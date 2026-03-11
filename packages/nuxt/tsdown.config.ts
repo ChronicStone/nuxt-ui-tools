@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
@@ -7,6 +8,9 @@ export default defineConfig({
   platform: 'node',
   dts: true,
   sourcemap: true,
+  alias: {
+    '@lib': fileURLToPath(new URL('./src', import.meta.url)),
+  },
   deps: {
     neverBundle: [
       '@nuxt/kit',
