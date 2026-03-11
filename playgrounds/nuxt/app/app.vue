@@ -21,7 +21,9 @@ const { t } = useI18n()
                   {{ currentSection ? t(currentSection.key) : t('layout.brandTitle') }}
                 </h1>
                 <p :class="classes.description">
-                  {{ currentSection ? t(currentSection.descriptionKey) : t('layout.brandDescription') }}
+                  {{
+                    currentSection ? t(currentSection.descriptionKey) : t('layout.brandDescription')
+                  }}
                 </p>
               </div>
             </div>

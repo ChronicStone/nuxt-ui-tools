@@ -117,17 +117,38 @@ export function usePlaygroundAppearance() {
   }))
 
   const currentMode = computed<ThemeMode>(() => {
-    const allowedModes = themeModes.map(item => item.value) as readonly ThemeMode[]
+    const allowedModes = themeModes.map((item) => item.value) as readonly ThemeMode[]
 
     return isOneOf(allowedModes, colorMode.preference) ? colorMode.preference : 'system'
   })
 
-  const selectedPrimary = computed(() => primaryOptions.find(option => option.value === currentTheme.value.primary) ?? primaryOptions[8])
-  const selectedNeutral = computed(() => neutralOptions.find(option => option.value === currentTheme.value.neutral) ?? neutralOptions[4])
-  const selectedRadius = computed(() => radiusOptions.find(option => option.value === currentTheme.value.radius) ?? radiusOptions[2])
-  const previousPrimary = computed(() => primaryOptions.find(option => option.value === previous.value.primary) ?? primaryOptions[8])
-  const previousNeutral = computed(() => neutralOptions.find(option => option.value === previous.value.neutral) ?? neutralOptions[4])
-  const previousRadius = computed(() => radiusOptions.find(option => option.value === previous.value.radius) ?? radiusOptions[2])
+  const selectedPrimary = computed(
+    () =>
+      primaryOptions.find((option) => option.value === currentTheme.value.primary) ??
+      primaryOptions[8],
+  )
+  const selectedNeutral = computed(
+    () =>
+      neutralOptions.find((option) => option.value === currentTheme.value.neutral) ??
+      neutralOptions[4],
+  )
+  const selectedRadius = computed(
+    () =>
+      radiusOptions.find((option) => option.value === currentTheme.value.radius) ??
+      radiusOptions[2],
+  )
+  const previousPrimary = computed(
+    () =>
+      primaryOptions.find((option) => option.value === previous.value.primary) ?? primaryOptions[8],
+  )
+  const previousNeutral = computed(
+    () =>
+      neutralOptions.find((option) => option.value === previous.value.neutral) ?? neutralOptions[4],
+  )
+  const previousRadius = computed(
+    () =>
+      radiusOptions.find((option) => option.value === previous.value.radius) ?? radiusOptions[2],
+  )
 
   const surfaceShellClass = computed(() => {
     const surfaceMap: Record<SurfaceMode, string[]> = {
@@ -173,7 +194,10 @@ export function usePlaygroundAppearance() {
   })
 
   const densityClass = computed(() => {
-    const densityMap: Record<DensityMode, { shell: string; panel: string; gap: string; nav: string }> = {
+    const densityMap: Record<
+      DensityMode,
+      { shell: string; panel: string; gap: string; nav: string }
+    > = {
       airy: {
         shell: 'px-4 py-4 md:px-6 md:py-6 xl:px-8 xl:py-8',
         panel: 'p-6 md:p-7',
@@ -225,9 +249,11 @@ export function usePlaygroundAppearance() {
       densityClass.value.gap,
       'flex flex-col',
     ],
-    eyebrowRow: 'flex flex-wrap items-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-toned',
+    eyebrowRow:
+      'flex flex-wrap items-center gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-toned',
     titleWrap: 'flex max-w-4xl flex-col gap-2',
-    title: 'm-0 text-3xl font-semibold tracking-tight text-highlighted text-balance sm:text-4xl xl:text-5xl',
+    title:
+      'm-0 text-3xl font-semibold tracking-tight text-highlighted text-balance sm:text-4xl xl:text-5xl',
     description: 'm-0 max-w-3xl text-sm leading-6 text-toned text-pretty sm:text-[15px]',
     headerActions: 'flex flex-col items-start gap-4 lg:flex-row lg:items-center lg:justify-between',
     badgeRow: 'flex flex-wrap items-center gap-2',
@@ -255,7 +281,8 @@ export function usePlaygroundAppearance() {
     ],
     panelMeta: 'flex flex-wrap items-center gap-2',
     panelCopy: 'flex flex-col gap-3',
-    panelTitle: 'm-0 text-2xl font-semibold tracking-tight text-highlighted text-balance md:text-[2rem]',
+    panelTitle:
+      'm-0 text-2xl font-semibold tracking-tight text-highlighted text-balance md:text-[2rem]',
     panelText: 'm-0 text-sm leading-6 text-toned text-pretty sm:text-[15px]',
     mono: 'font-mono text-xs uppercase tracking-[0.14em] text-toned',
     footer: 'mt-auto flex flex-wrap items-center gap-3 pt-1',
@@ -338,10 +365,13 @@ export function usePlaygroundAppearance() {
     { color: 'neutral' as const, label: locale.value.toUpperCase() },
   ])
 
-  const localeOptions = computed(() => [
-    { label: t('locale.english'), value: 'en' },
-    { label: t('locale.french'), value: 'fr' },
-  ] satisfies Array<{ label: string; value: LocaleCode }>)
+  const localeOptions = computed(
+    () =>
+      [
+        { label: t('locale.english'), value: 'en' },
+        { label: t('locale.french'), value: 'fr' },
+      ] satisfies Array<{ label: string; value: LocaleCode }>,
+  )
 
   const exportConfigPreview = computed(() => {
     return `@import "tailwindcss";
@@ -367,22 +397,36 @@ export default defineAppConfig({
 })`
   })
 
-  function normalizePreferences(value: Partial<AppearancePreferences> | null | undefined): AppearancePreferences {
-    const modeValues = themeModes.map(item => item.value) as readonly ThemeMode[]
-    const primaryValues = primaryOptions.map(option => option.value) as readonly PrimaryPalette[]
-    const neutralValues = neutralOptions.map(option => option.value) as readonly NeutralPalette[]
-    const surfaceValues = surfaceOptions.map(option => option.value) as readonly SurfaceMode[]
-    const radiusValues = radiusOptions.map(option => option.value) as readonly RadiusMode[]
-    const densityValues = densityOptions.map(option => option.value) as readonly DensityMode[]
+  function normalizePreferences(
+    value: Partial<AppearancePreferences> | null | undefined,
+  ): AppearancePreferences {
+    const modeValues = themeModes.map((item) => item.value) as readonly ThemeMode[]
+    const primaryValues = primaryOptions.map((option) => option.value) as readonly PrimaryPalette[]
+    const neutralValues = neutralOptions.map((option) => option.value) as readonly NeutralPalette[]
+    const surfaceValues = surfaceOptions.map((option) => option.value) as readonly SurfaceMode[]
+    const radiusValues = radiusOptions.map((option) => option.value) as readonly RadiusMode[]
+    const densityValues = densityOptions.map((option) => option.value) as readonly DensityMode[]
 
     return {
       mode: isOneOf(modeValues, value?.mode) ? value.mode : defaultAppearancePreferences.mode,
-      primary: isOneOf(primaryValues, value?.primary) ? value.primary : defaultAppearancePreferences.primary,
-      neutral: isOneOf(neutralValues, value?.neutral) ? value.neutral : defaultAppearancePreferences.neutral,
-      surface: isOneOf(surfaceValues, value?.surface) ? value.surface : defaultAppearancePreferences.surface,
-      radius: isOneOf(radiusValues, value?.radius) ? value.radius : defaultAppearancePreferences.radius,
-      density: isOneOf(densityValues, value?.density) ? value.density : defaultAppearancePreferences.density,
-      locale: isOneOf(localeCodes, value?.locale) ? value.locale : defaultAppearancePreferences.locale,
+      primary: isOneOf(primaryValues, value?.primary)
+        ? value.primary
+        : defaultAppearancePreferences.primary,
+      neutral: isOneOf(neutralValues, value?.neutral)
+        ? value.neutral
+        : defaultAppearancePreferences.neutral,
+      surface: isOneOf(surfaceValues, value?.surface)
+        ? value.surface
+        : defaultAppearancePreferences.surface,
+      radius: isOneOf(radiusValues, value?.radius)
+        ? value.radius
+        : defaultAppearancePreferences.radius,
+      density: isOneOf(densityValues, value?.density)
+        ? value.density
+        : defaultAppearancePreferences.density,
+      locale: isOneOf(localeCodes, value?.locale)
+        ? value.locale
+        : defaultAppearancePreferences.locale,
     }
   }
 
@@ -401,11 +445,11 @@ export default defineAppConfig({
     }
 
     if (
-      appConfig.ui?.colors?.primary !== preferences.primary
-      || appConfig.ui?.colors?.neutral !== preferences.neutral
-      || appConfig.playground?.surface !== preferences.surface
-      || appConfig.playground?.radius !== preferences.radius
-      || appConfig.playground?.density !== preferences.density
+      appConfig.ui?.colors?.primary !== preferences.primary ||
+      appConfig.ui?.colors?.neutral !== preferences.neutral ||
+      appConfig.playground?.surface !== preferences.surface ||
+      appConfig.playground?.radius !== preferences.radius ||
+      appConfig.playground?.density !== preferences.density
     ) {
       updateAppConfig({
         ui: {
@@ -433,7 +477,9 @@ export default defineAppConfig({
         surface: theme.surface,
         radius: theme.radius,
         density: theme.density,
-        locale: isOneOf(localeCodes, activeLocale) ? activeLocale : defaultAppearancePreferences.locale,
+        locale: isOneOf(localeCodes, activeLocale)
+          ? activeLocale
+          : defaultAppearancePreferences.locale,
       }
     },
     { deep: true },
@@ -447,7 +493,7 @@ export default defineAppConfig({
   }
 
   function setMode(mode: unknown) {
-    const allowedModes = themeModes.map(item => item.value) as readonly ThemeMode[]
+    const allowedModes = themeModes.map((item) => item.value) as readonly ThemeMode[]
 
     if (!isOneOf(allowedModes, mode) || mode === currentMode.value) {
       return
@@ -481,7 +527,9 @@ export default defineAppConfig({
     })
   }
 
-  function updatePlayground(next: Partial<{ surface: SurfaceMode; radius: RadiusMode; density: DensityMode }>) {
+  function updatePlayground(
+    next: Partial<{ surface: SurfaceMode; radius: RadiusMode; density: DensityMode }>,
+  ) {
     updateAppConfig({
       playground: {
         surface: next.surface ?? currentTheme.value.surface,
@@ -492,7 +540,7 @@ export default defineAppConfig({
   }
 
   function setPrimaryPalette(value: unknown) {
-    const allowed = primaryOptions.map(option => option.value) as readonly PrimaryPalette[]
+    const allowed = primaryOptions.map((option) => option.value) as readonly PrimaryPalette[]
 
     if (!isOneOf(allowed, value) || value === currentTheme.value.primary) {
       return
@@ -503,7 +551,7 @@ export default defineAppConfig({
   }
 
   function setNeutralPalette(value: unknown) {
-    const allowed = neutralOptions.map(option => option.value) as readonly NeutralPalette[]
+    const allowed = neutralOptions.map((option) => option.value) as readonly NeutralPalette[]
 
     if (!isOneOf(allowed, value) || value === currentTheme.value.neutral) {
       return
@@ -514,7 +562,7 @@ export default defineAppConfig({
   }
 
   function setSurfaceMode(value: unknown) {
-    const allowed = surfaceOptions.map(option => option.value) as readonly SurfaceMode[]
+    const allowed = surfaceOptions.map((option) => option.value) as readonly SurfaceMode[]
 
     if (isOneOf(allowed, value)) {
       updatePlayground({ surface: value })
@@ -522,7 +570,7 @@ export default defineAppConfig({
   }
 
   function setRadiusMode(value: unknown) {
-    const allowed = radiusOptions.map(option => option.value) as readonly RadiusMode[]
+    const allowed = radiusOptions.map((option) => option.value) as readonly RadiusMode[]
 
     if (!isOneOf(allowed, value) || value === currentTheme.value.radius) {
       return
@@ -533,7 +581,7 @@ export default defineAppConfig({
   }
 
   function setDensityMode(value: unknown) {
-    const allowed = densityOptions.map(option => option.value) as readonly DensityMode[]
+    const allowed = densityOptions.map((option) => option.value) as readonly DensityMode[]
 
     if (isOneOf(allowed, value)) {
       updatePlayground({ density: value })

@@ -80,11 +80,19 @@ function onOpenChange(value: boolean) {
                   :key="option.value"
                   :color="currentTheme.primary === option.value ? 'primary' : 'neutral'"
                   :variant="currentTheme.primary === option.value ? 'soft' : 'ghost'"
-                  :class="[classes.toneButton, currentTheme.primary === option.value && classes.toneButtonActive]"
+                  :class="[
+                    classes.toneButton,
+                    currentTheme.primary === option.value && classes.toneButtonActive,
+                  ]"
                   @click="setPrimaryPalette(option.value)"
                 >
                   <span class="flex items-center gap-3">
-                    <span :class="['size-3 rounded-full ring-1 ring-inset ring-white/25', option.swatch]" />
+                    <span
+                      :class="[
+                        'size-3 rounded-full ring-1 ring-inset ring-white/25',
+                        option.swatch,
+                      ]"
+                    />
                     <span>{{ option.label }}</span>
                   </span>
                 </UButton>
@@ -103,11 +111,19 @@ function onOpenChange(value: boolean) {
                   :key="option.value"
                   color="neutral"
                   :variant="currentTheme.neutral === option.value ? 'soft' : 'ghost'"
-                  :class="[classes.toneButton, currentTheme.neutral === option.value && classes.toneButtonActive]"
+                  :class="[
+                    classes.toneButton,
+                    currentTheme.neutral === option.value && classes.toneButtonActive,
+                  ]"
                   @click="setNeutralPalette(option.value)"
                 >
                   <span class="flex items-center gap-3">
-                    <span :class="['size-3 rounded-full ring-1 ring-inset ring-white/25', option.swatch]" />
+                    <span
+                      :class="[
+                        'size-3 rounded-full ring-1 ring-inset ring-white/25',
+                        option.swatch,
+                      ]"
+                    />
                     <span>{{ option.label }}</span>
                   </span>
                 </UButton>
@@ -126,7 +142,11 @@ function onOpenChange(value: boolean) {
                   :key="option.value"
                   color="neutral"
                   :variant="currentTheme.radius === option.value ? 'soft' : 'ghost'"
-                  :class="[classes.modeButton, 'justify-center', currentTheme.radius === option.value && classes.modeButtonActive]"
+                  :class="[
+                    classes.modeButton,
+                    'justify-center',
+                    currentTheme.radius === option.value && classes.modeButtonActive,
+                  ]"
                   @click="setRadiusMode(option.value)"
                 >
                   {{ option.label }}
@@ -144,7 +164,10 @@ function onOpenChange(value: boolean) {
                   color="neutral"
                   :variant="currentMode === mode.value ? 'soft' : 'ghost'"
                   :icon="mode.icon"
-                  :class="[classes.modeButton, currentMode === mode.value && classes.modeButtonActive]"
+                  :class="[
+                    classes.modeButton,
+                    currentMode === mode.value && classes.modeButtonActive,
+                  ]"
                   @click="setMode(mode.value)"
                 >
                   {{ t(mode.key) }}
@@ -171,7 +194,9 @@ function onOpenChange(value: boolean) {
               <div :class="classes.field">
                 <label :class="classes.fieldLabel">{{ t('layout.surface') }}</label>
                 <USelectMenu
-                  :items="surfaceOptions.map(option => ({ label: t(option.key), value: option.value }))"
+                  :items="
+                    surfaceOptions.map((option) => ({ label: t(option.key), value: option.value }))
+                  "
                   :model-value="currentTheme.surface"
                   value-key="value"
                   label-key="label"
@@ -186,7 +211,9 @@ function onOpenChange(value: boolean) {
               <div :class="[classes.field, classes.controlsWide]">
                 <label :class="classes.fieldLabel">{{ t('layout.density') }}</label>
                 <USelectMenu
-                  :items="densityOptions.map(option => ({ label: t(option.key), value: option.value }))"
+                  :items="
+                    densityOptions.map((option) => ({ label: t(option.key), value: option.value }))
+                  "
                   :model-value="currentTheme.density"
                   value-key="value"
                   label-key="label"
@@ -206,7 +233,11 @@ function onOpenChange(value: boolean) {
                   <UBadge color="primary" variant="soft" :label="selectedPrimary.label" />
                   <UBadge color="neutral" variant="soft" :label="selectedNeutral.label" />
                   <UBadge color="neutral" variant="subtle" :label="selectedRadius.label" />
-                  <UBadge color="neutral" variant="subtle" :label="t(`themeModes.${currentMode}`)" />
+                  <UBadge
+                    color="neutral"
+                    variant="subtle"
+                    :label="t(`themeModes.${currentMode}`)"
+                  />
                 </div>
               </div>
 
@@ -216,7 +247,11 @@ function onOpenChange(value: boolean) {
                   <UBadge color="primary" variant="soft" :label="previousPrimary.label" />
                   <UBadge color="neutral" variant="soft" :label="previousNeutral.label" />
                   <UBadge color="neutral" variant="subtle" :label="previousRadius.label" />
-                  <UBadge color="neutral" variant="subtle" :label="t(`themeModes.${previous.mode}`)" />
+                  <UBadge
+                    color="neutral"
+                    variant="subtle"
+                    :label="t(`themeModes.${previous.mode}`)"
+                  />
                 </div>
               </div>
             </section>

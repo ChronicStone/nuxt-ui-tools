@@ -46,11 +46,7 @@ const entries = [
       </article>
 
       <div :class="classes.list">
-        <article
-          v-for="entry in entries"
-          :key="entry.to"
-          :class="classes.panel"
-        >
+        <article v-for="entry in entries" :key="entry.to" :class="classes.panel">
           <div :class="classes.panelMeta">
             <UBadge :color="entry.color" variant="soft" :label="t(entry.titleKey)" />
           </div>
