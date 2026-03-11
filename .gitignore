@@ -1,0 +1,9 @@
+node_modules
+.turbo
+.nuxt
+.output
+dist
+coverage
+.idea
+.DS_Store
+bun.lock

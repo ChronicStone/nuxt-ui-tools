@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "overview": "Vue d'ensemble",
+    "overviewDescription": "Point d'entrée du shell du playground.",
+    "form": "Playground Formulaire",
+    "formDescription": "Réservé au travail sur le formulaire.",
+    "table": "Playground Tableau",
+    "tableDescription": "Réservé au travail sur le tableau.",
+    "lab": "Laboratoire",
+    "labDescription": "Espace de test pour prototypes et essais."
+  },
+  "layout": {
+    "badge": "Playground",
+    "brandEyebrow": "nuxt-ui-tools",
+    "brandTitle": "Surface de test",
+    "theme": "Thème",
+    "sessionDescription": "Utilisez ces pages pour isoler les interactions, comparer les états et itérer sans toucher aux packages pour le moment.",
+    "currentPage": "Page active",
+    "themeTesting": "Test du thème",
+    "pageRouting": "Navigation",
+    "cleanBaseline": "Base propre",
+    "nuxtUi": "Nuxt UI"
+  },
+  "themeModes": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "locale": {
+    "label": "Langue",
+    "english": "Anglais",
+    "french": "Français"
+  },
+  "pages": {
+    "overview": {
+      "badge": "Vue d'ensemble",
+      "status": "Prêt à explorer",
+      "title": "Un shell de playground ciblé pour itérer sur la suite.",
+      "description": "Gardez ici la structure, les tests de thème et les expériences de page pendant que les API des packages repartent d'une base propre.",
+      "openPage": "Ouvrir la page"
+    },
+    "form": {
+      "badge": "Playground Formulaire",
+      "title": "La surface formulaire est volontairement vide pour le moment.",
+      "description": "Utilisez cette page pour prototyper les schémas, la validation et le rendu des champs quand le travail sur le package commencera.",
+      "cta": "Aller au laboratoire"
+    },
+    "table": {
+      "badge": "Playground Tableau",
+      "title": "Les expérimentations de tableau arriveront ici.",
+      "description": "Gardez sur cette route les essais de densité de lignes, comportement des colonnes, filtres et sélection.",
+      "cta": "Aller au playground formulaire"
+    },
+    "lab": {
+      "badge": "Laboratoire",
+      "title": "Espace de test pour idées rapides et UI temporaires.",
+      "description": "Utilisez le laboratoire pour essayer vite des interactions sans les rattacher tout de suite à une surface dédiée.",
+      "cta": "Retour à la vue d'ensemble"
+    }
+  }
+}

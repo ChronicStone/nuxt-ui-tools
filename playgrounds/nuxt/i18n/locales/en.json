@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "overviewDescription": "Entry point for the playground shell.",
+    "form": "Form Playground",
+    "formDescription": "Reserved for form work.",
+    "table": "Table Playground",
+    "tableDescription": "Reserved for table work.",
+    "lab": "Experiment Lab",
+    "labDescription": "Scratch area for prototypes and tests."
+  },
+  "layout": {
+    "badge": "Playground",
+    "brandEyebrow": "nuxt-ui-tools",
+    "brandTitle": "Testing surface",
+    "theme": "Theme",
+    "sessionDescription": "Use these pages to isolate interactions, compare states, and iterate without touching package internals yet.",
+    "currentPage": "Current page",
+    "themeTesting": "Theme testing",
+    "pageRouting": "Page routing",
+    "cleanBaseline": "Clean baseline",
+    "nuxtUi": "Nuxt UI"
+  },
+  "themeModes": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "locale": {
+    "label": "Language",
+    "english": "English",
+    "french": "French"
+  },
+  "pages": {
+    "overview": {
+      "badge": "Overview",
+      "status": "Ready to explore",
+      "title": "A focused playground shell for iterating on the toolkit.",
+      "description": "Keep structure, theme testing, and page-level experiments here while the package APIs are rebuilt from a clean baseline.",
+      "openPage": "Open page"
+    },
+    "form": {
+      "badge": "Form Playground",
+      "title": "Form surface is intentionally empty for now.",
+      "description": "Use this page to prototype schemas, validation flows, and field rendering when package work begins.",
+      "cta": "Go to Experiment Lab"
+    },
+    "table": {
+      "badge": "Table Playground",
+      "title": "Table experiments will land here.",
+      "description": "Keep row density, column behavior, filtering, and selection experiments isolated on this route.",
+      "cta": "Go to Form Playground"
+    },
+    "lab": {
+      "badge": "Experiment Lab",
+      "title": "Scratch space for rough ideas and temporary UI.",
+      "description": "Use the lab when you want to try interactions quickly without committing them to a dedicated package page yet.",
+      "cta": "Back to Overview"
+    }
+  }
+}

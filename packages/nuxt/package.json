@@ -1,0 +1,33 @@
+{
+  "name": "@nuxt-ui-tools/nuxt",
+  "version": "0.0.0",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "module": "./dist/module.mjs",
+  "types": "./dist/module.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.mts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --project tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@nuxt-ui-tools/form": "workspace:*",
+    "@nuxt-ui-tools/shared": "workspace:*",
+    "@nuxt-ui-tools/table": "workspace:*",
+    "@nuxt/kit": "4.3.1",
+    "@nuxt/schema": "4.3.1"
+  },
+  "peerDependencies": {
+    "nuxt": "4.3.1"
+  }
+}
