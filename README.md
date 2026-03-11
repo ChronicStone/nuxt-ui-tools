@@ -18,3 +18,9 @@ bun dev
 bun build
 bun typecheck
 ```
+
+## Docs
+
+- Monorepo setup: [`docs/monorepo.md`](docs/monorepo.md)
+- Playground guide: [`docs/playground.md`](docs/playground.md)
+- Release workflow: [`docs/releasing.md`](docs/releasing.md)
