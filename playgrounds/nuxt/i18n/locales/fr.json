@@ -13,18 +13,48 @@
     "badge": "Playground",
     "brandEyebrow": "nuxt-ui-tools",
     "brandTitle": "Surface de test",
+    "brandDescription": "Un sandbox sobre pour valider le comportement des packages, la qualité visuelle et les choix de thème sans perdre le focus.",
     "theme": "Thème",
     "sessionDescription": "Utilisez ces pages pour isoler les interactions, comparer les états et itérer sans toucher aux packages pour le moment.",
     "currentPage": "Page active",
     "themeTesting": "Test du thème",
     "pageRouting": "Navigation",
     "cleanBaseline": "Base propre",
-    "nuxtUi": "Nuxt UI"
+    "nuxtUi": "Nuxt UI",
+    "controls": "Réglages",
+    "customizePlayground": "Réglages du playground",
+    "appearance": "Apparence en direct",
+    "controlsDescription": "Changez la langue, ajustez la palette et la densité du shell directement depuis le playground.",
+    "primaryTone": "Palette principale",
+    "neutralTone": "Palette neutre",
+    "surface": "Ton de fond",
+    "radius": "Échelle des rayons",
+    "density": "Densité",
+    "resetAppearance": "Réinitialiser",
+    "colorMode": "Mode de couleur",
+    "currentSelection": "Sélection actuelle",
+    "previousSelection": "Sélection précédente",
+    "exportConfig": "Export"
   },
   "themeModes": {
     "light": "Clair",
     "dark": "Sombre",
     "system": "Système"
+  },
+  "surfaceModes": {
+    "mist": "Brume",
+    "paper": "Papier",
+    "night": "Nuit"
+  },
+  "radiusModes": {
+    "soft": "Souple",
+    "balanced": "Équilibré",
+    "sharp": "Net"
+  },
+  "densityModes": {
+    "airy": "Aérée",
+    "relaxed": "Détendue",
+    "compact": "Compacte"
   },
   "locale": {
     "label": "Langue",
@@ -43,18 +73,21 @@
       "badge": "Playground Formulaire",
       "title": "La surface formulaire est volontairement vide pour le moment.",
       "description": "Utilisez cette page pour prototyper les schémas, la validation et le rendu des champs quand le travail sur le package commencera.",
+      "note": "Gardez ici un shell discret pour inspecter facilement les états de validation et la composition des champs.",
       "cta": "Aller au laboratoire"
     },
     "table": {
       "badge": "Playground Tableau",
       "title": "Les expérimentations de tableau arriveront ici.",
       "description": "Gardez sur cette route les essais de densité de lignes, comportement des colonnes, filtres et sélection.",
+      "note": "Cette route vise des mises en page plus denses, donc le shell supérieur reste compact et discret.",
       "cta": "Aller au playground formulaire"
     },
     "lab": {
       "badge": "Laboratoire",
       "title": "Espace de test pour idées rapides et UI temporaires.",
       "description": "Utilisez le laboratoire pour essayer vite des interactions sans les rattacher tout de suite à une surface dédiée.",
+      "note": "Utilisez le popover de réglages pour éditer en direct la palette, la densité et la langue pendant vos tests ici.",
       "cta": "Retour à la vue d'ensemble"
     }
   }

@@ -1,22 +1,31 @@
 <script setup lang="ts">
 const localePath = useLocalePath()
+const { classes } = usePlaygroundAppearance()
 const { t } = useI18n()
 </script>
 
 <template>
-  <UCard variant="subtle" class="page-panel">
-    <template #header>
-      <div class="page-copy">
-        <UBadge color="neutral" variant="subtle" :label="t('pages.table.badge')" />
-        <h3 class="text-balance">{{ t('pages.table.title') }}</h3>
-        <p class="text-pretty">{{ t('pages.table.description') }}</p>
-      </div>
-    </template>
+  <section :class="classes.pageStack">
+    <article :class="classes.panel">
+      <div :class="classes.panelCopy">
+        <div :class="classes.panelMeta">
+          <UBadge color="neutral" variant="subtle" :label="t('pages.table.badge')" />
+        </div>
 
-    <div class="page-actions">
-      <UButton :to="localePath('/form')" color="neutral" variant="soft">
-        {{ t('pages.table.cta') }}
-      </UButton>
-    </div>
-  </UCard>
+        <h2 :class="classes.panelTitle">{{ t('pages.table.title') }}</h2>
+        <p :class="classes.panelText">{{ t('pages.table.description') }}</p>
+      </div>
+
+      <div class="grid gap-3 lg:grid-cols-[auto,1fr] lg:items-end">
+        <div :class="classes.mono">tables / density / filters</div>
+        <p :class="classes.panelText">{{ t('pages.table.note') }}</p>
+      </div>
+
+      <div :class="classes.footer">
+        <UButton :to="localePath('/form')" color="neutral" variant="soft">
+          {{ t('pages.table.cta') }}
+        </UButton>
+      </div>
+    </article>
+  </section>
 </template>

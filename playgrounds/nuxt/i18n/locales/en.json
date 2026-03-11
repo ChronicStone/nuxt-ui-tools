@@ -13,18 +13,48 @@
     "badge": "Playground",
     "brandEyebrow": "nuxt-ui-tools",
     "brandTitle": "Testing surface",
+    "brandDescription": "A restrained sandbox for validating package behavior, visual polish, and theme decisions without losing focus.",
     "theme": "Theme",
     "sessionDescription": "Use these pages to isolate interactions, compare states, and iterate without touching package internals yet.",
     "currentPage": "Current page",
     "themeTesting": "Theme testing",
     "pageRouting": "Page routing",
     "cleanBaseline": "Clean baseline",
-    "nuxtUi": "Nuxt UI"
+    "nuxtUi": "Nuxt UI",
+    "controls": "Controls",
+    "customizePlayground": "Playground controls",
+    "appearance": "Live appearance",
+    "controlsDescription": "Switch locale, tune palette, and adjust shell density directly from the playground.",
+    "primaryTone": "Primary palette",
+    "neutralTone": "Neutral palette",
+    "surface": "Canvas tone",
+    "radius": "Radius scale",
+    "density": "Density",
+    "resetAppearance": "Reset",
+    "colorMode": "Color mode",
+    "currentSelection": "Current selection",
+    "previousSelection": "Previous selection",
+    "exportConfig": "Export"
   },
   "themeModes": {
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "surfaceModes": {
+    "mist": "Mist",
+    "paper": "Paper",
+    "night": "Night"
+  },
+  "radiusModes": {
+    "soft": "Soft",
+    "balanced": "Balanced",
+    "sharp": "Sharp"
+  },
+  "densityModes": {
+    "airy": "Airy",
+    "relaxed": "Relaxed",
+    "compact": "Compact"
   },
   "locale": {
     "label": "Language",
@@ -43,18 +73,21 @@
       "badge": "Form Playground",
       "title": "Form surface is intentionally empty for now.",
       "description": "Use this page to prototype schemas, validation flows, and field rendering when package work begins.",
+      "note": "Keep the shell quiet here so validation states and field composition are easy to inspect.",
       "cta": "Go to Experiment Lab"
     },
     "table": {
       "badge": "Table Playground",
       "title": "Table experiments will land here.",
       "description": "Keep row density, column behavior, filtering, and selection experiments isolated on this route.",
+      "note": "This route is intended for heavier data layouts, so the top shell stays compact and out of the way.",
       "cta": "Go to Form Playground"
     },
     "lab": {
       "badge": "Experiment Lab",
       "title": "Scratch space for rough ideas and temporary UI.",
       "description": "Use the lab when you want to try interactions quickly without committing them to a dedicated package page yet.",
+      "note": "Use the controls popover to live edit palette, density, and locale while testing one-off interactions here.",
       "cta": "Back to Overview"
     }
   }

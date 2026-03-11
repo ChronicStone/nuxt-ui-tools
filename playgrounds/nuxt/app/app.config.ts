@@ -1,8 +1,13 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'sky',
-      neutral: 'slate',
+      primary: 'cyan',
+      neutral: 'stone',
     },
+  },
+  playground: {
+    surface: 'mist',
+    radius: 'md',
+    density: 'relaxed',
   },
 })
