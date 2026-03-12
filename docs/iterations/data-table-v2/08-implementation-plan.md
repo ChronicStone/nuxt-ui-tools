@@ -31,6 +31,9 @@ The first iterations should prefer debug-first rendering and instrumentation ove
 - Every session must update the `Session Log` section of the step it worked on.
 - Every session must also create or update a file in:
   - [`./session-logs/`](./session-logs/)
+- Every session must update the Nuxt playground table page as soon as the current step is previewable:
+  - `playgrounds/nuxt/app/pages/table.vue`
+  - prefer a broad, full-scope preview that accumulates features over time
 - If a step is partially completed, mark what remains clearly before ending the session.
 - If implementation reveals a spec mismatch, update:
   - [`07-current-spec.md`](./07-current-spec.md)
@@ -103,12 +106,23 @@ Expected output:
 
 Session Log:
 
-- Status:
-- Date:
+- Status: completed
+- Date: 2026-03-12
 - Session summary:
+  - created the initial `packages/table` V2 folder structure and public export surface
+  - added compile-safe placeholder modules for schema, source, state, filters, actions, persistence, context, composables, components, debug, config, and adapters
+  - promoted a generic keyed-registry helper into `packages/shared` based on V1 adapter patterns
 - Files created/changed:
+  - `packages/table/src/**/*`
+  - `packages/shared/src/index.ts`
+  - `packages/shared/src/utils/registry.ts`
+  - `packages/shared/src/utils/render.ts`
 - Open issues:
+  - Step 2 still needs to replace placeholder contracts with real inference-preserving type models
+  - adapter/serializer registry exists only as scaffold and should be wired into the future source engine work
 - Next session handoff:
+  - begin Step 2 by replacing placeholder public types with the real schema/state/source/action/filter contracts
+  - keep generic non-table helpers in `packages/shared` when porting V1 utility patterns
 
 ## Step 2. Type System Foundations
 
@@ -139,12 +153,35 @@ Important:
 
 Session Log:
 
-- Status:
-- Date:
+- Status: completed
+- Date: 2026-03-12
 - Session summary:
+  - replaced placeholder contracts with structured foundational type modules
+  - implemented typed source, state, filter, action, context, column, schema, API, and `DataList` contracts
+  - updated `defineTableSchema(...)` and `useTable(...)` to carry schema generics through the public surface
+  - reviewed V1 internals and recorded `createInjectionState` as an important architectural pattern for future runtime orchestration
 - Files created/changed:
+  - `packages/table/src/types/**/*`
+  - `packages/table/src/core/schema.ts`
+  - `packages/table/src/core/source.ts`
+  - `packages/table/src/core/state.ts`
+  - `packages/table/src/core/filters.ts`
+  - `packages/table/src/core/actions.ts`
+  - `packages/table/src/core/persistence.ts`
+  - `packages/table/src/core/context.ts`
+  - `packages/table/src/composables/use-table.ts`
+  - `packages/table/src/components/data-list.ts`
+  - `packages/table/src/debug/table-debug.ts`
+  - `packages/table/src/adapters/serializers.ts`
+  - `packages/table/package.json`
+  - `packages/table/tsconfig.json`
 - Open issues:
+  - builder callback typing for columns and filter UI definitions is still intentionally loose until Step 3
+  - runtime orchestration, source execution, and injection-based internal state are still to be implemented in later steps
 - Next session handoff:
+  - begin Step 3 by implementing `defineTableSchema(...)` builder ergonomics for columns and filter UI definitions
+  - preserve the new type contracts rather than bypassing them with `any`
+  - when runtime composition begins, reuse the V1-style `createInjectionState` / provide-inject architecture to avoid prop drilling
 
 ## Step 3. Schema Builder
 
@@ -156,8 +193,8 @@ Scope:
 
 - inference-preserving identity builder
 - builder callback support for:
-  - `columns: column => [...]`
-  - `filters.dynamic: filter => [...]`
+  - `table.columns: column => [...]`
+  - `filters.ui: filter => [...]`
 - initial column builder support:
   - `field`
   - `composite`
@@ -178,12 +215,41 @@ Do not yet implement UI rendering.
 
 Session Log:
 
-- Status:
-- Date:
+- Status: completed
+- Date: 2026-03-12
 - Session summary:
+  - implemented `defineTableSchema(...)` builder support for callback-based columns and filter UI definitions
+  - added concrete builder methods for `field`, `composite`, `display`, `text`, `option`, `boolean`, `number`, and `date`
+  - tightened consumer-facing inference so the playground can consume the schema/builders and typecheck successfully
+  - added a maintained V2 playground surface and documented it as a required part of future sessions
 - Files created/changed:
+  - `packages/table/src/core/builders.ts`
+  - `packages/table/src/core/schema.ts`
+  - `packages/table/src/types/columns.ts`
+  - `packages/table/src/types/context.ts`
+  - `packages/table/src/types/filters.ts`
+  - `packages/table/src/types/schema.ts`
+  - `packages/table/src/types/source.ts`
+  - `packages/table/src/types/utils.ts`
+  - `packages/table/src/types/api.ts`
+  - `packages/table/src/debug/table-debug.ts`
+  - `packages/table/src/type-tests/schema-builder.test.ts`
+  - `playgrounds/nuxt/app/composables/useTablePlaygroundSchema.ts`
+  - `playgrounds/nuxt/app/pages/table.vue`
+  - `playgrounds/nuxt/i18n/locales/en.json`
+  - `playgrounds/nuxt/i18n/locales/fr.json`
+  - `docs/iterations/data-table-v2/README.md`
+  - `docs/iterations/data-table-v2/CONTEXT.md`
+  - `docs/iterations/data-table-v2/08-implementation-plan.md`
 - Open issues:
+  - external consumer inference is much stronger now, but the table typing surface still deserves more cleanup before runtime work resumes
+  - callback inference currently benefits from explicitly typed demo sources in the playground; keep tightening the generic surface before expanding runtime complexity
 - Next session handoff:
+  - continue refining schema/API inference rather than moving into new runtime features until the type surface feels stable
+  - keep validating changes in both:
+    - `packages/table` type tests
+    - `playgrounds/nuxt/app/composables/useTablePlaygroundSchema.ts`
+  - once the type surface is truly stable, resume Step 4 with the injection-state architecture from V1
 
 ## Step 4. Source Resolution Engine
 
@@ -296,9 +362,9 @@ Objective:
 
 Scope:
 
-- dynamic filter state
+- UI filter state
 - static filters
-- `source: 'static' | 'dynamic'` provenance
+- `source: 'static' | 'ui'` provenance
 - search integration
 - normalized effective filters
 - filter operator typing and runtime shaping
@@ -306,7 +372,7 @@ Scope:
 Expected output:
 
 - one effective filter list consumable by source execution
-- clear distinction between authored dynamic filters and resolved static filters
+- clear distinction between authored UI filters and resolved static filters
 
 Session Log:
 

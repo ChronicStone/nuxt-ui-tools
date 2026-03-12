@@ -36,10 +36,10 @@ Rules:
 - filters are top-level and split into:
   - `search`
   - `static`
-  - `dynamic`
+  - `ui`
 - filter state is a normalized rule array
 - effective filters expose:
-  - `source: 'static' | 'dynamic'`
+  - `source: 'static' | 'ui'`
 - keep `context` and `pageContext`
 - keep lifecycle:
   1. context

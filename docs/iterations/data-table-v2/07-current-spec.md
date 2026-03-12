@@ -261,7 +261,7 @@ Purpose:
 Rules:
 
 - every property is optional
-- specified filters should only allow schema-configured dynamic filters
+- specified filters should only allow schema-configured UI filters
 
 ## State Model
 
@@ -326,7 +326,7 @@ Rules:
 
 - search is a dedicated config
 - placeholder is overridable
-- it remains separate from dynamic filters
+- it remains separate from UI filter definitions
 
 ## Filters
 
@@ -338,7 +338,7 @@ Top-level structure:
 filters: {
   search: { ... },
   static: [...],
-  dynamic: filter => [...]
+  ui: filter => [...]
 }
 ```
 
@@ -354,7 +354,7 @@ They are useful for cases like:
 
 Static filters support:
 
-- `columnId`
+- `key`
 - `operator`
 - `value`
 - `views`
@@ -362,16 +362,22 @@ Static filters support:
 
 Rules:
 
+- `key` targets the row property path directly
+- filters are not modeled as column-bound config
+- property-backed filter keys should infer from the row shape
+
+Rules:
+
 - static filters are reactive
 - if their `value` or `condition` changes, the table refreshes
-- they compile into the same effective filter pipeline as dynamic filters
+- they compile into the same effective filter pipeline as UI filters
 
-### Dynamic filters
+### UI filters
 
-Dynamic filters use builder-callback API only:
+UI filters use builder-callback API only:
 
 ```ts
-dynamic: filter => [...]
+ui: filter => [...]
 ```
 
 First iteration filter types:
@@ -401,14 +407,14 @@ Rules:
 
 ### Effective filter provenance
 
-Effective filters must expose provenance publicly so APIs/serializers can treat static and dynamic filters differently.
+Effective filters must expose provenance publicly so APIs/serializers can treat static and UI filters differently.
 
 Effective rule shape should include:
 
 ```ts
 {
-  source: 'static' | 'dynamic',
-  columnId: 'status',
+  source: 'static' | 'ui',
+  key: 'status',
   type: 'option',
   operator: 'isAnyOf',
   value: [...]
@@ -453,28 +459,34 @@ The UX direction should strongly take inspiration from Bazza UI:
 Columns use builder-callback API only:
 
 ```ts
-columns: column => [...]
+table: {
+  columns: column => [...]
+}
 ```
 
 First iteration column types:
 
-- `text`
+- `field`
 - `composite`
 - `display`
 
-Open naming question:
+### Field column
 
-- property-backed column builder naming is not fully locked yet
-- `column.text(...)` currently remains the working draft
-- alternatives still under consideration:
-  - `column.field(...)`
-  - `column.property(...)`
+`field` is a property-backed column.
 
-### Text column
+Rules:
 
-`text` is a semantic type, not a rendering limitation.
-
-It may still define custom rendering.
+- the field path is the source of truth
+- it does not expose `sortableKey`
+- if sortable behavior is enabled, it sorts on that same property
+- custom rendering is still allowed
+- field callbacks receive the full `row`
+- field callbacks receive a typed `value` resolved from the field path
+- this applies to `render(...)` and other row-aware field callbacks such as:
+  - `cellProps(...)`
+  - `colSpan(...)`
+  - `rowSpan(...)`
+  - `labelRowSpan(...)`
 
 ### Composite column
 

@@ -3,7 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@lib/*": ["src/*"]
+      "@lib/*": ["src/*"],
+      "@nuxt-ui-tools/shared/types/utils": ["../shared/src/types/utils.ts"]
     }
   },
   "include": ["src/**/*.ts"]

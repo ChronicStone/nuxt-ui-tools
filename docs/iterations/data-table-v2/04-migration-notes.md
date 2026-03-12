@@ -24,10 +24,10 @@ This file captures the current migration framing from V1 to V2.
 - move filters to:
   - `filters.search`
   - `filters.static`
-  - `filters.dynamic`
+  - `filters.ui`
 - use builder callback API for:
   - columns
-  - dynamic filters
+  - filter UI definitions
 - move toward:
   - `column.field`
   - `column.composite`

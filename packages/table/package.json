@@ -18,6 +18,9 @@
     "access": "public",
     "provenance": true
   },
+  "dependencies": {
+    "@nuxt-ui-tools/shared": "workspace:*"
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",

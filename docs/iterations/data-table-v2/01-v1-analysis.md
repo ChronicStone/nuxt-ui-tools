@@ -105,7 +105,7 @@ This is powerful, but hard to reason about. It also creates inconsistencies:
 - client filters use `QueryFilter`
 - remote filters use adapter-specific metadata
 - quick filters behave differently from regular filters
-- static filters are not the same kind of object as dynamic filters
+- static filters are not the same kind of object as UI filters
 
 V2 should separate:
 
@@ -161,7 +161,7 @@ V2 should preserve these V1 capabilities:
 - schema-based card/grid renderer
 - row actions and bulk actions
 - search query
-- dynamic filters
+- UI filters
 - static filters
 - quick filters
 - persisted state

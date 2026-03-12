@@ -78,10 +78,42 @@
     },
     "table": {
       "badge": "Playground Tableau",
-      "title": "Les expérimentations de tableau arriveront ici.",
-      "description": "Gardez sur cette route les essais de densité de lignes, comportement des colonnes, filtres et sélection.",
-      "note": "Cette route vise des mises en page plus denses, donc le shell supérieur reste compact et discret.",
-      "cta": "Aller au playground formulaire"
+      "title": "Tableau de bord de progression et surface de preview V2.",
+      "description": "Cette route suit maintenant l'implémentation en direct de Data Table V2 et doit rester à jour à mesure que le schéma, le moteur et l'UI avancent.",
+      "note": "Utilisez cette page comme preview la plus large possible au lieu de laisser les progrès cachés dans les packages.",
+      "cta": "Aller au playground formulaire",
+      "schemaBadge": "Schéma",
+      "runtimeBadge": "Runtime",
+      "debugBadge": "Debug",
+      "showcaseBadge": "Couverture fonctionnelle",
+      "statusReady": "Étape courante câblée dans le playground",
+      "statusPending": "En attente d'une exécution runtime plus profonde",
+      "metaTitle": "Instantané du contrat de table actuel",
+      "metaDescription": "La preview exerce actuellement le schema builder, l'API de table typée et la surface de debug.",
+      "schemaTitle": "Surface de schéma résolue",
+      "schemaDescription": "Les callbacks du builder sont résolus ici en colonnes et filtres concrets afin que le playground reflète la structure que les prochaines étapes runtime consommeront.",
+      "featureTitle": "Utilisation pleine portée",
+      "featureDescription": "Ce schéma touche volontairement les vues, layouts, filtres, contextes, actions, contrôles et la persistance pour rendre les régressions visibles tôt.",
+      "debugTitle": "Payload de debug",
+      "debugDescription": "Tant que les lignes et l'orchestration async ne sont pas implémentées, le panneau de debug montre l'instantané d'API courant et les métadonnées normalisées du schéma.",
+      "metaLabels": {
+        "tableKey": "Clé de table",
+        "rowKey": "Clé de ligne",
+        "sourceMode": "Mode source",
+        "views": "Vues",
+        "columnCount": "Colonnes",
+        "filterCount": "Filtres dynamiques",
+        "toolbarActions": "Actions barre d'outils",
+        "bulkActions": "Actions de masse"
+      },
+      "sections": {
+        "columns": "Colonnes",
+        "filters": "Filtres dynamiques",
+        "context": "Contexte",
+        "pageContext": "Contexte de page",
+        "actions": "Actions",
+        "rowActions": "Aperçu des actions de ligne"
+      }
     },
     "lab": {
       "badge": "Laboratoire",

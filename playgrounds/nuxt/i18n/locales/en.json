@@ -78,10 +78,42 @@
     },
     "table": {
       "badge": "Table Playground",
-      "title": "Table experiments will land here.",
-      "description": "Keep row density, column behavior, filtering, and selection experiments isolated on this route.",
-      "note": "This route is intended for heavier data layouts, so the top shell stays compact and out of the way.",
-      "cta": "Go to Form Playground"
+      "title": "V2 table progress board and preview surface.",
+      "description": "This route now tracks the live Data Table V2 implementation and should stay updated as schema, engine, and UI capabilities land.",
+      "note": "Use this page as the broadest currently-working preview rather than keeping progress trapped inside package internals.",
+      "cta": "Go to Form Playground",
+      "schemaBadge": "Schema",
+      "runtimeBadge": "Runtime",
+      "debugBadge": "Debug",
+      "showcaseBadge": "Feature coverage",
+      "statusReady": "Current step wired into playground",
+      "statusPending": "Waiting on deeper runtime execution",
+      "metaTitle": "Current table contract snapshot",
+      "metaDescription": "The preview currently exercises the schema builder, the typed table API, and the debug snapshot surface.",
+      "schemaTitle": "Resolved schema surface",
+      "schemaDescription": "Builder callbacks are resolved into concrete columns and filters here so the playground reflects the same structure future runtime steps will consume.",
+      "featureTitle": "Full-scope feature usage",
+      "featureDescription": "This schema intentionally touches views, layouts, filters, context, page context, actions, controls, and persistence so regression risk is visible early.",
+      "debugTitle": "Debug payload",
+      "debugDescription": "Until rows and async orchestration are implemented, the debug panel shows the current API snapshot and normalized schema metadata.",
+      "metaLabels": {
+        "tableKey": "Table key",
+        "rowKey": "Row key",
+        "sourceMode": "Source mode",
+        "views": "Views",
+        "columnCount": "Columns",
+        "filterCount": "Dynamic filters",
+        "toolbarActions": "Toolbar actions",
+        "bulkActions": "Bulk actions"
+      },
+      "sections": {
+        "columns": "Columns",
+        "filters": "Dynamic filters",
+        "context": "Context",
+        "pageContext": "Page context",
+        "actions": "Actions",
+        "rowActions": "Row actions preview"
+      }
     },
     "lab": {
       "badge": "Experiment Lab",
