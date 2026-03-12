@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import {
   useTable,
+  type ExtractTableFilterKey,
+  type ExtractTableFilterRule,
+  type ExtractTableFilterValue,
   type TableFilterOperator,
   type TableUiFilterDefinition,
 } from '@nuxt-ui-tools/table'
@@ -9,12 +12,18 @@ const { classes } = usePlaygroundAppearance()
 const route = useRoute()
 const table = useTable(tableSchema)
 
+
+
 const EMPTY_SELECT_VALUE = '__empty__'
 const EMPTY_BOOLEAN_VALUE = '__any__'
 
-const pendingFilterKey = ref('')
-const draftFilterKeys = ref<string[]>([])
-const draftOperators = ref<Record<string, TableFilterOperator>>({})
+type PlaygroundFilterKey = ExtractTableFilterKey<typeof tableSchema>
+type PlaygroundFilterRule = ExtractTableFilterRule<typeof tableSchema, PlaygroundFilterKey>
+type PlaygroundFilterValue = ExtractTableFilterValue<typeof tableSchema, PlaygroundFilterKey>
+
+const pendingFilterKey = ref<PlaygroundFilterKey | ''>('')
+const draftFilterKeys = ref<PlaygroundFilterKey[]>([])
+const draftOperators = ref<Partial<Record<PlaygroundFilterKey, TableFilterOperator>>>({})
 
 const layoutOptions = [
   { label: 'Table', value: 'table' },
@@ -35,62 +44,15 @@ const fallbackOptionItems: Record<string, Array<{ label: string; value: string }
 }
 
 
-const activeLayoutModel = computed({
-  get: () => table.queryState.value.layout,
-  set: (value: 'table' | 'grid') => {
-    table.api.setLayout(value)
-  },
-})
-
-const searchModel = computed({
-  get: () => table.queryState.value.filters.search,
-  set: (value: string | number) => {
-    table.api.setSearch(String(value ?? ''))
-  },
-})
-
-const currentPageModel = computed({
-  get: () => table.queryState.value.pagination.pageIndex,
-  set: (value: number | string) => {
-    table.api.setPage(Number(value) || 1)
-  },
-})
-
-const pageSizeModel = computed({
-  get: () => table.queryState.value.pagination.pageSize,
-  set: (value: number | string) => {
-    table.api.setPageSize(Number(value) || 1)
-  },
-})
-
 const sortKeyOptions = computed(() => [
   { label: 'Default', value: EMPTY_SELECT_VALUE },
   ...table.api.sortKeys.value.map((key) => ({ label: key, value: key })),
 ])
 
-const sortKeyModel = computed({
-  get: () => table.queryState.value.sorting?.sortKey ?? EMPTY_SELECT_VALUE,
-  set: (value: string | number | undefined) => {
-    if (!value || value === EMPTY_SELECT_VALUE) {
-      table.api.setSortKey(undefined)
-      return
-    }
-
-    table.api.setSortKey(String(value))
-  },
-})
-
 const sortDirectionOptions = [
   { label: 'Ascending', value: 'asc' },
   { label: 'Descending', value: 'desc' },
 ]
-
-const sortDirectionModel = computed({
-  get: () => table.queryState.value.sorting?.sortDirection ?? 'asc',
-  set: (value: 'asc' | 'desc') => {
-    table.api.setSortDirection(value)
-  },
-})
 
 const pageSizeOptions = computed(() =>
   table.api.pageSizeOptions.value.map((size) => ({
@@ -115,7 +77,7 @@ const availableFilterOptions = computed(() =>
 
 const filterBlocks = computed(() =>
   displayedFilterKeys.value
-    .map((key) => table.api.getFilterDefinition(key as never))
+    .map((key) => getFilterDefinition(key))
     .filter((filter): filter is TableUiFilterDefinition => !!filter),
 )
 
@@ -159,23 +121,50 @@ function resolveLabel(label: string | (() => unknown)) {
   return typeof label === 'function' ? String(label()) : label
 }
 
-function getFilterState(key: string) {
-  return table.api.getFilterState(key as never)
+function getFilterDefinition(key: PlaygroundFilterKey) {
+  return table.api.getFilterDefinition(key)
 }
 
-function getFilterOperator(key: string) {
+function getFilterState(key: PlaygroundFilterKey) {
+  return table.api.getFilterState(key)
+}
+
+function getFilterOperators(key: PlaygroundFilterKey) {
+  return table.api.getFilterOperators(key)
+}
+
+function addFilter(
+  key: PlaygroundFilterKey,
+  value: PlaygroundFilterValue,
+  options?: { operator?: TableFilterOperator },
+) {
+  table.api.addFilter(key, value, options)
+}
+
+function updateFilter(
+  key: PlaygroundFilterKey,
+  patch: Partial<PlaygroundFilterRule>,
+) {
+  table.api.updateFilter(key, patch)
+}
+
+function removeFilter(key: PlaygroundFilterKey) {
+  table.api.removeFilter(key)
+}
+
+function getFilterOperator(key: PlaygroundFilterKey) {
   return (
     getFilterState(key)?.operator ??
     draftOperators.value[key] ??
-    table.api.getFilterOperators(key as never)[0] ??
+    getFilterOperators(key)[0] ??
     'is'
   )
 }
 
-function getFilterOperatorOptions(key: string) {
-  return table.api.getFilterOperators(key as never).map((operator) => ({
-    label: formatOperatorLabel(operator),
-    value: operator,
+function getFilterOperatorOptions(key: PlaygroundFilterKey) {
+  return getFilterOperators(key).map((operator) => ({
+      label: formatOperatorLabel(operator),
+      value: operator,
   }))
 }
 
@@ -206,30 +195,30 @@ function addSelectedFilter() {
   draftOperators.value = {
     ...draftOperators.value,
     [pendingFilterKey.value]:
-      table.api.getFilterOperators(pendingFilterKey.value as never)[0] ?? 'is',
+      getFilterOperators(pendingFilterKey.value)[0] ?? 'is',
   }
 
   pendingFilterKey.value = ''
 }
 
-function removeFilterBlock(key: string) {
+function removeFilterBlock(key: PlaygroundFilterKey) {
   draftFilterKeys.value = draftFilterKeys.value.filter((draftKey) => draftKey !== key)
 
   const nextDraftOperators = { ...draftOperators.value }
   delete nextDraftOperators[key]
   draftOperators.value = nextDraftOperators
 
-  table.api.removeFilter(key as never)
+  removeFilter(key)
 }
 
-function updateFilterOperator(key: string, value: string | number | undefined) {
+function updateFilterOperator(key: PlaygroundFilterKey, value: string | number | undefined) {
   if (!value) {
     return
   }
 
   const operator = value as TableFilterOperator
   const currentFilter = getFilterState(key)
-  const definition = table.api.getFilterDefinition(key as never)
+  const definition = getFilterDefinition(key)
 
   draftOperators.value = {
     ...draftOperators.value,
@@ -241,82 +230,78 @@ function updateFilterOperator(key: string, value: string | number | undefined) {
   }
 
   if (definition.kind === 'number') {
-    table.api.updateFilter(key as never, {
-      operator: operator as never,
+    updateFilter(key, {
+      operator,
       value:
-        operator === 'between'
-          ? (normalizeNumberRange(currentFilter.value) as never)
-          : (normalizeSingleNumber(currentFilter.value) as never),
+        operator === 'between' ? normalizeNumberRange(currentFilter.value) : normalizeSingleNumber(currentFilter.value),
     })
     return
   }
 
   if (definition.kind === 'date') {
-    table.api.updateFilter(key as never, {
-      operator: operator as never,
+    updateFilter(key, {
+      operator,
       value:
-        operator === 'between'
-          ? (normalizeDateRange(currentFilter.value) as never)
-          : (normalizeSingleDate(currentFilter.value) as never),
+        operator === 'between' ? normalizeDateRange(currentFilter.value) : normalizeSingleDate(currentFilter.value),
     })
     return
   }
 
-  table.api.updateFilter(key as never, {
-    operator: operator as never,
+  updateFilter(key, {
+    operator,
   })
 }
 
-function updateTextFilter(key: string, value: string | number | undefined) {
+function updateTextFilter(key: PlaygroundFilterKey, value: string | number | undefined) {
   const nextValue = String(value ?? '')
 
   if (!nextValue) {
-    table.api.removeFilter(key as never)
+    removeFilter(key)
     return
   }
 
-  table.api.addFilter(key as never, nextValue as never, {
-    operator: getFilterOperator(key) as never,
+  addFilter(key, nextValue, {
+    operator: getFilterOperator(key),
   })
 }
 
-function updateOptionFilter(key: string, value: string[] | string | undefined) {
+function updateOptionFilter(key: PlaygroundFilterKey, value: string[] | string | undefined) {
   const nextValue = Array.isArray(value) ? value : value ? [String(value)] : []
 
   if (!nextValue.length) {
-    table.api.removeFilter(key as never)
+    removeFilter(key)
     return
   }
 
-  table.api.addFilter(key as never, nextValue as never, {
-    operator: getFilterOperator(key) as never,
+  addFilter(key, nextValue, {
+    operator: getFilterOperator(key),
   })
 }
 
-function updateBooleanFilter(key: string, value: string | number | undefined) {
+function updateBooleanFilter(key: PlaygroundFilterKey, value: string | number | undefined) {
   if (!value || value === EMPTY_BOOLEAN_VALUE) {
-    table.api.removeFilter(key as never)
+    removeFilter(key)
     return
   }
 
-  table.api.addFilter(key as never, (value === 'true') as never, {
-    operator: getFilterOperator(key) as never,
+  addFilter(key, value === 'true', {
+    operator: getFilterOperator(key),
   })
 }
 
-function updateNumberFilter(key: string, value: string | number | undefined) {
+function updateNumberFilter(key: PlaygroundFilterKey, value: string | number | undefined) {
   if (value === '' || value == null) {
-    table.api.removeFilter(key as never)
+    removeFilter(key)
     return
   }
 
-  table.api.addFilter(key as never, Number(value) as never, {
-    operator: getFilterOperator(key) as never,
+  addFilter(key, Number(value), {
+    operator: getFilterOperator(key),
   })
 }
 
 function updateNumberRangeValue(
-  key: string,
+  key: PlaygroundFilterKey,
   bound: 'from' | 'to',
   value: string | number | undefined,
 ) {
@@ -327,28 +312,28 @@ function updateNumberRangeValue(
   }
 
   if (nextRange.from == null && nextRange.to == null) {
-    table.api.removeFilter(key as never)
+    removeFilter(key)
     return
   }
 
-  table.api.addFilter(key as never, nextRange as never, {
-    operator: 'between' as never,
+  addFilter(key, nextRange, {
+    operator: 'between',
   })
 }
 
-function updateDateFilter(key: string, value: string | number | undefined) {
+function updateDateFilter(key: PlaygroundFilterKey, value: string | number | undefined) {
   if (!value) {
-    table.api.removeFilter(key as never)
+    removeFilter(key)
     return
   }
 
-  table.api.addFilter(key as never, new Date(`${value}T00:00:00.000Z`) as never, {
-    operator: getFilterOperator(key) as never,
+  addFilter(key, new Date(`${value}T00:00:00.000Z`), {
+    operator: getFilterOperator(key),
   })
 }
 
 function updateDateRangeValue(
-  key: string,
+  key: PlaygroundFilterKey,
   bound: 'from' | 'to',
   value: string | number | undefined,
 ) {
@@ -359,12 +344,12 @@ function updateDateRangeValue(
   }
 
   if (!nextRange.from && !nextRange.to) {
-    table.api.removeFilter(key as never)
+    removeFilter(key)
     return
   }
 
-  table.api.addFilter(key as never, nextRange as never, {
-    operator: 'between' as never,
+  addFilter(key, nextRange, {
+    operator: 'between',
   })
 }
 
@@ -419,36 +404,36 @@ function formatDateValue(value: unknown) {
   return value instanceof Date ? value.toISOString().slice(0, 10) : ''
 }
 
-function getTextValue(key: string) {
+function getTextValue(key: PlaygroundFilterKey) {
   const value = getFilterState(key)?.value
   return typeof value === 'string' ? value : ''
 }
 
-function getOptionValue(key: string) {
+function getOptionValue(key: PlaygroundFilterKey) {
   const value = getFilterState(key)?.value
   return Array.isArray(value) ? (value as unknown[]).map(String) : []
 }
 
-function getBooleanValue(key: string) {
+function getBooleanValue(key: PlaygroundFilterKey) {
   const value = getFilterState(key)?.value
   return typeof value === 'boolean' ? String(value) : ''
 }
 
-function getNumberValue(key: string) {
+function getNumberValue(key: PlaygroundFilterKey) {
   const value = getFilterState(key)?.value
   return typeof value === 'number' ? String(value) : ''
 }
 
-function getNumberRangeValue(key: string, bound: 'from' | 'to') {
+function getNumberRangeValue(key: PlaygroundFilterKey, bound: 'from' | 'to') {
   const value = normalizeNumberRange(getFilterState(key)?.value)[bound]
   return value == null ? '' : String(value)
 }
 
-function getDateValue(key: string) {
+function getDateValue(key: PlaygroundFilterKey) {
   return formatDateValue(getFilterState(key)?.value)
 }
 
-function getDateRangeValue(key: string, bound: 'from' | 'to') {
+function getDateRangeValue(key: PlaygroundFilterKey, bound: 'from' | 'to') {
   return formatDateValue(normalizeDateRange(getFilterState(key)?.value)[bound])
 }
 
@@ -573,7 +558,7 @@ function formatOperatorLabel(operator: TableFilterOperator) {
                 <div class="grid gap-2 min-w-0">
                   <label class="text-xs font-medium uppercase text-muted">Layout</label>
                   <USelectMenu
-                    v-model="activeLayoutModel"
+                    :model-value="table.queryState.value.layout"
                     :items="layoutOptions"
                     color="neutral"
                     variant="subtle"
@@ -582,41 +567,42 @@ function formatOperatorLabel(operator: TableFilterOperator) {
                     label-key="label"
                     :search-input="false"
                     class="w-full"
+                    @update:model-value="table.api.setLayout(($event as 'table' | 'grid') ?? 'table')"
                   />
                 </div>
 
                 <div class="grid gap-2 min-w-0 md:col-span-2">
                   <label class="text-xs font-medium uppercase text-muted">Search</label>
                   <UInput
-                    :model-value="searchModel"
+                    :model-value="table.queryState.value.filters.search"
                     placeholder="Search name or email"
                     color="neutral"
                     variant="subtle"
                     size="lg"
                     icon="i-lucide-search"
                     class="w-full"
-                    @update:model-value="searchModel = $event"
+                    @update:model-value="table.api.setSearch(String($event ?? ''))"
                   />
                 </div>
 
                 <div class="grid gap-2 min-w-0">
                   <label class="text-xs font-medium uppercase text-muted">Page</label>
                   <UInput
-                    :model-value="String(currentPageModel)"
+                    :model-value="String(table.queryState.value.pagination.pageIndex)"
                     type="number"
                     min="1"
                     color="neutral"
                     variant="subtle"
                     size="lg"
                     class="w-full"
-                    @update:model-value="currentPageModel = Number($event)"
+                    @update:model-value="table.api.setPage(Number($event) || 1)"
                   />
                 </div>
 
                 <div class="grid gap-2 min-w-0">
                   <label class="text-xs font-medium uppercase text-muted">Page size</label>
                   <USelectMenu
-                    v-model="pageSizeModel"
+                    :model-value="table.queryState.value.pagination.pageSize"
                     :items="pageSizeOptions"
                     color="neutral"
                     variant="subtle"
@@ -625,13 +611,14 @@ function formatOperatorLabel(operator: TableFilterOperator) {
                     label-key="label"
                     :search-input="false"
                     class="w-full"
+                    @update:model-value="table.api.setPageSize(Number($event) || 1)"
                   />
                 </div>
 
                 <div class="grid gap-2 min-w-0">
                   <label class="text-xs font-medium uppercase text-muted">Sort key</label>
                   <USelectMenu
-                    v-model="sortKeyModel"
+                    :model-value="table.queryState.value.sorting?.sortKey ?? EMPTY_SELECT_VALUE"
                     :items="sortKeyOptions"
                     color="neutral"
                     variant="subtle"
@@ -640,13 +627,18 @@ function formatOperatorLabel(operator: TableFilterOperator) {
                     label-key="label"
                     :search-input="false"
                     class="w-full"
+                    @update:model-value="
+                      !$event || $event === EMPTY_SELECT_VALUE
+                        ? table.api.setSortKey(undefined)
+                        : table.api.setSortKey(String($event))
+                    "
                   />
                 </div>
 
                 <div class="grid gap-2 min-w-0">
                   <label class="text-xs font-medium uppercase text-muted">Sort direction</label>
                   <USelectMenu
-                    v-model="sortDirectionModel"
+                    :model-value="table.queryState.value.sorting?.sortDirection ?? 'asc'"
                     :items="sortDirectionOptions"
                     color="neutral"
                     variant="subtle"
@@ -655,6 +647,7 @@ function formatOperatorLabel(operator: TableFilterOperator) {
                     label-key="label"
                     :search-input="false"
                     class="w-full"
+                    @update:model-value="table.api.setSortDirection(($event as 'asc' | 'desc') ?? 'asc')"
                   />
                 </div>
               </div>
@@ -754,7 +747,7 @@ function formatOperatorLabel(operator: TableFilterOperator) {
                   <div class="grid gap-2 min-w-0">
                     <label class="text-xs font-medium uppercase text-muted">Operator</label>
                     <USelectMenu
-                      :model-value="getFilterOperator(filter.key) as never"
+                      :model-value="getFilterOperator(filter.key)"
                       :items="getFilterOperatorOptions(filter.key)"
                       color="neutral"
                       variant="subtle"

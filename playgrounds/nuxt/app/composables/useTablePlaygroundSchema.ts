@@ -73,6 +73,107 @@ export const tableSchema = defineTableSchema({
         label: 'Name',
         operators: ['contains', 'is'],
       }),
+      filter.option('status', {
+        label: 'Status preset',
+        defaultOperator: 'isAnyOf',
+        options: [
+          { label: 'Reachable', value: 'reachable' as const },
+          { label: 'Needs review', value: 'needs_review' as const },
+          { label: 'Inactive only', value: 'inactive_only' as const },
+        ],
+        resolve({ rule }) {
+          const presets = Array.isArray(rule.value) ? rule.value : []
+          const children: Array<{
+            type: 'condition'
+            key: string
+            operator: 'is'
+            value: unknown
+          } | {
+            type: 'group'
+            combinator: 'and'
+            children: Array<{
+              type: 'condition'
+              key: string
+              operator: 'is'
+              value: unknown
+            }>
+          }> = []
+
+          for (const preset of presets) {
+            switch (preset) {
+              case 'reachable':
+                children.push(
+                  {
+                    type: 'group' as const,
+                    combinator: 'and' as const,
+                    children: [
+                      {
+                        type: 'condition' as const,
+                        key: 'status',
+                        operator: 'is' as const,
+                        value: 'active' as const,
+                      },
+                      {
+                        type: 'condition' as const,
+                        key: 'verified',
+                        operator: 'is' as const,
+                        value: true,
+                      },
+                    ],
+                  },
+                )
+                break
+
+              case 'needs_review':
+                children.push(
+                  {
+                    type: 'group' as const,
+                    combinator: 'and' as const,
+                    children: [
+                      {
+                        type: 'condition' as const,
+                        key: 'status',
+                        operator: 'is' as const,
+                        value: 'active' as const,
+                      },
+                      {
+                        type: 'condition' as const,
+                        key: 'verified',
+                        operator: 'is' as const,
+                        value: false,
+                      },
+                    ],
+                  },
+                )
+                break
+
+              case 'inactive_only':
+                children.push(
+                  {
+                    type: 'condition' as const,
+                    key: 'status',
+                    operator: 'is' as const,
+                    value: 'inactive' as const,
+                  },
+                )
+                break
+
+              default:
+                break
+            }
+          }
+
+          if (!children.length) {
+            return null
+          }
+
+          return {
+            type: 'group',
+            combinator: 'or',
+            children,
+          }
+        },
+      }),
       filter.option('organisation.status', {
         label: 'Organisation status',
         defaultOperator: 'isAnyOf',
@@ -138,4 +239,5 @@ export const tablePlaygroundSummary = {
   sourceMode: tableSchema.source.mode,
   filterKeys: tableSchema.filters?.ui?.map(filter => filter.key),
   resolvedFilters: true,
+  resolveExamples: ['status -> status preset'],
 }

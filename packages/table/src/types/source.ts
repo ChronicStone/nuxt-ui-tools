@@ -8,6 +8,7 @@ import type {
   TableSortingRule,
   TableRowsFromSourceResult,
 } from './utils'
+import type { TableResolvedFilterGroup } from './filters'
 
 export type TableQueryDefinition<TData = unknown> = UseQueryOptions<TData>
 
@@ -19,12 +20,11 @@ export interface TableSourceExecutionResult<TRow extends GenericObject = Generic
 export interface TableSourceRequestContext<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
-  TFilterKey extends string = TableKnownFieldPath<TRow>,
   TSortKey extends string = TableSortKey<TRow>,
 > {
   pagination: TablePaginationState
   sorting: TableSortingRule<TSortKey>[]
-  filters: Partial<Record<TFilterKey, unknown>>
+  filters: TableResolvedFilterGroup<TableKnownFieldPath<TRow> | string>
   search: string
   context: TContext
 }

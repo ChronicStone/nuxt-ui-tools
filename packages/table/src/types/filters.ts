@@ -50,9 +50,8 @@ export interface TableFilterResolveContext<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-  TValue = TableQueryStateFilterValue,
 > {
-  rule: TableQueryStateFilterRule<TKey, TableFilterOperator, TValue>
+  rule: TableQueryStateFilterRule<TKey, TableFilterOperator, TableQueryStateFilterValue>
   definition: TableUiFilterDefinition<TRow, TContext, TKey>
   context?: TContext
 }
@@ -72,7 +71,9 @@ interface TableFilterDefinitionBase<
   defaultValue?: TValue
   defaultOperator?: TableFilterOperator
   operators?: TableFilterOperator[]
-  resolve?: (params: TableFilterResolveContext<TRow, TContext, TKey, TValue>) => TableFilterResolveResult<TKey>
+  resolve?: (
+    params: TableFilterResolveContext<TRow, TContext, TKey>,
+  ) => TableFilterResolveResult<string>
 }
 
 export interface TableTextFilterDefinition<
@@ -198,8 +199,8 @@ export type TableUiFilterCollection<
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
 > =
-  | TableUiFilterDefinition<TRow, TContext, TKey>[]
-  | ((filter: TableFilterBuilder<TRow, TContext>) => TableUiFilterDefinition<TRow, TContext, TKey>[])
+  | TableUiFilterDefinition<TRow, TContext, any>[]
+  | ((filter: TableFilterBuilder<TRow, TContext>) => TableUiFilterDefinition<TRow, TContext, any>[])
 
 export interface TableFiltersSchema<
   TRow extends GenericObject = GenericObject,

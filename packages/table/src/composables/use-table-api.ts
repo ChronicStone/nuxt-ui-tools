@@ -17,6 +17,7 @@ import {
   getDefaultSort,
   getPageSizeOptions,
   getSortKeys,
+  normalizeFilterDefinition,
   resolveFilterDefaultOperator,
   resolveFilterSupportedOperators,
 } from '../utils'
@@ -98,7 +99,7 @@ export function useTableApi<TSchema = TableSchemaView>(
       return [] as Array<ExtractTableFilterOperator<TSchema, TKey>>
     }
 
-    return resolveFilterSupportedOperators(definition as never) as Array<
+    return resolveFilterSupportedOperators(normalizeFilterDefinition(definition)) as Array<
       ExtractTableFilterOperator<TSchema, TKey>
     >
   }
@@ -202,7 +203,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     const operator =
       options?.operator ??
       (definition
-        ? (resolveFilterDefaultOperator(definition as never) as ExtractTableFilterRule<
+        ? (resolveFilterDefaultOperator(normalizeFilterDefinition(definition)) as ExtractTableFilterRule<
             TSchema,
             TKey
           >['operator'])

@@ -256,7 +256,7 @@ export function resolveFilterSupportedOperators(
   return [...new Set([defaultOperator, ...definition.operators])]
 }
 
-function normalizeFilterDefinition(
+export function normalizeFilterDefinition(
   definition: TableQueryStateFilterDefinition | TableUiFilterDefinition,
 ): TableQueryStateFilterDefinition {
   if (definition.kind !== 'number') {

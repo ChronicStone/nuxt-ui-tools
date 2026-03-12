@@ -2,7 +2,6 @@ import { computed, type ComputedRef } from 'vue'
 
 import type {
   ExtractTableContextData,
-  ExtractTableFilterKey,
   ExtractTablePageContextData,
   ExtractTableRow,
   MaybeComputedRef,
@@ -11,10 +10,10 @@ import type {
   TableResolvedFilterGroup,
   TableSchemaView,
 } from '../types'
-import { createResolvedFilterState } from '../utils'
-import { useQueryState } from './use-query-state'
+import { useTableData } from './use-table-data'
 import { type UseTableApi, useTableApi } from './use-table-api'
 import { useTableLayout } from './use-table-layout'
+import { useTableState } from './use-table-state'
 
 export interface UseTableOptions {}
 
@@ -30,7 +29,8 @@ export interface UseTableReturn<TSchema = TableSchemaView> {
   options?: UseTableOptions
   layout: ComputedRef<TableLayout>
   queryState: ComputedRef<UseTableQueryState>
-  resolvedFilterState: ComputedRef<TableResolvedFilterGroup<ExtractTableFilterKey<TSchema>>>
+  resolvedFilterState: ComputedRef<TableResolvedFilterGroup<string>>
+  data: ReturnType<typeof useTableData>
   api: UseTableApi<TSchema>
   types: {
     row?: ExtractTableRow<TSchema>
@@ -46,7 +46,7 @@ export function useTable<TSchema = TableSchemaView>(
   const resolvedSchema = computed(() => resolveSchemaSource(schema))
   const schemaView = computed(() => resolvedSchema.value as unknown as TableSchemaView)
   const layout = useTableLayout({ schema: schemaView })
-  const queryState = useQueryState({
+  const state = useTableState({
     schema: schemaView,
     activeLayout: computed(
       () => layout.activeLayout.value ?? schemaView.value.defaultLayout ?? 'table',
@@ -55,17 +55,14 @@ export function useTable<TSchema = TableSchemaView>(
   const api = useTableApi({
     schema: schemaView,
     activeLayout: layout.activeLayout,
-    pagination: queryState.pagination,
-    sorting: queryState.sorting,
-    filters: queryState.filters,
+    pagination: state.queryState.pagination,
+    sorting: state.queryState.sorting,
+    filters: state.queryState.filters,
   }) as UseTableApi<TSchema>
-  const resolvedFilterState = computed(() =>
-    createResolvedFilterState({
-      definitions: schemaView.value.filters?.ui ?? [],
-      filters: queryState.filters.value,
-      staticFilters: schemaView.value.filters?.static,
-    }),
-  ) as ComputedRef<TableResolvedFilterGroup<ExtractTableFilterKey<TSchema>>>
+  const data = useTableData({
+    schema: schemaView,
+    state,
+  })
 
   return {
     schema: resolvedSchema,
@@ -73,16 +70,17 @@ export function useTable<TSchema = TableSchemaView>(
     layout: computed(() => layout.activeLayout.value ?? schemaView.value.defaultLayout ?? 'table'),
     queryState: computed(() => ({
       layout: layout.activeLayout.value ?? schemaView.value.defaultLayout ?? 'table',
-      pagination: queryState.pagination.value,
-      sorting: queryState.sorting.value
+      pagination: state.queryState.pagination.value,
+      sorting: state.queryState.sorting.value
         ? {
-            sortKey: queryState.sorting.value.key,
-            sortDirection: queryState.sorting.value.dir,
+            sortKey: state.queryState.sorting.value.key,
+            sortDirection: state.queryState.sorting.value.dir,
           }
         : null,
-      filters: queryState.filters.value,
+      filters: state.queryState.filters.value,
     })),
-    resolvedFilterState,
+    resolvedFilterState: state.resolvedFilterState,
+    data,
     api,
     types: {},
   }

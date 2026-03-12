@@ -1,5 +1,3 @@
-import type { ComputedRef, Ref } from 'vue'
-
 import type {
   GenericObject,
   MaybePromise,
@@ -9,6 +7,7 @@ import type {
   TypeFromPath,
   UnionToIntersection,
 } from '@nuxt-ui-tools/shared'
+import type { ComputedRef, Ref } from 'vue'
 
 export type {
   ComputedRef,
@@ -35,15 +34,11 @@ export type TableKnownFieldPath<TRow extends GenericObject> = Extract<NestedPath
 export type TableFieldValue<
   TRow extends GenericObject,
   TField extends TableFieldPath<TRow>,
-> = TField extends string
-  ? TypeFromPath<TRow, TField>
-  : never
+> = TField extends string ? TypeFromPath<TRow, TField> : never
 
 export type TableSortKey<TRow extends GenericObject> = TableFieldPath<TRow> | (string & {})
 
-export type TableRowKey<TRow extends GenericObject> =
-  | TableFieldPath<TRow>
-  | TableFieldPath<TRow>[]
+export type TableRowKey<TRow extends GenericObject> = TableFieldPath<TRow> | TableFieldPath<TRow>[]
 
 export type TableSortingDirection = 'asc' | 'desc'
 
@@ -53,7 +48,7 @@ export interface TableSortingRule<TKey extends string = string> {
 }
 
 export interface TablePaginationState {
-  page: number
+  pageIndex: number
   pageSize: number
 }
 
@@ -85,11 +80,7 @@ export type TableSchemaRefLike<TValue> = {
   value: TValue
 }
 
-export type MaybeComputedRef<TValue> =
-  | TValue
-  | Ref<TValue>
-  | ComputedRef<TValue>
-  | (() => TValue)
+export type MaybeComputedRef<TValue> = TValue | Ref<TValue> | ComputedRef<TValue> | (() => TValue)
 
 export type TableSchemaSource<TSchema> = TSchema | TableSchemaRefLike<TSchema> | (() => TSchema)
 
@@ -114,11 +105,12 @@ type MergeContextItem<TItem> = TItem extends {
 
 type MergeContextItemUnion<TItem> = UnionToIntersection<MergeContextItem<TItem>>
 
-type ExtractSourceResult<TSchema> = TableResolvedSchema<TSchema> extends {
-  source: infer TSource
-}
-  ? import('./source').ExtractTableSourceResult<TSource>
-  : never
+type ExtractSourceResult<TSchema> =
+  TableResolvedSchema<TSchema> extends {
+    source: infer TSource
+  }
+    ? import('./source').ExtractTableSourceResult<TSource>
+    : never
 
 export type ExtractTableRow<TSchema> = TableRowsFromSourceResult<ExtractSourceResult<TSchema>>
 

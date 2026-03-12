@@ -1,8 +1,10 @@
 import { resolveColumns, resolveUiFilters } from '../builders'
 import type {
   BuildTableSchema,
+  GenericObject,
   InferTableSourceRow,
   ResolvedTableSchema,
+  TableColumnCollection,
   TableContextDataFromItems,
   TableContextItem,
   TableKnownFieldPath,
@@ -40,15 +42,27 @@ export function defineTableSchema<
   return {
     ...schema,
     table: schema.table
-      ? {
+        ? {
           ...schema.table,
-          columns: resolveColumns(schema.table.columns as never),
+          columns: resolveColumns(
+            schema.table.columns as TableColumnCollection<
+              GenericObject,
+              GenericObject,
+              GenericObject,
+              string,
+              string
+            >,
+          ),
         }
       : undefined,
     filters: schema.filters
       ? {
           ...schema.filters,
-          ui: resolveUiFilters(schema.filters.ui),
+          ui: resolveUiFilters<
+            InferTableSourceRow<TSource>,
+            TableContextDataFromItems<TContextItems>,
+            TableKnownFieldPath<InferTableSourceRow<TSource>>
+          >(schema.filters.ui),
         }
       : undefined,
   } as ResolvedTableSchema<
