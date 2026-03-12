@@ -1,19 +1,12 @@
-import type { TableApi } from '../types/api'
+import type { AnyTableInstance } from '../types/api'
 
-export interface TableDebugSnapshot<
-  TSchema = unknown,
-  TTable extends TableApi<TSchema> = TableApi<TSchema>,
-> {
-  schema: TSchema
-  state: TTable['state']
-  meta: TTable['meta']
+export interface TableDebugSnapshot {
+  state: AnyTableInstance['state']
+  meta: AnyTableInstance['meta']
 }
 
-export function createTableDebugSnapshot<TSchema, TTable extends TableApi<TSchema>>(
-  table: TTable,
-): TableDebugSnapshot<TSchema, TTable> {
+export function createTableDebugSnapshot(table: AnyTableInstance): TableDebugSnapshot {
   return {
-    schema: table.resolveSchema(),
     state: table.state,
     meta: table.meta,
   }

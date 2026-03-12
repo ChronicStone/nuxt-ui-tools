@@ -1,10 +1,11 @@
+import type { TableSourceRequestContext } from './source'
 import type {
   GenericObject,
   MaybePromise,
+  RenderableType,
   TableLayout,
   TableRowRenderParams,
 } from './utils'
-import type { TableSourceRequestContext } from './source'
 
 export interface TableActionContext<
   TRow extends GenericObject = GenericObject,
@@ -23,11 +24,9 @@ export interface TableToolbarAction<
   TPageContext extends GenericObject = GenericObject,
 > {
   key: string
-  label: string
+  label: string | (() => RenderableType)
   visible?: boolean | ((context: TContext) => boolean)
-  action?: (
-    context: TableActionContext<TRow, TContext, TPageContext>,
-  ) => MaybePromise<unknown>
+  action?: (context: TableActionContext<TRow, TContext, TPageContext>) => MaybePromise<unknown>
 }
 
 export interface TableBulkAction<
@@ -52,9 +51,7 @@ export interface TableRowAction<
   TPageContext extends GenericObject = GenericObject,
 > {
   key: string
-  label: string
+  label: string | (() => RenderableType)
   visible?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
-  action?: (
-    context: TableRowActionContext<TRow, TContext, TPageContext>,
-  ) => MaybePromise<unknown>
+  action?: (context: TableRowActionContext<TRow, TContext, TPageContext>) => MaybePromise<unknown>
 }

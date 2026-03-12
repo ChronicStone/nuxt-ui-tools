@@ -1,22 +1,25 @@
-import { useTable } from '../composables'
-import type {
-  DataListComponentContract,
-  DataListProps,
-  TableSchema,
-} from '../types'
+import type { DataListComponentContract, DataListProps, TableSchema } from '../types'
+import { provideTableInternals } from '../core/injection'
 
-export function createDataListComponent<TSchema extends TableSchema>(
+export function createDataListSetup<TSchema extends TableSchema>(
   props: DataListProps<TSchema>,
 ): DataListComponentContract<TSchema> {
-  const table = props.table ?? (props.schema ? useTable(props.schema) : undefined)
-  const resolvedSchema = table?.resolveSchema()
+  const table = props.table
+
+  // DataList is the injection boundary — provides internals to all child components
+  provideTableInternals({
+    schema: table._schema,
+    stateRefs: table.state,
+    metaRefs: table.meta as any,
+    effectiveFilters: table._effectiveFilters,
+    refresh: table.api.refresh,
+  })
 
   return {
     name: 'DataList',
     props: {
-      schema: props.schema,
       table,
     },
-    resolvedSchema,
+    resolvedSchema: table._schema as unknown as TSchema,
   }
 }

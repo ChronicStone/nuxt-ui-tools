@@ -1,7 +1,4 @@
-export * from './adapters'
-export * from './components'
-export * from './composables'
-export * from './config'
-export * from './core'
-export * from './debug'
-export * from './types'
+export { defineTable } from './schema'
+
+export type * from './types'
+export type * from '@nuxt-ui-tools/table-core'

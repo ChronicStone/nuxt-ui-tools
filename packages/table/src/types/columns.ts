@@ -3,7 +3,6 @@ import type {
   RenderableType,
   TableColumnAlign,
   TableColumnPinned,
-  TableFieldPath,
   TableKnownFieldPath,
   TableFieldValue,
   TableRowRenderParams,
@@ -45,18 +44,10 @@ interface TableColumnBase<
   enabled?: TableViewValue<TView, boolean>
   required?: TableViewValue<TView, boolean>
   visible?: boolean | ((context: TContext) => boolean)
-  cellProps?: (
-    params: TParams,
-  ) => TableColumnCellProps
-  colSpan?: (
-    params: TParams,
-  ) => number
-  rowSpan?: (
-    params: TParams,
-  ) => number
-  labelRowSpan?: (
-    params: TParams,
-  ) => number
+  cellProps?: (params: TParams) => TableColumnCellProps
+  colSpan?: (params: TParams) => number
+  rowSpan?: (params: TParams) => number
+  labelRowSpan?: (params: TParams) => number
   meta?: {
     pageContext?: TPageContext
   }
@@ -107,7 +98,13 @@ type TableAnyFieldColumn<
   TPageContext extends GenericObject,
   TView extends string,
 > = {
-  [TField in TableKnownFieldPath<TRow>]: TableFieldColumn<TRow, TContext, TPageContext, TView, TField>
+  [TField in TableKnownFieldPath<TRow>]: TableFieldColumn<
+    TRow,
+    TContext,
+    TPageContext,
+    TView,
+    TField
+  >
 }[TableKnownFieldPath<TRow>]
 
 export interface TableCompositeColumn<
@@ -180,13 +177,7 @@ export interface TableColumnBuilder<
 > {
   field<TField extends TableKnownFieldPath<TRow>>(
     field: TField,
-    options?: TableFieldColumnOptions<
-      TRow,
-      TContext,
-      TPageContext,
-      TView,
-      TField
-    >,
+    options?: TableFieldColumnOptions<TRow, TContext, TPageContext, TView, TField>,
   ): TableFieldColumn<TRow, TContext, TPageContext, TView, TField>
   composite<TKey extends string>(
     key: TKey,

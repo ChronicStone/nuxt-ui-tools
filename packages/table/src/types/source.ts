@@ -1,5 +1,11 @@
-import type { GenericObject, MaybePromise, TableFieldPath, TableSortKey } from './utils'
-import type { TablePaginationState, TableSortingRule } from './utils'
+import type {
+  GenericObject,
+  TableFieldPath,
+  TableSortKey,
+  TablePaginationState,
+  TableSortingRule,
+  TableRowsFromSourceResult,
+} from './utils'
 
 export interface TableSourceExecutionResult<TRow extends GenericObject = GenericObject> {
   rows: TRow[]
@@ -10,53 +16,23 @@ export interface TableSourceRequestContext<
   TRow extends GenericObject = GenericObject,
   TFilterKey extends string = TableFieldPath<TRow>,
   TSortKey extends string = TableSortKey<TRow>,
+  TContext extends GenericObject = GenericObject,
 > {
   pagination: TablePaginationState
   sorting: readonly TableSortingRule<TSortKey>[]
   filters: Partial<Record<TFilterKey, unknown>>
   search: string
+  context: TContext
   rowType?: TRow
 }
 
-export interface TableSerializerContext<
-  TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
-> {
-  state: TableSourceRequestContext<TRow, TFilterKey, TSortKey>
-}
-
 export interface TableSerializerDefinition<
-  TRequest = unknown,
   TResponse = unknown,
   TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
 > {
   key: string
-  toRequest?: (
-    context: TableSerializerContext<TRow, TFilterKey, TSortKey>,
-  ) => TRequest
   fromResponse?: (response: TResponse) => TableSourceExecutionResult<TRow>
 }
-
-export type TableSourceLoader<
-  TResult,
-  TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
-> = (
-  context: TableSourceRequestContext<TRow, TFilterKey, TSortKey>,
-) => MaybePromise<TResult>
-
-export type TableSourceQuery<
-  TResult,
-  TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
-> = (
-  context: TableSourceRequestContext<TRow, TFilterKey, TSortKey>,
-) => MaybePromise<TResult>
 
 interface TableSourceTypeMetadata<
   TRow extends GenericObject,
@@ -68,59 +44,38 @@ interface TableSourceTypeMetadata<
   __sortKey?: TSortKey
 }
 
-type TableSourceLoaderBranch<
-  TMode extends 'client' | 'remote',
-  TResult,
-  TRow extends GenericObject,
-  TFilterKey extends string,
-  TSortKey extends string,
-> = TableSourceTypeMetadata<TRow, TFilterKey, TSortKey> & {
-  mode: TMode
-  loader: TableSourceLoader<TResult, TRow, TFilterKey, TSortKey>
-  query?: never
-}
-
-type TableSourceQueryBranch<
-  TMode extends 'client' | 'remote',
-  TResult,
-  TRow extends GenericObject,
-  TFilterKey extends string,
-  TSortKey extends string,
-> = TableSourceTypeMetadata<TRow, TFilterKey, TSortKey> & {
-  mode: TMode
-  query: TableSourceQuery<TResult, TRow, TFilterKey, TSortKey>
-  loader?: never
-}
-
 export type TableClientSource<
   TRow extends GenericObject = GenericObject,
   TFilterKey extends string = TableFieldPath<TRow>,
   TSortKey extends string = TableSortKey<TRow>,
-> =
-  | TableSourceLoaderBranch<'client', readonly TRow[], TRow, TFilterKey, TSortKey>
-  | TableSourceQueryBranch<'client', readonly TRow[], TRow, TFilterKey, TSortKey>
+> = TableSourceTypeMetadata<TRow, TFilterKey, TSortKey> & {
+  mode: 'client'
+  loader: (
+    ctx: TableSourceRequestContext<TRow, TFilterKey, TSortKey>,
+  ) => Promise<readonly TRow[]> | readonly TRow[]
+}
 
 export type TableRemoteSource<
   TRow extends GenericObject = GenericObject,
   TFilterKey extends string = TableFieldPath<TRow>,
   TSortKey extends string = TableSortKey<TRow>,
-  TRequest = unknown,
   TResponse = TableSourceExecutionResult<TRow>,
-> =
-  | (TableSourceLoaderBranch<'remote', TResponse, TRow, TFilterKey, TSortKey> & {
-      serializer?: string | TableSerializerDefinition<TRequest, TResponse, TRow, TFilterKey, TSortKey>
-    })
-  | (TableSourceQueryBranch<'remote', TResponse, TRow, TFilterKey, TSortKey> & {
-      serializer?: string | TableSerializerDefinition<TRequest, TResponse, TRow, TFilterKey, TSortKey>
-    })
+> = TableSourceTypeMetadata<TRow, TFilterKey, TSortKey> & {
+  mode: 'remote'
+  loader: (
+    ctx: TableSourceRequestContext<TRow, TFilterKey, TSortKey>,
+  ) => Promise<TResponse> | TResponse
+  serializer?: TableSerializerDefinition<TResponse, TRow> | string
+}
 
 export type TableSource<
   TRow extends GenericObject = GenericObject,
   TFilterKey extends string = TableFieldPath<TRow>,
   TSortKey extends string = TableSortKey<TRow>,
-  TRequest = unknown,
   TResponse = TableSourceExecutionResult<TRow>,
-> = TableClientSource<TRow, TFilterKey, TSortKey> | TableRemoteSource<TRow, TFilterKey, TSortKey, TRequest, TResponse>
+> =
+  | TableClientSource<TRow, TFilterKey, TSortKey>
+  | TableRemoteSource<TRow, TFilterKey, TSortKey, TResponse>
 
 export type InferTableSourceFilterKey<TSource> = TSource extends { __filterKey?: infer TFilterKey }
   ? TFilterKey extends string
@@ -133,3 +88,15 @@ export type InferTableSourceSortKey<TSource> = TSource extends { __sortKey?: inf
     ? TSortKey
     : string
   : string
+
+type ExtractSourceResult<TSource> = TSource extends {
+  loader: (...args: never[]) => Promise<infer TResult> | infer TResult
+}
+  ? Awaited<TResult>
+  : never
+
+export type InferTableSourceRow<TSource> = TSource extends { __rowType?: infer TRow }
+  ? [TRow] extends [never]
+    ? TableRowsFromSourceResult<ExtractSourceResult<TSource>>
+    : TRow
+  : TableRowsFromSourceResult<ExtractSourceResult<TSource>>

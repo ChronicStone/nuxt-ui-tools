@@ -1,26 +1,28 @@
-import type { TableBulkAction, TableRowAction, TableToolbarAction } from './actions'
-import type { TableColumnCollection } from './columns'
+import type {
+  TableBulkAction,
+  TableColumnCollection,
+  TableControlsSchema,
+  TableDefaultSort,
+  TableGridSortOption,
+  TableKnownFieldPath,
+  TableLayout,
+  TablePersistenceOptions,
+  TableRowAction,
+  TableRowKey,
+  TableRowRenderParams,
+  TableSelectionSchema,
+  TableSortKey,
+  TableToolbarAction,
+  TableViewValue,
+  GenericObject,
+} from './utils'
 import type {
   TableContextDataFromItems,
   TableContextItem,
   TablePageContextItem,
 } from './context'
 import type { TableFiltersSchema } from './filters'
-import type { TableSelectionSchema, TableControlsSchema, TablePersistenceOptions } from './state'
-import type { TableSource } from './source'
-import type {
-  TableFieldPath,
-  GenericObject,
-  InferTableSourceRow,
-  TableKnownFieldPath,
-  TableDefaultSort,
-  TableGridSortOption,
-  TableLayout,
-  TableRowKey,
-  TableRowRenderParams,
-  TableSortKey,
-  TableViewValue,
-} from './utils'
+import type { InferTableSourceRow, TableSource, InferTableSourceFilterKey, InferTableSourceSortKey } from './source'
 
 type TableResolvedPageContextData<TItems extends readonly unknown[]> =
   TableContextDataFromItems<TItems>
@@ -215,3 +217,33 @@ export type ResolvedTableSchema<TSchema> =
         : TFilters
       : never
   }
+
+export type ResolveSchemaKey<TCandidate extends string, TFallback extends string> = [TCandidate] extends [
+  never,
+]
+  ? TFallback
+  : string extends TCandidate
+    ? TFallback
+    : TCandidate
+
+export type BuildTableSchemaInput<
+  TSource extends TableSource<any, any, any>,
+  TContextItems extends readonly TableContextItem[],
+  TPageContextItems extends readonly TablePageContextItem<
+    InferTableSourceRow<TSource>,
+    TableContextDataFromItems<TContextItems>
+  >[],
+  TView extends string,
+> = TableSchemaInput<
+  TSource,
+  InferTableSourceFilterKey<TSource> extends never
+    ? TableKnownFieldPath<InferTableSourceRow<TSource>>
+    : InferTableSourceFilterKey<TSource>,
+  ResolveSchemaKey<
+    InferTableSourceSortKey<TSource>,
+    TableKnownFieldPath<InferTableSourceRow<TSource>>
+  >,
+  TContextItems,
+  TPageContextItems,
+  TView
+>

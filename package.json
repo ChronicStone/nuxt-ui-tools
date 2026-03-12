@@ -11,6 +11,7 @@
     "build:packages": "turbo run build --filter='./packages/*'",
     "check": "bun run format:check && bun run lint && bun run build && bun run typecheck",
     "dev": "turbo run dev --parallel",
+    "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
@@ -31,6 +32,7 @@
     "tsdown": "0.21.1",
     "turbo": "2.8.16",
     "typescript": "5.9.3",
+    "vitest": "3.2.4",
     "vite": "7.3.1",
     "vue-tsc": "3.2.5"
   },

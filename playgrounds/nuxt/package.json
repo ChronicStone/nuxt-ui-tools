@@ -13,8 +13,11 @@
     "@nuxt-ui-tools/nuxt": "workspace:*",
     "@nuxt-ui-tools/shared": "workspace:*",
     "@nuxt-ui-tools/table": "workspace:*",
+    "@nuxt-ui-tools/table-query": "workspace:*",
     "@nuxt/ui": "4.5.1",
     "@nuxtjs/i18n": "10.2.3",
+    "@tanstack/vue-query": "5.92.9",
+    "@tanstack/vue-query-devtools": "6.1.5",
     "nuxt": "4.3.1",
     "tailwindcss": "4.2.1"
   }

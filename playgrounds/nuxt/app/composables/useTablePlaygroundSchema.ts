@@ -1,48 +1,31 @@
+import { defineTable, type ExtractTableContextData as ExtractBaseContextData } from '@nuxt-ui-tools/table'
 import {
-  createTableDebugSnapshot,
-  defineTableSchema,
-  useTable,
-  type ExtractTableRow,
-  type ExtractTableContextData,
-  type ExtractTablePageContextData,
-} from '@nuxt-ui-tools/table'
+  defineQueryTable,
+  type ExtractTableContextData as ExtractQueryContextData,
+} from '@nuxt-ui-tools/table-query'
 
-export const tablePlaygroundSchema = defineTableSchema({
-  tableKey: 'playground-users',
+export const baseTableSchema = defineTable({
+  tableKey: 'playground-users-base',
   rowKey: 'id',
   source: {
     mode: 'remote',
-    loader: async () => ({
+    loader: async ({ context }) => ({
       rows: [
         {
           id: 'usr_1',
           name: 'Ada Lovelace',
           email: 'ada@analytical.test',
-          status: 'active',
-          createdAt: '2026-03-12',
-          isArchived: false,
-          orders: 42,
+          organisationId: context.organisationId,
+          status: 'active' as const,
         },
       ],
       rowCount: 1,
     }),
   },
-  views: ['all', 'active'],
-  defaultLayout: 'table',
   context: [
     {
       key: 'organisationId',
-      loader: async () => 'org_demo',
-    },
-    {
-      key: 'canManageUsers',
-      loader: async () => true,
-    },
-  ],
-  pageContext: [
-    {
-      key: 'rowSummary',
-      loader: async ({ rows }) => `${rows.length} visible rows`,
+      loader: async () => 'org_base',
     },
   ],
   filters: {
@@ -50,33 +33,18 @@ export const tablePlaygroundSchema = defineTableSchema({
       fields: ['name', 'email'],
       placeholder: 'Search users',
     },
-    static: [
-      {
-        key: 'status',
-        operator: 'is',
-        value: () => 'active',
-      },
-    ],
     ui: (filter) => [
       filter.text('name', {
         label: 'Name',
-        operators: ['contains', 'is'],
       }),
       filter.option('status', {
         label: 'Status',
-        options: [
-          { label: 'Active', value: 'active' },
-          { label: 'Inactive', value: 'inactive' },
-        ],
-      }),
-      filter.boolean('isArchived', {
-        label: 'Archived',
-      }),
-      filter.number('orders', {
-        label: 'Orders',
-      }),
-      filter.date('createdAt', {
-        label: 'Created at',
+        options: {
+          loader: async () => [
+            { label: 'Active', value: 'active' as const },
+            { label: 'Inactive', value: 'inactive' as const },
+          ],
+        },
       }),
     ],
   },
@@ -84,106 +52,88 @@ export const tablePlaygroundSchema = defineTableSchema({
     columns: (column) => [
       column.field('name', {
         label: 'Name',
-        sortable: true,
-        cellProps: ({ row, value }) => ({
-          'data-user-id': row.id,
-          'data-user-name': value,
-        }),
-        render: ({ value, context, pageContext }) =>
-          `${value} / ${context.organisationId} / ${pageContext.rowSummary}`,
+        render: ({ value, context }) => `${value} (${context.organisationId})`,
       }),
       column.field('email', {
         label: 'Email',
       }),
-      column.composite('statusSummary', {
-        label: 'Status summary',
-        sortableKey: 'status',
-        render: ({ row, context, pageContext }) =>
-          `${row.status} / ${context.organisationId} / ${pageContext.rowSummary}`,
-      }),
-      column.display('actions', {
-        label: 'Actions',
-        render: ({ row }) => `View ${row.id}`,
-      }),
-      column.field('status', {
-        label: 'Status',
-      }),
     ],
-  },
-  grid: {
-    renderItem: ({ row }) => row.name,
-    defaultSorting: {
-      key: 'createdAt',
-      dir: 'desc',
-    },
-  },
-  selection: {
-    mode: 'auto',
-  },
-  actions: [
-    {
-      key: 'archive-selected',
-      label: 'Archive selected',
-      requiresSelection: true,
-    },
-  ],
-  toolbarActions: [
-    {
-      key: 'invite-user',
-      label: 'Invite user',
-    },
-  ],
-  rowActions: ({ row, context, pageContext }) => [
-    {
-      key: 'open-profile',
-      label: `Open ${row.name}`,
-      visible: () => context.canManageUsers && pageContext.rowSummary.length > 0,
-    },
-  ],
-  controls: {
-    refresh: true,
-    layout: {
-      table: true,
-      grid: true,
-    },
-  },
-  persistence: {
-    state: true,
-    preferences: true,
   },
 })
 
-export type TablePlaygroundRow = ExtractTableRow<typeof tablePlaygroundSchema>
-export type TablePlaygroundContext = ExtractTableContextData<typeof tablePlaygroundSchema>
-export type TablePlaygroundPageContext = ExtractTablePageContextData<typeof tablePlaygroundSchema>
+export const queryTableSchema = defineQueryTable({
+  tableKey: 'playground-users-query',
+  rowKey: 'id',
+  source: {
+    mode: 'remote',
+    query: ({ context }) => ({
+      queryKey: ['users', context.organisationId],
+      queryFn: async () => ({
+        rows: [
+          {
+            id: 'usr_2',
+            name: 'Grace Hopper',
+            email: 'grace@compiler.test',
+            organisationId: context.organisationId,
+            status: 'active' as const,
+          },
+        ],
+        rowCount: 1,
+      }),
+    }),
+  },
+  context: [
+    {
+      key: 'organisationId',
+      query: () => ({
+        queryKey: ['organisation'],
+        queryFn: async () => 'org_query',
+      }),
+    },
+  ],
+  filters: {
+    ui: (filter) => [
+      filter.option('status', {
+        label: 'Status',
+        options: {
+          query: () => ({
+            queryKey: ['statuses'],
+            queryFn: async () => [
+              { label: 'Active', value: 'active' as const },
+              { label: 'Inactive', value: 'inactive' as const },
+            ],
+          }),
+        },
+      }),
+    ],
+  },
+  table: {
+    columns: (column) => [
+      column.field('name', {
+        label: 'Name',
+        render: ({ value, context }) => `${value} (${context.organisationId})`,
+      }),
+      column.field('email', {
+        label: 'Email',
+      }),
+    ],
+  },
+})
 
-export const tablePlayground = useTable(tablePlaygroundSchema)
-export const tablePlaygroundSnapshot = createTableDebugSnapshot(tablePlayground)
+export type BaseTableContext = ExtractBaseContextData<typeof baseTableSchema>
+export type QueryTableContext = ExtractQueryContextData<typeof queryTableSchema>
 
-export const tablePlaygroundPreviewContext: TablePlaygroundContext = {
-  organisationId: 'org_demo',
-  canManageUsers: true,
+export const tablePlaygroundSummary = {
+  base: {
+    builder: 'defineTable',
+    asyncContract: 'promise-only',
+    contextKeys: Object.keys({ organisationId: '' satisfies BaseTableContext['organisationId'] extends string ? '' : never }),
+    sourceMode: baseTableSchema.source.mode,
+  },
+  query: {
+    builder: 'defineQueryTable',
+    asyncContract: 'query-options-only',
+    contextKeys: Object.keys({ organisationId: '' satisfies QueryTableContext['organisationId'] extends string ? '' : never }),
+    sourceMode: queryTableSchema.source.mode,
+  },
 }
-
-export const tablePlaygroundPreviewPageContext: TablePlaygroundPageContext = {
-  rowSummary: '1 visible row',
-}
-
-export const tablePlaygroundPreviewRow: TablePlaygroundRow = {
-  id: 'usr_1',
-  name: 'Ada Lovelace',
-  email: 'ada@analytical.test',
-  status: 'active',
-  createdAt: '2026-03-12',
-  isArchived: false,
-  orders: 42,
-}
-
-export const tablePlaygroundRowActions =
-  typeof tablePlaygroundSchema.rowActions === 'function'
-    ? tablePlaygroundSchema.rowActions({
-        row: tablePlaygroundPreviewRow,
-        context: tablePlaygroundPreviewContext,
-        pageContext: tablePlaygroundPreviewPageContext,
-      })
-    : (tablePlaygroundSchema.rowActions ?? [])

@@ -1,16 +1,14 @@
-import type { TableApi } from './api'
-import type { TableSchemaSource } from './utils'
+import type { AnyTableInstance, TableInstance } from './api'
+import type { TableSchema } from './schema'
 
-export interface DataListProps<TSchema> {
-  schema?: TableSchemaSource<TSchema>
-  table?: TableApi<TSchema>
+export interface DataListProps<TSchema extends TableSchema> {
+  table: TableInstance<any, any, any, any, any, any>
 }
 
-export interface DataListComponentContract<TSchema> {
+export interface DataListComponentContract<TSchema extends TableSchema> {
   name: 'DataList'
   props: {
-    schema?: TableSchemaSource<TSchema>
-    table?: TableApi<TSchema>
+    table: AnyTableInstance
   }
   resolvedSchema?: TSchema
 }

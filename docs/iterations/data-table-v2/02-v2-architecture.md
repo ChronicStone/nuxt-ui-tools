@@ -1,86 +1,57 @@
 # V2 Architecture
 
-This file summarizes the current architectural direction only.
+The V2 reset is now based on three packages:
 
-For full detail, see [`07-current-spec.md`](./07-current-spec.md).
+- `@nuxt-ui-tools/table-core`
+- `@nuxt-ui-tools/table`
+- `@nuxt-ui-tools/table-query`
 
-## Core Direction
+## Package roles
 
-- one schema builder:
-  - `defineTableSchema(...)`
-- one runtime primitive:
-  - `useTable(schema)`
-- one main UI abstraction:
-  - `DataList`
+### `table-core`
 
-The system is a **data list**, not just a table:
+Shared foundation only:
 
-- table layout
-- grid layout
-- shared toolbar
-- shared footer
+- generic schema/types
+- column builder internals
+- shared utilities
+- normalized contracts for future shared runtime work
 
-## Source Strategy
+It is public, but not the main end-user schema entrypoint.
 
-There is one source model across the system:
+### `table`
 
-- `mode: 'client' | 'remote'`
-- `loader` xor `query`
-- optional `serializer` only for remote sources
+Base schema package:
 
-`client` mode:
+- exports `defineTable(...)`
+- every async resolver is promise-based
+- no TanStack Query dependency
 
-- plain array
-- no serializer
+### `table-query`
 
-`remote` mode:
+Query-backed schema package:
 
-- normalized `{ rows, rowCount }` contract
-- serializer available when source contract does not match
+- exports `defineQueryTable(...)`
+- every async resolver returns query options
+- owns the TanStack Query-facing types
 
-## Async Resolution Model
+## Runtime direction
 
-The same async resolution pattern should be reusable across:
+The previous runtime implementation is discarded.
 
-- table source
-- async filter options
-- `context`
-- `pageContext`
+Future runtime work should preserve the V1 structural style:
 
-Two execution styles:
+- `types/`
+- `utils/`
+- `composables/`
+- `components/`
+- `adapters/`
+- `config/`
 
-- `loader`
-- `query`
+The critical first runtime milestone is intentionally narrow:
 
-## Runtime Ownership
+- query state
+- table context
+- table data
 
-The table engine owns:
-
-- pagination
-- filters
-- search
-- sorting
-- selection
-- loading
-- error state
-- persistence
-
-Pages should not manually orchestrate these pieces.
-
-## UI Strategy
-
-Implementation order:
-
-1. core runtime and orchestration
-2. debug-first inspection UI
-3. functional table/grid rendering
-4. refined UI system
-
-## Package Strategy
-
-For now:
-
-- keep one `table` package
-- organize internally instead of splitting `table-core` / `table-ui`
-
-Shared generic utilities can still live in `packages/shared`.
+These will be built iteratively and reviewed before expanding into filters, actions, selection, layout, or polished UI.

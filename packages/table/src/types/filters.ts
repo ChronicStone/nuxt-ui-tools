@@ -1,4 +1,4 @@
-import type { GenericObject, TableFieldPath, TableKnownFieldPath } from './utils'
+import type { GenericObject, RenderableType, TableFieldPath, TableKnownFieldPath } from './utils'
 
 export type TableFilterOperator =
   | 'contains'
@@ -34,7 +34,7 @@ interface TableFilterDefinitionBase<
   TValue = unknown,
 > {
   key: TKey
-  label: string
+  label: string | (() => RenderableType)
   defaultValue?: TValue
   operators?: readonly TableFilterOperator[]
 }
@@ -53,9 +53,11 @@ export interface TableOptionFilterDefinition<
 > extends TableFilterDefinitionBase<TRow, TKey, readonly TValue[]> {
   kind: 'option'
   options:
-    | readonly { label: string, value: TValue }[]
+    | readonly { label: string | (() => RenderableType); value: TValue }[]
     | {
-        loader: () => Promise<readonly { label: string, value: TValue }[]>
+        loader: () =>
+          | Promise<readonly { label: string | (() => RenderableType); value: TValue }[]>
+          | readonly { label: string | (() => RenderableType); value: TValue }[]
       }
 }
 
@@ -69,14 +71,14 @@ export interface TableBooleanFilterDefinition<
 export interface TableNumberFilterDefinition<
   TRow extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> extends TableFilterDefinitionBase<TRow, TKey, number | { min?: number, max?: number }> {
+> extends TableFilterDefinitionBase<TRow, TKey, number | { min?: number; max?: number }> {
   kind: 'number'
 }
 
 export interface TableDateFilterDefinition<
   TRow extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> extends TableFilterDefinitionBase<TRow, TKey, Date | { from?: Date, to?: Date }> {
+> extends TableFilterDefinitionBase<TRow, TKey, Date | { from?: Date; to?: Date }> {
   kind: 'date'
 }
 

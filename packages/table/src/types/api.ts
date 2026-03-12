@@ -1,38 +1,66 @@
+import type { ComputedRef } from 'vue'
 import type { GenericObject } from './utils'
-import type { TableSourceExecutionResult } from './source'
-import type { TableRuntimeState, TableState } from './state'
-import type {
-  ExtractTableContextData,
-  ExtractTablePageContextData,
-  ExtractTableRow,
-  TableSchemaSource,
-} from './utils'
+import type { TableStateRefs, TableMetaRefs } from '../composables/use-table-state'
+import type { TableEffectiveFilterRule } from '../composables/use-table-filters'
+import type { TableSchema } from './schema'
 
-export interface TableMeta<TSchema> {
-  rowKey: TSchema extends { rowKey: infer TRowKey } ? TRowKey : never
-  mode: TSchema extends { source: { mode: infer TMode } } ? TMode : never
-  views: TSchema extends { views?: infer TViews } ? TViews : never
+// ---------------------------------------------------------------------------
+// Public imperative API methods
+// ---------------------------------------------------------------------------
+
+export interface TableApiMethods<TRow extends GenericObject = GenericObject> {
+  refresh: () => Promise<void>
+  clearSelection: () => void
+  setSelection: (keys: readonly (string | number)[]) => void
+  toggleSelection: (key: string | number) => void
+  selectRow: (row: TRow) => void
+  deselectRow: (row: TRow) => void
 }
 
-export interface TableApi<TSchema> {
-  schema: TableSchemaSource<TSchema>
-  state: TableState
-  runtime: TableRuntimeState<ExtractTableRow<TSchema>>
-  meta: TableMeta<TSchema>
-  resolveSchema: () => TSchema
-  refresh: () => Promise<TableSourceExecutionResult<ExtractTableRow<TSchema>>>
+// ---------------------------------------------------------------------------
+// Public table instance — returned by useTable()
+// ---------------------------------------------------------------------------
+
+/**
+ * The public table instance returned by `useTable()`.
+ * Users pass this to `<DataList :table="..." />`.
+ *
+ * Contains:
+ * - `state`: writable reactive refs for all user-controlled state
+ * - `meta`:  read-only reactive refs for derived data (rows, loading, errors…)
+ * - `api`:   imperative methods (refresh, selection management…)
+ *
+ * DataList reads `_schema` and `_effectiveFilters` to set up its injection scope.
+ */
+export interface TableInstance<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TPageContext extends GenericObject = GenericObject,
+  TFilterKey extends string = string,
+  TSortKey extends string = string,
+  TView extends string = string,
+> {
+  state: TableStateRefs<TFilterKey, TSortKey, TView>
+  meta: TableMetaRefs<TRow, TContext, TPageContext>
+  api: TableApiMethods<TRow>
+  /** @internal Resolved plain schema — consumed by DataList to set up injection */
+  _schema: TableSchema
+  /** @internal Effective filter pipeline — consumed by DataList */
+  _effectiveFilters: ComputedRef<readonly TableEffectiveFilterRule[]>
 }
 
-export interface TableRowApi<TSchema> {
-  row: ExtractTableRow<TSchema>
-  context: ExtractTableContextData<TSchema>
-  pageContext: ExtractTablePageContextData<TSchema>
-}
+export type AnyTableInstance = TableInstance<GenericObject, GenericObject, GenericObject>
 
-export type AnyTableApi = TableApi<{
-  rowKey: string
-  source: { mode: 'client' | 'remote' }
-}> & {
-  runtime: TableRuntimeState<GenericObject>
-  state: TableState
+// ---------------------------------------------------------------------------
+// Row-level API (used by column renderers and row-action callbacks)
+// ---------------------------------------------------------------------------
+
+export interface TableRowApi<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TPageContext extends GenericObject = GenericObject,
+> {
+  row: TRow
+  context: TContext
+  pageContext: TPageContext
 }

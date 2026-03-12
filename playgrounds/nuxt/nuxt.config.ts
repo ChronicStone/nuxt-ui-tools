@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
+  ssr: false,
   compatibilityDate: '2026-03-11',
   modules: [
     '@nuxt/ui',
@@ -10,7 +11,7 @@ export default defineNuxtConfig({
     fileURLToPath(new URL('../../packages/nuxt/src/module.ts', import.meta.url)),
   ],
   css: ['./app/assets/main.css'],
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   nuxtUiTools: {
     prefix: 'Nut',
     global: true,
