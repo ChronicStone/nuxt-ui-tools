@@ -49,6 +49,9 @@ const schema = defineTableSchema({
     },
   ],
   filters: {
+    search: {
+      fields: ['name', 'organisation.status'],
+    },
     ui: (filter) => [
       filter.text('name', {
         label: 'Name',
@@ -95,6 +98,7 @@ const schema = defineTableSchema({
 type ContextData = ExtractTableContextData<typeof schema>
 type PageContextData = ExtractTablePageContextData<typeof schema>
 type Row = ExtractTableRow<typeof schema>
+type SourceContext = Parameters<typeof schema.source.query>[0]
 
 describe('defineTableSchema inference', () => {
   it('infers context and page context data from query definitions', () => {
@@ -105,6 +109,11 @@ describe('defineTableSchema inference', () => {
   it('infers the row shape from the source query result', () => {
     expectTypeOf<Row['name']>().toEqualTypeOf<string>()
     expectTypeOf<Row['organisation']['status']>().toEqualTypeOf<'active'>()
+  })
+
+  it('exposes search fields on the source query context', () => {
+    expectTypeOf<SourceContext['search']['value']>().toEqualTypeOf<string>()
+    expectTypeOf<SourceContext['search']['fields']>().toMatchTypeOf<string[]>()
   })
 
   it('keeps nested sort keys inferred through the schema surface', () => {

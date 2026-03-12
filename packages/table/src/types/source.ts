@@ -17,6 +17,13 @@ export interface TableSourceExecutionResult<TRow extends GenericObject = Generic
   rowCount: number
 }
 
+export interface TableSourceSearchRequest<
+  TRow extends GenericObject = GenericObject,
+> {
+  value: string
+  fields: TableKnownFieldPath<TRow>[]
+}
+
 export interface TableSourceRequestContext<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
@@ -25,7 +32,7 @@ export interface TableSourceRequestContext<
   pagination: TablePaginationState
   sorting: TableSortingRule<TSortKey>[]
   filters: TableResolvedFilterGroup<TableKnownFieldPath<TRow> | string>
-  search: string
+  search: TableSourceSearchRequest<TRow>
   context: TContext
 }
 

@@ -84,7 +84,10 @@ export function useTableData(
         pagination: params.state.queryState.pagination.value,
         sorting: params.state.queryState.sorting.value ? [params.state.queryState.sorting.value] : [],
         filters: params.state.resolvedFilterState.value,
-        search: params.state.queryState.filters.value.search,
+        search: {
+          value: params.state.queryState.filters.value.search,
+          fields: params.schema.value.filters?.search?.fields ?? [],
+        },
       }) satisfies TableSourceRequestContext,
   )
 
@@ -120,7 +123,6 @@ export function useTableData(
       return executeClientQuery({
         rows: result,
         request: requestContext.value,
-        searchFields: params.schema.value.filters?.search?.fields ?? [],
       })
     }
 
@@ -252,6 +254,7 @@ function withEnabled<TData = unknown>(
 ): TableQueryDefinition<TData> {
   return {
     ...query,
+    // @ts-expect-error
     enabled: (query.enabled ?? true) && enabled,
   }
 }

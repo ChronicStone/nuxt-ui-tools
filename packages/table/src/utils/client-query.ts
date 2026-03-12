@@ -2,7 +2,6 @@ import { isArray, isDate, isObject, isString } from '@nuxt-ui-tools/shared'
 
 import type {
   GenericObject,
-  TableFieldPath,
   TableResolvedFilterCondition,
   TableResolvedFilterGroup,
   TableResolvedFilterNode,
@@ -17,7 +16,6 @@ export interface TableClientQueryParams<
 > {
   rows: Iterable<TRow>
   request: TableSourceRequestContext<TRow, TContext>
-  searchFields?: TableFieldPath<TRow>[]
 }
 
 export function executeClientQuery<
@@ -27,7 +25,6 @@ export function executeClientQuery<
   let result = lazyFilterRows(params.rows, {
     filters: params.request.filters,
     search: params.request.search,
-    searchFields: params.searchFields ?? [],
   })
 
   result = lazySortRows(result, params.request.sorting)
@@ -39,13 +36,12 @@ function* lazyFilterRows<TRow extends GenericObject>(
   rows: Iterable<TRow>,
   params: {
     filters: TableResolvedFilterGroup<string>
-    search: string
-    searchFields: TableFieldPath<TRow>[]
+    search: TableSourceRequestContext<TRow>['search']
   },
 ): Generator<TRow> {
   for (const row of rows) {
     if (
-      matchesSearch(row, params.search, params.searchFields) &&
+      matchesSearch(row, params.search) &&
       matchesFilterNode(row, params.filters)
     ) {
       yield row
@@ -55,14 +51,13 @@ function* lazyFilterRows<TRow extends GenericObject>(
 
 function matchesSearch<TRow extends GenericObject>(
   row: TRow,
-  search: string,
-  searchFields: TableFieldPath<TRow>[],
+  search: TableSourceRequestContext<TRow>['search'],
 ): boolean {
-  if (!search.trim().length || !searchFields.length) {
+  if (!search.value.trim().length || !search.fields.length) {
     return true
   }
 
-  return searchFields.some((field) => pathMatchesSearchValue(row, String(field), search))
+  return search.fields.some((field) => pathMatchesSearchValue(row, String(field), search.value))
 }
 
 function pathMatchesSearchValue(value: unknown, path: string, search: string): boolean {

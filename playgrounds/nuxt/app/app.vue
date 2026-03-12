@@ -2,6 +2,8 @@
 const { currentSection, links, route } = usePlaygroundNavigation()
 const { classes, headerBadges, themeUi } = usePlaygroundAppearance()
 const { t } = useI18n()
+
+// IMPORT VUE TANSTACK DEVTOOLS
 </script>
 
 <template>

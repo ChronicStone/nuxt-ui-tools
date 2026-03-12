@@ -125,7 +125,10 @@ function createRequest(
 ): TableSourceRequestContext<TestRow> {
   return {
     context: {},
-    search: '',
+    search: {
+      value: '',
+      fields: [],
+    },
     sorting: [],
     pagination: {
       pageIndex: 1,
@@ -142,12 +145,17 @@ function createRequest(
 
 function queryIds(
   request: Partial<TableSourceRequestContext<TestRow>>,
-  searchFields: string[] = ['name'],
+  fields: string[] = ['name'],
 ): string[] {
   return executeClientQuery({
     rows,
-    request: createRequest(request),
-    searchFields,
+    request: createRequest({
+      ...request,
+      search: {
+        value: request.search?.value ?? '',
+        fields,
+      },
+    }),
   }).rows.map((row) => row.id)
 }
 
@@ -156,7 +164,6 @@ describe('executeClientQuery', () => {
     it('evaluates nested and/or resolved filter groups', () => {
       const result = executeClientQuery({
         rows,
-        searchFields: ['name'],
         request: createRequest({
           filters: {
             type: 'group',
@@ -533,7 +540,10 @@ describe('executeClientQuery', () => {
       expect(
         queryIds(
           {
-            search: 'los',
+            search: {
+              value: 'los',
+              fields: [],
+            },
           },
           ['profile.city'],
         ),
@@ -542,7 +552,10 @@ describe('executeClientQuery', () => {
       expect(
         queryIds(
           {
-            search: 'los',
+            search: {
+              value: 'los',
+              fields: [],
+            },
           },
           ['name'],
         ),
@@ -553,7 +566,10 @@ describe('executeClientQuery', () => {
       expect(
         queryIds(
           {
-            search: 'dorothy',
+            search: {
+              value: 'dorothy',
+              fields: [],
+            },
           },
           ['teams.lead.name'],
         ),
@@ -562,7 +578,10 @@ describe('executeClientQuery', () => {
       expect(
         queryIds(
           {
-            search: 'numbers',
+            search: {
+              value: 'numbers',
+              fields: [],
+            },
           },
           ['profile.aliases'],
         ),
@@ -573,9 +592,11 @@ describe('executeClientQuery', () => {
       const result = executeClientQuery({
         rows,
         request: createRequest({
-          search: 'definitely-not-present',
+          search: {
+            value: 'definitely-not-present',
+            fields: [],
+          },
         }),
-        searchFields: [],
       })
 
       expect(result.rowCount).toBe(4)
@@ -587,9 +608,11 @@ describe('executeClientQuery', () => {
     it('applies search, sorting and pagination on client rows', () => {
       const result = executeClientQuery({
         rows,
-        searchFields: ['name', 'tags'],
         request: createRequest({
-          search: 'a',
+          search: {
+            value: 'a',
+            fields: ['name', 'tags'],
+          },
           sorting: [
             {
               key: 'score',
@@ -610,7 +633,6 @@ describe('executeClientQuery', () => {
     it('supports multi-column sorting and places nullish values last', () => {
       const result = executeClientQuery({
         rows,
-        searchFields: ['name'],
         request: createRequest({
           sorting: [
             {
@@ -635,7 +657,6 @@ describe('executeClientQuery', () => {
     it('normalizes invalid pagination values and preserves total rowCount', () => {
       const result = executeClientQuery({
         rows,
-        searchFields: ['name'],
         request: createRequest({
           pagination: {
             pageIndex: 0,
@@ -651,7 +672,6 @@ describe('executeClientQuery', () => {
     it('returns an empty page when the page index exceeds available rows', () => {
       const result = executeClientQuery({
         rows,
-        searchFields: ['name'],
         request: createRequest({
           pagination: {
             pageIndex: 3,
