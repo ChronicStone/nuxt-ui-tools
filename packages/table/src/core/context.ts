@@ -1,7 +1,7 @@
 import type {
   TableContextItem,
   TablePageContextItem,
-} from '@lib/types'
+} from '../types'
 
 export interface TableContextStorePlaceholder {
   context: readonly TableContextItem[]

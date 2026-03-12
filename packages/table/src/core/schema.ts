@@ -1,4 +1,4 @@
-import { resolveColumns, resolveUiFilters } from '@lib/core/builders'
+import { resolveColumns, resolveUiFilters } from './builders'
 import type {
   InferTableSourceRow,
   InferTableSourceFilterKey,
@@ -10,14 +10,15 @@ import type {
   TablePageContextItem,
   TableSchemaInput,
   TableSource,
-} from '@lib/types'
+} from '../types'
 
-type ResolveSchemaKey<TCandidate extends string, TFallback extends string> =
-  [TCandidate] extends [never]
+type ResolveSchemaKey<TCandidate extends string, TFallback extends string> = [TCandidate] extends [
+  never,
+]
+  ? TFallback
+  : string extends TCandidate
     ? TFallback
-    : string extends TCandidate
-      ? TFallback
-      : TCandidate
+    : TCandidate
 
 export function defineTableSchema<
   const TSource extends TableSource<any, any, any> = TableSource<any, any, any>,

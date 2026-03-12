@@ -15,7 +15,7 @@ import type {
   TableDateFilterOptions,
   TableUiFilterCollection,
   TableUiFilterDefinition,
-} from '@lib/types'
+} from '../types'
 
 export function createTableColumnBuilder<
   TRow extends GenericObject,
@@ -121,7 +121,7 @@ export function createTableFilterBuilder<
 
 export function resolveUiFilters<
   TRow extends GenericObject,
-  TKey extends TableKnownFieldPath<TRow>,
+  TKey extends string,
 >(
   filters: TableUiFilterCollection<TRow, TKey> | undefined,
 ): readonly TableUiFilterDefinition<TRow, TKey>[] | undefined {

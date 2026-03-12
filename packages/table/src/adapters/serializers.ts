@@ -1,4 +1,4 @@
-import type { TableSerializerDefinition } from '@lib/types'
+import type { TableSerializerDefinition } from '../types/source'
 
 export function defineTableSerializer<
   const TSerializer extends TableSerializerDefinition,

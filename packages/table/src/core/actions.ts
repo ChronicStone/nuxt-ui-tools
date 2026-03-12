@@ -1,4 +1,4 @@
-import type { TableToolbarAction } from '@lib/types'
+import type { TableToolbarAction } from '../types/actions'
 
 export function createTableActions(
   actions: readonly TableToolbarAction[] = [],

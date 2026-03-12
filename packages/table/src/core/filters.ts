@@ -1,4 +1,4 @@
-import type { TableUiFilterDefinition } from '@lib/types'
+import type { TableUiFilterDefinition } from '../types/filters'
 
 export function createTableFilters(
   filters: readonly TableUiFilterDefinition[] = [],

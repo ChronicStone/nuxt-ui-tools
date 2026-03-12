@@ -1,4 +1,4 @@
-import type { TableState } from '@lib/types'
+import type { TableState } from '../types/state'
 
 export function createTableState(initialState: Partial<TableState> = {}): TableState {
   return {

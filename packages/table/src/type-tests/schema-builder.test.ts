@@ -6,6 +6,7 @@ import type {
   TableDefaultSort,
   TableFieldValue,
   TableGridSortOption,
+  TableViewValue,
 } from '@lib/types'
 
 type Equal<A, B> =
@@ -162,10 +163,14 @@ const _fieldCellPropsValue: TableFieldValue<Row, 'name'> = nameColumnCellPropsPa
 const _fieldColSpanValue: TableFieldValue<Row, 'name'> = nameColumnColSpanParams.value
 const _contextValue: string = contextData.organisationId
 const _pageContextValue: string = pageContextData.rowCountLabel
-const _defaultSortingValue: TableDefaultSort<'id' | 'name' | 'status' | 'createdAt' | 'archived'> =
+const _defaultSortingValue: TableViewValue<
+  string,
+  TableDefaultSort<'id' | 'name' | 'status' | 'createdAt' | 'archived'>
+> =
   tableDefaultSorting
-const _gridSortOptionsValue: readonly TableGridSortOption<
-  'id' | 'name' | 'status' | 'createdAt' | 'archived'
->[] = gridSortOptions
+const _gridSortOptionsValue: TableViewValue<
+  string,
+  readonly TableGridSortOption<'id' | 'name' | 'status' | 'createdAt' | 'archived'>[]
+> = gridSortOptions
 
 export {}

@@ -126,7 +126,7 @@ export interface TableSchema<
 
 export type TableSchemaInput<
   TSource extends TableSource<any, any, any> = TableSource<any, any, any>,
-  TFilterKey extends TableKnownFieldPath<InferTableSourceRow<TSource>> = TableKnownFieldPath<InferTableSourceRow<TSource>>,
+  TFilterKey extends string = TableKnownFieldPath<InferTableSourceRow<TSource>>,
   TSortKey extends string = TableKnownFieldPath<InferTableSourceRow<TSource>>,
   TContextItems extends readonly TableContextItem[] = readonly TableContextItem[],
   TPageContextItems extends readonly TablePageContextItem<

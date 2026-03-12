@@ -1,4 +1,6 @@
-import type { GenericObject, TableSchema, TableSourceExecutionResult } from '@lib/types'
+import type { TableSchema } from '../types/schema'
+import type { TableSourceExecutionResult } from '../types/source'
+import type { GenericObject } from '../types/utils'
 
 export interface TableSourceExecutorPlaceholder<
   TSchema extends TableSchema = TableSchema,

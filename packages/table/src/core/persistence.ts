@@ -1,4 +1,4 @@
-import type { TablePersistenceOptions } from '@lib/types'
+import type { TablePersistenceOptions } from '../types/state'
 
 export function createTablePersistenceAdapter(
   adapter: TablePersistenceOptions,

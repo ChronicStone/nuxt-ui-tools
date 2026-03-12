@@ -21,7 +21,7 @@ export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
 export interface TableStaticFilterRule<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > {
   key: TKey
   operator: TableFilterOperator
@@ -30,7 +30,7 @@ export interface TableStaticFilterRule<
 
 interface TableFilterDefinitionBase<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
   TValue = unknown,
 > {
   key: TKey
@@ -41,14 +41,14 @@ interface TableFilterDefinitionBase<
 
 export interface TableTextFilterDefinition<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > extends TableFilterDefinitionBase<TRow, TKey, string> {
   kind: 'text'
 }
 
 export interface TableOptionFilterDefinition<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
   TValue = string | number | boolean,
 > extends TableFilterDefinitionBase<TRow, TKey, readonly TValue[]> {
   kind: 'option'
@@ -61,28 +61,28 @@ export interface TableOptionFilterDefinition<
 
 export interface TableBooleanFilterDefinition<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > extends TableFilterDefinitionBase<TRow, TKey, boolean> {
   kind: 'boolean'
 }
 
 export interface TableNumberFilterDefinition<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > extends TableFilterDefinitionBase<TRow, TKey, number | { min?: number, max?: number }> {
   kind: 'number'
 }
 
 export interface TableDateFilterDefinition<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > extends TableFilterDefinitionBase<TRow, TKey, Date | { from?: Date, to?: Date }> {
   kind: 'date'
 }
 
 export type TableUiFilterDefinition<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > =
   | TableTextFilterDefinition<TRow, TKey>
   | TableOptionFilterDefinition<TRow, TKey>
@@ -92,28 +92,28 @@ export type TableUiFilterDefinition<
 
 export type TableTextFilterOptions<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > = Omit<TableTextFilterDefinition<TRow, TKey>, 'key' | 'kind'>
 
 export type TableOptionFilterOptions<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
   TValue = string | number | boolean,
 > = Omit<TableOptionFilterDefinition<TRow, TKey, TValue>, 'key' | 'kind'>
 
 export type TableBooleanFilterOptions<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > = Omit<TableBooleanFilterDefinition<TRow, TKey>, 'key' | 'kind'>
 
 export type TableNumberFilterOptions<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > = Omit<TableNumberFilterDefinition<TRow, TKey>, 'key' | 'kind'>
 
 export type TableDateFilterOptions<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > = Omit<TableDateFilterDefinition<TRow, TKey>, 'key' | 'kind'>
 
 export interface TableFilterBuilder<TRow extends GenericObject = GenericObject> {
@@ -141,7 +141,7 @@ export interface TableFilterBuilder<TRow extends GenericObject = GenericObject> 
 
 export type TableUiFilterCollection<
   TRow extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > =
   | readonly TableUiFilterDefinition<TRow, TKey>[]
   | ((filter: TableFilterBuilder<TRow>) => readonly TableUiFilterDefinition<TRow, TKey>[])
@@ -149,7 +149,7 @@ export type TableUiFilterCollection<
 export interface TableFiltersSchema<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
-  TKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  TKey extends string = TableKnownFieldPath<TRow>,
 > {
   search?: TableSearchFilter<TRow>
   static?: readonly TableStaticFilterRule<TRow, TContext, TKey>[]

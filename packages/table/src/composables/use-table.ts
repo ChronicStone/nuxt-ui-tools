@@ -1,10 +1,10 @@
-import { createTableState } from '@lib/core'
+import { createTableState } from '../core'
 import type {
   TableApi,
   TableMeta,
   TableSchemaSource,
   TableLayout,
-} from '@lib/types'
+} from '../types'
 
 type UsableTableSchema = {
   rowKey: unknown

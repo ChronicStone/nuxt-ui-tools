@@ -1,9 +1,9 @@
-import { useTable } from '@lib/composables'
+import { useTable } from '../composables'
 import type {
   DataListComponentContract,
   DataListProps,
   TableSchema,
-} from '@lib/types'
+} from '../types'
 
 export function createDataListComponent<TSchema extends TableSchema>(
   props: DataListProps<TSchema>,

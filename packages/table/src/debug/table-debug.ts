@@ -1,4 +1,4 @@
-import type { TableApi } from '@lib/types'
+import type { TableApi } from '../types/api'
 
 export interface TableDebugSnapshot<
   TSchema = unknown,

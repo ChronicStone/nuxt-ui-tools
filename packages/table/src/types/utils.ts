@@ -6,7 +6,7 @@ import type {
   RenderableType,
   TypeFromPath,
   UnionToIntersection,
-} from '@nuxt-ui-tools/shared/types/utils'
+} from '@nuxt-ui-tools/shared'
 
 export type {
   GenericObject,
