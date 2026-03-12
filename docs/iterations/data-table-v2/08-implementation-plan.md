@@ -1,19 +1,18 @@
 # Implementation Plan
 
-This plan replaces the old single-package runtime roadmap.
+This plan replaces the old split-package runtime roadmap.
 
 ## Phase 1: Schema package reset
 
 Goal:
 
-- land the three-package surface
-- stabilize `defineTable(...)`
-- stabilize `defineQueryTable(...)`
-- move shared schema primitives into `table-core`
+- land the single-package surface
+- stabilize `defineTableSchema(...)`
+- keep TanStack Query as the only async contract
 
 Status:
 
-- completed on 2026-03-12 for the initial package split and type surface
+- completed on 2026-03-12 for the package collapse and single-builder surface
 
 ## Phase 2: Runtime contract planning
 

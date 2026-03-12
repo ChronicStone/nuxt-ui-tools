@@ -5,65 +5,36 @@ This is the canonical V2 spec after the architecture reset.
 ## Priorities
 
 - preserve inference across the full schema surface
-- keep the base package free of TanStack Query
+- keep the package TanStack Query-only
 - mirror the proven V1 runtime organization when runtime work resumes
 - build runtime foundations incrementally instead of shipping a broad partial engine
 
 ## Package model
 
-### `@nuxt-ui-tools/table-core`
-
-Owns:
-
-- shared utility types
-- shared column and state types
-- shared builder internals
-- normalized contracts for future shared runtime logic
-
 ### `@nuxt-ui-tools/table`
 
 Owns:
 
-- `defineTable(...)`
-- promise-based source/context/pageContext/filter-option async contracts
-- base schema typing and extraction helpers
-
-### `@nuxt-ui-tools/table-query`
-
-Owns:
-
-- `defineQueryTable(...)`
+- `defineTableSchema(...)`
 - query-options-based source/context/pageContext/filter-option async contracts
-- query schema typing and extraction helpers
+- schema typing and extraction helpers
+- query-state utilities and composables
 
 ## Builder contract
 
-Two builders now exist:
+One builder now exists:
 
 ```ts
-defineTable(...)
-defineQueryTable(...)
+defineTableSchema(...)
 ```
 
 Rules:
 
 - inference-first
 - no manual userland generics for normal usage
-- same non-async schema ergonomics across both packages
-- async contract differs by package only
+- lean composables with pure helpers extracted into `utils/`
 
 ## Async contracts
-
-### Base package
-
-Every async resolver returns a plain value or promise:
-
-- `source.loader(...)`
-- `context.loader(...)`
-- `pageContext.loader(...)`
-- `filters.ui.option(...).options.loader(...)`
-
-### Query package
 
 Every async resolver returns query options:
 
@@ -87,9 +58,9 @@ Future runtime work should keep the V1-style code organization:
 
 Expected runtime pattern:
 
-- same public composable contracts
-- separate base/query implementations for async-sensitive areas
-- shared normalization and helpers in `table-core`
+- single runtime path
+- shared normalization and helpers inside `packages/table/src/utils`
+- public composables built in the V1 style with minimal nesting and early returns
 
 ## First runtime milestone
 

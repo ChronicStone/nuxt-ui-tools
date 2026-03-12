@@ -19,7 +19,8 @@
     "provenance": true
   },
   "dependencies": {
-    "@nuxt-ui-tools/table-core": "workspace:*"
+    "@nuxt-ui-tools/shared": "workspace:*",
+    "vue-qs": "^0.1.18"
   },
   "scripts": {
     "build": "tsdown",
@@ -29,9 +30,11 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
+    "@tanstack/vue-query": ">=5.0.0",
     "vue": ">=3.3.0"
   },
   "devDependencies": {
+    "@tanstack/vue-query": "5.92.9",
     "vue": "^3.5.0"
   }
 }

@@ -93,6 +93,13 @@ export function isFunction(value: unknown): value is (...args: unknown[]) => unk
 }
 
 /**
+ * Type predicate to check if a value is an object (excluding null).
+ */
+export function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && !Array.isArray(value) && typeof value === 'object'
+}
+
+/**
  * Type predicate to check if a value is a symbol.
  */
 export function isSymbol(value: unknown): value is symbol {
@@ -156,6 +163,13 @@ export function isPlainObject(value: unknown): value is Record<string, unknown> 
   }
   const proto = Object.getPrototypeOf(value)
   return proto === null || proto === Object.prototype
+}
+
+/**
+ * Type predicate to check if a value is an array.
+ */
+export function isArray<T = unknown>(value: unknown): value is T[] {
+  return Array.isArray(value)
 }
 
 /**

@@ -1,4 +1,3 @@
-import type { TableSourceRequestContext } from './source'
 import type {
   GenericObject,
   MaybePromise,
@@ -6,16 +5,17 @@ import type {
   TableLayout,
   TableRowRenderParams,
 } from './utils'
+import type { TableSourceRequestContext } from './source'
 
 export interface TableActionContext<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TPageContext extends GenericObject = GenericObject,
 > {
-  selectedRows: readonly TRow[]
+  selectedRows: TRow[]
   context: TContext
   pageContext: TPageContext
-  request: TableSourceRequestContext<TRow>
+  request: TableSourceRequestContext<TRow, TContext>
 }
 
 export interface TableToolbarAction<

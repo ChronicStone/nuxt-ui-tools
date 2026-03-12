@@ -5,9 +5,7 @@ Bun-powered monorepo for a Vue/Nuxt UI toolkit suite.
 ## Workspaces
 
 - `packages/shared`: shared composables, types, and helpers
-- `packages/table-core`: shared schema primitives and future runtime contracts
-- `packages/table`: base table schema package with promise-based async contracts
-- `packages/table-query`: query-backed table schema package with TanStack Query contracts
+- `packages/table`: TanStack Query table package with a single `defineTableSchema` builder
 - `packages/form`: Vue form package
 - `packages/nuxt`: Nuxt module for auto-imports and component registration
 - `playgrounds/nuxt`: Nuxt playground for module integration

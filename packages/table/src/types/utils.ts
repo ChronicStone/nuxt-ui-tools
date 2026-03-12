@@ -1,26 +1,103 @@
-import type { MaybePromise, Prettify, UnionToIntersection } from '@nuxt-ui-tools/table-core'
+import type { ComputedRef, Ref } from 'vue'
 
-export type * from '@nuxt-ui-tools/table-core'
+import type {
+  GenericObject,
+  MaybePromise,
+  NestedPaths,
+  Prettify,
+  RenderableType,
+  TypeFromPath,
+  UnionToIntersection,
+} from '@nuxt-ui-tools/shared'
 
-export type ExtractTableSourceResult<TSource> = TSource extends {
-  loader: (...args: never[]) => Promise<infer TResult> | infer TResult
+export type {
+  ComputedRef,
+  GenericObject,
+  MaybePromise,
+  NestedPaths,
+  Prettify,
+  Ref,
+  RenderableType,
+  TypeFromPath,
+  UnionToIntersection,
 }
-  ? Awaited<TResult>
+
+export type TableLayout = 'table' | 'grid'
+
+export type TableColumnPinned = 'left' | 'right'
+
+export type TableColumnAlign = 'left' | 'center' | 'right'
+
+export type TableFieldPath<TRow extends GenericObject> = NestedPaths<TRow> | (string & {})
+
+export type TableKnownFieldPath<TRow extends GenericObject> = Extract<NestedPaths<TRow>, string>
+
+export type TableFieldValue<
+  TRow extends GenericObject,
+  TField extends TableFieldPath<TRow>,
+> = TField extends string
+  ? TypeFromPath<TRow, TField>
   : never
 
-type SourceRowFromMetadata<TSource> = TSource extends { __rowType?: infer TRow }
-  ? TRow
-  : never
+export type TableSortKey<TRow extends GenericObject> = TableFieldPath<TRow> | (string & {})
 
-export type TableRowsFromSourceResult<TResult> = TResult extends readonly (infer TRow)[]
+export type TableRowKey<TRow extends GenericObject> =
+  | TableFieldPath<TRow>
+  | TableFieldPath<TRow>[]
+
+export type TableSortingDirection = 'asc' | 'desc'
+
+export interface TableSortingRule<TKey extends string = string> {
+  key: TKey
+  dir: TableSortingDirection
+}
+
+export interface TablePaginationState {
+  page: number
+  pageSize: number
+}
+
+export interface TableRowRenderParams<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TPageContext extends GenericObject = GenericObject,
+> {
+  row: TRow
+  index: number
+  context: TContext
+  pageContext: TPageContext
+  layout?: TableLayout
+}
+
+export interface TableGridSortOption<TKey extends string = string> {
+  label: string | (() => RenderableType)
+  key: TKey
+}
+
+export type TableDefaultSort<TKey extends string = string> =
+  | TKey
+  | {
+      key: TKey
+      dir: TableSortingDirection
+    }
+
+export type TableSchemaRefLike<TValue> = {
+  value: TValue
+}
+
+export type MaybeComputedRef<TValue> =
+  | TValue
+  | Ref<TValue>
+  | ComputedRef<TValue>
+  | (() => TValue)
+
+export type TableSchemaSource<TSchema> = TSchema | TableSchemaRefLike<TSchema> | (() => TSchema)
+
+export type TableRowsFromSourceResult<TResult> = TResult extends (infer TRow)[]
   ? TRow
-  : TResult extends { rows: readonly (infer TRow)[] }
+  : TResult extends { rows: (infer TRow)[] }
     ? TRow
     : never
-
-type InferSourceRow<TSource> = [SourceRowFromMetadata<TSource>] extends [never]
-  ? TableRowsFromSourceResult<ExtractTableSourceResult<TSource>>
-  : SourceRowFromMetadata<TSource>
 
 export type TableResolvedSchema<TSchema> = TSchema extends () => infer TValue
   ? TValue
@@ -30,34 +107,29 @@ export type TableResolvedSchema<TSchema> = TSchema extends () => infer TValue
 
 type MergeContextItem<TItem> = TItem extends {
   key: infer TKey extends string
-  loader: (...args: any[]) => MaybePromise<infer TValue>
+  query: (...args: any[]) => import('@tanstack/vue-query').UseQueryOptions<infer TValue>
 }
   ? { [K in TKey]: Awaited<TValue> }
   : {}
 
 type MergeContextItemUnion<TItem> = UnionToIntersection<MergeContextItem<TItem>>
 
-export type ExtractTableRow<TSchema> = TableResolvedSchema<TSchema> extends {
+type ExtractSourceResult<TSchema> = TableResolvedSchema<TSchema> extends {
   source: infer TSource
 }
-  ? InferSourceRow<TSource>
+  ? import('./source').ExtractTableSourceResult<TSource>
   : never
 
-export type ExtractTableView<TSchema> =
-  TableResolvedSchema<TSchema> extends { views?: readonly (infer TView)[] }
-    ? TView extends string
-      ? TView
-      : never
-    : never
+export type ExtractTableRow<TSchema> = TableRowsFromSourceResult<ExtractSourceResult<TSchema>>
 
 export type ExtractTableContextData<TSchema> = Prettify<
-  TableResolvedSchema<TSchema> extends { context?: infer TItems extends readonly unknown[] }
+  TableResolvedSchema<TSchema> extends { context?: infer TItems extends unknown[] }
     ? MergeContextItemUnion<TItems[number]>
     : {}
 >
 
 export type ExtractTablePageContextData<TSchema> = Prettify<
-  TableResolvedSchema<TSchema> extends { pageContext?: infer TItems extends readonly unknown[] }
+  TableResolvedSchema<TSchema> extends { pageContext?: infer TItems extends unknown[] }
     ? MergeContextItemUnion<TItems[number]>
     : {}
 >

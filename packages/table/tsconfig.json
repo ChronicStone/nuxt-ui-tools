@@ -4,15 +4,18 @@
     "baseUrl": ".",
     "paths": {
       "@lib/*": ["src/*"],
-      "@nuxt-ui-tools/table-core": ["../table-core/src/index.ts"],
       "@nuxt-ui-tools/shared": ["../shared/dist/index.d.ts"]
     }
   },
   "include": [
     "src/index.ts",
-    "src/schema.ts",
-    "src/builders.ts",
+    "src/schema/**/*.ts",
+    "src/builders/**/*.ts",
+    "src/composables/*.ts",
+    "src/utils/**/*.ts",
+    "src/composables/**/*.ts",
+    "src/utils/*.ts",
     "src/types/**/*.ts",
-    "test/**/*.ts"
+    "tests/**/*.ts"
   ]
 }

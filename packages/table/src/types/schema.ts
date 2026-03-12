@@ -1,84 +1,38 @@
+import type { TableBulkAction, TableRowAction, TableToolbarAction } from './actions'
+import type { TableContextDataFromItems, TableContextItem, TablePageContextItem } from './context'
+import type { TableFiltersSchema } from './filters'
 import type {
-  TableBulkAction,
-  TableColumnCollection,
   TableControlsSchema,
-  TableDefaultSort,
-  TableGridSortOption,
+  TableGridSchema,
+  TablePaginationSchema,
+  TablePersistenceOptions,
+  TableSelectionSchema,
+  TableTableSchema,
+} from './layout'
+import type { InferTableSourceRow, TableSource } from './source'
+import type {
   TableKnownFieldPath,
   TableLayout,
-  TablePersistenceOptions,
-  TableRowAction,
   TableRowKey,
-  TableRowRenderParams,
-  TableSelectionSchema,
   TableSortKey,
-  TableToolbarAction,
-  TableViewValue,
   GenericObject,
 } from './utils'
-import type {
-  TableContextDataFromItems,
-  TableContextItem,
-  TablePageContextItem,
-} from './context'
-import type { TableFiltersSchema } from './filters'
-import type { InferTableSourceRow, TableSource, InferTableSourceFilterKey, InferTableSourceSortKey } from './source'
-
-type TableResolvedPageContextData<TItems extends readonly unknown[]> =
-  TableContextDataFromItems<TItems>
-
-export interface TableGridSchema<
-  TRow extends GenericObject = GenericObject,
-  TContext extends GenericObject = GenericObject,
-  TPageContext extends GenericObject = GenericObject,
-  TView extends string = string,
-  TSortKey extends string = TableSortKey<TRow>,
-> {
-  enabled?: TableViewValue<TView, boolean | string | (() => boolean | string)>
-  renderItem?: (
-    params: TableRowRenderParams<TRow, TContext, TPageContext, TView>,
-  ) => unknown
-  renderSkeleton?: TableViewValue<
-    TView,
-    (params: { view?: TView, layout?: 'grid' }) => unknown
-  >
-  gridSize?: TableViewValue<TView, number | string | (() => number | string)>
-  itemSize?: TableViewValue<TView, number | string | (() => number | string)>
-  sortOptions?: TableViewValue<TView, readonly TableGridSortOption<TSortKey, TView>[]>
-  defaultSorting?: TableViewValue<TView, TableDefaultSort<TSortKey>>
-}
-
-export interface TableTableSchema<
-  TRow extends GenericObject = GenericObject,
-  TContext extends GenericObject = GenericObject,
-  TPageContext extends GenericObject = GenericObject,
-  TView extends string = string,
-  TSortKey extends string = TableSortKey<TRow>,
-> {
-  enabled?: TableViewValue<TView, boolean | string | (() => boolean | string)>
-  columns?: TableColumnCollection<TRow, TContext, TPageContext, TView, string, TSortKey>
-  treeMode?: TableViewValue<TView, boolean>
-  childrenKey?: TableSortKey<TRow>
-  defaultSorting?: TableViewValue<TView, TableDefaultSort<TSortKey>>
-  selection?: TableViewValue<TView, boolean | 'auto'>
-}
 
 export interface TableSchema<
   TRow extends GenericObject = GenericObject,
-  TContextItems extends readonly TableContextItem[] = readonly TableContextItem[],
-  TPageContextItems extends readonly TablePageContextItem<
+  TContextItems extends TableContextItem[] = TableContextItem[],
+  TPageContextItems extends TablePageContextItem<
     TRow,
     TableContextDataFromItems<TContextItems>
-  >[] = readonly TablePageContextItem<TRow, TableContextDataFromItems<TContextItems>>[],
-  TView extends string = string,
-  TFilterKey extends TableKnownFieldPath<TRow> = TableKnownFieldPath<TRow>,
+  >[] = TablePageContextItem<TRow, TableContextDataFromItems<TContextItems>>[],
+  TFilterKey extends string = TableKnownFieldPath<TRow>,
   TSortKey extends string = TableSortKey<TRow>,
 > {
   tableKey: string
   rowKey: TableRowKey<TRow>
-  source: TableSource<TRow, TFilterKey, TSortKey>
-  views?: readonly TView[]
+  source: TableSource<TRow, TableContextDataFromItems<TContextItems>>
   defaultLayout?: TableLayout
+  pagination?: TablePaginationSchema
   context?: TContextItems
   pageContext?: TPageContextItems
   filters?: TableFiltersSchema<TRow, TableContextDataFromItems<TContextItems>, TFilterKey>
@@ -86,29 +40,27 @@ export interface TableSchema<
     TRow,
     TableContextDataFromItems<TContextItems>,
     TableContextDataFromItems<TPageContextItems>,
-    TView,
     TSortKey
   >
   grid?: TableGridSchema<
     TRow,
     TableContextDataFromItems<TContextItems>,
     TableContextDataFromItems<TPageContextItems>,
-    TView,
     TSortKey
   >
   selection?: TableSelectionSchema
-  actions?: readonly TableBulkAction<
+  actions?: TableBulkAction<
     TRow,
     TableContextDataFromItems<TContextItems>,
     TableContextDataFromItems<TPageContextItems>
   >[]
-  toolbarActions?: readonly TableToolbarAction<
+  toolbarActions?: TableToolbarAction<
     TRow,
     TableContextDataFromItems<TContextItems>,
     TableContextDataFromItems<TPageContextItems>
   >[]
   rowActions?:
-    | readonly TableRowAction<
+    | TableRowAction<
         TRow,
         TableContextDataFromItems<TContextItems>,
         TableContextDataFromItems<TPageContextItems>
@@ -117,7 +69,7 @@ export interface TableSchema<
         row: TRow
         context: TableContextDataFromItems<TContextItems>
         pageContext: TableContextDataFromItems<TPageContextItems>
-      }) => readonly TableRowAction<
+      }) => TableRowAction<
         TRow,
         TableContextDataFromItems<TContextItems>,
         TableContextDataFromItems<TPageContextItems>
@@ -126,124 +78,51 @@ export interface TableSchema<
   persistence?: TablePersistenceOptions
 }
 
-export type TableSchemaInput<
+export type BuildTableSchema<
   TSource extends TableSource<any, any, any> = TableSource<any, any, any>,
-  TFilterKey extends string = TableKnownFieldPath<InferTableSourceRow<TSource>>,
-  TSortKey extends string = TableKnownFieldPath<InferTableSourceRow<TSource>>,
-  TContextItems extends readonly TableContextItem[] = readonly TableContextItem[],
-  TPageContextItems extends readonly TablePageContextItem<
+  TContextItems extends TableContextItem[] = TableContextItem[],
+  TPageContextItems extends TablePageContextItem<
     InferTableSourceRow<TSource>,
     TableContextDataFromItems<TContextItems>
-  >[] = readonly TablePageContextItem<
+  >[] = TablePageContextItem<
     InferTableSourceRow<TSource>,
     TableContextDataFromItems<TContextItems>
   >[],
-  TView extends string = string,
-> = {
-  tableKey: string
-  rowKey: TableRowKey<InferTableSourceRow<TSource>>
-  source: TSource
-  views?: readonly TView[]
-  defaultLayout?: TableLayout
-  context?: TContextItems
-  pageContext?: TPageContextItems
-  filters?: TableFiltersSchema<
+  TFilterKey extends string = TableKnownFieldPath<InferTableSourceRow<TSource>>,
+  TSortKey extends string = TableKnownFieldPath<InferTableSourceRow<TSource>>,
+> = Omit<
+  TableSchema<
     InferTableSourceRow<TSource>,
-    TableContextDataFromItems<TContextItems>,
-    TFilterKey
-  >
-  table?: TableTableSchema<
-    InferTableSourceRow<TSource>,
-    TableContextDataFromItems<TContextItems>,
-    TableResolvedPageContextData<TPageContextItems>,
-    TView,
+    TContextItems,
+    TPageContextItems,
+    TFilterKey,
     TSortKey
-  >
-  grid?: TableGridSchema<
-    InferTableSourceRow<TSource>,
-    TableContextDataFromItems<TContextItems>,
-    TableResolvedPageContextData<TPageContextItems>,
-    TView,
-    TSortKey
-  >
-  selection?: TableSelectionSchema
-  actions?: readonly TableBulkAction<
-    InferTableSourceRow<TSource>,
-    TableContextDataFromItems<TContextItems>,
-    TableResolvedPageContextData<TPageContextItems>
-  >[]
-  toolbarActions?: readonly TableToolbarAction<
-    InferTableSourceRow<TSource>,
-    TableContextDataFromItems<TContextItems>,
-    TableResolvedPageContextData<TPageContextItems>
-  >[]
-  rowActions?:
-    | readonly TableRowAction<
-        InferTableSourceRow<TSource>,
-        TableContextDataFromItems<TContextItems>,
-        TableResolvedPageContextData<TPageContextItems>
-      >[]
-    | ((params: {
-        row: InferTableSourceRow<TSource>
-        context: TableContextDataFromItems<TContextItems>
-        pageContext: TableResolvedPageContextData<TPageContextItems>
-      }) => readonly TableRowAction<
-        InferTableSourceRow<TSource>,
-        TableContextDataFromItems<TContextItems>,
-        TableResolvedPageContextData<TPageContextItems>
-      >[])
-  controls?: TableControlsSchema
-  persistence?: TablePersistenceOptions
+  >,
+  'source'
+> & {
+  source: TSource &
+    TableSource<InferTableSourceRow<TSource>, TableContextDataFromItems<TContextItems>>
 }
 
 type ResolveCollection<TCollection> = TCollection extends (...args: never[]) => infer TResult
   ? TResult
   : TCollection
 
-export type ResolvedTableSchema<TSchema> =
-  Omit<TSchema, 'table' | 'filters'> & {
-    table?: TSchema extends { table?: infer TTable }
-      ? TTable extends { columns?: infer TColumns }
-        ? Omit<TTable, 'columns'> & {
-            columns?: ResolveCollection<TColumns>
-          }
-        : TTable
-      : never
-    filters?: TSchema extends { filters?: infer TFilters }
-      ? TFilters extends { ui?: infer TUi }
-        ? Omit<TFilters, 'ui'> & {
-            ui?: ResolveCollection<TUi>
-          }
-        : TFilters
-      : never
-  }
+export type ResolvedTableSchema<TSchema> = Omit<TSchema, 'table' | 'filters'> & {
+  table?: TSchema extends { table?: infer TTable }
+    ? TTable extends { columns?: infer TColumns }
+      ? Omit<TTable, 'columns'> & {
+          columns?: ResolveCollection<TColumns>
+        }
+      : TTable
+    : never
+  filters?: TSchema extends { filters?: infer TFilters }
+    ? TFilters extends { ui?: infer TUi }
+      ? Omit<TFilters, 'ui'> & {
+          ui?: ResolveCollection<TUi>
+        }
+      : TFilters
+    : never
+}
 
-export type ResolveSchemaKey<TCandidate extends string, TFallback extends string> = [TCandidate] extends [
-  never,
-]
-  ? TFallback
-  : string extends TCandidate
-    ? TFallback
-    : TCandidate
-
-export type BuildTableSchemaInput<
-  TSource extends TableSource<any, any, any>,
-  TContextItems extends readonly TableContextItem[],
-  TPageContextItems extends readonly TablePageContextItem<
-    InferTableSourceRow<TSource>,
-    TableContextDataFromItems<TContextItems>
-  >[],
-  TView extends string,
-> = TableSchemaInput<
-  TSource,
-  InferTableSourceFilterKey<TSource> extends never
-    ? TableKnownFieldPath<InferTableSourceRow<TSource>>
-    : InferTableSourceFilterKey<TSource>,
-  ResolveSchemaKey<
-    InferTableSourceSortKey<TSource>,
-    TableKnownFieldPath<InferTableSourceRow<TSource>>
-  >,
-  TContextItems,
-  TPageContextItems,
-  TView
->
+export type TableSchemaView = ResolvedTableSchema<TableSchema>

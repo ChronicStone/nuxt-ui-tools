@@ -1,52 +1,22 @@
 # V2 Architecture
 
-The V2 reset is now based on three packages:
+The V2 reset is now based on a single package:
 
-- `@nuxt-ui-tools/table-core`
 - `@nuxt-ui-tools/table`
-- `@nuxt-ui-tools/table-query`
 
-## Package roles
+## Package role
 
-### `table-core`
+`@nuxt-ui-tools/table` owns:
 
-Shared foundation only:
-
-- generic schema/types
-- column builder internals
-- shared utilities
-- normalized contracts for future shared runtime work
-
-It is public, but not the main end-user schema entrypoint.
-
-### `table`
-
-Base schema package:
-
-- exports `defineTable(...)`
-- every async resolver is promise-based
-- no TanStack Query dependency
-
-### `table-query`
-
-Query-backed schema package:
-
-- exports `defineQueryTable(...)`
-- every async resolver returns query options
-- owns the TanStack Query-facing types
+- `defineTableSchema(...)`
+- TanStack Query-backed source/context/pageContext/filter-option contracts
+- schema typing and extraction helpers
+- query-state utilities and composables
+- future runtime work in V1-style folders (`types`, `utils`, `composables`, `components`, `adapters`, `config`)
 
 ## Runtime direction
 
 The previous runtime implementation is discarded.
-
-Future runtime work should preserve the V1 structural style:
-
-- `types/`
-- `utils/`
-- `composables/`
-- `components/`
-- `adapters/`
-- `config/`
 
 The critical first runtime milestone is intentionally narrow:
 

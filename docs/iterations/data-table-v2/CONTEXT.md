@@ -32,19 +32,15 @@ Read in this order:
 
 The architecture is now:
 
-- `@nuxt-ui-tools/table-core`
 - `@nuxt-ui-tools/table`
-- `@nuxt-ui-tools/table-query`
 
-Builder ownership:
+Builder:
 
-- `defineTable(...)` in `table`
-- `defineQueryTable(...)` in `table-query`
+- `defineTableSchema(...)` in `table`
 
-Async contract split:
+Async contract:
 
-- base package: promises only
-- query package: query options only
+- TanStack Query options only
 
 ## Runtime note
 

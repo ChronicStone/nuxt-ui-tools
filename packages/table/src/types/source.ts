@@ -1,11 +1,15 @@
+import type { UseQueryOptions } from '@tanstack/vue-query'
+
 import type {
   GenericObject,
-  TableFieldPath,
-  TableSortKey,
+  TableKnownFieldPath,
   TablePaginationState,
+  TableSortKey,
   TableSortingRule,
   TableRowsFromSourceResult,
 } from './utils'
+
+export type TableQueryDefinition<TData = unknown> = UseQueryOptions<TData>
 
 export interface TableSourceExecutionResult<TRow extends GenericObject = GenericObject> {
   rows: TRow[]
@@ -14,89 +18,44 @@ export interface TableSourceExecutionResult<TRow extends GenericObject = Generic
 
 export interface TableSourceRequestContext<
   TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
   TContext extends GenericObject = GenericObject,
+  TFilterKey extends string = TableKnownFieldPath<TRow>,
+  TSortKey extends string = TableSortKey<TRow>,
 > {
   pagination: TablePaginationState
-  sorting: readonly TableSortingRule<TSortKey>[]
+  sorting: TableSortingRule<TSortKey>[]
   filters: Partial<Record<TFilterKey, unknown>>
   search: string
   context: TContext
-  rowType?: TRow
 }
 
-export interface TableSerializerDefinition<
-  TResponse = unknown,
+export interface TableSource<
   TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TResult = TableSourceExecutionResult<TRow> | TRow[],
 > {
-  key: string
-  fromResponse?: (response: TResponse) => TableSourceExecutionResult<TRow>
+  mode?: 'client' | 'remote'
+  query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
 }
 
-interface TableSourceTypeMetadata<
-  TRow extends GenericObject,
-  TFilterKey extends string,
-  TSortKey extends string,
-> {
-  __rowType?: TRow
-  __filterKey?: TFilterKey
-  __sortKey?: TSortKey
-}
-
-export type TableClientSource<
-  TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
-> = TableSourceTypeMetadata<TRow, TFilterKey, TSortKey> & {
-  mode: 'client'
-  loader: (
-    ctx: TableSourceRequestContext<TRow, TFilterKey, TSortKey>,
-  ) => Promise<readonly TRow[]> | readonly TRow[]
-}
-
-export type TableRemoteSource<
-  TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
-  TResponse = TableSourceExecutionResult<TRow>,
-> = TableSourceTypeMetadata<TRow, TFilterKey, TSortKey> & {
-  mode: 'remote'
-  loader: (
-    ctx: TableSourceRequestContext<TRow, TFilterKey, TSortKey>,
-  ) => Promise<TResponse> | TResponse
-  serializer?: TableSerializerDefinition<TResponse, TRow> | string
-}
-
-export type TableSource<
-  TRow extends GenericObject = GenericObject,
-  TFilterKey extends string = TableFieldPath<TRow>,
-  TSortKey extends string = TableSortKey<TRow>,
-  TResponse = TableSourceExecutionResult<TRow>,
-> =
-  | TableClientSource<TRow, TFilterKey, TSortKey>
-  | TableRemoteSource<TRow, TFilterKey, TSortKey, TResponse>
-
-export type InferTableSourceFilterKey<TSource> = TSource extends { __filterKey?: infer TFilterKey }
-  ? TFilterKey extends string
-    ? TFilterKey
-    : never
-  : never
-
-export type InferTableSourceSortKey<TSource> = TSource extends { __sortKey?: infer TSortKey }
-  ? TSortKey extends string
-    ? TSortKey
-    : string
-  : string
-
-type ExtractSourceResult<TSource> = TSource extends {
-  loader: (...args: never[]) => Promise<infer TResult> | infer TResult
+type ExtractQueryResult<TQuery> = TQuery extends {
+  queryFn?: (...args: never[]) => Promise<infer TResult> | infer TResult
 }
   ? Awaited<TResult>
+  : TQuery extends TableQueryDefinition<infer TResult>
+    ? Awaited<TResult>
+    : never
+
+export type ExtractTableSourceResult<TSource> = TSource extends {
+  query: (...args: never[]) => infer TQuery
+}
+  ? ExtractQueryResult<TQuery>
   : never
 
-export type InferTableSourceRow<TSource> = TSource extends { __rowType?: infer TRow }
-  ? [TRow] extends [never]
-    ? TableRowsFromSourceResult<ExtractSourceResult<TSource>>
-    : TRow
-  : TableRowsFromSourceResult<ExtractSourceResult<TSource>>
+type NormalizeSourceRow<TRow> = TRow extends GenericObject
+  ? TRow
+  : GenericObject
+
+export type InferTableSourceRow<TSource> = NormalizeSourceRow<
+  TableRowsFromSourceResult<ExtractTableSourceResult<TSource>>
+>

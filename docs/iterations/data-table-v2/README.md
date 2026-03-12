@@ -18,9 +18,9 @@ Supporting files:
 
 Important:
 
-- older runtime directions have been superseded
+- older multi-package runtime directions have been superseded
 - the canonical current source of truth is [`07-current-spec.md`](./07-current-spec.md)
 - the centralized handoff context is [`CONTEXT.md`](./CONTEXT.md)
 - the Nuxt playground route at `playgrounds/nuxt/app/pages/table.vue` is a required progress surface:
-  - it currently demonstrates the schema split only
+  - it currently demonstrates the single-package schema direction
   - runtime previews should return later, starting with query state, table context, and table data

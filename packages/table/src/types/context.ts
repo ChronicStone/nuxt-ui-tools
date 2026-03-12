@@ -1,19 +1,10 @@
-import type {
-  GenericObject,
-  MaybePromise,
-  Prettify,
-  TableViewValue,
-  UnionToIntersection,
-} from './utils'
+import type { TableQueryDefinition } from './source'
+import type { GenericObject, Prettify, UnionToIntersection } from './utils'
 
-export interface TableContextItem<
-  TKey extends string = string,
-  TValue = unknown,
-> {
+export interface TableContextItem<TKey extends string = string, TValue = unknown> {
   key: TKey
-  loader: () => MaybePromise<TValue>
-  views?: readonly string[]
-  condition?: TableViewValue<string, boolean | (() => boolean)>
+  query: () => TableQueryDefinition<TValue>
+  condition?: () => boolean
 }
 
 export interface TablePageContextItem<
@@ -23,25 +14,24 @@ export interface TablePageContextItem<
   TValue = unknown,
 > {
   key: TKey
-  loader: (ctx: {
-    rows: readonly TRow[]
-    context: TContext
-  }) => MaybePromise<TValue>
-  views?: readonly string[]
-  condition?: TableViewValue<string, boolean | (() => boolean)>
+  query: (ctx: { rows: TRow[]; context: TContext }) => TableQueryDefinition<TValue>
+  condition?: () => boolean
 }
 
 type ContextItemRecord<TItem> = TItem extends {
   key: infer TKey extends string
 }
   ? {
-      [K in TKey]:
-        TItem extends { loader: (...args: any[]) => MaybePromise<infer TValue> }
+      [K in TKey]: TItem extends { query: (...args: any[]) => infer TQuery }
+        ? TQuery extends { queryFn?: (...args: never[]) => Promise<infer TValue> | (infer TValue) }
           ? Awaited<TValue>
-          : never
+          : TQuery extends TableQueryDefinition<infer TValue>
+            ? Awaited<TValue>
+            : never
+        : never
     }
   : {}
 
-export type TableContextDataFromItems<
-  TItems extends readonly unknown[],
-> = Prettify<UnionToIntersection<ContextItemRecord<TItems[number]>>>
+export type TableContextDataFromItems<TItems extends unknown[]> = Prettify<
+  UnionToIntersection<ContextItemRecord<TItems[number]>>
+>
