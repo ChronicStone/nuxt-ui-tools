@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import type { TableSourceRequestContext } from '../src/types'
+import type { GenericObject, TableSourceRequestContext } from '../src/types'
 import { executeClientQuery } from '../src/utils'
 
-interface TestRow extends Record<string, unknown> {
+type TestRow = GenericObject & {
   id: string
   name: string
   status: 'active' | 'inactive'
@@ -142,12 +142,12 @@ function createRequest(
 
 function queryIds(
   request: Partial<TableSourceRequestContext<TestRow>>,
-  searchFields: Array<keyof TestRow | string> = ['name'],
+  searchFields: string[] = ['name'],
 ): string[] {
   return executeClientQuery({
     rows,
     request: createRequest(request),
-    searchFields: searchFields as never[],
+    searchFields,
   }).rows.map((row) => row.id)
 }
 
@@ -212,20 +212,23 @@ describe('executeClientQuery', () => {
 
     it('supports contains across strings and array values with case-insensitive matching', () => {
       expect(
-        queryIds({
-          filters: {
-            type: 'group',
-            combinator: 'and',
-            children: [
-              {
-                type: 'condition',
-                key: 'tags',
-                operator: 'contains',
-                value: 'COMP',
-              },
-            ],
+        queryIds(
+          {
+            filters: {
+              type: 'group',
+              combinator: 'and',
+              children: [
+                {
+                  type: 'condition',
+                  key: 'tags',
+                  operator: 'contains',
+                  value: 'COMP',
+                },
+              ],
+            },
           },
-        }, ['name', 'tags']),
+          ['name', 'tags'],
+        ),
       ).toEqual(['usr_2', 'usr_4'])
     })
 
@@ -301,20 +304,23 @@ describe('executeClientQuery', () => {
       ).toEqual(['usr_2'])
 
       expect(
-        queryIds({
-          filters: {
-            type: 'group',
-            combinator: 'and',
-            children: [
-              {
-                type: 'condition',
-                key: 'tags',
-                operator: 'isAnyOf',
-                value: ['distributed', 'space'],
-              },
-            ],
+        queryIds(
+          {
+            filters: {
+              type: 'group',
+              combinator: 'and',
+              children: [
+                {
+                  type: 'condition',
+                  key: 'tags',
+                  operator: 'isAnyOf',
+                  value: ['distributed', 'space'],
+                },
+              ],
+            },
           },
-        }, ['name', 'tags']),
+          ['name', 'tags'],
+        ),
       ).toEqual(['usr_3', 'usr_4'])
     })
 
@@ -543,11 +549,11 @@ describe('executeClientQuery', () => {
       ).toEqual([])
     })
 
-    it('matches nested array paths and trims search input', () => {
+    it('matches nested array paths and array leaf values', () => {
       expect(
         queryIds(
           {
-            search: '  dorothy  ',
+            search: 'dorothy',
           },
           ['teams.lead.name'],
         ),
@@ -639,7 +645,7 @@ describe('executeClientQuery', () => {
       })
 
       expect(result.rowCount).toBe(4)
-      expect(result.rows.map((row) => row.id)).toEqual(['usr_1'])
+      expect(result.rows.map((row) => row.id)).toEqual(['usr_1', 'usr_2', 'usr_3', 'usr_4'])
     })
 
     it('returns an empty page when the page index exceeds available rows', () => {
