@@ -147,12 +147,16 @@ export function useTableApi<TSchema = TableSchemaView>(
 
   function setPageSize(pageSize: number) {
     params.pagination.value = {
-      ...params.pagination.value,
+      pageIndex: 1,
       pageSize,
     }
   }
 
   function setSorting(sorting: TableSortingRule | null) {
+    params.pagination.value = {
+      ...params.pagination.value,
+      pageIndex: 1,
+    }
     params.sorting.value = sorting ? { key: sorting.key, dir: sorting.dir } : null
   }
 
@@ -180,6 +184,10 @@ export function useTableApi<TSchema = TableSchemaView>(
   }
 
   function setSearch(search: string) {
+    params.pagination.value = {
+      ...params.pagination.value,
+      pageIndex: 1,
+    }
     params.filters.value = {
       ...params.filters.value,
       search,
@@ -217,6 +225,10 @@ export function useTableApi<TSchema = TableSchemaView>(
 
     const nextFilters = params.filters.value.ui.filter((filter) => filter.key !== key)
 
+    params.pagination.value = {
+      ...params.pagination.value,
+      pageIndex: 1,
+    }
     params.filters.value = {
       ...params.filters.value,
       ui: [...nextFilters, nextRule],
@@ -245,6 +257,10 @@ export function useTableApi<TSchema = TableSchemaView>(
   }
 
   function removeFilter<TKey extends ExtractTableFilterKey<TSchema>>(key: TKey) {
+    params.pagination.value = {
+      ...params.pagination.value,
+      pageIndex: 1,
+    }
     params.filters.value = {
       ...params.filters.value,
       ui: params.filters.value.ui.filter((filter) => filter.key !== key),
@@ -252,6 +268,10 @@ export function useTableApi<TSchema = TableSchemaView>(
   }
 
   function clearFilters() {
+    params.pagination.value = {
+      ...params.pagination.value,
+      pageIndex: 1,
+    }
     params.filters.value = {
       ...params.filters.value,
       ui: [],

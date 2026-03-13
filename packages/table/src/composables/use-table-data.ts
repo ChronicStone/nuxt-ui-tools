@@ -62,7 +62,13 @@ export function useTableData(
   })
 
   const contextData = computed(() =>
-    context.value.reduce<GenericObject>((acc, item) => ({ ...acc, [item.key]: item.data }), {}),
+    context.value.reduce<GenericObject>((acc, item) => {
+      if (!item.key) {
+        return acc
+      }
+
+      return { ...acc, [item.key]: item.data }
+    }, {}),
   )
 
   const isContextPending = computed(() =>
@@ -161,7 +167,13 @@ export function useTableData(
   })
 
   const pageContextData = computed(() =>
-    pageContext.value.reduce<GenericObject>((acc, item) => ({ ...acc, [item.key]: item.data }), {}),
+    pageContext.value.reduce<GenericObject>((acc, item) => {
+      if (!item.key) {
+        return acc
+      }
+
+      return { ...acc, [item.key]: item.data }
+    }, {}),
   )
 
   const isPageContextPending = computed(() =>

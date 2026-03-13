@@ -17,7 +17,7 @@ export function usePlaygroundNavigation() {
         descriptionKey: 'nav.formDescription',
       },
       {
-        to: localePath('/table'),
+        to: localePath('/table-v2'),
         key: 'nav.table',
         descriptionKey: 'nav.tableDescription',
       },

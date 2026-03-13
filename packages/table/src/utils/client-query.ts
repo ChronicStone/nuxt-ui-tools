@@ -57,43 +57,82 @@ function matchesSearch<TRow extends GenericObject>(
     return true
   }
 
-  return search.fields.some((field) => pathMatchesSearchValue(row, String(field), search.value))
+  return search.fields.some((field) =>
+    pathMatchesSearchValue({
+      value: row,
+      path: String(field),
+      search: search.value,
+    }),
+  )
 }
 
-function pathMatchesSearchValue(value: unknown, path: string, search: string): boolean {
-  const segments = path.split('.')
-  return matchSearchPathSegments(value, segments, search)
+function pathMatchesSearchValue(options: {
+  value: unknown
+  path: string
+  search: string
+}): boolean {
+  const segments = options.path.split('.')
+  return matchSearchPathSegments({
+    value: options.value,
+    segments,
+    search: options.search,
+  })
 }
 
-function matchSearchPathSegments(value: unknown, segments: string[], search: string): boolean {
-  if (segments.length === 0) {
-    return valueMatchesSearch(value, search)
+function matchSearchPathSegments(options: {
+  value: unknown
+  segments: string[]
+  search: string
+}): boolean {
+  if (options.segments.length === 0) {
+    return valueMatchesSearch({
+      value: options.value,
+      search: options.search,
+    })
   }
 
-  if (isArray(value)) {
-    return value.some((item) => matchSearchPathSegments(item, segments, search))
+  if (isArray(options.value)) {
+    return options.value.some((item) =>
+      matchSearchPathSegments({
+        value: item,
+        segments: options.segments,
+        search: options.search,
+      }),
+    )
   }
 
-  if (!isObject(value)) {
+  if (!isObject(options.value)) {
     return false
   }
 
-  const [head, ...tail] = segments
-  if (!head || !(head in value)) {
+  const [head, ...tail] = options.segments
+  if (!head || !(head in options.value)) {
     return false
   }
 
-  return matchSearchPathSegments((value as Record<string, unknown>)[head], tail, search)
+  return matchSearchPathSegments({
+    value: (options.value as Record<string, unknown>)[head],
+    segments: tail,
+    search: options.search,
+  })
 }
 
-function valueMatchesSearch(value: unknown, search: string): boolean {
-  const normalizedSearch = normalizeString(search)
+function valueMatchesSearch(options: {
+  value: unknown
+  search: string
+}): boolean {
+  const normalizedSearch = normalizeString(options.search)
 
-  if (isArray(value)) {
-    return value.some((item) => valueMatchesSearch(item, normalizedSearch))
+  if (isArray(options.value)) {
+    return options.value.some((item) =>
+      valueMatchesSearch({
+        value: item,
+        search: normalizedSearch,
+      }),
+    )
   }
 
-  return normalizeString(value).includes(normalizedSearch)
+  return normalizeString(options.value).includes(normalizedSearch)
 }
 
 function* lazySortRows<TRow extends GenericObject>(
@@ -132,7 +171,11 @@ function* lazySortRows<TRow extends GenericObject>(
         break
       }
 
-      const insertIndex = findInsertIndex(buffer, next.value, compare)
+      const insertIndex = findInsertIndex({
+        rows: buffer,
+        value: next.value,
+        compare,
+      })
       buffer.splice(insertIndex, 0, next.value)
     }
   }
@@ -144,10 +187,10 @@ function createRowComparator<TRow extends GenericObject>(
   return (left, right) => {
     for (const rule of sorting) {
       const direction = rule.dir === 'desc' ? -1 : 1
-      const comparison = compareUnknownValues(
-        getFilterTargetValue(left, rule.key),
-        getFilterTargetValue(right, rule.key),
-      )
+      const comparison = compareUnknownValues({
+        left: getFilterTargetValue({ source: left, key: rule.key }),
+        right: getFilterTargetValue({ source: right, key: rule.key }),
+      })
 
       if (comparison !== 0) {
         return comparison * direction
@@ -158,18 +201,18 @@ function createRowComparator<TRow extends GenericObject>(
   }
 }
 
-function findInsertIndex<TRow>(
-  rows: TRow[],
-  value: TRow,
-  compare: (left: TRow, right: TRow) => number,
-): number {
+function findInsertIndex<TRow>(options: {
+  rows: TRow[]
+  value: TRow
+  compare: (left: TRow, right: TRow) => number
+}): number {
   let low = 0
-  let high = rows.length
+  let high = options.rows.length
 
   while (low < high) {
     const mid = Math.floor((low + high) / 2)
 
-    if (compare(value, rows[mid] as TRow) < 0) {
+    if (options.compare(options.value, options.rows[mid] as TRow) < 0) {
       high = mid
       continue
     }
@@ -218,38 +261,44 @@ function matchesFilterCondition<TRow extends GenericObject>(
   row: TRow,
   condition: TableResolvedFilterCondition<string>,
 ): boolean {
-  const value = getFilterTargetValue(row, condition.key)
+  const value = getFilterTargetValue({
+    source: row,
+    key: condition.key,
+  })
 
   switch (condition.operator) {
     case 'contains':
-      return matchContains(value, condition.value)
+      return matchContains({ value, filter: condition.value })
     case 'is':
-      return matchIs(value, condition.value)
+      return matchIs({ value, filter: condition.value })
     case 'isAnyOf':
-      return matchIsAnyOf(value, condition.value)
+      return matchIsAnyOf({ value, filter: condition.value })
     case 'isNot':
-      return !matchIs(value, condition.value)
+      return !matchIs({ value, filter: condition.value })
     case 'gt':
-      return matchComparison(value, condition.value, 'gt')
+      return matchComparison({ value, filter: condition.value, operator: 'gt' })
     case 'gte':
-      return matchComparison(value, condition.value, 'gte')
+      return matchComparison({ value, filter: condition.value, operator: 'gte' })
     case 'lt':
-      return matchComparison(value, condition.value, 'lt')
+      return matchComparison({ value, filter: condition.value, operator: 'lt' })
     case 'lte':
-      return matchComparison(value, condition.value, 'lte')
+      return matchComparison({ value, filter: condition.value, operator: 'lte' })
     case 'between':
-      return matchBetween(value, condition.value)
+      return matchBetween({ value, filter: condition.value })
     case 'before':
-      return matchComparison(value, condition.value, 'lt')
+      return matchComparison({ value, filter: condition.value, operator: 'lt' })
     case 'after':
-      return matchComparison(value, condition.value, 'gt')
+      return matchComparison({ value, filter: condition.value, operator: 'gt' })
     default:
       return false
   }
 }
 
-function getFilterTargetValue(source: unknown, key: string): unknown {
-  return key.split('.').reduce<unknown>((current, segment) => {
+function getFilterTargetValue(options: {
+  source: unknown
+  key: string
+}): unknown {
+  return options.key.split('.').reduce<unknown>((current, segment) => {
     if (isArray(current)) {
       return current.map((item) =>
         item != null && typeof item === 'object'
@@ -263,41 +312,68 @@ function getFilterTargetValue(source: unknown, key: string): unknown {
     }
 
     return (current as Record<string, unknown>)[segment]
-  }, source)
+  }, options.source)
 }
 
-function matchContains(value: unknown, filter: unknown): boolean {
-  const needle = normalizeString(filter)
+function matchContains(options: {
+  value: unknown
+  filter: unknown
+}): boolean {
+  const needle = normalizeString(options.filter)
 
   if (!needle.length) {
     return true
   }
 
-  return toValueList(value).some((item) => normalizeString(item).includes(needle))
+  return toValueList(options.value).some((item) => normalizeString(item).includes(needle))
 }
 
-function matchIs(value: unknown, filter: unknown): boolean {
-  return toValueList(value).some((item) => areEqual(item, filter))
+function matchIs(options: {
+  value: unknown
+  filter: unknown
+}): boolean {
+  return toValueList(options.value).some((item) =>
+    areEqual({
+      left: item,
+      right: options.filter,
+    }),
+  )
 }
 
-function matchIsAnyOf(value: unknown, filter: unknown): boolean {
-  if (!isArray(filter)) {
-    return matchIs(value, filter)
+function matchIsAnyOf(options: {
+  value: unknown
+  filter: unknown
+}): boolean {
+  if (!isArray(options.filter)) {
+    return matchIs(options)
   }
 
-  return filter.some((candidate) => matchIs(value, candidate))
+  return options.filter.some((candidate) =>
+    matchIs({
+      value: options.value,
+      filter: candidate,
+    }),
+  )
 }
 
-function matchBetween(value: unknown, filter: unknown): boolean {
-  if (!isObject(filter)) {
+function matchBetween(options: {
+  value: unknown
+  filter: unknown
+}): boolean {
+  if (!isObject(options.filter)) {
     return false
   }
 
   const from =
-    'from' in filter ? normalizeComparable((filter as Record<string, unknown>).from) : null
-  const to = 'to' in filter ? normalizeComparable((filter as Record<string, unknown>).to) : null
+    'from' in options.filter
+      ? normalizeComparable((options.filter as Record<string, unknown>).from)
+      : null
+  const to =
+    'to' in options.filter
+      ? normalizeComparable((options.filter as Record<string, unknown>).to)
+      : null
 
-  return toValueList(value).some((item) => {
+  return toValueList(options.value).some((item) => {
     const comparable = normalizeComparable(item)
 
     if (comparable == null) {
@@ -316,24 +392,24 @@ function matchBetween(value: unknown, filter: unknown): boolean {
   })
 }
 
-function matchComparison(
-  value: unknown,
-  filter: unknown,
-  operator: 'gt' | 'gte' | 'lt' | 'lte',
-): boolean {
-  const expected = normalizeComparable(filter)
+function matchComparison(options: {
+  value: unknown
+  filter: unknown
+  operator: 'gt' | 'gte' | 'lt' | 'lte'
+}): boolean {
+  const expected = normalizeComparable(options.filter)
   if (expected == null) {
     return false
   }
 
-  return toValueList(value).some((item) => {
+  return toValueList(options.value).some((item) => {
     const comparable = normalizeComparable(item)
 
     if (comparable == null) {
       return false
     }
 
-    switch (operator) {
+    switch (options.operator) {
       case 'gt':
         return comparable > expected
       case 'gte':
@@ -354,19 +430,25 @@ function toValueList(value: unknown): unknown[] {
   return value.flatMap((item) => (isArray(item) ? toValueList(item) : [item]))
 }
 
-function areEqual(left: unknown, right: unknown): boolean {
-  if (isDate(left) || isDate(right)) {
-    const leftValue = normalizeComparable(left)
-    const rightValue = normalizeComparable(right)
+function areEqual(options: {
+  left: unknown
+  right: unknown
+}): boolean {
+  if (isDate(options.left) || isDate(options.right)) {
+    const leftValue = normalizeComparable(options.left)
+    const rightValue = normalizeComparable(options.right)
     return leftValue != null && leftValue === rightValue
   }
 
-  return left === right
+  return options.left === options.right
 }
 
-function compareUnknownValues(left: unknown, right: unknown): number {
-  const leftComparable = normalizeComparableForSort(left)
-  const rightComparable = normalizeComparableForSort(right)
+function compareUnknownValues(options: {
+  left: unknown
+  right: unknown
+}): number {
+  const leftComparable = normalizeComparableForSort(options.left)
+  const rightComparable = normalizeComparableForSort(options.right)
 
   if (leftComparable == null && rightComparable == null) {
     return 0

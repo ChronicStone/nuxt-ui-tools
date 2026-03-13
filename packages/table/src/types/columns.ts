@@ -28,6 +28,7 @@ interface TableColumnBase<
 > {
   key: TKey
   label?: string | (() => RenderableType)
+  icon?: string
   width?: number | string
   minWidth?: number | string
   sortable?: boolean
@@ -173,10 +174,6 @@ export type TableColumnCollection<
   TSortKey extends string = TableSortKey<TRow>,
 > =
   | TableColumn<TRow, TContext, TPageContext, TKey, TSortKey>[]
-  | ((column: TableColumnBuilder<TRow, TContext, TPageContext, TSortKey>) => TableColumn<
-      TRow,
-      TContext,
-      TPageContext,
-      TKey,
-      TSortKey
-    >[])
+  | ((
+      column: TableColumnBuilder<TRow, TContext, TPageContext, TSortKey>,
+    ) => TableColumn<TRow, TContext, TPageContext, TKey, TSortKey>[])

@@ -1,7 +1,109 @@
-import { defineTableSchema, type ExtractTableContextData } from '@nuxt-ui-tools/table'
+import { defineTableSchema, type GenericObject } from '../../../../packages/table/src'
+
+interface DemoCompany extends GenericObject {
+  id: string
+  name: string
+  country: string | null
+  createdAt: string
+}
+
+interface DemoDepartment extends GenericObject {
+  id: string
+  companyId: string
+  name: string
+  budget: number | null
+  company?: DemoCompany
+}
+
+interface DemoSkill extends GenericObject {
+  id: string
+  label: string
+}
+
+interface DemoEmployeeSkill extends GenericObject {
+  employeeId: string
+  skillId: string
+  skill: DemoSkill
+}
+
+interface DemoEmployeeRow extends GenericObject {
+  id: string
+  departmentId: string
+  fullName: string
+  email: string
+  salary: number | null
+  isActive: boolean
+  hiredAt: string | null
+  department?: DemoDepartment
+  employeeSkills: DemoEmployeeSkill[]
+}
+
+interface TableRemoteFilterCondition {
+  type: 'condition'
+  key: string
+  operator:
+    | 'contains'
+    | 'is'
+    | 'isAnyOf'
+    | 'isNot'
+    | 'gt'
+    | 'gte'
+    | 'lt'
+    | 'lte'
+    | 'between'
+    | 'before'
+    | 'after'
+  value: unknown
+}
+
+interface TableRemoteFilterGroup {
+  type: 'group'
+  combinator: 'and' | 'or'
+  children: Array<TableRemoteFilterGroup | TableRemoteFilterCondition>
+}
+
+interface DemoEmployeesTableRequest {
+  pagination: {
+    pageIndex: number
+    pageSize: number
+  }
+  sorting: Array<{
+    key: string
+    dir: 'asc' | 'desc'
+  }>
+  filters: TableRemoteFilterGroup
+  search: {
+    value: string
+    fields: string[]
+  }
+  context: Record<string, unknown>
+}
+
+interface DemoEmployeesTableResponse {
+  rows: DemoEmployeeRow[]
+  rowCount: number
+}
+
+const demoCountryOptions = [
+  { label: 'France', value: 'France' },
+  { label: 'Germany', value: 'Germany' },
+  { label: 'Japan', value: 'Japan' },
+  { label: 'United Kingdom', value: 'United Kingdom' },
+  { label: 'United States', value: 'United States' },
+] as const
+
+const demoSkillOptions = [
+  { label: 'Distributed Systems', value: 'Distributed Systems' },
+  { label: 'Go', value: 'Go' },
+  { label: 'Kubernetes', value: 'Kubernetes' },
+  { label: 'Security', value: 'Security' },
+  { label: 'TypeScript', value: 'TypeScript' },
+] as const
+
+const demoEmployeesEndpoint = '/api/table/demo-employees/query'
 
 export const tableSchema = defineTableSchema({
-  tableKey: 'playground-users',
+  tableKey: 'demo-employees-remote',
   rowKey: 'id',
   defaultLayout: 'table',
   pagination: {
@@ -10,7 +112,7 @@ export const tableSchema = defineTableSchema({
       grid: 12,
     },
     sizeOptions: {
-      table: [10, 20, 50],
+      table: [10, 20, 50, 100],
       grid: [12, 24, 48],
     },
     showPageSizePicker: true,
@@ -19,225 +121,98 @@ export const tableSchema = defineTableSchema({
   },
   source: {
     mode: 'remote',
-    query: ({ context }) => ({
-      queryKey: ['users', context.organisationId],
-      queryFn: async () => ({
-        rows: [
-          {
-            id: 'usr_1',
-            name: 'Ada Lovelace',
-            email: 'ada@analytical.test',
-            organisationId: context.organisationId,
-            status: 'active' as const,
-            verified: true,
-            score: 98,
-            createdAt: new Date('2026-03-10T08:00:00.000Z'),
-            organisation: {
-              status: 'active' as const,
-            },
-          },
-          {
-            id: 'usr_2',
-            name: 'Grace Hopper',
-            email: 'grace@compiler.test',
-            organisationId: context.organisationId,
-            status: 'inactive' as const,
-            verified: false,
-            score: 73,
-            createdAt: new Date('2026-03-08T10:30:00.000Z'),
-            organisation: {
-              status: 'inactive' as const,
-            },
-          },
-        ],
-        rowCount: 2,
-      }),
+    query: (request) => ({
+      queryKey: ['demo-employees', request],
+      queryFn: async () =>
+        $fetch<DemoEmployeesTableResponse>(demoEmployeesEndpoint, {
+          method: 'POST',
+          body: request as DemoEmployeesTableRequest,
+        }),
     }),
   },
-  context: [
-    {
-      key: 'organisationId',
-      query: () => ({
-        queryKey: ['organisation'],
-        queryFn: async () => 'org_123',
-      }),
-    },
-  ],
   filters: {
     search: {
-      fields: ['name', 'email'],
-      placeholder: 'Search users',
+      fields: ['fullName', 'email', 'department.company.name', 'employeeSkills.skill.label'],
+      placeholder: 'Search employees, companies, or skills',
     },
     ui: (filter) => [
-      filter.text('name', {
-        label: 'Name',
+      filter.text('fullName', {
+        label: 'Employee name',
         operators: ['contains', 'is'],
       }),
-      filter.option('status', {
-        label: 'Status preset',
+      filter.option('department.company.country', {
+        label: 'Company country',
         defaultOperator: 'isAnyOf',
-        options: [
-          { label: 'Reachable', value: 'reachable' as const },
-          { label: 'Needs review', value: 'needs_review' as const },
-          { label: 'Inactive only', value: 'inactive_only' as const },
-        ],
-        resolve({ rule }) {
-          const presets = Array.isArray(rule.value) ? rule.value : []
-          const children: Array<{
-            type: 'condition'
-            key: string
-            operator: 'is'
-            value: unknown
-          } | {
-            type: 'group'
-            combinator: 'and'
-            children: Array<{
-              type: 'condition'
-              key: string
-              operator: 'is'
-              value: unknown
-            }>
-          }> = []
-
-          for (const preset of presets) {
-            switch (preset) {
-              case 'reachable':
-                children.push(
-                  {
-                    type: 'group' as const,
-                    combinator: 'and' as const,
-                    children: [
-                      {
-                        type: 'condition' as const,
-                        key: 'status',
-                        operator: 'is' as const,
-                        value: 'active' as const,
-                      },
-                      {
-                        type: 'condition' as const,
-                        key: 'verified',
-                        operator: 'is' as const,
-                        value: true,
-                      },
-                    ],
-                  },
-                )
-                break
-
-              case 'needs_review':
-                children.push(
-                  {
-                    type: 'group' as const,
-                    combinator: 'and' as const,
-                    children: [
-                      {
-                        type: 'condition' as const,
-                        key: 'status',
-                        operator: 'is' as const,
-                        value: 'active' as const,
-                      },
-                      {
-                        type: 'condition' as const,
-                        key: 'verified',
-                        operator: 'is' as const,
-                        value: false,
-                      },
-                    ],
-                  },
-                )
-                break
-
-              case 'inactive_only':
-                children.push(
-                  {
-                    type: 'condition' as const,
-                    key: 'status',
-                    operator: 'is' as const,
-                    value: 'inactive' as const,
-                  },
-                )
-                break
-
-              default:
-                break
-            }
-          }
-
-          if (!children.length) {
-            return null
-          }
-
-          return {
-            type: 'group',
-            combinator: 'or',
-            children,
-          }
-        },
+        options: [...demoCountryOptions],
       }),
-      filter.option('organisation.status', {
-        label: 'Organisation status',
+      filter.option('employeeSkills.skill.label', {
+        label: 'Skill',
         defaultOperator: 'isAnyOf',
-        options: {
-          query: () => ({
-            queryKey: ['statuses'],
-            queryFn: async () => [
-              { label: 'Active', value: 'active' as const },
-              { label: 'Inactive', value: 'inactive' as const },
-            ],
-          }),
-        },
+        options: [...demoSkillOptions],
       }),
-      filter.boolean('verified', {
-        label: 'Verified',
+      filter.boolean('isActive', {
+        label: 'Active',
       }),
-      filter.number('score', {
-        label: 'Score',
+      filter.number('salary', {
+        label: 'Salary',
         operators: ['is', 'gte', 'lte', 'between'],
       }),
-      filter.date('createdAt', {
-        label: 'Created at',
+      filter.date('hiredAt', {
+        label: 'Hired at',
         operators: ['is', 'before', 'after', 'between'],
       }),
     ],
   },
   table: {
     defaultSorting: {
-      key: 'createdAt',
+      key: 'hiredAt',
       dir: 'desc',
     },
     columns: (column) => [
-      column.field('name', {
-        label: 'Name',
-        render: ({ value, context }) => `${value} (${context.organisationId})`,
+      column.field('fullName', {
+        label: 'Employee',
+        icon: 'i-lucide-user-round',
+        minWidth: 240,
       }),
       column.field('email', {
         label: 'Email',
+        icon: 'i-lucide-at-sign',
+        minWidth: 260,
       }),
-      column.field('organisation.status', {
-        label: 'Organisation status',
+      column.field('department.company.country', {
+        label: 'Country',
+        icon: 'i-lucide-globe',
+        minWidth: 160,
       }),
-      column.field('score', {
-        label: 'Score',
+      column.field('department.name', {
+        label: 'Department',
+        icon: 'i-lucide-building-2',
+        minWidth: 180,
+      }),
+      column.field('salary', {
+        label: 'Salary',
+        icon: 'i-lucide-wallet',
+        align: 'right',
+        labelAlign: 'right',
+        minWidth: 150,
       }),
     ],
   },
   grid: {
     enabled: true,
     defaultSorting: {
-      key: 'name',
+      key: 'fullName',
       dir: 'asc',
     },
   },
 })
 
-export type PlaygroundTableContext = ExtractTableContextData<typeof tableSchema>
-
 export const tablePlaygroundSummary = {
   builder: 'defineTableSchema',
   asyncContract: 'tanstack-query-only',
-  contextKeys: Object.keys({ organisationId: '' satisfies PlaygroundTableContext['organisationId'] extends string ? '' : never }),
   sourceMode: tableSchema.source.mode,
-  filterKeys: tableSchema.filters?.ui?.map(filter => filter.key),
-  resolvedFilters: true,
-  resolveExamples: ['status -> status preset'],
+  endpoint: demoEmployeesEndpoint,
+  searchFields: tableSchema.filters?.search?.fields ?? [],
+  filterKeys: tableSchema.filters?.ui?.map((filter) => filter.key),
+  remote: true,
 }

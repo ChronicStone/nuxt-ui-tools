@@ -1,11 +1,16 @@
 import type { UseQueryOptions } from '@tanstack/vue-query'
 
-import type { TableFilterOperator, TableQueryStateFilterRule, TableQueryStateFilterValue } from './query-state'
+import type {
+  TableFilterOperator,
+  TableQueryStateFilterRule,
+  TableQueryStateFilterValue,
+} from './query-state'
 import type { GenericObject, RenderableType, TableFieldPath, TableKnownFieldPath } from './utils'
 
 export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
   fields: TableFieldPath<TRow>[]
   placeholder?: string
+  debounce?: number
 }
 
 export interface TableStaticFilterRule<
@@ -18,10 +23,7 @@ export interface TableStaticFilterRule<
   value: unknown | ((context: TContext) => unknown)
 }
 
-export interface TableResolvedFilterCondition<
-  TKey extends string = string,
-  TValue = unknown,
-> {
+export interface TableResolvedFilterCondition<TKey extends string = string, TValue = unknown> {
   type: 'condition'
   key: TKey
   operator: TableFilterOperator
@@ -42,9 +44,7 @@ export type TableStaticFilterNode<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> =
-  | TableStaticFilterRule<TRow, TContext, TKey>
-  | TableResolvedFilterGroup<TKey>
+> = TableStaticFilterRule<TRow, TContext, TKey> | TableResolvedFilterGroup<TKey>
 
 export interface TableFilterResolveContext<
   TRow extends GenericObject = GenericObject,
@@ -57,8 +57,7 @@ export interface TableFilterResolveContext<
 }
 
 export type TableFilterResolveResult<TKey extends string = string> =
-  | TableResolvedFilterNode<TKey>
-  | null
+  TableResolvedFilterNode<TKey> | null
 
 interface TableFilterDefinitionBase<
   TRow extends GenericObject = GenericObject,
@@ -200,7 +199,9 @@ export type TableUiFilterCollection<
   TKey extends string = TableKnownFieldPath<TRow>,
 > =
   | TableUiFilterDefinition<TRow, TContext, any>[]
-  | ((filter: TableFilterBuilder<TRow, TContext>) => TableUiFilterDefinition<TRow, TContext, any>[])
+  | ((
+      filter: TableFilterBuilder<TRow, TContext>,
+    ) => TableUiFilterDefinition<TRow, TContext, any>[])
 
 export interface TableFiltersSchema<
   TRow extends GenericObject = GenericObject,

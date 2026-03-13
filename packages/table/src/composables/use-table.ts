@@ -11,26 +11,44 @@ import type {
   TableSchemaView,
 } from '../types'
 import { useTableData } from './use-table-data'
-import { type UseTableApi, useTableApi } from './use-table-api'
-import { useTableLayout } from './use-table-layout'
+import type { UseTableApi } from './use-table-api'
 import { useTableState } from './use-table-state'
+import { useProvideTableInternals } from './use-table-internals'
 
-export interface UseTableOptions {}
-
-export interface UseTableQueryState {
+export type UseTableOptions = Record<string, never>
+export type PublicTableQueryState = {
   layout: TableLayout
   pagination: { pageIndex: number; pageSize: number }
   sorting: { sortKey: string; sortDirection: 'asc' | 'desc' } | null
   filters: TableFilterState
 }
 
-export interface UseTableReturn<TSchema = TableSchemaView> {
+export type UseTableReturn<TSchema = TableSchemaView> = {
   schema: ComputedRef<TSchema>
   options?: UseTableOptions
   layout: ComputedRef<TableLayout>
-  queryState: ComputedRef<UseTableQueryState>
+  queryState: ComputedRef<PublicTableQueryState>
   resolvedFilterState: ComputedRef<TableResolvedFilterGroup<string>>
-  data: ReturnType<typeof useTableData>
+  state: {
+    layout: ComputedRef<TableLayout>
+    query: ComputedRef<PublicTableQueryState>
+    resolvedFilters: ComputedRef<TableResolvedFilterGroup<string>>
+  }
+  data: {
+    rows: ComputedRef<ExtractTableRow<TSchema>[]>
+    rowCount: ComputedRef<number>
+    rawRows: ComputedRef<ExtractTableRow<TSchema>[]>
+    rawRowCount: ComputedRef<number>
+    context: ComputedRef<ExtractTableContextData<TSchema>>
+    pageContext: ComputedRef<ExtractTablePageContextData<TSchema>>
+    requestContext: ReturnType<typeof useTableData>['requestContext']
+    error: ReturnType<typeof useTableData>['error']
+    status: ReturnType<typeof useTableData>['status']
+    data: ReturnType<typeof useTableData>['data']
+    rawData: ReturnType<typeof useTableData>['rawData']
+    contextData: ReturnType<typeof useTableData>['contextData']
+    pageContextData: ReturnType<typeof useTableData>['pageContextData']
+  }
   api: UseTableApi<TSchema>
   types: {
     row?: ExtractTableRow<TSchema>
@@ -42,58 +60,83 @@ export interface UseTableReturn<TSchema = TableSchemaView> {
 export function useTable<TSchema = TableSchemaView>(
   schema: MaybeComputedRef<TSchema>,
   options?: UseTableOptions,
-): UseTableReturn<TSchema> {
-  const resolvedSchema = computed(() => resolveSchemaSource(schema))
-  const schemaView = computed(() => resolvedSchema.value as unknown as TableSchemaView)
-  const layout = useTableLayout({ schema: schemaView })
-  const state = useTableState({
-    schema: schemaView,
-    activeLayout: computed(
-      () => layout.activeLayout.value ?? schemaView.value.defaultLayout ?? 'table',
-    ),
+) {
+  const resolvedSchema = computed(() => resolveSchemaSource({ schema }))
+  const internals = useProvideTableInternals(
+    { rawSchema: computed(() => resolvedSchema.value as unknown as TableSchemaView) },
+  )
+  const queryState = createPublicQueryState({
+    queryState: internals.queryState,
+    activeLayout: internals.activeLayout,
   })
-  const api = useTableApi({
-    schema: schemaView,
-    activeLayout: layout.activeLayout,
-    pagination: state.queryState.pagination,
-    sorting: state.queryState.sorting,
-    filters: state.queryState.filters,
-  }) as UseTableApi<TSchema>
-  const data = useTableData({
-    schema: schemaView,
-    state,
-  })
+  const api = internals.tableApi as UseTableApi<TSchema>
 
-  return {
+  const publicTable = {
     schema: resolvedSchema,
     options,
-    layout: computed(() => layout.activeLayout.value ?? schemaView.value.defaultLayout ?? 'table'),
-    queryState: computed(() => ({
-      layout: layout.activeLayout.value ?? schemaView.value.defaultLayout ?? 'table',
-      pagination: state.queryState.pagination.value,
-      sorting: state.queryState.sorting.value
-        ? {
-            sortKey: state.queryState.sorting.value.key,
-            sortDirection: state.queryState.sorting.value.dir,
-          }
-        : null,
-      filters: state.queryState.filters.value,
-    })),
-    resolvedFilterState: state.resolvedFilterState,
-    data,
+    layout: internals.activeLayout,
+    queryState,
+    resolvedFilterState: internals.resolvedFilterState,
+    state: {
+      layout: internals.activeLayout,
+      query: queryState,
+      resolvedFilters: internals.resolvedFilterState,
+    },
+    data: {
+      rows: computed(() => internals.queryContent.data.value.rows as ExtractTableRow<TSchema>[]),
+      rowCount: computed(() => internals.queryContent.data.value.rowCount),
+      rawRows: computed(() => internals.queryContent.rawData.value.rows as ExtractTableRow<TSchema>[]),
+      rawRowCount: computed(() => internals.queryContent.rawData.value.rowCount),
+      context: computed(
+        () => internals.queryContent.contextData.value as ExtractTableContextData<TSchema>,
+      ),
+      pageContext: computed(
+        () => internals.queryContent.pageContextData.value as ExtractTablePageContextData<TSchema>,
+      ),
+      requestContext: internals.queryContent.requestContext,
+      error: internals.queryContent.error,
+      status: internals.queryContent.status,
+      data: internals.queryContent.data,
+      rawData: internals.queryContent.rawData,
+      contextData: internals.queryContent.contextData,
+      pageContextData: internals.queryContent.pageContextData,
+    },
     api,
     types: {},
   }
+
+  return publicTable
 }
 
-function resolveSchemaSource<TSchema>(schema: MaybeComputedRef<TSchema>): TSchema {
-  if (typeof schema === 'function') {
-    return (schema as () => TSchema)()
+function resolveSchemaSource<TSchema>(options: {
+  schema: MaybeComputedRef<TSchema>
+}): TSchema {
+  if (typeof options.schema === 'function') {
+    return (options.schema as () => TSchema)()
   }
 
-  if (schema && typeof schema === 'object' && 'value' in schema) {
-    return schema.value as TSchema
+  if (options.schema && typeof options.schema === 'object' && 'value' in options.schema) {
+    return options.schema.value as TSchema
   }
 
-  return schema as TSchema
+  return options.schema as TSchema
+}
+
+function createPublicQueryState(
+  options: {
+    queryState: ReturnType<typeof useTableState>['queryState']
+    activeLayout: ComputedRef<TableLayout>
+  },
+) {
+  return computed(() => ({
+    layout: options.activeLayout.value,
+    pagination: options.queryState.pagination.value,
+    sorting: options.queryState.sorting.value
+      ? {
+          sortKey: options.queryState.sorting.value.key,
+          sortDirection: options.queryState.sorting.value.dir,
+        }
+      : null,
+    filters: options.queryState.filters.value,
+  }))
 }

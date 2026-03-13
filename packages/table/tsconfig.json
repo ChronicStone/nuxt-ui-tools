@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "allowArbitraryExtensions": true,
+    "jsxImportSource": "vue",
     "paths": {
       "@lib/*": ["src/*"],
       "@nuxt-ui-tools/shared": ["../shared/dist/index.d.ts"]
@@ -12,10 +14,14 @@
     "src/schema/**/*.ts",
     "src/builders/**/*.ts",
     "src/composables/*.ts",
+    "src/composables/*.tsx",
     "src/utils/**/*.ts",
     "src/composables/**/*.ts",
+    "src/composables/**/*.tsx",
     "src/utils/*.ts",
     "src/types/**/*.ts",
+    "src/types/**/*.d.ts",
+    "src/components/**/*.vue",
     "tests/**/*.ts"
   ]
 }
