@@ -32,12 +32,14 @@ function normalizeDimension(value: string | number) {
 }
 
 function humanizeKey(value: string) {
-  return value
-    .split('.')
-    .at(-1)
-    ?.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase()) ?? value
+  return (
+    value
+      .split('.')
+      .at(-1)
+      ?.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase()) ?? value
+  )
 }
 </script>
 
@@ -47,7 +49,10 @@ function humanizeKey(value: string) {
       :title="titleText"
       :description="descriptionText"
       :search-placeholder="internals.filters.searchPlaceholder.value"
-      :search-loading="internals.queryContent.status.value.isFetching && !internals.queryContent.status.value.isPending"
+      :search-loading="
+        internals.queryContent.status.value.isFetching &&
+        !internals.queryContent.status.value.isPending
+      "
       :search-query="internals.filters.searchQuery.value"
       :table-layout="internals.controls.tableLayout.value"
       :grid-enabled="Boolean(internals.controls.gridEnabled.value)"
@@ -63,8 +68,16 @@ function humanizeKey(value: string) {
     </TableHeader>
 
     <div class="overflow-hidden rounded-xl border border-default bg-default shadow-sm">
-      <Transition :name="internals.controls.tableLayout.value === 'grid' ? 'slide-fade' : 'slide-fade-reverse'" mode="out-in">
-        <TableRenderer v-if="internals.controls.tableLayout.value === 'table'" :height="tableHeight">
+      <Transition
+        :name="
+          internals.controls.tableLayout.value === 'grid' ? 'slide-fade' : 'slide-fade-reverse'
+        "
+        mode="out-in"
+      >
+        <TableRenderer
+          v-if="internals.controls.tableLayout.value === 'table'"
+          :height="tableHeight"
+        >
           <template v-if="$slots['empty-table'] || $slots.empty" #empty>
             <slot name="empty-table">
               <slot name="empty" />
@@ -101,7 +114,9 @@ function humanizeKey(value: string) {
 .slide-fade-leave-active,
 .slide-fade-reverse-enter-active,
 .slide-fade-reverse-leave-active {
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .slide-fade-enter-from,

@@ -77,7 +77,7 @@ watch(tableEmpty, (isEmpty) => {
         thead: 'border-b border-default/30 bg-default/95',
         tbody: 'bg-transparent',
         tr: 'group',
-        th: 'h-8 border-b-0 bg-default px-3 py-1.5 text-left align-middle text-sm font-medium text-default',
+        th: 'h-8 border-b-0 bg-default pl-3 pr-0 py-1.5 text-left align-middle text-sm font-medium text-default',
         td: 'h-12 border-b px-3 align-middle text-sm text-toned transition-colors duration-100 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
         loading: 'p-0 align-top bg-transparent',
         empty: 'p-0 text-sm text-muted',

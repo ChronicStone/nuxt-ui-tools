@@ -110,7 +110,7 @@ function toggleValue(options: { value: string | number | boolean }) {
         />
 
         <UScrollArea
-          style="height: 320px"
+          style="max-height: 320px"
           type="hover"
           class="!h-80 p-2"
           :ui="{

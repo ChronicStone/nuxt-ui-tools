@@ -124,7 +124,7 @@ export function createDataColumns(options: {
             ? (row: Record<string, any>) => getPathValue({ row, path: column.field })
             : undefined,
         header: ({ column: tableColumn, header }: { column: any; header: any }) => (
-          <div class="group/column-header flex h-full w-full items-center justify-between gap-2">
+          <div class="group/column-header relative flex h-full w-full items-center">
             <UDropdownMenu
               items={options.getMenuItems({ columnId: runtimeColumn.id })}
               content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
@@ -162,20 +162,16 @@ export function createDataColumns(options: {
             </UDropdownMenu>
 
             {column.resizable !== false ? (
-              <button
-                type="button"
+              <div
                 aria-label={`Resize ${runtimeColumn.label} column`}
+                role="separator"
                 class={[
-                  'relative z-20 flex h-8 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded-sm active:cursor-grabbing',
-                  'border-l border-default/50 bg-transparent text-muted transition-[opacity,background-color,color,border-color] duration-150',
-                  'opacity-30 group-hover/column-header:opacity-100 group-focus-within/column-header:opacity-100',
-                  'hover:bg-elevated/60 hover:text-default focus-visible:bg-elevated/60 focus-visible:text-default focus-visible:outline-none',
-                  header.getIsResizing?.() ? 'border-primary/50 bg-elevated/70 opacity-100 text-primary' : '',
+                  'absolute right-0 top-0 z-20 h-full w-1 cursor-col-resize touch-none select-none',
+                  'transition-[background-color] duration-150',
+                  header.getIsResizing?.()
+                    ? 'bg-primary/80'
+                    : 'bg-transparent group-hover/column-header:bg-default/50',
                 ]}
-                onClick={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                }}
                 onDblclick={(event: MouseEvent) => {
                   event.preventDefault()
                   event.stopPropagation()
@@ -190,16 +186,7 @@ export function createDataColumns(options: {
                   event.stopPropagation()
                   header.getResizeHandler?.()(event)
                 }}
-              >
-                <UIcon
-                  name="i-lucide-grip-vertical"
-                  class={[
-                    'size-3 shrink-0',
-                    header.getIsResizing?.() ? 'text-primary' : 'text-inherit',
-                  ]}
-                />
-                <span class="sr-only">Resize column</span>
-              </button>
+              />
             ) : null}
           </div>
         ),
