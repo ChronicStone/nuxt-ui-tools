@@ -3,7 +3,7 @@ import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 
 defineProps<{
   label: string
-  count: number
+  count?: number
   selected: boolean
 }>()
 </script>
@@ -21,6 +21,6 @@ defineProps<{
       :ui="{ root: 'pointer-events-none', base: 'rounded-md' }"
     />
     <span class="min-w-0 flex-1 truncate">{{ label }}</span>
-    <span class="shrink-0 text-muted">{{ count }}</span>
+    <span v-if="count != null" class="shrink-0 text-muted">{{ count }}</span>
   </div>
 </template>

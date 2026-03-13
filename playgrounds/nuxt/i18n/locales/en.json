@@ -4,10 +4,10 @@
     "overviewDescription": "Entry point for the playground shell.",
     "form": "Form Playground",
     "formDescription": "Reserved for form work.",
-    "table": "Table Playground",
-    "tableDescription": "Reserved for table work.",
-    "lab": "Experiment Lab",
-    "labDescription": "Scratch area for prototypes and tests."
+    "tableClient": "Client Table",
+    "tableClientDescription": "Local data source with auto-derived counts.",
+    "tableRemote": "Remote Table",
+    "tableRemoteDescription": "Remote source with async filter options."
   },
   "layout": {
     "badge": "Playground",
@@ -67,7 +67,8 @@
       "status": "Ready to explore",
       "title": "A focused playground shell for iterating on the toolkit.",
       "description": "Keep structure, theme testing, and page-level experiments here while the package APIs are rebuilt from a clean baseline.",
-      "openPage": "Open page"
+      "openPage": "Open remote table",
+      "openClientPage": "Open client table"
     },
     "form": {
       "badge": "Form Playground",

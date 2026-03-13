@@ -17,14 +17,14 @@ export function usePlaygroundNavigation() {
         descriptionKey: 'nav.formDescription',
       },
       {
-        to: localePath('/table-v2'),
-        key: 'nav.table',
-        descriptionKey: 'nav.tableDescription',
+        to: localePath('/table-client'),
+        key: 'nav.tableClient',
+        descriptionKey: 'nav.tableClientDescription',
       },
       {
-        to: localePath('/lab'),
-        key: 'nav.lab',
-        descriptionKey: 'nav.labDescription',
+        to: localePath('/table-remote'),
+        key: 'nav.tableRemote',
+        descriptionKey: 'nav.tableRemoteDescription',
       },
     ]
   })

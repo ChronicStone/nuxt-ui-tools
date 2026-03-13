@@ -4,10 +4,10 @@
     "overviewDescription": "Point d'entrée du shell du playground.",
     "form": "Playground Formulaire",
     "formDescription": "Réservé au travail sur le formulaire.",
-    "table": "Playground Tableau",
-    "tableDescription": "Réservé au travail sur le tableau.",
-    "lab": "Laboratoire",
-    "labDescription": "Espace de test pour prototypes et essais."
+    "tableClient": "Tableau Client",
+    "tableClientDescription": "Source locale avec comptage automatique.",
+    "tableRemote": "Tableau Remote",
+    "tableRemoteDescription": "Source distante avec options async."
   },
   "layout": {
     "badge": "Playground",
@@ -67,7 +67,8 @@
       "status": "Prêt à explorer",
       "title": "Un shell de playground ciblé pour itérer sur la suite.",
       "description": "Gardez ici la structure, les tests de thème et les expériences de page pendant que les API des packages repartent d'une base propre.",
-      "openPage": "Ouvrir la page"
+      "openPage": "Ouvrir le tableau remote",
+      "openClientPage": "Ouvrir le tableau client"
     },
     "form": {
       "badge": "Playground Formulaire",

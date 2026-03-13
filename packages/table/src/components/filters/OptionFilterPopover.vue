@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-
 import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
+import UScrollArea from '@nuxt/ui/components/ScrollArea.vue'
+import { computed, ref } from 'vue'
 
-import type {
-  TableBooleanFilterDefinition,
-  TableOptionFilterDefinition,
-} from '../../types'
+import { useTableFilterOptions } from '../../composables/use-table-filter-options'
+import { useTableInternals } from '../../composables/use-table-internals'
+import type { TableBooleanFilterDefinition, TableOptionFilterDefinition } from '../../types'
 import FilterOptionRow from './FilterOptionRow.vue'
 import TableFilterTrigger from './TableFilterTrigger.vue'
-import { useTableInternals } from '../../composables/use-table-internals'
 
 type FilterOptionEntry = {
   label: string | (() => unknown)
@@ -24,28 +22,18 @@ const props = defineProps<{
 
 const internals = useTableInternals()
 const searchQuery = ref('')
-
-const resolvedOptions = computed(() => {
-  if (props.definition.kind === 'boolean') {
-    return []
-  }
-
-  if (Array.isArray(props.definition.options)) {
-    return props.definition.options.map((entry: { label: string | (() => unknown); value: string | number | boolean }) => ({
-      label: internals.filters.getFilterLabelText({
-        label: entry.label,
-      }),
-      value: entry.value,
-    }))
-  }
-
-  return []
+const optionSource = useTableFilterOptions({
+  definition: props.definition,
+  searchQuery,
+  filters: internals.filters,
+  queryContent: internals.queryContent,
+  schema: internals.schema,
 })
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
     key: props.definition.key,
-    entries: resolvedOptions.value,
+    entries: optionSource.sourceEntries.value,
   }),
 )
 
@@ -55,10 +43,14 @@ const operator = computed(() =>
   }),
 )
 
-const operatorLabel = computed(() =>
-  internals.filters.getFilterOperatorOptions({
-    key: props.definition.key,
-  }).find((item: { label: string; value: string }) => item.value === operator.value)?.label ?? 'is',
+const operatorLabel = computed(
+  () =>
+    internals.filters
+      .getFilterOperatorOptions({
+        key: props.definition.key,
+      })
+      .find((item: { label: string; value: string }) => item.value === operator.value)?.label ??
+    'is',
 )
 
 const operatorItems = computed(() =>
@@ -67,32 +59,11 @@ const operatorItems = computed(() =>
   }),
 )
 
-const optionEntries = computed(() =>
-  internals.filters.getFilterOptionEntries({
-    key: props.definition.key,
-    entries: resolvedOptions.value,
-  }),
-)
-
-const filteredEntries = computed(() => {
-  const normalizedSearch = searchQuery.value.trim().toLowerCase()
-
-  if (!normalizedSearch.length) {
-    return optionEntries.value
-  }
-
-  return optionEntries.value.filter((entry) =>
-    entry.label.toLowerCase().includes(normalizedSearch),
-  )
-})
-
 const triggerIcon = computed(() =>
   preview.value.active ? 'i-lucide-circle-x' : 'i-lucide-circle-plus',
 )
 
-function toggleValue(options: {
-  value: string | number | boolean
-}) {
+function toggleValue(options: { value: string | number | boolean }) {
   internals.filters.toggleOptionFilterValue({
     key: props.definition.key,
     value: options.value,
@@ -104,7 +75,7 @@ function toggleValue(options: {
   <UPopover
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-[22rem] rounded-xl p-0 shadow-xl'
+      content: 'w-[22rem] rounded-xl p-0 shadow-xl',
     }"
   >
     <TableFilterTrigger
@@ -115,7 +86,9 @@ function toggleValue(options: {
       :preview-tags="preview.tags"
       :preview-summary="preview.summary"
       :active="preview.active"
-      @select-operator="internals.filters.setFilterOperator({ key: definition.key, operator: $event })"
+      @select-operator="
+        internals.filters.setFilterOperator({ key: definition.key, operator: $event })
+      "
       @clear="internals.filters.clearFilter({ key: definition.key })"
     />
 
@@ -136,32 +109,56 @@ function toggleValue(options: {
           }"
         />
 
-        <div class="grid max-h-80 gap-1.5 overflow-y-auto p-2">
-          <button
-            v-for="entry in filteredEntries"
-            :key="String(entry.value)"
-            type="button"
-            class="block w-full"
-            @click="toggleValue({ value: entry.value })"
-          >
-            <FilterOptionRow
-              :label="entry.label"
-              :count="entry.count"
-              :selected="entry.selected"
-            />
-          </button>
-        </div>
+        <UScrollArea
+          style="height: 320px"
+          type="hover"
+          class="!h-80 p-2"
+          :ui="{
+            root: 'h-80',
+            viewport: 'h-full',
+          }"
+        >
+          <div class="grid gap-1.5">
+            <div
+              v-if="optionSource.isLoading.value"
+              class="px-3 py-8 text-center text-sm text-muted"
+            >
+              Loading options...
+            </div>
 
-        <div class="border-t border-default p-2">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            size="lg"
-            block
-            label="Clear filters"
-            @click="internals.filters.clearFilter({ key: definition.key })"
-          />
-        </div>
+            <button
+              v-for="entry in optionSource.filteredEntries.value"
+              :key="String(entry.value)"
+              type="button"
+              class="block w-full"
+              @click="toggleValue({ value: entry.value })"
+            >
+              <FilterOptionRow
+                :label="entry.label"
+                :count="entry.count"
+                :selected="entry.selected"
+              />
+            </button>
+
+            <div
+              v-if="!optionSource.isLoading.value && !optionSource.filteredEntries.value.length"
+              class="px-3 py-8 text-center text-sm text-muted"
+            >
+              No matching options.
+            </div>
+          </div>
+        </UScrollArea>
+      </div>
+
+      <div class="border-t border-default p-2">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          block
+          label="Clear filters"
+          @click="internals.filters.clearFilter({ key: definition.key })"
+        />
       </div>
     </template>
   </UPopover>

@@ -22,6 +22,30 @@ export interface TableSourceExecutionResult<TRow extends GenericObject = Generic
   rowCount: number
 }
 
+export interface TableFacetRequestDescriptor<TKey extends string = string> {
+  key: TKey
+  mode?: 'exclude-self' | 'include-self'
+  search?: string
+  limit?: number
+  cursor?: string | null
+}
+
+export interface TableFacetOptionResult<TValue = unknown> {
+  value: TValue
+  count: number
+}
+
+export interface TableFacetResult<TKey extends string = string, TValue = unknown> {
+  key: TKey
+  options: TableFacetOptionResult<TValue>[]
+  nextCursor?: string | null
+  total?: number
+}
+
+export interface TableFacetExecutionResult<TKey extends string = string, TValue = unknown> {
+  facets: TableFacetResult<TKey, TValue>[]
+}
+
 export interface TableSourceSearchRequest<
   TRow extends GenericObject = GenericObject,
 > {
@@ -57,6 +81,12 @@ export interface TableRemoteSource<
 > {
   mode: 'remote'
   query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
+  facets?: (
+    ctx: {
+      table: TableSourceRequestContext<TRow, TContext>
+      facets: TableFacetRequestDescriptor<TableKnownFieldPath<TRow> | string>[]
+    },
+  ) => TableQueryDefinition<TableFacetExecutionResult<TableKnownFieldPath<TRow> | string>>
 }
 
 export type TableSource<

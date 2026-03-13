@@ -1,10 +1,9 @@
-import type { UseQueryOptions } from '@tanstack/vue-query'
-
 import type {
   TableFilterOperator,
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
 } from './query-state'
+import type { TableQueryDefinition } from './source'
 import type { GenericObject, RenderableType, TableFieldPath, TableKnownFieldPath } from './utils'
 
 export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
@@ -12,6 +11,26 @@ export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
   placeholder?: string
   debounce?: number
 }
+
+export interface TableFilterOptionEntry<TValue = string | number | boolean> {
+  label: string | (() => RenderableType)
+  value: TValue
+  count?: number
+}
+
+export interface TableFilterOptionQueryContext {
+  search?: string
+  limit?: number
+  cursor?: string | null
+}
+
+export interface TableFilterOptionQueryResult<TValue = string | number | boolean> {
+  options: TableFilterOptionEntry<TValue>[]
+  nextCursor?: string | null
+  total?: number
+}
+
+export type TableFilterFacetMode = boolean | 'exclude-self' | 'include-self'
 
 export interface TableStaticFilterRule<
   TRow extends GenericObject = GenericObject,
@@ -70,9 +89,11 @@ interface TableFilterDefinitionBase<
   defaultValue?: TValue
   defaultOperator?: TableFilterOperator
   operators?: TableFilterOperator[]
-  resolve?: (
-    params: TableFilterResolveContext<TRow, TContext, TKey>,
-  ) => TableFilterResolveResult<string>
+  resolve?: {
+    bivarianceHack(
+      params: TableFilterResolveContext<TRow, TContext, TKey>,
+    ): TableFilterResolveResult<string>
+  }['bivarianceHack']
 }
 
 export interface TableTextFilterDefinition<
@@ -90,13 +111,11 @@ export interface TableOptionFilterDefinition<
   TValue = string | number | boolean,
 > extends TableFilterDefinitionBase<TRow, TContext, TKey, TValue[]> {
   kind: 'option'
-  options:
-    | Array<{ label: string | (() => RenderableType); value: TValue }>
-    | {
-        query: () => UseQueryOptions<
-          Array<{ label: string | (() => RenderableType); value: TValue }>
-        >
-      }
+  options?: Array<TableFilterOptionEntry<TValue>>
+  query?: (
+    context: TableFilterOptionQueryContext,
+  ) => TableQueryDefinition<TableFilterOptionEntry<TValue>[] | TableFilterOptionQueryResult<TValue>>
+  facet?: TableFilterFacetMode
 }
 
 export interface TableBooleanFilterDefinition<
@@ -105,6 +124,7 @@ export interface TableBooleanFilterDefinition<
   TKey extends string = TableKnownFieldPath<TRow>,
 > extends TableFilterDefinitionBase<TRow, TContext, TKey, boolean> {
   kind: 'boolean'
+  facet?: TableFilterFacetMode
 }
 
 export interface TableNumberFilterDefinition<
@@ -198,10 +218,10 @@ export type TableUiFilterCollection<
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
 > =
-  | TableUiFilterDefinition<TRow, TContext, any>[]
+  | TableUiFilterDefinition<TRow, TContext, TKey>[]
   | ((
       filter: TableFilterBuilder<TRow, TContext>,
-    ) => TableUiFilterDefinition<TRow, TContext, any>[])
+    ) => TableUiFilterDefinition<TRow, TContext, TKey>[])
 
 export interface TableFiltersSchema<
   TRow extends GenericObject = GenericObject,

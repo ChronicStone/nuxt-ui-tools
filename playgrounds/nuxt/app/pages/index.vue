@@ -18,7 +18,10 @@ const { t } = useI18n()
       </div>
 
       <div :class="classes.footer">
-        <UButton :to="localePath('/table-v2')" color="primary" :label="t('pages.overview.openPage')" />
+        <div class="flex flex-wrap items-center gap-2">
+          <UButton :to="localePath('/table-remote')" color="primary" :label="t('pages.overview.openPage')" />
+          <UButton :to="localePath('/table-client')" color="neutral" variant="outline" :label="t('pages.overview.openClientPage')" />
+        </div>
       </div>
     </div>
   </section>

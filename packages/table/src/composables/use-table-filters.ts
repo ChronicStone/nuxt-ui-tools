@@ -25,7 +25,11 @@ export function useTableFilters(options: {
   const activeUiFilters = computed<TableQueryStateFilterRule[]>(() => options.queryState.filters.value.ui ?? [])
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
   const hasActiveSearch = computed(() => searchQuery.value.trim().length > 0)
-  const rows = computed(() => options.queryContent.data.value.rows ?? [])
+  const rows = computed(() =>
+    options.schema.value.source.mode === 'client'
+      ? (options.queryContent.rawData.value.rows ?? [])
+      : (options.queryContent.data.value.rows ?? []),
+  )
   const searchPlaceholder = computed(
     () => options.schema.value.filters?.search?.placeholder ?? 'Search rows…',
   )
@@ -73,12 +77,13 @@ export function useTableFilters(options: {
     return activeUiFilters.value.find((rule: TableQueryStateFilterRule) => rule.key === options.key)
   }
 
-  function getFilterOptionEntries(options: {
+  function getFilterOptionEntries(params: {
     key: string
     entries?: Array<{ label: string; value: string | number | boolean }>
+    facetCounts?: Array<{ value: string | number | boolean; count: number }>
   }) {
     const definition = getDefinition({
-      key: options.key,
+      key: params.key,
     })
 
     if (!definition) {
@@ -86,7 +91,7 @@ export function useTableFilters(options: {
     }
 
     const rule = getFilterState({
-      key: options.key,
+      key: params.key,
     })
     const selectedValues = Array.isArray(rule?.value)
       ? rule.value
@@ -97,8 +102,10 @@ export function useTableFilters(options: {
     return resolveFilterOptionEntries({
       definition,
       rows: rows.value,
-      options: options.entries,
+      options: params.entries,
+      facetCounts: params.facetCounts,
       selectedValues,
+      deriveCounts: options.schema.value.source.mode !== 'remote',
     })
   }
 

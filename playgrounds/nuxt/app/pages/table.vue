@@ -1,3 +1,3 @@
 <script setup lang="ts">
-await navigateTo('/table-v2', { replace: true })
+await navigateTo('/table-remote', { replace: true })
 </script>

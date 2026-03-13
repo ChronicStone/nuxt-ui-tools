@@ -11,14 +11,18 @@ import {
 export function resolveFilterOptionEntries(options: {
   definition: TableUiFilterDefinition
   rows: unknown[]
-  options?: Array<{ label: string; value: string | number | boolean }>
+  options?: Array<{ label: string; value: string | number | boolean; count?: number }>
   selectedValues?: unknown[]
+  deriveCounts?: boolean
+  facetCounts?: Array<{ value: string | number | boolean; count: number }>
 }) {
   if (options.definition.kind === 'boolean') {
     return createBooleanEntries({
       definition: options.definition,
       rows: options.rows,
       selectedValues: options.selectedValues ?? [],
+      deriveCounts: options.deriveCounts ?? true,
+      facetCounts: options.facetCounts ?? [],
     })
   }
 
@@ -26,22 +30,22 @@ export function resolveFilterOptionEntries(options: {
     return []
   }
 
-  const sourceOptions = options.options ?? (
-    Array.isArray(options.definition.options)
-      ? options.definition.options
-      : []
-  )
+  const sourceOptions = options.options ?? options.definition.options ?? []
 
   return sourceOptions.map((entry) => ({
     label: getFilterLabelText({
       label: entry.label,
     }),
     value: entry.value,
-    count: countOptionMatches({
-      rows: options.rows,
-      key: options.definition.key,
-      candidate: entry.value,
-    }),
+    count: entry.count ?? (
+      options.deriveCounts === false
+        ? undefined
+        : countOptionMatches({
+            rows: options.rows,
+            key: options.definition.key,
+            candidate: entry.value,
+          })
+    ),
     selected: isFilterValueSelected({
       values: options.selectedValues ?? [],
       candidate: entry.value,
@@ -53,16 +57,25 @@ function createBooleanEntries(options: {
   definition: TableBooleanFilterDefinition
   rows: unknown[]
   selectedValues: unknown[]
+  deriveCounts: boolean
+  facetCounts: Array<{ value: string | number | boolean; count: number }>
 }) {
+  const trueCount = options.facetCounts.find((entry) => entry.value === true)?.count
+  const falseCount = options.facetCounts.find((entry) => entry.value === false)?.count
+
   return [
     {
       label: 'Yes',
       value: true,
-      count: countOptionMatches({
-        rows: options.rows,
-        key: options.definition.key,
-        candidate: true,
-      }),
+      count: trueCount ?? (
+        options.deriveCounts
+        ? countOptionMatches({
+            rows: options.rows,
+            key: options.definition.key,
+            candidate: true,
+          })
+        : undefined
+      ),
       selected: isFilterValueSelected({
         values: options.selectedValues,
         candidate: true,
@@ -71,11 +84,15 @@ function createBooleanEntries(options: {
     {
       label: 'No',
       value: false,
-      count: countOptionMatches({
-        rows: options.rows,
-        key: options.definition.key,
-        candidate: false,
-      }),
+      count: falseCount ?? (
+        options.deriveCounts
+        ? countOptionMatches({
+            rows: options.rows,
+            key: options.definition.key,
+            candidate: false,
+          })
+        : undefined
+      ),
       selected: isFilterValueSelected({
         values: options.selectedValues,
         candidate: false,
