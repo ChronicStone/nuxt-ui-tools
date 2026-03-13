@@ -2,6 +2,7 @@ import { createInjectionState } from '@vueuse/core'
 import { computed, ref, type ComputedRef } from 'vue'
 
 import type { MaybeComputedRef, TableLayout, TableSchemaView } from '../types'
+import { createDefaultColumnState, type TableColumnState } from '../utils'
 import { useTableColumns } from './use-table-columns'
 import { useTableControls } from './use-table-controls'
 import { useTableData } from './use-table-data'
@@ -12,15 +13,6 @@ import { useTableLayout } from './use-table-layout'
 import { useTableRows } from './use-table-rows'
 import { useTableSelection } from './use-table-selection'
 import { useTableState } from './use-table-state'
-
-export interface TableRuntimeColumn {
-  id: string
-  label: string
-  icon?: string
-  sortableKey?: string
-  canHide: boolean
-  defaultVisible: boolean
-}
 
 function createTableInternals(options: {
   rawSchema: MaybeComputedRef<TableSchemaView>
@@ -43,14 +35,7 @@ function createTableInternals(options: {
       resolvedFilterState,
     },
   })
-  const tableState = ref<Record<string, any>>({
-    columnOrder: [],
-    columnVisibility: {},
-    columnPinning: { left: [], right: [] },
-    columnSizing: {},
-    columnSizingInfo: {},
-    sorting: [],
-  })
+  const tableState = ref<TableColumnState>(createDefaultColumnState())
   const rows = useTableRows({
     schema,
     rows: computed(() => queryContent.data.value.rows),

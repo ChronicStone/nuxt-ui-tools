@@ -25,7 +25,7 @@ const filteredColumns = computed(() => {
 const draggableColumns = computed({
   get: () => internals.tableColumns.orderedColumns.value,
   set: (columns: Array<{ id: string }>) =>
-    internals.tableColumns.setOrder(columns.map((column) => column.id)),
+    internals.tableColumns.setOrder({ columnIds: columns.map((column) => column.id) }),
 })
 
 function toggleColumn(columnId: string) {

@@ -1,4 +1,5 @@
 export * from './client-query'
+export * from './columns'
 export * from './query-state'
 export * from './resolved-filters'
 export * from './rows'

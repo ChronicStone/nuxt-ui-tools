@@ -3,6 +3,7 @@ import UTable from '@nuxt/ui/components/Table.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../composables/use-table-internals'
+import { createDefaultColumnState } from '../../utils'
 import TableEmptyState from './TableEmptyState.vue'
 import TableLoadingState from './TableLoadingState.vue'
 
@@ -14,30 +15,26 @@ const tableRef = ref<{ $el?: Element | null } | null>(null)
 
 const tableRows = computed(() => internals.rows.value)
 const tableLoading = computed(() => internals.queryContent.status.value.isPending)
-const tableEmpty = computed(() =>
-  !tableLoading.value && tableRows.value.length === 0,
-)
+const tableEmpty = computed(() => !tableLoading.value && tableRows.value.length === 0)
 const bodyPlaceholderMinHeight = computed(() => `calc(${props.height} - 7rem)`)
 const bodyOverlayTop = '2.625rem'
+const defaultColumnState = createDefaultColumnState()
 
-watch(
-  tableEmpty,
-  (isEmpty) => {
-    if (!isEmpty) {
+watch(tableEmpty, (isEmpty) => {
+  if (!isEmpty) {
+    return
+  }
+
+  nextTick(() => {
+    const element = tableRef.value?.$el
+
+    if (!(element instanceof HTMLElement)) {
       return
     }
 
-    nextTick(() => {
-      const element = tableRef.value?.$el
-
-      if (!(element instanceof HTMLElement)) {
-        return
-      }
-
-      element.scrollTo({ top: 0, left: 0 })
-    })
-  },
-)
+    element.scrollTo({ top: 0, left: 0 })
+  })
+})
 </script>
 
 <template>
@@ -53,12 +50,18 @@ watch(
       :column-sizing-info="internals.tableColumns.tableState.value.columnSizingInfo"
       :row-selection="internals.selection.rowSelection.value"
       @update:column-order="internals.tableColumns.tableState.value.columnOrder = $event ?? []"
-      @update:column-visibility="internals.tableColumns.tableState.value.columnVisibility = $event ?? {}"
+      @update:column-visibility="
+        internals.tableColumns.tableState.value.columnVisibility = $event ?? {}
+      "
       @update:column-pinning="
-        internals.tableColumns.tableState.value.columnPinning = $event ?? { left: [], right: [] }
+        internals.tableColumns.tableState.value.columnPinning =
+          $event ?? defaultColumnState.columnPinning
       "
       @update:column-sizing="internals.tableColumns.tableState.value.columnSizing = $event ?? {}"
-      @update:column-sizing-info="internals.tableColumns.tableState.value.columnSizingInfo = $event ?? {}"
+      @update:column-sizing-info="
+        internals.tableColumns.tableState.value.columnSizingInfo =
+          $event ?? defaultColumnState.columnSizingInfo
+      "
       @update:row-selection="internals.selection.setRowSelection({ selection: $event ?? {} })"
       :get-row-id="(row: any) => String(row?.__$rowId ?? row?.id ?? '')"
       :sorting-options="{ manualSorting: true }"
@@ -66,7 +69,9 @@ watch(
       :loading="tableLoading"
       class="h-full"
       :ui="{
-        root: tableEmpty ? 'h-full overflow-hidden bg-transparent' : 'h-full overflow-auto bg-transparent',
+        root: tableEmpty
+          ? 'h-full overflow-hidden bg-transparent'
+          : 'h-full overflow-auto bg-transparent',
         base: 'min-w-full border-separate border-spacing-0 bg-transparent text-sm',
         thead: 'border-b border-default/60 bg-default/95',
         tbody: 'bg-transparent',
@@ -90,7 +95,7 @@ watch(
 
     <div
       v-if="tableEmpty"
-      class="pointer-events-none absolute top-0 bottom-0 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center"
+      class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center"
       :style="{ top: bodyOverlayTop }"
     >
       <TableEmptyState :min-height="bodyPlaceholderMinHeight" />
@@ -106,7 +111,7 @@ watch(
   backdrop-filter: blur(8px) saturate(125%);
 }
 
-:deep(tr[data-selected="true"] td[data-pinned]) {
+:deep(tr[data-selected='true'] td[data-pinned]) {
   background-color: color-mix(in oklab, var(--ui-bg-elevated) 78%, transparent) !important;
   color: var(--ui-text) !important;
 }
