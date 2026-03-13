@@ -115,7 +115,7 @@ export const tableSchema = defineTableSchema({
       grid: 12,
     },
     sizeOptions: {
-      table: [10, 20, 50, 100],
+      table: [10, 20, 50, 100, 500, 1000],
       grid: [12, 24, 48],
     },
     showPageSizePicker: true,
@@ -176,6 +176,7 @@ export const tableSchema = defineTableSchema({
         label: 'ID',
         icon: 'i-lucide-hash',
         minWidth: 124,
+        maxWidth: 180,
         render: ({ value }) => (
           <div class="flex items-center gap-2">
             <span class="font-medium text-highlighted">{String(value)}</span>
@@ -330,6 +331,7 @@ export const tableSchema = defineTableSchema({
         label: 'Active',
         icon: 'i-lucide-badge-check',
         minWidth: 132,
+        maxWidth: 160,
         render: ({ row, value }) => {
           const employee = asEmployeeRow(row)
           const isActive = Boolean(value)
@@ -352,6 +354,7 @@ export const tableSchema = defineTableSchema({
         label: 'Joined',
         icon: 'i-lucide-calendar-days',
         minWidth: 170,
+        maxWidth: 220,
         render: ({ value }) => {
           const joinedAt = asOptionalString(value)
 
@@ -369,6 +372,7 @@ export const tableSchema = defineTableSchema({
         align: 'right',
         labelAlign: 'right',
         minWidth: 156,
+        maxWidth: 220,
         render: ({ row, value }) => {
           const employee = asEmployeeRow(row)
           const salary = typeof value === 'number' ? value : 0

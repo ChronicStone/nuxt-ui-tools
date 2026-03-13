@@ -121,36 +121,77 @@ export function createDataColumns(options: {
             ? (row: Record<string, any>) => getPathValue({ row, path: column.field })
             : undefined,
         header: ({ column: tableColumn }: { column: any }) => (
-          <UDropdownMenu
-            items={options.getMenuItems({ columnId: runtimeColumn.id })}
-            content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
-            modal={false}
-            ui={{ content: 'w-56 rounded-lg p-1' }}
-          >
-            <button
-              type="button"
-              class="inline-flex h-8 items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
+          <div class="group/column-header relative flex h-full items-center pr-0.5">
+            <UDropdownMenu
+              items={options.getMenuItems({ columnId: runtimeColumn.id })}
+              content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
+              modal={false}
+              ui={{ content: 'w-56 rounded-lg p-1' }}
             >
-              <div class="flex min-w-0 items-center gap-2.5">
-                {runtimeColumn.icon ? (
-                  <UIcon name={runtimeColumn.icon} class="size-4 shrink-0 text-muted" />
+              <button
+                type="button"
+                class="inline-flex h-8 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
+              >
+                <div class="flex min-w-0 items-center gap-2.5">
+                  {runtimeColumn.icon ? (
+                    <UIcon name={runtimeColumn.icon} class="size-4 shrink-0 text-muted" />
+                  ) : null}
+                  <span class="truncate">{runtimeColumn.label}</span>
+                </div>
+                <UIcon
+                  name={getColumnHeaderIcon({
+                    columnId: runtimeColumn.id,
+                    canHide: tableColumn.getCanHide?.(),
+                    getSortState: options.getSortState,
+                    getPinnedState: options.getPinnedState,
+                  })}
+                  class="size-4 shrink-0 text-muted"
+                />
+                {options.getPinnedState({ columnId: runtimeColumn.id }) ? (
+                  <UIcon name="i-lucide-pin" class="size-3.5 shrink-0 text-muted" />
                 ) : null}
-                <span class="truncate">{runtimeColumn.label}</span>
-              </div>
-              <UIcon
-                name={getColumnHeaderIcon({
-                  columnId: runtimeColumn.id,
-                  canHide: tableColumn.getCanHide?.(),
-                  getSortState: options.getSortState,
-                  getPinnedState: options.getPinnedState,
-                })}
-                class="size-4 shrink-0 text-muted"
-              />
-              {options.getPinnedState({ columnId: runtimeColumn.id }) ? (
-                <UIcon name="i-lucide-pin" class="size-3.5 shrink-0 text-muted" />
-              ) : null}
-            </button>
-          </UDropdownMenu>
+              </button>
+            </UDropdownMenu>
+
+            {column.resizable !== false ? (
+              <button
+                type="button"
+                aria-label={`Resize ${runtimeColumn.label} column`}
+                class={[
+                  'absolute inset-y-1.5 right-0 z-10 flex w-3 translate-x-1/2 cursor-col-resize touch-none items-center justify-center',
+                  'rounded-full transition-colors',
+                  'opacity-70 hover:bg-elevated focus-visible:bg-elevated',
+                  tableColumn.getIsResizing?.() ? 'opacity-100 bg-elevated' : '',
+                ]}
+                onClick={(event: MouseEvent) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                }}
+                onDblclick={(event: MouseEvent) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  tableColumn.resetSize?.()
+                }}
+                onMousedown={(event: MouseEvent) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  tableColumn.getResizeHandler?.()(event)
+                }}
+                onTouchstart={(event: TouchEvent) => {
+                  event.stopPropagation()
+                  tableColumn.getResizeHandler?.()(event)
+                }}
+              >
+                <span
+                  class={[
+                    'h-4 w-px rounded-full bg-default/35 transition-colors',
+                    'group-hover/column-header:bg-default/55',
+                    tableColumn.getIsResizing?.() ? '!bg-primary' : '',
+                  ]}
+                />
+              </button>
+            ) : null}
+          </div>
         ),
         cell: ({ row }: { row: { original: Record<string, any> } }) =>
           renderColumnCell({
@@ -161,8 +202,10 @@ export function createDataColumns(options: {
         enableSorting: false,
         enableHiding: runtimeColumn.canHide,
         enablePinning: true,
+        enableResizing: column.resizable !== false,
         size: normalizeColumnSize({ size: column.width }),
         minSize: normalizeColumnSize({ size: column.minWidth }) ?? 120,
+        maxSize: normalizeColumnSize({ size: column.maxWidth }),
         meta: {
           class: {
             th: getColumnHeaderClass({ column }),
@@ -172,10 +215,12 @@ export function createDataColumns(options: {
             th: ({ column: headerColumn }: { column: { getSize: () => number } }) => ({
               width: `${headerColumn.getSize()}px`,
               minWidth: `${headerColumn.getSize()}px`,
+              maxWidth: `${headerColumn.getSize()}px`,
             }),
             td: ({ column: cellColumn }: { column: { getSize: () => number } }) => ({
               width: `${cellColumn.getSize()}px`,
               minWidth: `${cellColumn.getSize()}px`,
+              maxWidth: `${cellColumn.getSize()}px`,
             }),
           },
         },
@@ -244,13 +289,15 @@ export function wrapEllipsisContent(options: {
   content: any
   title?: string | null
 }) {
+  const baseClass = 'min-w-0 max-w-full overflow-hidden'
+
   if (!options.column.ellipsis) {
-    return options.content
+    return <div class={baseClass}>{options.content}</div>
   }
 
   return (
     <div
-      class="min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+      class={`${baseClass} text-ellipsis whitespace-nowrap`}
       title={options.title ?? undefined}
     >
       {options.content}
@@ -274,6 +321,7 @@ export function getColumnCellClass(options: {
   column: TableColumn
 }) {
   return [
+    'overflow-hidden',
     options.column.align === 'right' ? 'text-right' : '',
     options.column.align === 'center' ? 'text-center' : '',
   ]

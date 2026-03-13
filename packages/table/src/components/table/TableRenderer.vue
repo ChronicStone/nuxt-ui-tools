@@ -48,6 +48,7 @@ watch(tableEmpty, (isEmpty) => {
       :column-pinning="internals.tableColumns.tableState.value.columnPinning"
       :column-sizing="internals.tableColumns.tableState.value.columnSizing"
       :column-sizing-info="internals.tableColumns.tableState.value.columnSizingInfo"
+      :column-sizing-options="{ columnResizeMode: 'onChange' }"
       :row-selection="internals.selection.rowSelection.value"
       @update:column-order="internals.tableColumns.tableState.value.columnOrder = $event ?? []"
       @update:column-visibility="
@@ -71,7 +72,7 @@ watch(tableEmpty, (isEmpty) => {
       :ui="{
         root: tableEmpty
           ? 'h-full overflow-hidden bg-transparent'
-          : 'h-full overflow-auto bg-transparent',
+          : 'h-full overflow-auto bg-transparent [scrollbar-gutter:stable]',
         base: 'min-w-full border-separate border-spacing-0 bg-transparent text-sm',
         thead: 'border-b border-default/60 bg-default/95',
         tbody: 'bg-transparent',
@@ -104,6 +105,45 @@ watch(tableEmpty, (isEmpty) => {
 </template>
 
 <style scoped>
+:deep([data-slot='root']) {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--ui-border) 82%, transparent) transparent;
+}
+
+:deep([data-slot='root']:hover) {
+  scrollbar-color: color-mix(in oklab, var(--ui-border-accented) 92%, transparent) transparent;
+}
+
+:deep([data-slot='root']::-webkit-scrollbar) {
+  width: 10px;
+  height: 10px;
+}
+
+:deep([data-slot='root']::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+:deep([data-slot='root']::-webkit-scrollbar-thumb) {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ui-border) 86%, transparent);
+  background-clip: padding-box;
+}
+
+:deep([data-slot='root']:hover::-webkit-scrollbar-thumb) {
+  background: color-mix(in oklab, var(--ui-border-accented) 80%, transparent);
+  background-clip: padding-box;
+}
+
+:deep([data-slot='root']::-webkit-scrollbar-thumb:hover) {
+  background: color-mix(in oklab, var(--ui-border-accented) 95%, transparent);
+  background-clip: padding-box;
+}
+
+:deep([data-slot='root']::-webkit-scrollbar-corner) {
+  background: transparent;
+}
+
 :deep(th[data-pinned]) {
   background-color: color-mix(in oklab, var(--ui-bg) 76%, transparent) !important;
   background-image: none !important;
