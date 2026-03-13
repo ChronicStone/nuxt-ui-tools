@@ -75,9 +75,9 @@ watch(tableEmpty, (isEmpty) => {
         base: 'min-w-full border-separate border-spacing-0 bg-transparent text-sm',
         thead: 'border-b border-default/60 bg-default/95',
         tbody: 'bg-transparent',
-        tr: 'group transition-colors duration-150',
+        tr: 'group',
         th: 'h-8 border-b-0 bg-default px-3 py-1.5 text-left align-middle text-sm font-medium text-default',
-        td: 'h-12 border-b border-default/50 px-3 align-middle text-sm text-toned transition-colors duration-150 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
+        td: 'h-12 border-b border-default/50 px-3 align-middle text-sm text-toned transition-colors duration-100 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
         loading: 'p-0 align-top bg-transparent',
         empty: 'p-0 text-sm text-muted',
       }"
@@ -104,15 +104,20 @@ watch(tableEmpty, (isEmpty) => {
 </template>
 
 <style scoped>
-:deep(th[data-pinned]),
-:deep(td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg) 74%, transparent) !important;
+:deep(th[data-pinned]) {
+  background-color: color-mix(in oklab, var(--ui-bg) 76%, transparent) !important;
   background-image: none !important;
-  backdrop-filter: blur(8px) saturate(125%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+:deep(td[data-pinned]) {
+  background-color: color-mix(in oklab, var(--ui-bg) 88%, transparent) !important;
+  background-image: none !important;
+  backdrop-filter: none;
 }
 
 :deep(tr[data-selected='true'] td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg-elevated) 78%, transparent) !important;
+  background-color: color-mix(in oklab, var(--ui-bg-elevated) 90%, transparent) !important;
   color: var(--ui-text) !important;
 }
 </style>
