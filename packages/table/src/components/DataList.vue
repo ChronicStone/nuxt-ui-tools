@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { UseTableReturn } from '../composables/use-table'
-import type { TableSchemaView } from '../types'
 import { useTableInternals } from '../composables/use-table-internals'
 import GridRenderer from './grid/GridRenderer.vue'
 import TableFooter from './layout/TableFooter.vue'
@@ -10,7 +8,7 @@ import TableHeader from './layout/TableHeader.vue'
 import TableRenderer from './table/TableRenderer.vue'
 
 const props = defineProps<{
-  table: UseTableReturn<TableSchemaView>
+  table: any
   title?: string
   description?: string
   height?: string | number

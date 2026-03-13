@@ -15,17 +15,18 @@ const emit = defineEmits<{
 <template>
   <UInput
     :model-value="modelValue"
-    class="!bg-red-100"
-    size="lg"
+    size="md"
     color="primary"
     variant="outline"
     icon="i-lucide-search"
     :loading="loading"
     :placeholder="placeholder"
+    class="w-[21rem] max-w-full shrink-0"
     :ui="{
       leadingIcon: 'text-muted',
       trailing: 'pe-2',
       root: 'focus-within:ring-1 focus-within:ring-inset focus-within:ring-primary',
+      base: 'h-10',
     }"
     @update:model-value="emit('update:modelValue', String($event ?? ''))"
   />

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import type { TableLayout } from '../../types'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
+
+import type { TableLayout } from '../../types'
 import ColumnPanel from '../drawers/ColumnPanel.vue'
+import TableFiltersBar from '../filters/TableFiltersBar.vue'
 import SearchQueryInput from '../utils/SearchQueryInput.vue'
 
 defineProps<{
@@ -39,7 +41,7 @@ defineSlots<{
       </p>
     </div>
 
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
       <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <SearchQueryInput
           :model-value="searchQuery"
@@ -48,15 +50,13 @@ defineSlots<{
           @update:model-value="emit('update:searchQuery', $event)"
         />
 
+        <TableFiltersBar />
+
         <slot name="actions" />
       </div>
 
-      <div class="flex items-center justify-end gap-2">
-        <UFieldGroup
-          v-if="gridEnabled"
-          size="md"
-          class="shrink-0"
-        >
+      <div class="flex shrink-0 self-start items-start justify-end gap-2">
+        <UFieldGroup v-if="gridEnabled" size="md" class="shrink-0">
           <UButton
             color="neutral"
             :variant="tableLayout === 'table' ? 'subtle' : 'outline'"

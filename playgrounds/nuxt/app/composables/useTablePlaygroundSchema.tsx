@@ -103,6 +103,14 @@ const demoSkillOptions = [
   { label: 'TypeScript', value: 'TypeScript' },
 ] as const
 
+const demoDepartmentOptions = [
+  { label: 'Engineering', value: 'Engineering' },
+  { label: 'Finance', value: 'Finance' },
+  { label: 'Operations', value: 'Operations' },
+  { label: 'Platform', value: 'Platform' },
+  { label: 'Product', value: 'Product' },
+] as const
+
 const demoEmployeesEndpoint = '/api/table/demo-employees/query'
 
 export const tableSchema = defineTableSchema({
@@ -140,11 +148,11 @@ export const tableSchema = defineTableSchema({
     },
     ui: (filter) => [
       filter.text('fullName', {
-        label: 'Employee name',
+        label: 'Name',
         operators: ['contains', 'is'],
       }),
       filter.option('department.company.country', {
-        label: 'Company country',
+        label: 'Country',
         defaultOperator: 'isAnyOf',
         options: [...demoCountryOptions],
       }),
@@ -152,6 +160,11 @@ export const tableSchema = defineTableSchema({
         label: 'Skill',
         defaultOperator: 'isAnyOf',
         options: [...demoSkillOptions],
+      }),
+      filter.option('department.name', {
+        label: 'Department',
+        defaultOperator: 'isAnyOf',
+        options: [...demoDepartmentOptions],
       }),
       filter.boolean('isActive', {
         label: 'Active',
@@ -161,7 +174,7 @@ export const tableSchema = defineTableSchema({
         operators: ['is', 'gte', 'lte', 'between'],
       }),
       filter.date('hiredAt', {
-        label: 'Hired at',
+        label: 'Hired At',
         operators: ['is', 'before', 'after', 'between'],
       }),
     ],

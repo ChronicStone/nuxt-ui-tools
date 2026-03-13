@@ -93,10 +93,12 @@ export function useTableApi<TSchema = TableSchemaView>(
     }),
   )
 
-  const uiFilters = computed(() => params.schema.value.filters?.ui ?? [])
+  const uiFilters = computed(() => params.schema.value.filters?.ui ?? []) as ComputedRef<
+    TableUiFilterDefinition[]
+  >
 
   function getFilterDefinition<TKey extends ExtractTableFilterKey<TSchema>>(key: TKey) {
-    return uiFilters.value.find((filter) => filter.key === key)
+    return uiFilters.value.find((filter) => filter.key === key) as TableUiFilterDefinition | undefined
   }
 
   function getFilterOperators<TKey extends ExtractTableFilterKey<TSchema>>(key: TKey) {

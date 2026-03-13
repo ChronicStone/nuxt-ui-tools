@@ -17,7 +17,7 @@ export function useTableState(params: UseTableStateParams) {
 
   const resolvedFilterState = computed(() =>
     createResolvedFilterState({
-      definitions: params.schema.value.filters?.ui ?? [],
+      definitions: (params.schema.value.filters?.ui ?? []) as any,
       filters: queryState.filters.value,
       staticFilters: params.schema.value.filters?.static,
     }),

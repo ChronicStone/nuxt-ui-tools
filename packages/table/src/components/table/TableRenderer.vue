@@ -162,6 +162,6 @@ watch(tableEmpty, (isEmpty) => {
 }
 
 :deep(tbody td) {
-  border-bottom-color: color-mix(in oklab, var(--ui-border) 28%, transparent) !important;
+  border-bottom-color: color-mix(in oklab, var(--ui-border) 14%, transparent) !important;
 }
 </style>

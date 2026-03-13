@@ -56,6 +56,7 @@ function createTableInternals(options: {
     schema,
     queryState,
     api: tableApi,
+    queryContent,
   })
   const controls = useTableControls({
     schema,
