@@ -139,7 +139,12 @@ export function createDataColumns(options: {
                   {runtimeColumn.icon ? (
                     <UIcon name={runtimeColumn.icon} class="size-4 shrink-0 text-muted" />
                   ) : null}
-                  <span class="truncate">{runtimeColumn.label}</span>
+                  <TableCellEllipsis
+                    title={runtimeColumn.label}
+                    wrapperClass="min-w-0 max-w-full"
+                  >
+                    {runtimeColumn.label}
+                  </TableCellEllipsis>
                 </div>
                 <UIcon
                   name={getColumnHeaderIcon({
@@ -156,44 +161,46 @@ export function createDataColumns(options: {
               </button>
             </UDropdownMenu>
 
-            <button
-              type="button"
-              aria-label={`Resize ${runtimeColumn.label} column`}
-              class={[
-                'relative z-20 flex h-8 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded-sm active:cursor-grabbing',
-                'border-l border-default/50 bg-transparent text-muted transition-[opacity,background-color,color,border-color] duration-150',
-                'opacity-30 group-hover/column-header:opacity-100 group-focus-within/column-header:opacity-100',
-                'hover:bg-elevated/60 hover:text-default focus-visible:bg-elevated/60 focus-visible:text-default focus-visible:outline-none',
-                header.getIsResizing?.() ? 'border-primary/50 bg-elevated/70 opacity-100 text-primary' : '',
-              ]}
-              onClick={(event: MouseEvent) => {
-                event.preventDefault()
-                event.stopPropagation()
-              }}
-              onDblclick={(event: MouseEvent) => {
-                event.preventDefault()
-                event.stopPropagation()
-                tableColumn.resetSize?.()
-              }}
-              onMousedown={(event: MouseEvent) => {
-                event.preventDefault()
-                event.stopPropagation()
-                header.getResizeHandler?.()(event)
-              }}
-              onTouchstart={(event: TouchEvent) => {
-                event.stopPropagation()
-                header.getResizeHandler?.()(event)
-              }}
-            >
-              <UIcon
-                name="i-lucide-grip-vertical"
+            {column.resizable !== false ? (
+              <button
+                type="button"
+                aria-label={`Resize ${runtimeColumn.label} column`}
                 class={[
-                  'size-3 shrink-0',
-                  header.getIsResizing?.() ? 'text-primary' : 'text-inherit',
+                  'relative z-20 flex h-8 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded-sm active:cursor-grabbing',
+                  'border-l border-default/50 bg-transparent text-muted transition-[opacity,background-color,color,border-color] duration-150',
+                  'opacity-30 group-hover/column-header:opacity-100 group-focus-within/column-header:opacity-100',
+                  'hover:bg-elevated/60 hover:text-default focus-visible:bg-elevated/60 focus-visible:text-default focus-visible:outline-none',
+                  header.getIsResizing?.() ? 'border-primary/50 bg-elevated/70 opacity-100 text-primary' : '',
                 ]}
-              />
-              <span class="sr-only">Resize column</span>
-            </button>
+                onClick={(event: MouseEvent) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                }}
+                onDblclick={(event: MouseEvent) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  tableColumn.resetSize?.()
+                }}
+                onMousedown={(event: MouseEvent) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  header.getResizeHandler?.()(event)
+                }}
+                onTouchstart={(event: TouchEvent) => {
+                  event.stopPropagation()
+                  header.getResizeHandler?.()(event)
+                }}
+              >
+                <UIcon
+                  name="i-lucide-grip-vertical"
+                  class={[
+                    'size-3 shrink-0',
+                    header.getIsResizing?.() ? 'text-primary' : 'text-inherit',
+                  ]}
+                />
+                <span class="sr-only">Resize column</span>
+              </button>
+            ) : null}
           </div>
         ),
         cell: ({ row }: { row: { original: Record<string, any> } }) =>

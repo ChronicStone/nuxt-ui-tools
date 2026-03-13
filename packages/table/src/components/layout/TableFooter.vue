@@ -15,12 +15,19 @@ const pageSizeItems = computed(() =>
     },
   ]),
 )
+
+const groupedNumberFormatter = new Intl.NumberFormat('fr-FR')
+
+function formatCount(value: number) {
+  return groupedNumberFormatter.format(value)
+}
 </script>
 
 <template>
   <footer class="flex flex-col gap-3 px-4 py-3 text-sm text-muted sm:px-5 lg:flex-row lg:items-center lg:justify-between">
     <div>
-      {{ internals.selection.selectedCount.value }} of {{ internals.queryContent.data.value.rowCount }} row(s) selected.
+      {{ formatCount(internals.selection.selectedCount.value) }} of
+      {{ formatCount(internals.queryContent.data.value.rowCount) }} row(s) selected.
     </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">

@@ -372,6 +372,7 @@ export const tableSchema = defineTableSchema({
         icon: 'i-lucide-wallet',
         align: 'right',
         labelAlign: 'right',
+        resizable: false,
         minWidth: 156,
         maxWidth: 220,
         render: ({ row, value }) => {
