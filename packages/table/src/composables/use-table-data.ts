@@ -45,6 +45,17 @@ export interface UseTableDataReturn {
   refreshPageContext: () => Promise<unknown[]>
 }
 
+type CombinedQueryResult = {
+  key?: string
+  data?: unknown
+  error?: unknown
+  isPending?: boolean
+  isFetching?: boolean
+  isSuccess?: boolean
+  isRefetching?: boolean
+  refetch: () => Promise<unknown>
+}
+
 export function useTableData(
   params: UseTableDataParams,
 ): UseTableDataReturn {
@@ -61,8 +72,10 @@ export function useTableData(
       })),
   })
 
+  const contextResults = computed(() => context.value as CombinedQueryResult[])
+
   const contextData = computed(() =>
-    context.value.reduce<GenericObject>((acc, item) => {
+    contextResults.value.reduce<GenericObject>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -72,42 +85,41 @@ export function useTableData(
   )
 
   const isContextPending = computed(() =>
-    context.value.some((item) => Boolean(item.isPending)),
+    contextResults.value.some((item) => Boolean(item.isPending)),
   )
 
   const isContextFetching = computed(() =>
-    context.value.some((item) => Boolean(item.isFetching)),
+    contextResults.value.some((item) => Boolean(item.isFetching)),
   )
 
   const isContextReady = computed(() =>
-    !contextItems.value.length || context.value.every((item) => Boolean(item.isSuccess)),
+    !contextItems.value.length || contextResults.value.every((item) => Boolean(item.isSuccess)),
   )
 
-  const requestContext = computed(
-    () =>
-      ({
-        context: contextData.value,
-        pagination: params.state.queryState.pagination.value,
-        sorting: params.state.queryState.sorting.value ? [params.state.queryState.sorting.value] : [],
-        filters: params.state.resolvedFilterState.value,
-        search: {
-          value: params.state.queryState.filters.value.search,
-          fields: params.schema.value.filters?.search?.fields ?? [],
-        },
-      }) satisfies TableSourceRequestContext,
-  )
+  const requestContext = computed<TableSourceRequestContext>(() => ({
+    context: contextData.value as TableSourceRequestContext['context'],
+    pagination: params.state.queryState.pagination.value,
+    sorting: params.state.queryState.sorting.value ? [params.state.queryState.sorting.value] : [],
+    filters: params.state.resolvedFilterState.value,
+    search: {
+      value: params.state.queryState.filters.value.search,
+      fields: params.schema.value.filters?.search?.fields ?? [],
+    },
+  }))
 
   const searchParams = requestContext
 
   const query = useQuery(
     computed(() => withEnabled(
-      params.schema.value.source.query(requestContext.value),
+      params.schema.value.source.query(requestContext.value as never) as TableQueryDefinition,
       isContextReady.value,
     )),
   )
 
   const rawData = computed<TableExternalState>(() => {
-    const result = query.data.value
+    const result = query.data.value as
+      | TableExternalState
+      | undefined
 
     if (Array.isArray(result)) {
       return {
@@ -153,7 +165,7 @@ export function useTableData(
         withEnabled(
           item.query({
             rows: data.value.rows,
-            context: contextData.value,
+            context: contextData.value as never,
           }),
           true,
         ),
@@ -166,8 +178,10 @@ export function useTableData(
       })),
   })
 
+  const pageContextResults = computed(() => pageContext.value as CombinedQueryResult[])
+
   const pageContextData = computed(() =>
-    pageContext.value.reduce<GenericObject>((acc, item) => {
+    pageContextResults.value.reduce<GenericObject>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -177,19 +191,19 @@ export function useTableData(
   )
 
   const isPageContextPending = computed(() =>
-    isPageContextEnabled.value && pageContext.value.some((item) => Boolean(item.isPending)),
+    isPageContextEnabled.value && pageContextResults.value.some((item) => Boolean(item.isPending)),
   )
 
   const isPageContextFetching = computed(() =>
-    pageContext.value.some((item) => Boolean(item.isFetching)),
+    pageContextResults.value.some((item) => Boolean(item.isFetching)),
   )
 
   const initialized = computed(() =>
-    query.isSuccess.value && (!pageContextItems.value.length || pageContext.value.every((item) => Boolean(item.isSuccess))),
+    query.isSuccess.value && (!pageContextItems.value.length || pageContextResults.value.every((item) => Boolean(item.isSuccess))),
   )
 
   const error = computed(() => {
-    const contextError = context.value.find((item) => item.error)?.error
+    const contextError = contextResults.value.find((item) => item.error)?.error
     if (contextError) {
       return contextError
     }
@@ -198,7 +212,7 @@ export function useTableData(
       return query.error.value
     }
 
-    return pageContext.value.find((item) => item.error)?.error
+    return pageContextResults.value.find((item) => item.error)?.error
   })
 
   const status = computed(() => {
@@ -207,7 +221,7 @@ export function useTableData(
     const isRefreshing =
       context.value.some((item) => Boolean(item.isRefetching)) ||
       query.isRefetching.value ||
-      pageContext.value.some((item) => Boolean(item.isRefetching))
+      pageContextResults.value.some((item) => Boolean(item.isRefetching))
 
     return {
       initialized: initialized.value,
@@ -231,7 +245,7 @@ export function useTableData(
   })
 
   async function refreshContext() {
-    return Promise.all(context.value.map((item) => item.refetch()))
+    return Promise.all(contextResults.value.map((item) => item.refetch()))
   }
 
   function refreshData() {
@@ -239,7 +253,7 @@ export function useTableData(
   }
 
   async function refreshPageContext() {
-    return Promise.all(pageContext.value.map((item) => item.refetch()))
+    return Promise.all(pageContextResults.value.map((item) => item.refetch()))
   }
 
   return {

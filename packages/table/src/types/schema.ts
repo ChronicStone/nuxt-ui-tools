@@ -9,7 +9,7 @@ import type {
   TableSelectionSchema,
   TableTableSchema,
 } from './layout'
-import type { InferTableSourceRow, TableSource } from './source'
+import type { InferTableSourceRow, NormalizeTableSource, TableSource } from './source'
 import type {
   TableKnownFieldPath,
   TableLayout,
@@ -100,9 +100,15 @@ export type BuildTableSchema<
   >,
   'source'
 > & {
-  source: TSource &
-    TableSource<InferTableSourceRow<TSource>, TableContextDataFromItems<TContextItems>>
+  source: ValidateTableSource<TSource, TableContextDataFromItems<TContextItems>>
 }
+
+type ValidateTableSource<
+  TSource,
+  TContext extends GenericObject,
+> = TSource extends NormalizeTableSource<TSource, TContext>
+  ? TSource
+  : NormalizeTableSource<TSource, TContext>
 
 type ResolveCollection<TCollection> = TCollection extends (...args: never[]) => infer TResult
   ? TResult

@@ -40,7 +40,8 @@ const skeletonGridTemplate = computed(() =>
     <div
       v-for="rowIndex in skeletonRows"
       :key="rowIndex"
-      class="grid h-12 items-center gap-3 border-b border-default/50 px-3"
+      class="grid h-12 items-center gap-3 border-b px-3"
+      style="border-bottom-color: color-mix(in oklab, var(--ui-border) 28%, transparent)"
       :style="{ gridTemplateColumns: skeletonGridTemplate }"
     >
       <div

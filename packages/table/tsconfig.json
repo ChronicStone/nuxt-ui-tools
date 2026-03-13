@@ -5,8 +5,8 @@
     "allowArbitraryExtensions": true,
     "jsxImportSource": "vue",
     "paths": {
-      "@lib/*": ["src/*"],
-      "@nuxt-ui-tools/shared": ["../shared/dist/index.d.ts"]
+      "@lib/*": ["../shared/src/*"],
+      "@nuxt-ui-tools/shared": ["../shared/src/index.ts"]
     }
   },
   "include": [

@@ -31,6 +31,7 @@ interface TableColumnBase<
   icon?: string
   width?: number | string
   minWidth?: number | string
+  maxWidth?: number | string
   sortable?: boolean
   pinned?: TableColumnPinned
   align?: TableColumnAlign

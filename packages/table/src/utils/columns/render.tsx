@@ -1,8 +1,10 @@
+/** @jsxImportSource vue */
 /// <reference types="vue/jsx" />
 
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import TableCellEllipsis from '../../components/table/TableCellEllipsis'
 
 import type { TableColumn } from '../../types'
 
@@ -75,6 +77,7 @@ export function createSelectionColumn(options: {
     enableSorting: false,
     enableHiding: false,
     enablePinning: true,
+    enableResizing: false,
     meta: {
       class: {
         th: 'w-14 px-4',
@@ -120,8 +123,8 @@ export function createDataColumns(options: {
           column.kind === 'field'
             ? (row: Record<string, any>) => getPathValue({ row, path: column.field })
             : undefined,
-        header: ({ column: tableColumn }: { column: any }) => (
-          <div class="group/column-header relative flex h-full items-center pr-0.5">
+        header: ({ column: tableColumn, header }: { column: any; header: any }) => (
+          <div class="group/column-header flex h-full w-full items-center justify-between gap-2">
             <UDropdownMenu
               items={options.getMenuItems({ columnId: runtimeColumn.id })}
               content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
@@ -130,7 +133,7 @@ export function createDataColumns(options: {
             >
               <button
                 type="button"
-                class="inline-flex h-8 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
+                class="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
               >
                 <div class="flex min-w-0 items-center gap-2.5">
                   {runtimeColumn.icon ? (
@@ -153,44 +156,44 @@ export function createDataColumns(options: {
               </button>
             </UDropdownMenu>
 
-            {column.resizable !== false ? (
-              <button
-                type="button"
-                aria-label={`Resize ${runtimeColumn.label} column`}
+            <button
+              type="button"
+              aria-label={`Resize ${runtimeColumn.label} column`}
+              class={[
+                'relative z-20 flex h-8 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded-sm active:cursor-grabbing',
+                'border-l border-default/50 bg-transparent text-muted transition-[opacity,background-color,color,border-color] duration-150',
+                'opacity-30 group-hover/column-header:opacity-100 group-focus-within/column-header:opacity-100',
+                'hover:bg-elevated/60 hover:text-default focus-visible:bg-elevated/60 focus-visible:text-default focus-visible:outline-none',
+                header.getIsResizing?.() ? 'border-primary/50 bg-elevated/70 opacity-100 text-primary' : '',
+              ]}
+              onClick={(event: MouseEvent) => {
+                event.preventDefault()
+                event.stopPropagation()
+              }}
+              onDblclick={(event: MouseEvent) => {
+                event.preventDefault()
+                event.stopPropagation()
+                tableColumn.resetSize?.()
+              }}
+              onMousedown={(event: MouseEvent) => {
+                event.preventDefault()
+                event.stopPropagation()
+                header.getResizeHandler?.()(event)
+              }}
+              onTouchstart={(event: TouchEvent) => {
+                event.stopPropagation()
+                header.getResizeHandler?.()(event)
+              }}
+            >
+              <UIcon
+                name="i-lucide-grip-vertical"
                 class={[
-                  'absolute inset-y-1.5 right-0 z-10 flex w-3 translate-x-1/2 cursor-col-resize touch-none items-center justify-center',
-                  'rounded-full transition-colors',
-                  'opacity-70 hover:bg-elevated focus-visible:bg-elevated',
-                  tableColumn.getIsResizing?.() ? 'opacity-100 bg-elevated' : '',
+                  'size-3 shrink-0',
+                  header.getIsResizing?.() ? 'text-primary' : 'text-inherit',
                 ]}
-                onClick={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                }}
-                onDblclick={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  tableColumn.resetSize?.()
-                }}
-                onMousedown={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  tableColumn.getResizeHandler?.()(event)
-                }}
-                onTouchstart={(event: TouchEvent) => {
-                  event.stopPropagation()
-                  tableColumn.getResizeHandler?.()(event)
-                }}
-              >
-                <span
-                  class={[
-                    'h-4 w-px rounded-full bg-default/35 transition-colors',
-                    'group-hover/column-header:bg-default/55',
-                    tableColumn.getIsResizing?.() ? '!bg-primary' : '',
-                  ]}
-                />
-              </button>
-            ) : null}
+              />
+              <span class="sr-only">Resize column</span>
+            </button>
           </div>
         ),
         cell: ({ row }: { row: { original: Record<string, any> } }) =>
@@ -246,7 +249,7 @@ export function renderColumnCell(options: TableColumnRenderParams) {
         column: options.column,
         content: options.column.render({
           ...cellContext,
-          value,
+          value: value as never,
         }),
         title: resolveEllipsisTitle({
           column: options.column,
@@ -296,12 +299,12 @@ export function wrapEllipsisContent(options: {
   }
 
   return (
-    <div
-      class={`${baseClass} text-ellipsis whitespace-nowrap`}
+    <TableCellEllipsis
       title={options.title ?? undefined}
+      wrapperClass={baseClass}
     >
       {options.content}
-    </div>
+    </TableCellEllipsis>
   )
 }
 

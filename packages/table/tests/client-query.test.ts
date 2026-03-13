@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { GenericObject, TableSourceRequestContext } from '../src/types'
+import type { GenericObject, TableKnownFieldPath, TableSourceRequestContext } from '../src/types'
 import { executeClientQuery } from '../src/utils'
 
 type TestRow = GenericObject & {
@@ -8,7 +8,7 @@ type TestRow = GenericObject & {
   name: string
   status: 'active' | 'inactive'
   verified: boolean
-  score: number
+  score: number 
   priority: number
   createdAt: Date
   tags: string[]
@@ -145,7 +145,7 @@ function createRequest(
 
 function queryIds(
   request: Partial<TableSourceRequestContext<TestRow>>,
-  fields: string[] = ['name'],
+  fields: TableKnownFieldPath<TestRow>[] = ['name'],
 ): string[] {
   return executeClientQuery({
     rows,

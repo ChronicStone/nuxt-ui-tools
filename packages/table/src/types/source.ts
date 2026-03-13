@@ -1,4 +1,4 @@
-import type { UseQueryOptions } from '@tanstack/vue-query'
+import type { QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
 
 import type {
   GenericObject,
@@ -10,7 +10,12 @@ import type {
 } from './utils'
 import type { TableResolvedFilterGroup } from './filters'
 
-export type TableQueryDefinition<TData = unknown> = UseQueryOptions<TData>
+export type TableQueryDefinition<TData = unknown> = Omit<UseQueryOptions<TData>, 'queryFn'> & {
+  queryKey: QueryKey
+  queryFn?: QueryFunction<TData>
+}
+
+export type TableSourceMode = 'client' | 'remote'
 
 export interface TableSourceExecutionResult<TRow extends GenericObject = GenericObject> {
   rows: TRow[]
@@ -36,14 +41,50 @@ export interface TableSourceRequestContext<
   context: TContext
 }
 
-export interface TableSource<
+export interface TableClientSource<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TResult = TableSourceExecutionResult<TRow> | TRow[],
 > {
-  mode?: 'client' | 'remote'
+  mode?: 'client'
   query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
 }
+
+export interface TableRemoteSource<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TResult = TableSourceExecutionResult<TRow>,
+> {
+  mode: 'remote'
+  query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
+}
+
+export type TableSource<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TResult = TableSourceExecutionResult<TRow> | TRow[],
+> =
+  | TableClientSource<
+      TRow,
+      TContext,
+      Extract<TResult, TableSourceExecutionResult<TRow> | TRow[]> extends never
+        ? TableSourceExecutionResult<TRow> | TRow[]
+        : Extract<TResult, TableSourceExecutionResult<TRow> | TRow[]>
+    >
+  | TableRemoteSource<
+      TRow,
+      TContext,
+      Extract<TResult, TableSourceExecutionResult<TRow>> extends never
+        ? TableSourceExecutionResult<TRow>
+        : Extract<TResult, TableSourceExecutionResult<TRow>>
+    >
+
+export type NormalizeTableSource<
+  TSource,
+  TContext extends GenericObject,
+> = TSource extends { mode: 'remote' }
+  ? TableRemoteSource<InferTableSourceRow<TSource>, TContext, ExtractTableSourceResult<TSource>>
+  : TableClientSource<InferTableSourceRow<TSource>, TContext, ExtractTableSourceResult<TSource>>
 
 type ExtractQueryResult<TQuery> = TQuery extends {
   queryFn?: (...args: never[]) => Promise<infer TResult> | infer TResult

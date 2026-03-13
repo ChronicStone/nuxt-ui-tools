@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { defineTableSchema } from '../src'
+import type { TableRemoteSource } from '../src'
 
 describe('table package surface', () => {
   it('exports defineTableSchema from the package root', () => {
@@ -41,5 +42,18 @@ describe('table package surface', () => {
     })
 
     expectTypeOf(schema.pagination?.showPageSizePicker).toEqualTypeOf<boolean | undefined>()
+  })
+
+  it('requires remote sources to return rows with rowCount metadata', () => {
+    const remoteSource: TableRemoteSource<{ id: number }> = {
+      mode: 'remote',
+      query: () => ({
+        queryKey: ['remote-users'],
+        // @ts-expect-error remote queries must resolve { rows, rowCount }
+        queryFn: async () => [{ id: 1 }],
+      }),
+    }
+
+    expectTypeOf(remoteSource).toEqualTypeOf<TableRemoteSource<{ id: number }>>()
   })
 })

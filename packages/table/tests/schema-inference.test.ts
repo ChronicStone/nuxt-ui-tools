@@ -5,15 +5,32 @@ import type {
   ExtractTableContextData,
   ExtractTablePageContextData,
   ExtractTableRow,
+  TableQueryDefinition,
 } from '../src'
+
+interface DemoEmployeeRow {
+  id: string
+  email: string
+  organisation: {
+    id: string
+    status: 'active' | 'inactive'
+  }
+}
+
+interface DemoEmployeeListResult {
+  rows: DemoEmployeeRow[]
+  rowCount: number
+}
+
+type DemoEmployeeQuery = TableQueryDefinition<DemoEmployeeListResult>
 
 const schema = defineTableSchema({
   tableKey: 'users',
   rowKey: 'id',
   source: {
     mode: 'remote',
-    query: () => ({
-      queryKey: ['users'],
+    query: (ctx) => ({
+      queryKey: ['users', ctx.search.value],
       queryFn: async () => ({
         rows: [
           {
@@ -125,8 +142,51 @@ describe('defineTableSchema inference', () => {
     type DefaultSortingKey = Extract<DefaultSortingObject['key'], 'organisation.status'>
 
     expectTypeOf<DefaultSortingKey>().toEqualTypeOf<'organisation.status'>()
-    expectTypeOf<
-      Extract<DefaultSortingObject['dir'], 'desc'>
-    >().toEqualTypeOf<'desc'>()
+    expectTypeOf<Extract<DefaultSortingObject['dir'], 'desc'>>().toEqualTypeOf<'desc'>()
+  })
+
+  it('keeps interface-backed query rows inferred without requiring an index signature', () => {
+    const interfaceSchema = defineTableSchema({
+      tableKey: 'demo-users',
+      rowKey: 'id',
+      source: {
+        query: () =>
+          ({
+            queryKey: ['demo-users'],
+            queryFn: async () =>
+              ({
+                rows: [
+                  {
+                    id: 'user_1',
+                    email: 'ada@example.com',
+                    organisation: {
+                      id: 'org_1',
+                      status: 'active' as const,
+                    },
+                  },
+                ],
+                rowCount: 1,
+              }) satisfies DemoEmployeeListResult,
+          }) satisfies DemoEmployeeQuery,
+      },
+      table: {
+        columns: (column) => [
+          column.field('email', {
+            render: (params) => {
+              expectTypeOf(params.row.id).toEqualTypeOf<string>()
+              expectTypeOf(params.row.organisation.status).toMatchTypeOf<'active' | 'inactive'>()
+              expectTypeOf(params.value).toEqualTypeOf<string>()
+
+              return params.value
+            },
+          }),
+        ],
+      },
+    })
+
+    type InterfaceRow = ExtractTableRow<typeof interfaceSchema>
+
+    expectTypeOf<InterfaceRow['email']>().toEqualTypeOf<string>()
+    expectTypeOf<InterfaceRow['organisation']['status']>().toMatchTypeOf<'active' | 'inactive'>()
   })
 })

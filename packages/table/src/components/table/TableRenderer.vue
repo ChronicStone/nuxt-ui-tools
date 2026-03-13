@@ -48,7 +48,7 @@ watch(tableEmpty, (isEmpty) => {
       :column-pinning="internals.tableColumns.tableState.value.columnPinning"
       :column-sizing="internals.tableColumns.tableState.value.columnSizing"
       :column-sizing-info="internals.tableColumns.tableState.value.columnSizingInfo"
-      :column-sizing-options="{ columnResizeMode: 'onChange' }"
+      :column-sizing-options="{ enableColumnResizing: true, columnResizeMode: 'onChange' }"
       :row-selection="internals.selection.rowSelection.value"
       @update:column-order="internals.tableColumns.tableState.value.columnOrder = $event ?? []"
       @update:column-visibility="
@@ -74,11 +74,11 @@ watch(tableEmpty, (isEmpty) => {
           ? 'h-full overflow-hidden bg-transparent'
           : 'h-full overflow-auto bg-transparent [scrollbar-gutter:stable]',
         base: 'min-w-full border-separate border-spacing-0 bg-transparent text-sm',
-        thead: 'border-b border-default/60 bg-default/95',
+        thead: 'border-b border-default/30 bg-default/95',
         tbody: 'bg-transparent',
         tr: 'group',
         th: 'h-8 border-b-0 bg-default px-3 py-1.5 text-left align-middle text-sm font-medium text-default',
-        td: 'h-12 border-b border-default/50 px-3 align-middle text-sm text-toned transition-colors duration-100 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
+        td: 'h-12 border-b px-3 align-middle text-sm text-toned transition-colors duration-100 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
         loading: 'p-0 align-top bg-transparent',
         empty: 'p-0 text-sm text-muted',
       }"
@@ -159,5 +159,9 @@ watch(tableEmpty, (isEmpty) => {
 :deep(tr[data-selected='true'] td[data-pinned]) {
   background-color: color-mix(in oklab, var(--ui-bg-elevated) 90%, transparent) !important;
   color: var(--ui-text) !important;
+}
+
+:deep(tbody td) {
+  border-bottom-color: color-mix(in oklab, var(--ui-border) 28%, transparent) !important;
 }
 </style>

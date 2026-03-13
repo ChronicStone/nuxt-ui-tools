@@ -29,7 +29,7 @@ interface DemoEmployeeSkill extends GenericObject {
   skill: DemoSkill
 }
 
-interface DemoEmployeeRow extends GenericObject {
+interface DemoEmployeeRow {
   id: string
   departmentId: string
   fullName: string
@@ -136,7 +136,7 @@ export const tableSchema = defineTableSchema({
   filters: {
     search: {
       fields: ['fullName', 'email', 'department.company.name', 'employeeSkills.skill.label'],
-      placeholder: 'Search employees, companies, or skills',
+      placeholder: 'Search employees...',
     },
     ui: (filter) => [
       filter.text('fullName', {
@@ -175,14 +175,9 @@ export const tableSchema = defineTableSchema({
       column.field('id', {
         label: 'ID',
         icon: 'i-lucide-hash',
-        minWidth: 124,
-        maxWidth: 180,
-        render: ({ value }) => (
-          <div class="flex items-center gap-2">
-            <span class="font-medium text-highlighted">{String(value)}</span>
-            <UBadge color="neutral" variant="subtle" size="sm" label={String(value).slice(-3)} />
-          </div>
-        ),
+        width: 200,
+        ellipsis: true,
+        render: ({ value }) => <span class="font-medium text-highlighted">{value}</span>,
       }),
       column.field('fullName', {
         label: 'Employee',
@@ -235,7 +230,9 @@ export const tableSchema = defineTableSchema({
         sortableKey: 'fullName',
         render: ({ row }) => {
           const employee = asEmployeeRow(row)
-          const skills = employee.employeeSkills.map((entry: DemoEmployeeSkill) => entry.skill.label).slice(0, 3)
+          const skills = employee.employeeSkills
+            .map((entry: DemoEmployeeSkill) => entry.skill.label)
+            .slice(0, 3)
           const overflow = employee.employeeSkills.length - skills.length
 
           return (
@@ -284,7 +281,9 @@ export const tableSchema = defineTableSchema({
               <div class="truncate font-medium text-highlighted">
                 {employee.department?.company?.name ?? 'Independent'}
               </div>
-              <div class="truncate text-xs text-muted">{employee.department?.name ?? 'No department'}</div>
+              <div class="truncate text-xs text-muted">
+                {employee.department?.name ?? 'No department'}
+              </div>
             </div>
           )
         },
@@ -299,7 +298,9 @@ export const tableSchema = defineTableSchema({
           return (
             <div class="flex items-center gap-2">
               <span class={getDepartmentDot(employee.department?.name)} />
-              <span class="truncate text-highlighted">{employee.department?.name ?? 'Unassigned'}</span>
+              <span class="truncate text-highlighted">
+                {employee.department?.name ?? 'Unassigned'}
+              </span>
             </div>
           )
         },
@@ -476,15 +477,16 @@ function getCountryFlag(country: string) {
 }
 
 function getDepartmentDot(department: string | undefined) {
-  const palette = department === 'Engineering'
-    ? 'bg-sky-500/70'
-    : department === 'Design'
-      ? 'bg-pink-500/70'
-      : department === 'Operations'
-        ? 'bg-amber-500/70'
-        : department === 'Sales'
-          ? 'bg-emerald-500/70'
-          : 'bg-primary/70'
+  const palette =
+    department === 'Engineering'
+      ? 'bg-sky-500/70'
+      : department === 'Design'
+        ? 'bg-pink-500/70'
+        : department === 'Operations'
+          ? 'bg-amber-500/70'
+          : department === 'Sales'
+            ? 'bg-emerald-500/70'
+            : 'bg-primary/70'
 
   return `size-2 rounded-full ${palette}`
 }

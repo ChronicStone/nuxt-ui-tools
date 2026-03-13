@@ -1,25 +1,32 @@
 import type {
-  GenericObject,
   MaybePromise,
   NestedPaths,
   Prettify,
   RenderableType,
-  TypeFromPath,
   UnionToIntersection,
 } from '@nuxt-ui-tools/shared'
 import type { ComputedRef, Ref } from 'vue'
 
 export type {
   ComputedRef,
-  GenericObject,
   MaybePromise,
   NestedPaths,
   Prettify,
   Ref,
   RenderableType,
-  TypeFromPath,
   UnionToIntersection,
 }
+
+export type GenericObject = object
+
+export type TypeFromPath<TValue, TPath extends string> =
+  TPath extends `${infer THead}.${infer TRest}`
+    ? THead extends keyof TValue
+      ? TypeFromPath<TValue[THead], TRest>
+      : never
+    : TPath extends keyof TValue
+      ? TValue[TPath]
+      : never
 
 export type TableLayout = 'table' | 'grid'
 
@@ -27,16 +34,21 @@ export type TableColumnPinned = 'left' | 'right'
 
 export type TableColumnAlign = 'left' | 'center' | 'right'
 
-export type TableFieldPath<TRow extends GenericObject> = NestedPaths<TRow> | (string & {})
+type FallbackIfNever<TValue, TFallback> = [TValue] extends [never] ? TFallback : TValue
 
-export type TableKnownFieldPath<TRow extends GenericObject> = Extract<NestedPaths<TRow>, string>
+export type TableFieldPath<TRow extends GenericObject> = FallbackIfNever<
+  Extract<NestedPaths<TRow>, string>,
+  string
+>
+
+export type TableKnownFieldPath<TRow extends GenericObject> = TableFieldPath<TRow>
 
 export type TableFieldValue<
   TRow extends GenericObject,
   TField extends TableFieldPath<TRow>,
 > = TField extends string ? TypeFromPath<TRow, TField> : never
 
-export type TableSortKey<TRow extends GenericObject> = TableFieldPath<TRow> | (string & {})
+export type TableSortKey<TRow extends GenericObject> = TableFieldPath<TRow>
 
 export type TableRowKey<TRow extends GenericObject> = TableFieldPath<TRow> | TableFieldPath<TRow>[]
 
