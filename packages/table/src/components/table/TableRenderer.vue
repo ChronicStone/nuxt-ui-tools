@@ -1,63 +1,113 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import UTable from '@nuxt/ui/components/Table.vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../composables/use-table-internals'
+import TableEmptyState from './TableEmptyState.vue'
+import TableLoadingState from './TableLoadingState.vue'
 
 const internals = useTableInternals()
-defineProps<{
+const props = defineProps<{
   height: string
 }>()
+const tableRef = ref<{ $el?: Element | null } | null>(null)
 
 const tableRows = computed(() => internals.rows.value)
-const tableRowCount = computed(() => internals.queryContent.data.value.rowCount)
 const tableLoading = computed(() => internals.queryContent.status.value.isPending)
-const tableRevalidating = computed(() => internals.queryContent.status.value.isRevalidating)
+const tableEmpty = computed(() =>
+  !tableLoading.value && tableRows.value.length === 0,
+)
+const bodyPlaceholderMinHeight = computed(() => `calc(${props.height} - 7rem)`)
+const bodyOverlayTop = '2.625rem'
+
+watch(
+  tableEmpty,
+  (isEmpty) => {
+    if (!isEmpty) {
+      return
+    }
+
+    nextTick(() => {
+      const element = tableRef.value?.$el
+
+      if (!(element instanceof HTMLElement)) {
+        return
+      }
+
+      element.scrollTo({ top: 0, left: 0 })
+    })
+  },
+)
 </script>
 
 <template>
-  <div class="overflow-hidden" :style="{ height }">
+  <div class="relative overflow-hidden" :style="{ height }">
     <UTable
+      ref="tableRef"
       :data="tableRows"
       :columns="internals.tableColumns.tableColumns.value"
-      :state="internals.tableColumns.tableState.value"
-      :on-state-change="(updater: any) => {
-        internals.tableColumns.tableState.value = typeof updater === 'function'
-          ? updater(internals.tableColumns.tableState.value)
-          : updater
-      }"
+      :column-order="internals.tableColumns.tableState.value.columnOrder"
+      :column-visibility="internals.tableColumns.tableState.value.columnVisibility"
+      :column-pinning="internals.tableColumns.tableState.value.columnPinning"
+      :column-sizing="internals.tableColumns.tableState.value.columnSizing"
+      :column-sizing-info="internals.tableColumns.tableState.value.columnSizingInfo"
+      :row-selection="internals.selection.rowSelection.value"
+      @update:column-order="internals.tableColumns.tableState.value.columnOrder = $event ?? []"
+      @update:column-visibility="internals.tableColumns.tableState.value.columnVisibility = $event ?? {}"
+      @update:column-pinning="
+        internals.tableColumns.tableState.value.columnPinning = $event ?? { left: [], right: [] }
+      "
+      @update:column-sizing="internals.tableColumns.tableState.value.columnSizing = $event ?? {}"
+      @update:column-sizing-info="internals.tableColumns.tableState.value.columnSizingInfo = $event ?? {}"
+      @update:row-selection="internals.selection.setRowSelection({ selection: $event ?? {} })"
       :get-row-id="(row: any) => String(row?.__$rowId ?? row?.id ?? '')"
       :sorting-options="{ manualSorting: true }"
       sticky="header"
       :loading="tableLoading"
       class="h-full"
       :ui="{
-        root: 'h-full overflow-auto bg-transparent',
+        root: tableEmpty ? 'h-full overflow-hidden bg-transparent' : 'h-full overflow-auto bg-transparent',
         base: 'min-w-full border-separate border-spacing-0 bg-transparent text-sm',
-        thead: 'border-b border-default/60 bg-default/95 backdrop-blur supports-[backdrop-filter]:bg-default/80',
+        thead: 'border-b border-default/60 bg-default/95',
         tbody: 'bg-transparent',
         tr: 'group transition-colors duration-150',
-        th: 'h-8 border-b-0 bg-default px-3 text-left align-middle text-sm font-medium text-default',
-        td: 'h-12 border-b border-default/50 px-3 align-middle text-sm text-toned transition-colors duration-150 group-hover:bg-elevated/70',
-        loading: 'bg-primary',
-        empty: 'py-16 text-sm text-muted'
+        th: 'h-8 border-b-0 bg-default px-3 py-1.5 text-left align-middle text-sm font-medium text-default',
+        td: 'h-12 border-b border-default/50 px-3 align-middle text-sm text-toned transition-colors duration-150 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
+        loading: 'p-0 align-top bg-transparent',
+        empty: 'p-0 text-sm text-muted',
       }"
     >
+      <template #loading>
+        <TableLoadingState :min-height="bodyPlaceholderMinHeight" />
+      </template>
+
       <template #empty>
         <slot name="empty">
-          <div class="flex flex-col items-center justify-center gap-3 py-14">
-            <UIcon
-              :name="tableRevalidating ? 'i-lucide-loader-circle' : 'i-lucide-database-zap'"
-              class="size-6 text-muted"
-              :class="{ 'animate-spin': tableRevalidating }"
-            />
-            <div class="text-sm text-muted">
-              {{ tableRowCount ? 'Refreshing rows…' : 'No rows match the current state.' }}
-            </div>
-          </div>
+          <div />
         </slot>
       </template>
     </UTable>
+
+    <div
+      v-if="tableEmpty"
+      class="pointer-events-none absolute top-0 bottom-0 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center"
+      :style="{ top: bodyOverlayTop }"
+    >
+      <TableEmptyState :min-height="bodyPlaceholderMinHeight" />
+    </div>
   </div>
 </template>
+
+<style scoped>
+:deep(th[data-pinned]),
+:deep(td[data-pinned]) {
+  background-color: color-mix(in oklab, var(--ui-bg) 74%, transparent) !important;
+  background-image: none !important;
+  backdrop-filter: blur(8px) saturate(125%);
+}
+
+:deep(tr[data-selected="true"] td[data-pinned]) {
+  background-color: color-mix(in oklab, var(--ui-bg-elevated) 78%, transparent) !important;
+  color: var(--ui-text) !important;
+}
+</style>

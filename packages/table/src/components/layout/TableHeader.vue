@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { TableLayout } from '../../types'
+import UButton from '@nuxt/ui/components/Button.vue'
+import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import ColumnPanel from '../drawers/ColumnPanel.vue'
 import SearchQueryInput from '../utils/SearchQueryInput.vue'
 
@@ -50,31 +52,32 @@ defineSlots<{
       </div>
 
       <div class="flex items-center justify-end gap-2">
-        <div
+        <UFieldGroup
           v-if="gridEnabled"
-          class="inline-flex items-center gap-2"
+          size="md"
+          class="shrink-0"
         >
-          <button
-            type="button"
-            class="inline-flex h-10 items-center rounded-lg border px-3 text-sm transition-colors"
-            :class="tableLayout === 'table'
-              ? 'border-default bg-elevated text-default shadow-xs'
-              : 'border-default bg-default text-muted hover:bg-elevated/60 hover:text-default'"
+          <UButton
+            color="neutral"
+            :variant="tableLayout === 'table' ? 'subtle' : 'outline'"
+            size="md"
+            icon="i-lucide-table-properties"
+            :ui="{ base: 'h-10 w-10 justify-center' }"
+            aria-label="Table view"
+            title="Table view"
             @click="emit('update:tableLayout', 'table')"
-          >
-            Table
-          </button>
-          <button
-            type="button"
-            class="inline-flex h-10 items-center rounded-lg border px-3 text-sm transition-colors"
-            :class="tableLayout === 'grid'
-              ? 'border-default bg-elevated text-default shadow-xs'
-              : 'border-default bg-default text-muted hover:bg-elevated/60 hover:text-default'"
+          />
+          <UButton
+            color="neutral"
+            :variant="tableLayout === 'grid' ? 'subtle' : 'outline'"
+            size="md"
+            icon="i-lucide-layout-grid"
+            :ui="{ base: 'h-10 w-10 justify-center' }"
+            aria-label="Grid view"
+            title="Grid view"
             @click="emit('update:tableLayout', 'grid')"
-          >
-            Grid
-          </button>
-        </div>
+          />
+        </UFieldGroup>
 
         <ColumnPanel />
       </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DataList from '../../../../packages/table/src/components/DataList.vue'
 import { useTable } from '../../../../packages/table/src'
+import { tableSchema } from '../composables/useTablePlaygroundSchema'
 
 const { classes } = usePlaygroundAppearance()
 const table = useTable(tableSchema)

@@ -20,7 +20,7 @@ const pageSizeItems = computed(() =>
 <template>
   <footer class="flex flex-col gap-3 px-4 py-3 text-sm text-muted sm:px-5 lg:flex-row lg:items-center lg:justify-between">
     <div>
-      {{ internals.tableColumns.selectedRowCount.value }} of {{ internals.queryContent.data.value.rowCount }} row(s) selected.
+      {{ internals.selection.selectedCount.value }} of {{ internals.queryContent.data.value.rowCount }} row(s) selected.
     </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">

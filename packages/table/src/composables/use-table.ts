@@ -33,6 +33,18 @@ export type UseTableReturn<TSchema = TableSchemaView> = {
     layout: ComputedRef<TableLayout>
     query: ComputedRef<PublicTableQueryState>
     resolvedFilters: ComputedRef<TableResolvedFilterGroup<string>>
+    selection: {
+      selectedKeys: ComputedRef<string[]>
+      selectedCount: ComputedRef<number>
+      allSelected: ComputedRef<boolean>
+      partiallySelected: ComputedRef<boolean>
+    }
+  }
+  selection: {
+    selectedKeys: ComputedRef<string[]>
+    selectedCount: ComputedRef<number>
+    allSelected: ComputedRef<boolean>
+    partiallySelected: ComputedRef<boolean>
   }
   data: {
     rows: ComputedRef<ExtractTableRow<TSchema>[]>
@@ -81,6 +93,18 @@ export function useTable<TSchema = TableSchemaView>(
       layout: internals.activeLayout,
       query: queryState,
       resolvedFilters: internals.resolvedFilterState,
+      selection: {
+        selectedKeys: computed(() => internals.selection.selectedKeys.value),
+        selectedCount: internals.selection.selectedCount,
+        allSelected: internals.selection.allSelected,
+        partiallySelected: internals.selection.partiallySelected,
+      },
+    },
+    selection: {
+      selectedKeys: computed(() => internals.selection.selectedKeys.value),
+      selectedCount: internals.selection.selectedCount,
+      allSelected: internals.selection.allSelected,
+      partiallySelected: internals.selection.partiallySelected,
     },
     data: {
       rows: computed(() => internals.queryContent.data.value.rows as ExtractTableRow<TSchema>[]),

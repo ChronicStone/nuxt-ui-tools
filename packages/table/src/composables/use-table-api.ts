@@ -28,6 +28,7 @@ interface UseTableApiParams<TSchema = TableSchemaView> {
   pagination: WritableComputedRef<{ pageIndex: number; pageSize: number }>
   sorting: WritableComputedRef<{ key: string; dir: TableSortingDirection } | null>
   filters: WritableComputedRef<TableFilterState>
+  selection: any
 }
 
 export interface UseTableApi<TSchema = TableSchemaView> {
@@ -50,6 +51,12 @@ export interface UseTableApi<TSchema = TableSchemaView> {
   setSortKey: (key?: string) => void
   setSortDirection: (direction: TableSortingDirection) => void
   setSearch: (search: string) => void
+  clearSelection: () => void
+  selectAllRows: () => void
+  selectRows: (rowIds: string[]) => void
+  unselectRows: (rowIds: string[]) => void
+  toggleRowSelection: (options: { rowId: string; selected?: boolean; shiftKey?: boolean }) => void
+  isRowSelected: (rowId: string) => boolean
   clearFilters: () => void
   resetQueryState: () => void
   getFilterState: <TKey extends ExtractTableFilterKey<TSchema>>(
@@ -194,6 +201,34 @@ export function useTableApi<TSchema = TableSchemaView>(
     }
   }
 
+  function clearSelection() {
+    params.selection.clearSelection()
+  }
+
+  function selectAllRows() {
+    params.selection.selectAllRows()
+  }
+
+  function selectRows(rowIds: string[]) {
+    params.selection.selectRows({ rowIds })
+  }
+
+  function unselectRows(rowIds: string[]) {
+    params.selection.unselectRows({ rowIds })
+  }
+
+  function toggleRowSelection(options: {
+    rowId: string
+    selected?: boolean
+    shiftKey?: boolean
+  }) {
+    params.selection.toggleRowSelection(options)
+  }
+
+  function isRowSelected(rowId: string) {
+    return params.selection.isRowSelected({ rowId })
+  }
+
   function getFilterState<TKey extends ExtractTableFilterKey<TSchema>>(
     key: TKey,
   ): ExtractTableFilterRule<TSchema, TKey> | undefined {
@@ -317,6 +352,12 @@ export function useTableApi<TSchema = TableSchemaView>(
     setSortKey,
     setSortDirection,
     setSearch,
+    clearSelection,
+    selectAllRows,
+    selectRows,
+    unselectRows,
+    toggleRowSelection,
+    isRowSelected,
     clearFilters,
     resetQueryState,
     getFilterState,

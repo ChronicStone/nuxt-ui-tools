@@ -16,6 +16,7 @@ export function useTableColumns(params: {
   data: any
   query: any
   api: any
+  selection: any
   tableLayout: ComputedRef<TableLayout>
   tableState: Ref<Record<string, any>>
 }) {
@@ -47,8 +48,10 @@ export function useTableColumns(params: {
       .filter((column): column is TableRuntimeColumn => Boolean(column))
   })
 
-  const selectedRowCount = computed(() =>
-    Object.values(params.tableState.value.rowSelection ?? {}).filter(Boolean).length,
+  const visibleOrderedColumns = computed(() =>
+    orderedColumns.value.filter(
+      (column) => params.tableState.value.columnVisibility?.[column.id] !== false,
+    ),
   )
 
   watch(
@@ -65,6 +68,9 @@ export function useTableColumns(params: {
           params.tableState.value.columnVisibility?.[column.id] ?? column.defaultVisible,
         ]),
       )
+      const visibleColumnIds = columns
+        .filter((column) => nextVisibility[column.id] !== false)
+        .map((column) => column.id)
       const pinnedLeft = unique([
         SELECT_COLUMN_ID,
         ...columns
@@ -73,7 +79,7 @@ export function useTableColumns(params: {
         ...((params.tableState.value.columnPinning?.left as string[] | undefined) ?? []).filter(
           (columnId) => columnIds.includes(columnId),
         ),
-      ])
+      ]).filter((columnId) => columnId === SELECT_COLUMN_ID || visibleColumnIds.includes(columnId))
       const pinnedRight = unique([
         ...columns
           .filter((column) => findSchemaColumn({ schema: params.schema.value, columnId: column.id })?.pinned === 'right')
@@ -81,7 +87,7 @@ export function useTableColumns(params: {
         ...((params.tableState.value.columnPinning?.right as string[] | undefined) ?? []).filter(
           (columnId) => columnIds.includes(columnId),
         ),
-      ])
+      ]).filter((columnId) => visibleColumnIds.includes(columnId))
 
       params.tableState.value = {
         ...params.tableState.value,
@@ -136,11 +142,22 @@ export function useTableColumns(params: {
     columnId: string
     visible: boolean
   }) {
+    const left = ((params.tableState.value.columnPinning?.left as string[] | undefined) ?? []).filter(
+      (id) => options.visible || id !== options.columnId,
+    )
+    const right = ((params.tableState.value.columnPinning?.right as string[] | undefined) ?? []).filter(
+      (id) => options.visible || id !== options.columnId,
+    )
+
     params.tableState.value = {
       ...params.tableState.value,
       columnVisibility: {
         ...params.tableState.value.columnVisibility,
         [options.columnId]: options.visible,
+      },
+      columnPinning: {
+        left: unique([SELECT_COLUMN_ID, ...left.filter((id) => id !== SELECT_COLUMN_ID)]),
+        right: unique(right.filter((id) => id !== SELECT_COLUMN_ID)),
       },
     }
   }
@@ -266,42 +283,78 @@ export function useTableColumns(params: {
   const tableColumns = computed(() => {
     const selectionColumn = {
       id: SELECT_COLUMN_ID,
-      header: ({ table }: { table: any }) => (
-        <UCheckbox
-          modelValue={
-            table.getIsAllPageRowsSelected()
-              ? true
-              : table.getIsSomePageRowsSelected()
-                ? 'indeterminate'
-                : false
-          }
-          color="neutral"
-          ui={{ root: 'items-center' }}
-          onUpdate:modelValue={(value: boolean | 'indeterminate') =>
-            table.toggleAllPageRowsSelected(Boolean(value))}
-        />
+      header: () => (
+        <button
+          type="button"
+          class="inline-flex items-center"
+          onClick={(event: MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            params.selection.toggleAllRows({ selected: !params.selection.allSelected.value })
+          }}
+        >
+          <UCheckbox
+            modelValue={
+              params.selection.allSelected.value
+                ? true
+                : params.selection.partiallySelected.value
+                  ? 'indeterminate'
+                  : false
+            }
+            color="neutral"
+            ui={{ root: 'pointer-events-none items-center' }}
+          />
+        </button>
       ),
       cell: ({ row }: { row: any }) => (
-        <UCheckbox
-          modelValue={row.getIsSelected()}
-          color="neutral"
-          ui={{ root: 'items-center' }}
-          onUpdate:modelValue={(value: boolean | 'indeterminate') =>
-            row.toggleSelected(Boolean(value))}
-        />
+        <button
+          type="button"
+          class="inline-flex items-center"
+          onClick={(event: MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+
+            const rowId = String(row.original?.__$rowId ?? row.id)
+
+            params.selection.toggleRowSelection({
+              rowId,
+              selected: !params.selection.isRowSelected({ rowId }),
+              shiftKey: event.shiftKey,
+            })
+          }}
+        >
+          <UCheckbox
+            modelValue={params.selection.isRowSelected({ rowId: String(row.original?.__$rowId ?? row.id) })}
+            color="neutral"
+            ui={{ root: 'pointer-events-none items-center' }}
+          />
+        </button>
       ),
       size: 56,
       enableSorting: false,
       enableHiding: false,
+      enablePinning: true,
       meta: {
         class: {
           th: 'w-14 px-4',
           td: 'w-14 px-4',
         },
+        style: {
+          th: () => ({
+            width: '56px',
+            minWidth: '56px',
+            maxWidth: '56px',
+          }),
+          td: () => ({
+            width: '56px',
+            minWidth: '56px',
+            maxWidth: '56px',
+          }),
+        },
       },
     }
 
-    const dataColumns = orderedColumns.value
+    const dataColumns = visibleOrderedColumns.value
       .map((runtimeColumn) => {
         const column = findSchemaColumn({
           schema: params.schema.value,
@@ -327,7 +380,7 @@ export function useTableColumns(params: {
             >
               <button
                 type="button"
-                class="inline-flex h-7 items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
+                class="inline-flex h-8 items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
               >
                 <div class="flex min-w-0 items-center gap-2.5">
                   {runtimeColumn.icon ? (
@@ -343,6 +396,9 @@ export function useTableColumns(params: {
                   })}
                   class="size-4 shrink-0 text-muted"
                 />
+                {getPinnedState(runtimeColumn.id) ? (
+                  <UIcon name="i-lucide-pin" class="size-3.5 shrink-0 text-muted" />
+                ) : null}
               </button>
             </UDropdownMenu>
           ),
@@ -354,12 +410,23 @@ export function useTableColumns(params: {
             }),
           enableSorting: false,
           enableHiding: runtimeColumn.canHide,
+          enablePinning: true,
           size: normalizeColumnSize(column.width),
           minSize: normalizeColumnSize(column.minWidth) ?? 120,
           meta: {
             class: {
               th: getColumnHeaderClass(column),
               td: getColumnCellClass(column),
+            },
+            style: {
+              th: ({ column: headerColumn }: { column: { getSize: () => number } }) => ({
+                width: `${headerColumn.getSize()}px`,
+                minWidth: `${headerColumn.getSize()}px`,
+              }),
+              td: ({ column: cellColumn }: { column: { getSize: () => number } }) => ({
+                width: `${cellColumn.getSize()}px`,
+                minWidth: `${cellColumn.getSize()}px`,
+              }),
             },
           },
         }
@@ -370,7 +437,9 @@ export function useTableColumns(params: {
         ): column is Exclude<typeof column, null> => column !== null,
       )
 
-    return [selectionColumn, ...dataColumns]
+    return params.selection.selectionEnabled.value
+      ? [selectionColumn, ...dataColumns]
+      : dataColumns
   })
 
   return {
@@ -378,7 +447,7 @@ export function useTableColumns(params: {
     tableColumns,
     runtimeColumns,
     orderedColumns,
-    selectedRowCount,
+    visibleOrderedColumns,
     reset,
     setVisibility,
     setPinning,
@@ -451,10 +520,6 @@ function getHeaderIcon(
     return 'i-lucide-arrow-down'
   }
 
-  if (controls.getPinnedState(columnId)) {
-    return 'i-lucide-pin'
-  }
-
   return controls.getCanHide?.() ? 'i-lucide-chevrons-up-down' : 'i-lucide-grip-vertical'
 }
 
@@ -478,16 +543,65 @@ function renderColumnCell(options: {
     })
 
     if (options.column.render) {
-      return options.column.render({
-        ...cellParams,
-        value,
+      return wrapEllipsisContent({
+        column: options.column,
+        content: options.column.render({
+          ...cellParams,
+          value,
+        }),
+        title: resolveEllipsisTitle({
+          column: options.column,
+          params: {
+            ...cellParams,
+            value,
+          },
+          fallbackValue: value,
+        }),
       })
     }
 
-    return formatCellValue(value)
+    return wrapEllipsisContent({
+      column: options.column,
+      content: formatCellValue(value),
+      title: resolveEllipsisTitle({
+        column: options.column,
+        params: {
+          ...cellParams,
+          value,
+        },
+        fallbackValue: value,
+      }),
+    })
   }
 
-  return options.column.render(cellParams)
+  return wrapEllipsisContent({
+    column: options.column,
+    content: options.column.render(cellParams),
+    title: resolveEllipsisTitle({
+      column: options.column,
+      params: cellParams,
+      fallbackValue: null,
+    }),
+  })
+}
+
+function wrapEllipsisContent(options: {
+  column: TableColumn
+  content: any
+  title?: string | null
+}) {
+  if (!options.column.ellipsis) {
+    return options.content
+  }
+
+  return (
+    <div
+      class="min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+      title={options.title ?? undefined}
+    >
+      {options.content}
+    </div>
+  )
 }
 
 function getColumnHeaderClass(column: TableColumn) {
@@ -504,10 +618,41 @@ function getColumnCellClass(column: TableColumn) {
   return [
     column.align === 'right' ? 'text-right' : '',
     column.align === 'center' ? 'text-center' : '',
-    column.ellipsis ? 'max-w-0 truncate' : '',
+    column.ellipsis ? 'max-w-0' : '',
   ]
     .filter(Boolean)
     .join(' ')
+}
+
+function resolveEllipsisTitle(options: {
+  column: TableColumn
+  params: Record<string, any>
+  fallbackValue: unknown
+}) {
+  if (!options.column.ellipsis) {
+    return null
+  }
+
+  const ellipsisOptions =
+    typeof options.column.ellipsis === 'object'
+      ? options.column.ellipsis as Record<string, unknown>
+      : null
+
+  const explicitTitle = ellipsisOptions?.title
+
+  if (typeof explicitTitle === 'function') {
+    return String(explicitTitle(options.params))
+  }
+
+  if (typeof explicitTitle === 'string') {
+    return explicitTitle
+  }
+
+  if (options.fallbackValue != null) {
+    return formatCellValue(options.fallbackValue)
+  }
+
+  return null
 }
 
 function normalizeColumnSize(value: number | string | undefined) {

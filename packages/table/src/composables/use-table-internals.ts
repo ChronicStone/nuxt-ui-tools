@@ -10,6 +10,7 @@ import { useTablePagination } from './use-table-pagination'
 import { useTableApi } from './use-table-api'
 import { useTableLayout } from './use-table-layout'
 import { useTableRows } from './use-table-rows'
+import { useTableSelection } from './use-table-selection'
 import { useTableState } from './use-table-state'
 
 export interface TableRuntimeColumn {
@@ -35,13 +36,6 @@ function createTableInternals(options: {
   })
   const queryState = state.queryState
   const resolvedFilterState = state.resolvedFilterState
-  const tableApi = useTableApi({
-    schema,
-    activeLayout: layout.activeLayout,
-    pagination: queryState.pagination,
-    sorting: queryState.sorting,
-    filters: queryState.filters,
-  })
   const queryContent = useTableData({
     schema,
     state: {
@@ -49,19 +43,34 @@ function createTableInternals(options: {
       resolvedFilterState,
     },
   })
-  const filters = useTableFilters({
-    schema,
-    queryState,
-    api: tableApi,
-  })
   const tableState = ref<Record<string, any>>({
     columnOrder: [],
     columnVisibility: {},
     columnPinning: { left: [], right: [] },
     columnSizing: {},
     columnSizingInfo: {},
-    rowSelection: {},
     sorting: [],
+  })
+  const rows = useTableRows({
+    schema,
+    rows: computed(() => queryContent.data.value.rows),
+  })
+  const selection = useTableSelection({
+    schema,
+    rows,
+  })
+  const tableApi = useTableApi({
+    schema,
+    activeLayout: layout.activeLayout,
+    pagination: queryState.pagination,
+    sorting: queryState.sorting,
+    filters: queryState.filters,
+    selection,
+  })
+  const filters = useTableFilters({
+    schema,
+    queryState,
+    api: tableApi,
   })
   const controls = useTableControls({
     schema,
@@ -72,12 +81,9 @@ function createTableInternals(options: {
     data: queryContent,
     query: createPublicQueryState({ queryState, activeLayout }),
     api: tableApi,
+    selection,
     tableLayout: activeLayout,
     tableState,
-  })
-  const rows = useTableRows({
-    schema,
-    rows: computed(() => queryContent.data.value.rows),
   })
   const pagination = useTablePagination({
     rowCount: computed(() => queryContent.data.value.rowCount),
@@ -93,6 +99,7 @@ function createTableInternals(options: {
     resolvedFilterState,
     queryContent,
     tableApi,
+    selection,
     filters,
     controls,
     tableColumns,
