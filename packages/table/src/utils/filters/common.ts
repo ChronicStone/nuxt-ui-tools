@@ -140,6 +140,48 @@ export function getDateRangeValue(options: {
   return isDateRangeValue({ value: options.value }) ? (options.value as DateRangeLike) : undefined
 }
 
+type NumberRangeLike = {
+  from?: number
+  to?: number
+}
+
+function isNumberRangeValue(options: {
+  value: unknown
+}): options is { value: NumberRangeLike } {
+  if (!options.value || !isObject(options.value) || isArray(options.value)) {
+    return false
+  }
+
+  return 'from' in options.value || 'to' in options.value
+}
+
+export function getNumberRangeValue(options: {
+  value: unknown
+}) {
+  return isNumberRangeValue({ value: options.value }) ? (options.value as NumberRangeLike) : undefined
+}
+
+export function formatFilterNumber(options: {
+  value: number
+}) {
+  return new Intl.NumberFormat('en-US').format(options.value)
+}
+
+export function toMaybeNumber(options: {
+  value: unknown
+}): number | undefined {
+  if (typeof options.value === 'number') {
+    return options.value
+  }
+
+  if (typeof options.value === 'string') {
+    const n = Number(options.value)
+    return Number.isNaN(n) ? undefined : n
+  }
+
+  return undefined
+}
+
 export function toMaybeDate(options: {
   value: unknown
 }) {

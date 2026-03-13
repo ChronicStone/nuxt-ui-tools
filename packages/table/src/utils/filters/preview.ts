@@ -4,9 +4,12 @@ import type {
 } from '../../types'
 import {
   formatFilterDate,
+  formatFilterNumber,
   getDateRangeValue,
+  getNumberRangeValue,
   toDateFilterValue,
   toMaybeDate,
+  toMaybeNumber,
 } from './common'
 
 export function buildFilterPreview(options: {
@@ -82,6 +85,35 @@ export function buildFilterPreview(options: {
       count: date ? 1 : 0,
       tags: [] as string[],
       summary: date ? formatFilterDate({ value: date }) : '',
+    }
+  }
+
+  if (options.definition.kind === 'number') {
+    const range = getNumberRangeValue({ value: options.rule.value })
+
+    if (range && (range.from != null || range.to != null)) {
+      const start = toMaybeNumber({ value: range.from })
+      const end = toMaybeNumber({ value: range.to })
+
+      return {
+        active: true,
+        count: [start, end].filter((v) => v != null).length,
+        tags: [] as string[],
+        summary: [start, end]
+          .filter((v): v is number => v != null)
+          .map((value) => formatFilterNumber({ value }))
+          .join(' - '),
+      }
+    }
+
+    const num = toMaybeNumber({ value: options.rule.value })
+    const summary = num != null ? formatFilterNumber({ value: num }) : ''
+
+    return {
+      active: Boolean(summary),
+      count: summary ? 1 : 0,
+      tags: [] as string[],
+      summary,
     }
   }
 
