@@ -182,7 +182,7 @@ export function useTableFilterOptions(options: {
       }),
       count:
         entry.count ??
-        (canMergeFacetCounts.value ? countByValue.get(String(entry.value)) || 0 : undefined),
+        (canMergeFacetCounts.value ? countByValue.get(String(entry.value)) : undefined),
     }))
   })
 
@@ -207,18 +207,26 @@ export function useTableFilterOptions(options: {
     )
   })
 
+  // True only on the very first fetch — no data available at all yet (no placeholder)
+  const isInitialLoading = computed(
+    () =>
+      (optionQuery.isLoading.value && !optionQuery.isPlaceholderData.value) ||
+      (facetQuery.isLoading.value && !facetQuery.isPlaceholderData.value),
+  )
+
+  const isStaleLoading = computed(
+    () =>
+      !isInitialLoading.value &&
+      (optionQuery.isFetching.value || facetQuery.isFetching.value),
+  )
+
   return {
     sourceEntries,
     optionEntries,
     filteredEntries,
     facetCounts,
-    isLoading: computed(
-      () =>
-        optionQuery.isLoading.value ||
-        optionQuery.isFetching.value ||
-        facetQuery.isLoading.value ||
-        facetQuery.isFetching.value,
-    ),
+    isLoading: isInitialLoading,
+    isStaleLoading,
     isError: computed(() => optionQuery.isError.value || facetQuery.isError.value),
     error: computed(() => optionQuery.error.value ?? facetQuery.error.value),
     refresh: () => Promise.all([optionQuery.refetch(), facetQuery.refetch()]),

@@ -1,3 +1,4 @@
+export * from './composables/use-range-select'
 export * from './types/utils'
 export * from './utils/object'
 export * from './utils/predicate'

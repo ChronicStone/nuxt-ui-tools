@@ -114,6 +114,7 @@ const remoteSchema = defineTableSchema({
         label: 'Department',
         defaultOperator: 'isAnyOf',
         facet: true,
+        sort: 'count',
         query: ({ search, limit, cursor }) => ({
           queryKey: ['demo-filter-options', 'departments', search, limit, cursor],
           queryFn: async () => demoEmployeesClient.filterOptions.departments({

@@ -116,6 +116,7 @@ export interface TableOptionFilterDefinition<
     context: TableFilterOptionQueryContext,
   ) => TableQueryDefinition<TableFilterOptionEntry<TValue>[] | TableFilterOptionQueryResult<TValue>>
   facet?: TableFilterFacetMode
+  sort?: 'alpha' | 'count'
 }
 
 export interface TableBooleanFilterDefinition<
