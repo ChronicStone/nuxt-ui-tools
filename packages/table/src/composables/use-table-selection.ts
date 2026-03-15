@@ -1,16 +1,20 @@
 import { computed, ref, watch, type ComputedRef } from 'vue'
 
+import type { GenericObject, TableSchemaView } from '../types'
 import { resolveTableRowId } from '../utils'
 
-export function useTableSelection(options: {
-  schema: ComputedRef<any>
-  rows: ComputedRef<Array<Record<string, any>>>
-}) {
+export interface UseTableSelectionParams {
+  schema: ComputedRef<TableSchemaView>
+  rows: ComputedRef<GenericObject[]>
+}
+
+export function useTableSelection(options: UseTableSelectionParams) {
   const selectedKeys = ref<string[]>([])
   const lastTouchedRowId = ref<string | null>(null)
 
   const selectionEnabled = computed(() => {
-    const mode = options.schema.value.table?.selection ?? options.schema.value.selection?.mode ?? 'auto'
+    const mode =
+      options.schema.value.table?.selection ?? options.schema.value.selection?.mode ?? 'auto'
     return mode !== false
   })
 
@@ -25,20 +29,20 @@ export function useTableSelection(options: {
           .filter((rowId) => selectedKeys.value.includes(rowId))
           .map((rowId) => [rowId, true]),
       ),
-    set: (selection: Record<string, boolean> = {}) =>
-      setRowSelection({ selection }),
+    set: (selection: Record<string, boolean> = {}) => setRowSelection({ selection }),
   })
 
   const selectedCount = computed(() => selectedKeys.value.length)
 
-  const allSelected = computed(() =>
-    visibleRowIds.value.length > 0
-    && visibleRowIds.value.every((rowId) => selectedKeys.value.includes(rowId)),
+  const allSelected = computed(
+    () =>
+      visibleRowIds.value.length > 0 &&
+      visibleRowIds.value.every((rowId) => selectedKeys.value.includes(rowId)),
   )
 
-  const partiallySelected = computed(() =>
-    !allSelected.value
-    && visibleRowIds.value.some((rowId) => selectedKeys.value.includes(rowId)),
+  const partiallySelected = computed(
+    () =>
+      !allSelected.value && visibleRowIds.value.some((rowId) => selectedKeys.value.includes(rowId)),
   )
 
   const selectedRows = computed(() =>
@@ -47,13 +51,9 @@ export function useTableSelection(options: {
     ),
   )
 
-  function getRowId(params: {
-    row: Record<string, any>
-    index?: number
-  }) {
+  function getRowId(params: { row: GenericObject; index?: number }) {
     return String(
-      params.row.__$rowId
-      ?? resolveTableRowId({
+      resolveTableRowId({
         rowKey: options.schema.value.rowKey,
         row: params.row,
         index: params.index,
@@ -61,15 +61,11 @@ export function useTableSelection(options: {
     )
   }
 
-  function isRowSelected(params: {
-    rowId: string
-  }) {
+  function isRowSelected(params: { rowId: string }) {
     return selectedKeys.value.includes(params.rowId)
   }
 
-  function selectRows(params: {
-    rowIds: string[]
-  }) {
+  function selectRows(params: { rowIds: string[] }) {
     if (!selectionEnabled.value) {
       return
     }
@@ -77,9 +73,7 @@ export function useTableSelection(options: {
     selectedKeys.value = uniqueRowIds([...selectedKeys.value, ...params.rowIds])
   }
 
-  function unselectRows(params: {
-    rowIds: string[]
-  }) {
+  function unselectRows(params: { rowIds: string[] }) {
     if (!selectionEnabled.value) {
       return
     }
@@ -101,9 +95,7 @@ export function useTableSelection(options: {
     selectedKeys.value = uniqueRowIds([...selectedKeys.value, ...visibleRowIds.value])
   }
 
-  function setRowSelection(params: {
-    selection: Record<string, boolean>
-  }) {
+  function setRowSelection(params: { selection: Record<string, boolean> }) {
     if (!selectionEnabled.value) {
       clearSelection()
       return
@@ -118,9 +110,7 @@ export function useTableSelection(options: {
     selectedKeys.value = uniqueRowIds([...preservedSelection, ...nextVisibleSelection])
   }
 
-  function toggleAllRows(params: {
-    selected: boolean
-  }) {
+  function toggleAllRows(params: { selected: boolean }) {
     if (params.selected) {
       selectAllRows()
       return
@@ -129,22 +119,19 @@ export function useTableSelection(options: {
     unselectRows({ rowIds: visibleRowIds.value })
   }
 
-  function toggleRowSelection(params: {
-    rowId: string
-    selected?: boolean
-    shiftKey?: boolean
-  }) {
+  function toggleRowSelection(params: { rowId: string; selected?: boolean; shiftKey?: boolean }) {
     if (!selectionEnabled.value) {
       return
     }
 
     const nextSelected = params.selected ?? !isRowSelected({ rowId: params.rowId })
-    const targetRowIds = params.shiftKey && lastTouchedRowId.value
-      ? getRangeRowIds({
-          anchorRowId: lastTouchedRowId.value,
-          targetRowId: params.rowId,
-        })
-      : [params.rowId]
+    const targetRowIds =
+      params.shiftKey && lastTouchedRowId.value
+        ? getRangeRowIds({
+            anchorRowId: lastTouchedRowId.value,
+            targetRowId: params.rowId,
+          })
+        : [params.rowId]
 
     if (nextSelected) {
       selectRows({ rowIds: targetRowIds })
@@ -155,10 +142,7 @@ export function useTableSelection(options: {
     lastTouchedRowId.value = params.rowId
   }
 
-  function getRangeRowIds(params: {
-    anchorRowId: string
-    targetRowId: string
-  }) {
+  function getRangeRowIds(params: { anchorRowId: string; targetRowId: string }) {
     const anchorIndex = visibleRowIds.value.indexOf(params.anchorRowId)
     const targetIndex = visibleRowIds.value.indexOf(params.targetRowId)
 

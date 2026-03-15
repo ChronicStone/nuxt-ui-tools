@@ -1,5 +1,6 @@
-import { SELECT_COLUMN_ID } from './types'
+import type { TableSchemaView } from '../../types'
 import { findSchemaColumn, uniqueColumnIds } from './schema'
+import { SELECT_COLUMN_ID, type TableColumnState } from './types'
 
 export function createDefaultColumnState() {
   return {
@@ -20,9 +21,9 @@ export function createDefaultColumnState() {
 }
 
 export function syncColumnState(options: {
-  schema: any
+  schema: TableSchemaView
   runtimeColumns: Array<{ id: string; defaultVisible: boolean }>
-  currentState: any
+  currentState: TableColumnState
 }) {
   const columnIds = options.runtimeColumns.map((column) => column.id)
   const nextVisibility = Object.fromEntries(
@@ -57,7 +58,7 @@ export function syncColumnState(options: {
 }
 
 export function syncSortingState(options: {
-  currentState: any
+  currentState: TableColumnState
   sorting: { sortKey?: string; sortDirection?: 'asc' | 'desc' } | null | undefined
 }) {
   return {
@@ -69,7 +70,7 @@ export function syncSortingState(options: {
 }
 
 export function updateColumnVisibilityState(options: {
-  currentState: any
+  currentState: TableColumnState
   columnId: string
   visible: boolean
 }) {
@@ -98,7 +99,7 @@ export function updateColumnVisibilityState(options: {
 }
 
 export function updateColumnPinningState(options: {
-  currentState: any
+  currentState: TableColumnState
   columnId: string
   pinned?: 'left' | 'right'
 }) {
@@ -129,7 +130,7 @@ export function updateColumnPinningState(options: {
 }
 
 export function updateColumnOrderState(options: {
-  currentState: any
+  currentState: TableColumnState
   columnIds: string[]
 }) {
   return {
@@ -141,9 +142,9 @@ export function updateColumnOrderState(options: {
 }
 
 export function createResetColumnState(options: {
-  schema: any
+  schema: TableSchemaView
   runtimeColumns: Array<{ id: string; defaultVisible: boolean }>
-  currentState: any
+  currentState: TableColumnState
 }) {
   return {
     ...options.currentState,
@@ -171,12 +172,12 @@ export function createResetColumnState(options: {
         .map((column) => column.id),
     },
     columnSizing: {},
-    columnSizingInfo: {},
+    columnSizingInfo: createDefaultColumnState().columnSizingInfo,
   }
 }
 
 export function getPinnedState(options: {
-  currentState: any
+  currentState: TableColumnState
   columnId: string
 }) {
   if (options.currentState.columnPinning?.left?.includes(options.columnId)) {
@@ -191,7 +192,7 @@ export function getPinnedState(options: {
 }
 
 function sanitizeColumnPinning(options: {
-  schema: any
+  schema: TableSchemaView
   columnIds: string[]
   visibleColumnIds: string[]
   currentPinning?: {

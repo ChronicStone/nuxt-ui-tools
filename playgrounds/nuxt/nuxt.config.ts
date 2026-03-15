@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     fileURLToPath(new URL('../../packages/nuxt/src/module.ts', import.meta.url)),
   ],
   css: ['./app/assets/main.css'],
-  devtools: { enabled: false },
+  devtools: { enabled: true },
   nuxtUiTools: {
     prefix: 'Nut',
     global: true,

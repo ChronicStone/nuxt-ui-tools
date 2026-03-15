@@ -1,9 +1,10 @@
-import { Debouncer } from '@tanstack/pacer'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 
 import type {
   TableFilterOperator,
   TableQueryStateFilterRule,
+  TableQueryStateFilterValue,
+  TableSchemaView,
   TableUiFilterDefinition,
 } from '../types'
 import {
@@ -12,68 +13,42 @@ import {
   getFilterOperatorLabel,
   resolveFilterOptionEntries,
 } from '../utils'
+import type { UseTableApi } from './use-table-api'
+import type { UseTableDataReturn } from './use-table-data'
+import type { useQueryState } from './use-query-state'
+import { useTableSearch } from './use-table-search'
 
-export function useTableFilters(options: {
-  schema: any
-  queryState: any
-  api: any
-  queryContent: any
-}) {
+export interface UseTableFiltersParams {
+  schema: ComputedRef<TableSchemaView>
+  queryState: ReturnType<typeof useQueryState>
+  api: UseTableApi
+  queryContent: UseTableDataReturn
+}
+
+export function useTableFilters(options: UseTableFiltersParams) {
   const api = options.api
-  const searchQuery = ref(String(options.queryState.filters.value.search ?? ''))
+
+  const search = useTableSearch({
+    schema: options.schema,
+    queryState: options.queryState,
+    api: options.api,
+  })
+
   const definitions = computed<TableUiFilterDefinition[]>(() => options.schema.value.filters?.ui ?? [])
   const activeUiFilters = computed<TableQueryStateFilterRule[]>(() => options.queryState.filters.value.ui ?? [])
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
-  const hasActiveSearch = computed(() => searchQuery.value.trim().length > 0)
+
   const rows = computed(() =>
     options.schema.value.source.mode === 'client'
       ? (options.queryContent.rawData.value.rows ?? [])
       : (options.queryContent.data.value.rows ?? []),
   )
-  const searchPlaceholder = computed(
-    () => options.schema.value.filters?.search?.placeholder ?? 'Search rows…',
-  )
-  const searchDebounce = computed(
-    () => Math.max(0, options.schema.value.filters?.search?.debounce ?? 260),
-  )
 
-  const searchDebouncer = new Debouncer(
-    (value: string) => {
-      options.api.setSearch(value)
-    },
-    {
-      wait: searchDebounce.value,
-    },
-  )
-
-  watch(
-    () => options.queryState.filters.value.search,
-    (value) => {
-      const normalizedValue = String(value ?? '')
-
-      if (normalizedValue !== searchQuery.value) {
-        searchQuery.value = normalizedValue
-      }
-    },
-  )
-
-  watch(searchDebounce, (wait) => {
-    searchDebouncer.setOptions({ wait })
-  })
-
-  watch(searchQuery, (value) => {
-    searchDebouncer.maybeExecute(value)
-  })
-
-  function getDefinition(options: {
-    key: string
-  }) {
+  function getDefinition(options: { key: string }) {
     return definitions.value.find((definition: TableUiFilterDefinition) => definition.key === options.key)
   }
 
-  function getFilterState(options: {
-    key: string
-  }) {
+  function getFilterState(options: { key: string }) {
     return activeUiFilters.value.find((rule: TableQueryStateFilterRule) => rule.key === options.key)
   }
 
@@ -82,17 +57,13 @@ export function useTableFilters(options: {
     entries?: Array<{ label: string; value: string | number | boolean }>
     facetCounts?: Array<{ value: string | number | boolean; count: number }>
   }) {
-    const definition = getDefinition({
-      key: params.key,
-    })
+    const definition = getDefinition({ key: params.key })
 
     if (!definition) {
       return []
     }
 
-    const rule = getFilterState({
-      key: params.key,
-    })
+    const rule = getFilterState({ key: params.key })
     const selectedValues = Array.isArray(rule?.value)
       ? rule.value
       : rule?.value != null
@@ -113,9 +84,7 @@ export function useTableFilters(options: {
     key: string
     entries?: Array<{ label: string; value: string | number | boolean }>
   }) {
-    const definition = getDefinition({
-      key: options.key,
-    })
+    const definition = getDefinition({ key: options.key })
 
     if (!definition) {
       return buildFilterPreview({
@@ -129,22 +98,14 @@ export function useTableFilters(options: {
 
     return buildFilterPreview({
       definition,
-      rule: getFilterState({
-        key: options.key,
-      }),
+      rule: getFilterState({ key: options.key }),
       optionEntries: options.entries,
     })
   }
 
-  function getFilterOperator(options: {
-    key: string
-  }) {
-    const definition = getDefinition({
-      key: options.key,
-    })
-    const rule = getFilterState({
-      key: options.key,
-    })
+  function getFilterOperator(options: { key: string }) {
+    const definition = getDefinition({ key: options.key })
+    const rule = getFilterState({ key: options.key })
 
     if (rule?.operator) {
       return rule.operator
@@ -155,13 +116,11 @@ export function useTableFilters(options: {
       : undefined
   }
 
-  function getFilterOperatorOptions(options: {
-    key: string
-  }) {
+  function getFilterOperatorOptions(options: { key: string }) {
     return api.getFilterOperators(options.key).map((operator: string) => ({
       value: operator,
       label: getFilterOperatorLabel({
-        operator: operator as any,
+        operator: operator as TableFilterOperator,
       }),
     }))
   }
@@ -170,13 +129,11 @@ export function useTableFilters(options: {
     key: string
     operator: string
   }) {
-    const currentRule = getFilterState({
-      key: options.key,
-    })
+    const currentRule = getFilterState({ key: options.key })
 
     if (currentRule) {
       api.updateFilter(options.key, {
-        operator: options.operator as any,
+        operator: options.operator as TableFilterOperator,
       })
       return
     }
@@ -185,7 +142,7 @@ export function useTableFilters(options: {
       key: options.key,
       operator: options.operator as TableFilterOperator,
     }), {
-      operator: options.operator as any,
+      operator: options.operator as TableFilterOperator,
     })
   }
 
@@ -193,27 +150,15 @@ export function useTableFilters(options: {
     key: string
     operator: TableFilterOperator
   }) {
-    const definition = getDefinition({
-      key: options.key,
-    })
+    const definition = getDefinition({ key: options.key })
 
     if (!definition) {
       return api.getDefaultFilterValue(options.key)
     }
 
     if (options.operator === 'between') {
-      if (definition.kind === 'number') {
-        return {
-          from: undefined,
-          to: undefined,
-        }
-      }
-
-      if (definition.kind === 'date') {
-        return {
-          from: undefined,
-          to: undefined,
-        }
+      if (definition.kind === 'number' || definition.kind === 'date') {
+        return { from: undefined, to: undefined }
       }
     }
 
@@ -223,30 +168,26 @@ export function useTableFilters(options: {
   function setOptionFilterValues(options: {
     key: string
     values: Array<string | number | boolean>
+    operator?: string
   }) {
-    const currentRule = getFilterState({
-      key: options.key,
-    })
+    const currentRule = getFilterState({ key: options.key })
 
     if (!options.values.length) {
-      apiRemoveFilter({
-        key: options.key,
-      })
+      apiRemoveFilter({ key: options.key })
       return
     }
 
     api.addFilter(options.key, options.values, {
-      operator: currentRule?.operator as any,
+      operator: (options.operator ?? currentRule?.operator) as TableFilterOperator | undefined,
     })
   }
 
   function toggleOptionFilterValue(options: {
     key: string
     value: string | number | boolean
+    operator?: string
   }) {
-    const currentRule = getFilterState({
-      key: options.key,
-    })
+    const currentRule = getFilterState({ key: options.key })
     const currentValues = Array.isArray(currentRule?.value)
       ? currentRule.value.filter((value: unknown): value is string | number | boolean =>
           typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean',
@@ -268,39 +209,28 @@ export function useTableFilters(options: {
     setOptionFilterValues({
       key: options.key,
       values: nextValues,
+      operator: options.operator,
     })
   }
 
   function setScalarFilterValue(options: {
     key: string
-    value:
-      | string
-      | number
-      | boolean
-      | Date
-      | { from?: string | number | Date; to?: string | number | Date }
-      | null
-      | undefined
+    value: TableQueryStateFilterValue | null | undefined
+    operator?: string
   }) {
-    const currentRule = getFilterState({
-      key: options.key,
-    })
+    const currentRule = getFilterState({ key: options.key })
 
     if (options.value == null || options.value === '') {
-      apiRemoveFilter({
-        key: options.key,
-      })
+      apiRemoveFilter({ key: options.key })
       return
     }
 
-    api.addFilter(options.key, options.value, {
-      operator: currentRule?.operator as any,
+    api.addFilter(options.key, options.value as never, {
+      operator: (options.operator ?? currentRule?.operator) as TableFilterOperator | undefined,
     })
   }
 
-  function apiRemoveFilter(options: {
-    key: string
-  }) {
+  function apiRemoveFilter(options: { key: string }) {
     api.removeFilter(options.key)
   }
 
@@ -308,16 +238,15 @@ export function useTableFilters(options: {
     options.api.clearFilters()
   }
 
-  onBeforeUnmount(() => {
-    searchDebouncer.cancel()
-  })
-
   return {
-    searchQuery,
+    searchQuery: search.searchQuery,
+    searchPlaceholder: search.searchPlaceholder,
+    searchDebounce: search.searchDebounce,
+    searchDebouncer: search.searchDebouncer,
+    hasActiveSearch: search.hasActiveSearch,
     definitions,
     activeUiFilters,
     hasActiveUiFilters,
-    hasActiveSearch,
     getDefinition,
     getFilterState,
     getFilterOptionEntries,
@@ -331,8 +260,5 @@ export function useTableFilters(options: {
     clearFilter: apiRemoveFilter,
     clearAllFilters,
     getFilterLabelText,
-    searchPlaceholder,
-    searchDebounce,
-    searchDebouncer,
   }
 }

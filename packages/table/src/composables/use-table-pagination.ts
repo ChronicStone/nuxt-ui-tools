@@ -1,10 +1,14 @@
-import { computed } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 
-export function useTablePagination(options: {
-  rowCount: any
-  pagination: any
-  api: any
-}) {
+import type { UseTableApi } from './use-table-api'
+
+export interface UseTablePaginationParams {
+  rowCount: ComputedRef<number>
+  pagination: ComputedRef<{ pageIndex: number; pageSize: number }>
+  api: Pick<UseTableApi, 'setPage' | 'setPageSize'>
+}
+
+export function useTablePagination(options: UseTablePaginationParams) {
   const rowCount = computed(() => options.rowCount.value)
   const currentPage = computed(() => options.pagination.value.pageIndex)
   const pageSize = computed(() => options.pagination.value.pageSize)

@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
+import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
@@ -18,16 +20,47 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   selectOperator: [value: string]
+  activate: [operator: string]
   clear: []
 }>()
 
 const showMatchMode = computed(() => props.operatorItems.length > 1)
+const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.value)
 </script>
 
 <template>
   <div class="inline-flex min-w-0 max-w-full align-top">
+    <UDropdownMenu
+      v-if="showOperatorPickerFirst"
+      :items="[
+        operatorItems.map((item) => ({
+          label: item.label,
+          onSelect: () => {
+            emit('activate', item.value)
+          },
+        })),
+      ]"
+      :content="{ side: 'bottom', align: 'start', sideOffset: 6 }"
+      :ui="{ content: 'rounded-xl p-1 shadow-xl' }"
+    >
+      <UButton
+        color="neutral"
+        variant="outline"
+        size="md"
+        class="min-w-0 shrink-0"
+        :ui="{ base: 'h-10 px-3 text-sm font-medium' }"
+        @pointerdown.stop
+        @click.stop
+      >
+        <span class="flex min-w-0 items-center gap-2">
+          <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
+          <span class="truncate">{{ props.label }}</span>
+        </span>
+      </UButton>
+    </UDropdownMenu>
+
     <UButton
-      v-if="!props.active"
+      v-else-if="!props.active"
       color="neutral"
       variant="outline"
       size="md"
@@ -41,13 +74,7 @@ const showMatchMode = computed(() => props.operatorItems.length > 1)
     </UButton>
 
     <UFieldGroup v-else size="md" class="min-w-0 max-w-full">
-      <UButton
-        color="neutral"
-        variant="outline"
-        size="md"
-        class="shrink-0"
-        :ui="{ base: 'h-10 px-3 text-sm font-medium' }"
-      >
+      <UButton color="neutral" variant="outline" size="md" class="shrink-0">
         <span class="flex min-w-0 items-center gap-2">
           <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
           <span class="truncate">{{ props.label }}</span>
@@ -66,26 +93,27 @@ const showMatchMode = computed(() => props.operatorItems.length > 1)
         variant="outline"
         size="md"
         class="min-w-0 max-w-full"
-        :ui="{ base: 'h-10 px-3 text-sm font-medium' }"
         :class="props.active ? 'bg-elevated text-highlighted' : ''"
       >
         <span class="flex min-w-0 items-center gap-2">
-          <span
+          <UBadge
+            color="neutral"
+            size="sm"
+            variant="subtle"
             v-for="tag in props.previewTags ?? []"
             :key="tag"
-            class="inline-flex h-7 max-w-[9rem] items-center truncate rounded-md border border-default bg-muted px-2.5 text-[13px] text-toned"
           >
             {{ tag }}
-          </span>
+          </UBadge>
 
-          <span
-            v-if="props.previewSummary"
-            class="inline-flex h-7 items-center rounded-md border border-default bg-muted px-2.5 text-[13px] text-toned"
-          >
+          <span v-if="props.previewSummary">
             {{ props.previewSummary }}
           </span>
 
-          <span v-if="!(props.previewTags?.length ?? 0) && !props.previewSummary" class="text-muted">
+          <span
+            v-if="!(props.previewTags?.length ?? 0) && !props.previewSummary"
+            class="text-muted"
+          >
             Select…
           </span>
         </span>

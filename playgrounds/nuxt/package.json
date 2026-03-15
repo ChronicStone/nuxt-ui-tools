@@ -9,15 +9,16 @@
     "clean": "rm -rf .nuxt .output"
   },
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@nuxt-ui-tools/form": "workspace:*",
     "@nuxt-ui-tools/nuxt": "workspace:*",
     "@nuxt-ui-tools/shared": "workspace:*",
     "@nuxt-ui-tools/table": "workspace:*",
-    "@faker-js/faker": "^9.9.0",
     "@nuxt/ui": "4.5.1",
     "@nuxtjs/i18n": "10.2.3",
     "@tanstack/vue-query": "5.92.9",
     "nuxt": "4.3.1",
-    "tailwindcss": "4.2.1"
+    "tailwindcss": "4.2.1",
+    "vue-qs": "0.1.18"
   }
 }

@@ -3,7 +3,7 @@ import UTable from '@nuxt/ui/components/Table.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../composables/use-table-internals'
-import { createDefaultColumnState } from '../../utils'
+import { createDefaultColumnState, resolveTableRowId } from '../../utils'
 import TableEmptyState from './TableEmptyState.vue'
 import TableLoadingState from './TableLoadingState.vue'
 
@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 const tableRef = ref<{ $el?: Element | null } | null>(null)
 
-const tableRows = computed(() => internals.rows.value)
+const tableRows = computed(() => internals.queryContent.data.value.rows)
 const tableLoading = computed(() => internals.queryContent.status.value.isPending)
 const tableEmpty = computed(() => !tableLoading.value && tableRows.value.length === 0)
 const bodyPlaceholderMinHeight = computed(() => `calc(${props.height} - 7rem)`)
@@ -64,7 +64,9 @@ watch(tableEmpty, (isEmpty) => {
           $event ?? defaultColumnState.columnSizingInfo
       "
       @update:row-selection="internals.selection.setRowSelection({ selection: $event ?? {} })"
-      :get-row-id="(row: any) => String(row?.__$rowId ?? row?.id ?? '')"
+      :get-row-id="
+        (row, index) => resolveTableRowId({ rowKey: internals.schema.value.rowKey, row, index })
+      "
       :sorting-options="{ manualSorting: true }"
       sticky="header"
       :loading="tableLoading"
@@ -81,6 +83,15 @@ watch(tableEmpty, (isEmpty) => {
         td: 'h-12 border-b px-3 align-middle text-sm text-toned transition-colors duration-100 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
         loading: 'p-0 align-top bg-transparent',
         empty: 'p-0 text-sm text-muted',
+      }"
+      :virtualize="{
+        enabled: true,
+        getItemKey: (index: number) =>
+          resolveTableRowId({
+            rowKey: internals.schema.value.rowKey,
+            row: (tableRows as unknown as Record<string, any>[])[index] ?? {},
+            index,
+          }),
       }"
     >
       <template #loading>

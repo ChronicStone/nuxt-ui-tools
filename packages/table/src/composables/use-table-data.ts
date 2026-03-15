@@ -277,10 +277,9 @@ export function useTableData(
 function withEnabled<TData = unknown>(
   query: TableQueryDefinition<TData>,
   enabled: boolean,
-): TableQueryDefinition<TData> {
+): TableQueryDefinition<TData> & { enabled: boolean } {
   return {
     ...query,
-    // @ts-expect-error
-    enabled: (query.enabled ?? true) && enabled,
+    enabled: enabled && (query as { enabled?: boolean }).enabled !== false,
   }
 }

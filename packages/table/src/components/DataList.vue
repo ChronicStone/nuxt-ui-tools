@@ -2,13 +2,17 @@
 import { computed } from 'vue'
 
 import { useTableInternals } from '../composables/use-table-internals'
+import type { TableLayout } from '../types'
 import GridRenderer from './grid/GridRenderer.vue'
 import TableFooter from './layout/TableFooter.vue'
 import TableHeader from './layout/TableHeader.vue'
 import TableRenderer from './table/TableRenderer.vue'
 
 const props = defineProps<{
-  table: any
+  table: {
+    schema: { value: { tableKey: string } }
+    api: { setLayout: (layout: TableLayout) => void }
+  }
   title?: string
   description?: string
   height?: string | number

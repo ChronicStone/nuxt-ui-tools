@@ -1,11 +1,15 @@
-import { computed, ref } from 'vue'
+import { computed, ref, type ComputedRef } from 'vue'
 
-export function useTableControls(options: {
-  schema: any
-  activeLayout: any
-}) {
-  const columnsPanelOpen = ref(false)
-  const columnsPanelSearch = ref('')
+import type { TableLayout, TableSchemaView } from '../types'
+
+export interface UseTableControlsParams {
+  schema: ComputedRef<TableSchemaView>
+  activeLayout: ComputedRef<TableLayout>
+}
+
+export function useTableControls(options: UseTableControlsParams) {
+  const columnsPanelOpen = ref<boolean>(false)
+  const columnsPanelSearch = ref<string>('')
 
   const tableLayout = computed(() => options.activeLayout.value)
   const gridEnabled = computed(

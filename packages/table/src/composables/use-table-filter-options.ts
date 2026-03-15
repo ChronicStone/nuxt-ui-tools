@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/vue-query'
-import { computed, unref, type Ref } from 'vue'
+import { computed, unref, type ComputedRef, type Ref } from 'vue'
 
 import type {
   TableBooleanFilterDefinition,
@@ -10,7 +10,11 @@ import type {
   TableFilterOptionQueryResult,
   TableOptionFilterDefinition,
   TableQueryDefinition,
+  TableRemoteSource,
+  TableSchemaView,
 } from '../types'
+import type { UseTableDataReturn } from './use-table-data'
+import type { useTableFilters } from './use-table-filters'
 
 type ResolvedFilterOptionEntry = {
   label: string
@@ -30,13 +34,15 @@ function resolveFacetMode(options: { facet: TableFilterFacetMode | undefined }) 
   return options.facet
 }
 
-export function useTableFilterOptions(options: {
+export interface UseTableFilterOptionsParams {
   definition: TableOptionFilterDefinition | TableBooleanFilterDefinition
   searchQuery: Ref<string>
-  filters: any
-  queryContent: any
-  schema: any
-}) {
+  filters: ReturnType<typeof useTableFilters>
+  queryContent: UseTableDataReturn
+  schema: ComputedRef<TableSchemaView>
+}
+
+export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const normalizedSearch = computed(() => options.searchQuery.value.trim())
   const isBooleanFilter = computed(() => options.definition.kind === 'boolean')
   const isRemoteTable = computed(() => options.schema.value.source.mode === 'remote')
@@ -47,7 +53,7 @@ export function useTableFilterOptions(options: {
     () =>
       isRemoteTable.value &&
       Boolean(options.definition.facet) &&
-      typeof options.schema.value.source.facets === 'function',
+      typeof (options.schema.value.source as TableRemoteSource).facets === 'function',
   )
   const canMergeFacetCounts = computed(() => !isRemoteTable.value || usesFacetCounts.value)
 
@@ -110,7 +116,7 @@ export function useTableFilterOptions(options: {
       }
 
       const queryOptions = unref(
-        options.schema.value.source.facets!({
+        (options.schema.value.source as TableRemoteSource).facets!({
           table: options.queryContent.requestContext.value,
           facets: [
             {

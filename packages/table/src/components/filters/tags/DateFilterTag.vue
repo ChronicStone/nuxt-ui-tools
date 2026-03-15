@@ -1,19 +1,43 @@
 <script setup lang="ts">
 import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import UButton from '@nuxt/ui/components/Button.vue'
 import UCalendar from '@nuxt/ui/components/Calendar.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 
-import TableFilterTrigger from './TableFilterTrigger.vue'
-import { useTableInternals } from '../../composables/use-table-internals'
+import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
+import { useTableInternals } from '../../../composables/use-table-internals'
+import type { TableDateFilterDefinition } from '../../../types'
 
 const props = defineProps<{
-  definition: any
+  definition: TableDateFilterDefinition
 }>()
 
 const internals = useTableInternals()
+const isOpen = ref<boolean>(false)
+const pendingOperator = ref<string>()
+
+let dismissLocked = false
+
+function handleActivate(op: string) {
+  pendingOperator.value = op
+  dismissLocked = true
+  setTimeout(() => {
+    isOpen.value = true
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { dismissLocked = false })
+    })
+  })
+}
+
+function handleOpenChange(open: boolean) {
+  if (!open && dismissLocked) return
+  isOpen.value = open
+  if (!open) {
+    pendingOperator.value = undefined
+  }
+}
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
@@ -22,6 +46,7 @@ const preview = computed(() =>
 )
 
 const operator = computed(() =>
+  pendingOperator.value ??
   internals.filters.getFilterOperator({
     key: props.definition.key,
   }),
@@ -57,9 +82,12 @@ const calendarValue = computed({
     return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
   },
   set(value?: CalendarDate) {
+    const op = pendingOperator.value
+    pendingOperator.value = undefined
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
       value: value ? value.toDate(getLocalTimeZone()) : undefined,
+      operator: op,
     })
   },
 })
@@ -84,12 +112,15 @@ const rangeCalendarValue = computed<any>({
     }
   },
   set(value) {
+    const op = pendingOperator.value
+    pendingOperator.value = undefined
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
       value: {
         from: value?.start ? value.start.toDate(getLocalTimeZone()) : undefined,
         to: value?.end ? value.end.toDate(getLocalTimeZone()) : undefined,
       },
+      operator: op,
     })
   },
 })
@@ -148,10 +179,12 @@ function toCalendarDate(value: unknown) {
 
 <template>
   <UPopover
+    :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
       content: 'rounded-xl p-0 shadow-xl'
     }"
+    @update:open="handleOpenChange"
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
@@ -161,7 +194,8 @@ function toCalendarDate(value: unknown) {
       :preview-summary="preview.summary"
       :active="preview.active"
       @select-operator="internals.filters.setFilterOperator({ key: definition.key, operator: $event })"
-      @clear="internals.filters.clearFilter({ key: definition.key })"
+      @activate="handleActivate"
+      @clear="internals.filters.clearFilter({ key: definition.key }); isOpen = false"
     />
 
     <template #content>

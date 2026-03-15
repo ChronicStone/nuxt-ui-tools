@@ -57,7 +57,7 @@ export function createSelectionColumn(options: {
           event.preventDefault()
           event.stopPropagation()
 
-          const rowId = String(row.original?.__$rowId ?? row.id)
+          const rowId = String(row.id)
 
           options.params.selection.toggleRowSelection({
             rowId,
@@ -67,7 +67,7 @@ export function createSelectionColumn(options: {
         }}
       >
         <UCheckbox
-          modelValue={options.params.selection.isRowSelected({ rowId: String(row.original?.__$rowId ?? row.id) })}
+          modelValue={options.params.selection.isRowSelected({ rowId: String(row.id) })}
           color="neutral"
           ui={{ root: 'pointer-events-none items-center' }}
         />
@@ -190,10 +190,11 @@ export function createDataColumns(options: {
             ) : null}
           </div>
         ),
-        cell: ({ row }: { row: { original: Record<string, any> } }) =>
+        cell: ({ row }: { row: { original: Record<string, any>; index: number } }) =>
           renderColumnCell({
             column,
             row: row.original,
+            rowIndex: row.index,
             params: options.params,
           }),
         enableSorting: false,
@@ -229,6 +230,7 @@ export function createDataColumns(options: {
 export function renderColumnCell(options: TableColumnRenderParams) {
   const cellContext = createCellRenderContext({
     row: options.row,
+    rowIndex: options.rowIndex,
     params: options.params,
   })
 
@@ -343,11 +345,12 @@ export function normalizeColumnSize(options: {
 
 function createCellRenderContext(options: {
   row: Record<string, any>
+  rowIndex: number
   params: UseTableColumnsParams
 }): TableCellRenderContext {
   return {
     row: options.row,
-    index: Number(options.row.__$rowIndex ?? 0),
+    index: options.rowIndex,
     context: options.params.data.contextData.value,
     pageContext: options.params.data.pageContextData.value,
     layout: options.params.tableLayout.value,

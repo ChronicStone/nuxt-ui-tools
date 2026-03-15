@@ -15,13 +15,13 @@ export function useTableState(params: UseTableStateParams) {
     activeLayout: params.activeLayout,
   })
 
-  const resolvedFilterState = computed(() =>
+  const resolvedFilterState = computed<TableResolvedFilterGroup<string>>(() =>
     createResolvedFilterState({
-      definitions: (params.schema.value.filters?.ui ?? []) as any,
+      definitions: params.schema.value.filters?.ui ?? [],
       filters: queryState.filters.value,
       staticFilters: params.schema.value.filters?.static,
     }),
-  ) as ComputedRef<TableResolvedFilterGroup<string>>
+  )
 
   return {
     queryState,

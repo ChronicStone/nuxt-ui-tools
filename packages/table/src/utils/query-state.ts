@@ -1,5 +1,5 @@
-import type { QueryParameterOptions, QueryCodec } from 'vue-qs'
 import { isObject, isString } from '@nuxt-ui-tools/shared'
+import type { QueryParameterOptions, QueryCodec } from 'vue-qs'
 import {
   booleanCodec,
   createArrayCodec,
@@ -68,10 +68,7 @@ export function getDefaultSort(params: {
   else return defaultSorting
 }
 
-export function getSortKeys(params: {
-  schema: TableSchemaView
-  layout: TableLayout
-}): string[] {
+export function getSortKeys(params: { schema: TableSchemaView; layout: TableLayout }): string[] {
   const keys = new Set<string>()
   const defaultSort = getDefaultSort(params)
 
@@ -170,6 +167,8 @@ export function createUiFilterQuerySchema(
     for (const operator of supportedOperators) {
       schema[getQueryKeyFromFilter(definition.key, operator, definition)] = {
         defaultValue: undefined,
+        // @ts-expect-error
+        historyStrategy: 'push' as const,
         shouldOmitDefault: true,
         codec: createTableFilterValueCodec(definition),
       }

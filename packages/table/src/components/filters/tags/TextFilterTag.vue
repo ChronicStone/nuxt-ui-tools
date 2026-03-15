@@ -6,15 +6,18 @@ import UInput from '@nuxt/ui/components/Input.vue'
 import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 
-import TableFilterTrigger from './TableFilterTrigger.vue'
-import { useTableInternals } from '../../composables/use-table-internals'
+import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
+import { useTableInternals } from '../../../composables/use-table-internals'
+import type { TableNumberFilterDefinition, TableTextFilterDefinition } from '../../../types'
 
 const props = defineProps<{
-  definition: any
+  definition: TableTextFilterDefinition | TableNumberFilterDefinition
 }>()
 
 const internals = useTableInternals()
-const localValue = ref('')
+const isOpen = ref<boolean>(false)
+const pendingOperator = ref<string>()
+const localValue = ref<string>('')
 const rangeValue = ref<{
   from: string
   to: string
@@ -30,6 +33,7 @@ const preview = computed(() =>
 )
 
 const operator = computed(() =>
+  pendingOperator.value ??
   internals.filters.getFilterOperator({
     key: props.definition.key,
   }),
@@ -90,7 +94,31 @@ watch(
   },
 )
 
+let dismissLocked = false
+
+function handleActivate(op: string) {
+  pendingOperator.value = op
+  dismissLocked = true
+  setTimeout(() => {
+    isOpen.value = true
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { dismissLocked = false })
+    })
+  })
+}
+
+function handleOpenChange(open: boolean) {
+  if (!open && dismissLocked) return
+  isOpen.value = open
+  if (!open) {
+    pendingOperator.value = undefined
+  }
+}
+
 function applyValue() {
+  const op = pendingOperator.value
+  pendingOperator.value = undefined
+
   if (props.definition.kind === 'number' && operator.value === 'between') {
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
@@ -98,6 +126,7 @@ function applyValue() {
         from: rangeValue.value.from === '' ? undefined : Number(rangeValue.value.from),
         to: rangeValue.value.to === '' ? undefined : Number(rangeValue.value.to),
       }) as { from?: number; to?: number },
+      operator: op,
     })
     return
   }
@@ -111,16 +140,19 @@ function applyValue() {
     value: localValue.value === ''
       ? undefined
       : normalizedValue,
+    operator: op,
   })
 }
 </script>
 
 <template>
   <UPopover
+    :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
       content: 'w-80 rounded-xl p-0 shadow-xl'
     }"
+    @update:open="handleOpenChange"
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
@@ -130,7 +162,8 @@ function applyValue() {
       :preview-summary="preview.summary"
       :active="preview.active"
       @select-operator="internals.filters.setFilterOperator({ key: definition.key, operator: $event })"
-      @clear="internals.filters.clearFilter({ key: definition.key })"
+      @activate="handleActivate"
+      @clear="internals.filters.clearFilter({ key: definition.key }); isOpen = false"
     />
 
     <template #content>

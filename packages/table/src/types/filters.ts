@@ -78,6 +78,8 @@ export interface TableFilterResolveContext<
 export type TableFilterResolveResult<TKey extends string = string> =
   TableResolvedFilterNode<TKey> | null
 
+export type TableFilterDisplayMode = 'inline' | 'dynamic' | 'panel'
+
 interface TableFilterDefinitionBase<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
@@ -86,6 +88,7 @@ interface TableFilterDefinitionBase<
 > {
   key: TKey
   label: string | (() => RenderableType)
+  display?: TableFilterDisplayMode
   defaultValue?: TValue
   defaultOperator?: TableFilterOperator
   operators?: TableFilterOperator[]

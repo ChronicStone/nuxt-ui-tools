@@ -22,13 +22,22 @@ import {
   resolveFilterSupportedOperators,
 } from '../utils'
 
-interface UseTableApiParams<TSchema = TableSchemaView> {
+type TableSelectionApi = {
+  clearSelection: () => void
+  selectAllRows: () => void
+  selectRows: (params: { rowIds: string[] }) => void
+  unselectRows: (params: { rowIds: string[] }) => void
+  toggleRowSelection: (params: { rowId: string; selected?: boolean; shiftKey?: boolean }) => void
+  isRowSelected: (params: { rowId: string }) => boolean
+}
+
+export interface UseTableApiParams {
   schema: ComputedRef<TableSchemaView>
   activeLayout: Ref<TableLayout | undefined> | WritableComputedRef<TableLayout | undefined>
   pagination: WritableComputedRef<{ pageIndex: number; pageSize: number }>
   sorting: WritableComputedRef<{ key: string; dir: TableSortingDirection } | null>
   filters: WritableComputedRef<TableFilterState>
-  selection: any
+  selection: TableSelectionApi
 }
 
 export interface UseTableApi<TSchema = TableSchemaView> {
@@ -75,9 +84,11 @@ export interface UseTableApi<TSchema = TableSchemaView> {
 }
 
 export function useTableApi<TSchema = TableSchemaView>(
-  params: UseTableApiParams<TSchema>,
+  params: UseTableApiParams,
 ): UseTableApi<TSchema> {
-  const currentLayout = computed(() => params.activeLayout.value ?? params.schema.value.defaultLayout ?? 'table')
+  const currentLayout = computed(
+    () => params.activeLayout.value ?? params.schema.value.defaultLayout ?? 'table',
+  )
 
   const pageSizeOptions = computed(() =>
     getPageSizeOptions({
@@ -98,7 +109,9 @@ export function useTableApi<TSchema = TableSchemaView>(
   >
 
   function getFilterDefinition<TKey extends ExtractTableFilterKey<TSchema>>(key: TKey) {
-    return uiFilters.value.find((filter) => filter.key === key) as TableUiFilterDefinition | undefined
+    return uiFilters.value.find((filter) => filter.key === key) as
+      | TableUiFilterDefinition
+      | undefined
   }
 
   function getFilterOperators<TKey extends ExtractTableFilterKey<TSchema>>(key: TKey) {
@@ -219,11 +232,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     params.selection.unselectRows({ rowIds })
   }
 
-  function toggleRowSelection(options: {
-    rowId: string
-    selected?: boolean
-    shiftKey?: boolean
-  }) {
+  function toggleRowSelection(options: { rowId: string; selected?: boolean; shiftKey?: boolean }) {
     params.selection.toggleRowSelection(options)
   }
 
@@ -248,10 +257,9 @@ export function useTableApi<TSchema = TableSchemaView>(
     const operator =
       options?.operator ??
       (definition
-        ? (resolveFilterDefaultOperator(normalizeFilterDefinition(definition)) as ExtractTableFilterRule<
-            TSchema,
-            TKey
-          >['operator'])
+        ? (resolveFilterDefaultOperator(
+            normalizeFilterDefinition(definition),
+          ) as ExtractTableFilterRule<TSchema, TKey>['operator'])
         : undefined)
 
     const nextRule = {
@@ -282,15 +290,11 @@ export function useTableApi<TSchema = TableSchemaView>(
       return
     }
 
-    addFilter(
-      key,
-      (patch.value ?? currentFilter.value) as ExtractTableFilterValue<TSchema, TKey>,
-      {
-        operator: (patch.operator ?? currentFilter.operator) as
-          | ExtractTableFilterRule<TSchema, TKey>['operator']
-          | undefined,
-      },
-    )
+    addFilter(key, (patch.value ?? currentFilter.value) as ExtractTableFilterValue<TSchema, TKey>, {
+      operator: (patch.operator ?? currentFilter.operator) as
+        | ExtractTableFilterRule<TSchema, TKey>['operator']
+        | undefined,
+    })
   }
 
   function removeFilter<TKey extends ExtractTableFilterKey<TSchema>>(key: TKey) {

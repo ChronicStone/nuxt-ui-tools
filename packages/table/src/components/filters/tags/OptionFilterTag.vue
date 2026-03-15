@@ -8,19 +8,20 @@ import { computed, ref } from 'vue'
 
 import { useRangeSelect } from '@nuxt-ui-tools/shared'
 
-import { useTableFilterOptions } from '../../composables/use-table-filter-options'
-import { useTableInternals } from '../../composables/use-table-internals'
-import type { TableBooleanFilterDefinition, TableOptionFilterDefinition } from '../../types'
-import FilterOptionRow from './FilterOptionRow.vue'
-import TableFilterTrigger from './TableFilterTrigger.vue'
+import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
+import { useTableInternals } from '../../../composables/use-table-internals'
+import type { TableBooleanFilterDefinition, TableOptionFilterDefinition } from '../../../types'
+import FilterOptionRow from '../shared/FilterOptionRow.vue'
+import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableOptionFilterDefinition | TableBooleanFilterDefinition
 }>()
 
 const internals = useTableInternals()
-const searchQuery = ref('')
-const isOpen = ref(false)
+const searchQuery = ref<string>('')
+const isOpen = ref<boolean>(false)
+const pendingOperator = ref<string>()
 
 const optionSource = useTableFilterOptions({
   definition: props.definition,
@@ -38,6 +39,7 @@ const preview = computed(() =>
 )
 
 const operator = computed(() =>
+  pendingOperator.value ??
   internals.filters.getFilterOperator({
     key: props.definition.key,
   }),
@@ -66,7 +68,21 @@ const triggerIcon = computed(() =>
 // Values that were active when the popover was opened — pinned at top
 const pinnedValues = ref<Set<string>>(new Set())
 
+let dismissLocked = false
+
+function handleActivate(op: string) {
+  pendingOperator.value = op
+  dismissLocked = true
+  setTimeout(() => {
+    isOpen.value = true
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { dismissLocked = false })
+    })
+  })
+}
+
 function handleOpenChange(open: boolean) {
+  if (!open && dismissLocked) return
   isOpen.value = open
   if (open) {
     pinnedValues.value = new Set(
@@ -75,6 +91,7 @@ function handleOpenChange(open: boolean) {
         .map((e: { value: string | number | boolean }) => String(e.value)),
     )
   } else {
+    pendingOperator.value = undefined
     pinnedRangeSelect.reset()
     restRangeSelect.reset()
   }
@@ -114,7 +131,9 @@ const restEntries = computed(() =>
 const hasPinnedSection = computed(() => pinnedEntries.value.length > 0)
 
 function toggleValue(value: string | number | boolean) {
-  internals.filters.toggleOptionFilterValue({ key: props.definition.key, value })
+  const operator = pendingOperator.value
+  pendingOperator.value = undefined
+  internals.filters.toggleOptionFilterValue({ key: props.definition.key, value, operator })
 }
 
 const pinnedRangeSelect = useRangeSelect({
@@ -130,7 +149,7 @@ const restRangeSelect = useRangeSelect({
 
 <template>
   <UPopover
-    v-model:open="isOpen"
+    :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
       content: 'w-[22rem] rounded-xl p-0 shadow-xl',
@@ -148,7 +167,8 @@ const restRangeSelect = useRangeSelect({
       @select-operator="
         internals.filters.setFilterOperator({ key: definition.key, operator: $event })
       "
-      @clear="internals.filters.clearFilter({ key: definition.key })"
+      @activate="handleActivate"
+      @clear="internals.filters.clearFilter({ key: definition.key }); isOpen = false"
     />
 
     <template #content>

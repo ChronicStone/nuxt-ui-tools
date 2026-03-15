@@ -4,7 +4,7 @@ import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 
 import type { TableLayout } from '../../types'
 import ColumnPanel from '../drawers/ColumnPanel.vue'
-import TableFiltersBar from '../filters/TableFiltersBar.vue'
+import TableFiltersBar from '../filters/tags/FilterTagsBar.vue'
 import SearchQueryInput from '../utils/SearchQueryInput.vue'
 
 defineProps<{

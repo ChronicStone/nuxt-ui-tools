@@ -1,8 +1,8 @@
 import { createInjectionState } from '@vueuse/core'
-import { computed, ref, type ComputedRef } from 'vue'
+import { computed, ref } from 'vue'
 
 import type { MaybeComputedRef, TableLayout, TableSchemaView } from '../types'
-import { createDefaultColumnState, type TableColumnState } from '../utils'
+import { createDefaultColumnState, createPublicQueryState, resolveSchemaSource, type TableColumnState } from '../utils'
 import { useTableColumns } from './use-table-columns'
 import { useTableControls } from './use-table-controls'
 import { useTableData } from './use-table-data'
@@ -10,7 +10,6 @@ import { useTableFilters } from './use-table-filters'
 import { useTablePagination } from './use-table-pagination'
 import { useTableApi } from './use-table-api'
 import { useTableLayout } from './use-table-layout'
-import { useTableRows } from './use-table-rows'
 import { useTableSelection } from './use-table-selection'
 import { useTableState } from './use-table-state'
 
@@ -36,13 +35,9 @@ function createTableInternals(options: {
     },
   })
   const tableState = ref<TableColumnState>(createDefaultColumnState())
-  const rows = useTableRows({
-    schema,
-    rows: computed(() => queryContent.data.value.rows),
-  })
   const selection = useTableSelection({
     schema,
-    rows,
+    rows: computed(() => queryContent.data.value.rows),
   })
   const tableApi = useTableApi({
     schema,
@@ -90,7 +85,6 @@ function createTableInternals(options: {
     controls,
     tableColumns,
     pagination,
-    rows,
   }
 }
 
@@ -104,39 +98,6 @@ function useTableInternals() {
   }
 
   return internals
-}
-
-function resolveSchemaSource<TSchema>(options: {
-  schema: MaybeComputedRef<TSchema>
-}): TSchema {
-  if (typeof options.schema === 'function') {
-    return (options.schema as () => TSchema)()
-  }
-
-  if (options.schema && typeof options.schema === 'object' && 'value' in options.schema) {
-    return options.schema.value as TSchema
-  }
-
-  return options.schema as TSchema
-}
-
-function createPublicQueryState(
-  options: {
-    queryState: ReturnType<typeof useTableState>['queryState']
-    activeLayout: ComputedRef<TableLayout>
-  },
-) {
-  return computed(() => ({
-    layout: options.activeLayout.value,
-    pagination: options.queryState.pagination.value,
-    sorting: options.queryState.sorting.value
-      ? {
-          sortKey: options.queryState.sorting.value.key,
-          sortDirection: options.queryState.sorting.value.dir,
-        }
-      : null,
-    filters: options.queryState.filters.value,
-  }))
 }
 
 export type TableInternals = ReturnType<typeof createTableInternals>

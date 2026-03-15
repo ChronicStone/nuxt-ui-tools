@@ -1,8 +1,9 @@
+import type { TableSchemaView } from '../../types'
 import { findSchemaColumn } from './schema'
 
 export function createColumnMenuItems(options: {
   columnId: string
-  schema: any
+  schema: TableSchemaView
   orderedColumns: Array<{ id: string; sortableKey?: string }>
   getSortState: (options: { columnId: string }) => 'asc' | 'desc' | null
   getPinnedState: (options: { columnId: string }) => 'left' | 'right' | null

@@ -1,21 +1,21 @@
-import type { TableColumn } from '../../types'
+import type { TableColumn, TableSchemaView } from '../../types'
 
 import type { TableRuntimeColumn } from './types'
 
 export function findSchemaColumn(options: {
-  schema: any
+  schema: TableSchemaView
   columnId: string
-}) {
+}): TableColumn | undefined {
   return (options.schema.table?.columns ?? []).find(
-    (column: TableColumn) => column.key === options.columnId,
-  )
+    (column) => column.key === options.columnId,
+  ) as TableColumn | undefined
 }
 
 export function createRuntimeColumns(options: {
-  schema: any
+  schema: TableSchemaView
   context: Record<string, any>
 }) {
-  return ((options.schema.table?.columns ?? []) as TableColumn[])
+  return ((options.schema.table?.columns ?? []) as unknown as TableColumn[])
     .filter((column) => (column.condition?.() ?? true) && (column.enabled ?? true))
     .map(
       (column): TableRuntimeColumn => ({

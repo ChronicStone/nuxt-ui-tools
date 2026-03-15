@@ -27,12 +27,14 @@ export function useQueryState(params: UseQueryStateParams) {
 
   const pageIndex = queryRef('p.page', {
     shouldOmitDefault: true,
+    historyStrategy: 'push',
     defaultValue: 1,
     codec: numberCodec,
   })
 
   const pageSize = queryRef('p.size', {
     shouldOmitDefault: true,
+    historyStrategy: 'push',
     defaultValue: getDefaultPageSize({
       schema: params.schema.value,
       layout: params.activeLayout.value,
@@ -42,6 +44,7 @@ export function useQueryState(params: UseQueryStateParams) {
 
   const sortKey = queryRef('s.key', {
     shouldOmitDefault: true,
+    historyStrategy: 'push',
     defaultValue: getDefaultSort({
       schema: params.schema.value,
       layout: params.activeLayout.value,
@@ -56,6 +59,7 @@ export function useQueryState(params: UseQueryStateParams) {
 
   const sortDirection = queryRef('s.dir', {
     shouldOmitDefault: true,
+    historyStrategy: 'push',
     defaultValue: getDefaultSort({
       schema: params.schema.value,
       layout: params.activeLayout.value,
@@ -64,6 +68,7 @@ export function useQueryState(params: UseQueryStateParams) {
   })
 
   const searchQuery = queryRef('f.search', {
+    historyStrategy: 'push',
     defaultValue: '',
   })
 
