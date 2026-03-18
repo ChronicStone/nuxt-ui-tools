@@ -1,9 +1,39 @@
+# Dependencies
 node_modules
+playground/node_modules
+
+# Logs
+*.log*
+
+# Temp directories
+.temp
+.tmp
+.cache
 .turbo
+
+# Generated dirs
+dist
+
+# Nuxt
 .nuxt
 .output
-dist
+.data
+.vercel_build_output
+.build-*
+.netlify
+playground/.nuxt
+playground/.output
+
+# Env
+.env
+
+# Testing
+reports
 coverage
+*.lcov
+.nyc_output
+
+# IDE
 .idea
+*.iml
 .DS_Store
-bun.lock

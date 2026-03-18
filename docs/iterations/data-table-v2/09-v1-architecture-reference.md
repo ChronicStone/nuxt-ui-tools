@@ -34,6 +34,7 @@ const [useProvideTableInternals, _useTableInternals] = createInjectionState(
 ```
 
 **Key pattern:**
+
 - `useProvideTableInternals(schema)` — called in `DataList` component's setup, sets up all state and provides it to the component subtree
 - `useTableInternals()` — called by any child component (DataTable, DataGrid, toolbar, filters...) to inject the shared state
 - `_useTableInternals()` — raw inject, returns `undefined` if no provider (used internally)
@@ -47,12 +48,14 @@ const [useProvideTableInternals, _useTableInternals] = createInjectionState(
 Each composable has a narrow, well-defined concern. They receive their dependencies as typed params and return reactive state.
 
 ### `useTableView({ rawSchema })`
+
 - Computes `activeView` from `rawSchema.value.activeView`
 - Produces a derived `schema: ComputedRef<DataListSchemaView>` where all view-template objects (`{ '#default': ..., 'active': ... }`) have been resolved to their active-view value
 - This "view-resolved schema" is passed down to all other composables
 - **Key insight:** schema is normalized once here, all other composables work with the resolved version
 
 ### `useQueryState({ schema, persistency, activeLayout })`
+
 - Manages ALL persistent/queryable state: sort, pagination, filters (including quickFilters), search
 - Handles URL persistence via `useRouteQuery`
 - Manages context and pageContext loading using `useAsyncState`
@@ -61,6 +64,7 @@ Each composable has a narrow, well-defined concern. They receive their dependenc
 - Returns: `pagination`, `sort`, `filters`, `contextData`, `pageContextData`, `isContextLoading`, `queryContext`, `refreshContext`, `refreshPageContext`
 
 ### `useTableData({ schema, source, queryContext, pagination, contextData, ... })`
+
 - Watches `queryContext` and `contextData` changes (debounced at 10ms)
 - Executes the source (remote adapter or local function) when they change
 - For remote: calls the registered adapter processor to build payload, execute, normalize response
@@ -70,6 +74,7 @@ Each composable has a narrow, well-defined concern. They receive their dependenc
 - Returns: `data`, `rawData`, `isLoading`, `error`, `initialized`, `refreshData`
 
 ### `useTableSelection({ schema, queryState, queryContent })`
+
 - Manages `selectedKeys` ref and `allSelected` flag
 - Derives `selectedCount` (uses total count when `allSelected` is true)
 - `getRowKey(row)` — reads `rowKey` path from schema
@@ -78,6 +83,7 @@ Each composable has a narrow, well-defined concern. They receive their dependenc
 - Returns selection state and mutation methods
 
 ### `useTableApi({ queryState, queryContent, selection })`
+
 - Assembles the public `TableApi` object from the reactive pieces
 - All mutation methods write directly to reactive state
 - `refresh()`: calls `refreshData({ query: true, context })`
@@ -86,6 +92,7 @@ Each composable has a narrow, well-defined concern. They receive their dependenc
 - This is a thin orchestration layer — no logic, just wiring
 
 ### `useTableColumns({ schema, columns, queryState, queryContent, rowActions, actions, ... })`
+
 - Resolves the columns array (handles function form)
 - Injects the selection column at position 0 when enabled
 - Injects a row-actions column at the end when `rowActions` exist
@@ -94,21 +101,25 @@ Each composable has a narrow, well-defined concern. They receive their dependenc
 - Returns computed `resolvedColumns` that the table renderer uses
 
 ### `useTableFilters({ queryState, filters })`
+
 - Resolves filter definitions
 - Tracks active filter count
 - Returns filter state helpers used by the filter panel UI
 
 ### `useTableActions('table' | 'row', { tableApi, data, actions, contextData, ... })`
+
 - Resolves action arrays (handles function form)
 - Evaluates `condition` per-action
 - Returns active actions list + execute handler
 
 ### `useTableLayout({ schema, persistency })`
+
 - Tracks `activeLayout` (table/grid)
 - Computes `tableEnabled` and `gridEnabled` from schema
 - Persists layout choice if `persistency` is enabled
 
 ### `useTableControls({ schema, actions, activeLayout, filters, ... })`
+
 - Resolves which toolbar controls are visible
 - Evaluates responsive DSL strings for each control
 
@@ -167,6 +178,7 @@ V2 equivalent: `requestContext` — a computed that combines state + context, de
 V1 uses `obsoletableFn` — a higher-order function that wraps async functions and makes them cancellable. Each invocation receives an `isObsolete()` check. If a newer request was started before the current one completes, `isObsolete()` returns true and the stale result is discarded.
 
 V2 should implement this as a simple request counter pattern:
+
 ```ts
 let latestRequestId = 0
 async function execute() {
@@ -196,13 +208,13 @@ V2 should debounce the source trigger similarly.
 
 ## What V2 Does Differently
 
-| Concern | V1 | V2 |
-|---|---|---|
-| Schema builder | No formal builder, plain object | `defineTableSchema(...)` |
-| Source model | `remote: 'adapter-key'` + data function | `mode: 'client' \| 'remote'` + `loader \| query` |
-| Filters | Mixed quickFilters/filters | Top-level `search`, `static`, `ui` |
-| Context loading | `useAsyncState` per item | Dedicated `useTableContext` composable |
-| Injection entry | `useProvideTableInternals` in DataList | `useTable(schema)` + DataList provides via symbol key |
-| Persistence | `useRouteQuery` (tied to Nuxt) | Abstracted persistence adapter |
-| Column types | Flat definition | `field`, `composite`, `display` with builder |
-| State surface | Internal `queryState` | Public `table.state`, `table.meta`, `table.api` |
+| Concern         | V1                                      | V2                                                    |
+| --------------- | --------------------------------------- | ----------------------------------------------------- |
+| Schema builder  | No formal builder, plain object         | `defineTableSchema(...)`                              |
+| Source model    | `remote: 'adapter-key'` + data function | `mode: 'client' \| 'remote'` + `loader \| query`      |
+| Filters         | Mixed quickFilters/filters              | Top-level `search`, `static`, `ui`                    |
+| Context loading | `useAsyncState` per item                | Dedicated `useTableContext` composable                |
+| Injection entry | `useProvideTableInternals` in DataList  | `useTable(schema)` + DataList provides via symbol key |
+| Persistence     | `useRouteQuery` (tied to Nuxt)          | Abstracted persistence adapter                        |
+| Column types    | Flat definition                         | `field`, `composite`, `display` with builder          |
+| State surface   | Internal `queryState`                   | Public `table.state`, `table.meta`, `table.api`       |

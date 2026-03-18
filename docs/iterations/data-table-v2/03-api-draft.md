@@ -43,9 +43,7 @@ defineTableSchema({
         options: {
           query: () => ({
             queryKey: ['statuses'],
-            queryFn: async () => [
-              { label: 'Active', value: 'active' },
-            ],
+            queryFn: async () => [{ label: 'Active', value: 'active' }],
           }),
         },
       }),

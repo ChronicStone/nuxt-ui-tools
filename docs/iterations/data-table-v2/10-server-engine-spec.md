@@ -257,13 +257,13 @@ When the resolved field value is nested arrays, flatten them before operator eva
 Example:
 
 ```ts
-[['compiler'], ['distributed', 'systems']]
+;[['compiler'], ['distributed', 'systems']]
 ```
 
 should be treated as:
 
 ```ts
-['compiler', 'distributed', 'systems']
+;['compiler', 'distributed', 'systems']
 ```
 
 ## 3. Sorting
