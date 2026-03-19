@@ -18,7 +18,7 @@ defineProps<{
       color="neutral"
       size="md"
       tabindex="-1"
-      class="[&_[data-slot=base]]:rounded-sm [&_[data-slot=indicator]]:rounded-none"
+      :ui="{ base: '!rounded-sm', indicator: '!rounded-none' }"
     />
     <span class="min-w-0 flex-1 truncate">{{ label }}</span>
     <span v-if="count != null" class="shrink-0 text-muted">{{ count }}</span>
