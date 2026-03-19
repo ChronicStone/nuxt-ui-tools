@@ -38,8 +38,7 @@ const operatorLabel = computed(
       .getFilterOperatorOptions({
         key: props.definition.key,
       })
-      .find((item) => item.value === operator.value)?.label ??
-    'is',
+      .find((item) => item.value === operator.value)?.label ?? 'is',
 )
 
 const operatorItems = computed(() =>
@@ -147,7 +146,7 @@ function clearFilter() {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-80 rounded-xl p-0 shadow-xl',
+      content: 'w-fit p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -166,7 +165,9 @@ function clearFilter() {
     />
 
     <template #content>
-      <div class="overflow-hidden rounded-xl border border-default bg-default">
+      <div
+        class="min-w-[16rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
+      >
         <div
           v-if="operator === 'between'"
           class="grid grid-cols-2 gap-2 border-b border-default p-2.5"
@@ -179,11 +180,11 @@ function clearFilter() {
             placeholder="Min"
             :increment="{ variant: 'ghost' }"
             :decrement="{ variant: 'ghost' }"
-            class="w-full rounded-lg border border-default px-2"
+            class="w-full rounded-sm border border-default px-2"
             :ui="{
               base: 'h-8 px-2',
-              increment: 'size-7 rounded-md',
-              decrement: 'size-7 rounded-md',
+              increment: 'size-7 rounded-sm',
+              decrement: 'size-7 rounded-sm',
             }"
             @update:model-value="rangeValue.from = $event == null ? '' : String($event)"
             @keydown.enter.prevent="applyFilter"
@@ -197,11 +198,11 @@ function clearFilter() {
             placeholder="Max"
             :increment="{ variant: 'ghost' }"
             :decrement="{ variant: 'ghost' }"
-            class="w-full rounded-lg border border-default px-2"
+            class="w-full rounded-sm border border-default px-2"
             :ui="{
               base: 'h-8 px-2',
-              increment: 'size-7 rounded-md',
-              decrement: 'size-7 rounded-md',
+              increment: 'size-7 rounded-sm',
+              decrement: 'size-7 rounded-sm',
             }"
             @update:model-value="rangeValue.to = $event == null ? '' : String($event)"
             @keydown.enter.prevent="applyFilter"
@@ -215,13 +216,13 @@ function clearFilter() {
           color="neutral"
           variant="ghost"
           :placeholder="internals.filters.getFilterLabelText({ label: definition.label })"
-          class="w-full border-b border-default px-2.5 py-2"
+          class="w-full border-b border-default p-2"
           :increment="{ variant: 'ghost' }"
           :decrement="{ variant: 'ghost' }"
           :ui="{
             base: 'h-8 px-2',
-            increment: 'size-7 rounded-md',
-            decrement: 'size-7 rounded-md',
+            increment: 'size-7 rounded-sm',
+            decrement: 'size-7 rounded-sm',
           }"
           @keydown.enter.prevent="applyFilter"
         />

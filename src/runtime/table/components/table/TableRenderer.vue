@@ -71,6 +71,10 @@ watch(tableEmpty, (isEmpty) => {
       sticky="header"
       :loading="tableLoading"
       class="h-full"
+      :ui="{
+        thead: 'group/table-head',
+        tr: 'transition-colors data-[selected=true]:bg-elevated/70 hover:bg-elevated/40',
+      }"
       :virtualize="{
         enabled: true,
         getItemKey: (index: number) =>
@@ -157,6 +161,10 @@ watch(tableEmpty, (isEmpty) => {
 :deep(tr[data-selected='true'] td[data-pinned]) {
   background-color: color-mix(in oklab, var(--ui-bg-elevated) 90%, transparent) !important;
   color: var(--ui-text) !important;
+}
+
+:deep(tbody tr:hover td[data-pinned]) {
+  background-color: color-mix(in oklab, var(--ui-bg-elevated) 82%, transparent) !important;
 }
 
 :deep(tbody td) {

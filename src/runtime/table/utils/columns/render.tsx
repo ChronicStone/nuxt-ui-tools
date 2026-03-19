@@ -53,6 +53,7 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
                 : false
           }
           color="neutral"
+          class="[&_[data-slot=base]]:rounded-sm [&_[data-slot=indicator]]:rounded-none"
         />
       </button>
     ),
@@ -76,6 +77,7 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
         <UCheckbox
           modelValue={options.params.selection.isRowSelected({ rowId: String(row.id) })}
           color="neutral"
+          class="[&_[data-slot=base]]:rounded-sm [&_[data-slot=indicator]]:rounded-none"
         />
       </button>
     ),
@@ -141,11 +143,11 @@ export function createDataColumns(options: {
               items={options.getMenuItems({ columnId: runtimeColumn.id })}
               content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
               modal={false}
-              ui={{ content: 'w-56 rounded-lg p-1' }}
+              ui={{ content: 'w-fit p-1 shadow-none' }}
             >
               <button
                 type="button"
-                class="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
+                class="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-sm px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
               >
                 <div class="flex min-w-0 items-center gap-2.5">
                   {runtimeColumn.icon ? (
@@ -175,11 +177,11 @@ export function createDataColumns(options: {
                 aria-label={`Resize ${runtimeColumn.label} column`}
                 role="separator"
                 class={[
-                  'absolute right-0 top-0 z-20 h-full w-1 cursor-col-resize touch-none select-none',
-                  'transition-[background-color] duration-150',
+                  'absolute inset-y-1 -right-1 z-20 w-3 cursor-col-resize touch-none select-none opacity-0',
+                  "transition-opacity duration-150 after:absolute after:inset-y-0 after:left-1/2 after:w-px after:-translate-x-1/2 after:rounded-full after:content-['']",
                   header.getIsResizing?.()
-                    ? 'bg-primary/80'
-                    : 'bg-transparent group-hover/column-header:bg-default/50',
+                    ? 'opacity-100 after:bg-primary'
+                    : 'group-hover/table-head:opacity-100 hover:opacity-100 after:bg-accented/70',
                 ]}
                 onDblclick={(event: MouseEvent) => {
                   event.preventDefault()

@@ -51,8 +51,7 @@ const operatorLabel = computed(
       .getFilterOperatorOptions({
         key: props.definition.key,
       })
-      .find((item) => item.value === operator.value)?.label ??
-    'is',
+      .find((item) => item.value === operator.value)?.label ?? 'is',
 )
 
 const operatorItems = computed(() =>
@@ -198,7 +197,7 @@ const restRangeSelect = useRangeSelect({
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-[22rem] rounded-xl p-0 shadow-xl',
+      content: 'w-fit p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -218,8 +217,10 @@ const restRangeSelect = useRangeSelect({
     />
 
     <template #content>
-      <div class="overflow-hidden rounded-xl border border-default bg-default">
-        <div class="relative border-b border-default">
+      <div
+        class="min-w-[20rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
+      >
+        <div class="relative border-b border-default p-2">
           <UInput
             v-model="searchQuery"
             size="sm"
@@ -227,29 +228,24 @@ const restRangeSelect = useRangeSelect({
             :placeholder="internals.filters.getFilterLabelText({ label: definition.label })"
             color="neutral"
             variant="ghost"
-            class="w-full px-2.5 py-2"
+            class="min-w-[18rem] w-full"
             :loading="optionSource.isStaleLoading.value"
-            :ui="{
-              base: 'h-8 ps-8',
-              leading: 'start-2',
-              leadingIcon: 'size-4 text-muted',
-              trailing: 'end-2',
-            }"
+            :ui="{ base: 'rounded-sm' }"
           />
         </div>
 
         <UScrollArea
           style="max-height: 320px"
           type="hover"
-          class="!h-80 p-2"
+          class="max-h-80 p-2"
           :ui="{
-            root: 'h-80',
-            viewport: 'h-full',
+            root: 'max-h-80',
+            viewport: 'max-h-80',
           }"
         >
           <div class="grid gap-0.5">
             <template v-if="optionSource.isLoading.value">
-              <div v-for="i in 5" :key="i" class="flex items-center gap-3 rounded-lg px-3 py-2.5">
+              <div v-for="i in 5" :key="i" class="flex items-center gap-3 rounded-sm px-3 py-2">
                 <USkeleton class="size-4 shrink-0 rounded-md" />
                 <USkeleton class="h-3.5 min-w-0 flex-1" />
                 <USkeleton class="h-3.5 w-6 shrink-0" />

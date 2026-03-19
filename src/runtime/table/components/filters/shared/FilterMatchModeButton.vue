@@ -28,7 +28,7 @@ const emit = defineEmits<{
       })),
     ]"
     :content="{ side: 'bottom', align: 'start', sideOffset: 6 }"
-    :ui="{ content: 'rounded-xl p-1 shadow-xl' }"
+    :ui="{ content: 'w-fit p-1 shadow-none' }"
   >
     <UButton
       color="neutral"

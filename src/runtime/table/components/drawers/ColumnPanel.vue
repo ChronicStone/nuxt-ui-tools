@@ -61,7 +61,7 @@ function toggleColumn(columnId: string) {
     @update:open="internals.controls.columnsPanelOpen.value = $event"
     mode="click"
     :content="{ side: 'bottom', align: 'end', sideOffset: 8 }"
-    :ui="{ }"
+    :ui="{ content: 'w-fit p-0 shadow-none' }"
   >
     <UButton
       color="neutral"
@@ -72,26 +72,31 @@ function toggleColumn(columnId: string) {
     />
 
     <template #content>
-      <div class="overflow-hidden border border-default bg-default rounded-sm p-2">
-        <UInput
-          :model-value="internals.controls.columnsPanelSearch.value"
-          @update:model-value="internals.controls.columnsPanelSearch.value = String($event ?? '')"
-          size="sm"
-          icon="i-lucide-search"
-          placeholder="Search columns..."
-          color="neutral"
-          variant="ghost"
-          class="w-full"
-        />
+      <div
+        class="min-w-[20rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
+      >
+        <div class="border-b border-default p-2">
+          <UInput
+            :model-value="internals.controls.columnsPanelSearch.value"
+            @update:model-value="internals.controls.columnsPanelSearch.value = String($event ?? '')"
+            size="sm"
+            icon="i-lucide-search"
+            placeholder="Search columns..."
+            color="neutral"
+            variant="ghost"
+            class="min-w-[18rem] w-full"
+            :ui="{ base: 'rounded-sm' }"
+          />
+        </div>
 
-        <div class="grid max-h-80 gap-1 overflow-y-auto">
-          <div v-if="!internals.controls.columnsPanelSearch.value" class="grid gap-1">
+        <div class="grid max-h-80 gap-1 overflow-y-auto p-2">
+          <div v-if="!internals.controls.columnsPanelSearch.value" class="grid gap-0.5">
             <div
               v-for="column in pinnedLeft"
               :key="column.id"
-              class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
+              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
             >
-              <div class="flex size-6 items-center justify-center rounded-md text-muted">
+              <div class="flex size-6 items-center justify-center rounded-sm text-muted">
                 <UIcon name="i-lucide-pin" class="size-4" />
               </div>
               <button
@@ -123,16 +128,16 @@ function toggleColumn(columnId: string) {
               item-key="id"
               handle=".column-drag-handle"
               ghost-class="opacity-60"
-              class="grid gap-1"
+              class="grid gap-0.5"
             >
               <div
                 v-for="column in draggableColumns"
                 :key="column.id"
-                class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
+                class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
               >
                 <button
                   type="button"
-                  class="column-drag-handle flex size-6 cursor-grab items-center justify-center rounded-md text-muted hover:bg-elevated active:cursor-grabbing"
+                  class="column-drag-handle flex size-6 cursor-grab items-center justify-center rounded-sm text-muted hover:bg-elevated active:cursor-grabbing"
                 >
                   <UIcon name="i-lucide-grip" class="size-4" />
                 </button>
@@ -165,9 +170,9 @@ function toggleColumn(columnId: string) {
             <div
               v-for="column in pinnedRight"
               :key="column.id"
-              class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
+              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
             >
-              <div class="flex size-6 items-center justify-center rounded-md text-muted">
+              <div class="flex size-6 items-center justify-center rounded-sm text-muted">
                 <UIcon name="i-lucide-pin" class="size-4" />
               </div>
               <button
@@ -194,15 +199,15 @@ function toggleColumn(columnId: string) {
             </div>
           </div>
 
-          <div v-else class="grid gap-1">
+          <div v-else class="grid gap-0.5">
             <button
               v-for="column in filteredColumns"
               :key="column.id"
               type="button"
-              class="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-elevated/70"
+              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-elevated/70"
               @click="toggleColumn(column.id)"
             >
-              <div class="flex size-6 items-center justify-center rounded-md text-muted">
+              <div class="flex size-6 items-center justify-center rounded-sm text-muted">
                 <UIcon
                   :name="
                     internals.tableColumns.getPinnedState({ columnId: column.id })
@@ -231,7 +236,7 @@ function toggleColumn(columnId: string) {
         </div>
 
         <div class="flex items-center justify-between gap-3 border-t border-default px-3 py-2">
-          <div class="text-xs text-muted">
+          <div class="text-sm text-muted">
             {{ internals.tableColumns.orderedColumns.value.length }} configurable columns
           </div>
 

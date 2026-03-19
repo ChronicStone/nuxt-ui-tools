@@ -435,6 +435,16 @@ This repository values clean architecture and good performance over preserving a
 - do not reintroduce a pattern the developer explicitly rejected elsewhere in the same domain
 - once a rule has been made explicit by the developer, enforce it across the touched area instead of applying a one-off local fix
 
+## 8.7 UI Precision Rule
+
+- when the developer gives visual feedback or screenshots, treat each complaint as a hard constraint, not a loose design direction
+- map each complaint to a concrete rendered cause before editing, such as a specific width class, forced height, variant choice, slot override, or component theme slot
+- do not broaden a UI cleanup into a general restyle unless the developer explicitly asks for that
+- if a previous change clearly violated the request, revert that specific change first before adding more edits on top
+- prefer small, testable edits tied to each visible symptom over a broad pass that changes multiple visual decisions at once
+- when working with Nuxt UI components, inspect the actual rendered slots/theme surface before assuming an override lands on the right element
+- if the developer's request implies fit-content behavior, do not replace it with a fixed width; use a content-fitting width with only the necessary min/max guards
+
 ## 9. Task Routing
 
 Use this routing before doing a broad scan.

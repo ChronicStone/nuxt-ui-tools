@@ -42,11 +42,11 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
         })),
       ]"
       :content="{ side: 'bottom', align: 'start', sideOffset: 6 }"
-      :ui="{ content: 'rounded-xl p-1 shadow-xl' }"
+      :ui="{ content: 'w-fit p-1 shadow-none' }"
     >
       <UButton
         color="neutral"
-        variant="outline"
+        :variant="props.active ? 'subtle' : 'outline'"
         size="md"
         class="min-w-0 shrink-0"
         @pointerdown.stop
@@ -73,7 +73,7 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
     </UButton>
 
     <UFieldGroup v-else size="md" class="min-w-0 max-w-full">
-      <UButton color="neutral" variant="outline" size="md" class="shrink-0">
+      <UButton color="neutral" variant="subtle" size="md" class="shrink-0">
         <span class="flex min-w-0 items-center gap-2">
           <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
           <span class="truncate">{{ props.label }}</span>
@@ -87,13 +87,7 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
         @select="emit('selectOperator', $event)"
       />
 
-      <UButton
-        color="neutral"
-        variant="outline"
-        size="md"
-        class="min-w-0 max-w-full"
-        :class="props.active ? 'bg-elevated text-highlighted' : ''"
-      >
+      <UButton color="neutral" variant="subtle" size="md" class="min-w-0 max-w-full">
         <span class="flex min-w-0 items-center gap-2">
           <UBadge
             color="neutral"
@@ -120,7 +114,7 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
 
       <UButton
         color="neutral"
-        variant="outline"
+        variant="subtle"
         size="md"
         icon="i-lucide-x"
         class="shrink-0"

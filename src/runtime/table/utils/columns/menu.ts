@@ -23,7 +23,6 @@ export function createColumnMenuItems(options: {
             label: 'Sort asc',
             icon: sortState === 'asc' ? 'i-lucide-check' : 'i-lucide-chevron-up',
             color: 'neutral',
-            class: sortState === 'asc' ? 'rounded-md bg-elevated text-default' : '',
             onSelect: () =>
               options.setSorting({
                 key: column.sortableKey as string,
@@ -34,13 +33,22 @@ export function createColumnMenuItems(options: {
             label: 'Sort desc',
             icon: sortState === 'desc' ? 'i-lucide-check' : 'i-lucide-chevron-down',
             color: 'neutral',
-            class: sortState === 'desc' ? 'rounded-md bg-elevated text-default' : '',
             onSelect: () =>
               options.setSorting({
                 key: column.sortableKey as string,
                 dir: 'desc',
               }),
           },
+          ...(sortState
+            ? [
+                {
+                  label: 'Clear sort',
+                  icon: 'i-lucide-x',
+                  color: 'neutral',
+                  onSelect: () => options.setSorting(null),
+                },
+              ]
+            : []),
         ]
       : [],
     [
@@ -48,14 +56,12 @@ export function createColumnMenuItems(options: {
         label: 'Pin to left',
         icon: pinnedState === 'left' ? 'i-lucide-check' : 'i-lucide-pin',
         color: 'neutral',
-        class: pinnedState === 'left' ? 'rounded-md bg-elevated text-default' : '',
         onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'left' }),
       },
       {
         label: 'Pin to right',
         icon: pinnedState === 'right' ? 'i-lucide-check' : 'i-lucide-pin',
         color: 'neutral',
-        class: pinnedState === 'right' ? 'rounded-md bg-elevated text-default' : '',
         onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'right' }),
       },
       ...(pinnedState

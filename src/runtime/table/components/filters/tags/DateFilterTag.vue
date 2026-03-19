@@ -95,8 +95,7 @@ const operatorLabel = computed(
       .getFilterOperatorOptions({
         key: props.definition.key,
       })
-      .find((item) => item.value === operator.value)?.label ??
-    'is',
+      .find((item) => item.value === operator.value)?.label ?? 'is',
 )
 
 const operatorItems = computed(() =>
@@ -174,7 +173,7 @@ function toCalendarDate(value: unknown) {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'rounded-xl p-0 shadow-xl',
+      content: 'max-w-[calc(100vw-1rem)] p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -193,9 +192,9 @@ function toCalendarDate(value: unknown) {
     />
 
     <template #content>
-      <div class="overflow-hidden rounded-xl border border-default bg-default">
+      <div class="overflow-hidden rounded-sm border border-default bg-default">
         <div v-if="operator === 'between'" class="grid gap-3 p-3">
-          <div class="rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm text-toned">
+          <div class="rounded-sm border border-default bg-elevated/30 px-3 py-2 text-sm text-toned">
             {{ rangeSummary || 'Select a date range' }}
           </div>
 
@@ -214,7 +213,7 @@ function toCalendarDate(value: unknown) {
               body: 'gap-4',
               grid: 'gap-y-1',
               cell: 'p-0.5',
-              cellTrigger: 'rounded-lg',
+              cellTrigger: 'rounded-sm',
             }"
           />
         </div>
@@ -232,7 +231,7 @@ function toCalendarDate(value: unknown) {
               header: 'px-1 pb-2',
               grid: 'gap-y-1',
               cell: 'p-0.5',
-              cellTrigger: 'rounded-lg',
+              cellTrigger: 'rounded-sm',
             }"
           />
         </div>

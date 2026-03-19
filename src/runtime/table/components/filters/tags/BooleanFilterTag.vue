@@ -97,7 +97,7 @@ const entries = computed(() => {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-56 rounded-xl p-0 shadow-xl',
+      content: 'w-fit p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -113,24 +113,26 @@ const entries = computed(() => {
     />
 
     <template #content>
-      <div class="overflow-hidden rounded-xl border border-default bg-default">
+      <div
+        class="min-w-[14rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
+      >
         <div class="grid gap-0.5 p-2">
           <button
             v-for="entry in entries"
             :key="String(entry.value)"
             type="button"
-            class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-elevated"
+            class="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-elevated"
             :class="entry.selected ? 'bg-elevated text-highlighted' : 'text-default'"
             @click="selectValue(entry.value)"
           >
             <span
-              class="flex size-4 shrink-0 items-center justify-center rounded-full border"
+              class="flex size-4 shrink-0 items-center justify-center rounded-sm border"
               :class="entry.selected ? 'border-inverted bg-inverted' : 'border-default'"
             >
               <UIcon
                 v-if="entry.selected"
-                name="i-lucide-circle"
-                class="size-1.5 text-[var(--ui-bg)]"
+                name="i-lucide-check"
+                class="size-3 text-[var(--ui-bg)]"
               />
             </span>
             <span class="min-w-0 flex-1 truncate">{{ entry.label }}</span>

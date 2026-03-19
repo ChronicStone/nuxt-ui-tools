@@ -37,8 +37,7 @@ const operatorLabel = computed(
       .getFilterOperatorOptions({
         key: props.definition.key,
       })
-      .find((item) => item.value === operator.value)?.label ??
-    'contains',
+      .find((item) => item.value === operator.value)?.label ?? 'contains',
 )
 
 const operatorItems = computed(() =>
@@ -100,7 +99,7 @@ function clearFilter() {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-80 rounded-xl p-0 shadow-xl',
+      content: 'w-fit p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -119,22 +118,22 @@ function clearFilter() {
     />
 
     <template #content>
-      <div class="overflow-hidden rounded-xl border border-default bg-default">
-        <UInput
-          v-model="localValue"
-          size="sm"
-          variant="ghost"
-          color="neutral"
-          icon="i-lucide-search"
-          :placeholder="internals.filters.getFilterLabelText({ label: definition.label })"
-          class="w-full border-b border-default px-2.5 py-2"
-          :ui="{
-            base: 'h-8 ps-8',
-            leading: 'start-2',
-            leadingIcon: 'size-4 text-muted',
-          }"
-          @keydown.enter.prevent="applyFilter"
-        />
+      <div
+        class="min-w-[16rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
+      >
+        <div class="border-b border-default p-2">
+          <UInput
+            v-model="localValue"
+            size="sm"
+            variant="ghost"
+            color="neutral"
+            icon="i-lucide-search"
+            :placeholder="internals.filters.getFilterLabelText({ label: definition.label })"
+            class="min-w-[14rem] w-full"
+            :ui="{ base: 'rounded-sm' }"
+            @keydown.enter.prevent="applyFilter"
+          />
+        </div>
 
         <div class="flex items-center justify-between border-t border-default p-2">
           <UButton color="neutral" variant="ghost" size="sm" label="Clear" @click="clearFilter" />
