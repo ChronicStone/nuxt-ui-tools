@@ -2,15 +2,17 @@ import { computed, ref, watch, type ComputedRef } from 'vue'
 
 import type { GenericObject, TableSchemaView } from '../types'
 import { resolveTableRowId } from '../utils'
+import type { useTableData } from './use-table-data'
 
 export interface UseTableSelectionParams {
   schema: ComputedRef<TableSchemaView>
-  rows: ComputedRef<GenericObject[]>
+  queryContent: ReturnType<typeof useTableData>
 }
 
 export function useTableSelection(options: UseTableSelectionParams) {
   const selectedKeys = ref<string[]>([])
   const lastTouchedRowId = ref<string | null>(null)
+  const rows = computed<GenericObject[]>(() => options.queryContent.data.value.rows)
 
   const selectionEnabled = computed(() => {
     const mode =
@@ -19,7 +21,7 @@ export function useTableSelection(options: UseTableSelectionParams) {
   })
 
   const visibleRowIds = computed(() =>
-    options.rows.value.map((row, index) => getRowId({ row, index })),
+    rows.value.map((row, index) => getRowId({ row, index })),
   )
 
   const rowSelection = computed({
@@ -46,7 +48,7 @@ export function useTableSelection(options: UseTableSelectionParams) {
   )
 
   const selectedRows = computed(() =>
-    options.rows.value.filter((row, index) =>
+    rows.value.filter((row, index) =>
       selectedKeys.value.includes(getRowId({ row, index })),
     ),
   )

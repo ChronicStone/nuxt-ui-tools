@@ -4,11 +4,7 @@ import { computed, ref } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableUiFilterDefinition } from '../../../types'
-import BooleanFilterTag from './BooleanFilterTag.vue'
-import DateFilterTag from './DateFilterTag.vue'
-import NumberFilterTag from './NumberFilterTag.vue'
-import OptionFilterTag from './OptionFilterTag.vue'
-import TextFilterTag from './TextFilterTag.vue'
+import { resolveFilterTagComponent } from './registry'
 
 const internals = useTableInternals()
 
@@ -49,21 +45,6 @@ function activateDynamicFilter(key: string) {
   activeDynamicKeys.value = new Set([...activeDynamicKeys.value, key])
 }
 
-function getFilterComponent(options: { definition: TableUiFilterDefinition }) {
-  switch (options.definition.kind) {
-    case 'option':
-      return OptionFilterTag
-    case 'boolean':
-      return BooleanFilterTag
-    case 'date':
-      return DateFilterTag
-    case 'number':
-      return NumberFilterTag
-    default:
-      return TextFilterTag
-  }
-}
-
 function getFilterLabel(definition: TableUiFilterDefinition) {
   return typeof definition.label === 'function' ? '' : definition.label
 }
@@ -75,10 +56,10 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
     class="flex flex-wrap items-center gap-2"
   >
     <component
-      :is="getFilterComponent({ definition })"
+      :is="resolveFilterTagComponent(definition)"
       v-for="definition in visibleDefinitions"
       :key="definition.key"
-      :definition="definition as any"
+      :definition="definition"
     />
 
     <UButton

@@ -1,8 +1,10 @@
-import type { TableRowKey } from '../types'
+import type { GenericObject, TableRowKey } from '../types'
+
+type PathReadableRecord = Record<string, unknown>
 
 export function resolveTableRowId(options: {
-  rowKey: TableRowKey<any>
-  row: Record<string, any>
+  rowKey: TableRowKey<GenericObject>
+  row: unknown
   index?: number
 }) {
   if (Array.isArray(options.rowKey)) {
@@ -16,12 +18,16 @@ export function resolveTableRowId(options: {
   return String(getTableRowValue({ row: options.row, path: options.rowKey }) ?? options.index ?? 0)
 }
 
-export function getTableRowValue(options: { row: Record<string, any>; path: string }) {
+export function getTableRowValue(options: { row: unknown; path: string }) {
   return options.path.split('.').reduce<unknown>((value, key) => {
-    if (value == null) {
+    if (!isPathReadableRecord(value)) {
       return undefined
     }
 
-    return (value as Record<string, unknown>)[key]
+    return value[key]
   }, options.row)
+}
+
+function isPathReadableRecord(value: unknown): value is PathReadableRecord {
+  return value !== null && typeof value === 'object'
 }

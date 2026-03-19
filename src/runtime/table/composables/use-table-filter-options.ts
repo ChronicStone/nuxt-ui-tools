@@ -11,7 +11,6 @@ import type {
   TableFilterOptionQueryResult,
   TableOptionFilterDefinition,
   TableQueryDefinition,
-  TableRemoteSource,
   TableSchemaView,
 } from '../types'
 import type { UseTableDataReturn } from './use-table-data'
@@ -44,6 +43,9 @@ export interface UseTableFilterOptionsParams {
 }
 
 export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
+  const remoteSource = computed(() =>
+    options.schema.value.source.mode === 'remote' ? options.schema.value.source : null,
+  )
   const normalizedSearch = computed(() => options.searchQuery.value.trim())
   const isBooleanFilter = computed(() => options.definition.kind === 'boolean')
   const isRemoteTable = computed(() => options.schema.value.source.mode === 'remote')
@@ -54,7 +56,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     () =>
       isRemoteTable.value &&
       Boolean(options.definition.facet) &&
-      typeof (options.schema.value.source as TableRemoteSource).facets === 'function',
+      typeof remoteSource.value?.facets === 'function',
   )
   const canMergeFacetCounts = computed(() => !isRemoteTable.value || usesFacetCounts.value)
 
@@ -80,7 +82,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
         }
       }
 
-      const optionDefinition = options.definition as TableOptionFilterDefinition
+      const optionDefinition = options.definition
       const queryOptions = unref(
         optionDefinition.query!({
           search: normalizedSearch.value || undefined,
@@ -119,8 +121,8 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       }
 
       const queryOptions = unref(
-        (options.schema.value.source as TableRemoteSource).facets!({
-          table: options.queryContent.requestContext.value,
+        remoteSource.value!.facets!({
+          table: options.queryContent.requestContext.value as never,
           facets: [
             {
               key: options.definition.key,

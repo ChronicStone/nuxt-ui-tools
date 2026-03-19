@@ -9,7 +9,7 @@ import { computed, ref } from 'vue'
 import { useRangeSelect } from '../../../../shared'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableOptionFilterDefinition } from '../../../types'
+import type { TableFilterOperator, TableOptionFilterDefinition } from '../../../types'
 import FilterOptionRow from '../shared/FilterOptionRow.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
@@ -20,7 +20,7 @@ const props = defineProps<{
 const internals = useTableInternals()
 const searchQuery = ref<string>('')
 const isOpen = ref<boolean>(false)
-const pendingOperator = ref<string>()
+const pendingOperator = ref<TableFilterOperator>()
 
 const optionSource = useTableFilterOptions({
   definition: props.definition,
@@ -51,7 +51,7 @@ const operatorLabel = computed(
       .getFilterOperatorOptions({
         key: props.definition.key,
       })
-      .find((item: { label: string; value: string }) => item.value === operator.value)?.label ??
+      .find((item) => item.value === operator.value)?.label ??
     'is',
 )
 
@@ -73,7 +73,7 @@ const pinnedValues = ref<Set<string>>(new Set())
 
 let dismissLocked = false
 
-function handleActivate(op: string) {
+function handleActivate(op: TableFilterOperator) {
   pendingOperator.value = op
   dismissLocked = true
   setTimeout(() => {

@@ -2,10 +2,12 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 
+import type { TableFilterOperator } from '../../../types'
+
 withDefaults(
   defineProps<{
     label: string
-    items?: Array<{ label: string; value: string }>
+    items?: Array<{ label: string; value: TableFilterOperator }>
   }>(),
   {
     items: () => [],
@@ -13,7 +15,7 @@ withDefaults(
 )
 
 const emit = defineEmits<{
-  select: [value: string]
+  select: [value: TableFilterOperator]
 }>()
 </script>
 
@@ -34,7 +36,6 @@ const emit = defineEmits<{
       size="md"
       :label="label"
       trailing-icon="i-lucide-chevron-down"
-      :ui="{ base: 'h-10 px-3 capitalize', trailingIcon: 'size-4 text-muted' }"
       @pointerdown.stop
       @click.stop
     />

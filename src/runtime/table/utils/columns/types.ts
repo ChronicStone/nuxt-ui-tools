@@ -1,9 +1,9 @@
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { UseTableDataReturn } from '../../composables/use-table-data'
+import type { useTableState } from '../../composables/use-table-state'
 import type {
-  TableColumn,
-  TableFilterState,
+  GenericObject,
   TableLayout,
   TableSchemaView,
   TableSortingDirection,
@@ -11,6 +11,8 @@ import type {
 
 export const SELECT_COLUMN_ID = '__select'
 export const SELECT_COLUMN_WIDTH = 56
+
+export type SchemaTableColumn = NonNullable<NonNullable<TableSchemaView['table']>['columns']>[number]
 
 export interface TableRuntimeColumn {
   id: string
@@ -50,34 +52,25 @@ export interface TableColumnsSelectionState {
   isRowSelected: (params: { rowId: string }) => boolean
 }
 
-export interface TablePublicQueryState {
-  layout: TableLayout
-  pagination: { pageIndex: number; pageSize: number }
-  sorting: { sortKey: string; sortDirection: TableSortingDirection } | null
-  filters: TableFilterState
-}
-
 export interface UseTableColumnsParams {
   schema: ComputedRef<TableSchemaView>
+  state: ReturnType<typeof useTableState>
   data: Pick<UseTableDataReturn, 'contextData' | 'pageContextData'>
-  query: ComputedRef<TablePublicQueryState>
-  api: { setSorting: (sorting: { key: string; dir: TableSortingDirection } | null) => void }
   selection: TableColumnsSelectionState
   tableLayout: ComputedRef<TableLayout>
-  tableState: Ref<TableColumnState>
 }
 
 export interface TableColumnRenderParams {
-  column: TableColumn
-  row: Record<string, any>
+  column: SchemaTableColumn
+  row: GenericObject
   rowIndex: number
   params: UseTableColumnsParams
 }
 
 export interface TableCellRenderContext {
-  row: Record<string, any>
+  row: GenericObject
   index: number
-  context: Record<string, any>
-  pageContext: Record<string, any>
+  context: GenericObject
+  pageContext: GenericObject
   layout: TableLayout
 }

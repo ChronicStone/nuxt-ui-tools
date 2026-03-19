@@ -1,8 +1,14 @@
 import type {
+  TableBooleanFilterOperator,
+  TableDateFilterOperator,
+  TableFilterPrimitiveValue,
   TableBooleanFilterDefinition,
   TableDateFilterDefinition,
+  TableNumberFilterOperator,
   TableNumberFilterDefinition,
   TableOptionFilterDefinition,
+  TableOptionFilterOperator,
+  TableTextFilterOperator,
   TableTextFilterDefinition,
   TableUiFilterDefinition,
 } from './filters'
@@ -38,9 +44,10 @@ export type TableQueryStateFilterValue =
   | string
   | number
   | boolean
-  | Array<string | number | boolean>
+  | Array<TableFilterPrimitiveValue>
   | Date
-  | TableQueryStateFilterRange<string | number | Date>
+  | TableQueryStateFilterRange<number>
+  | TableQueryStateFilterRange<Date>
 
 export interface TableQueryStateFilterDefinition<TKey extends string = string> {
   key: TKey
@@ -91,42 +98,48 @@ export type ExtractTableFilterKey<TSchema> =
     ? TKey
     : never
 
-type DefaultFilterOperatorByKind<TKind> = TKind extends 'text'
-  ? 'contains'
+type ExtractDefinitionForKey<TSchema, TKey extends ExtractTableFilterKey<TSchema>> = Extract<
+  ExtractTableUiFilterDefinition<TSchema>,
+  { key: TKey }
+>
+
+type DefinitionForKeyOrFallback<TSchema, TKey extends ExtractTableFilterKey<TSchema>> = [
+  ExtractDefinitionForKey<TSchema, TKey>,
+] extends [never]
+  ? ExtractTableUiFilterDefinition<TSchema>
+  : ExtractDefinitionForKey<TSchema, TKey>
+
+type FilterOperatorsByKind<TKind> = TKind extends 'text'
+  ? TableTextFilterOperator
   : TKind extends 'option'
-    ? 'isAnyOf'
+    ? TableOptionFilterOperator
     : TKind extends 'boolean'
-      ? 'is'
+      ? TableBooleanFilterOperator
       : TKind extends 'number'
-        ? 'is'
+        ? TableNumberFilterOperator
         : TKind extends 'date'
-          ? 'is'
+          ? TableDateFilterOperator
           : TableFilterOperator
 
 export type ExtractTableFilterOperator<TSchema, TKey extends ExtractTableFilterKey<TSchema>> =
-  Extract<ExtractTableUiFilterDefinition<TSchema>, { key: TKey }> extends infer TDefinition
+  DefinitionForKeyOrFallback<TSchema, TKey> extends infer TDefinition
     ? TDefinition extends {
         kind: infer TKind
-        defaultOperator?: infer TDefault
-        operators?: infer TOperators
       }
-      ?
-          | Extract<TDefault, TableFilterOperator>
-          | Extract<TOperators, TableFilterOperator[]>[number]
-          | DefaultFilterOperatorByKind<TKind>
+      ? FilterOperatorsByKind<TKind>
       : TableFilterOperator
     : TableFilterOperator
 
 type ExtractFilterValueFromDefinition<TDefinition> =
-  TDefinition extends TableTextFilterDefinition<any, any, any>
+  TDefinition extends TableTextFilterDefinition<object, object, string>
     ? string
-    : TDefinition extends TableOptionFilterDefinition<any, any, any, infer TValue>
+    : TDefinition extends TableOptionFilterDefinition<object, object, string, infer TValue>
       ? TValue[]
-      : TDefinition extends TableBooleanFilterDefinition<any, any, any>
+      : TDefinition extends TableBooleanFilterDefinition<object, object, string>
         ? boolean
-        : TDefinition extends TableNumberFilterDefinition<any, any, any>
+        : TDefinition extends TableNumberFilterDefinition<object, object, string>
           ? number | TableQueryStateFilterRange<number>
-          : TDefinition extends TableDateFilterDefinition<any, any, any>
+          : TDefinition extends TableDateFilterDefinition<object, object, string>
             ? Date | TableQueryStateFilterRange<Date>
             : TableQueryStateFilterValue
 
@@ -134,7 +147,7 @@ export type ExtractTableFilterValue<
   TSchema,
   TKey extends ExtractTableFilterKey<TSchema>,
 > = ExtractFilterValueFromDefinition<
-  Extract<ExtractTableUiFilterDefinition<TSchema>, { key: TKey }>
+  DefinitionForKeyOrFallback<TSchema, TKey>
 >
 
 export type ExtractTableFilterRule<TSchema, TKey extends ExtractTableFilterKey<TSchema>> = {

@@ -8,7 +8,7 @@ import { useTableInternals } from '../../composables/use-table-internals'
 const internals = useTableInternals()
 
 const pageSizeItems = computed(() =>
-  internals.tableApi.pageSizeOptions.value.map((size: number) => [
+  internals.tableApi.pagination.pageSizeOptions.value.map((size: number) => [
     {
       label: `${size} rows`,
       onSelect: () => internals.pagination.setPageSize(size),
@@ -45,7 +45,7 @@ function formatCount(value: number) {
             variant="outline"
             size="md"
             class="min-w-20 justify-between"
-            :label="String(internals.pagination.pageSize.value)"
+            :label="String(internals.tableApi.pagination.state.value.pageSize)"
             trailing-icon="i-lucide-chevron-down"
           />
         </UDropdownMenu>

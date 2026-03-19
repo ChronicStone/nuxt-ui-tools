@@ -18,9 +18,11 @@ export function useTableLayout({ schema }: UseTableLayoutParams) {
     defaultValue: schema.value.defaultLayout,
     omitDefault: true,
   })
+  const resolvedLayout = computed(() => activeLayout.value ?? schema.value.defaultLayout ?? 'table')
 
   return {
     activeLayout,
+    resolvedLayout,
     gridEnabled,
     tableEnabled,
   }

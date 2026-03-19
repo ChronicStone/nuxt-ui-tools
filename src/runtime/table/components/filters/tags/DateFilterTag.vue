@@ -6,7 +6,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableDateFilterDefinition } from '../../../types'
+import type { TableDateFilterDefinition, TableFilterOperator } from '../../../types'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
@@ -15,7 +15,7 @@ const props = defineProps<{
 
 const internals = useTableInternals()
 const isOpen = ref<boolean>(false)
-const pendingOperator = ref<string>()
+const pendingOperator = ref<TableFilterOperator>()
 
 // --- Local calendar state (only committed on Apply) ---
 const localDate = ref<CalendarDate>()
@@ -23,7 +23,7 @@ const localDateRange = ref<{ start: CalendarDate; end: CalendarDate }>()
 
 let dismissLocked = false
 
-function handleActivate(op: string) {
+function handleActivate(op: TableFilterOperator) {
   pendingOperator.value = op
   dismissLocked = true
   setTimeout(() => {
@@ -95,7 +95,7 @@ const operatorLabel = computed(
       .getFilterOperatorOptions({
         key: props.definition.key,
       })
-      .find((item: { label: string; value: string }) => item.value === operator.value)?.label ??
+      .find((item) => item.value === operator.value)?.label ??
     'is',
 )
 

@@ -61,9 +61,7 @@ function toggleColumn(columnId: string) {
     @update:open="internals.controls.columnsPanelOpen.value = $event"
     mode="click"
     :content="{ side: 'bottom', align: 'end', sideOffset: 8 }"
-    :ui="{
-      content: 'w-[18rem] rounded-xl p-0 shadow-xl',
-    }"
+    :ui="{ }"
   >
     <UButton
       color="neutral"
@@ -71,11 +69,10 @@ function toggleColumn(columnId: string) {
       size="md"
       icon="i-lucide-sliders-horizontal"
       label="View"
-      :ui="{ base: 'h-10 px-3' }"
     />
 
     <template #content>
-      <div class="overflow-hidden rounded-xl border border-default bg-default">
+      <div class="overflow-hidden border border-default bg-default rounded-sm p-2">
         <UInput
           :model-value="internals.controls.columnsPanelSearch.value"
           @update:model-value="internals.controls.columnsPanelSearch.value = String($event ?? '')"
@@ -84,15 +81,10 @@ function toggleColumn(columnId: string) {
           placeholder="Search columns..."
           color="neutral"
           variant="ghost"
-          class="w-full border-b border-default px-2.5 py-2"
-          :ui="{
-            base: 'h-8 ps-8',
-            leading: 'start-2',
-            leadingIcon: 'size-4 text-muted',
-          }"
+          class="w-full"
         />
 
-        <div class="grid max-h-80 gap-1 overflow-y-auto p-2">
+        <div class="grid max-h-80 gap-1 overflow-y-auto">
           <div v-if="!internals.controls.columnsPanelSearch.value" class="grid gap-1">
             <div
               v-for="column in pinnedLeft"

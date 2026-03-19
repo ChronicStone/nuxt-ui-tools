@@ -1,7 +1,7 @@
 import { computed, type ComputedRef } from 'vue'
 
 import type { useTableState } from '../composables/use-table-state'
-import type { MaybeComputedRef, TableFilterState, TableLayout } from '../types'
+import type { MaybeComputedRef, PublicTableQueryState, TableLayout } from '../types'
 
 export function resolveSchemaSource<TSchema>(options: {
   schema: MaybeComputedRef<TSchema>
@@ -11,23 +11,18 @@ export function resolveSchemaSource<TSchema>(options: {
   }
 
   if (options.schema && typeof options.schema === 'object' && 'value' in options.schema) {
-    return options.schema.value as TSchema
+    return options.schema.value
   }
 
-  return options.schema as TSchema
+  return options.schema
 }
 
-export function createPublicQueryState(options: {
+export function mapPublicQueryState(options: {
   queryState: ReturnType<typeof useTableState>['queryState']
-  activeLayout: ComputedRef<TableLayout>
-}) {
-  return computed<{
-    layout: TableLayout
-    pagination: { pageIndex: number; pageSize: number }
-    sorting: { sortKey: string; sortDirection: 'asc' | 'desc' } | null
-    filters: TableFilterState
-  }>(() => ({
-    layout: options.activeLayout.value,
+  activeLayout: TableLayout
+}): PublicTableQueryState {
+  return {
+    layout: options.activeLayout,
     pagination: options.queryState.pagination.value,
     sorting: options.queryState.sorting.value
       ? {
@@ -36,5 +31,17 @@ export function createPublicQueryState(options: {
         }
       : null,
     filters: options.queryState.filters.value,
-  }))
+  }
+}
+
+export function createPublicQueryState(options: {
+  queryState: ReturnType<typeof useTableState>['queryState']
+  activeLayout: ComputedRef<TableLayout>
+}) {
+  return computed<PublicTableQueryState>(() =>
+    mapPublicQueryState({
+      queryState: options.queryState,
+      activeLayout: options.activeLayout.value,
+    }),
+  )
 }

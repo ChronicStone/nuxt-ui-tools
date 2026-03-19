@@ -1,20 +1,18 @@
-import type { TableColumn, TableSchemaView } from '../../types'
-import type { TableRuntimeColumn } from './types'
+import type { GenericObject, TableSchemaView } from '../../types'
+import type { SchemaTableColumn, TableRuntimeColumn } from './types'
 
 export function findSchemaColumn(options: {
   schema: TableSchemaView
   columnId: string
-}): TableColumn | undefined {
-  return (options.schema.table?.columns ?? []).find((column) => column.key === options.columnId) as
-    | TableColumn
-    | undefined
+}): SchemaTableColumn | undefined {
+  return (options.schema.table?.columns ?? []).find((column) => column.key === options.columnId)
 }
 
 export function createRuntimeColumns(options: {
   schema: TableSchemaView
-  context: Record<string, any>
+  context: GenericObject
 }) {
-  return ((options.schema.table?.columns ?? []) as unknown as TableColumn[])
+  return (options.schema.table?.columns ?? [])
     .filter((column) => (column.condition?.() ?? true) && (column.enabled ?? true))
     .map(
       (column): TableRuntimeColumn => ({
@@ -50,7 +48,7 @@ export function createVisibleOrderedColumns(options: {
   return options.orderedColumns.filter((column) => options.columnVisibility?.[column.id] !== false)
 }
 
-export function resolveColumnLabel(options: { column: TableColumn }) {
+export function resolveColumnLabel(options: { column: SchemaTableColumn }) {
   if (typeof options.column.label === 'function') {
     return String(options.column.label())
   }
@@ -63,17 +61,17 @@ export function resolveColumnLabel(options: { column: TableColumn }) {
 }
 
 export function resolveColumnVisibility(options: {
-  column: TableColumn
-  context: Record<string, any>
+  column: SchemaTableColumn
+  context: GenericObject
 }) {
   if (typeof options.column.visible === 'function') {
-    return options.column.visible(options.context)
+    return options.column.visible(options.context as never)
   }
 
   return options.column.visible ?? true
 }
 
-export function getSortableKey(options: { column: TableColumn }) {
+export function getSortableKey(options: { column: SchemaTableColumn }) {
   if (options.column.kind === 'field' && options.column.sortable !== false) {
     return options.column.field
   }

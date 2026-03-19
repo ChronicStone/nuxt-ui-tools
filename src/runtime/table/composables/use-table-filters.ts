@@ -2,6 +2,7 @@ import { computed, type ComputedRef } from 'vue'
 
 import type {
   TableFilterOperator,
+  TableFilterPrimitiveValue,
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
   TableSchemaView,
@@ -9,36 +10,32 @@ import type {
 } from '../types'
 import {
   buildFilterPreview,
+  createFilterValueForOperator,
   getFilterLabelText,
   getFilterOperatorLabel,
   resolveFilterOptionEntries,
 } from '../utils'
-import type { useQueryState } from './use-query-state'
-import type { UseTableApi } from './use-table-api'
 import type { UseTableDataReturn } from './use-table-data'
 import { useTableSearch } from './use-table-search'
+import type { useTableState } from './use-table-state'
 
 export interface UseTableFiltersParams {
   schema: ComputedRef<TableSchemaView>
-  queryState: ReturnType<typeof useQueryState>
-  api: UseTableApi
+  state: ReturnType<typeof useTableState>
   queryContent: UseTableDataReturn
 }
 
 export function useTableFilters(params: UseTableFiltersParams) {
-  const api = params.api
-
   const search = useTableSearch({
     schema: params.schema,
-    queryState: params.queryState,
-    api: params.api,
+    queryState: params.state.queryState,
   })
 
   const definitions = computed<TableUiFilterDefinition[]>(
     () => params.schema.value.filters?.ui ?? [],
   )
   const activeUiFilters = computed<TableQueryStateFilterRule[]>(
-    () => params.queryState.filters.value.ui ?? [],
+    () => params.state.queryState.filters.value.ui ?? [],
   )
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
 
@@ -117,60 +114,55 @@ export function useTableFilters(params: UseTableFiltersParams) {
       return rule.operator
     }
 
-    return definition ? api.getFilterOperators(input.key)[0] : undefined
+    return definition ? getFilterOperators(input.key)[0] : undefined
+  }
+
+  function getFilterOperators(key: string) {
+    return getFilterOperatorsForDefinition(getDefinition({ key }))
   }
 
   function getFilterOperatorOptions(input: { key: string }) {
-    return api.getFilterOperators(input.key).map((operator: string) => ({
+    return getFilterOperators(input.key).map((operator) => ({
       value: operator,
       label: getFilterOperatorLabel({
-        operator: operator as TableFilterOperator,
+        operator,
       }),
     }))
   }
 
-  function setFilterOperator(input: { key: string; operator: string }) {
+  function setFilterOperator(input: { key: string; operator: TableFilterOperator }) {
     const currentRule = getFilterState({ key: input.key })
 
     if (currentRule) {
-      api.updateFilter(input.key, {
-        operator: input.operator as TableFilterOperator,
+      updateFilter(input.key, {
+        operator: input.operator,
       })
       return
     }
 
-    api.addFilter(
+    addFilter(
       input.key,
       getDefaultFilterValueForOperator({
         key: input.key,
-        operator: input.operator as TableFilterOperator,
+        operator: input.operator,
       }),
       {
-        operator: input.operator as TableFilterOperator,
+        operator: input.operator,
       },
     )
   }
 
   function getDefaultFilterValueForOperator(input: { key: string; operator: TableFilterOperator }) {
-    const definition = getDefinition({ key: input.key })
-
-    if (!definition) {
-      return api.getDefaultFilterValue(input.key)
-    }
-
-    if (input.operator === 'between') {
-      if (definition.kind === 'number' || definition.kind === 'date') {
-        return { from: undefined, to: undefined }
-      }
-    }
-
-    return api.getDefaultFilterValue(input.key)
+    return createFilterValueForOperator({
+      definition: getDefinition({ key: input.key }),
+      operator: input.operator,
+    })
   }
 
   function setOptionFilterValues(input: {
     key: string
-    values: Array<string | number | boolean>
-    operator?: string
+    values: TableFilterPrimitiveValue[]
+    operator?: TableFilterOperator
   }) {
     const currentRule = getFilterState({ key: input.key })
 
@@ -179,15 +171,18 @@ export function useTableFilters(params: UseTableFiltersParams) {
       return
     }
 
-    api.addFilter(input.key, input.values, {
-      operator: (input.operator ?? currentRule?.operator) as TableFilterOperator | undefined,
+    addFilter(input.key, input.values, {
+      operator: resolveActiveOperator({
+        inputOperator: input.operator,
+        currentOperator: currentRule?.operator,
+      }),
     })
   }
 
   function toggleOptionFilterValue(input: {
     key: string
-    value: string | number | boolean
-    operator?: string
+    value: TableFilterPrimitiveValue
+    operator?: TableFilterOperator
   }) {
     const currentRule = getFilterState({ key: input.key })
     const currentValues = Array.isArray(currentRule?.value)
@@ -197,8 +192,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
         )
       : currentRule?.value != null
         ? typeof currentRule.value === 'string' ||
-          typeof currentRule.value === 'number' ||
-          typeof currentRule.value === 'boolean'
+            typeof currentRule.value === 'number' ||
+            typeof currentRule.value === 'boolean'
           ? [currentRule.value]
           : []
         : []
@@ -217,7 +212,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
   function setScalarFilterValue(input: {
     key: string
     value: TableQueryStateFilterValue | null | undefined
-    operator?: string
+    operator?: TableFilterOperator
   }) {
     const currentRule = getFilterState({ key: input.key })
 
@@ -226,17 +221,71 @@ export function useTableFilters(params: UseTableFiltersParams) {
       return
     }
 
-    api.addFilter(input.key, input.value as never, {
-      operator: (input.operator ?? currentRule?.operator) as TableFilterOperator | undefined,
+    addFilter(input.key, input.value, {
+      operator: resolveActiveOperator({
+        inputOperator: input.operator,
+        currentOperator: currentRule?.operator,
+      }),
     })
   }
 
   function apiRemoveFilter(input: { key: string }) {
-    api.removeFilter(input.key)
+    removeFilter(input.key)
+  }
+
+  function addFilter(
+    key: string,
+    value: TableQueryStateFilterValue,
+    options?: { operator?: TableFilterOperator },
+  ) {
+    const nextRule: TableQueryStateFilterRule = {
+      key,
+      ...(options?.operator ? { operator: options.operator } : {}),
+      value,
+    }
+
+    params.state.queryState.pagination.value = {
+      ...params.state.queryState.pagination.value,
+      pageIndex: 1,
+    }
+    params.state.queryState.filters.value = {
+      ...params.state.queryState.filters.value,
+      ui: [...params.state.queryState.filters.value.ui.filter((filter) => filter.key !== key), nextRule],
+    }
+  }
+
+  function updateFilter(key: string, patch: Partial<TableQueryStateFilterRule>) {
+    const currentRule = getFilterState({ key })
+
+    if (!currentRule) {
+      return
+    }
+
+    addFilter(key, patch.value ?? currentRule.value, {
+      operator: patch.operator ?? currentRule.operator,
+    })
+  }
+
+  function removeFilter(key: string) {
+    params.state.queryState.pagination.value = {
+      ...params.state.queryState.pagination.value,
+      pageIndex: 1,
+    }
+    params.state.queryState.filters.value = {
+      ...params.state.queryState.filters.value,
+      ui: params.state.queryState.filters.value.ui.filter((filter) => filter.key !== key),
+    }
   }
 
   function clearAllFilters() {
-    params.api.clearFilters()
+    params.state.queryState.pagination.value = {
+      ...params.state.queryState.pagination.value,
+      pageIndex: 1,
+    }
+    params.state.queryState.filters.value = {
+      ...params.state.queryState.filters.value,
+      ui: [],
+    }
   }
 
   return {
@@ -260,4 +309,29 @@ export function useTableFilters(params: UseTableFiltersParams) {
     clearAllFilters,
     getFilterLabelText,
   }
+}
+
+function resolveActiveOperator(options: {
+  inputOperator?: TableFilterOperator
+  currentOperator?: TableFilterOperator
+}) {
+  return options.inputOperator ?? options.currentOperator
+}
+
+function getFilterOperatorsForDefinition(
+  definition: TableUiFilterDefinition | undefined,
+): TableFilterOperator[] {
+  if (!definition) {
+    return []
+  }
+
+  const defaultOperator =
+    definition.defaultOperator ??
+    (definition.kind === 'text'
+      ? 'contains'
+      : definition.kind === 'option'
+        ? 'isAnyOf'
+        : 'is')
+
+  return [...new Set([defaultOperator, ...(definition.operators ?? [])])]
 }

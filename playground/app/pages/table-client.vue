@@ -236,6 +236,8 @@ const clientSchema = defineTableSchema({
 
 const table = useTable(clientSchema)
 
+
+
 function createClientRows() {
   const random = createSeededRandom(42)
 

@@ -20,7 +20,6 @@ export default defineNuxtConfig({
     '#form': fileURLToPath(new URL('../src/runtime/form', import.meta.url)),
   },
   modules: [
-    '@nuxt/ui',
     '@nuxtjs/i18n',
     fileURLToPath(new URL('../src/module.ts', import.meta.url)),
     './modules/query-devtools',

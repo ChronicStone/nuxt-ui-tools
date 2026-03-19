@@ -1,25 +1,39 @@
 import { computed, ref, type ComputedRef } from 'vue'
 
 import type { TableLayout, TableSchemaView } from '../types'
+import type { useTableLayout } from './use-table-layout'
 
 export interface UseTableControlsParams {
   schema: ComputedRef<TableSchemaView>
-  activeLayout: ComputedRef<TableLayout>
+  layout: ReturnType<typeof useTableLayout>
 }
 
 export function useTableControls(options: UseTableControlsParams) {
   const columnsPanelOpen = ref<boolean>(false)
   const columnsPanelSearch = ref<string>('')
 
-  const tableLayout = computed(() => options.activeLayout.value)
+  const tableLayout = computed<TableLayout>(() => options.layout.resolvedLayout.value)
   const gridEnabled = computed(
     () => options.schema.value.grid?.enabled ?? !!options.schema.value.grid,
   )
+  const layoutState = computed(() => ({
+    active: tableLayout.value,
+    available: [
+      ...(options.layout.tableEnabled.value ? ['table'] : []),
+      ...(options.layout.gridEnabled.value ? ['grid'] : []),
+    ] as TableLayout[],
+  }))
+
+  function setTableLayout(layout: TableLayout) {
+    options.layout.activeLayout.value = layout
+  }
 
   return {
     columnsPanelOpen,
     columnsPanelSearch,
     tableLayout,
     gridEnabled,
+    layoutState,
+    setTableLayout,
   }
 }

@@ -2,17 +2,14 @@
 import { computed } from 'vue'
 
 import { useTableInternals } from '../composables/use-table-internals'
-import type { TableLayout } from '../types'
+import type { TableApi } from '../types'
 import GridRenderer from './grid/GridRenderer.vue'
 import TableFooter from './layout/TableFooter.vue'
 import TableHeader from './layout/TableHeader.vue'
 import TableRenderer from './table/TableRenderer.vue'
 
 const props = defineProps<{
-  table: {
-    schema: { value: { tableKey: string } }
-    api: { setLayout: (layout: TableLayout) => void }
-  }
+  table: TableApi & { schema: { value: { tableKey: string } } }
   title?: string
   description?: string
   height?: string | number
@@ -61,7 +58,7 @@ function humanizeKey(value: string) {
       :table-layout="internals.controls.tableLayout.value"
       :grid-enabled="Boolean(internals.controls.gridEnabled.value)"
       @update:search-query="internals.filters.searchQuery.value = $event"
-      @update:table-layout="table.api.setLayout($event)"
+      @update:table-layout="table.layout.set($event)"
     >
       <template v-if="$slots.title" #title>
         <slot name="title" />
@@ -71,7 +68,7 @@ function humanizeKey(value: string) {
       </template>
     </TableHeader>
 
-    <div class="overflow-hidden rounded-xl border border-default bg-default shadow-sm">
+    <div class="overflow-hidden border border-default bg-default rounded-md">
       <Transition
         :name="
           internals.controls.tableLayout.value === 'grid' ? 'slide-fade' : 'slide-fade-reverse'

@@ -5,7 +5,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableNumberFilterDefinition } from '../../../types'
+import type { TableFilterOperator, TableNumberFilterDefinition } from '../../../types'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
@@ -14,7 +14,7 @@ const props = defineProps<{
 
 const internals = useTableInternals()
 const isOpen = ref<boolean>(false)
-const pendingOperator = ref<string>()
+const pendingOperator = ref<TableFilterOperator>()
 const localValue = ref<string>('')
 const rangeValue = ref<{ from: string; to: string }>({ from: '', to: '' })
 
@@ -38,7 +38,7 @@ const operatorLabel = computed(
       .getFilterOperatorOptions({
         key: props.definition.key,
       })
-      .find((item: { label: string; value: string }) => item.value === operator.value)?.label ??
+      .find((item) => item.value === operator.value)?.label ??
     'is',
 )
 
@@ -87,7 +87,7 @@ watch(
 
 let dismissLocked = false
 
-function handleActivate(op: string) {
+function handleActivate(op: TableFilterOperator) {
   pendingOperator.value = op
   dismissLocked = true
   setTimeout(() => {
@@ -121,7 +121,7 @@ function applyFilter() {
       value: {
         from: rangeValue.value.from === '' ? undefined : Number(rangeValue.value.from),
         to: rangeValue.value.to === '' ? undefined : Number(rangeValue.value.to),
-      } as { from?: number; to?: number },
+      },
       operator: op,
     })
     isOpen.value = false

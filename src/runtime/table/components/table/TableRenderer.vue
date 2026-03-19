@@ -13,25 +13,25 @@ const props = defineProps<{
 }>()
 const tableRef = ref<{ $el?: Element | null } | null>(null)
 
-const tableRows = computed(() => internals.queryContent.data.value.rows)
+const tableRows = computed(
+  () => internals.queryContent.data.value.rows as Array<Record<string, unknown>>,
+)
 const tableLoading = computed(() => internals.queryContent.status.value.isPending)
 const tableEmpty = computed(() => !tableLoading.value && tableRows.value.length === 0)
 const bodyPlaceholderMinHeight = computed(() => `calc(${props.height} - 7rem)`)
 const bodyOverlayTop = '2.625rem'
 const defaultColumnState = createDefaultColumnState()
 
+function getVirtualRow(index: number) {
+  return tableRows.value[index] ?? {}
+}
+
 watch(tableEmpty, (isEmpty) => {
-  if (!isEmpty) {
-    return
-  }
+  if (!isEmpty) return
 
   nextTick(() => {
     const element = tableRef.value?.$el
-
-    if (!(element instanceof HTMLElement)) {
-      return
-    }
-
+    if (!(element instanceof HTMLElement)) return
     element.scrollTo({ top: 0, left: 0 })
   })
 })
@@ -71,25 +71,12 @@ watch(tableEmpty, (isEmpty) => {
       sticky="header"
       :loading="tableLoading"
       class="h-full"
-      :ui="{
-        root: tableEmpty
-          ? 'h-full overflow-hidden bg-transparent'
-          : 'h-full overflow-auto bg-transparent [scrollbar-gutter:stable]',
-        base: 'min-w-full border-separate border-spacing-0 bg-transparent text-sm',
-        thead: 'border-b border-default/30 bg-default/95',
-        tbody: 'bg-transparent',
-        tr: 'group',
-        th: 'h-8 border-b-0 bg-default pl-3 pr-0 py-1.5 text-left align-middle text-sm font-medium text-default',
-        td: 'h-12 border-b px-3 align-middle text-sm text-toned transition-colors duration-100 group-hover:bg-elevated/70 group-data-[selected=true]:!bg-elevated/70 group-data-[selected=true]:text-default',
-        loading: 'p-0 align-top bg-transparent',
-        empty: 'p-0 text-sm text-muted',
-      }"
       :virtualize="{
         enabled: true,
         getItemKey: (index: number) =>
           resolveTableRowId({
             rowKey: internals.schema.value.rowKey,
-            row: (tableRows as unknown as Record<string, any>[])[index] ?? {},
+            row: getVirtualRow(index),
             index,
           }),
       }"

@@ -12,7 +12,15 @@ export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
   debounce?: number
 }
 
-export interface TableFilterOptionEntry<TValue = string | number | boolean> {
+export type TableFilterPrimitiveValue = string | number | boolean
+
+export type TableTextFilterOperator = 'contains' | 'is' | 'isNot'
+export type TableOptionFilterOperator = 'is' | 'isAnyOf' | 'isNot'
+export type TableBooleanFilterOperator = 'is' | 'isNot'
+export type TableNumberFilterOperator = 'is' | 'isNot' | 'gt' | 'gte' | 'lt' | 'lte' | 'between'
+export type TableDateFilterOperator = 'is' | 'isNot' | 'before' | 'after' | 'between'
+
+export interface TableFilterOptionEntry<TValue = TableFilterPrimitiveValue> {
   label: string | (() => RenderableType)
   value: TValue
   count?: number
@@ -24,7 +32,7 @@ export interface TableFilterOptionQueryContext {
   cursor?: string | null
 }
 
-export interface TableFilterOptionQueryResult<TValue = string | number | boolean> {
+export interface TableFilterOptionQueryResult<TValue = TableFilterPrimitiveValue> {
   options: TableFilterOptionEntry<TValue>[]
   nextCursor?: string | null
   total?: number
@@ -85,13 +93,14 @@ interface TableFilterDefinitionBase<
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
   TValue = unknown,
+  TOperator extends TableFilterOperator = TableFilterOperator,
 > {
   key: TKey
   label: string | (() => RenderableType)
   display?: TableFilterDisplayMode
   defaultValue?: TValue
-  defaultOperator?: TableFilterOperator
-  operators?: TableFilterOperator[]
+  defaultOperator?: TOperator
+  operators?: TOperator[]
   resolve?: {
     bivarianceHack(
       params: TableFilterResolveContext<TRow, TContext, TKey>,
@@ -103,7 +112,7 @@ export interface TableTextFilterDefinition<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> extends TableFilterDefinitionBase<TRow, TContext, TKey, string> {
+> extends TableFilterDefinitionBase<TRow, TContext, TKey, string, TableTextFilterOperator> {
   kind: 'text'
 }
 
@@ -111,8 +120,14 @@ export interface TableOptionFilterDefinition<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-  TValue = string | number | boolean,
-> extends TableFilterDefinitionBase<TRow, TContext, TKey, TValue[]> {
+  TValue = TableFilterPrimitiveValue,
+> extends TableFilterDefinitionBase<
+  TRow,
+  TContext,
+  TKey,
+  TValue[],
+  TableOptionFilterOperator
+> {
   kind: 'option'
   options?: Array<TableFilterOptionEntry<TValue>>
   query?: (
@@ -126,7 +141,7 @@ export interface TableBooleanFilterDefinition<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> extends TableFilterDefinitionBase<TRow, TContext, TKey, boolean> {
+> extends TableFilterDefinitionBase<TRow, TContext, TKey, boolean, TableBooleanFilterOperator> {
   kind: 'boolean'
   facet?: TableFilterFacetMode
 }
@@ -135,7 +150,13 @@ export interface TableNumberFilterDefinition<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> extends TableFilterDefinitionBase<TRow, TContext, TKey, number | { min?: number; max?: number }> {
+> extends TableFilterDefinitionBase<
+  TRow,
+  TContext,
+  TKey,
+  number | { min?: number; max?: number },
+  TableNumberFilterOperator
+> {
   kind: 'number'
 }
 
@@ -143,7 +164,13 @@ export interface TableDateFilterDefinition<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> extends TableFilterDefinitionBase<TRow, TContext, TKey, Date | { from?: Date; to?: Date }> {
+> extends TableFilterDefinitionBase<
+  TRow,
+  TContext,
+  TKey,
+  Date | { from?: Date; to?: Date },
+  TableDateFilterOperator
+> {
   kind: 'date'
 }
 
@@ -153,7 +180,7 @@ export type TableUiFilterDefinition<
   TKey extends string = TableKnownFieldPath<TRow>,
 > =
   | TableTextFilterDefinition<TRow, TContext, TKey>
-  | TableOptionFilterDefinition<TRow, TContext, TKey, any>
+  | TableOptionFilterDefinition<TRow, TContext, TKey, TableFilterPrimitiveValue>
   | TableBooleanFilterDefinition<TRow, TContext, TKey>
   | TableNumberFilterDefinition<TRow, TContext, TKey>
   | TableDateFilterDefinition<TRow, TContext, TKey>
@@ -170,7 +197,7 @@ export type TableOptionFilterOptions<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-  TValue = string | number | boolean,
+  TValue = TableFilterPrimitiveValue,
 > = Omit<TableOptionFilterDefinition<TRow, TContext, TKey, TValue>, 'key' | 'kind'>
 
 export type TableBooleanFilterOptions<
@@ -199,7 +226,7 @@ export interface TableFilterBuilder<
     key: TKey,
     options: TableTextFilterOptions<TRow, TContext, TKey>,
   ): TableTextFilterDefinition<TRow, TContext, TKey>
-  option<TKey extends TableKnownFieldPath<TRow>, TValue extends string | number | boolean>(
+  option<TKey extends TableKnownFieldPath<TRow>, TValue extends TableFilterPrimitiveValue>(
     key: TKey,
     options: TableOptionFilterOptions<TRow, TContext, TKey, TValue>,
   ): TableOptionFilterDefinition<TRow, TContext, TKey, TValue>

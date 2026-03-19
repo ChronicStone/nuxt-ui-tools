@@ -108,12 +108,21 @@ export function createTableFilterValueCodec(
         return createArrayCodec(stringCodec).parse(rawValue)
       }
 
-      if ((definition.kind === 'number' || definition.kind === 'date') && rawValue.includes('..')) {
+      if (definition.kind === 'number' && rawValue.includes('..')) {
         const [from, to] = rawValue.split('..')
 
         return {
-          ...(from ? { from: parseRangeScalar(from, definition) } : {}),
-          ...(to ? { to: parseRangeScalar(to, definition) } : {}),
+          ...(from ? { from: numberCodec.parse(from) } : {}),
+          ...(to ? { to: numberCodec.parse(to) } : {}),
+        }
+      }
+
+      if (definition.kind === 'date' && rawValue.includes('..')) {
+        const [from, to] = rawValue.split('..')
+
+        return {
+          ...(from ? { from: dateISOCodec.parse(from) } : {}),
+          ...(to ? { to: dateISOCodec.parse(to) } : {}),
         }
       }
 
@@ -173,25 +182,22 @@ export function normalizeFilterDefinition(
   definition: TableQueryStateFilterDefinition | TableUiFilterDefinition,
 ): TableQueryStateFilterDefinition {
   if (definition.kind !== 'number') {
-    return definition as TableQueryStateFilterDefinition
+    return definition
   }
 
-  const defaultValue = definition.defaultValue
-
-  if (!defaultValue || typeof defaultValue !== 'object' || Array.isArray(defaultValue)) {
-    return definition as TableQueryStateFilterDefinition
-  }
-
-  if ('from' in defaultValue || 'to' in defaultValue) {
-    return definition as TableQueryStateFilterDefinition
+  if (isMinMaxNumberRange(definition.defaultValue)) {
+    return {
+      ...definition,
+      defaultValue: {
+        ...('min' in definition.defaultValue ? { from: definition.defaultValue.min } : {}),
+        ...('max' in definition.defaultValue ? { to: definition.defaultValue.max } : {}),
+      },
+    }
   }
 
   return {
     ...definition,
-    defaultValue: {
-      ...('min' in defaultValue ? { from: defaultValue.min } : {}),
-      ...('max' in defaultValue ? { to: defaultValue.max } : {}),
-    },
+    defaultValue: definition.defaultValue,
   }
 }
 
@@ -201,6 +207,24 @@ function isRange(value: unknown): value is TableQueryStateFilterRange<unknown> {
   }
 
   return 'from' in value || 'to' in value
+}
+
+function isMinMaxNumberRange(value: unknown): value is { min?: number; max?: number } {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false
+  }
+
+  if ('from' in value || 'to' in value) {
+    return false
+  }
+
+  const minValue = 'min' in value ? value.min : undefined
+  const maxValue = 'max' in value ? value.max : undefined
+
+  return (
+    (minValue == null || typeof minValue === 'number') &&
+    (maxValue == null || typeof maxValue === 'number')
+  )
 }
 
 function serializeScalar(value: string | number | boolean | Date): string {
@@ -223,21 +247,6 @@ function parseScalar(
     return booleanCodec.parse(rawValue)
   }
 
-  if (definition.kind === 'number') {
-    return numberCodec.parse(rawValue)
-  }
-
-  if (definition.kind === 'date') {
-    return dateISOCodec.parse(rawValue)
-  }
-
-  return stringCodec.parse(rawValue)
-}
-
-function parseRangeScalar(
-  rawValue: string,
-  definition: TableQueryStateFilterDefinition,
-): string | number | Date {
   if (definition.kind === 'number') {
     return numberCodec.parse(rawValue)
   }

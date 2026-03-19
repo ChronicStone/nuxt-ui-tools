@@ -1,18 +1,19 @@
 import { computed, type ComputedRef } from 'vue'
 
-import type { TableLayout, TableResolvedFilterGroup, TableSchemaView } from '../types'
+import type { TableResolvedFilterGroup, TableSchemaView } from '../types'
 import { createResolvedFilterState } from '../utils'
 import { useQueryState } from './use-query-state'
+import type { useTableLayout } from './use-table-layout'
 
 export interface UseTableStateParams {
   schema: ComputedRef<TableSchemaView>
-  activeLayout: ComputedRef<TableLayout>
+  layout: ReturnType<typeof useTableLayout>
 }
 
 export function useTableState(params: UseTableStateParams) {
   const queryState = useQueryState({
     schema: params.schema,
-    activeLayout: params.activeLayout,
+    activeLayout: params.layout.resolvedLayout,
   })
 
   const resolvedFilterState = computed<TableResolvedFilterGroup<string>>(() =>
@@ -24,6 +25,7 @@ export function useTableState(params: UseTableStateParams) {
   )
 
   return {
+    activeLayout: params.layout.resolvedLayout,
     queryState,
     resolvedFilterState,
   }

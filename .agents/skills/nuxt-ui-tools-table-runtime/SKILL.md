@@ -1,0 +1,145 @@
+---
+name: nuxt-ui-tools-table-runtime
+description: Use this skill when implementing, refactoring, or extending the internal table runtime inside this repository. Covers the current architecture layers, state model, composable flow, where different responsibilities live, how to add features cleanly, and what kinds of refactors are encouraged.
+---
+
+# nuxt-ui-tools Table Runtime
+
+Use this skill for internal repository work on:
+
+- table runtime architecture
+- table state management
+- composables
+- runtime components
+- schema/builder internals
+- adding new table capabilities
+- refactoring table internals
+
+## Read First
+
+- `AGENTS.md`
+- `.agents/skills/nuxt-ui-tools-maintainer/SKILL.md`
+- `.agents/skills/nuxt-ui-tools-table-runtime/references/architecture.md`
+
+## Current Mental Model
+
+The current table runtime is a schema-driven system with these major layers:
+
+1. public schema and public entrypoints
+2. schema/building and normalization helpers
+3. reactive orchestration in composables
+4. pure or mostly pure utilities
+5. rendering components
+6. playground integration surface
+
+The important split is:
+
+- public shape and schema definition
+- runtime orchestration
+- pure transformations
+- rendering
+
+Do not collapse those layers together.
+
+## Current File Routing
+
+Start from these depending on the task:
+
+- public package surface:
+  `src/runtime/table/index.ts`
+- schema definition entry:
+  `src/runtime/table/schema/index.ts`
+- internal orchestration root:
+  `src/runtime/table/composables/use-table-internals.ts`
+- public table API shape:
+  `src/runtime/table/composables/use-table.ts`
+  `src/runtime/table/composables/use-table-api.ts`
+- query-state bridge:
+  `src/runtime/table/composables/use-query-state.ts`
+- data orchestration:
+  `src/runtime/table/composables/use-table-data.ts`
+- columns pipeline:
+  `src/runtime/table/composables/use-table-columns.tsx`
+  `src/runtime/table/utils/columns/*`
+- filter pipeline:
+  `src/runtime/table/composables/use-table-filters.ts`
+  `src/runtime/table/utils/filters/*`
+- rendering shell:
+  `src/runtime/table/components/DataList.vue`
+
+## Important Current Reality
+
+The current implementation works, but it is not the final shape.
+
+There are known improvement targets:
+
+- reduce reactive waste
+- reduce layers of derived state
+- simplify query-state integration
+- move toward cleaner structure
+- preserve or improve inference while simplifying internals
+
+Do not treat the current layering as sacred.
+If an abstraction is wasteful or too indirect, refactor it.
+
+## Feature-Addition Rules
+
+When adding a table feature:
+
+1. identify the public contract first
+2. decide whether it belongs in schema, API, runtime orchestration, pure utils, or rendering
+3. keep normalized or config-driven handling when multiple variants exist
+4. isolate variant-specific behavior behind a shared contract
+5. update tests, playground, and consumer skills when the surface changes
+
+Preferred shape:
+
+- schema-facing definition in types/schema/building layer
+- normalization or resolution in utils
+- orchestration in composables
+- view-only consumption in components
+
+Avoid:
+
+- burying domain logic directly in components
+- feature behavior implemented only in playground
+- one giant helper handling every variant inline
+
+## Specific Internal Guidance
+
+### State
+
+- prefer one strong state abstraction over many computed bridges
+- avoid derivation of derivation of derivation
+- avoid temporary reactive wrappers when direct state modeling is possible
+- if local draft state exists only to mirror another reactive source, reconsider the abstraction
+
+### Columns
+
+- columns are a pipeline, not a flat render blob
+- runtime columns, ordering, visibility, pinning, menu items, and render adapters should stay separated
+
+### Filters
+
+- filters should be definition-driven
+- each filter kind should have standardized behavior and isolated implementation where logic is non-trivial
+- preview generation is a good model: normalized contract plus per-kind implementation files
+
+### Components
+
+- `DataList.vue` is a shell/composition boundary
+- renderer internals should consume prepared state rather than reinvent logic
+
+## When To Reorganize
+
+Reorganize without hesitation when:
+
+- a file is carrying multiple unrelated concerns
+- a feature introduces another variant into a growing domain
+- the state model is becoming layered and wasteful
+- a top-level folder should really become a subdomain under `utils/`
+
+Builder-specific note:
+
+- existing top-level `src/runtime/table/builders` is transitional
+- prefer the long-term direction of `utils/builders/` when touching or growing builder code

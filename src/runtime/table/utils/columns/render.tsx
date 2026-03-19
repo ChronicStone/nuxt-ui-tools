@@ -4,23 +4,34 @@
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import type { VNodeChild } from 'vue'
 
 import TableCellEllipsis from '../../components/table/TableCellEllipsis'
-import type { TableColumn } from '../../types'
+import type { GenericObject } from '../../types'
 import { getColumnHeaderIcon } from './menu'
 import { findSchemaColumn } from './schema'
 import {
   SELECT_COLUMN_ID,
   SELECT_COLUMN_WIDTH,
+  type SchemaTableColumn,
   type TableCellRenderContext,
   type TableColumnRenderParams,
   type TableRuntimeColumn,
   type UseTableColumnsParams,
 } from './types'
 
+type ColumnMenuItem = {
+  label?: string
+  icon?: string
+  color?: string
+  class?: string
+  onSelect?: () => void
+}
+
 export function createSelectionColumn(options: { params: UseTableColumnsParams }) {
   return {
     id: SELECT_COLUMN_ID,
+
     header: () => (
       <button
         type="button"
@@ -42,11 +53,10 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
                 : false
           }
           color="neutral"
-          ui={{ root: 'pointer-events-none items-center' }}
         />
       </button>
     ),
-    cell: ({ row }: { row: any }) => (
+    cell: ({ row }: { row: { id: string } }) => (
       <button
         type="button"
         class="inline-flex items-center"
@@ -66,7 +76,6 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
         <UCheckbox
           modelValue={options.params.selection.isRowSelected({ rowId: String(row.id) })}
           color="neutral"
-          ui={{ root: 'pointer-events-none items-center' }}
         />
       </button>
     ),
@@ -99,7 +108,7 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
 export function createDataColumns(options: {
   params: UseTableColumnsParams
   visibleOrderedColumns: TableRuntimeColumn[]
-  getMenuItems: (options: { columnId: string }) => any[]
+  getMenuItems: (options: { columnId: string }) => ColumnMenuItem[][]
   getPinnedState: (options: { columnId: string }) => 'left' | 'right' | null
   getSortState: (options: { columnId: string }) => 'asc' | 'desc' | null
 }) {
@@ -118,9 +127,15 @@ export function createDataColumns(options: {
         id: runtimeColumn.id,
         accessorFn:
           column.kind === 'field'
-            ? (row: Record<string, any>) => getPathValue({ row, path: column.field })
+            ? (row: GenericObject) => getPathValue({ row, path: column.field })
             : undefined,
-        header: ({ column: tableColumn, header }: { column: any; header: any }) => (
+        header: ({
+          column: tableColumn,
+          header,
+        }: {
+          column: { getCanHide?: () => boolean; resetSize?: () => void }
+          header: { getIsResizing?: () => boolean; getResizeHandler?: () => (event: Event) => void }
+        }) => (
           <div class="group/column-header relative flex h-full w-full items-center">
             <UDropdownMenu
               items={options.getMenuItems({ columnId: runtimeColumn.id })}
@@ -184,7 +199,7 @@ export function createDataColumns(options: {
             ) : null}
           </div>
         ),
-        cell: ({ row }: { row: { original: Record<string, any>; index: number } }) =>
+        cell: ({ row }: { row: { original: GenericObject; index: number } }) =>
           renderColumnCell({
             column,
             row: row.original,
@@ -240,7 +255,7 @@ export function renderColumnCell(options: TableColumnRenderParams) {
         content: options.column.render({
           ...cellContext,
           value: value as never,
-        }),
+        } as never),
         title: resolveEllipsisTitle({
           column: options.column,
           params: {
@@ -268,7 +283,7 @@ export function renderColumnCell(options: TableColumnRenderParams) {
 
   return wrapEllipsisContent({
     column: options.column,
-    content: options.column.render(cellContext),
+    content: options.column.render(cellContext as never),
     title: resolveEllipsisTitle({
       column: options.column,
       params: cellContext,
@@ -278,8 +293,8 @@ export function renderColumnCell(options: TableColumnRenderParams) {
 }
 
 export function wrapEllipsisContent(options: {
-  column: TableColumn
-  content: any
+  column: SchemaTableColumn
+  content: VNodeChild
   title?: string | null
 }) {
   const baseClass = 'min-w-0 max-w-full overflow-hidden'
@@ -295,7 +310,7 @@ export function wrapEllipsisContent(options: {
   )
 }
 
-export function getColumnHeaderClass(options: { column: TableColumn }) {
+export function getColumnHeaderClass(options: { column: SchemaTableColumn }) {
   return [
     'bg-default',
     options.column.labelAlign === 'right' ? 'text-right' : '',
@@ -305,7 +320,7 @@ export function getColumnHeaderClass(options: { column: TableColumn }) {
     .join(' ')
 }
 
-export function getColumnCellClass(options: { column: TableColumn }) {
+export function getColumnCellClass(options: { column: SchemaTableColumn }) {
   return [
     'overflow-hidden',
     options.column.align === 'right' ? 'text-right' : '',
@@ -329,7 +344,7 @@ export function normalizeColumnSize(options: { size?: number | string }) {
 }
 
 function createCellRenderContext(options: {
-  row: Record<string, any>
+  row: GenericObject
   rowIndex: number
   params: UseTableColumnsParams
 }): TableCellRenderContext {
@@ -343,8 +358,8 @@ function createCellRenderContext(options: {
 }
 
 function resolveEllipsisTitle(options: {
-  column: TableColumn
-  params: Record<string, any>
+  column: SchemaTableColumn
+  params: unknown
   fallbackValue: unknown
 }) {
   if (!options.column.ellipsis) {
@@ -352,10 +367,10 @@ function resolveEllipsisTitle(options: {
   }
 
   if (typeof options.column.ellipsis === 'object' && options.column.ellipsis !== null) {
-    const title = (options.column.ellipsis as { title?: unknown }).title
+    const title = 'title' in options.column.ellipsis ? options.column.ellipsis.title : undefined
 
-    if (typeof title === 'function') {
-      return String((title as (params: Record<string, any>) => unknown)(options.params))
+    if (isEllipsisTitleResolver(title)) {
+      return String(title(options.params))
     }
 
     if (title != null) {
@@ -364,6 +379,10 @@ function resolveEllipsisTitle(options: {
   }
 
   return options.fallbackValue == null ? null : String(options.fallbackValue)
+}
+
+function isEllipsisTitleResolver(value: unknown): value is (params: unknown) => unknown {
+  return typeof value === 'function'
 }
 
 function formatCellValue(options: { value: unknown }) {
@@ -386,7 +405,7 @@ function formatCellValue(options: { value: unknown }) {
   return String(options.value)
 }
 
-function getPathValue(options: { row: Record<string, any>; path: string }) {
+function getPathValue(options: { row: GenericObject; path: string }) {
   return options.path.split('.').reduce<unknown>((value, key) => {
     if (value == null || typeof value !== 'object') {
       return undefined
