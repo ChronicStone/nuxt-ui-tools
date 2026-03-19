@@ -127,7 +127,11 @@ function toggleColumn(columnId: string) {
               v-model="draggableColumns"
               item-key="id"
               handle=".column-drag-handle"
-              ghost-class="opacity-60"
+              :animation="180"
+              easing="cubic-bezier(0.22, 1, 0.36, 1)"
+              ghost-class="column-panel-row-ghost"
+              chosen-class="column-panel-row-chosen"
+              drag-class="column-panel-row-dragging"
               class="grid gap-0.5"
             >
               <div
@@ -253,3 +257,22 @@ function toggleColumn(columnId: string) {
     </template>
   </UPopover>
 </template>
+
+<style scoped>
+:deep(.column-panel-row-ghost) {
+  opacity: 0.35;
+  background-color: rgb(var(--ui-bg-elevated) / 0.55);
+}
+
+:deep(.column-panel-row-chosen) {
+  background-color: rgb(var(--ui-bg-elevated) / 0.8);
+}
+
+:deep(.column-panel-row-dragging) {
+  opacity: 1;
+  background-color: rgb(var(--ui-bg-default));
+  box-shadow:
+    0 12px 28px rgb(15 23 42 / 0.14),
+    0 2px 6px rgb(15 23 42 / 0.08);
+}
+</style>
