@@ -66,7 +66,7 @@ function humanizeKey(value: string) {
       </template>
     </TableHeader>
 
-    <div class="overflow-hidden rounded-sm border border-accented bg-default">
+    <div class="overflow-hidden rounded-md border border-accented bg-default">
       <Transition
         :name="
           internals.controls.tableLayout.value === 'grid' ? 'slide-fade' : 'slide-fade-reverse'

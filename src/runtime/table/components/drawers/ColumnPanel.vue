@@ -83,7 +83,6 @@ function toggleColumn(columnId: string) {
             color="neutral"
             variant="ghost"
             class="w-[min(14rem,calc(100vw-3rem))] max-w-full"
-            :ui="{ base: 'rounded-sm' }"
           />
         </div>
 
