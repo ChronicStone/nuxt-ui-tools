@@ -6,16 +6,8 @@
     "jsxImportSource": "vue",
     "paths": {
       "@/*": ["./src/*"],
-      "#src/*": ["./src/*"],
-      "#runtime/*": ["./src/runtime/*"],
-      "#shared": ["./src/runtime/shared/index.ts"],
-      "#shared/*": ["./src/runtime/shared/*"],
-      "#query-state": ["./src/runtime/query-state/index.ts"],
-      "#query-state/*": ["./src/runtime/query-state/*"],
-      "#table": ["./src/runtime/table/index.ts"],
-      "#table/*": ["./src/runtime/table/*"],
-      "#form": ["./src/runtime/form/index.ts"],
-      "#form/*": ["./src/runtime/form/*"]
+      "#ui-tools": ["./src/runtime"],
+      "#ui-tools/*": ["./src/runtime/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "test/**/*.ts"],

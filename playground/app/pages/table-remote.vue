@@ -2,17 +2,38 @@
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import { COUNTRIES } from '../data/countries'
 import {
   demoEmployeesClient,
   type DemoEmployeesFacetsRequest,
   type DemoEmployeeRow,
   type DemoEmployeesTableRequest,
 } from '../lib/demo-employees-api'
-import DataList from '#table/components/DataList.vue'
-import { defineTableSchema, useTable } from '#table'
+import DataList from '#ui-tools/table/components/DataList.vue'
+import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
 
 const { classes } = usePlaygroundAppearance()
+const countryTreeOptions = [
+  {
+    label: 'Europe',
+    children: [
+      { label: 'France', value: 'France' },
+      { label: 'Germany', value: 'Germany' },
+      { label: 'United Kingdom', value: 'United Kingdom' },
+    ],
+  },
+  {
+    label: 'North America',
+    children: [
+      { label: 'United States', value: 'United States' },
+    ],
+  },
+  {
+    label: 'Asia',
+    children: [
+      { label: 'Japan', value: 'Japan' },
+    ],
+  },
+] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
 
 const remoteSchema = defineTableSchema({
   tableKey: 'demo-employees-remote',
@@ -70,15 +91,32 @@ const remoteSchema = defineTableSchema({
       filter.text('fullName', {
         label: 'Name',
         operators: ['contains', 'is'],
+        ui: {
+          placeholder: 'Search employees',
+          leadingIcon: 'i-lucide-search',
+          inputType: 'search',
+        },
       }),
       filter.option('department.company.country', {
         label: 'Country',
         defaultOperator: 'isAnyOf',
         facet: 'exclude-self',
-        options: COUNTRIES.map((value) => ({
-          label: value,
-          value,
-        })),
+        options: countryTreeOptions,
+        ui: {
+          searchable: true,
+          closeOnSelect: false,
+          presentation: 'tree',
+          tree: {
+            selectable: 'leaf-only',
+            searchMode: 'remote',
+          },
+          selection: {
+            mode: 'multiple',
+          },
+          labels: {
+            searchPlaceholder: 'Select countries',
+          },
+        },
       }),
       filter.option('department.companyId', {
         label: 'Company',
@@ -94,6 +132,16 @@ const remoteSchema = defineTableSchema({
             },
           }),
         }),
+        ui: {
+          searchable: true,
+          closeOnSelect: false,
+          selection: {
+            mode: 'multiple',
+          },
+          labels: {
+            searchPlaceholder: 'Select companies',
+          },
+        },
       }),
       filter.option('employeeSkills.skillId', {
         label: 'Skill',
@@ -109,6 +157,11 @@ const remoteSchema = defineTableSchema({
             },
           }),
         }),
+        ui: {
+          row: {
+            showCounts: false,
+          },
+        },
       }),
       filter.option('departmentId', {
         label: 'Department',
@@ -125,18 +178,93 @@ const remoteSchema = defineTableSchema({
             },
           }),
         }),
+        ui: {
+          searchable: false,
+          selection: {
+            mode: 'multiple',
+          },
+        },
       }),
       filter.boolean('isActive', {
         label: 'Active',
         facet: 'exclude-self',
+        ui: {
+          labels: {
+            true: 'Online',
+            false: 'Paused',
+          },
+        },
       }),
       filter.number('salary', {
         label: 'Salary',
         operators: ['is', 'gte', 'lte', 'between'],
+        ui: {
+          min: 50000,
+          max: 250000,
+          step: 5000,
+          scalar: {
+            display: 'input-slider',
+          },
+          range: {
+            display: 'inputs-slider',
+            minGap: 10000,
+          },
+        },
       }),
       filter.date('hiredAt', {
         label: 'Hired At',
         operators: ['is', 'before', 'after', 'between'],
+        ui: {
+          scalar: {
+            display: 'calendar',
+            presets: [
+              {
+                label: 'Today',
+                value: ({ now }) => atStartOfDay(now),
+              },
+              {
+                label: 'Yesterday',
+                value: ({ now }) => atStartOfDay(shiftDays(now, -1)),
+              },
+              {
+                label: 'Start of month',
+                value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
+              },
+            ],
+          },
+          range: {
+            display: 'inputs-calendar',
+            presetsPlacement: 'side',
+            presets: [
+              {
+                label: 'Last 7 days',
+                value: ({ now }) => ({
+                  from: atStartOfDay(shiftDays(now, -6)),
+                  to: atEndOfDay(now),
+                }),
+              },
+              {
+                label: 'Last 30 days',
+                value: ({ now }) => ({
+                  from: atStartOfDay(shiftDays(now, -29)),
+                  to: atEndOfDay(now),
+                }),
+              },
+              {
+                label: 'This month',
+                value: ({ now }) => ({
+                  from: new Date(now.getFullYear(), now.getMonth(), 1),
+                  to: atEndOfDay(now),
+                }),
+              },
+            ],
+            calendar: {
+              months: 1,
+              pagedNavigation: true,
+              fixedWeeks: true,
+            },
+          },
+        },
       }),
     ],
   },
@@ -265,6 +393,24 @@ const remoteSchema = defineTableSchema({
 })
 
 const table = useTable(remoteSchema)
+
+function atStartOfDay(value: Date) {
+  const next = new Date(value)
+  next.setHours(0, 0, 0, 0)
+  return next
+}
+
+function atEndOfDay(value: Date) {
+  const next = new Date(value)
+  next.setHours(23, 59, 59, 999)
+  return next
+}
+
+function shiftDays(value: Date, amount: number) {
+  const next = new Date(value)
+  next.setDate(next.getDate() + amount)
+  return next
+}
 
 function getInitials(value: string) {
   return value

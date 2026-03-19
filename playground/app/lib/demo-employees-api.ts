@@ -1,4 +1,4 @@
-import type { GenericObject } from '#table'
+import type { GenericObject } from '#ui-tools/table'
 
 export interface DemoCompany extends GenericObject {
   id: string

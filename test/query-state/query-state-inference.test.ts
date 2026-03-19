@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest'
 import type { WritableComputedRef } from 'vue'
 
-import { createEnumCodec, stringCodec, useQueryState, useQueryStates } from '#query-state'
+import { createEnumCodec, stringCodec, useQueryState, useQueryStates } from '#ui-tools/query-state'
 
 function useExplicitLayoutState() {
   return useQueryState({

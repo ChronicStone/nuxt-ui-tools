@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs'
 
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
-import { defineTableSchema } from '#table/schema'
-import type { TableRemoteSource } from '#table/types'
+import { defineTableSchema } from '#ui-tools/table/schema'
+import type { TableRemoteSource } from '#ui-tools/table/types'
 
 describe('table package surface', () => {
   it('exports defineTableSchema from the package root', () => {

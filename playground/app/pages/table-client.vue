@@ -2,8 +2,8 @@
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import DataList from '#table/components/DataList.vue'
-import { defineTableSchema, useTable, type GenericObject } from '#table'
+import DataList from '#ui-tools/table/components/DataList.vue'
+import { defineTableSchema, useTable, type GenericObject, type TableFilterOptionEntry } from '#ui-tools/table'
 
 interface DemoClientCompany extends GenericObject {
   id: string
@@ -26,11 +26,71 @@ interface DemoClientRow extends GenericObject {
   hiredAt: string
   department: DemoClientDepartment
   skills: string[]
+  skillTaxonomy: string[]
 }
 
 const { classes } = usePlaygroundAppearance()
 
 const countryOptions = ['France', 'Germany', 'Japan', 'United Kingdom', 'United States'] as const
+const countryTreeOptions = [
+  {
+    label: 'Europe',
+    children: [
+      { label: 'France', value: 'France' },
+      { label: 'Germany', value: 'Germany' },
+      { label: 'United Kingdom', value: 'United Kingdom' },
+    ],
+  },
+  {
+    label: 'North America',
+    children: [
+      { label: 'United States', value: 'United States' },
+    ],
+  },
+  {
+    label: 'Asia',
+    children: [
+      { label: 'Japan', value: 'Japan' },
+    ],
+  },
+] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
+const skillTreeOptions = [
+  {
+    label: 'Engineering',
+    value: 'cat:engineering',
+    children: [
+      {
+        label: 'Application',
+        value: 'cat:application',
+        children: [
+          { label: 'TypeScript', value: 'skill:typescript' },
+        ],
+      },
+      {
+        label: 'Services',
+        value: 'cat:services',
+        children: [
+          { label: 'Go', value: 'skill:go' },
+        ],
+      },
+      {
+        label: 'Infrastructure',
+        value: 'cat:infrastructure',
+        children: [
+          { label: 'Kubernetes', value: 'skill:kubernetes' },
+          { label: 'Distributed Systems', value: 'skill:distributed-systems' },
+        ],
+      },
+      {
+        label: 'Security',
+        value: 'cat:security',
+        children: [
+          { label: 'Security', value: 'skill:security' },
+        ],
+      },
+    ],
+  },
+] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
 const departmentOptions = ['Engineering', 'Platform', 'Operations', 'Finance', 'Product'] as const
 const skillOptions = ['TypeScript', 'Go', 'Kubernetes', 'Security', 'Distributed Systems'] as const
 const companyNames = ['Northstar', 'Rivet', 'Monarch', 'Atlas', 'Helio'] as const
@@ -72,14 +132,30 @@ const clientSchema = defineTableSchema({
       filter.text('fullName', {
         label: 'Name',
         operators: ['contains', 'is'],
+        ui: {
+          placeholder: 'Search employees',
+          leadingIcon: 'i-lucide-search',
+          inputType: 'search',
+        },
       }),
       filter.option('department.company.country', {
         label: 'Country',
         defaultOperator: 'isAnyOf',
-        options: countryOptions.map((value) => ({
-          label: value,
-          value,
-        })),
+        options: countryTreeOptions,
+        ui: {
+          searchable: true,
+          closeOnSelect: false,
+          presentation: 'tree',
+          tree: {
+            selectable: 'leaf-only',
+          },
+          selection: {
+            mode: 'multiple',
+          },
+          labels: {
+            searchPlaceholder: 'Select countries',
+          },
+        },
       }),
       filter.option('skills', {
         label: 'Skill',
@@ -88,6 +164,33 @@ const clientSchema = defineTableSchema({
           label: value,
           value,
         })),
+        ui: {
+          row: {
+            showCounts: false,
+          },
+        },
+      }),
+      filter.option('skillTaxonomy', {
+        label: 'Skill Tree',
+        defaultOperator: 'isAnyOf',
+        options: skillTreeOptions,
+        ui: {
+          searchable: true,
+          closeOnSelect: false,
+          presentation: 'tree',
+          tree: {
+            selectable: 'all',
+          },
+          selection: {
+            mode: 'multiple',
+          },
+          row: {
+            showCounts: false,
+          },
+          labels: {
+            searchPlaceholder: 'Select skill taxonomy',
+          },
+        },
       }),
       filter.option('department.name', {
         label: 'Department',
@@ -96,17 +199,112 @@ const clientSchema = defineTableSchema({
           label: value,
           value,
         })),
+        ui: {
+          searchable: false,
+          selection: {
+            mode: 'multiple',
+          },
+        },
       }),
       filter.boolean('isActive', {
         label: 'Active',
+        ui: {
+          labels: {
+            true: 'Online',
+            false: 'Paused',
+          },
+        },
       }),
       filter.number('salary', {
         label: 'Salary',
         operators: ['is', 'gte', 'lte', 'between'],
+        ui: {
+          min: 50000,
+          max: 250000,
+          step: 5000,
+          scalar: {
+            display: 'input-slider',
+            preview: {
+              formatter: (value) => formatCurrency(value),
+            },
+          },
+          range: {
+            display: 'inputs-slider',
+            minGap: 10000,
+            preview: {
+              rangeFormatter: ({ from, to }) =>
+                `${from == null ? 'Min' : formatCurrency(from)} - ${to == null ? 'Max' : formatCurrency(to)}`,
+            },
+          },
+        },
       }),
       filter.date('hiredAt', {
         label: 'Hired At',
         operators: ['is', 'before', 'after', 'between'],
+        ui: {
+          preview: {
+            label: 'Hired',
+          },
+          scalar: {
+            display: 'calendar',
+            presets: [
+              {
+                label: 'Today',
+                value: ({ now }) => atStartOfDay(now),
+              },
+              {
+                label: 'Yesterday',
+                value: ({ now }) => atStartOfDay(shiftDays(now, -1)),
+              },
+              {
+                label: 'Start of month',
+                value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
+              },
+            ],
+            preview: {
+              formatter: (value) => formatDate(value.toISOString()),
+            },
+          },
+          range: {
+            display: 'inputs-calendar',
+            presetsPlacement: 'side',
+            presets: [
+              {
+                label: 'Last 7 days',
+                value: ({ now }) => ({
+                  from: atStartOfDay(shiftDays(now, -6)),
+                  to: atEndOfDay(now),
+                }),
+              },
+              {
+                label: 'Last 30 days',
+                value: ({ now }) => ({
+                  from: atStartOfDay(shiftDays(now, -29)),
+                  to: atEndOfDay(now),
+                }),
+              },
+              {
+                label: 'This month',
+                value: ({ now }) => ({
+                  from: new Date(now.getFullYear(), now.getMonth(), 1),
+                  to: atEndOfDay(now),
+                }),
+              },
+            ],
+            calendar: {
+              months: 1,
+              pagedNavigation: true,
+              fixedWeeks: true,
+            },
+            preview: {
+              rangeFormatter: ({ from, to }) =>
+                [from, to]
+                  .filter((value): value is Date => value instanceof Date)
+                  .map(value => formatDate(value.toISOString()))
+                  .join(' - '),
+            },
+          },
+        },
       }),
     ],
   },
@@ -236,6 +434,24 @@ const clientSchema = defineTableSchema({
 
 const table = useTable(clientSchema)
 
+function atStartOfDay(value: Date) {
+  const next = new Date(value)
+  next.setHours(0, 0, 0, 0)
+  return next
+}
+
+function atEndOfDay(value: Date) {
+  const next = new Date(value)
+  next.setHours(23, 59, 59, 999)
+  return next
+}
+
+function shiftDays(value: Date, amount: number) {
+  const next = new Date(value)
+  next.setDate(next.getDate() + amount)
+  return next
+}
+
 
 
 function createClientRows() {
@@ -283,6 +499,7 @@ function createClientRows() {
     const skills = tertiarySkill == null
       ? [primarySkill, secondarySkill]
       : [primarySkill, secondarySkill, tertiarySkill]
+    const skillTaxonomy = [...new Set(skills.flatMap(getSkillTaxonomyValues))]
     const salaryBaseByDepartment: Record<string, number> = {
       Engineering: 118000,
       Platform: 132000,
@@ -315,6 +532,7 @@ function createClientRows() {
         },
       },
       skills,
+      skillTaxonomy,
     } satisfies DemoClientRow
   })
 }
@@ -372,6 +590,18 @@ function formatDate(value: string) {
     day: 'numeric',
     year: 'numeric',
   }).format(new Date(value))
+}
+
+function getSkillTaxonomyValues(skill: string) {
+  const entries: Record<string, string[]> = {
+    TypeScript: ['cat:engineering', 'cat:application', 'skill:typescript'],
+    Go: ['cat:engineering', 'cat:services', 'skill:go'],
+    Kubernetes: ['cat:engineering', 'cat:infrastructure', 'skill:kubernetes'],
+    'Distributed Systems': ['cat:engineering', 'cat:infrastructure', 'skill:distributed-systems'],
+    Security: ['cat:engineering', 'cat:security', 'skill:security'],
+  }
+
+  return entries[skill] ?? [skill]
 }
 
 function getCountryFlag(country: string) {

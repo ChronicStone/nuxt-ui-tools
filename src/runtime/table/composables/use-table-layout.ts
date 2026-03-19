@@ -1,6 +1,6 @@
 import { computed, type ComputedRef } from 'vue'
 
-import { useQueryState, createEnumCodec } from '#query-state'
+import { useQueryState, createEnumCodec } from '#ui-tools/query-state'
 
 import type { TableSchemaView } from '../types'
 

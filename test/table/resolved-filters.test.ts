@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { TableFilterResolveContext, TableResolvedFilterNode } from '#table/types'
-import { createResolvedFilterState } from '#table/utils/resolved-filters'
+import type { TableFilterResolveContext, TableResolvedFilterNode } from '#ui-tools/table/types'
+import { createResolvedFilterState } from '#ui-tools/table/utils/resolved-filters'
 
 describe('resolved filters', () => {
   it('resolves ui filters into an engine-ready tree while keeping static groups', () => {

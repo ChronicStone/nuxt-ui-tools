@@ -1,4 +1,6 @@
-import { addComponentsDir, createResolver, defineNuxtModule } from '@nuxt/kit'
+import { breakpointsTailwind } from '@vueuse/core'
+import { addComponentsDir, createResolver, defineNuxtModule, installModule } from '@nuxt/kit'
+import type { ModuleOptions as ViewportOptions } from 'nuxt-viewport'
 
 import { setupTailwindCss } from './tailwindcss'
 
@@ -6,6 +8,17 @@ export interface ModuleOptions {
   prefix?: string
   global?: boolean
 }
+
+const viewportDefaults = {
+  breakpoints: breakpointsTailwind,
+  defaultBreakpoints: {
+    desktop: 'lg',
+    mobile: 'sm',
+    tablet: 'md',
+  },
+  fallbackBreakpoint: 'lg',
+  feature: 'minWidth',
+} as const
 
 export default defineNuxtModule<ModuleOptions>({
   defaults: {
@@ -24,9 +37,21 @@ export default defineNuxtModule<ModuleOptions>({
     '@nuxt/ui': {
       version: '>=4.5.1',
     },
+    'nuxt-viewport': {
+      version: '>=2.4.0',
+    },
   },
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+
+    nuxt.options.alias['#ui-tools'] = resolve('./runtime')
+
+    const viewportOptions = mergeViewportOptions(
+      nuxt.options.viewport === false ? undefined : nuxt.options.viewport,
+    )
+    nuxt.options.viewport = viewportOptions
+    await installModule('nuxt-viewport', viewportOptions)
+
     setupTailwindCss(nuxt, resolve('./runtime'))
 
     addComponentsDir({
@@ -38,3 +63,21 @@ export default defineNuxtModule<ModuleOptions>({
     })
   },
 })
+
+function mergeViewportOptions(
+  viewportOptions: Partial<ViewportOptions> | undefined,
+): ViewportOptions {
+  return {
+    breakpoints: {
+      ...viewportDefaults.breakpoints,
+      ...viewportOptions?.breakpoints,
+    },
+    cookie: viewportOptions?.cookie ?? {},
+    defaultBreakpoints: {
+      ...viewportDefaults.defaultBreakpoints,
+      ...viewportOptions?.defaultBreakpoints,
+    },
+    fallbackBreakpoint: viewportOptions?.fallbackBreakpoint ?? viewportDefaults.fallbackBreakpoint,
+    feature: viewportOptions?.feature ?? viewportDefaults.feature,
+  }
+}

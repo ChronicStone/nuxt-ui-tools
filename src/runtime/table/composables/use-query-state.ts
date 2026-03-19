@@ -6,7 +6,7 @@ import {
   numberCodec,
   stringCodec,
   createEnumCodec,
-} from '#query-state'
+} from '#ui-tools/query-state'
 
 import type {
   TableFilterOperator,

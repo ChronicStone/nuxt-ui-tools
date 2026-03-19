@@ -351,6 +351,9 @@ Split by concern early when needed:
 - add explicit return types only when they materially improve the public contract, prevent internal type leakage, or inference is insufficient
 - add JSDoc on important exported APIs when it improves safe usage or context
 - do not add noisy JSDoc to trivial internals
+- schema-driven user-facing text must be translation-friendly by default
+- labels and user-facing copy should allow at least lazy text values such as `string | (() => string | number)` unless there is a strong reason not to
+- use richer render functions only on surfaces where real rendered content is relevant, not as the default for every text field
 
 ### Refs
 

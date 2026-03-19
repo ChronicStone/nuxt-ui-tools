@@ -1,4 +1,4 @@
-import type { QueryCodec } from '#query-state'
+import type { QueryCodec } from '#ui-tools/query-state'
 import {
   booleanCodec,
   createArrayCodec,
@@ -6,7 +6,7 @@ import {
   dateISOCodec,
   numberCodec,
   stringCodec,
-} from '#query-state'
+} from '#ui-tools/query-state'
 
 import { isObject, isString } from '../../shared'
 import { DEFAULT_FILTER_OPERATOR, PAGINATION_DEFAULTS } from '../constants/query-state'

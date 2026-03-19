@@ -8,6 +8,7 @@ Today the main usable package surfaces are:
 
 - table runtime
 - query-state runtime
+- shared responsive helpers
 
 The `form` area exists but is not yet a mature consumer-facing surface.
 
@@ -16,7 +17,7 @@ The `form` area exists but is not yet a mature consumer-facing surface.
 Table usage:
 
 ```ts
-import { DataList, defineTableSchema, useTable } from '#table'
+import { DataList, defineTableSchema, useTable } from '#ui-tools/table'
 ```
 
 Query-state usage:
@@ -32,7 +33,13 @@ import {
   stringCodec,
   useQueryState,
   useQueryStates,
-} from '#query-state'
+} from '#ui-tools/query-state'
+```
+
+Responsive shared usage:
+
+```ts
+import { useResponsiveValue } from '#ui-tools/shared'
 ```
 
 ## How To Route
@@ -43,8 +50,11 @@ Use:
   for schema-driven data/table usage
 - `skills/consumer/query-state/SKILL.md`
   for typed URL/query param state
+- `skills/consumer/shared/SKILL.md`
+  for breakpoint-aware shared runtime helpers
 
 ## Which Skill To Open Next
 
 - use `skills/consumer/table/SKILL.md` for data list/table/grid questions
 - use `skills/consumer/query-state/SKILL.md` for URL/query-param state questions
+- use `skills/consumer/shared/SKILL.md` for breakpoint-driven values

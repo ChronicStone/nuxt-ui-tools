@@ -38,3 +38,29 @@ Before keeping a typing design, ask:
 - can this be explained simply in consumer docs?
 
 If the answer is bad, improve the package surface.
+
+## Translation-Friendly Text Surfaces
+
+Schema-driven public APIs should treat user-facing text as translation-aware by default.
+
+Preferred default:
+
+- `string | (() => string | number)`
+
+Use this for:
+
+- labels
+- placeholders
+- empty states
+- action text
+- preview text
+- other consumer-provided copy in schema/config objects
+
+Only use richer renderable function types when the surface genuinely needs rendered content instead of translated text.
+
+Do not force consumers to choose between:
+
+- hard-coded strings, or
+- full render functions
+
+for normal translatable schema text.

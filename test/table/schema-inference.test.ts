@@ -1,12 +1,12 @@
 import { describe, expectTypeOf, it } from 'vitest'
 
-import { defineTableSchema } from '#table/schema'
+import { defineTableSchema } from '#ui-tools/table/schema'
 import type {
   ExtractTableContextData,
   ExtractTablePageContextData,
   ExtractTableRow,
   TableQueryDefinition,
-} from '#table/types'
+} from '#ui-tools/table/types'
 
 interface DemoEmployeeRow {
   id: string
@@ -72,6 +72,10 @@ const schema = defineTableSchema({
     ui: (filter) => [
       filter.text('name', {
         label: 'Name',
+        ui: {
+          placeholder: 'Search users',
+          inputType: 'search',
+        },
       }),
       filter.option('organisation.status', {
         label: 'Status',
@@ -80,6 +84,11 @@ const schema = defineTableSchema({
           { label: 'Active', value: 'active' as const },
           { label: 'Inactive', value: 'inactive' as const },
         ],
+        ui: {
+          selection: {
+            mode: 'multiple',
+          },
+        },
       }),
     ],
   },

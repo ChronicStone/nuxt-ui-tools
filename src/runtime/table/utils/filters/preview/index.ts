@@ -39,8 +39,14 @@ export function buildFilterPreview(options: {
   }
 
   if (options.definition.kind === 'number') {
-    return buildNumberFilterPreview({ rule: options.rule })
+    return buildNumberFilterPreview({
+      definition: options.definition,
+      rule: options.rule,
+    })
   }
 
-  return buildTextFilterPreview({ rule: options.rule })
+  return buildTextFilterPreview({
+    definition: options.definition,
+    rule: options.rule,
+  })
 }

@@ -59,7 +59,7 @@ const skeletonGridTemplate = computed(() =>
         :class="column.align === 'end' ? 'justify-end' : 'justify-start'"
       >
         <template v-if="column.kind === 'checkbox'">
-          <USkeleton class="size-4 rounded-sm" />
+          <USkeleton class="size-4 rounded-md" />
         </template>
         <template v-else>
           <USkeleton class="h-4 rounded-full" :style="{ width: column.skeletonWidth }" />

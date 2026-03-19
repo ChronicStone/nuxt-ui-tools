@@ -1,3 +1,4 @@
+import { getFilterTextValue } from '../utils'
 import { computed, type ComputedRef } from 'vue'
 
 import type { TableSchemaView } from '../types'
@@ -12,19 +13,16 @@ export function useTableSearch(options: UseTableSearchParams) {
   const searchQuery = computed({
     get: () => String(options.queryState.filters.value.search ?? ''),
     set: (value: string) => {
-      options.queryState.pagination.value = {
-        ...options.queryState.pagination.value,
-        pageIndex: 1,
-      }
-      options.queryState.filters.value = {
-        ...options.queryState.filters.value,
-        search: value,
-      }
+      options.queryState.pagination.value.pageIndex = 1
+      options.queryState.filters.value.search = value
     },
   })
 
   const searchPlaceholder = computed(
-    () => options.schema.value.filters?.search?.placeholder ?? 'Search rows…',
+    () => getFilterTextValue({
+      value: options.schema.value.filters?.search?.placeholder,
+      fallback: 'Search rows…',
+    }),
   )
 
   const hasActiveSearch = computed(() => searchQuery.value.trim().length > 0)

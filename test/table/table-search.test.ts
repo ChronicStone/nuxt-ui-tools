@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
 
-import { useTableSearch } from '#table/composables/use-table-search'
+import { useTableSearch } from '#ui-tools/table/composables/use-table-search'
 import {
   createDefaultFilterValue,
   createFilterValueForOperator,

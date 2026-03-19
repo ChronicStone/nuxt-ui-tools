@@ -1,8 +1,17 @@
-import type { TableUiFilterDefinition, TableQueryStateFilterRule } from '../../../types'
+import type {
+  TableBooleanFilterDefinition,
+  TableBooleanFilterOperator,
+  TableOptionFilterDefinition,
+  TableOptionFilterOperator,
+  TableQueryStateFilterRule,
+} from '../../../types'
+import { resolveBooleanFilterUi, resolveOptionFilterUi } from '../ui'
 import type { FilterPreviewOptionEntry, FilterPreviewResult } from './types'
 
 export function buildOptionFilterPreview(options: {
-  definition: TableUiFilterDefinition
+  definition:
+    | TableOptionFilterDefinition<object, object, string, string | number | boolean, 'list' | 'tree'>
+    | TableBooleanFilterDefinition
   rule: TableQueryStateFilterRule
   optionEntries: FilterPreviewOptionEntry[]
 }): FilterPreviewResult {
@@ -14,21 +23,26 @@ export function buildOptionFilterPreview(options: {
       value,
     }),
   )
-
-  const MAX_TAGS = 1
-  const visibleTags = labels.slice(0, MAX_TAGS)
-  const overflow = labels.length - visibleTags.length
+  const preview = resolveOptionPreview(options)
+  const mode = resolvePreviewMode(preview.mode, labels.length)
 
   return {
     active: true,
     count: labels.length,
-    tags: visibleTags,
-    summary: overflow > 0 ? `+${overflow}` : '',
+    tags: mode === 'tags' ? labels.slice(0, preview.maxTags) : [],
+    summary: resolvePreviewSummary({
+      labels,
+      mode,
+      maxTags: preview.maxTags,
+      label: preview.label,
+    }),
   }
 }
 
 function resolveOptionPreviewLabel(options: {
-  definition: TableUiFilterDefinition
+  definition:
+    | TableOptionFilterDefinition<object, object, string, string | number | boolean, 'list' | 'tree'>
+    | TableBooleanFilterDefinition
   optionEntries: FilterPreviewOptionEntry[]
   value: unknown
 }) {
@@ -41,8 +55,49 @@ function resolveOptionPreviewLabel(options: {
   }
 
   if (options.definition.kind === 'boolean') {
-    return options.value ? 'Yes' : 'No'
+    const filterUi = resolveBooleanFilterUi(options.definition, options.definition.defaultOperator ?? 'is')
+    return options.value ? filterUi.labels.true : filterUi.labels.false
   }
 
   return String(options.value ?? '')
+}
+
+function resolveOptionPreview(options: {
+  definition:
+    | TableOptionFilterDefinition<object, object, string, string | number | boolean, 'list' | 'tree'>
+    | TableBooleanFilterDefinition
+  rule: TableQueryStateFilterRule
+}) {
+  if (options.definition.kind === 'boolean') {
+    const operator: TableBooleanFilterOperator = options.rule.operator === 'isNot' ? 'isNot' : 'is'
+    return resolveBooleanFilterUi(options.definition, operator).preview
+  }
+
+  const operator: TableOptionFilterOperator =
+    options.rule.operator === 'isAnyOf' || options.rule.operator === 'isNot'
+      ? options.rule.operator
+      : 'is'
+
+  return resolveOptionFilterUi(options.definition, operator).preview
+}
+
+function resolvePreviewMode(mode: string, count: number) {
+  if (mode === 'summary' || mode === 'tags') return mode
+  return count > 1 ? 'tags' : 'summary'
+}
+
+function resolvePreviewSummary(options: {
+  labels: string[]
+  mode: 'summary' | 'tags'
+  maxTags: number
+  label: string
+}) {
+  if (options.mode === 'summary') {
+    const summary = options.labels.join(', ')
+    return options.label && summary ? `${options.label}: ${summary}` : summary
+  }
+
+  const overflow = options.labels.length - options.maxTags
+  if (overflow <= 0) return ''
+  return `+${overflow}`
 }

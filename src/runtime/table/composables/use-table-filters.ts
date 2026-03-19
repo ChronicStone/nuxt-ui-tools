@@ -1,6 +1,7 @@
 import { computed, type ComputedRef } from 'vue'
 
 import type {
+  TableFilterOptionEntry,
   TableFilterOperator,
   TableFilterPrimitiveValue,
   TableQueryStateFilterRule,
@@ -11,6 +12,7 @@ import type {
 import {
   buildFilterPreview,
   createFilterValueForOperator,
+  flattenFilterOptionEntries,
   getFilterLabelText,
   getFilterOperatorLabel,
   resolveFilterOptionEntries,
@@ -57,7 +59,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
 
   function getFilterOptionEntries(input: {
     key: string
-    entries?: Array<{ label: string; value: string | number | boolean }>
+    entries?: TableFilterOptionEntry[]
     facetCounts?: Array<{ value: string | number | boolean; count: number }>
   }) {
     const definition = getDefinition({ key: input.key })
@@ -73,14 +75,16 @@ export function useTableFilters(params: UseTableFiltersParams) {
         ? [rule.value]
         : []
 
-    return resolveFilterOptionEntries({
+    return flattenFilterOptionEntries(resolveFilterOptionEntries({
       definition,
       rows: rows.value,
       options: input.entries,
       facetCounts: input.facetCounts,
       selectedValues,
       deriveCounts: params.schema.value.source.mode !== 'remote',
-    })
+    })).filter(
+      (entry): entry is typeof entry & { value: string | number | boolean } => entry.value != null,
+    )
   }
 
   function getFilterPreview(input: {

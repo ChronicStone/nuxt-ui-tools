@@ -17,6 +17,7 @@ The current serious package surfaces are:
 
 - table runtime
 - query-state runtime
+- shared responsive helpers
 
 The `form` area exists but is not yet a mature consumer surface.
 
@@ -29,6 +30,10 @@ If the task is about table setup, schema design, columns, filters, layouts, or `
 If the task is about typed URL state, query params, codecs, or reusable URL-backed state, use:
 
 - `skills/consumer/query-state/SKILL.md`
+
+If the task is about breakpoint-aware values driven by the current viewport, use:
+
+- `skills/consumer/shared/SKILL.md`
 
 These sibling skills carry the feature-specific guidance.
 This top-level skill is the package overview and router.

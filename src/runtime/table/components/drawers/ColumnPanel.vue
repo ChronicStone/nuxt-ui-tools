@@ -82,7 +82,7 @@ function toggleColumn(columnId: string) {
             placeholder="Search columns..."
             color="neutral"
             variant="ghost"
-            class="w-[min(14rem,calc(100vw-3rem))] max-w-full"
+            class="w-full"
           />
         </div>
 
@@ -91,9 +91,9 @@ function toggleColumn(columnId: string) {
             <div
               v-for="column in pinnedLeft"
               :key="column.id"
-              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
+              class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
             >
-              <div class="flex size-6 items-center justify-center rounded-sm text-muted">
+              <div class="flex size-6 items-center justify-center rounded-md text-muted">
                 <UIcon name="i-lucide-pin" class="size-4" />
               </div>
               <button
@@ -134,11 +134,11 @@ function toggleColumn(columnId: string) {
               <div
                 v-for="column in draggableColumns"
                 :key="column.id"
-                class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
+                class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
               >
                 <button
                   type="button"
-                  class="column-drag-handle flex size-6 cursor-grab items-center justify-center rounded-sm text-muted hover:bg-elevated active:cursor-grabbing"
+                  class="column-drag-handle flex size-6 cursor-grab items-center justify-center rounded-md text-muted hover:bg-elevated active:cursor-grabbing"
                 >
                   <UIcon name="i-lucide-grip" class="size-4" />
                 </button>
@@ -171,9 +171,9 @@ function toggleColumn(columnId: string) {
             <div
               v-for="column in pinnedRight"
               :key="column.id"
-              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
+              class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70"
             >
-              <div class="flex size-6 items-center justify-center rounded-sm text-muted">
+              <div class="flex size-6 items-center justify-center rounded-md text-muted">
                 <UIcon name="i-lucide-pin" class="size-4" />
               </div>
               <button
@@ -205,10 +205,10 @@ function toggleColumn(columnId: string) {
               v-for="column in filteredColumns"
               :key="column.id"
               type="button"
-              class="flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-elevated/70"
+              class="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-elevated/70"
               @click="toggleColumn(column.id)"
             >
-              <div class="flex size-6 items-center justify-center rounded-sm text-muted">
+              <div class="flex size-6 items-center justify-center rounded-md text-muted">
                 <UIcon
                   :name="
                     internals.tableColumns.getPinnedState({ columnId: column.id })

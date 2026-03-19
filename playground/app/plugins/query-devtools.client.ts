@@ -1,4 +1,4 @@
-import { QueryStateClient, registerQueryStateClient } from '#query-state'
+import { QueryStateClient, registerQueryStateClient } from '#ui-tools/query-state'
 
 const CHANNEL_NAME = '__query-state-devtools__'
 

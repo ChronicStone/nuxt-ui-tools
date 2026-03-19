@@ -5,7 +5,8 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableTextFilterDefinition } from '../../../types'
+import type { TableFilterOperator, TableTextFilterDefinition, TableTextFilterOperator } from '../../../types'
+import { resolveTextFilterUi } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
@@ -23,13 +24,15 @@ const preview = computed(() =>
   }),
 )
 
-const operator = computed(
-  () =>
+const operator = computed<TableTextFilterOperator>(() => {
+  const value =
     pendingOperator.value ??
     internals.filters.getFilterOperator({
       key: props.definition.key,
-    }),
-)
+    })
+
+  return value === 'is' || value === 'isNot' ? value : 'contains'
+})
 
 const operatorLabel = computed(
   () =>
@@ -45,6 +48,7 @@ const operatorItems = computed(() =>
     key: props.definition.key,
   }),
 )
+const filterUi = computed(() => resolveTextFilterUi(props.definition, operator.value))
 
 function initLocalState() {
   const value = internals.filters.getFilterState({ key: props.definition.key })?.value
@@ -92,6 +96,27 @@ function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   isOpen.value = false
 }
+
+function handleOperatorChange(op: TableFilterOperator) {
+  if (filterUi.value.clearOnOperatorChange) {
+    internals.filters.clearFilter({ key: props.definition.key })
+  }
+  localValue.value = ''
+  if (filterUi.value.reopenOnOperatorChange) handleActivate(op)
+  else pendingOperator.value = op
+}
+
+function handleValueUpdate(value: string | number | undefined) {
+  localValue.value = value == null ? '' : String(value)
+
+  if (filterUi.value.commitMode === 'auto') {
+    internals.filters.setScalarFilterValue({
+      key: props.definition.key,
+      value: localValue.value.trim() || undefined,
+      operator: pendingOperator.value,
+    })
+  }
+}
 </script>
 
 <template>
@@ -110,9 +135,7 @@ function clearFilter() {
       :operator-items="operatorItems"
       :preview-summary="preview.summary"
       :active="preview.active"
-      @select-operator="
-        internals.filters.setFilterOperator({ key: definition.key, operator: $event })
-      "
+      @select-operator="handleOperatorChange"
       @activate="handleActivate"
       @clear="clearFilter"
     />
@@ -121,21 +144,27 @@ function clearFilter() {
       <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
         <div class="border-b border-default p-2">
           <UInput
-            v-model="localValue"
-            size="sm"
-            variant="ghost"
-            color="neutral"
-            icon="i-lucide-search"
-            :placeholder="internals.filters.getFilterLabelText({ label: definition.label })"
+            :model-value="localValue"
+            :type="filterUi.inputType"
+            :icon="filterUi.leadingIcon"
+            :placeholder="filterUi.placeholder"
+            :autocomplete="filterUi.autocomplete"
+            :autofocus="filterUi.input.autofocus"
+            :highlight="filterUi.input.highlight"
+            :fixed="filterUi.input.fixed"
             class="w-[min(13rem,calc(100vw-3rem))] max-w-full"
-            :ui="{ base: 'rounded-sm' }"
+            :ui="{ base: 'rounded-md' }"
+            @update:model-value="handleValueUpdate"
             @keydown.enter.prevent="applyFilter"
           />
         </div>
 
-        <div class="flex items-center justify-between border-t border-default p-2">
-          <UButton color="neutral" variant="ghost" size="sm" label="Clear" @click="clearFilter" />
-          <UButton color="neutral" variant="subtle" size="sm" label="Apply" @click="applyFilter" />
+        <div
+          v-if="filterUi.commitMode === 'manual'"
+          class="flex items-center justify-between border-t border-default p-2"
+        >
+          <UButton color="neutral" variant="ghost" size="sm" :label="filterUi.actions.clear" @click="clearFilter" />
+          <UButton color="neutral" variant="subtle" size="sm" :label="filterUi.actions.apply" @click="applyFilter" />
         </div>
       </div>
     </template>

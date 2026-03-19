@@ -32,6 +32,7 @@ export type TypeFromPath<
     : never
 
 export type TableLayout = 'table' | 'grid'
+export type TableTextValue = string | (() => string | number)
 
 export type TableColumnPinned = 'left' | 'right'
 

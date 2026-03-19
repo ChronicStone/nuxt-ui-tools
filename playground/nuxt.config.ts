@@ -12,12 +12,7 @@ export default defineNuxtConfig({
     },
   },
   alias: {
-    '#src': fileURLToPath(new URL('../src', import.meta.url)),
-    '#runtime': fileURLToPath(new URL('../src/runtime', import.meta.url)),
-    '#shared': fileURLToPath(new URL('../src/runtime/shared', import.meta.url)),
-    '#query-state': fileURLToPath(new URL('../src/runtime/query-state', import.meta.url)),
-    '#table': fileURLToPath(new URL('../src/runtime/table', import.meta.url)),
-    '#form': fileURLToPath(new URL('../src/runtime/form', import.meta.url)),
+    '#ui-tools': fileURLToPath(new URL('../src/runtime', import.meta.url)),
   },
   modules: [
     '@nuxtjs/i18n',

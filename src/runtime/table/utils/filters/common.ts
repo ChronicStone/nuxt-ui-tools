@@ -1,7 +1,9 @@
-import { isArray, isObject } from '../../../shared'
+import { isArray, isObject } from '../../../shared/utils/predicate'
+import { resolveTextValue } from '../../../shared/utils/render'
 import type {
   TableDateFilterDefinition,
   TableQueryStateFilterRule,
+  TableTextValue,
   TableUiFilterDefinition,
 } from '../../types'
 
@@ -13,12 +15,17 @@ type DateRangeLike = {
 export function getFilterLabelText(options: {
   label: TableUiFilterDefinition['label'] | (() => unknown)
 }) {
-  if (typeof options.label === 'string') {
-    return options.label
-  }
+  if (typeof options.label === 'string') return options.label
 
   const resolved = options.label()
   return typeof resolved === 'string' || typeof resolved === 'number' ? String(resolved) : ''
+}
+
+export function getFilterTextValue(options: {
+  value: TableTextValue | undefined
+  fallback?: string
+}) {
+  return resolveTextValue(options.value, options.fallback)
 }
 
 export function getFilterRuleValue(options: { rule?: TableQueryStateFilterRule }) {
