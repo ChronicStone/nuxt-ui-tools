@@ -52,28 +52,48 @@ export function useQueryStateClient(options?: {
 // useQueryState — single param
 // ---------------------------------------------------------------------------
 
-export interface UseQueryStateOptions<T> {
+type ResolveDefaultedValue<TValue, TDefault> = undefined extends TDefault
+  ? TValue
+  : Exclude<TValue, undefined>
+
+type UseQueryStateBaseOptions<TValue> = {
   key: string
-  codec: QueryCodec<T>
-  defaultValue: T
+  codec: QueryCodec<TValue>
   omitDefault?: boolean
   historyMode?: HistoryMode
 }
 
-export function useQueryState<T>(options: UseQueryStateOptions<T>): WritableComputedRef<T> {
+export type UseQueryStateOptions<TValue, TDefault = TValue> = UseQueryStateBaseOptions<TValue> & {
+  defaultValue: TDefault
+}
+
+export function useQueryState<TValue>(
+  options: UseQueryStateBaseOptions<TValue> & { defaultValue: undefined },
+): WritableComputedRef<TValue>
+export function useQueryState<TValue, TDefault extends Exclude<TValue, undefined>>(
+  options: UseQueryStateBaseOptions<TValue> & { defaultValue: TDefault },
+): WritableComputedRef<Exclude<TValue, undefined>>
+export function useQueryState<TValue, TDefault extends TValue>(
+  options: UseQueryStateOptions<TValue, TDefault>,
+): WritableComputedRef<ResolveDefaultedValue<TValue, TDefault>> {
   const client = useQueryStateClient()
   const { key, codec, defaultValue, historyMode } = options
   const omitDefault = options.omitDefault ?? true
 
-  const internal = shallowRef<T>(readFromClient())
+  const internal = shallowRef<ResolveDefaultedValue<TValue, TDefault>>(readFromClient())
 
-  function readFromClient(): T {
+  function readFromClient(): ResolveDefaultedValue<TValue, TDefault> {
     const raw = client.get(key)
-    if (raw == null) return defaultValue
-    return codec.parse(raw)
+    if (raw == null) return defaultValue as ResolveDefaultedValue<TValue, TDefault>
+
+    const parsed = codec.parse(raw)
+    return (parsed === undefined ? defaultValue : parsed) as ResolveDefaultedValue<
+      TValue,
+      TDefault
+    >
   }
 
-  function writeToClient(value: T): void {
+  function writeToClient(value: ResolveDefaultedValue<TValue, TDefault>): void {
     const serialized = codec.serialize(value)
     const shouldOmit = omitDefault && serialized === codec.serialize(defaultValue)
     client.set(key, shouldOmit ? null : serialized, historyMode)
@@ -81,14 +101,20 @@ export function useQueryState<T>(options: UseQueryStateOptions<T>): WritableComp
 
   const unsubscribe = client.subscribe((changedKey, rawValue) => {
     if (changedKey !== key) return
-    internal.value = rawValue == null ? defaultValue : codec.parse(rawValue)
+    internal.value =
+      rawValue == null
+        ? (defaultValue as ResolveDefaultedValue<TValue, TDefault>)
+        : ((() => {
+            const parsed = codec.parse(rawValue)
+            return parsed === undefined ? defaultValue : parsed
+          })() as ResolveDefaultedValue<TValue, TDefault>)
   })
 
   onScopeDispose(unsubscribe)
 
   return computed({
     get: () => internal.value,
-    set: (value: T) => {
+    set: (value) => {
       internal.value = value
       writeToClient(value)
     },
@@ -141,21 +167,27 @@ function isDynamicDef(value: unknown): value is DynamicQueryStateDef<unknown> {
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface StaticParamDef<T = any> {
-  codec: QueryCodec<T>
-  defaultValue: T
+interface StaticParamDef<TValue = any, TDefault = TValue> {
+  codec: QueryCodec<TValue>
+  defaultValue: TDefault
   urlKey?: string
   omitDefault?: boolean
   historyMode?: HistoryMode
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SchemaEntry<T = any> = StaticParamDef<T> | DynamicQueryStateDef<T>
+type SchemaEntry<TValue = any, TDefault = TValue> =
+  | StaticParamDef<TValue, TDefault>
+  | DynamicQueryStateDef<TValue>
 
 type QueryStatesSchema = Record<string, SchemaEntry>
 
 type InferEntryValue<E> =
-  E extends DynamicQueryStateDef<infer V> ? V : E extends StaticParamDef<infer V> ? V : never
+  E extends DynamicQueryStateDef<infer TValue>
+    ? TValue
+    : E extends StaticParamDef<infer TValue, infer TDefault>
+      ? ResolveDefaultedValue<TValue, TDefault>
+      : never
 
 type QueryStatesValues<T extends QueryStatesSchema> = {
   [K in keyof T]: InferEntryValue<T[K]>
@@ -202,7 +234,8 @@ export function useQueryStates<T extends QueryStatesSchema>(
     const urlKey = staticUrlKeys.get(propKey)!
     const raw = client.get(urlKey)
     if (raw == null) return def.defaultValue
-    return def.codec.parse(raw)
+    const parsed = def.codec.parse(raw)
+    return parsed === undefined ? def.defaultValue : parsed
   }
 
   // --- Dynamic field helpers ---

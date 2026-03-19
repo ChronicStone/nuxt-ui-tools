@@ -392,6 +392,8 @@ const api = shallowRef<TableApi | null>(null)
 - if a mapper is needed, prefer a plain function returning a plain object; only wrap it in `computed` at the exact callsite that needs reactivity
 - do not create public-state helpers that return computed wrappers by default when a plain mapper is sufficient
 - no duplicated reactivity means no mirrored state, no bridge refs, and no repeated fallback computations unless there is a hard external integration reason
+- if `undefined` in a public state type causes downstream replicas, fallback computeds, or writable wrapper state, fix the source API typing instead of adding local cleanup state
+- query-state defaults must narrow consumer-facing types when a non-`undefined` default is provided; do not reintroduce local `resolvedX` or bridge state to compensate for a weak query-state contract
 
 Use `shallowRef` deliberately for:
 
@@ -427,6 +429,9 @@ This repository values clean architecture and good performance over preserving a
 - do not expand tiny statements into multi-line ceremony
 - keep code visually compact when that does not hurt readability
 - follow existing local style when it is stricter, but never violate the single-line no-braces rule above for trivial `if` statements
+- in Vue SFCs, when a child component is exposing state for `v-model`, use `defineModel` instead of separate `defineProps` / `defineEmits` declarations for `modelValue` or `update:*`
+- prefer named `defineModel` bindings such as `defineModel('searchQuery')` when the parent uses `v-model:search-query`
+- do not hand-roll `modelValue` / `update:modelValue` or `update:foo` pairs for component models unless there is a hard compatibility constraint
 
 ## 8.6 Non-Negotiable Cleanup Rule
 

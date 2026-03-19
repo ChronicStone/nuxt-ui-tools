@@ -12,15 +12,10 @@ defineProps<{
   description?: string
   searchPlaceholder: string
   searchLoading: boolean
-  searchQuery: string
-  tableLayout: TableLayout
   gridEnabled: boolean
 }>()
-
-const emit = defineEmits<{
-  'update:searchQuery': [value: string]
-  'update:tableLayout': [value: TableLayout]
-}>()
+const searchQuery = defineModel<string>('searchQuery', { required: true })
+const tableLayout = defineModel<TableLayout>('tableLayout', { required: true })
 
 defineSlots<{
   title?: () => any
@@ -44,10 +39,9 @@ defineSlots<{
     <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
       <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <SearchQueryInput
-          :model-value="searchQuery"
+          v-model="searchQuery"
           :loading="searchLoading"
           :placeholder="searchPlaceholder"
-          @update:model-value="emit('update:searchQuery', $event)"
         />
 
         <TableFiltersBar />
@@ -64,7 +58,7 @@ defineSlots<{
             icon="i-lucide-table-properties"
             aria-label="Table view"
             title="Table view"
-            @click="emit('update:tableLayout', 'table')"
+            @click="tableLayout = 'table'"
           />
           <UButton
             color="neutral"
@@ -73,7 +67,7 @@ defineSlots<{
             icon="i-lucide-layout-grid"
             aria-label="Grid view"
             title="Grid view"
-            @click="emit('update:tableLayout', 'grid')"
+            @click="tableLayout = 'grid'"
           />
         </UFieldGroup>
 

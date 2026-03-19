@@ -54,11 +54,9 @@ function humanizeKey(value: string) {
         internals.queryContent.status.value.isFetching &&
         !internals.queryContent.status.value.isPending
       "
-      :search-query="internals.filters.searchQuery.value"
-      :table-layout="internals.controls.tableLayout.value"
+      v-model:search-query="internals.filters.searchQuery.value"
+      v-model:table-layout="internals.controls.tableLayout.value"
       :grid-enabled="Boolean(internals.controls.gridEnabled.value)"
-      @update:search-query="internals.filters.searchQuery.value = $event"
-      @update:table-layout="table.layout.set($event)"
     >
       <template v-if="$slots.title" #title>
         <slot name="title" />
@@ -68,7 +66,7 @@ function humanizeKey(value: string) {
       </template>
     </TableHeader>
 
-    <div class="overflow-hidden rounded-sm border border-default bg-default">
+    <div class="overflow-hidden rounded-sm border border-accented bg-default">
       <Transition
         :name="
           internals.controls.tableLayout.value === 'grid' ? 'slide-fade' : 'slide-fade-reverse'

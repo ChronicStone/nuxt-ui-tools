@@ -20,7 +20,6 @@ defineTableSchema({
   rowActions,
   controls,
   persistence,
-  queryDebounce,
 })
 ```
 

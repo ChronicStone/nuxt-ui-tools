@@ -15,14 +15,12 @@ export function useTableLayout({ schema }: UseTableLayoutParams) {
   const activeLayout = useQueryState({
     key: 'l',
     codec: createEnumCodec(['grid', 'table'] as const),
-    defaultValue: schema.value.defaultLayout,
+    defaultValue: schema.value.defaultLayout ?? 'table',
     omitDefault: true,
   })
-  const resolvedLayout = computed(() => activeLayout.value ?? schema.value.defaultLayout ?? 'table')
 
   return {
     activeLayout,
-    resolvedLayout,
     gridEnabled,
     tableEnabled,
   }

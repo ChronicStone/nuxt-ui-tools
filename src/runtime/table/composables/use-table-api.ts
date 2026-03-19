@@ -32,11 +32,11 @@ export function useTableApi<TSchema extends TableSchemaView = TableSchemaView>(
   params: UseTableApiParams<TSchema>,
 ): TableApi<TSchema> {
   const state: TableApi<TSchema>['state'] = {
-    layout: params.state.activeLayout,
+    layout: params.layout.activeLayout,
     query: computed<PublicTableQueryState>(() =>
       mapPublicQueryState({
         queryState: params.state.queryState,
-        activeLayout: params.state.activeLayout.value,
+        activeLayout: params.layout.activeLayout.value,
       }),
     ),
     initialized: computed(() => params.queryContent.status.value.initialized),
@@ -108,7 +108,7 @@ export function useTableApi<TSchema extends TableSchemaView = TableSchemaView>(
       const layout = defaultLayout ?? 'table'
       const defaultSort = getDefaultSort({ schema: params.schema.value, layout })
 
-      params.layout.activeLayout.value = defaultLayout
+      params.layout.activeLayout.value = layout
       params.pagination.reset()
       params.columns.setSorting(defaultSort)
       params.state.queryState.filters.value = {

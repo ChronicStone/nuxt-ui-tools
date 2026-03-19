@@ -13,7 +13,7 @@ export interface UseTableStateParams {
 export function useTableState(params: UseTableStateParams) {
   const queryState = useQueryState({
     schema: params.schema,
-    activeLayout: params.layout.resolvedLayout,
+    activeLayout: params.layout.activeLayout,
   })
 
   const resolvedFilterState = computed<TableResolvedFilterGroup<string>>(() =>
@@ -25,7 +25,6 @@ export function useTableState(params: UseTableStateParams) {
   )
 
   return {
-    activeLayout: params.layout.resolvedLayout,
     queryState,
     resolvedFilterState,
   }

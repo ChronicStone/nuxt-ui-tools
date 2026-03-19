@@ -3,10 +3,12 @@ import { computed, type ComputedRef } from 'vue'
 import type { TableSchemaView } from '../types'
 import { getDefaultPageSize, getPageSizeOptions } from '../utils'
 import type { useTableData } from './use-table-data'
+import type { useTableLayout } from './use-table-layout'
 import type { useTableState } from './use-table-state'
 
 export interface UseTablePaginationParams {
   schema: ComputedRef<TableSchemaView>
+  layout: ReturnType<typeof useTableLayout>
   state: ReturnType<typeof useTableState>
   queryContent: ReturnType<typeof useTableData>
 }
@@ -30,7 +32,7 @@ export function useTablePagination(options: UseTablePaginationParams) {
   const pageSizeOptions = computed(() =>
     getPageSizeOptions({
       schema: options.schema.value,
-      layout: options.state.activeLayout.value,
+      layout: options.layout.activeLayout.value,
     }),
   )
 
@@ -60,7 +62,7 @@ export function useTablePagination(options: UseTablePaginationParams) {
     setPageSize(
       getDefaultPageSize({
         schema: options.schema.value,
-        layout: options.state.activeLayout.value,
+        layout: options.layout.activeLayout.value,
       }),
     )
   }

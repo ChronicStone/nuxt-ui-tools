@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/vue-query'
-import { computed, shallowRef, watch, type ComputedRef } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
@@ -115,34 +115,6 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
   const searchParams = requestContext
 
-  // Debounced request context — prevents rapid re-queries on fast interactions
-  const debounceMs = computed(
-    () =>
-      params.schema.value.queryDebounce ??
-      (params.schema.value.source.mode === 'remote'
-        ? QUERY_DEFAULTS.debounce.remote
-        : QUERY_DEFAULTS.debounce.client),
-  )
-
-  const effectiveRequestContext = shallowRef<TableSourceRequestContext>(requestContext.value)
-  let debounceTimer: ReturnType<typeof setTimeout> | undefined
-
-  watch(
-    requestContext,
-    (value) => {
-      clearTimeout(debounceTimer)
-      const ms = debounceMs.value
-      if (ms <= 0) {
-        effectiveRequestContext.value = value
-        return
-      }
-      debounceTimer = setTimeout(() => {
-        effectiveRequestContext.value = value
-      }, ms)
-    },
-    { flush: 'sync' },
-  )
-
   const dataStaleTime = computed(() =>
     params.schema.value.source.mode === 'remote' ? QUERY_DEFAULTS.staleTime.data : 0,
   )
@@ -151,7 +123,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     computed(() =>
       withEnabled(
         params.schema.value.source.query(
-          effectiveRequestContext.value as never,
+          requestContext.value as never,
         ) as TableQueryDefinition,
         isContextReady.value,
         {
@@ -184,7 +156,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     if (Array.isArray(result) && params.schema.value.source.mode === 'client') {
       return executeClientQuery({
         rows: result,
-        request: effectiveRequestContext.value,
+        request: requestContext.value,
       })
     }
 

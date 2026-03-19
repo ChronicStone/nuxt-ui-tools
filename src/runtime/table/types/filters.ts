@@ -9,7 +9,6 @@ import type { GenericObject, RenderableType, TableFieldPath, TableKnownFieldPath
 export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
   fields: TableFieldPath<TRow>[]
   placeholder?: string
-  debounce?: number
 }
 
 export type TableFilterPrimitiveValue = string | number | boolean

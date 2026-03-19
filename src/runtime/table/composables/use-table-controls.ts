@@ -12,7 +12,7 @@ export function useTableControls(options: UseTableControlsParams) {
   const columnsPanelOpen = ref<boolean>(false)
   const columnsPanelSearch = ref<string>('')
 
-  const tableLayout = computed<TableLayout>(() => options.layout.resolvedLayout.value)
+  const tableLayout = options.layout.activeLayout
   const gridEnabled = computed(
     () => options.schema.value.grid?.enabled ?? !!options.schema.value.grid,
   )

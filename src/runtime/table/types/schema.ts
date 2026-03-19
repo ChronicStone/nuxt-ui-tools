@@ -74,9 +74,6 @@ export interface TableSchema<
       >[])
   controls?: TableControlsSchema
   persistence?: TablePersistenceOptions
-  /** Debounce (ms) before re-executing the data query after filter/sort/pagination changes.
-   *  Defaults to 0 for client-mode, 150 for remote-mode. */
-  queryDebounce?: number
 }
 
 export type BuildTableSchema<

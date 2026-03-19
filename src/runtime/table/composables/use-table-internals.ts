@@ -49,6 +49,7 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
   })
   const pagination = useTablePagination({
     schema,
+    layout,
     state,
     queryContent,
   })
@@ -71,7 +72,6 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
   return {
     schema,
     layout,
-    activeLayout: state.activeLayout,
     queryState: state.queryState,
     resolvedFilterState: state.resolvedFilterState,
     queryContent,

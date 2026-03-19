@@ -28,9 +28,4 @@ export const QUERY_DEFAULTS = {
     filterOptions: 30_000,
   },
   refetchOnWindowFocus: false,
-  /** Default debounce (ms) before the query re-executes after a request context change. */
-  debounce: {
-    client: 0,
-    remote: 0,
-  },
 }
