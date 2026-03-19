@@ -61,7 +61,7 @@ function toggleColumn(columnId: string) {
     @update:open="internals.controls.columnsPanelOpen.value = $event"
     mode="click"
     :content="{ side: 'bottom', align: 'end', sideOffset: 8 }"
-    :ui="{ content: 'w-fit p-0 shadow-none' }"
+    :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
   >
     <UButton
       color="neutral"
@@ -72,9 +72,7 @@ function toggleColumn(columnId: string) {
     />
 
     <template #content>
-      <div
-        class="min-w-[20rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
-      >
+      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
         <div class="border-b border-default p-2">
           <UInput
             :model-value="internals.controls.columnsPanelSearch.value"
@@ -84,7 +82,7 @@ function toggleColumn(columnId: string) {
             placeholder="Search columns..."
             color="neutral"
             variant="ghost"
-            class="min-w-[18rem] w-full"
+            class="w-[min(14rem,calc(100vw-3rem))] max-w-full"
             :ui="{ base: 'rounded-sm' }"
           />
         </div>

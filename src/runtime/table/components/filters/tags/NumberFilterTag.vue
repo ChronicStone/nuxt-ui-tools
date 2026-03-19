@@ -146,7 +146,7 @@ function clearFilter() {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-fit p-0 shadow-none',
+      content: 'w-fit overflow-hidden p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -165,9 +165,7 @@ function clearFilter() {
     />
 
     <template #content>
-      <div
-        class="min-w-[16rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
-      >
+      <div class="min-w-[16rem] max-w-[calc(100vw-1rem)] bg-default">
         <div
           v-if="operator === 'between'"
           class="grid grid-cols-2 gap-2 border-b border-default p-2.5"

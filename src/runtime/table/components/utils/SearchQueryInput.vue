@@ -22,6 +22,7 @@ const emit = defineEmits<{
     :loading="loading"
     :placeholder="placeholder"
     class="w-[21rem] max-w-full shrink-0"
+    :ui="{ base: '!rounded-[var(--ui-radius)]' }"
     @update:model-value="emit('update:modelValue', String($event ?? ''))"
   />
 </template>

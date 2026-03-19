@@ -173,7 +173,7 @@ function toCalendarDate(value: unknown) {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'max-w-[calc(100vw-1rem)] p-0 shadow-none',
+      content: 'max-w-[calc(100vw-1rem)] overflow-hidden p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -192,7 +192,7 @@ function toCalendarDate(value: unknown) {
     />
 
     <template #content>
-      <div class="overflow-hidden rounded-sm border border-default bg-default">
+      <div class="bg-default">
         <div v-if="operator === 'between'" class="grid gap-3 p-3">
           <div class="rounded-sm border border-default bg-elevated/30 px-3 py-2 text-sm text-toned">
             {{ rangeSummary || 'Select a date range' }}

@@ -97,7 +97,7 @@ const entries = computed(() => {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-fit p-0 shadow-none',
+      content: 'w-fit overflow-hidden p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -113,9 +113,7 @@ const entries = computed(() => {
     />
 
     <template #content>
-      <div
-        class="min-w-[14rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
-      >
+      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
         <div class="grid gap-0.5 p-2">
           <button
             v-for="entry in entries"

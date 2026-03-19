@@ -99,7 +99,7 @@ function clearFilter() {
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-fit p-0 shadow-none',
+      content: 'w-fit overflow-hidden p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -118,9 +118,7 @@ function clearFilter() {
     />
 
     <template #content>
-      <div
-        class="min-w-[16rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
-      >
+      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
         <div class="border-b border-default p-2">
           <UInput
             v-model="localValue"
@@ -129,7 +127,7 @@ function clearFilter() {
             color="neutral"
             icon="i-lucide-search"
             :placeholder="internals.filters.getFilterLabelText({ label: definition.label })"
-            class="min-w-[14rem] w-full"
+            class="w-[min(13rem,calc(100vw-3rem))] max-w-full"
             :ui="{ base: 'rounded-sm' }"
             @keydown.enter.prevent="applyFilter"
           />

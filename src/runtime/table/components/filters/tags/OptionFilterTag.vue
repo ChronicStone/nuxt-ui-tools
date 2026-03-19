@@ -197,7 +197,7 @@ const restRangeSelect = useRangeSelect({
     :open="isOpen"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-fit p-0 shadow-none',
+      content: 'w-fit overflow-hidden p-0 shadow-none',
     }"
     @update:open="handleOpenChange"
   >
@@ -217,9 +217,7 @@ const restRangeSelect = useRangeSelect({
     />
 
     <template #content>
-      <div
-        class="min-w-[20rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-sm border border-default bg-default"
-      >
+      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
         <div class="relative border-b border-default p-2">
           <UInput
             v-model="searchQuery"
@@ -228,7 +226,7 @@ const restRangeSelect = useRangeSelect({
             :placeholder="internals.filters.getFilterLabelText({ label: definition.label })"
             color="neutral"
             variant="ghost"
-            class="min-w-[18rem] w-full"
+            class="w-[min(14rem,calc(100vw-3rem))] max-w-full"
             :loading="optionSource.isStaleLoading.value"
             :ui="{ base: 'rounded-sm' }"
           />
