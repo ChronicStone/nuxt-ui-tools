@@ -1,10 +1,12 @@
 <script setup lang="tsx">
 import { faker } from '@faker-js/faker'
 import UBadge from '@nuxt/ui/components/Badge.vue'
+import UButton from '@nuxt/ui/components/Button.vue'
 import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import DataList from '#ui-tools/table/components/DataList.vue'
+import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
 import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
 
 const { classes } = usePlaygroundAppearance()
@@ -43,7 +45,7 @@ const clientSchema = defineTableSchema({
     query: () => ({
       queryKey: ['demo-employees-client'],
       queryFn: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 3000))
         return clientRows
       },
     }),
@@ -233,6 +235,64 @@ const clientSchema = defineTableSchema({
       }),
     ],
   },
+  rowActions: ({ row, tableApi, layout }) => [
+    {
+      key: 'copy-email',
+      label: 'Copy email',
+      icon: 'i-lucide-copy',
+      action: async () => {
+        await navigator.clipboard.writeText(row.email)
+      },
+    },
+    {
+      key: row.isActive ? 'pause-employee' : 'resume-employee',
+      label: row.isActive ? 'Pause employee' : 'Resume employee',
+      icon: row.isActive ? 'i-lucide-pause' : 'i-lucide-play',
+      action: () => {
+        tableApi.updateRow({
+          ...row,
+          isActive: !row.isActive,
+        })
+      },
+    },
+    {
+      key: 'promote-salary',
+      label: 'Give raise',
+      icon: 'i-lucide-badge-dollar-sign',
+      disabled: ({ row: currentRow }) => currentRow.salary >= 200000,
+      action: () => {
+        tableApi.updateRow({
+          ...row,
+          salary: Math.min(row.salary + 5000, 200000),
+        })
+      },
+    },
+    {
+      key: 'more',
+      label: 'More actions',
+      icon: 'i-lucide-ellipsis',
+      children: [
+        {
+          key: 'refresh',
+          label: 'Refresh table',
+          icon: 'i-lucide-refresh-cw',
+          action: () => tableApi.refresh(),
+        },
+        {
+          key: 'grid-only',
+          label: 'Grid context only',
+          icon: 'i-lucide-layout-grid',
+          condition: ({ layout: currentLayout }) => currentLayout === 'grid',
+        },
+      ],
+    },
+    {
+      key: 'table-only',
+      label: 'Table context only',
+      icon: 'i-lucide-table-properties',
+      condition: () => layout === 'table',
+    },
+  ],
   table: {
     defaultSorting: {
       key: 'hiredAt',
@@ -351,7 +411,7 @@ const clientSchema = defineTableSchema({
   grid: {
     enabled: true,
     mode: 'flow',
-    gridSize: "1 md:2 lg:3 xl:4",
+    gridSize: '1 md:2 lg:3 xl:4',
     renderItem: ({ row }) => {
       const employee = row
 
@@ -379,13 +439,23 @@ const clientSchema = defineTableSchema({
                     </div>
                   </div>
                 </div>
-
-                <UBadge
-                  color={employee.isActive ? 'success' : 'neutral'}
-                  variant={employee.isActive ? 'soft' : 'subtle'}
-                  size="sm"
-                  label={employee.isActive ? 'Online' : 'Paused'}
-                />
+                <div class="flex shrink-0 items-start gap-2">
+                  <UBadge
+                    color={employee.isActive ? 'success' : 'neutral'}
+                    variant={employee.isActive ? 'soft' : 'subtle'}
+                    size="sm"
+                    label={employee.isActive ? 'Online' : 'Paused'}
+                  />
+                  <UiRowActions content={{ align: 'end', side: 'bottom', sideOffset: 8 }} modal={false}>
+                    <UButton
+                      color="neutral"
+                      variant="ghost"
+                      icon="i-lucide-ellipsis-vertical"
+                      size="sm"
+                      square
+                    />
+                  </UiRowActions>
+                 </div>
               </div>
             ),
             default: () => (
@@ -785,8 +855,6 @@ function getCountryFlag(country: string) {
           full local dataset without extra filter configuration.
         </p>
       </div>
-
-      <UButton> Hello </UButton>
 
       <DataList
         :table="table"

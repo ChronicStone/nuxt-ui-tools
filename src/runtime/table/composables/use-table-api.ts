@@ -17,8 +17,8 @@ import type { useTablePagination } from './use-table-pagination'
 import type { useTableSelection } from './use-table-selection'
 import type { useTableState } from './use-table-state'
 
-export interface UseTableApiParams<TSchema extends TableSchemaView = TableSchemaView> {
-  schema: ComputedRef<TSchema>
+export interface UseTableApiParams<TSchema = TableSchemaView> {
+  runtimeSchema: ComputedRef<TableSchemaView>
   layout: ReturnType<typeof useTableLayout>
   state: ReturnType<typeof useTableState>
   selection: ReturnType<typeof useTableSelection>
@@ -28,7 +28,7 @@ export interface UseTableApiParams<TSchema extends TableSchemaView = TableSchema
   queryContent: UseTableDataReturn
 }
 
-export function useTableApi<TSchema extends TableSchemaView = TableSchemaView>(
+export function useTableApi<TSchema = TableSchemaView>(
   params: UseTableApiParams<TSchema>,
 ): TableApi<TSchema> {
   const state: TableApi<TSchema>['state'] = {
@@ -60,6 +60,12 @@ export function useTableApi<TSchema extends TableSchemaView = TableSchemaView>(
     error: params.queryContent.error,
     status: params.queryContent.status,
     refresh: params.queryContent.refreshData(),
+    updateRow(row) {
+      params.queryContent.updateRows([row])
+    },
+    updateRows(rows) {
+      params.queryContent.updateRows(rows)
+    },
   }
 
   const layout: TableApi<TSchema>['layout'] = {
@@ -104,9 +110,9 @@ export function useTableApi<TSchema extends TableSchemaView = TableSchemaView>(
 
   const reset: TableApi<TSchema>['reset'] = {
     query() {
-      const defaultLayout = params.schema.value.defaultLayout
+      const defaultLayout = params.runtimeSchema.value.defaultLayout
       const layout = defaultLayout ?? 'table'
-      const defaultSort = getDefaultSort({ schema: params.schema.value, layout })
+      const defaultSort = getDefaultSort({ schema: params.runtimeSchema.value, layout })
 
       params.layout.activeLayout.value = layout
       params.pagination.reset()
@@ -130,5 +136,8 @@ export function useTableApi<TSchema extends TableSchemaView = TableSchemaView>(
     sorting,
     selection,
     reset,
+    refresh: params.queryContent.refreshData(),
+    updateRow: data.updateRow,
+    updateRows: data.updateRows,
   }
 }

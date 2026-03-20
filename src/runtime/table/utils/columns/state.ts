@@ -1,6 +1,6 @@
 import type { TableSchemaView } from '../../types'
 import { findSchemaColumn, uniqueColumnIds } from './schema'
-import { SELECT_COLUMN_ID, type TableColumnState } from './types'
+import { ROW_ACTIONS_COLUMN_ID, SELECT_COLUMN_ID, type TableColumnState } from './types'
 
 export function createDefaultColumnState() {
   return {
@@ -22,7 +22,7 @@ export function createDefaultColumnState() {
 
 export function syncColumnState(options: {
   schema: TableSchemaView
-  runtimeColumns: Array<{ id: string; defaultVisible: boolean }>
+  runtimeColumns: Array<{ id: string; defaultVisible: boolean; pinned?: 'left' | 'right' }>
   currentState: TableColumnState
 }) {
   const columnIds = options.runtimeColumns.map((column) => column.id)
@@ -50,7 +50,7 @@ export function syncColumnState(options: {
     columnVisibility: nextVisibility,
     columnPinning: sanitizeColumnPinning({
       schema: options.schema,
-      columnIds,
+      runtimeColumns: options.runtimeColumns,
       visibleColumnIds,
       currentPinning: options.currentState.columnPinning,
     }),
@@ -91,7 +91,7 @@ export function updateColumnVisibilityState(options: {
       left: uniqueColumnIds({
         columnIds: [SELECT_COLUMN_ID, ...left.filter((id) => id !== SELECT_COLUMN_ID)],
       }),
-      right: uniqueColumnIds({
+      right: normalizeRightPinnedIds({
         columnIds: right.filter((id) => id !== SELECT_COLUMN_ID),
       }),
     },
@@ -122,7 +122,7 @@ export function updateColumnPinningState(options: {
       left: uniqueColumnIds({
         columnIds: [SELECT_COLUMN_ID, ...left],
       }),
-      right: uniqueColumnIds({
+      right: normalizeRightPinnedIds({
         columnIds: right.filter((id) => id !== SELECT_COLUMN_ID),
       }),
     },
@@ -143,7 +143,7 @@ export function updateColumnOrderState(options: {
 
 export function createResetColumnState(options: {
   schema: TableSchemaView
-  runtimeColumns: Array<{ id: string; defaultVisible: boolean }>
+  runtimeColumns: Array<{ id: string; defaultVisible: boolean; pinned?: 'left' | 'right' }>
   currentState: TableColumnState
 }) {
   return {
@@ -159,18 +159,27 @@ export function createResetColumnState(options: {
           ...options.runtimeColumns
             .filter(
               (column) =>
-                findSchemaColumn({ schema: options.schema, columnId: column.id })?.pinned ===
-                'left',
+                resolvePinnedSide({
+                  schema: options.schema,
+                  columnId: column.id,
+                  pinned: column.pinned,
+                }) === 'left',
             )
             .map((column) => column.id),
         ],
       }),
-      right: options.runtimeColumns
-        .filter(
-          (column) =>
-            findSchemaColumn({ schema: options.schema, columnId: column.id })?.pinned === 'right',
-        )
-        .map((column) => column.id),
+      right: normalizeRightPinnedIds({
+        columnIds: options.runtimeColumns
+          .filter(
+            (column) =>
+              resolvePinnedSide({
+                schema: options.schema,
+                columnId: column.id,
+                pinned: column.pinned,
+              }) === 'right',
+          )
+          .map((column) => column.id),
+      }),
     },
     columnSizing: {},
     columnSizingInfo: createDefaultColumnState().columnSizingInfo,
@@ -191,42 +200,75 @@ export function getPinnedState(options: { currentState: TableColumnState; column
 
 function sanitizeColumnPinning(options: {
   schema: TableSchemaView
-  columnIds: string[]
+  runtimeColumns: Array<{ id: string; pinned?: 'left' | 'right' }>
   visibleColumnIds: string[]
   currentPinning?: {
     left?: string[]
     right?: string[]
   }
 }) {
+  const columnIds = options.runtimeColumns.map((column) => column.id)
   const pinnedLeft = uniqueColumnIds({
     columnIds: [
       SELECT_COLUMN_ID,
-      ...options.columnIds.filter(
-        (columnId) => findSchemaColumn({ schema: options.schema, columnId })?.pinned === 'left',
-      ),
+      ...options.runtimeColumns
+        .filter((column) =>
+          resolvePinnedSide({
+            schema: options.schema,
+            columnId: column.id,
+            pinned: column.pinned,
+          }) === 'left',
+        )
+        .map((column) => column.id),
       ...((options.currentPinning?.left as string[] | undefined) ?? []).filter((columnId) =>
-        options.columnIds.includes(columnId),
+        columnIds.includes(columnId),
       ),
     ],
   }).filter(
     (columnId) => columnId === SELECT_COLUMN_ID || options.visibleColumnIds.includes(columnId),
   )
 
-  const pinnedRight = uniqueColumnIds({
-    columnIds: [
-      ...options.columnIds.filter(
-        (columnId) => findSchemaColumn({ schema: options.schema, columnId })?.pinned === 'right',
-      ),
-      ...((options.currentPinning?.right as string[] | undefined) ?? []).filter((columnId) =>
-        options.columnIds.includes(columnId),
-      ),
-    ],
-  }).filter(
-    (columnId) => options.visibleColumnIds.includes(columnId) && !pinnedLeft.includes(columnId),
-  )
+  const pinnedRight = normalizeRightPinnedIds({
+    columnIds: uniqueColumnIds({
+      columnIds: [
+        ...options.runtimeColumns
+          .filter((column) =>
+            resolvePinnedSide({
+              schema: options.schema,
+              columnId: column.id,
+              pinned: column.pinned,
+            }) === 'right',
+          )
+          .map((column) => column.id),
+        ...((options.currentPinning?.right as string[] | undefined) ?? []).filter((columnId) =>
+          columnIds.includes(columnId),
+        ),
+      ],
+    }).filter(
+      (columnId) => options.visibleColumnIds.includes(columnId) && !pinnedLeft.includes(columnId),
+    ),
+  })
 
   return {
     left: pinnedLeft,
     right: pinnedRight,
   }
+}
+
+function resolvePinnedSide(options: {
+  schema: TableSchemaView
+  columnId: string
+  pinned?: 'left' | 'right'
+}) {
+  return options.pinned ?? findSchemaColumn({ schema: options.schema, columnId: options.columnId })?.pinned
+}
+
+function normalizeRightPinnedIds(options: { columnIds: string[] }) {
+  const ids = uniqueColumnIds({
+    columnIds: options.columnIds.filter((id) => id !== SELECT_COLUMN_ID),
+  })
+
+  if (!ids.includes(ROW_ACTIONS_COLUMN_ID)) return ids
+
+  return [...ids.filter((id) => id !== ROW_ACTIONS_COLUMN_ID), ROW_ACTIONS_COLUMN_ID]
 }

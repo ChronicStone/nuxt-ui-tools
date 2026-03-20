@@ -1,10 +1,12 @@
+import type { DropdownMenuItem } from '@nuxt/ui'
+
 import type { TableSourceRequestContext } from './source'
 import type {
   GenericObject,
   MaybePromise,
-  RenderableType,
   TableLayout,
   TableRowRenderParams,
+  TableTextValue,
 } from './utils'
 
 export interface TableActionContext<
@@ -22,10 +24,12 @@ export interface TableToolbarAction<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TPageContext extends GenericObject = GenericObject,
-> {
+> extends Omit<DropdownMenuItem, 'children' | 'disabled' | 'loading' | 'label' | 'onSelect'> {
   key: string
-  label: string | (() => RenderableType)
-  visible?: boolean | ((context: TContext) => boolean)
+  label?: TableTextValue
+  condition?: boolean | ((context: TContext) => boolean)
+  disabled?: boolean | ((context: TableActionContext<TRow, TContext, TPageContext>) => boolean)
+  loading?: boolean | ((context: TableActionContext<TRow, TContext, TPageContext>) => boolean)
   action?: (context: TableActionContext<TRow, TContext, TPageContext>) => MaybePromise<unknown>
 }
 
@@ -49,9 +53,16 @@ export interface TableRowAction<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TPageContext extends GenericObject = GenericObject,
-> {
+> extends Omit<DropdownMenuItem, 'children' | 'disabled' | 'loading' | 'label' | 'onSelect'> {
   key: string
-  label: string | (() => RenderableType)
-  visible?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
+  label?: TableTextValue
+  condition?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
+  disabled?:
+    | boolean
+    | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
+  loading?:
+    | boolean
+    | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
+  children?: TableRowAction<TRow, TContext, TPageContext>[]
   action?: (context: TableRowActionContext<TRow, TContext, TPageContext>) => MaybePromise<unknown>
 }

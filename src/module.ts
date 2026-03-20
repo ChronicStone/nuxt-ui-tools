@@ -46,9 +46,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.options.alias['#ui-tools'] = resolve('./runtime')
 
-    const viewportOptions = mergeViewportOptions(
-      nuxt.options.viewport === false ? undefined : nuxt.options.viewport,
-    )
+    const viewportOptions = normalizeViewportOptions(nuxt.options.viewport)
     nuxt.options.viewport = viewportOptions
     await installModule('nuxt-viewport', viewportOptions)
 
@@ -80,4 +78,11 @@ function mergeViewportOptions(
     fallbackBreakpoint: viewportOptions?.fallbackBreakpoint ?? viewportDefaults.fallbackBreakpoint,
     feature: viewportOptions?.feature ?? viewportDefaults.feature,
   }
+}
+
+function normalizeViewportOptions(
+  viewportOptions: Partial<ViewportOptions> | false | undefined,
+): ViewportOptions {
+  if (viewportOptions === false) return mergeViewportOptions(undefined)
+  return mergeViewportOptions(viewportOptions)
 }

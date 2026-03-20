@@ -411,12 +411,12 @@ function handleContentMounted() {
         class="w-fit max-w-[calc(100vw-1rem)] bg-default"
         @vue:mounted="handleContentMounted"
       >
-        <div v-if="filterUi.searchable" class="border-b border-default p-2">
+        <div v-if="filterUi.searchable" class="w-full border-b border-default p-2">
           <UInput
             v-model="searchQuery"
             icon="i-lucide-search"
             :placeholder="filterUi.labels.searchPlaceholder"
-            class="w-[min(14rem,calc(100vw-3rem))] max-w-full"
+            class="w-full"
             :loading="optionSource.isStaleLoading.value"
             variant="ghost"
             :ui="{ base: 'rounded-md' }"

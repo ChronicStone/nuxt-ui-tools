@@ -67,6 +67,8 @@ export interface TableSchema<
         row: TRow
         context: TableContextDataFromItems<TContextItems>
         pageContext: TableContextDataFromItems<TPageContextItems>
+        tableApi: import('./table-api').TableApi<TableSchemaView>
+        layout: TableLayout
       }) => TableRowAction<
         TRow,
         TableContextDataFromItems<TContextItems>,

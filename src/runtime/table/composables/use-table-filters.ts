@@ -24,7 +24,7 @@ import type { useTableState } from './use-table-state'
 export interface UseTableFiltersParams {
   schema: ComputedRef<TableSchemaView>
   state: ReturnType<typeof useTableState>
-  queryContent: UseTableDataReturn
+  queryContent: Pick<UseTableDataReturn, 'rawData' | 'data'>
 }
 
 export function useTableFilters(params: UseTableFiltersParams) {

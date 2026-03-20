@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
-import { useTableInternals } from '../composables/use-table-internals'
-import type { TableApi } from '../types'
+import { provideTableInternals, type TableInternals } from '../composables/use-table-internals'
 import GridRenderer from './grid/GridRenderer.vue'
 import TableFooter from './layout/TableFooter.vue'
 import TableHeader from './layout/TableHeader.vue'
 import TableRenderer from './table/TableRenderer.vue'
 
+type DataListTable = {
+  schema: ComputedRef<{
+    tableKey: string
+  }>
+  __internals: TableInternals
+}
+
 const props = defineProps<{
-  table: TableApi & { schema: { value: { tableKey: string } } }
+  table: DataListTable
   title?: string
   description?: string
   height?: string | number
@@ -23,13 +30,14 @@ defineSlots<{
   'empty-grid'?: () => any
 }>()
 
-const internals = useTableInternals()
+provideTableInternals(props.table.__internals)
+
+const internals = props.table.__internals
 const tableHeight = computed(() => normalizeDimension(props.height ?? '36rem'))
 const titleText = computed(() => props.title ?? humanizeKey(props.table.schema.value.tableKey))
 const descriptionText = computed(() => props.description)
 const flowGridActive = computed(
-  () =>
-    internals.controls.tableLayout.value === 'grid' && internals.grid.mode.value === 'flow',
+  () => internals.controls.tableLayout.value === 'grid' && internals.grid.mode.value === 'flow',
 )
 const contentShellClass = computed(() =>
   flowGridActive.value

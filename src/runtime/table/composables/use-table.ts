@@ -1,19 +1,20 @@
 import { computed, toValue } from 'vue'
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
-import type { TableApi, TableSchemaView } from '../types'
-import { useProvideTableInternals } from './use-table-internals'
+import type { TableApi } from '../types'
+import { createTableInternals, type TableInternals } from './use-table-internals'
 
-export function useTable<TSchema = TableSchemaView>(
+export function useTable<TSchema>(
   schema: MaybeRefOrGetter<TSchema>,
-): TableApi<TSchema> & { schema: ComputedRef<TSchema> } {
+): TableApi<TSchema> & { schema: ComputedRef<TSchema>; __internals: TableInternals } {
   const resolvedSchema = computed<TSchema>(() => toValue(schema))
-  const internals = useProvideTableInternals({
-    rawSchema: computed(() => resolvedSchema.value as unknown as TableSchemaView),
+  const internals = createTableInternals({
+    rawSchema: resolvedSchema,
   })
 
   return {
     ...internals.tableApi,
     schema: resolvedSchema,
-  } as TableApi<TSchema> & { schema: ComputedRef<TSchema> }
+    __internals: internals,
+  }
 }

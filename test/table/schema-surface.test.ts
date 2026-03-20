@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { defineTableSchema } from '#ui-tools/table/schema'
-import type { TableRemoteSource } from '#ui-tools/table/types'
+import type { ComputedRef } from 'vue'
+import type { TableApi, TableRemoteSource } from '#ui-tools/table/types'
 
 describe('table package surface', () => {
   it('exports defineTableSchema from the package root', () => {
@@ -42,6 +43,28 @@ describe('table package surface', () => {
     })
 
     expectTypeOf(schema.pagination?.showPageSizePicker).toEqualTypeOf<boolean | undefined>()
+  })
+
+  it('keeps the public table api generic compatible with inferred schemas', () => {
+    const schema = defineTableSchema({
+      tableKey: 'users',
+      rowKey: 'id',
+      source: {
+        query: () => ({
+          queryKey: ['users'],
+          queryFn: async () => [{ id: 'user_1', email: 'ada@example.com' }],
+        }),
+      },
+      grid: {
+        renderItem: ({ row }) => row.email,
+      },
+    })
+
+    type PublicTable = TableApi<typeof schema> & {
+      schema: ComputedRef<typeof schema>
+    }
+
+    expectTypeOf<PublicTable['schema']['value']['grid']>().toEqualTypeOf<typeof schema.grid>()
   })
 
   it('requires remote sources to return rows with rowCount metadata', () => {

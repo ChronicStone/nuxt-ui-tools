@@ -37,7 +37,7 @@ export interface UseTableFilterOptionsParams {
   active?: Ref<boolean>
   ready?: Ref<boolean>
   filters: ReturnType<typeof useTableFilters>
-  queryContent: UseTableDataReturn
+  queryContent: Pick<UseTableDataReturn, 'rawData' | 'data' | 'requestContext'>
   schema: ComputedRef<TableSchemaView>
 }
 

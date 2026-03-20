@@ -1,4 +1,4 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed, watch, type ComputedRef } from 'vue'
 
 import type { TableSchemaView } from '../types'
 import { getDefaultPageSize, getPageSizeOptions } from '../utils'
@@ -35,6 +35,14 @@ export function useTablePagination(options: UseTablePaginationParams) {
       layout: options.layout.activeLayout.value,
     }),
   )
+  const compatiblePageSize = computed(() => {
+    if (pageSizeOptions.value.includes(pageSize.value)) return pageSize.value
+
+    return getDefaultPageSize({
+      schema: options.schema.value,
+      layout: options.layout.activeLayout.value,
+    })
+  })
 
   function setPage(page: number) {
     options.state.queryState.pagination.value = {
@@ -66,6 +74,16 @@ export function useTablePagination(options: UseTablePaginationParams) {
       }),
     )
   }
+
+  watch(
+    [pageSizeOptions, compatiblePageSize],
+    ([optionsList, nextPageSize]) => {
+      if (optionsList.includes(pageSize.value)) return
+      if (nextPageSize === pageSize.value) return
+      setPageSize(nextPageSize)
+    },
+    { immediate: true },
+  )
 
   return {
     rowCount,

@@ -2,15 +2,20 @@
 /// <reference types="vue/jsx" />
 
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
+import UButton from '@nuxt/ui/components/Button.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import type { VNodeChild } from 'vue'
 
+import RowActions from '../../components/actions/RowActions.vue'
+import TableRowScopeProvider from '../../components/actions/TableRowScopeProvider.vue'
 import TableCellEllipsis from '../../components/table/TableCellEllipsis'
 import type { GenericObject } from '../../types'
 import { getColumnHeaderIcon } from './menu'
 import { findSchemaColumn } from './schema'
 import {
+  ROW_ACTIONS_COLUMN_ID,
+  ROW_ACTIONS_COLUMN_WIDTH,
   SELECT_COLUMN_ID,
   SELECT_COLUMN_WIDTH,
   type SchemaTableColumn,
@@ -116,6 +121,12 @@ export function createDataColumns(options: {
 }) {
   return options.visibleOrderedColumns
     .map((runtimeColumn) => {
+      if (runtimeColumn.id === ROW_ACTIONS_COLUMN_ID) {
+        return createRowActionsColumn({
+          params: options.params,
+        })
+      }
+
       const column = findSchemaColumn({
         schema: options.params.schema.value,
         columnId: runtimeColumn.id,
@@ -252,12 +263,31 @@ export function renderColumnCell(options: TableColumnRenderParams) {
     })
 
     if (options.column.render) {
-      return wrapEllipsisContent({
+      return wrapRowScope({
+        scope: cellContext,
+        content: wrapEllipsisContent({
+          column: options.column,
+          content: options.column.render({
+            ...cellContext,
+            value: value as never,
+          } as never),
+          title: resolveEllipsisTitle({
+            column: options.column,
+            params: {
+              ...cellContext,
+              value,
+            },
+            fallbackValue: value,
+          }),
+        }),
+      })
+    }
+
+    return wrapRowScope({
+      scope: cellContext,
+      content: wrapEllipsisContent({
         column: options.column,
-        content: options.column.render({
-          ...cellContext,
-          value: value as never,
-        } as never),
+        content: formatCellValue({ value }),
         title: resolveEllipsisTitle({
           column: options.column,
           params: {
@@ -266,30 +296,20 @@ export function renderColumnCell(options: TableColumnRenderParams) {
           },
           fallbackValue: value,
         }),
-      })
-    }
-
-    return wrapEllipsisContent({
-      column: options.column,
-      content: formatCellValue({ value }),
-      title: resolveEllipsisTitle({
-        column: options.column,
-        params: {
-          ...cellContext,
-          value,
-        },
-        fallbackValue: value,
       }),
     })
   }
 
-  return wrapEllipsisContent({
-    column: options.column,
-    content: options.column.render(cellContext as never),
-    title: resolveEllipsisTitle({
+  return wrapRowScope({
+    scope: cellContext,
+    content: wrapEllipsisContent({
       column: options.column,
-      params: cellContext,
-      fallbackValue: null,
+      content: options.column.render(cellContext as never),
+      title: resolveEllipsisTitle({
+        column: options.column,
+        params: cellContext,
+        fallbackValue: null,
+      }),
     }),
   })
 }
@@ -350,13 +370,88 @@ function createCellRenderContext(options: {
   rowIndex: number
   params: UseTableColumnsParams
 }): TableCellRenderContext {
+  const tableApi = options.params.tableApi.value
+  if (!tableApi) throw new Error('Table API is not ready')
+
   return {
     row: options.row,
     index: options.rowIndex,
-    context: options.params.data.contextData.value,
-    pageContext: options.params.data.pageContextData.value,
+    context: toPlainRecord(options.params.data.contextData.value),
+    pageContext: toPlainRecord(options.params.data.pageContextData.value),
+    tableApi,
     layout: options.params.tableLayout.value,
   }
+}
+
+function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
+  return {
+    id: ROW_ACTIONS_COLUMN_ID,
+    header: () => null,
+    cell: ({ row }: { row: { original: GenericObject; index: number } }) => {
+      const scope = createCellRenderContext({
+        row: row.original,
+        rowIndex: row.index,
+        params: options.params,
+      })
+
+      return (
+        <TableRowScopeProvider scope={scope}>
+          <div class="flex justify-end">
+            <RowActions
+              content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
+              modal={false}
+              portal
+              ui={{ content: 'z-[80] min-w-48' }}
+            >
+              <UButton
+                color="neutral"
+                variant="ghost"
+                icon="i-lucide-ellipsis-vertical"
+                size="sm"
+                square
+                aria-label="Row actions"
+                class="bg-transparent text-muted shadow-none ring-0 hover:bg-accented/60 hover:text-default focus-visible:bg-accented/60 focus-visible:text-default"
+              />
+            </RowActions>
+          </div>
+        </TableRowScopeProvider>
+      )
+    },
+    size: ROW_ACTIONS_COLUMN_WIDTH,
+    enableSorting: false,
+    enableHiding: false,
+    enablePinning: true,
+    enableResizing: false,
+    meta: {
+      class: {
+        th: 'w-13 px-2',
+        td: 'w-13 px-2',
+      },
+      style: {
+        th: () => ({
+          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+        }),
+        td: () => ({
+          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+        }),
+      },
+    },
+  }
+}
+
+function wrapRowScope(options: {
+  scope: TableCellRenderContext
+  content: VNodeChild
+}) {
+  return <TableRowScopeProvider scope={options.scope}>{options.content}</TableRowScopeProvider>
+}
+
+function toPlainRecord(value: object) {
+  return Object.fromEntries(Object.entries(value))
 }
 
 function resolveEllipsisTitle(options: {

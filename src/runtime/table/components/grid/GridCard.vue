@@ -2,6 +2,7 @@
 import { computed, defineComponent } from 'vue'
 
 import type { TableSchemaView } from '../../types'
+import TableRowScopeProvider from '../actions/TableRowScopeProvider.vue'
 import { useGridRow, useProvideGridRow } from '../../composables/use-grid-row'
 import { useTableInternals } from '../../composables/use-table-internals'
 
@@ -24,6 +25,7 @@ const rowParams = computed(() =>
     index: localRowIndex.value,
     context: toPlainRecord(internals.queryContent.contextData.value),
     pageContext: toPlainRecord(internals.queryContent.pageContextData.value),
+    tableApi: internals.tableApi,
     layout: 'grid',
   }),
 )
@@ -46,6 +48,8 @@ function toPlainRecord(value: object) {
 
 <template>
   <div class="min-w-0 h-full">
-    <RenderGridCard />
+    <TableRowScopeProvider :scope="rowParams">
+      <RenderGridCard />
+    </TableRowScopeProvider>
   </div>
 </template>

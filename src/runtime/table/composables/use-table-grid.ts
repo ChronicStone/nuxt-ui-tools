@@ -3,7 +3,7 @@ import { computed, type ComputedRef } from 'vue'
 import { getResponsiveValue } from '#ui-tools/shared'
 
 import { GRID_DEFAULTS } from '../constants/grid'
-import type { TableExternalState, TableGridMode, TableSchemaView } from '../types'
+import type { GenericObject, TableExternalState, TableGridMode, TableSchemaView } from '../types'
 
 export interface GridRowChunk<TRow = unknown> {
   index: number
@@ -12,12 +12,12 @@ export interface GridRowChunk<TRow = unknown> {
   rows: TRow[]
 }
 
-export interface UseTableGridParams {
+export interface UseTableGridParams<TRow extends GenericObject = GenericObject> {
   schema: ComputedRef<TableSchemaView>
-  data: ComputedRef<TableExternalState>
+  data: ComputedRef<TableExternalState<TRow>>
 }
 
-export function useTableGrid(options: UseTableGridParams) {
+export function useTableGrid<TRow extends GenericObject>(options: UseTableGridParams<TRow>) {
   const resolvedGridColumns = computed(() =>
     resolveResponsiveGridNumber(options.schema.value.grid?.gridSize ?? GRID_DEFAULTS.columns),
   )

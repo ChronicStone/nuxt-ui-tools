@@ -1,4 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
+import type { TableApi } from './table-api'
 
 import type {
   MaybePromise,
@@ -77,7 +78,8 @@ export interface TableRowRenderParams<
   index: number
   context: TContext
   pageContext: TPageContext
-  layout?: TableLayout
+  tableApi: TableApi
+  layout: TableLayout
 }
 
 export interface TableGridSortOption<TKey extends string = string> {
@@ -128,7 +130,11 @@ type ExtractSourceResult<TSchema> =
     ? import('./source').ExtractTableSourceResult<TSource>
     : never
 
-export type ExtractTableRow<TSchema> = TableRowsFromSourceResult<ExtractSourceResult<TSchema>>
+type NormalizeExtractedRow<TRow> = TRow extends GenericObject ? TRow : GenericObject
+
+export type ExtractTableRow<TSchema> = NormalizeExtractedRow<
+  TableRowsFromSourceResult<ExtractSourceResult<TSchema>>
+>
 
 export type ExtractTableContextData<TSchema> = Prettify<
   TableResolvedSchema<TSchema> extends { context?: infer TItems extends unknown[] }

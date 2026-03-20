@@ -25,6 +25,8 @@ export function createRuntimeColumns(options: {
           column,
           context: options.context,
         }),
+        configurable: true,
+        pinned: column.pinned,
       }),
     )
 }

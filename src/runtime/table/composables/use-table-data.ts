@@ -44,6 +44,7 @@ export interface UseTableDataReturn {
   refreshContext: () => Promise<unknown[]>
   refreshData: () => ReturnType<typeof useQuery>['refetch']
   refreshPageContext: () => Promise<unknown[]>
+  updateRows: (rows: GenericObject[]) => void
 }
 
 type CombinedQueryResult = {
@@ -308,6 +309,23 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     return Promise.all(pageContextResults.value.map((item) => item.refetch()))
   }
 
+  function updateRows(rows: GenericObject[]) {
+    if (!rows.length) return
+
+    const nextRawRows = mergeRowsByKey({
+      currentRows: rawDataState.value.rows,
+      nextRows: rows,
+      rowKey: params.schema.value.rowKey,
+    })
+
+    if (sameRows(rawDataState.value.rows, nextRawRows)) return
+
+    rawDataState.value = {
+      rows: nextRawRows,
+      rowCount: rawDataState.value.rowCount,
+    }
+  }
+
   return {
     context,
     contextData,
@@ -323,6 +341,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     refreshContext,
     refreshData,
     refreshPageContext,
+    updateRows,
   }
 }
 
@@ -382,6 +401,45 @@ function sameRows(left: unknown[], right: unknown[]) {
   }
 
   return true
+}
+
+function mergeRowsByKey(options: {
+  currentRows: GenericObject[]
+  nextRows: GenericObject[]
+  rowKey: TableSchemaView['rowKey']
+}) {
+  const replacements = new Map(
+    options.nextRows.map((row, index) => [resolveRowIdentity({ rowKey: options.rowKey, row, index }), row]),
+  )
+
+  return options.currentRows.map((row, index) => {
+    const nextRow = replacements.get(resolveRowIdentity({ rowKey: options.rowKey, row, index }))
+    return nextRow ?? row
+  })
+}
+
+function resolveRowIdentity(options: {
+  rowKey: TableSchemaView['rowKey']
+  row: GenericObject
+  index: number
+}) {
+  if (Array.isArray(options.rowKey)) {
+    return options.rowKey
+      .map((key) => String(resolveRowIdentityValue({ row: options.row, key }) ?? ''))
+      .join('::')
+  }
+
+  return String(resolveRowIdentityValue({ row: options.row, key: options.rowKey }) ?? options.index)
+}
+
+function resolveRowIdentityValue(options: {
+  row: GenericObject
+  key: string
+}) {
+  return options.key.split('.').reduce<unknown>((value, segment) => {
+    if (!value || typeof value !== 'object') return undefined
+    return (value as Record<string, unknown>)[segment]
+  }, options.row)
 }
 
 function withEnabled<TData = unknown>(

@@ -3,6 +3,8 @@
 import { computed, ref, watch } from 'vue'
 
 import {
+  ROW_ACTIONS_COLUMN_ID,
+  hasVisibleTableRowActions,
   createColumnMenuItems,
   createDefaultColumnState,
   createDataColumns,
@@ -23,11 +25,41 @@ import {
 
 export function useTableColumns(params: UseTableColumnsParams) {
   const tableState = ref<TableColumnState>(createDefaultColumnState())
-  const runtimeColumns = computed(() =>
-    createRuntimeColumns({
+  const hasRowActions = computed(() => {
+    if (!params.schema.value.rowActions) return false
+
+    const tableApi = params.tableApi.value
+    if (!tableApi) return false
+
+    return hasVisibleTableRowActions({
       schema: params.schema.value,
+      rows: params.data.data.value.rows,
       context: params.data.contextData.value,
-    }),
+      pageContext: params.data.pageContextData.value,
+      tableApi,
+      layout: params.tableLayout.value,
+    })
+  })
+  const runtimeColumns = computed(() =>
+    [
+      ...createRuntimeColumns({
+        schema: params.schema.value,
+        context: params.data.contextData.value,
+      }),
+      ...(hasRowActions.value
+        ? [
+            {
+              id: ROW_ACTIONS_COLUMN_ID,
+              label: 'Actions',
+              icon: 'i-lucide-ellipsis',
+              canHide: false,
+              defaultVisible: true,
+              configurable: false,
+              pinned: 'right' as const,
+            },
+          ]
+        : []),
+    ],
   )
 
   const orderedColumns = computed(() =>

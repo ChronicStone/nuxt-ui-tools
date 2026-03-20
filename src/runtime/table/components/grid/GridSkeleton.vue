@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UCard from '@nuxt/ui/components/Card.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { defineComponent } from 'vue'
 
@@ -17,9 +18,9 @@ const RenderGridSkeleton = defineComponent({
 <template>
   <RenderGridSkeleton v-if="internals.schema.value.grid?.renderSkeleton" />
 
-  <div
+  <UCard
     v-else
-    class="relative overflow-hidden rounded-[24px] border border-default/70 bg-gradient-to-br from-default via-default to-elevated/70 p-4 shadow-sm ring-1 ring-inset ring-white/5"
+    class="relative overflow-hidden border border-default/70 bg-gradient-to-br from-default via-default to-elevated/70 p-4 shadow-sm ring-1 ring-inset ring-white/5"
   >
     <div class="grid gap-4">
       <div class="flex items-start justify-between gap-3">
@@ -44,5 +45,5 @@ const RenderGridSkeleton = defineComponent({
         <USkeleton class="h-7 w-24 rounded-full" />
       </div>
     </div>
-  </div>
+  </UCard>
 </template>

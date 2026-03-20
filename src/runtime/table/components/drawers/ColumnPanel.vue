@@ -9,30 +9,33 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { useTableInternals } from '../../composables/use-table-internals'
 
 const internals = useTableInternals()
+const configurableColumns = computed(() =>
+  internals.tableColumns.orderedColumns.value.filter((column) => column.configurable !== false),
+)
 
 const pinnedLeft = computed(() => {
   const leftIds = internals.tableColumns.tableState.value.columnPinning?.left ?? []
-  return internals.tableColumns.orderedColumns.value.filter((col) => leftIds.includes(col.id))
+  return configurableColumns.value.filter((col) => leftIds.includes(col.id))
 })
 
 const pinnedRight = computed(() => {
   const rightIds = internals.tableColumns.tableState.value.columnPinning?.right ?? []
-  return internals.tableColumns.orderedColumns.value.filter((col) => rightIds.includes(col.id))
+  return configurableColumns.value.filter((col) => rightIds.includes(col.id))
 })
 
 const unpinnedColumns = computed(() => {
   const leftIds = internals.tableColumns.tableState.value.columnPinning?.left ?? []
   const rightIds = internals.tableColumns.tableState.value.columnPinning?.right ?? []
-  return internals.tableColumns.orderedColumns.value.filter(
+  return configurableColumns.value.filter(
     (col) => !leftIds.includes(col.id) && !rightIds.includes(col.id),
   )
 })
 
 const filteredColumns = computed(() => {
   const search = internals.controls.columnsPanelSearch.value.trim().toLowerCase()
-  if (!search) return internals.tableColumns.orderedColumns.value
+  if (!search) return configurableColumns.value
 
-  return internals.tableColumns.orderedColumns.value.filter((column) =>
+  return configurableColumns.value.filter((column) =>
     column.label.toLowerCase().includes(search),
   )
 })
@@ -238,7 +241,7 @@ function toggleColumn(columnId: string) {
 
         <div class="flex items-center justify-between gap-3 border-t border-default px-3 py-2">
           <div class="text-sm text-muted">
-            {{ internals.tableColumns.orderedColumns.value.length }} configurable columns
+            {{ configurableColumns.length }} configurable columns
           </div>
 
           <UButton

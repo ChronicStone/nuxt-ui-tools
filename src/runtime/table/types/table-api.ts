@@ -39,6 +39,8 @@ export interface TableApi<TSchema = TableSchemaView> {
     error: ReturnType<typeof useTableData>['error']
     status: ReturnType<typeof useTableData>['status']
     refresh: ReturnType<ReturnType<typeof useTableData>['refreshData']>
+    updateRow: (row: ExtractTableRow<TSchema>) => void
+    updateRows: (rows: ExtractTableRow<TSchema>[]) => void
   }
   layout: {
     state: ComputedRef<{ active: TableLayout; available: TableLayout[] }>
@@ -90,4 +92,7 @@ export interface TableApi<TSchema = TableSchemaView> {
     query: () => void
     all: () => void
   }
+  refresh: ReturnType<ReturnType<typeof useTableData>['refreshData']>
+  updateRow: (row: ExtractTableRow<TSchema>) => void
+  updateRows: (rows: ExtractTableRow<TSchema>[]) => void
 }

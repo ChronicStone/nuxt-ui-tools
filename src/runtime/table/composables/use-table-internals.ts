@@ -1,5 +1,4 @@
-import { createInjectionState } from '@vueuse/core'
-import { computed, shallowRef } from 'vue'
+import { computed, inject, provide, shallowRef, type InjectionKey } from 'vue'
 
 import type { MaybeComputedRef, TableApi, TableSchemaView } from '../types'
 import { resolveSchemaSource } from '../utils'
@@ -14,10 +13,11 @@ import { useTablePagination } from './use-table-pagination'
 import { useTableSelection } from './use-table-selection'
 import { useTableState } from './use-table-state'
 
-function createTableInternals<TSchema extends TableSchemaView>(options: {
+function createTableInternals<TSchema>(options: {
   rawSchema: MaybeComputedRef<TSchema>
 }) {
-  const schema = computed(() => resolveSchemaSource({ schema: options.rawSchema }))
+  const publicSchema = computed(() => resolveSchemaSource({ schema: options.rawSchema }))
+  const schema = computed(() => publicSchema.value as TableSchemaView)
   const tableApi = shallowRef<TableApi<TSchema> | null>(null)
   const layout = useTableLayout({ schema })
   const state = useTableState({
@@ -51,6 +51,7 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
     data: queryContent,
     selection,
     tableLayout: controls.tableLayout,
+    tableApi,
   })
   const pagination = useTablePagination({
     schema,
@@ -60,7 +61,7 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
   })
 
   tableApi.value = useTableApi({
-    schema,
+    runtimeSchema: schema,
     layout,
     state,
     selection,
@@ -70,9 +71,7 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
     queryContent,
   })
 
-  if (!tableApi.value) {
-    throw new Error('Failed to initialize table API')
-  }
+  if (!tableApi.value) throw new Error('Failed to initialize table API')
 
   return {
     schema,
@@ -90,18 +89,26 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
   }
 }
 
-const [useProvideTableInternals, injectTableInternals] = createInjectionState(createTableInternals)
+const TABLE_INTERNALS_KEY = Symbol('nuxt-ui-tools.table.internals') as InjectionKey<TableInternals>
+
+function provideTableInternals(internals: TableInternals) {
+  provide(TABLE_INTERNALS_KEY, internals)
+}
+
+function useProvideTableInternals<TSchema>(options: {
+  rawSchema: MaybeComputedRef<TSchema>
+}) {
+  const internals = createTableInternals(options)
+  provideTableInternals(internals)
+  return internals
+}
 
 function useTableInternals() {
-  const internals = injectTableInternals()
-
-  if (!internals) {
-    throw new Error('useTableInternals must be called inside a <DataList> component')
-  }
-
+  const internals = inject(TABLE_INTERNALS_KEY, null)
+  if (!internals) throw new Error('useTableInternals must be called inside a <DataList> component')
   return internals
 }
 
 export type TableInternals = ReturnType<typeof createTableInternals>
 
-export { useProvideTableInternals, useTableInternals }
+export { createTableInternals, provideTableInternals, useProvideTableInternals, useTableInternals }

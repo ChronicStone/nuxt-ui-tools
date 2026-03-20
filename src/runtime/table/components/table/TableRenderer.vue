@@ -16,8 +16,16 @@ const tableRef = ref<{ $el?: Element | null } | null>(null)
 const tableRows = computed(
   () => internals.queryContent.data.value.rows as Array<Record<string, unknown>>,
 )
-const tableLoading = computed(() => internals.queryContent.status.value.isPending)
-const tableEmpty = computed(() => !tableLoading.value && tableRows.value.length === 0)
+const showInitialLoading = computed(
+  () => internals.queryContent.status.value.isPending && tableRows.value.length === 0,
+)
+const showRefreshing = computed(
+  () =>
+    tableRows.value.length > 0 &&
+    (internals.queryContent.status.value.isRefreshing ||
+      internals.queryContent.status.value.isRevalidating),
+)
+const tableEmpty = computed(() => !showInitialLoading.value && tableRows.value.length === 0)
 const bodyPlaceholderMinHeight = computed(() => `calc(${props.height} - 7rem)`)
 const bodyOverlayTop = '2.625rem'
 const defaultColumnState = createDefaultColumnState()
@@ -69,11 +77,14 @@ watch(tableEmpty, (isEmpty) => {
       "
       :sorting-options="{ manualSorting: true }"
       sticky="header"
-      :loading="tableLoading"
+      :loading="showRefreshing"
+      loading-color="primary"
+      loading-animation="carousel"
       class="h-full"
       :ui="{
-        thead: 'group/table-head',
-        tr: 'transition-colors data-[selected=true]:bg-elevated/70 hover:bg-elevated/40',
+        thead:
+          'group/table-head after:inset-x-0 after:bottom-0 after:w-full after:z-[2] after:pointer-events-none',
+        tr: 'transition-colors',
       }"
       :virtualize="{
         enabled: true,
@@ -85,16 +96,20 @@ watch(tableEmpty, (isEmpty) => {
           }),
       }"
     >
-      <template #loading>
-        <TableLoadingState :min-height="bodyPlaceholderMinHeight" />
-      </template>
-
       <template #empty>
         <slot name="empty">
           <div />
         </slot>
       </template>
     </UTable>
+
+    <div
+      v-if="showInitialLoading"
+      class="pointer-events-none absolute inset-x-0 bottom-0 z-10"
+      :style="{ top: bodyOverlayTop }"
+    >
+      <TableLoadingState :min-height="bodyPlaceholderMinHeight" />
+    </div>
 
     <div
       v-if="tableEmpty"
@@ -147,24 +162,45 @@ watch(tableEmpty, (isEmpty) => {
 }
 
 :deep(th[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg) 76%, transparent) !important;
+  background-color: color-mix(in oklab, var(--ui-bg) 94%, transparent) !important;
   background-image: none !important;
   backdrop-filter: blur(6px) saturate(120%);
 }
 
 :deep(td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg) 88%, transparent) !important;
+  background-color: color-mix(in oklab, var(--ui-bg) 96%, transparent) !important;
   background-image: none !important;
   backdrop-filter: none;
 }
 
-:deep(tr[data-selected='true'] td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg-elevated) 90%, transparent) !important;
+:deep(tbody tr[data-selected='true'] td) {
+  background-color: color-mix(in oklab, var(--ui-bg-elevated) 88%, transparent) !important;
   color: var(--ui-text) !important;
 }
 
+:deep(tbody tr:hover td) {
+  background-color: color-mix(in oklab, var(--ui-bg-elevated) 18%, transparent) !important;
+}
+
+:deep(tr[data-selected='true'] td[data-pinned]) {
+  background-color: color-mix(in oklab, var(--ui-bg-elevated) 96%, transparent) !important;
+  color: var(--ui-text) !important;
+  backdrop-filter: none;
+}
+
 :deep(tbody tr:hover td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg-elevated) 82%, transparent) !important;
+  background-color: color-mix(in oklab, var(--ui-bg-elevated) 68%, transparent) !important;
+  backdrop-filter: none;
+}
+
+:deep(th[data-pinned='left']),
+:deep(td[data-pinned='left']) {
+  box-shadow: 12px 0 18px -18px color-mix(in oklab, var(--ui-border-accented) 80%, transparent);
+}
+
+:deep(th[data-pinned='right']),
+:deep(td[data-pinned='right']) {
+  box-shadow: -12px 0 18px -18px color-mix(in oklab, var(--ui-border-accented) 80%, transparent);
 }
 
 :deep(tbody td) {

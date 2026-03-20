@@ -44,11 +44,11 @@ const skeletonGridTemplate = computed(() =>
 </script>
 
 <template>
-  <div class="w-full" :style="{ minHeight }">
+  <div class="w-full pt-6" :style="{ minHeight }">
     <div
       v-for="rowIndex in skeletonRows"
       :key="rowIndex"
-      class="grid h-12 items-center gap-3 border-b px-3"
+      class="grid h-12 items-center gap-3 border-b px-4"
       style="border-bottom-color: color-mix(in oklab, var(--ui-border) 14%, transparent)"
       :style="{ gridTemplateColumns: skeletonGridTemplate }"
     >
@@ -56,7 +56,10 @@ const skeletonGridTemplate = computed(() =>
         v-for="column in skeletonColumns"
         :key="`${rowIndex}-${column.id}`"
         class="flex items-center"
-        :class="column.align === 'end' ? 'justify-end' : 'justify-start'"
+        :class="[
+          column.align === 'end' ? 'justify-end' : 'justify-start',
+          column.kind === 'checkbox' ? 'pl-0' : '',
+        ]"
       >
         <template v-if="column.kind === 'checkbox'">
           <USkeleton class="size-4 rounded-md" />

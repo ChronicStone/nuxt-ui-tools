@@ -1,8 +1,10 @@
-import type { ComputedRef } from 'vue'
+import type { ComputedRef, ShallowRef } from 'vue'
 
 import type { UseTableDataReturn } from '../../composables/use-table-data'
 import type { useTableState } from '../../composables/use-table-state'
 import type {
+  TableApi,
+  TableColumnPinned,
   GenericObject,
   TableLayout,
   TableSchemaView,
@@ -11,6 +13,8 @@ import type {
 
 export const SELECT_COLUMN_ID = '__select'
 export const SELECT_COLUMN_WIDTH = 56
+export const ROW_ACTIONS_COLUMN_ID = '__row-actions'
+export const ROW_ACTIONS_COLUMN_WIDTH = 52
 
 export type SchemaTableColumn = NonNullable<NonNullable<TableSchemaView['table']>['columns']>[number]
 
@@ -21,6 +25,8 @@ export interface TableRuntimeColumn {
   sortableKey?: string
   canHide: boolean
   defaultVisible: boolean
+  configurable?: boolean
+  pinned?: TableColumnPinned
 }
 
 export interface TableColumnState {
@@ -55,9 +61,10 @@ export interface TableColumnsSelectionState {
 export interface UseTableColumnsParams {
   schema: ComputedRef<TableSchemaView>
   state: ReturnType<typeof useTableState>
-  data: Pick<UseTableDataReturn, 'contextData' | 'pageContextData'>
+  data: Pick<UseTableDataReturn, 'contextData' | 'pageContextData' | 'data'>
   selection: TableColumnsSelectionState
   tableLayout: ComputedRef<TableLayout>
+  tableApi: ShallowRef<TableApi<unknown> | null>
 }
 
 export interface TableColumnRenderParams {
@@ -70,7 +77,8 @@ export interface TableColumnRenderParams {
 export interface TableCellRenderContext {
   row: GenericObject
   index: number
-  context: GenericObject
-  pageContext: GenericObject
+  context: Record<string, unknown>
+  pageContext: Record<string, unknown>
+  tableApi: TableApi<unknown>
   layout: TableLayout
 }
