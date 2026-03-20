@@ -32,7 +32,6 @@ export function useTableLayout({ schema }: UseTableLayoutParams) {
     },
     { immediate: true },
   )
-
   return {
     activeLayout,
     gridEnabled,

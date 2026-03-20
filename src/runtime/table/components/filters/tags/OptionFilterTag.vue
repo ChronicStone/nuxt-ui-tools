@@ -29,7 +29,7 @@ const props = defineProps<{
 const internals = useTableInternals()
 const searchQuery = ref<string>('')
 const isOpen = ref<boolean>(false)
-const shouldHydrateOptions = ref<boolean>(false)
+const isContentReady = ref<boolean>(false)
 const pendingOperator = ref<TableFilterOperator>()
 const localSelectedValues = ref<(string | number | boolean)[]>([])
 const pinnedValues = ref<Set<string>>(new Set())
@@ -39,8 +39,9 @@ let dismissLocked = false
 
 const optionSource = useTableFilterOptions({
   definition: props.definition,
+  active: isOpen,
+  ready: isContentReady,
   searchQuery,
-  active: shouldHydrateOptions,
   filters: internals.filters,
   queryContent: internals.queryContent,
   schema: internals.schema,
@@ -217,7 +218,6 @@ function handleActivate(op: TableFilterOperator) {
   dismissLocked = true
   setTimeout(() => {
     isOpen.value = true
-    queueOptionHydration()
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         dismissLocked = false
@@ -231,24 +231,17 @@ function handleOpenChange(open: boolean) {
   isOpen.value = open
 
   if (open) {
+    isContentReady.value = false
     initLocalState()
-    queueOptionHydration()
     return
   }
 
+  isContentReady.value = false
   pendingOperator.value = undefined
   searchQuery.value = ''
   localExpandedIds.value = new Set()
   pinnedRangeSelect.reset()
   restRangeSelect.reset()
-}
-
-function queueOptionHydration() {
-  if (shouldHydrateOptions.value) return
-
-  requestAnimationFrame(() => {
-    shouldHydrateOptions.value = true
-  })
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -387,6 +380,10 @@ function mapSelectedTreeEntries(options: {
     }),
   }))
 }
+
+function handleContentMounted() {
+  isContentReady.value = true
+}
 </script>
 
 <template>
@@ -410,7 +407,10 @@ function mapSelectedTreeEntries(options: {
     />
 
     <template #content>
-      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
+      <div
+        class="w-fit max-w-[calc(100vw-1rem)] bg-default"
+        @vue:mounted="handleContentMounted"
+      >
         <div v-if="filterUi.searchable" class="border-b border-default p-2">
           <UInput
             v-model="searchQuery"
@@ -486,7 +486,11 @@ function mapSelectedTreeEntries(options: {
                     </span>
                   </div>
 
-                  <span v-if="filterUi.row.showCounts && entry.count != null" class="ml-3 shrink-0 text-muted">
+                  <USkeleton
+                    v-if="filterUi.row.showCounts && optionSource.isCountLoading.value"
+                    class="ml-3 h-3.5 w-6 shrink-0"
+                  />
+                  <span v-else-if="filterUi.row.showCounts && entry.count != null" class="ml-3 shrink-0 text-muted">
                     {{ entry.count }}
                   </span>
                 </div>
@@ -539,7 +543,11 @@ function mapSelectedTreeEntries(options: {
                     >
                       {{ item.label }}
                     </span>
-                    <span v-if="item.count != null" class="ml-3 shrink-0 text-muted">
+                    <USkeleton
+                      v-if="filterUi.row.showCounts && optionSource.isCountLoading.value"
+                      class="ml-3 h-3.5 w-6 shrink-0"
+                    />
+                    <span v-else-if="item.count != null" class="ml-3 shrink-0 text-muted">
                       {{ item.count }}
                     </span>
                   </div>
@@ -573,6 +581,7 @@ function mapSelectedTreeEntries(options: {
                   <FilterOptionRow
                     :label="entry.label"
                     :count="filterUi.row.showCounts ? entry.count : undefined"
+                    :count-loading="filterUi.row.showCounts && optionSource.isCountLoading.value"
                     :selected="entry.selected"
                     :leading-icon="resolveRowIcon(entry)"
                     :selected-icon="filterUi.row.selectedIcon"
@@ -593,6 +602,7 @@ function mapSelectedTreeEntries(options: {
                 <FilterOptionRow
                   :label="entry.label"
                   :count="filterUi.row.showCounts ? entry.count : undefined"
+                  :count-loading="filterUi.row.showCounts && optionSource.isCountLoading.value"
                   :selected="entry.selected"
                   :leading-icon="resolveRowIcon(entry)"
                   :selected-icon="filterUi.row.selectedIcon"
@@ -644,7 +654,11 @@ function mapSelectedTreeEntries(options: {
                   <span class="min-w-0 flex-1" :class="item.truncate ? 'truncate' : ''">
                     {{ item.label }}
                   </span>
-                  <span v-if="item.count != null" class="ml-3 shrink-0 text-muted">
+                  <USkeleton
+                    v-if="filterUi.row.showCounts && optionSource.isCountLoading.value"
+                    class="ml-3 h-3.5 w-6 shrink-0"
+                  />
+                  <span v-else-if="item.count != null" class="ml-3 shrink-0 text-muted">
                     {{ item.count }}
                   </span>
                 </div>

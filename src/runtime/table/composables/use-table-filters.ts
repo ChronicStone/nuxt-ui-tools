@@ -40,7 +40,6 @@ export function useTableFilters(params: UseTableFiltersParams) {
     () => params.state.queryState.filters.value.ui ?? [],
   )
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
-
   const rows = computed(() =>
     params.schema.value.source.mode === 'client'
       ? (params.queryContent.rawData.value.rows ?? [])

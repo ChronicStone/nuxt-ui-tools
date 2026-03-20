@@ -7,7 +7,6 @@
  * - Supports multiple independent query state consumers without interference
  * - Pluggable router adapter (vue-router, custom, or manual)
  */
-
 import type { Router, LocationQuery } from 'vue-router'
 
 // ---------------------------------------------------------------------------

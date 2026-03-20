@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/vue-query'
-import { computed, type ComputedRef } from 'vue'
+import { computed, shallowRef, watch, type ComputedRef } from 'vue'
 
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
@@ -57,7 +57,10 @@ type CombinedQueryResult = {
   refetch: () => Promise<unknown>
 }
 
+let clientQueryInstanceId = 0
+
 export function useTableData(params: UseTableDataParams): UseTableDataReturn {
+  const localClientQueryInstanceId = ++clientQueryInstanceId
   const contextItems = computed(() =>
     (params.schema.value.context ?? []).filter((item) => item?.condition?.() ?? true),
   )
@@ -122,9 +125,15 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const query = useQuery(
     computed(() =>
       withEnabled(
-        params.schema.value.source.query(
-          requestContext.value as never,
-        ) as TableQueryDefinition,
+        scopeClientQueryDefinition(
+          params.schema.value.source.query(
+            requestContext.value as never,
+          ) as TableQueryDefinition,
+          {
+            mode: params.schema.value.source.mode,
+            instanceId: localClientQueryInstanceId,
+          },
+        ),
         isContextReady.value,
         {
           staleTime: dataStaleTime.value,
@@ -134,34 +143,19 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     ),
   )
 
-  const rawData = computed<TableExternalState>(() => {
-    const result = query.data.value as TableExternalState | undefined
-
-    if (Array.isArray(result)) {
-      return {
-        rows: result,
-        rowCount: result.length,
-      }
-    }
-
-    return {
-      rows: result?.rows ?? [],
-      rowCount: result?.rowCount ?? 0,
-    } as TableExternalState
+  const rawDataState = shallowRef<TableExternalState>({
+    rows: [],
+    rowCount: 0,
   })
 
-  const data = computed<TableExternalState>(() => {
-    const result = query.data.value
-
-    if (Array.isArray(result) && params.schema.value.source.mode === 'client') {
-      return executeClientQuery({
-        rows: result,
-        request: requestContext.value,
-      })
-    }
-
-    return rawData.value
+  const dataState = shallowRef<TableExternalState>({
+    rows: [],
+    rowCount: 0,
   })
+
+  const rawData = computed<TableExternalState>(() => rawDataState.value)
+
+  const data = computed<TableExternalState>(() => dataState.value)
 
   const pageContextItems = computed(() =>
     (params.schema.value.pageContext ?? []).filter((item) => item?.condition?.() ?? true),
@@ -266,6 +260,42 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     }
   })
 
+  watch(
+    () => query.data.value,
+    (nextQueryData) => {
+      const normalized = normalizeExternalState(nextQueryData)
+      if (sameExternalState(rawDataState.value, normalized)) return
+
+      rawDataState.value = normalized
+    },
+    { immediate: true },
+  )
+
+  watch(
+    () => ({
+      mode: params.schema.value.source.mode,
+      rawRows: rawData.value.rows,
+      pageIndex: requestContext.value.pagination.pageIndex,
+      pageSize: requestContext.value.pagination.pageSize,
+      sorting: requestContext.value.sorting,
+      filters: requestContext.value.filters,
+      searchValue: requestContext.value.search.value,
+      searchFields: requestContext.value.search.fields,
+    }),
+    (next) => {
+      const resolved = next.mode === 'client'
+        ? executeClientQuery({
+            rows: next.rawRows,
+            request: requestContext.value,
+          })
+        : rawData.value
+
+      if (sameExternalState(dataState.value, resolved)) return
+      dataState.value = resolved
+    },
+    { immediate: true },
+  )
+
   async function refreshContext() {
     return Promise.all(contextResults.value.map((item) => item.refetch()))
   }
@@ -294,6 +324,64 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     refreshData,
     refreshPageContext,
   }
+}
+
+function scopeClientQueryDefinition<TData>(
+  query: TableQueryDefinition<TData>,
+  options: {
+    mode: TableSchemaView['source']['mode']
+    instanceId: number
+  },
+) {
+  if (options.mode !== 'client') return query
+
+  return {
+    ...query,
+    queryKey: [...query.queryKey, `client-instance:${options.instanceId}`],
+  }
+}
+
+function normalizeExternalState(result: unknown): TableExternalState {
+  if (Array.isArray(result)) {
+    return {
+      rows: result,
+      rowCount: result.length,
+    }
+  }
+
+  if (isTableExternalState(result)) {
+    return {
+      rows: result.rows,
+      rowCount: result.rowCount,
+    }
+  }
+
+  return {
+    rows: [],
+    rowCount: 0,
+  }
+}
+
+function isTableExternalState(value: unknown): value is TableExternalState {
+  if (!value || typeof value !== 'object') return false
+  if (!('rows' in value) || !('rowCount' in value)) return false
+
+  return Array.isArray(value.rows) && typeof value.rowCount === 'number'
+}
+
+function sameExternalState(left: TableExternalState, right: TableExternalState) {
+  return left.rowCount === right.rowCount && sameRows(left.rows, right.rows)
+}
+
+function sameRows(left: unknown[], right: unknown[]) {
+  if (left === right) return true
+  if (left.length !== right.length) return false
+
+  for (let index = 0; index < left.length; index++) {
+    if (left[index] !== right[index]) return false
+  }
+
+  return true
 }
 
 function withEnabled<TData = unknown>(

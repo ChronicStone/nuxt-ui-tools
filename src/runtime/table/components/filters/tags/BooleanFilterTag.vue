@@ -3,6 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed, ref } from 'vue'
 
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
@@ -18,10 +19,13 @@ const props = defineProps<{
 const internals = useTableInternals()
 const searchQuery = ref<string>('')
 const isOpen = ref<boolean>(false)
+const isContentReady = ref<boolean>(false)
 const localValue = ref<boolean | null>(null)
 
 const optionSource = useTableFilterOptions({
   definition: props.definition,
+  active: isOpen,
+  ready: isContentReady,
   searchQuery,
   filters: internals.filters,
   queryContent: internals.queryContent,
@@ -93,7 +97,12 @@ function initLocalState() {
 
 function handleOpenChange(open: boolean) {
   isOpen.value = open
+  if (!open) isContentReady.value = false
   if (open) initLocalState()
+}
+
+function handleContentMounted() {
+  isContentReady.value = true
 }
 
 function applyFilter() {
@@ -134,7 +143,7 @@ function clearFilter() {
     />
 
     <template #content>
-      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
+      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default" @vue:mounted="handleContentMounted">
         <div class="p-2">
           <URadioGroup
             v-model="radioValue"
@@ -162,7 +171,8 @@ function clearFilter() {
                 <span class="min-w-0 flex-1 truncate">
                   {{ item.label }}
                 </span>
-                <span v-if="item.count != null" class="ml-3 shrink-0 text-muted">
+                <USkeleton v-if="optionSource.isCountLoading.value" class="ml-3 h-3.5 w-6 shrink-0" />
+                <span v-else-if="item.count != null" class="ml-3 shrink-0 text-muted">
                   {{ item.count }}
                 </span>
               </div>

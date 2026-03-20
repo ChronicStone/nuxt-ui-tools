@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 
 defineProps<{
   label: string
   count?: number
+  countLoading?: boolean
   selected: boolean
   leadingIcon?: string
   selectedIcon?: string
@@ -33,6 +35,7 @@ defineProps<{
     />
 
     <span class="min-w-0 flex-1" :class="(truncate ?? true) ? 'truncate' : ''">{{ label }}</span>
-    <span v-if="count != null" class="ml-3 shrink-0 text-muted">{{ count }}</span>
+    <USkeleton v-if="countLoading" class="ml-3 h-3.5 w-6 shrink-0" />
+    <span v-else-if="count != null" class="ml-3 shrink-0 text-muted">{{ count }}</span>
   </div>
 </template>

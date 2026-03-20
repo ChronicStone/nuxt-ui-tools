@@ -91,7 +91,7 @@ const clientSchema = defineTableSchema({
         })),
         ui: {
           row: {
-            showCounts: false,
+            showCounts: true,
           },
         },
       }),
@@ -110,7 +110,7 @@ const clientSchema = defineTableSchema({
             mode: 'multiple',
           },
           row: {
-            showCounts: false,
+            showCounts: true,
           },
           labels: {
             searchPlaceholder: 'Select skill taxonomy',

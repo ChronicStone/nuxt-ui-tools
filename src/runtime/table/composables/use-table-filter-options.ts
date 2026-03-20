@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/vue-query'
-import { computed, toValue, unref, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
+import { computed, ref, shallowRef, unref, watch, type ComputedRef, type Ref } from 'vue'
 
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
@@ -34,27 +34,20 @@ function resolveFacetMode(options: { facet: TableFilterFacetMode | undefined }) 
 export interface UseTableFilterOptionsParams {
   definition: TableOptionFilterDefinition | TableBooleanFilterDefinition
   searchQuery: Ref<string>
-  active?: MaybeRefOrGetter<boolean>
+  active?: Ref<boolean>
+  ready?: Ref<boolean>
   filters: ReturnType<typeof useTableFilters>
   queryContent: UseTableDataReturn
   schema: ComputedRef<TableSchemaView>
 }
 
 export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
+  const isActive = computed(() => options.active?.value ?? true)
+  const isReady = computed(() => options.ready?.value ?? true)
   const remoteSource = computed(() =>
     options.schema.value.source.mode === 'remote' ? options.schema.value.source : null,
   )
   const normalizedSearch = computed(() => options.searchQuery.value.trim())
-  const selectedValues = computed(() =>
-    getSelectedValues({
-      filters: options.filters,
-      key: options.definition.key,
-    }),
-  )
-  const shouldHydrate = computed(
-    () => Boolean(toValue(options.active)) || selectedValues.value.length > 0,
-  )
-  const isBooleanFilter = computed(() => options.definition.kind === 'boolean')
   const optionDefinition = computed(() =>
     options.definition.kind === 'option' ? options.definition : undefined,
   )
@@ -70,6 +63,12 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const optionUi = computed(() =>
     optionDefinition.value ? resolveOptionFilterUi(optionDefinition.value, optionOperator.value) : undefined,
   )
+  const shouldDeriveCounts = computed(() => {
+    if (options.definition.kind === 'boolean') return true
+    if (options.definition.kind !== 'option') return false
+    return optionUi.value?.row.showCounts ?? true
+  })
+  const shouldResolveCounts = computed(() => shouldDeriveCounts.value && isActive.value && isReady.value)
   const isRemoteTable = computed(() => options.schema.value.source.mode === 'remote')
   const hasRemoteOptionQuery = computed(
     () => options.definition.kind === 'option' && typeof options.definition.query === 'function',
@@ -82,9 +81,8 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   )
   const canMergeFacetCounts = computed(() => !isRemoteTable.value || usesFacetCounts.value)
   const resolvedTreeSearchMode = computed(() => {
-    if (optionUi.value?.presentation !== 'tree') {
+    if (optionUi.value?.presentation !== 'tree')
       return hasRemoteOptionQuery.value ? 'remote' : 'local'
-    }
 
     const configured = optionUi.value.tree.searchMode
 
@@ -104,13 +102,24 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     if (options.definition.kind !== 'option') return []
     return [...(options.definition.options ?? [])]
   })
+  const selectedValues = computed(() =>
+    getSelectedValues({
+      filters: options.filters,
+      key: options.definition.key,
+    }),
+  )
+  const selectedValueKey = computed(() => selectedValues.value.map(String).join('|'))
+  const sourceRows = computed(() =>
+    options.schema.value.source.mode === 'client'
+      ? (options.queryContent.rawData.value.rows ?? [])
+      : (options.queryContent.data.value.rows ?? []),
+  )
 
   const optionQuery = useQuery<TableFilterOptionEntry[] | TableFilterOptionQueryResult>(
     computed(() => {
       const activeDefinition = optionDefinition.value
 
       if (
-        !shouldHydrate.value ||
         !hasRemoteOptionQuery.value ||
         !activeDefinition ||
         typeof activeDefinition.query !== 'function'
@@ -153,7 +162,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
   const facetQuery = useQuery<TableFacetExecutionResult>(
     computed(() => {
-      if (!shouldHydrate.value || !usesFacetCounts.value) {
+      if (!usesFacetCounts.value) {
         return {
           queryKey: ['table-filter-facets', options.definition.key, 'disabled'],
           queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult,
@@ -186,6 +195,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
           queryKey: queryOptions.queryKey,
           queryFn: queryOptions.queryFn,
           placeholderData: (previousData: TableFacetExecutionResult | undefined) => previousData,
+          enabled: shouldResolveCounts.value,
         },
         {
           staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
@@ -210,32 +220,88 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     return facets.find((facet: { key: string }) => facet.key === options.definition.key)?.options ?? []
   })
 
-  const sourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() => {
-    const entries = hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value
-    const rows = shouldHydrate.value
-      ? options.schema.value.source.mode === 'client'
-        ? (options.queryContent.rawData.value.rows ?? [])
-        : (options.queryContent.data.value.rows ?? [])
-      : []
-
-    return resolveFilterOptionEntries({
+  const baseSourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() =>
+    resolveFilterOptionEntries({
       definition: options.definition,
-      rows,
-      options: entries,
-      facetCounts: (shouldHydrate.value ? facetCounts.value : []).flatMap((entry) =>
-        isPrimitiveFilterOptionValue(entry.value)
-          ? [{
-              value: entry.value,
-              count: entry.count,
-            }]
-          : [],
-      ),
+      rows: [],
+      options: hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value,
+      facetCounts: [],
       selectedValues: selectedValues.value,
-      deriveCounts: shouldHydrate.value && canMergeFacetCounts.value,
-    })
-  })
+      deriveCounts: false,
+    }),
+  )
 
-  const sourceEntries = computed(() => flattenFilterOptionEntries(sourceTreeEntries.value))
+  const countTreeEntries = shallowRef<TableResolvedFilterOptionEntry[] | null>(null)
+  const countStatus = ref<'idle' | 'loading' | 'ready'>('idle')
+  let countJobId = 0
+
+  function resolveFacetCountEntries() {
+    return facetCounts.value.flatMap((entry) =>
+      isPrimitiveFilterOptionValue(entry.value)
+        ? [{
+            value: entry.value,
+            count: entry.count,
+          }]
+        : [],
+    )
+  }
+
+  function invalidateCountCache() {
+    countTreeEntries.value = null
+    countStatus.value = 'idle'
+  }
+
+  function scheduleCountResolution() {
+    countJobId += 1
+
+    if (!shouldResolveCounts.value) return
+    if (countTreeEntries.value) {
+      countStatus.value = 'ready'
+      return
+    }
+
+    const jobId = countJobId
+    countStatus.value = 'loading'
+
+    const run = () => {
+      if (jobId !== countJobId) return
+
+      countTreeEntries.value = resolveFilterOptionEntries({
+        definition: options.definition,
+        rows: sourceRows.value,
+        options: hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value,
+        facetCounts: resolveFacetCountEntries(),
+        selectedValues: selectedValues.value,
+        deriveCounts: canMergeFacetCounts.value,
+      })
+      countStatus.value = 'ready'
+    }
+
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+      queueMicrotask(run)
+      return
+    }
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(run)
+    })
+  }
+
+  watch(
+    [sourceRows, staticEntries, remoteEntries, facetCounts, canMergeFacetCounts, selectedValueKey],
+    invalidateCountCache,
+  )
+
+  watch(
+    [shouldResolveCounts, sourceRows, staticEntries, remoteEntries, facetCounts, canMergeFacetCounts, selectedValueKey],
+    scheduleCountResolution,
+    { immediate: true },
+  )
+
+  const resolvedSourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() =>
+    countTreeEntries.value ?? baseSourceTreeEntries.value,
+  )
+  const sourceEntries = computed(() => flattenFilterOptionEntries(resolvedSourceTreeEntries.value))
   const selectableSourceEntries = computed(() =>
     sourceEntries.value.filter(
       (entry): entry is TableResolvedFilterOptionEntry & { value: string | number | boolean } =>
@@ -246,30 +312,30 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const filteredTreeState = computed(() => {
     if (optionUi.value?.presentation !== 'tree') {
       return {
-        entries: sourceTreeEntries.value,
+        entries: resolvedSourceTreeEntries.value,
         expandedIds: [] as string[],
       }
     }
 
     if (!normalizedSearch.value.length) {
       return {
-        entries: sourceTreeEntries.value,
+        entries: resolvedSourceTreeEntries.value,
         expandedIds: optionUi.value.tree.expandedByDefault
-          ? collectFilterOptionBranchIds(sourceTreeEntries.value)
+          ? collectFilterOptionBranchIds(resolvedSourceTreeEntries.value)
           : [],
       }
     }
 
     if (resolvedTreeSearchMode.value === 'local') {
       return filterFilterOptionTree({
-        entries: sourceTreeEntries.value,
+        entries: resolvedSourceTreeEntries.value,
         search: normalizedSearch.value,
       })
     }
 
     return {
-      entries: sourceTreeEntries.value,
-      expandedIds: collectFilterOptionBranchIds(sourceTreeEntries.value),
+      entries: resolvedSourceTreeEntries.value,
+      expandedIds: collectFilterOptionBranchIds(resolvedSourceTreeEntries.value),
     }
   })
 
@@ -289,22 +355,24 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   })
 
   const isInitialLoading = computed(
-    () =>
-      (optionQuery.isLoading.value && !optionQuery.isPlaceholderData.value) ||
-      (facetQuery.isLoading.value && !facetQuery.isPlaceholderData.value),
+    () => optionQuery.isLoading.value && !optionQuery.isPlaceholderData.value,
   )
   const isStaleLoading = computed(
-    () => !isInitialLoading.value && (optionQuery.isFetching.value || facetQuery.isFetching.value),
+    () => !isInitialLoading.value && optionQuery.isFetching.value,
+  )
+  const isCountLoading = computed(
+    () => countStatus.value === 'loading' || (shouldResolveCounts.value && facetQuery.isFetching.value),
   )
 
   return {
     sourceEntries: selectableSourceEntries,
-    sourceTreeEntries,
+    sourceTreeEntries: resolvedSourceTreeEntries,
     filteredEntries,
     filteredTreeEntries: computed(() => filteredTreeState.value.entries),
     searchExpandedIds: computed(() => filteredTreeState.value.expandedIds),
     facetCounts,
     isLoading: isInitialLoading,
+    isCountLoading,
     isStaleLoading,
     isError: computed(() => optionQuery.isError.value || facetQuery.isError.value),
     error: computed(() => optionQuery.error.value ?? facetQuery.error.value),
