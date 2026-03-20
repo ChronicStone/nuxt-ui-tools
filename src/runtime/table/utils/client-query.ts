@@ -1,5 +1,8 @@
 import { isArray, isDate, isObject, isString } from '../../shared'
 import type {
+  TableFacetExecutionResult,
+  TableFacetOptionResult,
+  TableFacetRequestDescriptor,
   GenericObject,
   TableResolvedFilterCondition,
   TableResolvedFilterGroup,
@@ -35,6 +38,28 @@ export function executeClientQuery<
     rows: sortedRows,
     pagination: params.request.pagination,
   })
+}
+
+export interface TableClientFacetParams<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+> {
+  rows: Iterable<TRow>
+  request: TableSourceRequestContext<TRow, TContext>
+  facets: TableFacetRequestDescriptor<string>[]
+}
+
+export function executeClientFacets<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+>(params: TableClientFacetParams<TRow, TContext>): TableFacetExecutionResult<string> {
+  return {
+    facets: params.facets.map((facet) => resolveClientFacet({
+      rows: params.rows,
+      request: params.request,
+      facet,
+    })),
+  }
 }
 
 export function filterClientRows<TRow extends GenericObject>(params: {
@@ -73,6 +98,44 @@ function* lazyFilterRows<TRow extends GenericObject>(
     if (matchesSearch(row, params.search) && matchesFilterNode(row, params.filters)) {
       yield row
     }
+  }
+}
+
+function resolveClientFacet<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+>(options: {
+  rows: Iterable<TRow>
+  request: TableSourceRequestContext<TRow, TContext>
+  facet: TableFacetRequestDescriptor<string>
+}) {
+  const matchingRows = lazyFilterRows(options.rows, {
+    filters: options.facet.mode === 'include-self'
+      ? options.request.filters
+      : removeFilterKeyFromGroup({
+          group: options.request.filters,
+          key: options.facet.key,
+        }),
+    search: options.request.search,
+  })
+  const counts = countFacetOptions({
+    rows: matchingRows,
+    key: options.facet.key,
+    search: options.facet.search,
+  })
+  const start = resolveFacetOffset(options.facet.cursor)
+  const limited = options.facet.limit
+    ? counts.slice(start, start + options.facet.limit)
+    : counts.slice(start)
+
+  return {
+    key: options.facet.key,
+    options: limited,
+    nextCursor:
+      options.facet.limit && start + options.facet.limit < counts.length
+        ? String(start + options.facet.limit)
+        : null,
+    total: counts.length,
   }
 }
 
@@ -273,6 +336,87 @@ function paginateRows<TRow extends GenericObject>(
     rows: collected,
     rowCount: index + remaining,
   }
+}
+
+function removeFilterKeyFromGroup(options: {
+  group: TableResolvedFilterGroup<string>
+  key: string
+}): TableResolvedFilterGroup<string> {
+  const children: TableResolvedFilterNode<string>[] = []
+
+  for (const child of options.group.children) {
+    if (child.type === 'condition') {
+      if (child.key !== options.key) children.push(child)
+      continue
+    }
+
+    const nextGroup = removeFilterKeyFromGroup({
+      group: child,
+      key: options.key,
+    })
+    if (nextGroup.children.length) children.push(nextGroup)
+  }
+
+  return {
+    ...options.group,
+    children,
+  }
+}
+
+function countFacetOptions<TRow extends GenericObject>(options: {
+  rows: Iterable<TRow>
+  key: string
+  search?: string
+}) {
+  const countByValue = new Map<string, TableFacetOptionResult<string | number | boolean>>()
+  const normalizedSearch = options.search?.trim().toLocaleLowerCase() ?? ''
+
+  for (const row of options.rows) {
+    const seenInRow = new Set<string>()
+
+    for (const value of toValueList(getFilterTargetValue({ source: row, key: options.key }))) {
+      if (
+        typeof value !== 'string' &&
+        typeof value !== 'number' &&
+        typeof value !== 'boolean'
+      ) continue
+
+      const searchValue = String(value).toLocaleLowerCase()
+      if (normalizedSearch.length && !searchValue.includes(normalizedSearch)) continue
+
+      const mapKey = `${typeof value}:${String(value)}`
+      if (seenInRow.has(mapKey)) continue
+
+      seenInRow.add(mapKey)
+      const current = countByValue.get(mapKey)
+      if (current) {
+        current.count += 1
+        continue
+      }
+
+      countByValue.set(mapKey, {
+        value,
+        count: 1,
+      })
+    }
+  }
+
+  return [...countByValue.values()].sort(compareFacetOptions)
+}
+
+function compareFacetOptions(
+  left: TableFacetOptionResult<string | number | boolean>,
+  right: TableFacetOptionResult<string | number | boolean>,
+) {
+  if (left.count !== right.count) return right.count - left.count
+  return compareUnknownValues({ left: left.value, right: right.value })
+}
+
+function resolveFacetOffset(cursor?: string | null) {
+  if (!cursor) return 0
+
+  const value = Number(cursor)
+  return Number.isFinite(value) && value > 0 ? value : 0
 }
 
 function matchesFilterNode<TRow extends GenericObject>(

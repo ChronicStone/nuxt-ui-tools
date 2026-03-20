@@ -79,6 +79,7 @@ const clientSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         source: {
+          facet: 'exclude-self',
           options: countryTreeOptions,
         },
         editor: {
@@ -105,6 +106,7 @@ const clientSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         source: {
+          facet: 'exclude-self',
           options: skillOptions.map((value) => ({
             label: value,
             value,
@@ -125,6 +127,7 @@ const clientSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         source: {
+          facet: 'exclude-self',
           options: skillTreeOptions,
         },
         editor: {
@@ -154,6 +157,7 @@ const clientSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         source: {
+          facet: 'exclude-self',
           options: departmentOptions.map((value) => ({
             label: value,
             value,
@@ -170,6 +174,9 @@ const clientSchema = defineTableSchema({
         label: 'Active',
         display: {
           location: 'panel md:tag',
+        },
+        source: {
+          facet: 'exclude-self',
         },
         editor: {
           labels: {

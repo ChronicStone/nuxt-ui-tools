@@ -5,11 +5,18 @@ import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
   GenericObject,
   TableExternalState,
+  TableFacetExecutionResult,
+  TableFacetRequestDescriptor,
   TableQueryDefinition,
   TableSchemaView,
   TableSourceRequestContext,
 } from '../types'
-import { filterClientRows, paginateClientRows, sortClientRows } from '../utils'
+import {
+  executeClientFacets,
+  filterClientRows,
+  paginateClientRows,
+  sortClientRows,
+} from '../utils'
 import type { useTableState } from './use-table-state'
 
 export interface UseTableDataParams {
@@ -27,6 +34,7 @@ export interface UseTableDataReturn {
   query: ReturnType<typeof useQuery>
   rawData: ComputedRef<TableExternalState>
   data: ComputedRef<TableExternalState>
+  facets: ComputedRef<TableFacetExecutionResult<string>>
   error: ComputedRef<unknown>
   status: ComputedRef<{
     initialized: boolean
@@ -179,6 +187,28 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     return paginateClientRows({
       rows: clientSortedRows.value,
       pagination: requestPagination.value,
+    })
+  })
+  const clientFacetDescriptors = computed<TableFacetRequestDescriptor<string>[]>(() =>
+    (params.schema.value.filters?.ui ?? []).flatMap((definition) => {
+      if (definition.kind !== 'option' && definition.kind !== 'boolean') return []
+      if (!definition.source?.facet) return []
+
+      return [{
+        key: definition.key,
+        mode: definition.source.facet === true ? 'exclude-self' : definition.source.facet,
+      }]
+    }),
+  )
+  const facets = computed<TableFacetExecutionResult<string>>(() => {
+    if (params.schema.value.source.mode !== 'client') {
+      return { facets: [] }
+    }
+
+    return executeClientFacets({
+      rows: rawData.value.rows,
+      request: requestContext.value,
+      facets: clientFacetDescriptors.value,
     })
   })
 
@@ -335,6 +365,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     query,
     rawData,
     data,
+    facets,
     error,
     status,
     refreshContext,

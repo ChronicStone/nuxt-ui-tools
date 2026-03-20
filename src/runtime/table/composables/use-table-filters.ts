@@ -40,11 +40,6 @@ export function useTableFilters(params: UseTableFiltersParams) {
     () => params.state.queryState.filters.value.ui ?? [],
   )
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
-  const rows = computed(() =>
-    params.schema.value.source.mode === 'client'
-      ? (params.queryContent.rawData.value.rows ?? [])
-      : (params.queryContent.data.value.rows ?? []),
-  )
 
   function getDefinition(input: { key: string }) {
     return definitions.value.find(
@@ -76,11 +71,11 @@ export function useTableFilters(params: UseTableFiltersParams) {
 
     return flattenFilterOptionEntries(resolveFilterOptionEntries({
       definition,
-      rows: rows.value,
+      rows: [],
       options: input.entries,
       facetCounts: input.facetCounts,
       selectedValues,
-      deriveCounts: params.schema.value.source.mode !== 'remote',
+      deriveCounts: false,
     })).filter(
       (entry): entry is typeof entry & { value: string | number | boolean } => entry.value != null,
     )

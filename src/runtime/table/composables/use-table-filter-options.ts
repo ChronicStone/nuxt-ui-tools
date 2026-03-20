@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/vue-query'
-import { computed, ref, shallowRef, unref, watch, type ComputedRef, type Ref } from 'vue'
+import { computed, unref, type ComputedRef, type Ref } from 'vue'
 
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
@@ -25,10 +25,6 @@ import {
 import type { UseTableDataReturn } from './use-table-data'
 import type { useTableFilters } from './use-table-filters'
 
-const FILTER_OPTION_COUNT_CACHE = new Map<string, TableResolvedFilterOptionEntry[]>()
-const FILTER_OPTION_CACHE_IDS = new WeakMap<object, number>()
-let filterOptionCacheId = 0
-
 function resolveFacetMode(options: { facet: TableFilterFacetMode | undefined }) {
   if (!options.facet) return undefined
   if (options.facet === true) return 'exclude-self'
@@ -41,7 +37,7 @@ export interface UseTableFilterOptionsParams {
   active?: Ref<boolean>
   ready?: Ref<boolean>
   filters: ReturnType<typeof useTableFilters>
-  queryContent: Pick<UseTableDataReturn, 'rawData' | 'data' | 'requestContext'>
+  queryContent: Pick<UseTableDataReturn, 'facets' | 'requestContext'>
   schema: ComputedRef<TableSchemaView>
 }
 
@@ -81,11 +77,12 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   )
   const usesFacetCounts = computed(
     () =>
-      isRemoteTable.value &&
       Boolean(options.definition.source?.facet) &&
-      typeof remoteSource.value?.facets === 'function',
+      (
+        (isRemoteTable.value && typeof remoteSource.value?.facets === 'function')
+        || options.schema.value.source.mode === 'client'
+      ),
   )
-  const canMergeFacetCounts = computed(() => !isRemoteTable.value || usesFacetCounts.value)
   const resolvedTreeSearchMode = computed(() => {
     if (optionUi.value?.presentation !== 'tree')
       return hasRemoteOptionQuery.value ? 'remote' : 'local'
@@ -113,12 +110,6 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       filters: options.filters,
       key: options.definition.key,
     }),
-  )
-  const selectedValueKey = computed(() => selectedValues.value.map(String).join('|'))
-  const sourceRows = computed(() =>
-    options.schema.value.source.mode === 'client'
-      ? (options.queryContent.rawData.value.rows ?? [])
-      : (options.queryContent.data.value.rows ?? []),
   )
 
   const optionQuery = useQuery<TableFilterOptionEntry[] | TableFilterOptionQueryResult>(
@@ -168,7 +159,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
   const facetQuery = useQuery<TableFacetExecutionResult>(
     computed(() => {
-      if (!usesFacetCounts.value) {
+      if (!isRemoteTable.value || !usesFacetCounts.value) {
         return {
           queryKey: ['table-filter-facets', options.definition.key, 'disabled'],
           queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult,
@@ -222,104 +213,29 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const facetCounts = computed<TableFacetOptionResult[]>(() => {
     if (!usesFacetCounts.value) return []
 
-    const facets = unref(facetQuery.data)?.facets ?? []
+    const facets = isRemoteTable.value
+      ? (unref(facetQuery.data)?.facets ?? [])
+      : options.queryContent.facets.value.facets
+
     return facets.find((facet: { key: string }) => facet.key === options.definition.key)?.options ?? []
   })
 
-  const baseSourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() =>
+  const resolvedFacetCounts = computed(() =>
+    facetCounts.value.flatMap((entry) =>
+      isPrimitiveFilterOptionValue(entry.value)
+        ? [{ value: entry.value, count: entry.count }]
+        : [],
+    ),
+  )
+  const resolvedSourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() =>
     resolveFilterOptionEntries({
       definition: options.definition,
       rows: [],
       options: hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value,
-      facetCounts: [],
+      facetCounts: shouldResolveCounts.value ? resolvedFacetCounts.value : [],
       selectedValues: selectedValues.value,
       deriveCounts: false,
     }),
-  )
-
-  const countTreeEntries = shallowRef<TableResolvedFilterOptionEntry[] | null>(null)
-  const countStatus = ref<'idle' | 'loading' | 'ready'>('idle')
-  let countJobId = 0
-  const countCacheKey = computed(() =>
-    [
-      options.definition.key,
-      selectedValueKey.value,
-      canMergeFacetCounts.value ? 'merge' : 'no-merge',
-      shouldDeriveCounts.value ? 'counts' : 'no-counts',
-      getCacheIdentity(sourceRows.value),
-      getCacheIdentity(options.definition.kind === 'option' ? options.definition.source?.options : undefined),
-      getCacheIdentity(unref(optionQuery.data)),
-      getCacheIdentity(unref(facetQuery.data)),
-    ].join(':'),
-  )
-
-  function resolveFacetCountEntries() {
-    return facetCounts.value.flatMap((entry) =>
-      isPrimitiveFilterOptionValue(entry.value)
-        ? [{
-            value: entry.value,
-            count: entry.count,
-          }]
-        : [],
-    )
-  }
-
-  function invalidateCountCache() {
-    const cached = FILTER_OPTION_COUNT_CACHE.get(countCacheKey.value) ?? null
-    countTreeEntries.value = cached
-    countStatus.value = cached ? 'ready' : 'idle'
-  }
-
-  function scheduleCountResolution() {
-    countJobId += 1
-
-    if (!shouldResolveCounts.value) return
-    if (countTreeEntries.value) {
-      countStatus.value = 'ready'
-      return
-    }
-
-    const jobId = countJobId
-    countStatus.value = 'loading'
-
-    const run = () => {
-      if (jobId !== countJobId) return
-
-      countTreeEntries.value = resolveFilterOptionEntries({
-        definition: options.definition,
-        rows: sourceRows.value,
-        options: hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value,
-        facetCounts: resolveFacetCountEntries(),
-        selectedValues: selectedValues.value,
-        deriveCounts: canMergeFacetCounts.value,
-      })
-      FILTER_OPTION_COUNT_CACHE.set(countCacheKey.value, countTreeEntries.value)
-      countStatus.value = 'ready'
-    }
-
-    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
-      queueMicrotask(run)
-      return
-    }
-
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(run)
-    })
-  }
-
-  watch(
-    [sourceRows, staticEntries, remoteEntries, facetCounts, canMergeFacetCounts, selectedValueKey],
-    invalidateCountCache,
-  )
-
-  watch(
-    [shouldResolveCounts, sourceRows, staticEntries, remoteEntries, facetCounts, canMergeFacetCounts, selectedValueKey],
-    scheduleCountResolution,
-    { immediate: true },
-  )
-
-  const resolvedSourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() =>
-    countTreeEntries.value ?? baseSourceTreeEntries.value,
   )
   const sourceEntries = computed(() => flattenFilterOptionEntries(resolvedSourceTreeEntries.value))
   const selectableSourceEntries = computed(() =>
@@ -381,7 +297,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     () => !isInitialLoading.value && optionQuery.isFetching.value,
   )
   const isCountLoading = computed(
-    () => countStatus.value === 'loading' || (shouldResolveCounts.value && facetQuery.isFetching.value),
+    () => isRemoteTable.value && shouldResolveCounts.value && facetQuery.isFetching.value,
   )
 
   return {
@@ -398,17 +314,6 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     error: computed(() => optionQuery.error.value ?? facetQuery.error.value),
     refresh: () => Promise.all([optionQuery.refetch(), facetQuery.refetch()]),
   }
-}
-
-function getCacheIdentity(value: unknown) {
-  if (typeof value !== 'object' || value === null) return 'null'
-
-  const cached = FILTER_OPTION_CACHE_IDS.get(value)
-  if (cached) return String(cached)
-
-  filterOptionCacheId += 1
-  FILTER_OPTION_CACHE_IDS.set(value, filterOptionCacheId)
-  return String(filterOptionCacheId)
 }
 
 function getSelectedValues(options: {
