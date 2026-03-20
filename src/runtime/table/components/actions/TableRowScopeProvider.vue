@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
 import {
   provideTableRowActionScope,
   type TableInjectedRowActionScope,
@@ -10,7 +8,7 @@ const props = defineProps<{
   scope: TableInjectedRowActionScope
 }>()
 
-provideTableRowActionScope(computed(() => props.scope))
+provideTableRowActionScope(props.scope)
 </script>
 
 <template>

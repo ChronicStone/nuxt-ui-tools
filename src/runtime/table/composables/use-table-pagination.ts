@@ -45,9 +45,11 @@ export function useTablePagination(options: UseTablePaginationParams) {
   })
 
   function setPage(page: number) {
+    const nextPage = Math.max(1, Math.min(page, totalPages.value))
+
     options.state.queryState.pagination.value = {
       ...options.state.queryState.pagination.value,
-      pageIndex: Math.max(1, Math.min(page, totalPages.value)),
+      pageIndex: nextPage,
     }
   }
 
@@ -80,6 +82,7 @@ export function useTablePagination(options: UseTablePaginationParams) {
     ([optionsList, nextPageSize]) => {
       if (optionsList.includes(pageSize.value)) return
       if (nextPageSize === pageSize.value) return
+
       setPageSize(nextPageSize)
     },
     { immediate: true },

@@ -21,14 +21,45 @@ export function executeClientQuery<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
 >(params: TableClientQueryParams<TRow, TContext>): TableSourceExecutionResult<TRow> {
-  let result = lazyFilterRows(params.rows, {
+  const filteredRows = filterClientRows({
+    rows: params.rows,
     filters: params.request.filters,
     search: params.request.search,
   })
+  const sortedRows = sortClientRows({
+    rows: filteredRows,
+    sorting: params.request.sorting,
+  })
 
-  result = lazySortRows(result, params.request.sorting)
+  return paginateClientRows({
+    rows: sortedRows,
+    pagination: params.request.pagination,
+  })
+}
 
-  return paginateRows(result, params.request.pagination)
+export function filterClientRows<TRow extends GenericObject>(params: {
+  rows: Iterable<TRow>
+  filters: TableResolvedFilterGroup<string>
+  search: TableSourceRequestContext<TRow>['search']
+}) {
+  return [...lazyFilterRows(params.rows, {
+    filters: params.filters,
+    search: params.search,
+  })]
+}
+
+export function sortClientRows<TRow extends GenericObject>(params: {
+  rows: Iterable<TRow>
+  sorting: TableSortingRule[]
+}) {
+  return [...lazySortRows(params.rows, params.sorting)]
+}
+
+export function paginateClientRows<TRow extends GenericObject>(params: {
+  rows: Iterable<TRow>
+  pagination: TableSourceRequestContext<TRow>['pagination']
+}) {
+  return paginateRows(params.rows, params.pagination)
 }
 
 function* lazyFilterRows<TRow extends GenericObject>(
@@ -143,10 +174,7 @@ function* lazySortRows<TRow extends GenericObject>(
 
   while (buffer.length < 1000) {
     const next = iterator.next()
-    if (next.done) {
-      break
-    }
-
+    if (next.done) break
     buffer.push(next.value)
   }
 
@@ -159,9 +187,7 @@ function* lazySortRows<TRow extends GenericObject>(
 
     while (buffer.length < cursor + 1000) {
       const next = iterator.next()
-      if (next.done) {
-        break
-      }
+      if (next.done) break
 
       const insertIndex = findInsertIndex({
         rows: buffer,
@@ -185,9 +211,7 @@ function createRowComparator<TRow extends GenericObject>(
         right: getFilterTargetValue({ source: right, key: rule.key }),
       })
 
-      if (comparison !== 0) {
-        return comparison * direction
-      }
+      if (comparison !== 0) return comparison * direction
     }
 
     return 0

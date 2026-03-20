@@ -9,7 +9,7 @@ import type {
   TableSchemaView,
   TableSourceRequestContext,
 } from '../types'
-import { executeClientQuery } from '../utils'
+import { filterClientRows, paginateClientRows, sortClientRows } from '../utils'
 import type { useTableState } from './use-table-state'
 
 export interface UseTableDataParams {
@@ -106,15 +106,21 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       !contextItems.value.length || contextResults.value.every((item) => Boolean(item.isSuccess)),
   )
 
+  const requestPagination = computed(() => params.state.queryState.pagination.value)
+  const requestSorting = computed(() =>
+    params.state.queryState.sorting.value ? [params.state.queryState.sorting.value] : [],
+  )
+  const requestFilters = computed(() => params.state.resolvedFilterState.value)
+  const requestSearch = computed(() => ({
+    value: params.state.queryState.filters.value.search,
+    fields: params.schema.value.filters?.search?.fields ?? [],
+  }))
   const requestContext = computed<TableSourceRequestContext>(() => ({
     context: contextData.value as TableSourceRequestContext['context'],
-    pagination: params.state.queryState.pagination.value,
-    sorting: params.state.queryState.sorting.value ? [params.state.queryState.sorting.value] : [],
-    filters: params.state.resolvedFilterState.value,
-    search: {
-      value: params.state.queryState.filters.value.search,
-      fields: params.schema.value.filters?.search?.fields ?? [],
-    },
+    pagination: requestPagination.value,
+    sorting: requestSorting.value,
+    filters: requestFilters.value,
+    search: requestSearch.value,
   }))
 
   const searchParams = requestContext
@@ -149,14 +155,32 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     rowCount: 0,
   })
 
-  const dataState = shallowRef<TableExternalState>({
-    rows: [],
-    rowCount: 0,
-  })
-
   const rawData = computed<TableExternalState>(() => rawDataState.value)
+  const clientFilteredRows = computed(() => {
+    if (params.schema.value.source.mode !== 'client') return rawData.value.rows
 
-  const data = computed<TableExternalState>(() => dataState.value)
+    return filterClientRows({
+      rows: rawData.value.rows,
+      filters: requestFilters.value,
+      search: requestSearch.value,
+    })
+  })
+  const clientSortedRows = computed(() => {
+    if (params.schema.value.source.mode !== 'client') return clientFilteredRows.value
+
+    return sortClientRows({
+      rows: clientFilteredRows.value,
+      sorting: requestSorting.value,
+    })
+  })
+  const data = computed<TableExternalState>(() => {
+    if (params.schema.value.source.mode !== 'client') return rawData.value
+
+    return paginateClientRows({
+      rows: clientSortedRows.value,
+      pagination: requestPagination.value,
+    })
+  })
 
   const pageContextItems = computed(() =>
     (params.schema.value.pageContext ?? []).filter((item) => item?.condition?.() ?? true),
@@ -268,31 +292,6 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       if (sameExternalState(rawDataState.value, normalized)) return
 
       rawDataState.value = normalized
-    },
-    { immediate: true },
-  )
-
-  watch(
-    () => ({
-      mode: params.schema.value.source.mode,
-      rawRows: rawData.value.rows,
-      pageIndex: requestContext.value.pagination.pageIndex,
-      pageSize: requestContext.value.pagination.pageSize,
-      sorting: requestContext.value.sorting,
-      filters: requestContext.value.filters,
-      searchValue: requestContext.value.search.value,
-      searchFields: requestContext.value.search.fields,
-    }),
-    (next) => {
-      const resolved = next.mode === 'client'
-        ? executeClientQuery({
-            rows: next.rawRows,
-            request: requestContext.value,
-          })
-        : rawData.value
-
-      if (sameExternalState(dataState.value, resolved)) return
-      dataState.value = resolved
     },
     { immediate: true },
   )
@@ -409,7 +408,10 @@ function mergeRowsByKey(options: {
   rowKey: TableSchemaView['rowKey']
 }) {
   const replacements = new Map(
-    options.nextRows.map((row, index) => [resolveRowIdentity({ rowKey: options.rowKey, row, index }), row]),
+    options.nextRows.map((row, index) => [
+      resolveRowIdentity({ rowKey: options.rowKey, row, index }),
+      row,
+    ]),
   )
 
   return options.currentRows.map((row, index) => {
