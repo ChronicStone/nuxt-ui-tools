@@ -42,6 +42,8 @@ export type PaginationConfig = {
 
 export type TablePaginationSchema = PaginationConfig
 
+export type TableGridMode = 'flow' | 'contained'
+
 export interface TableGridSchema<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
@@ -49,6 +51,7 @@ export interface TableGridSchema<
   TSortKey extends string = TableSortKey<TRow>,
 > {
   enabled?: boolean | string | (() => boolean | string)
+  mode?: TableGridMode
   renderItem?: (params: TableRowRenderParams<TRow, TContext, TPageContext>) => unknown
   renderSkeleton?: (params: { layout?: 'grid' }) => unknown
   gridSize?: number | string | (() => number | string)

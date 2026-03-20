@@ -1,6 +1,6 @@
 import type { SplitLitteral } from './utils'
 
-export type ResponsiveValueInput = string | number | boolean
+export type ResponsiveValueInput = string | number | boolean | (() => ResponsiveValueInput)
 
 export type ResponsiveTransformKey =
   | 'string'
@@ -37,4 +37,3 @@ export type ResponsiveTransformResult<TTransform> = TTransform extends Responsiv
     : TTransform extends 'integer' | 'float'
       ? number
       : string
-

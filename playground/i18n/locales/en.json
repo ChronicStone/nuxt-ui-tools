@@ -61,6 +61,27 @@
     "english": "English",
     "french": "French"
   },
+  "slideover": {
+    "close": "Close"
+  },
+  "selectMenu": {
+    "search": "Search...",
+    "noData": "No data",
+    "noMatch": "No matching data"
+  },
+  "table": {
+    "noData": "No data"
+  },
+  "inputNumber": {
+    "increment": "Increment",
+    "decrement": "Decrement"
+  },
+  "calendar": {
+    "nextMonth": "Next month",
+    "nextYear": "Next year",
+    "prevMonth": "Previous month",
+    "prevYear": "Previous year"
+  },
   "pages": {
     "overview": {
       "badge": "Overview",

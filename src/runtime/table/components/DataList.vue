@@ -27,6 +27,20 @@ const internals = useTableInternals()
 const tableHeight = computed(() => normalizeDimension(props.height ?? '36rem'))
 const titleText = computed(() => props.title ?? humanizeKey(props.table.schema.value.tableKey))
 const descriptionText = computed(() => props.description)
+const flowGridActive = computed(
+  () =>
+    internals.controls.tableLayout.value === 'grid' && internals.grid.mode.value === 'flow',
+)
+const contentShellClass = computed(() =>
+  flowGridActive.value
+    ? 'grid gap-5'
+    : 'overflow-hidden rounded-md border border-accented bg-default shadow-sm',
+)
+const footerClass = computed(() =>
+  flowGridActive.value
+    ? 'rounded-md border border-default/70 bg-default/80 shadow-sm backdrop-blur'
+    : '',
+)
 
 function normalizeDimension(value: string | number) {
   return typeof value === 'number' ? `${value}px` : value
@@ -66,7 +80,7 @@ function humanizeKey(value: string) {
       </template>
     </TableHeader>
 
-    <div class="overflow-hidden rounded-md border border-accented bg-default">
+    <div :class="contentShellClass">
       <Transition
         :name="
           internals.controls.tableLayout.value === 'grid' ? 'slide-fade' : 'slide-fade-reverse'
@@ -93,40 +107,41 @@ function humanizeKey(value: string) {
         </GridRenderer>
       </Transition>
 
-      <TableFooter />
+      <div :class="footerClass">
+        <TableFooter />
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 180ms ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 .slide-fade-enter-active,
 .slide-fade-leave-active,
 .slide-fade-reverse-enter-active,
 .slide-fade-reverse-leave-active {
   transition:
-    opacity 180ms ease,
-    transform 180ms ease;
+    opacity 240ms cubic-bezier(0.25, 1, 0.5, 1),
+    transform 240ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .slide-fade-enter-from,
 .slide-fade-reverse-leave-to {
   opacity: 0;
-  transform: translateY(4px);
+  transform: translateY(8px) scale(0.995);
 }
 
 .slide-fade-leave-to,
 .slide-fade-reverse-enter-from {
   opacity: 0;
-  transform: translateY(-4px);
+  transform: translateY(-6px) scale(0.995);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-fade-enter-active,
+  .slide-fade-leave-active,
+  .slide-fade-reverse-enter-active,
+  .slide-fade-reverse-leave-active {
+    transition-duration: 0.01ms;
+  }
 }
 </style>

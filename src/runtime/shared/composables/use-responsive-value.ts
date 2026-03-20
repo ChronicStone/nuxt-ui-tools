@@ -27,16 +27,17 @@ export function getResponsiveValue(
   value: ResponsiveValueInput,
   transform?: ResponsiveTransformKey | ResponsiveTransformer<unknown>,
 ): unknown | null {
+  const resolvedValue = unwrapResponsiveValue(value)
   const viewport = useCurrentViewport()
   const context = {
     breakpoint: viewport.breakpoint.value,
     breakpointKeys: getOrderedBreakpointKeys(viewport),
   }
 
-  if (typeof value !== 'string') return resolveResponsiveValueAtBreakpoint(value, context)
-  if (transform === undefined) return resolveResponsiveValueAtBreakpoint(value, context)
+  if (typeof resolvedValue !== 'string') return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
+  if (transform === undefined) return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
 
-  return resolveResponsiveValueAtBreakpoint(value, context, transform)
+  return resolveResponsiveValueAtBreakpoint(resolvedValue, context, transform)
 }
 
 export function useResponsiveValue<TValue extends ResponsiveValueInput>(
@@ -53,12 +54,22 @@ export function useResponsiveValue(
   transform?: ResponsiveTransformKey | ResponsiveTransformer<unknown>,
 ): ComputedRef<unknown | null> {
   return computed(() => {
-    const resolvedValue = toValue(value)
+    const resolvedValue = unwrapResponsiveValue(toValue(value))
     if (typeof resolvedValue !== 'string') return getResponsiveValue(resolvedValue)
     if (transform === undefined) return getResponsiveValue(resolvedValue)
 
     return getResponsiveValue(resolvedValue, transform)
   })
+}
+
+function unwrapResponsiveValue(value: ResponsiveValueInput): string | number | boolean {
+  let currentValue = value
+
+  while (typeof currentValue === 'function') {
+    currentValue = currentValue()
+  }
+
+  return currentValue
 }
 
 function useCurrentViewport(): ViewportLike {

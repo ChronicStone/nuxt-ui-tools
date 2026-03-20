@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/vue-query'
-import { computed, unref, type ComputedRef, type Ref } from 'vue'
+import { computed, toValue, unref, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
 
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
@@ -34,6 +34,7 @@ function resolveFacetMode(options: { facet: TableFilterFacetMode | undefined }) 
 export interface UseTableFilterOptionsParams {
   definition: TableOptionFilterDefinition | TableBooleanFilterDefinition
   searchQuery: Ref<string>
+  active?: MaybeRefOrGetter<boolean>
   filters: ReturnType<typeof useTableFilters>
   queryContent: UseTableDataReturn
   schema: ComputedRef<TableSchemaView>
@@ -44,6 +45,15 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     options.schema.value.source.mode === 'remote' ? options.schema.value.source : null,
   )
   const normalizedSearch = computed(() => options.searchQuery.value.trim())
+  const selectedValues = computed(() =>
+    getSelectedValues({
+      filters: options.filters,
+      key: options.definition.key,
+    }),
+  )
+  const shouldHydrate = computed(
+    () => Boolean(toValue(options.active)) || selectedValues.value.length > 0,
+  )
   const isBooleanFilter = computed(() => options.definition.kind === 'boolean')
   const optionDefinition = computed(() =>
     options.definition.kind === 'option' ? options.definition : undefined,
@@ -99,7 +109,12 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     computed(() => {
       const activeDefinition = optionDefinition.value
 
-      if (!hasRemoteOptionQuery.value || !activeDefinition || typeof activeDefinition.query !== 'function') {
+      if (
+        !shouldHydrate.value ||
+        !hasRemoteOptionQuery.value ||
+        !activeDefinition ||
+        typeof activeDefinition.query !== 'function'
+      ) {
         return {
           queryKey: ['table-filter-options', options.definition.key, 'disabled'],
           queryFn: async () => ({ options: [] }) as TableFilterOptionQueryResult,
@@ -138,7 +153,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
   const facetQuery = useQuery<TableFacetExecutionResult>(
     computed(() => {
-      if (!usesFacetCounts.value) {
+      if (!shouldHydrate.value || !usesFacetCounts.value) {
         return {
           queryKey: ['table-filter-facets', options.definition.key, 'disabled'],
           queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult,
@@ -197,14 +212,17 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
   const sourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() => {
     const entries = hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value
+    const rows = shouldHydrate.value
+      ? options.schema.value.source.mode === 'client'
+        ? (options.queryContent.rawData.value.rows ?? [])
+        : (options.queryContent.data.value.rows ?? [])
+      : []
 
     return resolveFilterOptionEntries({
       definition: options.definition,
-      rows: options.schema.value.source.mode === 'client'
-        ? (options.queryContent.rawData.value.rows ?? [])
-        : (options.queryContent.data.value.rows ?? []),
+      rows,
       options: entries,
-      facetCounts: facetCounts.value.flatMap((entry) =>
+      facetCounts: (shouldHydrate.value ? facetCounts.value : []).flatMap((entry) =>
         isPrimitiveFilterOptionValue(entry.value)
           ? [{
               value: entry.value,
@@ -212,11 +230,8 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
             }]
           : [],
       ),
-      selectedValues: getSelectedValues({
-        filters: options.filters,
-        key: options.definition.key,
-      }),
-      deriveCounts: canMergeFacetCounts.value,
+      selectedValues: selectedValues.value,
+      deriveCounts: shouldHydrate.value && canMergeFacetCounts.value,
     })
   })
 

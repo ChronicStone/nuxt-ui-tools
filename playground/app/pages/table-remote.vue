@@ -1,5 +1,6 @@
 <script setup lang="tsx">
 import UBadge from '@nuxt/ui/components/Badge.vue'
+import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import {
@@ -385,6 +386,90 @@ const remoteSchema = defineTableSchema({
   },
   grid: {
     enabled: true,
+    mode: 'contained',
+    gridSize: '1 md:2 xl:3',
+    renderItem: ({ row }) => {
+      const employee = row
+      const employeeSkills = employee.employeeSkills.map((entry) => entry.skill.label)
+      const departmentName = employee.department?.name ?? 'No department'
+      const companyName = employee.department?.company?.name ?? 'No company'
+      const countryName = employee.department?.company?.country ?? 'Unknown'
+      const salary = employee.salary ?? 0
+      const hiredAt = employee.hiredAt ?? new Date().toISOString()
+
+      return (
+        <UCard
+          class="rounded-md h-full"
+          ui={{
+            root: 'flex h-full flex-col',
+            header: 'p-4',
+            body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
+            footer: 'mt-auto p-4 pt-3',
+          }}
+          v-slots={{
+            header: () => (
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
+                    {getInitials(employee.fullName)}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="truncate font-medium text-highlighted">{employee.fullName}</div>
+                    <div class="mt-1 flex items-center gap-2 text-sm text-muted">
+                      <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
+                      <span class="truncate">{departmentName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <UBadge
+                  color={employee.isActive ? 'success' : 'neutral'}
+                  variant={employee.isActive ? 'soft' : 'subtle'}
+                  size="sm"
+                  label={employee.isActive ? 'Online' : 'Paused'}
+                />
+              </div>
+            ),
+            default: () => (
+              <>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                    <div class="text-xs text-muted">Country</div>
+                    <div class="flex items-center gap-2 text-sm font-medium text-highlighted">
+                      <span class="inline-flex h-4 w-4 items-center justify-center text-sm leading-none">
+                        {getCountryFlag(countryName)}
+                      </span>
+                      <span class="truncate">{countryName}</span>
+                    </div>
+                  </div>
+
+                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                    <div class="text-xs text-muted">Salary</div>
+                    <div class="text-sm font-medium text-highlighted">
+                      {formatCurrency(salary)}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  {employeeSkills.slice(0, 4).map((skill) => (
+                    <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={skill} />
+                  ))}
+                </div>
+              </>
+            ),
+            footer: () => (
+              <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
+                <div class="min-w-0 flex-1 truncate">
+                  {companyName}
+                </div>
+                <div class="shrink-0">{formatDate(hiredAt)}</div>
+              </div>
+            ),
+          }}
+        />
+      )
+    },
     defaultSorting: {
       key: 'fullName',
       dir: 'asc',

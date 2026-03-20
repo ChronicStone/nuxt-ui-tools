@@ -1,103 +1,25 @@
 <script setup lang="tsx">
+import { faker } from '@faker-js/faker'
 import UBadge from '@nuxt/ui/components/Badge.vue'
+import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import DataList from '#ui-tools/table/components/DataList.vue'
-import { defineTableSchema, useTable, type GenericObject, type TableFilterOptionEntry } from '#ui-tools/table'
-
-interface DemoClientCompany extends GenericObject {
-  id: string
-  name: string
-  country: string
-}
-
-interface DemoClientDepartment extends GenericObject {
-  id: string
-  name: string
-  company: DemoClientCompany
-}
-
-interface DemoClientRow extends GenericObject {
-  id: string
-  fullName: string
-  email: string
-  salary: number
-  isActive: boolean
-  hiredAt: string
-  department: DemoClientDepartment
-  skills: string[]
-  skillTaxonomy: string[]
-}
+import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
 
 const { classes } = usePlaygroundAppearance()
 
-const countryOptions = ['France', 'Germany', 'Japan', 'United Kingdom', 'United States'] as const
-const countryTreeOptions = [
-  {
-    label: 'Europe',
-    children: [
-      { label: 'France', value: 'France' },
-      { label: 'Germany', value: 'Germany' },
-      { label: 'United Kingdom', value: 'United Kingdom' },
-    ],
-  },
-  {
-    label: 'North America',
-    children: [
-      { label: 'United States', value: 'United States' },
-    ],
-  },
-  {
-    label: 'Asia',
-    children: [
-      { label: 'Japan', value: 'Japan' },
-    ],
-  },
-] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
-const skillTreeOptions = [
-  {
-    label: 'Engineering',
-    value: 'cat:engineering',
-    children: [
-      {
-        label: 'Application',
-        value: 'cat:application',
-        children: [
-          { label: 'TypeScript', value: 'skill:typescript' },
-        ],
-      },
-      {
-        label: 'Services',
-        value: 'cat:services',
-        children: [
-          { label: 'Go', value: 'skill:go' },
-        ],
-      },
-      {
-        label: 'Infrastructure',
-        value: 'cat:infrastructure',
-        children: [
-          { label: 'Kubernetes', value: 'skill:kubernetes' },
-          { label: 'Distributed Systems', value: 'skill:distributed-systems' },
-        ],
-      },
-      {
-        label: 'Security',
-        value: 'cat:security',
-        children: [
-          { label: 'Security', value: 'skill:security' },
-        ],
-      },
-    ],
-  },
-] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
-const departmentOptions = ['Engineering', 'Platform', 'Operations', 'Finance', 'Product'] as const
-const skillOptions = ['TypeScript', 'Go', 'Kubernetes', 'Security', 'Distributed Systems'] as const
-const companyNames = ['Northstar', 'Rivet', 'Monarch', 'Atlas', 'Helio'] as const
-const FIRST_NAMES = ['Ava', 'Luca', 'Emma', 'Noah', 'Mia', 'Leo', 'Iris', 'Milan']
-const LAST_NAMES = ['Martin', 'Dubois', 'Bernard', 'Garcia', 'Nguyen', 'Wright', 'Klein', 'Sato']
+const clientRows = createClientRows(5000)
+type DemoClientRow = (typeof clientRows)[number]
 
-const clientRows = createClientRows()
+const skillOptions = [...new Set(clientRows.flatMap(row => row.skills))].sort((left, right) =>
+  left.localeCompare(right),
+)
+const departmentOptions = [...new Set(clientRows.map(row => row.department.name))].sort((left, right) =>
+  left.localeCompare(right),
+)
+const countryTreeOptions = buildCountryTreeOptions(clientRows)
+const skillTreeOptions = buildSkillTreeOptions()
 
 const clientSchema = defineTableSchema({
   tableKey: 'demo-employees-client',
@@ -110,7 +32,7 @@ const clientSchema = defineTableSchema({
     },
     sizeOptions: {
       table: [10, 20, 50, 100, 500, 1000],
-      grid: [12, 24, 48],
+      grid: [12, 24, 48, 96, 144, 192, 240, 480],
     },
     showPageSizePicker: true,
     showPagesList: true,
@@ -120,7 +42,10 @@ const clientSchema = defineTableSchema({
     mode: 'client',
     query: () => ({
       queryKey: ['demo-employees-client'],
-      queryFn: async () => clientRows,
+      queryFn: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        return clientRows
+      },
     }),
   },
   filters: {
@@ -320,7 +245,7 @@ const clientSchema = defineTableSchema({
         minWidth: 260,
         pinned: 'left',
         render: ({ row }) => {
-          const employee = row as DemoClientRow
+          const employee = row
 
           return (
             <div class="flex min-w-0 items-center gap-3">
@@ -343,7 +268,7 @@ const clientSchema = defineTableSchema({
         icon: 'i-lucide-at-sign',
         minWidth: 280,
         render: ({ row }) => {
-          const employee = row as DemoClientRow
+          const employee = row
 
           return (
             <div class="min-w-0">
@@ -362,7 +287,7 @@ const clientSchema = defineTableSchema({
         sortableKey: 'fullName',
         minWidth: 230,
         render: ({ row }) => {
-          const employee = row as DemoClientRow
+          const employee = row
 
           return (
             <div class="flex flex-wrap gap-1.5">
@@ -425,6 +350,84 @@ const clientSchema = defineTableSchema({
   },
   grid: {
     enabled: true,
+    mode: 'flow',
+    gridSize: "1 md:2 lg:3 xl:4",
+    renderItem: ({ row }) => {
+      const employee = row
+
+      return (
+        <UCard
+          class="rounded-md h-full"
+          ui={{
+            root: 'flex h-full flex-col',
+            header: 'p-4',
+            body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
+            footer: 'mt-auto p-4 pt-3',
+          }}
+          v-slots={{
+            header: () => (
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
+                    {getInitials(employee.fullName)}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="truncate font-medium text-highlighted">{employee.fullName}</div>
+                    <div class="mt-1 flex items-center gap-2 text-sm text-muted">
+                      <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
+                      <span class="truncate">{employee.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <UBadge
+                  color={employee.isActive ? 'success' : 'neutral'}
+                  variant={employee.isActive ? 'soft' : 'subtle'}
+                  size="sm"
+                  label={employee.isActive ? 'Online' : 'Paused'}
+                />
+              </div>
+            ),
+            default: () => (
+              <>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                    <div class="text-xs text-muted">Company</div>
+                    <div class="truncate text-sm font-medium text-highlighted">
+                      {employee.department.company.name}
+                    </div>
+                  </div>
+
+                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                    <div class="text-xs text-muted">Salary</div>
+                    <div class="text-sm font-medium text-highlighted">
+                      {formatCurrency(employee.salary)}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  {employee.skills.slice(0, 4).map((skill) => (
+                    <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={skill} />
+                  ))}
+                </div>
+              </>
+            ),
+            footer: () => (
+              <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
+                <div class="flex min-w-0 flex-1 items-center gap-2">
+                  <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none">
+                    {getCountryFlag(employee.department.company.country)}
+                  </span>
+                  <span class="truncate">{employee.department.company.country}</span>
+                </div>
+                <div class="shrink-0">{formatDate(employee.hiredAt)}</div>
+              </div>
+            ),
+          }}
+        />
+      )
+    },
     defaultSorting: {
       key: 'fullName',
       dir: 'asc',
@@ -452,128 +455,135 @@ function shiftDays(value: Date, amount: number) {
   return next
 }
 
-
-
-function createClientRows() {
-  const random = createSeededRandom(42)
-
-  return Array.from({ length: 5000 }, (_, index) => {
-    const country = pickWeighted(random, [
-      ['United States', 0.3],
-      ['United Kingdom', 0.18],
-      ['Germany', 0.2],
-      ['France', 0.16],
-      ['Japan', 0.16],
-    ])
-    const department = pickWeighted(random, [
-      ['Engineering', 0.32],
-      ['Platform', 0.2],
-      ['Product', 0.18],
-      ['Operations', 0.18],
-      ['Finance', 0.12],
-    ])
-    const company = pickWeighted(random, [
-      ['Northstar', 0.28],
-      ['Atlas', 0.2],
-      ['Rivet', 0.2],
-      ['Helio', 0.18],
-      ['Monarch', 0.14],
-    ])
-    const firstName = pickOne(random, FIRST_NAMES, 'Ava')
-    const lastName = pickOne(random, LAST_NAMES, 'Martin')
-    const primarySkill = pickWeighted(random, [
-      ['TypeScript', 0.34],
-      ['Distributed Systems', 0.22],
-      ['Kubernetes', 0.18],
-      ['Go', 0.16],
-      ['Security', 0.1],
-    ])
-    const secondarySkill = pickOne(random, skillOptions.filter(skill => skill !== primarySkill), 'Go')
-    const tertiarySkill = random() > 0.42
-      ? pickOne(
-          random,
-          skillOptions.filter(skill => skill !== primarySkill && skill !== secondarySkill),
-          'Kubernetes',
-        )
-      : null
-    const skills = tertiarySkill == null
-      ? [primarySkill, secondarySkill]
-      : [primarySkill, secondarySkill, tertiarySkill]
-    const skillTaxonomy = [...new Set(skills.flatMap(getSkillTaxonomyValues))]
-    const salaryBaseByDepartment: Record<string, number> = {
-      Engineering: 118000,
-      Platform: 132000,
-      Product: 109000,
-      Operations: 92000,
-      Finance: 98000,
-    }
-    const salary = Math.round((salaryBaseByDepartment[department] ?? 100000) + random() * 42000 - 9000)
-    const hiredAt = new Date(
-      2019 + Math.floor(random() * 7),
-      Math.floor(random() * 12),
-      1 + Math.floor(random() * 27),
-    ).toISOString()
-    const isActive = random() > 0.17
-
-    return {
-      id: `client-${index + 1}`,
-      fullName: `${firstName} ${lastName}`,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-      salary,
-      isActive,
-      hiredAt,
-      department: {
-        id: `department-${department}`,
-        name: department,
-        company: {
-          id: `company-${company}`,
-          name: company,
-          country,
-        },
-      },
-      skills,
-      skillTaxonomy,
-    } satisfies DemoClientRow
-  })
-}
-
-function createSeededRandom(seed: number) {
-  let state = seed
-
-  return () => {
-    state = (state * 1664525 + 1013904223) % 4294967296
-    return state / 4294967296
-  }
-}
-
-function pickOne<TValue>(random: () => number, values: readonly TValue[], fallback: TValue) {
-  return values[Math.floor(random() * values.length)] ?? fallback
-}
-
-function pickWeighted<TValue extends string>(
-  random: () => number,
-  values: ReadonlyArray<readonly [TValue, number]>,
-) {
-  const threshold = random()
-  let cursor = 0
-
-  for (const [value, weight] of values) {
-    cursor += weight
-
-    if (threshold <= cursor) {
-      return value
-    }
-  }
-
-  return values.at(-1)?.[0] ?? values[0]?.[0] ?? '' as TValue
-}
-
 function getInitials(value: string) {
   return value
     .split(/\s+/)
     .slice(0, 2)
-    .map(part => part[0]?.toUpperCase() ?? '')
+    .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
+}
+
+
+
+function createClientRows(count: number) {
+  faker.seed(42)
+
+  const companies = [
+    { name: 'Northstar', country: 'United States', region: 'North America' },
+    { name: 'Atlas', country: 'Germany', region: 'Europe' },
+    { name: 'Rivet', country: 'United Kingdom', region: 'Europe' },
+    { name: 'Helio', country: 'Japan', region: 'Asia' },
+    { name: 'Monarch', country: 'France', region: 'Europe' },
+    { name: 'Vela', country: 'Canada', region: 'North America' },
+    { name: 'Kumo', country: 'Singapore', region: 'Asia' },
+    { name: 'Cinder', country: 'Spain', region: 'Europe' },
+  ] as const
+  const departments = [
+    'Engineering',
+    'Platform',
+    'Operations',
+    'Finance',
+    'Product',
+    'Design',
+    'Security',
+    'Data',
+    'Support',
+    'Growth',
+  ] as const
+  const skillCatalog = [
+    'TypeScript',
+    'Go',
+    'Kubernetes',
+    'Security',
+    'Distributed Systems',
+    'Rust',
+    'Python',
+    'GraphQL',
+    'PostgreSQL',
+    'Machine Learning',
+    'Design Systems',
+    'Observability',
+    'Terraform',
+    'Incident Response',
+    'Product Strategy',
+    'UX Research',
+  ] as const
+  const salaryBaseByDepartment = {
+    Engineering: 128000,
+    Platform: 142000,
+    Operations: 96000,
+    Finance: 104000,
+    Product: 118000,
+    Design: 110000,
+    Security: 145000,
+    Data: 136000,
+    Support: 82000,
+    Growth: 98000,
+  } as const
+
+  return Array.from({ length: count }, (_, index) => {
+    const company = faker.helpers.arrayElement(companies)
+    const department = faker.helpers.arrayElement(departments)
+    const fullName = faker.person.fullName()
+    const skillCount = faker.number.int({ min: 2, max: 5 })
+    const skills = faker.helpers.arrayElements(skillCatalog, skillCount)
+    const primarySkill = skills[0] ?? 'Generalist'
+    const yearsAtCompany = faker.number.int({ min: 0, max: 9 })
+    const salaryNoise = faker.number.int({ min: -14000, max: 52000 })
+    const salary = (salaryBaseByDepartment[department] ?? 100000) + salaryNoise
+    const hiredAt = faker.date
+      .between({
+        from: new Date(new Date().getFullYear() - 9, 0, 1),
+        to: new Date(),
+      })
+      .toISOString()
+    const isActive = faker.datatype.boolean({ probability: 0.8 })
+    const city = faker.location.city()
+
+    return {
+      id: `client-${index + 1}`,
+      fullName,
+      email: faker.internet.email({ firstName: fullName.split(' ')[0], lastName: fullName.split(' ').at(-1) }),
+      salary,
+      isActive,
+      hiredAt,
+      title: faker.person.jobTitle(),
+      bio: faker.person.bio(),
+      tenureYears: yearsAtCompany,
+      profileAccent: faker.color.rgb({ prefix: '#' }),
+      officeCity: city,
+      officeTimezone: faker.location.timeZone(),
+      employmentType: faker.helpers.arrayElement(['Full-time', 'Contract', 'Part-time'] as const),
+      workMode: faker.helpers.arrayElement(['Remote', 'Hybrid', 'On-site'] as const),
+      region: company.region,
+      department: {
+        id: faker.string.uuid(),
+        name: department,
+        budgetCode: faker.finance.accountNumber(6),
+        company: {
+          id: faker.string.uuid(),
+          name: company.name,
+          country: company.country,
+        },
+      },
+      skills,
+      skillTaxonomy: [...new Set(skills.flatMap(getSkillTaxonomyValues))],
+      highlights: faker.helpers.arrayElements(
+        [
+          'Mentors onboarding cohorts',
+          'Runs architecture reviews',
+          'Owns reliability rotations',
+          'Leads cross-functional planning',
+          'Keeps customer escalations calm',
+          'Improves release automation',
+          'Builds internal tooling',
+          'Shapes pricing experiments',
+        ] as const,
+        faker.number.int({ min: 1, max: 3 }),
+      ),
+      primarySkill,
+    }
+  })
 }
 
 function formatCurrency(value: number) {
@@ -599,9 +609,152 @@ function getSkillTaxonomyValues(skill: string) {
     Kubernetes: ['cat:engineering', 'cat:infrastructure', 'skill:kubernetes'],
     'Distributed Systems': ['cat:engineering', 'cat:infrastructure', 'skill:distributed-systems'],
     Security: ['cat:engineering', 'cat:security', 'skill:security'],
+    Rust: ['cat:engineering', 'cat:systems', 'skill:rust'],
+    Python: ['cat:data', 'cat:analysis', 'skill:python'],
+    GraphQL: ['cat:engineering', 'cat:application', 'skill:graphql'],
+    PostgreSQL: ['cat:data', 'cat:platform', 'skill:postgresql'],
+    'Machine Learning': ['cat:data', 'cat:intelligence', 'skill:machine-learning'],
+    'Design Systems': ['cat:design', 'cat:systems', 'skill:design-systems'],
+    Observability: ['cat:engineering', 'cat:reliability', 'skill:observability'],
+    Terraform: ['cat:engineering', 'cat:infrastructure', 'skill:terraform'],
+    'Incident Response': ['cat:engineering', 'cat:reliability', 'skill:incident-response'],
+    'Product Strategy': ['cat:product', 'cat:planning', 'skill:product-strategy'],
+    'UX Research': ['cat:design', 'cat:research', 'skill:ux-research'],
   }
 
   return entries[skill] ?? [skill]
+}
+
+function buildCountryTreeOptions(rows: DemoClientRow[]) {
+  const countriesByRegion = rows.reduce<Record<string, Set<string>>>((acc, row) => {
+    const region = row.region
+    const bucket = acc[region] ?? new Set<string>()
+    bucket.add(row.department.company.country)
+    return { ...acc, [region]: bucket }
+  }, {})
+
+  return Object.entries(countriesByRegion)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([region, countries]) => ({
+      label: region,
+      children: [...countries]
+        .sort((left, right) => left.localeCompare(right))
+        .map((country) => ({
+          label: country,
+          value: country,
+        })),
+    })) satisfies ReadonlyArray<TableFilterOptionEntry<string>>
+}
+
+function buildSkillTreeOptions() {
+  return [
+    {
+      label: 'Engineering',
+      value: 'cat:engineering',
+      children: [
+        {
+          label: 'Application',
+          value: 'cat:application',
+          children: [
+            { label: 'GraphQL', value: 'skill:graphql' },
+            { label: 'TypeScript', value: 'skill:typescript' },
+          ],
+        },
+        {
+          label: 'Infrastructure',
+          value: 'cat:infrastructure',
+          children: [
+            { label: 'Kubernetes', value: 'skill:kubernetes' },
+            { label: 'Terraform', value: 'skill:terraform' },
+            { label: 'Distributed Systems', value: 'skill:distributed-systems' },
+          ],
+        },
+        {
+          label: 'Reliability',
+          value: 'cat:reliability',
+          children: [
+            { label: 'Incident Response', value: 'skill:incident-response' },
+            { label: 'Observability', value: 'skill:observability' },
+          ],
+        },
+        {
+          label: 'Security',
+          value: 'cat:security',
+          children: [
+            { label: 'Security', value: 'skill:security' },
+          ],
+        },
+        {
+          label: 'Services',
+          value: 'cat:services',
+          children: [
+            { label: 'Go', value: 'skill:go' },
+            { label: 'Rust', value: 'skill:rust' },
+          ],
+        },
+      ],
+    },
+    {
+      label: 'Data',
+      value: 'cat:data',
+      children: [
+        {
+          label: 'Analysis',
+          value: 'cat:analysis',
+          children: [
+            { label: 'Python', value: 'skill:python' },
+          ],
+        },
+        {
+          label: 'Intelligence',
+          value: 'cat:intelligence',
+          children: [
+            { label: 'Machine Learning', value: 'skill:machine-learning' },
+          ],
+        },
+        {
+          label: 'Platform',
+          value: 'cat:platform',
+          children: [
+            { label: 'PostgreSQL', value: 'skill:postgresql' },
+          ],
+        },
+      ],
+    },
+    {
+      label: 'Design',
+      value: 'cat:design',
+      children: [
+        {
+          label: 'Research',
+          value: 'cat:research',
+          children: [
+            { label: 'UX Research', value: 'skill:ux-research' },
+          ],
+        },
+        {
+          label: 'Systems',
+          value: 'cat:systems',
+          children: [
+            { label: 'Design Systems', value: 'skill:design-systems' },
+          ],
+        },
+      ],
+    },
+    {
+      label: 'Product',
+      value: 'cat:product',
+      children: [
+        {
+          label: 'Planning',
+          value: 'cat:planning',
+          children: [
+            { label: 'Product Strategy', value: 'skill:product-strategy' },
+          ],
+        },
+      ],
+    },
+  ] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
 }
 
 function getCountryFlag(country: string) {

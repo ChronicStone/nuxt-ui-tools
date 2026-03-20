@@ -8,6 +8,7 @@ import { useTableColumns } from './use-table-columns'
 import { useTableControls } from './use-table-controls'
 import { useTableData } from './use-table-data'
 import { useTableFilters } from './use-table-filters'
+import { useTableGrid } from './use-table-grid'
 import { useTableLayout } from './use-table-layout'
 import { useTablePagination } from './use-table-pagination'
 import { useTableSelection } from './use-table-selection'
@@ -39,6 +40,10 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
     schema,
     state,
     queryContent,
+  })
+  const grid = useTableGrid({
+    schema,
+    data: queryContent.data,
   })
   const tableColumns = useTableColumns({
     schema,
@@ -78,6 +83,7 @@ function createTableInternals<TSchema extends TableSchemaView>(options: {
     tableApi: tableApi.value,
     selection,
     filters,
+    grid,
     controls,
     tableColumns,
     pagination,

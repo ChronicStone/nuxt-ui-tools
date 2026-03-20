@@ -29,6 +29,7 @@ const props = defineProps<{
 const internals = useTableInternals()
 const searchQuery = ref<string>('')
 const isOpen = ref<boolean>(false)
+const shouldHydrateOptions = ref<boolean>(false)
 const pendingOperator = ref<TableFilterOperator>()
 const localSelectedValues = ref<(string | number | boolean)[]>([])
 const pinnedValues = ref<Set<string>>(new Set())
@@ -39,6 +40,7 @@ let dismissLocked = false
 const optionSource = useTableFilterOptions({
   definition: props.definition,
   searchQuery,
+  active: shouldHydrateOptions,
   filters: internals.filters,
   queryContent: internals.queryContent,
   schema: internals.schema,
@@ -215,6 +217,7 @@ function handleActivate(op: TableFilterOperator) {
   dismissLocked = true
   setTimeout(() => {
     isOpen.value = true
+    queueOptionHydration()
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         dismissLocked = false
@@ -229,6 +232,7 @@ function handleOpenChange(open: boolean) {
 
   if (open) {
     initLocalState()
+    queueOptionHydration()
     return
   }
 
@@ -237,6 +241,14 @@ function handleOpenChange(open: boolean) {
   localExpandedIds.value = new Set()
   pinnedRangeSelect.reset()
   restRangeSelect.reset()
+}
+
+function queueOptionHydration() {
+  if (shouldHydrateOptions.value) return
+
+  requestAnimationFrame(() => {
+    shouldHydrateOptions.value = true
+  })
 }
 
 function handleOperatorChange(op: TableFilterOperator) {

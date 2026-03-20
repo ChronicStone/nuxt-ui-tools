@@ -13,9 +13,7 @@ export function useTableControls(options: UseTableControlsParams) {
   const columnsPanelSearch = ref<string>('')
 
   const tableLayout = options.layout.activeLayout
-  const gridEnabled = computed(
-    () => options.schema.value.grid?.enabled ?? !!options.schema.value.grid,
-  )
+  const gridEnabled = options.layout.gridEnabled
   const layoutState = computed(() => ({
     active: tableLayout.value,
     available: [

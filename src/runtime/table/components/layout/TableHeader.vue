@@ -71,7 +71,7 @@ defineSlots<{
           />
         </UFieldGroup>
 
-        <ColumnPanel />
+        <ColumnPanel v-if="tableLayout === 'table'" />
       </div>
     </div>
   </header>
