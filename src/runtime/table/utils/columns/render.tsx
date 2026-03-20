@@ -10,7 +10,7 @@ import type { VNodeChild } from 'vue'
 import RowActions from '../../components/actions/RowActions.vue'
 import TableRowScopeProvider from '../../components/actions/TableRowScopeProvider.vue'
 import TableCellEllipsis from '../../components/table/TableCellEllipsis'
-import type { GenericObject, TableApi, TableLayout } from '../../types'
+import type { GenericObject } from '../../types'
 import { getColumnHeaderIcon } from './menu'
 import { findSchemaColumn } from './schema'
 import {
@@ -33,22 +33,14 @@ type ColumnMenuItem = {
   onSelect?: () => void
 }
 
-type CachedRowScope = {
-  index: number
-  scope: TableCellRenderContext
-}
-
-type RowScopeCacheState = {
+type PlainRenderContextCacheState = {
   contextSource: object
   pageContextSource: object
-  tableApi: TableApi<unknown>
-  layout: TableLayout
   plainContext: Record<string, unknown>
   plainPageContext: Record<string, unknown>
-  rowScopes: WeakMap<GenericObject, CachedRowScope>
 }
 
-const ROW_SCOPE_CACHE = new WeakMap<UseTableColumnsParams, RowScopeCacheState>()
+const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<UseTableColumnsParams, PlainRenderContextCacheState>()
 
 export function createSelectionColumn(options: { params: UseTableColumnsParams }) {
   return {
@@ -387,65 +379,18 @@ function createCellRenderContext(options: {
   rowIndex: number
   params: UseTableColumnsParams
 }): TableCellRenderContext {
-  const contextSource = options.params.data.contextData.value
-  const pageContextSource = options.params.data.pageContextData.value
   const tableApi = options.params.tableApi.value
   if (!tableApi) throw new Error('Table API is not ready')
-  const layout = options.params.tableLayout.value
-  const cached = ROW_SCOPE_CACHE.get(options.params)
+  const plainRenderContext = resolvePlainRenderContext(options.params)
 
-  if (
-    cached &&
-    cached.contextSource === contextSource &&
-    cached.pageContextSource === pageContextSource &&
-    cached.tableApi === tableApi &&
-    cached.layout === layout
-  ) {
-    const cachedRowScope = cached.rowScopes.get(options.row)
-    if (cachedRowScope && cachedRowScope.index === options.rowIndex) return cachedRowScope.scope
-
-    const scope: TableCellRenderContext = {
-      row: options.row,
-      index: options.rowIndex,
-      context: cached.plainContext,
-      pageContext: cached.plainPageContext,
-      tableApi,
-      layout,
-    }
-
-    cached.rowScopes.set(options.row, {
-      index: options.rowIndex,
-      scope,
-    })
-
-    return scope
-  }
-
-  const nextCache: RowScopeCacheState = {
-    contextSource,
-    pageContextSource,
-    tableApi,
-    layout,
-    plainContext: toPlainRecord(contextSource),
-    plainPageContext: toPlainRecord(pageContextSource),
-    rowScopes: new WeakMap(),
-  }
-  const scope: TableCellRenderContext = {
+  return {
     row: options.row,
     index: options.rowIndex,
-    context: nextCache.plainContext,
-    pageContext: nextCache.plainPageContext,
+    context: plainRenderContext.plainContext,
+    pageContext: plainRenderContext.plainPageContext,
     tableApi,
-    layout,
+    layout: options.params.tableLayout.value,
   }
-
-  nextCache.rowScopes.set(options.row, {
-    index: options.rowIndex,
-    scope,
-  })
-  ROW_SCOPE_CACHE.set(options.params, nextCache)
-
-  return scope
 }
 
 function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
@@ -513,6 +458,28 @@ function wrapRowScope(options: {
   content: VNodeChild
 }) {
   return <TableRowScopeProvider scope={options.scope}>{options.content}</TableRowScopeProvider>
+}
+
+function resolvePlainRenderContext(params: UseTableColumnsParams): PlainRenderContextCacheState {
+  const contextSource = params.data.contextData.value
+  const pageContextSource = params.data.pageContextData.value
+  const cached = PLAIN_RENDER_CONTEXT_CACHE.get(params)
+
+  if (
+    cached &&
+    cached.contextSource === contextSource &&
+    cached.pageContextSource === pageContextSource
+  ) return cached
+
+  const nextCache: PlainRenderContextCacheState = {
+    contextSource,
+    pageContextSource,
+    plainContext: toPlainRecord(contextSource),
+    plainPageContext: toPlainRecord(pageContextSource),
+  }
+
+  PLAIN_RENDER_CONTEXT_CACHE.set(params, nextCache)
+  return nextCache
 }
 
 function toPlainRecord(value: object) {
