@@ -4,7 +4,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -14,6 +14,11 @@ import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableBooleanFilterDefinition
+  dynamic?: boolean
+  activationToken?: number
+}>()
+const emit = defineEmits<{
+  dismiss: []
 }>()
 
 const internals = useTableInternals()
@@ -99,6 +104,7 @@ function handleOpenChange(open: boolean) {
   isOpen.value = open
   if (!open) isContentReady.value = false
   if (open) initLocalState()
+  else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
 function handleContentMounted() {
@@ -121,7 +127,17 @@ function applyFilter() {
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   isOpen.value = false
+  if (props.dynamic) emit('dismiss')
 }
+
+watch(
+  () => props.activationToken,
+  (value, previousValue) => {
+    if (value == null || value === previousValue) return
+    isOpen.value = true
+    initLocalState()
+  },
+)
 </script>
 
 <template>

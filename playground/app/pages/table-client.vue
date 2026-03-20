@@ -58,8 +58,13 @@ const clientSchema = defineTableSchema({
     ui: (filter) => [
       filter.text('fullName', {
         label: 'Name',
-        operators: ['contains', 'is'],
-        ui: {
+        behavior: {
+          operators: ['contains', 'is'],
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        editor: {
           placeholder: 'Search employees',
           leadingIcon: 'i-lucide-search',
           inputType: 'search',
@@ -67,9 +72,16 @@ const clientSchema = defineTableSchema({
       }),
       filter.option('department.company.country', {
         label: 'Country',
-        defaultOperator: 'isAnyOf',
-        options: countryTreeOptions,
-        ui: {
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          options: countryTreeOptions,
+        },
+        editor: {
           searchable: true,
           closeOnSelect: false,
           presentation: 'tree',
@@ -86,12 +98,19 @@ const clientSchema = defineTableSchema({
       }),
       filter.option('skills', {
         label: 'Skill',
-        defaultOperator: 'isAnyOf',
-        options: skillOptions.map((value) => ({
-          label: value,
-          value,
-        })),
-        ui: {
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          options: skillOptions.map((value) => ({
+            label: value,
+            value,
+          })),
+        },
+        editor: {
           row: {
             showCounts: true,
           },
@@ -99,9 +118,16 @@ const clientSchema = defineTableSchema({
       }),
       filter.option('skillTaxonomy', {
         label: 'Skill Tree',
-        defaultOperator: 'isAnyOf',
-        options: skillTreeOptions,
-        ui: {
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          options: skillTreeOptions,
+        },
+        editor: {
           searchable: true,
           closeOnSelect: false,
           presentation: 'tree',
@@ -121,12 +147,19 @@ const clientSchema = defineTableSchema({
       }),
       filter.option('department.name', {
         label: 'Department',
-        defaultOperator: 'isAnyOf',
-        options: departmentOptions.map((value) => ({
-          label: value,
-          value,
-        })),
-        ui: {
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          options: departmentOptions.map((value) => ({
+            label: value,
+            value,
+          })),
+        },
+        editor: {
           searchable: false,
           selection: {
             mode: 'multiple',
@@ -135,7 +168,10 @@ const clientSchema = defineTableSchema({
       }),
       filter.boolean('isActive', {
         label: 'Active',
-        ui: {
+        display: {
+          location: 'panel md:tag',
+        },
+        editor: {
           labels: {
             true: 'Online',
             false: 'Paused',
@@ -144,34 +180,39 @@ const clientSchema = defineTableSchema({
       }),
       filter.number('salary', {
         label: 'Salary',
-        operators: ['is', 'gte', 'lte', 'between'],
-        ui: {
+        behavior: {
+          operators: ['is', 'gte', 'lte', 'between'],
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        editor: {
           min: 50000,
           max: 250000,
           step: 5000,
           scalar: {
             display: 'input-slider',
-            preview: {
-              formatter: (value) => formatCurrency(value),
-            },
           },
           range: {
             display: 'inputs-slider',
             minGap: 10000,
-            preview: {
-              rangeFormatter: ({ from, to }) =>
-                `${from == null ? 'Min' : formatCurrency(from)} - ${to == null ? 'Max' : formatCurrency(to)}`,
-            },
           },
+        },
+        preview: {
+          formatter: (value) => formatCurrency(value),
+          rangeFormatter: ({ from, to }) =>
+            `${from == null ? 'Min' : formatCurrency(from)} - ${to == null ? 'Max' : formatCurrency(to)}`,
         },
       }),
       filter.date('hiredAt', {
         label: 'Hired At',
-        operators: ['is', 'before', 'after', 'between'],
-        ui: {
-          preview: {
-            label: 'Hired',
-          },
+        behavior: {
+          operators: ['is', 'before', 'after', 'between'],
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        editor: {
           scalar: {
             display: 'calendar',
             presets: [
@@ -188,9 +229,6 @@ const clientSchema = defineTableSchema({
                 value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
               },
             ],
-            preview: {
-              formatter: (value) => formatDate(value.toISOString()),
-            },
           },
           range: {
             display: 'inputs-calendar',
@@ -223,14 +261,16 @@ const clientSchema = defineTableSchema({
               pagedNavigation: true,
               fixedWeeks: true,
             },
-            preview: {
-              rangeFormatter: ({ from, to }) =>
-                [from, to]
-                  .filter((value): value is Date => value instanceof Date)
-                  .map(value => formatDate(value.toISOString()))
-                  .join(' - '),
-            },
           },
+        },
+        preview: {
+          label: 'Hired',
+          formatter: (value) => formatDate(value.toISOString()),
+          rangeFormatter: ({ from, to }) =>
+            [from, to]
+              .filter((value): value is Date => value instanceof Date)
+              .map(value => formatDate(value.toISOString()))
+              .join(' - '),
         },
       }),
     ],

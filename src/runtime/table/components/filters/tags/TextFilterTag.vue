@@ -2,7 +2,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableFilterOperator, TableTextFilterDefinition, TableTextFilterOperator } from '../../../types'
@@ -11,6 +11,11 @@ import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableTextFilterDefinition
+  dynamic?: boolean
+  activationToken?: number
+}>()
+const emit = defineEmits<{
+  dismiss: []
 }>()
 
 const internals = useTableInternals()
@@ -77,6 +82,7 @@ function handleOpenChange(open: boolean) {
     initLocalState()
   } else {
     pendingOperator.value = undefined
+    if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
   }
 }
 
@@ -95,6 +101,7 @@ function applyFilter() {
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   isOpen.value = false
+  if (props.dynamic) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -117,6 +124,14 @@ function handleValueUpdate(value: string | number | undefined) {
     })
   }
 }
+
+watch(
+  () => props.activationToken,
+  (value, previousValue) => {
+    if (value == null || value === previousValue) return
+    handleActivate(operator.value)
+  },
+)
 </script>
 
 <template>

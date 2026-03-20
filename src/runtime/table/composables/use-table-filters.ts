@@ -291,6 +291,17 @@ export function useTableFilters(params: UseTableFiltersParams) {
     }
   }
 
+  function replaceFilters(input: { rules: TableQueryStateFilterRule[] }) {
+    params.state.queryState.pagination.value = {
+      ...params.state.queryState.pagination.value,
+      pageIndex: 1,
+    }
+    params.state.queryState.filters.value = {
+      ...params.state.queryState.filters.value,
+      ui: [...input.rules],
+    }
+  }
+
   return {
     searchQuery: search.searchQuery,
     searchPlaceholder: search.searchPlaceholder,
@@ -304,12 +315,14 @@ export function useTableFilters(params: UseTableFiltersParams) {
     getFilterPreview,
     getFilterOperator,
     getFilterOperatorOptions,
+    getDefaultFilterValueForOperator,
     setFilterOperator,
     setOptionFilterValues,
     toggleOptionFilterValue,
     setScalarFilterValue,
     clearFilter: apiRemoveFilter,
     clearAllFilters,
+    replaceFilters,
     getFilterLabelText,
   }
 }
@@ -329,12 +342,12 @@ function getFilterOperatorsForDefinition(
   }
 
   const defaultOperator =
-    definition.defaultOperator ??
+    definition.behavior?.defaultOperator ??
     (definition.kind === 'text'
       ? 'contains'
       : definition.kind === 'option'
         ? 'isAnyOf'
         : 'is')
 
-  return [...new Set([defaultOperator, ...(definition.operators ?? [])])]
+  return [...new Set([defaultOperator, ...(definition.behavior?.operators ?? [])])]
 }

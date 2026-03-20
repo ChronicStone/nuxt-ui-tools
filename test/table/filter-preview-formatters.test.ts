@@ -13,21 +13,11 @@ describe('filter preview formatters', () => {
       kind: 'number',
       key: 'salary',
       label: 'Salary',
-      ui: {
-        preview: {
-          label: 'Salary',
-        },
-        scalar: {
-          preview: {
-            formatter: (value: number) => `$${value.toLocaleString('en-US')}`,
-          },
-        },
-        range: {
-          preview: {
-            rangeFormatter: ({ from, to }: { from?: number; to?: number }) =>
-              `${from ?? 0} USD -> ${to ?? 0} USD`,
-          },
-        },
+      preview: {
+        label: 'Salary',
+        formatter: (value: number) => `$${value.toLocaleString('en-US')}`,
+        rangeFormatter: ({ from, to }: { from?: number; to?: number }) =>
+          `${from ?? 0} USD -> ${to ?? 0} USD`,
       },
     } satisfies TableNumberFilterDefinition<{ salary: number }, object, 'salary'>
 
@@ -57,24 +47,14 @@ describe('filter preview formatters', () => {
       kind: 'date',
       key: 'createdAt',
       label: 'Created',
-      ui: {
-        preview: {
-          label: 'Created',
-        },
-        scalar: {
-          preview: {
-            formatter: (value: Date) => value.toISOString().slice(0, 10),
-          },
-        },
-        range: {
-          preview: {
-            rangeFormatter: ({ from, to }: { from?: Date; to?: Date }) =>
-              [from, to]
-                .filter((value): value is Date => value instanceof Date)
-                .map(value => value.toISOString().slice(0, 10))
-                .join(' -> '),
-          },
-        },
+      preview: {
+        label: 'Created',
+        formatter: (value: Date) => value.toISOString().slice(0, 10),
+        rangeFormatter: ({ from, to }: { from?: Date; to?: Date }) =>
+          [from, to]
+            .filter((value): value is Date => value instanceof Date)
+            .map(value => value.toISOString().slice(0, 10))
+            .join(' -> '),
       },
     } satisfies TableDateFilterDefinition<{ createdAt: string }, object, 'createdAt'>
 

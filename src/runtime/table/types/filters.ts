@@ -27,14 +27,35 @@ export type TableDateFilterOperator = 'is' | 'isNot' | 'before' | 'after' | 'bet
 export type TableScalarDateFilterOperator = Exclude<TableDateFilterOperator, 'between'>
 export type TableFilterCommitMode = 'manual' | 'auto'
 export type TableFilterPreviewMode = 'auto' | 'summary' | 'tags'
+export type TableFilterDisplayLocation = 'tag' | 'panel' | 'tag-dynamic'
+export type TableFilterDisplayLocationValue =
+  | TableFilterDisplayLocation
+  | string
 
-export interface TableFilterUiCommon {
+export interface TableFilterBehaviorCommon<TOperator extends TableFilterOperator = TableFilterOperator> {
+  defaultValue?: TableQueryStateFilterValue
+  operators?: TOperator[]
+  defaultOperator?: TOperator
   commitMode?: TableFilterCommitMode
   clearOnOperatorChange?: boolean
   reopenOnOperatorChange?: boolean
+}
+
+export interface TableFilterUiActionLabelsConfig {
   actions?: {
     clear?: TableTextValue
     apply?: TableTextValue
+  }
+}
+
+export interface TableFilterDisplayConfig {
+  location?: TableFilterDisplayLocationValue
+  order?: number
+  group?: string
+  triggerLabel?: TableTextValue
+  panel?: {
+    section?: string
+    title?: TableTextValue
   }
 }
 
@@ -64,16 +85,14 @@ export interface TableTextFilterUiInputConfig {
   fixed?: boolean
 }
 
-export interface TableTextFilterUiConfig extends TableFilterUiCommon {
+export interface TableTextFilterEditorConfig {
   placeholder?: TableTextValue
   inputType?: 'text' | 'search' | 'email' | 'url' | 'tel'
   leadingIcon?: string
   autocomplete?: 'on' | 'off' | string
   input?: TableTextFilterUiInputConfig
-  preview?: TableFilterPreviewConfig
   operators?: Partial<Record<TableTextFilterOperator, {
     placeholder?: TableTextValue
-    preview?: TableFilterPreviewConfig
   }>>
 }
 
@@ -112,12 +131,11 @@ export interface TableOptionFilterUiOperatorConfig {
   selection?: TableOptionFilterUiSelectionConfig
   row?: TableOptionFilterUiRowConfig
   labels?: TableOptionFilterUiLabels
-  preview?: TableTagFilterPreviewConfig
 }
 
-export interface TableOptionFilterUiConfig<
+export interface TableOptionFilterEditorConfig<
   TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
-> extends TableFilterUiCommon {
+> {
   searchable?: boolean
   closeOnSelect?: boolean
   presentation?: TPresentation
@@ -125,7 +143,6 @@ export interface TableOptionFilterUiConfig<
   selection?: TableOptionFilterUiSelectionConfig
   row?: TableOptionFilterUiRowConfig
   labels?: TableOptionFilterUiLabels
-  preview?: TableTagFilterPreviewConfig
   operators?: Partial<Record<TableOptionFilterOperator, TableOptionFilterUiOperatorConfig>>
 }
 
@@ -150,14 +167,12 @@ export interface TableBooleanFilterUiOperatorConfig {
   labels?: TableBooleanFilterUiLabels
   icons?: TableBooleanFilterUiIcons
   selection?: TableBooleanFilterUiSelectionConfig
-  preview?: TableTagFilterPreviewConfig
 }
 
-export interface TableBooleanFilterUiConfig extends TableFilterUiCommon {
+export interface TableBooleanFilterEditorConfig {
   labels?: TableBooleanFilterUiLabels
   icons?: TableBooleanFilterUiIcons
   selection?: TableBooleanFilterUiSelectionConfig
-  preview?: TableTagFilterPreviewConfig
   operators?: Partial<Record<TableBooleanFilterOperator, TableBooleanFilterUiOperatorConfig>>
 }
 
@@ -189,7 +204,6 @@ export interface TableNumberFilterUiScalarConfig {
   display?: TableNumberScalarDisplay
   input?: TableNumberFilterUiScalarInputConfig
   slider?: TableNumberFilterUiSliderConfig
-  preview?: TableNumberFilterPreviewConfig
 }
 
 export interface TableNumberFilterUiRangeConfig {
@@ -197,17 +211,14 @@ export interface TableNumberFilterUiRangeConfig {
   minGap?: number
   inputs?: TableNumberFilterUiRangeInputConfig
   slider?: TableNumberFilterUiSliderConfig
-  preview?: TableNumberFilterPreviewConfig
 }
 
 export interface TableNumberFilterUiScalarOperatorConfig {
   scalar?: TableNumberFilterUiScalarConfig
-  preview?: TableNumberFilterPreviewConfig
 }
 
 export interface TableNumberFilterUiRangeOperatorConfig {
   range?: TableNumberFilterUiRangeConfig
-  preview?: TableNumberFilterPreviewConfig
 }
 
 export interface TableNumberFilterUiOperators {
@@ -220,14 +231,13 @@ export interface TableNumberFilterUiOperators {
   between?: TableNumberFilterUiRangeOperatorConfig
 }
 
-export interface TableNumberFilterUiConfig extends TableFilterUiCommon {
+export interface TableNumberFilterEditorConfig {
   min?: number
   max?: number
   step?: number
   formatOptions?: Intl.NumberFormatOptions
   scalar?: TableNumberFilterUiScalarConfig
   range?: TableNumberFilterUiRangeConfig
-  preview?: TableNumberFilterPreviewConfig
   operators?: TableNumberFilterUiOperators
 }
 
@@ -263,15 +273,6 @@ export type TableDateFilterResponsivePanels =
       mobile?: 1 | 2
       desktop?: 1 | 2
     }
-
-export interface TableDateFilterPickerConfig {
-  scalarPresets?: boolean | TableDateFilterScalarPreset[]
-  rangePresets?: boolean | TableDateFilterRangePreset[]
-  rangeCalendar?: {
-    panels?: TableDateFilterResponsivePanels
-    pagedNavigation?: boolean
-  }
-}
 
 export type TableDateScalarDisplay = 'calendar' | 'input' | 'input-calendar'
 export type TableDateRangeDisplay = 'calendar' | 'inputs' | 'inputs-calendar'
@@ -311,7 +312,6 @@ export interface TableDateFilterUiScalarConfig {
   presets?: boolean | TableDateFilterScalarPreset[]
   input?: TableDateFilterUiScalarInputConfig
   calendar?: TableDateFilterUiCalendarConfig
-  preview?: TableDateFilterPreviewConfig
 }
 
 export interface TableDateFilterUiRangeConfig {
@@ -320,17 +320,14 @@ export interface TableDateFilterUiRangeConfig {
   presetsPlacement?: TableDatePresetPlacement
   input?: TableDateFilterUiRangeInputConfig
   calendar?: TableDateFilterUiCalendarConfig
-  preview?: TableDateFilterPreviewConfig
 }
 
 export interface TableDateFilterUiScalarOperatorConfig {
   scalar?: TableDateFilterUiScalarConfig
-  preview?: TableDateFilterPreviewConfig
 }
 
 export interface TableDateFilterUiRangeOperatorConfig {
   range?: TableDateFilterUiRangeConfig
-  preview?: TableDateFilterPreviewConfig
 }
 
 export interface TableDateFilterUiOperators {
@@ -341,10 +338,9 @@ export interface TableDateFilterUiOperators {
   between?: TableDateFilterUiRangeOperatorConfig
 }
 
-export interface TableDateFilterUiConfig extends TableFilterUiCommon {
+export interface TableDateFilterEditorConfig {
   scalar?: TableDateFilterUiScalarConfig
   range?: TableDateFilterUiRangeConfig
-  preview?: TableDateFilterPreviewConfig
   operators?: TableDateFilterUiOperators
 }
 
@@ -373,15 +369,25 @@ export interface TableTagFilterPreviewConfigResolved extends TableFilterPreviewC
   maxTags: number
 }
 
+export interface TableResolvedFilterPresentation<TKey extends string = string> {
+  key: TKey
+  location: TableFilterDisplayLocation
+  order: number
+  group?: string
+  panelSection?: string
+  active: boolean
+  visible: boolean
+}
+
 export interface TableTextFilterUiResolved {
   commitMode: TableFilterCommitMode
   clearOnOperatorChange: boolean
   reopenOnOperatorChange: boolean
   actions: TableFilterUiActionLabelsResolved
   placeholder: string
-  inputType: NonNullable<TableTextFilterUiConfig['inputType']>
+  inputType: NonNullable<TableTextFilterEditorConfig['inputType']>
   leadingIcon: string
-  autocomplete: NonNullable<TableTextFilterUiConfig['autocomplete']>
+  autocomplete: NonNullable<TableTextFilterEditorConfig['autocomplete']>
   input: {
     autofocus: boolean
     highlight: boolean
@@ -652,8 +658,6 @@ export interface TableFilterResolveContext<
 export type TableFilterResolveResult<TKey extends string = string> =
   TableResolvedFilterNode<TKey> | null
 
-export type TableFilterDisplayMode = 'inline' | 'dynamic' | 'panel'
-
 interface TableFilterDefinitionBase<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
@@ -663,10 +667,12 @@ interface TableFilterDefinitionBase<
 > {
   key: TKey
   label: string | (() => RenderableType)
-  display?: TableFilterDisplayMode
-  defaultValue?: TValue
-  defaultOperator?: TOperator
-  operators?: TOperator[]
+  behavior?: TableFilterBehaviorCommon<TOperator> & {
+    defaultValue?: TValue
+  }
+  display?: TableFilterDisplayConfig
+  preview?: TableFilterPreviewConfig
+  actions?: TableFilterUiActionLabelsConfig['actions']
   resolve?: {
     bivarianceHack(
       params: TableFilterResolveContext<TRow, TContext, TKey>,
@@ -680,7 +686,7 @@ export interface TableTextFilterDefinition<
   TKey extends string = TableKnownFieldPath<TRow>,
 > extends TableFilterDefinitionBase<TRow, TContext, TKey, string, TableTextFilterOperator> {
   kind: 'text'
-  ui?: TableTextFilterUiConfig
+  editor?: TableTextFilterEditorConfig
 }
 
 export interface TableOptionFilterDefinition<
@@ -697,16 +703,18 @@ export interface TableOptionFilterDefinition<
   TableOptionFilterOperator
 > {
   kind: 'option'
-  options?: ReadonlyArray<TableOptionEntryForPresentation<TValue, TPresentation>>
-  query?: (
-    context: TableFilterOptionQueryContext,
-  ) => TableQueryDefinition<
-    TableOptionEntryForPresentation<TValue, TPresentation>[] |
-    TableFilterOptionQueryResultForPresentation<TValue, TPresentation>
-  >
-  facet?: TableFilterFacetMode
-  sort?: 'alpha' | 'count'
-  ui?: TableOptionFilterUiConfig<TPresentation>
+  source?: {
+    options?: ReadonlyArray<TableOptionEntryForPresentation<TValue, TPresentation>>
+    query?: (
+      context: TableFilterOptionQueryContext,
+    ) => TableQueryDefinition<
+      TableOptionEntryForPresentation<TValue, TPresentation>[] |
+      TableFilterOptionQueryResultForPresentation<TValue, TPresentation>
+    >
+    facet?: TableFilterFacetMode
+    sort?: 'alpha' | 'count'
+  }
+  editor?: TableOptionFilterEditorConfig<TPresentation>
 }
 
 export interface TableBooleanFilterDefinition<
@@ -715,8 +723,10 @@ export interface TableBooleanFilterDefinition<
   TKey extends string = TableKnownFieldPath<TRow>,
 > extends TableFilterDefinitionBase<TRow, TContext, TKey, boolean, TableBooleanFilterOperator> {
   kind: 'boolean'
-  facet?: TableFilterFacetMode
-  ui?: TableBooleanFilterUiConfig
+  source?: {
+    facet?: TableFilterFacetMode
+  }
+  editor?: TableBooleanFilterEditorConfig
 }
 
 export interface TableNumberFilterDefinition<
@@ -731,7 +741,8 @@ export interface TableNumberFilterDefinition<
   TableNumberFilterOperator
 > {
   kind: 'number'
-  ui?: TableNumberFilterUiConfig
+  editor?: TableNumberFilterEditorConfig
+  preview?: TableNumberFilterPreviewConfig
 }
 
 export interface TableDateFilterDefinition<
@@ -746,8 +757,8 @@ export interface TableDateFilterDefinition<
   TableDateFilterOperator
 > {
   kind: 'date'
-  picker?: TableDateFilterPickerConfig
-  ui?: TableDateFilterUiConfig
+  editor?: TableDateFilterEditorConfig
+  preview?: TableDateFilterPreviewConfig
 }
 
 export type TableUiFilterDefinition<

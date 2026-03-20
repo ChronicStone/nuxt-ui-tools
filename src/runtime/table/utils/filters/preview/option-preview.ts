@@ -55,7 +55,7 @@ function resolveOptionPreviewLabel(options: {
   }
 
   if (options.definition.kind === 'boolean') {
-    const filterUi = resolveBooleanFilterUi(options.definition, options.definition.defaultOperator ?? 'is')
+    const filterUi = resolveBooleanFilterUi(options.definition, options.definition.behavior?.defaultOperator ?? 'is')
     return options.value ? filterUi.labels.true : filterUi.labels.false
   }
 

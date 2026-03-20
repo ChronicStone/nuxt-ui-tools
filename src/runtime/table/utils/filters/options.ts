@@ -28,7 +28,7 @@ export function resolveFilterOptionEntries(options: {
     return []
   }
 
-  const sourceOptions = options.options ?? options.definition.options ?? []
+  const sourceOptions = options.options ?? options.definition.source?.options ?? []
   const countByValue = new Map(
     (options.facetCounts ?? []).map((entry) => [String(entry.value), entry.count] as const),
   )

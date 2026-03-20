@@ -26,9 +26,11 @@ describe('filter ui utils', () => {
       kind: 'text',
       key: 'name',
       label: 'Employee name',
-      ui: {
-        placeholder: () => 'Find employee',
+      behavior: {
         commitMode: 'auto',
+      },
+      editor: {
+        placeholder: () => 'Find employee',
         inputType: 'search',
       },
     } satisfies TableTextFilterDefinition<TestRow, object, 'name'>
@@ -46,12 +48,16 @@ describe('filter ui utils', () => {
       kind: 'option',
       key: 'status',
       label: 'Status',
-      defaultOperator: 'isAnyOf',
-      options: [
-        { label: 'Active', value: 'active' },
-        { label: 'Inactive', value: 'inactive' },
-      ],
-      ui: {
+      behavior: {
+        defaultOperator: 'isAnyOf',
+      },
+      source: {
+        options: [
+          { label: 'Active', value: 'active' },
+          { label: 'Inactive', value: 'inactive' },
+        ],
+      },
+      editor: {
         searchable: false,
         closeOnSelect: true,
         presentation: 'tree',
@@ -72,7 +78,7 @@ describe('filter ui utils', () => {
       kind: 'boolean',
       key: 'active',
       label: 'Active',
-      ui: {
+      editor: {
         labels: {
           true: 'Online',
           false: 'Paused',
@@ -99,7 +105,7 @@ describe('filter ui utils', () => {
       kind: 'number',
       key: 'amount',
       label: 'Amount',
-      ui: {
+      editor: {
         min: 0,
         max: 100,
         step: 5,

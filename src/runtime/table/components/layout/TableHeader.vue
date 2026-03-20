@@ -6,6 +6,7 @@ import { computed } from 'vue'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { TableLayout } from '../../types'
 import ColumnPanel from '../drawers/ColumnPanel.vue'
+import FilterPanel from '../filters/panel/FilterPanel.vue'
 import TableFiltersBar from '../filters/tags/FilterTagsBar.vue'
 import SearchQueryInput from '../utils/SearchQueryInput.vue'
 
@@ -63,6 +64,8 @@ function refreshData() {
       </div>
 
       <div class="flex shrink-0 self-start items-start justify-end gap-2">
+        <FilterPanel v-if="internals.filterPresentation.hasPanelFilters.value" />
+
         <ColumnPanel v-if="tableLayout === 'table'" />
 
         <UButton

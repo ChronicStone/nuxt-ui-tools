@@ -11,11 +11,15 @@ describe('resolved filters', () => {
           kind: 'option' as const,
           key: 'status',
           label: 'Status',
-          defaultOperator: 'isAnyOf' as const,
-          options: [
-            { label: 'Live', value: 'live' as const },
-            { label: 'Paused', value: 'paused' as const },
-          ],
+          behavior: {
+            defaultOperator: 'isAnyOf' as const,
+          },
+          source: {
+            options: [
+              { label: 'Live', value: 'live' as const },
+              { label: 'Paused', value: 'paused' as const },
+            ],
+          },
           resolve({ rule }: TableFilterResolveContext) {
             return {
               type: 'group' as const,

@@ -12,6 +12,11 @@ import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableNumberFilterDefinition
+  dynamic?: boolean
+  activationToken?: number
+}>()
+const emit = defineEmits<{
+  dismiss: []
 }>()
 
 const internals = useTableInternals()
@@ -132,6 +137,7 @@ function handleOpenChange(open: boolean) {
   }
 
   pendingOperator.value = undefined
+  if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -181,6 +187,7 @@ function applyFilter() {
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   isOpen.value = false
+  if (props.dynamic) emit('dismiss')
 }
 
 function updateScalarValue(value: number | undefined) {
@@ -226,6 +233,14 @@ function updateSliderRangeValue(value: unknown) {
 function resolveIncrementConfig(hideStepper: boolean) {
   return hideStepper ? false : { variant: 'ghost' as const }
 }
+
+watch(
+  () => props.activationToken,
+  (value, previousValue) => {
+    if (value == null || value === previousValue) return
+    handleActivate(operator.value)
+  },
+)
 </script>
 
 <template>

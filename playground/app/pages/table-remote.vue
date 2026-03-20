@@ -91,8 +91,13 @@ const remoteSchema = defineTableSchema({
     ui: (filter) => [
       filter.text('fullName', {
         label: 'Name',
-        operators: ['contains', 'is'],
-        ui: {
+        behavior: {
+          operators: ['contains', 'is'],
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        editor: {
           placeholder: 'Search employees',
           leadingIcon: 'i-lucide-search',
           inputType: 'search',
@@ -100,10 +105,17 @@ const remoteSchema = defineTableSchema({
       }),
       filter.option('department.company.country', {
         label: 'Country',
-        defaultOperator: 'isAnyOf',
-        facet: 'exclude-self',
-        options: countryTreeOptions,
-        ui: {
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          facet: 'exclude-self',
+          options: countryTreeOptions,
+        },
+        editor: {
           searchable: true,
           closeOnSelect: false,
           presentation: 'tree',
@@ -121,19 +133,26 @@ const remoteSchema = defineTableSchema({
       }),
       filter.option('department.companyId', {
         label: 'Company',
-        defaultOperator: 'isAnyOf',
-        facet: true,
-        query: ({ search, limit, cursor }) => ({
-          queryKey: ['demo-filter-options', 'companies', search, limit, cursor],
-          queryFn: async () => demoEmployeesClient.filterOptions.companies({
-            request: {
-              search,
-              limit,
-              cursor: cursor ?? undefined,
-            },
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          facet: true,
+          query: ({ search, limit, cursor }) => ({
+            queryKey: ['demo-filter-options', 'companies', search, limit, cursor],
+            queryFn: async () => demoEmployeesClient.filterOptions.companies({
+              request: {
+                search,
+                limit,
+                cursor: cursor ?? undefined,
+              },
+            }),
           }),
-        }),
-        ui: {
+        },
+        editor: {
           searchable: true,
           closeOnSelect: false,
           selection: {
@@ -146,19 +165,26 @@ const remoteSchema = defineTableSchema({
       }),
       filter.option('employeeSkills.skillId', {
         label: 'Skill',
-        defaultOperator: 'isAnyOf',
-        facet: true,
-        query: ({ search, limit, cursor }) => ({
-          queryKey: ['demo-filter-options', 'skills', search, limit, cursor],
-          queryFn: async () => demoEmployeesClient.filterOptions.skills({
-            request: {
-              search,
-              limit,
-              cursor: cursor ?? undefined,
-            },
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          facet: true,
+          query: ({ search, limit, cursor }) => ({
+            queryKey: ['demo-filter-options', 'skills', search, limit, cursor],
+            queryFn: async () => demoEmployeesClient.filterOptions.skills({
+              request: {
+                search,
+                limit,
+                cursor: cursor ?? undefined,
+              },
+            }),
           }),
-        }),
-        ui: {
+        },
+        editor: {
           row: {
             showCounts: false,
           },
@@ -166,20 +192,27 @@ const remoteSchema = defineTableSchema({
       }),
       filter.option('departmentId', {
         label: 'Department',
-        defaultOperator: 'isAnyOf',
-        facet: true,
-        sort: 'count',
-        query: ({ search, limit, cursor }) => ({
-          queryKey: ['demo-filter-options', 'departments', search, limit, cursor],
-          queryFn: async () => demoEmployeesClient.filterOptions.departments({
-            request: {
-              search,
-              limit,
-              cursor: cursor ?? undefined,
-            },
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          facet: true,
+          sort: 'count',
+          query: ({ search, limit, cursor }) => ({
+            queryKey: ['demo-filter-options', 'departments', search, limit, cursor],
+            queryFn: async () => demoEmployeesClient.filterOptions.departments({
+              request: {
+                search,
+                limit,
+                cursor: cursor ?? undefined,
+              },
+            }),
           }),
-        }),
-        ui: {
+        },
+        editor: {
           searchable: false,
           selection: {
             mode: 'multiple',
@@ -188,8 +221,13 @@ const remoteSchema = defineTableSchema({
       }),
       filter.boolean('isActive', {
         label: 'Active',
-        facet: 'exclude-self',
-        ui: {
+        display: {
+          location: 'panel md:tag',
+        },
+        source: {
+          facet: 'exclude-self',
+        },
+        editor: {
           labels: {
             true: 'Online',
             false: 'Paused',
@@ -198,8 +236,13 @@ const remoteSchema = defineTableSchema({
       }),
       filter.number('salary', {
         label: 'Salary',
-        operators: ['is', 'gte', 'lte', 'between'],
-        ui: {
+        behavior: {
+          operators: ['is', 'gte', 'lte', 'between'],
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        editor: {
           min: 50000,
           max: 250000,
           step: 5000,
@@ -214,8 +257,13 @@ const remoteSchema = defineTableSchema({
       }),
       filter.date('hiredAt', {
         label: 'Hired At',
-        operators: ['is', 'before', 'after', 'between'],
-        ui: {
+        behavior: {
+          operators: ['is', 'before', 'after', 'between'],
+        },
+        display: {
+          location: 'panel md:tag',
+        },
+        editor: {
           scalar: {
             display: 'calendar',
             presets: [

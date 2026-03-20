@@ -72,19 +72,23 @@ const schema = defineTableSchema({
     ui: (filter) => [
       filter.text('name', {
         label: 'Name',
-        ui: {
+        editor: {
           placeholder: 'Search users',
           inputType: 'search',
         },
       }),
       filter.option('organisation.status', {
         label: 'Status',
-        defaultOperator: 'isAnyOf',
-        options: [
-          { label: 'Active', value: 'active' as const },
-          { label: 'Inactive', value: 'inactive' as const },
-        ],
-        ui: {
+        behavior: {
+          defaultOperator: 'isAnyOf',
+        },
+        source: {
+          options: [
+            { label: 'Active', value: 'active' as const },
+            { label: 'Inactive', value: 'inactive' as const },
+          ],
+        },
+        editor: {
           selection: {
             mode: 'multiple',
           },

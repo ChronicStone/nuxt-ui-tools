@@ -25,6 +25,10 @@ import {
 import type { UseTableDataReturn } from './use-table-data'
 import type { useTableFilters } from './use-table-filters'
 
+const FILTER_OPTION_COUNT_CACHE = new Map<string, TableResolvedFilterOptionEntry[]>()
+const FILTER_OPTION_CACHE_IDS = new WeakMap<object, number>()
+let filterOptionCacheId = 0
+
 function resolveFacetMode(options: { facet: TableFilterFacetMode | undefined }) {
   if (!options.facet) return undefined
   if (options.facet === true) return 'exclude-self'
@@ -71,12 +75,14 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const shouldResolveCounts = computed(() => shouldDeriveCounts.value && isActive.value && isReady.value)
   const isRemoteTable = computed(() => options.schema.value.source.mode === 'remote')
   const hasRemoteOptionQuery = computed(
-    () => options.definition.kind === 'option' && typeof options.definition.query === 'function',
+    () =>
+      options.definition.kind === 'option' &&
+      typeof options.definition.source?.query === 'function',
   )
   const usesFacetCounts = computed(
     () =>
       isRemoteTable.value &&
-      Boolean(options.definition.facet) &&
+      Boolean(options.definition.source?.facet) &&
       typeof remoteSource.value?.facets === 'function',
   )
   const canMergeFacetCounts = computed(() => !isRemoteTable.value || usesFacetCounts.value)
@@ -100,7 +106,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
   const staticEntries = computed<TableFilterOptionEntry[]>(() => {
     if (options.definition.kind !== 'option') return []
-    return [...(options.definition.options ?? [])]
+    return [...(options.definition.source?.options ?? [])]
   })
   const selectedValues = computed(() =>
     getSelectedValues({
@@ -122,7 +128,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       if (
         !hasRemoteOptionQuery.value ||
         !activeDefinition ||
-        typeof activeDefinition.query !== 'function'
+        typeof activeDefinition.source?.query !== 'function'
       ) {
         return {
           queryKey: ['table-filter-options', options.definition.key, 'disabled'],
@@ -136,7 +142,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       }
 
       const queryOptions = unref(
-        activeDefinition.query({
+        activeDefinition.source.query({
           search: querySearch.value,
           limit: undefined,
           cursor: undefined,
@@ -179,7 +185,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
             {
               key: options.definition.key,
               mode: resolveFacetMode({
-                facet: options.definition.facet,
+                facet: options.definition.source?.facet,
               }),
               search: facetSearch.value,
               limit: undefined,
@@ -234,6 +240,18 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const countTreeEntries = shallowRef<TableResolvedFilterOptionEntry[] | null>(null)
   const countStatus = ref<'idle' | 'loading' | 'ready'>('idle')
   let countJobId = 0
+  const countCacheKey = computed(() =>
+    [
+      options.definition.key,
+      selectedValueKey.value,
+      canMergeFacetCounts.value ? 'merge' : 'no-merge',
+      shouldDeriveCounts.value ? 'counts' : 'no-counts',
+      getCacheIdentity(sourceRows.value),
+      getCacheIdentity(options.definition.kind === 'option' ? options.definition.source?.options : undefined),
+      getCacheIdentity(unref(optionQuery.data)),
+      getCacheIdentity(unref(facetQuery.data)),
+    ].join(':'),
+  )
 
   function resolveFacetCountEntries() {
     return facetCounts.value.flatMap((entry) =>
@@ -247,8 +265,9 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   }
 
   function invalidateCountCache() {
-    countTreeEntries.value = null
-    countStatus.value = 'idle'
+    const cached = FILTER_OPTION_COUNT_CACHE.get(countCacheKey.value) ?? null
+    countTreeEntries.value = cached
+    countStatus.value = cached ? 'ready' : 'idle'
   }
 
   function scheduleCountResolution() {
@@ -274,6 +293,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
         selectedValues: selectedValues.value,
         deriveCounts: canMergeFacetCounts.value,
       })
+      FILTER_OPTION_COUNT_CACHE.set(countCacheKey.value, countTreeEntries.value)
       countStatus.value = 'ready'
     }
 
@@ -378,6 +398,17 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     error: computed(() => optionQuery.error.value ?? facetQuery.error.value),
     refresh: () => Promise.all([optionQuery.refetch(), facetQuery.refetch()]),
   }
+}
+
+function getCacheIdentity(value: unknown) {
+  if (typeof value !== 'object' || value === null) return 'null'
+
+  const cached = FILTER_OPTION_CACHE_IDS.get(value)
+  if (cached) return String(cached)
+
+  filterOptionCacheId += 1
+  FILTER_OPTION_CACHE_IDS.set(value, filterOptionCacheId)
+  return String(filterOptionCacheId)
 }
 
 function getSelectedValues(options: {

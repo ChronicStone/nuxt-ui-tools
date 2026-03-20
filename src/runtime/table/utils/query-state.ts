@@ -181,23 +181,43 @@ export function resolveFilterSupportedOperators(
 export function normalizeFilterDefinition(
   definition: TableQueryStateFilterDefinition | TableUiFilterDefinition,
 ): TableQueryStateFilterDefinition {
-  if (definition.kind !== 'number') {
-    return definition
-  }
+  const hasBehavior = 'behavior' in definition
+  const defaultValue = hasBehavior
+    ? definition.behavior?.defaultValue
+    : ('defaultValue' in definition ? definition.defaultValue : undefined)
+  const defaultOperator = hasBehavior
+    ? definition.behavior?.defaultOperator
+    : ('defaultOperator' in definition ? definition.defaultOperator : undefined)
+  const operators = hasBehavior
+    ? definition.behavior?.operators
+    : ('operators' in definition ? definition.operators : undefined)
 
-  if (isMinMaxNumberRange(definition.defaultValue)) {
+  if (definition.kind !== 'number') {
     return {
       ...definition,
+      defaultOperator,
+      operators,
+      defaultValue,
+    }
+  }
+
+  if (isMinMaxNumberRange(defaultValue)) {
+    return {
+      ...definition,
+      defaultOperator,
+      operators,
       defaultValue: {
-        ...('min' in definition.defaultValue ? { from: definition.defaultValue.min } : {}),
-        ...('max' in definition.defaultValue ? { to: definition.defaultValue.max } : {}),
+        ...('min' in defaultValue ? { from: defaultValue.min } : {}),
+        ...('max' in defaultValue ? { to: defaultValue.max } : {}),
       },
     }
   }
 
   return {
     ...definition,
-    defaultValue: definition.defaultValue,
+    defaultOperator,
+    operators,
+    defaultValue,
   }
 }
 

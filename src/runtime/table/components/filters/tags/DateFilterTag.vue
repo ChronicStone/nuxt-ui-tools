@@ -22,6 +22,11 @@ import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableDateFilterDefinition
+  dynamic?: boolean
+  activationToken?: number
+}>()
+const emit = defineEmits<{
+  dismiss: []
 }>()
 
 const internals = useTableInternals()
@@ -147,6 +152,7 @@ function handleOpenChange(open: boolean) {
   }
 
   pendingOperator.value = undefined
+  if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
 function initLocalState() {
@@ -207,6 +213,7 @@ function clearFilter() {
   localRangeStart.value = undefined
   localRangeEnd.value = undefined
   isOpen.value = false
+  if (props.dynamic) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -257,6 +264,14 @@ function setRangeEnd(value: unknown) {
     applyFilter()
   }
 }
+
+watch(
+  () => props.activationToken,
+  (value, previousValue) => {
+    if (value == null || value === previousValue) return
+    handleActivate(operator.value)
+  },
+)
 
 function setCalendarRange(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {

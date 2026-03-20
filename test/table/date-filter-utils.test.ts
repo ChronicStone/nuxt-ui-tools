@@ -40,7 +40,7 @@ describe('date filter utils', () => {
   it('supports operator-specific custom scalar presets', () => {
     const definition = {
       ...baseDefinition,
-      ui: {
+      editor: {
         operators: {
           after: {
             scalar: {
@@ -88,7 +88,7 @@ describe('date filter utils', () => {
   it('allows disabling presets and overriding responsive panel counts', () => {
     const definition = {
       ...baseDefinition,
-      ui: {
+      editor: {
         scalar: {
           presets: false,
         },
@@ -110,14 +110,16 @@ describe('date filter utils', () => {
     expect(resolveDateFilterRangeCalendarPanels({ definition, mobile: false })).toBe(1)
   })
 
-  it('keeps legacy picker config working when ui is omitted', () => {
+  it('reads range presets and calendar settings from the editor config', () => {
     const definition = {
       ...baseDefinition,
-      picker: {
-        rangePresets: false,
-        rangeCalendar: {
-          panels: 2,
-          pagedNavigation: true,
+      editor: {
+        range: {
+          presets: false,
+          calendar: {
+            months: 2,
+            pagedNavigation: true,
+          },
         },
       },
     } satisfies TableDateFilterDefinition<TestRow, object, 'createdAt'>

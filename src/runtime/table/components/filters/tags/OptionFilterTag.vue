@@ -7,7 +7,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import UScrollArea from '@nuxt/ui/components/ScrollArea.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { useRangeSelect } from '../../../../shared'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
@@ -24,6 +24,11 @@ import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableOptionFilterDefinition
+  dynamic?: boolean
+  activationToken?: number
+}>()
+const emit = defineEmits<{
+  dismiss: []
 }>()
 
 const internals = useTableInternals()
@@ -242,6 +247,7 @@ function handleOpenChange(open: boolean) {
   localExpandedIds.value = new Set()
   pinnedRangeSelect.reset()
   restRangeSelect.reset()
+  if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -344,6 +350,7 @@ function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   localSelectedValues.value = []
   isOpen.value = false
+  if (props.dynamic) emit('dismiss')
 }
 
 function resolveRowIcon(entry: { label: string; value?: string | number | boolean; count?: number; icon?: string }) {
@@ -384,6 +391,14 @@ function mapSelectedTreeEntries(options: {
 function handleContentMounted() {
   isContentReady.value = true
 }
+
+watch(
+  () => props.activationToken,
+  (value, previousValue) => {
+    if (value == null || value === previousValue) return
+    handleActivate(operator.value)
+  },
+)
 </script>
 
 <template>
