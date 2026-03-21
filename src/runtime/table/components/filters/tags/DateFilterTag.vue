@@ -5,8 +5,9 @@ import UCalendar from '@nuxt/ui/components/Calendar.vue'
 import UInputDate from '@nuxt/ui/components/InputDate.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { useMediaQuery } from '@vueuse/core'
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, toRef, watch } from 'vue'
 
+import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableDateFilterOperator, TableFilterOperator } from '../../../types'
 import type { TableDateFilterDefinition } from '../../../types/filters'
@@ -34,14 +35,10 @@ const emit = defineEmits<{
 
 const internals = useTableInternals()
 const isMobile = useMediaQuery('(max-width: 639px)')
-const isOpen = ref<boolean>(false)
 const pendingOperator = ref<TableFilterOperator>()
 const localDate = shallowRef<CalendarDate | undefined>(undefined)
 const localRangeStart = shallowRef<CalendarDate | undefined>(undefined)
 const localRangeEnd = shallowRef<CalendarDate | undefined>(undefined)
-const lastActivationToken = ref<number | null>(null)
-
-let dismissLocked = false
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
@@ -126,38 +123,30 @@ const rangeSummary = computed(() => {
   return 'No range selected'
 })
 
+const session = useFilterTagSession({
+  activationToken: toRef(props, 'activationToken'),
+  session: props.session,
+  dynamic: props.dynamic,
+  hasCommittedState: () => internals.filters.getFilterState({ key: props.definition.key }) != null,
+  onActivated: () => handleActivate(operator.value),
+  onOpen: initLocalState,
+  onClose: () => {
+    pendingOperator.value = undefined
+  },
+  onSessionClosed: () => emit('sessionClosed'),
+  onDismiss: () => emit('dismiss'),
+})
+
 watch(
   () => operator.value,
   () => {
-    if (isOpen.value) initLocalState()
+    if (session.isOpen.value) initLocalState()
   },
 )
 
 function handleActivate(op: TableFilterOperator) {
   pendingOperator.value = op
-  dismissLocked = true
-  setTimeout(() => {
-    isOpen.value = true
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        dismissLocked = false
-      })
-    })
-  })
-}
-
-function handleOpenChange(open: boolean) {
-  if (!open && dismissLocked) return
-  isOpen.value = open
-
-  if (open) {
-    initLocalState()
-    return
-  }
-
-  pendingOperator.value = undefined
-  if (props.session) emit('sessionClosed')
-  else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
+  session.openWithLock()
 }
 
 function initLocalState() {
@@ -200,8 +189,7 @@ function applyFilter() {
       value: from || to ? { ...(from ? { from } : {}), ...(to ? { to } : {}) } : undefined,
       operator: nextOperator,
     })
-    isOpen.value = false
-    if (props.session) emit('sessionClosed')
+    session.close()
     return
   }
 
@@ -210,8 +198,7 @@ function applyFilter() {
     value: localDate.value ? toJsDate(localDate.value) : undefined,
     operator: nextOperator,
   })
-  isOpen.value = false
-  if (props.session) emit('sessionClosed')
+  session.close()
 }
 
 function clearFilter() {
@@ -219,9 +206,7 @@ function clearFilter() {
   localDate.value = undefined
   localRangeStart.value = undefined
   localRangeEnd.value = undefined
-  isOpen.value = false
-  if (props.session) emit('sessionClosed')
-  else if (props.dynamic) emit('dismiss')
+  session.close()
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -272,16 +257,6 @@ function setRangeEnd(value: unknown) {
     applyFilter()
   }
 }
-
-watch(
-  () => props.activationToken,
-  (value) => {
-    if (value == null || value === lastActivationToken.value) return
-    lastActivationToken.value = value
-    handleActivate(operator.value)
-  },
-  { immediate: true },
-)
 
 function setCalendarRange(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -340,16 +315,17 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
   return left.year === right.year && left.month === right.month && left.day === right.day
 }
+
 </script>
 
 <template>
   <UPopover
-    :open="isOpen"
+    :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
       content: 'max-w-[calc(100vw-1rem)] overflow-hidden p-0 shadow-none',
     }"
-    @update:open="handleOpenChange"
+    @update:open="session.handleOpenChange"
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"

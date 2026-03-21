@@ -144,7 +144,16 @@ Important ownership split:
 - `use-table-filters.ts` owns filter semantics and query-state operations
 - `use-table-filter-presentation.ts` owns filter surface behavior and panel draft state
 - `use-table-filter-options.ts` owns option-source consumption and merges in facet results
+- `use-option-filter-editor-state.ts` owns option editor state derivation shared by tag and panel surfaces
+- `use-filter-tag-session.ts` owns transient tag session activation/open/close behavior for tag and tag-dynamic flows
 - rendering components should consume those prepared layers instead of rebuilding filter logic locally
+
+Current renderer cleanup direction:
+
+- searchable popover structure should be shared through `components/filters/shared/FilterSearchablePanel.vue`
+- option picker content should be shared through `components/filters/shared/FilterOptionPickerContent.vue`
+- tag and panel wrappers should stay thin and mostly own surface-specific commit behavior
+- when adding a new filter kind, prefer a shared editor-state composable plus thin surface wrappers over duplicating tag/panel implementations
 
 ## 7. Column Flow
 

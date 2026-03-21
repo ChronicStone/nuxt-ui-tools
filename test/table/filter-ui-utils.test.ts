@@ -8,6 +8,7 @@ import type {
 } from '#ui-tools/table/types'
 import {
   resolveBooleanFilterUi,
+  resolveFilterTriggerIcon,
   resolveNumberFilterUi,
   resolveOptionFilterUi,
   resolveTextFilterUi,
@@ -125,5 +126,25 @@ describe('filter ui utils', () => {
     expect(scalarUi.scalar.display).toBe('slider')
     expect(rangeUi.range.display).toBe('inputs-slider')
     expect(rangeUi.range.minGap).toBe(10)
+  })
+
+  it('resolves default trigger icons with display overrides', () => {
+    const optionDefinition = {
+      kind: 'option',
+      key: 'status',
+      label: 'Status',
+    } satisfies TableOptionFilterDefinition<TestRow, object, 'status'>
+
+    const booleanDefinition = {
+      kind: 'boolean',
+      key: 'active',
+      label: 'Active',
+      display: {
+        icon: 'i-lucide-badge-check',
+      },
+    } satisfies TableBooleanFilterDefinition<TestRow, object, 'active'>
+
+    expect(resolveFilterTriggerIcon(optionDefinition)).toBe('i-lucide-filter')
+    expect(resolveFilterTriggerIcon(booleanDefinition)).toBe('i-lucide-badge-check')
   })
 })

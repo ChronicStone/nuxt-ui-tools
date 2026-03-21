@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
-import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
 import type { TableUiFilterDefinition } from '../../../types'
 import { resolveFilterTriggerIcon } from '../../../utils'
+import FilterSearchablePanel from './FilterSearchablePanel.vue'
 
 const props = defineProps<{
   definitions: TableUiFilterDefinition[]
@@ -54,20 +54,16 @@ function handleSelect(key: string) {
     />
 
     <template #content>
-      <div class="w-fit min-w-[18rem] max-w-[min(24rem,calc(100vw-1rem))] bg-default">
-        <div class="border-b border-default p-2">
-          <UInput
-            v-model="searchQuery"
-            icon="i-lucide-search"
-            placeholder="Search filters..."
-            color="neutral"
-            variant="ghost"
-            autofocus
-            class="w-full"
-          />
-        </div>
-
-        <div class="grid max-h-72 gap-1 overflow-y-auto p-2">
+      <div class="w-fit min-w-[18rem] max-w-[min(24rem,calc(100vw-1rem))]">
+        <FilterSearchablePanel
+          v-model:search-query="searchQuery"
+          searchable
+          autofocus
+          search-placeholder="Search filters..."
+          :show-empty="!filteredDefinitions.length"
+          empty-label="No matching filters."
+          max-height-class="max-h-72"
+        >
           <button
             v-for="definition in filteredDefinitions"
             :key="definition.key"
@@ -86,14 +82,7 @@ function handleSelect(key: string) {
               <UIcon name="i-lucide-arrow-right" class="size-4" />
             </span>
           </button>
-
-          <div
-            v-if="!filteredDefinitions.length"
-            class="px-3 py-6 text-center text-sm text-muted"
-          >
-            No matching filters.
-          </div>
-        </div>
+        </FilterSearchablePanel>
       </div>
     </template>
   </UPopover>

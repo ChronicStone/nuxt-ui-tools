@@ -132,6 +132,9 @@ That file should stay an orchestration map, not a dumping ground.
 - keep filters definition-driven
 - keep filter definitions organized around `behavior`, `display`, `source`, `editor`, and `preview`
 - keep filter surface behavior in `use-table-filter-presentation.ts`, not in tag/panel components
+- keep shared option editor state in `use-option-filter-editor-state.ts` instead of re-deriving list/tree/search/summary state in multiple components
+- keep transient tag-session behavior in `use-filter-tag-session.ts` instead of repeating activation/open/close logic across tag components
+- keep searchable option popovers on shared building blocks such as `FilterSearchablePanel.vue` and `FilterOptionPickerContent.vue`
 - keep client facet computation in the data/query layer, not in filter UI composables
 - keep actions, filters, columns, and layouts easy to document on the consumer side
 - prefer normalized state shapes that are easy to serialize, explain, and test

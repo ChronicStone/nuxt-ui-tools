@@ -4,8 +4,9 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, toRef } from 'vue'
 
+import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableBooleanFilterDefinition, TableBooleanFilterOperator } from '../../../types'
@@ -25,14 +26,12 @@ const emit = defineEmits<{
 
 const internals = useTableInternals()
 const searchQuery = ref<string>('')
-const isOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
 const localValue = ref<boolean | null>(null)
-const lastActivationToken = ref<number | null>(null)
 
 const optionSource = useTableFilterOptions({
   definition: props.definition,
-  active: isOpen,
+  active: computed(() => session.isOpen.value),
   ready: isContentReady,
   searchQuery,
   filters: internals.filters,
@@ -88,6 +87,20 @@ const radioValue = computed({
   },
 })
 
+const session = useFilterTagSession({
+  activationToken: toRef(props, 'activationToken'),
+  session: props.session,
+  dynamic: props.dynamic,
+  hasCommittedState: () => internals.filters.getFilterState({ key: props.definition.key }) != null,
+  onActivated: handleActivate,
+  onOpen: initLocalState,
+  onClose: () => {
+    isContentReady.value = false
+  },
+  onSessionClosed: () => emit('sessionClosed'),
+  onDismiss: () => emit('dismiss'),
+})
+
 function initLocalState() {
   const committedRule = internals.filters.getFilterState({ key: props.definition.key })
 
@@ -99,12 +112,8 @@ function initLocalState() {
   localValue.value = null
 }
 
-function handleOpenChange(open: boolean) {
-  isOpen.value = open
-  if (!open) isContentReady.value = false
-  if (open) initLocalState()
-  else if (props.session) emit('sessionClosed')
-  else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
+function handleActivate() {
+  session.openWithLock()
 }
 
 function handleContentMounted() {
@@ -121,35 +130,22 @@ function applyFilter() {
     })
   }
 
-  isOpen.value = false
-  if (props.session) emit('sessionClosed')
+  session.close()
 }
 
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
-  isOpen.value = false
-  if (props.session) emit('sessionClosed')
-  else if (props.dynamic) emit('dismiss')
+  session.close()
 }
 
-watch(
-  () => props.activationToken,
-  (value) => {
-    if (value == null || value === lastActivationToken.value) return
-    lastActivationToken.value = value
-    isOpen.value = true
-    initLocalState()
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
   <UPopover
-    :open="isOpen"
+    :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
-    @update:open="handleOpenChange"
+    @update:open="session.handleOpenChange"
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
@@ -159,6 +155,7 @@ watch(
       :preview-tags="preview.tags"
       :preview-summary="preview.summary"
       :active="preview.active"
+      @activate="handleActivate"
       @clear="clearFilter"
     />
 

@@ -2,8 +2,9 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, toRef } from 'vue'
 
+import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableFilterOperator, TableTextFilterDefinition, TableTextFilterOperator } from '../../../types'
 import { resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
@@ -21,10 +22,8 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
-const isOpen = ref<boolean>(false)
 const pendingOperator = ref<TableFilterOperator>()
 const localValue = ref<string>('')
-const lastActivationToken = ref<number | null>(null)
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
@@ -63,31 +62,23 @@ function initLocalState() {
   localValue.value = value == null ? '' : String(value)
 }
 
-let dismissLocked = false
+const session = useFilterTagSession({
+  activationToken: toRef(props, 'activationToken'),
+  session: props.session,
+  dynamic: props.dynamic,
+  hasCommittedState: () => internals.filters.getFilterState({ key: props.definition.key }) != null,
+  onActivated: () => handleActivate(operator.value),
+  onOpen: initLocalState,
+  onClose: () => {
+    pendingOperator.value = undefined
+  },
+  onSessionClosed: () => emit('sessionClosed'),
+  onDismiss: () => emit('dismiss'),
+})
 
 function handleActivate(op: TableFilterOperator) {
   pendingOperator.value = op
-  dismissLocked = true
-  setTimeout(() => {
-    isOpen.value = true
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        dismissLocked = false
-      })
-    })
-  })
-}
-
-function handleOpenChange(open: boolean) {
-  if (!open && dismissLocked) return
-  isOpen.value = open
-  if (open) {
-    initLocalState()
-  } else {
-    pendingOperator.value = undefined
-    if (props.session) emit('sessionClosed')
-    else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
-  }
+  session.openWithLock()
 }
 
 function applyFilter() {
@@ -99,15 +90,12 @@ function applyFilter() {
     value: localValue.value.trim() || undefined,
     operator: op,
   })
-  isOpen.value = false
-  if (props.session) emit('sessionClosed')
+  session.close()
 }
 
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
-  isOpen.value = false
-  if (props.session) emit('sessionClosed')
-  else if (props.dynamic) emit('dismiss')
+  session.close()
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -131,25 +119,16 @@ function handleValueUpdate(value: string | number | undefined) {
   }
 }
 
-watch(
-  () => props.activationToken,
-  (value) => {
-    if (value == null || value === lastActivationToken.value) return
-    lastActivationToken.value = value
-    handleActivate(operator.value)
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
   <UPopover
-    :open="isOpen"
+    :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
       content: 'w-fit overflow-hidden p-0 shadow-none',
     }"
-    @update:open="handleOpenChange"
+    @update:open="session.handleOpenChange"
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
