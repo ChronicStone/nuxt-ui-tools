@@ -7,6 +7,7 @@ Selection is configured through `selection` and related table behavior.
 ```ts
 selection: {
   mode: 'auto',
+  scope: 'all',
 }
 ```
 
@@ -15,6 +16,28 @@ selection: {
 - `false`: disable selection
 - `true`: always enable selection
 - `'auto'`: enable selection when the current schema and actions make it useful
+
+## What `scope` Means
+
+`scope` controls what the header "select all" checkbox targets in client tables:
+
+- `'page'`: only the current paginated page
+- `'all'`: all filtered rows across the current client dataset
+
+Example:
+
+```ts
+selection: {
+  mode: 'auto',
+  scope: 'all',
+}
+```
+
+Important rule:
+
+- `scope` is only meaningful for client tables
+- remote tables stay page-scoped
+- if `scope` is omitted, client tables default to `'all'`
 
 ## Typical Usage With Bulk Actions
 
@@ -31,6 +54,7 @@ const schema = defineTableSchema({
   },
   selection: {
     mode: 'auto',
+    scope: 'all',
   },
   actions: [
     {

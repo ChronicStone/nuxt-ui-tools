@@ -30,6 +30,7 @@ export interface TableControlsSchema {
 
 export interface TableSelectionSchema {
   mode?: false | true | 'auto'
+  scope?: 'page' | 'all'
 }
 
 export type PaginationConfig = {

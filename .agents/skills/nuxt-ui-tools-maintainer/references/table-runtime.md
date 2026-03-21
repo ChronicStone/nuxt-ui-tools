@@ -54,6 +54,8 @@ When you need the fastest understanding of current table wiring, start there.
   `use-table-api.ts`
 - filters:
   `use-table-filters.ts`
+- filter presentation:
+  `use-table-filter-presentation.ts`
 - selection:
   `use-table-selection.ts`
 - columns:
@@ -93,6 +95,15 @@ The current high-level flow is:
 4. orchestration composables prepare layout, state, data, API, filters, selection, controls, columns, and pagination
 5. `DataList.vue` and layout renderers consume the prepared state
 
+Filter presentation is now its own orchestration concern:
+
+- tag filters
+- panel filters
+- tag-dynamic filters
+- panel draft state and apply/clear behavior
+
+Do not collapse that back into render components.
+
 ## Where New Feature Code Usually Goes
 
 If the work is about:
@@ -119,6 +130,9 @@ That file should stay an orchestration map, not a dumping ground.
 - reduce extra reactive bridges when the abstraction can be improved directly
 - keep columns as a pipeline
 - keep filters definition-driven
+- keep filter definitions organized around `behavior`, `display`, `source`, `editor`, and `preview`
+- keep filter surface behavior in `use-table-filter-presentation.ts`, not in tag/panel components
+- keep client facet computation in the data/query layer, not in filter UI composables
 - keep actions, filters, columns, and layouts easy to document on the consumer side
 - prefer normalized state shapes that are easy to serialize, explain, and test
 

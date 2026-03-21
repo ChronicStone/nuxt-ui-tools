@@ -1,4 +1,4 @@
-import { computed, watch, type ComputedRef } from 'vue'
+import { computed, ref, watch, type ComputedRef } from 'vue'
 
 import type { TableSchemaView } from '../types'
 import { getDefaultPageSize, getPageSizeOptions } from '../utils'
@@ -14,7 +14,12 @@ export interface UseTablePaginationParams {
 }
 
 export function useTablePagination(options: UseTablePaginationParams) {
-  const rowCount = computed(() => options.queryContent.data.value.rowCount)
+  const stableRemoteRowCount = ref<number>(0)
+  const rowCount = computed(() =>
+    options.schema.value.source.mode === 'remote'
+      ? stableRemoteRowCount.value
+      : options.queryContent.data.value.rowCount,
+  )
   const currentPage = computed(() => options.state.queryState.pagination.value.pageIndex)
   const pageSize = computed(() => options.state.queryState.pagination.value.pageSize)
   const totalPages = computed(() =>
@@ -84,6 +89,20 @@ export function useTablePagination(options: UseTablePaginationParams) {
       if (nextPageSize === pageSize.value) return
 
       setPageSize(nextPageSize)
+    },
+    { immediate: true },
+  )
+
+  watch(
+    [() => options.queryContent.data.value.rowCount, () => options.queryContent.status.value.isDataFetching],
+    ([nextRowCount, isFetching]) => {
+      if (options.schema.value.source.mode !== 'remote') {
+        stableRemoteRowCount.value = nextRowCount
+        return
+      }
+
+      if (isFetching) return
+      stableRemoteRowCount.value = nextRowCount
     },
     { immediate: true },
   )

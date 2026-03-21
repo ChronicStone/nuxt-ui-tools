@@ -29,6 +29,14 @@ What you return:
 - an array of rows
 - or an object with `rows` and `rowCount`
 
+Client mode also includes built-in data-layer execution for:
+
+- filtering
+- search
+- sorting
+- pagination
+- facet counts for filters that opt into `source.facet`
+
 ## Remote Mode
 
 Use remote mode when filtering, sorting, pagination, or option counts should be server-backed.
@@ -67,6 +75,8 @@ Remote mode can also provide:
 - remote facets
 - remote filter-option queries
 
+Remote facet counts are configured on the filter with `source.facet` and implemented on the source with `source.facets(...)`.
+
 ## Choosing Between Them
 
 Use client mode for:
@@ -74,6 +84,7 @@ Use client mode for:
 - local datasets
 - simpler setups
 - built-in client-side query behavior
+- client-computed facet counts when filters opt into `source.facet`
 
 Use remote mode for:
 

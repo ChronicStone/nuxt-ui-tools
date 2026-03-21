@@ -34,6 +34,7 @@ export interface UseTableDataReturn {
   query: ReturnType<typeof useQuery>
   rawData: ComputedRef<TableExternalState>
   data: ComputedRef<TableExternalState>
+  selectableRows: ComputedRef<GenericObject[]>
   facets: ComputedRef<TableFacetExecutionResult<string>>
   error: ComputedRef<unknown>
   status: ComputedRef<{
@@ -189,6 +190,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       pagination: requestPagination.value,
     })
   })
+  const selectableRows = computed<GenericObject[]>(() =>
+    params.schema.value.source.mode === 'client'
+      ? clientSortedRows.value
+      : data.value.rows,
+  )
   const clientFacetDescriptors = computed<TableFacetRequestDescriptor<string>[]>(() =>
     (params.schema.value.filters?.ui ?? []).flatMap((definition) => {
       if (definition.kind !== 'option' && definition.kind !== 'boolean') return []
@@ -365,6 +371,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     query,
     rawData,
     data,
+    selectableRows,
     facets,
     error,
     status,

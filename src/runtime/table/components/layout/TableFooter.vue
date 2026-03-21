@@ -29,7 +29,7 @@ function formatCount(value: number) {
   >
     <div>
       {{ formatCount(internals.selection.selectedCount.value) }} of
-      {{ formatCount(internals.queryContent.data.value.rowCount) }} row(s) selected.
+      {{ formatCount(internals.pagination.rowCount.value) }} row(s) selected.
     </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">

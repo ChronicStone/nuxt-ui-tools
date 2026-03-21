@@ -63,6 +63,8 @@ Start from these depending on the task:
   `src/runtime/table/utils/columns/*`
 - filter pipeline:
   `src/runtime/table/composables/use-table-filters.ts`
+  `src/runtime/table/composables/use-table-filter-presentation.ts`
+  `src/runtime/table/composables/use-table-filter-options.ts`
   `src/runtime/table/utils/filters/*`
 - rendering shell:
   `src/runtime/table/components/DataList.vue`
@@ -122,8 +124,11 @@ Avoid:
 ### Filters
 
 - filters should be definition-driven
+- filter definitions currently organize around `behavior`, `display`, `source`, `editor`, and `preview`
 - each filter kind should have standardized behavior and isolated implementation where logic is non-trivial
 - preview generation is a good model: normalized contract plus per-kind implementation files
+- filter presentation is a separate orchestration concern from filter semantics
+- client facet counts belong to the data/query engine, not the filter render layer
 
 ### Components
 

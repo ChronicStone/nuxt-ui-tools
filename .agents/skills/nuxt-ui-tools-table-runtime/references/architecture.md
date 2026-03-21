@@ -31,6 +31,7 @@ Today it wires together:
 - query state
 - resolved filters
 - data loading
+- filter presentation
 - column state
 - selection
 - public API
@@ -102,29 +103,48 @@ Responsibilities include:
 - request context creation
 - data query execution
 - client-side query execution when needed
+- client-side facet execution when filters opt into `source.facet`
 - page-context queries
 - loading/error aggregation
 
 This layer should own data orchestration, not rendering components.
+
+Important current rule:
+
+- client facet counts belong to the data/query engine layer
+- `use-table-filter-options.ts` should consume prepared facet results, not compute client counts itself
+- option loading and facet computation are separate concerns
 
 ## 6. Filter Flow
 
 Important files:
 
 - `use-table-filters.ts`
+- `use-table-filter-presentation.ts`
 - `utils/filters/*`
 - `utils/resolved-filters.ts`
 - `utils/query-state.ts`
+- `components/filters/*`
 
 Good current pattern:
 
 - filter preview logic is split per kind under `utils/filters/preview/*`
+- filter presentation has dedicated orchestration for `tag`, `panel`, and `tag-dynamic`
+- panel state is staged at the panel level and applied together
+- filter definitions use one unified top-level contract: `behavior`, `display`, `source`, `editor`, `preview`
 
 This is the kind of organization to continue:
 
 - shared normalized contract
 - per-kind isolated implementation
 - orchestration layer consuming prepared outputs
+
+Important ownership split:
+
+- `use-table-filters.ts` owns filter semantics and query-state operations
+- `use-table-filter-presentation.ts` owns filter surface behavior and panel draft state
+- `use-table-filter-options.ts` owns option-source consumption and merges in facet results
+- rendering components should consume those prepared layers instead of rebuilding filter logic locally
 
 ## 7. Column Flow
 

@@ -12,22 +12,34 @@ export interface UseTableSelectionParams {
 export function useTableSelection(options: UseTableSelectionParams) {
   const selectedKeys = ref<string[]>([])
   const lastTouchedRowId = ref<string | null>(null)
-  const rows = computed<GenericObject[]>(() => options.queryContent.data.value.rows)
+  const pageRows = computed<GenericObject[]>(() => options.queryContent.data.value.rows)
 
   const selectionEnabled = computed(() => {
     const mode =
       options.schema.value.table?.selection ?? options.schema.value.selection?.mode ?? 'auto'
     return mode !== false
   })
+  const selectionScope = computed<'page' | 'all'>(() => {
+    if (options.schema.value.source.mode === 'remote') return 'page'
+    return options.schema.value.selection?.scope ?? 'all'
+  })
+  const selectionRows = computed<GenericObject[]>(() =>
+    selectionScope.value === 'all'
+      ? options.queryContent.selectableRows.value
+      : pageRows.value,
+  )
+  const pageRowIds = computed(() =>
+    pageRows.value.map((row, index) => getRowId({ row, index })),
+  )
 
-  const visibleRowIds = computed(() =>
-    rows.value.map((row, index) => getRowId({ row, index })),
+  const scopeRowIds = computed(() =>
+    selectionRows.value.map((row, index) => getRowId({ row, index })),
   )
 
   const rowSelection = computed({
     get: () =>
       Object.fromEntries(
-        visibleRowIds.value
+        pageRowIds.value
           .filter((rowId) => selectedKeys.value.includes(rowId))
           .map((rowId) => [rowId, true]),
       ),
@@ -38,17 +50,17 @@ export function useTableSelection(options: UseTableSelectionParams) {
 
   const allSelected = computed(
     () =>
-      visibleRowIds.value.length > 0 &&
-      visibleRowIds.value.every((rowId) => selectedKeys.value.includes(rowId)),
+      scopeRowIds.value.length > 0 &&
+      scopeRowIds.value.every((rowId) => selectedKeys.value.includes(rowId)),
   )
 
   const partiallySelected = computed(
     () =>
-      !allSelected.value && visibleRowIds.value.some((rowId) => selectedKeys.value.includes(rowId)),
+      !allSelected.value && scopeRowIds.value.some((rowId) => selectedKeys.value.includes(rowId)),
   )
 
   const selectedRows = computed(() =>
-    rows.value.filter((row, index) =>
+    selectionRows.value.filter((row, index) =>
       selectedKeys.value.includes(getRowId({ row, index })),
     ),
   )
@@ -94,7 +106,7 @@ export function useTableSelection(options: UseTableSelectionParams) {
       return
     }
 
-    selectedKeys.value = uniqueRowIds([...selectedKeys.value, ...visibleRowIds.value])
+    selectedKeys.value = uniqueRowIds([...selectedKeys.value, ...scopeRowIds.value])
   }
 
   function setRowSelection(params: { selection: Record<string, boolean> }) {
@@ -103,7 +115,7 @@ export function useTableSelection(options: UseTableSelectionParams) {
       return
     }
 
-    const visibleIds = new Set(visibleRowIds.value)
+    const visibleIds = new Set(pageRowIds.value)
     const preservedSelection = selectedKeys.value.filter((rowId) => !visibleIds.has(rowId))
     const nextVisibleSelection = Object.entries(params.selection)
       .filter(([, selected]) => Boolean(selected))
@@ -118,7 +130,7 @@ export function useTableSelection(options: UseTableSelectionParams) {
       return
     }
 
-    unselectRows({ rowIds: visibleRowIds.value })
+    unselectRows({ rowIds: scopeRowIds.value })
   }
 
   function toggleRowSelection(params: { rowId: string; selected?: boolean; shiftKey?: boolean }) {
@@ -145,8 +157,8 @@ export function useTableSelection(options: UseTableSelectionParams) {
   }
 
   function getRangeRowIds(params: { anchorRowId: string; targetRowId: string }) {
-    const anchorIndex = visibleRowIds.value.indexOf(params.anchorRowId)
-    const targetIndex = visibleRowIds.value.indexOf(params.targetRowId)
+    const anchorIndex = scopeRowIds.value.indexOf(params.anchorRowId)
+    const targetIndex = scopeRowIds.value.indexOf(params.targetRowId)
 
     if (anchorIndex === -1 || targetIndex === -1) {
       return [params.targetRowId]
@@ -155,11 +167,11 @@ export function useTableSelection(options: UseTableSelectionParams) {
     const start = Math.min(anchorIndex, targetIndex)
     const end = Math.max(anchorIndex, targetIndex)
 
-    return visibleRowIds.value.slice(start, end + 1)
+    return scopeRowIds.value.slice(start, end + 1)
   }
 
   watch(
-    visibleRowIds,
+    scopeRowIds,
     (rowIds) => {
       if (!selectedKeys.value.length && !lastTouchedRowId.value) return
 

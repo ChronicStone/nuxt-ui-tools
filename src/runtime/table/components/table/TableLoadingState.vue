@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
+import { useElementSize } from '@vueuse/core'
 import { computed } from 'vue'
+import { useTemplateRef } from 'vue'
 
 import { useTableInternals } from '../../composables/use-table-internals'
 
@@ -9,8 +11,16 @@ const props = defineProps<{
 }>()
 
 const internals = useTableInternals()
+const rootRef = useTemplateRef<HTMLDivElement>('root')
+const { height } = useElementSize(rootRef)
+const rowHeight = 48
+const topPadding = 24
 
-const skeletonRows = computed(() => Array.from({ length: 10 }, (_, index) => index))
+const skeletonRows = computed(() => {
+  const availableHeight = Math.max(height.value - topPadding, 0)
+  const count = Math.max(1, Math.ceil(availableHeight / rowHeight))
+  return Array.from({ length: count }, (_, index) => index)
+})
 
 const skeletonColumns = computed(() => [
   {
@@ -44,7 +54,11 @@ const skeletonGridTemplate = computed(() =>
 </script>
 
 <template>
-  <div class="w-full pt-6" :style="{ minHeight }">
+  <div
+    ref="root"
+    class="h-full w-full pt-6"
+    :style="{ minHeight }"
+  >
     <div
       v-for="rowIndex in skeletonRows"
       :key="rowIndex"

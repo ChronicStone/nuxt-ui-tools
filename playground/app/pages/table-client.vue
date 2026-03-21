@@ -40,6 +40,10 @@ const clientSchema = defineTableSchema({
     showPagesList: true,
     showPagesCount: true,
   },
+  selection: {
+    mode: 'auto',
+    scope: 'all',
+  },
   source: {
     mode: 'client',
     query: () => ({
