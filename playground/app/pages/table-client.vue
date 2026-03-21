@@ -66,7 +66,7 @@ const clientSchema = defineTableSchema({
           operators: ['contains', 'is'],
         },
         display: {
-          location: 'panel md:tag',
+          location: 'tag-dynamic',
         },
         editor: {
           placeholder: 'Search employees',
@@ -80,7 +80,7 @@ const clientSchema = defineTableSchema({
           defaultOperator: 'isAnyOf',
         },
         display: {
-          location: 'panel md:tag',
+          location: 'tag-dynamic',
         },
         source: {
           facet: 'exclude-self',
@@ -107,7 +107,7 @@ const clientSchema = defineTableSchema({
           defaultOperator: 'isAnyOf',
         },
         display: {
-          location: 'panel md:tag',
+          location: 'tag-dynamic',
         },
         source: {
           facet: 'exclude-self',
@@ -128,7 +128,7 @@ const clientSchema = defineTableSchema({
           defaultOperator: 'isAnyOf',
         },
         display: {
-          location: 'panel md:tag',
+          location: 'tag-dynamic',
         },
         source: {
           facet: 'exclude-self',
@@ -158,7 +158,7 @@ const clientSchema = defineTableSchema({
           defaultOperator: 'isAnyOf',
         },
         display: {
-          location: 'panel md:tag',
+          location: 'tag-dynamic',
         },
         source: {
           facet: 'exclude-self',
@@ -177,7 +177,7 @@ const clientSchema = defineTableSchema({
       filter.boolean('isActive', {
         label: 'Active',
         display: {
-          location: 'panel md:tag',
+          location: 'tag-dynamic',
         },
         source: {
           facet: 'exclude-self',
@@ -195,7 +195,7 @@ const clientSchema = defineTableSchema({
           operators: ['is', 'gte', 'lte', 'between'],
         },
         display: {
-          location: 'panel md:tag',
+          location: 'tag-dynamic',
         },
         editor: {
           min: 50000,

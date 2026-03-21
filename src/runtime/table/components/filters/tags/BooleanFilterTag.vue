@@ -9,16 +9,18 @@ import { computed, ref, watch } from 'vue'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableBooleanFilterDefinition, TableBooleanFilterOperator } from '../../../types'
-import { resolveBooleanFilterUi } from '../../../utils'
+import { resolveBooleanFilterUi, resolveFilterTriggerIcon } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableBooleanFilterDefinition
   dynamic?: boolean
+  session?: boolean
   activationToken?: number
 }>()
 const emit = defineEmits<{
   dismiss: []
+  sessionClosed: []
 }>()
 
 const internals = useTableInternals()
@@ -26,6 +28,7 @@ const searchQuery = ref<string>('')
 const isOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
 const localValue = ref<boolean | null>(null)
+const lastActivationToken = ref<number | null>(null)
 
 const optionSource = useTableFilterOptions({
   definition: props.definition,
@@ -53,10 +56,6 @@ const operator = computed<TableBooleanFilterOperator>(() => {
 })
 
 const filterUi = computed(() => resolveBooleanFilterUi(props.definition, operator.value))
-
-const triggerIcon = computed(() =>
-  preview.value.active ? 'i-lucide-circle-x' : 'i-lucide-circle-plus',
-)
 
 const entries = computed(() =>
   optionSource.filteredEntries.value
@@ -104,6 +103,7 @@ function handleOpenChange(open: boolean) {
   isOpen.value = open
   if (!open) isContentReady.value = false
   if (open) initLocalState()
+  else if (props.session) emit('sessionClosed')
   else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
@@ -122,21 +122,25 @@ function applyFilter() {
   }
 
   isOpen.value = false
+  if (props.session) emit('sessionClosed')
 }
 
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   isOpen.value = false
-  if (props.dynamic) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic) emit('dismiss')
 }
 
 watch(
   () => props.activationToken,
-  (value, previousValue) => {
-    if (value == null || value === previousValue) return
+  (value) => {
+    if (value == null || value === lastActivationToken.value) return
+    lastActivationToken.value = value
     isOpen.value = true
     initLocalState()
   },
+  { immediate: true },
 )
 </script>
 
@@ -149,7 +153,7 @@ watch(
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      :leading-icon="triggerIcon"
+      :leading-icon="resolveFilterTriggerIcon(definition)"
       operator-label="is"
       :operator-items="[]"
       :preview-tags="preview.tags"

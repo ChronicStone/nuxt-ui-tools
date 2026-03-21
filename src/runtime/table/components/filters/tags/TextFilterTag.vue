@@ -6,22 +6,25 @@ import { computed, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableFilterOperator, TableTextFilterDefinition, TableTextFilterOperator } from '../../../types'
-import { resolveTextFilterUi } from '../../../utils'
+import { resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableTextFilterDefinition
   dynamic?: boolean
+  session?: boolean
   activationToken?: number
 }>()
 const emit = defineEmits<{
   dismiss: []
+  sessionClosed: []
 }>()
 
 const internals = useTableInternals()
 const isOpen = ref<boolean>(false)
 const pendingOperator = ref<TableFilterOperator>()
 const localValue = ref<string>('')
+const lastActivationToken = ref<number | null>(null)
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
@@ -82,7 +85,8 @@ function handleOpenChange(open: boolean) {
     initLocalState()
   } else {
     pendingOperator.value = undefined
-    if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
+    if (props.session) emit('sessionClosed')
+    else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
   }
 }
 
@@ -96,12 +100,14 @@ function applyFilter() {
     operator: op,
   })
   isOpen.value = false
+  if (props.session) emit('sessionClosed')
 }
 
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   isOpen.value = false
-  if (props.dynamic) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -127,10 +133,12 @@ function handleValueUpdate(value: string | number | undefined) {
 
 watch(
   () => props.activationToken,
-  (value, previousValue) => {
-    if (value == null || value === previousValue) return
+  (value) => {
+    if (value == null || value === lastActivationToken.value) return
+    lastActivationToken.value = value
     handleActivate(operator.value)
   },
+  { immediate: true },
 )
 </script>
 
@@ -145,7 +153,7 @@ watch(
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      leading-icon="i-lucide-circle-plus"
+      :leading-icon="resolveFilterTriggerIcon(definition)"
       :operator-label="operatorLabel"
       :operator-items="operatorItems"
       :preview-summary="preview.summary"

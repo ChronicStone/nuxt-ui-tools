@@ -34,8 +34,23 @@ import type {
   TableTextFilterOperator,
   TableTextFilterUiResolved,
   TableTextValue,
+  TableUiFilterDefinition,
 } from '../../types'
 import { getFilterLabelText, getFilterTextValue } from './common'
+
+const DEFAULT_FILTER_TRIGGER_ICONS = {
+  text: 'i-lucide-search',
+  option: 'i-lucide-filter',
+  boolean: 'i-lucide-check',
+  number: 'i-lucide-hash',
+  date: 'i-lucide-calendar-days',
+} as const
+
+export function resolveFilterTriggerIcon(
+  definition: TableUiFilterDefinition<GenericObject, GenericObject, string>,
+) {
+  return definition.display?.icon ?? DEFAULT_FILTER_TRIGGER_ICONS[definition.kind]
+}
 
 export function resolveTextFilterUi(
   definition: TableTextFilterDefinition,

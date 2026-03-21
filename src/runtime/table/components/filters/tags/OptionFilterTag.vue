@@ -18,17 +18,19 @@ import type {
   TableOptionFilterOperator,
   TableResolvedFilterOptionEntry,
 } from '../../../types'
-import { flattenVisibleFilterOptionTree, resolveOptionFilterUi } from '../../../utils'
+import { flattenVisibleFilterOptionTree, resolveFilterTriggerIcon, resolveOptionFilterUi } from '../../../utils'
 import FilterOptionRow from '../shared/FilterOptionRow.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableOptionFilterDefinition
   dynamic?: boolean
+  session?: boolean
   activationToken?: number
 }>()
 const emit = defineEmits<{
   dismiss: []
+  sessionClosed: []
 }>()
 
 const internals = useTableInternals()
@@ -39,6 +41,7 @@ const pendingOperator = ref<TableFilterOperator>()
 const localSelectedValues = ref<(string | number | boolean)[]>([])
 const pinnedValues = ref<Set<string>>(new Set())
 const localExpandedIds = ref<Set<string>>(new Set())
+const lastActivationToken = ref<number | null>(null)
 
 let dismissLocked = false
 
@@ -85,10 +88,6 @@ const operatorItems = computed(() =>
 )
 
 const filterUi = computed(() => resolveOptionFilterUi(props.definition, operator.value))
-
-const triggerIcon = computed(() =>
-  preview.value.active ? 'i-lucide-circle-x' : 'i-lucide-circle-plus',
-)
 
 const displayEntries = computed(() =>
   optionSource.filteredEntries.value.map((entry) => ({
@@ -247,7 +246,8 @@ function handleOpenChange(open: boolean) {
   localExpandedIds.value = new Set()
   pinnedRangeSelect.reset()
   restRangeSelect.reset()
-  if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -344,13 +344,15 @@ function applyFilter() {
   })
   pendingOperator.value = undefined
   isOpen.value = false
+  if (props.session) emit('sessionClosed')
 }
 
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   localSelectedValues.value = []
   isOpen.value = false
-  if (props.dynamic) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic) emit('dismiss')
 }
 
 function resolveRowIcon(entry: { label: string; value?: string | number | boolean; count?: number; icon?: string }) {
@@ -394,10 +396,12 @@ function handleContentMounted() {
 
 watch(
   () => props.activationToken,
-  (value, previousValue) => {
-    if (value == null || value === previousValue) return
+  (value) => {
+    if (value == null || value === lastActivationToken.value) return
+    lastActivationToken.value = value
     handleActivate(operator.value)
   },
+  { immediate: true },
 )
 </script>
 
@@ -410,7 +414,7 @@ watch(
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      :leading-icon="triggerIcon"
+      :leading-icon="resolveFilterTriggerIcon(definition)"
       :operator-label="operatorLabel"
       :operator-items="operatorItems"
       :preview-tags="preview.tags"

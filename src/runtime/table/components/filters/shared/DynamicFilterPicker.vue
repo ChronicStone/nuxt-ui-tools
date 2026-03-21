@@ -6,6 +6,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
 import type { TableUiFilterDefinition } from '../../../types'
+import { resolveFilterTriggerIcon } from '../../../utils'
 
 const props = defineProps<{
   definitions: TableUiFilterDefinition[]
@@ -40,7 +41,7 @@ function handleSelect(key: string) {
     :open="isOpen"
     mode="click"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
+    :ui="{ content: 'w-fit max-w-[calc(100vw-1rem)] overflow-hidden p-0 shadow-none' }"
     @update:open="isOpen = $event"
   >
     <UButton
@@ -53,7 +54,7 @@ function handleSelect(key: string) {
     />
 
     <template #content>
-      <div class="w-[min(26rem,calc(100vw-1rem))] bg-default">
+      <div class="w-fit min-w-[18rem] max-w-[min(24rem,calc(100vw-1rem))] bg-default">
         <div class="border-b border-default p-2">
           <UInput
             v-model="searchQuery"
@@ -62,10 +63,11 @@ function handleSelect(key: string) {
             color="neutral"
             variant="ghost"
             autofocus
+            class="w-full"
           />
         </div>
 
-        <div class="grid max-h-80 gap-1 overflow-y-auto p-2">
+        <div class="grid max-h-72 gap-1 overflow-y-auto p-2">
           <button
             v-for="definition in filteredDefinitions"
             :key="definition.key"
@@ -73,6 +75,10 @@ function handleSelect(key: string) {
             class="flex min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-elevated/70"
             @click="handleSelect(definition.key)"
           >
+            <UIcon
+              :name="resolveFilterTriggerIcon(definition)"
+              class="size-4 shrink-0 text-muted"
+            />
             <span class="min-w-0 flex-1 truncate text-sm text-default">
               {{ getLabel(definition) }}
             </span>

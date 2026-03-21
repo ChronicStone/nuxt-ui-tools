@@ -13,6 +13,9 @@ const visibleDefinitions = computed(() => [
   ...internals.filterPresentation.tagDefinitions.value,
   ...internals.filterPresentation.activeDynamicDefinitions.value,
 ])
+const dynamicSessionDefinition = computed(
+  () => internals.filterPresentation.dynamicSessionDefinition.value,
+)
 
 function getFilterLabel(definition: TableUiFilterDefinition) {
   return typeof definition.label === 'function' ? '' : definition.label
@@ -34,12 +37,23 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       :key="definition.key"
       :definition="definition"
       :dynamic="internals.filterPresentation.activeDynamicDefinitions.value.some(item => item.key === definition.key)"
-      :activation-token="internals.filterPresentation.getDynamicActivationToken({ key: definition.key })"
-      @dismiss="internals.filterPresentation.dismissDynamicFilter({ key: definition.key })"
+      @dismiss="internals.filterPresentation.releaseDynamicSession({ key: definition.key })"
+    />
+
+    <component
+      :is="resolveFilterTagComponent(dynamicSessionDefinition)"
+      v-if="dynamicSessionDefinition"
+      :key="`dynamic-session:${dynamicSessionDefinition.key}`"
+      :definition="dynamicSessionDefinition"
+      dynamic
+      session
+      :activation-token="internals.filterPresentation.getDynamicActivationToken({ key: dynamicSessionDefinition.key })"
+      @dismiss="internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })"
+      @session-closed="internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })"
     />
 
     <DynamicFilterPicker
-      v-if="internals.filterPresentation.dormantDynamicDefinitions.value.length"
+      v-else-if="internals.filterPresentation.dormantDynamicDefinitions.value.length"
       :definitions="internals.filterPresentation.dormantDynamicDefinitions.value"
       :get-label="getFilterLabel"
       @select="internals.filterPresentation.activateDynamicFilter({ key: $event })"

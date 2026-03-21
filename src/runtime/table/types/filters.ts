@@ -50,6 +50,7 @@ export interface TableFilterUiActionLabelsConfig {
 
 export interface TableFilterDisplayConfig {
   location?: TableFilterDisplayLocationValue
+  icon?: string
   order?: number
   group?: string
   triggerLabel?: TableTextValue

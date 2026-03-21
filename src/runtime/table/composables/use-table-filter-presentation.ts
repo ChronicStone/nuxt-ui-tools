@@ -14,7 +14,7 @@ export interface UseTableFilterPresentationParams {
 }
 
 export function useTableFilterPresentation(options: UseTableFilterPresentationParams) {
-  const dynamicOpenKeys = ref<Set<string>>(new Set())
+  const dynamicSessionKey = ref<string | null>(null)
   const dynamicActivationToken = ref<Record<string, number>>({})
   const panelOpen = ref<boolean>(false)
   const panelDraftFilters = ref<TableQueryStateFilterRule[]>([])
@@ -31,7 +31,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     definitions.value.map((definition) => {
       const active = options.filters.getFilterState({ key: definition.key }) != null
       const location = resolveFilterDisplayLocation(definition.display?.location)
-      const visible = location !== 'tag-dynamic' || active || dynamicOpenKeys.value.has(definition.key)
+      const visible = location !== 'tag-dynamic' || active
 
       return {
         key: definition.key,
@@ -55,15 +55,28 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   const activeDynamicDefinitions = computed(() =>
     definitions.value.filter((definition) => {
       const presentation = resolved.value.find(item => item.key === definition.key)
-      return presentation?.location === 'tag-dynamic' && presentation.visible
+      return (
+        presentation?.location === 'tag-dynamic' &&
+        presentation.visible &&
+        dynamicSessionKey.value !== definition.key
+      )
     }),
   )
 
   const dormantDynamicDefinitions = computed(() =>
     definitions.value.filter((definition) => {
       const presentation = resolved.value.find(item => item.key === definition.key)
-      return presentation?.location === 'tag-dynamic' && !presentation.visible
+      return (
+        presentation?.location === 'tag-dynamic' &&
+        !presentation.visible &&
+        dynamicSessionKey.value !== definition.key
+      )
     }),
+  )
+  const dynamicSessionDefinition = computed(() =>
+    dynamicSessionKey.value == null
+      ? undefined
+      : definitions.value.find((definition) => definition.key === dynamicSessionKey.value),
   )
 
   const panelDefinitions = computed(() =>
@@ -96,19 +109,16 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   })
 
   function activateDynamicFilter(input: { key: string }) {
-    dynamicOpenKeys.value = new Set([...dynamicOpenKeys.value, input.key])
+    dynamicSessionKey.value = input.key
     dynamicActivationToken.value = {
       ...dynamicActivationToken.value,
       [input.key]: (dynamicActivationToken.value[input.key] ?? 0) + 1,
     }
   }
 
-  function dismissDynamicFilter(input: { key: string }) {
-    if (options.filters.getFilterState({ key: input.key }) != null) return
-
-    const nextKeys = new Set(dynamicOpenKeys.value)
-    nextKeys.delete(input.key)
-    dynamicOpenKeys.value = nextKeys
+  function releaseDynamicSession(input: { key: string }) {
+    if (dynamicSessionKey.value !== input.key) return
+    dynamicSessionKey.value = null
   }
 
   function openPanel() {
@@ -237,13 +247,14 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     tagDefinitions,
     activeDynamicDefinitions,
     dormantDynamicDefinitions,
+    dynamicSessionDefinition,
     panelDefinitions,
     panelSections,
     hasPanelFilters,
     activePanelCount,
     panelOpen,
     activateDynamicFilter,
-    dismissDynamicFilter,
+    releaseDynamicSession,
     getDynamicActivationToken,
     openPanel,
     closePanel,

@@ -7,16 +7,18 @@ import { computed, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableFilterOperator, TableNumberFilterDefinition, TableNumberFilterOperator } from '../../../types'
-import { resolveNumberFilterUi } from '../../../utils'
+import { resolveFilterTriggerIcon, resolveNumberFilterUi } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableNumberFilterDefinition
   dynamic?: boolean
+  session?: boolean
   activationToken?: number
 }>()
 const emit = defineEmits<{
   dismiss: []
+  sessionClosed: []
 }>()
 
 const internals = useTableInternals()
@@ -24,6 +26,7 @@ const isOpen = ref<boolean>(false)
 const pendingOperator = ref<TableFilterOperator>()
 const localValue = ref<string>('')
 const rangeValue = ref<{ from: string; to: string }>({ from: '', to: '' })
+const lastActivationToken = ref<number | null>(null)
 
 let dismissLocked = false
 
@@ -137,7 +140,8 @@ function handleOpenChange(open: boolean) {
   }
 
   pendingOperator.value = undefined
-  if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -173,6 +177,7 @@ function applyFilter() {
       operator: nextOperator,
     })
     isOpen.value = false
+    if (props.session) emit('sessionClosed')
     return
   }
 
@@ -182,12 +187,14 @@ function applyFilter() {
     operator: nextOperator,
   })
   isOpen.value = false
+  if (props.session) emit('sessionClosed')
 }
 
 function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   isOpen.value = false
-  if (props.dynamic) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic) emit('dismiss')
 }
 
 function updateScalarValue(value: number | undefined) {
@@ -236,10 +243,12 @@ function resolveIncrementConfig(hideStepper: boolean) {
 
 watch(
   () => props.activationToken,
-  (value, previousValue) => {
-    if (value == null || value === previousValue) return
+  (value) => {
+    if (value == null || value === lastActivationToken.value) return
+    lastActivationToken.value = value
     handleActivate(operator.value)
   },
+  { immediate: true },
 )
 </script>
 
@@ -252,7 +261,7 @@ watch(
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      leading-icon="i-lucide-circle-plus"
+      :leading-icon="resolveFilterTriggerIcon(definition)"
       :operator-label="operatorLabel"
       :operator-items="operatorItems"
       :preview-summary="preview.summary"

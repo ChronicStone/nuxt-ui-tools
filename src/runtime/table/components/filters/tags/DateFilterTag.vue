@@ -13,6 +13,7 @@ import type { TableDateFilterDefinition } from '../../../types/filters'
 import {
   formatFilterDate,
   getDateRangeValue,
+  resolveFilterTriggerIcon,
   resolveDateFilterRangeCalendarPanels,
   resolveDateFilterRangePresets,
   resolveDateFilterScalarPresets,
@@ -23,10 +24,12 @@ import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 const props = defineProps<{
   definition: TableDateFilterDefinition
   dynamic?: boolean
+  session?: boolean
   activationToken?: number
 }>()
 const emit = defineEmits<{
   dismiss: []
+  sessionClosed: []
 }>()
 
 const internals = useTableInternals()
@@ -36,6 +39,7 @@ const pendingOperator = ref<TableFilterOperator>()
 const localDate = shallowRef<CalendarDate | undefined>(undefined)
 const localRangeStart = shallowRef<CalendarDate | undefined>(undefined)
 const localRangeEnd = shallowRef<CalendarDate | undefined>(undefined)
+const lastActivationToken = ref<number | null>(null)
 
 let dismissLocked = false
 
@@ -152,7 +156,8 @@ function handleOpenChange(open: boolean) {
   }
 
   pendingOperator.value = undefined
-  if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic && internals.filters.getFilterState({ key: props.definition.key }) == null) emit('dismiss')
 }
 
 function initLocalState() {
@@ -196,6 +201,7 @@ function applyFilter() {
       operator: nextOperator,
     })
     isOpen.value = false
+    if (props.session) emit('sessionClosed')
     return
   }
 
@@ -205,6 +211,7 @@ function applyFilter() {
     operator: nextOperator,
   })
   isOpen.value = false
+  if (props.session) emit('sessionClosed')
 }
 
 function clearFilter() {
@@ -213,7 +220,8 @@ function clearFilter() {
   localRangeStart.value = undefined
   localRangeEnd.value = undefined
   isOpen.value = false
-  if (props.dynamic) emit('dismiss')
+  if (props.session) emit('sessionClosed')
+  else if (props.dynamic) emit('dismiss')
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
@@ -267,10 +275,12 @@ function setRangeEnd(value: unknown) {
 
 watch(
   () => props.activationToken,
-  (value, previousValue) => {
-    if (value == null || value === previousValue) return
+  (value) => {
+    if (value == null || value === lastActivationToken.value) return
+    lastActivationToken.value = value
     handleActivate(operator.value)
   },
+  { immediate: true },
 )
 
 function setCalendarRange(value: unknown) {
@@ -343,7 +353,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
   >
     <TableFilterTrigger
       :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      leading-icon="i-lucide-calendar"
+      :leading-icon="resolveFilterTriggerIcon(definition)"
       :operator-label="operatorLabel"
       :operator-items="operatorItems"
       :preview-summary="preview.summary"
