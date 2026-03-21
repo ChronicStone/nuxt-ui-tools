@@ -101,6 +101,7 @@ export type TableOptionFilterSelectionMode = 'auto' | 'single' | 'multiple'
 export type TableOptionFilterPresentation = 'list' | 'tree'
 export type TableOptionFilterTreeSelectable = 'all' | 'leaf-only'
 export type TableOptionFilterTreeSearchMode = 'auto' | 'local' | 'remote'
+export type TableOptionFilterTreeBranchSelection = 'off' | 'children'
 
 export interface TableOptionFilterUiSelectionConfig {
   mode?: TableOptionFilterSelectionMode
@@ -112,6 +113,7 @@ export interface TableOptionFilterUiTreeConfig {
   selectable?: TableOptionFilterTreeSelectable
   expandedByDefault?: boolean
   searchMode?: TableOptionFilterTreeSearchMode
+  branchSelection?: TableOptionFilterTreeBranchSelection
 }
 
 export interface TableOptionFilterUiRowConfig {
@@ -409,6 +411,7 @@ export interface TableOptionFilterUiResolved {
     selectable: TableOptionFilterTreeSelectable
     expandedByDefault: boolean
     searchMode: TableOptionFilterTreeSearchMode
+    branchSelection: TableOptionFilterTreeBranchSelection
   }
   selection: {
     mode: 'single' | 'multiple'
@@ -600,6 +603,7 @@ export interface TableVisibleFilterOptionEntry<TValue = TableFilterPrimitiveValu
   depth: number
   expandable: boolean
   selectable: boolean
+  branchSelectable: boolean
 }
 
 export interface TableFilterOptionQueryContext {

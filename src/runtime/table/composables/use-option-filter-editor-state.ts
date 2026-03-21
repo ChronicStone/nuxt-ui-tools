@@ -8,6 +8,8 @@ import type {
   TableSchemaView,
 } from '../types'
 import {
+  collectSelectableDescendantValues,
+  flattenFilterOptionEntries,
   flattenVisibleFilterOptionTree,
   resolveOptionFilterUi,
 } from '../utils'
@@ -71,16 +73,49 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const effectiveExpandedIds = computed(
     () => new Set([...optionSource.searchExpandedIds.value, ...expandedIds.value]),
   )
+  const selectedValueKeys = computed(() =>
+    new Set(options.selectedValues.value.map(value => String(value))),
+  )
+  const flatTreeEntryMap = computed(() =>
+    new Map(
+      flattenFilterOptionEntries(displayTreeEntries.value)
+        .map(entry => [entry.id, entry] as const),
+    ),
+  )
 
   const visibleTreeEntries = computed(() =>
     flattenVisibleFilterOptionTree({
       entries: displayTreeEntries.value,
       expandedIds: effectiveExpandedIds.value,
       selectable: filterUi.value.tree.selectable,
-    }).map((entry) => ({
-      ...entry,
-      expanded: effectiveExpandedIds.value.has(entry.id),
-    })),
+      branchSelection: filterUi.value.tree.branchSelection,
+    }).map((entry) => {
+      if (!entry.branchSelectable) {
+        return {
+          ...entry,
+          expanded: effectiveExpandedIds.value.has(entry.id),
+          indeterminate: false,
+        }
+      }
+
+      const sourceEntry = flatTreeEntryMap.value.get(entry.id)
+      const descendantValues = sourceEntry
+        ? collectSelectableDescendantValues({
+            entry: sourceEntry,
+            selectable: filterUi.value.tree.selectable,
+          })
+        : []
+      const selectedCount = descendantValues.filter(value =>
+        selectedValueKeys.value.has(String(value)),
+      ).length
+
+      return {
+        ...entry,
+        selected: descendantValues.length > 0 && selectedCount === descendantValues.length,
+        indeterminate: selectedCount > 0 && selectedCount < descendantValues.length,
+        expanded: effectiveExpandedIds.value.has(entry.id),
+      }
+    }),
   )
 
   const flatRadioItems = computed(() =>
@@ -190,9 +225,15 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   function toggleTreeEntry(entry: {
     value?: PrimitiveFilterValue
     selectable: boolean
+    branchSelectable?: boolean
     expandable: boolean
     id: string
   }) {
+    if (entry.branchSelectable) {
+      toggleBranchSelection(entry.id)
+      return
+    }
+
     if (!entry.selectable) {
       if (entry.expandable) toggleExpanded(entry.id)
       return
@@ -207,6 +248,45 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     if (next.has(id)) next.delete(id)
     else next.add(id)
     expandedIds.value = next
+  }
+
+  function toggleBranchSelection(id: string) {
+    if (filterUi.value.selection.mode !== 'multiple') return
+
+    const entry = flatTreeEntryMap.value.get(id)
+    if (!entry) return
+
+    const descendantValues = collectSelectableDescendantValues({
+      entry,
+      selectable: filterUi.value.tree.selectable,
+    })
+    if (!descendantValues.length) {
+      if (entry.children.length) toggleExpanded(id)
+      return
+    }
+
+    const currentKeys = selectedValueKeys.value
+    const allSelected = descendantValues.every(value => currentKeys.has(String(value)))
+
+    if (allSelected) {
+      const nextValues = options.selectedValues.value.filter(
+        (value) => !descendantValues.some(descendant => String(descendant) === String(value)),
+      )
+
+      if (!filterUi.value.selection.allowEmpty && !nextValues.length) return
+      options.setSelectedValues(nextValues)
+      return
+    }
+
+    const missingValues = descendantValues.filter(value => !currentKeys.has(String(value)))
+    const nextValues = [...options.selectedValues.value, ...missingValues]
+
+    if (
+      filterUi.value.selection.max != null &&
+      nextValues.length > filterUi.value.selection.max
+    ) return
+
+    options.setSelectedValues(nextValues)
   }
 
   function resetExpandedIds() {

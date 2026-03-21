@@ -121,6 +121,7 @@ export function resolveOptionFilterUi(
       selectable: tree?.selectable ?? 'all',
       expandedByDefault: tree?.expandedByDefault ?? false,
       searchMode: tree?.searchMode ?? 'auto',
+      branchSelection: tree?.branchSelection ?? 'children',
     },
     selection: {
       mode,

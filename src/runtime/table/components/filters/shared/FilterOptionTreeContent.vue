@@ -14,7 +14,9 @@ type TreeEntry = {
   expandable: boolean
   expanded: boolean
   selectable: boolean
+  branchSelectable?: boolean
   selected?: boolean
+  indeterminate?: boolean
   truncate?: boolean
 }
 
@@ -80,8 +82,9 @@ function getTreeIndentStyle(depth: number) {
           <span v-else class="size-4 shrink-0" />
 
           <UCheckbox
-            v-if="entry.selectable"
+            v-if="entry.selectable || entry.branchSelectable"
             :model-value="entry.selected"
+            :indeterminate="entry.indeterminate"
             color="neutral"
             size="md"
             tabindex="-1"

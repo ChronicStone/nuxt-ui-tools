@@ -47,13 +47,25 @@ export function flattenVisibleFilterOptionTree(options: {
   entries: TableResolvedFilterOptionEntry[]
   expandedIds: Set<string>
   selectable: 'all' | 'leaf-only'
+  branchSelection?: 'off' | 'children'
 }): TableVisibleFilterOptionEntry[] {
   return flattenVisibleEntries({
     entries: options.entries,
     expandedIds: options.expandedIds,
     selectable: options.selectable,
+    branchSelection: options.branchSelection ?? 'children',
     depth: 0,
   })
+}
+
+export function collectSelectableDescendantValues(options: {
+  entry: TableResolvedFilterOptionEntry
+  selectable: 'all' | 'leaf-only'
+}): Array<string | number | boolean> {
+  return options.entry.children.flatMap((child) => collectSelectableValues({
+    entry: child,
+    selectable: options.selectable,
+  }))
 }
 
 function filterEntries(options: {
@@ -86,6 +98,7 @@ function flattenVisibleEntries(options: {
   entries: TableResolvedFilterOptionEntry[]
   expandedIds: Set<string>
   selectable: 'all' | 'leaf-only'
+  branchSelection: 'off' | 'children'
   depth: number
 }): TableVisibleFilterOptionEntry[] {
   return options.entries.flatMap((entry) => {
@@ -93,6 +106,10 @@ function flattenVisibleEntries(options: {
     const selectable =
       entry.value != null &&
       (options.selectable === 'all' || !expandable)
+    const branchSelectable =
+      entry.value == null &&
+      expandable &&
+      options.branchSelection === 'children'
     const current: TableVisibleFilterOptionEntry = {
       id: entry.id,
       label: entry.label,
@@ -103,6 +120,7 @@ function flattenVisibleEntries(options: {
       depth: options.depth,
       expandable,
       selectable,
+      branchSelectable,
     }
 
     if (!expandable || !options.expandedIds.has(entry.id)) return [current]
@@ -113,8 +131,29 @@ function flattenVisibleEntries(options: {
         entries: entry.children,
         expandedIds: options.expandedIds,
         selectable: options.selectable,
+        branchSelection: options.branchSelection,
         depth: options.depth + 1,
       }),
     ]
   })
+}
+
+function collectSelectableValues(options: {
+  entry: TableResolvedFilterOptionEntry
+  selectable: 'all' | 'leaf-only'
+}): Array<string | number | boolean> {
+  const expandable = options.entry.children.length > 0
+  const ownValue =
+    options.entry.value != null &&
+    (options.selectable === 'all' || !expandable)
+      ? [options.entry.value]
+      : []
+
+  return [
+    ...ownValue,
+    ...options.entry.children.flatMap((child) => collectSelectableValues({
+      entry: child,
+      selectable: options.selectable,
+    })),
+  ]
 }

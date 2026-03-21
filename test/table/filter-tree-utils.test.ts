@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { TableResolvedFilterOptionEntry } from '#ui-tools/table/types'
 import {
+  collectSelectableDescendantValues,
   collectFilterOptionBranchIds,
   filterFilterOptionTree,
   flattenFilterOptionEntries,
@@ -62,7 +63,24 @@ describe('filter tree utils', () => {
 
     expect(flattenFilterOptionEntries(entries)).toHaveLength(4)
     expect(visible[0]?.selectable).toBe(false)
+    expect(visible[0]?.branchSelectable).toBe(true)
     expect(visible[1]?.depth).toBe(1)
     expect(visible[1]?.selectable).toBe(true)
+  })
+
+  it('collects selectable descendant values for branch selection', () => {
+    expect(
+      collectSelectableDescendantValues({
+        entry: entries[0]!,
+        selectable: 'leaf-only',
+      }),
+    ).toEqual(['frontend', 'backend'])
+
+    expect(
+      collectSelectableDescendantValues({
+        entry: entries[0]!,
+        selectable: 'all',
+      }),
+    ).toEqual(['frontend', 'backend'])
   })
 })

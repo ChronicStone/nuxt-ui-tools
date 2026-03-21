@@ -72,6 +72,9 @@ filters: {
         selection: {
           mode: 'multiple',
         },
+        tree: {
+          branchSelection: 'children',
+        },
       },
       preview: {
         label: 'Department',
@@ -211,6 +214,14 @@ preview: {
 ```
 
 ## Option Filters
+
+Tree-specific option editor settings:
+
+- `editor.tree.selectable`: `'all' | 'leaf-only'`
+- `editor.tree.searchMode`: `'auto' | 'local' | 'remote'`
+- `editor.tree.branchSelection`: `'off' | 'children'`
+
+`branchSelection: 'children'` means non-value branch rows in multi-select trees get a checkbox that selects or clears all selectable descendants. This is the default.
 
 Flat option filter:
 

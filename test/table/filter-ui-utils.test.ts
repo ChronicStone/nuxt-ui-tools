@@ -95,6 +95,7 @@ describe('filter ui utils', () => {
     expect(optionUi.presentation).toBe('tree')
     expect(optionUi.tree.selectable).toBe('leaf-only')
     expect(optionUi.tree.searchMode).toBe('remote')
+    expect(optionUi.tree.branchSelection).toBe('children')
     expect(optionUi.labels.searchPlaceholder).toBe('Pick a status')
     expect(optionUi.selection.mode).toBe('multiple')
     expect(booleanUi.labels.true).toBe('Online')
