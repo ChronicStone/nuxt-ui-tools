@@ -68,6 +68,18 @@ export function collectSelectableDescendantValues(options: {
   }))
 }
 
+export function collectSelectedBranchIds(
+  entries: TableResolvedFilterOptionEntry[],
+): string[] {
+  const ids = new Set<string>()
+
+  entries.forEach((entry) => {
+    collectSelectedBranchIdsRecursive(entry, ids)
+  })
+
+  return [...ids]
+}
+
 function filterEntries(options: {
   entries: TableResolvedFilterOptionEntry[]
   normalizedSearch: string
@@ -156,4 +168,16 @@ function collectSelectableValues(options: {
       selectable: options.selectable,
     })),
   ]
+}
+
+function collectSelectedBranchIdsRecursive(
+  entry: TableResolvedFilterOptionEntry,
+  ids: Set<string>,
+): boolean {
+  const hasSelectedChild = entry.children.some((child) => collectSelectedBranchIdsRecursive(child, ids))
+  const hasSelection = entry.selected || hasSelectedChild
+
+  if (entry.children.length && hasSelection) ids.add(entry.id)
+
+  return hasSelection
 }

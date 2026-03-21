@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { TableResolvedFilterOptionEntry } from '#ui-tools/table/types'
 import {
   collectSelectableDescendantValues,
+  collectSelectedBranchIds,
   collectFilterOptionBranchIds,
   filterFilterOptionTree,
   flattenFilterOptionEntries,
@@ -82,5 +83,22 @@ describe('filter tree utils', () => {
         selectable: 'all',
       }),
     ).toEqual(['frontend', 'backend'])
+  })
+
+  it('collects selected ancestor branch ids for reopening selected paths', () => {
+    expect(
+      collectSelectedBranchIds([
+        {
+          ...entries[0]!,
+          children: [
+            {
+              ...entries[0]!.children[0]!,
+              selected: true,
+            },
+            entries[0]!.children[1]!,
+          ],
+        },
+      ]),
+    ).toEqual(['0:engineering'])
   })
 })

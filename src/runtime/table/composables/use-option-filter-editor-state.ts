@@ -8,6 +8,7 @@ import type {
   TableSchemaView,
 } from '../types'
 import {
+  collectSelectedBranchIds,
   collectSelectableDescendantValues,
   flattenFilterOptionEntries,
   flattenVisibleFilterOptionTree,
@@ -69,9 +70,16 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       filterUi: filterUi.value,
     }),
   )
+  const selectedExpandedIds = computed(() =>
+    new Set(collectSelectedBranchIds(displayTreeEntries.value)),
+  )
 
   const effectiveExpandedIds = computed(
-    () => new Set([...optionSource.searchExpandedIds.value, ...expandedIds.value]),
+    () => new Set([
+      ...optionSource.searchExpandedIds.value,
+      ...selectedExpandedIds.value,
+      ...expandedIds.value,
+    ]),
   )
   const selectedValueKeys = computed(() =>
     new Set(options.selectedValues.value.map(value => String(value))),
