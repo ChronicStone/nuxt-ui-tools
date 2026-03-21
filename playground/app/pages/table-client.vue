@@ -558,6 +558,7 @@ const clientSchema = defineTableSchema({
 
 const table = useTable(clientSchema)
 
+
 function atStartOfDay(value: Date) {
   const next = new Date(value)
   next.setHours(0, 0, 0, 0)

@@ -25,6 +25,7 @@ const emit = defineEmits<{
 
 const internals = useTableInternals()
 const searchQuery = ref<string>('')
+const isSessionOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
 const pendingOperator = ref<TableFilterOperator>()
 const localSelectedValues = ref<(string | number | boolean)[]>([])
@@ -45,7 +46,7 @@ const state = useOptionFilterEditorState({
   operator,
   selectedValues: localSelectedValues,
   searchQuery,
-  active: computed(() => session.isOpen.value),
+  active: computed(() => isSessionOpen.value),
   ready: isContentReady,
   filters: internals.filters,
   queryContent: internals.queryContent,
@@ -54,6 +55,7 @@ const state = useOptionFilterEditorState({
 })
 
 const session = useFilterTagSession({
+  isOpen: isSessionOpen,
   activationToken: toRef(props, 'activationToken'),
   session: props.session,
   dynamic: props.dynamic,

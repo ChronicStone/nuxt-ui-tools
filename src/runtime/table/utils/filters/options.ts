@@ -13,6 +13,7 @@ export function resolveFilterOptionEntries(options: {
   selectedValues?: unknown[]
   deriveCounts?: boolean
   facetCounts?: Array<{ value: string | number | boolean; count: number }>
+  missingCountFallback?: number
 }) {
   if (options.definition.kind === 'boolean') {
     return createBooleanEntries({
@@ -21,6 +22,7 @@ export function resolveFilterOptionEntries(options: {
       selectedValues: options.selectedValues ?? [],
       deriveCounts: options.deriveCounts ?? true,
       facetCounts: options.facetCounts ?? [],
+      missingCountFallback: options.missingCountFallback,
     })
   }
 
@@ -39,7 +41,7 @@ export function resolveFilterOptionEntries(options: {
     getCount: (value) =>
       countByValue.get(String(value)) ??
       (options.deriveCounts === false || value == null
-        ? undefined
+        ? options.missingCountFallback
         : countOptionMatches({
             rows: options.rows,
             key: options.definition.key,
@@ -54,6 +56,7 @@ function createBooleanEntries(options: {
   selectedValues: unknown[]
   deriveCounts: boolean
   facetCounts: Array<{ value: string | number | boolean; count: number }>
+  missingCountFallback?: number
 }) {
   const trueCount = options.facetCounts.find((entry) => entry.value === true)?.count
   const falseCount = options.facetCounts.find((entry) => entry.value === false)?.count
@@ -71,7 +74,7 @@ function createBooleanEntries(options: {
               key: options.definition.key,
               candidate: true,
             })
-          : undefined),
+          : options.missingCountFallback),
       selected: isFilterValueSelected({
         values: options.selectedValues,
         candidate: true,
@@ -90,7 +93,7 @@ function createBooleanEntries(options: {
               key: options.definition.key,
               candidate: false,
             })
-          : undefined),
+          : options.missingCountFallback),
       selected: isFilterValueSelected({
         values: options.selectedValues,
         candidate: false,

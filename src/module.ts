@@ -20,6 +20,15 @@ const viewportDefaults = {
   feature: 'minWidth',
 } as const
 
+const optimizeDepsInclude = [
+  '@tanstack/vue-query',
+  '@tanstack/vue-virtual',
+  '@vueuse/core',
+  '@internationalized/date',
+  'motion-v',
+  'vue-draggable-plus',
+] as const
+
 export default defineNuxtModule<ModuleOptions>({
   defaults: {
     prefix: 'Ui',
@@ -45,6 +54,11 @@ export default defineNuxtModule<ModuleOptions>({
     const { resolve } = createResolver(import.meta.url)
 
     nuxt.options.alias['#ui-tools'] = resolve('./runtime')
+    nuxt.options.vite ??= {}
+    nuxt.options.vite.optimizeDeps ??= {}
+    nuxt.options.vite.optimizeDeps.include = mergeOptimizeDepsInclude(
+      nuxt.options.vite.optimizeDeps.include,
+    )
 
     const viewportOptions = normalizeViewportOptions(nuxt.options.viewport)
     nuxt.options.viewport = viewportOptions
@@ -85,4 +99,8 @@ function normalizeViewportOptions(
 ): ViewportOptions {
   if (viewportOptions === false) return mergeViewportOptions(undefined)
   return mergeViewportOptions(viewportOptions)
+}
+
+function mergeOptimizeDepsInclude(current: string[] | undefined) {
+  return [...new Set([...(current ?? []), ...optimizeDepsInclude])]
 }

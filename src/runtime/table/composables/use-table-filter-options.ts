@@ -235,6 +235,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       facetCounts: shouldResolveCounts.value ? resolvedFacetCounts.value : [],
       selectedValues: selectedValues.value,
       deriveCounts: false,
+      missingCountFallback: shouldResolveCounts.value ? 0 : undefined,
     }),
   )
   const sourceEntries = computed(() => flattenFilterOptionEntries(resolvedSourceTreeEntries.value))

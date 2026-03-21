@@ -21,11 +21,6 @@ export default defineNuxtConfig({
   ],
   css: [fileURLToPath(new URL('./app/assets/main.css', import.meta.url))],
   devtools: { enabled: true },
-  vite: {
-    optimizeDeps: {
-      include: ['@tanstack/vue-query'],
-    },
-  },
   nuxtUiTools: {
     prefix: 'Nut',
     global: true,
@@ -38,5 +33,10 @@ export default defineNuxtConfig({
       { code: 'en', name: 'English', file: 'en.json' },
       { code: 'fr', name: 'Français', file: 'fr.json' },
     ],
+  },
+  vite: {
+    optimizeDeps: {
+      include: ['@faker-js/faker'],
+    },
   },
 })

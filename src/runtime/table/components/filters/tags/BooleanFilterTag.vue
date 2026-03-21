@@ -26,12 +26,13 @@ const emit = defineEmits<{
 
 const internals = useTableInternals()
 const searchQuery = ref<string>('')
+const isSessionOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
 const localValue = ref<boolean | null>(null)
 
 const optionSource = useTableFilterOptions({
   definition: props.definition,
-  active: computed(() => session.isOpen.value),
+  active: computed(() => isSessionOpen.value),
   ready: isContentReady,
   searchQuery,
   filters: internals.filters,
@@ -88,6 +89,7 @@ const radioValue = computed({
 })
 
 const session = useFilterTagSession({
+  isOpen: isSessionOpen,
   activationToken: toRef(props, 'activationToken'),
   session: props.session,
   dynamic: props.dynamic,

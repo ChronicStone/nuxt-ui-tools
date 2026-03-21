@@ -1,6 +1,7 @@
 import { ref, watch, type Ref } from 'vue'
 
 export interface UseFilterTagSessionParams {
+  isOpen?: Ref<boolean>
   activationToken?: Ref<number | undefined>
   session?: boolean
   dynamic?: boolean
@@ -13,7 +14,7 @@ export interface UseFilterTagSessionParams {
 }
 
 export function useFilterTagSession(options: UseFilterTagSessionParams) {
-  const isOpen = ref<boolean>(false)
+  const isOpen = options.isOpen ?? ref<boolean>(false)
   const lastActivationToken = ref<number | null>(null)
 
   let dismissLocked = false
