@@ -83,8 +83,7 @@ function getTreeIndentStyle(depth: number) {
 
           <UCheckbox
             v-if="entry.selectable || entry.branchSelectable"
-            :model-value="entry.selected"
-            :indeterminate="entry.indeterminate"
+            :model-value="entry.indeterminate ? 'indeterminate' : entry.selected"
             color="neutral"
             size="md"
             tabindex="-1"
