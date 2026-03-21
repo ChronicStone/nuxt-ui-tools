@@ -42,12 +42,12 @@ const flowGridActive = computed(
 const contentShellClass = computed(() =>
   flowGridActive.value
     ? 'grid gap-5'
-    : 'overflow-hidden rounded-md border border-accented bg-default shadow-sm',
+    : 'overflow-hidden rounded-md border border-default bg-default',
 )
 const footerClass = computed(() =>
   flowGridActive.value
     ? 'rounded-md border border-default/70 bg-default/80 shadow-sm backdrop-blur'
-    : '',
+    : 'border-t border-default/70',
 )
 
 function normalizeDimension(value: string | number) {

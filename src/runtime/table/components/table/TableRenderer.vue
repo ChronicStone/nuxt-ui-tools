@@ -203,7 +203,16 @@ watch(tableEmpty, (isEmpty) => {
   box-shadow: -12px 0 18px -18px color-mix(in oklab, var(--ui-border-accented) 80%, transparent);
 }
 
+:deep(thead th) {
+  border-bottom-color: var(--ui-border) !important;
+}
+
+:deep(thead tr[data-slot='separator']) {
+  border-color: var(--ui-border) !important;
+  background-color: var(--ui-border) !important;
+}
+
 :deep(tbody td) {
-  border-bottom-color: color-mix(in oklab, var(--ui-border) 14%, transparent) !important;
+  border-bottom-color: color-mix(in oklab, var(--ui-border) 34%, transparent) !important;
 }
 </style>
