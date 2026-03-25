@@ -2,7 +2,15 @@
 import UInput from '@nuxt/ui/components/Input.vue'
 import UScrollArea from '@nuxt/ui/components/ScrollArea.vue'
 
-const props = withDefaults(defineProps<{
+const {
+  searchable = false,
+  autofocus = false,
+  searchPlaceholder = 'Search...',
+  searchLoading = false,
+  showEmpty = false,
+  emptyLabel = 'No matching options.',
+  maxHeightClass = 'max-h-80',
+} = defineProps<{
   searchable?: boolean
   autofocus?: boolean
   searchPlaceholder?: string
@@ -10,15 +18,7 @@ const props = withDefaults(defineProps<{
   showEmpty?: boolean
   emptyLabel?: string
   maxHeightClass?: string
-}>(), {
-  searchable: false,
-  autofocus: false,
-  searchPlaceholder: 'Search...',
-  searchLoading: false,
-  showEmpty: false,
-  emptyLabel: 'No matching options.',
-  maxHeightClass: 'max-h-80',
-})
+}>()
 
 const searchQuery = defineModel<string>('searchQuery', {
   default: '',
@@ -27,15 +27,15 @@ const searchQuery = defineModel<string>('searchQuery', {
 
 <template>
   <div class="bg-default">
-    <div v-if="props.searchable" class="w-full border-b border-default p-2">
+    <div v-if="searchable" class="w-full border-b border-default p-2">
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
-        :placeholder="props.searchPlaceholder"
+        :placeholder="searchPlaceholder"
         class="w-full"
-        :loading="props.searchLoading"
+        :loading="searchLoading"
         variant="ghost"
-        :autofocus="props.autofocus"
+        :autofocus="autofocus"
       />
     </div>
 
@@ -43,17 +43,17 @@ const searchQuery = defineModel<string>('searchQuery', {
       style="max-height: 320px"
       type="hover"
       class="p-2"
-      :class="props.maxHeightClass"
-      :ui="{ root: props.maxHeightClass, viewport: props.maxHeightClass }"
+      :class="maxHeightClass"
+      :ui="{ root: maxHeightClass, viewport: maxHeightClass }"
     >
       <slot />
 
       <div
-        v-if="props.showEmpty"
+        v-if="showEmpty"
         class="px-3 py-8 text-center text-sm text-muted"
       >
         <slot name="empty">
-          {{ props.emptyLabel }}
+          {{ emptyLabel }}
         </slot>
       </div>
     </UScrollArea>
