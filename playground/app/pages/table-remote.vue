@@ -11,8 +11,6 @@ import {
 } from '../lib/demo-employees-api'
 import DataList from '#ui-tools/table/components/DataList.vue'
 import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
-
-const { classes } = usePlaygroundAppearance()
 const countryTreeOptions = [
   {
     label: 'Europe',
@@ -583,27 +581,5 @@ function getCountryFlag(country: string) {
 </script>
 
 <template>
-  <section :class="classes.pageStack">
-    <div :class="classes.panel">
-      <div :class="classes.panelMeta">
-        <UBadge color="primary" variant="soft" label="DataList V2" />
-        <UBadge color="neutral" variant="subtle" label="Remote Playground" />
-      </div>
-
-      <div :class="classes.panelCopy">
-        <h2 :class="classes.panelTitle">Remote source with async option filters</h2>
-        <p :class="classes.panelText">
-          This route keeps the remote query engine active and showcases query-backed option filters
-          where counts can come from the backend payload directly.
-        </p>
-      </div>
-
-      <DataList
-        :table="table"
-        :height="'38rem'"
-        title="Remote employees"
-        description="Remote schema with API-backed option filters and centralized facet counts."
-      />
-    </div>
-  </section>
+  <DataList :table="table" :height="'38rem'" />
 </template>

@@ -17,10 +17,10 @@ function openControls() {
 <template>
   <UButton
     color="neutral"
-    variant="soft"
-    trailing-icon="i-lucide-panel-right-open"
+    variant="ghost"
+    icon="i-lucide-swatch-book"
+    class="data-[state=open]:bg-elevated"
+    :aria-label="t('layout.controls')"
     @click="openControls"
-  >
-    {{ t('layout.controls') }}
-  </UButton>
+  />
 </template>

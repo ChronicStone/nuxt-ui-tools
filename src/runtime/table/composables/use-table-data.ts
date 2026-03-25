@@ -67,10 +67,7 @@ type CombinedQueryResult = {
   refetch: () => Promise<unknown>
 }
 
-let clientQueryInstanceId = 0
-
 export function useTableData(params: UseTableDataParams): UseTableDataReturn {
-  const localClientQueryInstanceId = ++clientQueryInstanceId
   const contextItems = computed(() =>
     (params.schema.value.context ?? []).filter((item) => item?.condition?.() ?? true),
   )
@@ -134,22 +131,14 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
   const searchParams = requestContext
 
-  const dataStaleTime = computed(() =>
-    params.schema.value.source.mode === 'remote' ? QUERY_DEFAULTS.staleTime.data : 0,
-  )
+  const dataStaleTime = computed(() => QUERY_DEFAULTS.staleTime.data)
 
   const query = useQuery(
     computed(() =>
       withEnabled(
-        scopeClientQueryDefinition(
-          params.schema.value.source.query(
-            requestContext.value as never,
-          ) as TableQueryDefinition,
-          {
-            mode: params.schema.value.source.mode,
-            instanceId: localClientQueryInstanceId,
-          },
-        ),
+        params.schema.value.source.query(
+          requestContext.value as never,
+        ) as TableQueryDefinition,
         isContextReady.value,
         {
           staleTime: dataStaleTime.value,
@@ -379,21 +368,6 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     refreshData,
     refreshPageContext,
     updateRows,
-  }
-}
-
-function scopeClientQueryDefinition<TData>(
-  query: TableQueryDefinition<TData>,
-  options: {
-    mode: TableSchemaView['source']['mode']
-    instanceId: number
-  },
-) {
-  if (options.mode !== 'client') return query
-
-  return {
-    ...query,
-    queryKey: [...query.queryKey, `client-instance:${options.instanceId}`],
   }
 }
 

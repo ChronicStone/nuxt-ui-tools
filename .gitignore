@@ -10,6 +10,7 @@ playground/node_modules
 .tmp
 .cache
 .turbo
+references/
 
 # Generated dirs
 dist

@@ -1,5 +1,7 @@
 {
   "nav": {
+    "home": "Accueil",
+    "components": "Playground",
     "overview": "Vue d'ensemble",
     "overviewDescription": "Point d'entrée du shell du playground.",
     "form": "Playground Formulaire",
@@ -7,7 +9,9 @@
     "tableClient": "Tableau Client",
     "tableClientDescription": "Source locale avec comptage automatique.",
     "tableRemote": "Tableau Remote",
-    "tableRemoteDescription": "Source distante avec options async."
+    "tableRemoteDescription": "Source distante avec options async.",
+    "spreadsheet": "Import Spreadsheet",
+    "spreadsheetDescription": "Contexte async, colonnes dynamiques et réconciliation."
   },
   "layout": {
     "badge": "Playground",
@@ -89,7 +93,16 @@
       "title": "Un shell de playground ciblé pour itérer sur la suite.",
       "description": "Gardez ici la structure, les tests de thème et les expériences de page pendant que les API des packages repartent d'une base propre.",
       "openPage": "Ouvrir le tableau remote",
-      "openClientPage": "Ouvrir le tableau client"
+      "openClientPage": "Ouvrir le tableau client",
+      "openSpreadsheetPage": "Ouvrir l'import spreadsheet"
+    },
+    "spreadsheet": {
+      "badge": "Import Spreadsheet",
+      "asyncBadge": "Contexte async",
+      "referenceBadge": "Réconciliation",
+      "title": "Playground complet pour le runtime d'import spreadsheet.",
+      "description": "Cette page exerce le parsing du workbook, les colonnes d'affiliation dynamiques, le parsing des lignes et le mapping exam-vers-produit au-dessus de la nouvelle session headless.",
+      "note": "Changer de centre de test reconstruit la factory de schéma afin que le runtime reflète un autre contexte distant et une autre forme de payload cible."
     },
     "form": {
       "badge": "Playground Formulaire",

@@ -241,6 +241,15 @@ export function usePlaygroundAppearance() {
 
   const classes = computed(() => ({
     shell: ['min-h-dvh w-full', surfaceShellClass.value, densityClass.value.shell],
+    dashboardFrame: [
+      'mx-auto flex h-[calc(100dvh-2rem)] w-full max-w-[1800px] overflow-hidden border border-default/70 bg-default/80 shadow-[0_24px_80px_-48px_rgba(0,0,0,0.45)] backdrop-blur-xl',
+      radiusClass.value,
+    ],
+    dashboardPanel: 'min-h-0 min-w-0 bg-default/35',
+    dashboardPage: 'h-full min-h-0 overflow-auto',
+    dashboardSidebar: 'bg-elevated/25 backdrop-blur-xl',
+    pageInset: 'p-4 sm:p-6',
+    pageInsetWide: 'p-4 sm:p-6 xl:p-8',
     container: 'mx-auto flex w-full max-w-[1440px] flex-col gap-6',
     header: [
       'border border-default/70 bg-default/80 backdrop-blur-xl shadow-[0_24px_80px_-48px_rgba(0,0,0,0.45)]',

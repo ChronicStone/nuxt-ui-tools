@@ -1,0 +1,273 @@
+import { describe, expect, it } from 'vitest'
+
+import {
+  type SpreadsheetCellValue,
+  createSpreadsheetDynamicBuilder,
+  createSpreadsheetHeaderCells,
+  createSpreadsheetRowSummary,
+  flattenSpreadsheetStaticColumns,
+  getSpreadsheetUnmatchedColumns,
+  matchSpreadsheetColumns,
+  matchSpreadsheetDynamicColumns,
+  parseSpreadsheetRows,
+} from '#ui-tools/spreadsheet'
+
+interface DemoDynamicAffiliationItem {
+  id: string
+  name: string
+}
+
+interface DemoDynamicAffiliationGroup {
+  id: string
+  slug: string
+  name: string
+  items: readonly DemoDynamicAffiliationItem[]
+}
+
+describe('spreadsheet row utils', () => {
+  it('flattens grouped static columns and matches them against headers', () => {
+    const columns = flattenSpreadsheetStaticColumns([
+      {
+        kind: 'group',
+        key: 'candidate',
+        columns: [
+          {
+            kind: 'text',
+            key: 'firstName',
+            from: 'First name',
+            required: true,
+          },
+          {
+            kind: 'text',
+            key: 'lastName',
+            from: /^Last name$/i,
+            required: true,
+          },
+        ],
+      },
+      {
+        kind: 'text',
+        key: 'examNameRaw',
+        from: 'Exam name',
+        required: true,
+      },
+    ])
+
+    const headers = createSpreadsheetHeaderCells([
+      'First Name',
+      'Last name',
+      'Exam name',
+    ])
+
+    const matches = matchSpreadsheetColumns(columns, headers)
+    const unmatched = getSpreadsheetUnmatchedColumns(columns, matches)
+
+    expect(matches).toHaveLength(3)
+    expect(matches.map((match) => match.key)).toEqual([
+      'firstName',
+      'lastName',
+      'examNameRaw',
+    ])
+    expect(unmatched).toHaveLength(0)
+  })
+
+  it('parses matched rows into nested output and collects validation issues', async () => {
+    const matches = matchSpreadsheetColumns(
+      flattenSpreadsheetStaticColumns([
+        {
+          kind: 'text',
+          key: 'examNameRaw',
+          from: 'Exam name',
+          required: true,
+        },
+        {
+          kind: 'number',
+          key: 'scores.general',
+          from: 'General level',
+          parse: async ({ cell }: { cell: SpreadsheetCellValue }) => Number(cell.text),
+          validate: ({ value, addIssue }: {
+            value: number
+            addIssue: (level: 'info' | 'warning' | 'error', code: string, message: string) => void
+          }) => {
+            if (Number.isNaN(value))
+              addIssue('error', 'score.invalid', 'Score must be numeric')
+          },
+        },
+        {
+          kind: 'text',
+          key: 'candidate.email',
+          from: 'Email',
+          parse: ({ cell }: { cell: SpreadsheetCellValue }) => cell.text.toLowerCase(),
+        },
+      ]),
+      createSpreadsheetHeaderCells(['Exam name', 'General level', 'Email']),
+    )
+
+    const rows = await parseSpreadsheetRows<{
+      products: readonly string[]
+    }>({
+      rows: [
+        ['Business English 4 Skills', '84', 'JOHN@EXAMPLE.COM'],
+        ['', 'oops', 'JANE@EXAMPLE.COM'],
+      ],
+      matches,
+      context: {
+        products: ['prod_1'],
+      },
+    })
+
+    expect(rows).toHaveLength(2)
+    expect(rows[0]).toMatchObject({
+      isValid: true,
+      data: {
+        examNameRaw: 'Business English 4 Skills',
+        scores: {
+          general: 84,
+        },
+        candidate: {
+          email: 'john@example.com',
+        },
+      },
+    })
+    expect(rows[1]?.isValid).toBe(false)
+    expect(rows[1]?.issues).toEqual([
+      expect.objectContaining({
+        code: 'cell.required',
+        columnKey: 'examNameRaw',
+      }),
+      expect.objectContaining({
+        code: 'score.invalid',
+        columnKey: 'scores.general',
+      }),
+    ])
+  })
+
+  it('creates a compact summary for parsed rows', () => {
+    const summary = createSpreadsheetRowSummary([
+      {
+        index: 0,
+        source: ['a'],
+        data: { examNameRaw: 'A' },
+        issues: [],
+        isValid: true,
+      },
+      {
+        index: 1,
+        source: ['b'],
+        data: {},
+        issues: [
+          {
+            level: 'error',
+            code: 'cell.required',
+            message: 'Missing value',
+            rowIndex: 1,
+          },
+        ],
+        isValid: false,
+      },
+    ])
+
+    expect(summary).toEqual({
+      totalRows: 2,
+      validRows: 1,
+      invalidRows: 1,
+      issueCount: 1,
+    })
+  })
+
+  it('matches and parses dynamic option-group columns into normalized grouped output', async () => {
+    const dynamic = createSpreadsheetDynamicBuilder()
+    const headers = createSpreadsheetHeaderCells([
+      'Exam name',
+      'School level: PRÉREQUIS CECR',
+      'Program: PREREQUIS CECR',
+    ])
+
+    const staticMatches = matchSpreadsheetColumns(
+      flattenSpreadsheetStaticColumns([
+        {
+          kind: 'text',
+          key: 'examNameRaw',
+          from: 'Exam name',
+          required: true,
+        },
+      ]),
+      headers,
+    )
+
+    const dynamicMatches = matchSpreadsheetDynamicColumns(
+      [
+        dynamic.optionGroups({
+          key: 'affiliations',
+          source: [
+            {
+              id: 'school-level',
+              slug: 'schoolLevel',
+              name: 'School level',
+              items: [
+                { id: 'primary', name: 'Primary' },
+                { id: 'secondary', name: 'Secondary' },
+              ],
+            },
+            {
+              id: 'program',
+              slug: 'program',
+              name: 'Program',
+              items: [
+                { id: 'business-english', name: 'Business English' },
+              ],
+            },
+          ] satisfies readonly DemoDynamicAffiliationGroup[],
+          itemKey: (item) => item.id,
+          itemLabel: (item) => item.name,
+          targetKey: (item) => item.slug,
+          header: {
+            strategy: 'template',
+            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
+            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
+          },
+          options: {
+            resolve: (item) => item.items,
+            optionValue: (option) => option.id,
+            optionLabel: (option) => option.name,
+          },
+          values: {
+            mode: 'csv',
+            separator: ',',
+            resolve: 'label',
+            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
+          },
+          output: {
+            into: 'affiliations',
+          },
+        }),
+      ],
+      headers,
+      staticMatches.map((match) => match.columnIndex),
+    )
+
+    const rows = await parseSpreadsheetRows({
+      rows: [
+        ['Business English 4 Skills', 'Primary, Secondary', 'Business English'],
+      ],
+      matches: staticMatches,
+      dynamicMatches,
+      context: {},
+    })
+
+    expect(dynamicMatches.map((match) => match.targetKey)).toEqual([
+      'schoolLevel',
+      'program',
+    ])
+    expect(rows[0]).toMatchObject({
+      isValid: true,
+      data: {
+        examNameRaw: 'Business English 4 Skills',
+        affiliations: {
+          schoolLevel: ['primary', 'secondary'],
+          program: ['business-english'],
+        },
+      },
+    })
+  })
+})
