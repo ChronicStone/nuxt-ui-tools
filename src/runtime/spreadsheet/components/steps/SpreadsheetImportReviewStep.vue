@@ -44,7 +44,7 @@ const review = useSpreadsheetReview({
 </script>
 
 <template>
-  <div class="grid gap-5">
+  <div class="grid gap-5" :class="review.inspectedRow.value ? '' : 'grid-rows-[auto_auto_minmax(0,1fr)] min-h-full'">
     <SpreadsheetReviewOverflowAlert
       v-if="review.hasOverflow.value"
       :review-rows-length="props.spreadsheet.resolvedRows.value.length"
@@ -67,6 +67,7 @@ const review = useSpreadsheetReview({
       :get-issue-badge="review.getIssueBadge"
       :get-issue-value-tone="review.getIssueValueTone"
       :get-issue-value="review.getIssueValue"
+      :get-issue-raw-value="review.getIssueRawValue"
       :get-related-issue-count="review.getRelatedIssueCount"
       :is-discarded="review.isDiscarded"
       :is-manually-discarded="review.isManuallyDiscarded"
@@ -78,7 +79,7 @@ const review = useSpreadsheetReview({
       @show-issue-rows="review.setActiveTab('invalid'); review.closeInspection()"
     />
 
-    <div v-else class="overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default">
+    <div v-else class="grid min-h-[24rem] overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_auto_minmax(0,1fr)]">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-default/70 px-5 pt-2">
         <div class="flex flex-wrap items-center gap-2">
           <button
@@ -141,25 +142,20 @@ const review = useSpreadsheetReview({
         :columns="review.reviewTableColumns.value"
         :row-selection="review.rowSelection.value"
         :get-row-id="row => String(row.index)"
-        :column-pinning="{ right: ['status'] }"
         sticky="header"
-        class="h-[32rem]"
+        class="h-full min-h-0"
         :on-select="(_event, row) => review.inspectRow(row.original.index)"
-        :virtualize="{
-          enabled: true,
-          estimateSize: 48,
-          overscan: 10,
-          getItemKey: (index: number) => String(review.visibleRows.value[index]?.index ?? index),
-        }"
         :meta="{
           class: {
             tr: (row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } }) => review.getRowToneClass(row.original),
           },
         }"
         :ui="{
-          root: 'overflow-auto',
+          root: 'overflow-x-auto overflow-y-visible',
           base: 'min-w-max',
-          tr: 'transition-colors',
+          tr: 'cursor-pointer border-b border-default/40 transition-colors',
+          td: 'py-3 align-middle',
+          th: 'bg-elevated/60',
         }"
       />
     </div>

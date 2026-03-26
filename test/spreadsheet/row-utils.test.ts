@@ -185,6 +185,166 @@ describe('spreadsheet row utils', () => {
     ])
   })
 
+  it('resolves static option columns from context-backed sources', async () => {
+    const matches = matchSpreadsheetColumns(
+      flattenSpreadsheetStaticColumns([
+        {
+          kind: 'option',
+          key: 'productId',
+          from: 'Product',
+          options: {
+            resolve: ({ context }: {
+              context: {
+                products: readonly { id: string, name: string }[]
+              }
+            }) => context.products,
+            optionLabel: (product: { id: string, name: string }) => product.name,
+            optionValue: (product: { id: string, name: string }) => product.id,
+          },
+        },
+        {
+          kind: 'option',
+          key: 'selectedProductId',
+          from: 'Selected product',
+          options: ({ context }: {
+            context: {
+              products: readonly { id: string, name: string }[]
+            }
+          }) => context.products.map(product => ({
+            label: product.name,
+            value: product.id,
+          })),
+        },
+      ]),
+      createSpreadsheetHeaderCells(['Product', 'Selected product']),
+    )
+
+    const rows = await parseSpreadsheetRows({
+      rows: [
+        ['Business English 4 Skills', 'Reading Placement Test'],
+        ['Unknown product', 'Business English 4 Skills'],
+      ],
+      matches,
+      context: {
+        products: [
+          { id: 'prod_1', name: 'Business English 4 Skills' },
+          { id: 'prod_2', name: 'Reading Placement Test' },
+        ] as const,
+      },
+    })
+
+    expect(rows[0]).toMatchObject({
+      isValid: true,
+      data: {
+        productId: 'prod_1',
+        selectedProductId: 'prod_2',
+      },
+    })
+    expect(rows[1]).toMatchObject({
+      isValid: false,
+      data: {
+        selectedProductId: 'prod_1',
+      },
+      issues: [
+        expect.objectContaining({
+          code: 'option.not_found',
+          columnKey: 'productId',
+          message: 'Unknown option "Unknown product"',
+        }),
+      ],
+    })
+  })
+
+  it('parses built-in multiple values for scalar and option columns', async () => {
+    const matches = matchSpreadsheetColumns(
+      flattenSpreadsheetStaticColumns([
+        {
+          kind: 'text',
+          key: 'tags',
+          from: 'Tags',
+          multiple: true,
+        },
+        {
+          kind: 'number',
+          key: 'scores',
+          from: 'Scores',
+          multiple: {
+            separator: ';',
+          },
+          rules: {
+            allPassing: sheetRules.validate({
+              name: 'allPassing',
+              validator: (value: number[]) => value.every(score => score >= 50),
+              message: 'All scores must be at least 50',
+            }),
+          },
+        },
+        {
+          kind: 'option',
+          key: 'productIds',
+          from: 'Products',
+          multiple: {
+            separator: ',',
+            matchBy: 'label',
+          },
+          options: {
+            resolve: ({ context }: {
+              context: {
+                products: readonly { id: string, name: string }[]
+              }
+            }) => context.products,
+            optionLabel: (product: { id: string, name: string }) => product.name,
+            optionValue: (product: { id: string, name: string }) => product.id,
+          },
+        },
+      ]),
+      createSpreadsheetHeaderCells(['Tags', 'Scores', 'Products']),
+    )
+
+    const rows = await parseSpreadsheetRows({
+      rows: [
+        ['alpha, beta', '82;91', 'Business English 4 Skills, Reading Placement Test'],
+        ['solo', '82;oops', 'Business English 4 Skills, Unknown product'],
+      ],
+      matches,
+      context: {
+        products: [
+          { id: 'prod_1', name: 'Business English 4 Skills' },
+          { id: 'prod_2', name: 'Reading Placement Test' },
+        ] as const,
+      },
+    })
+
+    expect(rows[0]).toMatchObject({
+      isValid: true,
+      data: {
+        tags: ['alpha', 'beta'],
+        scores: [82, 91],
+        productIds: ['prod_1', 'prod_2'],
+      },
+    })
+    expect(rows[1]).toMatchObject({
+      isValid: false,
+      data: {
+        tags: ['solo'],
+        scores: [82],
+        productIds: ['prod_1'],
+      },
+      issues: [
+        expect.objectContaining({
+          code: 'number.invalid',
+          columnKey: 'scores',
+          message: 'Invalid number "oops"',
+        }),
+        expect.objectContaining({
+          code: 'option.not_found',
+          columnKey: 'productIds',
+          message: 'Unknown option "Unknown product"',
+        }),
+      ],
+    })
+  })
+
   it('creates a compact summary for parsed rows', () => {
     const summary = createSpreadsheetRowSummary([
       {

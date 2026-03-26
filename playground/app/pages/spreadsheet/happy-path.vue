@@ -57,6 +57,22 @@ function createHappyPathSchema() {
     matching: {
       strategy: 'smart',
     },
+    context: [
+      {
+        key: 'products',
+        query: () => ({
+          queryKey: ['playground', 'spreadsheet', 'happy-path', 'products'],
+          queryFn: async () => center.products,
+        }),
+      },
+      {
+        key: 'affiliationGroups',
+        query: () => ({
+          queryKey: ['playground', 'spreadsheet', 'happy-path', 'affiliation-groups'],
+          queryFn: async () => center.affiliationGroups,
+        }),
+      },
+    ],
     columns: {
       static: (column) => [
         column.text('testCenterId', {
@@ -83,6 +99,19 @@ function createHappyPathSchema() {
         column.text('examNameRaw', {
           match: {
             headers: ['Exam name'],
+          },
+          rules: {
+            required: sheetRules.required(),
+          },
+        }),
+        column.option('productId', {
+          match: {
+            headers: ['Product'],
+          },
+          options: {
+            resolve: ({ context }) => context.products,
+            optionLabel: product => product.name,
+            optionValue: product => product.id,
           },
           rules: {
             required: sheetRules.required(),
@@ -155,10 +184,10 @@ function createHappyPathSchema() {
           },
         }),
       ],
-      dynamic: ({ dynamic }) => [
+      dynamic: ({ dynamic, context }) => [
         dynamic.optionGroups({
           key: 'affiliations',
-          source: center.affiliationGroups,
+          source: context.affiliationGroups,
           itemKey: (group) => group.id,
           itemLabel: (group) => group.name,
           targetKey: (group) => group.slug,
@@ -184,14 +213,6 @@ function createHappyPathSchema() {
         }),
       ],
     },
-    references: (reference) => [
-      reference.select('productId', {
-        source: 'examNameRaw',
-        options: center.products,
-        optionValue: (product) => product.id,
-        optionLabel: (product) => product.name,
-      }),
-    ],
     buildRow: ({ row }) => ({
       testCenterId: row.testCenterId,
       secureCode: row.secureCode,
@@ -222,6 +243,7 @@ function createWorkbook() {
       'Test center ID',
       'Secure code',
       'Exam name',
+      'Product',
       'First name',
       'Last name',
       'Email',
@@ -238,6 +260,7 @@ function createWorkbook() {
       center.id,
       'PAR-001-A',
       center.products[0]?.name ?? '',
+      center.products[0]?.name ?? '',
       'Lina',
       'Martin',
       'lina.martin@example.com',
@@ -253,6 +276,7 @@ function createWorkbook() {
     [
       center.id,
       'PAR-002-B',
+      center.products[1]?.name ?? '',
       center.products[1]?.name ?? '',
       'Noah',
       'Bernard',

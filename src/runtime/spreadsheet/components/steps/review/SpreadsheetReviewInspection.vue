@@ -4,6 +4,7 @@ import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
+import SpreadsheetValuePreview from '../../shared/SpreadsheetValuePreview.vue'
 import type { SpreadsheetRowIssue } from '../../../types'
 
 const emit = defineEmits<{
@@ -33,6 +34,7 @@ const props = defineProps<{
   }
   getIssueValueTone: (issue: SpreadsheetRowIssue) => string
   getIssueValue: (rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) => string
+  getIssueRawValue: (rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) => unknown
   getRelatedIssueCount: (issue: SpreadsheetRowIssue) => number
   isDiscarded: (index: number) => boolean
   isManuallyDiscarded: (index: number) => boolean
@@ -245,7 +247,7 @@ function getFieldIssueTone(key: string) {
                     'text-toned': getFieldIssueTone(key) === 'neutral',
                   }"
                 >
-                  {{ formatCell(value) }}
+                  <SpreadsheetValuePreview :value="value" />
                 </span>
               </div>
 
@@ -302,7 +304,7 @@ function getFieldIssueTone(key: string) {
           </div>
         </div>
 
-        <div class="grid max-h-[42rem] overflow-auto">
+        <div class="grid">
           <div
             v-for="group in issueGroups"
             :key="group.key"
@@ -356,8 +358,12 @@ function getFieldIssueTone(key: string) {
 
                 <div class="rounded-[var(--ui-radius)] px-4 py-3" :class="getIssueValueTone(issue)">
                   <div class="mb-1 font-mono text-xs text-muted">Value in file</div>
-                  <div class="font-mono text-sm" :class="issue.level === 'error' ? 'text-error' : 'text-warning'">
-                    {{ getIssueValue(inspectedRow.rowObject, issue) }}
+                  <div class="text-sm" :class="issue.level === 'error' ? 'text-error' : 'text-warning'">
+                    <SpreadsheetValuePreview
+                      :value="issue.columnKey
+                        ? getIssueRawValue(inspectedRow.rowObject, issue)
+                        : getIssueValue(inspectedRow.rowObject, issue)"
+                    />
                   </div>
                 </div>
 

@@ -2,7 +2,6 @@ import type { MaybePromise } from '../../shared/types/utils'
 import type {
   SpreadsheetCellValue,
   SpreadsheetMatchDefinition,
-  SpreadsheetQueryDefinition,
 } from './shared'
 import type { SpreadsheetFieldRules } from './validation'
 
@@ -18,6 +17,11 @@ export interface SpreadsheetColumnDefinition<
   required?: TRequired
   match?: SpreadsheetMatchDefinition
   from?: string | RegExp | readonly (string | RegExp)[]
+  multiple?: boolean | {
+    separator?: string
+    matchBy?: 'label' | 'value'
+    normalize?: readonly string[]
+  }
   parse?: (params: {
     cell: SpreadsheetCellValue
     context: TContext
@@ -42,23 +46,56 @@ export type SpreadsheetStaticColumnEntry =
 type InferColumnValue<TDefault, TParse> = TParse extends (...args: infer _Args) => infer TResult
   ? Awaited<TResult>
   : TDefault
+type ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple> =
+  TParse extends (...args: infer _Args) => infer TResult
+    ? Awaited<TResult>
+    : TMultiple extends false | undefined
+      ? TDefault
+      : TDefault[]
 type SpreadsheetOptionLabelResolver<TOption> = {
   bivarianceHack: (option: TOption) => string
 }['bivarianceHack']
 type SpreadsheetOptionValueResolver<TOption, TValue> = {
   bivarianceHack: (option: TOption) => TValue
 }['bivarianceHack']
+type SpreadsheetOptionSourceResolver<TContext, TOption> = {
+  bivarianceHack: (params: {
+    context: TContext
+  }) => readonly TOption[]
+}['bivarianceHack']
+type SpreadsheetOptionSource<TContext, TOption> =
+  | readonly TOption[]
+  | SpreadsheetOptionSourceResolver<TContext, TOption>
 
 type SpreadsheetStandardOption<TValue = unknown> = {
   label: string
   value: TValue
 }
 
-export interface SpreadsheetColumnBaseOptions<TContext, TValue, TRequired extends boolean> {
+export interface SpreadsheetColumnMultipleOptions {
+  separator?: string
+}
+
+export interface SpreadsheetEnumColumnMultipleOptions extends SpreadsheetColumnMultipleOptions {
+  normalize?: readonly string[]
+}
+
+export interface SpreadsheetOptionColumnMultipleOptions extends SpreadsheetColumnMultipleOptions {
+  matchBy?: 'label' | 'value'
+  normalize?: readonly string[]
+}
+
+export interface SpreadsheetColumnBaseOptions<
+  TContext,
+  TValue,
+  TRequired extends boolean,
+  TMultiple = boolean | SpreadsheetColumnMultipleOptions,
+> {
   label?: string | (() => string | number)
   required?: TRequired
   match?: SpreadsheetMatchDefinition
   from?: string | RegExp | readonly (string | RegExp)[]
+  multiple?: TMultiple
   parse?: (params: {
     cell: SpreadsheetCellValue
     context: TContext
@@ -70,7 +107,9 @@ export type SpreadsheetEnumColumnOptions<
   TContext,
   TOptionValue,
   TRequired extends boolean,
-> = SpreadsheetColumnBaseOptions<TContext, TOptionValue, TRequired> & {
+  TMultiple = boolean | SpreadsheetEnumColumnMultipleOptions,
+  TResolvedValue = TOptionValue,
+> = SpreadsheetColumnBaseOptions<TContext, TResolvedValue, TRequired, TMultiple> & {
   options: readonly TOptionValue[]
 }
 
@@ -79,87 +118,146 @@ export type SpreadsheetOptionColumnOptions<
   TOption,
   TValue,
   TRequired extends boolean,
-> = SpreadsheetColumnBaseOptions<TContext, TValue, TRequired> & {
+  TMultiple = boolean | SpreadsheetOptionColumnMultipleOptions,
+  TResolvedValue = TValue,
+> = SpreadsheetColumnBaseOptions<TContext, TResolvedValue, TRequired, TMultiple> & {
   options:
-    | readonly TOption[]
-    | {
-        query: (params: {
-          context: TContext
-          search: string
-        }) => SpreadsheetQueryDefinition<readonly TOption[]>
-      }
-} & (
-  TOption extends SpreadsheetStandardOption<any>
-    ? {
-        optionValue?: SpreadsheetOptionValueResolver<TOption, TValue>
-        optionLabel?: SpreadsheetOptionLabelResolver<TOption>
-      }
-    : {
+    | SpreadsheetOptionSource<TContext, TOption>
+    | (
+      TOption extends SpreadsheetStandardOption<any>
+        ? {
+            resolve: SpreadsheetOptionSource<TContext, TOption>
+            optionValue?: SpreadsheetOptionValueResolver<TOption, TValue>
+            optionLabel?: SpreadsheetOptionLabelResolver<TOption>
+          }
+        : {
+            resolve: SpreadsheetOptionSource<TContext, TOption>
+            optionValue: SpreadsheetOptionValueResolver<TOption, TValue>
+            optionLabel: SpreadsheetOptionLabelResolver<TOption>
+          }
+    )
+}
+
+export interface SpreadsheetScalarColumnBuilder<
+  TContext = unknown,
+  TDefault = unknown,
+  TMultipleConfig = SpreadsheetColumnMultipleOptions,
+> {
+  <
+    TKey extends string,
+    TRequired extends boolean = false,
+    TMultiple extends boolean | TMultipleConfig | undefined = undefined,
+    TParse extends
+      | SpreadsheetColumnBaseOptions<
+        TContext,
+        ResolveSpreadsheetColumnValue<TDefault, undefined, TMultiple>,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      >['parse']
+      | undefined = undefined,
+  >(
+    key: TKey,
+    options?: SpreadsheetColumnBaseOptions<
+      TContext,
+      ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
+      TRequired,
+      Exclude<TMultiple, undefined>
+    >,
+  ): SpreadsheetColumnDefinition<TKey, ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>, TRequired, TContext>
+}
+
+export interface SpreadsheetOptionColumnBuilder<TContext = unknown> {
+  <
+    TKey extends string,
+    TOption,
+    TValue,
+    TRequired extends boolean = false,
+    TMultiple extends boolean | SpreadsheetOptionColumnMultipleOptions | undefined = undefined,
+    TParse extends
+      | SpreadsheetColumnBaseOptions<
+        TContext,
+        ResolveSpreadsheetColumnValue<TValue, undefined, TMultiple>,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      >['parse']
+      | undefined = undefined,
+  >(
+    key: TKey,
+    options: SpreadsheetColumnBaseOptions<
+      TContext,
+      ResolveSpreadsheetColumnValue<TValue, TParse, TMultiple>,
+      TRequired,
+      Exclude<TMultiple, undefined>
+    > & {
+      options: {
+        resolve: SpreadsheetOptionSource<TContext, TOption>
         optionValue: SpreadsheetOptionValueResolver<TOption, TValue>
         optionLabel: SpreadsheetOptionLabelResolver<TOption>
       }
-)
+    },
+  ): SpreadsheetColumnDefinition<TKey, ResolveSpreadsheetColumnValue<TValue, TParse, TMultiple>, TRequired, TContext>
+  <
+    TKey extends string,
+    TOption extends SpreadsheetStandardOption<any>,
+    TRequired extends boolean = false,
+    TMultiple extends boolean | SpreadsheetOptionColumnMultipleOptions | undefined = undefined,
+    TParse extends
+      | SpreadsheetColumnBaseOptions<
+        TContext,
+        ResolveSpreadsheetColumnValue<TOption['value'], undefined, TMultiple>,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      >['parse']
+      | undefined = undefined,
+  >(
+    key: TKey,
+    options: SpreadsheetColumnBaseOptions<
+      TContext,
+      ResolveSpreadsheetColumnValue<TOption['value'], TParse, TMultiple>,
+      TRequired,
+      Exclude<TMultiple, undefined>
+    > & {
+      options:
+        | SpreadsheetOptionSource<TContext, TOption>
+        | {
+            resolve: SpreadsheetOptionSource<TContext, TOption>
+            optionValue?: SpreadsheetOptionValueResolver<TOption, TOption['value']>
+            optionLabel?: SpreadsheetOptionLabelResolver<TOption>
+          }
+    },
+  ): SpreadsheetColumnDefinition<TKey, ResolveSpreadsheetColumnValue<TOption['value'], TParse, TMultiple>, TRequired, TContext>
+}
 
 export interface SpreadsheetColumnBuilder<TContext = unknown> {
-  text: <
-    TKey extends string,
-    TRequired extends boolean = false,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<TContext, string, TRequired>['parse']
-      | undefined = undefined,
-  >(
-    key: TKey,
-    options?: SpreadsheetColumnBaseOptions<TContext, InferColumnValue<string, TParse>, TRequired>,
-  ) => SpreadsheetColumnDefinition<TKey, InferColumnValue<string, TParse>, TRequired, TContext>
-  email: SpreadsheetColumnBuilder<TContext>['text']
-  number: <
-    TKey extends string,
-    TRequired extends boolean = false,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<TContext, number, TRequired>['parse']
-      | undefined = undefined,
-  >(
-    key: TKey,
-    options?: SpreadsheetColumnBaseOptions<TContext, InferColumnValue<number, TParse>, TRequired>,
-  ) => SpreadsheetColumnDefinition<TKey, InferColumnValue<number, TParse>, TRequired, TContext>
-  date: SpreadsheetColumnBuilder<TContext>['text']
-  boolean: <
-    TKey extends string,
-    TRequired extends boolean = false,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<TContext, boolean, TRequired>['parse']
-      | undefined = undefined,
-  >(
-    key: TKey,
-    options?: SpreadsheetColumnBaseOptions<TContext, InferColumnValue<boolean, TParse>, TRequired>,
-  ) => SpreadsheetColumnDefinition<TKey, InferColumnValue<boolean, TParse>, TRequired, TContext>
+  text: SpreadsheetScalarColumnBuilder<TContext, string>
+  email: SpreadsheetScalarColumnBuilder<TContext, string>
+  number: SpreadsheetScalarColumnBuilder<TContext, number>
+  date: SpreadsheetScalarColumnBuilder<TContext, string>
+  boolean: SpreadsheetScalarColumnBuilder<TContext, boolean>
   enum: <
     TKey extends string,
     const TOptions extends readonly unknown[],
     TRequired extends boolean = false,
+    TMultiple extends boolean | SpreadsheetEnumColumnMultipleOptions | undefined = undefined,
     TParse extends
-      | SpreadsheetColumnBaseOptions<TContext, TOptions[number], TRequired>['parse']
+      | SpreadsheetColumnBaseOptions<
+        TContext,
+        ResolveSpreadsheetColumnValue<TOptions[number], undefined, TMultiple>,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      >['parse']
       | undefined = undefined,
   >(
     key: TKey,
     options: SpreadsheetEnumColumnOptions<
       TContext,
-      InferColumnValue<TOptions[number], TParse>,
+      ResolveSpreadsheetColumnValue<TOptions[number], TParse, TMultiple>,
       TRequired
+      ,
+      Exclude<TMultiple, undefined>
     > & { options: TOptions },
-  ) => SpreadsheetColumnDefinition<TKey, InferColumnValue<TOptions[number], TParse>, TRequired, TContext>
-  option: <
-    TKey extends string,
-    TOption,
-    TValue,
-    TRequired extends boolean = false,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<TContext, TValue, TRequired>['parse']
-      | undefined = undefined,
-  >(
-    key: TKey,
-    options: SpreadsheetOptionColumnOptions<TContext, TOption, InferColumnValue<TValue, TParse>, TRequired>,
-  ) => SpreadsheetColumnDefinition<TKey, InferColumnValue<TValue, TParse>, TRequired, TContext>
+  ) => SpreadsheetColumnDefinition<TKey, ResolveSpreadsheetColumnValue<TOptions[number], TParse, TMultiple>, TRequired, TContext>
+  option: SpreadsheetOptionColumnBuilder<TContext>
 }
 
 export interface SpreadsheetGroupBuilder {

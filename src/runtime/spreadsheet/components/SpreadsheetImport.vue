@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, nextTick, watch } from 'vue'
 
 import { useSpreadsheetView } from '../composables/use-spreadsheet-view'
 import type { SpreadsheetComponentApi } from './types'
@@ -47,6 +47,7 @@ const stageTitle = computed(() => {
 const stageDescription = computed(() => currentStep.value?.description ?? '')
 const renderMode = computed(() => props.mode ?? 'inline')
 const isFullscreen = computed(() => renderMode.value === 'fullscreen')
+const isPreparingNextStep = ref<boolean>(false)
 const hasWorkbook = computed(() => Boolean(props.spreadsheet.workbook.value))
 const hasHeaders = computed(() => props.spreadsheet.headers.value.length > 0)
 function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
@@ -118,15 +119,41 @@ const primaryActionLabel = computed(() => {
 const primaryActionColor = computed(() =>
   activeStep.value === 'review' ? 'success' as const : 'primary' as const,
 )
+const primaryActionBusyLabel = computed(() => 'Preparing review...')
 
-function handlePrimaryAction() {
+function getNextStepValue() {
+  return steps.value[activeStepIndex.value + 1]?.value
+}
+
+function waitForPaint() {
+  return new Promise<void>((resolve) =>
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => resolve()),
+    ),
+  )
+}
+
+async function handlePrimaryAction() {
   if (activeStep.value === 'review') {
     void props.spreadsheet.refresh()
     return
   }
 
   if (!canGoNext.value) return
+  const nextStep = getNextStepValue()
+
+  if (nextStep === 'review') {
+    isPreparingNextStep.value = true
+    await nextTick()
+    await waitForPaint()
+  }
+
   goToNextStep()
+
+  if (nextStep === 'review') {
+    await nextTick()
+    isPreparingNextStep.value = false
+  }
 }
 
 watch(hasWorkbook, (nextHasWorkbook) => {
@@ -139,7 +166,7 @@ watch(hasWorkbook, (nextHasWorkbook) => {
 <template>
   <div
     class="grid h-full overflow-hidden bg-default lg:grid-cols-[280px_minmax(0,1fr)]"
-    :class="isFullscreen
+      :class="isFullscreen
       ? 'min-h-full'
       : 'min-h-[44rem] rounded-[var(--ui-radius)] border border-default/70 shadow-sm'"
   >
@@ -150,7 +177,23 @@ watch(hasWorkbook, (nextHasWorkbook) => {
     />
 
     <div class="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] bg-default">
-      <div class="min-h-0" :class="activeStep === 'matching' ? 'overflow-hidden' : 'overflow-y-auto'">
+      <div
+        class="relative min-h-0"
+        :class="activeStep === 'matching' ? 'overflow-hidden' : 'overflow-y-auto'"
+      >
+        <div
+          v-if="isPreparingNextStep"
+          class="absolute inset-0 z-10 flex items-center justify-center bg-default/72 backdrop-blur-sm"
+        >
+          <div class="flex items-center gap-3 rounded-[var(--ui-radius)] border border-default/70 bg-default px-4 py-3 shadow-sm">
+            <div class="size-4 animate-spin rounded-full border-2 border-default border-t-primary" />
+            <div class="grid gap-0.5">
+              <span class="text-sm font-medium text-highlighted">{{ primaryActionBusyLabel }}</span>
+              <span class="text-xs text-muted">Validation and review data are being prepared.</span>
+            </div>
+          </div>
+        </div>
+
         <div
           class="grid px-6 py-5 lg:px-10 lg:py-6"
           :class="activeStep === 'matching' ? 'h-full grid-rows-[auto_minmax(0,1fr)] gap-4' : 'gap-4'"
@@ -207,6 +250,7 @@ watch(hasWorkbook, (nextHasWorkbook) => {
         :show-previous="activeStep !== 'upload'"
         :primary-label="primaryActionLabel"
         :primary-disabled="activeStep !== 'review' && !canGoNext"
+        :primary-loading="isPreparingNextStep"
         :primary-color="primaryActionColor"
         :primary-icon="activeStep === 'review' ? 'i-lucide-check' : 'i-lucide-arrow-right'"
         :show-export="activeStep === 'review' && overflowRowCount > 0"

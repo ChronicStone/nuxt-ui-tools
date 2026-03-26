@@ -41,8 +41,31 @@ const context = [
         queryFn: async () => affiliationGroups,
       }) satisfies SpreadsheetQueryDefinition<readonly DemoAffiliationGroup[]>,
   },
+  {
+    key: 'products',
+    query: () =>
+      ({
+        queryKey: ['products', 'tc_123'],
+        queryFn: async () => [
+          { id: 'prod_1', name: 'Business English 4 Skills' },
+          { id: 'prod_2', name: 'Reading Placement Test' },
+        ] as const,
+      }) satisfies SpreadsheetQueryDefinition<
+        readonly [
+          { id: 'prod_1', name: 'Business English 4 Skills' },
+          { id: 'prod_2', name: 'Reading Placement Test' },
+        ]
+      >,
+  },
 ] satisfies readonly [
   SpreadsheetContextItem<'affiliationGroups', readonly DemoAffiliationGroup[]>,
+  SpreadsheetContextItem<
+    'products',
+    readonly [
+      { id: 'prod_1', name: 'Business English 4 Skills' },
+      { id: 'prod_2', name: 'Reading Placement Test' },
+    ]
+  >,
 ]
 
 const schema = defineSpreadsheetSchema({
@@ -64,6 +87,25 @@ const schema = defineSpreadsheetSchema({
         required: true,
         match: {
           headers: ['Exam name'],
+        },
+      }),
+      column.text('tags', {
+        multiple: true,
+      }),
+      column.number('scores.history', {
+        multiple: {
+          separator: ';',
+        },
+      }),
+      column.option('productIds', {
+        options: {
+          resolve: ({ context }) => context.products,
+          optionLabel: product => product.name,
+          optionValue: product => product.id,
+        },
+        multiple: {
+          separator: ',',
+          matchBy: 'label',
         },
       }),
       column.number('scores.general'),
@@ -120,7 +162,23 @@ describe('defineSpreadsheetSchema inference', () => {
   it('infers nested static row fields from dot-path keys', () => {
     expectTypeOf<Row['testCenterId']>().toEqualTypeOf<string>()
     expectTypeOf<Row['examNameRaw']>().toEqualTypeOf<string>()
-    expectTypeOf<Row['scores']>().toEqualTypeOf<{ general?: number } | undefined>()
+
+    const multiValueFields: Pick<Row, 'tags' | 'productIds' | 'scores'> = {
+      tags: ['tag'],
+      productIds: ['prod_1'],
+      scores: {
+        general: 82,
+        history: [73, 91],
+      },
+    }
+    const sparseMultiValueFields: Pick<Row, 'tags' | 'productIds' | 'scores'> = {
+      tags: undefined,
+      productIds: undefined,
+      scores: undefined,
+    }
+
+    void multiValueFields
+    void sparseMultiValueFields
   })
 
   it('adds reference outputs when references are provided', () => {
