@@ -1,10 +1,18 @@
 /**
- * Codecs for serializing/deserializing query parameter values.
- * Zero-dependency implementations.
+ * Serializes and parses a single query-string value.
+ *
+ * Query-state composables always store raw URL values as strings. A codec is
+ * the boundary that turns those strings into typed values for the app and back
+ * into URL-safe strings when writing.
  */
-
 export interface QueryCodec<T> {
+  /** Parse a raw query-string value into the typed runtime value. */
   parse: (raw: string) => T
+  /**
+   * Serialize a typed value for the URL.
+   *
+   * Return `null` when the value should be omitted from the query string.
+   */
   serialize: (value: T) => string | null
 }
 
@@ -36,6 +44,17 @@ export const dateISOCodec: QueryCodec<Date> = {
 // Codec factories
 // ---------------------------------------------------------------------------
 
+/**
+ * Creates a codec that only accepts values from a fixed string union.
+ *
+ * Invalid incoming query values parse to `undefined`, which lets
+ * `useQueryState(...)` and `useQueryStates(...)` fall back to their defaults.
+ *
+ * @example
+ * ```ts
+ * const layoutCodec = createEnumCodec(['grid', 'table'])
+ * ```
+ */
 export function createEnumCodec<const T extends readonly string[]>(
   values: T,
 ): QueryCodec<T[number] | undefined> {
@@ -52,6 +71,17 @@ export function createEnumCodec<const T extends readonly string[]>(
   }
 }
 
+/**
+ * Creates a codec for separator-delimited lists, such as `"a,b,c"`.
+ *
+ * Empty input parses to an empty array and empty arrays serialize to `null`, so
+ * default query-state behavior removes the key from the URL.
+ *
+ * @example
+ * ```ts
+ * const tagsCodec = createArrayCodec(stringCodec)
+ * ```
+ */
 export function createArrayCodec<T>(itemCodec: QueryCodec<T>, separator = ','): QueryCodec<T[]> {
   return {
     parse(raw) {

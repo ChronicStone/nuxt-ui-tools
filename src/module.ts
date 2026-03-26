@@ -1,7 +1,9 @@
 import { breakpointsTailwind } from '@vueuse/core'
-import { addComponentsDir, createResolver, defineNuxtModule, installModule } from '@nuxt/kit'
+import { createResolver, defineNuxtModule, installModule } from '@nuxt/kit'
 import type { ModuleOptions as ViewportOptions } from 'nuxt-viewport'
 
+import { setupComponents } from './components'
+import { setupImports } from './imports'
 import { setupTailwindCss } from './tailwindcss'
 
 export interface ModuleOptions {
@@ -65,14 +67,8 @@ export default defineNuxtModule<ModuleOptions>({
     await installModule('nuxt-viewport', viewportOptions)
 
     setupTailwindCss(nuxt, resolve('./runtime'))
-
-    addComponentsDir({
-      path: resolve('./runtime/table/components'),
-      pathPrefix: false,
-      prefix: options.prefix,
-      global: options.global,
-      ignore: ['drawers/**', 'filters/**', 'grid/**', 'layout/**', 'table/**', 'utils/**'],
-    })
+    setupImports(resolve('./runtime'))
+    setupComponents(resolve('./runtime'), options)
   },
 })
 

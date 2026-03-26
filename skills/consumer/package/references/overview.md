@@ -9,8 +9,28 @@ Today the main usable package surfaces are:
 - table runtime
 - query-state runtime
 - shared responsive helpers
+- spreadsheet import runtime
 
 The `form` area exists but is not yet a mature consumer-facing surface.
+
+## Nuxt Module Auto-Imports
+
+When the Nuxt module is installed, the main public functions are auto-imported.
+
+That includes the primary entrypoints for:
+
+- table schema and table runtime
+- query-state
+- shared responsive helpers
+- spreadsheet import
+
+The module also auto-registers the main public components:
+
+- `DataList`
+- `SpreadsheetImport`
+
+The configured module prefix still applies, so with the default module options
+those components are available as `UiDataList` and `UiSpreadsheetImport`.
 
 ## What To Import
 
@@ -42,6 +62,13 @@ Responsive shared usage:
 import { useResponsiveValue } from '#ui-tools/shared'
 ```
 
+Spreadsheet usage:
+
+```ts
+import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
+import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
+```
+
 ## How To Route
 
 Use:
@@ -52,9 +79,12 @@ Use:
   for typed URL/query param state
 - `skills/consumer/shared/SKILL.md`
   for breakpoint-aware shared runtime helpers
+- `skills/consumer/spreadsheet/SKILL.md`
+  for spreadsheet import setup and usage
 
 ## Which Skill To Open Next
 
 - use `skills/consumer/table/SKILL.md` for data list/table/grid questions
 - use `skills/consumer/query-state/SKILL.md` for URL/query-param state questions
 - use `skills/consumer/shared/SKILL.md` for breakpoint-driven values
+- use `skills/consumer/spreadsheet/SKILL.md` for spreadsheet import questions

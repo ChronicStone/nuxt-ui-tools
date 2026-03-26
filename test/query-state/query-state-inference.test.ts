@@ -6,7 +6,7 @@ import { createEnumCodec, stringCodec, useQueryState, useQueryStates } from '#ui
 function useExplicitLayoutState() {
   return useQueryState({
     key: 'l',
-    codec: createEnumCodec(['grid', 'table'] as const),
+    codec: createEnumCodec(['grid', 'table']),
     defaultValue: 'table',
     omitDefault: true,
   })
@@ -15,7 +15,7 @@ function useExplicitLayoutState() {
 function useOptionalLayoutState() {
   return useQueryState({
     key: 'l',
-    codec: createEnumCodec(['grid', 'table'] as const),
+    codec: createEnumCodec(['grid', 'table']),
     defaultValue: undefined,
     omitDefault: true,
   })
@@ -25,7 +25,7 @@ function useCombinedQueryStates() {
   return useQueryStates({
     schema: {
       layout: {
-        codec: createEnumCodec(['grid', 'table'] as const),
+        codec: createEnumCodec(['grid', 'table']),
         defaultValue: 'table',
         omitDefault: true,
       },
@@ -34,7 +34,7 @@ function useCombinedQueryStates() {
         defaultValue: '',
       },
       optionalLayout: {
-        codec: createEnumCodec(['grid', 'table'] as const),
+        codec: createEnumCodec(['grid', 'table']),
         defaultValue: undefined,
         omitDefault: true,
       },

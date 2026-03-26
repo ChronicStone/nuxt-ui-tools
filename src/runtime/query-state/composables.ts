@@ -21,13 +21,36 @@ import type { QueryCodec } from './codecs'
 
 const clientRegistry = new WeakMap<object, QueryStateClient>()
 
-/** Pre-register a client for a router instance (use from plugins). */
+/**
+ * Pre-register a query-state client for a router instance.
+ *
+ * This is useful from app plugins when you want one shared client instance with
+ * custom defaults or devtools wiring before composables run.
+ *
+ * @example
+ * ```ts
+ * const client = new QueryStateClient({ router, defaultHistoryMode: 'replace' })
+ * registerQueryStateClient(router, client)
+ * ```
+ */
 export function registerQueryStateClient(router: object, client: QueryStateClient): void {
   clientRegistry.set(router, client)
 }
 
-/** Get or create a QueryStateClient for the current router. */
+/**
+ * Returns the shared query-state client for the current router.
+ *
+ * If no client has been registered yet, this lazily creates one and wires route
+ * synchronization so external navigations update active query-state consumers.
+ *
+ * @example
+ * ```ts
+ * const client = useQueryStateClient({ defaultHistoryMode: 'push' })
+ * client.set('page', '2')
+ * ```
+ */
 export function useQueryStateClient(options?: {
+  /** History mode used by the lazily created client when individual writes omit one. */
   defaultHistoryMode?: HistoryMode
 }): QueryStateClient {
   const router = useRouter()
@@ -57,13 +80,24 @@ type ResolveDefaultedValue<TValue, TDefault> = undefined extends TDefault
   : Exclude<TValue, undefined>
 
 type UseQueryStateBaseOptions<TValue> = {
+  /** Query-string key to read from and write to. */
   key: string
+  /** Codec that maps between raw query values and the typed runtime value. */
   codec: QueryCodec<TValue>
+  /** Remove the key when the serialized value matches `defaultValue`. Defaults to `true`. */
   omitDefault?: boolean
+  /** Override the router history mode for writes from this state. */
   historyMode?: HistoryMode
 }
 
+/**
+ * Options for a single typed query-state binding.
+ *
+ * When `defaultValue` excludes `undefined`, the returned ref is narrowed so
+ * downstream code can treat missing or invalid query values as already resolved.
+ */
 export type UseQueryStateOptions<TValue, TDefault = TValue> = UseQueryStateBaseOptions<TValue> & {
+  /** Fallback used when the key is missing or the codec returns `undefined`. */
   defaultValue: TDefault
 }
 
@@ -73,6 +107,23 @@ export function useQueryState<TValue>(
 export function useQueryState<TValue, TDefault extends Exclude<TValue, undefined>>(
   options: UseQueryStateBaseOptions<TValue> & { defaultValue: TDefault },
 ): WritableComputedRef<Exclude<TValue, undefined>>
+/**
+ * Binds one query-string key to a writable computed ref.
+ *
+ * Reads come from the shared client cache, writes are pushed through the client
+ * so multiple updates in the same tick can still batch at the router layer.
+ * Use `useQueryStates(...)` instead when one feature owns multiple coordinated
+ * query values.
+ *
+ * @example
+ * ```ts
+ * const layout = useQueryState({
+ *   key: 'layout',
+ *   codec: createEnumCodec(['grid', 'table']),
+ *   defaultValue: 'grid',
+ * })
+ * ```
+ */
 export function useQueryState<TValue, TDefault extends TValue>(
   options: UseQueryStateOptions<TValue, TDefault>,
 ): WritableComputedRef<ResolveDefaultedValue<TValue, TDefault>> {
@@ -127,19 +178,33 @@ export function useQueryState<TValue, TDefault extends TValue>(
 
 const DYNAMIC_MARKER = Symbol('dynamicQueryState')
 
+/**
+ * Configuration for a grouped query-state field whose URL keys are discovered at
+ * runtime from a definition list.
+ *
+ * This is useful for abstractions like dynamic filters where the property shape
+ * is stable for consumers, but the concrete query keys depend on runtime schema.
+ */
 export interface DynamicQueryStateOptions<TDefinition, TValue> {
-  /** URL prefix for all keys this dynamic state owns (relative to parent prefix). */
+  /** URL prefix for all keys this dynamic state owns, relative to the parent `prefix`. */
   urlPrefix: string
-  /** Returns current definitions that drive which URL keys exist. */
+  /** Returns the current definitions that determine which query keys exist. */
   definitions: () => TDefinition[]
-  /** For a given definition, return all URL keys it could occupy + codec for each. */
+  /**
+   * For one runtime definition, return every query key it may occupy together
+   * with the codec that should parse and serialize that key.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   resolve: (definition: TDefinition) => Array<{ urlKey: string; codec: QueryCodec<any> }>
-  /** Transform parsed URL entries into the final value. */
+  /** Build the consumer-facing value from the parsed query entries and current definitions. */
   parse: (entries: ReadonlyMap<string, unknown>, definitions: TDefinition[]) => TValue
-  /** Transform value back into URL entries. null values = remove from URL. */
+  /**
+   * Map the consumer-facing value back into query entries.
+   *
+   * Use `null` values in the returned map to clear individual query keys.
+   */
   serialize: (value: TValue, definitions: TDefinition[]) => Map<string, unknown>
-  /** Default when no URL keys are present. */
+  /** Value returned when no relevant query keys are currently present. */
   defaultValue: TValue
 }
 
@@ -149,6 +214,23 @@ export interface DynamicQueryStateDef<TValue> {
   _options: DynamicQueryStateOptions<any, TValue>
 }
 
+/**
+ * Declares a dynamic grouped query-state field for use inside `useQueryStates(...)`.
+ *
+ * The returned marker object is schema metadata, not reactive state by itself.
+ *
+ * @example
+ * ```ts
+ * const filters = dynamicQueryState({
+ *   urlPrefix: 'filters',
+ *   definitions: () => filterDefinitions.value,
+ *   resolve: (definition) => [{ urlKey: definition.key, codec: stringCodec }],
+ *   parse: (entries) => Array.from(entries.entries()),
+ *   serialize: (value) => new Map(value),
+ *   defaultValue: [],
+ * })
+ * ```
+ */
 export function dynamicQueryState<TDefinition, TValue>(
   options: DynamicQueryStateOptions<TDefinition, TValue>,
 ): DynamicQueryStateDef<TValue> {
@@ -166,26 +248,47 @@ function isDynamicDef(value: unknown): value is DynamicQueryStateDef<unknown> {
 // useQueryStates — multiple params, batched
 // ---------------------------------------------------------------------------
 
+/**
+ * Static query-state definition used inside `useQueryStates(...)`.
+ *
+ * Each property maps one state field to one query-string key.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface StaticParamDef<TValue = any, TDefault = TValue> {
+export interface StaticQueryStateOptions<TValue = any, TDefault = TValue> {
+  /** Codec used to parse the raw query value and serialize writes back to the URL. */
   codec: QueryCodec<TValue>
+  /** Fallback used when the query key is missing or the codec returns `undefined`. */
   defaultValue: TDefault
+  /** Override the URL key for this property. Defaults to the property name. */
   urlKey?: string
+  /** Remove the key when the serialized value matches `defaultValue`. Defaults to `true`. */
   omitDefault?: boolean
+  /** Override the history mode for this property when `useQueryStates(...)` writes. */
   historyMode?: HistoryMode
 }
 
+/**
+ * One schema entry accepted by `useQueryStates(...)`.
+ *
+ * Use a static entry for one-to-one property mappings, or `dynamicQueryState(...)`
+ * when one property owns a runtime-defined set of query keys.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SchemaEntry<TValue = any, TDefault = TValue> =
-  | StaticParamDef<TValue, TDefault>
+export type QueryStatesSchemaEntry<TValue = any, TDefault = TValue> =
+  | StaticQueryStateOptions<TValue, TDefault>
   | DynamicQueryStateDef<TValue>
 
-type QueryStatesSchema = Record<string, SchemaEntry>
+/**
+ * Schema accepted by `useQueryStates(...)`.
+ *
+ * Each object key becomes a property on the returned writable computed state.
+ */
+export type QueryStatesSchema = Record<string, QueryStatesSchemaEntry>
 
 type InferEntryValue<E> =
   E extends DynamicQueryStateDef<infer TValue>
     ? TValue
-    : E extends StaticParamDef<infer TValue, infer TDefault>
+    : E extends StaticQueryStateOptions<infer TValue, infer TDefault>
       ? ResolveDefaultedValue<TValue, TDefault>
       : never
 
@@ -194,11 +297,32 @@ type QueryStatesValues<T extends QueryStatesSchema> = {
 }
 
 export interface UseQueryStatesOptions<T extends QueryStatesSchema> {
+  /** Optional prefix prepended to every static and dynamic query key in this schema. */
   prefix?: string
+  /** Schema describing the typed grouped state and how each property maps to the URL. */
   schema: T
+  /** Default history mode used when the grouped state writes to the router. */
   historyMode?: HistoryMode
 }
 
+/**
+ * Binds a schema of query-string keys to one writable computed object.
+ *
+ * Static entries map one property to one query key. Dynamic entries let one
+ * property own a runtime-discovered set of query keys while still participating
+ * in the same batched read/write flow.
+ *
+ * @example
+ * ```ts
+ * const pagination = useQueryStates({
+ *   prefix: 'users',
+ *   schema: {
+ *     page: { codec: numberCodec, defaultValue: 1 },
+ *     pageSize: { codec: numberCodec, defaultValue: 20, urlKey: 'size' },
+ *   },
+ * })
+ * ```
+ */
 export function useQueryStates<T extends QueryStatesSchema>(
   options: UseQueryStatesOptions<T>,
 ): WritableComputedRef<QueryStatesValues<T>> {
@@ -218,7 +342,7 @@ export function useQueryStates<T extends QueryStatesSchema>(
       dynamicKeys.push(k)
     } else {
       staticKeys.push(k)
-      const def = entry as StaticParamDef
+      const def = entry as StaticQueryStateOptions
       const urlSegment = def.urlKey ?? k
       staticUrlKeys.set(k, prefix ? `${prefix}.${urlSegment}` : urlSegment)
     }
@@ -230,7 +354,7 @@ export function useQueryStates<T extends QueryStatesSchema>(
   // --- Static field helpers ---
 
   function readStatic(propKey: string): unknown {
-    const def = schema[propKey] as StaticParamDef
+    const def = schema[propKey] as StaticQueryStateOptions
     const urlKey = staticUrlKeys.get(propKey)!
     const raw = client.get(urlKey)
     if (raw == null) return def.defaultValue
@@ -323,7 +447,7 @@ export function useQueryStates<T extends QueryStatesSchema>(
     const updates: Array<{ key: string; value: string | null }> = []
 
     for (const k of staticKeys) {
-      const def = schema[k] as StaticParamDef
+      const def = schema[k] as StaticQueryStateOptions
       const urlKey = staticUrlKeys.get(k)!
       const value = (values as Record<string, unknown>)[k]
       const serialized = def.codec.serialize(value)

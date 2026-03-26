@@ -15,8 +15,16 @@ import type { Router, LocationQuery } from 'vue-router'
 
 export type HistoryMode = 'push' | 'replace'
 
+/**
+ * Creates a query-state client bound to a router instance.
+ *
+ * A single client should usually be shared per router so multiple query-state
+ * consumers can coordinate batched writes and route-sync behavior.
+ */
 export interface QueryStateClientOptions {
+  /** Router instance whose current route and navigation methods back this client. */
   router: Router
+  /** History mode used when callers do not provide one for a write. */
   defaultHistoryMode?: HistoryMode
 }
 
@@ -51,6 +59,7 @@ export class QueryStateClient {
     historyMode: HistoryMode
   }> = []
 
+  /** Create a query-state client backed by the provided router. */
   constructor(options: QueryStateClientOptions) {
     this.router = options.router
     this.defaultHistoryMode = options.defaultHistoryMode ?? 'replace'

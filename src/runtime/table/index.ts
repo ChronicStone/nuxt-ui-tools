@@ -1,4 +1,4 @@
 export * from './builders'
-export * from './composables'
-export * from './schema'
+export { useTable } from './composables/use-table'
+export { defineTableSchema } from './schema'
 export type * from './types'

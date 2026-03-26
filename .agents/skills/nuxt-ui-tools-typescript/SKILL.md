@@ -20,6 +20,7 @@ Use this skill when the task is primarily about:
 - `.agents/skills/nuxt-ui-tools-maintainer/SKILL.md`
 - `.agents/skills/nuxt-ui-tools-typescript/references/rules.md`
 - `.agents/skills/nuxt-ui-tools-typescript/references/public-api.md`
+- `.agents/skills/nuxt-ui-tools-typescript/references/jsdoc.md`
 - `.agents/skills/nuxt-ui-tools-typescript/references/schema-patterns.md`
 
 ## Purpose
