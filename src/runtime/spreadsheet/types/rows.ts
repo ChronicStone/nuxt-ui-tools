@@ -56,6 +56,7 @@ export interface SpreadsheetRowIssue {
   code: string
   message: string
   rowIndex: number
+  ruleKey?: string
   columnKey?: string
   columnIndex?: number
   header?: string

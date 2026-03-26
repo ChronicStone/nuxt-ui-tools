@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { stringCodec, useQueryState } from '#ui-tools/query-state'
-import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
+import { sheetRules, useSpreadsheetImport } from '#ui-tools/spreadsheet'
 import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
@@ -49,10 +49,10 @@ function createHappyPathSchema() {
       maxRecords: 100,
     },
     sheet: {
-      strategy: 'selection',
+      strategy: 'auto',
     },
     header: {
-      strategy: 'selection',
+      strategy: 'detected',
     },
     matching: {
       strategy: 'smart',
@@ -60,68 +60,83 @@ function createHappyPathSchema() {
     columns: {
       static: (column) => [
         column.text('testCenterId', {
-          required: true,
           match: {
             headers: ['Test center ID'],
           },
-          validate: ({ value, addIssue }) => {
-            if (value !== center.id)
-              addIssue(
-                'error',
-                'test-center.mismatch',
-                'Row test center does not match this playground.',
-              )
+          rules: {
+            required: sheetRules.required(),
+            centerMatch: sheetRules.validate({
+              name: 'testCenterMismatch',
+              validator: (value: string) => value === center.id,
+              message: 'Row test center does not match this playground.',
+            }),
           },
         }),
         column.text('secureCode', {
-          required: true,
           match: {
             headers: ['Secure code'],
           },
+          rules: {
+            required: sheetRules.required(),
+          },
         }),
         column.text('examNameRaw', {
-          required: true,
           match: {
             headers: ['Exam name'],
           },
+          rules: {
+            required: sheetRules.required(),
+          },
         }),
         column.text('firstName', {
-          required: true,
           match: {
             headers: ['First name'],
           },
+          rules: {
+            required: sheetRules.required(),
+          },
         }),
         column.text('lastName', {
-          required: true,
           match: {
             headers: ['Last name'],
           },
+          rules: {
+            required: sheetRules.required(),
+          },
         }),
         column.email('email', {
-          required: true,
           match: {
             headers: ['Email'],
           },
           parse: ({ cell }) => cell.text.trim().toLowerCase(),
+          rules: {
+            required: sheetRules.required(),
+          },
         }),
         column.date('completionDate', {
-          required: true,
           match: {
             headers: ['Completed date'],
           },
           parse: ({ cell }) => new Date(`${cell.text.trim()} UTC`).toISOString(),
+          rules: {
+            required: sheetRules.required(),
+          },
         }),
         column.enum('status', {
-          required: true,
           match: {
             headers: ['Status'],
           },
           options: ['Done'],
+          rules: {
+            required: sheetRules.required(),
+          },
         }),
         column.text('country', {
-          required: true,
           match: {
             headers: ['Tc country'],
+          },
+          rules: {
+            required: sheetRules.required(),
           },
         }),
         column.text('batchName', {

@@ -125,3 +125,16 @@ Instead:
 - improve consumer documentation/examples
 
 The package should absorb complexity where it meaningfully reduces user burden.
+
+That same rule applies to Nuxt auto-imports and component registration:
+
+- keep them curated
+- keep them explicit
+- register only the APIs and components that are truly part of the intended public package story
+
+In this repository, maintain those registrations in:
+
+- `src/imports.ts` for public functions
+- `src/components.ts` for public components
+
+Keep both files organized by domain with clear comment blocks so agents can audit the public convenience surface quickly.

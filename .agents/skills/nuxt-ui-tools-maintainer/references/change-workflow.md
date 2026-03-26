@@ -60,6 +60,7 @@ When relevant, update:
 - playground validation surface
 - consumer skills
 - internal skills if architecture or extension patterns changed
+- `src/imports.ts` and `src/components.ts` if the intended public surface changed
 
 If the change touches user-facing behavior, treat the consumer skill update as required, not optional.
 

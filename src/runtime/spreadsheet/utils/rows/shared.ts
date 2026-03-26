@@ -11,6 +11,7 @@ import type {
   SpreadsheetStaticColumnGroup,
 } from '../../types'
 import { isSpreadsheetRecord } from '../object'
+import { executeSpreadsheetRules } from '../validation'
 
 export function normalizeSpreadsheetText(value: unknown) {
   return String(value ?? '')
@@ -88,31 +89,25 @@ export async function parseSpreadsheetCellValue<TContext>(
     })
   }
 
-  if (isEmpty && !column.parse) return undefined
-
   try {
     const value = column.parse
       ? await column.parse({ cell, context })
       : cell.text
 
-    if (column.validate) {
-      await column.validate({
-        value,
-        context,
-        addIssue: (level, code, message) => {
-          issues.push({
-            level,
-            code,
-            message,
-            rowIndex: cell.rowIndex,
-            columnKey: column.key,
-            columnIndex: cell.columnIndex,
-            header: cell.header,
-          })
-        },
-      })
-    }
+    const validationIssues = executeSpreadsheetRules({
+      value,
+      rules: column.rules,
+    })
 
+    issues.push(...validationIssues.map(issue => ({
+      ...issue,
+      rowIndex: cell.rowIndex,
+      columnKey: column.key,
+      columnIndex: cell.columnIndex,
+      header: cell.header,
+    })))
+
+    if (isEmpty && !column.parse) return undefined
     return value
   } catch (error) {
     issues.push({

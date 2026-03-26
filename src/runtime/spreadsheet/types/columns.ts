@@ -1,16 +1,10 @@
 import type { MaybePromise } from '../../shared/types/utils'
 import type {
   SpreadsheetCellValue,
-  SpreadsheetIssueLevel,
   SpreadsheetMatchDefinition,
   SpreadsheetQueryDefinition,
 } from './shared'
-
-export interface SpreadsheetColumnValidationParams<TValue, TContext> {
-  value: TValue
-  context: TContext
-  addIssue: (level: SpreadsheetIssueLevel, code: string, message: string) => void
-}
+import type { SpreadsheetFieldRules } from './validation'
 
 export interface SpreadsheetColumnDefinition<
   TKey extends string = string,
@@ -28,9 +22,7 @@ export interface SpreadsheetColumnDefinition<
     cell: SpreadsheetCellValue
     context: TContext
   }) => MaybePromise<TValue>
-  validate?: (
-    params: SpreadsheetColumnValidationParams<TValue, TContext>,
-  ) => MaybePromise<void>
+  rules?: SpreadsheetFieldRules<TValue>
   __valueType?: TValue
 }
 
@@ -71,9 +63,7 @@ export interface SpreadsheetColumnBaseOptions<TContext, TValue, TRequired extend
     cell: SpreadsheetCellValue
     context: TContext
   }) => MaybePromise<TValue>
-  validate?: (
-    params: SpreadsheetColumnValidationParams<TValue, TContext>,
-  ) => MaybePromise<void>
+  rules?: SpreadsheetFieldRules<TValue>
 }
 
 export type SpreadsheetEnumColumnOptions<

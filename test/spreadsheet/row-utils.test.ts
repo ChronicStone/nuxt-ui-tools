@@ -10,6 +10,7 @@ import {
   matchSpreadsheetColumns,
   matchSpreadsheetDynamicColumns,
   parseSpreadsheetRows,
+  sheetRules,
 } from '#ui-tools/spreadsheet'
 
 interface DemoDynamicAffiliationItem {
@@ -72,25 +73,54 @@ describe('spreadsheet row utils', () => {
   })
 
   it('parses matched rows into nested output and collects validation issues', async () => {
+    const scoreBand = sheetRules.createRule<number, [min: number, max: number], {
+      min: number
+      max: number
+    }>({
+      name: 'scoreBand',
+      validator: (value, min, max) => ({
+        $valid: value >= min && value <= max,
+        min,
+        max,
+      }),
+      message: ({ value, params: [min, max] }) => `${value} must be between ${min} and ${max}`,
+    })
+
     const matches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
         {
           kind: 'text',
           key: 'examNameRaw',
           from: 'Exam name',
-          required: true,
+          rules: {
+            required: sheetRules.required({
+              message: 'Exam name is required',
+            }),
+          },
         },
         {
           kind: 'number',
           key: 'scores.general',
           from: 'General level',
           parse: async ({ cell }: { cell: SpreadsheetCellValue }) => Number(cell.text),
-          validate: ({ value, addIssue }: {
-            value: number
-            addIssue: (level: 'info' | 'warning' | 'error', code: string, message: string) => void
-          }) => {
-            if (Number.isNaN(value))
-              addIssue('error', 'score.invalid', 'Score must be numeric')
+          rules: {
+            number: sheetRules.number({
+              message: 'Score must be numeric',
+            }),
+            scoreBand: scoreBand(0, 100),
+          },
+        },
+        {
+          kind: 'text',
+          key: 'batchName',
+          from: 'Batch',
+          rules: {
+            allowedBatch: sheetRules.oneOf(['spring-2026', '_internal']),
+            noUnderscore: sheetRules.validate({
+              name: 'noUnderscore',
+              validator: (value: string) => !value.startsWith('_'),
+              message: ({ value }) => `"${value}" cannot start with underscore`,
+            }),
           },
         },
         {
@@ -100,15 +130,15 @@ describe('spreadsheet row utils', () => {
           parse: ({ cell }: { cell: SpreadsheetCellValue }) => cell.text.toLowerCase(),
         },
       ]),
-      createSpreadsheetHeaderCells(['Exam name', 'General level', 'Email']),
+      createSpreadsheetHeaderCells(['Exam name', 'General level', 'Batch', 'Email']),
     )
 
     const rows = await parseSpreadsheetRows<{
       products: readonly string[]
     }>({
       rows: [
-        ['Business English 4 Skills', '84', 'JOHN@EXAMPLE.COM'],
-        ['', 'oops', 'JANE@EXAMPLE.COM'],
+        ['Business English 4 Skills', '84', 'spring-2026', 'JOHN@EXAMPLE.COM'],
+        ['', 'oops', '_internal', 'JANE@EXAMPLE.COM'],
       ],
       matches,
       context: {
@@ -127,17 +157,30 @@ describe('spreadsheet row utils', () => {
         candidate: {
           email: 'john@example.com',
         },
+        batchName: 'spring-2026',
       },
     })
     expect(rows[1]?.isValid).toBe(false)
     expect(rows[1]?.issues).toEqual([
       expect.objectContaining({
-        code: 'cell.required',
+        code: 'required',
         columnKey: 'examNameRaw',
+        message: 'Exam name is required',
       }),
       expect.objectContaining({
-        code: 'score.invalid',
+        code: 'number',
         columnKey: 'scores.general',
+        message: 'Score must be numeric',
+      }),
+      expect.objectContaining({
+        code: 'scoreBand',
+        columnKey: 'scores.general',
+        message: 'NaN must be between 0 and 100',
+      }),
+      expect.objectContaining({
+        code: 'noUnderscore',
+        columnKey: 'batchName',
+        message: '"_internal" cannot start with underscore',
       }),
     ])
   })

@@ -42,6 +42,15 @@ const variants = [
     tags: ['large workbook', 'offset headers', 'row issues', 'stress test'],
     to: '/spreadsheet/structure-stress',
   },
+  {
+    id: 'large-validation-lab',
+    title: 'Large Validation Lab',
+    description: 'A seeded high-volume workbook focused on the new rule system with a controlled 20% invalid slice.',
+    summary: 'Best route for validating review scalability, error grouping, and mixed rule failures. Seed workbook: 250 rows with 50 invalid rows on Bulk import.',
+    icon: 'i-lucide-bug-play',
+    tags: ['sheet rules', 'large dataset', '20% invalid', 'review stress'],
+    to: '/spreadsheet/large-validation-lab',
+  },
 ] as const
 </script>
 

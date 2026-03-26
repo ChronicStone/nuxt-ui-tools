@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
-import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
+import { sheetRules, useSpreadsheetImport } from '#ui-tools/spreadsheet'
 import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
@@ -51,27 +51,45 @@ function createReferenceReconciliationSchema() {
     matching: { strategy: 'smart' },
     columns: {
       static: (column) => [
-        column.text('testCenterId', { required: true, match: { headers: ['Test center ID'] } }),
-        column.text('secureCode', { required: true, match: { headers: ['Secure code'] } }),
-        column.text('examNameRaw', { required: true, match: { headers: ['Exam name'] } }),
-        column.text('firstName', { required: true, match: { headers: ['First name'] } }),
-        column.text('lastName', { required: true, match: { headers: ['Last name'] } }),
+        column.text('testCenterId', {
+          match: { headers: ['Test center ID'] },
+          rules: { required: sheetRules.required() },
+        }),
+        column.text('secureCode', {
+          match: { headers: ['Secure code'] },
+          rules: { required: sheetRules.required() },
+        }),
+        column.text('examNameRaw', {
+          match: { headers: ['Exam name'] },
+          rules: { required: sheetRules.required() },
+        }),
+        column.text('firstName', {
+          match: { headers: ['First name'] },
+          rules: { required: sheetRules.required() },
+        }),
+        column.text('lastName', {
+          match: { headers: ['Last name'] },
+          rules: { required: sheetRules.required() },
+        }),
         column.email('email', {
-          required: true,
           match: { headers: ['Email'] },
           parse: ({ cell }) => cell.text.trim().toLowerCase(),
+          rules: { required: sheetRules.required() },
         }),
         column.date('completionDate', {
-          required: true,
           match: { headers: ['Completed date'] },
           parse: ({ cell }) => new Date(`${cell.text.trim()} UTC`).toISOString(),
+          rules: { required: sheetRules.required() },
         }),
         column.enum('status', {
-          required: true,
           match: { headers: ['Status'] },
           options: ['Done'],
+          rules: { required: sheetRules.required() },
         }),
-        column.text('country', { required: true, match: { headers: ['Tc country'] } }),
+        column.text('country', {
+          match: { headers: ['Tc country'] },
+          rules: { required: sheetRules.required() },
+        }),
         column.text('batchName', { match: { headers: ['Batch'] } }),
       ],
       dynamic: ({ dynamic }) => [
