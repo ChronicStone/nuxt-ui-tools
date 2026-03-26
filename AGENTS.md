@@ -97,6 +97,42 @@ Does not belong here:
 - runtime feature logic
 - feature-specific orchestration
 
+### `src/imports.ts`
+
+Purpose:
+
+- curated Nuxt auto-import registration for public function APIs
+
+Belongs here:
+
+- `addImports(...)` registration for public package functions
+- one root registration list grouped by domain with comment blocks
+- only the functions that should feel like first-class consumer entrypoints
+
+Does not belong here:
+
+- internal helpers
+- raw directory scanning or broad "export everything" style registration
+- component registration
+
+### `src/components.ts`
+
+Purpose:
+
+- curated Nuxt component registration for public components
+
+Belongs here:
+
+- explicit `addComponent(...)` registration for public components
+- one root registration list grouped by domain with comment blocks
+- component names that respect the module prefix behavior
+
+Does not belong here:
+
+- internal component families
+- broad component directory registration for internal subcomponents
+- function auto-import registration
+
 ### `src/runtime/shared`
 
 Purpose:
@@ -533,8 +569,45 @@ When relevant, completion includes:
 - playground coverage or validation
 - consumer-facing skill updates
 - any canonical repo guidance affected by the change
+- public auto-import/component registration updates when the public surface changed
 
 Agents should proactively maintain the full affected surface, not only the code they directly touched.
+
+## 10.1 Public Auto-Imports And Components
+
+Nuxt public API registration is intentionally curated.
+
+Use:
+
+- `src/imports.ts` for public function auto-imports
+- `src/components.ts` for public component registration
+
+Rules:
+
+- keep a single root file for each of these concerns
+- organize registrations by domain using comment blocks such as query-state, shared, table, spreadsheet
+- register only APIs that should be treated as first-class public surface
+- do not auto-import low-level helpers just because they are exported somewhere
+- do not auto-register internal component trees just because they exist under `runtime/components`
+- if a feature is public but intentionally not auto-imported, keep it out of `src/imports.ts` on purpose
+
+Decision test for auto-importing a function:
+
+- should most consumers reach for this directly?
+- does auto-importing it improve adoption without making the public surface noisy?
+- is it part of the intended package story, not just technically exported?
+
+Decision test for auto-registering a component:
+
+- is this a top-level component consumers should render directly?
+- would auto-registering it help normal usage?
+- is it not just an internal child component of a larger public component?
+
+Avoid:
+
+- spreading registration logic back into `src/module.ts`
+- creating one file per domain for registration; keep the curated lists visible in the single root registration files
+- broad directory-based registration when the goal is to keep the public surface explicit
 
 ## 10.5 Consumer Skill Writing Rules
 
