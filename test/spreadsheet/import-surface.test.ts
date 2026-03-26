@@ -32,12 +32,16 @@ describe('useSpreadsheetImport', () => {
       columns: {
         static: (column) => [
           column.text('examNameRaw', {
-            from: 'Exam name',
-            required: true as const,
+            required: true,
+            match: {
+              headers: ['Exam name'],
+            },
           }),
           column.text('firstName', {
-            from: 'First name',
-            required: true as const,
+            required: true,
+            match: {
+              headers: ['First name'],
+            },
           }),
         ],
       },

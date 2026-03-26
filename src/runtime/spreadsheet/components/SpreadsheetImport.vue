@@ -49,6 +49,16 @@ const renderMode = computed(() => props.mode ?? 'inline')
 const isFullscreen = computed(() => renderMode.value === 'fullscreen')
 const hasWorkbook = computed(() => Boolean(props.spreadsheet.workbook.value))
 const hasHeaders = computed(() => props.spreadsheet.headers.value.length > 0)
+function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
+  if ('file' in schema && schema.file && typeof schema.file === 'object' && 'maxRecords' in schema.file)
+    return typeof schema.file.maxRecords === 'number' ? schema.file.maxRecords : undefined
+
+  if ('source' in schema && schema.source && typeof schema.source === 'object' && 'maxRecords' in schema.source)
+    return typeof schema.source.maxRecords === 'number' ? schema.source.maxRecords : undefined
+
+  return undefined
+}
+
 const canGoNext = computed(() => {
   if (activeStep.value === 'upload') return hasWorkbook.value
   if (activeStep.value === 'structure') return hasWorkbook.value && hasHeaders.value
@@ -58,7 +68,7 @@ const canGoNext = computed(() => {
   return false
 })
 const fileName = computed(() => props.spreadsheet.workbook.value?.fileName)
-const maxRecords = computed(() => props.spreadsheet.schema.value.source?.maxRecords ?? Infinity)
+const maxRecords = computed(() => getSchemaMaxRecords(props.spreadsheet.schema.value) ?? Infinity)
 const importableRowCount = computed(() =>
   Math.min(props.spreadsheet.rowSummary.value.totalRows, maxRecords.value),
 )

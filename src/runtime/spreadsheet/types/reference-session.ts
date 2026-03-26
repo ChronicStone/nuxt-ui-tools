@@ -17,7 +17,7 @@ export interface SpreadsheetReferenceResolution<
   TValue = unknown,
   TOption = unknown,
 > {
-  referenceKey: string
+  referenceField: string
   sourceField: string
   outputField: string
   sourceValue: string
@@ -36,12 +36,12 @@ export interface SpreadsheetResolvedReferenceRow<TRow = Record<string, unknown>>
   isValid: boolean
 }
 
-export interface SpreadsheetReferenceQueryRequest<TRow = Record<string, unknown>, TContext = unknown> {
-  referenceKey: string
+export interface SpreadsheetReferenceQueryRequest {
+  referenceField: string
   sourceValue: string
   query: ReturnType<
     NonNullable<
-      SpreadsheetReferenceDefinition<TContext, TRow>['target']['query']
+      SpreadsheetReferenceDefinition['getOptions']
     >
   >
 }

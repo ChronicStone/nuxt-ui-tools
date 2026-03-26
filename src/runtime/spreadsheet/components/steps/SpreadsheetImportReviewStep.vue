@@ -14,7 +14,29 @@ const props = defineProps<{
   spreadsheet: SpreadsheetComponentApi
 }>()
 
-const maxRecords = computed(() => props.spreadsheet.schema.value.source?.maxRecords ?? Infinity)
+function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
+  if (
+    'file' in schema
+    && schema.file
+    && typeof schema.file === 'object'
+    && 'maxRecords' in schema.file
+    && typeof schema.file.maxRecords === 'number'
+  )
+    return schema.file.maxRecords
+
+  if (
+    'source' in schema
+    && schema.source
+    && typeof schema.source === 'object'
+    && 'maxRecords' in schema.source
+    && typeof schema.source.maxRecords === 'number'
+  )
+    return schema.source.maxRecords
+
+  return undefined
+}
+
+const maxRecords = computed(() => getSchemaMaxRecords(props.spreadsheet.schema.value) ?? Infinity)
 const review = useSpreadsheetReview({
   resolvedRows: computed(() => props.spreadsheet.resolvedRows.value),
   maxRecords,

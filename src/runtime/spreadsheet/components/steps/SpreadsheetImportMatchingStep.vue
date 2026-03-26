@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import UBadge from '@nuxt/ui/components/Badge.vue'
 import { computed } from 'vue'
 
 import type { SpreadsheetColumnAssignmentOption } from '../../types'
@@ -40,58 +39,52 @@ const ignoredHeaderRows = computed(() =>
     .filter((header) => !usedColumnIndexes.value.has(header.index))
     .map((header) => ({
       key: `ignored:${header.index}`,
-      headerIndex: header.index,
       fileColumn: header.text || `Column ${header.index + 1}`,
-      systemFieldKey: '',
-      systemFieldLabel: '— Ignored',
-      status: 'ignored' as const,
-      locked: false,
-      kind: 'ignored' as const,
     })),
 )
 
-const matchRows = computed(() => [
-  ...internals.rows.columnMatches.value.map((match) => ({
-    key: `static:${match.columnIndex}`,
-    headerIndex: match.columnIndex,
-    fileColumn: match.header.text,
-    systemFieldKey: match.key,
-    systemFieldLabel: getStaticColumnLabel(match.key),
-    status: 'matched' as const,
-    locked: false,
-    kind: 'static' as const,
-  })),
-  ...internals.rows.dynamicColumnMatches.value.map((match) => ({
+const expectedFieldRows = computed(() =>
+  internals.rows.staticColumns.value.map((column) => {
+    const match = internals.rows.columnMatches.value.find((entry) => entry.key === column.key)
+
+    return {
+      key: column.key,
+      systemFieldKey: column.key,
+      systemFieldLabel: getStaticColumnLabel(column.key),
+      required: Boolean(column.required),
+      selectedHeaderIndex: match?.columnIndex ?? null,
+      selectedFileColumn: match?.header.text ?? '',
+      status: match ? 'matched' as const : 'unmatched' as const,
+    }
+  }),
+)
+
+const autoMappedRows = computed(() =>
+  internals.rows.dynamicColumnMatches.value.map((match) => ({
     key: `dynamic:${match.columnIndex}:${match.targetKey}`,
-    headerIndex: match.columnIndex,
-    fileColumn: match.header.text,
-    systemFieldKey: '',
     systemFieldLabel: match.targetKey,
-    status: 'matched' as const,
-    locked: true,
-    kind: 'dynamic' as const,
+    selectedFileColumn: match.header.text,
   })),
-  ...ignoredHeaderRows.value,
-])
+)
 
 const summaryItems = computed(() => [
   {
     key: 'matched',
     label: 'Matched',
-    value: matchRows.value.filter((row) => row.status === 'matched').length,
+    value: expectedFieldRows.value.filter((row) => row.status === 'matched').length,
     tone: 'success' as const,
   },
   {
-    key: 'ambiguous',
-    label: 'Ambiguous',
-    value: 0,
-    tone: 'warning' as const,
-  },
-  {
     key: 'unmatched',
-    label: 'Unmatched',
+    label: 'Missing',
     value: internals.rows.unmatchedColumns.value.length,
     tone: 'error' as const,
+  },
+  {
+    key: 'dynamic',
+    label: 'Auto-mapped',
+    value: autoMappedRows.value.length,
+    tone: 'warning' as const,
   },
   {
     key: 'ignored',
@@ -101,14 +94,32 @@ const summaryItems = computed(() => [
   },
 ])
 
-function getOptionsForRow(row: { systemFieldKey: string }) {
-  return internals.rows.staticColumns.value
-    .map<SpreadsheetColumnAssignmentOption>((column) => ({
-      key: column.key,
-      label: getStaticColumnLabel(column.key),
-      assigned: assignedStaticKeys.value.has(column.key) && column.key !== row.systemFieldKey,
-    }))
+function getOptionsForRow(row: { systemFieldKey: string, selectedHeaderIndex: number | null }) {
+  return [
+    ...props.spreadsheet.headerCells.value.map<SpreadsheetColumnAssignmentOption & { headerIndex: number }>((header) => {
+      const selectedMatch = internals.rows.columnMatches.value.find((entry) => entry.key === row.systemFieldKey)
+      const assignedMatch = internals.rows.columnMatches.value.find((entry) => entry.columnIndex === header.index)
+      const assignedToOtherField = Boolean(assignedMatch && assignedMatch.key !== row.systemFieldKey)
+
+      return {
+        key: row.systemFieldKey,
+        label: header.text || `Column ${header.index + 1}`,
+        assigned: assignedToOtherField,
+        headerIndex: header.index,
+        selected: selectedMatch?.columnIndex === header.index,
+      }
+    }),
+    {
+      key: '__ignore__',
+      label: 'Ignore this field',
+      assigned: false,
+      headerIndex: -1,
+      selected: row.selectedHeaderIndex === null,
+    },
+  ]
     .sort((left, right) => {
+      if ('selected' in left && 'selected' in right && left.selected !== right.selected)
+        return Number(right.selected) - Number(left.selected)
       if (left.assigned !== right.assigned) return Number(left.assigned) - Number(right.assigned)
       return left.label.localeCompare(right.label)
     })
@@ -120,9 +131,16 @@ function getOptionsForRow(row: { systemFieldKey: string }) {
     <SpreadsheetMatchingSummary :items="summaryItems" />
 
     <SpreadsheetMatchingTable
-      :rows="matchRows"
+      :expected-field-rows="expectedFieldRows"
+      :auto-mapped-rows="autoMappedRows"
+      :ignored-column-rows="ignoredHeaderRows"
       :get-options-for-row="getOptionsForRow"
-      @assign="spreadsheet.assignColumn"
+      @assign="({ headerIndex, columnKey }) => {
+        if (!columnKey)
+          spreadsheet.clearColumnAssignment(headerIndex)
+        else
+          spreadsheet.assignColumn({ headerIndex, columnKey })
+      }"
     />
   </div>
 </template>

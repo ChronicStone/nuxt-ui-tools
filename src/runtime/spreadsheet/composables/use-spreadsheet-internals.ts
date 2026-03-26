@@ -85,7 +85,8 @@ function useSpreadsheetInternals() {
   return internals
 }
 
-export type SpreadsheetInternals = ReturnType<typeof createSpreadsheetInternals>
+export type SpreadsheetInternals<TSchema extends { importKey: string } = { importKey: string }> =
+  ReturnType<typeof createSpreadsheetInternals<TSchema>>
 
 export {
   createSpreadsheetInternals,

@@ -1,6 +1,8 @@
 import type {
   SpreadsheetColumnDefinition,
   SpreadsheetColumnGroupDefinition,
+  SpreadsheetDynamicCollectionDefinition,
+  SpreadsheetDynamicCollectionItemDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
 } from './columns'
 import type { SpreadsheetIssueLevel } from './shared'
@@ -35,7 +37,10 @@ export interface SpreadsheetUnmatchedColumn<
 }
 
 export interface SpreadsheetDynamicColumnMatch<
-  TColumn = SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>,
+  TColumn =
+    | SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>
+    | SpreadsheetDynamicCollectionDefinition<string, 'array' | 'record'>,
+  TItem = SpreadsheetDynamicCollectionItemDefinition,
 > {
   key: string
   targetKey: string
@@ -43,6 +48,7 @@ export interface SpreadsheetDynamicColumnMatch<
   header: SpreadsheetHeaderCell
   column: TColumn
   source: unknown
+  item?: TItem
 }
 
 export interface SpreadsheetRowIssue {

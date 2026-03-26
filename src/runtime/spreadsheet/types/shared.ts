@@ -16,4 +16,25 @@ export interface SpreadsheetCellValue {
   rowIndex: number
 }
 
+export interface SpreadsheetHeaderMatchInput {
+  index: number
+  text: string
+  normalized: string
+}
+
+export type SpreadsheetHeaderMatcher =
+  | string
+  | RegExp
+  | ((params: {
+      header: SpreadsheetHeaderMatchInput
+    }) => number | null)
+
+export interface SpreadsheetMatchDefinition {
+  headers: readonly SpreadsheetHeaderMatcher[]
+  normalize?: readonly string[]
+  prefer?: 'first' | 'best-score'
+  minScore?: number
+  required?: boolean
+}
+
 export type SpreadsheetIssueLevel = 'info' | 'warning' | 'error'

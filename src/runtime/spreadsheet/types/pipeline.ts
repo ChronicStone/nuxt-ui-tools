@@ -4,7 +4,7 @@ export interface SpreadsheetPipelineDefinition<
   TContext = unknown,
   TRow = unknown,
 > {
-  submit?: (params: {
+  buildRow?: (params: {
     context: TContext
     row: TRow
   }) => MaybePromise<unknown>

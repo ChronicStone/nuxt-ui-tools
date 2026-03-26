@@ -18,7 +18,7 @@ export interface UseSpreadsheetReferencesParams {
 }
 
 function createResolutionId(resolution: SpreadsheetReferenceResolution) {
-  return `${resolution.referenceKey}::${resolution.sourceValue}`
+  return `${resolution.referenceField}::${resolution.sourceValue}`
 }
 
 export function useSpreadsheetReferences(params: UseSpreadsheetReferencesParams) {
@@ -61,12 +61,12 @@ export function useSpreadsheetReferences(params: UseSpreadsheetReferencesParams)
   }))
 
   function selectReference(params: {
-    referenceKey: string
+    referenceField: string
     sourceValue: string
     selectedValue: unknown
     selectedLabel: string
   }) {
-    const key = `${params.referenceKey}::${params.sourceValue}`
+    const key = `${params.referenceField}::${params.sourceValue}`
     const current = resolutions.value.find((resolution) => createResolutionId(resolution) === key)
     if (!current) return
 
@@ -82,10 +82,10 @@ export function useSpreadsheetReferences(params: UseSpreadsheetReferencesParams)
   }
 
   function clearReference(params: {
-    referenceKey: string
+    referenceField: string
     sourceValue: string
   }) {
-    const key = `${params.referenceKey}::${params.sourceValue}`
+    const key = `${params.referenceField}::${params.sourceValue}`
     const nextSelections = { ...manualSelections.value }
     delete nextSelections[key]
     manualSelections.value = nextSelections

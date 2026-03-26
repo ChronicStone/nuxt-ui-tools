@@ -1,5 +1,7 @@
 import type {
   SpreadsheetColumnDefinition,
+  SpreadsheetDynamicCollectionItemDefinition,
+  SpreadsheetDynamicCollectionDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
 } from '../../types'
 import type {
@@ -52,6 +54,18 @@ export function isSpreadsheetDynamicOptionGroupsColumn(
   value: unknown,
 ): value is SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown> {
   return isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'option-groups'
+}
+
+export function isSpreadsheetDynamicCollectionColumn(
+  value: unknown,
+): value is SpreadsheetDynamicCollectionDefinition<string, 'array' | 'record'> {
+  return isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'collection'
+}
+
+export function isSpreadsheetDynamicCollectionItem(
+  value: unknown,
+): value is SpreadsheetDynamicCollectionItemDefinition {
+  return isSpreadsheetRecord(value) && 'id' in value && 'match' in value && 'value' in value
 }
 
 export async function parseSpreadsheetCellValue<TContext>(

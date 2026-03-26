@@ -44,22 +44,20 @@ async function createSpreadsheetSubmitPayloads<TSchema>(params: {
 }): Promise<readonly ExtractSpreadsheetSubmitPayload<TSchema>[]>
 async function createSpreadsheetSubmitPayloads(params: {
   schema: {
-    pipeline?: {
-      submit?: (params: {
-        context: Record<string, unknown>
-        row: Record<string, unknown>
-      }) => Promise<unknown> | unknown
-    }
+    buildRow?: (params: {
+      context: Record<string, unknown>
+      row: Record<string, unknown>
+    }) => Promise<unknown> | unknown
   }
   context: Record<string, unknown>
   rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[]
 }) {
-  if (!params.schema.pipeline?.submit)
+  if (!params.schema.buildRow)
     return params.rows.map((row) => row.data)
 
   return Promise.all(
     params.rows.map((row) =>
-      params.schema.pipeline!.submit!({
+      params.schema.buildRow!({
         context: params.context,
         row: row.data,
       }),
@@ -69,7 +67,7 @@ async function createSpreadsheetSubmitPayloads(params: {
 
 export function useSpreadsheetImport<TSchema extends { importKey: string }>(
   schema: MaybeRefOrGetter<TSchema>,
-): SpreadsheetImportApi<TSchema> & { __internals: SpreadsheetInternals } {
+): SpreadsheetImportApi<TSchema> & { __internals: SpreadsheetInternals<TSchema> } {
   const resolvedSchema = computed<TSchema>(() => toValue(schema))
   const sourceRef = shallowRef<SpreadsheetBinarySource | null>(null)
   const fileNameRef = shallowRef<string | undefined>(undefined)

@@ -1,10 +1,8 @@
 import type { SpreadsheetColumnsDefinition, SpreadsheetResolvedColumns } from './columns'
-import type { SpreadsheetContextItem } from './context'
-import type { SpreadsheetPipelineDefinition } from './pipeline'
-import type { SpreadsheetContextDataFromItems } from './context'
+import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
 import type { SpreadsheetRowData } from './inference'
 
-export interface SpreadsheetSourceDefinition {
+export interface SpreadsheetFileDefinition {
   accept?: readonly string[]
   maxRecords?: number
 }
@@ -25,29 +23,31 @@ export interface SpreadsheetReviewDefinition {
   allowInvalidSubmit?: boolean
 }
 
+export type SpreadsheetBuildRowDefinition<TContext = unknown, TRow = unknown> = (params: {
+  context: TContext
+  row: TRow
+}) => unknown | Promise<unknown>
+
 export interface SpreadsheetSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly [],
   TColumns extends SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>> = SpreadsheetColumnsDefinition<
     SpreadsheetContextDataFromItems<TContextItems>
   >,
-  TReferences extends readonly unknown[] = readonly [],
-  TPipeline extends SpreadsheetPipelineDefinition<
-    SpreadsheetContextDataFromItems<TContextItems>,
-    SpreadsheetRowData<SpreadsheetResolvedColumns<TColumns>, TReferences>
-  > | undefined = SpreadsheetPipelineDefinition<
+  TReferences = readonly unknown[],
+  TBuildRow = SpreadsheetBuildRowDefinition<
     SpreadsheetContextDataFromItems<TContextItems>,
     SpreadsheetRowData<SpreadsheetResolvedColumns<TColumns>, TReferences>
   >,
 > {
   importKey: string
-  source?: SpreadsheetSourceDefinition
+  file?: SpreadsheetFileDefinition
   sheet?: SpreadsheetSheetDefinition
   header?: SpreadsheetHeaderDefinition
   matching?: SpreadsheetMatchingDefinition
   context?: TContextItems
   columns?: TColumns
   references?: TReferences
-  pipeline?: TPipeline
+  buildRow?: TBuildRow
   review?: SpreadsheetReviewDefinition
 }
 
@@ -56,16 +56,13 @@ export type BuildSpreadsheetSchema<
   TColumns extends SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>> = SpreadsheetColumnsDefinition<
     SpreadsheetContextDataFromItems<TContextItems>
   >,
-  TReferences extends readonly unknown[] = readonly [],
-  TPipeline extends SpreadsheetPipelineDefinition<
-    SpreadsheetContextDataFromItems<TContextItems>,
-    SpreadsheetRowData<SpreadsheetResolvedColumns<TColumns>, TReferences>
-  > | undefined = SpreadsheetPipelineDefinition<
+  TReferences = readonly unknown[],
+  TBuildRow = SpreadsheetBuildRowDefinition<
     SpreadsheetContextDataFromItems<TContextItems>,
     SpreadsheetRowData<SpreadsheetResolvedColumns<TColumns>, TReferences>
   >,
   TExtra extends { importKey: string } = { importKey: string },
-> = TExtra & SpreadsheetSchema<TContextItems, TColumns, TReferences, TPipeline>
+> = TExtra & SpreadsheetSchema<TContextItems, TColumns, TReferences, TBuildRow>
 
 export type ResolvedSpreadsheetSchema<TSchema> = TSchema extends { columns?: infer TColumns }
   ? TSchema & {

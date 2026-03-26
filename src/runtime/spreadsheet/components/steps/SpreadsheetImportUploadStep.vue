@@ -12,9 +12,30 @@ const props = defineProps<{
 }>()
 
 const file = ref<File | null>(null)
+function getSchemaAccept(schema: { importKey: string }): readonly string[] | undefined {
+  if (
+    'file' in schema
+    && schema.file
+    && typeof schema.file === 'object'
+    && 'accept' in schema.file
+    && Array.isArray(schema.file.accept)
+  )
+    return schema.file.accept
+
+  if (
+    'source' in schema
+    && schema.source
+    && typeof schema.source === 'object'
+    && 'accept' in schema.source
+    && Array.isArray(schema.source.accept)
+  )
+    return schema.source.accept
+
+  return undefined
+}
 
 const accept = computed(() =>
-  props.spreadsheet.schema.value.source?.accept?.join(',') ?? '.xlsx,.xls,.csv',
+  getSchemaAccept(props.spreadsheet.schema.value)?.join(',') ?? '.xlsx,.xls,.csv',
 )
 
 watch(file, (nextFile) => {

@@ -36,29 +36,60 @@ function getRowCountLabel(count: number) {
 }
 
 function getSelectItems(resolution: SpreadsheetReferenceResolution) {
-  return resolution.candidates.map(candidate => ({
-    value: candidate.value,
-    label: candidate.label,
-    description: `Score ${Math.round(candidate.score * 100)}%`,
-  }))
+  const recommendedOptions = resolution.candidates
+    .filter(candidate => candidate.score > 0)
+    .map(candidate => ({
+      kind: 'option' as const,
+      value: candidate.value,
+      label: candidate.label,
+      description: `${Math.round(candidate.score * 100)}% match`,
+    }))
+  const remainingOptions = resolution.candidates
+    .filter(candidate => candidate.score <= 0)
+    .map(candidate => ({
+      kind: 'option' as const,
+      value: candidate.value,
+      label: candidate.label,
+    }))
+
+  return [
+    ...recommendedOptions,
+    ...(
+      recommendedOptions.length && remainingOptions.length
+        ? [{
+            kind: 'divider' as const,
+            label: 'Other options',
+            disabled: true,
+          }]
+        : []
+    ),
+    ...(recommendedOptions.length ? remainingOptions : resolution.candidates.map(candidate => ({
+      kind: 'option' as const,
+      value: candidate.value,
+      label: candidate.label,
+      description: candidate.score > 0
+        ? `${Math.round(candidate.score * 100)}% match`
+        : undefined,
+    }))),
+  ]
 }
 
 const groupedColumns = computed(() => {
   const groups = new Map<string, SpreadsheetReferenceResolution[]>()
 
   for (const resolution of props.spreadsheet.referenceResolutions.value) {
-    const group = groups.get(resolution.referenceKey) ?? []
-    groups.set(resolution.referenceKey, [...group, resolution])
+    const group = groups.get(resolution.referenceField) ?? []
+    groups.set(resolution.referenceField, [...group, resolution])
   }
 
-  return Array.from(groups.entries()).map(([referenceKey, items]) => {
-    const sourceField = items[0]?.sourceField ?? referenceKey
-    const outputField = items[0]?.outputField ?? referenceKey
+  return Array.from(groups.entries()).map(([referenceField, items]) => {
+    const sourceField = items[0]?.sourceField ?? referenceField
+    const outputField = items[0]?.outputField ?? referenceField
     const resolvedCount = items.filter(item => item.status === 'matched').length
     const unresolvedCount = items.length - resolvedCount
 
     return {
-      referenceKey,
+      referenceKey: referenceField,
       sourceField,
       outputField,
       sourceLabel: getSourceLabel(sourceField),
@@ -152,7 +183,8 @@ function getMetaTone(resolution: SpreadsheetReferenceResolution) {
   if (resolution.status === 'matched') return null
 
   const bestScore = getBestScore(resolution.candidates)
-  if (bestScore === null) return { label: 'No match found', class: 'text-error' }
+  if (bestScore === null) return { label: 'No options available', class: 'text-error' }
+  if (bestScore === 0) return null
 
   return { label: `Best match: ${bestScore}%`, class: 'text-warning' }
 }
@@ -161,9 +193,11 @@ function getResolutionBadge(resolution: SpreadsheetReferenceResolution) {
   if (resolution.status === 'matched')
     return { label: 'Resolved', color: 'success' as const }
 
-  return getBestScore(resolution.candidates) === null
-    ? { label: 'No match', color: 'error' as const }
-    : { label: 'Needs review', color: 'warning' as const }
+  const bestScore = getBestScore(resolution.candidates)
+  if (bestScore === null)
+    return { label: 'No options', color: 'error' as const }
+
+  return { label: 'Needs review', color: 'warning' as const }
 }
 
 function handleSelect(resolution: SpreadsheetReferenceResolution, value: unknown) {
@@ -171,7 +205,7 @@ function handleSelect(resolution: SpreadsheetReferenceResolution, value: unknown
   if (!candidate) return
 
   props.spreadsheet.selectReference({
-    referenceKey: resolution.referenceKey,
+    referenceField: resolution.referenceField,
     sourceValue: resolution.sourceValue,
     selectedValue: candidate.value,
     selectedLabel: candidate.label,

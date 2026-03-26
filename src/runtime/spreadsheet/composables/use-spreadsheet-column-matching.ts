@@ -25,7 +25,7 @@ export function useSpreadsheetColumnMatching(params: UseSpreadsheetColumnMatchin
   const dynamicColumns = computed(() =>
     params.schema.value.columns.dynamic({
       context: params.contextData.value,
-      dynamic: createSpreadsheetDynamicBuilder(),
+      dynamic: createSpreadsheetDynamicBuilder(params.contextData.value),
     }),
   )
   const columnMatches = computed(() =>

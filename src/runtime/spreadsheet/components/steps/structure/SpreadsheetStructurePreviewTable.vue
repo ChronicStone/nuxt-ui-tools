@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useVirtualizer } from '@tanstack/vue-virtual'
+import { computed, ref } from 'vue'
+
 const props = defineProps<{
   rows: Array<{
     absoluteIndex: number
@@ -12,6 +15,19 @@ const emit = defineEmits<{
   selectHeader: [rowIndex: number]
 }>()
 
+const viewportRef = ref<HTMLElement | null>(null)
+const rowVirtualizer = useVirtualizer(
+  computed(() => ({
+    count: props.rows.length,
+    getScrollElement: () => viewportRef.value,
+    estimateSize: () => 38,
+    overscan: 12,
+    getItemKey: (index: number) => props.rows[index]?.absoluteIndex ?? index,
+  })),
+)
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize())
+
 function formatHeaderCell(cell: unknown) {
   return String(cell ?? '').trim()
 }
@@ -24,7 +40,7 @@ function getStatusCellTone(value: unknown) {
 </script>
 
 <template>
-  <div class="grid gap-3">
+  <div class="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
     <div class="flex items-center justify-between gap-3">
       <h3 class="text-[13px] font-semibold text-highlighted">
         Sheet preview — header detected at row {{ selectedHeaderRowIndex + 1 }}
@@ -36,44 +52,54 @@ function getStatusCellTone(value: unknown) {
       </div>
     </div>
 
-    <div class="max-h-[22rem] overflow-auto border border-default/70 bg-default">
-      <table class="min-w-max border-collapse">
-        <tbody>
-          <tr
-            v-for="row in rows"
-            :key="row.absoluteIndex"
-            class="cursor-pointer border-b border-default/50 last:border-b-0"
-            :class="row.absoluteIndex === selectedHeaderRowIndex ? 'bg-default' : row.absoluteIndex < selectedHeaderRowIndex ? 'bg-elevated/20' : ''"
-            @click="emit('selectHeader', row.absoluteIndex)"
+    <div
+      ref="viewportRef"
+      class="min-h-[26rem] max-h-[calc(100dvh-18rem)] overflow-auto border border-default/70 bg-default"
+    >
+      <div
+        class="relative min-w-max"
+        :style="{ height: `${totalSize}px` }"
+      >
+        <div
+          v-for="virtualRow in virtualRows"
+          :key="String(virtualRow.key)"
+          class="absolute left-0 top-0 min-w-max"
+          :style="{ transform: `translateY(${virtualRow.start}px)` }"
+        >
+          <div
+            v-if="rows[virtualRow.index]"
+            class="flex cursor-pointer border-b border-default/50 last:border-b-0"
+            :class="rows[virtualRow.index]!.absoluteIndex === selectedHeaderRowIndex ? 'bg-default' : rows[virtualRow.index]!.absoluteIndex < selectedHeaderRowIndex ? 'bg-elevated/20' : ''"
+            @click="emit('selectHeader', rows[virtualRow.index]!.absoluteIndex)"
           >
-            <td
+            <div
               class="w-12 min-w-12 px-3 py-2 align-middle font-mono text-[11px]"
-              :class="row.absoluteIndex === selectedHeaderRowIndex
+              :class="rows[virtualRow.index]!.absoluteIndex === selectedHeaderRowIndex
                 ? 'border-y border-l-[3px] border-inverted font-semibold text-highlighted'
                 : 'text-muted'"
             >
-              {{ row.absoluteIndex + 1 }}
-            </td>
+              {{ rows[virtualRow.index]!.absoluteIndex + 1 }}
+            </div>
 
-            <td
+            <div
               v-for="columnIndex in columnCount"
-              :key="`${row.absoluteIndex}:${columnIndex}`"
+              :key="`${rows[virtualRow.index]!.absoluteIndex}:${columnIndex}`"
               class="min-w-24 max-w-40 truncate px-3 py-2 font-mono text-[11px]"
-              :class="row.absoluteIndex === selectedHeaderRowIndex
+              :class="rows[virtualRow.index]!.absoluteIndex === selectedHeaderRowIndex
                 ? 'border-y border-inverted font-semibold text-highlighted'
                 : columnIndex === columnCount
-                  ? getStatusCellTone(row.cells[columnIndex - 1])
-                  : row.absoluteIndex < selectedHeaderRowIndex
+                  ? getStatusCellTone(rows[virtualRow.index]!.cells[columnIndex - 1])
+                  : rows[virtualRow.index]!.absoluteIndex < selectedHeaderRowIndex
                     ? 'text-muted'
                     : 'text-toned'"
             >
-              {{ row.absoluteIndex === selectedHeaderRowIndex
-                ? formatHeaderCell(row.cells[columnIndex - 1])
-                : String(row.cells[columnIndex - 1] ?? '') }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              {{ rows[virtualRow.index]!.absoluteIndex === selectedHeaderRowIndex
+                ? formatHeaderCell(rows[virtualRow.index]!.cells[columnIndex - 1])
+                : String(rows[virtualRow.index]!.cells[columnIndex - 1] ?? '') }}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

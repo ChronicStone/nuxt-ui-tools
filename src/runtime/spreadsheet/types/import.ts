@@ -56,13 +56,13 @@ export interface SpreadsheetImportApi<TSchema> {
   }) => void
   clearColumnAssignment: (headerIndex: number) => void
   selectReference: (params: {
-    referenceKey: string
+    referenceField: string
     sourceValue: string
     selectedValue: unknown
     selectedLabel: string
   }) => void
   clearReference: (params: {
-    referenceKey: string
+    referenceField: string
     sourceValue: string
   }) => void
   refresh: () => Promise<void>

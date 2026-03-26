@@ -1,23 +1,97 @@
-import type { SpreadsheetDynamicOptionGroupsDefinition } from '../../types'
+import type {
+  SpreadsheetDynamicCollectionDefinition,
+  SpreadsheetDynamicCollectionItemDefinition,
+  SpreadsheetDynamicOptionGroupsDefinition,
+  SpreadsheetHeaderCell,
+  SpreadsheetHeaderMatcher,
+  SpreadsheetMatchDefinition,
+  SpreadsheetStaticColumn,
+} from '../../types'
 import type {
   SpreadsheetColumnMatch,
   SpreadsheetDynamicColumnMatch,
-  SpreadsheetHeaderCell,
-  SpreadsheetStaticColumn,
   SpreadsheetUnmatchedColumn,
 } from '../../types'
 import {
   applySpreadsheetNormalization,
   isSpreadsheetColumnGroup,
+  isSpreadsheetDynamicCollectionItem,
+  isSpreadsheetDynamicCollectionColumn,
   isSpreadsheetDynamicOptionGroupsColumn,
   isSpreadsheetStaticColumn,
   normalizeSpreadsheetText,
 } from './shared'
 
-function getColumnPatterns(column: SpreadsheetStaticColumn) {
-  if (!column.from) return [column.key]
-  if (Array.isArray(column.from)) return column.from
-  return [column.from]
+function getDefaultMatchDefinition(column: SpreadsheetStaticColumn): SpreadsheetMatchDefinition {
+  if (column.match) return column.match
+
+  const from = column.from
+  if (!from)
+    return {
+      headers: [column.key],
+      normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
+      prefer: 'first',
+    }
+
+  return {
+    headers: Array.isArray(from) ? from : [from],
+    normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
+    prefer: 'first',
+  }
+}
+
+function scoreHeaderMatcher(
+  header: SpreadsheetHeaderCell,
+  matcher: SpreadsheetHeaderMatcher,
+  normalize: readonly string[] | undefined,
+) {
+  if (typeof matcher === 'string') {
+    const left = applySpreadsheetNormalization(header.text, normalize)
+    const right = applySpreadsheetNormalization(matcher, normalize)
+    return left === right ? 1 : null
+  }
+
+  if (matcher instanceof RegExp)
+    return matcher.test(header.text) ? 0.95 : null
+
+  return matcher({
+    header: {
+      index: header.index,
+      text: header.text,
+      normalized: normalizeSpreadsheetText(header.text),
+    },
+  })
+}
+
+function findHeaderMatch(
+  headers: readonly SpreadsheetHeaderCell[],
+  definition: SpreadsheetMatchDefinition,
+  usedHeaderIndexes: ReadonlySet<number>,
+) {
+  const candidates = headers.flatMap((header) => {
+    if (usedHeaderIndexes.has(header.index)) return []
+
+    const scores = definition.headers
+      .map((matcher) => scoreHeaderMatcher(header, matcher, definition.normalize))
+      .filter((score): score is number => score !== null)
+
+    if (!scores.length) return []
+
+    const bestScore = Math.max(...scores)
+    if (definition.minScore !== undefined && bestScore < definition.minScore) return []
+
+    return [{ header, score: bestScore }]
+  })
+
+  if (!candidates.length) return null
+  if (definition.prefer !== 'best-score') return candidates[0]
+
+  return candidates
+    .slice()
+    .sort((left, right) => {
+      if (left.score !== right.score) return right.score - left.score
+      return left.header.index - right.header.index
+    })[0]
 }
 
 function getDynamicHeaderPatterns(
@@ -36,26 +110,15 @@ function getDynamicHeaderPatterns(
   return [label]
 }
 
-function isSpreadsheetColumnMatch(
-  header: SpreadsheetHeaderCell,
-  pattern: string | RegExp,
-) {
-  if (typeof pattern === 'string')
-    return header.normalized === normalizeSpreadsheetText(pattern)
-
-  return pattern.test(header.text)
-}
-
-function isSpreadsheetDynamicHeaderMatch(
-  header: SpreadsheetHeaderCell,
-  pattern: string | RegExp,
-  normalize: readonly string[] | undefined,
-) {
-  if (typeof pattern === 'string')
-    return applySpreadsheetNormalization(header.text, normalize)
-      === applySpreadsheetNormalization(pattern, normalize)
-
-  return pattern.test(header.text)
+function createOptionGroupsMatchDefinition(
+  column: SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>,
+  source: unknown,
+): SpreadsheetMatchDefinition {
+  return {
+    headers: getDynamicHeaderPatterns(column, source),
+    normalize: column.header?.normalize,
+    prefer: 'first',
+  }
 }
 
 export function flattenSpreadsheetStaticColumns(
@@ -101,27 +164,70 @@ export function matchSpreadsheetColumns(
   const automaticMatches = columns.flatMap((column) => {
     if (matchedKeys.has(column.key)) return []
 
-    const match = headers.find((header) => {
-      if (usedHeaderIndexes.has(header.index)) return false
-
-      return getColumnPatterns(column).some((pattern) =>
-        isSpreadsheetColumnMatch(header, pattern),
-      )
-    })
-
+    const match = findHeaderMatch(headers, getDefaultMatchDefinition(column), usedHeaderIndexes)
     if (!match) return []
 
-    usedHeaderIndexes.add(match.index)
+    usedHeaderIndexes.add(match.header.index)
 
     return [{
       key: column.key,
-      columnIndex: match.index,
-      header: match,
+      columnIndex: match.header.index,
+      header: match.header,
       column,
     }]
   })
 
   return [...manualMatches, ...automaticMatches]
+}
+
+function matchCollectionColumn(
+  column: SpreadsheetDynamicCollectionDefinition<string, 'array' | 'record'>,
+  headers: readonly SpreadsheetHeaderCell[],
+  reservedHeaderIndexes: Set<number>,
+) {
+  return column.items.flatMap((entry) => {
+    if (!isSpreadsheetDynamicCollectionItem(entry)) return []
+
+    const item = entry
+    const match = findHeaderMatch(headers, item.match, reservedHeaderIndexes)
+    if (!match) return []
+
+    reservedHeaderIndexes.add(match.header.index)
+
+    return [{
+      key: column.rootKey,
+      targetKey: item.id,
+      columnIndex: match.header.index,
+      header: match.header,
+      column,
+      source: item.source,
+      item,
+    }]
+  })
+}
+
+function matchOptionGroupsColumn(
+  column: SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>,
+  headers: readonly SpreadsheetHeaderCell[],
+  reservedHeaderIndexes: Set<number>,
+) {
+  const sourceItems = column.source ?? []
+
+  return sourceItems.flatMap((source) => {
+    const match = findHeaderMatch(headers, createOptionGroupsMatchDefinition(column, source), reservedHeaderIndexes)
+    if (!match) return []
+
+    reservedHeaderIndexes.add(match.header.index)
+
+    return [{
+      key: column.output.into,
+      targetKey: column.targetKey?.(source) ?? column.itemKey?.(source) ?? String(match.header.index),
+      columnIndex: match.header.index,
+      header: match.header,
+      column,
+      source,
+    }]
+  })
 }
 
 export function matchSpreadsheetDynamicColumns(
@@ -130,37 +236,19 @@ export function matchSpreadsheetDynamicColumns(
   usedHeaderIndexes: readonly number[] = [],
 ): SpreadsheetDynamicColumnMatch[] {
   const reservedHeaderIndexes = new Set(usedHeaderIndexes)
+  const matches: SpreadsheetDynamicColumnMatch[] = []
 
-  return columns.flatMap((entry) => {
-    if (!isSpreadsheetDynamicOptionGroupsColumn(entry)) return []
+  for (const entry of columns) {
+    if (isSpreadsheetDynamicOptionGroupsColumn(entry)) {
+      matches.push(...matchOptionGroupsColumn(entry, headers, reservedHeaderIndexes))
+      continue
+    }
 
-    const column = entry
-    const sourceItems = column.source ?? []
+    if (isSpreadsheetDynamicCollectionColumn(entry))
+      matches.push(...matchCollectionColumn(entry, headers, reservedHeaderIndexes))
+  }
 
-    return sourceItems.flatMap((source) => {
-      const patterns = getDynamicHeaderPatterns(column, source)
-      const match = headers.find((header) => {
-        if (reservedHeaderIndexes.has(header.index)) return false
-
-        return patterns.some((pattern) =>
-          isSpreadsheetDynamicHeaderMatch(header, pattern, column.header?.normalize),
-        )
-      })
-
-      if (!match) return []
-
-      reservedHeaderIndexes.add(match.index)
-
-      return [{
-        key: column.key,
-        targetKey: column.targetKey?.(source) ?? column.itemKey?.(source) ?? String(match.index),
-        columnIndex: match.index,
-        header: match,
-        column,
-        source,
-      }]
-    })
-  })
+  return matches
 }
 
 export function getSpreadsheetUnmatchedColumns(

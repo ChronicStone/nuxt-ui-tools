@@ -8,40 +8,27 @@ import {
   createSpreadsheetReferenceResolutions,
 } from '#ui-tools/spreadsheet'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
-import type {
-  SpreadsheetParsedRow,
-  SpreadsheetReferenceDefinition,
-} from '#ui-tools/spreadsheet/types'
+import type { SpreadsheetParsedRow, SpreadsheetReferenceDefinition } from '#ui-tools/spreadsheet/types'
 import { useSpreadsheetReferences } from '../../src/runtime/spreadsheet/composables/use-spreadsheet-references'
+
+const productOptions = [
+  { label: 'Business English 4 Skills', value: 'prod_1' },
+  { label: 'Reading Placement Test', value: 'prod_2' },
+] as const
 
 describe('spreadsheet reference utils', () => {
   const references = [
     {
-      key: 'product',
-      sourceField: 'examNameRaw',
-      target: {
-        options: [
-          { id: 'prod_1', name: 'Business English 4 Skills' },
-          { id: 'prod_2', name: 'Reading Placement Test' },
-        ],
-        query: ({ search }: { search: string }) => ({
-          queryKey: ['products', search],
-          queryFn: async () => [],
-        }),
-        optionValue: (option: { id: string; name: string }) => option.id,
-        optionLabel: (option: { id: string; name: string }) => option.name,
-      },
-      output: {
-        field: 'productId',
-      },
+      kind: 'select',
+      field: 'productId',
+      source: 'examNameRaw',
+      options: productOptions,
+      getOptions: ({ search }: { search: string }) => ({
+        queryKey: ['products', search],
+        queryFn: async () => [],
+      }),
     },
-  ] satisfies readonly SpreadsheetReferenceDefinition<
-    Record<string, unknown>,
-    Record<string, unknown>,
-    'productId',
-    string,
-    { id: string; name: string }
-  >[]
+  ] satisfies readonly SpreadsheetReferenceDefinition[]
 
   const rows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
     {
@@ -77,7 +64,7 @@ describe('spreadsheet reference utils', () => {
     const candidates = createSpreadsheetReferenceCandidates({
       sourceValue: 'Business English 4 Skills',
       reference: references[0],
-      options: references[0].target.options,
+      options: references[0].options ?? [],
     })
 
     expect(candidates[0]).toMatchObject({
@@ -85,6 +72,17 @@ describe('spreadsheet reference utils', () => {
       label: 'Business English 4 Skills',
       score: 1,
     })
+  })
+
+  it('keeps full option list even when no recommendation score is found', () => {
+    const candidates = createSpreadsheetReferenceCandidates({
+      sourceValue: 'Unknown External Product',
+      reference: references[0],
+      options: references[0].options ?? [],
+    })
+
+    expect(candidates).toHaveLength(2)
+    expect(candidates.every(candidate => candidate.score === 0)).toBe(true)
   })
 
   it('creates one resolution per distinct imported source value', () => {
@@ -95,7 +93,7 @@ describe('spreadsheet reference utils', () => {
 
     expect(resolutions).toHaveLength(2)
     expect(resolutions[0]).toMatchObject({
-      referenceKey: 'product',
+      referenceField: 'productId',
       sourceValue: 'Business English 4 Skills',
       status: 'matched',
       selectedValue: 'prod_1',
@@ -104,6 +102,7 @@ describe('spreadsheet reference utils', () => {
       sourceValue: 'Unknown External Product',
       status: 'unresolved',
     })
+    expect(resolutions[1]?.candidates).toHaveLength(2)
   })
 
   it('applies reference selections back onto all matching rows', () => {
@@ -111,7 +110,7 @@ describe('spreadsheet reference utils', () => {
       rows,
       resolutions: [
         {
-          referenceKey: 'product',
+          referenceField: 'productId',
           sourceField: 'examNameRaw',
           outputField: 'product.id',
           sourceValue: 'Business English 4 Skills',
@@ -122,7 +121,7 @@ describe('spreadsheet reference utils', () => {
           candidates: [],
         },
         {
-          referenceKey: 'product',
+          referenceField: 'productId',
           sourceField: 'examNameRaw',
           outputField: 'product.id',
           sourceValue: 'Unknown External Product',
@@ -152,7 +151,7 @@ describe('spreadsheet reference utils', () => {
       references,
       rows,
       context: {
-        products: references[0].target.options,
+        products: references[0].options,
       },
     })
 
@@ -163,7 +162,25 @@ describe('spreadsheet reference utils', () => {
   it('orchestrates auto and manual selections in the reference composable', () => {
     const schema = defineSpreadsheetSchema({
       importKey: 'assessment.results',
-      references,
+      columns: {
+        static: (column) => [
+          column.text('examNameRaw', {
+            match: {
+              headers: ['Exam name'],
+            },
+          }),
+        ],
+      },
+      references: reference => [
+        reference.select('productId', {
+          source: 'examNameRaw',
+          options: productOptions,
+          getOptions: ({ search }) => ({
+            queryKey: ['products', search],
+            queryFn: async () => [],
+          }),
+        }),
+      ],
     })
 
     const referenceState = useSpreadsheetReferences({
@@ -177,7 +194,7 @@ describe('spreadsheet reference utils', () => {
         references,
       })),
       contextData: computed(() => ({
-        products: references[0].target.options,
+        products: references[0].options,
       })),
       rows: computed(() => rows),
     })
@@ -185,7 +202,7 @@ describe('spreadsheet reference utils', () => {
     expect(referenceState.unresolvedResolutions.value).toHaveLength(1)
 
     referenceState.selectReference({
-      referenceKey: 'product',
+      referenceField: 'productId',
       sourceValue: 'Unknown External Product',
       selectedValue: 'prod_2',
       selectedLabel: 'Reading Placement Test',

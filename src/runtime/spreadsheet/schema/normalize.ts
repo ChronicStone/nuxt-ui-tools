@@ -1,4 +1,8 @@
-import { createSpreadsheetDynamicBuilder, resolveSpreadsheetColumns } from '../utils/builders'
+import {
+  createSpreadsheetDynamicBuilder,
+  resolveSpreadsheetColumns,
+  resolveSpreadsheetReferences,
+} from '../utils/builders'
 import type {
   NormalizeSpreadsheetSchema,
   SpreadsheetColumnsDefinition,
@@ -6,18 +10,12 @@ import type {
   SpreadsheetDynamicBuilder,
 } from '../types'
 
-export function resolveSpreadsheetPipeline<TPipeline>(pipeline: TPipeline): TPipeline
-export function resolveSpreadsheetPipeline(pipeline: undefined): undefined
-export function resolveSpreadsheetPipeline<TPipeline>(pipeline: TPipeline | undefined) {
-  return pipeline
-}
-
 export function resolveSpreadsheetDynamicColumns<
   TContext,
   TResult extends readonly unknown[],
 >(columns: {
   dynamic: (params: {
-    dynamic: SpreadsheetDynamicBuilder
+    dynamic: SpreadsheetDynamicBuilder<TContext>
     context: TContext
   }) => TResult
 }, context: TContext): TResult
@@ -33,41 +31,50 @@ export function resolveSpreadsheetDynamicColumns<TContext>(
 export function resolveSpreadsheetDynamicColumns<TContext>(
   columns: {
     dynamic?: ((params: {
-      dynamic: SpreadsheetDynamicBuilder
+      dynamic: SpreadsheetDynamicBuilder<TContext>
       context: TContext
     }) => readonly unknown[]) | undefined
-  } | undefined,
+  },
   context: TContext,
 ) {
   if (!columns?.dynamic) return []
 
   return columns.dynamic({
     context,
-    dynamic: createSpreadsheetDynamicBuilder(),
+    dynamic: createSpreadsheetDynamicBuilder(context),
   })
+}
+
+export function resolveSpreadsheetBuildRow<TBuildRow>(
+  buildRow: TBuildRow,
+): TBuildRow
+export function resolveSpreadsheetBuildRow(buildRow: undefined): undefined
+export function resolveSpreadsheetBuildRow<TBuildRow>(buildRow: TBuildRow | undefined) {
+  return buildRow
 }
 
 export function normalizeSpreadsheetSchema<
   TSchema extends {
     importKey: string
+    file?: unknown
     context?: readonly SpreadsheetContextItem<string, unknown>[]
     columns?: SpreadsheetColumnsDefinition<any>
-    references?: readonly unknown[]
-    pipeline?: unknown
+    references?: unknown
+    buildRow?: unknown
   },
 >(schema: TSchema) {
   const resolvedColumns = resolveSpreadsheetColumns(schema.columns)
-  const dynamicColumns = resolvedColumns?.dynamic ?? (() => [])
+  const resolvedReferences = resolveSpreadsheetReferences(schema.references)
 
   return {
     ...schema,
     context: schema.context ?? [],
     columns: {
       static: resolvedColumns?.static ?? [],
-      dynamic: dynamicColumns,
+      dynamic: resolvedColumns?.dynamic ?? (() => []),
     },
-    references: schema.references ?? [],
-    pipeline: resolveSpreadsheetPipeline(schema.pipeline),
+    references: Array.isArray(resolvedReferences) ? resolvedReferences : [],
+    buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
   }
 }
 

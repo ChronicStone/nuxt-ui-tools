@@ -5,163 +5,218 @@ import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 
 import type { SpreadsheetColumnAssignmentOption } from '../../../types'
 
-type MatchingRow = {
-  key: string
+type MatchingOption = SpreadsheetColumnAssignmentOption & {
   headerIndex: number
-  fileColumn: string
+  selected?: boolean
+}
+
+type ExpectedFieldRow = {
+  key: string
   systemFieldKey: string
   systemFieldLabel: string
-  status: 'matched' | 'ignored'
-  locked: boolean
-  kind: 'static' | 'dynamic' | 'ignored'
+  required: boolean
+  selectedHeaderIndex: number | null
+  selectedFileColumn: string
+  status: 'matched' | 'unmatched'
+}
+
+type AutoMappedRow = {
+  key: string
+  systemFieldLabel: string
+  selectedFileColumn: string
+}
+
+type IgnoredColumnRow = {
+  key: string
+  fileColumn: string
 }
 
 const props = defineProps<{
-  rows: MatchingRow[]
-  getOptionsForRow: (row: { systemFieldKey: string }) => SpreadsheetColumnAssignmentOption[]
+  expectedFieldRows: ExpectedFieldRow[]
+  autoMappedRows: AutoMappedRow[]
+  ignoredColumnRows: IgnoredColumnRow[]
+  getOptionsForRow: (row: { systemFieldKey: string, selectedHeaderIndex: number | null }) => MatchingOption[]
 }>()
 
 const emit = defineEmits<{
   assign: [payload: { headerIndex: number, columnKey: string }]
 }>()
 
-function getBadgeProps(status: 'matched' | 'ignored') {
-  if (status === 'ignored')
-    return { color: 'neutral' as const, label: 'Ignored', dotClass: 'bg-muted' }
+function getMatchBadgeProps(status: 'matched' | 'unmatched') {
+  if (status === 'matched')
+    return { color: 'success' as const, label: 'Matched', dotClass: 'bg-success' }
 
-  return { color: 'success' as const, label: 'Matched', dotClass: 'bg-success' }
+  return { color: 'warning' as const, label: 'Needs match', dotClass: 'bg-warning' }
 }
 
-function getLeadingDotClass(status: 'matched' | 'ignored') {
-  return status === 'ignored' ? 'bg-muted' : 'bg-success'
+function getLeadingDotClass(status: 'matched' | 'unmatched') {
+  return status === 'matched' ? 'bg-success' : 'bg-warning'
 }
 
-function getArrowIcon(status: 'matched' | 'ignored') {
-  return status === 'ignored' ? 'i-lucide-minus' : 'i-lucide-arrow-right'
+function getRequiredBadgeColor(required: boolean) {
+  return required ? 'error' as const : 'neutral' as const
 }
 
-function getRowToneClass(status: 'matched' | 'ignored') {
-  return status === 'ignored' ? 'opacity-50' : ''
-}
-
-function getTypeBadgeProps(kind: 'static' | 'dynamic' | 'ignored') {
-  if (kind === 'dynamic')
-    return { color: 'info' as const, label: 'Dynamic' }
-
-  if (kind === 'ignored')
-    return { color: 'neutral' as const, label: 'Ignored' }
-
-  return null
-}
-
-function handleAssign(row: MatchingRow, value: unknown) {
+function handleAssign(row: ExpectedFieldRow, value: unknown) {
   if (typeof value !== 'string') return
+  if (value === '__ignore__') {
+    if (row.selectedHeaderIndex == null) return
+    emit('assign', {
+      headerIndex: row.selectedHeaderIndex,
+      columnKey: '',
+    })
+    return
+  }
+
+  const selectedOption = props.getOptionsForRow(row).find(option => option.key === value)
+  const headerIndex = selectedOption?.headerIndex
+  if (typeof headerIndex !== 'number') return
+
   emit('assign', {
-    headerIndex: row.headerIndex,
+    headerIndex,
     columnKey: value,
   })
 }
 </script>
 
 <template>
-  <div class="flex min-h-0 flex-col overflow-hidden border border-default/70 bg-default">
-    <div class="grid h-11 grid-cols-[40px_minmax(14rem,1.35fr)_40px_minmax(14rem,1.35fr)_minmax(10rem,0.9fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-      <div />
-      <div>File column</div>
-      <div class="flex justify-center">
-        <UIcon name="i-lucide-arrow-right" class="size-3.5" />
+  <div class="grid min-h-0 gap-4">
+    <div class="flex min-h-0 flex-col overflow-hidden border border-default/70 bg-default">
+      <div class="grid h-11 grid-cols-[40px_minmax(14rem,1fr)_120px_minmax(16rem,1.2fr)_minmax(9rem,0.8fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+        <div />
+        <div>System field</div>
+        <div>Requirement</div>
+        <div>Spreadsheet column</div>
+        <div>Status</div>
       </div>
-      <div>System field</div>
-      <div>Status</div>
+
+      <div class="min-h-0 flex-1 overflow-auto">
+        <div
+          v-for="row in expectedFieldRows"
+          :key="row.key"
+          class="grid min-h-12 grid-cols-[40px_minmax(14rem,1fr)_120px_minmax(16rem,1.2fr)_minmax(9rem,0.8fr)] items-center border-b border-default/50 px-5 py-2 transition-colors hover:bg-elevated/20 last:border-b-0"
+        >
+          <div class="flex justify-center">
+            <span class="size-2 rounded-full" :class="getLeadingDotClass(row.status)" />
+          </div>
+
+          <div class="min-w-0">
+            <div class="truncate font-mono text-sm font-medium text-highlighted">
+              {{ row.systemFieldLabel }}
+            </div>
+          </div>
+
+          <div class="flex items-center">
+            <UBadge :color="getRequiredBadgeColor(row.required)" variant="soft" size="sm" class="font-mono">
+              {{ row.required ? 'Required' : 'Optional' }}
+            </UBadge>
+          </div>
+
+          <div class="min-w-0">
+            <USelectMenu
+              :items="getOptionsForRow(row)"
+              :model-value="row.systemFieldKey"
+              value-key="key"
+              label-key="label"
+              color="neutral"
+              variant="none"
+              :search-input="{ variant: 'none', placeholder: 'Search spreadsheet columns...' }"
+              placeholder="Select a spreadsheet column..."
+              class="w-fit max-w-full"
+              :ui="{
+                base: [
+                  'min-h-0 w-fit max-w-full px-0 py-0 font-mono text-sm shadow-none ring-0',
+                  row.status === 'matched' ? 'text-toned' : 'text-warning',
+                ],
+                value: 'truncate pr-5',
+                placeholder: 'truncate pr-5',
+                trailing: 'end-0',
+                trailingIcon: 'size-3.5 text-muted',
+                content: 'w-auto min-w-80',
+                viewport: 'max-h-72',
+                input: 'border-b border-default px-3 py-2',
+                item: 'font-mono',
+                itemLabel: 'font-mono text-sm',
+                itemTrailing: 'ms-auto items-center',
+              }"
+              @update:model-value="handleAssign(row, $event)"
+            >
+              <template #item="{ item }">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="truncate font-mono text-sm" :class="item.assigned ? 'text-muted' : 'text-default'">
+                    {{ item.label }}
+                  </span>
+                  <span
+                    class="font-mono text-[10px] uppercase tracking-[0.12em]"
+                    :class="item.assigned ? 'text-muted' : 'text-success'"
+                  >
+                    {{ item.assigned ? 'Assigned' : 'Available' }}
+                  </span>
+                </div>
+              </template>
+            </USelectMenu>
+          </div>
+
+          <div class="flex items-center">
+            <UBadge :color="getMatchBadgeProps(row.status).color" variant="soft" class="font-mono">
+              <span class="mr-1.5 inline-block size-1.5 rounded-full" :class="getMatchBadgeProps(row.status).dotClass" />
+              {{ getMatchBadgeProps(row.status).label }}
+            </UBadge>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-auto">
+    <div
+      v-if="autoMappedRows.length"
+      class="overflow-hidden border border-default/70 bg-default"
+    >
       <div
-        v-for="row in rows"
-        :key="row.key"
-        class="grid h-11 grid-cols-[40px_minmax(14rem,1.35fr)_40px_minmax(14rem,1.35fr)_minmax(10rem,0.9fr)] items-center border-b border-default/50 px-5 transition-colors hover:bg-elevated/20 last:border-b-0"
-        :class="getRowToneClass(row.status)"
+        class="grid h-10 grid-cols-[minmax(14rem,1fr)_40px_minmax(14rem,1fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
       >
+        <div>Auto-mapped field</div>
         <div class="flex justify-center">
-          <span class="size-2 rounded-full" :class="getLeadingDotClass(row.status)" />
+          <UIcon name="i-lucide-arrow-right" class="size-3.5" />
         </div>
+        <div>Spreadsheet column</div>
+      </div>
 
-        <div class="flex min-w-0 items-center gap-2">
-          <div class="truncate font-mono text-sm font-medium text-highlighted">
-            {{ row.fileColumn }}
-          </div>
-
-          <UBadge
-            v-if="getTypeBadgeProps(row.kind)"
-            :color="getTypeBadgeProps(row.kind)?.color"
-            variant="soft"
-            size="sm"
-            class="shrink-0 font-mono"
-          >
-            {{ getTypeBadgeProps(row.kind)?.label }}
-          </UBadge>
+      <div
+        v-for="row in autoMappedRows"
+        :key="row.key"
+        class="grid min-h-11 grid-cols-[minmax(14rem,1fr)_40px_minmax(14rem,1fr)] items-center border-b border-default/50 px-5 py-2 last:border-b-0"
+      >
+        <div class="truncate font-mono text-sm font-medium text-highlighted">
+          {{ row.systemFieldLabel }}
         </div>
-
         <div class="flex justify-center">
-          <UIcon :name="getArrowIcon(row.status)" class="size-3.5 text-muted" />
+          <UIcon name="i-lucide-arrow-right" class="size-3.5 text-muted" />
         </div>
-
-        <div class="min-w-0">
-          <USelectMenu
-            v-if="!row.locked"
-            :items="getOptionsForRow(row)"
-            :model-value="row.systemFieldKey || undefined"
-            value-key="key"
-            label-key="label"
-            color="neutral"
-            variant="none"
-            :search-input="{ variant: 'none', placeholder: 'Search fields...' }"
-            placeholder="Select a field..."
-            class="w-fit max-w-full"
-            :ui="{
-              base: [
-                'min-h-0 w-fit max-w-full px-0 py-0 font-mono text-sm shadow-none ring-0',
-                row.status === 'ignored' ? 'text-muted' : 'text-toned',
-              ],
-              value: 'truncate pr-5',
-              placeholder: 'truncate pr-5',
-              trailing: 'end-0',
-              trailingIcon: 'size-3.5 text-muted',
-              content: 'w-auto min-w-80',
-              viewport: 'max-h-72',
-              input: 'border-b border-default px-3 py-2',
-              item: 'font-mono',
-              itemLabel: 'font-mono text-sm',
-              itemTrailing: 'ms-auto items-center',
-            }"
-            @update:model-value="handleAssign(row, $event)"
-          >
-            <template #item="{ item }">
-              <div class="flex items-center justify-between gap-3">
-                <span class="truncate font-mono text-sm" :class="item.assigned ? 'text-muted' : 'text-default'">
-                  {{ item.label }}
-                </span>
-                <span
-                  class="font-mono text-[10px] uppercase tracking-[0.12em]"
-                  :class="item.assigned ? 'text-muted' : 'text-success'"
-                >
-                  {{ item.assigned ? 'Assigned' : 'Available' }}
-                </span>
-              </div>
-            </template>
-          </USelectMenu>
-
-          <div v-else class="truncate font-mono text-sm text-toned">
-            {{ row.systemFieldLabel }}
-          </div>
+        <div class="truncate font-mono text-sm text-toned">
+          {{ row.selectedFileColumn }}
         </div>
+      </div>
+    </div>
 
-        <div class="flex items-center">
-          <UBadge :color="getBadgeProps(row.status).color" variant="soft" class="font-mono">
-            <span class="mr-1.5 inline-block size-1.5 rounded-full" :class="getBadgeProps(row.status).dotClass" />
-            {{ getBadgeProps(row.status).label }}
-          </UBadge>
-        </div>
+    <div
+      v-if="ignoredColumnRows.length"
+      class="overflow-hidden border border-default/70 bg-default"
+    >
+      <div class="grid h-10 grid-cols-[minmax(0,1fr)_auto] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+        <div>Ignored spreadsheet columns</div>
+        <div>{{ ignoredColumnRows.length }}</div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 px-5 py-4">
+        <UBadge
+          v-for="row in ignoredColumnRows"
+          :key="row.key"
+          color="neutral"
+          variant="subtle"
+          class="font-mono"
+        >
+          {{ row.fileColumn }}
+        </UBadge>
       </div>
     </div>
   </div>

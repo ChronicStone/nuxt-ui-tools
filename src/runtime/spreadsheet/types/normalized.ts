@@ -14,15 +14,19 @@ type SchemaColumns<TSchema> = TSchema extends {
   : undefined
 
 type SchemaReferences<TSchema> = TSchema extends {
+  references?: (...args: infer _Args) => infer TReferences extends readonly unknown[]
+}
+  ? TReferences
+  : TSchema extends {
   references?: infer TReferences extends readonly unknown[]
 }
   ? TReferences
   : readonly []
 
-type SchemaPipeline<TSchema> = TSchema extends {
-  pipeline?: infer TPipeline
+type SchemaBuildRow<TSchema> = TSchema extends {
+  buildRow?: infer TBuildRow
 }
-  ? TPipeline
+  ? TBuildRow
   : undefined
 
 export type SpreadsheetNormalizedStaticColumns<TSchema> = SpreadsheetResolvedColumns<
@@ -36,7 +40,7 @@ export type SpreadsheetNormalizedStaticColumns<TSchema> = SpreadsheetResolvedCol
 export type SpreadsheetNormalizedDynamicColumns<TSchema> = SpreadsheetResolvedColumns<
   SchemaColumns<TSchema>
 > extends {
-  dynamic?: (...args: infer _Args) => infer TResult
+    dynamic?: (...args: infer _Args) => infer TResult
 }
   ? TResult
   : readonly []
@@ -49,7 +53,7 @@ export interface SpreadsheetNormalizedColumns<
   static: TStaticColumns
   dynamic: (params: {
     context: TContext
-    dynamic: SpreadsheetDynamicBuilder
+    dynamic: SpreadsheetDynamicBuilder<TContext>
   }) => TDynamicColumns
 }
 
@@ -57,17 +61,17 @@ export interface SpreadsheetNormalizedSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly SpreadsheetContextItem<string, unknown>[],
   TColumns = SpreadsheetNormalizedColumns,
   TReferences extends readonly unknown[] = readonly unknown[],
-  TPipeline = unknown,
+  TBuildRow = unknown,
 > {
   importKey: string
-  source?: import('./schema').SpreadsheetSourceDefinition
+  file?: import('./schema').SpreadsheetFileDefinition
   sheet?: import('./schema').SpreadsheetSheetDefinition
   header?: import('./schema').SpreadsheetHeaderDefinition
   matching?: import('./schema').SpreadsheetMatchingDefinition
   context: TContextItems
   columns: TColumns
   references: TReferences
-  pipeline?: TPipeline
+  buildRow?: TBuildRow
   review?: import('./schema').SpreadsheetReviewDefinition
 }
 
@@ -79,5 +83,5 @@ export type NormalizeSpreadsheetSchema<TSchema> = SpreadsheetNormalizedSchema<
     SpreadsheetNormalizedDynamicColumns<TSchema>
   >,
   SchemaReferences<TSchema>,
-  SchemaPipeline<TSchema>
+  SchemaBuildRow<TSchema>
 >

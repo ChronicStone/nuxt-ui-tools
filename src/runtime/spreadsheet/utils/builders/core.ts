@@ -4,13 +4,18 @@ import type {
   SpreadsheetColumnDefinition,
   SpreadsheetColumnsDefinition,
   SpreadsheetDynamicBuilder,
+  SpreadsheetDynamicOptionsValueDefinition,
+  SpreadsheetDynamicValueBuilder,
   SpreadsheetDynamicOptionGroupsDefinition,
   SpreadsheetEnumColumnOptions,
   SpreadsheetGroupBuilder,
   SpreadsheetOptionColumnOptions,
-  SpreadsheetPipelineDefinition,
+  SpreadsheetReferenceBuilder,
   SpreadsheetReferenceDefinition,
+  SpreadsheetReferenceSelectConfig,
+  SpreadsheetReferenceValue,
   SpreadsheetResolvedColumns,
+  SpreadsheetBuildRowDefinition,
 } from '../../types'
 
 export function createSpreadsheetColumnBuilder<
@@ -98,7 +103,137 @@ export function createSpreadsheetGroupBuilder(): SpreadsheetGroupBuilder {
   })
 }
 
-export function createSpreadsheetDynamicBuilder(): SpreadsheetDynamicBuilder {
+function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder {
+  function options<
+    TOption,
+    TValue = TOption extends { value: infer TResolvedValue }
+      ? TResolvedValue
+      : never,
+  >(config: {
+    from: readonly TOption[]
+    optionLabel?: (option: TOption) => string
+    optionValue?: (option: TOption) => TValue
+    mode: 'multiple'
+    separator?: string
+    matchBy: 'label' | 'value'
+    normalize?: readonly string[]
+  }): SpreadsheetDynamicOptionsValueDefinition<TOption, TValue, 'multiple'>
+  function options<
+    TOption,
+    TValue = TOption extends { value: infer TResolvedValue }
+      ? TResolvedValue
+      : never,
+  >(config: {
+    from: readonly TOption[]
+    optionLabel?: (option: TOption) => string
+    optionValue?: (option: TOption) => TValue
+    mode?: 'single'
+    separator?: string
+    matchBy: 'label' | 'value'
+    normalize?: readonly string[]
+  }): SpreadsheetDynamicOptionsValueDefinition<TOption, TValue, 'single'>
+  function options<TOption, TValue>(config: {
+    from: readonly TOption[]
+    optionLabel?: (option: TOption) => string
+    optionValue?: (option: TOption) => TValue
+    mode?: 'single' | 'multiple'
+    separator?: string
+    matchBy: 'label' | 'value'
+    normalize?: readonly string[]
+  }): SpreadsheetDynamicOptionsValueDefinition<TOption, TValue, 'single' | 'multiple'> {
+    if (config.mode === 'multiple')
+      return {
+        kind: 'options',
+        from: config.from,
+        optionLabel: config.optionLabel,
+        optionValue: config.optionValue,
+        mode: 'multiple',
+        separator: config.separator,
+        matchBy: config.matchBy,
+        normalize: config.normalize,
+      }
+
+      return {
+        kind: 'options',
+        from: config.from,
+        optionLabel: config.optionLabel,
+        optionValue: config.optionValue,
+        mode: 'single',
+        separator: config.separator,
+        matchBy: config.matchBy,
+        normalize: config.normalize,
+    }
+  }
+
+  const builder: SpreadsheetDynamicValueBuilder = {
+    text(config = {}) {
+      return {
+        kind: 'text',
+        normalize: config.normalize,
+      }
+    },
+    number() {
+      return {
+        kind: 'number',
+      }
+    },
+    date() {
+      return {
+        kind: 'date',
+      }
+    },
+    boolean() {
+      return {
+        kind: 'boolean',
+      }
+    },
+    options,
+  }
+
+  return builder
+}
+
+function isSpreadsheetDynamicValueResolver<TValueDefinition>(
+  definition: TValueDefinition | ((value: SpreadsheetDynamicValueBuilder) => TValueDefinition),
+): definition is (value: SpreadsheetDynamicValueBuilder) => TValueDefinition {
+  return typeof definition === 'function'
+}
+
+function buildSpreadsheetCollectionItems<
+  TContext,
+  TSource extends readonly unknown[],
+  TItem,
+>(params: {
+  context: TContext
+  from: (params: { context: TContext }) => TSource
+  each: (source: TSource[number]) => TItem
+  resolveValue: (item: TItem) => unknown
+}) {
+  return params.from({ context: params.context }).map((source) => {
+    const item = params.each(source)
+    return {
+      ...item,
+      value: params.resolveValue(item),
+      source,
+    }
+  })
+}
+
+export function createSpreadsheetDynamicBuilder<TContext>(
+  context: TContext,
+): SpreadsheetDynamicBuilder<TContext>
+export function createSpreadsheetDynamicBuilder<TContext>(
+  context: TContext,
+): SpreadsheetDynamicBuilder<TContext> {
+  function resolveDynamicCollectionValue<TValueDefinition>(
+    definition: TValueDefinition | ((value: SpreadsheetDynamicValueBuilder) => TValueDefinition),
+  ) {
+    if (isSpreadsheetDynamicValueResolver(definition))
+      return definition(createSpreadsheetDynamicValueBuilder())
+
+    return definition
+  }
+
   return {
     optionGroups(config) {
       return {
@@ -114,6 +249,36 @@ export function createSpreadsheetDynamicBuilder(): SpreadsheetDynamicBuilder {
         output: config.output,
       }
     },
+    arrayFromCollection(rootKey, config) {
+      const items = buildSpreadsheetCollectionItems({
+        context,
+        from: config.from,
+        each: config.each,
+        resolveValue: item => resolveDynamicCollectionValue(item.value),
+      })
+
+      return {
+        kind: 'collection',
+        rootKey,
+        as: 'array',
+        items,
+      }
+    },
+    recordFromCollection(rootKey, config) {
+      const items = buildSpreadsheetCollectionItems({
+        context,
+        from: config.from,
+        each: config.each,
+        resolveValue: item => resolveDynamicCollectionValue(item.value),
+      })
+
+      return {
+        kind: 'collection',
+        rootKey,
+        as: 'record',
+        items,
+      }
+    },
   }
 }
 
@@ -127,35 +292,55 @@ export function defineSpreadsheetColumns<
   return columns
 }
 
-export function defineSpreadsheetReference<
-  TContext,
-  TRow,
-  const TOutputField extends string,
-  TValue,
-  TOption,
-  const TDefinition extends {
-    key: string
-    sourceField: string
-    target: unknown
-    output: {
-      field: TOutputField
-    }
-  },
->(
-  definition: TDefinition & SpreadsheetReferenceDefinition<
-    TContext,
-    TRow,
-    TOutputField,
-    TValue,
+export function createSpreadsheetReferenceBuilder<
+  _TContext,
+  _TRow,
+>(): SpreadsheetReferenceBuilder {
+  function select<
+    TField extends string,
+    const TOption,
+    TValue = TOption extends { value: infer TResolvedValue }
+      ? TResolvedValue
+      : unknown,
+  >(
+    field: TField,
+    config: SpreadsheetReferenceSelectConfig<TOption, TValue>,
+  ): SpreadsheetReferenceDefinition<
+    TField,
+    SpreadsheetReferenceValue<TOption, TValue>,
     TOption
-  >,
-): TDefinition & SpreadsheetReferenceDefinition<
-  TContext,
-  TRow,
-  TOutputField,
-  TValue,
-  TOption
-> {
+  > {
+    if (config.optionValue && config.optionLabel) {
+      return {
+        kind: 'select',
+        field,
+        source: config.source,
+        options: config.options,
+        getOptions: config.getOptions,
+        optionValue: config.optionValue,
+        optionLabel: config.optionLabel,
+      }
+    }
+
+    return {
+      kind: 'select',
+      field,
+      source: config.source,
+      options: config.options,
+      getOptions: config.getOptions,
+    }
+  }
+
+  return {
+    select,
+  }
+}
+
+export function defineSpreadsheetReference<
+  const TDefinition extends SpreadsheetReferenceDefinition,
+>(
+  definition: TDefinition,
+): TDefinition {
   return definition
 }
 
@@ -165,14 +350,40 @@ export function defineSpreadsheetReferences<
   return references
 }
 
-export function defineSpreadsheetPipeline<
+export function defineSpreadsheetBuildRow<
   TContext,
   TRow,
-  const TPipeline extends {
-    submit?: unknown
-  },
->(pipeline: TPipeline & SpreadsheetPipelineDefinition<TContext, TRow>): TPipeline {
-  return pipeline
+  const TBuildRow extends SpreadsheetBuildRowDefinition<TContext, TRow>,
+>(buildRow: TBuildRow): TBuildRow {
+  return buildRow
+}
+
+function isSpreadsheetReferenceResolver<TContext, TRow, TReferences>(
+  references:
+    | TReferences
+    | ((reference: SpreadsheetReferenceBuilder) => TReferences)
+    | undefined,
+): references is (reference: SpreadsheetReferenceBuilder) => TReferences {
+  return typeof references === 'function'
+}
+
+export function resolveSpreadsheetReferences<TReferences>(
+  references: TReferences,
+): TReferences
+export function resolveSpreadsheetReferences<TContext, TRow, TReferences>(
+  references: ((reference: SpreadsheetReferenceBuilder) => TReferences) | undefined,
+): TReferences | undefined
+export function resolveSpreadsheetReferences<TContext, TRow, TReferences>(
+  references:
+    | TReferences
+    | ((reference: SpreadsheetReferenceBuilder) => TReferences)
+    | undefined,
+) {
+  if (!references) return undefined
+  if (isSpreadsheetReferenceResolver<TContext, TRow, TReferences>(references))
+    return references(createSpreadsheetReferenceBuilder<TContext, TRow>())
+
+  return references
 }
 
 function isCollectionResolver<TBuilderTuple extends readonly unknown[], TResult>(
@@ -214,13 +425,8 @@ export function resolveSpreadsheetColumns(
       )
     : undefined
 
-  const dynamicColumns = 'dynamic' in columns
-    ? columns.dynamic
-    : undefined
-
   return {
     ...columns,
     static: staticColumns,
-    dynamic: dynamicColumns,
   }
 }

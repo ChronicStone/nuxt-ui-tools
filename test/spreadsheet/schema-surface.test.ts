@@ -9,7 +9,6 @@ import type {
   SpreadsheetColumnsDefinition,
   SpreadsheetContextItem,
   SpreadsheetQueryDefinition,
-  SpreadsheetReferenceDefinition,
 } from '#ui-tools/spreadsheet/types'
 
 describe('spreadsheet package surface', () => {
@@ -44,47 +43,30 @@ describe('spreadsheet package surface', () => {
     const columns = {
       static: (column) => [
         column.text('examNameRaw', {
-          required: true as const,
+          required: true,
+          match: {
+            headers: ['Exam name'],
+          },
         }),
       ],
     } satisfies SpreadsheetColumnsDefinition<ContextData>
-
-    type BaseRow = ExtractSpreadsheetRow<{
-      columns: typeof columns
-    }>
-
-    const references = [
-      {
-        key: 'product',
-        sourceField: 'examNameRaw',
-        target: {
-          options: [{ id: 'prod_1', name: 'Demo product' }],
-          optionValue: (option) => option.id,
-          optionLabel: (option) => option.name,
-        },
-        output: {
-          field: 'productId',
-        },
-      },
-    ] satisfies readonly SpreadsheetReferenceDefinition<
-      ContextData,
-      BaseRow,
-      'productId',
-      string,
-      { id: string; name: string }
-    >[]
 
     const schema = defineSpreadsheetSchema({
       importKey: 'demo.import',
       context,
       columns,
-      references,
+      references: reference => [
+        reference.select('productId', {
+          source: 'examNameRaw',
+          options: [{ label: 'Demo product', value: 'prod_1' }],
+        }),
+      ],
     })
 
     type SchemaContextData = ExtractSpreadsheetContextData<typeof schema>
     type Row = ExtractSpreadsheetRow<typeof schema>
 
     expectTypeOf<SchemaContextData['products'][number]['name']>().toEqualTypeOf<string>()
-    expectTypeOf<Row['productId']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<Row['productId']>().toEqualTypeOf<'prod_1' | undefined>()
   })
 })

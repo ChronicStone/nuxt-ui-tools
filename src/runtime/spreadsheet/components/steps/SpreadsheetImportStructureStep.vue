@@ -18,13 +18,9 @@ const sheetItems = computed(() =>
     columnCount: Math.max(...sheet.rows.map((row) => row.length), 0),
   })),
 )
-const previewStartIndex = computed(() =>
-  Math.max(props.spreadsheet.selection.value.headerRowIndex - 2, 0),
-)
 const previewRows = computed(() =>
-  (activeSheet.value?.rows ?? []).slice(previewStartIndex.value, previewStartIndex.value + 8)
-    .map((row, index) => ({
-      absoluteIndex: previewStartIndex.value + index,
+  (activeSheet.value?.rows ?? []).map((row, index) => ({
+      absoluteIndex: index,
       cells: row,
     })),
 )
@@ -35,7 +31,7 @@ const previewColumnCount = computed(() =>
 </script>
 
 <template>
-  <div class="grid gap-6">
+  <div class="grid h-full min-h-0 gap-6">
     <UAlert
       v-if="!spreadsheet.workbook.value"
       color="warning"
@@ -46,7 +42,7 @@ const previewColumnCount = computed(() =>
     />
 
     <template v-else>
-      <div class="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div class="grid min-h-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         <SpreadsheetStructureSheetList
           :items="sheetItems"
           :selected-sheet-name="spreadsheet.selection.value.sheetName"

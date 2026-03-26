@@ -176,7 +176,7 @@ describe('spreadsheet row utils', () => {
   })
 
   it('matches and parses dynamic option-group columns into normalized grouped output', async () => {
-    const dynamic = createSpreadsheetDynamicBuilder()
+    const dynamic = createSpreadsheetDynamicBuilder({})
     const headers = createSpreadsheetHeaderCells([
       'Exam name',
       'School level: PRÉREQUIS CECR',

@@ -1,6 +1,10 @@
 import type {
   SpreadsheetColumnDefinition,
+  SpreadsheetDynamicCollectionDefinition,
+  SpreadsheetDynamicCollectionItemDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
+  SpreadsheetDynamicOptionsValueDefinition,
+  SpreadsheetDynamicValueDefinition,
 } from '../../types'
 import type {
   SpreadsheetCellValue,
@@ -10,7 +14,152 @@ import type {
   SpreadsheetRowIssue,
 } from '../../types'
 import { setSpreadsheetValueAtPath } from '../object'
-import { applySpreadsheetNormalization, parseSpreadsheetCellValue } from './shared'
+import { isSpreadsheetRecord } from '../object'
+import {
+  applySpreadsheetNormalization,
+  isSpreadsheetDynamicCollectionColumn,
+  parseSpreadsheetCellValue,
+} from './shared'
+
+function resolveOptionValue<TOption>(params: {
+  definition: SpreadsheetDynamicOptionsValueDefinition<TOption, unknown, 'single' | 'multiple'>
+  raw: unknown
+  issues: SpreadsheetRowIssue[]
+  rowIndex: number
+  columnIndex: number
+  columnKey: string
+  header: string
+}) {
+  const text = String(params.raw ?? '').trim()
+  if (!text) return params.definition.mode === 'multiple' ? [] : undefined
+
+  const tokens = params.definition.mode === 'multiple'
+    ? text.split(params.definition.separator ?? ',').map((entry) => entry.trim()).filter(Boolean)
+    : [text]
+
+  const resolvedValues: unknown[] = []
+
+  for (const token of tokens) {
+    const normalizedToken = applySpreadsheetNormalization(token, params.definition.normalize)
+    const match = params.definition.from.find((option) => {
+      const candidate = params.definition.matchBy === 'value'
+        ? String(
+            params.definition.optionValue
+              ? params.definition.optionValue(option)
+              : isSpreadsheetRecord(option)
+                ? option.value
+                : '',
+          )
+        : params.definition.optionLabel
+          ? params.definition.optionLabel(option)
+          : isSpreadsheetRecord(option) && typeof option.label === 'string'
+            ? option.label
+            : ''
+
+      return applySpreadsheetNormalization(candidate, params.definition.normalize) === normalizedToken
+    })
+
+    if (!match) {
+      params.issues.push({
+        level: 'error',
+        code: 'option.not_found',
+        message: `Unknown option "${token}"`,
+        rowIndex: params.rowIndex,
+        columnKey: params.columnKey,
+        columnIndex: params.columnIndex,
+        header: params.header,
+      })
+      continue
+    }
+
+    const value = params.definition.optionValue
+      ? params.definition.optionValue(match)
+      : getSpreadsheetRecordValue(match)
+
+    if (value === undefined) continue
+    resolvedValues.push(value)
+  }
+
+  if (params.definition.mode === 'multiple') return resolvedValues
+  return resolvedValues[0]
+}
+
+function getSpreadsheetRecordValue(value: unknown) {
+  if (!isSpreadsheetRecord(value)) return undefined
+  return value.value
+}
+
+function resolveCollectionCellValue(params: {
+  column: SpreadsheetDynamicCollectionDefinition<string, 'array' | 'record'>
+  match: SpreadsheetDynamicColumnMatch
+  raw: unknown
+  issues: SpreadsheetRowIssue[]
+  rowIndex: number
+}) {
+  const item = params.match.item
+  if (!item) return undefined
+
+  const valueDefinition = item.value as SpreadsheetDynamicValueDefinition
+  const text = String(params.raw ?? '').trim()
+  if (!text) return undefined
+
+  if (valueDefinition.kind === 'text') return text
+  if (valueDefinition.kind === 'number') return Number(text)
+  if (valueDefinition.kind === 'date') return text
+  if (valueDefinition.kind === 'boolean') return ['true', '1', 'yes'].includes(text.toLowerCase())
+
+  return resolveOptionValue({
+    definition: valueDefinition,
+    raw: params.raw,
+    issues: params.issues,
+    rowIndex: params.rowIndex,
+    columnIndex: params.match.columnIndex,
+    columnKey: item.id,
+    header: params.match.header.text,
+  })
+}
+
+function applyCollectionValue(params: {
+  data: Record<string, unknown>
+  column: SpreadsheetDynamicCollectionDefinition<string, 'array' | 'record'>
+  match: SpreadsheetDynamicColumnMatch
+  resolvedValue: unknown
+}) {
+  const item = params.match.item
+  if (!item) return
+  if (params.resolvedValue === undefined) return
+
+  const builtValue = item.build
+    ? item.build(
+        Array.isArray(params.resolvedValue)
+          ? {
+              id: item.id,
+              source: params.match.source,
+              values: params.resolvedValue,
+            }
+          : {
+              id: item.id,
+              source: params.match.source,
+              value: params.resolvedValue,
+            },
+      )
+    : params.resolvedValue
+
+  if (params.column.as === 'array') {
+    const existing = params.data[params.column.rootKey]
+    const nextItems = Array.isArray(existing) ? existing : []
+    const nextValue = item.build
+      ? builtValue
+      : Array.isArray(params.resolvedValue)
+        ? { id: item.id, values: params.resolvedValue }
+        : { id: item.id, value: params.resolvedValue }
+
+    params.data[params.column.rootKey] = [...nextItems, nextValue]
+    return
+  }
+
+  setSpreadsheetValueAtPath(params.data, `${params.column.rootKey}.${item.id}`, builtValue)
+}
 
 function resolveSpreadsheetDynamicCellValues(
   column: SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>,
@@ -99,20 +248,42 @@ export async function parseSpreadsheetRows<TContext>(params: {
         setSpreadsheetValueAtPath(data, match.key, value)
     }
 
-    for (const match of params.dynamicMatches ?? []) {
-      const raw = source[match.columnIndex]
-      const values = resolveSpreadsheetDynamicCellValues(
-        match.column,
-        match.source,
+    for (const entry of params.dynamicMatches ?? []) {
+      const raw = source[entry.columnIndex]
+
+      if (entry.column.kind === 'option-groups') {
+        const values = resolveSpreadsheetDynamicCellValues(
+          entry.column,
+          entry.source,
+          raw,
+          issues,
+          rowIndex,
+          entry.columnIndex,
+          entry.header.text,
+        )
+
+        if (values.length)
+          setSpreadsheetValueAtPath(data, `${entry.key}.${entry.targetKey}`, values)
+
+        continue
+      }
+
+      if (!isSpreadsheetDynamicCollectionColumn(entry.column)) continue
+
+      const resolvedValue = resolveCollectionCellValue({
+        column: entry.column,
+        match: entry,
         raw,
         issues,
         rowIndex,
-        match.columnIndex,
-        match.header.text,
-      )
+      })
 
-      if (values.length)
-        setSpreadsheetValueAtPath(data, `${match.column.output.into}.${match.targetKey}`, values)
+      applyCollectionValue({
+        data,
+        column: entry.column,
+        match: entry,
+        resolvedValue,
+      })
     }
 
     parsedRows.push({
