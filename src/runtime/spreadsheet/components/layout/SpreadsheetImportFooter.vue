@@ -8,6 +8,7 @@ defineProps<{
   previousLabel?: string
   primaryLabel: string
   primaryDisabled?: boolean
+  primaryLoading?: boolean
   showExport?: boolean
   exportLabel?: string
   metaText?: string
@@ -45,6 +46,7 @@ const emit = defineEmits<{
         color="neutral"
         variant="ghost"
         icon="i-lucide-arrow-left"
+        :disabled="primaryLoading"
         @click="emit('previous')"
       />
 
@@ -52,8 +54,10 @@ const emit = defineEmits<{
         :label="primaryLabel"
         :color="primaryColor ?? 'primary'"
         :icon="primaryIcon"
+        loading-icon="i-lucide-loader-circle"
         trailing
-        :disabled="primaryDisabled"
+        :loading="primaryLoading"
+        :disabled="primaryDisabled || primaryLoading"
         @click="emit('primary')"
       />
     </div>

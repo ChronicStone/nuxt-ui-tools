@@ -2,6 +2,7 @@ import { computed, ref, type ComputedRef, h } from 'vue'
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 
+import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePreview.vue'
 import type { SpreadsheetRowIssue, SpreadsheetResolvedReferenceRow } from '../types'
 import { formatSpreadsheetCell, humanizeSpreadsheetKey } from '../utils/display'
 import {
@@ -257,6 +258,11 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     return formatSpreadsheetCell(getSpreadsheetValueAtPath(rowData, issue.columnKey))
   }
 
+  function getIssueRawValue(rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) {
+    if (!issue.columnKey) return undefined
+    return getSpreadsheetValueAtPath(rowData, issue.columnKey)
+  }
+
   function getRelatedIssueCount(issue: SpreadsheetRowIssue) {
     return issueRows.value.filter(row =>
       row.issues.some(candidate =>
@@ -305,13 +311,31 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
       },
     },
     {
-      id: 'index',
-      header: '#',
+      id: 'row',
+      header: 'Row',
       accessorFn: (row: { index: number }) => row.index + 1,
+      cell: ({ row }: { row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } } }) => {
+        const status = getRowStatus(row.original.index, row.original.issues)
+        const issueCount = row.original.issues.length
+        const statusLabel = issueCount > 0
+          ? `${status.label} · ${issueCount}`
+          : status.label
+
+        return h('div', { class: 'flex items-center gap-2 whitespace-nowrap leading-none' }, [
+          h('span', { class: 'font-mono text-xs text-muted' }, `#${row.original.index + 1}`),
+          h(UBadge, {
+            color: status.color,
+            variant: 'soft',
+            size: 'sm',
+            icon: status.icon,
+            class: 'font-medium',
+          }, () => statusLabel),
+        ])
+      },
       meta: {
         class: {
-          th: 'w-14',
-          td: 'w-14 font-mono text-muted',
+          th: 'w-44',
+          td: 'w-44 align-top',
         },
       },
     },
@@ -319,31 +343,18 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
       id: column,
       header: humanizeSpreadsheetKey(column),
       accessorFn: (row: { rowObject: Record<string, unknown> }) => formatSpreadsheetCell(row.rowObject[column]),
+      cell: ({ row }: { row: { original: { rowObject: Record<string, unknown> } } }) =>
+        h(SpreadsheetValuePreview, {
+          value: row.original.rowObject[column],
+          compact: true,
+        }),
       meta: {
         class: {
-          th: 'min-w-40',
-          td: 'min-w-40 max-w-64 truncate text-toned',
+          th: 'min-w-44',
+          td: 'min-w-44 max-w-80 align-top text-toned',
         },
       },
     })),
-    {
-      id: 'status',
-      header: 'Status',
-      accessorFn: (row: { index: number, issues: readonly SpreadsheetRowIssue[] }) =>
-        getRowStatus(row.index, row.issues).label,
-      cell: ({ row }: { row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } } }) => {
-        const status = getRowStatus(row.original.index, row.original.issues)
-        return h('div', { class: 'flex justify-end' }, [
-          h(UBadge, { color: status.color, variant: 'subtle', size: 'xs', icon: status.icon, class: 'font-mono' }, () => status.label),
-        ])
-      },
-      meta: {
-        class: {
-          th: 'w-36 text-right',
-          td: 'w-36',
-        },
-      },
-    },
   ])
 
   function inspectPrevIssueRow() {
@@ -380,8 +391,10 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     getIssueBadge,
     getIssueValueTone,
     getIssueValue,
+    getIssueRawValue,
     getRelatedIssueCount,
     getRowToneClass,
+    getRowStatus,
     setActiveTab,
     setIssueFilter,
     discardSelectedRows,

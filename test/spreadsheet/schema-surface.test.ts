@@ -69,4 +69,56 @@ describe('spreadsheet package surface', () => {
     expectTypeOf<SchemaContextData['products'][number]['name']>().toEqualTypeOf<string>()
     expectTypeOf<Row['productId']>().toEqualTypeOf<'prod_1' | undefined>()
   })
+
+  it('infers context-backed option columns without root-level getters', () => {
+    const context = [
+      {
+        key: 'products',
+        query: () =>
+          ({
+            queryKey: ['products', 'org_456'],
+            queryFn: async () => [
+              { id: 'prod_1', name: 'Demo product' },
+              { id: 'prod_2', name: 'Advanced product' },
+            ],
+          }) satisfies SpreadsheetQueryDefinition<readonly { id: string; name: string }[]>,
+      },
+    ] satisfies readonly [
+      SpreadsheetContextItem<'products', readonly { id: string; name: string }[]>,
+    ]
+
+    const schema = defineSpreadsheetSchema({
+      importKey: 'demo.option-import',
+      context,
+      columns: {
+        static: (column) => [
+          column.option('productId', {
+            match: {
+              headers: ['Product'],
+            },
+            options: {
+              resolve: ({ context }) => context.products,
+              optionLabel: product => product.name,
+              optionValue: product => product.id,
+            },
+          }),
+          column.option('selectedProductId', {
+            match: {
+              headers: ['Selected product'],
+            },
+            options: ({ context }) =>
+              context.products.map(product => ({
+                label: product.name,
+                value: product.id,
+              })),
+          }),
+        ],
+      },
+    })
+
+    type Row = ExtractSpreadsheetRow<typeof schema>
+
+    expectTypeOf<Row['productId']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<Row['selectedProductId']>().toEqualTypeOf<string | undefined>()
+  })
 })

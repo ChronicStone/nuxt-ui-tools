@@ -51,6 +51,15 @@ const variants = [
     tags: ['sheet rules', 'large dataset', '20% invalid', 'review stress'],
     to: '/spreadsheet/large-validation-lab',
   },
+  {
+    id: 'multi-value-lab',
+    title: 'Multi Value Lab',
+    description: 'A focused scenario for built-in static multiple columns with a mix of valid rows, array-level rule failures, and token parsing errors.',
+    summary: 'Use this route to validate how text, number, option, enum, and boolean multi-value cells behave in the full import pipeline. Seed workbook: 4 rows on Multi value import.',
+    icon: 'i-lucide-list-collapse',
+    tags: ['multiple columns', 'token parsing', 'array rules', 'context options'],
+    to: '/spreadsheet/multi-value-lab',
+  },
 ] as const
 </script>
 
