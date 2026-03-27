@@ -176,7 +176,6 @@ function createHappyPathSchema() {
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
           options: group => group.items.map(item => ({
             label: item.name,
@@ -186,7 +185,7 @@ function createHappyPathSchema() {
             mode: 'csv',
             separator: ',',
             resolve: 'label',
-            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
           output: {
             into: 'affiliations',

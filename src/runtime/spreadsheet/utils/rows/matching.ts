@@ -22,6 +22,8 @@ import {
   normalizeSpreadsheetText,
 } from './shared'
 
+const defaultHeaderModifiers = ['trim', 'case-insensitive', 'accent-insensitive'] as const
+
 function getDefaultMatchDefinition(column: SpreadsheetStaticColumn): SpreadsheetMatchDefinition {
   if (column.match) return column.match
 
@@ -29,13 +31,11 @@ function getDefaultMatchDefinition(column: SpreadsheetStaticColumn): Spreadsheet
   if (!from)
     return {
       headers: [column.key],
-      normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
       prefer: 'first',
     }
 
   return {
     headers: Array.isArray(from) ? from : [from],
-    normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
     prefer: 'first',
   }
 }
@@ -43,11 +43,10 @@ function getDefaultMatchDefinition(column: SpreadsheetStaticColumn): Spreadsheet
 function scoreHeaderMatcher(
   header: SpreadsheetHeaderCell,
   matcher: SpreadsheetHeaderMatcher,
-  normalize: readonly string[] | undefined,
 ) {
   if (typeof matcher === 'string') {
-    const left = applySpreadsheetNormalization(header.text, normalize)
-    const right = applySpreadsheetNormalization(matcher, normalize)
+    const left = applySpreadsheetNormalization(header.text, defaultHeaderModifiers)
+    const right = applySpreadsheetNormalization(matcher, defaultHeaderModifiers)
     return left === right ? 1 : null
   }
 
@@ -72,7 +71,7 @@ function findHeaderMatch(
     if (usedHeaderIndexes.has(header.index)) return []
 
     const scores = definition.headers
-      .map((matcher) => scoreHeaderMatcher(header, matcher, definition.normalize))
+      .map((matcher) => scoreHeaderMatcher(header, matcher))
       .filter((score): score is number => score !== null)
 
     if (!scores.length) return []
@@ -116,7 +115,6 @@ function createOptionGroupsMatchDefinition(
 ): SpreadsheetMatchDefinition {
   return {
     headers: getDynamicHeaderPatterns(column, source),
-    normalize: column.header?.normalize,
     prefer: 'first',
   }
 }

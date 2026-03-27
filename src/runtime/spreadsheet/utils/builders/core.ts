@@ -19,6 +19,7 @@ import type {
   SpreadsheetResolvedColumns,
   SpreadsheetBuildRowDefinition,
   SpreadsheetFieldRulesInput,
+  SpreadsheetModifier,
   SpreadsheetOptionItem,
 } from '../../types'
 import { resolveSpreadsheetRules } from '../validation'
@@ -188,7 +189,7 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
     mode: 'multiple'
     separator?: string
     matchBy: 'label' | 'value'
-    normalize?: readonly string[]
+    itemModifiers?: readonly SpreadsheetModifier[]
   }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'multiple'>
   function options<
     const TOption extends SpreadsheetOptionItem,
@@ -197,14 +198,14 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
     mode?: 'single'
     separator?: string
     matchBy: 'label' | 'value'
-    normalize?: readonly string[]
+    itemModifiers?: readonly SpreadsheetModifier[]
   }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'single'>
   function options<const TOption extends SpreadsheetOptionItem>(config: {
     from: readonly TOption[]
     mode?: 'single' | 'multiple'
     separator?: string
     matchBy: 'label' | 'value'
-    normalize?: readonly string[]
+    itemModifiers?: readonly SpreadsheetModifier[]
   }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'single' | 'multiple'> {
     if (config.mode === 'multiple')
       return {
@@ -213,7 +214,7 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
         mode: 'multiple',
         separator: config.separator,
         matchBy: config.matchBy,
-        normalize: config.normalize,
+        itemModifiers: config.itemModifiers,
       }
 
       return {
@@ -222,7 +223,7 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
         mode: 'single',
         separator: config.separator,
         matchBy: config.matchBy,
-        normalize: config.normalize,
+        itemModifiers: config.itemModifiers,
     }
   }
 
@@ -230,7 +231,7 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
     text(config = {}) {
       return {
         kind: 'text',
-        normalize: config.normalize,
+        modifiers: config.modifiers,
       }
     },
     number() {

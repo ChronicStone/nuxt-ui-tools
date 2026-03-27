@@ -81,6 +81,7 @@ When the spreadsheet cell text matches the option label or the option value, the
 ## Multiple Values In Static Columns
 
 Static column kinds support built-in multi-value parsing through `multiple`.
+Common normalization can be expressed with column `modifiers` and `multiple.itemModifiers`, so you only need `parse` for real escape-hatch logic.
 
 Validation rules use a local builder callback, so you do not import built-in spreadsheet rules in every schema. Reusable custom rules are created once with `createSheetRule(...)`.
 
@@ -94,10 +95,12 @@ const allPassing = createSheetRule<number[], [], {}>({
 })
 
 column.text('tags', {
+  modifiers: ['trim'],
   multiple: true,
 })
 
 column.number('scores', {
+  modifiers: ['trim'],
   multiple: {
     separator: ';',
   },
@@ -115,14 +118,17 @@ column.option('productIds', {
   multiple: {
     separator: ',',
     matchBy: 'label',
+    itemModifiers: ['trim', 'lowercase'],
   },
 })
 ```
 
 Behavior:
 
+- top-level `modifiers` run on the raw cell text before parsing
 - `multiple: true` uses `,` as the default separator
 - `multiple: { separator: ';' }` lets you change the token separator
+- `multiple.itemModifiers` runs on each split token after tokenization
 - `rules` stays singular and follows the final parsed value type such as `string[]`, `number[]`, or `ProductId[]`
 - built-in parsing validates each token by column kind, so invalid numbers, enums, or options produce row issues without needing a custom `parse`
 

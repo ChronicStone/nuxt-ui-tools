@@ -22,6 +22,14 @@ export interface SpreadsheetHeaderMatchInput {
   normalized: string
 }
 
+export type SpreadsheetModifier =
+  | 'trim'
+  | 'lowercase'
+  | 'uppercase'
+  | 'normalizeSpaces'
+  | 'accent-insensitive'
+  | 'case-insensitive'
+
 export type SpreadsheetHeaderMatcher =
   | string
   | RegExp
@@ -31,7 +39,6 @@ export type SpreadsheetHeaderMatcher =
 
 export interface SpreadsheetMatchDefinition {
   headers: readonly SpreadsheetHeaderMatcher[]
-  normalize?: readonly string[]
   prefer?: 'first' | 'best-score'
   minScore?: number
   required?: boolean

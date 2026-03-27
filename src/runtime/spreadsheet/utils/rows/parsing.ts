@@ -20,6 +20,7 @@ import {
   resolveSpreadsheetOptionEntries,
 } from '../options'
 import {
+  applySpreadsheetModifiers,
   applySpreadsheetNormalization,
   isSpreadsheetDynamicCollectionColumn,
   parseSpreadsheetCellValue,
@@ -44,13 +45,13 @@ function resolveOptionValue<TOption extends string | number | boolean | { label:
   const resolvedValues: unknown[] = []
 
   for (const token of tokens) {
-    const normalizedToken = applySpreadsheetNormalization(token, params.definition.normalize)
+    const normalizedToken = applySpreadsheetNormalization(token, params.definition.itemModifiers)
     const match = params.definition.from.find((option: TOption) => {
       const candidate = params.definition.matchBy === 'value'
         ? String(getSpreadsheetOptionValue(option) ?? '')
         : getSpreadsheetOptionLabel(option)
 
-      return applySpreadsheetNormalization(candidate, params.definition.normalize) === normalizedToken
+      return applySpreadsheetNormalization(candidate, params.definition.itemModifiers) === normalizedToken
     })
 
     if (!match) {
@@ -90,7 +91,8 @@ function resolveCollectionCellValue(params: {
   const text = String(params.raw ?? '').trim()
   if (!text) return undefined
 
-  if (valueDefinition.kind === 'text') return text
+  if (valueDefinition.kind === 'text')
+    return applySpreadsheetModifiers(text, valueDefinition.modifiers)
   if (valueDefinition.kind === 'number') return Number(text)
   if (valueDefinition.kind === 'date') return text
   if (valueDefinition.kind === 'boolean') return ['true', '1', 'yes'].includes(text.toLowerCase())
@@ -172,13 +174,13 @@ function resolveSpreadsheetDynamicCellValues(
   const resolvedValues: unknown[] = []
 
   for (const token of tokens) {
-    const normalizedToken = applySpreadsheetNormalization(token, valuesConfig.normalize)
+    const normalizedToken = applySpreadsheetNormalization(token, valuesConfig.itemModifiers)
     const match = options.find((option: unknown) => {
       const candidate = valuesConfig.resolve === 'label'
         ? getSpreadsheetOptionLabel(option)
         : String(getSpreadsheetOptionValue(option) ?? '')
 
-      return applySpreadsheetNormalization(candidate, valuesConfig.normalize) === normalizedToken
+      return applySpreadsheetNormalization(candidate, valuesConfig.itemModifiers) === normalizedToken
     })
 
     if (!match) {

@@ -6,6 +6,7 @@ import type {
 } from '../../types'
 import type {
   SpreadsheetCellValue,
+  SpreadsheetModifier,
   SpreadsheetRowIssue,
   SpreadsheetStaticColumn,
   SpreadsheetStaticColumnGroup,
@@ -31,7 +32,7 @@ export function normalizeSpreadsheetText(value: unknown) {
 
 export function applySpreadsheetNormalization(
   value: unknown,
-  normalize: readonly string[] | undefined,
+  normalize: readonly SpreadsheetModifier[] | undefined,
 ) {
   const nextValue = String(value ?? '').trim()
   if (!normalize?.length) return nextValue
@@ -46,6 +47,25 @@ export function applySpreadsheetNormalization(
   }, nextValue)
     .replace(/\s*\*\s*$/g, '')
     .replace(/\s*\(required\)\s*$/gi, '')
+}
+
+export function applySpreadsheetModifiers(
+  value: unknown,
+  modifiers: readonly string[] | undefined,
+) {
+  const nextValue = String(value ?? '')
+  if (!modifiers?.length) return nextValue
+
+  return modifiers.reduce((result, modifier) => {
+    if (modifier === 'trim') return result.trim()
+    if (modifier === 'lowercase' || modifier === 'case-insensitive') return result.toLowerCase()
+    if (modifier === 'uppercase') return result.toUpperCase()
+    if (modifier === 'normalizeSpaces') return result.replace(/\s+/g, ' ')
+    if (modifier === 'accent-insensitive')
+      return result.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+    return result
+  }, nextValue)
 }
 
 export function isSpreadsheetStaticColumn(value: unknown): value is SpreadsheetStaticColumn {
@@ -83,7 +103,7 @@ function resolveSpreadsheetColumnOptionEntries<TContext>(
 
 function resolveSpreadsheetMultipleConfig(
   multiple: SpreadsheetColumnDefinition['multiple'],
-) {
+): Exclude<SpreadsheetColumnDefinition['multiple'], boolean | undefined> | undefined {
   if (!multiple) return undefined
   if (multiple === true) return {}
 
@@ -144,15 +164,15 @@ function parseSpreadsheetEnumColumnValue<TContext>(
   if (!token) return undefined
 
   const multipleConfig = resolveSpreadsheetMultipleConfig(column.multiple)
-  const normalizedToken = multipleConfig?.normalize
-    ? applySpreadsheetNormalization(token, multipleConfig.normalize)
+  const normalizedToken = multipleConfig?.itemModifiers
+    ? applySpreadsheetNormalization(token, multipleConfig.itemModifiers)
     : token
 
   const match = column.options.find((option) => {
     const candidate = String(option)
-    if (!multipleConfig?.normalize) return candidate === token
+    if (!multipleConfig?.itemModifiers) return candidate === token
 
-    return applySpreadsheetNormalization(candidate, multipleConfig.normalize) === normalizedToken
+    return applySpreadsheetNormalization(candidate, multipleConfig.itemModifiers) === normalizedToken
   })
   if (match !== undefined) return match
 
@@ -183,8 +203,8 @@ function parseSpreadsheetOptionColumnValue<TContext>(
 
   const options = resolveSpreadsheetColumnOptionEntries(column.options, context)
   const multipleConfig = resolveSpreadsheetMultipleConfig(column.multiple)
-  const normalizedToken = multipleConfig?.normalize
-    ? applySpreadsheetNormalization(token, multipleConfig.normalize)
+  const normalizedToken = multipleConfig?.itemModifiers
+    ? applySpreadsheetNormalization(token, multipleConfig.itemModifiers)
     : token
   const match = options.find((option: unknown) => {
     const label = getSpreadsheetOptionLabel(option)
@@ -192,13 +212,13 @@ function parseSpreadsheetOptionColumnValue<TContext>(
     const by = multipleConfig?.matchBy
 
     if (by === 'label')
-      return (multipleConfig?.normalize
-        ? applySpreadsheetNormalization(label, multipleConfig.normalize)
+      return (multipleConfig?.itemModifiers
+        ? applySpreadsheetNormalization(label, multipleConfig.itemModifiers)
         : label) === normalizedToken
 
     if (by === 'value')
-      return (multipleConfig?.normalize
-        ? applySpreadsheetNormalization(String(value ?? ''), multipleConfig.normalize)
+      return (multipleConfig?.itemModifiers
+        ? applySpreadsheetNormalization(String(value ?? ''), multipleConfig.itemModifiers)
         : String(value ?? '')) === normalizedToken
 
     return token === label || token === String(value ?? '')
@@ -286,21 +306,35 @@ function parseSpreadsheetSingleBuiltInValue<TContext>(
   return token
 }
 
+function createSpreadsheetCellWithModifiers(
+  cell: SpreadsheetCellValue,
+  modifiers: readonly string[] | undefined,
+): SpreadsheetCellValue {
+  if (!modifiers?.length) return cell
+
+  return {
+    ...cell,
+    text: applySpreadsheetModifiers(cell.text, modifiers),
+  }
+}
+
 function parseSpreadsheetBuiltInCellValue<TContext>(
   column: SpreadsheetColumnDefinition<string, unknown, boolean, TContext>,
   cell: SpreadsheetCellValue,
   context: TContext,
   issues: SpreadsheetRowIssue[],
 ) {
+  const nextCell = createSpreadsheetCellWithModifiers(cell, column.modifiers)
   const multipleConfig = resolveSpreadsheetMultipleConfig(column.multiple)
   if (!multipleConfig)
-    return parseSpreadsheetSingleBuiltInValue(column, cell.text, cell, context, issues)
+    return parseSpreadsheetSingleBuiltInValue(column, nextCell.text, nextCell, context, issues)
 
-  if (!cell.text) return []
+  if (!nextCell.text) return []
 
-  return splitSpreadsheetMultipleTokens(cell.text, multipleConfig.separator)
+  return splitSpreadsheetMultipleTokens(nextCell.text, multipleConfig.separator)
     .flatMap((token) => {
-      const value = parseSpreadsheetSingleBuiltInValue(column, token, cell, context, issues)
+      const nextToken = applySpreadsheetModifiers(token, multipleConfig.itemModifiers)
+      const value = parseSpreadsheetSingleBuiltInValue(column, nextToken, nextCell, context, issues)
       return value === undefined ? [] : [value]
     })
 }
@@ -311,7 +345,8 @@ export async function parseSpreadsheetCellValue<TContext>(
   context: TContext,
   issues: SpreadsheetRowIssue[],
 ) {
-  const isEmpty = cell.text.trim() === ''
+  const nextCell = createSpreadsheetCellWithModifiers(cell, column.modifiers)
+  const isEmpty = nextCell.text.trim() === ''
 
   if (column.required && isEmpty) {
     issues.push({
@@ -327,7 +362,7 @@ export async function parseSpreadsheetCellValue<TContext>(
 
   try {
     const value = column.parse
-      ? await column.parse({ cell, context })
+      ? await column.parse({ cell: nextCell, context })
       : parseSpreadsheetBuiltInCellValue(column, cell, context, issues)
 
     const validationIssues = executeSpreadsheetRules({
