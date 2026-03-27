@@ -26,12 +26,12 @@ export default defineNuxtConfig({
     global: true,
   },
   i18n: {
+    vueI18n: './i18n.config.ts',
     defaultLocale: 'en',
     strategy: 'no_prefix',
-    langDir: 'locales',
     locales: [
-      { code: 'en', name: 'English', file: 'en.json' },
-      { code: 'fr', name: 'Français', file: 'fr.json' },
+      { code: 'en', name: 'English', language: 'en-US' },
+      { code: 'fr', name: 'Français', language: 'fr-FR' },
     ],
   },
   vite: {

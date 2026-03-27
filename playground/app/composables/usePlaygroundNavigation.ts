@@ -38,22 +38,23 @@ function fallbackTitle(path: string) {
 export function usePlaygroundNavigation() {
   const route = useRoute()
   const router = useRouter()
-  const localePath = useLocalePath()
-  const { t } = useI18n()
+  const { $i18n } = useNuxtApp()
+
+  console.info('i18n instance in usePlaygroundNavigation:', $i18n)
 
   const homeLink = computed(() => ({
-    label: t('nav.home'),
+    label: $i18n.t('nav.home'),
     icon: 'i-lucide-house',
-    to: localePath('/'),
+    to: '/',
   }))
 
   const pages = computed(() =>
     playgroundPages.map((page) => ({
       id: page.id,
-      label: t(page.labelKey),
-      description: t(page.descriptionKey),
+      label: $i18n.t(page.labelKey),
+      description: $i18n.t(page.descriptionKey),
       icon: page.icon,
-      to: localePath(page.path),
+      to: page.path,
     })),
   )
 
@@ -74,7 +75,7 @@ export function usePlaygroundNavigation() {
     },
     {
       id: 'components',
-      label: t('nav.components'),
+      label: $i18n.t('nav.components'),
       items: pages.value.map((page) => ({
         label: page.label,
         icon: page.icon,
