@@ -1,10 +1,13 @@
 import type {
+  CreateSpreadsheetRule,
   CreateSpreadsheetRuleReturn,
   SpreadsheetFieldRules,
+  SpreadsheetFieldRulesInput,
   SpreadsheetLazyMessage,
   SpreadsheetRule,
+  SpreadsheetRuleBuilder,
+  SpreadsheetRuleFlags,
   SpreadsheetRuleOverrides,
-  SpreadsheetSheetRules,
   SpreadsheetValidatorResult,
 } from '../../types/validation'
 
@@ -36,7 +39,9 @@ function createSpreadsheetRuleInstance<
   TValue,
   TParams extends unknown[],
   TMeta extends Record<string, unknown>,
+  TFlags extends SpreadsheetRuleFlags,
 >(options: {
+  flags?: TFlags
   name?: string
   validator: (value: TValue, ...params: TParams) => SpreadsheetValidatorResult<TMeta>
   params: TParams
@@ -44,6 +49,7 @@ function createSpreadsheetRuleInstance<
 }) {
   return {
     $rule: true,
+    flags: options.flags,
     name: options.name,
     level: 'error',
     validate(value) {
@@ -96,19 +102,22 @@ function createSpreadsheetRuleInstance<
           : messageResolver,
       }
     },
-  } satisfies SpreadsheetRule<TValue>
+  } satisfies SpreadsheetRule<TValue, TFlags>
 }
 
 function createRule<
   TValue,
   TParams extends unknown[],
   TMeta extends Record<string, unknown> = {},
+  TFlags extends SpreadsheetRuleFlags = {},
 >(options: {
+  flags?: TFlags
   name?: string
   validator: (value: TValue, ...params: TParams) => SpreadsheetValidatorResult<TMeta>
   message: SpreadsheetLazyMessage<TValue, TParams, TMeta>
-}): CreateSpreadsheetRuleReturn<TValue, TParams, TMeta>
+}): CreateSpreadsheetRuleReturn<TValue, TParams, TMeta, TFlags>
 function createRule(options: {
+  flags?: SpreadsheetRuleFlags
   name?: string
   validator: (value: unknown, ...params: unknown[]) => SpreadsheetValidatorResult<Record<string, unknown>>
   message: SpreadsheetLazyMessage<unknown, unknown[], Record<string, unknown>>
@@ -117,6 +126,7 @@ function createRule(options: {
     const { params, overrides } = resolveSpreadsheetRuleFactoryInput(input)
 
     return createSpreadsheetRuleInstance({
+      flags: options.flags,
       name: options.name,
       validator: options.validator,
       params,
@@ -151,11 +161,11 @@ function createNumericValueGuard(value: number) {
   return !Number.isNaN(value) && Number.isFinite(value)
 }
 
-export const sheetRules: SpreadsheetSheetRules = {
-  createRule,
+const createSpreadsheetRuleBuilder = () => ({
   validate,
-  required: createRule<unknown, [], {}>({
+  required: createRule<unknown, [], {}, { required: true }>({
     name: 'required',
+    flags: { required: true },
     validator: (value: unknown) => value != null && value !== '',
     message: () => 'This field is required',
   }),
@@ -225,23 +235,43 @@ export const sheetRules: SpreadsheetSheetRules = {
 
     return ruleFactory(values, overrides)
   },
+}) satisfies SpreadsheetRuleBuilder
+
+const spreadsheetRuleBuilder = createSpreadsheetRuleBuilder()
+
+export const createSheetRule = createRule as CreateSpreadsheetRule
+
+export function resolveSpreadsheetRules<TValue>(
+  rules: SpreadsheetFieldRulesInput<TValue> | undefined,
+) {
+  if (!rules) return []
+  if (typeof rules === 'function') return rules(spreadsheetRuleBuilder)
+  return rules
+}
+
+export function resolveSpreadsheetRelationRules<TRow, TValue>(params: {
+  row: TRow
+  rules: (rules: SpreadsheetRuleBuilder, row: TRow) => SpreadsheetFieldRules<TValue>
+}) {
+  return params.rules(spreadsheetRuleBuilder, params.row)
 }
 
 export function executeSpreadsheetRules<TValue>(params: {
   value: TValue
-  rules: SpreadsheetFieldRules<TValue> | undefined
+  rules: SpreadsheetFieldRulesInput<TValue> | undefined
 }) {
-  if (!params.rules) return []
+  const rules = resolveSpreadsheetRules(params.rules)
+  if (!rules.length) return []
 
-  return Object.entries(params.rules)
-    .flatMap(([ruleKey, rule]) => {
+  return rules
+    .flatMap((rule: SpreadsheetRule<TValue>, index: number) => {
       const result = rule.validate(params.value)
       if (result.$valid) return []
 
       return [{
-        ruleKey,
+        ruleKey: rule.name,
         level: rule.level,
-        code: rule.name ?? ruleKey,
+        code: rule.name ?? `rule.${index}`,
         message: result.$message ?? '',
       }]
     })

@@ -49,7 +49,7 @@ export function setupImports(runtimeDir: string) {
     ...withRuntime(runtimeDir, [
       { name: 'defineSpreadsheetSchema', from: 'spreadsheet/schema' },
       { name: 'useSpreadsheetImport', from: 'spreadsheet' },
-      { name: 'sheetRules', from: 'spreadsheet' },
+      { name: 'createSheetRule', from: 'spreadsheet' },
     ]),
   ])
 }

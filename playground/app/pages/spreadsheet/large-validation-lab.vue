@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker'
 import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
-import { sheetRules, useSpreadsheetImport } from '#ui-tools/spreadsheet'
+import { createSheetRule, useSpreadsheetImport } from '#ui-tools/spreadsheet'
 import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
@@ -49,13 +49,13 @@ type SpreadsheetAffiliationOption = {
   name: string
 }
 
-const batchCodeRule = sheetRules.createRule<string, [], {}>({
+const batchCodeRule = createSheetRule<string, [], {}>({
   name: 'batchCode',
   validator: value => !value.startsWith('_'),
   message: ({ value }) => `"${value}" cannot start with underscore`,
 })
 
-const centerMatchRule = sheetRules.createRule<string, [expectedId: string], {
+const centerMatchRule = createSheetRule<string, [expectedId: string], {
   expectedId: string
 }>({
   name: 'testCenterMatch',
@@ -66,7 +66,7 @@ const centerMatchRule = sheetRules.createRule<string, [expectedId: string], {
   message: ({ params: [expectedId] }) => `Row test center must be ${expectedId}`,
 })
 
-const scoreBandRule = sheetRules.createRule<number, [min: number, max: number], {
+const scoreBandRule = createSheetRule<number, [min: number, max: number], {
   min: number
   max: number
 }>({
@@ -93,88 +93,74 @@ function createLargeValidationSchema() {
       static: (column) => [
         column.text('testCenterId', {
           match: { headers: ['Test center ID'] },
-          rules: {
-            required: sheetRules.required(),
-            centerMatch: centerMatchRule(center.id),
-          },
+          rules: v => [
+            v.required(),
+            centerMatchRule(center.id),
+          ],
         }),
         column.text('secureCode', {
           match: { headers: ['Secure code'] },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('examNameRaw', {
           match: { headers: ['Exam name'] },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('firstName', {
           match: { headers: ['First name'] },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('lastName', {
           match: { headers: ['Last name'] },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.email('email', {
           match: { headers: ['Email'] },
           parse: ({ cell }) => cell.text.trim().toLowerCase(),
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.date('completionDate', {
           match: { headers: ['Completed date'] },
           parse: ({ cell }) => new Date(`${cell.text.trim()} UTC`).toISOString(),
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('status', {
           match: { headers: ['Status'] },
-          rules: {
-            required: sheetRules.required(),
-            allowedStatus: sheetRules.oneOf(['Done']),
-          },
+          rules: v => [
+            v.required(),
+            v.oneOf(['Done']),
+          ],
         }),
         column.text('country', {
           match: { headers: ['Tc country'] },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('batchName', {
           match: { headers: ['Batch'] },
-          rules: {
-            required: sheetRules.required(),
-            batchCode: batchCodeRule(),
-          },
+          rules: v => [
+            v.required(),
+            batchCodeRule(),
+          ],
         }),
         column.number('scores.general', {
           match: { headers: ['General score'] },
           parse: ({ cell }) => Number(cell.text.trim()),
-          rules: {
-            number: sheetRules.number({
+          rules: v => [
+            v.number({
               message: 'General score must be numeric',
             }),
-            scoreBand: scoreBandRule(0, 100),
-          },
+            scoreBandRule(0, 100),
+          ],
         }),
         column.number('scores.listening', {
           match: { headers: ['Listening score'] },
           parse: ({ cell }) => Number(cell.text.trim()),
-          rules: {
-            number: sheetRules.number({
+          rules: v => [
+            v.number({
               message: 'Listening score must be numeric',
             }),
-            scoreBand: scoreBandRule(0, 100),
-          },
+            scoreBandRule(0, 100),
+          ],
         }),
       ],
       dynamic: ({ dynamic }) => [
@@ -213,6 +199,18 @@ function createLargeValidationSchema() {
         optionValue: (product: SpreadsheetProduct) => product.id,
         optionLabel: (product: SpreadsheetProduct) => product.name,
       }),
+    ],
+  }).refine({
+    relations: [
+      {
+        column: 'scores.general',
+        condition: row => row.status === 'Done',
+        rules: v => [
+          v.required({
+            message: 'General score is required when status is Done',
+          }),
+        ],
+      },
     ],
   })
 }

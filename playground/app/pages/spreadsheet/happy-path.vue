@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { stringCodec, useQueryState } from '#ui-tools/query-state'
-import { sheetRules, useSpreadsheetImport } from '#ui-tools/spreadsheet'
+import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
 import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
@@ -79,30 +79,26 @@ function createHappyPathSchema() {
           match: {
             headers: ['Test center ID'],
           },
-          rules: {
-            required: sheetRules.required(),
-            centerMatch: sheetRules.validate({
+          rules: v => [
+            v.required(),
+            v.validate({
               name: 'testCenterMismatch',
               validator: (value: string) => value === center.id,
               message: 'Row test center does not match this playground.',
             }),
-          },
+          ],
         }),
         column.text('secureCode', {
           match: {
             headers: ['Secure code'],
           },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('examNameRaw', {
           match: {
             headers: ['Exam name'],
           },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.option('productId', {
           match: {
@@ -113,60 +109,46 @@ function createHappyPathSchema() {
             optionLabel: product => product.name,
             optionValue: product => product.id,
           },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('firstName', {
           match: {
             headers: ['First name'],
           },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('lastName', {
           match: {
             headers: ['Last name'],
           },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.email('email', {
           match: {
             headers: ['Email'],
           },
           parse: ({ cell }) => cell.text.trim().toLowerCase(),
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.date('completionDate', {
           match: {
             headers: ['Completed date'],
           },
           parse: ({ cell }) => new Date(`${cell.text.trim()} UTC`).toISOString(),
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.enum('status', {
           match: {
             headers: ['Status'],
           },
           options: ['Done'],
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('country', {
           match: {
             headers: ['Tc country'],
           },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('batchName', {
           match: {

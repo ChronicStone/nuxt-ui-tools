@@ -1,6 +1,7 @@
 import type {
   SpreadsheetParsedRow,
   SpreadsheetReferenceQueryRequest,
+  SpreadsheetRelationDefinition,
   SpreadsheetReferenceResolution,
   SpreadsheetResolvedReferenceRow,
   SpreadsheetRowIssue,
@@ -10,9 +11,21 @@ import {
   getSpreadsheetValueAtPath,
   setSpreadsheetValueAtPath,
 } from '../object'
+import { executeSpreadsheetRules, resolveSpreadsheetRelationRules } from '../validation/core'
 import { createSpreadsheetReferenceCandidates } from './candidates'
 import { isSpreadsheetReferenceDefinition } from './guards'
 import { collectSpreadsheetReferenceSources } from './sources'
+
+function isSpreadsheetRelationDefinition(
+  value: unknown,
+): value is SpreadsheetRelationDefinition<Record<string, unknown>> {
+  return value !== null
+    && typeof value === 'object'
+    && 'column' in value
+    && typeof value.column === 'string'
+    && 'rules' in value
+    && typeof value.rules === 'function'
+}
 
 export function createSpreadsheetReferenceResolutions(params: {
   references: readonly unknown[]
@@ -47,6 +60,7 @@ export function createSpreadsheetReferenceResolutions(params: {
 export function applySpreadsheetReferenceResolutions(params: {
   rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
   resolutions: readonly SpreadsheetReferenceResolution[]
+  relations?: readonly unknown[]
 }) {
   return params.rows.map<SpreadsheetResolvedReferenceRow<Record<string, unknown>>>((row) => {
     const data = cloneSpreadsheetRowData(row.data)
@@ -69,6 +83,30 @@ export function applySpreadsheetReferenceResolutions(params: {
         rowIndex: row.index,
         columnKey: resolution.outputField,
       })
+    }
+
+    for (const relation of params.relations ?? []) {
+      if (!isSpreadsheetRelationDefinition(relation)) continue
+      if (relation.condition && !relation.condition(data)) continue
+
+      const relationIssues = executeSpreadsheetRules({
+        value: getSpreadsheetValueAtPath(data, relation.column),
+        rules: resolveSpreadsheetRelationRules({
+          row: data,
+          rules: relation.rules,
+        }),
+      })
+
+      issues.push(...relationIssues.map((issue: {
+        ruleKey?: string
+        level: 'error' | 'warning' | 'info'
+        code: string
+        message: string
+      }) => ({
+        ...issue,
+        rowIndex: row.index,
+        columnKey: relation.column,
+      })))
     }
 
     return {

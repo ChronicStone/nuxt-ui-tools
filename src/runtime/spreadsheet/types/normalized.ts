@@ -29,6 +29,14 @@ type SchemaBuildRow<TSchema> = TSchema extends {
   ? TBuildRow
   : undefined
 
+type SchemaRelations<TSchema> = TSchema extends {
+  relations?: infer TRelations
+}
+  ? Exclude<TRelations, undefined> extends readonly unknown[]
+    ? Exclude<TRelations, undefined>
+    : readonly []
+  : readonly []
+
 export type SpreadsheetNormalizedStaticColumns<TSchema> = SpreadsheetResolvedColumns<
   SchemaColumns<TSchema>
 > extends {
@@ -61,6 +69,7 @@ export interface SpreadsheetNormalizedSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly SpreadsheetContextItem<string, unknown>[],
   TColumns = SpreadsheetNormalizedColumns,
   TReferences extends readonly unknown[] = readonly unknown[],
+  TRelations extends readonly unknown[] = readonly unknown[],
   TBuildRow = unknown,
 > {
   importKey: string
@@ -71,6 +80,7 @@ export interface SpreadsheetNormalizedSchema<
   context: TContextItems
   columns: TColumns
   references: TReferences
+  relations: TRelations
   buildRow?: TBuildRow
   review?: import('./schema').SpreadsheetReviewDefinition
 }
@@ -83,5 +93,6 @@ export type NormalizeSpreadsheetSchema<TSchema> = SpreadsheetNormalizedSchema<
     SpreadsheetNormalizedDynamicColumns<TSchema>
   >,
   SchemaReferences<TSchema>,
+  SchemaRelations<TSchema>,
   SchemaBuildRow<TSchema>
 >

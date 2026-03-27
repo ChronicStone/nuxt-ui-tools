@@ -78,13 +78,13 @@ const schema = defineSpreadsheetSchema({
   columns: {
     static: (column) => [
       column.text('testCenterId', {
-        required: true,
+        rules: v => [v.required()],
         match: {
           headers: ['Test center ID'],
         },
       }),
       column.text('examNameRaw', {
-        required: true,
+        rules: v => [v.required()],
         match: {
           headers: ['Exam name'],
         },

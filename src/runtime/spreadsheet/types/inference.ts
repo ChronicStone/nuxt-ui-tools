@@ -16,6 +16,7 @@ import type {
   SpreadsheetResolvedColumns,
 } from './columns'
 import type { InferSpreadsheetReferenceValue, SpreadsheetReferenceDefinition } from './references'
+import type { SpreadsheetFieldRules, SpreadsheetRule } from './validation'
 
 type IntersectionOrEmpty<TValue> = [TValue] extends [never] ? {} : UnionToIntersection<TValue>
 
@@ -39,13 +40,40 @@ type FlattenStaticColumns<TEntries> = TEntries extends readonly (infer TEntry)[]
     : TEntry
   : never
 
+type ColumnRulesOutput<TColumn> = TColumn extends {
+  __rulesInput?: infer TRules extends SpreadsheetFieldRules<any>
+}
+  ? TRules
+  : TColumn extends {
+  __rulesInput?: (...args: infer _Args) => infer TResult
+}
+    ? TResult
+    : TColumn extends {
+  rules?: (...args: infer _Args) => infer TResult
+}
+  ? TResult
+  : TColumn extends {
+    rules?: infer TRules extends SpreadsheetFieldRules<any>
+  }
+    ? TRules
+    : readonly []
+
+type HasRequiredRule<TRules> = TRules extends readonly SpreadsheetRule<any, any>[]
+  ? Extract<TRules[number], SpreadsheetRule<any, { required: true }>> extends never
+    ? false
+    : true
+  : false
+
 type StaticColumnOutput<TColumn> = TColumn extends SpreadsheetColumnDefinition<
   infer TKey,
   infer TValue,
   infer TRequired,
-  infer _TContext
+  infer _TContext,
+  infer _TRules
 >
   ? TRequired extends true
+    ? PathToObject<TKey, TValue>
+    : HasRequiredRule<ColumnRulesOutput<TColumn>> extends true
     ? PathToObject<TKey, TValue>
     : DeepPartial<PathToObject<TKey, TValue>>
   : never
@@ -175,6 +203,10 @@ export type SpreadsheetRowData<TColumns, TReferences = readonly []> = DeepPretti
 >
 
 type SchemaColumns<TSchema> = TSchema extends {
+  __columnsInput?: infer TColumns
+}
+  ? Exclude<TColumns, undefined>
+  : TSchema extends {
   columns?: infer TColumns
 }
   ? Exclude<TColumns, undefined>
@@ -200,3 +232,5 @@ export type ExtractSpreadsheetSubmitPayload<TSchema> = TSchema extends {
     ? SpreadsheetData<TSchema>
     : Awaited<TResult>
   : SpreadsheetData<TSchema>
+
+export type ExtractSpreadsheetValidationRow<TSchema> = ExtractSpreadsheetSubmitPayload<TSchema>
