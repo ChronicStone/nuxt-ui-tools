@@ -17,7 +17,7 @@ import type { useTablePagination } from './use-table-pagination'
 import type { useTableSelection } from './use-table-selection'
 import type { useTableState } from './use-table-state'
 
-export interface UseTableApiParams<TSchema = TableSchemaView> {
+export interface UseTableApiParams {
   runtimeSchema: ComputedRef<TableSchemaView>
   layout: ReturnType<typeof useTableLayout>
   state: ReturnType<typeof useTableState>
@@ -29,7 +29,7 @@ export interface UseTableApiParams<TSchema = TableSchemaView> {
 }
 
 export function useTableApi<TSchema = TableSchemaView>(
-  params: UseTableApiParams<TSchema>,
+  params: UseTableApiParams,
 ): TableApi<TSchema> {
   const state: TableApi<TSchema>['state'] = {
     layout: params.layout.activeLayout,
@@ -68,7 +68,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     },
   }
 
-  const layout: TableApi<TSchema>['layout'] = {
+  const layoutApi: TableApi<TSchema>['layout'] = {
     state: params.controls.layoutState,
     set: params.controls.setTableLayout,
   }
@@ -111,10 +111,10 @@ export function useTableApi<TSchema = TableSchemaView>(
   const reset: TableApi<TSchema>['reset'] = {
     query() {
       const defaultLayout = params.runtimeSchema.value.defaultLayout
-      const layout = defaultLayout ?? 'table'
-      const defaultSort = getDefaultSort({ schema: params.runtimeSchema.value, layout })
+      const nextLayout = defaultLayout ?? 'table'
+      const defaultSort = getDefaultSort({ schema: params.runtimeSchema.value, layout: nextLayout })
 
-      params.layout.activeLayout.value = layout
+      params.layout.activeLayout.value = nextLayout
       params.pagination.reset()
       params.columns.setSorting(defaultSort)
       params.state.queryState.filters.value = {
@@ -131,7 +131,7 @@ export function useTableApi<TSchema = TableSchemaView>(
   return {
     state,
     data,
-    layout,
+    layout: layoutApi,
     pagination,
     sorting,
     selection,

@@ -8,9 +8,6 @@ import type {
   SpreadsheetDynamicBuilder,
   SpreadsheetDynamicOptionsValueDefinition,
   SpreadsheetDynamicValueBuilder,
-  SpreadsheetDynamicOptionGroupsDefinition,
-  SpreadsheetEnumColumnMultipleOptions,
-  SpreadsheetEnumColumnOptions,
   SpreadsheetGroupBuilder,
   SpreadsheetOptionColumnMultipleOptions,
   SpreadsheetOptionColumnOptions,
@@ -392,7 +389,7 @@ export function defineSpreadsheetBuildRow<
   return buildRow
 }
 
-function isSpreadsheetReferenceResolver<TContext, TRow, TReferences>(
+function isSpreadsheetReferenceResolver<TRow, TReferences>(
   references:
     | TReferences
     | ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences)
@@ -404,18 +401,18 @@ function isSpreadsheetReferenceResolver<TContext, TRow, TReferences>(
 export function resolveSpreadsheetReferences<TReferences>(
   references: TReferences,
 ): TReferences
-export function resolveSpreadsheetReferences<TContext, TRow, TReferences>(
+export function resolveSpreadsheetReferences<TRow, TReferences>(
   references: ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences) | undefined,
 ): TReferences | undefined
-export function resolveSpreadsheetReferences<TContext, TRow, TReferences>(
+export function resolveSpreadsheetReferences<TRow, TReferences>(
   references:
     | TReferences
     | ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences)
     | undefined,
 ) {
   if (!references) return undefined
-  if (isSpreadsheetReferenceResolver<TContext, TRow, TReferences>(references))
-    return references(createSpreadsheetReferenceBuilder<TContext, TRow>())
+  if (isSpreadsheetReferenceResolver<TRow, TReferences>(references))
+    return references(createSpreadsheetReferenceBuilder<unknown, TRow>())
 
   return references
 }

@@ -62,9 +62,6 @@ export type SpreadsheetStaticColumnEntry =
   | SpreadsheetColumnDefinition<string, unknown, boolean, unknown>
   | SpreadsheetColumnGroupDefinition<string, readonly unknown[]>
 
-type InferColumnValue<TDefault, TParse> = TParse extends (...args: infer _Args) => infer TResult
-  ? Awaited<TResult>
-  : TDefault
 type ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple> =
   TParse extends (...args: infer _Args) => infer TResult
     ? Awaited<TResult>
@@ -411,10 +408,6 @@ export interface SpreadsheetDynamicValueBuilder {
   },
   ): SpreadsheetDynamicOptionsValueDefinition<TOption, TMode>
 }
-
-type SpreadsheetDynamicValueResolver<TValueDefinition extends SpreadsheetDynamicValueDefinition> =
-  | TValueDefinition
-  | ((value: SpreadsheetDynamicValueBuilder) => TValueDefinition)
 
 type SpreadsheetDynamicValueInput =
   | SpreadsheetDynamicValueDefinition

@@ -26,7 +26,7 @@ describe('spreadsheet package surface', () => {
   })
 
   it('supports schema sections without runtime implementation', () => {
-    const context = [
+    const contextItems = [
       {
         key: 'products',
         query: () =>
@@ -38,7 +38,7 @@ describe('spreadsheet package surface', () => {
     ] satisfies readonly SpreadsheetContextItem<string, unknown>[]
 
     type ContextData = ExtractSpreadsheetContextData<{
-      context: typeof context
+      context: typeof contextItems
     }>
 
     const columns = {
@@ -54,7 +54,7 @@ describe('spreadsheet package surface', () => {
 
     const schema = defineSpreadsheetSchema({
       importKey: 'demo.import',
-      context,
+      context: contextItems,
       columns,
       references: reference => [
         reference.select('productId', {
@@ -72,7 +72,7 @@ describe('spreadsheet package surface', () => {
   })
 
   it('infers context-backed option columns without root-level getters', () => {
-    const context = [
+    const contextItems = [
       {
         key: 'products',
         query: () =>
@@ -90,15 +90,15 @@ describe('spreadsheet package surface', () => {
 
     const schema = defineSpreadsheetSchema({
       importKey: 'demo.option-import',
-      context,
+      context: contextItems,
       columns: {
         static: (column) => [
           column.option('productId', {
             match: {
               headers: ['Product'],
             },
-            options: ({ context }) =>
-              context.products.map(product => ({
+            options: ({ context: queryContext }) =>
+              queryContext.products.map(product => ({
                 label: product.name,
                 value: product.id,
               })),
@@ -107,8 +107,8 @@ describe('spreadsheet package surface', () => {
             match: {
               headers: ['Selected product'],
             },
-            options: ({ context }) =>
-              context.products.map(product => ({
+            options: ({ context: queryContext }) =>
+              queryContext.products.map(product => ({
                 label: product.name,
                 value: product.id,
               })),

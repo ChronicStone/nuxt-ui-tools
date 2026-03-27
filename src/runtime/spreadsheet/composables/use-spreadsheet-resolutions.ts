@@ -63,13 +63,13 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
     unresolvedCount: unresolvedResolutions.value.length,
   }))
 
-  function selectResolution(params: {
+  function selectResolution(selection: {
     resolutionField: string
     sourceValue: string
     selectedValue: unknown
     selectedLabel: string
   }) {
-    const key = `${params.resolutionField}::${params.sourceValue}`
+    const key = `${selection.resolutionField}::${selection.sourceValue}`
     const current = resolutions.value.find((resolution) => createResolutionId(resolution) === key)
     if (!current) return
 
@@ -78,17 +78,17 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
       [key]: {
         ...current,
         status: 'matched',
-        selectedValue: params.selectedValue,
-        selectedLabel: params.selectedLabel,
+        selectedValue: selection.selectedValue,
+        selectedLabel: selection.selectedLabel,
       },
     }
   }
 
-  function clearResolution(params: {
+  function clearResolution(selection: {
     resolutionField: string
     sourceValue: string
   }) {
-    const key = `${params.resolutionField}::${params.sourceValue}`
+    const key = `${selection.resolutionField}::${selection.sourceValue}`
     const nextSelections = { ...manualSelections.value }
     delete nextSelections[key]
     manualSelections.value = nextSelections
@@ -108,25 +108,25 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
     selectResolution,
     clearResolution,
     referenceDefinitions: resolutionDefinitions,
-    selectReference: (params: {
+    selectReference: (selection: {
       referenceField: string
       sourceValue: string
       selectedValue: unknown
       selectedLabel: string
     }) =>
       selectResolution({
-        resolutionField: params.referenceField,
-        sourceValue: params.sourceValue,
-        selectedValue: params.selectedValue,
-        selectedLabel: params.selectedLabel,
+        resolutionField: selection.referenceField,
+        sourceValue: selection.sourceValue,
+        selectedValue: selection.selectedValue,
+        selectedLabel: selection.selectedLabel,
       }),
-    clearReference: (params: {
+    clearReference: (selection: {
       referenceField: string
       sourceValue: string
     }) =>
       clearResolution({
-        resolutionField: params.referenceField,
-        sourceValue: params.sourceValue,
+        resolutionField: selection.referenceField,
+        sourceValue: selection.sourceValue,
       }),
   }
 }

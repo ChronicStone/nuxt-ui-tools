@@ -8,7 +8,6 @@ import type {
   GenericObject,
   TableLayout,
   TableSchemaView,
-  TableSortingDirection,
 } from '../../types'
 
 export const SELECT_COLUMN_ID = '__select'

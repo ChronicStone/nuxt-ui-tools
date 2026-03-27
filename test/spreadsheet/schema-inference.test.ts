@@ -32,7 +32,7 @@ const affiliationGroups = [
   },
 ] satisfies readonly DemoAffiliationGroup[]
 
-const context = [
+const contextItems = [
   {
     key: 'affiliationGroups',
     query: () =>
@@ -70,7 +70,7 @@ const context = [
 
 const schema = defineSpreadsheetSchema({
   importKey: 'assessment.results',
-  context,
+  context: contextItems,
   file: {
     accept: ['.xlsx'],
     maxRecords: 100,
@@ -98,8 +98,8 @@ const schema = defineSpreadsheetSchema({
         },
       }),
       column.option('productIds', {
-        options: ({ context }) =>
-          context.products.map(product => ({
+        options: ({ context: queryContext }) =>
+          queryContext.products.map(product => ({
             label: product.name,
             value: product.id,
           })),
