@@ -64,8 +64,7 @@ const canGoNext = computed(() => {
   if (activeStep.value === 'upload') return hasWorkbook.value
   if (activeStep.value === 'structure') return hasWorkbook.value && hasHeaders.value
   if (activeStep.value === 'matching') return hasWorkbook.value && hasHeaders.value
-  if (activeStep.value === 'references')
-    return props.spreadsheet.unresolvedReferenceResolutions.value.length === 0
+  if (activeStep.value === 'references') return hasWorkbook.value && hasHeaders.value
   return false
 })
 const fileName = computed(() => props.spreadsheet.workbook.value?.fileName)
@@ -104,7 +103,7 @@ const actionHint = computed(() => {
     return 'Click on a row to change the header position'
 
   if (activeStep.value === 'references')
-    return 'Resolve all values in each column to continue'
+    return 'Resolve what you can here, then review row validity in the next step'
 
   return undefined
 })

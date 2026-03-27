@@ -3,6 +3,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import {
   applySpreadsheetReferenceResolutions,
+  createSheetRule,
   createSpreadsheetReferenceCandidates,
   createSpreadsheetReferenceQueryRequests,
   createSpreadsheetReferenceResolutions,
@@ -109,6 +110,7 @@ describe('spreadsheet reference utils', () => {
   it('applies reference selections back onto all matching rows', () => {
     const resolvedRows = applySpreadsheetReferenceResolutions({
       rows,
+      references,
       resolutions: [
         {
           referenceField: 'productId',
@@ -139,12 +141,7 @@ describe('spreadsheet reference utils', () => {
         id: 'prod_1',
       },
     })
-    expect(resolvedRows[2]?.issues).toEqual([
-      expect.objectContaining({
-        code: 'reference.unresolved',
-        columnKey: 'product.id',
-      }),
-    ])
+    expect(resolvedRows[2]?.issues).toEqual([])
   })
 
   it('creates query requests for unresolved references with remote targets', () => {
@@ -196,6 +193,7 @@ describe('spreadsheet reference utils', () => {
 
     const resolvedRows = applySpreadsheetReferenceResolutions({
       rows: multiRows,
+      references: multiReferences,
       resolutions,
     })
 
@@ -203,6 +201,70 @@ describe('spreadsheet reference utils', () => {
       examNamesRaw: ['Business English 4 Skills', 'Reading Placement Test'],
       productIds: ['prod_1', 'prod_2'],
     })
+  })
+
+  it('lets unresolved references pass unless reference rules invalidate the row', () => {
+    const requiredReference = createSheetRule<unknown, [], { required: true }, { required: true }>({
+      name: 'requiredReference',
+      flags: { required: true },
+      validator: value => ({
+        $valid: Boolean(value),
+        required: true,
+      }),
+      message: 'Product reference is required',
+    })
+
+    const referenceDefinitions = [
+      {
+        kind: 'select',
+        field: 'productId',
+        source: 'examNameRaw',
+        options: productOptions,
+      },
+      {
+        kind: 'select',
+        field: 'requiredProductId',
+        source: 'examNameRaw',
+        options: productOptions,
+        rules: [requiredReference()],
+      },
+    ] satisfies readonly SpreadsheetReferenceDefinition[]
+
+    const unresolvedRows = applySpreadsheetReferenceResolutions({
+      rows,
+      references: referenceDefinitions,
+      resolutions: [
+        {
+          referenceField: 'productId',
+          sourceField: 'examNameRaw',
+          outputField: 'productId',
+          sourceValue: 'Unknown External Product',
+          rowIndexes: [2],
+          status: 'unresolved',
+          candidates: [],
+        },
+        {
+          referenceField: 'requiredProductId',
+          sourceField: 'examNameRaw',
+          outputField: 'requiredProductId',
+          sourceValue: 'Unknown External Product',
+          rowIndexes: [2],
+          status: 'unresolved',
+          candidates: [],
+        },
+      ],
+    })
+
+    expect(unresolvedRows[2]?.data).toMatchObject({
+      examNameRaw: 'Unknown External Product',
+    })
+    expect(unresolvedRows[2]?.issues).toEqual([
+      expect.objectContaining({
+        code: 'requiredReference',
+        columnKey: 'requiredProductId',
+        message: 'Product reference is required',
+      }),
+    ])
   })
 
   it('orchestrates auto and manual selections in the reference composable', () => {

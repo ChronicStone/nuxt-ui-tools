@@ -63,6 +63,7 @@ export function createSpreadsheetReferenceResolutions(params: {
 
 export function applySpreadsheetReferenceResolutions(params: {
   rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
+  references: readonly unknown[]
   resolutions: readonly SpreadsheetReferenceResolution[]
   relations?: readonly unknown[]
 }) {
@@ -96,19 +97,31 @@ export function applySpreadsheetReferenceResolutions(params: {
           }
           continue
         }
-
-        issues.push({
-          level: 'error',
-          code: 'reference.unresolved',
-          message: `Unresolved reference "${sourceValue}"`,
-          rowIndex: row.index,
-          columnKey: resolution.outputField,
-        })
       }
     }
 
     for (const [outputField, values] of multiValueOutputs.entries())
       setSpreadsheetValueAtPath(data, outputField, values)
+
+    for (const reference of params.references) {
+      if (!isSpreadsheetReferenceDefinition(reference)) continue
+
+      const referenceIssues = executeSpreadsheetRules({
+        value: getSpreadsheetValueAtPath(data, reference.field),
+        rules: reference.rules,
+      })
+
+      issues.push(...referenceIssues.map((issue: {
+        ruleKey?: string
+        level: 'error' | 'warning' | 'info'
+        code: string
+        message: string
+      }) => ({
+        ...issue,
+        rowIndex: row.index,
+        columnKey: reference.field,
+      })))
+    }
 
     for (const relation of params.relations ?? []) {
       if (!isSpreadsheetRelationDefinition(relation)) continue

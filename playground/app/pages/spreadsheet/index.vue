@@ -27,6 +27,12 @@ const variants = [
     to: '/spreadsheet/multi-reference-lab',
   },
   {
+    id: 'reference-rules-lab',
+    title: 'Reference Rules Lab',
+    description: 'Unresolved references can continue; reference rules decide review validity.',
+    to: '/spreadsheet/reference-rules-lab',
+  },
+  {
     id: 'structure-stress',
     title: 'Structure Stress Test',
     description: 'Large workbook and structural edge cases.',
