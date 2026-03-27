@@ -45,6 +45,21 @@ export function getSpreadsheetObjectKeys(value: unknown) {
   return getSpreadsheetObjectEntries(value).map(([key]) => key)
 }
 
+export function getSpreadsheetLeafPaths(value: unknown, prefix = ''): string[] {
+  if (!isSpreadsheetRecord(value)) return prefix ? [prefix] : []
+
+  const entries = getSpreadsheetObjectEntries(value)
+  if (!entries.length) return prefix ? [prefix] : []
+
+  return entries.flatMap(([key, entryValue]) => {
+    const nextPath = prefix ? `${prefix}.${key}` : key
+    if (isSpreadsheetRecord(entryValue))
+      return getSpreadsheetLeafPaths(entryValue, nextPath)
+
+    return [nextPath]
+  })
+}
+
 export function cloneSpreadsheetRowData(data: Record<string, unknown>) {
   return structuredClone(data)
 }

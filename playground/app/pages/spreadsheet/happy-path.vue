@@ -104,11 +104,11 @@ function createHappyPathSchema() {
           match: {
             headers: ['Product'],
           },
-          options: {
-            resolve: ({ context }) => context.products,
-            optionLabel: product => product.name,
-            optionValue: product => product.id,
-          },
+          options: ({ context }) =>
+            context.products.map(product => ({
+              label: product.name,
+              value: product.id,
+            })),
           rules: v => [v.required()],
         }),
         column.text('firstName', {
@@ -178,11 +178,10 @@ function createHappyPathSchema() {
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
             normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
-          options: {
-            resolve: (group) => group.items,
-            optionLabel: (item) => item.name,
-            optionValue: (item) => item.id,
-          },
+          options: group => group.items.map(item => ({
+            label: item.name,
+            value: item.id,
+          })),
           values: {
             mode: 'csv',
             separator: ',',

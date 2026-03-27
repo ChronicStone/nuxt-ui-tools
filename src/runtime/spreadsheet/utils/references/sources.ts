@@ -4,6 +4,20 @@ import type {
 import { getSpreadsheetValueAtPath } from '../object'
 import { isSpreadsheetReferenceDefinition } from './guards'
 
+export function collectSpreadsheetReferenceTokens(value: unknown) {
+  const items = Array.isArray(value) ? value : [value]
+  const tokens: string[] = []
+
+  for (const item of items) {
+    const token = String(item ?? '').trim()
+    if (!token) continue
+    if (tokens.includes(token)) continue
+    tokens.push(token)
+  }
+
+  return tokens
+}
+
 export function collectSpreadsheetReferenceSources(
   references: readonly unknown[],
   rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[],
@@ -16,11 +30,10 @@ export function collectSpreadsheetReferenceSources(
 
     for (const row of rows) {
       const rawValue = getSpreadsheetValueAtPath(row.data, reference.source)
-      const sourceValue = String(rawValue ?? '').trim()
-      if (!sourceValue) continue
-
-      const rowIndexes = entries.get(sourceValue) ?? []
-      entries.set(sourceValue, [...rowIndexes, row.index])
+      for (const sourceValue of collectSpreadsheetReferenceTokens(rawValue)) {
+        const rowIndexes = entries.get(sourceValue) ?? []
+        entries.set(sourceValue, [...rowIndexes, row.index])
+      }
     }
 
     return [{

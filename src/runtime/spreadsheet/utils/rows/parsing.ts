@@ -14,15 +14,19 @@ import type {
   SpreadsheetRowIssue,
 } from '../../types'
 import { setSpreadsheetValueAtPath } from '../object'
-import { isSpreadsheetRecord } from '../object'
+import {
+  getSpreadsheetOptionLabel,
+  getSpreadsheetOptionValue,
+  resolveSpreadsheetOptionEntries,
+} from '../options'
 import {
   applySpreadsheetNormalization,
   isSpreadsheetDynamicCollectionColumn,
   parseSpreadsheetCellValue,
 } from './shared'
 
-function resolveOptionValue<TOption>(params: {
-  definition: SpreadsheetDynamicOptionsValueDefinition<TOption, unknown, 'single' | 'multiple'>
+function resolveOptionValue<TOption extends string | number | boolean | { label: string, value: unknown }>(params: {
+  definition: SpreadsheetDynamicOptionsValueDefinition<TOption, 'single' | 'multiple'>
   raw: unknown
   issues: SpreadsheetRowIssue[]
   rowIndex: number
@@ -41,20 +45,10 @@ function resolveOptionValue<TOption>(params: {
 
   for (const token of tokens) {
     const normalizedToken = applySpreadsheetNormalization(token, params.definition.normalize)
-    const match = params.definition.from.find((option) => {
+    const match = params.definition.from.find((option: TOption) => {
       const candidate = params.definition.matchBy === 'value'
-        ? String(
-            params.definition.optionValue
-              ? params.definition.optionValue(option)
-              : isSpreadsheetRecord(option)
-                ? option.value
-                : '',
-          )
-        : params.definition.optionLabel
-          ? params.definition.optionLabel(option)
-          : isSpreadsheetRecord(option) && typeof option.label === 'string'
-            ? option.label
-            : ''
+        ? String(getSpreadsheetOptionValue(option) ?? '')
+        : getSpreadsheetOptionLabel(option)
 
       return applySpreadsheetNormalization(candidate, params.definition.normalize) === normalizedToken
     })
@@ -72,9 +66,7 @@ function resolveOptionValue<TOption>(params: {
       continue
     }
 
-    const value = params.definition.optionValue
-      ? params.definition.optionValue(match)
-      : getSpreadsheetRecordValue(match)
+    const value = getSpreadsheetOptionValue(match)
 
     if (value === undefined) continue
     resolvedValues.push(value)
@@ -82,11 +74,6 @@ function resolveOptionValue<TOption>(params: {
 
   if (params.definition.mode === 'multiple') return resolvedValues
   return resolvedValues[0]
-}
-
-function getSpreadsheetRecordValue(value: unknown) {
-  if (!isSpreadsheetRecord(value)) return undefined
-  return value.value
 }
 
 function resolveCollectionCellValue(params: {
@@ -181,15 +168,15 @@ function resolveSpreadsheetDynamicCellValues(
     ? text.split(valuesConfig.separator ?? ',').map((entry) => entry.trim()).filter(Boolean)
     : [text]
 
-  const options = optionsConfig.resolve(source)
+  const options = resolveSpreadsheetOptionEntries(optionsConfig, source)
   const resolvedValues: unknown[] = []
 
   for (const token of tokens) {
     const normalizedToken = applySpreadsheetNormalization(token, valuesConfig.normalize)
-    const match = options.find((option) => {
+    const match = options.find((option: unknown) => {
       const candidate = valuesConfig.resolve === 'label'
-        ? optionsConfig.optionLabel(option)
-        : String(optionsConfig.optionValue(option))
+        ? getSpreadsheetOptionLabel(option)
+        : String(getSpreadsheetOptionValue(option) ?? '')
 
       return applySpreadsheetNormalization(candidate, valuesConfig.normalize) === normalizedToken
     })
@@ -207,7 +194,7 @@ function resolveSpreadsheetDynamicCellValues(
       continue
     }
 
-    resolvedValues.push(optionsConfig.optionValue(match))
+    resolvedValues.push(getSpreadsheetOptionValue(match))
   }
 
   return resolvedValues

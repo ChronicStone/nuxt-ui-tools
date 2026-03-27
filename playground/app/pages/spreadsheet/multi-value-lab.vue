@@ -99,11 +99,11 @@ function createMultiValueSchema() {
           match: {
             headers: ['Products'],
           },
-          options: {
-            resolve: ({ context }) => context.products,
-            optionLabel: product => product.name,
-            optionValue: product => product.id,
-          },
+          options: ({ context }) =>
+            context.products.map(product => ({
+              label: product.name,
+              value: product.id,
+            })),
           multiple: {
             separator: ',',
             matchBy: 'label',

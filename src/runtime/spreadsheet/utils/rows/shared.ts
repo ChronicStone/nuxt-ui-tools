@@ -11,6 +11,11 @@ import type {
   SpreadsheetStaticColumnGroup,
 } from '../../types'
 import { isSpreadsheetRecord } from '../object'
+import {
+  getSpreadsheetOptionLabel,
+  getSpreadsheetOptionValue,
+  resolveSpreadsheetOptionEntries,
+} from '../options'
 import { executeSpreadsheetRules } from '../validation'
 
 export function normalizeSpreadsheetText(value: unknown) {
@@ -69,53 +74,11 @@ export function isSpreadsheetDynamicCollectionItem(
   return isSpreadsheetRecord(value) && 'id' in value && 'match' in value && 'value' in value
 }
 
-function isSpreadsheetOptionResolver(value: unknown): value is (params: {
-  context: unknown
-}) => readonly unknown[] {
-  return typeof value === 'function'
-}
-
-function isSpreadsheetOptionConfig(value: unknown): value is {
-  resolve: readonly unknown[] | ((params: { context: unknown }) => readonly unknown[])
-  optionLabel?: (option: unknown) => string
-  optionValue?: (option: unknown) => unknown
-} {
-  return isSpreadsheetRecord(value) && 'resolve' in value
-}
-
 function resolveSpreadsheetColumnOptionEntries<TContext>(
   options: unknown,
   context: TContext,
 ) {
-  if (Array.isArray(options)) return options
-  if (isSpreadsheetOptionResolver(options)) return options({ context })
-  if (!isSpreadsheetOptionConfig(options)) return []
-  if (Array.isArray(options.resolve)) return options.resolve
-  if (isSpreadsheetOptionResolver(options.resolve)) return options.resolve({ context })
-
-  return []
-}
-
-function resolveSpreadsheetColumnOptionLabel(
-  option: unknown,
-  options: unknown,
-) {
-  if (isSpreadsheetOptionConfig(options) && options.optionLabel)
-    return options.optionLabel(option)
-  if (!isSpreadsheetRecord(option) || typeof option.label !== 'string') return ''
-
-  return option.label
-}
-
-function resolveSpreadsheetColumnOptionValue(
-  option: unknown,
-  options: unknown,
-) {
-  if (isSpreadsheetOptionConfig(options) && options.optionValue)
-    return options.optionValue(option)
-  if (!isSpreadsheetRecord(option) || !('value' in option)) return undefined
-
-  return option.value
+  return resolveSpreadsheetOptionEntries(options, { context })
 }
 
 function resolveSpreadsheetMultipleConfig(
@@ -223,9 +186,9 @@ function parseSpreadsheetOptionColumnValue<TContext>(
   const normalizedToken = multipleConfig?.normalize
     ? applySpreadsheetNormalization(token, multipleConfig.normalize)
     : token
-  const match = options.find((option) => {
-    const label = resolveSpreadsheetColumnOptionLabel(option, column.options)
-    const value = resolveSpreadsheetColumnOptionValue(option, column.options)
+  const match = options.find((option: unknown) => {
+    const label = getSpreadsheetOptionLabel(option)
+    const value = getSpreadsheetOptionValue(option)
     const by = multipleConfig?.matchBy
 
     if (by === 'label')
@@ -255,7 +218,7 @@ function parseSpreadsheetOptionColumnValue<TContext>(
     return undefined
   }
 
-  return resolveSpreadsheetColumnOptionValue(match, column.options)
+  return getSpreadsheetOptionValue(match)
 }
 
 function isSpreadsheetEnumColumn<TContext>(

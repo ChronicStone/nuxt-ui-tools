@@ -2,7 +2,7 @@ import type {
   SpreadsheetReferenceCandidate,
   SpreadsheetReferenceDefinition,
 } from '../../types'
-import { isSpreadsheetRecord } from '../object'
+import { getSpreadsheetOptionLabel, getSpreadsheetOptionValue } from '../options'
 import { scoreSpreadsheetReferenceCandidate } from './shared'
 
 export function createSpreadsheetReferenceCandidates(params: {
@@ -12,25 +12,15 @@ export function createSpreadsheetReferenceCandidates(params: {
 }) {
   return params.options
     .flatMap<SpreadsheetReferenceCandidate>((option) => {
-      if (params.reference.optionValue && params.reference.optionLabel) {
-        const label = params.reference.optionLabel(option)
-        return [{
-          value: params.reference.optionValue(option),
-          label,
-          option,
-          score: scoreSpreadsheetReferenceCandidate(params.sourceValue, label),
-        }]
-      }
-
-      if (!isSpreadsheetRecord(option)) return []
-      if (typeof option.label !== 'string') return []
-      if (!('value' in option)) return []
+      const label = getSpreadsheetOptionLabel(option)
+      const value = getSpreadsheetOptionValue(option)
+      if (!label || value === undefined) return []
 
       return [{
-        value: option.value,
-        label: option.label,
+        value,
+        label,
         option,
-        score: scoreSpreadsheetReferenceCandidate(params.sourceValue, option.label),
+        score: scoreSpreadsheetReferenceCandidate(params.sourceValue, label),
       }]
     })
     .sort((left, right) => {

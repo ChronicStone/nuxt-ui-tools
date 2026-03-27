@@ -6,6 +6,7 @@ import { computed } from 'vue'
 import { useSpreadsheetReview } from '../../composables/use-spreadsheet-review'
 import type { SpreadsheetRowIssue } from '../../types'
 import type { SpreadsheetComponentApi } from '../types'
+import TableEmptyState from '../../../table/components/table/TableEmptyState.vue'
 import SpreadsheetReviewInspection from './review/SpreadsheetReviewInspection.vue'
 import SpreadsheetReviewOverflowAlert from './review/SpreadsheetReviewOverflowAlert.vue'
 import SpreadsheetReviewStats from './review/SpreadsheetReviewStats.vue'
@@ -41,10 +42,16 @@ const review = useSpreadsheetReview({
   resolvedRows: computed(() => props.spreadsheet.resolvedRows.value),
   maxRecords,
 })
+const tableHasRows = computed(() => review.visibleRows.value.length > 0)
+
+const summaryLimitText = computed(() => {
+  if (!Number.isFinite(maxRecords.value)) return undefined
+  return `Import limit: ${Math.min(props.spreadsheet.resolvedRows.value.length, maxRecords.value)} of ${props.spreadsheet.resolvedRows.value.length}`
+})
 </script>
 
 <template>
-  <div class="grid gap-5" :class="review.inspectedRow.value ? '' : 'grid-rows-[auto_auto_minmax(0,1fr)] min-h-full'">
+  <div class="grid min-h-0 h-full gap-4">
     <SpreadsheetReviewOverflowAlert
       v-if="review.hasOverflow.value"
       :review-rows-length="props.spreadsheet.resolvedRows.value.length"
@@ -52,8 +59,6 @@ const review = useSpreadsheetReview({
       :overflow-count="review.overflowCount.value"
       @auto-trim="review.setActiveTab('discarded')"
     />
-
-    <SpreadsheetReviewStats :items="review.stats.value" />
 
     <SpreadsheetReviewInspection
       v-if="review.inspectedRow.value"
@@ -79,84 +84,107 @@ const review = useSpreadsheetReview({
       @show-issue-rows="review.setActiveTab('invalid'); review.closeInspection()"
     />
 
-    <div v-else class="grid min-h-[24rem] overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_auto_minmax(0,1fr)]">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-default/70 px-5 pt-2">
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            v-for="item in review.tabItems.value"
-            :key="item.key"
-            type="button"
-            class="border-b-2 px-4 py-3 text-sm transition-colors"
-            :class="review.activeTab.value === item.key
-              ? 'border-highlighted font-semibold text-highlighted'
-              : 'border-transparent text-muted hover:text-toned'"
-            @click="review.setActiveTab(item.key)"
+    <div v-else class="grid min-h-0 h-full gap-4 grid-rows-[minmax(0,1fr)_auto]">
+      <div class="grid min-h-0 h-full overflow-hidden rounded-[4px] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
+        <div class="grid gap-0">
+          <div class="flex min-h-11 flex-wrap items-center justify-between gap-2 border-b border-default/70 px-4">
+            <div class="flex min-w-0 items-center gap-1">
+              <button
+                v-for="item in review.tabItems.value"
+                :key="item.key"
+                type="button"
+                class="h-10 border-b-2 px-3 text-[12px] font-medium transition-colors"
+                :class="review.activeTab.value === item.key
+                  ? 'border-highlighted text-highlighted'
+                  : 'border-transparent text-muted hover:text-toned'"
+                @click="review.setActiveTab(item.key)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button
+                v-for="item in review.issueFilterItems.value"
+                :key="item.key"
+                type="button"
+                class="rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors"
+                :class="review.issueFilter.value === item.key
+                  ? 'bg-elevated text-highlighted'
+                  : 'text-muted hover:bg-elevated/60 hover:text-toned'"
+                :disabled="review.activeTab.value === 'valid' || review.activeTab.value === 'discarded'"
+                @click="review.setIssueFilter(item.key)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-if="review.selectedRowIndexes.value.length"
+            class="flex min-h-10 flex-wrap items-center gap-2 border-b border-default/70 bg-elevated/35 px-4 py-1.5"
           >
-            {{ item.label }}
-          </button>
+            <span class="font-mono text-[11px] text-muted">
+              {{ review.selectedRowIndexes.value.length }} selected
+            </span>
+            <UButton
+              color="error"
+              variant="outline"
+              size="xs"
+              icon="i-lucide-trash-2"
+              label="Discard"
+              :disabled="!review.canDiscardSelection.value"
+              @click="review.discardSelectedRows"
+            />
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="xs"
+              icon="i-lucide-undo-2"
+              label="Restore"
+              :disabled="!review.canRestoreSelection.value"
+              @click="review.restoreSelectedRows"
+            />
+          </div>
         </div>
 
-        <div v-if="review.selectedRowIndexes.value.length" class="flex flex-wrap items-center gap-2 pb-2">
-          <span class="font-mono text-sm text-muted">
-            {{ review.selectedRowIndexes.value.length }} selected
-          </span>
-          <UButton
-            color="error"
-            variant="outline"
-            size="xs"
-            icon="i-lucide-trash-2"
-            label="Discard selected"
-            :disabled="!review.canDiscardSelection.value"
-            @click="review.discardSelectedRows"
+        <div class="relative min-h-0 h-full overflow-hidden border-t border-default/70">
+          <UTable
+            :data="review.visibleRows.value"
+            :columns="review.reviewTableColumns.value"
+            :row-selection="review.rowSelection.value"
+            :get-row-id="row => String(row.index)"
+            sticky="header"
+            class="h-full min-h-0"
+            :on-select="(_event, row) => review.inspectRow(row.original.index)"
+            :meta="{
+              class: {
+                tr: (row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } }) => review.getRowToneClass(row.original),
+              },
+            }"
+            :ui="{
+              root: 'h-full overflow-auto',
+              base: 'min-w-max',
+              tr: 'cursor-pointer border-b border-default/40 text-[12px] transition-colors',
+              td: 'px-3 py-2 align-middle',
+              th: 'bg-elevated/45 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-muted',
+            }"
+            :virtualize="{ enabled: tableHasRows, overscan: 10, estimateSize: () => 41 }"
           />
-          <UButton
-            color="neutral"
-            variant="outline"
-            size="xs"
-            icon="i-lucide-undo-2"
-            label="Restore"
-            :disabled="!review.canRestoreSelection.value"
-            @click="review.restoreSelectedRows"
-          />
+
+          <div
+            v-if="!tableHasRows"
+            class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center"
+            style="top: 2.625rem"
+          >
+            <TableEmptyState min-height="20rem" />
+          </div>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2 border-b border-default/70 px-5 py-3">
-        <button
-          v-for="item in review.issueFilterItems.value"
-          :key="item.key"
-          type="button"
-          class="rounded-md px-3 py-1.5 text-sm transition-colors"
-          :class="review.issueFilter.value === item.key
-            ? 'bg-elevated text-highlighted'
-            : 'text-muted hover:bg-elevated/60 hover:text-toned'"
-          :disabled="review.activeTab.value === 'valid' || review.activeTab.value === 'discarded'"
-          @click="review.setIssueFilter(item.key)"
-        >
-          {{ item.label }}
-        </button>
-      </div>
-
-      <UTable
-        :data="review.visibleRows.value"
-        :columns="review.reviewTableColumns.value"
-        :row-selection="review.rowSelection.value"
-        :get-row-id="row => String(row.index)"
-        sticky="header"
-        class="h-full min-h-0"
-        :on-select="(_event, row) => review.inspectRow(row.original.index)"
-        :meta="{
-          class: {
-            tr: (row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } }) => review.getRowToneClass(row.original),
-          },
-        }"
-        :ui="{
-          root: 'overflow-x-auto overflow-y-visible',
-          base: 'min-w-max',
-          tr: 'cursor-pointer border-b border-default/40 transition-colors',
-          td: 'py-3 align-middle',
-          th: 'bg-elevated/60',
-        }"
+      <SpreadsheetReviewStats
+        :items="review.stats.value"
+        :limit-text="summaryLimitText"
       />
     </div>
   </div>
