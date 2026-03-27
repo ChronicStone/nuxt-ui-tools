@@ -16,6 +16,16 @@ export type InferSpreadsheetOptionValue<TOption> =
       ? TOption
       : never
 
+type InferSpreadsheetOptionsSourceItem<TSource> =
+  TSource extends readonly (infer TOption)[]
+    ? TOption
+    : TSource extends (...args: infer _Args) => readonly (infer TOption)[]
+      ? TOption
+      : never
+
+export type InferSpreadsheetOptionsSourceValue<TSource> =
+  InferSpreadsheetOptionValue<InferSpreadsheetOptionsSourceItem<TSource>>
+
 type SpreadsheetOptionsResolverFn<TParams, TOption extends SpreadsheetOptionItem> = {
   bivarianceHack: (params: TParams) => readonly TOption[]
 }['bivarianceHack']

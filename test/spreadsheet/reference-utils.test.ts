@@ -8,8 +8,8 @@ import {
   createSpreadsheetReferenceQueryRequests,
   createSpreadsheetReferenceResolutions,
 } from '#ui-tools/spreadsheet'
-import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
-import type { SpreadsheetParsedRow, SpreadsheetReferenceDefinition } from '#ui-tools/spreadsheet/types'
+import { defineSpreadsheetSchema, normalizeSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
+import type { SpreadsheetParsedRow } from '#ui-tools/spreadsheet/types'
 import { useSpreadsheetReferences } from '../../src/runtime/spreadsheet/composables/use-spreadsheet-references'
 
 const productOptions = [
@@ -20,7 +20,7 @@ const productOptions = [
 describe('spreadsheet reference utils', () => {
   const references = [
     {
-      kind: 'select',
+      kind: 'select' as const,
       field: 'productId',
       source: 'examNameRaw',
       options: productOptions,
@@ -29,7 +29,7 @@ describe('spreadsheet reference utils', () => {
         queryFn: async () => [],
       }),
     },
-  ] satisfies readonly SpreadsheetReferenceDefinition[]
+  ]
 
   const rows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
     {
@@ -172,12 +172,12 @@ describe('spreadsheet reference utils', () => {
 
     const multiReferences = [
       {
-        kind: 'select',
+        kind: 'select' as const,
         field: 'productIds',
         source: 'examNamesRaw',
         options: productOptions,
       },
-    ] satisfies readonly SpreadsheetReferenceDefinition[]
+    ]
 
     const resolutions = createSpreadsheetReferenceResolutions({
       references: multiReferences,
@@ -216,19 +216,19 @@ describe('spreadsheet reference utils', () => {
 
     const referenceDefinitions = [
       {
-        kind: 'select',
+        kind: 'select' as const,
         field: 'productId',
         source: 'examNameRaw',
         options: productOptions,
       },
       {
-        kind: 'select',
+        kind: 'select' as const,
         field: 'requiredProductId',
         source: 'examNameRaw',
         options: productOptions,
         rules: [requiredReference()],
       },
-    ] satisfies readonly SpreadsheetReferenceDefinition[]
+    ]
 
     const unresolvedRows = applySpreadsheetReferenceResolutions({
       rows,
@@ -290,18 +290,10 @@ describe('spreadsheet reference utils', () => {
         }),
       ],
     })
+    const normalizedSchema = normalizeSpreadsheetSchema(schema)
 
     const referenceState = useSpreadsheetReferences({
-      schema: computed(() => ({
-        ...schema,
-        context: [],
-        columns: {
-          static: [],
-          dynamic: () => [],
-        },
-        references,
-        relations: [],
-      })),
+      schema: computed(() => normalizedSchema),
       contextData: computed(() => ({
         products: references[0].options,
       })),
@@ -322,5 +314,151 @@ describe('spreadsheet reference utils', () => {
       productId: 'prod_2',
     })
     expectTypeOf(referenceState.queryRequests.value[0]?.query.queryKey).toMatchTypeOf<readonly unknown[] | undefined>()
+  })
+
+  it('resolves column-level resolve definitions in place without keeping the raw source field', () => {
+    const schema = defineSpreadsheetSchema({
+      importKey: 'assessment.resolve',
+      columns: {
+        static: (column) => [
+          column.text('productId', {
+            match: {
+              headers: ['Product'],
+            },
+            resolve: {
+              options: productOptions,
+            },
+          }),
+        ],
+      },
+    })
+    const normalizedSchema = normalizeSpreadsheetSchema(schema)
+
+    const parsedRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+      {
+        index: 0,
+        source: ['Business English 4 Skills'],
+        data: {
+          productId: 'Business English 4 Skills',
+        },
+        issues: [],
+        isValid: true,
+      },
+      {
+        index: 1,
+        source: ['Unknown External Product'],
+        data: {
+          productId: 'Unknown External Product',
+        },
+        issues: [],
+        isValid: true,
+      },
+    ]
+
+    const resolutions = createSpreadsheetReferenceResolutions({
+      references: normalizedSchema.resolutions,
+      rows: parsedRows,
+      context: {},
+    })
+
+    expect(resolutions).toHaveLength(2)
+    expect(resolutions[0]).toMatchObject({
+      scope: 'column',
+      targetField: 'productId',
+      status: 'matched',
+      selectedValue: 'prod_1',
+    })
+    expect(resolutions[1]).toMatchObject({
+      scope: 'column',
+      targetField: 'productId',
+      status: 'unresolved',
+    })
+
+    const resolvedRows = applySpreadsheetReferenceResolutions({
+      rows: parsedRows,
+      references: normalizedSchema.resolutions,
+      resolutions,
+    })
+
+    expect(resolvedRows[0]?.data).toMatchObject({
+      productId: 'prod_1',
+    })
+    expect(resolvedRows[1]?.data).toEqual({})
+  })
+
+  it('applies column resolve rules only after resolution and lets manual selections override auto-match', () => {
+    const schema = defineSpreadsheetSchema({
+      importKey: 'assessment.resolve.rules',
+      columns: {
+        static: (column) => [
+          column.text('productId', {
+            match: {
+              headers: ['Product'],
+            },
+            resolve: {
+              options: productOptions,
+            },
+            rules: v => [
+              v.required({
+                message: 'Product must be resolved before import',
+              }),
+            ],
+          }),
+        ],
+      },
+    })
+    const normalizedSchema = normalizeSpreadsheetSchema(schema)
+
+    const parsedRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+      {
+        index: 0,
+        source: ['Unknown External Product'],
+        data: {
+          productId: 'Unknown External Product',
+        },
+        issues: [],
+        isValid: true,
+      },
+      {
+        index: 1,
+        source: ['Business English 4 Skills'],
+        data: {
+          productId: 'Business English 4 Skills',
+        },
+        issues: [],
+        isValid: true,
+      },
+    ]
+
+    const resolutionState = useSpreadsheetReferences({
+      schema: computed(() => ({
+        ...normalizedSchema,
+        relations: [],
+      })),
+      contextData: computed(() => ({})),
+      rows: computed(() => parsedRows),
+    })
+
+    expect(resolutionState.unresolvedResolutions.value).toHaveLength(1)
+    expect(resolutionState.resolvedRows.value[0]?.issues).toEqual([
+      expect.objectContaining({
+        code: 'required',
+        columnKey: 'productId',
+        message: 'Product must be resolved before import',
+      }),
+    ])
+
+    resolutionState.selectReference({
+      referenceField: 'productId',
+      sourceValue: 'Unknown External Product',
+      selectedValue: 'prod_2',
+      selectedLabel: 'Reading Placement Test',
+    })
+
+    expect(resolutionState.unresolvedResolutions.value).toHaveLength(0)
+    expect(resolutionState.resolvedRows.value[0]?.data).toMatchObject({
+      productId: 'prod_2',
+    })
+    expect(resolutionState.resolvedRows.value[0]?.issues).toEqual([])
   })
 })

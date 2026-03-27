@@ -3,7 +3,7 @@ import { computed, inject, provide, toValue, type ComputedRef, type InjectionKey
 import type { SpreadsheetBinaryRef } from '../types'
 import { normalizeSpreadsheetSchema } from '../schema'
 import { useSpreadsheetContext } from './use-spreadsheet-context'
-import { useSpreadsheetReferences } from './use-spreadsheet-references'
+import { useSpreadsheetResolutions } from './use-spreadsheet-resolutions'
 import { useSpreadsheetRows } from './use-spreadsheet-rows'
 import { useSpreadsheetSource } from './use-spreadsheet-source'
 
@@ -48,7 +48,7 @@ function createSpreadsheetInternals<TSchema extends { importKey: string }>(optio
     headers: source.headers,
     rows: source.rows,
   })
-  const references = useSpreadsheetReferences({
+  const resolutions = useSpreadsheetResolutions({
     schema,
     contextData: context.contextData,
     rows: computed(() => rows.parsedRows.value),
@@ -59,7 +59,8 @@ function createSpreadsheetInternals<TSchema extends { importKey: string }>(optio
     source,
     context,
     rows,
-    references,
+    resolutions,
+    references: resolutions,
   }
 }
 

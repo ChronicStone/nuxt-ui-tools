@@ -12,7 +12,7 @@ const props = defineProps<{
 }>()
 
 const internals = props.spreadsheet.__internals
-const expandedReferenceKey = ref<string | undefined>(undefined)
+const expandedResolutionKey = ref<string | undefined>(undefined)
 
 function getSourceLabel(sourceField: string) {
   const staticColumn = internals.rows.staticColumns.value.find(column => column.key === sourceField)
@@ -89,7 +89,7 @@ const groupedColumns = computed(() => {
     const unresolvedCount = items.length - resolvedCount
 
     return {
-      referenceKey: referenceField,
+      resolutionKey: referenceField,
       sourceField,
       outputField,
       sourceLabel: getSourceLabel(sourceField),
@@ -132,18 +132,18 @@ const summaryItems = computed(() => [
 const unresolvedGroupKeys = computed(() =>
   groupedColumns.value
     .filter(group => group.unresolvedCount > 0)
-    .map(group => group.referenceKey),
+    .map(group => group.resolutionKey),
 )
 
 function getNextExpandableKey(currentKey: string) {
-  const currentIndex = groupedColumns.value.findIndex(group => group.referenceKey === currentKey)
+  const currentIndex = groupedColumns.value.findIndex(group => group.resolutionKey === currentKey)
   if (currentIndex < 0)
-    return unresolvedGroupKeys.value[0] ?? groupedColumns.value[0]?.referenceKey
+    return unresolvedGroupKeys.value[0] ?? groupedColumns.value[0]?.resolutionKey
 
   for (let index = currentIndex + 1; index < groupedColumns.value.length; index += 1) {
     const nextGroup = groupedColumns.value[index]
     if (nextGroup?.unresolvedCount)
-      return nextGroup.referenceKey
+      return nextGroup.resolutionKey
   }
 
   return unresolvedGroupKeys.value[0] ?? currentKey
@@ -153,26 +153,26 @@ watch(
   groupedColumns,
   (nextGroups, previousGroups) => {
     if (!nextGroups.length) {
-      expandedReferenceKey.value = undefined
+      expandedResolutionKey.value = undefined
       return
     }
 
-    if (!expandedReferenceKey.value) {
-      expandedReferenceKey.value = unresolvedGroupKeys.value[0] ?? nextGroups[0]?.referenceKey
+    if (!expandedResolutionKey.value) {
+      expandedResolutionKey.value = unresolvedGroupKeys.value[0] ?? nextGroups[0]?.resolutionKey
       return
     }
 
-    const currentGroup = nextGroups.find(group => group.referenceKey === expandedReferenceKey.value)
+    const currentGroup = nextGroups.find(group => group.resolutionKey === expandedResolutionKey.value)
     if (!currentGroup) {
-      expandedReferenceKey.value = unresolvedGroupKeys.value[0] ?? nextGroups[0]?.referenceKey
+      expandedResolutionKey.value = unresolvedGroupKeys.value[0] ?? nextGroups[0]?.resolutionKey
       return
     }
 
-    const previousGroup = previousGroups?.find(group => group.referenceKey === expandedReferenceKey.value)
+    const previousGroup = previousGroups?.find(group => group.resolutionKey === expandedResolutionKey.value)
     if (!previousGroup) return
     if (!previousGroup.unresolvedCount || currentGroup.unresolvedCount) return
 
-    expandedReferenceKey.value = getNextExpandableKey(currentGroup.referenceKey)
+    expandedResolutionKey.value = getNextExpandableKey(currentGroup.resolutionKey)
   },
   {
     immediate: true,
@@ -219,7 +219,7 @@ function handleSelect(resolution: SpreadsheetReferenceResolution, value: unknown
       <SpreadsheetReferencesSummary :items="summaryItems" />
 
       <SpreadsheetReferencesAccordion
-        v-model="expandedReferenceKey"
+        v-model="expandedResolutionKey"
         :groups="groupedColumns"
         :get-select-items="getSelectItems"
         :get-resolution-badge="getResolutionBadge"

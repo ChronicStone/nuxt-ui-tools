@@ -1,5 +1,6 @@
 import type { SpreadsheetDynamicBuilder, SpreadsheetResolvedColumns } from './columns'
 import type { SpreadsheetContextItem } from './context'
+import type { SpreadsheetResolutionDefinition } from './resolution'
 
 type SchemaContextItems<TSchema> = TSchema extends {
   context?: infer TContextItems extends readonly SpreadsheetContextItem<string, unknown>[]
@@ -69,6 +70,7 @@ export interface SpreadsheetNormalizedSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly SpreadsheetContextItem<string, unknown>[],
   TColumns = SpreadsheetNormalizedColumns,
   TReferences extends readonly unknown[] = readonly unknown[],
+  TResolutions extends readonly SpreadsheetResolutionDefinition[] = readonly SpreadsheetResolutionDefinition[],
   TRelations extends readonly unknown[] = readonly unknown[],
   TBuildRow = unknown,
 > {
@@ -80,6 +82,7 @@ export interface SpreadsheetNormalizedSchema<
   context: TContextItems
   columns: TColumns
   references: TReferences
+  resolutions: TResolutions
   relations: TRelations
   buildRow?: TBuildRow
   review?: import('./schema').SpreadsheetReviewDefinition
@@ -93,6 +96,7 @@ export type NormalizeSpreadsheetSchema<TSchema> = SpreadsheetNormalizedSchema<
     SpreadsheetNormalizedDynamicColumns<TSchema>
   >,
   SchemaReferences<TSchema>,
+  readonly SpreadsheetResolutionDefinition[],
   SchemaRelations<TSchema>,
   SchemaBuildRow<TSchema>
 >

@@ -24,7 +24,7 @@ export function setSpreadsheetValueAtPath(
       continue
     }
 
-    const nextValue = current[part]
+    const nextValue: unknown = current[part]
     if (isSpreadsheetRecord(nextValue)) {
       current = nextValue
       continue
@@ -33,6 +33,28 @@ export function setSpreadsheetValueAtPath(
     const nextRecord: Record<string, unknown> = {}
     current[part] = nextRecord
     current = nextRecord
+  }
+}
+
+export function deleteSpreadsheetValueAtPath(
+  target: Record<string, unknown>,
+  path: string,
+) {
+  const parts = path.split('.')
+  let current: Record<string, unknown> | undefined = target
+
+  for (const [index, part] of parts.entries()) {
+    if (!current) return
+
+    const isLast = index === parts.length - 1
+    if (isLast) {
+      delete current[part]
+      return
+    }
+
+    const nextValue: unknown = current[part]
+    if (!isSpreadsheetRecord(nextValue)) return
+    current = nextValue
   }
 }
 

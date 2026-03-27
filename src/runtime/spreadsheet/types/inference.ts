@@ -70,7 +70,9 @@ type StaticColumnOutput<TColumn> = TColumn extends SpreadsheetColumnDefinition<
   infer TValue,
   infer TRequired,
   infer _TContext,
-  infer _TRules
+  infer _TRules,
+  infer _TSourceValue,
+  infer _TResolve
 >
   ? TRequired extends true
     ? PathToObject<TKey, TValue>

@@ -1,15 +1,19 @@
 import type {
   SpreadsheetReferenceCandidate,
   SpreadsheetReferenceDefinition,
+  SpreadsheetResolutionDefinition,
 } from '../../types'
 import { getSpreadsheetOptionLabel, getSpreadsheetOptionValue } from '../options'
+import { normalizeSpreadsheetRuntimeResolutions } from './guards'
 import { scoreSpreadsheetReferenceCandidate } from './shared'
 
 export function createSpreadsheetReferenceCandidates(params: {
   sourceValue: string
-  reference: SpreadsheetReferenceDefinition
+  reference: SpreadsheetResolutionDefinition | SpreadsheetReferenceDefinition
   options: readonly unknown[]
 }) {
+  if (!normalizeSpreadsheetRuntimeResolutions([params.reference])[0]) return []
+
   return params.options
     .flatMap<SpreadsheetReferenceCandidate>((option) => {
       const label = getSpreadsheetOptionLabel(option)

@@ -1,14 +1,132 @@
 import {
-  createSpreadsheetDynamicBuilder,
   resolveSpreadsheetColumns,
   resolveSpreadsheetReferences,
+  createSpreadsheetDynamicBuilder,
 } from '../utils/builders'
 import type {
+  SpreadsheetColumnDefinition,
+  SpreadsheetColumnResolveDefinition,
+  SpreadsheetColumnGroupDefinition,
   NormalizeSpreadsheetSchema,
+  SpreadsheetResolutionDefinition,
   SpreadsheetColumnsDefinition,
   SpreadsheetContextItem,
   SpreadsheetDynamicBuilder,
+  SpreadsheetReferenceDefinition,
 } from '../types'
+
+function isSpreadsheetColumnGroupDefinition(
+  value: unknown,
+): value is SpreadsheetColumnGroupDefinition<string, readonly unknown[]> {
+  return value !== null
+    && typeof value === 'object'
+    && 'kind' in value
+    && value.kind === 'group'
+    && 'columns' in value
+}
+
+function isSpreadsheetResolvableColumnDefinition(
+  value: unknown,
+): value is SpreadsheetColumnDefinition<
+  string,
+  unknown,
+  boolean,
+  Record<string, unknown>,
+  undefined,
+  unknown,
+  SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+> {
+  return value !== null
+    && typeof value === 'object'
+    && 'kind' in value
+    && value.kind !== 'group'
+    && 'key' in value
+    && 'resolve' in value
+    && Boolean(value.resolve)
+}
+
+function isSpreadsheetReferenceDefinition(
+  value: unknown,
+): value is SpreadsheetReferenceDefinition {
+  return value !== null
+    && typeof value === 'object'
+    && 'kind' in value
+    && value.kind === 'select'
+    && 'field' in value
+    && 'source' in value
+}
+
+function collectSpreadsheetResolutionColumns(
+  entries: readonly unknown[],
+): SpreadsheetColumnDefinition<
+  string,
+  unknown,
+  boolean,
+  Record<string, unknown>,
+  undefined,
+  unknown,
+  SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+>[] {
+  const resolvedColumns: SpreadsheetColumnDefinition<
+    string,
+    unknown,
+    boolean,
+    Record<string, unknown>,
+    undefined,
+    unknown,
+    SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+  >[] = []
+
+  for (const entry of entries) {
+    if (isSpreadsheetColumnGroupDefinition(entry)) {
+      resolvedColumns.push(...collectSpreadsheetResolutionColumns(entry.columns))
+      continue
+    }
+
+    if (isSpreadsheetResolvableColumnDefinition(entry))
+      resolvedColumns.push(entry)
+  }
+
+  return resolvedColumns
+}
+
+function normalizeSpreadsheetResolutionDefinitions(params: {
+  columns: readonly unknown[]
+  references: readonly unknown[]
+}): readonly SpreadsheetResolutionDefinition[] {
+  const columnResolutions = collectSpreadsheetResolutionColumns(params.columns)
+    .flatMap<SpreadsheetResolutionDefinition>((column) => {
+      if (!column.resolve) return []
+
+      return [{
+        kind: 'select',
+        scope: 'column',
+        targetField: column.key,
+        sourceField: column.key,
+        options: column.resolve.options,
+        getOptions: column.resolve.getOptions,
+        rules: column.rules,
+      }]
+    })
+
+  const referenceResolutions: SpreadsheetResolutionDefinition[] = []
+
+  for (const entry of params.references) {
+    if (!isSpreadsheetReferenceDefinition(entry)) continue
+
+    referenceResolutions.push({
+      kind: 'select',
+      scope: 'reference',
+      targetField: entry.field,
+      sourceField: entry.source,
+      options: entry.options,
+      getOptions: entry.getOptions,
+      rules: entry.rules,
+    })
+  }
+
+  return [...columnResolutions, ...referenceResolutions]
+}
 
 export function resolveSpreadsheetDynamicColumns<
   TContext,
@@ -66,15 +184,21 @@ export function normalizeSpreadsheetSchema<
 >(schema: TSchema) {
   const resolvedColumns = resolveSpreadsheetColumns(schema.columns)
   const resolvedReferences = resolveSpreadsheetReferences(schema.references)
+  const staticColumns = resolvedColumns?.static ?? []
+  const references = Array.isArray(resolvedReferences) ? resolvedReferences : []
 
   return {
     ...schema,
     context: schema.context ?? [],
     columns: {
-      static: resolvedColumns?.static ?? [],
+      static: staticColumns,
       dynamic: resolvedColumns?.dynamic ?? (() => []),
     },
-    references: Array.isArray(resolvedReferences) ? resolvedReferences : [],
+    references,
+    resolutions: normalizeSpreadsheetResolutionDefinitions({
+      columns: staticColumns,
+      references,
+    }),
     relations: schema.relations ?? [],
     buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
   }
