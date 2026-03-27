@@ -670,6 +670,25 @@ Validation rules:
 - if a change touches integration behavior, validate the relevant playground route or integration surface when feasible
 - when reaching the end of a task and everything appears good and clear, run `bun run lint` as the final closing check and fix any issues before handing the task off
 
+## 11.1 Commit Message Policy
+
+Commit messages must follow this exact format:
+
+- `{type}(scope): {message}`
+
+Rules:
+
+- always include a scope
+- do not use unscoped commit messages such as `feat: ...` or free-form messages
+- choose a scope that reflects the main owning area, such as `table`, `spreadsheet`, `i18n`, `playground`, or `repo`
+- keep the message concise and behavior-focused
+
+Examples:
+
+- `feat(table): add embedded remote facets support`
+- `refactor(spreadsheet): simplify resolution pipeline`
+- `chore(repo): codify final lint check`
+
 ## 12. Compatibility File Policy
 
 `AGENTS.md` is the canonical shared root file for this repository.
