@@ -97,11 +97,11 @@ describe('spreadsheet package surface', () => {
             match: {
               headers: ['Product'],
             },
-            options: {
-              resolve: ({ context }) => context.products,
-              optionLabel: product => product.name,
-              optionValue: product => product.id,
-            },
+            options: ({ context }) =>
+              context.products.map(product => ({
+                label: product.name,
+                value: product.id,
+              })),
           }),
           column.option('selectedProductId', {
             match: {
@@ -121,6 +121,59 @@ describe('spreadsheet package surface', () => {
 
     expectTypeOf<Row['productId']>().toEqualTypeOf<string | undefined>()
     expectTypeOf<Row['selectedProductId']>().toEqualTypeOf<string | undefined>()
+  })
+
+  it('supports primitive option arrays without consumer-side mapping', () => {
+    const schema = defineSpreadsheetSchema({
+      importKey: 'demo.primitive-options',
+      columns: {
+        static: (column) => [
+          column.option('status', {
+            options: ['Draft', 'Done'],
+          }),
+        ],
+      },
+    })
+
+    type Row = ExtractSpreadsheetRow<typeof schema>
+
+    expectTypeOf<Row['status']>().toEqualTypeOf<'Draft' | 'Done' | undefined>()
+  })
+
+  it('infers array reference outputs from array source fields', () => {
+    const schema = defineSpreadsheetSchema({
+      importKey: 'demo.multi-reference',
+      columns: {
+        static: (column) => [
+          column.text('productLabels', {
+            multiple: true,
+          }),
+        ],
+      },
+      references: reference => [
+        reference.select('productIds', {
+          source: 'productLabels',
+          options: [
+            { label: 'Business English', value: 'prod_1' },
+            { label: 'Reading Placement', value: 'prod_2' },
+          ],
+        }),
+      ],
+    })
+
+    type Row = ExtractSpreadsheetRow<typeof schema>
+
+    const sparseRow: Row = {
+      productLabels: undefined,
+      productIds: undefined,
+    }
+    const populatedRow: Row = {
+      productLabels: ['Business English', 'Reading Placement'],
+      productIds: ['prod_1', 'prod_2'],
+    }
+
+    void sparseRow
+    void populatedRow
   })
 
   it('types refine relations against buildRow output', () => {

@@ -179,7 +179,7 @@ watch(hasWorkbook, (nextHasWorkbook) => {
     <div class="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] bg-default">
       <div
         class="relative min-h-0"
-        :class="activeStep === 'matching' ? 'overflow-hidden' : 'overflow-y-auto'"
+        :class="activeStep === 'matching' || activeStep === 'review' ? 'overflow-hidden' : 'overflow-y-auto'"
       >
         <div
           v-if="isPreparingNextStep"
@@ -196,10 +196,10 @@ watch(hasWorkbook, (nextHasWorkbook) => {
 
         <div
           class="grid px-6 py-5 lg:px-10 lg:py-6"
-          :class="activeStep === 'matching' ? 'h-full grid-rows-[auto_minmax(0,1fr)] gap-4' : 'gap-4'"
+          :class="activeStep === 'matching' || activeStep === 'review' ? 'h-full grid-rows-[auto_minmax(0,1fr)] gap-4' : 'gap-4'"
         >
           <div
-            class="grid gap-4"
+            class="grid gap-3"
             :class="activeStep === 'upload' ? '' : 'pb-2'"
           >
             <SpreadsheetImportHeader

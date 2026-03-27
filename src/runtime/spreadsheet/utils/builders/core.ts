@@ -1,4 +1,5 @@
 import type {
+  InferSpreadsheetOptionValue,
   SpreadsheetColumnBaseOptions,
   SpreadsheetColumnBuilder,
   SpreadsheetColumnDefinition,
@@ -20,6 +21,7 @@ import type {
   SpreadsheetResolvedColumns,
   SpreadsheetBuildRowDefinition,
   SpreadsheetFieldRulesInput,
+  SpreadsheetOptionItem,
 } from '../../types'
 import { resolveSpreadsheetRules } from '../validation'
 
@@ -144,15 +146,25 @@ export function createSpreadsheetColumnBuilder<
     enum: enumColumn,
     option<
       TKey extends string,
-      TOption,
-      TValue,
+      const TOption extends SpreadsheetOptionItem,
       TRequired extends boolean = false,
       TMultiple extends boolean | SpreadsheetOptionColumnMultipleOptions | undefined = undefined,
-      TResolvedValue = TValue,
+      TParse extends
+        | SpreadsheetColumnBaseOptions<
+          TContext,
+          InferSpreadsheetOptionValue<TOption>,
+          TRequired,
+          Exclude<TMultiple, undefined>
+        >['parse']
+        | undefined = undefined,
+      TResolvedValue = TParse extends (...args: infer _Args) => infer TResult
+        ? Awaited<TResult>
+        : InferSpreadsheetOptionValue<TOption>,
+      TRulesInput extends SpreadsheetFieldRulesInput<TResolvedValue> | undefined = SpreadsheetFieldRulesInput<TResolvedValue> | undefined,
     >(
       key: TKey,
-      options: SpreadsheetOptionColumnOptions<TContext, TOption, TValue, TRequired, Exclude<TMultiple, undefined>, TResolvedValue>,
-    ): SpreadsheetColumnDefinition<TKey, TResolvedValue, TRequired, TContext> {
+      options: SpreadsheetOptionColumnOptions<TContext, TOption, TRequired, Exclude<TMultiple, undefined>, TResolvedValue> & { rules?: TRulesInput },
+    ): SpreadsheetColumnDefinition<TKey, TResolvedValue, TRequired, TContext, TRulesInput> {
       return {
         kind: 'option',
         key,
@@ -172,48 +184,34 @@ export function createSpreadsheetGroupBuilder(): SpreadsheetGroupBuilder {
 
 function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder {
   function options<
-    TOption,
-    TValue = TOption extends { value: infer TResolvedValue }
-      ? TResolvedValue
-      : never,
+    const TOption extends SpreadsheetOptionItem,
   >(config: {
     from: readonly TOption[]
-    optionLabel?: (option: TOption) => string
-    optionValue?: (option: TOption) => TValue
     mode: 'multiple'
     separator?: string
     matchBy: 'label' | 'value'
     normalize?: readonly string[]
-  }): SpreadsheetDynamicOptionsValueDefinition<TOption, TValue, 'multiple'>
+  }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'multiple'>
   function options<
-    TOption,
-    TValue = TOption extends { value: infer TResolvedValue }
-      ? TResolvedValue
-      : never,
+    const TOption extends SpreadsheetOptionItem,
   >(config: {
     from: readonly TOption[]
-    optionLabel?: (option: TOption) => string
-    optionValue?: (option: TOption) => TValue
     mode?: 'single'
     separator?: string
     matchBy: 'label' | 'value'
     normalize?: readonly string[]
-  }): SpreadsheetDynamicOptionsValueDefinition<TOption, TValue, 'single'>
-  function options<TOption, TValue>(config: {
+  }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'single'>
+  function options<const TOption extends SpreadsheetOptionItem>(config: {
     from: readonly TOption[]
-    optionLabel?: (option: TOption) => string
-    optionValue?: (option: TOption) => TValue
     mode?: 'single' | 'multiple'
     separator?: string
     matchBy: 'label' | 'value'
     normalize?: readonly string[]
-  }): SpreadsheetDynamicOptionsValueDefinition<TOption, TValue, 'single' | 'multiple'> {
+  }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'single' | 'multiple'> {
     if (config.mode === 'multiple')
       return {
         kind: 'options',
         from: config.from,
-        optionLabel: config.optionLabel,
-        optionValue: config.optionValue,
         mode: 'multiple',
         separator: config.separator,
         matchBy: config.matchBy,
@@ -223,8 +221,6 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
       return {
         kind: 'options',
         from: config.from,
-        optionLabel: config.optionLabel,
-        optionValue: config.optionValue,
         mode: 'single',
         separator: config.separator,
         matchBy: config.matchBy,
@@ -361,46 +357,21 @@ export function defineSpreadsheetColumns<
 
 export function createSpreadsheetReferenceBuilder<
   _TContext,
-  _TRow,
->(): SpreadsheetReferenceBuilder {
-  function select<
-    TField extends string,
-    const TOption,
-    TValue = TOption extends { value: infer TResolvedValue }
-      ? TResolvedValue
-      : unknown,
-  >(
-    field: TField,
-    config: SpreadsheetReferenceSelectConfig<TOption, TValue>,
-  ): SpreadsheetReferenceDefinition<
-    TField,
-    SpreadsheetReferenceValue<TOption, TValue>,
-    TOption
-  > {
-    if (config.optionValue && config.optionLabel) {
-      return {
-        kind: 'select',
-        field,
-        source: config.source,
-        options: config.options,
-        getOptions: config.getOptions,
-        optionValue: config.optionValue,
-        optionLabel: config.optionLabel,
-      }
-    }
+  TRow,
+>(): SpreadsheetReferenceBuilder<TRow> {
+  const select: SpreadsheetReferenceBuilder<TRow>['select'] = (field, config) => ({
+    kind: 'select',
+    field,
+    source: config.source,
+    options: config.options,
+    getOptions: config.getOptions,
+  })
 
-    return {
-      kind: 'select',
-      field,
-      source: config.source,
-      options: config.options,
-      getOptions: config.getOptions,
-    }
-  }
-
-  return {
+  const builder: SpreadsheetReferenceBuilder<TRow> = {
     select,
   }
+
+  return builder
 }
 
 export function defineSpreadsheetReference<
@@ -428,9 +399,9 @@ export function defineSpreadsheetBuildRow<
 function isSpreadsheetReferenceResolver<TContext, TRow, TReferences>(
   references:
     | TReferences
-    | ((reference: SpreadsheetReferenceBuilder) => TReferences)
+    | ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences)
     | undefined,
-): references is (reference: SpreadsheetReferenceBuilder) => TReferences {
+): references is (reference: SpreadsheetReferenceBuilder<TRow>) => TReferences {
   return typeof references === 'function'
 }
 
@@ -438,12 +409,12 @@ export function resolveSpreadsheetReferences<TReferences>(
   references: TReferences,
 ): TReferences
 export function resolveSpreadsheetReferences<TContext, TRow, TReferences>(
-  references: ((reference: SpreadsheetReferenceBuilder) => TReferences) | undefined,
+  references: ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences) | undefined,
 ): TReferences | undefined
 export function resolveSpreadsheetReferences<TContext, TRow, TReferences>(
   references:
     | TReferences
-    | ((reference: SpreadsheetReferenceBuilder) => TReferences)
+    | ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences)
     | undefined,
 ) {
   if (!references) return undefined

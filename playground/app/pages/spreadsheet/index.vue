@@ -1,122 +1,93 @@
 <script setup lang="ts">
-import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
-
-import SpreadsheetVariantCard from '../../components/spreadsheet/SpreadsheetVariantCard.vue'
 
 const variants = [
   {
     id: 'happy-path',
     title: 'Happy Path Import',
-    description: 'A clean workbook that should flow through structure, matching, references, and review with almost no intervention.',
-    summary: 'Use this as the baseline smoke test for the end-to-end engine. Seed workbook: 2 rows on Assessments.',
-    icon: 'i-lucide-badge-check',
-    tags: ['auto matching', 'reference autofill', 'pipeline payloads', 'baseline regression'],
+    description: 'Baseline end-to-end flow.',
     to: '/spreadsheet/happy-path',
   },
   {
     id: 'manual-matching',
     title: 'Manual Matching Lab',
-    description: 'A workbook with noisy intro rows and deliberately renamed headers so header selection and manual column mapping are easy to debug.',
-    summary: 'Best route for iterating on structure detection and the matching UI. Seed workbook: 3 rows on Candidate import.',
-    icon: 'i-lucide-columns-3',
-    tags: ['header selection', 'sheet structure', 'manual column assignment', 'debugging'],
+    description: 'Header selection and manual column assignment.',
     to: '/spreadsheet/manual-matching',
   },
   {
     id: 'reference-reconciliation',
     title: 'Reference Reconciliation',
-    description: 'A workbook that keeps unresolved product labels visible so the reconciliation step stays active and realistic.',
-    summary: 'Focused on reference suggestions, manual selections, and resolved row output. Seed workbook: 3 rows on Assessments.',
-    icon: 'i-lucide-link-2',
-    tags: ['references', 'manual resolution', 'query suggestions', 'row output'],
+    description: 'Single-value reference suggestions and manual resolution.',
     to: '/spreadsheet/reference-reconciliation',
+  },
+  {
+    id: 'multi-reference-lab',
+    title: 'Multi Reference Lab',
+    description: 'References resolving from a multi-value source field into an array output.',
+    to: '/spreadsheet/multi-reference-lab',
   },
   {
     id: 'structure-stress',
     title: 'Structure Stress Test',
-    description: 'A larger workbook with multiple sheets, offset headers, noisy rows, and validation edge cases.',
-    summary: 'Use this to exercise layout, virtualization, row issues, and general resilience. Seed workbook: 22 rows on Assessment import raw.',
-    icon: 'i-lucide-file-stack',
-    tags: ['large workbook', 'offset headers', 'row issues', 'stress test'],
+    description: 'Large workbook and structural edge cases.',
     to: '/spreadsheet/structure-stress',
   },
   {
     id: 'large-validation-lab',
     title: 'Large Validation Lab',
-    description: 'A seeded high-volume workbook focused on the new rule system with a controlled 20% invalid slice.',
-    summary: 'Best route for validating review scalability, error grouping, and mixed rule failures. Seed workbook: 250 rows with 50 invalid rows on Bulk import.',
-    icon: 'i-lucide-bug-play',
-    tags: ['sheet rules', 'large dataset', '20% invalid', 'review stress'],
+    description: 'Large dataset with mixed validation failures.',
     to: '/spreadsheet/large-validation-lab',
+  },
+  {
+    id: 'refine-relations-lab',
+    title: 'Refine Relations Lab',
+    description: 'Tiny deterministic cross-field validation scenario.',
+    to: '/spreadsheet/refine-relations-lab',
   },
   {
     id: 'multi-value-lab',
     title: 'Multi Value Lab',
-    description: 'A focused scenario for built-in static multiple columns with a mix of valid rows, array-level rule failures, and token parsing errors.',
-    summary: 'Use this route to validate how text, number, option, enum, and boolean multi-value cells behave in the full import pipeline. Seed workbook: 4 rows on Multi value import.',
-    icon: 'i-lucide-list-collapse',
-    tags: ['multiple columns', 'token parsing', 'array rules', 'context options'],
+    description: 'Built-in multiple columns without references.',
     to: '/spreadsheet/multi-value-lab',
   },
 ] as const
 </script>
 
 <template>
-  <section class="grid gap-8 px-6 py-8 lg:px-10 lg:py-10">
-    <div class="grid gap-5 rounded-2xl border border-default/70 bg-gradient-to-br from-primary/8 via-default to-info/5 px-6 py-7 shadow-sm">
-      <div class="flex flex-wrap items-center gap-2">
-        <UBadge color="primary" variant="soft" size="sm" class="font-mono">
-          Spreadsheet engine
-        </UBadge>
-        <UBadge color="neutral" variant="subtle" size="sm" class="font-mono">
-          Focused playground catalog
-        </UBadge>
-      </div>
+  <section class="mx-auto grid max-w-4xl gap-5 px-6 py-8 lg:px-10">
+    <div class="grid gap-2">
+      <h1 class="text-2xl font-semibold text-highlighted">
+        Spreadsheet playgrounds
+      </h1>
+      <p class="text-sm text-muted">
+        Open the route that matches the behavior you want to inspect.
+      </p>
+    </div>
 
-      <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-        <div class="grid gap-3">
-          <div class="flex items-center gap-3">
-            <div class="flex size-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
-              <UIcon name="i-lucide-file-spreadsheet" class="size-6" />
-            </div>
-            <div>
-              <h1 class="text-2xl font-semibold tracking-tight text-highlighted">
-                Spreadsheet Playground Variants
-              </h1>
-              <p class="text-sm text-toned">
-                Open a focused route for the exact engine behavior you want to validate instead of debugging everything inside one giant page.
-              </p>
-            </div>
+    <div class="grid gap-3">
+      <div
+        v-for="variant in variants"
+        :key="variant.id"
+        class="flex flex-col gap-3 rounded-xl border border-default/70 bg-default px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="min-w-0">
+          <div class="text-sm font-medium text-highlighted">
+            {{ variant.title }}
           </div>
-
-          <p class="max-w-4xl text-sm leading-6 text-muted">
-            Each variant is designed around a distinct concern: happy-path flow, manual matching, reference reconciliation, or larger structural stress. Open a variant to land directly in a fullscreen spreadsheet surface with no extra wrapper UI.
-          </p>
+          <div class="text-sm text-muted">
+            {{ variant.description }}
+          </div>
         </div>
 
         <UButton
-          to="/spreadsheet/happy-path"
-          color="primary"
-          variant="solid"
-          icon="i-lucide-play"
-          label="Open baseline variant"
+          :to="variant.to"
+          color="neutral"
+          variant="soft"
+          icon="i-lucide-arrow-right"
+          trailing
+          label="Open"
         />
       </div>
-    </div>
-
-    <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-      <SpreadsheetVariantCard
-        v-for="variant in variants"
-        :key="variant.id"
-        :title="variant.title"
-        :description="variant.description"
-        :summary="variant.summary"
-        :icon="variant.icon"
-        :tags="variant.tags"
-        :to="variant.to"
-      />
     </div>
   </section>
 </template>

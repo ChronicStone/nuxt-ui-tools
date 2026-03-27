@@ -26,9 +26,9 @@ This surface is public and should be treated as a real package-consumer API.
 
 Static spreadsheet option columns support three option source shapes:
 
-1. a plain array of standard `{ label, value }` options
-2. a function that receives `{ context }` and returns standard `{ label, value }` options
-3. an object with `resolve`, `optionLabel`, and `optionValue` when the source items are custom objects
+1. a plain array of primitives like `['Draft', 'Done']`
+2. a plain array of standard `{ label, value }` options
+3. a function that receives `{ context }` and returns either of those shapes
 
 Example:
 
@@ -53,11 +53,11 @@ const schema = defineSpreadsheetSchema({
         match: {
           headers: ['Product'],
         },
-        options: {
-          resolve: ({ context }) => context.products,
-          optionLabel: product => product.name,
-          optionValue: product => product.id,
-        },
+        options: ({ context }) =>
+          context.products.map(product => ({
+            label: product.name,
+            value: product.id,
+          })),
       }),
       column.option('selectedProductId', {
         match: {
@@ -73,6 +73,8 @@ const schema = defineSpreadsheetSchema({
   },
 })
 ```
+
+Primitive options use the same value for both display and parsing. Object options use `label` for display and `value` for the parsed row.
 
 When the spreadsheet cell text matches the option label or the option value, the parsed row receives the resolved option value. If no option matches, the row gets an `option.not_found` error for that column.
 
@@ -105,11 +107,11 @@ column.number('scores', {
 })
 
 column.option('productIds', {
-  options: {
-    resolve: ({ context }) => context.products,
-    optionLabel: product => product.name,
-    optionValue: product => product.id,
-  },
+  options: ({ context }) =>
+    context.products.map(product => ({
+      label: product.name,
+      value: product.id,
+    })),
   multiple: {
     separator: ',',
     matchBy: 'label',

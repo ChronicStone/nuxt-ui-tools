@@ -106,11 +106,10 @@ function createManualMatchingSchema() {
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
             normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
-          options: {
-            resolve: group => group.items,
-            optionLabel: item => item.name,
-            optionValue: item => item.id,
-          },
+          options: group => group.items.map(item => ({
+            label: item.name,
+            value: item.id,
+          })),
           values: {
             mode: 'csv',
             separator: ',',
@@ -126,9 +125,10 @@ function createManualMatchingSchema() {
     references: reference => [
       reference.select('productId', {
         source: 'examNameRaw',
-        options: center.products,
-        optionValue: product => product.id,
-        optionLabel: product => product.name,
+        options: center.products.map(product => ({
+          label: product.name,
+          value: product.id,
+        })),
       }),
     ],
   })

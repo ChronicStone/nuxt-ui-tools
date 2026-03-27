@@ -78,11 +78,10 @@ const columns = {
         strategy: 'template',
         template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
       },
-      options: {
-        resolve: group => group.items,
-        optionLabel: item => item.name,
-        optionValue: item => item.id,
-      },
+      options: group => group.items.map(item => ({
+        label: item.name,
+        value: item.id,
+      })),
       values: {
         mode: 'csv',
         separator: ',',

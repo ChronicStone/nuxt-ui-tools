@@ -27,6 +27,7 @@ export function useSpreadsheetReferences(params: UseSpreadsheetReferencesParams)
     createSpreadsheetReferenceResolutions({
       references: referenceDefinitions.value,
       rows: params.rows.value,
+      context: params.contextData.value,
     }),
   )
   const manualSelections = shallowRef<Record<string, SpreadsheetReferenceResolution>>({})

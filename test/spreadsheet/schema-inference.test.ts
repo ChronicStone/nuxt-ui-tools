@@ -98,11 +98,11 @@ const schema = defineSpreadsheetSchema({
         },
       }),
       column.option('productIds', {
-        options: {
-          resolve: ({ context }) => context.products,
-          optionLabel: product => product.name,
-          optionValue: product => product.id,
-        },
+        options: ({ context }) =>
+          context.products.map(product => ({
+            label: product.name,
+            value: product.id,
+          })),
         multiple: {
           separator: ',',
           matchBy: 'label',
@@ -121,11 +121,10 @@ const schema = defineSpreadsheetSchema({
           strategy: 'template',
           template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
         },
-        options: {
-          resolve: group => group.items,
-          optionLabel: item => item.name,
-          optionValue: item => item.id,
-        },
+        options: group => group.items.map(item => ({
+          label: item.name,
+          value: item.id,
+        })),
         values: {
           mode: 'csv',
           separator: ',',

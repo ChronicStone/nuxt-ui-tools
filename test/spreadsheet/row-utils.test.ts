@@ -193,15 +193,14 @@ describe('spreadsheet row utils', () => {
           kind: 'option',
           key: 'productId',
           from: 'Product',
-          options: {
-            resolve: ({ context }: {
-              context: {
-                products: readonly { id: string, name: string }[]
-              }
-            }) => context.products,
-            optionLabel: (product: { id: string, name: string }) => product.name,
-            optionValue: (product: { id: string, name: string }) => product.id,
-          },
+          options: ({ context }: {
+            context: {
+              products: readonly { id: string, name: string }[]
+            }
+          }) => context.products.map(product => ({
+            label: product.name,
+            value: product.id,
+          })),
         },
         {
           kind: 'option',
@@ -288,15 +287,14 @@ describe('spreadsheet row utils', () => {
             separator: ',',
             matchBy: 'label',
           },
-          options: {
-            resolve: ({ context }: {
-              context: {
-                products: readonly { id: string, name: string }[]
-              }
-            }) => context.products,
-            optionLabel: (product: { id: string, name: string }) => product.name,
-            optionValue: (product: { id: string, name: string }) => product.id,
-          },
+          options: ({ context }: {
+            context: {
+              products: readonly { id: string, name: string }[]
+            }
+          }) => context.products.map(product => ({
+            label: product.name,
+            value: product.id,
+          })),
         },
       ]),
       createSpreadsheetHeaderCells(['Tags', 'Scores', 'Products']),
@@ -430,11 +428,10 @@ describe('spreadsheet row utils', () => {
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
             normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
-          options: {
-            resolve: (item) => item.items,
-            optionValue: (option) => option.id,
-            optionLabel: (option) => option.name,
-          },
+          options: item => item.items.map(option => ({
+            label: option.name,
+            value: option.id,
+          })),
           values: {
             mode: 'csv',
             separator: ',',

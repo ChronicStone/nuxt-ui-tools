@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import UIcon from '@nuxt/ui/components/Icon.vue'
+
 defineProps<{
   items: Array<{
     key: string
@@ -9,33 +11,37 @@ defineProps<{
     accentClass: string
     cardClass: string
   }>
+  limitText?: string
 }>()
 </script>
 
 <template>
-  <div class="grid gap-3 lg:grid-cols-3">
-    <div
-      v-for="item in items"
-      :key="item.key"
-      class="grid gap-3 rounded-[var(--ui-radius)] border bg-default px-5 py-4"
-      :class="item.cardClass"
-    >
-      <div class="flex items-end gap-2">
-        <span class="text-[2rem] font-semibold leading-none tracking-[-0.06em]" :class="item.valueClass">
+  <div class="flex min-h-11 flex-wrap items-center gap-3 rounded-[4px] border border-default/70 bg-default px-4 py-2">
+    <template v-for="(item, index) in items" :key="item.key">
+      <div class="flex min-w-0 items-center gap-2">
+        <div class="size-[7px] rounded-full" :class="item.accentClass" />
+        <span class="font-mono text-[13px] font-semibold leading-none" :class="item.valueClass">
           {{ item.value }}
         </span>
-        <span class="pb-1 font-mono text-[11px] text-muted">
+        <span class="text-[11px] text-muted">
           {{ item.label }}
+        </span>
+        <span class="font-mono text-[10px] text-muted">
+          {{ item.hint }}
         </span>
       </div>
 
-      <div class="h-1 overflow-hidden rounded-full bg-elevated">
-        <div class="h-full w-2/3 rounded-full" :class="item.accentClass" />
-      </div>
+      <div v-if="index < items.length - 1" class="h-4 w-px bg-default/70" />
+    </template>
 
-      <span class="font-mono text-[11px] text-muted">
-        {{ item.hint }}
-      </span>
-    </div>
+    <template v-if="limitText">
+      <div class="h-4 w-px bg-default/70" />
+      <div class="flex items-center gap-1.5">
+        <UIcon name="i-lucide-info" class="size-3 text-warning" />
+        <span class="font-mono text-[10px] font-medium text-warning">
+          {{ limitText }}
+        </span>
+      </div>
+    </template>
   </div>
 </template>

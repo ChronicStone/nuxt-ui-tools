@@ -21,10 +21,10 @@ type SpreadsheetResolvedColumnsInput<TColumns> = [TColumns] extends [Spreadsheet
 
 type SpreadsheetReferencesDefinition<
   _TContext,
-  _TRow,
+  TRow,
 > =
   | readonly SpreadsheetReferenceDefinition[]
-  | ((reference: SpreadsheetReferenceBuilder) => readonly unknown[])
+  | ((reference: SpreadsheetReferenceBuilder<TRow>) => readonly unknown[])
 
 type SpreadsheetExtractedReference<TValue> = Extract<
   TValue,
@@ -128,6 +128,7 @@ export function defineSpreadsheetSchema<
   TContextData = SpreadsheetContextDataFromItems<TContextItems>,
   const TColumns extends SpreadsheetColumnsDefinition<TContextData> | undefined = SpreadsheetColumnsDefinition<TContextData> | undefined,
   const TReferences extends readonly unknown[] | undefined = readonly unknown[] | undefined,
+  TReferenceRow = SpreadsheetRowData<SpreadsheetResolvedColumnsInput<TColumns>, readonly []>,
   TResolvedReferences = SpreadsheetResolvedReferences<TReferences>,
   TFinalRow = SpreadsheetRowData<SpreadsheetResolvedColumnsInput<TColumns>, TResolvedReferences>,
   TBuildRowResult = never,
@@ -136,7 +137,7 @@ export function defineSpreadsheetSchema<
     TImportKey,
     TContextItems,
     TColumns,
-    TReferences | ((reference: SpreadsheetReferenceBuilder) => TReferences),
+    TReferences | ((reference: SpreadsheetReferenceBuilder<TReferenceRow>) => TReferences),
     SpreadsheetBuildRowInput<TContextData, TFinalRow, TBuildRowResult> | undefined
   > & {
     relations?: undefined

@@ -11,10 +11,11 @@ import {
   getSpreadsheetValueAtPath,
   setSpreadsheetValueAtPath,
 } from '../object'
+import { resolveSpreadsheetOptionEntries } from '../options'
 import { executeSpreadsheetRules, resolveSpreadsheetRelationRules } from '../validation/core'
 import { createSpreadsheetReferenceCandidates } from './candidates'
 import { isSpreadsheetReferenceDefinition } from './guards'
-import { collectSpreadsheetReferenceSources } from './sources'
+import { collectSpreadsheetReferenceSources, collectSpreadsheetReferenceTokens } from './sources'
 
 function isSpreadsheetRelationDefinition(
   value: unknown,
@@ -30,6 +31,7 @@ function isSpreadsheetRelationDefinition(
 export function createSpreadsheetReferenceResolutions(params: {
   references: readonly unknown[]
   rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
+  context: Record<string, unknown>
 }) {
   return collectSpreadsheetReferenceSources(params.references, params.rows)
     .flatMap(({ reference, entries }) =>
@@ -37,7 +39,9 @@ export function createSpreadsheetReferenceResolutions(params: {
         const candidates = createSpreadsheetReferenceCandidates({
           sourceValue: entry.value,
           reference,
-          options: reference.options ?? [],
+          options: resolveSpreadsheetOptionEntries(reference.options, {
+            context: params.context,
+          }),
         })
         const bestCandidate = candidates[0]
         const isMatched = Boolean(bestCandidate && bestCandidate.score >= 0.9)
@@ -62,28 +66,49 @@ export function applySpreadsheetReferenceResolutions(params: {
   resolutions: readonly SpreadsheetReferenceResolution[]
   relations?: readonly unknown[]
 }) {
+  const resolutionsBySourceField = params.resolutions.reduce<Map<string, SpreadsheetReferenceResolution[]>>((groups, resolution) => {
+    const entries = groups.get(resolution.sourceField) ?? []
+    groups.set(resolution.sourceField, [...entries, resolution])
+    return groups
+  }, new Map<string, SpreadsheetReferenceResolution[]>())
+
   return params.rows.map<SpreadsheetResolvedReferenceRow<Record<string, unknown>>>((row) => {
     const data = cloneSpreadsheetRowData(row.data)
     const issues: SpreadsheetRowIssue[] = [...row.issues]
+    const multiValueOutputs = new Map<string, unknown[]>()
 
-    for (const resolution of params.resolutions) {
-      const sourceValue = String(getSpreadsheetValueAtPath(row.data, resolution.sourceField) ?? '').trim()
-      if (!sourceValue) continue
-      if (sourceValue !== resolution.sourceValue) continue
+    for (const [sourceField, resolutions] of resolutionsBySourceField.entries()) {
+      const rawValue = getSpreadsheetValueAtPath(row.data, sourceField)
+      const sourceTokens = collectSpreadsheetReferenceTokens(rawValue)
+      if (!sourceTokens.length) continue
 
-      if (resolution.selectedValue !== undefined) {
-        setSpreadsheetValueAtPath(data, resolution.outputField, resolution.selectedValue)
-        continue
+      for (const sourceValue of sourceTokens) {
+        const resolution = resolutions.find(entry => entry.sourceValue === sourceValue)
+        if (!resolution) continue
+
+        if (resolution.selectedValue !== undefined) {
+          if (Array.isArray(rawValue)) {
+            const values = multiValueOutputs.get(resolution.outputField) ?? []
+            multiValueOutputs.set(resolution.outputField, [...values, resolution.selectedValue])
+          }
+          else {
+            setSpreadsheetValueAtPath(data, resolution.outputField, resolution.selectedValue)
+          }
+          continue
+        }
+
+        issues.push({
+          level: 'error',
+          code: 'reference.unresolved',
+          message: `Unresolved reference "${sourceValue}"`,
+          rowIndex: row.index,
+          columnKey: resolution.outputField,
+        })
       }
-
-      issues.push({
-        level: 'error',
-        code: 'reference.unresolved',
-        message: `Unresolved reference "${sourceValue}"`,
-        rowIndex: row.index,
-        columnKey: resolution.outputField,
-      })
     }
+
+    for (const [outputField, values] of multiValueOutputs.entries())
+      setSpreadsheetValueAtPath(data, outputField, values)
 
     for (const relation of params.relations ?? []) {
       if (!isSpreadsheetRelationDefinition(relation)) continue
@@ -127,6 +152,7 @@ export function createSpreadsheetReferenceQueryRequests(params: {
   return createSpreadsheetReferenceResolutions({
     references: params.references,
     rows: params.rows,
+    context: params.context,
   }).flatMap<SpreadsheetReferenceQueryRequest>((resolution) => {
     const referenceEntry = params.references.find((entry) =>
       isSpreadsheetReferenceDefinition(entry) && entry.field === resolution.referenceField,

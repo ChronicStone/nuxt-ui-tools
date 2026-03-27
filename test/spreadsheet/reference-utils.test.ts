@@ -89,6 +89,7 @@ describe('spreadsheet reference utils', () => {
     const resolutions = createSpreadsheetReferenceResolutions({
       references,
       rows,
+      context: {},
     })
 
     expect(resolutions).toHaveLength(2)
@@ -157,6 +158,51 @@ describe('spreadsheet reference utils', () => {
 
     expect(requests).toHaveLength(1)
     expect(requests[0]?.query.queryKey).toEqual(['products', 'Unknown External Product'])
+  })
+
+  it('resolves array-bound references into array outputs', () => {
+    const multiRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+      {
+        index: 0,
+        source: ['Business English 4 Skills', 'Reading Placement Test'],
+        data: {
+          examNamesRaw: ['Business English 4 Skills', 'Reading Placement Test'],
+        },
+        issues: [],
+        isValid: true,
+      },
+    ]
+
+    const multiReferences = [
+      {
+        kind: 'select',
+        field: 'productIds',
+        source: 'examNamesRaw',
+        options: productOptions,
+      },
+    ] satisfies readonly SpreadsheetReferenceDefinition[]
+
+    const resolutions = createSpreadsheetReferenceResolutions({
+      references: multiReferences,
+      rows: multiRows,
+      context: {},
+    })
+
+    expect(resolutions).toHaveLength(2)
+    expect(resolutions.map(resolution => resolution.sourceValue)).toEqual([
+      'Business English 4 Skills',
+      'Reading Placement Test',
+    ])
+
+    const resolvedRows = applySpreadsheetReferenceResolutions({
+      rows: multiRows,
+      resolutions,
+    })
+
+    expect(resolvedRows[0]?.data).toMatchObject({
+      examNamesRaw: ['Business English 4 Skills', 'Reading Placement Test'],
+      productIds: ['prod_1', 'prod_2'],
+    })
   })
 
   it('orchestrates auto and manual selections in the reference composable', () => {

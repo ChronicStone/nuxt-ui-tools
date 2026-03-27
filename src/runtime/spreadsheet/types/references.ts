@@ -1,17 +1,25 @@
 import type { SpreadsheetQueryDefinition } from './shared'
+import type {
+  InferSpreadsheetOptionValue,
+  SpreadsheetOptionItem,
+  SpreadsheetOptionsSource,
+} from './options'
+import type { NestedPaths } from '../../shared/types/utils'
 
-export interface SpreadsheetStandardOption<TValue = unknown> {
-  label: string
-  value: TValue
-}
+type SpreadsheetReferencePath<TRow> = Extract<NestedPaths<TRow>, string>
 
-type SpreadsheetOptionLabelResolver<TOption> = {
-  bivarianceHack: (option: TOption) => string
-}['bivarianceHack']
+type SpreadsheetReferenceValueAtPath<TRow, TPath extends string> = TPath extends `${infer TKey}.${infer TRest}`
+  ? TKey extends keyof TRow
+    ? SpreadsheetReferenceValueAtPath<NonNullable<TRow[TKey]>, TRest>
+    : never
+  : TPath extends keyof TRow
+    ? TRow[TPath]
+    : never
 
-type SpreadsheetOptionValueResolver<TOption, TValue> = {
-  bivarianceHack: (option: TOption) => TValue
-}['bivarianceHack']
+type SpreadsheetReferenceResolvedValue<TSourceValue, TValue> =
+  NonNullable<TSourceValue> extends readonly unknown[]
+    ? TValue[]
+    : TValue
 
 type SpreadsheetReferenceOptionsResolver<TOption> = {
   bivarianceHack: (params: {
@@ -21,62 +29,61 @@ type SpreadsheetReferenceOptionsResolver<TOption> = {
   }) => SpreadsheetQueryDefinition<readonly TOption[]>
 }['bivarianceHack']
 
-type SpreadsheetReferenceSelectBaseConfig<TOption> = {
+type SpreadsheetReferenceSelectBaseConfig<TOption extends SpreadsheetOptionItem> = {
   source: string
-  options?: readonly TOption[]
+  options?: SpreadsheetOptionsSource<{
+    context: Record<string, unknown>
+  }, TOption>
   getOptions?: SpreadsheetReferenceOptionsResolver<TOption>
 }
 
 export interface SpreadsheetReferenceDefinition<
   TField extends string = string,
   TValue = unknown,
-  TOption = unknown,
+  TOption extends SpreadsheetOptionItem = SpreadsheetOptionItem,
+  TSource extends string = string,
 > {
   kind: 'select'
   field: TField
-  source: string
-  options?: readonly TOption[]
+  source: TSource
+  options?: SpreadsheetOptionsSource<{
+    context: Record<string, unknown>
+  }, TOption>
   getOptions?: SpreadsheetReferenceOptionsResolver<TOption>
-  optionValue?: SpreadsheetOptionValueResolver<TOption, TValue>
-  optionLabel?: SpreadsheetOptionLabelResolver<TOption>
 }
 
 export type SpreadsheetReferenceSelectConfig<
-  TOption,
-  TValue = TOption extends SpreadsheetStandardOption<infer TResolvedValue>
-    ? TResolvedValue
-    : unknown,
-> = SpreadsheetReferenceSelectBaseConfig<TOption> & (
-  TOption extends SpreadsheetStandardOption<any>
-    ? {
-        optionLabel?: SpreadsheetOptionLabelResolver<TOption>
-        optionValue?: SpreadsheetOptionValueResolver<TOption, TValue>
-      }
-    : {
-        optionLabel: SpreadsheetOptionLabelResolver<TOption>
-        optionValue: SpreadsheetOptionValueResolver<TOption, TValue>
-      }
-)
+  TRow,
+  TSource extends SpreadsheetReferencePath<TRow>,
+  TOption extends SpreadsheetOptionItem,
+> = Omit<SpreadsheetReferenceSelectBaseConfig<TOption>, 'source'> & {
+  source: TSource
+}
 
 export type SpreadsheetReferenceValue<
-  _TOption,
+  TSourceValue,
   TValue,
-> = TValue
+> = SpreadsheetReferenceResolvedValue<TSourceValue, TValue>
 
-export interface SpreadsheetReferenceBuilder {
+export interface SpreadsheetReferenceBuilder<
+  TRow = Record<string, unknown>,
+> {
   select: <
     TField extends string,
-    const TOption,
-    TValue = TOption extends SpreadsheetStandardOption<infer TResolvedValue>
-      ? TResolvedValue
-      : unknown,
+    TSource extends SpreadsheetReferencePath<TRow>,
+    const TOption extends SpreadsheetOptionItem,
+    TValue = SpreadsheetReferenceValue<
+      SpreadsheetReferenceValueAtPath<TRow, TSource>,
+      InferSpreadsheetOptionValue<TOption>
+    >,
   >(
     field: TField,
-    config: SpreadsheetReferenceSelectConfig<TOption, TValue>,
+    config: SpreadsheetReferenceSelectConfig<TRow, TSource, TOption>,
   ) => SpreadsheetReferenceDefinition<
     TField,
-    SpreadsheetReferenceValue<TOption, TValue>,
-    TOption
+    TValue,
+    TOption,
+    TSource
   >
 }
 

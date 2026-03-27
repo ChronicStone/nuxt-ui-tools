@@ -44,9 +44,6 @@ type InspectionGroupMode = 'property' | 'issue'
 
 const groupMode = ref<InspectionGroupMode>('property')
 
-const rowPrimaryLabel = computed(() =>
-  props.formatCell(props.inspectedRow.rowObject[props.tableColumns[0] ?? '']),
-)
 const blockingIssueCount = computed(() =>
   props.inspectedRow.issues.filter(issue => issue.level === 'error').length,
 )
@@ -120,7 +117,7 @@ function getFieldIssueTone(key: string) {
 </script>
 
 <template>
-  <div class="grid gap-6">
+  <div class="grid min-h-0 h-full gap-6 grid-rows-[auto_auto_minmax(0,1fr)]">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex flex-wrap items-center gap-4">
         <UButton
@@ -144,9 +141,6 @@ function getFieldIssueTone(key: string) {
               {{ isDiscarded(inspectedRow.index) ? 'Discarded' : blockingIssueCount ? 'Blocking issues' : warningIssueCount ? 'Warnings only' : 'Valid row' }}
             </UBadge>
           </div>
-          <span class="text-sm text-toned">
-            {{ rowPrimaryLabel }}
-          </span>
         </div>
       </div>
 
@@ -210,14 +204,14 @@ function getFieldIssueTone(key: string) {
       </div>
     </div>
 
-    <div class="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-      <div class="overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default">
+    <div class="grid min-h-0 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <div class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
         <div class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]">
           <span class="text-[13px] font-semibold text-highlighted">Row data</span>
           <span class="font-mono text-[11px] text-muted">Row #{{ inspectedRow.index + 1 }}</span>
         </div>
 
-        <div class="grid">
+        <div class="grid min-h-0 overflow-y-auto">
           <div
             v-for="[key, value] in getObjectEntries(inspectedRow.rowObject)"
             :key="key"
@@ -277,7 +271,7 @@ function getFieldIssueTone(key: string) {
         </div>
       </div>
 
-      <div class="overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default">
+      <div class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
         <div class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]">
           <div class="flex items-center gap-3">
             <span class="text-[13px] font-semibold text-highlighted">Issues on this row</span>
@@ -304,7 +298,7 @@ function getFieldIssueTone(key: string) {
           </div>
         </div>
 
-        <div class="grid">
+        <div class="grid min-h-0 overflow-y-auto">
           <div
             v-for="group in issueGroups"
             :key="group.key"

@@ -6,6 +6,7 @@ import type {
   UnionToIntersection,
 } from '../../shared/types/utils'
 import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
+import type { InferSpreadsheetOptionValue } from './options'
 import type {
   SpreadsheetColumnDefinition,
   SpreadsheetColumnGroupDefinition,
@@ -89,21 +90,13 @@ type ResolveDynamicValue<TValueDefinition extends SpreadsheetDynamicValueDefinit
     : TValueDefinition extends { kind: 'number' } ? number
       : TValueDefinition extends { kind: 'date' } ? string
         : TValueDefinition extends { kind: 'boolean' } ? boolean
-          : TValueDefinition extends { kind: 'options', mode: infer TMode, optionValue?: (option: any) => infer TValue }
-            ? TMode extends 'multiple'
-              ? TValue[]
-              : TValue
-            : TValueDefinition extends { kind: 'options', mode: infer TMode }
+          : TValueDefinition extends { kind: 'options', mode: infer TMode }
               ? TMode extends 'multiple'
                 ? TValueDefinition extends { from: readonly (infer TOption)[] }
-                  ? TOption extends { value: infer TValue }
-                    ? TValue[]
-                    : never
+                  ? InferSpreadsheetOptionValue<TOption>[]
                   : never
                 : TValueDefinition extends { from: readonly (infer TOption)[] }
-                  ? TOption extends { value: infer TValue }
-                    ? TValue
-                    : never
+                  ? InferSpreadsheetOptionValue<TOption>
                   : never
               : never
 

@@ -6,8 +6,8 @@ import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePrevie
 import type { SpreadsheetRowIssue, SpreadsheetResolvedReferenceRow } from '../types'
 import { formatSpreadsheetCell, humanizeSpreadsheetKey } from '../utils/display'
 import {
+  getSpreadsheetLeafPaths,
   getSpreadsheetObjectEntries,
-  getSpreadsheetObjectKeys,
   getSpreadsheetValueAtPath,
 } from '../utils/object'
 
@@ -71,7 +71,11 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
       return
     }
 
-    rowSelection.value = Object.fromEntries(visibleRows.value.map(row => [String(row.index), true]))
+    rowSelection.value = Object.fromEntries(
+      visibleRows.value
+        .filter(row => !isOverflowRow(row.index) || activeTab.value === 'discarded')
+        .map(row => [String(row.index), true]),
+    )
   }
 
   function discardSelectedRows() {
@@ -146,7 +150,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     {
       key: 'ready',
       value: validRows.value.length,
-      label: 'ready to import',
+      label: 'ready',
       hint: `${validRows.value.length} valid rows`,
       valueClass: 'text-success',
       accentClass: 'bg-success',
@@ -155,7 +159,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     {
       key: 'invalid',
       value: invalidRows.value.length,
-      label: 'invalid rows',
+      label: 'invalid',
       hint: invalidRows.value.length
         ? `${blockingIssueCount.value} blocking · ${warningIssueCount.value} warnings`
         : 'No blocking issues',
@@ -167,7 +171,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
       key: 'discarded',
       value: discardedRows.value.length,
       label: 'discarded',
-      hint: discardedRows.value.length ? 'Will not be imported — exportable' : 'Nothing discarded',
+      hint: discardedRows.value.length ? 'Will not be imported' : 'Nothing discarded',
       valueClass: 'text-warning',
       accentClass: 'bg-warning',
       cardClass: discardedRows.value.length ? 'border-warning/40' : 'border-default/70',
@@ -215,7 +219,9 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   )
   const allVisibleSelected = computed(() =>
     visibleRows.value.length > 0
-    && visibleRows.value.every(row => rowSelection.value[String(row.index)]),
+    && visibleRows.value
+      .filter(row => !isOverflowRow(row.index) || activeTab.value === 'discarded')
+      .every(row => rowSelection.value[String(row.index)]),
   )
   const canDiscardSelection = computed(() =>
     selectedRows.value.some(row => !isDiscarded(row.index)),
@@ -224,8 +230,8 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     selectedRows.value.some(row => isManuallyDiscarded(row.index)),
   )
   const tableColumns = computed(() => {
-    const sample = visibleRows.value[0]?.rowObject ?? reviewRows.value[0]?.rowObject ?? {}
-    return getSpreadsheetObjectKeys(sample)
+    const sample = visibleRows.value[0]?.data ?? reviewRows.value[0]?.data ?? {}
+    return getSpreadsheetLeafPaths(sample)
   })
 
   function getRowStatus(index: number, issues: readonly SpreadsheetRowIssue[]) {
@@ -342,10 +348,10 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     ...tableColumns.value.map((column: string) => ({
       id: column,
       header: humanizeSpreadsheetKey(column),
-      accessorFn: (row: { rowObject: Record<string, unknown> }) => formatSpreadsheetCell(row.rowObject[column]),
-      cell: ({ row }: { row: { original: { rowObject: Record<string, unknown> } } }) =>
+      accessorFn: (row: { data: Record<string, unknown> }) => formatSpreadsheetCell(getSpreadsheetValueAtPath(row.data, column)),
+      cell: ({ row }: { row: { original: { data: Record<string, unknown> } } }) =>
         h(SpreadsheetValuePreview, {
-          value: row.original.rowObject[column],
+          value: getSpreadsheetValueAtPath(row.original.data, column),
           compact: true,
         }),
       meta: {

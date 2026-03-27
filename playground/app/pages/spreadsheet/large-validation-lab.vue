@@ -175,11 +175,11 @@ function createLargeValidationSchema() {
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
             normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
-          options: {
-            resolve: (group: { items: readonly SpreadsheetAffiliationOption[] }) => group.items,
-            optionLabel: (item: SpreadsheetAffiliationOption) => item.name,
-            optionValue: (item: SpreadsheetAffiliationOption) => item.id,
-          },
+          options: (group: { items: readonly SpreadsheetAffiliationOption[] }) =>
+            group.items.map((item: SpreadsheetAffiliationOption) => ({
+              label: item.name,
+              value: item.id,
+            })),
           values: {
             mode: 'csv',
             separator: ',',
@@ -195,9 +195,10 @@ function createLargeValidationSchema() {
     references: reference => [
       reference.select('productId', {
         source: 'examNameRaw',
-        options: center.products,
-        optionValue: (product: SpreadsheetProduct) => product.id,
-        optionLabel: (product: SpreadsheetProduct) => product.name,
+        options: center.products.map((product: SpreadsheetProduct) => ({
+          label: product.name,
+          value: product.id,
+        })),
       }),
     ],
   }).refine({
