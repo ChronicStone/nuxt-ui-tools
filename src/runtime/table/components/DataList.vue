@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 
+import { provideUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
+import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 import { provideTableInternals, type TableInternals } from '../composables/use-table-internals'
 import GridRenderer from './grid/GridRenderer.vue'
 import TableFooter from './layout/TableFooter.vue'
@@ -20,6 +22,7 @@ const props = defineProps<{
   title?: string
   description?: string
   height?: string | number
+  locale?: UiToolsLocale<UiToolsMessages>
 }>()
 
 defineSlots<{
@@ -31,6 +34,7 @@ defineSlots<{
 }>()
 
 provideTableInternals(props.table.__internals)
+provideUiToolsLocale(useUiToolsLocaleRef(computed(() => props.locale)))
 
 const internals = props.table.__internals
 const tableHeight = computed(() => normalizeDimension(props.height ?? '36rem'))

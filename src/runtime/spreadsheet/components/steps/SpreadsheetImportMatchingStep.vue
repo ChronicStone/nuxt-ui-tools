@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+import { resolveTextValue } from '#ui-tools/shared/utils/render'
 import type { SpreadsheetColumnAssignmentOption } from '../../types'
 import type { SpreadsheetComponentApi } from '../types'
 import SpreadsheetMatchingSummary from './matching/SpreadsheetMatchingSummary.vue'
@@ -9,20 +11,14 @@ import SpreadsheetMatchingTable from './matching/SpreadsheetMatchingTable.vue'
 const props = defineProps<{
   spreadsheet: SpreadsheetComponentApi
 }>()
+const { t } = useUiToolsLocale()
 
 const internals = props.spreadsheet.__internals
-
-function resolveLabel(value: string | (() => string | number) | undefined, fallback: string) {
-  if (typeof value === 'function')
-    return String(value())
-
-  return value ?? fallback
-}
 
 function getStaticColumnLabel(columnKey: string) {
   const column = internals.rows.staticColumns.value.find((entry) => entry.key === columnKey)
   if (!column) return columnKey
-  return resolveLabel(column.label, column.key)
+  return resolveTextValue(column.label, column.key)
 }
 
 const assignedStaticKeys = computed(() => new Set(
@@ -39,7 +35,7 @@ const ignoredHeaderRows = computed(() =>
     .filter((header) => !usedColumnIndexes.value.has(header.index))
     .map((header) => ({
       key: `ignored:${header.index}`,
-      fileColumn: header.text || `Column ${header.index + 1}`,
+      fileColumn: header.text || t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
     })),
 )
 
@@ -70,25 +66,25 @@ const autoMappedRows = computed(() =>
 const summaryItems = computed(() => [
   {
     key: 'matched',
-    label: 'Matched',
+    label: t('spreadsheet.steps.matching.matched'),
     value: expectedFieldRows.value.filter((row) => row.status === 'matched').length,
     tone: 'success' as const,
   },
   {
     key: 'unmatched',
-    label: 'Missing',
+    label: t('spreadsheet.steps.matching.missing'),
     value: internals.rows.unmatchedColumns.value.length,
     tone: 'error' as const,
   },
   {
     key: 'dynamic',
-    label: 'Auto-mapped',
+    label: t('spreadsheet.steps.matching.autoMapped'),
     value: autoMappedRows.value.length,
     tone: 'warning' as const,
   },
   {
     key: 'ignored',
-    label: 'Ignored',
+    label: t('spreadsheet.steps.matching.ignored'),
     value: ignoredHeaderRows.value.length,
     tone: 'neutral' as const,
   },
@@ -103,7 +99,7 @@ function getOptionsForRow(row: { systemFieldKey: string, selectedHeaderIndex: nu
 
       return {
         key: row.systemFieldKey,
-        label: header.text || `Column ${header.index + 1}`,
+        label: header.text || t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
         assigned: assignedToOtherField,
         headerIndex: header.index,
         selected: selectedMatch?.columnIndex === header.index,
@@ -111,7 +107,7 @@ function getOptionsForRow(row: { systemFieldKey: string, selectedHeaderIndex: nu
     }),
     {
       key: '__ignore__',
-      label: 'Ignore this field',
+      label: t('spreadsheet.steps.matching.ignoreField'),
       assigned: false,
       headerIndex: -1,
       selected: row.selectedHeaderIndex === null,

@@ -2,6 +2,8 @@
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { computed, ref } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 const props = defineProps<{
   rows: Array<{
     absoluteIndex: number
@@ -10,6 +12,7 @@ const props = defineProps<{
   columnCount: number
   selectedHeaderRowIndex: number
 }>()
+const { t } = useUiToolsLocale()
 
 const emit = defineEmits<{
   selectHeader: [rowIndex: number]
@@ -43,12 +46,12 @@ function getStatusCellTone(value: unknown) {
   <div class="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
     <div class="flex items-center justify-between gap-3">
       <h3 class="text-[13px] font-semibold text-highlighted">
-        Sheet preview — header detected at row {{ selectedHeaderRowIndex + 1 }}
+        {{ t('spreadsheet.steps.structure.previewTitle') }} — {{ t('spreadsheet.steps.structure.headerDetectedAtRow', { row: selectedHeaderRowIndex + 1 }) }}
       </h3>
 
       <div class="inline-flex items-center gap-1.5 bg-info/10 px-2.5 py-1 font-mono text-[11px] font-medium text-info">
         <span class="size-1.5 rounded-full bg-info" />
-        <span>Auto-detected</span>
+        <span>{{ t('spreadsheet.steps.structure.autoDetected') }}</span>
       </div>
     </div>
 

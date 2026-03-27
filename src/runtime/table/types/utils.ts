@@ -2,6 +2,7 @@ import type { ComputedRef, Ref } from 'vue'
 import type { TableApi } from './table-api'
 
 import type {
+  LazyTextValue,
   MaybePromise,
   NestedPaths,
   Prettify,
@@ -11,6 +12,7 @@ import type {
 
 export type {
   ComputedRef,
+  LazyTextValue,
   MaybePromise,
   NestedPaths,
   Prettify,
@@ -33,7 +35,7 @@ export type TypeFromPath<
     : never
 
 export type TableLayout = 'table' | 'grid'
-export type TableTextValue = string | (() => string | number)
+export type TableTextValue = LazyTextValue
 
 export type TableColumnPinned = 'left' | 'right'
 

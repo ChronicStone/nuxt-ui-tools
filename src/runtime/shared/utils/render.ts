@@ -1,12 +1,12 @@
 import { createTextVNode, type VNodeChild } from 'vue'
 
-import type { RenderableType } from '../types/utils'
+import type { LazyTextValue, RenderableType } from '../types/utils'
 
 export type RenderableValue<TArgs extends unknown[] = []> =
   | RenderableType
   | ((...args: TArgs) => RenderableType)
 
-export type ResolvableTextValue = string | number | (() => string | number)
+export type ResolvableTextValue = LazyTextValue
 
 export function renderVNode<TArgs extends unknown[]>(
   value: RenderableValue<TArgs>,

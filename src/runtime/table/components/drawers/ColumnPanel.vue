@@ -6,9 +6,11 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useTableInternals } from '../../composables/use-table-internals'
 
 const internals = useTableInternals()
+const { t } = useUiToolsLocale()
 const configurableColumns = computed(() =>
   internals.tableColumns.orderedColumns.value.filter((column) => column.configurable !== false),
 )
@@ -71,7 +73,7 @@ function toggleColumn(columnId: string) {
       variant="outline"
       size="md"
       icon="i-lucide-sliders-horizontal"
-      label="View"
+      :label="t('table.controls.view')"
     />
 
     <template #content>
@@ -82,7 +84,7 @@ function toggleColumn(columnId: string) {
             @update:model-value="internals.controls.columnsPanelSearch.value = String($event ?? '')"
             size="sm"
             icon="i-lucide-search"
-            placeholder="Search columns..."
+            :placeholder="t('table.controls.searchColumns')"
             color="neutral"
             variant="ghost"
             class="w-full"
@@ -241,7 +243,7 @@ function toggleColumn(columnId: string) {
 
         <div class="flex items-center justify-between gap-3 border-t border-default px-3 py-2">
           <div class="text-sm text-muted">
-            {{ configurableColumns.length }} configurable columns
+            {{ t('table.controls.configurableColumns', { count: configurableColumns.length }) }}
           </div>
 
           <UButton
@@ -249,7 +251,7 @@ function toggleColumn(columnId: string) {
             variant="ghost"
             size="sm"
             icon="i-lucide-rotate-ccw"
-            label="Reset"
+            :label="t('table.controls.resetColumns')"
             @click="internals.tableColumns.reset()"
           />
         </div>

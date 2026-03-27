@@ -249,15 +249,15 @@ export interface TableDateFilterPresetContext {
 }
 
 export interface TableDateFilterScalarPreset {
-  label: string
-  description?: string
+  label: TableTextValue
+  description?: TableTextValue
   value: Date | ((context: TableDateFilterPresetContext) => Date)
   operators?: TableScalarDateFilterOperator[]
 }
 
 export interface TableDateFilterRangePreset {
-  label: string
-  description?: string
+  label: TableTextValue
+  description?: TableTextValue
   value:
     | {
         from?: Date
@@ -671,7 +671,7 @@ interface TableFilterDefinitionBase<
   TOperator extends TableFilterOperator = TableFilterOperator,
 > {
   key: TKey
-  label: string | (() => RenderableType)
+  label: TableTextValue | (() => RenderableType)
   behavior?: TableFilterBehaviorCommon<TOperator> & {
     defaultValue?: TValue
   }

@@ -36,3 +36,71 @@ Then use the focused references:
 - `skills/consumer/table/references/actions.md`
 - `skills/consumer/table/references/slots.md`
 - `skills/consumer/table/references/patterns.md`
+
+## I18n-Friendly Schema Text
+
+Schema-owned table text should be written as translation-friendly lazy values when it comes from app i18n.
+
+Use this pattern for:
+
+- filter labels
+- filter placeholders
+- preset labels and descriptions
+- column labels
+- action labels
+- static option labels
+
+Example:
+
+```ts
+const { t } = useI18n()
+
+const schema = defineTableSchema({
+  tableKey: 'employees',
+  rowKey: 'id',
+  filters: {
+    search: {
+      fields: ['fullName', 'email'],
+      placeholder: () => t('employees.search.placeholder'),
+    },
+    ui: (filter) => [
+      filter.text('fullName', {
+        label: () => t('employees.filters.name'),
+        editor: {
+          placeholder: () => t('employees.filters.searchName'),
+        },
+      }),
+      filter.date('hiredAt', {
+        label: () => t('employees.filters.hiredAt'),
+        editor: {
+          scalar: {
+            presets: [
+              {
+                label: () => t('shared.datePresets.today'),
+                value: ({ now }) => now,
+              },
+            ],
+          },
+        },
+      }),
+    ],
+  },
+  rowActions: ({ row }) => [
+    {
+      key: 'copy-email',
+      label: () => t('employees.actions.copyEmail'),
+    },
+  ],
+  table: {
+    columns: (column) => [
+      column.field('fullName', {
+        label: () => t('employees.columns.fullName'),
+      }),
+    ],
+  },
+})
+```
+
+Prefer translation keys through `t(...)` over writing bilingual helpers or rebuilding the whole schema in a `computed(...)`.
+
+If a surface only renders package-owned UI text and does not come from your schema, use the package locale/provider layer instead of duplicating those strings in your app schema.

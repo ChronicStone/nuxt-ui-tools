@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, nextTick, watch } from 'vue'
 
+import { provideUiToolsLocale, useUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
+import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
+import { resolveTextValue } from '#ui-tools/shared/utils/render'
 import { useSpreadsheetView } from '../composables/use-spreadsheet-view'
 import type { SpreadsheetComponentApi } from './types'
 import SpreadsheetImportFooter from './layout/SpreadsheetImportFooter.vue'
@@ -20,7 +23,12 @@ const props = defineProps<{
   onDownloadTemplate?: () => void
   closable?: boolean
   mode?: 'inline' | 'fullscreen'
+  locale?: UiToolsLocale<UiToolsMessages>
 }>()
+
+const locale = useUiToolsLocaleRef(computed(() => props.locale))
+provideUiToolsLocale(locale)
+const { t } = useUiToolsLocale(locale)
 
 const emit = defineEmits<{
   close: []
@@ -28,6 +36,8 @@ const emit = defineEmits<{
 
 const view = useSpreadsheetView({
   hasReferences: () => props.spreadsheet.referenceResolutions.value.length > 0,
+  stepConfig: () => props.spreadsheet.schema.value.steps,
+  t,
 })
 
 const workspaceTitle = computed(() =>
@@ -45,9 +55,19 @@ const currentStep = computed(() =>
   steps.value.find((step) => step.value === activeStep.value) ?? steps.value[0],
 )
 const stageTitle = computed(() => {
-  if (activeStep.value === 'upload') return 'Upload your file'
-  if (activeStep.value === 'structure') return 'Confirm file structure'
-  return currentStep.value?.title ?? 'Spreadsheet import'
+  if (activeStep.value === 'upload')
+    return resolveTextValue(
+      props.spreadsheet.schema.value.steps?.upload?.title,
+      t('spreadsheet.steps.upload.stageTitle'),
+    )
+
+  if (activeStep.value === 'structure')
+    return resolveTextValue(
+      props.spreadsheet.schema.value.steps?.structure?.title,
+      t('spreadsheet.steps.structure.stageTitle'),
+    )
+
+  return currentStep.value?.title ?? humanizeKey(props.spreadsheet.schema.value.importKey)
 })
 const stageDescription = computed(() => currentStep.value?.description ?? '')
 const renderMode = computed(() => props.mode ?? 'inline')
@@ -106,25 +126,25 @@ function humanizeKey(value: string) {
 
 const actionHint = computed(() => {
   if (activeStep.value === 'structure')
-    return 'Click on a row to change the header position'
+    return t('spreadsheet.common.clickToChangeHeaderRow')
 
   if (activeStep.value === 'references')
-    return 'Resolve what you can here, then review row validity in the next step'
+    return t('spreadsheet.common.referencesStepHint')
 
   return undefined
 })
 
 const primaryActionLabel = computed(() => {
   if (activeStep.value === 'review')
-    return `Import ${importableRowCount.value} rows`
+    return t('spreadsheet.common.importRows', { count: importableRowCount.value })
 
-  return 'Continue'
+  return t('spreadsheet.common.continue')
 })
 
 const primaryActionColor = computed(() =>
   activeStep.value === 'review' ? 'success' as const : 'primary' as const,
 )
-const primaryActionBusyLabel = computed(() => 'Preparing review...')
+const primaryActionBusyLabel = computed(() => t('spreadsheet.common.preparingReview'))
 
 function getNextStepValue() {
   return steps.value[activeStepIndex.value + 1]?.value
@@ -174,7 +194,7 @@ watch(hasWorkbook, (nextHasWorkbook) => {
 
 <template>
   <div
-    class="grid h-full overflow-hidden bg-default lg:grid-cols-[280px_minmax(0,1fr)]"
+    class="grid h-full overflow-hidden bg-default lg:grid-cols-[320px_minmax(0,1fr)]"
       :class="isFullscreen
       ? 'min-h-full'
       : 'min-h-[44rem] rounded-[var(--ui-radius)] border border-default/70 shadow-sm'"
@@ -198,7 +218,7 @@ watch(hasWorkbook, (nextHasWorkbook) => {
             <div class="size-4 animate-spin rounded-full border-2 border-default border-t-primary" />
             <div class="grid gap-0.5">
               <span class="text-sm font-medium text-highlighted">{{ primaryActionBusyLabel }}</span>
-              <span class="text-xs text-muted">Validation and review data are being prepared.</span>
+              <span class="text-xs text-muted">{{ t('spreadsheet.common.preparingReviewDescription') }}</span>
             </div>
           </div>
         </div>
@@ -259,14 +279,15 @@ watch(hasWorkbook, (nextHasWorkbook) => {
         v-if="activeStep !== 'upload'"
         :hint="actionHint"
         :show-previous="activeStep !== 'upload'"
+        :previous-label="t('spreadsheet.common.previous')"
         :primary-label="primaryActionLabel"
         :primary-disabled="activeStep !== 'review' && !canGoNext"
         :primary-loading="isPreparingNextStep"
         :primary-color="primaryActionColor"
         :primary-icon="activeStep === 'review' ? 'i-lucide-check' : 'i-lucide-arrow-right'"
         :show-export="activeStep === 'review' && overflowRowCount > 0"
-        :export-label="`Export ${overflowRowCount} discarded rows`"
-        :meta-text="`${importableRowCount} of ${spreadsheet.rowSummary.value.totalRows} rows will be imported`"
+        :export-label="t('spreadsheet.common.exportDiscardedRows', { count: overflowRowCount })"
+        :meta-text="t('spreadsheet.common.importSummary', { importable: importableRowCount, total: spreadsheet.rowSummary.value.totalRows })"
         @previous="goToPrevStep"
         @primary="handlePrimaryAction"
       />

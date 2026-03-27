@@ -138,6 +138,9 @@ That file should stay an orchestration map, not a dumping ground.
 - keep client facet computation in the data/query layer, not in filter UI composables
 - keep actions, filters, columns, and layouts easy to document on the consumer side
 - prefer normalized state shapes that are easy to serialize, explain, and test
+- schema-owned user-facing text must support lazy translation values instead of raw-string-only contracts
+- fix text contracts at the owning type/util layer; do not work around missing lazy-text support by rebuilding full schemas in `computed(...)`
+- when a table text surface needs plain rendered output internally, resolve it in the owning utility layer from the lazy source instead of narrowing the public API back to `string`
 
 ## State Design Rule
 

@@ -2,6 +2,7 @@ import { computed, ref, type ComputedRef, h } from 'vue'
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePreview.vue'
 import type { SpreadsheetRowIssue, SpreadsheetResolvedReferenceRow } from '../types'
 import { formatSpreadsheetCell, humanizeSpreadsheetKey } from '../utils/display'
@@ -24,6 +25,7 @@ export interface UseSpreadsheetReviewParams {
 }
 
 export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
+  const { t } = useUiToolsLocale()
   const activeTab = ref<SpreadsheetReviewTab>('all')
   const issueFilter = ref<SpreadsheetReviewIssueFilter>('all')
   const inspectedRowIndex = ref<number | null>(null)
@@ -150,8 +152,8 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     {
       key: 'ready',
       value: validRows.value.length,
-      label: 'ready',
-      hint: `${validRows.value.length} valid rows`,
+      label: t('spreadsheet.steps.review.ready'),
+      hint: t('spreadsheet.steps.review.validRows', { count: validRows.value.length }),
       valueClass: 'text-success',
       accentClass: 'bg-success',
       cardClass: 'border-default/70',
@@ -159,10 +161,10 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     {
       key: 'invalid',
       value: invalidRows.value.length,
-      label: 'invalid',
+      label: t('spreadsheet.steps.review.invalid', { count: invalidRows.value.length }),
       hint: invalidRows.value.length
-        ? `${blockingIssueCount.value} blocking · ${warningIssueCount.value} warnings`
-        : 'No blocking issues',
+        ? `${t('spreadsheet.steps.review.blocking', { count: blockingIssueCount.value })} · ${t('spreadsheet.steps.review.warnings', { count: warningIssueCount.value })}`
+        : t('spreadsheet.steps.review.noBlockingIssues'),
       valueClass: 'text-error',
       accentClass: 'bg-error',
       cardClass: 'border-default/70',
@@ -170,8 +172,10 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     {
       key: 'discarded',
       value: discardedRows.value.length,
-      label: 'discarded',
-      hint: discardedRows.value.length ? 'Will not be imported' : 'Nothing discarded',
+      label: t('spreadsheet.steps.review.discarded', { count: discardedRows.value.length }),
+      hint: discardedRows.value.length
+        ? t('spreadsheet.steps.review.willNotBeImported')
+        : t('spreadsheet.steps.review.nothingDiscarded'),
       valueClass: 'text-warning',
       accentClass: 'bg-warning',
       cardClass: discardedRows.value.length ? 'border-warning/40' : 'border-default/70',
@@ -182,15 +186,15 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     hasOverflow.value ? reviewRows.value.length - params.maxRecords.value : 0,
   )
   const tabItems = computed(() => [
-    { key: 'all' as const, label: `All rows ${reviewRows.value.length}` },
-    { key: 'valid' as const, label: `Valid ${validRows.value.length}` },
-    { key: 'invalid' as const, label: `Invalid ${invalidRows.value.length}` },
-    { key: 'discarded' as const, label: `Discarded ${discardedRows.value.length}` },
+    { key: 'all' as const, label: t('spreadsheet.steps.review.allRows', { count: reviewRows.value.length }) },
+    { key: 'valid' as const, label: t('spreadsheet.steps.review.valid', { count: validRows.value.length }) },
+    { key: 'invalid' as const, label: t('spreadsheet.steps.review.invalid', { count: invalidRows.value.length }) },
+    { key: 'discarded' as const, label: t('spreadsheet.steps.review.discarded', { count: discardedRows.value.length }) },
   ])
   const issueFilterItems = computed(() => [
-    { key: 'all' as const, label: 'All issues' },
-    { key: 'blocking' as const, label: `Blocking ${invalidRows.value.filter(row => hasBlockingIssue(row.issues)).length}` },
-    { key: 'warning' as const, label: `Warnings ${invalidRows.value.filter(row => !hasBlockingIssue(row.issues) && hasWarningIssue(row.issues)).length}` },
+    { key: 'all' as const, label: t('spreadsheet.steps.review.allIssues') },
+    { key: 'blocking' as const, label: t('spreadsheet.steps.review.blocking', { count: invalidRows.value.filter(row => hasBlockingIssue(row.issues)).length }) },
+    { key: 'warning' as const, label: t('spreadsheet.steps.review.warnings', { count: invalidRows.value.filter(row => !hasBlockingIssue(row.issues) && hasWarningIssue(row.issues)).length }) },
   ])
   const visibleRows = computed(() => {
     const baseRows = activeTab.value === 'valid'
@@ -236,22 +240,22 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
 
   function getRowStatus(index: number, issues: readonly SpreadsheetRowIssue[]) {
     if (isDiscarded(index))
-      return { label: 'Discarded', color: 'neutral' as const, icon: 'i-lucide-ban' }
+      return { label: t('spreadsheet.steps.review.discardedStatus'), color: 'neutral' as const, icon: 'i-lucide-ban' }
 
     if (hasBlockingIssue(issues))
-      return { label: 'Blocking', color: 'error' as const, icon: 'i-lucide-circle-x' }
+      return { label: t('spreadsheet.steps.review.blockingStatus'), color: 'error' as const, icon: 'i-lucide-circle-x' }
 
     if (hasWarningIssue(issues))
-      return { label: 'Warning', color: 'warning' as const, icon: 'i-lucide-triangle-alert' }
+      return { label: t('spreadsheet.steps.review.warningStatus'), color: 'warning' as const, icon: 'i-lucide-triangle-alert' }
 
-    return { label: 'Valid', color: 'success' as const, icon: 'i-lucide-circle-check' }
+    return { label: t('spreadsheet.steps.review.validStatus'), color: 'success' as const, icon: 'i-lucide-circle-check' }
   }
 
   function getIssueBadge(issue: SpreadsheetRowIssue) {
     if (issue.level === 'error')
-      return { label: 'BLOCKING', color: 'error' as const }
+      return { label: t('spreadsheet.steps.review.issueBadgeBlocking'), color: 'error' as const }
 
-    return { label: 'WARNING', color: 'warning' as const }
+    return { label: t('spreadsheet.steps.review.issueBadgeWarning'), color: 'warning' as const }
   }
 
   function getIssueValueTone(issue: SpreadsheetRowIssue) {
@@ -260,7 +264,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   }
 
   function getIssueValue(rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) {
-    if (!issue.columnKey) return '—'
+    if (!issue.columnKey) return t('spreadsheet.steps.review.noValue')
     return formatSpreadsheetCell(getSpreadsheetValueAtPath(rowData, issue.columnKey))
   }
 
@@ -318,7 +322,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     },
     {
       id: 'row',
-      header: 'Row',
+      header: t('spreadsheet.steps.review.row'),
       accessorFn: (row: { index: number }) => row.index + 1,
       cell: ({ row }: { row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } } }) => {
         const status = getRowStatus(row.original.index, row.original.issues)

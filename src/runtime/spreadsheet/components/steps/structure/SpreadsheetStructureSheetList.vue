@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 const props = defineProps<{
   items: Array<{
     label: string
@@ -7,6 +9,7 @@ const props = defineProps<{
   }>
   selectedSheetName?: string
 }>()
+const { locale, t } = useUiToolsLocale()
 
 const emit = defineEmits<{
   select: [sheetName: string]
@@ -16,12 +19,16 @@ function isSelectedSheet(index: number, sheetLabel: string) {
   return props.selectedSheetName === sheetLabel
     || (!props.selectedSheetName && index === 0)
 }
+
+function formatCount(value: number) {
+  return new Intl.NumberFormat(locale.value.code).format(value)
+}
 </script>
 
 <template>
   <div class="grid gap-2 self-start">
     <h3 class="text-[13px] font-semibold text-highlighted">
-      Sheet
+      {{ t('spreadsheet.steps.structure.sheetLabel') }}
     </h3>
 
     <button
@@ -42,7 +49,12 @@ function isSelectedSheet(index: number, sheetLabel: string) {
       />
       <div class="grid gap-0.5">
         <span class="text-[13px]" :class="isSelectedSheet(index, sheet.label) ? 'font-medium text-highlighted' : 'text-toned'">{{ sheet.label }}</span>
-        <span class="font-mono text-[11px] text-muted">{{ sheet.rowCount }} rows · {{ sheet.columnCount }} columns</span>
+        <span class="font-mono text-[11px] text-muted">{{
+          t('spreadsheet.common.sheetStats', {
+            rows: formatCount(sheet.rowCount),
+            columns: formatCount(sheet.columnCount),
+          })
+        }}</span>
       </div>
     </button>
   </div>

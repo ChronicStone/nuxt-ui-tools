@@ -11,6 +11,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const center = {
   id: 'tc_paris',
   name: 'Paris Academic Hub',
@@ -296,8 +298,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Happy Path Import"
-      description="Clean baseline scenario with strong automatic matching and successful reference resolution."
+      :title="t('playground.spreadsheetPages.happyPath.title')"
+      :description="t('playground.spreadsheetPages.happyPath.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

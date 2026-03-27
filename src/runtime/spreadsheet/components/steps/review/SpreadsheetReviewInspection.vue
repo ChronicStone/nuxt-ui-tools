@@ -4,7 +4,8 @@ import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import SpreadsheetValuePreview from '../../shared/SpreadsheetValuePreview.vue'
+import { useUiToolsLocale } from '#ui-tools/i18n'
+import SpreadsheetValuePreview from '#ui-tools/spreadsheet/components/shared/SpreadsheetValuePreview.vue'
 import type { SpreadsheetRowIssue } from '../../../types'
 
 const emit = defineEmits<{
@@ -15,6 +16,7 @@ const emit = defineEmits<{
   restoreRow: [rowIndex: number]
   showIssueRows: []
 }>()
+const { t } = useUiToolsLocale()
 
 const props = defineProps<{
   inspectedRow: {
@@ -70,7 +72,9 @@ const issueGroups = computed(() => {
       groups.set(key, {
         key,
         title: props.humanizeKey(issue.ruleKey ?? issue.code),
-        subtitle: issue.ruleKey ? `Rule key: ${issue.ruleKey}` : 'Grouped by issue type',
+        subtitle: issue.ruleKey
+          ? t('spreadsheet.steps.review.ruleKey', { key: issue.ruleKey })
+          : t('spreadsheet.steps.review.groupedByIssueType'),
         issues: [issue],
       })
     }
@@ -95,8 +99,10 @@ const issueGroups = computed(() => {
 
     groups.set(key, {
       key,
-      title: key === '__row__' ? 'Row-level issue' : props.humanizeKey(key),
-      subtitle: key === '__row__' ? 'Affects the full row' : `Property: ${key}`,
+      title: key === '__row__' ? t('spreadsheet.steps.review.rowLevelIssue') : props.humanizeKey(key),
+      subtitle: key === '__row__'
+        ? t('spreadsheet.steps.review.affectsFullRow')
+        : t('spreadsheet.steps.review.property', { key }),
       issues: [issue],
     })
   }
@@ -125,20 +131,20 @@ function getFieldIssueTone(key: string) {
           variant="outline"
           size="sm"
           icon="i-lucide-arrow-left"
-          label="Back to table"
+          :label="t('spreadsheet.steps.review.backToTable')"
           @click="emit('close')"
         />
         <div class="grid gap-2">
           <div class="flex flex-wrap items-center gap-3">
             <span class="text-xl font-semibold text-highlighted">
-              Inspecting row #{{ inspectedRow.index + 1 }}
+              {{ t('spreadsheet.steps.review.inspectingRow', { row: inspectedRow.index + 1 }) }}
             </span>
             <UBadge
               :color="isDiscarded(inspectedRow.index) ? 'neutral' : blockingIssueCount ? 'error' : warningIssueCount ? 'warning' : 'success'"
               variant="soft"
               size="sm"
             >
-              {{ isDiscarded(inspectedRow.index) ? 'Discarded' : blockingIssueCount ? 'Blocking issues' : warningIssueCount ? 'Warnings only' : 'Valid row' }}
+              {{ isDiscarded(inspectedRow.index) ? t('spreadsheet.steps.review.discarded') : blockingIssueCount ? t('spreadsheet.steps.review.blockingIssues') : warningIssueCount ? t('spreadsheet.steps.review.warningsOnly') : t('spreadsheet.steps.review.validRow') }}
             </UBadge>
           </div>
         </div>
@@ -150,19 +156,19 @@ function getFieldIssueTone(key: string) {
           variant="outline"
           size="sm"
           icon="i-lucide-chevron-left"
-          label="Prev"
+          :label="t('spreadsheet.steps.review.prev')"
           :disabled="inspectedIssueRowPosition <= 0"
           @click="emit('prev')"
         />
         <span class="font-mono text-sm text-muted">
-          {{ inspectedIssueRowPosition + 1 }} of {{ issueRowsLength }} with issues
+          {{ t('spreadsheet.steps.review.issueRowsProgress', { current: inspectedIssueRowPosition + 1, total: issueRowsLength }) }}
         </span>
         <UButton
           color="neutral"
           variant="solid"
           size="sm"
           trailing-icon="i-lucide-chevron-right"
-          label="Next"
+          :label="t('spreadsheet.steps.review.next')"
           :disabled="inspectedIssueRowPosition < 0 || inspectedIssueRowPosition >= issueRowsLength - 1"
           @click="emit('next')"
         />
@@ -172,13 +178,15 @@ function getFieldIssueTone(key: string) {
     <div class="grid gap-3 rounded-[var(--ui-radius)] border border-default/70 bg-elevated/20 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
       <div class="flex flex-wrap items-center gap-2">
         <UBadge color="error" variant="soft" size="sm">
-          {{ blockingIssueCount }} blocking
+          {{ t('spreadsheet.steps.review.blocking', { count: blockingIssueCount }) }}
         </UBadge>
         <UBadge color="warning" variant="soft" size="sm">
-          {{ warningIssueCount }} warnings
+          {{ t('spreadsheet.steps.review.warnings', { count: warningIssueCount }) }}
         </UBadge>
         <UBadge color="neutral" variant="subtle" size="sm">
-          {{ issueGroups.length }} {{ groupMode === 'property' ? 'property groups' : 'issue groups' }}
+          {{ groupMode === 'property'
+            ? t('spreadsheet.steps.review.propertyGroups', { count: issueGroups.length })
+            : t('spreadsheet.steps.review.issueGroups', { count: issueGroups.length }) }}
         </UBadge>
       </div>
 
@@ -189,7 +197,7 @@ function getFieldIssueTone(key: string) {
           variant="outline"
           size="sm"
           icon="i-lucide-trash-2"
-          label="Discard row"
+          :label="t('spreadsheet.steps.review.discardRow')"
           @click="emit('discardRow', inspectedRow.index)"
         />
         <UButton
@@ -198,7 +206,7 @@ function getFieldIssueTone(key: string) {
           variant="outline"
           size="sm"
           icon="i-lucide-undo-2"
-          label="Restore row"
+          :label="t('spreadsheet.steps.review.restoreRow')"
           @click="emit('restoreRow', inspectedRow.index)"
         />
       </div>
@@ -207,7 +215,7 @@ function getFieldIssueTone(key: string) {
     <div class="grid min-h-0 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
       <div class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
         <div class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]">
-          <span class="text-[13px] font-semibold text-highlighted">Row data</span>
+          <span class="text-[13px] font-semibold text-highlighted">{{ t('spreadsheet.steps.review.rowData') }}</span>
           <span class="font-mono text-[11px] text-muted">Row #{{ inspectedRow.index + 1 }}</span>
         </div>
 
@@ -274,7 +282,7 @@ function getFieldIssueTone(key: string) {
       <div class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
         <div class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]">
           <div class="flex items-center gap-3">
-            <span class="text-[13px] font-semibold text-highlighted">Issues on this row</span>
+            <span class="text-[13px] font-semibold text-highlighted">{{ t('spreadsheet.steps.review.issuesOnThisRow') }}</span>
             <UBadge color="error" variant="soft" size="sm">{{ inspectedRow.issues.length }}</UBadge>
           </div>
 
@@ -285,7 +293,7 @@ function getFieldIssueTone(key: string) {
               :class="groupMode === 'property' ? 'bg-inverted text-inverted' : 'text-muted hover:text-toned'"
               @click="groupMode = 'property'"
             >
-              By property
+              {{ t('spreadsheet.steps.review.byProperty') }}
             </button>
             <button
               type="button"
@@ -293,7 +301,7 @@ function getFieldIssueTone(key: string) {
               :class="groupMode === 'issue' ? 'bg-inverted text-inverted' : 'text-muted hover:text-toned'"
               @click="groupMode = 'issue'"
             >
-              By issue type
+              {{ t('spreadsheet.steps.review.byIssueType') }}
             </button>
           </div>
         </div>
@@ -351,7 +359,7 @@ function getFieldIssueTone(key: string) {
                 </div>
 
                 <div class="rounded-[var(--ui-radius)] px-4 py-3" :class="getIssueValueTone(issue)">
-                  <div class="mb-1 font-mono text-xs text-muted">Value in file</div>
+                  <div class="mb-1 font-mono text-xs text-muted">{{ t('spreadsheet.steps.review.valueInFile') }}</div>
                   <div class="text-sm" :class="issue.level === 'error' ? 'text-error' : 'text-warning'">
                     <SpreadsheetValuePreview
                       :value="issue.columnKey
@@ -371,7 +379,7 @@ function getFieldIssueTone(key: string) {
                   class="justify-self-start text-sm font-medium text-primary transition-colors hover:text-primary/80"
                   @click="emit('showIssueRows')"
                 >
-                  View all {{ getRelatedIssueCount(issue) }} rows with this issue
+                  {{ t('spreadsheet.steps.review.viewAllRowsWithThisIssue', { count: getRelatedIssueCount(issue) }) }}
                 </button>
               </div>
             </div>

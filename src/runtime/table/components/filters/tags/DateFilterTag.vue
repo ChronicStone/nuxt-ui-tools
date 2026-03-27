@@ -9,6 +9,7 @@ import { computed, ref, shallowRef, toRef, watch } from 'vue'
 
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { TableDateFilterOperator, TableFilterOperator } from '../../../types'
 import type { TableDateFilterDefinition } from '../../../types/filters'
 import {
@@ -34,6 +35,7 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
+const { t } = useUiToolsLocale()
 const isMobile = useMediaQuery('(max-width: 639px)')
 const pendingOperator = ref<TableFilterOperator>()
 const localDate = shallowRef<CalendarDate | undefined>(undefined)
@@ -118,9 +120,9 @@ const rangeSummary = computed(() => {
   const to = localRangeEnd.value ? toJsDate(localRangeEnd.value) : undefined
 
   if (from && to) return `${formatFilterDate({ value: from })} - ${formatFilterDate({ value: to })}`
-  if (from) return `From ${formatFilterDate({ value: from })}`
-  if (to) return `Until ${formatFilterDate({ value: to })}`
-  return 'No range selected'
+  if (from) return `${t('table.filters.operators.after')} ${formatFilterDate({ value: from })}`
+  if (to) return `${t('table.filters.operators.before')} ${formatFilterDate({ value: to })}`
+  return t('table.filters.preview.empty')
 })
 
 const session = useFilterTagSession({

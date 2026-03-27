@@ -1,4 +1,4 @@
-export type SpreadsheetDisplayLabel = string | (() => string | number) | undefined
+export type SpreadsheetDisplayLabel = string | number | (() => string | number) | undefined
 
 export function resolveSpreadsheetDisplayLabel(
   value: SpreadsheetDisplayLabel,
@@ -7,7 +7,7 @@ export function resolveSpreadsheetDisplayLabel(
   if (typeof value === 'function')
     return String(value())
 
-  return value ?? fallback
+  return value == null ? fallback : String(value)
 }
 
 export function humanizeSpreadsheetKey(value: string) {

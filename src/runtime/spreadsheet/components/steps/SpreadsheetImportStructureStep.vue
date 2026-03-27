@@ -2,6 +2,7 @@
 import UAlert from '@nuxt/ui/components/Alert.vue'
 import { computed } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { SpreadsheetComponentApi } from '../types'
 import SpreadsheetStructurePreviewTable from './structure/SpreadsheetStructurePreviewTable.vue'
 import SpreadsheetStructureSheetList from './structure/SpreadsheetStructureSheetList.vue'
@@ -9,6 +10,7 @@ import SpreadsheetStructureSheetList from './structure/SpreadsheetStructureSheet
 const props = defineProps<{
   spreadsheet: SpreadsheetComponentApi
 }>()
+const { t } = useUiToolsLocale()
 
 const activeSheet = computed(() => props.spreadsheet.activeSheet.value)
 const sheetItems = computed(() =>
@@ -37,8 +39,8 @@ const previewColumnCount = computed(() =>
       color="warning"
       variant="soft"
       icon="i-lucide-triangle-alert"
-      title="Load a workbook first"
-      description="The structure step becomes available after a file is uploaded."
+      :title="t('spreadsheet.steps.structure.loadWorkbookFirstTitle')"
+      :description="t('spreadsheet.steps.structure.loadWorkbookFirstDescription')"
     />
 
     <template v-else>

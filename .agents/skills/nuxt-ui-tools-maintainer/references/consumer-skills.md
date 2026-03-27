@@ -70,3 +70,18 @@ That includes:
 - changed URL serialization
 - new supported patterns
 - removed behavior
+
+## Translation Guidance Must Be Explicit
+
+When a schema or component surface accepts user-facing text, consumer skills should say clearly whether that text belongs to:
+
+- package-owned locale messages, or
+- consumer-owned schema text
+
+For consumer-owned schema text, document the lazy translation pattern directly:
+
+- prefer `() => t('...')`
+- do not recommend rebuilding the whole schema in `computed(...)` just to change language
+- do not recommend ad hoc bilingual helpers when translation keys are available
+
+If a task adds lazy text support to a new surface, update the matching consumer skill with at least one concrete i18n example in the same task.

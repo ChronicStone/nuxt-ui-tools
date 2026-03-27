@@ -4,26 +4,28 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-const entries = [
+const { t } = useI18n()
+
+const entries = computed(() => [
   {
-    title: 'Spreadsheet playground',
-    description: 'Focused import-engine scenarios with isolated fullscreen routes for matching, references, and stress cases.',
+    title: t('playground.home.entries.spreadsheet.title'),
+    description: t('playground.home.entries.spreadsheet.description'),
     icon: 'i-lucide-file-spreadsheet',
     to: '/spreadsheet',
   },
   {
-    title: 'Remote table',
-    description: 'Server-driven data list playground for remote queries, filters, and table orchestration.',
+    title: t('playground.home.entries.remoteTable.title'),
+    description: t('playground.home.entries.remoteTable.description'),
     icon: 'i-lucide-database-zap',
     to: '/table-remote',
   },
   {
-    title: 'Client table',
-    description: 'Client-side table playground for local data behavior, filtering, and interaction states.',
+    title: t('playground.home.entries.clientTable.title'),
+    description: t('playground.home.entries.clientTable.description'),
     icon: 'i-lucide-table-properties',
     to: '/table-client',
   },
-] as const
+])
 </script>
 
 <template>
@@ -32,19 +34,19 @@ const entries = [
       <div class="grid gap-4 text-center">
         <div class="flex flex-wrap items-center justify-center gap-2">
           <UBadge color="neutral" variant="subtle" size="sm" class="font-mono">
-            Playground home
+            {{ t('playground.home.badges.home') }}
           </UBadge>
           <UBadge color="primary" variant="soft" size="sm" class="font-mono">
-            No default component open
+            {{ t('playground.home.badges.idle') }}
           </UBadge>
         </div>
 
         <div class="grid gap-3">
           <h1 class="text-3xl font-semibold tracking-tight text-highlighted">
-            Playground Landing
+            {{ t('playground.home.title') }}
           </h1>
           <p class="mx-auto max-w-3xl text-sm leading-6 text-muted">
-            Start from an empty home state, then open the specific playground surface you want to inspect. This keeps the playground calm by default and makes intent explicit before loading a heavy runtime.
+            {{ t('playground.home.description') }}
           </p>
         </div>
       </div>
@@ -77,7 +79,7 @@ const entries = [
               color="primary"
               variant="soft"
               trailing-icon="i-lucide-arrow-right"
-              label="Open"
+              :label="t('playground.common.open')"
             />
           </div>
         </UCard>

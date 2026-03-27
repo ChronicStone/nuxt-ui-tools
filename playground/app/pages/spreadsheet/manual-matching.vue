@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const center = {
   id: 'tc_paris',
   country: 'France',
@@ -215,8 +217,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Manual Matching Lab"
-      description="Header row confirmation and manual column assignment should be the main focus in this scenario."
+      :title="t('playground.spreadsheetPages.manualMatching.title')"
+      :description="t('playground.spreadsheetPages.manualMatching.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

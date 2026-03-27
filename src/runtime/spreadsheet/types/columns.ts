@@ -1,4 +1,4 @@
-import type { MaybePromise } from '../../shared/types/utils'
+import type { LazyTextValue, MaybePromise } from '#ui-tools/shared/types/utils'
 import type {
   SpreadsheetCellValue,
   SpreadsheetMatchDefinition,
@@ -27,7 +27,7 @@ export interface SpreadsheetColumnDefinition<
 > {
   kind: 'text' | 'email' | 'number' | 'date' | 'boolean' | 'enum' | 'option'
   key: TKey
-  label?: string | (() => string | number)
+  label?: LazyTextValue
   required?: TRequired
   match?: SpreadsheetMatchDefinition
   from?: string | RegExp | readonly (string | RegExp)[]
@@ -86,7 +86,7 @@ export interface SpreadsheetColumnBaseOptions<
   TRequired extends boolean,
   TMultiple = boolean | SpreadsheetColumnMultipleOptions,
 > {
-  label?: string | (() => string | number)
+  label?: LazyTextValue
   required?: TRequired
   match?: SpreadsheetMatchDefinition
   from?: string | RegExp | readonly (string | RegExp)[]

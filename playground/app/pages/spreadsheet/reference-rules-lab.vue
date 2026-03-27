@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const products = [
   { label: 'Business English 4 Skills', value: 'prod_be' },
   { label: 'Career Readiness Bundle', value: 'prod_cr' },
@@ -106,8 +108,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Reference Rules Lab"
-      description="Unresolved references are allowed in matching, then reference rules decide row validity in review."
+      :title="t('playground.spreadsheetPages.referenceRules.title')"
+      :description="t('playground.spreadsheetPages.referenceRules.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

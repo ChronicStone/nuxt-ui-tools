@@ -7,6 +7,7 @@ import type {
   TableFieldValue,
   TableRowRenderParams,
   TableSortKey,
+  TableTextValue,
 } from './utils'
 
 export interface TableColumnCellDataAttributes {
@@ -27,7 +28,7 @@ interface TableColumnBase<
   >,
 > {
   key: TKey
-  label?: string | (() => RenderableType)
+  label?: TableTextValue | (() => RenderableType)
   icon?: string
   width?: number | string
   minWidth?: number | string

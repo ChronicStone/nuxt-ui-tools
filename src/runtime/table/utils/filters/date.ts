@@ -5,6 +5,7 @@ import type {
   TableDateFilterScalarPreset,
   TableScalarDateFilterOperator,
 } from '../../types'
+import { resolveTextValue } from '#ui-tools/shared/utils/render'
 import { resolveDateFilterUi } from './ui'
 
 export interface ResolvedTableDateFilterScalarPreset {
@@ -31,8 +32,8 @@ export function resolveDateFilterScalarPresets(options: {
   const now = options.now ?? new Date()
 
   return presetDefinitions.map((preset) => ({
-    label: preset.label,
-    ...(preset.description ? { description: preset.description } : {}),
+    label: resolveTextValue(preset.label),
+    ...(preset.description ? { description: resolveTextValue(preset.description) } : {}),
     value: resolveScalarPresetValue({
       preset,
       now,
@@ -48,8 +49,8 @@ export function resolveDateFilterRangePresets(options: {
   const now = options.now ?? new Date()
 
   return presetDefinitions.map((preset) => ({
-    label: preset.label,
-    ...(preset.description ? { description: preset.description } : {}),
+    label: resolveTextValue(preset.label),
+    ...(preset.description ? { description: resolveTextValue(preset.description) } : {}),
     value: resolveRangePresetValue({
       preset,
       now,

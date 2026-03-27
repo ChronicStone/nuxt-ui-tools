@@ -4,6 +4,7 @@ import { computed } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableUiFilterDefinition } from '../../../types'
+import { getFilterLabelText } from '../../../utils'
 import DynamicFilterPicker from '../shared/DynamicFilterPicker.vue'
 import { resolveFilterTagComponent } from './registry'
 
@@ -18,7 +19,7 @@ const dynamicSessionDefinition = computed(
 )
 
 function getFilterLabel(definition: TableUiFilterDefinition) {
-  return typeof definition.label === 'function' ? '' : definition.label
+  return getFilterLabelText({ label: definition.label })
 }
 </script>
 

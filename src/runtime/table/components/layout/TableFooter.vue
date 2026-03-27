@@ -3,23 +3,25 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import { computed } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useTableInternals } from '../../composables/use-table-internals'
 
 const internals = useTableInternals()
+const { locale, t } = useUiToolsLocale()
 
 const pageSizeItems = computed(() =>
   internals.tableApi.pagination.pageSizeOptions.value.map((size: number) => [
     {
-      label: `${size} rows`,
+      label: t('table.footer.pageSizeOption', {
+        count: formatCount(size),
+      }),
       onSelect: () => internals.pagination.setPageSize(size),
     },
   ]),
 )
 
-const groupedNumberFormatter = new Intl.NumberFormat('fr-FR')
-
 function formatCount(value: number) {
-  return groupedNumberFormatter.format(value)
+  return new Intl.NumberFormat(locale.value.code).format(value)
 }
 </script>
 
@@ -28,13 +30,15 @@ function formatCount(value: number) {
     class="flex flex-col gap-3 px-4 py-3 text-sm text-muted sm:px-5 lg:flex-row lg:items-center lg:justify-between"
   >
     <div>
-      {{ formatCount(internals.selection.selectedCount.value) }} of
-      {{ formatCount(internals.pagination.rowCount.value) }} row(s) selected.
+      {{ t('table.footer.rowsSelected', {
+        selected: formatCount(internals.selection.selectedCount.value),
+        total: formatCount(internals.pagination.rowCount.value),
+      }) }}
     </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
       <div class="flex items-center gap-3">
-        <span>Rows per page</span>
+        <span>{{ t('table.footer.rowsPerPage') }}</span>
 
         <UDropdownMenu
           :items="pageSizeItems"
@@ -52,10 +56,12 @@ function formatCount(value: number) {
       </div>
 
       <div class="flex items-center gap-3">
-        <span
-          >Page {{ internals.pagination.currentPage.value }} of
-          {{ internals.pagination.totalPages.value }}</span
-        >
+        <span>{{
+          t('table.footer.page', {
+            current: formatCount(internals.pagination.currentPage.value),
+            total: formatCount(internals.pagination.totalPages.value),
+          })
+        }}</span>
 
         <div class="flex items-center gap-2">
           <UButton
@@ -63,6 +69,8 @@ function formatCount(value: number) {
             variant="outline"
             size="md"
             icon="i-lucide-chevrons-left"
+            :aria-label="t('table.footer.firstPage')"
+            :title="t('table.footer.firstPage')"
             :disabled="!internals.pagination.canPreviousPage.value"
             @click="internals.pagination.setPage(1)"
           />
@@ -71,6 +79,8 @@ function formatCount(value: number) {
             variant="outline"
             size="md"
             icon="i-lucide-chevron-left"
+            :aria-label="t('table.footer.previousPage')"
+            :title="t('table.footer.previousPage')"
             :disabled="!internals.pagination.canPreviousPage.value"
             @click="internals.pagination.setPage(internals.pagination.currentPage.value - 1)"
           />
@@ -79,6 +89,8 @@ function formatCount(value: number) {
             variant="outline"
             size="md"
             icon="i-lucide-chevron-right"
+            :aria-label="t('table.footer.nextPage')"
+            :title="t('table.footer.nextPage')"
             :disabled="!internals.pagination.canNextPage.value"
             @click="internals.pagination.setPage(internals.pagination.currentPage.value + 1)"
           />
@@ -87,6 +99,8 @@ function formatCount(value: number) {
             variant="outline"
             size="md"
             icon="i-lucide-chevrons-right"
+            :aria-label="t('table.footer.lastPage')"
+            :title="t('table.footer.lastPage')"
             :disabled="!internals.pagination.canNextPage.value"
             @click="internals.pagination.setPage(internals.pagination.totalPages.value)"
           />

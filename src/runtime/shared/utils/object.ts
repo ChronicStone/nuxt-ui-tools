@@ -81,3 +81,10 @@ export function pick<T extends Record<PropertyKey, any>, K extends NestedPaths<T
 
   return result as Prettify<DeepPick<T, K>>
 }
+
+export function getObjectProperty(source: unknown, path: string) {
+  return path.split('.').reduce<unknown>((current, segment) => {
+    if (!current || typeof current !== 'object') return undefined
+    return (current as Record<string, unknown>)[segment]
+  }, source)
+}

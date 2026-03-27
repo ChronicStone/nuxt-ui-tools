@@ -86,6 +86,273 @@
     "prevMonth": "Previous month",
     "prevYear": "Previous year"
   },
+  "playground": {
+    "common": {
+      "open": "Open"
+    },
+    "nav": {
+      "previousPage": "Previous playground page",
+      "nextPage": "Next playground page"
+    },
+    "home": {
+      "badges": {
+        "home": "Playground home",
+        "idle": "No default component open"
+      },
+      "title": "Playground Landing",
+      "description": "Start from an empty home state, then open the specific playground surface you want to inspect. This keeps the playground calm by default and makes intent explicit before loading a heavy runtime.",
+      "entries": {
+        "spreadsheet": {
+          "title": "Spreadsheet playground",
+          "description": "Focused import-engine scenarios with isolated fullscreen routes for matching, references, and stress cases."
+        },
+        "remoteTable": {
+          "title": "Remote table",
+          "description": "Server-driven data list playground for remote queries, filters, and table orchestration."
+        },
+        "clientTable": {
+          "title": "Client table",
+          "description": "Client-side table playground for local data behavior, filtering, and interaction states."
+        }
+      }
+    },
+    "spreadsheetIndex": {
+      "title": "Spreadsheet playgrounds",
+      "description": "Open the route that matches the behavior you want to inspect.",
+      "variantLabel": "Spreadsheet variant",
+      "fullscreenScenario": "Fullscreen scenario",
+      "openVariant": "Open variant",
+      "variants": {
+        "happyPath": {
+          "title": "Happy Path Import",
+          "description": "Baseline end-to-end flow."
+        },
+        "manualMatching": {
+          "title": "Manual Matching Lab",
+          "description": "Header selection and manual column assignment."
+        },
+        "columnResolve": {
+          "title": "Column Resolve Lab",
+          "description": "In-place smart resolution where the final field becomes canonical and the raw source is not kept."
+        },
+        "derivedReferences": {
+          "title": "Derived References Lab",
+          "description": "Raw imported field preserved plus a derived canonical field through top-level references."
+        },
+        "referenceReconciliation": {
+          "title": "Reference Reconciliation",
+          "description": "Single-value reference suggestions and manual resolution."
+        },
+        "multiReference": {
+          "title": "Multi Reference Lab",
+          "description": "References resolving from a multi-value source field into an array output."
+        },
+        "referenceRules": {
+          "title": "Reference Rules Lab",
+          "description": "Unresolved references can continue; reference rules decide review validity."
+        },
+        "structureStress": {
+          "title": "Structure Stress Test",
+          "description": "Large workbook and structural edge cases."
+        },
+        "largeValidation": {
+          "title": "Large Validation Lab",
+          "description": "Large dataset with mixed validation failures."
+        },
+        "refineRelations": {
+          "title": "Refine Relations Lab",
+          "description": "Tiny deterministic cross-field validation scenario."
+        },
+        "multiValue": {
+          "title": "Multi Value Lab",
+          "description": "Built-in multiple columns without references."
+        }
+      }
+    },
+    "spreadsheetPages": {
+      "happyPath": {
+        "title": "Happy Path Import",
+        "description": "Clean baseline scenario with strong automatic matching and successful reference resolution."
+      },
+      "manualMatching": {
+        "title": "Manual Matching Lab",
+        "description": "Header row confirmation and manual column assignment should be the main focus in this scenario."
+      },
+      "columnResolve": {
+        "title": "Column Resolve Lab",
+        "description": "In-place smart resolution. The imported Product column resolves directly into productId, so the raw source field is not kept on the final row."
+      },
+      "derivedReferences": {
+        "title": "Derived References Lab",
+        "description": "Schema-level derived resolution. productLabelRaw stays on the row and productId is added separately through top-level references."
+      },
+      "referenceReconciliation": {
+        "title": "Reference Reconciliation",
+        "description": "This scenario keeps one unresolved product label visible so the reconciliation step stays active."
+      },
+      "multiReference": {
+        "title": "Multi Reference Lab",
+        "description": "Focused scenario for references resolving from a multi-value source field into an array output."
+      },
+      "referenceRules": {
+        "title": "Reference Rules Lab",
+        "description": "Unresolved references are allowed in matching, then reference rules decide row validity in review."
+      },
+      "structureStress": {
+        "title": "Structure Stress Test",
+        "description": "Large seeded workbook with offset headers, broken rows, unresolved values, and import overflow."
+      },
+      "largeValidation": {
+        "title": "Large Validation Lab",
+        "description": "Seeded 250-row workbook with exactly 20% invalid rows across missing values, score issues, batch naming violations, and center mismatches."
+      },
+      "refineRelations": {
+        "title": "Refine Relations Lab",
+        "description": "Small deterministic workbook focused on refine() relations with explicit cross-field messages for review."
+      },
+      "multiValue": {
+        "title": "Multi Value Lab",
+        "description": "Focused validation route for built-in static multiple columns, including text, number, option, enum, and boolean parsing."
+      }
+    },
+    "tableCommon": {
+      "searchPlaceholder": "Search employees...",
+      "generalist": "Generalist",
+      "range": {
+        "min": "Min",
+        "max": "Max"
+      },
+      "status": {
+        "online": "Online",
+        "paused": "Paused"
+      },
+      "filters": {
+        "name": "Name",
+        "searchEmployees": "Search employees",
+        "country": "Country",
+        "selectCountries": "Select countries",
+        "skill": "Skill",
+        "department": "Department",
+        "active": "Active",
+        "salary": "Salary",
+        "hiredAt": "Hired At"
+      },
+      "columns": {
+        "employee": "Employee",
+        "email": "Email",
+        "skills": "Skills",
+        "country": "Country",
+        "department": "Department",
+        "active": "Active",
+        "salary": "Salary",
+        "hiredAt": "Hired At"
+      },
+      "cards": {
+        "company": "Company",
+        "salary": "Salary",
+        "country": "Country"
+      },
+      "datePresets": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "startOfMonth": "Start of month",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "thisMonth": "This month"
+      },
+      "countries": {
+        "france": "France",
+        "germany": "Germany",
+        "japan": "Japan",
+        "unitedKingdom": "United Kingdom",
+        "unitedStates": "United States",
+        "canada": "Canada",
+        "singapore": "Singapore",
+        "spain": "Spain",
+        "unknown": "Unknown"
+      },
+      "regions": {
+        "europe": "Europe",
+        "northAmerica": "North America",
+        "asia": "Asia"
+      },
+      "departments": {
+        "engineering": "Engineering",
+        "platform": "Platform",
+        "operations": "Operations",
+        "finance": "Finance",
+        "product": "Product",
+        "design": "Design",
+        "security": "Security",
+        "data": "Data",
+        "support": "Support",
+        "growth": "Growth"
+      },
+      "categories": {
+        "engineering": "Engineering",
+        "application": "Application",
+        "infrastructure": "Infrastructure",
+        "reliability": "Reliability",
+        "security": "Security",
+        "services": "Services",
+        "data": "Data",
+        "analysis": "Analysis",
+        "intelligence": "Intelligence",
+        "platform": "Platform",
+        "design": "Design",
+        "research": "Research",
+        "systems": "Systems",
+        "product": "Product",
+        "planning": "Planning"
+      },
+      "skills": {
+        "typescript": "TypeScript",
+        "go": "Go",
+        "kubernetes": "Kubernetes",
+        "security": "Security",
+        "distributedSystems": "Distributed Systems",
+        "rust": "Rust",
+        "python": "Python",
+        "graphql": "GraphQL",
+        "postgresql": "PostgreSQL",
+        "machineLearning": "Machine Learning",
+        "designSystems": "Design Systems",
+        "observability": "Observability",
+        "terraform": "Terraform",
+        "incidentResponse": "Incident Response",
+        "productStrategy": "Product Strategy",
+        "uxResearch": "UX Research"
+      }
+    },
+    "tableClient": {
+      "searchPlaceholder": "Search local employees...",
+      "filters": {
+        "skillTree": "Skill Tree",
+        "selectSkillTaxonomy": "Select skill taxonomy"
+      },
+      "preview": {
+        "hired": "Hired"
+      },
+      "actions": {
+        "copyEmail": "Copy email",
+        "pauseEmployee": "Pause employee",
+        "resumeEmployee": "Resume employee",
+        "giveRaise": "Give raise",
+        "moreActions": "More actions",
+        "refreshTable": "Refresh table",
+        "gridContextOnly": "Grid context only",
+        "tableContextOnly": "Table context only"
+      }
+    },
+    "tableRemote": {
+      "searchPlaceholder": "Search remote employees...",
+      "filters": {
+        "selectCompanies": "Select companies"
+      },
+      "noCompany": "No company",
+      "noDepartment": "No department"
+    }
+  },
   "pages": {
     "overview": {
       "badge": "Overview",

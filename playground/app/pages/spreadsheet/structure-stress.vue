@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const center = {
   id: 'tc_paris',
   country: 'France',
@@ -209,8 +211,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Structure Stress Test"
-      description="Large seeded workbook with offset headers, broken rows, unresolved values, and import overflow."
+      :title="t('playground.spreadsheetPages.structureStress.title')"
+      :description="t('playground.spreadsheetPages.structureStress.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

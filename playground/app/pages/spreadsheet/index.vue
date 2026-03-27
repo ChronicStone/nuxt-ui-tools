@@ -1,84 +1,86 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 
-const variants = [
+const { t } = useI18n()
+
+const variants = computed(() => [
   {
     id: 'happy-path',
-    title: 'Happy Path Import',
-    description: 'Baseline end-to-end flow.',
+    title: t('playground.spreadsheetIndex.variants.happyPath.title'),
+    description: t('playground.spreadsheetIndex.variants.happyPath.description'),
     to: '/spreadsheet/happy-path',
   },
   {
     id: 'manual-matching',
-    title: 'Manual Matching Lab',
-    description: 'Header selection and manual column assignment.',
+    title: t('playground.spreadsheetIndex.variants.manualMatching.title'),
+    description: t('playground.spreadsheetIndex.variants.manualMatching.description'),
     to: '/spreadsheet/manual-matching',
   },
   {
     id: 'column-resolve-lab',
-    title: 'Column Resolve Lab',
-    description: 'In-place smart resolution where the final field becomes canonical and the raw source is not kept.',
+    title: t('playground.spreadsheetIndex.variants.columnResolve.title'),
+    description: t('playground.spreadsheetIndex.variants.columnResolve.description'),
     to: '/spreadsheet/column-resolve-lab',
   },
   {
     id: 'derived-references-lab',
-    title: 'Derived References Lab',
-    description: 'Raw imported field preserved plus a derived canonical field through top-level references.',
+    title: t('playground.spreadsheetIndex.variants.derivedReferences.title'),
+    description: t('playground.spreadsheetIndex.variants.derivedReferences.description'),
     to: '/spreadsheet/derived-references-lab',
   },
   {
     id: 'reference-reconciliation',
-    title: 'Reference Reconciliation',
-    description: 'Single-value reference suggestions and manual resolution.',
+    title: t('playground.spreadsheetIndex.variants.referenceReconciliation.title'),
+    description: t('playground.spreadsheetIndex.variants.referenceReconciliation.description'),
     to: '/spreadsheet/reference-reconciliation',
   },
   {
     id: 'multi-reference-lab',
-    title: 'Multi Reference Lab',
-    description: 'References resolving from a multi-value source field into an array output.',
+    title: t('playground.spreadsheetIndex.variants.multiReference.title'),
+    description: t('playground.spreadsheetIndex.variants.multiReference.description'),
     to: '/spreadsheet/multi-reference-lab',
   },
   {
     id: 'reference-rules-lab',
-    title: 'Reference Rules Lab',
-    description: 'Unresolved references can continue; reference rules decide review validity.',
+    title: t('playground.spreadsheetIndex.variants.referenceRules.title'),
+    description: t('playground.spreadsheetIndex.variants.referenceRules.description'),
     to: '/spreadsheet/reference-rules-lab',
   },
   {
     id: 'structure-stress',
-    title: 'Structure Stress Test',
-    description: 'Large workbook and structural edge cases.',
+    title: t('playground.spreadsheetIndex.variants.structureStress.title'),
+    description: t('playground.spreadsheetIndex.variants.structureStress.description'),
     to: '/spreadsheet/structure-stress',
   },
   {
     id: 'large-validation-lab',
-    title: 'Large Validation Lab',
-    description: 'Large dataset with mixed validation failures.',
+    title: t('playground.spreadsheetIndex.variants.largeValidation.title'),
+    description: t('playground.spreadsheetIndex.variants.largeValidation.description'),
     to: '/spreadsheet/large-validation-lab',
   },
   {
     id: 'refine-relations-lab',
-    title: 'Refine Relations Lab',
-    description: 'Tiny deterministic cross-field validation scenario.',
+    title: t('playground.spreadsheetIndex.variants.refineRelations.title'),
+    description: t('playground.spreadsheetIndex.variants.refineRelations.description'),
     to: '/spreadsheet/refine-relations-lab',
   },
   {
     id: 'multi-value-lab',
-    title: 'Multi Value Lab',
-    description: 'Built-in multiple columns without references.',
+    title: t('playground.spreadsheetIndex.variants.multiValue.title'),
+    description: t('playground.spreadsheetIndex.variants.multiValue.description'),
     to: '/spreadsheet/multi-value-lab',
   },
-] as const
+])
 </script>
 
 <template>
   <section class="mx-auto grid max-w-4xl gap-5 px-6 py-8 lg:px-10">
     <div class="grid gap-2">
       <h1 class="text-2xl font-semibold text-highlighted">
-        Spreadsheet playgrounds
+        {{ t('playground.spreadsheetIndex.title') }}
       </h1>
       <p class="text-sm text-muted">
-        Open the route that matches the behavior you want to inspect.
+        {{ t('playground.spreadsheetIndex.description') }}
       </p>
     </div>
 
@@ -103,7 +105,7 @@ const variants = [
           variant="soft"
           icon="i-lucide-arrow-right"
           trailing
-          label="Open"
+          :label="t('playground.common.open')"
         />
       </div>
     </div>

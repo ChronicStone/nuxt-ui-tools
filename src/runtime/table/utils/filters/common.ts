@@ -1,5 +1,6 @@
 import { isArray, isObject } from '../../../shared/utils/predicate'
 import { resolveTextValue } from '../../../shared/utils/render'
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type {
   TableDateFilterDefinition,
   TableQueryStateFilterRule,
@@ -13,8 +14,9 @@ type DateRangeLike = {
 }
 
 export function getFilterLabelText(options: {
-  label: TableUiFilterDefinition['label'] | (() => unknown)
+  label: TableTextValue | TableUiFilterDefinition['label'] | (() => unknown)
 }) {
+  if (typeof options.label === 'number') return String(options.label)
   if (typeof options.label === 'string') return options.label
 
   const resolved = options.label()
@@ -112,7 +114,8 @@ export function toDateFilterValue(options: {
 }
 
 export function formatFilterDate(options: { value: Date }) {
-  return new Intl.DateTimeFormat('en-US', {
+  const { locale } = useUiToolsLocale()
+  return new Intl.DateTimeFormat(locale.value.code, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -149,7 +152,8 @@ export function getNumberRangeValue(options: { value: unknown }) {
 }
 
 export function formatFilterNumber(options: { value: number }) {
-  return new Intl.NumberFormat('en-US').format(options.value)
+  const { locale } = useUiToolsLocale()
+  return new Intl.NumberFormat(locale.value.code).format(options.value)
 }
 
 export function toMaybeNumber(options: { value: unknown }): number | undefined {
