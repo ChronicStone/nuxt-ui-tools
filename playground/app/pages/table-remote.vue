@@ -5,10 +5,8 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import {
   demoEmployeesClient,
-  type DemoEmployeesFacetsRequest,
-  type DemoEmployeeRow,
-  type DemoEmployeesTableRequest,
 } from '../lib/demo-employees-api'
+
 import DataList from '#ui-tools/table/components/DataList.vue'
 import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
 const { locale, t } = useI18n()
@@ -54,32 +52,10 @@ const remoteSchema = defineTableSchema({
   },
   source: {
     mode: 'remote',
-    query: (request) => ({
-      queryKey: ['demo-employees', request],
-      queryFn: async () => demoEmployeesClient.queryTable<DemoEmployeeRow>({
-        request: request as unknown as DemoEmployeesTableRequest,
-      }),
-    }),
-    facets: ({ table, facets }) => ({
-      queryKey: ['demo-employee-facets', table, facets],
-      queryFn: async () => demoEmployeesClient.queryFacets({
-        request: {
-          request: {
-            pagination: table.pagination,
-            sorting: table.sorting as DemoEmployeesFacetsRequest['request']['sorting'],
-            filters: table.filters as DemoEmployeesFacetsRequest['request']['filters'],
-            search: table.search,
-            context: table.context,
-          },
-          facets: facets.map((facet) => ({
-            key: facet.key,
-            mode: facet.mode,
-            search: facet.search,
-            limit: facet.limit,
-            cursor: facet.cursor ?? undefined,
-          })),
-        },
-      }),
+    facets: true,
+    query: (params) => ({
+      queryKey: ['demo-employees', params],
+      queryFn: async () => demoEmployeesClient.queryTable(params),
     }),
   },
   filters: {
@@ -436,7 +412,6 @@ const remoteSchema = defineTableSchema({
   },
   grid: {
     enabled: true,
-    mode: 'contained',
     gridSize: '1 md:2 xl:3',
     renderItem: ({ row }) => {
       const employee = row
@@ -652,5 +627,7 @@ function translateSkill(value: string) {
 </script>
 
 <template>
-  <DataList :table="table" :height="'38rem'" />
+  <div class="p-6">
+    <DataList :table="table" :height="'38rem'" />
+  </div>
 </template>

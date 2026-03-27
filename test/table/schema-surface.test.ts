@@ -79,4 +79,21 @@ describe('table package surface', () => {
 
     expectTypeOf(remoteSource).toEqualTypeOf<TableRemoteSource<{ id: number }>>()
   })
+
+  it('accepts source-level embedded facets enablement for remote sources', () => {
+    const remoteSource: TableRemoteSource<{ id: number }> = {
+      mode: 'remote',
+      facets: true,
+      query: (ctx) => ({
+        queryKey: ['remote-users', ctx.facets],
+        queryFn: async () => ({
+          rows: [{ id: 1 }],
+          rowCount: 1,
+          facets: [],
+        }),
+      }),
+    }
+
+    expectTypeOf(remoteSource).toEqualTypeOf<TableRemoteSource<{ id: number }>>()
+  })
 })

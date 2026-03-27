@@ -3,7 +3,12 @@ import type {
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
 } from './query-state'
-import type { TableQueryDefinition } from './source'
+import type {
+  TableFacetExecutionResult,
+  TableFacetRequestDescriptor,
+  TableFacetsContext,
+  TableQueryDefinition,
+} from './source'
 import type {
   GenericObject,
   RenderableType,
@@ -617,6 +622,37 @@ export type TableFilterOptionQueryResult<TValue = TableFilterPrimitiveValue> =
 
 export type TableFilterFacetMode = boolean | 'exclude-self' | 'include-self'
 
+export interface TableFilterFacetQueryContext<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TKey extends string = TableKnownFieldPath<TRow>,
+> {
+  table: Omit<TableFacetsContext<TRow, TContext, TKey>, 'facets'>
+  facets: TableFacetRequestDescriptor<TKey>[]
+}
+
+export interface TableFilterFacetConfig<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TKey extends string = TableKnownFieldPath<TRow>,
+> {
+  mode?: 'exclude-self' | 'include-self'
+  limit?: number
+  query?: {
+    bivarianceHack(
+      context: TableFilterFacetQueryContext<TRow, TContext, TKey>,
+    ): TableQueryDefinition<TableFacetExecutionResult<TKey>>
+  }['bivarianceHack']
+}
+
+export type TableFilterFacetSpec<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TKey extends string = TableKnownFieldPath<TRow>,
+> =
+  | TableFilterFacetMode
+  | TableFilterFacetConfig<TRow, TContext, TKey>
+
 export interface TableStaticFilterRule<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
@@ -716,7 +752,7 @@ export interface TableOptionFilterDefinition<
       TableOptionEntryForPresentation<TValue, TPresentation>[] |
       TableFilterOptionQueryResultForPresentation<TValue, TPresentation>
     >
-    facet?: TableFilterFacetMode
+    facet?: TableFilterFacetSpec<TRow, TContext, TKey>
     sort?: 'alpha' | 'count'
   }
   editor?: TableOptionFilterEditorConfig<TPresentation>
@@ -729,7 +765,7 @@ export interface TableBooleanFilterDefinition<
 > extends TableFilterDefinitionBase<TRow, TContext, TKey, boolean, TableBooleanFilterOperator> {
   kind: 'boolean'
   source?: {
-    facet?: TableFilterFacetMode
+    facet?: TableFilterFacetSpec<TRow, TContext, TKey>
   }
   editor?: TableBooleanFilterEditorConfig
 }

@@ -6,7 +6,8 @@ import type {
   TableBooleanFilterDefinition,
   TableFacetExecutionResult,
   TableFacetOptionResult,
-  TableFilterFacetMode,
+  TableFilterFacetConfig,
+  TableFilterFacetSpec,
   TableFilterOptionEntry,
   TableFilterOptionQueryResult,
   TableOptionFilterDefinition,
@@ -25,19 +26,13 @@ import {
 import type { UseTableDataReturn } from './use-table-data'
 import type { useTableFilters } from './use-table-filters'
 
-function resolveFacetMode(options: { facet: TableFilterFacetMode | undefined }) {
-  if (!options.facet) return undefined
-  if (options.facet === true) return 'exclude-self'
-  return options.facet
-}
-
 export interface UseTableFilterOptionsParams {
   definition: TableOptionFilterDefinition | TableBooleanFilterDefinition
   searchQuery: Ref<string>
   active?: Ref<boolean>
   ready?: Ref<boolean>
   filters: ReturnType<typeof useTableFilters>
-  queryContent: Pick<UseTableDataReturn, 'facets' | 'requestContext'>
+  queryContent: Pick<UseTableDataReturn, 'facets' | 'facetsBaseContext'>
   schema: ComputedRef<TableSchemaView>
 }
 
@@ -75,12 +70,21 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       options.definition.kind === 'option' &&
       typeof options.definition.source?.query === 'function',
   )
+  const facetSpec = computed(() => options.definition.source?.facet)
+  const facetConfig = computed<TableFilterFacetConfig | null>(() => {
+    if (!facetSpec.value || typeof facetSpec.value !== 'object') return null
+    return facetSpec.value
+  })
+  const hasPerFilterFacetQuery = computed(
+    () => typeof facetConfig.value?.query === 'function',
+  )
   const usesFacetCounts = computed(
     () =>
-      Boolean(options.definition.source?.facet) &&
+      Boolean(facetSpec.value) &&
       (
-        (isRemoteTable.value && typeof remoteSource.value?.facets === 'function')
-        || options.schema.value.source.mode === 'client'
+        options.schema.value.source.mode === 'client'
+        || hasPerFilterFacetQuery.value
+        || (isRemoteTable.value && Boolean(remoteSource.value?.facets))
       ),
   )
   const resolvedTreeSearchMode = computed(() => {
@@ -157,9 +161,13 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     }),
   )
 
-  const facetQuery = useQuery<TableFacetExecutionResult>(
+  const perFilterFacetQuery = useQuery<TableFacetExecutionResult>(
     computed(() => {
-      if (!isRemoteTable.value || !usesFacetCounts.value) {
+      if (
+        !isRemoteTable.value ||
+        !usesFacetCounts.value ||
+        !facetConfig.value?.query
+      ) {
         return {
           queryKey: ['table-filter-facets', options.definition.key, 'disabled'],
           queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult,
@@ -170,16 +178,14 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       }
 
       const queryOptions = unref(
-        remoteSource.value!.facets!({
-          table: options.queryContent.requestContext.value as never,
+        facetConfig.value.query({
+          table: options.queryContent.facetsBaseContext.value,
           facets: [
             {
               key: options.definition.key,
-              mode: resolveFacetMode({
-                facet: options.definition.source?.facet,
-              }),
+              mode: resolveFacetMode(facetConfig.value),
               search: facetSearch.value,
-              limit: undefined,
+              limit: facetConfig.value.limit,
               cursor: undefined,
             },
           ],
@@ -213,8 +219,8 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const facetCounts = computed<TableFacetOptionResult[]>(() => {
     if (!usesFacetCounts.value) return []
 
-    const facets = isRemoteTable.value
-      ? (unref(facetQuery.data)?.facets ?? [])
+    const facets = isRemoteTable.value && hasPerFilterFacetQuery.value
+      ? (unref(perFilterFacetQuery.data)?.facets ?? [])
       : options.queryContent.facets.value.facets
 
     return facets.find((facet: { key: string }) => facet.key === options.definition.key)?.options ?? []
@@ -298,7 +304,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     () => !isInitialLoading.value && optionQuery.isFetching.value,
   )
   const isCountLoading = computed(
-    () => isRemoteTable.value && shouldResolveCounts.value && facetQuery.isFetching.value,
+    () => isRemoteTable.value && shouldResolveCounts.value && perFilterFacetQuery.isFetching.value,
   )
 
   return {
@@ -311,9 +317,9 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     isLoading: isInitialLoading,
     isCountLoading,
     isStaleLoading,
-    isError: computed(() => optionQuery.isError.value || facetQuery.isError.value),
-    error: computed(() => optionQuery.error.value ?? facetQuery.error.value),
-    refresh: () => Promise.all([optionQuery.refetch(), facetQuery.refetch()]),
+    isError: computed(() => optionQuery.isError.value || perFilterFacetQuery.isError.value),
+    error: computed(() => optionQuery.error.value ?? perFilterFacetQuery.error.value),
+    refresh: () => Promise.all([optionQuery.refetch(), perFilterFacetQuery.refetch()]),
   }
 }
 
@@ -332,4 +338,11 @@ function isPrimitiveFilterOptionValue(
   value: unknown,
 ): value is string | number | boolean {
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+}
+
+function resolveFacetMode(facet: TableFilterFacetSpec | undefined) {
+  if (!facet) return undefined
+  if (facet === 'include-self') return 'include-self'
+  if (typeof facet === 'object') return facet.mode ?? 'exclude-self'
+  return 'exclude-self'
 }

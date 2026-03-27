@@ -6,7 +6,9 @@ import type {
   GenericObject,
   TableExternalState,
   TableFacetExecutionResult,
+  TableFacetResult,
   TableFacetRequestDescriptor,
+  TableGlobalFacetDescriptor,
   TableQueryDefinition,
   TableSchemaView,
   TableSourceRequestContext,
@@ -26,9 +28,14 @@ export interface UseTableDataParams {
 
 export interface UseTableDataReturn {
   context: ReturnType<typeof useQueries>
-  contextData: ComputedRef<GenericObject>
+  contextData: ComputedRef<Record<string, unknown>>
   pageContext: ReturnType<typeof useQueries>
-  pageContextData: ComputedRef<GenericObject>
+  pageContextData: ComputedRef<Record<string, unknown>>
+  facetsBaseContext: ComputedRef<{
+    filters: TableSourceRequestContext['filters']
+    search: TableSourceRequestContext['search']
+    context: Record<string, unknown>
+  }>
   requestContext: ComputedRef<TableSourceRequestContext>
   searchParams: ComputedRef<TableSourceRequestContext>
   query: ReturnType<typeof useQuery>
@@ -90,7 +97,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const contextResults = computed(() => context.value as CombinedQueryResult[])
 
   const contextData = computed(() =>
-    contextResults.value.reduce<GenericObject>((acc, item) => {
+    contextResults.value.reduce<Record<string, unknown>>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -121,12 +128,48 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     value: params.state.queryState.filters.value.search,
     fields: params.schema.value.filters?.search?.fields ?? [],
   }))
+  const facetsBaseContext = computed<UseTableDataReturn['facetsBaseContext']['value']>(() => ({
+    filters: requestFilters.value,
+    search: requestSearch.value,
+    context: contextData.value,
+  }))
+  const globalFacetDescriptors = computed<TableGlobalFacetDescriptor<string>[]>(() =>
+    (params.schema.value.filters?.ui ?? []).flatMap((definition) => {
+      if (definition.kind !== 'option' && definition.kind !== 'boolean') return []
+
+      const descriptor = toGlobalFacetDescriptor({
+        key: definition.key,
+        facet: definition.source?.facet,
+      })
+
+      return descriptor ? [descriptor] : []
+    }),
+  )
+  const remoteSource = computed(() =>
+    params.schema.value.source.mode === 'remote'
+      ? params.schema.value.source
+      : null,
+  )
+  const hasRemoteFacetQuery = computed(
+    () => typeof remoteSource.value?.facets === 'function',
+  )
+  const usesEmbeddedRemoteFacets = computed(
+    () => remoteSource.value?.facets === true,
+  )
+  const facetsContextKey = computed(() => JSON.stringify(facetsBaseContext.value))
+  const lastResolvedEmbeddedFacetsKey = shallowRef<string | null>(null)
   const requestContext = computed<TableSourceRequestContext>(() => ({
     context: contextData.value as TableSourceRequestContext['context'],
     pagination: requestPagination.value,
     sorting: requestSorting.value,
     filters: requestFilters.value,
     search: requestSearch.value,
+    facets:
+      usesEmbeddedRemoteFacets.value &&
+      globalFacetDescriptors.value.length > 0 &&
+      facetsContextKey.value !== lastResolvedEmbeddedFacetsKey.value
+        ? globalFacetDescriptors.value
+        : undefined,
   }))
 
   const searchParams = requestContext
@@ -147,11 +190,45 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       ),
     ),
   )
+  const globalFacetsQuery = useQuery<TableFacetExecutionResult<string>>(
+    computed(() => {
+      const facetsSource = remoteSource.value?.facets
+
+      if (
+        !hasRemoteFacetQuery.value ||
+        typeof facetsSource !== 'function' ||
+        !globalFacetDescriptors.value.length
+      ) {
+        return {
+          queryKey: ['table-global-facets', 'disabled'],
+          queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult<string>,
+          enabled: false,
+        } satisfies TableQueryDefinition<TableFacetExecutionResult<string>> & {
+          enabled: boolean
+        }
+      }
+
+      const facetContext: Parameters<typeof facetsSource>[0] = {
+        ...facetsBaseContext.value,
+        facets: globalFacetDescriptors.value,
+      }
+
+      return withEnabled(
+        facetsSource(facetContext),
+        isContextReady.value,
+        {
+          staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
+          refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+        },
+      )
+    }),
+  )
 
   const rawDataState = shallowRef<TableExternalState>({
     rows: [],
     rowCount: 0,
   })
+  const embeddedFacetsState = shallowRef<TableFacetResult<string>[]>([])
 
   const rawData = computed<TableExternalState>(() => rawDataState.value)
   const clientFilteredRows = computed(() => {
@@ -185,26 +262,27 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       : data.value.rows,
   )
   const clientFacetDescriptors = computed<TableFacetRequestDescriptor<string>[]>(() =>
-    (params.schema.value.filters?.ui ?? []).flatMap((definition) => {
-      if (definition.kind !== 'option' && definition.kind !== 'boolean') return []
-      if (!definition.source?.facet) return []
-
-      return [{
-        key: definition.key,
-        mode: definition.source.facet === true ? 'exclude-self' : definition.source.facet,
-      }]
-    }),
+    globalFacetDescriptors.value.map((facet) => ({
+      key: facet.key,
+      mode: facet.mode,
+      limit: facet.limit,
+    })),
   )
   const facets = computed<TableFacetExecutionResult<string>>(() => {
-    if (params.schema.value.source.mode !== 'client') {
-      return { facets: [] }
-    }
+    if (params.schema.value.source.mode === 'client')
+      return executeClientFacets({
+        rows: rawData.value.rows,
+        request: requestContext.value,
+        facets: clientFacetDescriptors.value,
+      })
 
-    return executeClientFacets({
-      rows: rawData.value.rows,
-      request: requestContext.value,
-      facets: clientFacetDescriptors.value,
-    })
+    if (hasRemoteFacetQuery.value)
+      return globalFacetsQuery.data.value ?? { facets: [] }
+
+    if (usesEmbeddedRemoteFacets.value)
+      return { facets: embeddedFacetsState.value }
+
+    return { facets: [] }
   })
 
   const pageContextItems = computed(() =>
@@ -245,7 +323,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const pageContextResults = computed(() => pageContext.value as CombinedQueryResult[])
 
   const pageContextData = computed(() =>
-    pageContextResults.value.reduce<GenericObject>((acc, item) => {
+    pageContextResults.value.reduce<Record<string, unknown>>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -317,6 +395,12 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       if (sameExternalState(rawDataState.value, normalized)) return
 
       rawDataState.value = normalized
+
+      const embeddedFacets = extractEmbeddedFacets(nextQueryData)
+      if (!embeddedFacets) return
+
+      embeddedFacetsState.value = embeddedFacets
+      lastResolvedEmbeddedFacetsKey.value = facetsContextKey.value
     },
     { immediate: true },
   )
@@ -355,6 +439,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     contextData,
     pageContext,
     pageContextData,
+    facetsBaseContext,
     requestContext,
     searchParams,
     query,
@@ -391,6 +476,49 @@ function normalizeExternalState(result: unknown): TableExternalState {
     rowCount: 0,
   }
 }
+
+function extractEmbeddedFacets(result: unknown): TableFacetResult<string>[] | undefined {
+  if (!result || typeof result !== 'object' || !('facets' in result)) return undefined
+
+  const { facets } = result as { facets?: unknown }
+  if (!Array.isArray(facets)) return undefined
+
+  return facets as TableFacetResult<string>[]
+}
+
+function toGlobalFacetDescriptor(options: {
+  key: string
+  facet: GlobalFacetSpec | undefined
+}): TableGlobalFacetDescriptor<string> | null {
+  if (!options.facet) return null
+  if (hasPerFilterFacetQuery(options.facet)) return null
+
+  return {
+    key: options.key,
+    mode: resolveFacetMode(options.facet),
+    limit: typeof options.facet === 'object' ? options.facet.limit : undefined,
+  }
+}
+
+function hasPerFilterFacetQuery(facet: GlobalFacetSpec) {
+  return typeof facet === 'object' && typeof facet.query === 'function'
+}
+
+function resolveFacetMode(facet: GlobalFacetSpec): 'exclude-self' | 'include-self' {
+  if (facet === 'include-self') return 'include-self'
+  if (typeof facet === 'object' && facet.mode === 'include-self') return 'include-self'
+  return 'exclude-self'
+}
+
+type GlobalFacetSpec =
+  | boolean
+  | 'exclude-self'
+  | 'include-self'
+  | {
+      mode?: 'exclude-self' | 'include-self'
+      limit?: number
+      query?: unknown
+    }
 
 function isTableExternalState(value: unknown): value is TableExternalState {
   if (!value || typeof value !== 'object') return false
