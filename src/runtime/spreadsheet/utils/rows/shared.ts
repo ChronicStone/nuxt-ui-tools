@@ -372,7 +372,12 @@ export async function parseSpreadsheetCellValue<TContext>(
       rules: column.rules,
     })
 
-    issues.push(...validationIssues.map(issue => ({
+    issues.push(...validationIssues.map((issue: {
+      ruleKey?: string
+      level: 'error' | 'warning' | 'info'
+      code: string
+      message: string
+    }) => ({
       ...issue,
       rowIndex: cell.rowIndex,
       columnKey: column.key,

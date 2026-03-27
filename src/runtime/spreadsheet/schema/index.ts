@@ -1,6 +1,5 @@
 import { resolveSpreadsheetColumns } from '../utils/builders'
 import type {
-  SpreadsheetBuildRowDefinition,
   SpreadsheetColumnsDefinition,
   SpreadsheetContextDataFromItems,
   SpreadsheetContextItem,
@@ -9,6 +8,7 @@ import type {
   SpreadsheetMatchingDefinition,
   SpreadsheetReferenceBuilder,
   SpreadsheetReferenceDefinition,
+  SpreadsheetSchemaWithRefine,
   SpreadsheetResolvedColumns,
   SpreadsheetReviewDefinition,
   SpreadsheetRowData,
@@ -80,6 +80,46 @@ type SpreadsheetSchemaReturn<
   'columns'
 > & {
   columns?: SpreadsheetResolvedColumnsInput<TColumns>
+  __columnsInput?: TColumns
+}
+
+type SpreadsheetDefinedSchemaReturn<
+  TImportKey extends string,
+  TContextItems extends readonly SpreadsheetContextItem<string, unknown>[],
+  TColumns,
+  TReferences,
+  TBuildRow,
+> = SpreadsheetSchemaWithRefine<
+  SpreadsheetSchemaReturn<
+    TImportKey,
+    TContextItems,
+    TColumns,
+    TReferences,
+    TBuildRow
+  >
+>
+
+type SpreadsheetSchemaRow<TColumns, TReferences> = SpreadsheetRowData<
+  SpreadsheetResolvedColumnsInput<TColumns>,
+  SpreadsheetResolvedReferences<TReferences>
+>
+
+function withSpreadsheetRefine<TSchema extends { importKey: string }>(
+  schema: TSchema,
+): SpreadsheetSchemaWithRefine<TSchema>
+function withSpreadsheetRefine(schema: {
+  importKey: string
+  relations?: readonly unknown[]
+}) {
+  return {
+    ...schema,
+    refine(refinement: { relations: readonly unknown[] }) {
+      return withSpreadsheetRefine({
+        ...schema,
+        relations: refinement.relations,
+      })
+    },
+  }
 }
 
 export function defineSpreadsheetSchema<
@@ -87,7 +127,6 @@ export function defineSpreadsheetSchema<
   const TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly [],
   TContextData = SpreadsheetContextDataFromItems<TContextItems>,
   const TColumns extends SpreadsheetColumnsDefinition<TContextData> | undefined = SpreadsheetColumnsDefinition<TContextData> | undefined,
-  TBaseRow = SpreadsheetRowData<SpreadsheetResolvedColumnsInput<TColumns>>,
   const TReferences extends readonly unknown[] | undefined = readonly unknown[] | undefined,
   TResolvedReferences = SpreadsheetResolvedReferences<TReferences>,
   TFinalRow = SpreadsheetRowData<SpreadsheetResolvedColumnsInput<TColumns>, TResolvedReferences>,
@@ -99,8 +138,10 @@ export function defineSpreadsheetSchema<
     TColumns,
     TReferences | ((reference: SpreadsheetReferenceBuilder) => TReferences),
     SpreadsheetBuildRowInput<TContextData, TFinalRow, TBuildRowResult> | undefined
-  >,
-): SpreadsheetSchemaReturn<
+  > & {
+    relations?: undefined
+  },
+): SpreadsheetDefinedSchemaReturn<
   TImportKey,
   TContextItems,
   TColumns,
@@ -111,15 +152,16 @@ export function defineSpreadsheetSchema(
   schema: {
     importKey: string
     columns?: SpreadsheetColumnsDefinition<unknown>
+    relations?: undefined
   },
 ) {
   if (!schema.columns)
-    return { ...schema }
+    return withSpreadsheetRefine(schema)
 
-  return {
+  return withSpreadsheetRefine({
     ...schema,
     columns: resolveSpreadsheetColumns(schema.columns),
-  }
+  })
 }
 
 export * from './normalize'

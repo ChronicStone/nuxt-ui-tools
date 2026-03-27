@@ -80,9 +80,17 @@ When the spreadsheet cell text matches the option label or the option value, the
 
 Static column kinds support built-in multi-value parsing through `multiple`.
 
+Validation rules use a local builder callback, so you do not import built-in spreadsheet rules in every schema. Reusable custom rules are created once with `createSheetRule(...)`.
+
 Example:
 
 ```ts
+const allPassing = createSheetRule<number[], [], {}>({
+  name: 'allPassing',
+  validator: (value) => value.every(score => score >= 50),
+  message: 'All scores must be at least 50',
+})
+
 column.text('tags', {
   multiple: true,
 })
@@ -91,13 +99,9 @@ column.number('scores', {
   multiple: {
     separator: ';',
   },
-  rules: {
-    allPassing: sheetRules.validate({
-      name: 'allPassing',
-      validator: (value: number[]) => value.every(score => score >= 50),
-      message: 'All scores must be at least 50',
-    }),
-  },
+  rules: v => [
+    allPassing(),
+  ],
 })
 
 column.option('productIds', {
@@ -119,3 +123,42 @@ Behavior:
 - `multiple: { separator: ';' }` lets you change the token separator
 - `rules` stays singular and follows the final parsed value type such as `string[]`, `number[]`, or `ProductId[]`
 - built-in parsing validates each token by column kind, so invalid numbers, enums, or options produce row issues without needing a custom `parse`
+
+## Validation Relations
+
+Use `.refine({ relations })` for row-aware validation that depends on other parsed fields, references, dynamic outputs, or `buildRow` output.
+
+Example:
+
+```ts
+defineSpreadsheetSchema({
+  importKey: 'assessment.results',
+  columns: {
+    static: (column) => [
+      column.text('status'),
+      column.number('scores.general'),
+    ],
+  },
+}).refine({
+  relations: [
+    {
+      column: 'scores.general',
+      condition: row => row.status === 'Done',
+      rules: (v) => [
+        v.required({
+          message: 'General score is required when status is Done',
+        }),
+      ],
+    },
+  ],
+})
+```
+
+Behavior:
+
+- `rules: v => [...]` on a column runs as base field validation
+- `.refine({ relations })` runs after parsing, dynamic columns, and references have been resolved
+- if `buildRow` exists, relation paths and `row` are typed against the `buildRow` output
+- otherwise, relation paths and `row` are typed against the resolved import row
+- base `v.required()` affects row type inference
+- relation `v.required()` is runtime-only and does not make the field statically non-optional

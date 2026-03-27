@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   type SpreadsheetCellValue,
+  type SpreadsheetRuleBuilder,
+  createSheetRule,
   createSpreadsheetDynamicBuilder,
   createSpreadsheetHeaderCells,
   createSpreadsheetRowSummary,
@@ -10,7 +12,6 @@ import {
   matchSpreadsheetColumns,
   matchSpreadsheetDynamicColumns,
   parseSpreadsheetRows,
-  sheetRules,
 } from '#ui-tools/spreadsheet'
 
 interface DemoDynamicAffiliationItem {
@@ -73,7 +74,7 @@ describe('spreadsheet row utils', () => {
   })
 
   it('parses matched rows into nested output and collects validation issues', async () => {
-    const scoreBand = sheetRules.createRule<number, [min: number, max: number], {
+    const scoreBand = createSheetRule<number, [min: number, max: number], {
       min: number
       max: number
     }>({
@@ -92,36 +93,36 @@ describe('spreadsheet row utils', () => {
           kind: 'text',
           key: 'examNameRaw',
           from: 'Exam name',
-          rules: {
-            required: sheetRules.required({
+          rules: (v: SpreadsheetRuleBuilder) => [
+            v.required({
               message: 'Exam name is required',
             }),
-          },
+          ],
         },
         {
           kind: 'number',
           key: 'scores.general',
           from: 'General level',
           parse: async ({ cell }: { cell: SpreadsheetCellValue }) => Number(cell.text),
-          rules: {
-            number: sheetRules.number({
+          rules: (v: SpreadsheetRuleBuilder) => [
+            v.number({
               message: 'Score must be numeric',
             }),
-            scoreBand: scoreBand(0, 100),
-          },
+            scoreBand(0, 100),
+          ],
         },
         {
           kind: 'text',
           key: 'batchName',
           from: 'Batch',
-          rules: {
-            allowedBatch: sheetRules.oneOf(['spring-2026', '_internal']),
-            noUnderscore: sheetRules.validate({
+          rules: (v: SpreadsheetRuleBuilder) => [
+            v.oneOf(['spring-2026', '_internal']),
+            v.validate({
               name: 'noUnderscore',
               validator: (value: string) => !value.startsWith('_'),
               message: ({ value }) => `"${value}" cannot start with underscore`,
             }),
-          },
+          ],
         },
         {
           kind: 'text',
@@ -271,13 +272,13 @@ describe('spreadsheet row utils', () => {
           multiple: {
             separator: ';',
           },
-          rules: {
-            allPassing: sheetRules.validate({
+          rules: (v: SpreadsheetRuleBuilder) => [
+            v.validate({
               name: 'allPassing',
               validator: (value: number[]) => value.every(score => score >= 50),
               message: 'All scores must be at least 50',
             }),
-          },
+          ],
         },
         {
           kind: 'option',

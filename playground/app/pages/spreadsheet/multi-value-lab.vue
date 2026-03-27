@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
-import { sheetRules, useSpreadsheetImport, type SpreadsheetData, type SpreadsheetRowData } from '#ui-tools/spreadsheet'
+import { useSpreadsheetImport, type SpreadsheetData, type SpreadsheetRowData } from '#ui-tools/spreadsheet'
 import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
@@ -52,35 +52,33 @@ function createMultiValueSchema() {
           match: {
             headers: ['Test center ID'],
           },
-          rules: {
-            required: sheetRules.required(),
-            centerMatch: sheetRules.validate({
+          rules: v => [
+            v.required(),
+            v.validate({
               name: 'testCenterMatch',
               validator: (value: string) => value === center.id,
               message: `Row test center must be ${center.id}`,
             }),
-          },
+          ],
         }),
         column.text('candidateName', {
           match: {
             headers: ['Candidate'],
           },
-          rules: {
-            required: sheetRules.required(),
-          },
+          rules: v => [v.required()],
         }),
         column.text('tags', {
           match: {
             headers: ['Tags'],
           },
           multiple: true,
-          rules: {
-            tagCount: sheetRules.validate({
+          rules: v => [
+            v.validate({
               name: 'tagCount',
               validator: (value: string[]) => value.length >= 2,
               message: 'At least 2 tags are required',
             }),
-          },
+          ],
         }),
         column.number('scores', {
           match: {
@@ -89,13 +87,13 @@ function createMultiValueSchema() {
           multiple: {
             separator: ';',
           },
-          rules: {
-            allPassing: sheetRules.validate({
+          rules: v => [
+            v.validate({
               name: 'allPassing',
               validator: (value: number[]) => value.every(score => score >= 50),
               message: 'Every score must be at least 50',
             }),
-          },
+          ],
         }),
         column.option('productIds', {
           match: {
@@ -110,13 +108,13 @@ function createMultiValueSchema() {
             separator: ',',
             matchBy: 'label',
           },
-          rules: {
-            selectedProducts: sheetRules.validate({
+          rules: v => [
+            v.validate({
               name: 'selectedProducts',
               validator: (value: string[]) => value.length >= 1,
               message: 'At least one product must be selected',
             }),
-          },
+          ],
         }),
         column.enum('statuses', {
           match: {

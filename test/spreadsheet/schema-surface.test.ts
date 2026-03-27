@@ -6,6 +6,7 @@ import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 import type {
   ExtractSpreadsheetContextData,
   ExtractSpreadsheetRow,
+  ExtractSpreadsheetSubmitPayload,
   SpreadsheetColumnsDefinition,
   SpreadsheetContextItem,
   SpreadsheetQueryDefinition,
@@ -120,5 +121,38 @@ describe('spreadsheet package surface', () => {
 
     expectTypeOf<Row['productId']>().toEqualTypeOf<string | undefined>()
     expectTypeOf<Row['selectedProductId']>().toEqualTypeOf<string | undefined>()
+  })
+
+  it('types refine relations against buildRow output', () => {
+    const schema = defineSpreadsheetSchema({
+      importKey: 'demo.refine-import',
+      columns: {
+        static: (column) => [
+          column.text('examNameRaw', {
+            rules: v => [v.required()],
+            match: {
+              headers: ['Exam name'],
+            },
+          }),
+        ],
+      },
+      buildRow: ({ row }) => ({
+        examName: row.examNameRaw,
+      }),
+    }).refine({
+      relations: [
+        {
+          column: 'examName',
+          condition: row => row.examName.length > 0,
+          rules: v => [
+            v.required(),
+          ],
+        },
+      ],
+    })
+
+    type SubmitPayload = ExtractSpreadsheetSubmitPayload<typeof schema>
+
+    expectTypeOf<SubmitPayload>().toEqualTypeOf<{ examName: string }>()
   })
 })

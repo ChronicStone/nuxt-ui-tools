@@ -60,6 +60,7 @@ export function normalizeSpreadsheetSchema<
     context?: readonly SpreadsheetContextItem<string, unknown>[]
     columns?: SpreadsheetColumnsDefinition<any>
     references?: unknown
+    relations?: readonly unknown[]
     buildRow?: unknown
   },
 >(schema: TSchema) {
@@ -74,10 +75,10 @@ export function normalizeSpreadsheetSchema<
       dynamic: resolvedColumns?.dynamic ?? (() => []),
     },
     references: Array.isArray(resolvedReferences) ? resolvedReferences : [],
+    relations: schema.relations ?? [],
     buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
   }
 }
-
 export type {
   NormalizeSpreadsheetSchema,
 }

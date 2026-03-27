@@ -192,6 +192,7 @@ describe('spreadsheet reference utils', () => {
           dynamic: () => [],
         },
         references,
+        relations: [],
       })),
       contextData: computed(() => ({
         products: references[0].options,
