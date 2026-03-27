@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import { provideUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
@@ -53,6 +53,14 @@ const footerClass = computed(() =>
     ? 'rounded-md border border-default/70 bg-default/80 shadow-sm backdrop-blur'
     : 'border-t border-default/70',
 )
+
+onMounted(() => {
+  internals.startup.scheduleStart()
+})
+
+onBeforeUnmount(() => {
+  internals.startup.dispose()
+})
 
 function normalizeDimension(value: string | number) {
   return typeof value === 'number' ? `${value}px` : value

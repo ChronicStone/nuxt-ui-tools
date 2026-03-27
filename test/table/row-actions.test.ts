@@ -36,6 +36,8 @@ function createTableApiStub() {
   const error = computed<unknown>(() => null)
   const status = computed(() => ({
     initialized: true,
+    phase: 'active' as const,
+    isBooting: false,
     isPending: false,
     isFetching: false,
     isRefreshing: false,

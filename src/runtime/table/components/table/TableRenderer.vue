@@ -17,7 +17,9 @@ const tableRows = computed(
   () => internals.queryContent.data.value.rows as Array<Record<string, unknown>>,
 )
 const showInitialLoading = computed(
-  () => internals.queryContent.status.value.isPending && tableRows.value.length === 0,
+  () =>
+    internals.queryContent.status.value.isBooting ||
+    (internals.queryContent.status.value.isPending && tableRows.value.length === 0),
 )
 const showRefreshing = computed(
   () =>
@@ -48,6 +50,7 @@ watch(tableEmpty, (isEmpty) => {
 <template>
   <div class="relative overflow-hidden" :style="{ height }">
     <UTable
+      v-if="!internals.queryContent.status.value.isBooting"
       ref="tableRef"
       :data="tableRows"
       :columns="internals.tableColumns.tableColumns.value"

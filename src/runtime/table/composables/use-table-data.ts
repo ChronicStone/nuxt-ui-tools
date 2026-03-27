@@ -20,10 +20,12 @@ import {
   sortClientRows,
 } from '../utils'
 import type { useTableState } from './use-table-state'
+import type { UseTableStartupReturn } from './use-table-startup'
 
 export interface UseTableDataParams {
   schema: ComputedRef<TableSchemaView>
   state: ReturnType<typeof useTableState>
+  startup: UseTableStartupReturn
 }
 
 export interface UseTableDataReturn {
@@ -46,6 +48,8 @@ export interface UseTableDataReturn {
   error: ComputedRef<unknown>
   status: ComputedRef<{
     initialized: boolean
+    phase: 'booting' | 'scheduled' | 'active'
+    isBooting: boolean
     isPending: boolean
     isFetching: boolean
     isRefreshing: boolean
@@ -82,7 +86,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const context = useQueries({
     queries: () =>
       contextItems.value.map((item) =>
-        withEnabled(item.query(), true, {
+        withEnabled(item.query(), params.startup.isActive.value, {
           staleTime: QUERY_DEFAULTS.staleTime.context,
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
         }),
@@ -182,7 +186,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         params.schema.value.source.query(
           requestContext.value as never,
         ) as TableQueryDefinition,
-        isContextReady.value,
+        params.startup.isActive.value && isContextReady.value,
         {
           staleTime: dataStaleTime.value,
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
@@ -215,7 +219,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
       return withEnabled(
         facetsSource(facetContext),
-        isContextReady.value,
+        params.startup.isActive.value && isContextReady.value,
         {
           staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
@@ -232,6 +236,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
   const rawData = computed<TableExternalState>(() => rawDataState.value)
   const clientFilteredRows = computed(() => {
+    if (!params.startup.isActive.value) return []
     if (params.schema.value.source.mode !== 'client') return rawData.value.rows
 
     return filterClientRows({
@@ -241,6 +246,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     })
   })
   const clientSortedRows = computed(() => {
+    if (!params.startup.isActive.value) return []
     if (params.schema.value.source.mode !== 'client') return clientFilteredRows.value
 
     return sortClientRows({
@@ -249,6 +255,12 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     })
   })
   const data = computed<TableExternalState>(() => {
+    if (!params.startup.isActive.value)
+      return {
+        rows: [],
+        rowCount: 0,
+      }
+
     if (params.schema.value.source.mode !== 'client') return rawData.value
 
     return paginateClientRows({
@@ -257,7 +269,9 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     })
   })
   const selectableRows = computed<GenericObject[]>(() =>
-    params.schema.value.source.mode === 'client'
+    !params.startup.isActive.value
+      ? []
+      : params.schema.value.source.mode === 'client'
       ? clientSortedRows.value
       : data.value.rows,
   )
@@ -269,6 +283,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     })),
   )
   const facets = computed<TableFacetExecutionResult<string>>(() => {
+    if (!params.startup.isActive.value) return { facets: [] }
     if (params.schema.value.source.mode === 'client')
       return executeClientFacets({
         rows: rawData.value.rows,
@@ -290,7 +305,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   )
 
   const isPageContextEnabled = computed(
-    () => isContextReady.value && query.isSuccess.value && !query.isFetching.value,
+    () =>
+      params.startup.isActive.value &&
+      isContextReady.value &&
+      query.isSuccess.value &&
+      !query.isFetching.value,
   )
 
   const pageContext = useQueries({
@@ -363,6 +382,24 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   })
 
   const status = computed(() => {
+    if (!params.startup.isActive.value) {
+      return {
+        initialized: false,
+        phase: params.startup.phase.value,
+        isBooting: true,
+        isPending: true,
+        isFetching: false,
+        isRefreshing: false,
+        isRevalidating: false,
+        isContextPending: false,
+        isContextFetching: false,
+        isDataPending: false,
+        isDataFetching: false,
+        isPageContextPending: false,
+        isPageContextFetching: false,
+      }
+    }
+
     const isDataPending = query.isPending.value
     const isDataFetching = query.isFetching.value
     const isRefreshing =
@@ -372,6 +409,8 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
     return {
       initialized: initialized.value,
+      phase: params.startup.phase.value,
+      isBooting: false,
       isPending:
         isContextPending.value ||
         (!query.isSuccess.value && isDataPending) ||
@@ -406,14 +445,19 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   )
 
   async function refreshContext() {
+    params.startup.start()
     return Promise.all(contextResults.value.map((item) => item.refetch()))
   }
 
   function refreshData() {
-    return query.refetch
+    return (...args: Parameters<typeof query.refetch>) => {
+      params.startup.start()
+      return query.refetch(...args)
+    }
   }
 
   async function refreshPageContext() {
+    params.startup.start()
     return Promise.all(pageContextResults.value.map((item) => item.refetch()))
   }
 

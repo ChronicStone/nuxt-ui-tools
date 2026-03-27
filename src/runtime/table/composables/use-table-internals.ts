@@ -12,6 +12,7 @@ import { useTableGrid } from './use-table-grid'
 import { useTableLayout } from './use-table-layout'
 import { useTablePagination } from './use-table-pagination'
 import { useTableSelection } from './use-table-selection'
+import { useTableStartup } from './use-table-startup'
 import { useTableState } from './use-table-state'
 
 function createTableInternals<TSchema>(options: {
@@ -20,6 +21,7 @@ function createTableInternals<TSchema>(options: {
   const publicSchema = computed(() => resolveSchemaSource({ schema: options.rawSchema }))
   const schema = computed(() => publicSchema.value as TableSchemaView)
   const tableApi = shallowRef<TableApi<TSchema> | null>(null)
+  const startup = useTableStartup()
   const layout = useTableLayout({ schema })
   const state = useTableState({
     schema,
@@ -28,6 +30,7 @@ function createTableInternals<TSchema>(options: {
   const queryContent = useTableData({
     schema,
     state,
+    startup,
   })
   const selection = useTableSelection({
     schema,
@@ -80,6 +83,7 @@ function createTableInternals<TSchema>(options: {
   return {
     schema,
     layout,
+    startup,
     queryState: state.queryState,
     resolvedFilterState: state.resolvedFilterState,
     queryContent,

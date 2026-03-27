@@ -34,7 +34,9 @@ const gridColumn = computed(
 )
 const minHeight = computed(() => (isContained.value ? `calc(${props.height} - 6rem)` : '24rem'))
 const showInitialLoading = computed(
-  () => internals.queryContent.status.value.isPending && tableRows.value.length === 0,
+  () =>
+    internals.queryContent.status.value.isBooting ||
+    (internals.queryContent.status.value.isPending && tableRows.value.length === 0),
 )
 const showRefreshing = computed(
   () =>
@@ -135,7 +137,11 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
       class="overflow-auto px-4 py-4 sm:px-5"
       :style="{ height }"
     >
-      <div class="relative" :style="{ height: `${totalSize}px`, minHeight }">
+      <div
+        v-if="!internals.queryContent.status.value.isBooting"
+        class="relative"
+        :style="{ height: `${totalSize}px`, minHeight }"
+      >
         <AnimatePresence mode="popLayout">
           <motion.div
             v-for="virtualRow in virtualRows"
