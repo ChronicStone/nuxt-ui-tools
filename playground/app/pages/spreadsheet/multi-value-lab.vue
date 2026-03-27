@@ -123,7 +123,7 @@ function createMultiValueSchema() {
           options: ['pending', 'validated', 'archived'],
           multiple: {
             separator: '|',
-            normalize: ['trim', 'case-insensitive'],
+            itemModifiers: ['trim', 'case-insensitive'],
           },
         }),
         column.boolean('flags', {

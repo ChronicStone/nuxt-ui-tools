@@ -255,6 +255,77 @@ describe('spreadsheet row utils', () => {
     })
   })
 
+  it('applies column modifiers before built-in parsing', async () => {
+    const matches = matchSpreadsheetColumns(
+      flattenSpreadsheetStaticColumns([
+        {
+          kind: 'text',
+          key: 'candidate.email',
+          from: 'Email',
+          modifiers: ['trim', 'lowercase'],
+        },
+        {
+          kind: 'number',
+          key: 'candidate.score',
+          from: 'Score',
+          modifiers: ['trim'],
+        },
+      ]),
+      createSpreadsheetHeaderCells(['Email', 'Score']),
+    )
+
+    const rows = await parseSpreadsheetRows({
+      rows: [
+        ['  JOHN@EXAMPLE.COM  ', ' 84 '],
+      ],
+      matches,
+      context: {},
+    })
+
+    expect(rows[0]).toMatchObject({
+      isValid: true,
+      data: {
+        candidate: {
+          email: 'john@example.com',
+          score: 84,
+        },
+      },
+    })
+  })
+
+  it('applies multiple item modifiers after splitting tokens', async () => {
+    const matches = matchSpreadsheetColumns(
+      flattenSpreadsheetStaticColumns([
+        {
+          kind: 'text',
+          key: 'tags',
+          from: 'Tags',
+          modifiers: ['trim'],
+          multiple: {
+            separator: ',',
+            itemModifiers: ['trim', 'lowercase'],
+          },
+        },
+      ]),
+      createSpreadsheetHeaderCells(['Tags']),
+    )
+
+    const rows = await parseSpreadsheetRows({
+      rows: [
+        ['  Alpha, BETA ,  Gamma  '],
+      ],
+      matches,
+      context: {},
+    })
+
+    expect(rows[0]).toMatchObject({
+      isValid: true,
+      data: {
+        tags: ['alpha', 'beta', 'gamma'],
+      },
+    })
+  })
+
   it('parses built-in multiple values for scalar and option columns', async () => {
     const matches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
@@ -426,7 +497,6 @@ describe('spreadsheet row utils', () => {
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
           options: item => item.items.map(option => ({
             label: option.name,
@@ -436,7 +506,7 @@ describe('spreadsheet row utils', () => {
             mode: 'csv',
             separator: ',',
             resolve: 'label',
-            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
           output: {
             into: 'affiliations',

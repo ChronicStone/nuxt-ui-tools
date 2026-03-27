@@ -173,7 +173,6 @@ function createLargeValidationSchema() {
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
           options: (group: { items: readonly SpreadsheetAffiliationOption[] }) =>
             group.items.map((item: SpreadsheetAffiliationOption) => ({
@@ -184,7 +183,7 @@ function createLargeValidationSchema() {
             mode: 'csv',
             separator: ',',
             resolve: 'label',
-            normalize: ['trim', 'case-insensitive', 'accent-insensitive'],
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
           },
           output: {
             into: 'affiliations',

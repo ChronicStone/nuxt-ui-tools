@@ -2,6 +2,7 @@ import type { MaybePromise } from '../../shared/types/utils'
 import type {
   SpreadsheetCellValue,
   SpreadsheetMatchDefinition,
+  SpreadsheetModifier,
 } from './shared'
 import type { SpreadsheetFieldRulesInput } from './validation'
 import type {
@@ -23,10 +24,11 @@ export interface SpreadsheetColumnDefinition<
   required?: TRequired
   match?: SpreadsheetMatchDefinition
   from?: string | RegExp | readonly (string | RegExp)[]
+  modifiers?: readonly SpreadsheetModifier[]
   multiple?: boolean | {
     separator?: string
     matchBy?: 'label' | 'value'
-    normalize?: readonly string[]
+    itemModifiers?: readonly SpreadsheetModifier[]
   }
   parse?: (params: {
     cell: SpreadsheetCellValue
@@ -61,15 +63,13 @@ type ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple> =
       : TDefault[]
 export interface SpreadsheetColumnMultipleOptions {
   separator?: string
+  itemModifiers?: readonly SpreadsheetModifier[]
 }
 
-export interface SpreadsheetEnumColumnMultipleOptions extends SpreadsheetColumnMultipleOptions {
-  normalize?: readonly string[]
-}
+export interface SpreadsheetEnumColumnMultipleOptions extends SpreadsheetColumnMultipleOptions {}
 
 export interface SpreadsheetOptionColumnMultipleOptions extends SpreadsheetColumnMultipleOptions {
   matchBy?: 'label' | 'value'
-  normalize?: readonly string[]
 }
 
 export interface SpreadsheetColumnBaseOptions<
@@ -82,6 +82,7 @@ export interface SpreadsheetColumnBaseOptions<
   required?: TRequired
   match?: SpreadsheetMatchDefinition
   from?: string | RegExp | readonly (string | RegExp)[]
+  modifiers?: readonly SpreadsheetModifier[]
   multiple?: TMultiple
   parse?: (params: {
     cell: SpreadsheetCellValue
@@ -220,7 +221,7 @@ type SpreadsheetDynamicItemCallback<TResult> = SpreadsheetDynamicCallback<unknow
 
 export interface SpreadsheetDynamicTextValueDefinition {
   kind: 'text'
-  normalize?: readonly string[]
+  modifiers?: readonly SpreadsheetModifier[]
 }
 
 export interface SpreadsheetDynamicNumberValueDefinition {
@@ -244,7 +245,7 @@ export interface SpreadsheetDynamicOptionsValueDefinition<
   mode: TMode
   separator?: string
   matchBy: 'label' | 'value'
-  normalize?: readonly string[]
+  itemModifiers?: readonly SpreadsheetModifier[]
 }
 
 export type SpreadsheetDynamicValueDefinition =
@@ -291,7 +292,7 @@ type SpreadsheetDynamicBuildParams<
 
 export interface SpreadsheetDynamicValueBuilder {
   text: (config?: {
-    normalize?: readonly string[]
+    modifiers?: readonly SpreadsheetModifier[]
   }) => SpreadsheetDynamicTextValueDefinition
   number: () => SpreadsheetDynamicNumberValueDefinition
   date: () => SpreadsheetDynamicDateValueDefinition
@@ -305,7 +306,7 @@ export interface SpreadsheetDynamicValueBuilder {
     mode?: TMode
     separator?: string
     matchBy: 'label' | 'value'
-    normalize?: readonly string[]
+    itemModifiers?: readonly SpreadsheetModifier[]
   },
   ): SpreadsheetDynamicOptionsValueDefinition<TOption, TMode>
 }
@@ -383,7 +384,6 @@ export interface SpreadsheetDynamicOptionGroupsDefinition<
     strategy: 'exact' | 'template' | 'patterns'
     template?: SpreadsheetDynamicCallback<{ source: unknown }, string>
     patterns?: SpreadsheetDynamicCallback<{ source: unknown }, readonly (string | RegExp)[]>
-    normalize?: readonly string[]
   }
   options?:
     | readonly SpreadsheetOptionItem<TValue>[]
@@ -392,7 +392,7 @@ export interface SpreadsheetDynamicOptionGroupsDefinition<
     mode: 'single' | 'csv'
     separator?: string
     resolve: 'label' | 'value'
-    normalize?: readonly string[]
+    itemModifiers?: readonly SpreadsheetModifier[]
   }
   output: {
     into: TInto
@@ -418,14 +418,13 @@ export type SpreadsheetBuiltDynamicOptionGroupsDefinition<
     strategy: 'exact' | 'template' | 'patterns'
     template?: (params: { source: ArrayElement<TSource> }) => string
     patterns?: (params: { source: ArrayElement<TSource> }) => readonly (string | RegExp)[]
-    normalize?: readonly string[]
   }
   options: readonly TOption[] | ((item: ArrayElement<TSource>) => readonly TOption[])
   values: {
     mode: 'single' | 'csv'
     separator?: string
     resolve: 'label' | 'value'
-    normalize?: readonly string[]
+    itemModifiers?: readonly SpreadsheetModifier[]
   }
 }
 
@@ -456,14 +455,13 @@ export interface SpreadsheetDynamicBuilder<TContext = unknown> {
       strategy: 'exact' | 'template' | 'patterns'
       template?: (params: { source: ArrayElement<TSource> }) => string
       patterns?: (params: { source: ArrayElement<TSource> }) => readonly (string | RegExp)[]
-      normalize?: readonly string[]
     }
     options: readonly TOption[] | ((item: ArrayElement<TSource>) => readonly TOption[])
     values: {
       mode: 'single' | 'csv'
       separator?: string
       resolve: 'label' | 'value'
-      normalize?: readonly string[]
+      itemModifiers?: readonly SpreadsheetModifier[]
     }
     output: {
       into: TInto
