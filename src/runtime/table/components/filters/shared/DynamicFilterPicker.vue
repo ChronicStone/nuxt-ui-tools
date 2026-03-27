@@ -4,6 +4,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { TableUiFilterDefinition } from '../../../types'
 import { resolveFilterTriggerIcon } from '../../../utils'
 import FilterSearchablePanel from './FilterSearchablePanel.vue'
@@ -17,6 +18,7 @@ const emit = defineEmits<{
   select: [key: string]
 }>()
 
+const { t } = useUiToolsLocale()
 const isOpen = ref<boolean>(false)
 const searchQuery = ref<string>('')
 
@@ -49,7 +51,7 @@ function handleSelect(key: string) {
       variant="outline"
       size="md"
       icon="i-lucide-plus"
-      label="Add filter"
+      :label="t('table.controls.addFilter')"
       class="shrink-0 border-dashed"
     />
 
@@ -59,9 +61,9 @@ function handleSelect(key: string) {
           v-model:search-query="searchQuery"
           searchable
           autofocus
-          search-placeholder="Search filters..."
+          :search-placeholder="t('table.controls.searchFilters')"
           :show-empty="!filteredDefinitions.length"
-          empty-label="No matching filters."
+          :empty-label="t('table.controls.noMatchingFilters')"
           max-height-class="max-h-72"
         >
           <button

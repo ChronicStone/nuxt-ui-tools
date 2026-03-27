@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const products = [
   { label: 'Business English 4 Skills', value: 'prod_be' },
   { label: 'Career Readiness Bundle', value: 'prod_cr' },
@@ -107,8 +109,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Column Resolve Lab"
-      description="In-place smart resolution. The imported Product column resolves directly into productId, so the raw source field is not kept on the final row."
+      :title="t('playground.spreadsheetPages.columnResolve.title')"
+      :description="t('playground.spreadsheetPages.columnResolve.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

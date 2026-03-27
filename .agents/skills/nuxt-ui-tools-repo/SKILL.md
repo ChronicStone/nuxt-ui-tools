@@ -48,6 +48,10 @@ For general internal architecture, placement, feature organization, or maintenan
 
 - `.agents/skills/nuxt-ui-tools-maintainer/SKILL.md`
 
+For locale architecture, provider wiring, or translation-contract work, also use:
+
+- `.agents/skills/nuxt-ui-tools-i18n/SKILL.md`
+
 For table-specific internal work, also use:
 
 - `.agents/skills/nuxt-ui-tools-table-runtime/SKILL.md`

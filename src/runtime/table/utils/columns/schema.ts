@@ -1,4 +1,5 @@
 import type { GenericObject, TableSchemaView } from '../../types'
+import { resolveTextValue } from '#ui-tools/shared/utils/render'
 import type { SchemaTableColumn, TableRuntimeColumn } from './types'
 
 export function findSchemaColumn(options: {
@@ -52,14 +53,13 @@ export function createVisibleOrderedColumns(options: {
 
 export function resolveColumnLabel(options: { column: SchemaTableColumn }) {
   if (typeof options.column.label === 'function') {
-    return String(options.column.label())
+    const resolved = options.column.label()
+    return typeof resolved === 'string' || typeof resolved === 'number'
+      ? String(resolved)
+      : humanizeKey({ value: options.column.key })
   }
 
-  if (options.column.label) {
-    return options.column.label
-  }
-
-  return humanizeKey({ value: options.column.key })
+  return resolveTextValue(options.column.label, humanizeKey({ value: options.column.key }))
 }
 
 export function resolveColumnVisibility(options: {

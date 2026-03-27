@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const products = [
   { id: 'prod_be', name: 'Business English 4 Skills' },
   { id: 'prod_ge', name: 'General English 4 Skills' },
@@ -117,8 +119,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Multi Reference Lab"
-      description="Focused scenario for references resolving from a multi-value source field into an array output."
+      :title="t('playground.spreadsheetPages.multiReference.title')"
+      :description="t('playground.spreadsheetPages.multiReference.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

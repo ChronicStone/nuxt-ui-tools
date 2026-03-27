@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/vue-virtual'
 import { AnimatePresence, motion } from 'motion-v'
 import { computed, nextTick, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useTableInternals } from '../../composables/use-table-internals'
 import { GRID_DEFAULTS } from '../../constants/grid'
 import { resolveTableRowId } from '../../utils'
@@ -16,6 +17,7 @@ const props = defineProps<{
 }>()
 
 const internals = useTableInternals()
+const { t } = useUiToolsLocale()
 const viewportRef = ref<HTMLElement | null>(null)
 const hostRef = ref<HTMLElement | null>(null)
 const animationsReady = ref<boolean>(false)
@@ -188,10 +190,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
           </div>
           <div class="grid gap-1">
-            <div class="text-base font-medium text-highlighted">Unable to load this grid</div>
+            <div class="text-base font-medium text-highlighted">{{ t('table.states.gridError.title') }}</div>
             <p class="text-sm leading-6 text-muted">
-              Something interrupted the data request. You can retry without losing the current table
-              state.
+              {{ t('table.states.gridError.description') }}
             </p>
           </div>
           <UButton
@@ -201,7 +202,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             icon="i-lucide-refresh-cw"
             @click="refreshData"
           >
-            Retry
+            {{ t('table.states.gridError.action') }}
           </UButton>
         </div>
       </div>
@@ -221,9 +222,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
               <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
             </div>
             <div class="grid gap-1">
-              <div class="text-base font-medium text-highlighted">Nothing matches this view</div>
+              <div class="text-base font-medium text-highlighted">{{ t('table.states.gridEmpty.title') }}</div>
               <p class="text-sm leading-6 text-muted">
-                Adjust your search, filters, or layout settings to bring cards back into the grid.
+                {{ t('table.states.gridEmpty.description') }}
               </p>
             </div>
           </div>
@@ -297,10 +298,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
           </div>
           <div class="grid gap-1">
-            <div class="text-base font-medium text-highlighted">Unable to load this grid</div>
+            <div class="text-base font-medium text-highlighted">{{ t('table.states.gridError.title') }}</div>
             <p class="text-sm leading-6 text-muted">
-              Something interrupted the data request. You can retry without losing the current table
-              state.
+              {{ t('table.states.gridError.description') }}
             </p>
           </div>
           <UButton
@@ -310,7 +310,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             icon="i-lucide-refresh-cw"
             @click="refreshData"
           >
-            Retry
+            {{ t('table.states.gridError.action') }}
           </UButton>
         </div>
       </motion.div>
@@ -334,9 +334,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
               <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
             </div>
             <div class="grid gap-1">
-              <div class="text-base font-medium text-highlighted">Nothing matches this view</div>
+              <div class="text-base font-medium text-highlighted">{{ t('table.states.gridEmpty.title') }}</div>
               <p class="text-sm leading-6 text-muted">
-                Adjust your search, filters, or layout settings to bring cards back into the grid.
+                {{ t('table.states.gridEmpty.description') }}
               </p>
             </div>
           </div>

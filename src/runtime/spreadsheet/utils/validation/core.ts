@@ -10,6 +10,7 @@ import type {
   SpreadsheetRuleOverrides,
   SpreadsheetValidatorResult,
 } from '../../types/validation'
+import { useUiToolsLocale } from '#ui-tools/i18n'
 
 function isSpreadsheetRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object'
@@ -161,83 +162,93 @@ function createNumericValueGuard(value: number) {
   return !Number.isNaN(value) && Number.isFinite(value)
 }
 
-const createSpreadsheetRuleBuilder = () => ({
-  validate,
-  required: createRule<unknown, [], {}, { required: true }>({
-    name: 'required',
-    flags: { required: true },
-    validator: (value: unknown) => value != null && value !== '',
-    message: () => 'This field is required',
-  }),
-  maxLength: createRule<string, [max: number], { max: number }>({
-    name: 'maxLength',
-    validator: (value: string, max: number) => ({
-      $valid: value.length <= max,
-      max,
+const createSpreadsheetRuleBuilder = () => {
+  const { t } = useUiToolsLocale()
+
+  return ({
+    validate,
+    required: createRule<unknown, [], {}, { required: true }>({
+      name: 'required',
+      flags: { required: true },
+      validator: (value: unknown) => value != null && value !== '',
+      message: () => t('spreadsheet.validation.required'),
     }),
-    message: ({ value, params: [max] }) => `Max ${max} characters, got ${value.length}`,
-  }),
-  minLength: createRule<string, [min: number], { min: number }>({
-    name: 'minLength',
-    validator: (value: string, min: number) => ({
-      $valid: value.length >= min,
-      min,
-    }),
-    message: ({ value, params: [min] }) => `Min ${min} characters, got ${value.length}`,
-  }),
-  number: createRule<number, [], {}>({
-    name: 'number',
-    validator: (value: number) => createNumericValueGuard(value),
-    message: () => 'This field must be a valid number',
-  }),
-  min: createRule<number, [min: number], { min: number }>({
-    name: 'min',
-    validator: (value: number, min: number) => ({
-      $valid: createNumericValueGuard(value) && value >= min,
-      min,
-    }),
-    message: ({ value, params: [min] }) => `${value} must be greater than or equal to ${min}`,
-  }),
-  max: createRule<number, [max: number], { max: number }>({
-    name: 'max',
-    validator: (value: number, max: number) => ({
-      $valid: createNumericValueGuard(value) && value <= max,
-      max,
-    }),
-    message: ({ value, params: [max] }) => `${value} must be lower than or equal to ${max}`,
-  }),
-  between: createRule<number, [min: number, max: number], { min: number, max: number }>({
-    name: 'between',
-    validator: (value: number, min: number, max: number) => ({
-      $valid: createNumericValueGuard(value) && value >= min && value <= max,
-      min,
-      max,
-    }),
-    message: ({ value, params: [min, max] }) => `${value} must be between ${min} and ${max}`,
-  }),
-  oneOf(values, overrides) {
-    const ruleFactory = createRule<
-      typeof values[number] extends string ? string
-        : typeof values[number] extends number ? number
-          : typeof values[number] extends boolean ? boolean
-            : typeof values[number],
-      [typeof values],
-      { values: typeof values }
-    >({
-      name: 'oneOf',
-      validator: (value, allowedValues) => ({
-        $valid: allowedValues.includes(value),
-        values: allowedValues,
+    maxLength: createRule<string, [max: number], { max: number }>({
+      name: 'maxLength',
+      validator: (value: string, max: number) => ({
+        $valid: value.length <= max,
+        max,
       }),
-      message: ({ value, params: [allowedValues] }) =>
-        `${String(value)} must be one of ${allowedValues.map(String).join(', ')}`,
-    })
+      message: ({ value, params: [max] }) =>
+        t('spreadsheet.validation.maxLength', { max, length: value.length }),
+    }),
+    minLength: createRule<string, [min: number], { min: number }>({
+      name: 'minLength',
+      validator: (value: string, min: number) => ({
+        $valid: value.length >= min,
+        min,
+      }),
+      message: ({ value, params: [min] }) =>
+        t('spreadsheet.validation.minLength', { min, length: value.length }),
+    }),
+    number: createRule<number, [], {}>({
+      name: 'number',
+      validator: (value: number) => createNumericValueGuard(value),
+      message: () => t('spreadsheet.validation.number'),
+    }),
+    min: createRule<number, [min: number], { min: number }>({
+      name: 'min',
+      validator: (value: number, min: number) => ({
+        $valid: createNumericValueGuard(value) && value >= min,
+        min,
+      }),
+      message: ({ value, params: [min] }) =>
+        t('spreadsheet.validation.min', { value, min }),
+    }),
+    max: createRule<number, [max: number], { max: number }>({
+      name: 'max',
+      validator: (value: number, max: number) => ({
+        $valid: createNumericValueGuard(value) && value <= max,
+        max,
+      }),
+      message: ({ value, params: [max] }) =>
+        t('spreadsheet.validation.max', { value, max }),
+    }),
+    between: createRule<number, [min: number, max: number], { min: number, max: number }>({
+      name: 'between',
+      validator: (value: number, min: number, max: number) => ({
+        $valid: createNumericValueGuard(value) && value >= min && value <= max,
+        min,
+        max,
+      }),
+      message: ({ value, params: [min, max] }) =>
+        t('spreadsheet.validation.between', { value, min, max }),
+    }),
+    oneOf(values, overrides) {
+      const ruleFactory = createRule<
+        typeof values[number] extends string ? string
+          : typeof values[number] extends number ? number
+            : typeof values[number] extends boolean ? boolean
+              : typeof values[number],
+        [typeof values],
+        { values: typeof values }
+      >({
+        name: 'oneOf',
+        validator: (value, allowedValues) => ({
+          $valid: allowedValues.includes(value),
+          values: allowedValues,
+        }),
+        message: ({ value, params: [allowedValues] }) =>
+          t('spreadsheet.validation.oneOf', {
+            value: String(value),
+            values: allowedValues.map(String).join(', '),
+          }),
+      })
 
-    return ruleFactory(values, overrides)
-  },
-}) satisfies SpreadsheetRuleBuilder
-
-const spreadsheetRuleBuilder = createSpreadsheetRuleBuilder()
+      return ruleFactory(values, overrides)
+    },
+  }) satisfies SpreadsheetRuleBuilder
+}
 
 export const createSheetRule = createRule as CreateSpreadsheetRule
 
@@ -245,7 +256,7 @@ export function resolveSpreadsheetRules<TValue>(
   rules: SpreadsheetFieldRulesInput<TValue> | undefined,
 ) {
   if (!rules) return []
-  if (typeof rules === 'function') return rules(spreadsheetRuleBuilder)
+  if (typeof rules === 'function') return rules(createSpreadsheetRuleBuilder())
   return rules
 }
 
@@ -253,7 +264,7 @@ export function resolveSpreadsheetRelationRules<TRow, TValue>(params: {
   row: TRow
   rules: (rules: SpreadsheetRuleBuilder, row: TRow) => SpreadsheetFieldRules<TValue>
 }) {
-  return params.rules(spreadsheetRuleBuilder, params.row)
+  return params.rules(createSpreadsheetRuleBuilder(), params.row)
 }
 
 export function executeSpreadsheetRules<TValue>(params: {

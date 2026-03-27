@@ -40,6 +40,10 @@ If the task is about spreadsheet import flows, schema definition, matching, refe
 
 - `skills/consumer/spreadsheet/SKILL.md`
 
+If the task is about package locale wiring, `UiToolsProvider`, or translation-friendly schema text, use:
+
+- `skills/consumer/i18n/SKILL.md`
+
 These sibling skills carry the feature-specific guidance.
 This top-level skill is the package overview and router.
 

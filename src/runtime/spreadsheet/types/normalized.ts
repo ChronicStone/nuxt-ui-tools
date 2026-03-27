@@ -76,16 +76,17 @@ export interface SpreadsheetNormalizedSchema<
 > {
   importKey: string
   file?: import('./schema').SpreadsheetFileDefinition
-  sheet?: import('./schema').SpreadsheetSheetDefinition
-  header?: import('./schema').SpreadsheetHeaderDefinition
-  matching?: import('./schema').SpreadsheetMatchingDefinition
+  sheet?: import('./schema').SpreadsheetSheetStepDefinition
+  header?: import('./schema').SpreadsheetHeaderStepDefinition
+  matching?: import('./schema').SpreadsheetMatchingStepDefinition
+  steps?: import('./schema').SpreadsheetStepsDefinition
   context: TContextItems
   columns: TColumns
   references: TReferences
   resolutions: TResolutions
   relations: TRelations
   buildRow?: TBuildRow
-  review?: import('./schema').SpreadsheetReviewDefinition
+  review?: import('./schema').SpreadsheetReviewStepDefinition
 }
 
 export type NormalizeSpreadsheetSchema<TSchema> = SpreadsheetNormalizedSchema<

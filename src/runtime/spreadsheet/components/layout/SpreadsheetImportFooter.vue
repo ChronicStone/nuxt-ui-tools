@@ -2,6 +2,8 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 defineProps<{
   hint?: string
   showPrevious?: boolean
@@ -21,6 +23,8 @@ const emit = defineEmits<{
   primary: []
   export: []
 }>()
+
+const { t } = useUiToolsLocale()
 </script>
 
 <template>
@@ -42,7 +46,7 @@ const emit = defineEmits<{
     <div class="flex flex-wrap items-center gap-3">
       <UButton
         v-if="showPrevious"
-        :label="previousLabel ?? 'Previous'"
+        :label="previousLabel ?? t('spreadsheet.common.previous')"
         color="neutral"
         variant="ghost"
         icon="i-lucide-arrow-left"

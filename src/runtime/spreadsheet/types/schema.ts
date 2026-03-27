@@ -1,7 +1,7 @@
 import type { SpreadsheetColumnsDefinition, SpreadsheetResolvedColumns } from './columns'
 import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
 import type { ExtractSpreadsheetValidationRow, SpreadsheetRowData } from './inference'
-import type { NestedPaths } from '../../shared/types/utils'
+import type { LazyTextValue, NestedPaths } from '#ui-tools/shared/types/utils'
 import type { SpreadsheetFieldRules, SpreadsheetRuleBuilder } from './validation'
 
 export interface SpreadsheetFileDefinition {
@@ -9,20 +9,38 @@ export interface SpreadsheetFileDefinition {
   maxRecords?: number
 }
 
-export interface SpreadsheetSheetDefinition {
+export interface SpreadsheetStepTextDefinition {
+  title?: LazyTextValue
+  description?: LazyTextValue
+}
+
+export interface SpreadsheetSheetStepDefinition extends SpreadsheetStepTextDefinition {
   strategy?: 'fixed' | 'selection' | 'auto'
 }
 
-export interface SpreadsheetHeaderDefinition {
+export interface SpreadsheetHeaderStepDefinition extends SpreadsheetStepTextDefinition {
   strategy?: 'fixed' | 'first-row' | 'selection' | 'detected'
 }
 
-export interface SpreadsheetMatchingDefinition {
+export interface SpreadsheetMatchingStepDefinition extends SpreadsheetStepTextDefinition {
   strategy?: 'template' | 'smart' | 'manual'
 }
 
-export interface SpreadsheetReviewDefinition {
+export interface SpreadsheetReviewStepDefinition extends SpreadsheetStepTextDefinition {
   allowInvalidSubmit?: boolean
+}
+
+export interface SpreadsheetStructureStepDefinition extends SpreadsheetStepTextDefinition {
+  sheet?: SpreadsheetSheetStepDefinition
+  header?: SpreadsheetHeaderStepDefinition
+}
+
+export interface SpreadsheetStepsDefinition {
+  upload?: SpreadsheetStepTextDefinition
+  structure?: SpreadsheetStructureStepDefinition
+  matching?: SpreadsheetMatchingStepDefinition
+  references?: SpreadsheetStepTextDefinition
+  review?: SpreadsheetReviewStepDefinition
 }
 
 type SpreadsheetValueAtPath<TRow, TPath extends string> = TPath extends `${infer TKey}.${infer TRest}`
@@ -73,15 +91,16 @@ export interface SpreadsheetSchema<
 > {
   importKey: string
   file?: SpreadsheetFileDefinition
-  sheet?: SpreadsheetSheetDefinition
-  header?: SpreadsheetHeaderDefinition
-  matching?: SpreadsheetMatchingDefinition
+  sheet?: SpreadsheetSheetStepDefinition
+  header?: SpreadsheetHeaderStepDefinition
+  matching?: SpreadsheetMatchingStepDefinition
+  steps?: SpreadsheetStepsDefinition
   context?: TContextItems
   columns?: TColumns
   references?: TReferences
   relations?: TRelations
   buildRow?: TBuildRow
-  review?: SpreadsheetReviewDefinition
+  review?: SpreadsheetReviewStepDefinition
 }
 
 export interface SpreadsheetSchemaRefinement<

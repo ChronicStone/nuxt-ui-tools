@@ -2,6 +2,7 @@
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { formatSpreadsheetCell } from '../../utils/display'
 import { getSpreadsheetObjectEntries, isSpreadsheetRecord } from '../../utils/object'
 
@@ -13,6 +14,7 @@ const props = withDefaults(defineProps<{
 })
 
 const compactLimit = 2
+const { t } = useUiToolsLocale()
 
 function getCompactArrayItems(value: readonly unknown[]) {
   return props.compact ? value.slice(0, compactLimit) : value
@@ -32,11 +34,11 @@ function getValueKind(value: unknown) {
 
 function getObjectSummary(value: Record<string, unknown>) {
   const entries = getSpreadsheetObjectEntries(value)
-  return `${entries.length} field${entries.length > 1 ? 's' : ''}`
+  return t('spreadsheet.common.objectSummary', { count: entries.length })
 }
 
 function getArraySummary(value: readonly unknown[]) {
-  return `${value.length} item${value.length > 1 ? 's' : ''}`
+  return t('spreadsheet.common.arraySummary', { count: value.length })
 }
 </script>
 
@@ -75,7 +77,7 @@ function getArraySummary(value: readonly unknown[]) {
     <template #content>
       <div class="grid gap-3 p-3">
         <div class="flex items-center justify-between gap-3">
-          <span class="text-sm font-semibold text-highlighted">Array value</span>
+          <span class="text-sm font-semibold text-highlighted">{{ t('spreadsheet.common.arrayValue') }}</span>
           <UBadge color="neutral" variant="subtle" size="xs" class="font-mono">
             {{ getArraySummary(value) }}
           </UBadge>
@@ -123,7 +125,7 @@ function getArraySummary(value: readonly unknown[]) {
     <template #content>
       <div class="grid gap-3 p-3">
         <div class="flex items-center justify-between gap-3">
-          <span class="text-sm font-semibold text-highlighted">Object value</span>
+          <span class="text-sm font-semibold text-highlighted">{{ t('spreadsheet.common.objectValue') }}</span>
           <UBadge color="neutral" variant="subtle" size="xs" class="font-mono">
             {{ getObjectSummary(value) }}
           </UBadge>

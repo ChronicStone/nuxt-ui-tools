@@ -636,6 +636,22 @@ When writing or updating `.agents/skills/*`:
 - call out maintenance surfaces that must stay in sync when a feature changes
 - include concrete file paths and current examples when they materially reduce ambiguity
 
+## 10.7 Translation Cleanup Rule
+
+Translation keys are a maintained surface, not disposable implementation residue.
+
+When a refactor, UI change, feature removal, or copy change makes locale entries unused:
+
+- remove the unused translation keys from the owning locale message type
+- remove the unused translation keys from locale files
+- remove any dead helpers or dead code paths that only existed for those keys
+
+Do not leave stale translation entries behind "just in case".
+
+Unused locale entries make future maintenance harder, make coverage look misleading, and increase the chance that new work reuses the wrong key or outdated copy.
+
+For i18n work, cleanup is part of the implementation, not a nice-to-have follow-up.
+
 ## 11. Validation Workflow
 
 Use Bun as the package manager and command runner.

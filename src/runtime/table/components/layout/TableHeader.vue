@@ -3,6 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import { computed } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { TableLayout } from '../../types'
 import ColumnPanel from '../drawers/ColumnPanel.vue'
@@ -20,6 +21,7 @@ defineProps<{
 const searchQuery = defineModel<string>('searchQuery', { required: true })
 const tableLayout = defineModel<TableLayout>('tableLayout', { required: true })
 const internals = useTableInternals()
+const { t } = useUiToolsLocale()
 const refreshLoading = computed(
   () =>
     internals.queryContent.status.value.isFetching ||
@@ -74,8 +76,8 @@ function refreshData() {
           size="md"
           icon="i-lucide-refresh-cw"
           :loading="refreshLoading"
-          aria-label="Refresh data"
-          title="Refresh data"
+          :aria-label="t('table.header.refreshData')"
+          :title="t('table.header.refreshData')"
           @click="refreshData"
         />
 
@@ -85,8 +87,8 @@ function refreshData() {
             :variant="tableLayout === 'table' ? 'subtle' : 'outline'"
             size="md"
             icon="i-lucide-table-properties"
-            aria-label="Table view"
-            title="Table view"
+            :aria-label="t('table.header.tableView')"
+            :title="t('table.header.tableView')"
             @click="tableLayout = 'table'"
           />
           <UButton
@@ -94,8 +96,8 @@ function refreshData() {
             :variant="tableLayout === 'grid' ? 'subtle' : 'outline'"
             size="md"
             icon="i-lucide-layout-grid"
-            aria-label="Grid view"
-            title="Grid view"
+            :aria-label="t('table.header.gridView')"
+            :title="t('table.header.gridView')"
             @click="tableLayout = 'grid'"
           />
         </UFieldGroup>

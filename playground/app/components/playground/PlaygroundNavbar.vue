@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 const { currentPage, navigateToPage, pageIndex, pages } = usePlaygroundNavigation()
 
 defineShortcuts({
@@ -29,7 +30,7 @@ defineShortcuts({
           variant="outline"
           :disabled="pageIndex <= 0"
           class="ring-default"
-          aria-label="Previous playground page"
+          :aria-label="t('playground.nav.previousPage')"
           @click="navigateToPage(pageIndex - 1)"
         />
         <UButton
@@ -38,7 +39,7 @@ defineShortcuts({
           variant="outline"
           :disabled="pageIndex === pages.length - 1 || pageIndex === -1"
           class="ring-default"
-          aria-label="Next playground page"
+          :aria-label="t('playground.nav.nextPage')"
           @click="navigateToPage(pageIndex + 1)"
         />
       </UFieldGroup>

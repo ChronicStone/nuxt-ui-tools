@@ -34,6 +34,7 @@ import type {
   TableTextValue,
   TableUiFilterDefinition,
 } from '../../types'
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { getFilterLabelText, getFilterTextValue } from './common'
 
 const DEFAULT_FILTER_TRIGGER_ICONS = {
@@ -54,6 +55,7 @@ export function resolveTextFilterUi(
   definition: TableTextFilterDefinition,
   operator: TableTextFilterOperator | undefined,
 ): TableTextFilterUiResolved {
+  const { t } = useUiToolsLocale()
   const override = operator ? definition.editor?.operators?.[operator] : undefined
 
   return {
@@ -75,7 +77,7 @@ export function resolveTextFilterUi(
     },
     preview: resolvePreview({
       base: definition.preview,
-      empty: 'Select…',
+      empty: t('table.filters.preview.empty'),
       mode: 'summary',
     }),
   }
@@ -85,6 +87,7 @@ export function resolveOptionFilterUi(
   definition: TableOptionFilterDefinition<GenericObject, GenericObject, string>,
   operator: TableOptionFilterOperator | undefined,
 ): TableOptionFilterUiResolved {
+  const { t } = useUiToolsLocale()
   const override = operator ? definition.editor?.operators?.[operator] : undefined
   const selection = {
     ...definition.editor?.selection,
@@ -139,12 +142,12 @@ export function resolveOptionFilterUi(
       }),
       empty: getFilterTextValue({
         value: labels.empty,
-        fallback: 'No matching options.',
+        fallback: t('table.filters.options.empty'),
       }),
     },
     preview: resolveTagPreview({
       base: definition.preview,
-      empty: 'Select…',
+      empty: t('table.filters.preview.empty'),
       mode: 'auto',
       maxTags: 1,
     }),
@@ -155,6 +158,7 @@ export function resolveBooleanFilterUi(
   definition: TableBooleanFilterDefinition,
   operator: TableBooleanFilterOperator | undefined,
 ): TableBooleanFilterUiResolved {
+  const { t } = useUiToolsLocale()
   const override = operator ? definition.editor?.operators?.[operator] : undefined
   const labels = {
     ...definition.editor?.labels,
@@ -180,15 +184,15 @@ export function resolveBooleanFilterUi(
     labels: {
       true: getFilterTextValue({
         value: labels.true,
-        fallback: 'Yes',
+        fallback: t('table.filters.booleans.true'),
       }),
       false: getFilterTextValue({
         value: labels.false,
-        fallback: 'No',
+        fallback: t('table.filters.booleans.false'),
       }),
       empty: getFilterTextValue({
         value: labels.empty,
-        fallback: 'Select…',
+        fallback: t('table.filters.booleans.empty'),
       }),
     },
     icons: {
@@ -202,7 +206,7 @@ export function resolveBooleanFilterUi(
       base: definition.preview,
       empty: getFilterTextValue({
         value: labels.empty,
-        fallback: 'Select…',
+        fallback: t('table.filters.booleans.empty'),
       }),
       mode: 'summary',
       maxTags: 1,
@@ -214,6 +218,7 @@ export function resolveNumberFilterUi(
   definition: TableNumberFilterDefinition,
   operator: TableNumberFilterOperator | undefined,
 ): TableNumberFilterUiResolved {
+  const { t } = useUiToolsLocale()
   const scalarOverride = getNumberScalarOperatorOverride(definition.editor, operator)
   const rangeOverride = getNumberRangeOperatorOverride(definition.editor, operator)
   const scalar = mergeNumberScalarConfig(definition.editor?.scalar, scalarOverride)
@@ -230,7 +235,7 @@ export function resolveNumberFilterUi(
     formatOptions: definition.editor?.formatOptions,
     preview: resolveNumberPreview({
       base: definition.preview,
-      empty: 'Select…',
+      empty: t('table.filters.preview.empty'),
       mode: 'summary',
     }),
     scalar: {
@@ -251,7 +256,7 @@ export function resolveNumberFilterUi(
       },
       preview: resolveNumberPreview({
         base: definition.preview,
-        empty: 'Select…',
+        empty: t('table.filters.preview.empty'),
         mode: 'summary',
       }),
     },
@@ -278,7 +283,7 @@ export function resolveNumberFilterUi(
       },
       preview: resolveNumberPreview({
         base: definition.preview,
-        empty: 'Select…',
+        empty: t('table.filters.preview.empty'),
         mode: 'summary',
       }),
     },
@@ -289,6 +294,7 @@ export function resolveDateFilterUi(
   definition: TableDateFilterDefinition,
   operator: TableDateFilterOperator | undefined,
 ): TableDateFilterUiResolved {
+  const { t } = useUiToolsLocale()
   const scalarOverride = getDateScalarOperatorOverride(definition.editor, operator)
   const rangeOverride = getDateRangeOperatorOverride(definition.editor, operator)
   const scalar = mergeDateScalarConfig(definition.editor?.scalar, scalarOverride)
@@ -301,7 +307,7 @@ export function resolveDateFilterUi(
     actions: resolveActions({ common: definition.actions }),
     preview: resolveDatePreview({
       base: definition.preview,
-      empty: 'Select…',
+      empty: t('table.filters.preview.empty'),
       mode: 'summary',
     }),
     scalar: {
@@ -328,7 +334,7 @@ export function resolveDateFilterUi(
       },
       preview: resolveDatePreview({
         base: definition.preview,
-        empty: 'Select…',
+        empty: t('table.filters.preview.empty'),
         mode: 'summary',
       }),
     },
@@ -361,7 +367,7 @@ export function resolveDateFilterUi(
       },
       preview: resolveDatePreview({
         base: definition.preview,
-        empty: 'Select…',
+        empty: t('table.filters.preview.empty'),
         mode: 'summary',
       }),
     },
@@ -372,14 +378,16 @@ function resolveActions(options: {
   common?: { clear?: TableTextValue; apply?: TableTextValue }
   local?: { clear?: TableTextValue; apply?: TableTextValue }
 }): TableFilterUiActionLabelsResolved {
+  const { t } = useUiToolsLocale()
+
   return {
     clear: getFilterTextValue({
       value: options.local?.clear ?? options.common?.clear,
-      fallback: 'Clear',
+      fallback: t('table.filters.panel.clearAll'),
     }),
     apply: getFilterTextValue({
       value: options.local?.apply ?? options.common?.apply,
-      fallback: 'Apply',
+      fallback: t('table.filters.panel.apply'),
     }),
   }
 }

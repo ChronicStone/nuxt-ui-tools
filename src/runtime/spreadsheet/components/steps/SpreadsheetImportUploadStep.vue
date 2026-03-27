@@ -4,12 +4,14 @@ import UFileUpload from '@nuxt/ui/components/FileUpload.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref, watch } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { SpreadsheetComponentApi } from '../types'
 
 const props = defineProps<{
   spreadsheet: SpreadsheetComponentApi
   onDownloadTemplate?: () => void
 }>()
+const { t } = useUiToolsLocale()
 
 const file = ref<File | null>(null)
 function getSchemaAccept(schema: { importKey: string }): readonly string[] | undefined {
@@ -56,8 +58,8 @@ watch(file, (nextFile) => {
       variant="area"
       color="neutral"
       layout="list"
-      label="Drop your spreadsheet here"
-      description="or click to browse — .xlsx, .xls, .csv supported"
+      :label="t('spreadsheet.upload.dropzoneLabel')"
+      :description="t('spreadsheet.upload.dropzoneDescription')"
       class="min-h-[20rem]"
     >
       <template #leading>
@@ -70,7 +72,7 @@ watch(file, (nextFile) => {
       color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
-      title="Workbook parsing failed"
+      :title="t('spreadsheet.upload.parsingFailed')"
       :description="String(spreadsheet.sourceError.value)"
     />
 
@@ -85,10 +87,10 @@ watch(file, (nextFile) => {
             <UIcon name="i-lucide-file-spreadsheet" class="size-5 text-toned" />
             <div class="grid gap-0.5">
               <h3 class="text-sm font-medium text-highlighted">
-                Download template
+                {{ t('spreadsheet.upload.downloadTemplate') }}
               </h3>
               <p class="text-xs text-muted">
-                Get the expected format for assessment imports
+                {{ t('spreadsheet.upload.downloadTemplateDescription') }}
               </p>
             </div>
           </div>

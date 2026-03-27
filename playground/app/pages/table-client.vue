@@ -9,6 +9,7 @@ import DataList from '#ui-tools/table/components/DataList.vue'
 import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
 import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
 
+const { locale, t } = useI18n()
 const clientRows = createClientRows(5000)
 type DemoClientRow = (typeof clientRows)[number]
 
@@ -55,11 +56,11 @@ const clientSchema = defineTableSchema({
   filters: {
     search: {
       fields: ['fullName', 'email', 'department.company.name', 'skills'],
-      placeholder: 'Search local employees...',
+      placeholder: () => t('playground.tableClient.searchPlaceholder'),
     },
     ui: (filter) => [
       filter.text('fullName', {
-        label: 'Name',
+        label: () => t('playground.tableCommon.filters.name'),
         behavior: {
           operators: ['contains', 'is'],
         },
@@ -67,13 +68,13 @@ const clientSchema = defineTableSchema({
           location: 'tag-dynamic',
         },
         editor: {
-          placeholder: 'Search employees',
+          placeholder: () => t('playground.tableCommon.filters.searchEmployees'),
           leadingIcon: 'i-lucide-search',
           inputType: 'search',
         },
       }),
       filter.option('department.company.country', {
-        label: 'Country',
+        label: () => t('playground.tableCommon.filters.country'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
@@ -95,12 +96,12 @@ const clientSchema = defineTableSchema({
             mode: 'multiple',
           },
           labels: {
-            searchPlaceholder: 'Select countries',
+            searchPlaceholder: () => t('playground.tableCommon.filters.selectCountries'),
           },
         },
       }),
       filter.option('skills', {
-        label: 'Skill',
+        label: () => t('playground.tableCommon.filters.skill'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
@@ -110,7 +111,7 @@ const clientSchema = defineTableSchema({
         source: {
           facet: 'exclude-self',
           options: skillOptions.map((value) => ({
-            label: value,
+            label: () => translateSkill(value),
             value,
           })),
         },
@@ -121,7 +122,7 @@ const clientSchema = defineTableSchema({
         },
       }),
       filter.option('skillTaxonomy', {
-        label: 'Skill Tree',
+        label: () => t('playground.tableClient.filters.skillTree'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
@@ -146,12 +147,12 @@ const clientSchema = defineTableSchema({
             showCounts: true,
           },
           labels: {
-            searchPlaceholder: 'Select skill taxonomy',
+            searchPlaceholder: () => t('playground.tableClient.filters.selectSkillTaxonomy'),
           },
         },
       }),
       filter.option('department.name', {
-        label: 'Department',
+        label: () => t('playground.tableCommon.filters.department'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
@@ -161,7 +162,7 @@ const clientSchema = defineTableSchema({
         source: {
           facet: 'exclude-self',
           options: departmentOptions.map((value) => ({
-            label: value,
+            label: () => translateDepartment(value),
             value,
           })),
         },
@@ -173,7 +174,7 @@ const clientSchema = defineTableSchema({
         },
       }),
       filter.boolean('isActive', {
-        label: 'Active',
+        label: () => t('playground.tableCommon.filters.active'),
         display: {
           location: 'tag-dynamic',
         },
@@ -182,13 +183,13 @@ const clientSchema = defineTableSchema({
         },
         editor: {
           labels: {
-            true: 'Online',
-            false: 'Paused',
+            true: () => t('playground.tableCommon.status.online'),
+            false: () => t('playground.tableCommon.status.paused'),
           },
         },
       }),
       filter.number('salary', {
-        label: 'Salary',
+        label: () => t('playground.tableCommon.filters.salary'),
         behavior: {
           operators: ['is', 'gte', 'lte', 'between'],
         },
@@ -210,11 +211,11 @@ const clientSchema = defineTableSchema({
         preview: {
           formatter: (value) => formatCurrency(value),
           rangeFormatter: ({ from, to }) =>
-            `${from == null ? 'Min' : formatCurrency(from)} - ${to == null ? 'Max' : formatCurrency(to)}`,
+            `${from == null ? t('playground.tableCommon.range.min') : formatCurrency(from)} - ${to == null ? t('playground.tableCommon.range.max') : formatCurrency(to)}`,
         },
       }),
       filter.date('hiredAt', {
-        label: 'Hired At',
+        label: () => t('playground.tableCommon.filters.hiredAt'),
         behavior: {
           operators: ['is', 'before', 'after', 'between'],
         },
@@ -226,15 +227,15 @@ const clientSchema = defineTableSchema({
             display: 'calendar',
             presets: [
               {
-                label: 'Today',
+                label: () => t('playground.tableCommon.datePresets.today'),
                 value: ({ now }) => atStartOfDay(now),
               },
               {
-                label: 'Yesterday',
+                label: () => t('playground.tableCommon.datePresets.yesterday'),
                 value: ({ now }) => atStartOfDay(shiftDays(now, -1)),
               },
               {
-                label: 'Start of month',
+                label: () => t('playground.tableCommon.datePresets.startOfMonth'),
                 value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
               },
             ],
@@ -244,21 +245,21 @@ const clientSchema = defineTableSchema({
             presetsPlacement: 'side',
             presets: [
               {
-                label: 'Last 7 days',
+                label: () => t('playground.tableCommon.datePresets.last7Days'),
                 value: ({ now }) => ({
                   from: atStartOfDay(shiftDays(now, -6)),
                   to: atEndOfDay(now),
                 }),
               },
               {
-                label: 'Last 30 days',
+                label: () => t('playground.tableCommon.datePresets.last30Days'),
                 value: ({ now }) => ({
                   from: atStartOfDay(shiftDays(now, -29)),
                   to: atEndOfDay(now),
                 }),
               },
               {
-                label: 'This month',
+                label: () => t('playground.tableCommon.datePresets.thisMonth'),
                 value: ({ now }) => ({
                   from: new Date(now.getFullYear(), now.getMonth(), 1),
                   to: atEndOfDay(now),
@@ -273,7 +274,7 @@ const clientSchema = defineTableSchema({
           },
         },
         preview: {
-          label: 'Hired',
+          label: () => t('playground.tableClient.preview.hired'),
           formatter: (value) => formatDate(value.toISOString()),
           rangeFormatter: ({ from, to }) =>
             [from, to]
@@ -287,7 +288,7 @@ const clientSchema = defineTableSchema({
   rowActions: ({ row, tableApi, layout }) => [
     {
       key: 'copy-email',
-      label: 'Copy email',
+      label: () => t('playground.tableClient.actions.copyEmail'),
       icon: 'i-lucide-copy',
       action: async () => {
         await navigator.clipboard.writeText(row.email)
@@ -295,7 +296,9 @@ const clientSchema = defineTableSchema({
     },
     {
       key: row.isActive ? 'pause-employee' : 'resume-employee',
-      label: row.isActive ? 'Pause employee' : 'Resume employee',
+      label: () => row.isActive
+        ? t('playground.tableClient.actions.pauseEmployee')
+        : t('playground.tableClient.actions.resumeEmployee'),
       icon: row.isActive ? 'i-lucide-pause' : 'i-lucide-play',
       action: () => {
         tableApi.updateRow({
@@ -306,7 +309,7 @@ const clientSchema = defineTableSchema({
     },
     {
       key: 'promote-salary',
-      label: 'Give raise',
+      label: () => t('playground.tableClient.actions.giveRaise'),
       icon: 'i-lucide-badge-dollar-sign',
       disabled: ({ row: currentRow }) => currentRow.salary >= 200000,
       action: () => {
@@ -318,18 +321,18 @@ const clientSchema = defineTableSchema({
     },
     {
       key: 'more',
-      label: 'More actions',
+      label: () => t('playground.tableClient.actions.moreActions'),
       icon: 'i-lucide-ellipsis',
       children: [
         {
           key: 'refresh',
-          label: 'Refresh table',
+          label: () => t('playground.tableClient.actions.refreshTable'),
           icon: 'i-lucide-refresh-cw',
           action: () => tableApi.refresh(),
         },
         {
           key: 'grid-only',
-          label: 'Grid context only',
+          label: () => t('playground.tableClient.actions.gridContextOnly'),
           icon: 'i-lucide-layout-grid',
           condition: ({ layout: currentLayout }) => currentLayout === 'grid',
         },
@@ -337,7 +340,7 @@ const clientSchema = defineTableSchema({
     },
     {
       key: 'table-only',
-      label: 'Table context only',
+      label: () => t('playground.tableClient.actions.tableContextOnly'),
       icon: 'i-lucide-table-properties',
       condition: () => layout === 'table',
     },
@@ -349,7 +352,7 @@ const clientSchema = defineTableSchema({
     },
     columns: (column) => [
       column.field('fullName', {
-        label: 'Employee',
+        label: () => t('playground.tableCommon.columns.employee'),
         icon: 'i-lucide-user-round',
         minWidth: 260,
         pinned: 'left',
@@ -365,7 +368,7 @@ const clientSchema = defineTableSchema({
                 <div class="truncate font-medium text-highlighted">{employee.fullName}</div>
                 <div class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
                   <UIcon name="i-lucide-sparkles" class="size-3 shrink-0" />
-                  <span class="truncate">{employee.skills[0] ?? 'Generalist'}</span>
+                  <span class="truncate">{employee.skills[0] ? translateSkill(employee.skills[0]) : t('playground.tableCommon.generalist')}</span>
                 </div>
               </div>
             </div>
@@ -373,7 +376,7 @@ const clientSchema = defineTableSchema({
         },
       }),
       column.field('email', {
-        label: 'Email',
+        label: () => t('playground.tableCommon.columns.email'),
         icon: 'i-lucide-at-sign',
         minWidth: 280,
         render: ({ row }) => {
@@ -391,7 +394,7 @@ const clientSchema = defineTableSchema({
         },
       }),
       column.composite('skillsSummary', {
-        label: 'Skills',
+        label: () => t('playground.tableCommon.columns.skills'),
         icon: 'i-lucide-tags',
         sortableKey: 'fullName',
         minWidth: 230,
@@ -401,30 +404,33 @@ const clientSchema = defineTableSchema({
           return (
             <div class="flex flex-wrap gap-1.5">
               {employee.skills.slice(0, 3).map((skill) => (
-                <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={skill} />
+                <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={translateSkill(skill)} />
               ))}
             </div>
           )
         },
       }),
       column.field('department.company.country', {
-        label: 'Country',
+        label: () => t('playground.tableCommon.columns.country'),
         icon: 'i-lucide-globe',
         minWidth: 170,
         render: ({ value }) => (
           <div class="flex items-center gap-2">
             <span class="text-base leading-none">{getCountryFlag(String(value ?? ''))}</span>
-            <span class="truncate text-highlighted">{String(value ?? 'Unknown')}</span>
+            <span class="truncate text-highlighted">{translateCountry(String(value ?? 'Unknown'))}</span>
           </div>
         ),
       }),
       column.field('department.name', {
-        label: 'Department',
+        label: () => t('playground.tableCommon.columns.department'),
         icon: 'i-lucide-building-2',
         minWidth: 180,
+        render: ({ value }) => (
+          <span class="truncate text-highlighted">{translateDepartment(String(value ?? ''))}</span>
+        ),
       }),
       column.field('isActive', {
-        label: 'Active',
+        label: () => t('playground.tableCommon.columns.active'),
         icon: 'i-lucide-badge-check',
         minWidth: 120,
         maxWidth: 150,
@@ -433,12 +439,12 @@ const clientSchema = defineTableSchema({
             color={value ? 'success' : 'neutral'}
             variant={value ? 'soft' : 'subtle'}
             size="sm"
-            label={value ? 'Online' : 'Paused'}
+            label={value ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
           />
         ),
       }),
       column.field('salary', {
-        label: 'Salary',
+        label: () => t('playground.tableCommon.columns.salary'),
         icon: 'i-lucide-wallet',
         align: 'right',
         labelAlign: 'right',
@@ -448,7 +454,7 @@ const clientSchema = defineTableSchema({
         ),
       }),
       column.field('hiredAt', {
-        label: 'Hired At',
+        label: () => t('playground.tableCommon.columns.hiredAt'),
         icon: 'i-lucide-calendar-days',
         minWidth: 170,
         render: ({ value }) => (
@@ -493,7 +499,7 @@ const clientSchema = defineTableSchema({
                     color={employee.isActive ? 'success' : 'neutral'}
                     variant={employee.isActive ? 'soft' : 'subtle'}
                     size="sm"
-                    label={employee.isActive ? 'Online' : 'Paused'}
+                    label={employee.isActive ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
                   />
                   <UiRowActions content={{ align: 'end', side: 'bottom', sideOffset: 8 }} modal={false}>
                     <UButton
@@ -511,14 +517,14 @@ const clientSchema = defineTableSchema({
               <>
                 <div class="grid gap-3 sm:grid-cols-2">
                   <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                    <div class="text-xs text-muted">Company</div>
+                    <div class="text-xs text-muted">{t('playground.tableCommon.cards.company')}</div>
                     <div class="truncate text-sm font-medium text-highlighted">
                       {employee.department.company.name}
                     </div>
                   </div>
 
                   <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                    <div class="text-xs text-muted">Salary</div>
+                    <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
                     <div class="text-sm font-medium text-highlighted">
                       {formatCurrency(employee.salary)}
                     </div>
@@ -527,7 +533,7 @@ const clientSchema = defineTableSchema({
 
                 <div class="flex flex-wrap gap-2">
                   {employee.skills.slice(0, 4).map((skill) => (
-                    <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={skill} />
+                    <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={translateSkill(skill)} />
                   ))}
                 </div>
               </>
@@ -538,7 +544,7 @@ const clientSchema = defineTableSchema({
                   <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none">
                     {getCountryFlag(employee.department.company.country)}
                   </span>
-                  <span class="truncate">{employee.department.company.country}</span>
+                  <span class="truncate">{translateCountry(employee.department.company.country)}</span>
                 </div>
                 <div class="shrink-0">{formatDate(employee.hiredAt)}</div>
               </div>
@@ -707,7 +713,7 @@ function createClientRows(count: number) {
 }
 
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
@@ -715,7 +721,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -756,11 +762,11 @@ function buildCountryTreeOptions(rows: DemoClientRow[]) {
   return Object.entries(countriesByRegion)
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([region, countries]) => ({
-      label: region,
+      label: () => translateRegion(region),
       children: [...countries]
         .sort((left, right) => left.localeCompare(right))
         .map((country) => ({
-          label: country,
+          label: () => translateCountry(country),
           value: country,
         })),
     })) satisfies ReadonlyArray<TableFilterOptionEntry<string>>
@@ -769,107 +775,107 @@ function buildCountryTreeOptions(rows: DemoClientRow[]) {
 function buildSkillTreeOptions() {
   return [
     {
-      label: 'Engineering',
+      label: () => translateCategory('Engineering'),
       value: 'cat:engineering',
       children: [
         {
-          label: 'Application',
+          label: () => translateCategory('Application'),
           value: 'cat:application',
           children: [
-            { label: 'GraphQL', value: 'skill:graphql' },
-            { label: 'TypeScript', value: 'skill:typescript' },
+            { label: () => translateSkill('GraphQL'), value: 'skill:graphql' },
+            { label: () => translateSkill('TypeScript'), value: 'skill:typescript' },
           ],
         },
         {
-          label: 'Infrastructure',
+          label: () => translateCategory('Infrastructure'),
           value: 'cat:infrastructure',
           children: [
-            { label: 'Kubernetes', value: 'skill:kubernetes' },
-            { label: 'Terraform', value: 'skill:terraform' },
-            { label: 'Distributed Systems', value: 'skill:distributed-systems' },
+            { label: () => translateSkill('Kubernetes'), value: 'skill:kubernetes' },
+            { label: () => translateSkill('Terraform'), value: 'skill:terraform' },
+            { label: () => translateSkill('Distributed Systems'), value: 'skill:distributed-systems' },
           ],
         },
         {
-          label: 'Reliability',
+          label: () => translateCategory('Reliability'),
           value: 'cat:reliability',
           children: [
-            { label: 'Incident Response', value: 'skill:incident-response' },
-            { label: 'Observability', value: 'skill:observability' },
+            { label: () => translateSkill('Incident Response'), value: 'skill:incident-response' },
+            { label: () => translateSkill('Observability'), value: 'skill:observability' },
           ],
         },
         {
-          label: 'Security',
+          label: () => translateCategory('Security'),
           value: 'cat:security',
           children: [
-            { label: 'Security', value: 'skill:security' },
+            { label: () => translateSkill('Security'), value: 'skill:security' },
           ],
         },
         {
-          label: 'Services',
+          label: () => translateCategory('Services'),
           value: 'cat:services',
           children: [
-            { label: 'Go', value: 'skill:go' },
-            { label: 'Rust', value: 'skill:rust' },
+            { label: () => translateSkill('Go'), value: 'skill:go' },
+            { label: () => translateSkill('Rust'), value: 'skill:rust' },
           ],
         },
       ],
     },
     {
-      label: 'Data',
+      label: () => translateCategory('Data'),
       value: 'cat:data',
       children: [
         {
-          label: 'Analysis',
+          label: () => translateCategory('Analysis'),
           value: 'cat:analysis',
           children: [
-            { label: 'Python', value: 'skill:python' },
+            { label: () => translateSkill('Python'), value: 'skill:python' },
           ],
         },
         {
-          label: 'Intelligence',
+          label: () => translateCategory('Intelligence'),
           value: 'cat:intelligence',
           children: [
-            { label: 'Machine Learning', value: 'skill:machine-learning' },
+            { label: () => translateSkill('Machine Learning'), value: 'skill:machine-learning' },
           ],
         },
         {
-          label: 'Platform',
+          label: () => translateCategory('Platform'),
           value: 'cat:platform',
           children: [
-            { label: 'PostgreSQL', value: 'skill:postgresql' },
+            { label: () => translateSkill('PostgreSQL'), value: 'skill:postgresql' },
           ],
         },
       ],
     },
     {
-      label: 'Design',
+      label: () => translateCategory('Design'),
       value: 'cat:design',
       children: [
         {
-          label: 'Research',
+          label: () => translateCategory('Research'),
           value: 'cat:research',
           children: [
-            { label: 'UX Research', value: 'skill:ux-research' },
+            { label: () => translateSkill('UX Research'), value: 'skill:ux-research' },
           ],
         },
         {
-          label: 'Systems',
+          label: () => translateCategory('Systems'),
           value: 'cat:systems',
           children: [
-            { label: 'Design Systems', value: 'skill:design-systems' },
+            { label: () => translateSkill('Design Systems'), value: 'skill:design-systems' },
           ],
         },
       ],
     },
     {
-      label: 'Product',
+      label: () => translateCategory('Product'),
       value: 'cat:product',
       children: [
         {
-          label: 'Planning',
+          label: () => translateCategory('Planning'),
           value: 'cat:planning',
           children: [
-            { label: 'Product Strategy', value: 'skill:product-strategy' },
+            { label: () => translateSkill('Product Strategy'), value: 'skill:product-strategy' },
           ],
         },
       ],
@@ -887,6 +893,99 @@ function getCountryFlag(country: string) {
   }
 
   return flags[country] ?? '🌍'
+}
+
+function translateCountry(value: string) {
+  const keyByCountry: Record<string, string> = {
+    France: 'france',
+    Germany: 'germany',
+    Japan: 'japan',
+    'United Kingdom': 'unitedKingdom',
+    'United States': 'unitedStates',
+    Canada: 'canada',
+    Singapore: 'singapore',
+    Spain: 'spain',
+    Unknown: 'unknown',
+  }
+
+  const key = keyByCountry[value]
+  return key ? t(`playground.tableCommon.countries.${key}`) : value
+}
+
+function translateRegion(value: string) {
+  const keyByRegion: Record<string, string> = {
+    Europe: 'europe',
+    'North America': 'northAmerica',
+    Asia: 'asia',
+  }
+
+  const key = keyByRegion[value]
+  return key ? t(`playground.tableCommon.regions.${key}`) : value
+}
+
+function translateDepartment(value: string) {
+  const keyByDepartment: Record<string, string> = {
+    Engineering: 'engineering',
+    Platform: 'platform',
+    Operations: 'operations',
+    Finance: 'finance',
+    Product: 'product',
+    Design: 'design',
+    Security: 'security',
+    Data: 'data',
+    Support: 'support',
+    Growth: 'growth',
+  }
+
+  const key = keyByDepartment[value]
+  return key ? t(`playground.tableCommon.departments.${key}`) : value
+}
+
+function translateCategory(value: string) {
+  const keyByCategory: Record<string, string> = {
+    Engineering: 'engineering',
+    Application: 'application',
+    Infrastructure: 'infrastructure',
+    Reliability: 'reliability',
+    Security: 'security',
+    Services: 'services',
+    Data: 'data',
+    Analysis: 'analysis',
+    Intelligence: 'intelligence',
+    Platform: 'platform',
+    Design: 'design',
+    Research: 'research',
+    Systems: 'systems',
+    Product: 'product',
+    Planning: 'planning',
+  }
+
+  const key = keyByCategory[value]
+  return key ? t(`playground.tableCommon.categories.${key}`) : value
+}
+
+function translateSkill(value: string) {
+  const keyBySkill: Record<string, string> = {
+    TypeScript: 'typescript',
+    Go: 'go',
+    Kubernetes: 'kubernetes',
+    Security: 'security',
+    'Distributed Systems': 'distributedSystems',
+    Rust: 'rust',
+    Python: 'python',
+    GraphQL: 'graphql',
+    PostgreSQL: 'postgresql',
+    'Machine Learning': 'machineLearning',
+    'Design Systems': 'designSystems',
+    Observability: 'observability',
+    Terraform: 'terraform',
+    'Incident Response': 'incidentResponse',
+    'Product Strategy': 'productStrategy',
+    'UX Research': 'uxResearch',
+  }
+
+  const key = keyBySkill[value]
+  return key ? t(`playground.tableCommon.skills.${key}`) : value
 }
 </script>
 

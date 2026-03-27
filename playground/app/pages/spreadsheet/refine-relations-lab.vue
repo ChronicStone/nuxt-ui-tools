@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 function createRefineRelationsSchema() {
   return defineSpreadsheetSchema({
     importKey: 'playground.spreadsheet.refine-relations-lab',
@@ -174,8 +176,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Refine Relations Lab"
-      description="Small deterministic workbook focused on refine() relations with explicit cross-field messages for review."
+      :title="t('playground.spreadsheetPages.refineRelations.title')"
+      :description="t('playground.spreadsheetPages.refineRelations.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

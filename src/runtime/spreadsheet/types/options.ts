@@ -1,7 +1,9 @@
+import type { LazyTextValue } from '#ui-tools/shared/types/utils'
+
 export type SpreadsheetPrimitiveOption = string | number | boolean
 
 export interface SpreadsheetOptionEntry<TValue = unknown> {
-  label: string
+  label: LazyTextValue
   value: TValue
 }
 

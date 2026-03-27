@@ -4,14 +4,15 @@ import type {
   SpreadsheetContextDataFromItems,
   SpreadsheetContextItem,
   SpreadsheetFileDefinition,
-  SpreadsheetHeaderDefinition,
-  SpreadsheetMatchingDefinition,
+  SpreadsheetHeaderStepDefinition,
+  SpreadsheetMatchingStepDefinition,
   SpreadsheetReferenceBuilder,
   SpreadsheetSchemaWithRefine,
   SpreadsheetResolvedColumns,
-  SpreadsheetReviewDefinition,
+  SpreadsheetReviewStepDefinition,
   SpreadsheetRowData,
-  SpreadsheetSheetDefinition,
+  SpreadsheetSheetStepDefinition,
+  SpreadsheetStepsDefinition,
 } from '../types'
 
 type SpreadsheetResolvedColumnsInput<TColumns> = [TColumns] extends [SpreadsheetColumnsDefinition<any>]
@@ -40,10 +41,11 @@ type SpreadsheetSchemaDefinition<
 > = {
   importKey: TImportKey
   file?: SpreadsheetFileDefinition
-  sheet?: SpreadsheetSheetDefinition
-  header?: SpreadsheetHeaderDefinition
-  matching?: SpreadsheetMatchingDefinition
-  review?: SpreadsheetReviewDefinition
+  sheet?: SpreadsheetSheetStepDefinition
+  header?: SpreadsheetHeaderStepDefinition
+  matching?: SpreadsheetMatchingStepDefinition
+  steps?: SpreadsheetStepsDefinition
+  review?: SpreadsheetReviewStepDefinition
   context?: TContextItems
   columns?: TColumns
   references?: TReferences

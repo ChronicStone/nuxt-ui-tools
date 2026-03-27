@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const center = {
   id: 'tc_lyon',
   name: 'Lyon Import Lab',
@@ -236,8 +238,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Multi Value Lab"
-      description="Focused validation route for built-in static multiple columns, including text, number, option, enum, and boolean parsing."
+      :title="t('playground.spreadsheetPages.multiValue.title')"
+      :description="t('playground.spreadsheetPages.multiValue.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

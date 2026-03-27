@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 defineProps<{
   title: string
   description?: string
   closable?: boolean
 }>()
+
+const { t } = useUiToolsLocale()
 
 const emit = defineEmits<{
   close: []
@@ -30,7 +34,8 @@ const emit = defineEmits<{
       size="sm"
       square
       icon="i-lucide-x"
-      aria-label="Close import"
+      :aria-label="t('spreadsheet.common.closeImport')"
+      :title="t('spreadsheet.common.closeImport')"
       @click="emit('close')"
     />
   </div>

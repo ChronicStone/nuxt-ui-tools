@@ -1,44 +1,78 @@
 import { computed, ref, watch } from 'vue'
 
+import { resolveTextValue } from '#ui-tools/shared/utils/render'
 import type { SpreadsheetStepItem } from '../components/types'
+import type { SpreadsheetStepsDefinition } from '../types'
 
 export function useSpreadsheetView(params: {
   hasReferences: () => boolean
+  stepConfig?: () => SpreadsheetStepsDefinition | undefined
+  t: (path: string, option?: Record<string, string | number>) => string
 }) {
   const activeStep = ref<string>('upload')
   const steps = computed<SpreadsheetStepItem[]>(() => [
     {
       value: 'upload',
-      title: 'Upload file',
-      description: 'Drag and drop or select an Excel / CSV file to begin the import process.',
+      title: resolveTextValue(
+        params.stepConfig?.()?.upload?.title,
+        params.t('spreadsheet.steps.upload.title'),
+      ),
+      description: resolveTextValue(
+        params.stepConfig?.()?.upload?.description,
+        params.t('spreadsheet.steps.upload.description'),
+      ),
       icon: 'i-lucide-upload',
     },
     {
       value: 'structure',
-      title: 'Structure',
-      description: 'Select the correct sheet and verify the header row detected by the system.',
+      title: resolveTextValue(
+        params.stepConfig?.()?.structure?.title,
+        params.t('spreadsheet.steps.structure.title'),
+      ),
+      description: resolveTextValue(
+        params.stepConfig?.()?.structure?.description,
+        params.t('spreadsheet.steps.structure.description'),
+      ),
       icon: 'i-lucide-table-properties',
     },
     {
       value: 'matching',
-      title: 'Column matching',
-      description: 'Review how file columns map to system fields. Fix any missing or ambiguous matches.',
+      title: resolveTextValue(
+        params.stepConfig?.()?.matching?.title,
+        params.t('spreadsheet.steps.matching.title'),
+      ),
+      description: resolveTextValue(
+        params.stepConfig?.()?.matching?.description,
+        params.t('spreadsheet.steps.matching.description'),
+      ),
       icon: 'i-lucide-columns-3',
     },
     ...(
       params.hasReferences()
         ? [{
             value: 'references',
-            title: 'Reconciliation',
-            description: 'Match imported values to internal products. Resolve once, apply to all matching rows.',
+            title: resolveTextValue(
+              params.stepConfig?.()?.references?.title,
+              params.t('spreadsheet.steps.references.title'),
+            ),
+            description: resolveTextValue(
+              params.stepConfig?.()?.references?.description,
+              params.t('spreadsheet.steps.references.description'),
+            ),
             icon: 'i-lucide-link-2',
           }]
         : []
     ),
     {
       value: 'review',
-      title: 'Review & import',
-      description: 'Review rows, discard overflow, and confirm the final import payload.',
+      title: resolveTextValue(
+        params.stepConfig?.()?.review?.title,
+        params.t('spreadsheet.steps.review.title'),
+      ),
+      description: resolveTextValue(
+        params.stepConfig?.()?.review?.description,
+        params.t('spreadsheet.steps.review.description'),
+      ),
       icon: 'i-lucide-clipboard-check',
     },
   ])

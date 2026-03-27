@@ -12,6 +12,8 @@ defineProps<{
   tags: readonly string[]
   to: string
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -25,7 +27,7 @@ defineProps<{
       <div class="grid gap-2">
         <div class="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
           <span class="size-2 rounded-full bg-primary/70" />
-          Spreadsheet variant
+          {{ t('playground.spreadsheetIndex.variantLabel') }}
         </div>
         <div class="flex items-center gap-3">
           <div class="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/8 text-primary">
@@ -62,14 +64,14 @@ defineProps<{
 
     <div class="flex items-center justify-between gap-3 border-t border-default/70 pt-4">
       <span class="font-mono text-xs text-muted">
-        Fullscreen scenario
+        {{ t('playground.spreadsheetIndex.fullscreenScenario') }}
       </span>
       <UButton
         :to="to"
         color="primary"
         variant="solid"
         trailing-icon="i-lucide-arrow-right"
-        label="Open variant"
+        :label="t('playground.spreadsheetIndex.openVariant')"
       />
     </div>
   </UCard>

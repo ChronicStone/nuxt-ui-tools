@@ -13,6 +13,13 @@ function getPublicComponents(runtimeDir: string, options: {
   const prefix = options.prefix ?? 'Ui'
 
   return [
+    // I18n
+    {
+      name: `${prefix}ToolsProvider`,
+      filePath: `${runtimeDir}/i18n/provider.vue`,
+      global: options.global,
+    },
+
     // Table
     {
       name: `${prefix}DataList`,

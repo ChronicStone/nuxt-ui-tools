@@ -175,6 +175,11 @@ export function normalizeSpreadsheetSchema<
   TSchema extends {
     importKey: string
     file?: unknown
+    sheet?: unknown
+    header?: unknown
+    matching?: unknown
+    review?: unknown
+    steps?: unknown
     context?: readonly SpreadsheetContextItem<string, unknown>[]
     columns?: SpreadsheetColumnsDefinition<any>
     references?: unknown
@@ -186,9 +191,15 @@ export function normalizeSpreadsheetSchema<
   const resolvedReferences = resolveSpreadsheetReferences(schema.references)
   const staticColumns = resolvedColumns?.static ?? []
   const references = Array.isArray(resolvedReferences) ? resolvedReferences : []
+  const steps = normalizeSpreadsheetSteps(schema)
 
   return {
     ...schema,
+    sheet: steps.structure?.sheet,
+    header: steps.structure?.header,
+    matching: steps.matching,
+    review: steps.review,
+    steps,
     context: schema.context ?? [],
     columns: {
       static: staticColumns,
@@ -205,4 +216,47 @@ export function normalizeSpreadsheetSchema<
 }
 export type {
   NormalizeSpreadsheetSchema,
+}
+
+function normalizeSpreadsheetSteps(schema: {
+  sheet?: unknown
+  header?: unknown
+  matching?: unknown
+  review?: unknown
+  steps?: unknown
+}) {
+  const steps = toRecord(schema.steps)
+  const structure = toRecord(steps.structure)
+
+  return {
+    upload: toRecord(steps.upload),
+    structure: {
+      ...structure,
+      sheet: {
+        ...toRecord(schema.sheet),
+        ...toRecord(structure.sheet),
+      },
+      header: {
+        ...toRecord(schema.header),
+        ...toRecord(structure.header),
+      },
+    },
+    matching: {
+      ...toRecord(schema.matching),
+      ...toRecord(steps.matching),
+    },
+    references: toRecord(steps.references),
+    review: {
+      ...toRecord(schema.review),
+      ...toRecord(steps.review),
+    },
+  }
+}
+
+function toRecord(value: unknown) {
+  return isRecord(value) ? value : {}
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object'
 }

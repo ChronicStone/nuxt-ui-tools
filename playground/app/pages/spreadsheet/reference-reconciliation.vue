@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const center = {
   id: 'tc_newyork',
   country: 'United States',
@@ -206,8 +208,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Reference Reconciliation"
-      description="This scenario keeps one unresolved product label visible so the reconciliation step stays active."
+      :title="t('playground.spreadsheetPages.referenceReconciliation.title')"
+      :description="t('playground.spreadsheetPages.referenceReconciliation.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

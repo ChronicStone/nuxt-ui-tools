@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { SpreadsheetStepItem } from '../types'
 
 defineProps<{
@@ -8,27 +9,29 @@ defineProps<{
   description?: string
   items: SpreadsheetStepItem[]
 }>()
+
+const { t } = useUiToolsLocale()
 </script>
 
 <template>
-  <aside class="flex h-full flex-col gap-8 border-b border-default/70 bg-default px-6 py-8 lg:border-b-0 lg:border-r">
-    <div class="grid gap-1">
+  <aside class="flex h-full flex-col gap-8 border-b border-default/70 bg-default px-7 py-8 lg:border-b-0 lg:border-r">
+    <div class="grid gap-2">
       <h2 class="text-base font-semibold tracking-[-0.04em] text-highlighted">
         {{ title }}
       </h2>
-      <p v-if="description" class="font-mono text-[11px] text-muted">
+      <p v-if="description" class="max-w-[30ch] text-sm leading-6 text-toned">
         {{ description }}
       </p>
     </div>
 
     <div class="grid gap-3">
       <p class="px-3 text-[11px] uppercase tracking-[0.18em] text-muted">
-        Steps
+        {{ t('spreadsheet.common.steps') }}
       </p>
 
       <div v-for="(item, index) in items" :key="item.value" :class="item.disabled ? 'opacity-50' : ''">
         <div
-          class="flex w-full items-center gap-4 px-4 py-2.5 text-left"
+          class="flex w-full items-start gap-4 px-4 py-3 text-left"
           :class="item.status === 'active'
             ? 'bg-elevated/80 text-default'
             : item.status === 'pending'
@@ -48,7 +51,7 @@ defineProps<{
           </div>
 
           <span
-            class="text-[13px]"
+            class="min-w-0 text-sm leading-6"
             :class="item.status === 'active'
               ? 'font-medium text-highlighted'
               : item.status === 'pending'

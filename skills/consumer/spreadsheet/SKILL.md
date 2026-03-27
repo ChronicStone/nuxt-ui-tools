@@ -43,6 +43,52 @@ Behavior:
 - `@close` fires when that button is clicked
 - the component does not hide itself automatically; the parent owns open/closed state
 
+## I18n-Friendly Spreadsheet Schema Text
+
+Schema-owned spreadsheet text should be passed as lazy translation values when it comes from app i18n.
+
+Use this pattern for:
+
+- step titles and descriptions
+- column labels
+- option labels
+- reference option labels
+
+Example:
+
+```ts
+const { t } = useI18n()
+
+const schema = defineSpreadsheetSchema({
+  importKey: 'assessment.results',
+  steps: {
+    matching: {
+      title: () => t('spreadsheet.steps.matching.title'),
+      description: () => t('spreadsheet.steps.matching.description'),
+    },
+  },
+  columns: {
+    static: (column) => [
+      column.text('candidateName', {
+        label: () => t('spreadsheet.columns.candidateName'),
+      }),
+      column.option('productId', {
+        label: () => t('spreadsheet.columns.product'),
+        options: ({ context }) =>
+          context.products.map(product => ({
+            label: () => t(`products.${product.id}.name`),
+            value: product.id,
+          })),
+      }),
+    ],
+  },
+})
+```
+
+Prefer `() => t('...')` on schema text surfaces over rebuilding the entire schema in a reactive wrapper.
+
+Package-owned UI text inside `SpreadsheetImport` itself comes from the ui-tools locale layer. Consumer schema text should stay in the consumer schema.
+
 ## Read This Skill With
 
 - `skills/consumer/package/SKILL.md`

@@ -29,6 +29,14 @@ export function setupImports(runtimeDir: string) {
       { name: 'useQueryStates', from: 'query-state' },
     ]),
 
+    // I18n
+    ...withRuntime(runtimeDir, [
+      { name: 'defineUiToolsLocale', from: 'i18n' },
+      { name: 'extendUiToolsLocale', from: 'i18n' },
+      { name: 'provideUiToolsLocale', from: 'i18n' },
+      { name: 'useUiToolsLocale', from: 'i18n' },
+    ]),
+
     // Shared responsive helpers
     ...withRuntime(runtimeDir, [
       { name: 'getResponsiveValue', from: 'shared' },

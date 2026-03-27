@@ -11,6 +11,8 @@ definePageMeta({
   layout: 'empty',
 })
 
+const { t } = useI18n()
+
 const center = {
   id: 'tc_madrid',
   country: 'Spain',
@@ -303,8 +305,8 @@ onMounted(() => {
   <section class="h-full overflow-hidden bg-default">
     <SpreadsheetImport
       :spreadsheet="spreadsheet"
-      title="Large Validation Lab"
-      description="Seeded 250-row workbook with exactly 20% invalid rows across missing values, score issues, batch naming violations, and center mismatches."
+      :title="t('playground.spreadsheetPages.largeValidation.title')"
+      :description="t('playground.spreadsheetPages.largeValidation.description')"
       closable
       mode="fullscreen"
       @close="navigateTo('/spreadsheet')"

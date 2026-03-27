@@ -3,6 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UTable from '@nuxt/ui/components/Table.vue'
 import { computed } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useSpreadsheetReview } from '../../composables/use-spreadsheet-review'
 import type { SpreadsheetRowIssue } from '../../types'
 import type { SpreadsheetComponentApi } from '../types'
@@ -14,6 +15,7 @@ import SpreadsheetReviewStats from './review/SpreadsheetReviewStats.vue'
 const props = defineProps<{
   spreadsheet: SpreadsheetComponentApi
 }>()
+const { t } = useUiToolsLocale()
 
 function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
   if (
@@ -46,7 +48,10 @@ const tableHasRows = computed(() => review.visibleRows.value.length > 0)
 
 const summaryLimitText = computed(() => {
   if (!Number.isFinite(maxRecords.value)) return undefined
-  return `Import limit: ${Math.min(props.spreadsheet.resolvedRows.value.length, maxRecords.value)} of ${props.spreadsheet.resolvedRows.value.length}`
+  return t('spreadsheet.steps.review.importLimit', {
+    importable: Math.min(props.spreadsheet.resolvedRows.value.length, maxRecords.value),
+    total: props.spreadsheet.resolvedRows.value.length,
+  })
 })
 </script>
 
@@ -125,14 +130,14 @@ const summaryLimitText = computed(() => {
             class="flex min-h-10 flex-wrap items-center gap-2 border-b border-default/70 bg-elevated/35 px-4 py-1.5"
           >
             <span class="font-mono text-[11px] text-muted">
-              {{ review.selectedRowIndexes.value.length }} selected
+              {{ t('spreadsheet.steps.review.selected', { count: review.selectedRowIndexes.value.length }) }}
             </span>
             <UButton
               color="error"
               variant="outline"
               size="xs"
               icon="i-lucide-trash-2"
-              label="Discard"
+              :label="t('spreadsheet.steps.review.discard')"
               :disabled="!review.canDiscardSelection.value"
               @click="review.discardSelectedRows"
             />
@@ -141,7 +146,7 @@ const summaryLimitText = computed(() => {
               variant="outline"
               size="xs"
               icon="i-lucide-undo-2"
-              label="Restore"
+              :label="t('spreadsheet.steps.review.restore')"
               :disabled="!review.canRestoreSelection.value"
               @click="review.restoreSelectedRows"
             />

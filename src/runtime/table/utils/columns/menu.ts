@@ -1,4 +1,5 @@
 import type { TableSchemaView } from '../../types'
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { findSchemaColumn } from './schema'
 
 export function createColumnMenuItems(options: {
@@ -11,6 +12,7 @@ export function createColumnMenuItems(options: {
   setVisibility: (options: { columnId: string; visible: boolean }) => void
   setSorting: (options: { key: string; dir: 'asc' | 'desc' } | null) => void
 }) {
+  const { t } = useUiToolsLocale()
   const column = options.orderedColumns.find((entry) => entry.id === options.columnId)
   const schemaColumn = findSchemaColumn({ schema: options.schema, columnId: options.columnId })
   const sortState = options.getSortState({ columnId: options.columnId })
@@ -20,7 +22,7 @@ export function createColumnMenuItems(options: {
     column?.sortableKey
       ? [
           {
-            label: 'Sort asc',
+            label: t('table.columnsMenu.sortAsc'),
             icon: sortState === 'asc' ? 'i-lucide-check' : 'i-lucide-chevron-up',
             color: 'neutral',
             onSelect: () =>
@@ -30,7 +32,7 @@ export function createColumnMenuItems(options: {
               }),
           },
           {
-            label: 'Sort desc',
+            label: t('table.columnsMenu.sortDesc'),
             icon: sortState === 'desc' ? 'i-lucide-check' : 'i-lucide-chevron-down',
             color: 'neutral',
             onSelect: () =>
@@ -42,7 +44,7 @@ export function createColumnMenuItems(options: {
           ...(sortState
             ? [
                 {
-                  label: 'Clear sort',
+                  label: t('table.columnsMenu.clearSort'),
                   icon: 'i-lucide-x',
                   color: 'neutral',
                   onSelect: () => options.setSorting(null),
@@ -53,13 +55,13 @@ export function createColumnMenuItems(options: {
       : [],
     [
       {
-        label: 'Pin to left',
+        label: t('table.columnsMenu.pinToLeft'),
         icon: pinnedState === 'left' ? 'i-lucide-check' : 'i-lucide-pin',
         color: 'neutral',
         onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'left' }),
       },
       {
-        label: 'Pin to right',
+        label: t('table.columnsMenu.pinToRight'),
         icon: pinnedState === 'right' ? 'i-lucide-check' : 'i-lucide-pin',
         color: 'neutral',
         onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'right' }),
@@ -67,7 +69,7 @@ export function createColumnMenuItems(options: {
       ...(pinnedState
         ? [
             {
-              label: 'Unpin column',
+              label: t('table.columnsMenu.unpinColumn'),
               icon: 'i-lucide-pin-off',
               onSelect: () => options.setPinning({ columnId: options.columnId }),
             },
@@ -78,7 +80,7 @@ export function createColumnMenuItems(options: {
       ? []
       : [
           {
-            label: 'Hide column',
+            label: t('table.columnsMenu.hideColumn'),
             icon: 'i-lucide-eye-off',
             onSelect: () => options.setVisibility({ columnId: options.columnId, visible: false }),
           },

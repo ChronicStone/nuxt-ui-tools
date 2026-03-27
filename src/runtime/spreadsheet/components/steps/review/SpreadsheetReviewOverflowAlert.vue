@@ -2,11 +2,14 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 defineProps<{
   reviewRowsLength: number
   maxRecords: number
   overflowCount: number
 }>()
+const { t } = useUiToolsLocale()
 
 const emit = defineEmits<{
   autoTrim: []
@@ -19,10 +22,10 @@ const emit = defineEmits<{
       <UIcon name="i-lucide-triangle-alert" class="mt-0.5 size-4 shrink-0 text-warning" />
       <div class="grid gap-1">
         <p class="text-[13px] font-semibold text-highlighted">
-          Import limit exceeded — {{ reviewRowsLength }} rows detected, max is {{ maxRecords }}
+          {{ t('spreadsheet.steps.review.overflowTitle', { total: reviewRowsLength, max: maxRecords }) }}
         </p>
         <p class="text-xs text-toned">
-          Select rows to discard below, or auto-trim the last {{ overflowCount }} rows. Discarded rows can be exported.
+          {{ t('spreadsheet.steps.review.overflowDescription', { count: overflowCount }) }}
         </p>
       </div>
     </div>
@@ -31,7 +34,7 @@ const emit = defineEmits<{
       color="warning"
       variant="outline"
       size="sm"
-      label="Auto-trim"
+      :label="t('spreadsheet.steps.review.autoTrim')"
       @click="emit('autoTrim')"
     />
   </div>

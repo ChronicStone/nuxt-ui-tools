@@ -3,10 +3,12 @@ import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import USlideover from '@nuxt/ui/components/Slideover.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import { resolveFilterPanelComponent } from './registry'
 
 const internals = useTableInternals()
+const { t } = useUiToolsLocale()
 </script>
 
 <template>
@@ -15,7 +17,7 @@ const internals = useTableInternals()
     side="right"
     inset
     :overlay="true"
-    title="Filters"
+    :title="t('table.filters.panel.trigger')"
     @update:open="
       $event ? internals.filterPresentation.openPanel() : internals.filterPresentation.closePanel()
     "
@@ -28,7 +30,7 @@ const internals = useTableInternals()
       class="shrink-0"
     >
       <span class="flex items-center gap-2">
-        <span>Filters</span>
+        <span>{{ t('table.filters.panel.trigger') }}</span>
         <UBadge
           v-if="internals.filterPresentation.activePanelCount.value > 0"
           color="neutral"
@@ -58,7 +60,7 @@ const internals = useTableInternals()
           color="neutral"
           variant="ghost"
           size="sm"
-          label="Clear all"
+          :label="t('table.filters.panel.clearAll')"
           @click="internals.filterPresentation.clearPanelDraft()"
         />
 
@@ -66,7 +68,7 @@ const internals = useTableInternals()
           color="neutral"
           variant="subtle"
           size="sm"
-          label="Apply"
+          :label="t('table.filters.panel.apply')"
           @click="internals.filterPresentation.applyPanelDraft()"
         />
       </div>

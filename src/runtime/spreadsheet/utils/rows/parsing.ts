@@ -2,6 +2,7 @@ import type {
   SpreadsheetColumnDefinition,
   SpreadsheetDynamicCollectionDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
+  SpreadsheetOptionItem,
   SpreadsheetDynamicOptionsValueDefinition,
   SpreadsheetDynamicValueDefinition,
 } from '../../types'
@@ -25,7 +26,7 @@ import {
   parseSpreadsheetCellValue,
 } from './shared'
 
-function resolveOptionValue<TOption extends string | number | boolean | { label: string, value: unknown }>(params: {
+function resolveOptionValue<TOption extends SpreadsheetOptionItem>(params: {
   definition: SpreadsheetDynamicOptionsValueDefinition<TOption, 'single' | 'multiple'>
   raw: unknown
   issues: SpreadsheetRowIssue[]

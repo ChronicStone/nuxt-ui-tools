@@ -3,6 +3,7 @@ import UBadge from '@nuxt/ui/components/Badge.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { SpreadsheetColumnAssignmentOption } from '../../../types'
 
 type MatchingOption = SpreadsheetColumnAssignmentOption & {
@@ -41,12 +42,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   assign: [payload: { headerIndex: number, columnKey: string }]
 }>()
+const { t } = useUiToolsLocale()
 
 function getMatchBadgeProps(status: 'matched' | 'unmatched') {
   if (status === 'matched')
-    return { color: 'success' as const, label: 'Matched', dotClass: 'bg-success' }
+    return { color: 'success' as const, label: t('spreadsheet.steps.matching.matched'), dotClass: 'bg-success' }
 
-  return { color: 'warning' as const, label: 'Needs match', dotClass: 'bg-warning' }
+  return { color: 'warning' as const, label: t('spreadsheet.steps.matching.needsMatch'), dotClass: 'bg-warning' }
 }
 
 function getLeadingDotClass(status: 'matched' | 'unmatched') {
@@ -84,10 +86,10 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
     <div class="flex min-h-0 flex-col overflow-hidden border border-default/70 bg-default">
       <div class="grid h-11 grid-cols-[40px_minmax(14rem,1fr)_120px_minmax(16rem,1.2fr)_minmax(9rem,0.8fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
         <div />
-        <div>System field</div>
-        <div>Requirement</div>
-        <div>Spreadsheet column</div>
-        <div>Status</div>
+        <div>{{ t('spreadsheet.steps.matching.systemField') }}</div>
+        <div>{{ t('spreadsheet.steps.matching.requirement') }}</div>
+        <div>{{ t('spreadsheet.steps.matching.spreadsheetColumn') }}</div>
+        <div>{{ t('spreadsheet.steps.matching.statusHeader') }}</div>
       </div>
 
       <div class="min-h-0 flex-1 overflow-auto">
@@ -108,7 +110,7 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
 
           <div class="flex items-center">
             <UBadge :color="getRequiredBadgeColor(row.required)" variant="soft" size="sm" class="font-mono">
-              {{ row.required ? 'Required' : 'Optional' }}
+              {{ row.required ? t('spreadsheet.steps.matching.required') : t('spreadsheet.steps.matching.optional') }}
             </UBadge>
           </div>
 
@@ -120,8 +122,8 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
               label-key="label"
               color="neutral"
               variant="none"
-              :search-input="{ variant: 'none', placeholder: 'Search spreadsheet columns...' }"
-              placeholder="Select a spreadsheet column..."
+              :search-input="{ variant: 'none', placeholder: t('spreadsheet.steps.matching.searchColumns') }"
+              :placeholder="t('spreadsheet.steps.matching.selectColumn')"
               class="w-fit max-w-full"
               :ui="{
                 base: [
@@ -150,7 +152,7 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
                     class="font-mono text-[10px] uppercase tracking-[0.12em]"
                     :class="item.assigned ? 'text-muted' : 'text-success'"
                   >
-                    {{ item.assigned ? 'Assigned' : 'Available' }}
+                    {{ item.assigned ? t('spreadsheet.steps.matching.assigned') : t('spreadsheet.steps.matching.available') }}
                   </span>
                 </div>
               </template>
@@ -174,11 +176,11 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
       <div
         class="grid h-10 grid-cols-[minmax(14rem,1fr)_40px_minmax(14rem,1fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
       >
-        <div>Auto-mapped field</div>
+        <div>{{ t('spreadsheet.steps.matching.autoMappedField') }}</div>
         <div class="flex justify-center">
           <UIcon name="i-lucide-arrow-right" class="size-3.5" />
         </div>
-        <div>Spreadsheet column</div>
+        <div>{{ t('spreadsheet.steps.matching.spreadsheetColumn') }}</div>
       </div>
 
       <div
@@ -203,7 +205,7 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
       class="overflow-hidden border border-default/70 bg-default"
     >
       <div class="grid h-10 grid-cols-[minmax(0,1fr)_auto] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-        <div>Ignored spreadsheet columns</div>
+        <div>{{ t('spreadsheet.steps.matching.ignoredColumns') }}</div>
         <div>{{ ignoredColumnRows.length }}</div>
       </div>
 

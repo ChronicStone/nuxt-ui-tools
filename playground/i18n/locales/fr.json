@@ -86,6 +86,273 @@
     "prevMonth": "Mois précédent",
     "prevYear": "Année précédente"
   },
+  "playground": {
+    "common": {
+      "open": "Ouvrir"
+    },
+    "nav": {
+      "previousPage": "Page playground précédente",
+      "nextPage": "Page playground suivante"
+    },
+    "home": {
+      "badges": {
+        "home": "Accueil du playground",
+        "idle": "Aucun composant ouvert par défaut"
+      },
+      "title": "Point d'entrée du playground",
+      "description": "Partez d'un accueil vide, puis ouvrez la surface de playground que vous voulez inspecter. Cela garde le playground calme par défaut et rend l'intention explicite avant de charger un runtime lourd.",
+      "entries": {
+        "spreadsheet": {
+          "title": "Playground spreadsheet",
+          "description": "Scénarios ciblés du moteur d'import avec routes fullscreen isolées pour le matching, les références et les cas de stress."
+        },
+        "remoteTable": {
+          "title": "Table distante",
+          "description": "Playground de liste pilotée par le serveur pour les requêtes distantes, les filtres et l'orchestration de table."
+        },
+        "clientTable": {
+          "title": "Table client",
+          "description": "Playground de table côté client pour le comportement local des données, le filtrage et les états d'interaction."
+        }
+      }
+    },
+    "spreadsheetIndex": {
+      "title": "Playgrounds tableur",
+      "description": "Ouvrez la route correspondant au comportement que vous souhaitez inspecter.",
+      "variantLabel": "Variante tableur",
+      "fullscreenScenario": "Scénario plein écran",
+      "openVariant": "Ouvrir la variante",
+      "variants": {
+        "happyPath": {
+          "title": "Import happy path",
+          "description": "Flux de bout en bout de référence."
+        },
+        "manualMatching": {
+          "title": "Lab de matching manuel",
+          "description": "Sélection d'en-tête et affectation manuelle des colonnes."
+        },
+        "columnResolve": {
+          "title": "Lab de résolution de colonne",
+          "description": "Résolution intelligente en place où le champ final devient canonique et la source brute n'est pas conservée."
+        },
+        "derivedReferences": {
+          "title": "Lab de références dérivées",
+          "description": "Champ importé brut conservé, plus un champ canonique dérivé via des références de haut niveau."
+        },
+        "referenceReconciliation": {
+          "title": "Réconciliation de références",
+          "description": "Suggestions de références à valeur unique et résolution manuelle."
+        },
+        "multiReference": {
+          "title": "Lab multi-références",
+          "description": "Références résolues à partir d'un champ source multi-valeur vers un tableau de sortie."
+        },
+        "referenceRules": {
+          "title": "Lab des règles de référence",
+          "description": "Les références non résolues peuvent continuer ; les règles de référence décident de la validité en revue."
+        },
+        "structureStress": {
+          "title": "Test de stress structurel",
+          "description": "Grand classeur et cas limites structurels."
+        },
+        "largeValidation": {
+          "title": "Lab de validation large volume",
+          "description": "Grand jeu de données avec validations mixtes en échec."
+        },
+        "refineRelations": {
+          "title": "Lab d'affinage des relations",
+          "description": "Petit scénario déterministe de validation inter-champs."
+        },
+        "multiValue": {
+          "title": "Lab multi-valeur",
+          "description": "Colonnes multiples natives sans références."
+        }
+      }
+    },
+    "spreadsheetPages": {
+      "happyPath": {
+        "title": "Import parcours nominal",
+        "description": "Scénario de base avec matching automatique fiable et références résolues."
+      },
+      "manualMatching": {
+        "title": "Lab d'association manuelle",
+        "description": "La confirmation de la ligne d'en-tête et l'affectation manuelle des colonnes doivent être au cœur de ce scénario."
+      },
+      "columnResolve": {
+        "title": "Lab de résolution de colonne",
+        "description": "Résolution intelligente en place. La colonne Product importée est résolue directement vers productId, donc le champ source brut n'est pas conservé sur la ligne finale."
+      },
+      "derivedReferences": {
+        "title": "Lab de références dérivées",
+        "description": "Résolution dérivée au niveau du schéma. productLabelRaw reste sur la ligne et productId est ajouté séparément via les références de premier niveau."
+      },
+      "referenceReconciliation": {
+        "title": "Rapprochement des références",
+        "description": "Ce scénario conserve une étiquette produit non résolue afin que l'étape de rapprochement reste active."
+      },
+      "multiReference": {
+        "title": "Lab multi-références",
+        "description": "Scénario ciblé pour des références résolues depuis un champ source multi-valeur vers une sortie en tableau."
+      },
+      "referenceRules": {
+        "title": "Lab des règles de référence",
+        "description": "Les références non résolues sont autorisées pendant le matching, puis les règles de référence déterminent la validité des lignes en revue."
+      },
+      "structureStress": {
+        "title": "Test de charge structurel",
+        "description": "Grand classeur généré avec en-têtes décalés, lignes cassées, valeurs non résolues et dépassement de limite d'import."
+      },
+      "largeValidation": {
+        "title": "Lab de validation volumineuse",
+        "description": "Classeur de 250 lignes généré avec exactement 20 % de lignes invalides entre valeurs manquantes, problèmes de score, règles de lot et incohérences de centre."
+      },
+      "refineRelations": {
+        "title": "Lab des relations refine",
+        "description": "Petit classeur déterministe centré sur les relations refine() avec des messages explicites entre champs pour la revue."
+      },
+      "multiValue": {
+        "title": "Lab multi-valeurs",
+        "description": "Parcours de validation ciblé pour les colonnes multiples statiques intégrées, avec parsing texte, nombre, option, enum et booléen."
+      }
+    },
+    "tableCommon": {
+      "searchPlaceholder": "Rechercher des employés...",
+      "generalist": "Généraliste",
+      "range": {
+        "min": "Min",
+        "max": "Max"
+      },
+      "status": {
+        "online": "En ligne",
+        "paused": "En pause"
+      },
+      "filters": {
+        "name": "Nom",
+        "searchEmployees": "Rechercher des employés",
+        "country": "Pays",
+        "selectCountries": "Sélectionner des pays",
+        "skill": "Compétence",
+        "department": "Département",
+        "active": "Actif",
+        "salary": "Salaire",
+        "hiredAt": "Date d’embauche"
+      },
+      "columns": {
+        "employee": "Employé",
+        "email": "Email",
+        "skills": "Compétences",
+        "country": "Pays",
+        "department": "Département",
+        "active": "Actif",
+        "salary": "Salaire",
+        "hiredAt": "Date d’embauche"
+      },
+      "cards": {
+        "company": "Entreprise",
+        "salary": "Salaire",
+        "country": "Pays"
+      },
+      "datePresets": {
+        "today": "Aujourd’hui",
+        "yesterday": "Hier",
+        "startOfMonth": "Début du mois",
+        "last7Days": "7 derniers jours",
+        "last30Days": "30 derniers jours",
+        "thisMonth": "Ce mois-ci"
+      },
+      "countries": {
+        "france": "France",
+        "germany": "Allemagne",
+        "japan": "Japon",
+        "unitedKingdom": "Royaume-Uni",
+        "unitedStates": "États-Unis",
+        "canada": "Canada",
+        "singapore": "Singapour",
+        "spain": "Espagne",
+        "unknown": "Inconnu"
+      },
+      "regions": {
+        "europe": "Europe",
+        "northAmerica": "Amérique du Nord",
+        "asia": "Asie"
+      },
+      "departments": {
+        "engineering": "Ingénierie",
+        "platform": "Plateforme",
+        "operations": "Opérations",
+        "finance": "Finance",
+        "product": "Produit",
+        "design": "Design",
+        "security": "Sécurité",
+        "data": "Données",
+        "support": "Support",
+        "growth": "Croissance"
+      },
+      "categories": {
+        "engineering": "Ingénierie",
+        "application": "Application",
+        "infrastructure": "Infrastructure",
+        "reliability": "Fiabilité",
+        "security": "Sécurité",
+        "services": "Services",
+        "data": "Données",
+        "analysis": "Analyse",
+        "intelligence": "Intelligence",
+        "platform": "Plateforme",
+        "design": "Design",
+        "research": "Recherche",
+        "systems": "Systèmes",
+        "product": "Produit",
+        "planning": "Planification"
+      },
+      "skills": {
+        "typescript": "TypeScript",
+        "go": "Go",
+        "kubernetes": "Kubernetes",
+        "security": "Sécurité",
+        "distributedSystems": "Systèmes distribués",
+        "rust": "Rust",
+        "python": "Python",
+        "graphql": "GraphQL",
+        "postgresql": "PostgreSQL",
+        "machineLearning": "Machine Learning",
+        "designSystems": "Design Systems",
+        "observability": "Observabilité",
+        "terraform": "Terraform",
+        "incidentResponse": "Réponse aux incidents",
+        "productStrategy": "Stratégie produit",
+        "uxResearch": "Recherche UX"
+      }
+    },
+    "tableClient": {
+      "searchPlaceholder": "Rechercher des employés locaux...",
+      "filters": {
+        "skillTree": "Arborescence des compétences",
+        "selectSkillTaxonomy": "Sélectionner une arborescence de compétences"
+      },
+      "preview": {
+        "hired": "Embauché"
+      },
+      "actions": {
+        "copyEmail": "Copier l’email",
+        "pauseEmployee": "Mettre en pause",
+        "resumeEmployee": "Reprendre",
+        "giveRaise": "Augmenter le salaire",
+        "moreActions": "Plus d’actions",
+        "refreshTable": "Actualiser la table",
+        "gridContextOnly": "Seulement en vue grille",
+        "tableContextOnly": "Seulement en vue tableau"
+      }
+    },
+    "tableRemote": {
+      "searchPlaceholder": "Rechercher des employés distants...",
+      "filters": {
+        "selectCompanies": "Sélectionner des entreprises"
+      },
+      "noCompany": "Aucune entreprise",
+      "noDepartment": "Aucun département"
+    }
+  },
   "pages": {
     "overview": {
       "badge": "Vue d'ensemble",
