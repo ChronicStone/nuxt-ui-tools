@@ -2,7 +2,7 @@ import type {
   SpreadsheetParsedRow,
 } from '../../types'
 import { getSpreadsheetValueAtPath } from '../object'
-import { isSpreadsheetReferenceDefinition } from './guards'
+import { normalizeSpreadsheetRuntimeResolutions } from './guards'
 
 export function collectSpreadsheetReferenceTokens(value: unknown) {
   const items = Array.isArray(value) ? value : [value]
@@ -22,14 +22,11 @@ export function collectSpreadsheetReferenceSources(
   references: readonly unknown[],
   rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[],
 ) {
-  return references.flatMap((entry) => {
-    if (!isSpreadsheetReferenceDefinition(entry)) return []
-
-    const reference = entry
+  return normalizeSpreadsheetRuntimeResolutions(references).flatMap((entry) => {
     const entries = new Map<string, number[]>()
 
     for (const row of rows) {
-      const rawValue = getSpreadsheetValueAtPath(row.data, reference.source)
+      const rawValue = getSpreadsheetValueAtPath(row.data, entry.sourceField)
       for (const sourceValue of collectSpreadsheetReferenceTokens(rawValue)) {
         const rowIndexes = entries.get(sourceValue) ?? []
         entries.set(sourceValue, [...rowIndexes, row.index])
@@ -37,7 +34,7 @@ export function collectSpreadsheetReferenceSources(
     }
 
     return [{
-      reference,
+      reference: entry,
       entries: Array.from(entries.entries()).map(([value, rowIndexes]) => ({
         value,
         rowIndexes,

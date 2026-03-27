@@ -1,4 +1,5 @@
 import type { SpreadsheetReferenceDefinition } from './references'
+import type { SpreadsheetResolutionDefinition } from './resolution'
 import type { SpreadsheetRowIssue } from './rows'
 
 export interface SpreadsheetReferenceCandidate<TValue = unknown, TOption = unknown> {
@@ -17,6 +18,9 @@ export interface SpreadsheetReferenceResolution<
   TValue = unknown,
   TOption = unknown,
 > {
+  scope?: SpreadsheetResolutionDefinition['scope']
+  resolutionField?: string
+  targetField?: string
   referenceField: string
   sourceField: string
   outputField: string
@@ -37,6 +41,9 @@ export interface SpreadsheetResolvedReferenceRow<TRow = Record<string, unknown>>
 }
 
 export interface SpreadsheetReferenceQueryRequest {
+  scope?: SpreadsheetResolutionDefinition['scope']
+  resolutionField?: string
+  targetField?: string
   referenceField: string
   sourceValue: string
   query: ReturnType<

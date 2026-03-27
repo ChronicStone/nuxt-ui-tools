@@ -80,15 +80,15 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
     mapSpreadsheetParsedRows<TSchema>(internals.rows.parsedRows.value),
   )
   const resolvedRows = computed(() =>
-    mapSpreadsheetResolvedRows<TSchema>(internals.references.resolvedRows.value),
+    mapSpreadsheetResolvedRows<TSchema>(internals.resolutions.resolvedRows.value),
   )
   const rowData = computed(() =>
-    mapSpreadsheetRowData<TSchema>(internals.references.resolvedRows.value),
+    mapSpreadsheetRowData<TSchema>(internals.resolutions.resolvedRows.value),
   )
   const submitPayloads = computedAsyncPayloads({
     schema: resolvedSchema,
     context: internals.context.contextData,
-    rows: computed(() => internals.references.resolvedRows.value),
+    rows: computed(() => internals.resolutions.resolvedRows.value),
   })
   const status = computed(() => ({
     initialized:
@@ -138,8 +138,8 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
     rowData,
     submitPayloads,
     rowSummary: internals.rows.summary,
-    referenceResolutions: computed(() => internals.references.resolutions.value),
-    unresolvedReferenceResolutions: computed(() => internals.references.unresolvedResolutions.value),
+    referenceResolutions: computed(() => internals.resolutions.resolutions.value),
+    unresolvedReferenceResolutions: computed(() => internals.resolutions.unresolvedResolutions.value),
     status,
     sourceError: internals.source.error,
     contextError: internals.context.error,
@@ -150,8 +150,8 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
     setHeaderRowIndex: internals.source.setHeaderRowIndex,
     assignColumn: ({ headerIndex, columnKey }) => internals.rows.assignColumn(headerIndex, columnKey),
     clearColumnAssignment: (headerIndex) => internals.rows.clearColumnAssignment(headerIndex),
-    selectReference: internals.references.selectReference,
-    clearReference: internals.references.clearReference,
+    selectReference: internals.resolutions.selectReference,
+    clearReference: internals.resolutions.clearReference,
     refresh,
     __internals: internals,
   }

@@ -15,7 +15,7 @@ type ReferenceSelectItem = {
 }
 
 type ReferenceGroup = {
-  referenceKey: string
+  resolutionKey: string
   sourceField: string
   outputField: string
   sourceLabel: string
@@ -26,7 +26,7 @@ type ReferenceGroup = {
   items: SpreadsheetReferenceResolution[]
 }
 
-const expandedReferenceKey = defineModel<string | undefined>()
+const expandedResolutionKey = defineModel<string | undefined>()
 
 defineProps<{
   groups: ReferenceGroup[]
@@ -53,11 +53,11 @@ function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
 
 <template>
   <UAccordion
-    v-model="expandedReferenceKey"
+    v-model="expandedResolutionKey"
     :items="groups"
     type="single"
     collapsible
-    value-key="referenceKey"
+    value-key="resolutionKey"
     :ui="{
       root: 'grid min-h-0 gap-3',
       item: 'overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default',

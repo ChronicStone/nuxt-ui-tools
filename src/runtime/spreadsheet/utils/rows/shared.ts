@@ -94,6 +94,12 @@ export function isSpreadsheetDynamicCollectionItem(
   return isSpreadsheetRecord(value) && 'id' in value && 'match' in value && 'value' in value
 }
 
+function hasSpreadsheetColumnResolve<TContext>(
+  column: SpreadsheetColumnDefinition<string, unknown, boolean, TContext>,
+) {
+  return 'resolve' in column && Boolean(column.resolve)
+}
+
 function resolveSpreadsheetColumnOptionEntries<TContext>(
   options: unknown,
   context: TContext,
@@ -348,7 +354,7 @@ export async function parseSpreadsheetCellValue<TContext>(
   const nextCell = createSpreadsheetCellWithModifiers(cell, column.modifiers)
   const isEmpty = nextCell.text.trim() === ''
 
-  if (column.required && isEmpty) {
+  if (column.required && !hasSpreadsheetColumnResolve(column) && isEmpty) {
     issues.push({
       level: 'error',
       code: 'cell.required',
@@ -365,10 +371,12 @@ export async function parseSpreadsheetCellValue<TContext>(
       ? await column.parse({ cell: nextCell, context })
       : parseSpreadsheetBuiltInCellValue(column, cell, context, issues)
 
-    const validationIssues = executeSpreadsheetRules({
-      value,
-      rules: column.rules,
-    })
+    const validationIssues = hasSpreadsheetColumnResolve(column)
+      ? []
+      : executeSpreadsheetRules({
+          value,
+          rules: column.rules,
+        })
 
     issues.push(...validationIssues.map((issue: {
       ruleKey?: string

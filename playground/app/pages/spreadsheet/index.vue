@@ -15,6 +15,18 @@ const variants = [
     to: '/spreadsheet/manual-matching',
   },
   {
+    id: 'column-resolve-lab',
+    title: 'Column Resolve Lab',
+    description: 'In-place smart resolution where the final field becomes canonical and the raw source is not kept.',
+    to: '/spreadsheet/column-resolve-lab',
+  },
+  {
+    id: 'derived-references-lab',
+    title: 'Derived References Lab',
+    description: 'Raw imported field preserved plus a derived canonical field through top-level references.',
+    to: '/spreadsheet/derived-references-lab',
+  },
+  {
     id: 'reference-reconciliation',
     title: 'Reference Reconciliation',
     description: 'Single-value reference suggestions and manual resolution.',

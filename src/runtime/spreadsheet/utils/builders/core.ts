@@ -24,23 +24,23 @@ import type {
 } from '../../types'
 import { resolveSpreadsheetRules } from '../validation'
 
-function resolveSpreadsheetColumnOptions<
-  TContext,
-  TValue,
-  TRequired extends boolean,
-  TMultiple,
->(
-  options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, TMultiple>,
-) {
-  return {
-    ...options,
-    rules: resolveSpreadsheetRules(options.rules),
-  }
-}
-
 export function createSpreadsheetColumnBuilder<
   TContext = unknown,
 >(): SpreadsheetColumnBuilder<TContext> {
+  const textColumn: SpreadsheetColumnBuilder<TContext>['text'] = (
+    key: string,
+    options: { rules?: SpreadsheetFieldRulesInput<unknown> } = {},
+  ) => {
+    const rules = resolveSpreadsheetRules(options.rules)
+
+    return {
+      kind: 'text' as const,
+      key,
+      ...options,
+      rules,
+    }
+  }
+
   const enumColumn: SpreadsheetColumnBuilder<TContext>['enum'] = (
     key,
     options,
@@ -61,23 +61,22 @@ export function createSpreadsheetColumnBuilder<
     }
   }
 
+  const numberColumn: SpreadsheetColumnBuilder<TContext>['number'] = (
+    key: string,
+    options: { rules?: SpreadsheetFieldRulesInput<unknown> } = {},
+  ) => {
+    const rules = resolveSpreadsheetRules(options.rules)
+
+    return {
+      kind: 'number' as const,
+      key,
+      ...options,
+      rules,
+    }
+  }
+
   return {
-    text<
-      TKey extends string,
-      TValue = string,
-      TRequired extends boolean = false,
-      TMultiple extends boolean | SpreadsheetColumnMultipleOptions | undefined = undefined,
-      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
-    >(
-      key: TKey,
-      options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
-    ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
-      return {
-        kind: 'text',
-        key,
-        ...resolveSpreadsheetColumnOptions(options),
-      }
-    },
+    text: textColumn,
     email<
       TKey extends string,
       TValue = string,
@@ -88,28 +87,16 @@ export function createSpreadsheetColumnBuilder<
       key: TKey,
       options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
     ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
+      const rules = resolveSpreadsheetRules(options.rules)
+
       return {
         kind: 'email',
         key,
-        ...resolveSpreadsheetColumnOptions(options),
+        ...options,
+        rules,
       }
     },
-    number<
-      TKey extends string,
-      TValue = number,
-      TRequired extends boolean = false,
-      TMultiple extends boolean | SpreadsheetColumnMultipleOptions | undefined = undefined,
-      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
-    >(
-      key: TKey,
-      options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
-    ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
-      return {
-        kind: 'number',
-        key,
-        ...resolveSpreadsheetColumnOptions(options),
-      }
-    },
+    number: numberColumn,
     date<
       TKey extends string,
       TValue = string,
@@ -120,10 +107,13 @@ export function createSpreadsheetColumnBuilder<
       key: TKey,
       options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
     ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
+      const rules = resolveSpreadsheetRules(options.rules)
+
       return {
         kind: 'date',
         key,
-        ...resolveSpreadsheetColumnOptions(options),
+        ...options,
+        rules,
       }
     },
     boolean<
@@ -136,10 +126,13 @@ export function createSpreadsheetColumnBuilder<
       key: TKey,
       options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
     ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
+      const rules = resolveSpreadsheetRules(options.rules)
+
       return {
         kind: 'boolean',
         key,
-        ...resolveSpreadsheetColumnOptions(options),
+        ...options,
+        rules,
       }
     },
     enum: enumColumn,
@@ -164,10 +157,13 @@ export function createSpreadsheetColumnBuilder<
       key: TKey,
       options: SpreadsheetOptionColumnOptions<TContext, TOption, TRequired, Exclude<TMultiple, undefined>, TResolvedValue> & { rules?: TRulesInput },
     ): SpreadsheetColumnDefinition<TKey, TResolvedValue, TRequired, TContext, TRulesInput> {
+      const rules = resolveSpreadsheetRules(options.rules)
+
       return {
         kind: 'option',
         key,
-        ...resolveSpreadsheetColumnOptions(options),
+        ...options,
+        rules,
       }
     },
   }

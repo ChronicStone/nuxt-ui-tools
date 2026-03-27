@@ -1,0 +1,132 @@
+import { computed, shallowRef, watch, type ComputedRef } from 'vue'
+
+import type {
+  SpreadsheetNormalizedSchema,
+  SpreadsheetParsedRow,
+  SpreadsheetReferenceResolution,
+} from '../types'
+import {
+  applySpreadsheetReferenceResolutions,
+  createSpreadsheetReferenceQueryRequests,
+  createSpreadsheetReferenceResolutions,
+} from '../utils'
+
+export interface UseSpreadsheetResolutionsParams {
+  schema: ComputedRef<SpreadsheetNormalizedSchema>
+  contextData: ComputedRef<Record<string, unknown>>
+  rows: ComputedRef<readonly SpreadsheetParsedRow<Record<string, unknown>>[]>
+}
+
+function createResolutionId(resolution: SpreadsheetReferenceResolution) {
+  return `${resolution.targetField ?? resolution.referenceField}::${resolution.sourceValue}`
+}
+
+export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParams) {
+  const resolutionDefinitions = computed(() =>
+    params.schema.value.resolutions ?? params.schema.value.references ?? [],
+  )
+  const autoResolutions = computed(() =>
+    createSpreadsheetReferenceResolutions({
+      references: resolutionDefinitions.value,
+      rows: params.rows.value,
+      context: params.contextData.value,
+    }),
+  )
+  const manualSelections = shallowRef<Record<string, SpreadsheetReferenceResolution>>({})
+  const resolutions = computed(() =>
+    autoResolutions.value.map((resolution) => {
+      const manual = manualSelections.value[createResolutionId(resolution)]
+      return manual ?? resolution
+    }),
+  )
+  const unresolvedResolutions = computed(() =>
+    resolutions.value.filter((resolution) => resolution.status === 'unresolved'),
+  )
+  const resolvedRows = computed(() =>
+    applySpreadsheetReferenceResolutions({
+      rows: params.rows.value,
+      references: resolutionDefinitions.value,
+      resolutions: resolutions.value,
+      relations: params.schema.value.relations,
+    }),
+  )
+  const queryRequests = computed(() =>
+    createSpreadsheetReferenceQueryRequests({
+      references: resolutionDefinitions.value,
+      rows: params.rows.value,
+      context: params.contextData.value,
+    }),
+  )
+  const status = computed(() => ({
+    initialized: true,
+    isReady: true,
+    unresolvedCount: unresolvedResolutions.value.length,
+  }))
+
+  function selectResolution(params: {
+    resolutionField: string
+    sourceValue: string
+    selectedValue: unknown
+    selectedLabel: string
+  }) {
+    const key = `${params.resolutionField}::${params.sourceValue}`
+    const current = resolutions.value.find((resolution) => createResolutionId(resolution) === key)
+    if (!current) return
+
+    manualSelections.value = {
+      ...manualSelections.value,
+      [key]: {
+        ...current,
+        status: 'matched',
+        selectedValue: params.selectedValue,
+        selectedLabel: params.selectedLabel,
+      },
+    }
+  }
+
+  function clearResolution(params: {
+    resolutionField: string
+    sourceValue: string
+  }) {
+    const key = `${params.resolutionField}::${params.sourceValue}`
+    const nextSelections = { ...manualSelections.value }
+    delete nextSelections[key]
+    manualSelections.value = nextSelections
+  }
+
+  watch(resolutionDefinitions, () => {
+    manualSelections.value = {}
+  })
+
+  return {
+    resolutionDefinitions,
+    resolutions,
+    unresolvedResolutions,
+    resolvedRows,
+    queryRequests,
+    status,
+    selectResolution,
+    clearResolution,
+    referenceDefinitions: resolutionDefinitions,
+    selectReference: (params: {
+      referenceField: string
+      sourceValue: string
+      selectedValue: unknown
+      selectedLabel: string
+    }) =>
+      selectResolution({
+        resolutionField: params.referenceField,
+        sourceValue: params.sourceValue,
+        selectedValue: params.selectedValue,
+        selectedLabel: params.selectedLabel,
+      }),
+    clearReference: (params: {
+      referenceField: string
+      sourceValue: string
+    }) =>
+      clearResolution({
+        resolutionField: params.referenceField,
+        sourceValue: params.sourceValue,
+      }),
+  }
+}

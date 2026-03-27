@@ -150,8 +150,82 @@ const schema = defineSpreadsheetSchema({
   }),
 })
 
+const resolveSchema = defineSpreadsheetSchema({
+  importKey: 'assessment.resolve',
+  columns: {
+    static: (column) => [
+      column.text('productId', {
+        match: {
+          headers: ['Product'],
+        },
+        resolve: {
+          options: [
+            { label: 'Business English 4 Skills', value: 'prod_1' },
+            { label: 'Reading Placement Test', value: 'prod_2' },
+          ],
+        },
+        rules: v => [
+          v.required(),
+          v.validate({
+            name: 'allowedProduct',
+            validator: value => value !== 'prod_2',
+            message: 'Product is not allowed',
+          }),
+        ],
+      }),
+      column.number('centerId', {
+        match: {
+          headers: ['Center code'],
+        },
+        resolve: {
+          options: [
+            { label: '1201', value: 1201 },
+            { label: '1202', value: 1202 },
+          ],
+        },
+      }),
+      column.text('productIds', {
+        match: {
+          headers: ['Products'],
+        },
+        multiple: {
+          separator: ',',
+        },
+        resolve: {
+          options: [
+            { label: 'Business English 4 Skills', value: 'prod_1' },
+            { label: 'Reading Placement Test', value: 'prod_2' },
+          ],
+        },
+      }),
+      column.text('status', {
+        match: {
+          headers: ['Status'],
+        },
+      }),
+    ],
+  },
+  buildRow: ({ row }) => ({
+    resolvedProductId: row.productId,
+    reviewStatus: row.status,
+  }),
+}).refine({
+  relations: [
+    {
+      column: 'resolvedProductId',
+      condition: row => row.reviewStatus === 'Done',
+      rules: v => [
+        v.required({
+          message: 'Resolved product is required when reviewStatus is Done',
+        }),
+      ],
+    },
+  ],
+})
+
 type SchemaContextData = ExtractSpreadsheetContextData<typeof schema>
 type Row = ExtractSpreadsheetRow<typeof schema>
+type ResolveRow = ExtractSpreadsheetRow<typeof resolveSchema>
 
 describe('defineSpreadsheetSchema inference', () => {
   it('infers context data from query definitions', () => {
@@ -184,9 +258,22 @@ describe('defineSpreadsheetSchema inference', () => {
     expectTypeOf<Row['productId']>().toEqualTypeOf<'prod_1' | 'prod_2' | undefined>()
   })
 
+  it('infers in-place resolve outputs from text and number options', () => {
+    expectTypeOf<ResolveRow['productId']>().toEqualTypeOf<'prod_1' | 'prod_2' | undefined>()
+    expectTypeOf<ResolveRow['centerId']>().toEqualTypeOf<1201 | 1202 | undefined>()
+    expectTypeOf<ResolveRow['productIds']>().toMatchTypeOf<readonly unknown[] | undefined>()
+  })
+
   it('infers buildRow payloads from the schema', () => {
     expectTypeOf<Awaited<ReturnType<NonNullable<typeof schema.buildRow>>>>().toEqualTypeOf<{
       examName: string
+    }>()
+  })
+
+  it('keeps buildRow and refine working after introducing column resolve', () => {
+    expectTypeOf<Awaited<ReturnType<NonNullable<typeof resolveSchema.buildRow>>>>().toEqualTypeOf<{
+      resolvedProductId: 'prod_1' | 'prod_2' | undefined
+      reviewStatus: string | undefined
     }>()
   })
 })
