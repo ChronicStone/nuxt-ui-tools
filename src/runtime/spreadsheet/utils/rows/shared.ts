@@ -11,6 +11,7 @@ import type {
   SpreadsheetStaticColumn,
   SpreadsheetStaticColumnGroup,
 } from '../../types'
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import { isSpreadsheetRecord } from '../object'
 import {
   getSpreadsheetOptionLabel,
@@ -158,6 +159,18 @@ function pushSpreadsheetParseIssue(params: {
   })
 }
 
+export function getSpreadsheetIssueText() {
+  const { t } = useUiToolsLocale()
+
+  return {
+    unrecognizedValue: (value: string) => t('spreadsheet.validation.unrecognizedValue', { value }),
+    invalidNumberInput: (value: string) => t('spreadsheet.validation.invalidNumberInput', { value }),
+    invalidBooleanInput: (value: string) => t('spreadsheet.validation.invalidBooleanInput', { value }),
+    missingValue: (field: string) => t('spreadsheet.validation.missingValue', { field }),
+    parseFailed: (field: string) => t('spreadsheet.validation.parseFailed', { field }),
+  }
+}
+
 function parseSpreadsheetEnumColumnValue<TContext>(
   column: SpreadsheetColumnDefinition<string, unknown, boolean, TContext> & {
     kind: 'enum'
@@ -167,6 +180,7 @@ function parseSpreadsheetEnumColumnValue<TContext>(
   cell: SpreadsheetCellValue,
   issues: SpreadsheetRowIssue[],
 ) {
+  const issueText = getSpreadsheetIssueText()
   if (!token) return undefined
 
   const multipleConfig = resolveSpreadsheetMultipleConfig(column.multiple)
@@ -185,7 +199,7 @@ function parseSpreadsheetEnumColumnValue<TContext>(
   pushSpreadsheetParseIssue({
     issues,
     code: 'enum.not_found',
-    message: `Unknown enum value "${token}"`,
+    message: issueText.unrecognizedValue(token),
     rowIndex: cell.rowIndex,
     columnKey: column.key,
     columnIndex: cell.columnIndex,
@@ -205,6 +219,7 @@ function parseSpreadsheetOptionColumnValue<TContext>(
   context: TContext,
   issues: SpreadsheetRowIssue[],
 ) {
+  const issueText = getSpreadsheetIssueText()
   if (!token) return undefined
 
   const options = resolveSpreadsheetColumnOptionEntries(column.options, context)
@@ -234,7 +249,7 @@ function parseSpreadsheetOptionColumnValue<TContext>(
     pushSpreadsheetParseIssue({
       issues,
       code: 'option.not_found',
-      message: `Unknown option "${token}"`,
+      message: issueText.unrecognizedValue(token),
       rowIndex: cell.rowIndex,
       columnKey: column.key,
       columnIndex: cell.columnIndex,
@@ -272,6 +287,7 @@ function parseSpreadsheetSingleBuiltInValue<TContext>(
   context: TContext,
   issues: SpreadsheetRowIssue[],
 ) {
+  const issueText = getSpreadsheetIssueText()
   if (column.kind === 'text' || column.kind === 'email' || column.kind === 'date')
     return token
   if (column.kind === 'number') {
@@ -281,7 +297,7 @@ function parseSpreadsheetSingleBuiltInValue<TContext>(
     pushSpreadsheetParseIssue({
       issues,
       code: 'number.invalid',
-      message: `Invalid number "${token}"`,
+      message: issueText.invalidNumberInput(token),
       rowIndex: cell.rowIndex,
       columnKey: column.key,
       columnIndex: cell.columnIndex,
@@ -296,7 +312,7 @@ function parseSpreadsheetSingleBuiltInValue<TContext>(
     pushSpreadsheetParseIssue({
       issues,
       code: 'boolean.invalid',
-      message: `Invalid boolean "${token}"`,
+      message: issueText.invalidBooleanInput(token),
       rowIndex: cell.rowIndex,
       columnKey: column.key,
       columnIndex: cell.columnIndex,
@@ -351,6 +367,7 @@ export async function parseSpreadsheetCellValue<TContext>(
   context: TContext,
   issues: SpreadsheetRowIssue[],
 ) {
+  const issueText = getSpreadsheetIssueText()
   const nextCell = createSpreadsheetCellWithModifiers(cell, column.modifiers)
   const isEmpty = nextCell.text.trim() === ''
 
@@ -358,7 +375,7 @@ export async function parseSpreadsheetCellValue<TContext>(
     issues.push({
       level: 'error',
       code: 'cell.required',
-      message: `Missing required value for "${column.key}"`,
+      message: issueText.missingValue(cell.header),
       rowIndex: cell.rowIndex,
       columnKey: column.key,
       columnIndex: cell.columnIndex,
@@ -399,7 +416,7 @@ export async function parseSpreadsheetCellValue<TContext>(
       code: 'cell.parse_failed',
       message: error instanceof Error
         ? error.message
-        : `Failed to parse "${column.key}"`,
+        : issueText.parseFailed(cell.header),
       rowIndex: cell.rowIndex,
       columnKey: column.key,
       columnIndex: cell.columnIndex,

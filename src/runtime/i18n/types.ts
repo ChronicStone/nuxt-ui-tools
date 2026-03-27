@@ -217,6 +217,11 @@ export interface UiToolsSpreadsheetMessages {
     max: string
     between: string
     oneOf: string
+    unrecognizedValue: string
+    invalidNumberInput: string
+    invalidBooleanInput: string
+    missingValue: string
+    parseFailed: string
   }
 }
 

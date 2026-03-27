@@ -13,6 +13,7 @@ import {
   matchSpreadsheetDynamicColumns,
   parseSpreadsheetRows,
 } from '#ui-tools/spreadsheet'
+import { fr } from '#ui-tools/i18n'
 
 interface DemoDynamicAffiliationItem {
   id: string
@@ -249,7 +250,7 @@ describe('spreadsheet row utils', () => {
         expect.objectContaining({
           code: 'option.not_found',
           columnKey: 'productId',
-          message: 'Unknown option "Unknown product"',
+          message: 'The value "Unknown product" is not recognized',
         }),
       ],
     })
@@ -404,15 +405,23 @@ describe('spreadsheet row utils', () => {
         expect.objectContaining({
           code: 'number.invalid',
           columnKey: 'scores',
-          message: 'Invalid number "oops"',
+          message: 'Enter a valid number instead of "oops"',
         }),
         expect.objectContaining({
           code: 'option.not_found',
           columnKey: 'productIds',
-          message: 'Unknown option "Unknown product"',
+          message: 'The value "Unknown product" is not recognized',
         }),
       ],
     })
+  })
+
+  it('defines user-facing French translations for built-in spreadsheet parsing issues', () => {
+    expect(fr.messages.spreadsheet.validation.unrecognizedValue).toBe('La valeur "{value}" n est pas reconnue')
+    expect(fr.messages.spreadsheet.validation.invalidNumberInput).toBe('Saisissez un nombre valide à la place de "{value}"')
+    expect(fr.messages.spreadsheet.validation.invalidBooleanInput).toBe('Répondez par Oui ou Non à la place de "{value}"')
+    expect(fr.messages.spreadsheet.validation.missingValue).toBe('Ajoutez une valeur pour "{field}"')
+    expect(fr.messages.spreadsheet.validation.parseFailed).toBe('Impossible de lire la valeur pour "{field}"')
   })
 
   it('creates a compact summary for parsed rows', () => {

@@ -22,6 +22,7 @@ import {
 import {
   applySpreadsheetModifiers,
   applySpreadsheetNormalization,
+  getSpreadsheetIssueText,
   isSpreadsheetDynamicCollectionColumn,
   parseSpreadsheetCellValue,
 } from './shared'
@@ -35,6 +36,7 @@ function resolveOptionValue<TOption extends SpreadsheetOptionItem>(params: {
   columnKey: string
   header: string
 }) {
+  const issueText = getSpreadsheetIssueText()
   const text = String(params.raw ?? '').trim()
   if (!text) return params.definition.mode === 'multiple' ? [] : undefined
 
@@ -58,7 +60,7 @@ function resolveOptionValue<TOption extends SpreadsheetOptionItem>(params: {
       params.issues.push({
         level: 'error',
         code: 'option.not_found',
-        message: `Unknown option "${token}"`,
+        message: issueText.unrecognizedValue(token),
         rowIndex: params.rowIndex,
         columnKey: params.columnKey,
         columnIndex: params.columnIndex,
@@ -159,6 +161,7 @@ function resolveSpreadsheetDynamicCellValues(
   columnIndex: number,
   header: string,
 ) {
+  const issueText = getSpreadsheetIssueText()
   const text = String(raw ?? '').trim()
   if (!text) return []
 
@@ -187,7 +190,7 @@ function resolveSpreadsheetDynamicCellValues(
       issues.push({
         level: 'error',
         code: 'option.not_found',
-        message: `Unknown option "${token}"`,
+        message: issueText.unrecognizedValue(token),
         rowIndex,
         columnKey: column.key,
         columnIndex,
