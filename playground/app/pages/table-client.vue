@@ -12,6 +12,41 @@ import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-to
 const { locale, t } = useI18n()
 const clientRows = createClientRows(5000)
 type DemoClientRow = (typeof clientRows)[number]
+type DemoCompanySeed = {
+  name: string
+  country: string
+  region: string
+}
+type DemoDepartmentName =
+  | 'Engineering'
+  | 'Platform'
+  | 'Operations'
+  | 'Finance'
+  | 'Product'
+  | 'Design'
+  | 'Security'
+  | 'Data'
+  | 'Support'
+  | 'Growth'
+type DemoSkillName =
+  | 'TypeScript'
+  | 'Go'
+  | 'Kubernetes'
+  | 'Security'
+  | 'Distributed Systems'
+  | 'Rust'
+  | 'Python'
+  | 'GraphQL'
+  | 'PostgreSQL'
+  | 'Machine Learning'
+  | 'Design Systems'
+  | 'Observability'
+  | 'Terraform'
+  | 'Incident Response'
+  | 'Product Strategy'
+  | 'UX Research'
+type EmploymentType = 'Full-time' | 'Contract' | 'Part-time'
+type WorkMode = 'Remote' | 'Hybrid' | 'On-site'
 
 const skillOptions = [...new Set(clientRows.flatMap(row => row.skills))].sort((left, right) =>
   left.localeCompare(right),
@@ -594,7 +629,7 @@ function getInitials(value: string) {
 function createClientRows(count: number) {
   faker.seed(42)
 
-  const companies = [
+  const companies: DemoCompanySeed[] = [
     { name: 'Northstar', country: 'United States', region: 'North America' },
     { name: 'Atlas', country: 'Germany', region: 'Europe' },
     { name: 'Rivet', country: 'United Kingdom', region: 'Europe' },
@@ -603,8 +638,8 @@ function createClientRows(count: number) {
     { name: 'Vela', country: 'Canada', region: 'North America' },
     { name: 'Kumo', country: 'Singapore', region: 'Asia' },
     { name: 'Cinder', country: 'Spain', region: 'Europe' },
-  ] as const
-  const departments = [
+  ]
+  const departments: DemoDepartmentName[] = [
     'Engineering',
     'Platform',
     'Operations',
@@ -615,8 +650,8 @@ function createClientRows(count: number) {
     'Data',
     'Support',
     'Growth',
-  ] as const
-  const skillCatalog = [
+  ]
+  const skillCatalog: DemoSkillName[] = [
     'TypeScript',
     'Go',
     'Kubernetes',
@@ -633,8 +668,8 @@ function createClientRows(count: number) {
     'Incident Response',
     'Product Strategy',
     'UX Research',
-  ] as const
-  const salaryBaseByDepartment = {
+  ]
+  const salaryBaseByDepartment: Record<DemoDepartmentName, number> = {
     Engineering: 128000,
     Platform: 142000,
     Operations: 96000,
@@ -645,7 +680,19 @@ function createClientRows(count: number) {
     Data: 136000,
     Support: 82000,
     Growth: 98000,
-  } as const
+  }
+  const employmentTypes: EmploymentType[] = ['Full-time', 'Contract', 'Part-time']
+  const workModes: WorkMode[] = ['Remote', 'Hybrid', 'On-site']
+  const highlightCatalog = [
+    'Mentors onboarding cohorts',
+    'Runs architecture reviews',
+    'Owns reliability rotations',
+    'Leads cross-functional planning',
+    'Keeps customer escalations calm',
+    'Improves release automation',
+    'Builds internal tooling',
+    'Shapes pricing experiments',
+  ]
 
   return Array.from({ length: count }, (_, index) => {
     const company = faker.helpers.arrayElement(companies)
@@ -679,8 +726,8 @@ function createClientRows(count: number) {
       profileAccent: faker.color.rgb({ prefix: '#' }),
       officeCity: city,
       officeTimezone: faker.location.timeZone(),
-      employmentType: faker.helpers.arrayElement(['Full-time', 'Contract', 'Part-time'] as const),
-      workMode: faker.helpers.arrayElement(['Remote', 'Hybrid', 'On-site'] as const),
+      employmentType: faker.helpers.arrayElement(employmentTypes),
+      workMode: faker.helpers.arrayElement(workModes),
       region: company.region,
       department: {
         id: faker.string.uuid(),
@@ -695,16 +742,7 @@ function createClientRows(count: number) {
       skills,
       skillTaxonomy: [...new Set(skills.flatMap(getSkillTaxonomyValues))],
       highlights: faker.helpers.arrayElements(
-        [
-          'Mentors onboarding cohorts',
-          'Runs architecture reviews',
-          'Owns reliability rotations',
-          'Leads cross-functional planning',
-          'Keeps customer escalations calm',
-          'Improves release automation',
-          'Builds internal tooling',
-          'Shapes pricing experiments',
-        ] as const,
+        highlightCatalog,
         faker.number.int({ min: 1, max: 3 }),
       ),
       primarySkill,

@@ -1,14 +1,14 @@
 import type { TableSourceExecutionResult } from '#ui-tools/table'
-import type { TableResolvedFilterGroup } from '#ui-tools/table/types'
+import type { GenericObject, TableResolvedFilterGroup } from '#ui-tools/table/types'
 
-export interface DemoCompany extends GenericObject {
+export interface DemoCompany {
   id: string
   name: string
   country: string | null
   createdAt: string
 }
 
-export interface DemoDepartment extends GenericObject {
+export interface DemoDepartment {
   id: string
   companyId: string
   name: string
@@ -16,12 +16,13 @@ export interface DemoDepartment extends GenericObject {
   company?: DemoCompany
 }
 
-export interface DemoSkill extends GenericObject {
+export interface DemoSkill {
   id: string
   label: string
 }
 
-export interface DemoEmployeeSkill extends GenericObject {
+export interface DemoEmployeeSkill {
+
   employeeId: string
   skillId: string
   skill: DemoSkill
@@ -107,4 +108,4 @@ export const demoEmployeesClient = {
       })
     },
   },
-} as const
+}

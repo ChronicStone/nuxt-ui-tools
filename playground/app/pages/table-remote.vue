@@ -5,6 +5,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import {
   demoEmployeesClient,
+  type DemoEmployeeRow,
 } from '../lib/demo-employees-api'
 
 import DataList from '#ui-tools/table/components/DataList.vue'
@@ -304,7 +305,7 @@ const remoteSchema = defineTableSchema({
         minWidth: 260,
         pinned: 'left',
         render: ({ row }) => {
-          const employee = row as DemoEmployeeRow
+          const employee: DemoEmployeeRow = row
 
           return (
             <div class="flex min-w-0 items-center gap-3">
@@ -327,7 +328,7 @@ const remoteSchema = defineTableSchema({
         icon: 'i-lucide-at-sign',
         minWidth: 280,
         render: ({ row }) => {
-          const employee = row as DemoEmployeeRow
+          const employee: DemoEmployeeRow = row
 
           return (
             <div class="min-w-0">
@@ -346,12 +347,12 @@ const remoteSchema = defineTableSchema({
         sortableKey: 'fullName',
         minWidth: 240,
         render: ({ row }) => {
-          const employee = row as DemoEmployeeRow
-          const skills = employee.employeeSkills.map(entry => entry.skill.label).slice(0, 3)
+          const employee: DemoEmployeeRow = row
+          const skills = employee.employeeSkills.map((entry) => entry.skill.label).slice(0, 3)
 
           return (
             <div class="flex flex-wrap gap-1.5">
-              {skills.map(skill => (
+              {skills.map((skill) => (
                 <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={translateSkill(skill)} />
               ))}
             </div>
