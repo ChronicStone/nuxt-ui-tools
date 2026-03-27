@@ -45,6 +45,7 @@ export function useSpreadsheetReferences(params: UseSpreadsheetReferencesParams)
   const resolvedRows = computed(() =>
     applySpreadsheetReferenceResolutions({
       rows: params.rows.value,
+      references: referenceDefinitions.value,
       resolutions: resolutions.value,
       relations: params.schema.value.relations,
     }),

@@ -164,3 +164,41 @@ Behavior:
 - otherwise, relation paths and `row` are typed against the resolved import row
 - base `v.required()` affects row type inference
 - relation `v.required()` is runtime-only and does not make the field statically non-optional
+
+## References And Review Validity
+
+Top-level `references` derive canonical fields from imported fields. They can now use the same rules builder shape as columns.
+
+Example:
+
+```ts
+defineSpreadsheetSchema({
+  importKey: 'assessment.results',
+  columns: {
+    static: (column) => [
+      column.text('examNameRaw'),
+    ],
+  },
+  references: reference => [
+    reference.select('productId', {
+      source: 'examNameRaw',
+      options: [
+        { label: 'Business English 4 Skills', value: 'prod_1' },
+      ],
+      rules: v => [
+        v.required({
+          message: 'A product match is required before import',
+        }),
+      ],
+    }),
+  ],
+})
+```
+
+Behavior:
+
+- the references step is now permissive: unresolved matches do not block navigation on their own
+- unresolved reference outputs stay unset on the row
+- reference `rules` run after resolution on the final reference output value
+- row validity is decided in review by validation issues, not by a hardcoded unresolved-reference blocker
+- if the source field is multi-value, the resolved reference output is inferred as an array and reference rules receive that array type

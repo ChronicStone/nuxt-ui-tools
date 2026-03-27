@@ -4,6 +4,7 @@ import type {
   SpreadsheetOptionItem,
   SpreadsheetOptionsSource,
 } from './options'
+import type { SpreadsheetFieldRulesInput } from './validation'
 import type { NestedPaths } from '../../shared/types/utils'
 
 type SpreadsheetReferencePath<TRow> = Extract<NestedPaths<TRow>, string>
@@ -42,6 +43,7 @@ export interface SpreadsheetReferenceDefinition<
   TValue = unknown,
   TOption extends SpreadsheetOptionItem = SpreadsheetOptionItem,
   TSource extends string = string,
+  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
 > {
   kind: 'select'
   field: TField
@@ -50,14 +52,22 @@ export interface SpreadsheetReferenceDefinition<
     context: Record<string, unknown>
   }, TOption>
   getOptions?: SpreadsheetReferenceOptionsResolver<TOption>
+  rules?: SpreadsheetFieldRulesInput<TValue>
+  __rulesInput?: TRulesInput
 }
 
 export type SpreadsheetReferenceSelectConfig<
   TRow,
   TSource extends SpreadsheetReferencePath<TRow>,
   TOption extends SpreadsheetOptionItem,
+  TValue = SpreadsheetReferenceValue<
+    SpreadsheetReferenceValueAtPath<TRow, TSource>,
+    InferSpreadsheetOptionValue<TOption>
+  >,
+  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
 > = Omit<SpreadsheetReferenceSelectBaseConfig<TOption>, 'source'> & {
   source: TSource
+  rules?: TRulesInput
 }
 
 export type SpreadsheetReferenceValue<
@@ -76,14 +86,16 @@ export interface SpreadsheetReferenceBuilder<
       SpreadsheetReferenceValueAtPath<TRow, TSource>,
       InferSpreadsheetOptionValue<TOption>
     >,
+    TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
   >(
     field: TField,
-    config: SpreadsheetReferenceSelectConfig<TRow, TSource, TOption>,
+    config: SpreadsheetReferenceSelectConfig<TRow, TSource, TOption, TValue, TRulesInput>,
   ) => SpreadsheetReferenceDefinition<
     TField,
     TValue,
     TOption,
-    TSource
+    TSource,
+    TRulesInput
   >
 }
 

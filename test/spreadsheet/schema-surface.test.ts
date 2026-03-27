@@ -176,6 +176,40 @@ describe('spreadsheet package surface', () => {
     void populatedRow
   })
 
+  it('types reference rules against resolved output values', () => {
+    defineSpreadsheetSchema({
+      importKey: 'demo.reference-rules',
+      columns: {
+        static: (column) => [
+          column.text('examNameRaw'),
+          column.text('productLabels', {
+            multiple: true,
+          }),
+        ],
+      },
+      references: reference => [
+        reference.select('productId', {
+          source: 'examNameRaw',
+          options: [{ label: 'Business English', value: 'prod_1' }],
+          rules: v => [
+            v.required(),
+          ],
+        }),
+        reference.select('productIds', {
+          source: 'productLabels',
+          options: [{ label: 'Business English', value: 'prod_1' }],
+          rules: v => [
+            v.validate({
+              name: 'nonEmptySelection',
+              validator: (value: string[] | undefined) => (value?.length ?? 0) > 0,
+              message: 'At least one product must be resolved',
+            }),
+          ],
+        }),
+      ],
+    })
+  })
+
   it('types refine relations against buildRow output', () => {
     const schema = defineSpreadsheetSchema({
       importKey: 'demo.refine-import',

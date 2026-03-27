@@ -16,8 +16,6 @@ import type {
   SpreadsheetOptionColumnOptions,
   SpreadsheetReferenceBuilder,
   SpreadsheetReferenceDefinition,
-  SpreadsheetReferenceSelectConfig,
-  SpreadsheetReferenceValue,
   SpreadsheetResolvedColumns,
   SpreadsheetBuildRowDefinition,
   SpreadsheetFieldRulesInput,
@@ -359,16 +357,17 @@ export function createSpreadsheetReferenceBuilder<
   _TContext,
   TRow,
 >(): SpreadsheetReferenceBuilder<TRow> {
-  const select: SpreadsheetReferenceBuilder<TRow>['select'] = (field, config) => ({
-    kind: 'select',
-    field,
-    source: config.source,
-    options: config.options,
-    getOptions: config.getOptions,
-  })
-
   const builder: SpreadsheetReferenceBuilder<TRow> = {
-    select,
+    select(field, config) {
+      return {
+        kind: 'select',
+        field,
+        source: config.source,
+        options: config.options,
+        getOptions: config.getOptions,
+        rules: resolveSpreadsheetRules(config.rules),
+      }
+    },
   }
 
   return builder
