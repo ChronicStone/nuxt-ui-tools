@@ -217,7 +217,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Manual Matching Lab"
       description="Header row confirmation and manual column assignment should be the main focus in this scenario."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

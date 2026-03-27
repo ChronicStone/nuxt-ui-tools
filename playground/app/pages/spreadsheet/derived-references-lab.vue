@@ -100,7 +100,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Derived References Lab"
       description="Schema-level derived resolution. productLabelRaw stays on the row and productId is added separately through top-level references."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

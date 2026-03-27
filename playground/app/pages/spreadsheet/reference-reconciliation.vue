@@ -208,7 +208,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Reference Reconciliation"
       description="This scenario keeps one unresolved product label visible so the reconciliation step stays active."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

@@ -298,7 +298,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Happy Path Import"
       description="Clean baseline scenario with strong automatic matching and successful reference resolution."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

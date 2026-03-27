@@ -15,6 +15,34 @@ Use this skill for package-consumer tasks involving:
 - reference reconciliation
 - review and submit payload preparation
 
+## `SpreadsheetImport` Close Controls
+
+`SpreadsheetImport` can expose a close button for parent-controlled shells such as modals, slideovers, or fullscreen flows.
+
+Example:
+
+```vue
+<script setup lang="ts">
+const open = ref(true)
+const spreadsheet = useSpreadsheetImport(schema)
+</script>
+
+<template>
+  <UiSpreadsheetImport
+    v-if="open"
+    :spreadsheet="spreadsheet"
+    closable
+    @close="open = false"
+  />
+</template>
+```
+
+Behavior:
+
+- `closable` shows a close button in the import header
+- `@close` fires when that button is clicked
+- the component does not hide itself automatically; the parent owns open/closed state
+
 ## Read This Skill With
 
 - `skills/consumer/package/SKILL.md`

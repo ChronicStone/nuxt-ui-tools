@@ -176,7 +176,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Refine Relations Lab"
       description="Small deterministic workbook focused on refine() relations with explicit cross-field messages for review."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

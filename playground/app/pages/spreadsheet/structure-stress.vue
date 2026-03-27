@@ -211,7 +211,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Structure Stress Test"
       description="Large seeded workbook with offset headers, broken rows, unresolved values, and import overflow."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>
