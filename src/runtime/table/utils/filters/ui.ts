@@ -1,7 +1,6 @@
 import type {
   GenericObject,
   TableBooleanFilterDefinition,
-  TableBooleanFilterEditorConfig,
   TableBooleanFilterOperator,
   TableBooleanFilterUiResolved,
   TableDateFilterDefinition,
@@ -25,7 +24,6 @@ import type {
   TableNumberFilterUiResolved,
   TableNumberFilterUiScalarConfig,
   TableOptionFilterDefinition,
-  TableOptionFilterEditorConfig,
   TableOptionFilterOperator,
   TableOptionFilterUiResolved,
   TableTagFilterPreviewConfig,

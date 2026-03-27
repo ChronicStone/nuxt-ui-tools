@@ -1,7 +1,6 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 
 import type {
-  TableFilterOperator,
   TableOptionFilterDefinition,
   TableOptionFilterOperator,
   TableResolvedFilterOptionEntry,

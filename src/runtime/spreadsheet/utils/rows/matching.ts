@@ -1,6 +1,5 @@
 import type {
   SpreadsheetDynamicCollectionDefinition,
-  SpreadsheetDynamicCollectionItemDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
   SpreadsheetHeaderCell,
   SpreadsheetHeaderMatcher,

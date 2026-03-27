@@ -1,7 +1,6 @@
 import type {
   SpreadsheetColumnDefinition,
   SpreadsheetDynamicCollectionDefinition,
-  SpreadsheetDynamicCollectionItemDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
   SpreadsheetDynamicOptionsValueDefinition,
   SpreadsheetDynamicValueDefinition,

@@ -561,6 +561,8 @@ Inspect first:
 
 A task is not done when the code compiles.
 
+Before closing a task, if the implementation and requested changes appear complete and there are no known open questions, run the lint check as a final closing step and fix any reported lint issues.
+
 When relevant, completion includes:
 
 - implementation
@@ -650,6 +652,7 @@ Validation rules:
 - run the narrowest relevant checks first
 - do not default to the full suite when a targeted check is enough to validate the current change
 - if a change touches integration behavior, validate the relevant playground route or integration surface when feasible
+- when reaching the end of a task and everything appears good and clear, run `bun run lint` as the final closing check and fix any issues before handing the task off
 
 ## 12. Compatibility File Policy
 

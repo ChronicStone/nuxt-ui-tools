@@ -7,7 +7,6 @@ import type {
   SpreadsheetHeaderDefinition,
   SpreadsheetMatchingDefinition,
   SpreadsheetReferenceBuilder,
-  SpreadsheetReferenceDefinition,
   SpreadsheetSchemaWithRefine,
   SpreadsheetResolvedColumns,
   SpreadsheetReviewDefinition,
@@ -19,16 +18,9 @@ type SpreadsheetResolvedColumnsInput<TColumns> = [TColumns] extends [Spreadsheet
   ? SpreadsheetResolvedColumns<TColumns>
   : undefined
 
-type SpreadsheetReferencesDefinition<
-  _TContext,
-  TRow,
-> =
-  | readonly SpreadsheetReferenceDefinition[]
-  | ((reference: SpreadsheetReferenceBuilder<TRow>) => readonly unknown[])
-
 type SpreadsheetExtractedReference<TValue> = Extract<
   TValue,
-  SpreadsheetReferenceDefinition<any, any, any>
+  import('../types').SpreadsheetReferenceDefinition<any, any, any>
 >
 
 type SpreadsheetResolvedReferences<TReferences> = TReferences extends (...args: infer _Args) => infer TResult
@@ -97,11 +89,6 @@ type SpreadsheetDefinedSchemaReturn<
     TReferences,
     TBuildRow
   >
->
-
-type SpreadsheetSchemaRow<TColumns, TReferences> = SpreadsheetRowData<
-  SpreadsheetResolvedColumnsInput<TColumns>,
-  SpreadsheetResolvedReferences<TReferences>
 >
 
 function withSpreadsheetRefine<TSchema extends { importKey: string }>(
