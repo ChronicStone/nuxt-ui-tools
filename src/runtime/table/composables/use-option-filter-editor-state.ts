@@ -27,7 +27,7 @@ export interface UseOptionFilterEditorStateParams {
   active?: Ref<boolean>
   ready?: Ref<boolean>
   filters: ReturnType<typeof useTableFilters>
-  queryContent: Pick<UseTableDataReturn, 'facets' | 'requestContext'>
+  queryContent: Pick<UseTableDataReturn, 'facets' | 'facetsBaseContext'>
   schema: ComputedRef<TableSchemaView>
   setSelectedValues: (values: PrimitiveFilterValue[]) => void
 }

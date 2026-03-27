@@ -17,9 +17,19 @@ export type TableQueryDefinition<TData = unknown> = Omit<UseQueryOptions<TData>,
 
 export type TableSourceMode = 'client' | 'remote'
 
-export interface TableSourceExecutionResult<TRow extends GenericObject = GenericObject> {
+export interface TableSourceExecutionResult<
+  TRow extends GenericObject = GenericObject,
+  TKey extends string = string,
+> {
   rows: TRow[]
   rowCount: number
+  facets?: TableFacetResult<TKey>[]
+}
+
+export interface TableGlobalFacetDescriptor<TKey extends string = string> {
+  key: TKey
+  mode?: 'exclude-self' | 'include-self'
+  limit?: number
 }
 
 export interface TableFacetRequestDescriptor<TKey extends string = string> {
@@ -61,6 +71,18 @@ export interface TableSourceRequestContext<
   filters: TableResolvedFilterGroup<TableKnownFieldPath<TRow> | string>
   search: TableSourceSearchRequest<TRow>
   context: TContext
+  facets?: TableGlobalFacetDescriptor<TableKnownFieldPath<TRow> | string>[]
+}
+
+export interface TableFacetsContext<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TKey extends string = TableKnownFieldPath<TRow> | string,
+> {
+  filters: TableResolvedFilterGroup<TKey>
+  search: TableSourceSearchRequest<TRow>
+  context: TContext
+  facets: TableFacetRequestDescriptor<TKey>[]
 }
 
 export interface TableClientSource<
@@ -72,17 +94,22 @@ export interface TableClientSource<
   query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
 }
 
+export type TableRemoteFacetSource<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TKey extends string = TableKnownFieldPath<TRow> | string,
+> =
+  | true
+  | ((ctx: TableFacetsContext<TRow, TContext, TKey>) => TableQueryDefinition<TableFacetExecutionResult<TKey>>)
+
 export interface TableRemoteSource<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
-  TResult = TableSourceExecutionResult<TRow>,
+  TResult = TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>,
 > {
   mode: 'remote'
   query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
-  facets?: (ctx: {
-    table: TableSourceRequestContext<TRow, TContext>
-    facets: TableFacetRequestDescriptor<TableKnownFieldPath<TRow> | string>[]
-  }) => TableQueryDefinition<TableFacetExecutionResult<TableKnownFieldPath<TRow> | string>>
+  facets?: TableRemoteFacetSource<TRow, TContext>
 }
 
 export type TableSource<
@@ -100,9 +127,9 @@ export type TableSource<
   | TableRemoteSource<
       TRow,
       TContext,
-      Extract<TResult, TableSourceExecutionResult<TRow>> extends never
-        ? TableSourceExecutionResult<TRow>
-        : Extract<TResult, TableSourceExecutionResult<TRow>>
+      Extract<TResult, TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>> extends never
+        ? TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+        : Extract<TResult, TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>>
     >
 
 export type NormalizeTableSource<TSource, TContext extends GenericObject> = TSource extends {

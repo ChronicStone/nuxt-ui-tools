@@ -1,4 +1,5 @@
-import type { GenericObject } from '#ui-tools/table'
+import type { TableSourceExecutionResult } from '#ui-tools/table'
+import type { TableResolvedFilterGroup } from '#ui-tools/table/types'
 
 export interface DemoCompany extends GenericObject {
   id: string
@@ -47,18 +48,20 @@ export interface DemoEmployeesTableRequest {
     key: string
     dir: 'asc' | 'desc'
   }>
-  filters: Record<string, unknown>
+  filters: TableResolvedFilterGroup<string>
   search: {
     value: string
     fields: string[]
   }
   context: Record<string, unknown>
+  facets?: Array<{
+    key: string
+    mode?: 'exclude-self' | 'include-self'
+    limit?: number
+  }>
 }
 
-export interface DemoEmployeesTableResponse<TRow> {
-  rows: TRow[]
-  rowCount: number
-}
+export type DemoEmployeesTableResponse = TableSourceExecutionResult<DemoEmployeeRow, string>
 
 export interface FilterOptionsRequest {
   search?: string
@@ -75,55 +78,13 @@ export interface FilterOptionsResponse {
   total?: number
 }
 
-export interface DemoEmployeesFacetsRequest {
-  request: {
-    pagination: {
-      pageIndex: number
-      pageSize: number
-    }
-    sorting: Array<{
-      key: string
-      dir: 'asc' | 'desc'
-    }>
-    filters: {
-      type: 'group'
-      combinator: 'and' | 'or'
-      children: Array<any>
-    }
-    search: {
-      value?: string
-      fields?: string[]
-    }
-    context: Record<string, unknown>
-  }
-  facets: Array<{
-    key: string
-    mode?: 'exclude-self' | 'include-self'
-    search?: string
-    limit?: number
-    cursor?: string
-  }>
-}
-
-export interface DemoEmployeesFacetsResponse {
-  facets: Array<{
-    key: string
-    options: Array<{
-      value: unknown
-      count: number
-    }>
-    nextCursor?: string | null
-    total?: number
-  }>
-}
-
 export type DemoEmployeeFilterOptionsResource = 'companies' | 'departments' | 'skills'
 
 export const demoEmployeesClient = {
-  queryTable<TRow>(options: { request: DemoEmployeesTableRequest }) {
-    return $fetch<DemoEmployeesTableResponse<TRow>>('/api/table/demo-employees/query', {
+  queryTable(request: DemoEmployeesTableRequest) {
+    return $fetch<DemoEmployeesTableResponse>('/api/table/demo-employees/query', {
       method: 'POST',
-      body: options.request,
+      body: request,
     })
   },
   filterOptions: {
@@ -145,11 +106,5 @@ export const demoEmployeesClient = {
         body: options.request,
       })
     },
-  },
-  queryFacets(options: { request: DemoEmployeesFacetsRequest }) {
-    return $fetch<DemoEmployeesFacetsResponse>('/api/table/demo-employees/facets', {
-      method: 'POST',
-      body: options.request,
-    })
   },
 } as const

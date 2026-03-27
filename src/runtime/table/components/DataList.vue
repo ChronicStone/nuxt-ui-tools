@@ -40,16 +40,16 @@ const internals = props.table.__internals
 const tableHeight = computed(() => normalizeDimension(props.height ?? '36rem'))
 const titleText = computed(() => props.title ?? humanizeKey(props.table.schema.value.tableKey))
 const descriptionText = computed(() => props.description)
-const flowGridActive = computed(
-  () => internals.controls.tableLayout.value === 'grid' && internals.grid.mode.value === 'flow',
+const gridActive = computed(
+  () => internals.controls.tableLayout.value === 'grid',
 )
 const contentShellClass = computed(() =>
-  flowGridActive.value
+  gridActive.value
     ? 'grid gap-5'
     : 'overflow-hidden rounded-md border border-default bg-default',
 )
 const footerClass = computed(() =>
-  flowGridActive.value
+  gridActive.value
     ? 'rounded-md border border-default/70 bg-default/80 shadow-sm backdrop-blur'
     : 'border-t border-default/70',
 )

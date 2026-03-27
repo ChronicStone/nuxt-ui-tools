@@ -29,8 +29,9 @@ const schema = defineTableSchema({
   rowKey: 'id',
   source: {
     mode: 'remote',
+    facets: true,
     query: (ctx) => ({
-      queryKey: ['users', ctx.search.value],
+      queryKey: ['users', ctx.search.value, ctx.facets],
       queryFn: async () => ({
         rows: [
           {
@@ -144,6 +145,17 @@ describe('defineTableSchema inference', () => {
   it('exposes search fields on the source query context', () => {
     expectTypeOf<SourceContext['search']['value']>().toEqualTypeOf<string>()
     expectTypeOf<SourceContext['search']['fields']>().toMatchTypeOf<string[]>()
+  })
+
+  it('exposes optional global facet descriptors on the source query context', () => {
+    expectTypeOf<SourceContext['facets']>().toMatchTypeOf<
+      | Array<{
+          key: string
+          mode?: 'exclude-self' | 'include-self'
+          limit?: number
+        }>
+      | undefined
+    >()
   })
 
   it('keeps nested sort keys inferred through the schema surface', () => {
