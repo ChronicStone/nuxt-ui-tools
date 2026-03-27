@@ -5,7 +5,6 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import {
   demoEmployeesClient,
-  type DemoEmployeeRow,
 } from '../lib/demo-employees-api'
 
 import DataList from '#ui-tools/table/components/DataList.vue'
@@ -304,60 +303,50 @@ const remoteSchema = defineTableSchema({
         icon: 'i-lucide-user-round',
         minWidth: 260,
         pinned: 'left',
-        render: ({ row }) => {
-          const employee: DemoEmployeeRow = row
-
-          return (
-            <div class="flex min-w-0 items-center gap-3">
-              <div class="flex size-9 shrink-0 items-center justify-center rounded-full border border-default bg-elevated text-[11px] font-semibold text-highlighted">
-                {getInitials(employee.fullName)}
-              </div>
-              <div class="min-w-0">
-                <div class="truncate font-medium text-highlighted">{employee.fullName}</div>
-                <div class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
-                  <UIcon name="i-lucide-sparkles" class="size-3 shrink-0" />
-                  <span class="truncate">{employee.employeeSkills[0]?.skill.label ? translateSkill(employee.employeeSkills[0].skill.label) : t('playground.tableCommon.generalist')}</span>
-                </div>
+        render: ({ row }) => (
+          <div class="flex min-w-0 items-center gap-3">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded-full border border-default bg-elevated text-[11px] font-semibold text-highlighted">
+              {getInitials(row.fullName)}
+            </div>
+            <div class="min-w-0">
+              <div class="truncate font-medium text-highlighted">{row.fullName}</div>
+              <div class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
+                <UIcon name="i-lucide-sparkles" class="size-3 shrink-0" />
+                <span class="truncate">{row.employeeSkills[0]?.skill.label ? translateSkill(row.employeeSkills[0].skill.label) : t('playground.tableCommon.generalist')}</span>
               </div>
             </div>
-          )
-        },
+          </div>
+        ),
       }),
       column.field('email', {
         label: () => t('playground.tableCommon.columns.email'),
         icon: 'i-lucide-at-sign',
         minWidth: 280,
-        render: ({ row }) => {
-          const employee: DemoEmployeeRow = row
-
-          return (
-            <div class="min-w-0">
-              <div class="truncate text-highlighted">{employee.email}</div>
-              <div class="mt-1 flex items-center gap-1.5 text-xs text-muted">
-                <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
-                <span class="truncate">{employee.department?.company?.name ?? t('playground.tableRemote.noCompany')}</span>
-              </div>
+        render: ({ row }) => (
+          <div class="min-w-0">
+            <div class="truncate text-highlighted">{row.email}</div>
+            <div class="mt-1 flex items-center gap-1.5 text-xs text-muted">
+              <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
+              <span class="truncate">{row.department?.company?.name ?? t('playground.tableRemote.noCompany')}</span>
             </div>
-          )
-        },
+          </div>
+        ),
       }),
       column.composite('skills', {
         label: () => t('playground.tableCommon.columns.skills'),
         icon: 'i-lucide-tags',
         sortableKey: 'fullName',
         minWidth: 240,
-        render: ({ row }) => {
-          const employee: DemoEmployeeRow = row
-          const skills = employee.employeeSkills.map((entry) => entry.skill.label).slice(0, 3)
-
-          return (
-            <div class="flex flex-wrap gap-1.5">
-              {skills.map((skill) => (
+        render: ({ row }) => (
+          <div class="flex flex-wrap gap-1.5">
+            {row.employeeSkills
+              .map((entry) => entry.skill.label)
+              .slice(0, 3)
+              .map((skill) => (
                 <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={translateSkill(skill)} />
               ))}
-            </div>
-          )
-        },
+          </div>
+        ),
       }),
       column.field('department.company.country', {
         label: () => t('playground.tableCommon.columns.country'),
@@ -415,13 +404,12 @@ const remoteSchema = defineTableSchema({
     enabled: true,
     gridSize: '1 md:2 xl:3',
     renderItem: ({ row }) => {
-      const employee = row
-      const employeeSkills = employee.employeeSkills.map((entry) => translateSkill(entry.skill.label))
-      const departmentName = employee.department?.name ? translateDepartment(employee.department.name) : t('playground.tableRemote.noDepartment')
-      const companyName = employee.department?.company?.name ?? t('playground.tableRemote.noCompany')
-      const countryName = employee.department?.company?.country ? translateCountry(employee.department.company.country) : t('playground.tableCommon.countries.unknown')
-      const salary = employee.salary ?? 0
-      const hiredAt = employee.hiredAt ?? new Date().toISOString()
+      const employeeSkills = row.employeeSkills.map((entry) => translateSkill(entry.skill.label))
+      const departmentName = row.department?.name ? translateDepartment(row.department.name) : t('playground.tableRemote.noDepartment')
+      const companyName = row.department?.company?.name ?? t('playground.tableRemote.noCompany')
+      const countryName = row.department?.company?.country ? translateCountry(row.department.company.country) : t('playground.tableCommon.countries.unknown')
+      const salary = row.salary ?? 0
+      const hiredAt = row.hiredAt ?? new Date().toISOString()
 
       return (
         <UCard
@@ -437,10 +425,10 @@ const remoteSchema = defineTableSchema({
               <div class="flex items-start justify-between gap-3">
                 <div class="flex min-w-0 items-center gap-3">
                   <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
-                    {getInitials(employee.fullName)}
+                    {getInitials(row.fullName)}
                   </div>
                   <div class="min-w-0">
-                    <div class="truncate font-medium text-highlighted">{employee.fullName}</div>
+                    <div class="truncate font-medium text-highlighted">{row.fullName}</div>
                     <div class="mt-1 flex items-center gap-2 text-sm text-muted">
                       <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
                       <span class="truncate">{departmentName}</span>
@@ -449,10 +437,10 @@ const remoteSchema = defineTableSchema({
                 </div>
 
                 <UBadge
-                  color={employee.isActive ? 'success' : 'neutral'}
-                  variant={employee.isActive ? 'soft' : 'subtle'}
+                  color={row.isActive ? 'success' : 'neutral'}
+                  variant={row.isActive ? 'soft' : 'subtle'}
                   size="sm"
-                  label={employee.isActive ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
+                  label={row.isActive ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
                 />
               </div>
             ),

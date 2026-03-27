@@ -391,59 +391,47 @@ const clientSchema = defineTableSchema({
         icon: 'i-lucide-user-round',
         minWidth: 260,
         pinned: 'left',
-        render: ({ row }) => {
-          const employee = row
-
-          return (
-            <div class="flex min-w-0 items-center gap-3">
-              <div class="flex size-9 shrink-0 items-center justify-center rounded-full border border-default bg-elevated text-[11px] font-semibold text-highlighted">
-                {getInitials(employee.fullName)}
-              </div>
-              <div class="min-w-0">
-                <div class="truncate font-medium text-highlighted">{employee.fullName}</div>
-                <div class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
-                  <UIcon name="i-lucide-sparkles" class="size-3 shrink-0" />
-                  <span class="truncate">{employee.skills[0] ? translateSkill(employee.skills[0]) : t('playground.tableCommon.generalist')}</span>
-                </div>
+        render: ({ row }) => (
+          <div class="flex min-w-0 items-center gap-3">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded-full border border-default bg-elevated text-[11px] font-semibold text-highlighted">
+              {getInitials(row.fullName)}
+            </div>
+            <div class="min-w-0">
+              <div class="truncate font-medium text-highlighted">{row.fullName}</div>
+              <div class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+                <UIcon name="i-lucide-sparkles" class="size-3 shrink-0" />
+                <span class="truncate">{row.skills[0] ? translateSkill(row.skills[0]) : t('playground.tableCommon.generalist')}</span>
               </div>
             </div>
-          )
-        },
+          </div>
+        ),
       }),
       column.field('email', {
         label: () => t('playground.tableCommon.columns.email'),
         icon: 'i-lucide-at-sign',
         minWidth: 280,
-        render: ({ row }) => {
-          const employee = row
-
-          return (
-            <div class="min-w-0">
-              <div class="truncate text-highlighted">{employee.email}</div>
-              <div class="mt-1 flex items-center gap-1.5 text-xs text-muted">
-                <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
-                <span class="truncate">{employee.department.company.name}</span>
-              </div>
+        render: ({ row }) => (
+          <div class="min-w-0">
+            <div class="truncate text-highlighted">{row.email}</div>
+            <div class="mt-1 flex items-center gap-1.5 text-xs text-muted">
+              <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
+              <span class="truncate">{row.department.company.name}</span>
             </div>
-          )
-        },
+          </div>
+        ),
       }),
       column.composite('skillsSummary', {
         label: () => t('playground.tableCommon.columns.skills'),
         icon: 'i-lucide-tags',
         sortableKey: 'fullName',
         minWidth: 230,
-        render: ({ row }) => {
-          const employee = row
-
-          return (
-            <div class="flex flex-wrap gap-1.5">
-              {employee.skills.slice(0, 3).map((skill) => (
-                <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={translateSkill(skill)} />
-              ))}
-            </div>
-          )
-        },
+        render: ({ row }) => (
+          <div class="flex flex-wrap gap-1.5">
+            {row.skills.slice(0, 3).map((skill) => (
+              <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={translateSkill(skill)} />
+            ))}
+          </div>
+        ),
       }),
       column.field('department.company.country', {
         label: () => t('playground.tableCommon.columns.country'),
@@ -502,92 +490,88 @@ const clientSchema = defineTableSchema({
     enabled: true,
     mode: 'flow',
     gridSize: '1 md:2 lg:3 xl:4',
-    renderItem: ({ row }) => {
-      const employee = row
-
-      return (
-        <UCard
-          class="rounded-md h-full"
-          ui={{
-            root: 'flex h-full flex-col',
-            header: 'p-4',
-            body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
-            footer: 'mt-auto p-4 pt-3',
-          }}
-          v-slots={{
-            header: () => (
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-3">
-                  <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
-                    {getInitials(employee.fullName)}
-                  </div>
-                  <div class="min-w-0">
-                    <div class="truncate font-medium text-highlighted">{employee.fullName}</div>
-                    <div class="mt-1 flex items-center gap-2 text-sm text-muted">
-                      <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
-                      <span class="truncate">{employee.email}</span>
-                    </div>
+    renderItem: ({ row }) => (
+      <UCard
+        class="rounded-md h-full"
+        ui={{
+          root: 'flex h-full flex-col',
+          header: 'p-4',
+          body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
+          footer: 'mt-auto p-4 pt-3',
+        }}
+        v-slots={{
+          header: () => (
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-3">
+                <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
+                  {getInitials(row.fullName)}
+                </div>
+                <div class="min-w-0">
+                  <div class="truncate font-medium text-highlighted">{row.fullName}</div>
+                  <div class="mt-1 flex items-center gap-2 text-sm text-muted">
+                    <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
+                    <span class="truncate">{row.email}</span>
                   </div>
                 </div>
-                <div class="flex shrink-0 items-start gap-2">
-                  <UBadge
-                    color={employee.isActive ? 'success' : 'neutral'}
-                    variant={employee.isActive ? 'soft' : 'subtle'}
+              </div>
+              <div class="flex shrink-0 items-start gap-2">
+                <UBadge
+                  color={row.isActive ? 'success' : 'neutral'}
+                  variant={row.isActive ? 'soft' : 'subtle'}
+                  size="sm"
+                  label={row.isActive ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
+                />
+                <UiRowActions content={{ align: 'end', side: 'bottom', sideOffset: 8 }} modal={false}>
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-ellipsis-vertical"
                     size="sm"
-                    label={employee.isActive ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
+                    square
                   />
-                  <UiRowActions content={{ align: 'end', side: 'bottom', sideOffset: 8 }} modal={false}>
-                    <UButton
-                      color="neutral"
-                      variant="ghost"
-                      icon="i-lucide-ellipsis-vertical"
-                      size="sm"
-                      square
-                    />
-                  </UiRowActions>
-                 </div>
-              </div>
-            ),
-            default: () => (
-              <>
-                <div class="grid gap-3 sm:grid-cols-2">
-                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                    <div class="text-xs text-muted">{t('playground.tableCommon.cards.company')}</div>
-                    <div class="truncate text-sm font-medium text-highlighted">
-                      {employee.department.company.name}
-                    </div>
-                  </div>
-
-                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                    <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
-                    <div class="text-sm font-medium text-highlighted">
-                      {formatCurrency(employee.salary)}
-                    </div>
+                </UiRowActions>
+               </div>
+            </div>
+          ),
+          default: () => (
+            <>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                  <div class="text-xs text-muted">{t('playground.tableCommon.cards.company')}</div>
+                  <div class="truncate text-sm font-medium text-highlighted">
+                    {row.department.company.name}
                   </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                  {employee.skills.slice(0, 4).map((skill) => (
-                    <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={translateSkill(skill)} />
-                  ))}
+                <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                  <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
+                  <div class="text-sm font-medium text-highlighted">
+                    {formatCurrency(row.salary)}
+                  </div>
                 </div>
-              </>
-            ),
-            footer: () => (
-              <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
-                <div class="flex min-w-0 flex-1 items-center gap-2">
-                  <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none">
-                    {getCountryFlag(employee.department.company.country)}
-                  </span>
-                  <span class="truncate">{translateCountry(employee.department.company.country)}</span>
-                </div>
-                <div class="shrink-0">{formatDate(employee.hiredAt)}</div>
               </div>
-            ),
-          }}
-        />
-      )
-    },
+
+              <div class="flex flex-wrap gap-2">
+                {row.skills.slice(0, 4).map((skill) => (
+                  <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={translateSkill(skill)} />
+                ))}
+              </div>
+            </>
+          ),
+          footer: () => (
+            <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
+              <div class="flex min-w-0 flex-1 items-center gap-2">
+                <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none">
+                  {getCountryFlag(row.department.company.country)}
+                </span>
+                <span class="truncate">{translateCountry(row.department.company.country)}</span>
+              </div>
+              <div class="shrink-0">{formatDate(row.hiredAt)}</div>
+            </div>
+          ),
+        }}
+      />
+    ),
     defaultSorting: {
       key: 'fullName',
       dir: 'asc',
