@@ -18,7 +18,12 @@ const props = defineProps<{
   title?: string
   description?: string
   onDownloadTemplate?: () => void
+  closable?: boolean
   mode?: 'inline' | 'fullscreen'
+}>()
+
+const emit = defineEmits<{
+  close: []
 }>()
 
 const view = useSpreadsheetView({
@@ -47,6 +52,7 @@ const stageTitle = computed(() => {
 const stageDescription = computed(() => currentStep.value?.description ?? '')
 const renderMode = computed(() => props.mode ?? 'inline')
 const isFullscreen = computed(() => renderMode.value === 'fullscreen')
+const isClosable = computed(() => props.closable ?? false)
 const isPreparingNextStep = ref<boolean>(false)
 const hasWorkbook = computed(() => Boolean(props.spreadsheet.workbook.value))
 const hasHeaders = computed(() => props.spreadsheet.headers.value.length > 0)
@@ -155,6 +161,10 @@ async function handlePrimaryAction() {
   }
 }
 
+function handleClose() {
+  emit('close')
+}
+
 watch(hasWorkbook, (nextHasWorkbook) => {
   if (!nextHasWorkbook) return
   if (activeStep.value !== 'upload') return
@@ -204,6 +214,8 @@ watch(hasWorkbook, (nextHasWorkbook) => {
             <SpreadsheetImportHeader
               :title="stageTitle"
               :description="stageDescription"
+              :closable="isClosable"
+              @close="handleClose"
             />
 
             <SpreadsheetImportFileBar

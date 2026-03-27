@@ -109,7 +109,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Column Resolve Lab"
       description="In-place smart resolution. The imported Product column resolves directly into productId, so the raw source field is not kept on the final row."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

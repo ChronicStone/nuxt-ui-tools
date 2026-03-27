@@ -108,7 +108,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Reference Rules Lab"
       description="Unresolved references are allowed in matching, then reference rules decide row validity in review."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

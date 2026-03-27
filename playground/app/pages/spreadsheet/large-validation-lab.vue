@@ -305,7 +305,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Large Validation Lab"
       description="Seeded 250-row workbook with exactly 20% invalid rows across missing values, score issues, batch naming violations, and center mismatches."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

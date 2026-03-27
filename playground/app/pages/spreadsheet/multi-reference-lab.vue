@@ -119,7 +119,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Multi Reference Lab"
       description="Focused scenario for references resolving from a multi-value source field into an array output."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>

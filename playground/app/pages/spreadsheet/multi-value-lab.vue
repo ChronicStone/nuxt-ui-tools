@@ -238,7 +238,9 @@ onMounted(() => {
       :spreadsheet="spreadsheet"
       title="Multi Value Lab"
       description="Focused validation route for built-in static multiple columns, including text, number, option, enum, and boolean parsing."
+      closable
       mode="fullscreen"
+      @close="navigateTo('/spreadsheet')"
     />
   </section>
 </template>
