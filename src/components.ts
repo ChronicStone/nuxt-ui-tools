@@ -27,6 +27,13 @@ function getPublicComponents(runtimeDir: string, options: {
       global: options.global,
     },
 
+    // Form
+    {
+      name: `${prefix}Form`,
+      filePath: `${runtimeDir}/form/components/root/Form.vue`,
+      global: options.global,
+    },
+
     // Spreadsheet
     {
       name: `${prefix}SpreadsheetImport`,

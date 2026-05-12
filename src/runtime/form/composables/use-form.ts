@@ -1,0 +1,160 @@
+import { computed, shallowRef, toValue } from 'vue'
+
+import type {
+  FormController,
+  FormObject,
+  FormSubmitAction,
+  FormSubmitHandler,
+  FormSubmitHandlerResult,
+  RuntimeUseFormParams,
+  UseFormParams,
+  FormRuntime,
+} from '../types'
+
+export function useForm<const TSchema, TSubmitData = unknown>(
+  params: UseFormParams<TSchema, TSubmitData>,
+): FormController<TSchema, TSubmitData>
+export function useForm(params: RuntimeUseFormParams) {
+  const runtime = shallowRef<FormRuntime | null>(null)
+  const schema = computed(() => toValue(params.schema))
+  const input = computed(() => params.input ? toValue(params.input) : undefined)
+  const isBound = computed(() => runtime.value !== null)
+  const context = computed(() => runtime.value?.context ?? {})
+  const internal = computed(() => runtime.value?.state ?? {})
+  const output = computed(() => runtime.value?.output.value ?? {})
+  const errors = computed(() => runtime.value?.errors.value ?? [])
+  const hasErrors = computed(() => errors.value.length > 0)
+  const isValid = computed(() => !hasErrors.value)
+  const dirtyPaths = computed(() => runtime.value?.dirtyPaths.value ?? [])
+  const isDirty = computed(() => runtime.value?.isDirty.value ?? false)
+  const actionPending = computed<FormSubmitAction | null>(() => runtime.value?.actionPending.value ?? null)
+  const isSubmitting = computed(() => actionPending.value === 'submit')
+  const currentStepIndex = computed(() => runtime.value?.currentStepIndex.value ?? 0)
+  const currentStep = computed(() => runtime.value?.currentStep.value ?? null)
+  const steps = computed(() => runtime.value?.steps.value ?? [])
+  const isStepped = computed(() => runtime.value?.isStepped.value ?? false)
+  const isFirstStep = computed(() => runtime.value?.isFirstStep.value ?? true)
+  const isLastStep = computed(() => runtime.value?.isLastStep.value ?? true)
+  const canGoPrevious = computed(() => runtime.value?.canGoPrevious.value ?? false)
+  const canGoNext = computed(() => runtime.value?.canGoNext.value ?? false)
+
+  async function submitHandler(
+    externalSubmitHandler?: FormSubmitHandler<FormObject, unknown>,
+  ): Promise<FormSubmitHandlerResult<unknown>> {
+    const current = runtime.value
+    if (!current) return { success: false }
+    return await current.submitHandler(externalSubmitHandler ?? params.onSubmit)
+  }
+
+  async function submit(externalSubmitHandler?: FormSubmitHandler<FormObject, unknown>) {
+    const result = await submitHandler(externalSubmitHandler)
+    return result.success
+  }
+
+  async function validate() {
+    return await runtime.value?.validate() ?? false
+  }
+
+  async function validateCurrentStep() {
+    return await runtime.value?.validateCurrentStep() ?? false
+  }
+
+  function getError(path: string) {
+    return errors.value.find(error => error.path === path)?.message
+  }
+
+  function clearErrors() {
+    runtime.value?.clearErrors()
+  }
+
+  function reset() {
+    runtime.value?.reset()
+  }
+
+  async function nextStep() {
+    return await runtime.value?.nextStep() ?? false
+  }
+
+  function previousStep() {
+    return runtime.value?.previousStep() ?? false
+  }
+
+  async function goToStep(index: number) {
+    return await runtime.value?.goToStep(index) ?? false
+  }
+
+  function bind(nextRuntime: FormRuntime) {
+    runtime.value = nextRuntime
+  }
+
+  function unbind(previousRuntime: FormRuntime) {
+    if (runtime.value === previousRuntime) runtime.value = null
+  }
+
+  const state = {
+    internal,
+    output,
+    get: (path: string) => runtime.value?.getValue(path),
+    set: (path: string, value: unknown) => runtime.value?.setValue(path, value),
+    reset,
+  }
+  const meta = {
+    isBound,
+    isDirty,
+    dirtyPaths,
+  }
+  const validation = {
+    errors,
+    hasErrors,
+    isValid,
+    validate,
+    validateCurrentStep,
+    getError,
+    clear: clearErrors,
+  }
+  const submission = {
+    actionPending,
+    isSubmitting,
+    submit,
+    submitHandler,
+  }
+  const navigation = {
+    currentStepIndex,
+    currentStep,
+    steps,
+    isStepped,
+    isFirstStep,
+    isLastStep,
+    canGoPrevious,
+    canGoNext,
+    next: nextStep,
+    previous: previousStep,
+    goTo: goToStep,
+  }
+
+  return {
+    schema,
+    input,
+    context,
+    state,
+    meta,
+    validation,
+    submission,
+    navigation,
+    internal,
+    output,
+    errors,
+    dirtyPaths,
+    isDirty,
+    actionPending,
+    isSubmitting,
+    validate,
+    submit,
+    submitHandler,
+    reset,
+    nextStep,
+    previousStep,
+    bind,
+    unbind,
+  }
+}

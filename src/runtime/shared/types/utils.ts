@@ -77,6 +77,7 @@ export type IsObject<T> = T extends object ? (T extends any[] ? never : T) : nev
 
 export type RenderableType = string | number | VNodeChild | null | undefined
 export type LazyTextValue = string | number | (() => string | number)
+export type LazyRenderableValue = LazyTextValue | VNodeChild | (() => VNodeChild)
 
 export type InferParams<T> = T extends (params: infer P) => any ? P : never
 

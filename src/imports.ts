@@ -53,6 +53,15 @@ export function setupImports(runtimeDir: string) {
       { name: 'useTable', from: 'table' },
     ]),
 
+    // Form
+    ...withRuntime(runtimeDir, [
+      { name: 'defineFormField', from: 'form' },
+      { name: 'defineFormFields', from: 'form' },
+      { name: 'defineFormSchema', from: 'form' },
+      { name: 'useForm', from: 'form' },
+      { name: 'useFormSubmit', from: 'form' },
+    ]),
+
     // Spreadsheet
     ...withRuntime(runtimeDir, [
       { name: 'defineSpreadsheetSchema', from: 'spreadsheet/schema' },
