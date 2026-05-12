@@ -19,6 +19,7 @@ import {
   isSteppedSchema,
   shouldRenderField,
 } from '../utils/state'
+import { isRecord } from '../utils/path'
 import { getSchemaContext, useFormContextResources } from './use-form-context-resources'
 import { useFormOptionRegistry } from './use-form-option-registry'
 import { useFormState } from './use-form-state'
@@ -219,7 +220,7 @@ function createFieldApi(params: {
   clearExternalError: () => void
   validateField: () => Promise<boolean>
 }): FormFieldApi {
-  const api: FormFieldApi = {
+  const api: FormFieldApi<unknown, unknown, FormRuntime['context']> = {
     value: {
       get: () => params.getValue(params.path),
       set: value => params.setValue(params.path, value),
@@ -232,6 +233,7 @@ function createFieldApi(params: {
       loading: () => params.optionRegistry.get(params.path).loading.value,
       error: () => params.optionRegistry.get(params.path).error.value,
       refresh: () => params.optionRegistry.get(params.path).refresh(),
+      add: option => params.optionRegistry.get(params.path).add(option),
       create: label => params.optionRegistry.get(params.path).create(label),
     },
     upload: {
@@ -242,6 +244,13 @@ function createFieldApi(params: {
     },
     context: {
       get: key => params.ctx[key],
+      set: (key, value) => {
+        params.ctx[key].value = value
+      },
+      update: (key, updater) => {
+        updateContextResourceValue(params.ctx[key], updater)
+      },
+      patch: (key, value) => patchContextResourceValue(params.ctx[key], value),
       refresh: async (key) => {
         const resource = params.ctx[key]
         if (isRefreshableResource(resource)) await resource.refresh()
@@ -262,6 +271,32 @@ function createFieldApi(params: {
   }
 
   return api
+}
+
+function updateContextResourceValue<TResource extends { value: unknown }>(
+  resource: TResource,
+  updater: (value: TResource['value']) => TResource['value'],
+) {
+  resource.value = updater(resource.value)
+}
+
+function patchContextResourceValue(resource: unknown, patch: unknown) {
+  if (!isContextValueResource(resource)) return
+
+  const current = resource.value
+  const patchValue = typeof patch === 'function' ? patch(current) : patch
+  if (isRecord(current) && isRecord(patchValue)) {
+    resource.value = { ...current, ...patchValue }
+    return
+  }
+
+  resource.value = patchValue
+}
+
+function isContextValueResource(value: unknown): value is { value: unknown } {
+  return typeof value === 'object'
+    && value !== null
+    && 'value' in value
 }
 
 function isRefreshableResource(value: unknown): value is { refresh: () => Promise<void> } {

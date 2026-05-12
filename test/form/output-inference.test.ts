@@ -65,9 +65,19 @@ const schema = defineFormSchema({
         >()
         expectTypeOf(api.context.refresh).parameter(0).toEqualTypeOf<'countries' | 'session'>()
         expectTypeOf(api.context.refreshAll()).toEqualTypeOf<Promise<void>>()
+        api.context.set('countries', [{ label: 'Spain', value: 'ES' }])
+        api.context.set('session', { id: 'session_2' })
+        api.context.update('session', value => ({ id: value?.id ?? 'session_2' }))
+        api.context.patch('session', { id: 'session_3' })
+        api.context.patch('session', value => ({ id: value.id }))
+        api.options.add({ label: 'Spain', value: 'ES' })
         void api.context.refresh('countries')
         // @ts-expect-error sync context values do not expose explicit refresh
         void api.context.refresh('tenant')
+        // @ts-expect-error array context resources must use set/update instead of object patch
+        api.context.patch('countries', {})
+        // @ts-expect-error local object options must include a value
+        api.options.add({ label: 'Spain' })
 
         return ctx.countries.value ?? []
       },

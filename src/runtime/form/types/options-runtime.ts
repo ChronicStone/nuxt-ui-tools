@@ -37,6 +37,8 @@ export interface FormOptionRuntimeState {
   disableOnLoading: ComputedRef<boolean>
   /** Re-runs the field option source. */
   refresh: () => Promise<void>
+  /** Appends a local option to the field option list without calling the async create handler. */
+  add: (option: unknown) => void
   /** Creates and appends a local option when configured by the field. */
   create: (label: string) => Promise<ResolvedFormOption | null>
 }

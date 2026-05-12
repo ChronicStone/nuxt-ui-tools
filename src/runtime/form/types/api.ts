@@ -1,9 +1,24 @@
 import type { ComputedRef } from 'vue'
+import type { FormContextData } from './context'
 import type { FormMaybePromise, FormObject } from './utils'
 
 export type FormRefreshableContextKey<TContext> = {
-  [TKey in keyof TContext]: TContext[TKey] extends { refresh: () => Promise<void> } ? TKey : never
+  [TKey in keyof TContext]: Extract<TContext[TKey], { refresh: () => Promise<void> }> extends never ? never : TKey
 }[keyof TContext] & string
+
+export type FormContextResourceValue<TResource> = TResource extends { value: infer TValue } ? TValue : unknown
+
+export type FormPatchableContextKey<TContext> = {
+  [TKey in keyof TContext]: NonNullable<FormContextResourceValue<TContext[TKey]>> extends readonly unknown[]
+    ? never
+    : NonNullable<FormContextResourceValue<TContext[TKey]>> extends object
+      ? TKey
+      : never
+}[keyof TContext] & string
+
+export type FormContextPatchValue<TContext, TKey extends keyof TContext> = Partial<
+  NonNullable<FormContextResourceValue<TContext[TKey]>>
+>
 
 /**
  * Public value namespace exposed to a mounted field.
@@ -23,6 +38,8 @@ export interface FormFieldValueApi<TValue = unknown> {
 export interface FormFieldOptionsApi<TOption = unknown> {
   /** Returns the current resolved options. */
   get: () => readonly TOption[]
+  /** Adds a local option to the mounted field without calling the async create handler. */
+  add: (option: TOption) => void
   /** True while the first option value is loading. */
   pending: () => boolean
   /** True while options are refreshing after usable data already exists. */
@@ -66,9 +83,26 @@ export interface FormFieldValidationApi {
 /**
  * Public context namespace exposed to a mounted field.
  */
-export interface FormFieldContextApi<TContext = FormObject> {
+export interface FormFieldContextApi<TContext = FormContextData> {
   /** Reads a form-scoped context resource by key. */
   get: <TKey extends keyof TContext & string>(key: TKey) => TContext[TKey]
+  /** Replaces the current value of a form-scoped context resource. */
+  set: <TKey extends keyof TContext & string>(
+    key: TKey,
+    value: FormContextResourceValue<TContext[TKey]>,
+  ) => void
+  /** Updates the current value of a form-scoped context resource from its previous value. */
+  update: <TKey extends keyof TContext & string>(
+    key: TKey,
+    updater: (value: FormContextResourceValue<TContext[TKey]>) => FormContextResourceValue<TContext[TKey]>,
+  ) => void
+  /** Shallow-patches object context values. Arrays and primitives should use `set` or `update`. */
+  patch: <TKey extends FormPatchableContextKey<TContext>>(
+    key: TKey,
+    value: FormContextPatchValue<TContext, TKey> | ((
+      value: NonNullable<FormContextResourceValue<TContext[TKey]>>
+    ) => FormContextPatchValue<TContext, TKey>),
+  ) => void
   /** Refreshes an async form-scoped context resource by key. */
   refresh: <TKey extends FormRefreshableContextKey<TContext>>(key: TKey) => Promise<void>
   /** Refreshes every async form-scoped context resource declared by the schema. */
@@ -78,7 +112,7 @@ export interface FormFieldContextApi<TContext = FormObject> {
 /**
  * Public field API available from field callbacks.
  */
-export interface FormFieldApi<TValue = unknown, TOption = unknown, TContext = FormObject> {
+export interface FormFieldApi<TValue = unknown, TOption = unknown, TContext = FormContextData> {
   /** Field-local value operations. */
   value: FormFieldValueApi<TValue>
   /** Form-scoped context operations. */

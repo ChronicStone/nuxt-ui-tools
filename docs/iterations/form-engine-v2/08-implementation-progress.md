@@ -727,3 +727,46 @@ curl -I http://localhost:3010/form
 Targeted form tests and targeted lint pass. The playground route still returns `200 OK`.
 
 `bun run typecheck` remains blocked only by unrelated spreadsheet import/review errors.
+
+### Typed Context And Option Mutation Surface
+
+Extended the field callback API with typed manual mutation helpers:
+
+```ts
+options: ({ api }) => {
+  api.context.set('session', { id: 'session_2' })
+  api.context.update('session', value => ({ id: value?.id ?? 'session_2' }))
+  api.context.patch('session', { id: 'session_3' })
+  api.options.add({ label: 'Spain', value: 'ES' })
+}
+```
+
+Current behavior:
+
+- `api.context.set(key, value)` replaces the exposed context resource value.
+- `api.context.update(key, updater)` derives a new context value from the previous one.
+- `api.context.patch(key, patch)` shallow-patches object context values and rejects array/primitive context values at type level.
+- query-backed context resources patch TanStack Query cache through the context resource setter.
+- sync and promise-backed context resources patch their local resource value directly.
+- `api.options.add(option)` appends a local option without calling the configured async create handler.
+
+Type coverage now asserts:
+
+- context `set` and `update` preserve the specific resource value type.
+- context `patch` accepts object resources such as `session`.
+- context `patch` rejects array resources such as `countries`.
+- option `add` preserves the field option item value shape.
+
+Validation after this slice:
+
+```sh
+bun run test test/form/field-kind.test.ts test/form/dependencies.test.ts test/form/schema-inference.test.ts test/form/output-inference.test.ts test/form/stepped-output-inference.test.ts
+./node_modules/.bin/oxlint src/runtime/form src/runtime/shared src/components.ts src/imports.ts test/form playground/app/pages/form.vue docs/iterations/form-engine-v2
+bunx vue-tsc --noEmit --project tsconfig.json --pretty false 2>&1 | rg "src/runtime/form|test/form|playground/app/pages/form|error TS"
+curl -I http://localhost:3010/form
+```
+
+Focused tests and targeted lint pass. The filtered root `vue-tsc` check reports no form errors.
+The playground route still returns `200 OK`.
+
+Root `bun run lint` remains blocked only by unrelated `.claude/worktrees/*` table lint errors.

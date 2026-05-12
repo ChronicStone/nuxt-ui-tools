@@ -1,6 +1,6 @@
 import type { DataTag, QueryKey } from '@tanstack/vue-query'
 import type { GenericObject } from '../../shared/types/utils'
-import type { FormContextResource } from './utils'
+import type { FormAsyncResource, FormContextResource, FormSyncResource } from './utils'
 
 /**
  * Query options accepted by form context and option sources.
@@ -37,6 +37,8 @@ export type FormContextData<TContext extends FormContextDefinition | undefined =
   ? { [TKey in keyof TContext]: ResolveContextSource<TContext[TKey]> }
   : {}
 
-export type FormRuntimeContext = FormContextData
+export type FormRuntimeContext = {
+  [key: string]: FormSyncResource<unknown> | FormAsyncResource<unknown>
+}
 
 export type { DataTag, QueryKey }

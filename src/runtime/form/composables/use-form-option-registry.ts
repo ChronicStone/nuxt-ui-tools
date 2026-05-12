@@ -35,6 +35,7 @@ function createEmptyOptionState(): FormOptionRuntimeState {
     error: computed<unknown | null>(() => null),
     disableOnLoading: computed<boolean>(() => false),
     refresh: async () => {},
+    add: () => {},
     create: async () => null,
   }
 }

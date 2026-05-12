@@ -135,6 +135,7 @@ export function useFieldOptions(params: {
     error,
     disableOnLoading,
     refresh,
+    add,
     create,
   }
 
@@ -150,6 +151,10 @@ export function useFieldOptions(params: {
     }
 
     if (isPromise(source)) await resolvePromiseOptions(source)
+  }
+
+  function add(option: unknown) {
+    createdOptions.value = [...createdOptions.value, option]
   }
 
   async function create(_label: string) {

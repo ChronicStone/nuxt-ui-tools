@@ -1,5 +1,5 @@
 import { computed, reactive } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import type { GenericObject } from '../../shared/types/utils'
 
 import type { FormAsyncResource, FormRuntimeContext, FormRuntimeQueryOptions, FormSyncResource } from '../types'
@@ -8,6 +8,7 @@ import { isRecord } from '../utils/path'
 type RuntimeResource = FormSyncResource<unknown> | FormAsyncResource<unknown>
 export function useFormContextResources() {
   const context = reactive<FormRuntimeContext>({})
+  const queryClient = useQueryClient()
 
   function setContext(definition: GenericObject | undefined) {
     for (const key of Object.keys(context))
@@ -17,7 +18,7 @@ export function useFormContextResources() {
 
     for (const key of Object.keys(definition)) {
       const source = Object.getOwnPropertyDescriptor(definition, key)?.value
-      context[key] = createResource(source)
+      context[key] = createResource(source, queryClient)
     }
   }
 
@@ -33,7 +34,7 @@ export function getSchemaContext(schema: unknown) {
   return isRecord(context) ? context : undefined
 }
 
-function createResource(source: unknown): RuntimeResource {
+function createResource(source: unknown, queryClient: QueryClient): RuntimeResource {
   const raw = resolveResourceSource(source)
 
   if (isPromise(raw)) {
@@ -88,6 +89,10 @@ function createResource(source: unknown): RuntimeResource {
     const resource: FormAsyncResource<unknown> = {
       get value() {
         return query.data.value
+      },
+      set value(value) {
+        const nextSource = querySource.value
+        if (nextSource) queryClient.setQueryData(nextSource.queryKey, value)
       },
       get error() {
         return query.error.value ?? null
