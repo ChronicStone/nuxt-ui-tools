@@ -682,6 +682,33 @@ Focused tests and lint pass. The filtered root `vue-tsc` check reports no form e
 `typecheck:playground` is clear for the form playground, then remains blocked by unrelated
 spreadsheet import/review errors already present in the current worktree.
 
+### Field API Refresh Surface
+
+Extended the field callback API with a typed context namespace:
+
+```ts
+options: ({ api }) => {
+  void api.context.refresh('countries')
+  void api.context.refreshAll()
+  void api.options.refresh()
+}
+```
+
+Current behavior:
+
+- `api.context.get(key)` reads a typed form-scoped context resource.
+- `api.context.refresh(key)` only accepts async context resource keys.
+- `api.context.refreshAll()` refreshes every async context resource available to the form.
+- `api.options.refresh()` refreshes every async context resource that the option source touched,
+  then refreshes the field option source itself.
+
+Type coverage now asserts:
+
+- `api.context.get('countries').value` preserves the context query result type
+- `api.context.refresh` accepts `countries` and promise-backed `session`
+- `api.context.refresh` rejects sync `tenant`
+- `api.context.refreshAll()` returns `Promise<void>`
+
 Current limitations:
 
 - Query-backed option runtime keeps only the core query shape (`queryKey`, `queryFn`, `enabled`) for now. Rich TanStack options such as stale time, placeholder data, select, retry, and dependent query context should be folded in deliberately.

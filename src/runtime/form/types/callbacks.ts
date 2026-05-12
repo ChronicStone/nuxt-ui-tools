@@ -13,7 +13,7 @@ export interface FormFieldCallbackParams<
   /** Values read from the field's dependency list. */
   deps: TDeps
   /** Field-level API for values, options, upload work, and validation. */
-  api: FormFieldApi<TValue, TOption>
+  api: FormFieldApi<TValue, TOption, TContext>
 }
 
 /**

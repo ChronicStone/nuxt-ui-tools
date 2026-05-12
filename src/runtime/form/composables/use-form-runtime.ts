@@ -240,6 +240,20 @@ function createFieldApi(params: {
       retry: async () => {},
       remove: async () => {},
     },
+    context: {
+      get: key => params.ctx[key],
+      refresh: async (key) => {
+        const resource = params.ctx[key]
+        if (isRefreshableResource(resource)) await resource.refresh()
+      },
+      refreshAll: async () => {
+        const refreshTasks = Object.values(params.ctx).map(resource =>
+          isRefreshableResource(resource) ? resource.refresh() : Promise.resolve(),
+        )
+
+        await Promise.all(refreshTasks)
+      },
+    },
     validation: {
       validate: params.validateField,
       setError: params.setExternalError,
@@ -248,6 +262,13 @@ function createFieldApi(params: {
   }
 
   return api
+}
+
+function isRefreshableResource(value: unknown): value is { refresh: () => Promise<void> } {
+  return typeof value === 'object'
+    && value !== null
+    && 'refresh' in value
+    && typeof value.refresh === 'function'
 }
 
 function fieldCallbackParams(params: {

@@ -53,13 +53,21 @@ const schema = defineFormSchema({
     {
       key: 'country',
       type: 'select',
-      options: ({ ctx }) => {
+      options: ({ ctx, api }) => {
         expectTypeOf(ctx.countries.value).toEqualTypeOf<
           { label: string, value: string }[] | undefined
         >()
         expectTypeOf(ctx.countries.loading).toEqualTypeOf<boolean>()
         expectTypeOf(ctx.session.value).toEqualTypeOf<{ id: string } | undefined>()
         expectTypeOf(ctx.tenant.value).toMatchTypeOf<{ id: string, currency: string }>()
+        expectTypeOf(api.context.get('countries').value).toEqualTypeOf<
+          { label: string, value: string }[] | undefined
+        >()
+        expectTypeOf(api.context.refresh).parameter(0).toEqualTypeOf<'countries' | 'session'>()
+        expectTypeOf(api.context.refreshAll()).toEqualTypeOf<Promise<void>>()
+        void api.context.refresh('countries')
+        // @ts-expect-error sync context values do not expose explicit refresh
+        void api.context.refresh('tenant')
 
         return ctx.countries.value ?? []
       },

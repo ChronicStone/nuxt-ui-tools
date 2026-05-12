@@ -1,6 +1,10 @@
 import type { ComputedRef } from 'vue'
 import type { FormMaybePromise, FormObject } from './utils'
 
+export type FormRefreshableContextKey<TContext> = {
+  [TKey in keyof TContext]: TContext[TKey] extends { refresh: () => Promise<void> } ? TKey : never
+}[keyof TContext] & string
+
 /**
  * Public value namespace exposed to a mounted field.
  */
@@ -60,11 +64,25 @@ export interface FormFieldValidationApi {
 }
 
 /**
+ * Public context namespace exposed to a mounted field.
+ */
+export interface FormFieldContextApi<TContext = FormObject> {
+  /** Reads a form-scoped context resource by key. */
+  get: <TKey extends keyof TContext & string>(key: TKey) => TContext[TKey]
+  /** Refreshes an async form-scoped context resource by key. */
+  refresh: <TKey extends FormRefreshableContextKey<TContext>>(key: TKey) => Promise<void>
+  /** Refreshes every async form-scoped context resource declared by the schema. */
+  refreshAll: () => Promise<void>
+}
+
+/**
  * Public field API available from field callbacks.
  */
-export interface FormFieldApi<TValue = unknown, TOption = unknown> {
+export interface FormFieldApi<TValue = unknown, TOption = unknown, TContext = FormObject> {
   /** Field-local value operations. */
   value: FormFieldValueApi<TValue>
+  /** Form-scoped context operations. */
+  context: FormFieldContextApi<TContext>
   /** Option operations. Present for all fields at type level only where the field supports options. */
   options: FormFieldOptionsApi<TOption>
   /** Upload operations. Present for upload fields. */
