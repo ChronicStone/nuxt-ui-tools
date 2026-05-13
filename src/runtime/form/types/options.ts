@@ -1,5 +1,5 @@
 import type { FormQueryOptions } from './context'
-import type { FormFieldCallback } from './callbacks'
+import type { FormFieldCallback, FormFieldCallbackParams } from './callbacks'
 import type { FormMaybePromise, FormText } from './utils'
 
 /**
@@ -47,11 +47,17 @@ export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = unkno
 /**
  * Option creation hook for fields that can create a missing option from user input.
  */
+export interface FormCreateOptionParams<TContext = {}, TDeps = {}, TValue = unknown, TOption = unknown>
+  extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
+  /** User-entered label that should be converted into a concrete option. */
+  label: string
+}
+
 export interface FormCreateOption<TOption, TContext = {}, TDeps = {}, TValue = unknown> {
   /** Label shown by the create affordance. */
   label?: FormText
   /** Creates an option and returns it. Return `null` when creation was cancelled. */
-  handler: FormFieldCallback<FormMaybePromise<TOption | null>, TContext, TDeps, TValue, TOption>
+  handler: (params: FormCreateOptionParams<TContext, TDeps, TValue, TOption>) => FormMaybePromise<TOption | null>
 }
 
 /**

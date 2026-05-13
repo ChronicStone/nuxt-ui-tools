@@ -218,9 +218,199 @@ Known runtime gaps for the next passes:
 - async context/query resources are represented and can execute simple query functions, but TanStack Query integration and magic option loading propagation are not complete
 - dependency typing/runtime remains skeletal (`deps` is still empty at runtime)
 - field/form API namespaces are still only a base shape
+
+## 2026-05-12
+
+### Provider Form API And Overlay Layouts
+
+Added the first provider-owned form API slice:
+
+- public `<NutFormProvider>` component registration
+- public `useFormApi` auto-import/export
+- `$formApi`-style controller returned by `useFormApi`
+- typed `createForm(schema, options)` with schema output inference
+- typed submit result inference from `onSubmit`
+- external controls for active provider-owned forms:
+  - `getForm`
+  - `isOpen`
+  - `closeForm`
+  - `submitForm`
+  - `destroyAll`
+  - `getController`
+
+Provider-owned forms now register mounted runtime controls so external `closeForm` and `submitForm` go through the mounted overlay lifecycle instead of bypassing the visible UI.
+
+Overlay rendering currently supports:
+
+- `modal`
+- `drawer`
+- `fullscreen`
+- responsive display mode values such as `drawer md:modal`
+- close cleanup delayed until after the visible transition window
+
+The responsive display mode uses the shared `useResponsiveValue` helper rather than re-implementing breakpoint resolution in the form runtime.
+
+The playground route at `playground/app/pages/form.vue` now exposes the same account schema in:
+
+- inline mode through `<NutForm :form="form" />`
+- modal mode through `formApi.createForm(accountForm, { mode: 'modal' })`
+- drawer mode through `formApi.createForm(accountForm, { mode: 'drawer' })`
+- responsive overlay mode through `formApi.createForm(accountForm, { mode: 'drawer md:modal' })`
+
+Consumer-facing guidance was started in:
+
+- `skills/consumer/form/SKILL.md`
+
+Focused validation after this slice:
+
+```sh
+bun run test test/form/output-inference.test.ts test/form/schema-inference.test.ts test/form/field-kind.test.ts
+bunx vue-tsc --noEmit 2>&1 | rg "(src/runtime/form|playground/app/pages/form|test/form/output-inference|src/imports|src/components)"
+```
+
+The filtered form typecheck is clean. The full `vue-tsc` command still fails on unrelated non-form issues in the current worktree.
+
+## 2026-05-13
+
+### Overlay Split And Playground Entry
+
+Refined the provider-owned overlay slice to match the `shared-ui` layout responsibility split more closely:
+
+- `components/provider/FormProvider.vue` owns provider registration and active instances
+- `components/provider/FormOverlayHost.vue` selects the current overlay layout
+- `composables/use-form-overlay-controller.ts` owns mounted form controller binding, submit/cancel resolution, and runtime controls
+- `composables/use-form-overlay-layout.ts` owns responsive display-mode resolution through shared `useResponsiveValue`
+- `components/layout/ModalLayout.vue`, `DrawerLayout.vue`, and `FullscreenLayout.vue` own Nuxt UI layout shell and close-complete events
+- the previous broad `FormOverlayRenderer.vue` path was removed
+
+The playground now exposes the form runtime from the visible home surface and shell navigation:
+
+- `/` home card: Form playground
+- shell component navigation entry: Form Playground
+- `/form` route: inline form plus modal, drawer, and responsive overlay buttons
+
+Live browser validation was performed in the Codex in-app browser:
+
+- opened `http://localhost:3010/`
+- confirmed the Form playground card is visible
+- opened `/form` through the card
+- confirmed the inline form and live state/output panels render
+- opened and closed modal overlay
+- opened and closed drawer overlay
+- opened and closed responsive overlay
+- confirmed no browser console errors after the interaction pass
+
+Focused validation after this slice:
+
+```sh
+bun run test test/form/output-inference.test.ts test/form/schema-inference.test.ts test/form/field-kind.test.ts
+bunx vue-tsc --noEmit 2>&1 | rg "(src/runtime/form|playground/app/(app|pages/form|pages/index|composables/usePlaygroundNavigation)|playground/i18n|test/form/output-inference|src/imports|src/components|skills/consumer/form)"
+./node_modules/.bin/oxlint src/runtime/form src/components.ts src/imports.ts test/form playground/app/app.vue playground/app/pages/form.vue playground/app/pages/index.vue playground/app/composables/usePlaygroundNavigation.ts playground/i18n/locales/en.json playground/i18n/locales/fr.json docs/iterations/form-engine-v2/09-structure-guidelines.md .agents/skills/nuxt-ui-tools-maintainer/references/form-runtime.md
+```
+
+The filtered form/playground typecheck is clean. The `rg` command exits `1` because it finds no matching errors.
+
+Known remaining gaps after this slice:
+
 - array rendering is intentionally a placeholder
 - layout supports numeric columns/spans and `full`; responsive layout tokens need a dedicated pass
 - validation is a basic required-rule shell, not Regle yet
+
+### Focus, Live Validation, And Shared-UI Layout Defaults
+
+Refined the validation and focus behavior against the shared-ui baseline:
+
+- field validation messages now display only after the field has been touched/blurred, while external field errors remain immediately visible
+- live validation continues after the first blur/touch, matching the previous Vuelidate-style interaction model
+- `validate({ focus: true })` is supported on the form controller, form instance API, and callback `api.validate`
+- `Next`, forward `goToStep`, and submit focus the first focusable invalid field
+- mounted fields register a public focus boundary with the runtime, so focus is a first-class field/runtime capability rather than an ad hoc document query
+- field APIs now expose `api.focus()`
+- default placeholders are restored through i18n (`Enter a value` / `Saisissez une valeur`)
+- the playground password confirmation now validates against the password field through typed dependencies
+
+Aligned grid/item/subgrid sizing defaults with shared-ui:
+
+- root form grid defaults to `8` columns
+- field item span defaults to `8 md:4`
+- nested object grids inherit the active form/step grid unless the object layout overrides `columns`
+- grid and span resolution now use shared `useResponsiveValue`
+- form/step layout merging preserves form-level layout values when a step only overrides part of the layout
+
+Drawer overlay rendering was refined so the form header/content/footer are separate shell regions and footer controls stay pinned at the bottom while the field body scrolls.
+
+Browser validation was performed on `http://localhost:3010/form`:
+
+- focusing a field does not show validation errors
+- blurring a touched invalid field shows the error
+- `Next` focuses the first invalid field
+- submit focuses the password confirmation field when it fails the match rule
+- default placeholders render on fields without explicit placeholders
+- drawer form footer remains fixed at the bottom in the visible overlay
+
+Focused validation after this slice:
+
+```sh
+bun run test test/form/output-inference.test.ts test/form/schema-inference.test.ts test/form/field-kind.test.ts
+bunx vue-tsc --noEmit --project tsconfig.json 2>&1 | rg "src/runtime/form|playground/app/pages/form|src/runtime/i18n"
+./node_modules/.bin/oxlint src/runtime/form/composables/use-form-runtime.ts src/runtime/form/composables/use-form.ts src/runtime/form/composables/use-form-focus.ts src/runtime/form/composables/use-form-validation.ts src/runtime/form/composables/use-field-control.ts src/runtime/form/composables/use-form-layout.ts src/runtime/form/utils/focus.ts src/runtime/form/utils/layout.ts src/runtime/form/components/root/Form.vue src/runtime/form/components/renderer/FormFieldRenderer.vue src/runtime/form/components/renderer/FormFieldShell.vue src/runtime/form/components/layout/DrawerLayout.vue src/runtime/form/components/provider/FormOverlayHost.vue src/runtime/form/fields/object/component.vue playground/app/pages/form.vue src/runtime/i18n/types.ts src/runtime/i18n/locales/en.ts src/runtime/i18n/locales/fr.ts
+```
+
+### Field Surface And Option Dropdown UX
+
+Expanded the shared-ui field surface with Nuxt UI-backed field folders:
+
+- `switch`
+- `checkbox-group`
+- `color-picker`
+- `one-time-code`
+
+Each field has the standard local split:
+
+- `component.vue`
+- `config.ts`
+- `types.ts`
+- `index.ts`
+
+Refined existing field UI/runtime behavior:
+
+- date calendar now opens as an overlaid popover instead of rendering inline
+- input-group now renders grouped child controls without nested field labels
+- password/text/number/select support a dedicated grouped/bare rendering path
+- modal/drawer/fullscreen form shells keep header/footer fixed while only field content scrolls
+- the playground no longer overrides the root `8 md:4` field-span default
+
+Option-backed select controls now expose dropdown actions:
+
+- query/context-backed option refresh is visible inside the select dropdown
+- `options.refresh()` refreshes tracked context resources first, then the field option query/source
+- `options.create(label)` passes the user-entered label to the field create handler
+- created options are appended to the mounted field option state and selected immediately
+
+The playground was reorganized as a labelled showcase rather than a single scenario:
+
+- Core inputs
+- Options, context, and creation
+- Layout and composed fields
+- Collections and files
+- Validation and transforms
+
+The showcase now includes artificial async delays for context/options, a creatable query-backed select, dropdown option refresh, context refresh, checkbox-group, switch, color-picker, one-time-code, file/upload, array-list, input-group, and live state/output panels.
+
+Focused validation after this slice:
+
+```sh
+bun run typecheck
+bun run test test/form/output-inference.test.ts test/form/field-kind.test.ts
+```
+
+Live browser validation on `http://localhost:3010/form` confirmed:
+
+- labelled showcase sections render
+- date calendar opens as an overlay
+- select dropdown displays the refresh action
+- selecting refresh refetches the option query
+- modal layout pins bottom actions while field content scrolls
 
 ## 2026-05-12
 

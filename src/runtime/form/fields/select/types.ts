@@ -2,6 +2,14 @@ import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FormOptionConfig, FormOptionItem, FormOptionValue, FormOptionsSource } from '../../types/options'
 import type { FieldOptionValue, FallbackNever, NullableValue } from '../../types/field-output-utils'
 
+export type FormSelectCreateItem =
+  | boolean
+  | 'always'
+  | {
+      position?: 'top' | 'bottom'
+      when?: 'always' | 'empty'
+    }
+
 export interface FormSelectField<
   TContext = {},
   TDeps = {},
@@ -12,6 +20,7 @@ export interface FormSelectField<
   multiple?: boolean
   searchable?: boolean
   clearable?: boolean
+  createItem?: FormSelectCreateItem
 }
 
 type SelectFieldValue<TField> = TField extends { multiple: true }

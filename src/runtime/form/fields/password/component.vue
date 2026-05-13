@@ -10,6 +10,7 @@ import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 const props = defineProps<{
   field: FormPasswordField
   path: readonly string[]
+  bare?: boolean
 }>()
 
 const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(() => props.field, () => props.path)
@@ -23,7 +24,17 @@ const model = computed<string | undefined>({
 </script>
 
 <template>
-  <FormFieldShell :field="field" :path="path">
+  <UInput
+    v-if="bare"
+    v-model="model"
+    v-bind="controlProps"
+    class="w-full"
+    type="password"
+    :placeholder="placeholder"
+    :disabled="disabled"
+    @blur="handleBlur"
+  />
+  <FormFieldShell v-else :field="field" :path="path">
     <UInput
       v-model="model"
       v-bind="controlProps"

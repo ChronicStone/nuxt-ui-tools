@@ -157,14 +157,17 @@ export function useFieldOptions(params: {
     createdOptions.value = [...createdOptions.value, option]
   }
 
-  async function create(_label: string) {
+  async function create(label: string) {
     const createOption = optionConfig.value?.create
     if (!isRecord(createOption)) return null
 
     const handler = Object.getOwnPropertyDescriptor(createOption, 'handler')?.value
     if (typeof handler !== 'function') return null
 
-    const result = await handler(params.callbackParams.value)
+    const result = await handler({
+      ...params.callbackParams.value,
+      label,
+    })
     if (result === null || typeof result === 'undefined') return null
 
     createdOptions.value = [...createdOptions.value, result]
@@ -198,7 +201,7 @@ export function useFieldOptions(params: {
 }
 
 function resolveOptionConfig(field: FormField) {
-  if (!createFormFieldInstance(field).type.is('select')) return undefined
+  if (!createFormFieldInstance(field).capability.has('options')) return undefined
   const options = Object.getOwnPropertyDescriptor(field, 'options')?.value
   return isRecord(options) && 'source' in options ? options : undefined
 }

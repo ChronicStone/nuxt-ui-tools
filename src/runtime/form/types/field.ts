@@ -3,6 +3,8 @@ import type { FormArrayTabsField } from '../fields/array-tabs/types'
 import type { FormArrayVariantField } from '../fields/array-variant/types'
 import type { FormButtonField } from '../fields/button/types'
 import type { FormCheckboxField } from '../fields/checkbox/types'
+import type { FormCheckboxGroupField } from '../fields/checkbox-group/types'
+import type { FormColorPickerField } from '../fields/color-picker/types'
 import type { FormCustomComponentField } from '../fields/custom-component/types'
 import type { FormDateField } from '../fields/date/types'
 import type { FormDividerField } from '../fields/divider/types'
@@ -11,11 +13,14 @@ import type { FormHiddenField } from '../fields/hidden/types'
 import type { FormInfoField } from '../fields/info/types'
 import type { FormInputGroupField } from '../fields/input-group/types'
 import type { FormNumberField } from '../fields/number/types'
+import type { FormOneTimeCodeField } from '../fields/one-time-code/types'
 import type { FormObjectField } from '../fields/object/types'
 import type { FormPasswordField } from '../fields/password/types'
+import type { FormPhoneNumberField } from '../fields/phone-number/types'
 import type { FormRadioField } from '../fields/radio/types'
 import type { FormSelectField } from '../fields/select/types'
 import type { FormSliderField } from '../fields/slider/types'
+import type { FormSwitchField } from '../fields/switch/types'
 import type { FormTagField } from '../fields/tag/types'
 import type { FormTextField } from '../fields/text/types'
 import type { FormTextareaField } from '../fields/textarea/types'
@@ -32,6 +37,8 @@ export type { FormArrayTabsField } from '../fields/array-tabs/types'
 export type { FormArrayVariantField } from '../fields/array-variant/types'
 export type { FormButtonField } from '../fields/button/types'
 export type { FormCheckboxField } from '../fields/checkbox/types'
+export type { FormCheckboxGroupField } from '../fields/checkbox-group/types'
+export type { FormColorPickerField } from '../fields/color-picker/types'
 export type { FormCustomComponentField } from '../fields/custom-component/types'
 export type { FormDateField } from '../fields/date/types'
 export type { FormDividerField } from '../fields/divider/types'
@@ -40,11 +47,14 @@ export type { FormHiddenField } from '../fields/hidden/types'
 export type { FormInfoField } from '../fields/info/types'
 export type { FormInputGroupField } from '../fields/input-group/types'
 export type { FormNumberField } from '../fields/number/types'
+export type { FormOneTimeCodeField } from '../fields/one-time-code/types'
 export type { FormObjectField } from '../fields/object/types'
 export type { FormPasswordField } from '../fields/password/types'
+export type { FormPhoneNumberField } from '../fields/phone-number/types'
 export type { FormRadioField } from '../fields/radio/types'
-export type { FormSelectField } from '../fields/select/types'
+export type { FormSelectCreateItem, FormSelectField } from '../fields/select/types'
 export type { FormSliderField } from '../fields/slider/types'
+export type { FormSwitchField } from '../fields/switch/types'
 export type { FormTagField } from '../fields/tag/types'
 export type { FormTextField } from '../fields/text/types'
 export type { FormTextareaField } from '../fields/textarea/types'
@@ -62,9 +72,12 @@ export type FormField<TContext = {}, TDeps = {}> =
   | FormTextareaField<TContext, TDeps>
   | FormNumberField<TContext, TDeps>
   | FormCheckboxField<TContext, TDeps>
+  | FormSwitchField<TContext, TDeps>
   | FormRadioField<TContext, TDeps>
+  | FormCheckboxGroupField<TContext, TDeps>
   | FormSelectField<TContext, TDeps>
   | FormDateField<TContext, TDeps>
+  | FormPhoneNumberField<TContext, TDeps>
   | FormHiddenField<TContext, TDeps>
   | FormInfoField<TContext, TDeps>
   | FormDividerField<TContext, TDeps>
@@ -77,5 +90,7 @@ export type FormField<TContext = {}, TDeps = {}> =
   | FormArrayTabsField<TContext, TDeps>
   | FormArrayVariantField<TContext, TDeps>
   | FormSliderField<TContext, TDeps>
+  | FormColorPickerField<TContext, TDeps>
+  | FormOneTimeCodeField<TContext, TDeps>
   | FormTagField<TContext, TDeps>
   | FormButtonField<TContext, TDeps>

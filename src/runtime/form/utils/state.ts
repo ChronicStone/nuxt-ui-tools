@@ -243,9 +243,19 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData) {
     return typeof value === 'function' ? cloneFormValue(value({ ctx })) : cloneFormValue(value)
 
   if (fieldInstance.type.is('checkbox')) return false
+  if (fieldInstance.type.is('switch')) return resolveSwitchDefault(field)
+  if (fieldInstance.type.is('checkbox-group')) return []
   if (fieldInstance.type.is('tag')) return []
   if (fieldInstance.type.is('slider')) return 0
+  if (fieldInstance.type.is('one-time-code')) return ''
   return null
+}
+
+function resolveSwitchDefault(field: FormField) {
+  const trueValue = Object.getOwnPropertyDescriptor(field, 'trueValue')?.value
+  return typeof trueValue === 'string' || typeof trueValue === 'number' || typeof trueValue === 'boolean'
+    ? trueValue
+    : false
 }
 
 function applyOutputTransform(field: FormField, value: unknown, params: FormFieldCallbackParams) {
