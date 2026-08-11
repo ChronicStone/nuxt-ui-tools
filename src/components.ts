@@ -6,10 +6,13 @@ type PublicComponent = {
   global: boolean | undefined
 }
 
-function getPublicComponents(runtimeDir: string, options: {
-  prefix?: string
-  global?: boolean
-}): PublicComponent[] {
+function getPublicComponents(
+  runtimeDir: string,
+  options: {
+    prefix?: string
+    global?: boolean
+  },
+): PublicComponent[] {
   const prefix = options.prefix ?? 'Ui'
 
   return [
@@ -33,6 +36,11 @@ function getPublicComponents(runtimeDir: string, options: {
       filePath: `${runtimeDir}/form/components/root/Form.vue`,
       global: options.global,
     },
+    {
+      name: `${prefix}FormProvider`,
+      filePath: `${runtimeDir}/form/components/provider/FormProvider.vue`,
+      global: options.global,
+    },
 
     // Spreadsheet
     {
@@ -43,10 +51,12 @@ function getPublicComponents(runtimeDir: string, options: {
   ]
 }
 
-export function setupComponents(runtimeDir: string, options: {
-  prefix?: string
-  global?: boolean
-}) {
-  for (const component of getPublicComponents(runtimeDir, options))
-    addComponent(component)
+export function setupComponents(
+  runtimeDir: string,
+  options: {
+    prefix?: string
+    global?: boolean
+  },
+) {
+  for (const component of getPublicComponents(runtimeDir, options)) addComponent(component)
 }

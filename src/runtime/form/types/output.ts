@@ -1,4 +1,9 @@
-import type { DeepPrettify, DeepTransformNestedPaths, PathToObject, UnionToIntersection } from '../../shared/types/utils'
+import type {
+  DeepPrettify,
+  DeepTransformNestedPaths,
+  PathToObject,
+  UnionToIntersection,
+} from '../../shared/types/utils'
 import type {
   ArrayListFieldOutput,
   ArrayTabsFieldOutput,
@@ -16,32 +21,44 @@ export type {
 } from './field-output'
 export type { FormStateMode } from './field-output-utils'
 
-export type ExtractFormFieldOutputValue<TField> =
-  TransformOutputValue<TField, ResolveFormFieldValue<TField>>
+export type ExtractFormFieldOutputValue<TField> = TransformOutputValue<
+  TField,
+  ResolveFormFieldValue<TField>
+>
 
 type FieldKey<TField> = TField extends { key: infer TKey }
-  ? TKey extends string ? TKey : never
+  ? TKey extends string
+    ? TKey
+    : never
   : never
 
-type FieldValueObject<TField, TValue> = FieldKey<TField> extends infer TKey
-  ? TKey extends string
-    ? string extends TKey ? {} : PathToObject<TKey, TValue>
+type FieldValueObject<TField, TValue> =
+  FieldKey<TField> extends infer TKey
+    ? TKey extends string
+      ? string extends TKey
+        ? {}
+        : PathToObject<TKey, TValue>
+      : {}
     : {}
-  : {}
 
 type OptionalPathToObject<Path extends string, Output> = Path extends `${infer First}.${infer Rest}`
   ? { [K in First]: OptionalPathToObject<Rest, Output> }
   : { [K in Path]?: Output }
 
-type OptionalFieldValueObject<TField, TValue> = FieldKey<TField> extends infer TKey
-  ? TKey extends string
-    ? string extends TKey ? {} : OptionalPathToObject<TKey, TValue>
+type OptionalFieldValueObject<TField, TValue> =
+  FieldKey<TField> extends infer TKey
+    ? TKey extends string
+      ? string extends TKey
+        ? {}
+        : OptionalPathToObject<TKey, TValue>
+      : {}
     : {}
-  : {}
 
 type ChildFields<TField> = TField extends { readonly fields: infer TFields }
   ? TFields extends readonly unknown[]
-    ? number extends TFields['length'] ? readonly [] : TFields
+    ? number extends TFields['length']
+      ? readonly []
+      : TFields
     : never
   : never
 
@@ -61,32 +78,36 @@ type ApplyOutputMode<TField, TMode extends FormStateMode, TValue> = TMode extend
   ? TransformOutputValue<TField, TValue>
   : TValue
 
-type ObjectFieldValue<TField, TMode extends FormStateMode> =
-  ApplyOutputMode<TField, TMode, ObjectFieldOutput<FieldsValue<ChildFields<TField>, TMode>>>
+type ObjectFieldValue<TField, TMode extends FormStateMode> = ApplyOutputMode<
+  TField,
+  TMode,
+  ObjectFieldOutput<FieldsValue<ChildFields<TField>, TMode>>
+>
 
-type StatefulFieldObject<TField, TMode extends FormStateMode> =
-  TMode extends 'output'
-    ? TField extends { submit: { omit: true } }
-      ? {}
-      : TField extends { condition: infer _TCondition }
-        ? OptionalFieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
-        : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
-    : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
-
-type FieldObject<TField, TMode extends FormStateMode> =
-  TField extends { type: 'info' | 'divider' | 'button' }
+type StatefulFieldObject<TField, TMode extends FormStateMode> = TMode extends 'output'
+  ? TField extends { submit: { omit: true } }
     ? {}
-    : TField extends { type: 'input-group' }
-      ? FieldsValue<ChildFields<TField>, TMode>
-      : TField extends { type: 'object' }
-        ? FieldValueObject<TField, ObjectFieldValue<TField, TMode>>
-        : TField extends { type: 'array-list' | 'array-tabs' | 'array-variant' }
-          ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
-          : StatefulFieldObject<TField, TMode>
+    : TField extends { condition: infer _TCondition }
+      ? OptionalFieldValueObject<
+          TField,
+          ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>
+        >
+      : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
+  : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
 
-type StepFields<TStep> = TStep extends { readonly fields: infer TFields }
-  ? TFields
-  : never
+type FieldObject<TField, TMode extends FormStateMode> = TField extends {
+  type: 'info' | 'divider' | 'button'
+}
+  ? {}
+  : TField extends { type: 'input-group' | 'card' | 'column' }
+    ? FieldsValue<ChildFields<TField>, TMode>
+    : TField extends { type: 'object' }
+      ? FieldValueObject<TField, ObjectFieldValue<TField, TMode>>
+      : TField extends { type: 'array-list' | 'array-tabs' | 'array-variant' }
+        ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
+        : StatefulFieldObject<TField, TMode>
+
+type StepFields<TStep> = TStep extends { readonly fields: infer TFields } ? TFields : never
 
 type StepObject<TStep, TMode extends FormStateMode> = TStep extends unknown
   ? TStep extends { readonly root: infer TRoot }

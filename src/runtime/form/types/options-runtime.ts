@@ -1,5 +1,6 @@
-import type { ComputedRef } from 'vue'
 import type { QueryKey } from '@tanstack/vue-query'
+import type { ComputedRef } from 'vue'
+
 import type { ResolvedFormOption } from '../utils/options'
 
 /**
@@ -31,10 +32,20 @@ export interface FormOptionRuntimeState {
   fetching: ComputedRef<boolean>
   /** True when controls should show a blocking loader. */
   loading: ComputedRef<boolean>
+  /** True while an option creation handler is pending. */
+  creating: ComputedRef<boolean>
+  /** True when the field has an option creation handler. */
+  creatable: ComputedRef<boolean>
+  /** Optional label for the explicit create affordance. */
+  createLabel: ComputedRef<string | undefined>
   /** Last option-source error, if any. */
   error: ComputedRef<unknown | null>
   /** True when the field should disable interactions while `loading` is true. */
   disableOnLoading: ComputedRef<boolean>
+  /** True when the field should render a refresh affordance. */
+  refreshable: ComputedRef<boolean>
+  /** True when created options should be selected immediately. */
+  selectCreatedOption: ComputedRef<boolean>
   /** Re-runs the field option source. */
   refresh: () => Promise<void>
   /** Appends a local option to the field option list without calling the async create handler. */

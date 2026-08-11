@@ -1,5 +1,6 @@
 export { defineFormField, defineFormFields, defineFormSchema } from './schema'
 export { useForm } from './composables/use-form'
+export { provideFormApi, useFormApi } from './composables/use-form-api'
 export type { FormController, UseFormParams } from './types'
 export { useFormSubmit } from './composables/use-form-submit'
 export {

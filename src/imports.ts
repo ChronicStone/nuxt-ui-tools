@@ -59,6 +59,7 @@ export function setupImports(runtimeDir: string) {
       { name: 'defineFormFields', from: 'form' },
       { name: 'defineFormSchema', from: 'form' },
       { name: 'useForm', from: 'form' },
+      { name: 'useFormApi', from: 'form' },
       { name: 'useFormSubmit', from: 'form' },
     ]),
 

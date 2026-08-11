@@ -9,6 +9,7 @@ import type {
   RuntimeUseFormParams,
   UseFormParams,
   FormRuntime,
+  FormValidationOptions,
 } from '../types'
 
 export function useForm<const TSchema, TSubmitData = unknown>(
@@ -17,7 +18,7 @@ export function useForm<const TSchema, TSubmitData = unknown>(
 export function useForm(params: RuntimeUseFormParams) {
   const runtime = shallowRef<FormRuntime | null>(null)
   const schema = computed(() => toValue(params.schema))
-  const input = computed(() => params.input ? toValue(params.input) : undefined)
+  const input = computed(() => (params.input ? toValue(params.input) : undefined))
   const isBound = computed(() => runtime.value !== null)
   const context = computed(() => runtime.value?.context ?? {})
   const internal = computed(() => runtime.value?.state ?? {})
@@ -27,7 +28,9 @@ export function useForm(params: RuntimeUseFormParams) {
   const isValid = computed(() => !hasErrors.value)
   const dirtyPaths = computed(() => runtime.value?.dirtyPaths.value ?? [])
   const isDirty = computed(() => runtime.value?.isDirty.value ?? false)
-  const actionPending = computed<FormSubmitAction | null>(() => runtime.value?.actionPending.value ?? null)
+  const actionPending = computed<FormSubmitAction | null>(
+    () => runtime.value?.actionPending.value ?? null,
+  )
   const isSubmitting = computed(() => actionPending.value === 'submit')
   const currentStepIndex = computed(() => runtime.value?.currentStepIndex.value ?? 0)
   const currentStep = computed(() => runtime.value?.currentStep.value ?? null)
@@ -51,16 +54,24 @@ export function useForm(params: RuntimeUseFormParams) {
     return result.success
   }
 
-  async function validate() {
-    return await runtime.value?.validate() ?? false
+  async function validate(options?: FormValidationOptions) {
+    return (await runtime.value?.validate(options)) ?? false
   }
 
-  async function validateCurrentStep() {
-    return await runtime.value?.validateCurrentStep() ?? false
+  async function validateCurrentStep(options?: FormValidationOptions) {
+    return (await runtime.value?.validateCurrentStep(options)) ?? false
+  }
+
+  async function focus(path: string | readonly string[]) {
+    return (await runtime.value?.focusField(path)) ?? false
+  }
+
+  async function focusFirstInvalid() {
+    return (await runtime.value?.focusFirstInvalid()) ?? false
   }
 
   function getError(path: string) {
-    return errors.value.find(error => error.path === path)?.message
+    return errors.value.find((error) => error.path === path)?.message
   }
 
   function clearErrors() {
@@ -72,15 +83,15 @@ export function useForm(params: RuntimeUseFormParams) {
   }
 
   async function nextStep() {
-    return await runtime.value?.nextStep() ?? false
+    return (await runtime.value?.nextStep()) ?? false
   }
 
-  function previousStep() {
-    return runtime.value?.previousStep() ?? false
+  async function previousStep() {
+    return (await runtime.value?.previousStep()) ?? false
   }
 
   async function goToStep(index: number) {
-    return await runtime.value?.goToStep(index) ?? false
+    return (await runtime.value?.goToStep(index)) ?? false
   }
 
   function bind(nextRuntime: FormRuntime) {
@@ -109,6 +120,7 @@ export function useForm(params: RuntimeUseFormParams) {
     isValid,
     validate,
     validateCurrentStep,
+    focusFirstInvalid,
     getError,
     clear: clearErrors,
   }
@@ -149,6 +161,7 @@ export function useForm(params: RuntimeUseFormParams) {
     actionPending,
     isSubmitting,
     validate,
+    focus,
     submit,
     submitHandler,
     reset,

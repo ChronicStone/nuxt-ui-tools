@@ -1,12 +1,15 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { FormField } from './field'
+
 import type { FormFieldApi } from './api'
-import type { FormFieldCallbackParams } from './callbacks'
-import type { FormObject } from './utils'
-import type { FormOptionRuntimeState } from './options-runtime'
-import type { FormRuntimeContext } from './context'
 import type { FormSubmitAction, FormSubmitHandler, FormSubmitHandlerResult } from './api'
-import type { FormValidationError } from './validation'
+import type { FormFieldCallbackParams } from './callbacks'
+import type { FormRuntimeContext } from './context'
+import type { FormField } from './field'
+import type { FormFocusRequest } from './focus'
+import type { FormLayoutConfig } from './layout'
+import type { FormOptionRuntimeState } from './options-runtime'
+import type { FormObject } from './utils'
+import type { FormValidationError, FormValidationOptions } from './validation'
 
 /**
  * Parameters used to create the internal form runtime consumed by `<NutForm>`.
@@ -53,6 +56,7 @@ export interface FormRuntime {
   currentStepIndex: Ref<number>
   currentFields: ComputedRef<readonly FormField[]>
   currentStepRoot: ComputedRef<string | undefined>
+  currentLayout: ComputedRef<FormLayoutConfig>
   currentStep: ComputedRef<FormRuntimeStep | null>
   steps: ComputedRef<readonly FormRuntimeStep[]>
   isStepped: ComputedRef<boolean>
@@ -65,19 +69,22 @@ export interface FormRuntime {
   getFieldApi: (path: readonly string[], field?: FormField) => FormFieldApi
   getFieldCallbackParams: (path: readonly string[], field: FormField) => FormFieldCallbackParams
   registerFieldOptions: (path: readonly string[], state: FormOptionRuntimeState) => () => void
+  refreshFieldOptions: (paths: readonly (string | readonly string[])[]) => Promise<void>
   getFieldError: (path: readonly string[]) => string | undefined
   markFieldTouched: (path: readonly string[]) => void
   isFieldTouched: (path: readonly string[]) => boolean
   shouldRender: (field: FormField, path: readonly string[]) => boolean
-  validate: () => Promise<boolean>
-  validateCurrentStep: () => Promise<boolean>
+  validate: (options?: FormValidationOptions) => Promise<boolean>
+  validateCurrentStep: (options?: FormValidationOptions) => Promise<boolean>
+  focusRequest: Ref<FormFocusRequest | null>
+  registerFieldElement: (path: string | readonly string[], element: HTMLElement) => () => void
+  focusField: (path: string | readonly string[]) => Promise<boolean>
+  focusFirstInvalid: () => Promise<boolean>
   clearErrors: () => void
-  submitHandler: (
-    submitHandler?: FormSubmitHandler<FormObject>,
-  ) => Promise<FormSubmitHandlerResult>
+  submitHandler: (submitHandler?: FormSubmitHandler<FormObject>) => Promise<FormSubmitHandlerResult>
   submit: () => Promise<boolean>
   reset: () => void
   nextStep: () => Promise<boolean>
-  previousStep: () => boolean
+  previousStep: () => Promise<boolean>
   goToStep: (index: number) => Promise<boolean>
 }

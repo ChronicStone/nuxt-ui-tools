@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
 import UButton from '@nuxt/ui/components/Button.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
+import { computed, ref } from 'vue'
 
-import type { FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
-import { useFieldControl } from '../../composables/use-field-control'
-import { isRecord } from '../../utils/path'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import { useFieldControl } from '../../composables/use-field-control'
+import type { FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
 
 const props = defineProps<{
   field: FormSelectField
@@ -15,7 +13,11 @@ const props = defineProps<{
   bare?: boolean
 }>()
 
-const { form, controlProps, disabled, handleBlur, options, placeholder } = useFieldControl(() => props.field, () => props.path)
+const { form, controlProps, disabled, handleBlur, options, placeholder } = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
+const searchTerm = ref<string>('')
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
   get: () => {
     const value = form.getValue(props.path)
@@ -23,15 +25,24 @@ const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
     if (isOptionValue(value)) return value
     return null
   },
-  set: value => form.setValue(props.path, value),
+  set: (value) => form.setValue(props.path, value),
 })
 const items = computed(() => [...options.items.value])
-const createItem = computed<FormSelectCreateItem>(() => hasCreateOption() ? props.field.createItem ?? { position: 'bottom', when: 'empty' } : false)
-const showRefreshAction = computed(() => items.value.length > 0 || options.pending.value || options.fetching.value || options.error.value !== null)
+const createItem = computed<FormSelectCreateItem>(() =>
+  options.creatable.value
+    ? (props.field.createItem ?? { position: 'bottom', when: 'empty' })
+    : false,
+)
+const showFooterActions = computed(() => options.refreshable.value || options.creatable.value)
+const footerActionsClass = computed(() =>
+  options.refreshable.value && options.creatable.value ? 'sm:grid-cols-2' : 'grid-cols-1',
+)
+const createActionLabel = computed(() => options.createLabel.value ?? 'Create option')
 
 async function handleCreate(label: string) {
   const option = await options.create(label)
   if (!option) return
+  if (!options.selectCreatedOption.value) return
 
   if (props.field.multiple) {
     const current = Array.isArray(model.value) ? model.value.filter(isOptionValue) : []
@@ -42,15 +53,12 @@ async function handleCreate(label: string) {
   model.value = option.value
 }
 
-async function refreshOptions() {
-  await options.refresh()
+async function handleCreateAction() {
+  await handleCreate(searchTerm.value)
 }
 
-function hasCreateOption() {
-  const rawOptions = Object.getOwnPropertyDescriptor(props.field, 'options')?.value
-  if (!isRecord(rawOptions)) return false
-  const create = Object.getOwnPropertyDescriptor(rawOptions, 'create')?.value
-  return isRecord(create) && typeof Object.getOwnPropertyDescriptor(create, 'handler')?.value === 'function'
+async function refreshOptions() {
+  await options.refresh()
 }
 
 function isOptionValue(value: unknown): value is FormOptionValue {
@@ -62,6 +70,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
   <USelectMenu
     v-if="bare"
     v-model="model"
+    v-model:search-term="searchTerm"
     v-bind="controlProps"
     class="w-full"
     value-key="value"
@@ -70,16 +79,21 @@ function isOptionValue(value: unknown): value is FormOptionValue {
     :multiple="field.multiple"
     :placeholder="placeholder"
     :disabled="disabled"
-    :loading="options.loading.value"
+    :loading="options.loading.value || options.creating.value"
     :search-input="field.searchable ?? false"
-    :clear="field.clearable ?? true"
+    :clear="field.clearable === true"
     :create-item="createItem"
     @create="handleCreate"
     @blur="handleBlur"
   >
     <template #content-bottom>
-      <div v-if="showRefreshAction" class="border-t border-default p-1">
+      <div
+        v-if="showFooterActions"
+        class="grid gap-1 border-t border-default p-1"
+        :class="footerActionsClass"
+      >
         <UButton
+          v-if="options.refreshable.value"
           block
           size="xs"
           variant="ghost"
@@ -88,18 +102,32 @@ function isOptionValue(value: unknown): value is FormOptionValue {
           :loading="options.pending.value || options.fetching.value"
           @click.stop="refreshOptions"
         >
-          Refresh options
+          Refresh
+        </UButton>
+        <UButton
+          v-if="options.creatable.value"
+          block
+          size="xs"
+          variant="ghost"
+          color="primary"
+          icon="i-lucide-plus"
+          :loading="options.creating.value"
+          :disabled="disabled || options.creating.value"
+          @click.stop="handleCreateAction"
+        >
+          {{ createActionLabel }}
         </UButton>
       </div>
     </template>
 
     <template #create-item-label="{ item }">
-      Create "{{ item }}"
+      {{ options.creating.value ? 'Creating...' : `Create "${item}"` }}
     </template>
   </USelectMenu>
   <FormFieldShell v-else :field="field" :path="path">
     <USelectMenu
       v-model="model"
+      v-model:search-term="searchTerm"
       v-bind="controlProps"
       class="w-full"
       value-key="value"
@@ -108,16 +136,21 @@ function isOptionValue(value: unknown): value is FormOptionValue {
       :multiple="field.multiple"
       :placeholder="placeholder"
       :disabled="disabled"
-      :loading="options.loading.value"
+      :loading="options.loading.value || options.creating.value"
       :search-input="field.searchable ?? false"
-      :clear="field.clearable ?? true"
+      :clear="field.clearable === true"
       :create-item="createItem"
       @create="handleCreate"
       @blur="handleBlur"
     >
       <template #content-bottom>
-        <div v-if="showRefreshAction" class="border-t border-default p-1">
+        <div
+          v-if="showFooterActions"
+          class="grid gap-1 border-t border-default p-1"
+          :class="footerActionsClass"
+        >
           <UButton
+            v-if="options.refreshable.value"
             block
             size="xs"
             variant="ghost"
@@ -126,13 +159,26 @@ function isOptionValue(value: unknown): value is FormOptionValue {
             :loading="options.pending.value || options.fetching.value"
             @click.stop="refreshOptions"
           >
-            Refresh options
+            Refresh
+          </UButton>
+          <UButton
+            v-if="options.creatable.value"
+            block
+            size="xs"
+            variant="ghost"
+            color="primary"
+            icon="i-lucide-plus"
+            :loading="options.creating.value"
+            :disabled="disabled || options.creating.value"
+            @click.stop="handleCreateAction"
+          >
+            {{ createActionLabel }}
           </UButton>
         </div>
       </template>
 
       <template #create-item-label="{ item }">
-        Create "{{ item }}"
+        {{ options.creating.value ? 'Creating...' : `Create "${item}"` }}
       </template>
     </USelectMenu>
   </FormFieldShell>

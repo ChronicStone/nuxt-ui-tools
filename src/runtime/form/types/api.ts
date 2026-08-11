@@ -1,20 +1,30 @@
 import type { ComputedRef } from 'vue'
+
 import type { FormContextData } from './context'
 import type { FormMaybePromise, FormObject } from './utils'
+import type { FormValidationOptions } from './validation'
 
 export type FormRefreshableContextKey<TContext> = {
-  [TKey in keyof TContext]: Extract<TContext[TKey], { refresh: () => Promise<void> }> extends never ? never : TKey
-}[keyof TContext] & string
+  [TKey in keyof TContext]: Extract<TContext[TKey], { refresh: () => Promise<void> }> extends never
+    ? never
+    : TKey
+}[keyof TContext] &
+  string
 
-export type FormContextResourceValue<TResource> = TResource extends { value: infer TValue } ? TValue : unknown
+export type FormContextResourceValue<TResource> = TResource extends { value: infer TValue }
+  ? TValue
+  : unknown
 
 export type FormPatchableContextKey<TContext> = {
-  [TKey in keyof TContext]: NonNullable<FormContextResourceValue<TContext[TKey]>> extends readonly unknown[]
+  [TKey in keyof TContext]: NonNullable<
+    FormContextResourceValue<TContext[TKey]>
+  > extends readonly unknown[]
     ? never
     : NonNullable<FormContextResourceValue<TContext[TKey]>> extends object
       ? TKey
       : never
-}[keyof TContext] & string
+}[keyof TContext] &
+  string
 
 export type FormContextPatchValue<TContext, TKey extends keyof TContext> = Partial<
   NonNullable<FormContextResourceValue<TContext[TKey]>>
@@ -46,6 +56,10 @@ export interface FormFieldOptionsApi<TOption = unknown> {
   fetching: () => boolean
   /** True when options should render a visible loader. */
   loading: () => boolean
+  /** True while an option creation handler is pending. */
+  creating: () => boolean
+  /** True when the option field configured a refresh affordance. */
+  refreshable: () => boolean
   /** Returns the latest option-source error, if any. */
   error: () => unknown | null
   /** Refreshes the option source when it is async or query-backed. */
@@ -94,14 +108,18 @@ export interface FormFieldContextApi<TContext = FormContextData> {
   /** Updates the current value of a form-scoped context resource from its previous value. */
   update: <TKey extends keyof TContext & string>(
     key: TKey,
-    updater: (value: FormContextResourceValue<TContext[TKey]>) => FormContextResourceValue<TContext[TKey]>,
+    updater: (
+      value: FormContextResourceValue<TContext[TKey]>,
+    ) => FormContextResourceValue<TContext[TKey]>,
   ) => void
   /** Shallow-patches object context values. Arrays and primitives should use `set` or `update`. */
   patch: <TKey extends FormPatchableContextKey<TContext>>(
     key: TKey,
-    value: FormContextPatchValue<TContext, TKey> | ((
-      value: NonNullable<FormContextResourceValue<TContext[TKey]>>
-    ) => FormContextPatchValue<TContext, TKey>),
+    value:
+      | FormContextPatchValue<TContext, TKey>
+      | ((
+          value: NonNullable<FormContextResourceValue<TContext[TKey]>>,
+        ) => FormContextPatchValue<TContext, TKey>),
   ) => void
   /** Refreshes an async form-scoped context resource by key. */
   refresh: <TKey extends FormRefreshableContextKey<TContext>>(key: TKey) => Promise<void>
@@ -123,6 +141,8 @@ export interface FormFieldApi<TValue = unknown, TOption = unknown, TContext = Fo
   upload: FormFieldUploadApi<TValue>
   /** Validation operations for the field. */
   validation: FormFieldValidationApi
+  /** Focuses the mounted control for this field when it has a focusable input. */
+  focus: () => Promise<boolean>
 }
 
 /**
@@ -134,7 +154,9 @@ export interface FormApi {
   /** Writes an internal form value by raw path. */
   set: (path: string, value: unknown) => void
   /** Runs form validation. */
-  validate: () => Promise<boolean>
+  validate: (options?: FormValidationOptions) => Promise<boolean>
+  /** Focuses a mounted field by raw path. */
+  focus: (path: string | readonly string[]) => Promise<boolean>
   /** Submits the form through the configured submit lifecycle. */
   submit: () => Promise<void>
   /** Resets the form to configured defaults. */
@@ -147,7 +169,7 @@ export type FormSubmitResult<TSubmitData = unknown> =
   | boolean
   | void
   | { success: false }
-  | { success: true, data?: TSubmitData }
+  | { success: true; data?: TSubmitData }
 
 export interface FormSubmitHandlerParams<TOutput = FormObject> {
   /** Submitted output value after output transforms and omitted fields are applied. */
@@ -157,7 +179,7 @@ export interface FormSubmitHandlerParams<TOutput = FormObject> {
 }
 
 export type FormSubmitHandler<TOutput = FormObject, TSubmitData = unknown> = (
-  params: FormSubmitHandlerParams<TOutput>
+  params: FormSubmitHandlerParams<TOutput>,
 ) => FormMaybePromise<FormSubmitResult<TSubmitData>>
 
 export interface FormSubmitHandlerResult<TSubmitData = unknown> {

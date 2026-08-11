@@ -5,6 +5,20 @@ export default defineUiToolsLocale<Messages>({
   name: 'English',
   code: 'en',
   messages: {
+    form: {
+      actions: {
+        nextButton: 'Next',
+        prevButton: 'Back',
+        submitButton: 'Submit',
+        cancelButton: 'Cancel',
+        resetButton: 'Reset',
+      },
+      fields: {
+        text: {
+          defaultPlaceholder: 'Enter a value',
+        },
+      },
+    },
     table: {
       header: {
         refreshData: 'Refresh data',
@@ -117,7 +131,8 @@ export default defineUiToolsLocale<Messages>({
           description: 'Select the correct sheet and verify the header row detected by the system.',
           stageTitle: 'Confirm file structure',
           loadWorkbookFirstTitle: 'Load a workbook first',
-          loadWorkbookFirstDescription: 'The structure step becomes available after a file is uploaded.',
+          loadWorkbookFirstDescription:
+            'The structure step becomes available after a file is uploaded.',
           sheetLabel: 'Sheet',
           previewTitle: 'Sheet preview',
           autoDetected: 'Auto-detected',
@@ -125,7 +140,8 @@ export default defineUiToolsLocale<Messages>({
         },
         matching: {
           title: 'Column matching',
-          description: 'Review how file columns map to system fields. Fix any missing or ambiguous matches.',
+          description:
+            'Review how file columns map to system fields. Fix any missing or ambiguous matches.',
           matched: 'Matched',
           needsMatch: 'Needs match',
           missing: 'Missing',
@@ -148,7 +164,8 @@ export default defineUiToolsLocale<Messages>({
         },
         references: {
           title: 'Reconciliation',
-          description: 'Match imported values to internal products. Resolve once, apply to all matching rows.',
+          description:
+            'Match imported values to internal products. Resolve once, apply to all matching rows.',
         },
         review: {
           title: 'Review & import',
@@ -182,7 +199,8 @@ export default defineUiToolsLocale<Messages>({
           issueBadgeWarning: 'WARNING',
           noValue: '—',
           overflowTitle: 'Import limit exceeded — {total} rows detected, max is {max}',
-          overflowDescription: 'Select rows to discard below, or auto-trim the last {count} rows. Discarded rows can be exported.',
+          overflowDescription:
+            'Select rows to discard below, or auto-trim the last {count} rows. Discarded rows can be exported.',
           discardedStatus: 'Discarded',
           blockingStatus: 'Blocking',
           warningStatus: 'Warning',

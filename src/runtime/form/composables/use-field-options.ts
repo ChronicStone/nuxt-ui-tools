@@ -1,19 +1,26 @@
 import { useQuery } from '@tanstack/vue-query'
+import type { QueryKey } from '@tanstack/vue-query'
 import { computed, onScopeDispose, ref, shallowRef, unref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
-import type { QueryKey } from '@tanstack/vue-query'
 
 import type {
   FormAsyncResource,
   FormField,
   FormFieldApi,
   FormFieldCallbackParams,
+  FormOptionConfig,
+  FormOptionValue,
   FormRuntime,
   FormRuntimeQueryOptions,
 } from '../types'
 import { createFormFieldInstance } from '../utils/field-instance'
-import { normalizeOptionItem, normalizeOptionItems, type ResolvedFormOption } from '../utils/options'
-import { isRecord } from '../utils/path'
+import {
+  normalizeOptionItem,
+  normalizeOptionItems,
+  type ResolvedFormOption,
+} from '../utils/options'
+import { isRecord, relativePathSegments } from '../utils/path'
+import { resolveFormText } from '../utils/text'
 
 export function useFieldOptions(params: {
   field: () => FormField
@@ -21,6 +28,7 @@ export function useFieldOptions(params: {
   api: ComputedRef<FormFieldApi>
   callbackParams: ComputedRef<FormFieldCallbackParams>
   register: FormRuntime['registerFieldOptions']
+  refreshFieldOptions: FormRuntime['refreshFieldOptions']
 }) {
   const promiseOptions = shallowRef<readonly unknown[]>([])
   const createdOptions = shallowRef<readonly unknown[]>([])
@@ -28,23 +36,30 @@ export function useFieldOptions(params: {
   const promiseFetching = ref<boolean>(false)
   const promiseError = ref<unknown | null>(null)
   const promiseRun = ref<number>(0)
-  const trackedOptionSource = computed(() => resolveTrackedOptionSource(params.field(), params.callbackParams.value))
+  const creating = ref<boolean>(false)
+  const trackedOptionSource = computed(() =>
+    resolveTrackedOptionSource(params.field(), params.callbackParams.value),
+  )
   const resolvedSource = computed(() => trackedOptionSource.value.source)
   const contextResources = computed(() => {
     const ctx = params.callbackParams.value.ctx
     if (!isRecord(ctx)) return []
     return trackedOptionSource.value.contextKeys
-      .map(key => Object.getOwnPropertyDescriptor(ctx, key)?.value)
+      .map((key) => Object.getOwnPropertyDescriptor(ctx, key)?.value)
       .filter(isAsyncResource)
   })
-  const contextPending = computed<boolean>(() => contextResources.value.some(resource =>
-    resource.pending && typeof resource.value === 'undefined',
-  ))
-  const contextFetching = computed<boolean>(() => contextResources.value.some(resource =>
-    resource.fetching && typeof resource.value !== 'undefined',
-  ))
-  const contextError = computed<unknown | null>(() =>
-    contextResources.value.find(resource => resource.error !== null)?.error ?? null,
+  const contextPending = computed<boolean>(() =>
+    contextResources.value.some(
+      (resource) => resource.pending && typeof resource.value === 'undefined',
+    ),
+  )
+  const contextFetching = computed<boolean>(() =>
+    contextResources.value.some(
+      (resource) => resource.fetching && typeof resource.value !== 'undefined',
+    ),
+  )
+  const contextError = computed<unknown | null>(
+    () => contextResources.value.find((resource) => resource.error !== null)?.error ?? null,
   )
   const optionConfig = computed(() => resolveOptionConfig(params.field()))
   const querySource = computed(() => {
@@ -53,7 +68,9 @@ export function useFieldOptions(params: {
   })
 
   const optionQuery = useQuery<readonly unknown[]>({
-    queryKey: computed<QueryKey>(() => querySource.value?.queryKey ?? ['form-options', params.path().join('.'), 'disabled']),
+    queryKey: computed<QueryKey>(
+      () => querySource.value?.queryKey ?? ['form-options', params.path().join('.'), 'disabled'],
+    ),
     queryFn: async () => {
       const query = querySource.value
       if (!query?.queryFn) return []
@@ -61,12 +78,13 @@ export function useFieldOptions(params: {
       const result = await query.queryFn()
       return Array.isArray(result) ? result : []
     },
-    enabled: computed<boolean>(() =>
-      Boolean(querySource.value?.queryFn)
-      && querySource.value?.enabled !== false
-      && !contextPending.value,
+    enabled: computed<boolean>(
+      () =>
+        Boolean(querySource.value?.queryFn) &&
+        querySource.value?.enabled !== false &&
+        !contextPending.value,
     ),
-    placeholderData: previous => previous,
+    placeholderData: (previous) => previous,
   })
 
   watch(
@@ -106,7 +124,7 @@ export function useFieldOptions(params: {
   })
   const items = computed<readonly ResolvedFormOption[]>(() => [
     ...sourceItems.value,
-    ...createdOptions.value.map(option => normalizeOptionItem(option)),
+    ...createdOptions.value.map((option) => normalizeOptionItem(option)),
   ])
   const hasItems = computed<boolean>(() => items.value.length > 0)
   const pending = computed<boolean>(() => {
@@ -125,15 +143,28 @@ export function useFieldOptions(params: {
     if (querySource.value) return unref(optionQuery.error) ?? null
     return promiseError.value
   })
-  const disableOnLoading = computed<boolean>(() => optionConfig.value?.disableOnLoading === true)
+  const refreshable = computed<boolean>(() => optionConfig.value?.allowOptionsRefresh === true)
+  const creatable = computed<boolean>(() => hasCreateHandler(optionConfig.value?.create))
+  const createLabel = computed<string | undefined>(() =>
+    resolveFormText(optionConfig.value?.create?.label),
+  )
+  const disableOnLoading = computed<boolean>(() => optionConfig.value?.disableOnLoading !== false)
+  const selectCreatedOption = computed<boolean>(
+    () => optionConfig.value?.create?.selectOnCreation !== false,
+  )
 
   const state = {
     items,
     pending,
     fetching,
     loading,
+    creating: computed(() => creating.value),
+    creatable,
+    createLabel,
     error,
     disableOnLoading,
+    refreshable,
+    selectCreatedOption,
     refresh,
     add,
     create,
@@ -142,9 +173,24 @@ export function useFieldOptions(params: {
   const unregister = params.register(params.path(), state)
   onScopeDispose(unregister)
 
+  watch(
+    sourceItems,
+    (nextOptions, previousOptions) => {
+      if (optionConfig.value?.onOptionsChange) {
+        optionConfig.value.onOptionsChange(nextOptions, {
+          ...params.callbackParams.value,
+          previousOptions: previousOptions ?? [],
+        })
+      }
+
+      clearInvalidValue(nextOptions)
+    },
+    { immediate: true },
+  )
+
   async function refresh() {
     const source = resolvedSource.value
-    await Promise.all(contextResources.value.map(resource => resource.refresh()))
+    await Promise.all(contextResources.value.map((resource) => resource.refresh()))
     if (querySource.value) {
       await optionQuery.refetch()
       return
@@ -164,14 +210,42 @@ export function useFieldOptions(params: {
     const handler = Object.getOwnPropertyDescriptor(createOption, 'handler')?.value
     if (typeof handler !== 'function') return null
 
-    const result = await handler({
-      ...params.callbackParams.value,
-      label,
-    })
-    if (result === null || typeof result === 'undefined') return null
+    creating.value = true
+    try {
+      const result = await handler({
+        ...params.callbackParams.value,
+        label,
+      })
+      if (result === null || typeof result === 'undefined') return null
 
-    createdOptions.value = [...createdOptions.value, result]
-    return normalizeOptionItem(result)
+      createdOptions.value = [...createdOptions.value, result]
+      await params.refreshFieldOptions(
+        resolveRevalidatePaths(params.path(), createOption.revalidateFieldOptions ?? []),
+      )
+      return normalizeOptionItem(result)
+    } finally {
+      creating.value = false
+    }
+  }
+
+  function clearInvalidValue(options: readonly ResolvedFormOption[]) {
+    if (pending.value) return
+    if (optionConfig.value?.clearOnInvalid === false) return
+
+    const current = params.api.value.value.get()
+    const validValues = options.map((option) => option.value)
+    if (Array.isArray(current)) {
+      const nextValue = current.filter(
+        (value) => isOptionValue(value) && validValues.includes(value),
+      )
+      if (nextValue.length !== current.length) params.api.value.value.set(nextValue)
+      return
+    }
+
+    if (current === null || typeof current === 'undefined') return
+    if (isOptionValue(current) && validValues.includes(current)) return
+
+    params.api.value.value.set(null)
   }
 
   async function resolvePromiseOptions(source: Promise<unknown>) {
@@ -200,10 +274,10 @@ export function useFieldOptions(params: {
   return state
 }
 
-function resolveOptionConfig(field: FormField) {
+function resolveOptionConfig(field: FormField): FormOptionConfig<unknown> | undefined {
   if (!createFormFieldInstance(field).capability.has('options')) return undefined
   const options = Object.getOwnPropertyDescriptor(field, 'options')?.value
-  return isRecord(options) && 'source' in options ? options : undefined
+  return isFormOptionConfig(options) ? options : undefined
 }
 
 function resolveOptionSource(field: FormField, params: FormFieldCallbackParams) {
@@ -227,10 +301,7 @@ function resolveTrackedOptionSource(field: FormField, params: FormFieldCallbackP
   }
 }
 
-function trackContextAccess(
-  ctx: FormFieldCallbackParams['ctx'],
-  contextKeys: Set<string>,
-) {
+function trackContextAccess(ctx: FormFieldCallbackParams['ctx'], contextKeys: Set<string>) {
   return new Proxy(ctx, {
     get(target, property, receiver) {
       if (typeof property === 'string') contextKeys.add(property)
@@ -246,13 +317,39 @@ function isRuntimeQueryOptions(value: unknown): value is FormRuntimeQueryOptions
 }
 
 function isPromise(value: unknown): value is Promise<unknown> {
-  return isRecord(value) && typeof Object.getOwnPropertyDescriptor(value, 'then')?.value === 'function'
+  return (
+    isRecord(value) && typeof Object.getOwnPropertyDescriptor(value, 'then')?.value === 'function'
+  )
 }
 
 function isAsyncResource(value: unknown): value is FormAsyncResource<unknown> {
   if (!isRecord(value)) return false
-  return 'pending' in value
-    && 'fetching' in value
-    && 'refresh' in value
-    && typeof value.refresh === 'function'
+  return (
+    'pending' in value &&
+    'fetching' in value &&
+    'refresh' in value &&
+    typeof value.refresh === 'function'
+  )
+}
+
+function isFormOptionConfig(value: unknown): value is FormOptionConfig<unknown> {
+  return isRecord(value) && 'source' in value
+}
+
+function hasCreateHandler(value: unknown) {
+  if (!isRecord(value)) return false
+  return typeof Object.getOwnPropertyDescriptor(value, 'handler')?.value === 'function'
+}
+
+function resolveRevalidatePaths(path: readonly string[], revalidatePaths: readonly string[]) {
+  const parentPath = path.slice(0, -1)
+  return revalidatePaths.map((revalidatePath) => {
+    if (revalidatePath.startsWith('$parent'))
+      return relativePathSegments(parentPath, revalidatePath)
+    return revalidatePath
+  })
+}
+
+function isOptionValue(value: unknown): value is FormOptionValue {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
 }

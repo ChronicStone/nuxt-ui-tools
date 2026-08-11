@@ -61,12 +61,20 @@ export function buildInitialFormState(schema: unknown, ctx: FormContextData, inp
   return state
 }
 
-export function buildFormOutput(schema: unknown, state: FormObject, ctx: FormContextData, apiFactory: FormFieldApiFactory) {
+export function buildFormOutput(
+  schema: unknown,
+  state: FormObject,
+  ctx: FormContextData,
+  apiFactory: FormFieldApiFactory,
+) {
   const output: FormObject = {}
 
   if (isSteppedSchema(schema)) {
     for (const step of getSchemaSteps(schema))
-      mergeFormObjects(output, buildFieldsOutput(step.fields, state, ctx, apiFactory, step.root ? [step.root] : []))
+      mergeFormObjects(
+        output,
+        buildFieldsOutput(step.fields, state, ctx, apiFactory, step.root ? [step.root] : []),
+      )
 
     return output
   }
@@ -74,17 +82,46 @@ export function buildFormOutput(schema: unknown, state: FormObject, ctx: FormCon
   return buildFieldsOutput(getSchemaFields(schema), state, ctx, apiFactory, [])
 }
 
-export async function validateFormState(schema: unknown, state: FormObject, ctx: FormContextData, apiFactory: FormFieldApiFactory) {
+export async function validateFormState(
+  schema: unknown,
+  state: FormObject,
+  ctx: FormContextData,
+  apiFactory: FormFieldApiFactory,
+) {
   const errors: FormSubmitError[] = []
 
   if (isSteppedSchema(schema)) {
     for (const step of getSchemaSteps(schema))
-      errors.push(...await validateFields(step.fields, state, ctx, apiFactory, step.root ? [step.root] : []))
+      errors.push(
+        ...(await validateFields(
+          step.fields,
+          state,
+          ctx,
+          apiFactory,
+          step.root ? [step.root] : [],
+        )),
+      )
 
     return errors
   }
 
   return validateFields(getSchemaFields(schema), state, ctx, apiFactory, [])
+}
+
+export function collectFormFieldPaths(schema: unknown) {
+  if (isSteppedSchema(schema))
+    return getSchemaSteps(schema).flatMap((step) =>
+      collectFormFieldsPaths(step.fields, step.root ? [step.root] : []),
+    )
+
+  return collectFormFieldsPaths(getSchemaFields(schema), [])
+}
+
+export function collectFormFieldsPaths(
+  fields: readonly FormField[],
+  parentPath: readonly string[],
+) {
+  return collectFieldPaths(fields, parentPath)
 }
 
 export async function validateFormFields(params: {
@@ -94,7 +131,13 @@ export async function validateFormFields(params: {
   apiFactory: FormFieldApiFactory
   parentPath: readonly string[]
 }) {
-  return await validateFields(params.fields, params.state, params.ctx, params.apiFactory, params.parentPath)
+  return await validateFields(
+    params.fields,
+    params.state,
+    params.ctx,
+    params.apiFactory,
+    params.parentPath,
+  )
 }
 
 export type FormFieldApiFactory = (path: readonly string[], field?: FormField) => FormFieldApi
@@ -104,7 +147,7 @@ export function fieldPath(parentPath: readonly string[], field: FormField) {
 }
 
 export function childParentPath(parentPath: readonly string[], field: FormField) {
-  if (createFormFieldInstance(field).type.is('input-group')) return parentPath
+  if (isFlatPassthroughField(field)) return parentPath
   return fieldPath(parentPath, field)
 }
 
@@ -123,7 +166,7 @@ function mergeMissingFieldDefaults(
   for (const field of fields) {
     const fieldInstance = createFormFieldInstance(field)
     if (fieldInstance.state.is('stateless')) continue
-    if (fieldInstance.type.is('input-group')) {
+    if (isFlatPassthroughField(field)) {
       mergeMissingFieldDefaults(target, getChildFields(field), ctx, parentPath)
       continue
     }
@@ -142,7 +185,8 @@ function mergeMissingFieldDefaults(
     }
 
     const path = fieldPath(parentPath, field)
-    if (typeof getPathValue(target, path) === 'undefined') setPathValue(target, path, resolveFieldDefault(field, ctx))
+    if (typeof getPathValue(target, path) === 'undefined')
+      setPathValue(target, path, resolveFieldDefault(field, ctx))
   }
 }
 
@@ -158,8 +202,11 @@ function buildFieldsOutput(
   for (const field of fields) {
     const fieldInstance = createFormFieldInstance(field)
     if (fieldInstance.state.is('stateless')) continue
-    if (fieldInstance.type.is('input-group')) {
-      mergeFormObjects(output, buildFieldsOutput(getChildFields(field), state, ctx, apiFactory, parentPath))
+    if (isFlatPassthroughField(field)) {
+      mergeFormObjects(
+        output,
+        buildFieldsOutput(getChildFields(field), state, ctx, apiFactory, parentPath),
+      )
       continue
     }
 
@@ -200,8 +247,10 @@ async function validateFields(
   for (const field of fields) {
     const fieldInstance = createFormFieldInstance(field)
     if (fieldInstance.state.is('stateless')) continue
-    if (fieldInstance.type.is('input-group')) {
-      errors.push(...await validateFields(getChildFields(field), state, ctx, apiFactory, parentPath))
+    if (isFlatPassthroughField(field)) {
+      errors.push(
+        ...(await validateFields(getChildFields(field), state, ctx, apiFactory, parentPath)),
+      )
       continue
     }
 
@@ -217,7 +266,7 @@ async function validateFields(
     if (!shouldRenderField(field, params)) continue
 
     if (fieldInstance.type.is('object')) {
-      errors.push(...await validateFields(getChildFields(field), state, ctx, apiFactory, path))
+      errors.push(...(await validateFields(getChildFields(field), state, ctx, apiFactory, path)))
       continue
     }
 
@@ -230,10 +279,29 @@ async function validateFields(
       })
     }
 
-    errors.push(...await validateFieldRules(field, value, params, path))
+    errors.push(...(await validateFieldRules(field, value, params, path)))
   }
 
   return errors
+}
+
+function collectFieldPaths(
+  fields: readonly FormField[],
+  parentPath: readonly string[],
+): readonly string[] {
+  return fields.flatMap((field) => {
+    const fieldInstance = createFormFieldInstance(field)
+    if (fieldInstance.state.is('stateless')) return []
+    if (isFlatPassthroughField(field)) return collectFieldPaths(getChildFields(field), parentPath)
+
+    const path = fieldPath(parentPath, field)
+    if (fieldInstance.type.is('object')) return collectFieldPaths(getChildFields(field), path)
+    return [path.join('.')]
+  })
+}
+
+function isFlatPassthroughField(field: FormField) {
+  return createFormFieldInstance(field).type.isAny(['input-group', 'card', 'column'])
 }
 
 function resolveFieldDefault(field: FormField, ctx: FormContextData) {
@@ -253,7 +321,9 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData) {
 
 function resolveSwitchDefault(field: FormField) {
   const trueValue = Object.getOwnPropertyDescriptor(field, 'trueValue')?.value
-  return typeof trueValue === 'string' || typeof trueValue === 'number' || typeof trueValue === 'boolean'
+  return typeof trueValue === 'string' ||
+    typeof trueValue === 'number' ||
+    typeof trueValue === 'boolean'
     ? trueValue
     : false
 }
@@ -362,7 +432,8 @@ function normalizeLayout(value: unknown): FormLayoutConfig | undefined {
 
   return {
     columns: typeof columns === 'string' || typeof columns === 'number' ? columns : undefined,
-    fieldSpan: typeof fieldSpan === 'string' || typeof fieldSpan === 'number' ? fieldSpan : undefined,
+    fieldSpan:
+      typeof fieldSpan === 'string' || typeof fieldSpan === 'number' ? fieldSpan : undefined,
     gap: typeof gap === 'string' || typeof gap === 'number' ? gap : undefined,
   }
 }
@@ -374,7 +445,9 @@ function isFormText(value: unknown): value is FormText {
 function isFormField(value: unknown): value is FormField {
   if (!isRecord(value)) return false
   const type = Object.getOwnPropertyDescriptor(value, 'type')?.value
-  return typeof value.key === 'string' && typeof type === 'string' && isRegisteredFormFieldType(type)
+  return (
+    typeof value.key === 'string' && typeof type === 'string' && isRegisteredFormFieldType(type)
+  )
 }
 
 function getChildFields(field: FormField) {

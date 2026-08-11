@@ -1,19 +1,23 @@
 <script setup lang="ts">
+import UAlert from '@nuxt/ui/components/Alert.vue'
 import { computed, ref, watchEffect } from 'vue'
 import type { Component } from 'vue'
 
-import UAlert from '@nuxt/ui/components/Alert.vue'
-
-import type { FormField, FormFieldType, FormItemLayout } from '../../types'
-import { childParentPath, fieldPath, useFormRuntimeContext } from '../../composables/use-form-runtime'
-import { focusFormFieldElement } from '../../utils/focus'
-import { createFormFieldInstance } from '../../utils/field-instance'
 import { useFormItemLayout } from '../../composables/use-form-layout'
+import {
+  childParentPath,
+  fieldPath,
+  useFormRuntimeContext,
+} from '../../composables/use-form-runtime'
 import ArrayListField from '../../fields/array-list/component.vue'
+import AutoCompleteField from '../../fields/auto-complete/component.vue'
 import ButtonField from '../../fields/button/component.vue'
+import CardField from '../../fields/card/component.vue'
+import CheckboxCardField from '../../fields/checkbox-card/component.vue'
 import CheckboxGroupField from '../../fields/checkbox-group/component.vue'
 import CheckboxField from '../../fields/checkbox/component.vue'
 import ColorPickerField from '../../fields/color-picker/component.vue'
+import ColumnField from '../../fields/column/component.vue'
 import CustomComponentField from '../../fields/custom-component/component.vue'
 import DateField from '../../fields/date/component.vue'
 import DividerField from '../../fields/divider/component.vue'
@@ -22,18 +26,25 @@ import HiddenField from '../../fields/hidden/component.vue'
 import InfoField from '../../fields/info/component.vue'
 import InputGroupField from '../../fields/input-group/component.vue'
 import NumberField from '../../fields/number/component.vue'
-import OneTimeCodeField from '../../fields/one-time-code/component.vue'
 import ObjectField from '../../fields/object/component.vue'
+import OneTimeCodeField from '../../fields/one-time-code/component.vue'
 import PasswordField from '../../fields/password/component.vue'
 import PhoneNumberField from '../../fields/phone-number/component.vue'
+import RadioCardField from '../../fields/radio-card/component.vue'
 import RadioField from '../../fields/radio/component.vue'
+import RatingField from '../../fields/rating/component.vue'
 import SelectField from '../../fields/select/component.vue'
 import SliderField from '../../fields/slider/component.vue'
+import SwitchGroupField from '../../fields/switch-group/component.vue'
 import SwitchField from '../../fields/switch/component.vue'
 import TagField from '../../fields/tag/component.vue'
 import TextField from '../../fields/text/component.vue'
 import TextareaField from '../../fields/textarea/component.vue'
+import TimeField from '../../fields/time/component.vue'
 import UploadField from '../../fields/upload/component.vue'
+import type { FormField, FormFieldType, FormItemLayout } from '../../types'
+import { createFormFieldInstance } from '../../utils/field-instance'
+import { focusFormFieldElement } from '../../utils/focus'
 
 const props = defineProps<{
   field: FormField
@@ -52,7 +63,7 @@ const rendererProps = computed(() => {
     field: props.field,
     path: path.value,
   }
-  if (!field.value.type.isAny(['input-group', 'object'])) return baseProps
+  if (!field.value.type.isAny(['input-group', 'object', 'card', 'column'])) return baseProps
 
   return {
     ...baseProps,
@@ -81,12 +92,17 @@ const fieldRenderers = new Map<FormFieldType, Component>([
   ['password', PasswordField],
   ['textarea', TextareaField],
   ['number', NumberField],
+  ['auto-complete', AutoCompleteField],
   ['checkbox', CheckboxField],
   ['switch', SwitchField],
+  ['switch-group', SwitchGroupField],
   ['select', SelectField],
   ['checkbox-group', CheckboxGroupField],
+  ['checkbox-card', CheckboxCardField],
   ['radio', RadioField],
+  ['radio-card', RadioCardField],
   ['date', DateField],
+  ['time', TimeField],
   ['phone-number', PhoneNumberField],
   ['hidden', HiddenField],
   ['info', InfoField],
@@ -102,8 +118,11 @@ const fieldRenderers = new Map<FormFieldType, Component>([
   ['slider', SliderField],
   ['color-picker', ColorPickerField],
   ['one-time-code', OneTimeCodeField],
+  ['rating', RatingField],
   ['tag', TagField],
   ['button', ButtonField],
+  ['card', CardField],
+  ['column', ColumnField],
 ])
 
 function resolveFieldLayout(): FormItemLayout | undefined {
@@ -124,11 +143,7 @@ function isLayout(value: unknown): value is FormItemLayout {
     :data-form-field="path.join('.')"
     :style="itemLayout.style.value"
   >
-    <component
-      :is="renderer"
-      v-if="renderer"
-      v-bind="rendererProps"
-    />
+    <component :is="renderer" v-if="renderer" v-bind="rendererProps" />
     <UAlert
       v-else
       color="neutral"

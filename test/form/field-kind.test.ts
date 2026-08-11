@@ -1,19 +1,25 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
-import { createFormFieldInstance, defineFormField, formFieldKinds, getFormFieldKind, isRegisteredFormFieldType } from '#ui-tools/form'
+import {
+  createFormFieldInstance,
+  defineFormField,
+  formFieldKinds,
+  getFormFieldKind,
+  isRegisteredFormFieldType,
+} from '#ui-tools/form'
 
 describe('form field kinds', () => {
   it('keeps file and upload as separate field kinds', () => {
-    const fieldTypes = formFieldKinds.map(kind => kind.type)
+    const fieldTypes = formFieldKinds.map((kind) => kind.type)
 
     expect(fieldTypes).toContain('file')
     expect(fieldTypes).toContain('upload')
   })
 
   it('starts from core Exassess fields before specialized fields', () => {
-    const fieldTypes = formFieldKinds.map(kind => kind.type)
+    const fieldTypes = formFieldKinds.map((kind) => kind.type)
 
-    expect(fieldTypes.slice(0, 14)).toEqual([
+    expect(fieldTypes.slice(0, 15)).toEqual([
       'text',
       'password',
       'textarea',
@@ -22,6 +28,7 @@ describe('form field kinds', () => {
       'radio',
       'select',
       'date',
+      'phone-number',
       'hidden',
       'info',
       'divider',

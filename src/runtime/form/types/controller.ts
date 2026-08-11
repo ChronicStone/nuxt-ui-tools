@@ -1,15 +1,16 @@
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
-import type { ExtractFormContext } from './schema'
-import type { ExtractFormInternalValue, ExtractFormOutput } from './output'
-import type { FormObject } from './utils'
+
 import type {
   FormSubmitAction,
   FormSubmitHandler,
   FormSubmitHandlerResult,
   FormSubmitTarget,
 } from './api'
-import type { FormValidationError } from './validation'
+import type { ExtractFormInternalValue, ExtractFormOutput } from './output'
 import type { FormRuntime, FormRuntimeStep } from './runtime'
+import type { ExtractFormContext } from './schema'
+import type { FormObject } from './utils'
+import type { FormValidationError, FormValidationOptions } from './validation'
 
 /**
  * Options accepted by `useForm`.
@@ -75,9 +76,11 @@ export interface FormControllerValidation {
   /** True when the current validation result has no errors. */
   isValid: ComputedRef<boolean>
   /** Runs whole-form validation and marks invalid paths as touched. */
-  validate: () => Promise<boolean>
+  validate: (options?: FormValidationOptions) => Promise<boolean>
   /** Runs validation for the currently visible step or field collection. */
-  validateCurrentStep: () => Promise<boolean>
+  validateCurrentStep: (options?: FormValidationOptions) => Promise<boolean>
+  /** Focuses the first focusable invalid field from the current error list. */
+  focusFirstInvalid: () => Promise<boolean>
   /** Reads the current error message for a raw path. */
   getError: (path: string) => string | undefined
   /** Clears all current validation and external errors. */
@@ -93,7 +96,7 @@ export interface FormControllerSubmission<TOutput = FormObject, TSubmitData = un
   submit: (submitHandler?: FormSubmitHandler<TOutput, TSubmitData>) => Promise<boolean>
   /** Runs the submit lifecycle and returns the normalized submit result. */
   submitHandler: (
-    submitHandler?: FormSubmitHandler<TOutput, TSubmitData>
+    submitHandler?: FormSubmitHandler<TOutput, TSubmitData>,
   ) => Promise<FormSubmitHandlerResult<TSubmitData>>
 }
 
@@ -117,7 +120,7 @@ export interface FormControllerNavigation {
   /** Moves to the next step after validating the current step. */
   next: () => Promise<boolean>
   /** Moves to the previous step. */
-  previous: () => boolean
+  previous: () => Promise<boolean>
   /** Moves to a step index. Forward moves validate the current step first. */
   goTo: (index: number) => Promise<boolean>
 }
@@ -135,6 +138,8 @@ export interface FormRendererController {
   input: ComputedRef<FormObject | undefined>
   /** Runs the controller's default submit lifecycle. */
   submit: () => Promise<boolean>
+  /** Runs the controller's default submit lifecycle and returns the normalized result. */
+  submitHandler: () => Promise<FormSubmitHandlerResult<unknown>>
   /** Binds a mounted runtime instance to the controller. */
   bind: (runtime: FormRuntime) => void
   /** Unbinds a mounted runtime instance from the controller. */
@@ -181,19 +186,23 @@ export interface FormController<TSchema = FormObject, TSubmitData = unknown>
   /** Ergonomic alias for `form.submission.actionPending`. */
   actionPending: ComputedRef<FormSubmitAction | null>
   /** Ergonomic alias for `form.validation.validate`. */
-  validate: () => Promise<boolean>
+  validate: (options?: FormValidationOptions) => Promise<boolean>
+  /** Ergonomic alias for focusing a mounted field by raw path. */
+  focus: (path: string | readonly string[]) => Promise<boolean>
   /** Ergonomic alias for `form.submission.submit`. */
-  submit: (submitHandler?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>) => Promise<boolean>
+  submit: (
+    submitHandler?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>,
+  ) => Promise<boolean>
   /** Ergonomic alias for `form.submission.submitHandler`. */
   submitHandler: (
-    submitHandler?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>
+    submitHandler?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>,
   ) => Promise<FormSubmitHandlerResult<TSubmitData>>
   /** Ergonomic alias for `form.state.reset`. */
   reset: () => void
   /** Ergonomic alias for `form.navigation.next`. */
   nextStep: () => Promise<boolean>
   /** Ergonomic alias for `form.navigation.previous`. */
-  previousStep: () => boolean
+  previousStep: () => Promise<boolean>
   /** Internal renderer binding used by `<NutForm :form="form" />`. */
   bind: (runtime: FormRuntime) => void
   /** Internal renderer unbinding used when the form component unmounts. */

@@ -1,5 +1,5 @@
-import type { FormQueryOptions } from './context'
 import type { FormFieldCallback, FormFieldCallbackParams } from './callbacks'
+import type { FormQueryOptions } from './context'
 import type { FormMaybePromise, FormText } from './utils'
 
 /**
@@ -35,9 +35,7 @@ export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = unkno
   | readonly TOption[]
   | FormQueryOptions<readonly TOption[]>
   | FormFieldCallback<
-      | readonly TOption[]
-      | Promise<readonly TOption[]>
-      | FormQueryOptions<readonly TOption[]>,
+      readonly TOption[] | Promise<readonly TOption[]> | FormQueryOptions<readonly TOption[]>,
       TContext,
       TDeps,
       TValue,
@@ -47,8 +45,12 @@ export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = unkno
 /**
  * Option creation hook for fields that can create a missing option from user input.
  */
-export interface FormCreateOptionParams<TContext = {}, TDeps = {}, TValue = unknown, TOption = unknown>
-  extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
+export interface FormCreateOptionParams<
+  TContext = {},
+  TDeps = {},
+  TValue = unknown,
+  TOption = unknown,
+> extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
   /** User-entered label that should be converted into a concrete option. */
   label: string
 }
@@ -56,8 +58,24 @@ export interface FormCreateOptionParams<TContext = {}, TDeps = {}, TValue = unkn
 export interface FormCreateOption<TOption, TContext = {}, TDeps = {}, TValue = unknown> {
   /** Label shown by the create affordance. */
   label?: FormText
+  /** Selects the newly-created option immediately. Defaults to `true`. */
+  selectOnCreation?: boolean
+  /** Option field paths to refresh after creation. Supports `$parent` relative paths. */
+  revalidateFieldOptions?: readonly string[]
   /** Creates an option and returns it. Return `null` when creation was cancelled. */
-  handler: (params: FormCreateOptionParams<TContext, TDeps, TValue, TOption>) => FormMaybePromise<TOption | null>
+  handler: (
+    params: FormCreateOptionParams<TContext, TDeps, TValue, TOption>,
+  ) => FormMaybePromise<TOption | null>
+}
+
+export interface FormOptionsChangeParams<
+  TContext = {},
+  TDeps = {},
+  TValue = unknown,
+  TOption = unknown,
+> extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
+  /** Previously resolved normalized options. */
+  previousOptions: readonly TOption[]
 }
 
 /**
@@ -68,6 +86,15 @@ export interface FormOptionConfig<TOption, TContext = {}, TDeps = {}, TValue = u
   source: FormOptionsSource<TOption, TContext, TDeps, TValue>
   /** Optional creation behavior for missing options. */
   create?: FormCreateOption<TOption, TContext, TDeps, TValue>
+  /** Enables the field-level refresh affordance. Matches shared-ui `allowOptionsRefresh`. */
+  allowOptionsRefresh?: boolean
+  /** Clears current values that no longer exist in resolved options. Defaults to `true`. */
+  clearOnInvalid?: boolean
+  /** Runs when resolved source options change, excluding locally-created options. */
+  onOptionsChange?: (
+    options: readonly TOption[],
+    params: FormOptionsChangeParams<TContext, TDeps, TValue, TOption>,
+  ) => void
   /** Disable the field while its option source has no usable data yet. */
   disableOnLoading?: boolean
 }

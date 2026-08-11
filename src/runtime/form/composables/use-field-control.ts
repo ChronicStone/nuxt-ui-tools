@@ -1,13 +1,15 @@
 import { computed, watch } from 'vue'
 
+import { useUiToolsLocale } from '../../i18n/use-locale'
 import type { FormField, FormObject, FormValidationTrigger } from '../types'
-import { useFormRuntimeContext } from './use-form-runtime'
-import { useFieldOptions } from './use-field-options'
 import { createFormFieldInstance } from '../utils/field-instance'
 import { resolveFormText } from '../utils/text'
+import { useFieldOptions } from './use-field-options'
+import { useFormRuntimeContext } from './use-form-runtime'
 
 export function useFieldControl(field: () => FormField, path: () => readonly string[]) {
   const form = useFormRuntimeContext()
+  const { t } = useUiToolsLocale()
   const api = computed(() => form.getFieldApi(path(), field()))
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
   const options = useFieldOptions({
@@ -16,6 +18,7 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     api,
     callbackParams: params,
     register: form.registerFieldOptions,
+    refreshFieldOptions: form.refreshFieldOptions,
   })
 
   const controlProps = computed<FormObject>(() => {
@@ -38,8 +41,12 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
 
   const placeholder = computed(() => {
     const current = field()
-    if (!('placeholder' in current)) return undefined
-    return resolveFormText(current.placeholder)
+    const value = Object.getOwnPropertyDescriptor(current, 'placeholder')?.value
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'function') {
+      return resolveFormText(value) ?? t('form.fields.text.defaultPlaceholder')
+    }
+
+    return t('form.fields.text.defaultPlaceholder')
   })
 
   watch(
@@ -79,7 +86,8 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
 function getValidationTrigger(field: FormField): FormValidationTrigger {
   if (!createFormFieldInstance(field).capability.has('validation')) return 'blur'
   const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
-  if (typeof validation !== 'object' || validation === null || Array.isArray(validation)) return 'blur'
+  if (typeof validation !== 'object' || validation === null || Array.isArray(validation))
+    return 'blur'
 
   const trigger = Object.getOwnPropertyDescriptor(validation, 'trigger')?.value
   return trigger === 'input' || trigger === 'submit' ? trigger : 'blur'

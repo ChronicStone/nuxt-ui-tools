@@ -5,6 +5,20 @@ export default defineUiToolsLocale<Messages>({
   name: 'Français',
   code: 'fr',
   messages: {
+    form: {
+      actions: {
+        nextButton: 'Suivant',
+        prevButton: 'Précédent',
+        submitButton: 'Soumettre',
+        cancelButton: 'Annuler',
+        resetButton: 'Réinitialiser',
+      },
+      fields: {
+        text: {
+          defaultPlaceholder: 'Saisissez une valeur',
+        },
+      },
+    },
     table: {
       header: {
         refreshData: 'Actualiser les données',
@@ -74,16 +88,19 @@ export default defineUiToolsLocale<Messages>({
       states: {
         empty: {
           title: 'Aucun résultat pour cette vue',
-          description: 'Essayez d ajuster les filtres, la recherche ou la mise en page pour afficher plus de lignes.',
+          description:
+            'Essayez d ajuster les filtres, la recherche ou la mise en page pour afficher plus de lignes.',
         },
         gridError: {
           title: 'Impossible de charger cette grille',
-          description: 'La dernière requête a échoué. Réessayez une fois la source de données disponible.',
+          description:
+            'La dernière requête a échoué. Réessayez une fois la source de données disponible.',
           action: 'Réessayer',
         },
         gridEmpty: {
           title: 'Aucun résultat pour cette vue',
-          description: 'Essayez d ajuster les filtres, la recherche ou la mise en page pour afficher plus de lignes.',
+          description:
+            'Essayez d ajuster les filtres, la recherche ou la mise en page pour afficher plus de lignes.',
         },
       },
     },
@@ -94,12 +111,14 @@ export default defineUiToolsLocale<Messages>({
         continue: 'Continuer',
         closeImport: 'Fermer l import',
         preparingReview: 'Préparation de la revue...',
-        preparingReviewDescription: 'Les données de validation et de revue sont en cours de préparation.',
+        preparingReviewDescription:
+          'Les données de validation et de revue sont en cours de préparation.',
         importRows: 'Importer {count} lignes',
         exportDiscardedRows: 'Exporter {count} lignes ignorées',
         importSummary: '{importable} lignes sur {total} seront importées',
         clickToChangeHeaderRow: 'Cliquez sur une ligne pour changer la position de l en-tete',
-        referencesStepHint: 'Résolvez ici ce que vous pouvez, puis vérifiez la validité des lignes à l étape suivante',
+        referencesStepHint:
+          'Résolvez ici ce que vous pouvez, puis vérifiez la validité des lignes à l étape suivante',
         sheetStats: '{rows} lignes · {columns} colonnes',
         arrayValue: 'Valeur tableau',
         objectValue: 'Valeur objet',
@@ -109,15 +128,18 @@ export default defineUiToolsLocale<Messages>({
       steps: {
         upload: {
           title: 'Téléversement',
-          description: 'Glissez-déposez ou sélectionnez un fichier Excel / CSV pour commencer l import.',
+          description:
+            'Glissez-déposez ou sélectionnez un fichier Excel / CSV pour commencer l import.',
           stageTitle: 'Téléversez votre fichier',
         },
         structure: {
           title: 'Structure',
-          description: 'Sélectionnez la bonne feuille et vérifiez la ligne d en-tête détectée par le système.',
+          description:
+            'Sélectionnez la bonne feuille et vérifiez la ligne d en-tête détectée par le système.',
           stageTitle: 'Confirmer la structure du fichier',
           loadWorkbookFirstTitle: 'Chargez d abord un classeur',
-          loadWorkbookFirstDescription: 'L étape de structure devient disponible une fois le fichier téléversé.',
+          loadWorkbookFirstDescription:
+            'L étape de structure devient disponible une fois le fichier téléversé.',
           sheetLabel: 'Feuille',
           previewTitle: 'Aperçu de la feuille',
           autoDetected: 'Détection automatique',
@@ -125,7 +147,8 @@ export default defineUiToolsLocale<Messages>({
         },
         matching: {
           title: 'Affectation',
-          description: 'Vérifiez comment les colonnes du fichier sont associées aux champs du système. Corrigez les correspondances manquantes ou ambiguës.',
+          description:
+            'Vérifiez comment les colonnes du fichier sont associées aux champs du système. Corrigez les correspondances manquantes ou ambiguës.',
           matched: 'Associé',
           needsMatch: 'À associer',
           missing: 'Manquant',
@@ -148,11 +171,13 @@ export default defineUiToolsLocale<Messages>({
         },
         references: {
           title: 'Rapprochement',
-          description: 'Associez les valeurs importées aux produits internes. Résolvez une fois, appliquez à toutes les lignes correspondantes.',
+          description:
+            'Associez les valeurs importées aux produits internes. Résolvez une fois, appliquez à toutes les lignes correspondantes.',
         },
         review: {
           title: 'Revue finale',
-          description: 'Revoyez les lignes, ignorez les excédents et confirmez la charge utile finale.',
+          description:
+            'Revoyez les lignes, ignorez les excédents et confirmez la charge utile finale.',
           importLimit: 'Limite d import : {importable} sur {total}',
           selected: '{count} sélectionnées',
           discard: 'Ignorer',
@@ -182,7 +207,8 @@ export default defineUiToolsLocale<Messages>({
           issueBadgeWarning: 'AVERTISSEMENT',
           noValue: '—',
           overflowTitle: 'Limite d import dépassée — {total} lignes détectées, maximum {max}',
-          overflowDescription: 'Sélectionnez ci-dessous les lignes à ignorer, ou tronquez automatiquement les {count} dernières lignes. Les lignes ignorées peuvent être exportées.',
+          overflowDescription:
+            'Sélectionnez ci-dessous les lignes à ignorer, ou tronquez automatiquement les {count} dernières lignes. Les lignes ignorées peuvent être exportées.',
           discardedStatus: 'Ignorée',
           blockingStatus: 'Bloquante',
           warningStatus: 'Avertissement',

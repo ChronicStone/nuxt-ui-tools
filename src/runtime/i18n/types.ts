@@ -225,7 +225,23 @@ export interface UiToolsSpreadsheetMessages {
   }
 }
 
+export interface UiToolsFormMessages {
+  actions: {
+    nextButton: string
+    prevButton: string
+    submitButton: string
+    cancelButton: string
+    resetButton: string
+  }
+  fields: {
+    text: {
+      defaultPlaceholder: string
+    }
+  }
+}
+
 export interface Messages {
+  form: UiToolsFormMessages
   table: UiToolsTableMessages
   spreadsheet: UiToolsSpreadsheetMessages
 }
