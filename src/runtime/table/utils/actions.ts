@@ -1,7 +1,7 @@
 import type { DropdownMenuItem } from '@nuxt/ui'
 
-import type { GenericObject, TableRowAction, TableSchemaView } from '../types'
 import type { TableInjectedRowActionScope } from '../composables/use-table-row-actions'
+import type { GenericObject, TableRowAction, TableSchemaView } from '../types'
 
 type RowActionSchemaSource = {
   rowActions?: TableSchemaView['rowActions']
@@ -43,18 +43,19 @@ export function hasVisibleTableRowActions(options: {
   tableApi: TableInjectedRowActionScope['tableApi']
   layout: TableInjectedRowActionScope['layout']
 }) {
-  return options.rows.some((row, index) =>
-    resolveVisibleTableRowActions({
-      schema: options.schema,
-      scope: {
-        row,
-        index,
-        context: toPlainRecord(options.context),
-        pageContext: toPlainRecord(options.pageContext),
-        tableApi: options.tableApi,
-        layout: options.layout,
-      },
-    }).length > 0,
+  return options.rows.some(
+    (row, index) =>
+      resolveVisibleTableRowActions({
+        schema: options.schema,
+        scope: {
+          row,
+          index,
+          context: toPlainRecord(options.context),
+          pageContext: toPlainRecord(options.pageContext),
+          tableApi: options.tableApi,
+          layout: options.layout,
+        },
+      }).length > 0,
   )
 }
 
@@ -62,7 +63,9 @@ export function createRowActionDropdownItems(options: {
   actions: ResolvedRowAction[]
   scope: TableInjectedRowActionScope
 }): DropdownMenuItem[] {
-  return options.actions.map((action) => mapRowActionToDropdownItem({ action, scope: options.scope }))
+  return options.actions.map((action) =>
+    mapRowActionToDropdownItem({ action, scope: options.scope }),
+  )
 }
 
 function mapRowActionToDropdownItem(options: {
@@ -99,19 +102,14 @@ function mapRowActionToDropdownItem(options: {
   return item
 }
 
-function resolveActionLabel(
-  action: ResolvedRowAction,
-) {
+function resolveActionLabel(action: ResolvedRowAction) {
   if (typeof action.label === 'function') return String(action.label())
   if (typeof action.label === 'number') return String(action.label)
   return action.label
 }
 
 function resolveConditionalBoolean(options: {
-  value:
-    | boolean
-    | ((scope: TableInjectedRowActionScope) => boolean)
-    | undefined
+  value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined
   scope: TableInjectedRowActionScope
 }) {
   if (typeof options.value === 'function') return options.value(options.scope)
@@ -119,20 +117,14 @@ function resolveConditionalBoolean(options: {
 }
 
 function resolveCondition(options: {
-  value:
-    | boolean
-    | ((scope: TableInjectedRowActionScope) => boolean)
-    | undefined
+  value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined
   scope: TableInjectedRowActionScope
 }) {
   return resolveConditionalBoolean(options)
 }
 
 function resolveFlag(options: {
-  value:
-    | boolean
-    | ((scope: TableInjectedRowActionScope) => boolean)
-    | undefined
+  value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined
   scope: TableInjectedRowActionScope
 }) {
   if (typeof options.value === 'function') return options.value(options.scope)
@@ -153,9 +145,7 @@ function pruneTableRowActions(options: {
         })
       : undefined
 
-    const nextAction: ResolvedRowAction = children
-      ? { ...action, children }
-      : action
+    const nextAction: ResolvedRowAction = children ? { ...action, children } : action
     if (!children?.length && !isActionItemSelectable(nextAction)) return []
 
     return [
@@ -167,9 +157,7 @@ function pruneTableRowActions(options: {
   })
 }
 
-function isActionItemSelectable(
-  action: ResolvedRowAction,
-) {
+function isActionItemSelectable(action: ResolvedRowAction) {
   if (action.action) return true
   if (action.href) return true
   if (action.to) return true

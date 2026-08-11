@@ -40,20 +40,28 @@ function resolveOptionValue<TOption extends SpreadsheetOptionItem>(params: {
   const text = String(params.raw ?? '').trim()
   if (!text) return params.definition.mode === 'multiple' ? [] : undefined
 
-  const tokens = params.definition.mode === 'multiple'
-    ? text.split(params.definition.separator ?? ',').map((entry) => entry.trim()).filter(Boolean)
-    : [text]
+  const tokens =
+    params.definition.mode === 'multiple'
+      ? text
+          .split(params.definition.separator ?? ',')
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [text]
 
   const resolvedValues: unknown[] = []
 
   for (const token of tokens) {
     const normalizedToken = applySpreadsheetNormalization(token, params.definition.itemModifiers)
     const match = params.definition.from.find((option: TOption) => {
-      const candidate = params.definition.matchBy === 'value'
-        ? String(getSpreadsheetOptionValue(option) ?? '')
-        : getSpreadsheetOptionLabel(option)
+      const candidate =
+        params.definition.matchBy === 'value'
+          ? String(getSpreadsheetOptionValue(option) ?? '')
+          : getSpreadsheetOptionLabel(option)
 
-      return applySpreadsheetNormalization(candidate, params.definition.itemModifiers) === normalizedToken
+      return (
+        applySpreadsheetNormalization(candidate, params.definition.itemModifiers) ===
+        normalizedToken
+      )
     })
 
     if (!match) {
@@ -169,9 +177,13 @@ function resolveSpreadsheetDynamicCellValues(
   const optionsConfig = column.options
   if (!valuesConfig || !optionsConfig) return []
 
-  const tokens = valuesConfig.mode === 'csv'
-    ? text.split(valuesConfig.separator ?? ',').map((entry) => entry.trim()).filter(Boolean)
-    : [text]
+  const tokens =
+    valuesConfig.mode === 'csv'
+      ? text
+          .split(valuesConfig.separator ?? ',')
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      : [text]
 
   const options = resolveSpreadsheetOptionEntries(optionsConfig, source)
   const resolvedValues: unknown[] = []
@@ -179,11 +191,14 @@ function resolveSpreadsheetDynamicCellValues(
   for (const token of tokens) {
     const normalizedToken = applySpreadsheetNormalization(token, valuesConfig.itemModifiers)
     const match = options.find((option: unknown) => {
-      const candidate = valuesConfig.resolve === 'label'
-        ? getSpreadsheetOptionLabel(option)
-        : String(getSpreadsheetOptionValue(option) ?? '')
+      const candidate =
+        valuesConfig.resolve === 'label'
+          ? getSpreadsheetOptionLabel(option)
+          : String(getSpreadsheetOptionValue(option) ?? '')
 
-      return applySpreadsheetNormalization(candidate, valuesConfig.itemModifiers) === normalizedToken
+      return (
+        applySpreadsheetNormalization(candidate, valuesConfig.itemModifiers) === normalizedToken
+      )
     })
 
     if (!match) {
@@ -229,15 +244,9 @@ export async function parseSpreadsheetRows<TContext>(params: {
         rowIndex,
       }
 
-      const value = await parseSpreadsheetCellValue(
-        match.column,
-        cell,
-        params.context,
-        issues,
-      )
+      const value = await parseSpreadsheetCellValue(match.column, cell, params.context, issues)
 
-      if (value !== undefined)
-        setSpreadsheetValueAtPath(data, match.key, value)
+      if (value !== undefined) setSpreadsheetValueAtPath(data, match.key, value)
     }
 
     for (const entry of params.dynamicMatches ?? []) {

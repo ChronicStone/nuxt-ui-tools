@@ -212,12 +212,13 @@ function sanitizeColumnPinning(options: {
     columnIds: [
       SELECT_COLUMN_ID,
       ...options.runtimeColumns
-        .filter((column) =>
-          resolvePinnedSide({
-            schema: options.schema,
-            columnId: column.id,
-            pinned: column.pinned,
-          }) === 'left',
+        .filter(
+          (column) =>
+            resolvePinnedSide({
+              schema: options.schema,
+              columnId: column.id,
+              pinned: column.pinned,
+            }) === 'left',
         )
         .map((column) => column.id),
       ...((options.currentPinning?.left as string[] | undefined) ?? []).filter((columnId) =>
@@ -232,12 +233,13 @@ function sanitizeColumnPinning(options: {
     columnIds: uniqueColumnIds({
       columnIds: [
         ...options.runtimeColumns
-          .filter((column) =>
-            resolvePinnedSide({
-              schema: options.schema,
-              columnId: column.id,
-              pinned: column.pinned,
-            }) === 'right',
+          .filter(
+            (column) =>
+              resolvePinnedSide({
+                schema: options.schema,
+                columnId: column.id,
+                pinned: column.pinned,
+              }) === 'right',
           )
           .map((column) => column.id),
         ...((options.currentPinning?.right as string[] | undefined) ?? []).filter((columnId) =>
@@ -260,7 +262,10 @@ function resolvePinnedSide(options: {
   columnId: string
   pinned?: 'left' | 'right'
 }) {
-  return options.pinned ?? findSchemaColumn({ schema: options.schema, columnId: options.columnId })?.pinned
+  return (
+    options.pinned ??
+    findSchemaColumn({ schema: options.schema, columnId: options.columnId })?.pinned
+  )
 }
 
 function normalizeRightPinnedIds(options: { columnIds: string[] }) {

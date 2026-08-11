@@ -6,7 +6,11 @@ import { computed, ref, toRef } from 'vue'
 
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableTextFilterDefinition, TableTextFilterOperator } from '../../../types'
+import type {
+  TableFilterOperator,
+  TableTextFilterDefinition,
+  TableTextFilterOperator,
+} from '../../../types'
 import { resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
@@ -118,7 +122,6 @@ function handleValueUpdate(value: string | number | undefined) {
     })
   }
 }
-
 </script>
 
 <template>
@@ -165,8 +168,20 @@ function handleValueUpdate(value: string | number | undefined) {
           v-if="filterUi.commitMode === 'manual'"
           class="flex items-center justify-between border-t border-default p-2"
         >
-          <UButton color="neutral" variant="ghost" size="sm" :label="filterUi.actions.clear" @click="clearFilter" />
-          <UButton color="neutral" variant="subtle" size="sm" :label="filterUi.actions.apply" @click="applyFilter" />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            :label="filterUi.actions.clear"
+            @click="clearFilter"
+          />
+          <UButton
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            :label="filterUi.actions.apply"
+            @click="applyFilter"
+          />
         </div>
       </div>
     </template>

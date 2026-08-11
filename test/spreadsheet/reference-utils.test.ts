@@ -1,5 +1,5 @@
-import { computed } from 'vue'
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import { computed } from 'vue'
 
 import {
   applySpreadsheetReferenceResolutions,
@@ -10,6 +10,7 @@ import {
 } from '#ui-tools/spreadsheet'
 import { defineSpreadsheetSchema, normalizeSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 import type { SpreadsheetParsedRow } from '#ui-tools/spreadsheet/types'
+
 import { useSpreadsheetReferences } from '../../src/runtime/spreadsheet/composables/use-spreadsheet-references'
 
 const productOptions = [
@@ -83,7 +84,7 @@ describe('spreadsheet reference utils', () => {
     })
 
     expect(candidates).toHaveLength(2)
-    expect(candidates.every(candidate => candidate.score === 0)).toBe(true)
+    expect(candidates.every((candidate) => candidate.score === 0)).toBe(true)
   })
 
   it('creates one resolution per distinct imported source value', () => {
@@ -186,7 +187,7 @@ describe('spreadsheet reference utils', () => {
     })
 
     expect(resolutions).toHaveLength(2)
-    expect(resolutions.map(resolution => resolution.sourceValue)).toEqual([
+    expect(resolutions.map((resolution) => resolution.sourceValue)).toEqual([
       'Business English 4 Skills',
       'Reading Placement Test',
     ])
@@ -207,7 +208,7 @@ describe('spreadsheet reference utils', () => {
     const requiredReference = createSheetRule<unknown, [], { required: true }, { required: true }>({
       name: 'requiredReference',
       flags: { required: true },
-      validator: value => ({
+      validator: (value) => ({
         $valid: Boolean(value),
         required: true,
       }),
@@ -279,7 +280,7 @@ describe('spreadsheet reference utils', () => {
           }),
         ],
       },
-      references: reference => [
+      references: (reference) => [
         reference.select('productId', {
           source: 'examNameRaw',
           options: productOptions,
@@ -313,7 +314,9 @@ describe('spreadsheet reference utils', () => {
     expect(referenceState.resolvedRows.value[2]?.data).toMatchObject({
       productId: 'prod_2',
     })
-    expectTypeOf(referenceState.queryRequests.value[0]?.query.queryKey).toMatchTypeOf<readonly unknown[] | undefined>()
+    expectTypeOf(referenceState.queryRequests.value[0]?.query.queryKey).toMatchTypeOf<
+      readonly unknown[] | undefined
+    >()
   })
 
   it('resolves column-level resolve definitions in place without keeping the raw source field', () => {
@@ -398,7 +401,7 @@ describe('spreadsheet reference utils', () => {
             resolve: {
               options: productOptions,
             },
-            rules: v => [
+            rules: (v) => [
               v.required({
                 message: 'Product must be resolved before import',
               }),

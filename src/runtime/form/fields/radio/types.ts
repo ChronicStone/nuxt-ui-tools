@@ -1,6 +1,6 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
-import type { FormOptionItem, FormOptionValue, FormOptionsSource } from '../../types/options'
 import type { FieldOptionValue, NullableValue } from '../../types/field-output-utils'
+import type { FormOptionItem, FormOptionValue, FormOptionsSource } from '../../types/options'
 
 export interface FormRadioField<
   TContext = {},

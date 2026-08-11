@@ -184,13 +184,19 @@ export function normalizeFilterDefinition(
   const hasBehavior = 'behavior' in definition
   const defaultValue = hasBehavior
     ? definition.behavior?.defaultValue
-    : ('defaultValue' in definition ? definition.defaultValue : undefined)
+    : 'defaultValue' in definition
+      ? definition.defaultValue
+      : undefined
   const defaultOperator = hasBehavior
     ? definition.behavior?.defaultOperator
-    : ('defaultOperator' in definition ? definition.defaultOperator : undefined)
+    : 'defaultOperator' in definition
+      ? definition.defaultOperator
+      : undefined
   const operators = hasBehavior
     ? definition.behavior?.operators
-    : ('operators' in definition ? definition.operators : undefined)
+    : 'operators' in definition
+      ? definition.operators
+      : undefined
 
   if (definition.kind !== 'number') {
     return {

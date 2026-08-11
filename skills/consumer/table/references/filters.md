@@ -273,9 +273,7 @@ filter.option('department.company.country', {
       },
       {
         label: 'North America',
-        children: [
-          { label: 'United States', value: 'United States' },
-        ],
+        children: [{ label: 'United States', value: 'United States' }],
       },
     ],
   },
@@ -433,7 +431,10 @@ filter.date('createdAt', {
     label: 'Created',
     formatter: (value) => value.toLocaleDateString(),
     rangeFormatter: ({ from, to }) =>
-      [from, to].filter(Boolean).map(value => value!.toLocaleDateString()).join(' - '),
+      [from, to]
+        .filter(Boolean)
+        .map((value) => value!.toLocaleDateString())
+        .join(' - '),
   },
 })
 ```

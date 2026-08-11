@@ -4,6 +4,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import USlideover from '@nuxt/ui/components/Slideover.vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { useTableInternals } from '../../../composables/use-table-internals'
 import { resolveFilterPanelComponent } from './registry'
 
@@ -22,13 +23,7 @@ const { t } = useUiToolsLocale()
       $event ? internals.filterPresentation.openPanel() : internals.filterPresentation.closePanel()
     "
   >
-    <UButton
-      color="neutral"
-      variant="outline"
-      size="md"
-      icon="i-lucide-funnel"
-      class="shrink-0"
-    >
+    <UButton color="neutral" variant="outline" size="md" icon="i-lucide-funnel" class="shrink-0">
       <span class="flex items-center gap-2">
         <span>{{ t('table.filters.panel.trigger') }}</span>
         <UBadge

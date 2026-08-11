@@ -24,13 +24,9 @@ export function useTableSelection(options: UseTableSelectionParams) {
     return options.schema.value.selection?.scope ?? 'all'
   })
   const selectionRows = computed<GenericObject[]>(() =>
-    selectionScope.value === 'all'
-      ? options.queryContent.selectableRows.value
-      : pageRows.value,
+    selectionScope.value === 'all' ? options.queryContent.selectableRows.value : pageRows.value,
   )
-  const pageRowIds = computed(() =>
-    pageRows.value.map((row, index) => getRowId({ row, index })),
-  )
+  const pageRowIds = computed(() => pageRows.value.map((row, index) => getRowId({ row, index })))
 
   const scopeRowIds = computed(() =>
     selectionRows.value.map((row, index) => getRowId({ row, index })),

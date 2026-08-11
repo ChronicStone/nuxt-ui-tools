@@ -8,4 +8,3 @@ export const sliderFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

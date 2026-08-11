@@ -38,10 +38,7 @@ export function createSpreadsheetColumnBuilder<
     }
   }
 
-  const enumColumn: SpreadsheetColumnBuilder<TContext>['enum'] = (
-    key,
-    options,
-  ) => {
+  const enumColumn: SpreadsheetColumnBuilder<TContext>['enum'] = (key, options) => {
     const rules = resolveSpreadsheetRules(options.rules)
 
     return {
@@ -79,10 +76,17 @@ export function createSpreadsheetColumnBuilder<
       TValue = string,
       TRequired extends boolean = false,
       TMultiple extends boolean | SpreadsheetColumnMultipleOptions | undefined = undefined,
-      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
+      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
+        | SpreadsheetFieldRulesInput<TValue>
+        | undefined,
     >(
       key: TKey,
-      options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
+      options: SpreadsheetColumnBaseOptions<
+        TContext,
+        TValue,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      > & { rules?: TRulesInput } = {},
     ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
       const rules = resolveSpreadsheetRules(options.rules)
 
@@ -99,10 +103,17 @@ export function createSpreadsheetColumnBuilder<
       TValue = string,
       TRequired extends boolean = false,
       TMultiple extends boolean | SpreadsheetColumnMultipleOptions | undefined = undefined,
-      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
+      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
+        | SpreadsheetFieldRulesInput<TValue>
+        | undefined,
     >(
       key: TKey,
-      options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
+      options: SpreadsheetColumnBaseOptions<
+        TContext,
+        TValue,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      > & { rules?: TRulesInput } = {},
     ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
       const rules = resolveSpreadsheetRules(options.rules)
 
@@ -118,10 +129,17 @@ export function createSpreadsheetColumnBuilder<
       TValue = boolean,
       TRequired extends boolean = false,
       TMultiple extends boolean | SpreadsheetColumnMultipleOptions | undefined = undefined,
-      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
+      TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
+        | SpreadsheetFieldRulesInput<TValue>
+        | undefined,
     >(
       key: TKey,
-      options: SpreadsheetColumnBaseOptions<TContext, TValue, TRequired, Exclude<TMultiple, undefined>> & { rules?: TRulesInput } = {},
+      options: SpreadsheetColumnBaseOptions<
+        TContext,
+        TValue,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      > & { rules?: TRulesInput } = {},
     ): SpreadsheetColumnDefinition<TKey, TValue, TRequired, TContext, TRulesInput> {
       const rules = resolveSpreadsheetRules(options.rules)
 
@@ -140,19 +158,27 @@ export function createSpreadsheetColumnBuilder<
       TMultiple extends boolean | SpreadsheetOptionColumnMultipleOptions | undefined = undefined,
       TParse extends
         | SpreadsheetColumnBaseOptions<
-          TContext,
-          InferSpreadsheetOptionValue<TOption>,
-          TRequired,
-          Exclude<TMultiple, undefined>
-        >['parse']
+            TContext,
+            InferSpreadsheetOptionValue<TOption>,
+            TRequired,
+            Exclude<TMultiple, undefined>
+          >['parse']
         | undefined = undefined,
       TResolvedValue = TParse extends (...args: infer _Args) => infer TResult
         ? Awaited<TResult>
         : InferSpreadsheetOptionValue<TOption>,
-      TRulesInput extends SpreadsheetFieldRulesInput<TResolvedValue> | undefined = SpreadsheetFieldRulesInput<TResolvedValue> | undefined,
+      TRulesInput extends SpreadsheetFieldRulesInput<TResolvedValue> | undefined =
+        | SpreadsheetFieldRulesInput<TResolvedValue>
+        | undefined,
     >(
       key: TKey,
-      options: SpreadsheetOptionColumnOptions<TContext, TOption, TRequired, Exclude<TMultiple, undefined>, TResolvedValue> & { rules?: TRulesInput },
+      options: SpreadsheetOptionColumnOptions<
+        TContext,
+        TOption,
+        TRequired,
+        Exclude<TMultiple, undefined>,
+        TResolvedValue
+      > & { rules?: TRulesInput },
     ): SpreadsheetColumnDefinition<TKey, TResolvedValue, TRequired, TContext, TRulesInput> {
       const rules = resolveSpreadsheetRules(options.rules)
 
@@ -175,18 +201,14 @@ export function createSpreadsheetGroupBuilder(): SpreadsheetGroupBuilder {
 }
 
 function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder {
-  function options<
-    const TOption extends SpreadsheetOptionItem,
-  >(config: {
+  function options<const TOption extends SpreadsheetOptionItem>(config: {
     from: readonly TOption[]
     mode: 'multiple'
     separator?: string
     matchBy: 'label' | 'value'
     itemModifiers?: readonly SpreadsheetModifier[]
   }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'multiple'>
-  function options<
-    const TOption extends SpreadsheetOptionItem,
-  >(config: {
+  function options<const TOption extends SpreadsheetOptionItem>(config: {
     from: readonly TOption[]
     mode?: 'single'
     separator?: string
@@ -210,13 +232,13 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
         itemModifiers: config.itemModifiers,
       }
 
-      return {
-        kind: 'options',
-        from: config.from,
-        mode: 'single',
-        separator: config.separator,
-        matchBy: config.matchBy,
-        itemModifiers: config.itemModifiers,
+    return {
+      kind: 'options',
+      from: config.from,
+      mode: 'single',
+      separator: config.separator,
+      matchBy: config.matchBy,
+      itemModifiers: config.itemModifiers,
     }
   }
 
@@ -309,7 +331,7 @@ export function createSpreadsheetDynamicBuilder<TContext>(
         context,
         from: config.from,
         each: config.each,
-        resolveValue: item => resolveDynamicCollectionValue(item.value),
+        resolveValue: (item) => resolveDynamicCollectionValue(item.value),
       })
 
       return {
@@ -324,7 +346,7 @@ export function createSpreadsheetDynamicBuilder<TContext>(
         context,
         from: config.from,
         each: config.each,
-        resolveValue: item => resolveDynamicCollectionValue(item.value),
+        resolveValue: (item) => resolveDynamicCollectionValue(item.value),
       })
 
       return {
@@ -369,15 +391,13 @@ export function createSpreadsheetReferenceBuilder<
 
 export function defineSpreadsheetReference<
   const TDefinition extends SpreadsheetReferenceDefinition,
->(
-  definition: TDefinition,
-): TDefinition {
+>(definition: TDefinition): TDefinition {
   return definition
 }
 
-export function defineSpreadsheetReferences<
-  const TReferences extends readonly unknown[],
->(references: TReferences): TReferences {
+export function defineSpreadsheetReferences<const TReferences extends readonly unknown[]>(
+  references: TReferences,
+): TReferences {
   return references
 }
 
@@ -398,9 +418,7 @@ function isSpreadsheetReferenceResolver<TRow, TReferences>(
   return typeof references === 'function'
 }
 
-export function resolveSpreadsheetReferences<TReferences>(
-  references: TReferences,
-): TReferences
+export function resolveSpreadsheetReferences<TReferences>(references: TReferences): TReferences
 export function resolveSpreadsheetReferences<TRow, TReferences>(
   references: ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences) | undefined,
 ): TReferences | undefined
@@ -442,19 +460,20 @@ export function resolveCollection<TBuilderTuple extends readonly unknown[], TRes
 
 export function resolveSpreadsheetColumns<TColumns>(
   columns: TColumns,
-): TColumns extends SpreadsheetColumnsDefinition<any> ? SpreadsheetResolvedColumns<TColumns> : TColumns
-export function resolveSpreadsheetColumns(
-  columns: SpreadsheetColumnsDefinition | undefined,
-) {
+): TColumns extends SpreadsheetColumnsDefinition<any>
+  ? SpreadsheetResolvedColumns<TColumns>
+  : TColumns
+export function resolveSpreadsheetColumns(columns: SpreadsheetColumnsDefinition | undefined) {
   if (!columns || typeof columns !== 'object') return columns
 
-  const staticColumns = 'static' in columns
-    ? resolveCollection(
-        columns.static,
-        createSpreadsheetColumnBuilder(),
-        createSpreadsheetGroupBuilder(),
-      )
-    : undefined
+  const staticColumns =
+    'static' in columns
+      ? resolveCollection(
+          columns.static,
+          createSpreadsheetColumnBuilder(),
+          createSpreadsheetGroupBuilder(),
+        )
+      : undefined
 
   return {
     ...columns,

@@ -1,4 +1,8 @@
-import type { TableNumberFilterDefinition, TableNumberFilterOperator, TableQueryStateFilterRule } from '../../../types'
+import type {
+  TableNumberFilterDefinition,
+  TableNumberFilterOperator,
+  TableQueryStateFilterRule,
+} from '../../../types'
 import { formatFilterNumber, getNumberRangeValue, toMaybeNumber } from '../common'
 import { resolveNumberFilterUi } from '../ui'
 import type { FilterPreviewResult } from './types'
@@ -32,9 +36,7 @@ export function buildNumberFilterPreview(options: {
 
   const num = toMaybeNumber({ value: options.rule.value })
   const summary =
-    num != null
-      ? (preview.formatter?.(num) ?? formatFilterNumber({ value: num }))
-      : ''
+    num != null ? (preview.formatter?.(num) ?? formatFilterNumber({ value: num })) : ''
 
   return {
     active: Boolean(summary),
@@ -44,7 +46,9 @@ export function buildNumberFilterPreview(options: {
   }
 }
 
-function resolveNumberOperator(value: TableQueryStateFilterRule['operator']): TableNumberFilterOperator {
+function resolveNumberOperator(
+  value: TableQueryStateFilterRule['operator'],
+): TableNumberFilterOperator {
   if (
     value === 'isNot' ||
     value === 'gt' ||
@@ -52,7 +56,8 @@ function resolveNumberOperator(value: TableQueryStateFilterRule['operator']): Ta
     value === 'lt' ||
     value === 'lte' ||
     value === 'between'
-  ) return value
+  )
+    return value
 
   return 'is'
 }

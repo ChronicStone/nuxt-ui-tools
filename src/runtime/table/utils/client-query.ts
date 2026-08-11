@@ -54,11 +54,13 @@ export function executeClientFacets<
   TContext extends GenericObject = GenericObject,
 >(params: TableClientFacetParams<TRow, TContext>): TableFacetExecutionResult<string> {
   return {
-    facets: params.facets.map((facet) => resolveClientFacet({
-      rows: params.rows,
-      request: params.request,
-      facet,
-    })),
+    facets: params.facets.map((facet) =>
+      resolveClientFacet({
+        rows: params.rows,
+        request: params.request,
+        facet,
+      }),
+    ),
   }
 }
 
@@ -67,10 +69,12 @@ export function filterClientRows<TRow extends GenericObject>(params: {
   filters: TableResolvedFilterGroup<string>
   search: TableSourceRequestContext<TRow>['search']
 }) {
-  return [...lazyFilterRows(params.rows, {
-    filters: params.filters,
-    search: params.search,
-  })]
+  return [
+    ...lazyFilterRows(params.rows, {
+      filters: params.filters,
+      search: params.search,
+    }),
+  ]
 }
 
 export function sortClientRows<TRow extends GenericObject>(params: {
@@ -110,12 +114,13 @@ function resolveClientFacet<
   facet: TableFacetRequestDescriptor<string>
 }) {
   const matchingRows = lazyFilterRows(options.rows, {
-    filters: options.facet.mode === 'include-self'
-      ? options.request.filters
-      : removeFilterKeyFromGroup({
-          group: options.request.filters,
-          key: options.facet.key,
-        }),
+    filters:
+      options.facet.mode === 'include-self'
+        ? options.request.filters
+        : removeFilterKeyFromGroup({
+            group: options.request.filters,
+            key: options.facet.key,
+          }),
     search: options.request.search,
   })
   const counts = countFacetOptions({
@@ -375,11 +380,8 @@ function countFacetOptions<TRow extends GenericObject>(options: {
     const seenInRow = new Set<string>()
 
     for (const value of toValueList(getFilterTargetValue({ source: row, key: options.key }))) {
-      if (
-        typeof value !== 'string' &&
-        typeof value !== 'number' &&
-        typeof value !== 'boolean'
-      ) continue
+      if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean')
+        continue
 
       const searchValue = String(value).toLocaleLowerCase()
       if (normalizedSearch.length && !searchValue.includes(normalizedSearch)) continue

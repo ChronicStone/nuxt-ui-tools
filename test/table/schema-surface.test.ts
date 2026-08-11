@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import type { ComputedRef } from 'vue'
 
 import { defineTableSchema } from '#ui-tools/table/schema'
-import type { ComputedRef } from 'vue'
 import type { TableApi, TableRemoteSource } from '#ui-tools/table/types'
 
 describe('table package surface', () => {

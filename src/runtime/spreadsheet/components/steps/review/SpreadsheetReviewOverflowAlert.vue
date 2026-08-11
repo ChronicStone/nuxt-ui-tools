@@ -17,12 +17,19 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-wrap items-start justify-between gap-3 rounded-[var(--ui-radius)] border border-warning/50 bg-warning/8 px-4 py-3">
+  <div
+    class="flex flex-wrap items-start justify-between gap-3 rounded-[var(--ui-radius)] border border-warning/50 bg-warning/8 px-4 py-3"
+  >
     <div class="flex min-w-0 items-start gap-2.5">
       <UIcon name="i-lucide-triangle-alert" class="mt-0.5 size-4 shrink-0 text-warning" />
       <div class="grid gap-1">
         <p class="text-[13px] font-semibold text-highlighted">
-          {{ t('spreadsheet.steps.review.overflowTitle', { total: reviewRowsLength, max: maxRecords }) }}
+          {{
+            t('spreadsheet.steps.review.overflowTitle', {
+              total: reviewRowsLength,
+              max: maxRecords,
+            })
+          }}
         </p>
         <p class="text-xs text-toned">
           {{ t('spreadsheet.steps.review.overflowDescription', { count: overflowCount }) }}

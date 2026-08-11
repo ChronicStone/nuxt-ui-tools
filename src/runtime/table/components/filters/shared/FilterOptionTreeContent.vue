@@ -69,7 +69,10 @@ function getTreeIndentStyle(depth: number) {
         class="flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-elevated"
         :class="entry.selected ? 'bg-elevated text-highlighted' : 'text-default'"
       >
-        <div class="flex min-w-0 flex-1 items-center gap-3" :style="getTreeIndentStyle(entry.depth)">
+        <div
+          class="flex min-w-0 flex-1 items-center gap-3"
+          :style="getTreeIndentStyle(entry.depth)"
+        >
           <button
             v-if="entry.expandable"
             type="button"
@@ -92,11 +95,7 @@ function getTreeIndentStyle(depth: number) {
           />
           <span v-else class="size-5 shrink-0" />
 
-          <UIcon
-            v-if="entry.icon"
-            :name="entry.icon"
-            class="size-4 shrink-0 text-muted"
-          />
+          <UIcon v-if="entry.icon" :name="entry.icon" class="size-4 shrink-0 text-muted" />
 
           <span class="min-w-0 flex-1" :class="entry.truncate ? 'truncate' : ''">
             {{ entry.label }}

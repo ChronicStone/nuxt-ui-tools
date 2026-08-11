@@ -21,10 +21,7 @@ export function renderVNode<TArgs extends unknown[]>(
   return resolved ?? null
 }
 
-export function resolveTextValue(
-  value: ResolvableTextValue | null | undefined,
-  fallback = '',
-) {
+export function resolveTextValue(value: ResolvableTextValue | null | undefined, fallback = '') {
   if (typeof value === 'function') return String(value())
   if (typeof value === 'string' || typeof value === 'number') return String(value)
   return fallback

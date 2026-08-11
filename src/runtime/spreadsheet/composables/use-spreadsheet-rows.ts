@@ -1,8 +1,6 @@
 import type { ComputedRef } from 'vue'
 
-import type {
-  SpreadsheetNormalizedSchema,
-} from '../types'
+import type { SpreadsheetNormalizedSchema } from '../types'
 import { useSpreadsheetColumnMatching } from './use-spreadsheet-column-matching'
 import { useSpreadsheetRowState } from './use-spreadsheet-row-state'
 

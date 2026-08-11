@@ -9,19 +9,19 @@ import {
   normalizeFormLayoutGap,
 } from '../utils/layout'
 
-export function useFormGridLayout(params: {
-  layout: ComputedRef<FormLayoutConfig>
-}) {
+export function useFormGridLayout(params: { layout: ComputedRef<FormLayoutConfig> }) {
   const columns = useResponsiveValue(
     () => String(params.layout.value.columns ?? FORM_LAYOUT_DEFAULTS.columns),
     normalizeFormGridColumnsStyle,
   )
 
-  const style = computed(() => [
-    'display: grid',
-    columns.value ?? normalizeFormGridColumnsStyle(String(FORM_LAYOUT_DEFAULTS.columns)),
-    `gap: ${normalizeFormLayoutGap(params.layout.value.gap)}`,
-  ].join('; '))
+  const style = computed(() =>
+    [
+      'display: grid',
+      columns.value ?? normalizeFormGridColumnsStyle(String(FORM_LAYOUT_DEFAULTS.columns)),
+      `gap: ${normalizeFormLayoutGap(params.layout.value.gap)}`,
+    ].join('; '),
+  )
 
   return {
     columns,
@@ -34,11 +34,18 @@ export function useFormItemLayout(params: {
   formLayout: ComputedRef<FormLayoutConfig>
 }) {
   const span = useResponsiveValue(
-    () => String(params.layout()?.span ?? params.formLayout.value.fieldSpan ?? FORM_LAYOUT_DEFAULTS.fieldSpan),
+    () =>
+      String(
+        params.layout()?.span ??
+          params.formLayout.value.fieldSpan ??
+          FORM_LAYOUT_DEFAULTS.fieldSpan,
+      ),
     normalizeFormGridColumnSpanStyle,
   )
 
-  const style = computed(() => span.value ?? normalizeFormGridColumnSpanStyle(String(FORM_LAYOUT_DEFAULTS.fieldSpan)))
+  const style = computed(
+    () => span.value ?? normalizeFormGridColumnSpanStyle(String(FORM_LAYOUT_DEFAULTS.fieldSpan)),
+  )
 
   return {
     span,
@@ -51,15 +58,20 @@ export function useFormContainerLayout(params: {
   formLayout: ComputedRef<FormLayoutConfig>
 }) {
   const columns = useResponsiveValue(
-    () => String(params.layout()?.columns ?? params.formLayout.value.columns ?? FORM_LAYOUT_DEFAULTS.columns),
+    () =>
+      String(
+        params.layout()?.columns ?? params.formLayout.value.columns ?? FORM_LAYOUT_DEFAULTS.columns,
+      ),
     normalizeFormGridColumnsStyle,
   )
 
-  const style = computed(() => [
-    'display: grid',
-    columns.value ?? normalizeFormGridColumnsStyle(String(FORM_LAYOUT_DEFAULTS.columns)),
-    `gap: ${normalizeFormLayoutGap(FORM_LAYOUT_DEFAULTS.gap)}`,
-  ].join('; '))
+  const style = computed(() =>
+    [
+      'display: grid',
+      columns.value ?? normalizeFormGridColumnsStyle(String(FORM_LAYOUT_DEFAULTS.columns)),
+      `gap: ${normalizeFormLayoutGap(FORM_LAYOUT_DEFAULTS.gap)}`,
+    ].join('; '),
+  )
 
   return {
     columns,

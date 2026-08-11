@@ -59,13 +59,11 @@ describe('query-state inference', () => {
     expectTypeOf<ReturnType<typeof useCombinedQueryStates>['value']['layout']>().toEqualTypeOf<
       'grid' | 'table'
     >()
-    expectTypeOf<ReturnType<typeof useCombinedQueryStates>['value']['search']>().toEqualTypeOf<
-      string
-    >()
+    expectTypeOf<
+      ReturnType<typeof useCombinedQueryStates>['value']['search']
+    >().toEqualTypeOf<string>()
     expectTypeOf<
       ReturnType<typeof useCombinedQueryStates>['value']['optionalLayout']
-    >().toEqualTypeOf<
-      'grid' | 'table' | undefined
-    >()
+    >().toEqualTypeOf<'grid' | 'table' | undefined>()
   })
 })

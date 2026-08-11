@@ -1,13 +1,12 @@
 <script setup lang="ts">
+import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import { computed } from 'vue'
 import type { Component } from 'vue'
 
-import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
-
-import type { FormField, FormInputGroupField } from '../../types'
-import { fieldPath } from '../../composables/use-form-runtime'
 import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import { fieldPath } from '../../composables/use-form-runtime'
+import type { FormField, FormInputGroupField } from '../../types'
 import NumberField from '../number/component.vue'
 import PasswordField from '../password/component.vue'
 import SelectField from '../select/component.vue'
@@ -19,11 +18,13 @@ const props = defineProps<{
   parentPath: readonly string[]
 }>()
 
-const groupChildren = computed(() => props.field.fields.map(child => ({
-  field: child,
-  path: fieldPath(props.parentPath, child),
-  renderer: getGroupedRenderer(child),
-})))
+const groupChildren = computed(() =>
+  props.field.fields.map((child) => ({
+    field: child,
+    path: fieldPath(props.parentPath, child),
+    renderer: getGroupedRenderer(child),
+  })),
+)
 
 function getGroupedRenderer(field: FormField): Component | null {
   if (field.type === 'text') return TextField
@@ -37,10 +38,7 @@ function getGroupedRenderer(field: FormField): Component | null {
 <template>
   <FormFieldShell :field="field" :path="path">
     <UFieldGroup class="w-full">
-      <template
-        v-for="child in groupChildren"
-        :key="child.field.key"
-      >
+      <template v-for="child in groupChildren" :key="child.field.key">
         <component
           :is="child.renderer"
           v-if="child.renderer"
@@ -48,11 +46,7 @@ function getGroupedRenderer(field: FormField): Component | null {
           :path="child.path"
           bare
         />
-        <FormFieldRenderer
-          v-else
-          :field="child.field"
-          :parent-path="parentPath"
-        />
+        <FormFieldRenderer v-else :field="child.field" :parent-path="parentPath" />
       </template>
     </UFieldGroup>
   </FormFieldShell>

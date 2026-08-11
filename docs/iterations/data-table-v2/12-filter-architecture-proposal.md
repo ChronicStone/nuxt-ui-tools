@@ -25,7 +25,7 @@ The next filter system should satisfy these rules:
    - add one normalized definition branch
    - add one editor implementation
    - add one preview implementation if needed
-   not rewrite orchestration
+     not rewrite orchestration
 
 ## Design Summary
 

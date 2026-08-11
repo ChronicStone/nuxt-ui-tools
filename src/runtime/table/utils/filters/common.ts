@@ -1,6 +1,7 @@
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { isArray, isObject } from '../../../shared/utils/predicate'
 import { resolveTextValue } from '../../../shared/utils/render'
-import { useUiToolsLocale } from '#ui-tools/i18n'
 import type {
   TableDateFilterDefinition,
   TableQueryStateFilterRule,

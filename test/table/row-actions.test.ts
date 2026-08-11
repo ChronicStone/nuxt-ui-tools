@@ -1,7 +1,8 @@
-import { computed } from 'vue'
 import { describe, expect, it } from 'vitest'
+import { computed } from 'vue'
 
 import type { TableApi } from '#ui-tools/table/types'
+
 import {
   createRowActionDropdownItems,
   hasVisibleTableRowActions,

@@ -3,6 +3,7 @@ import UAlert from '@nuxt/ui/components/Alert.vue'
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type { SpreadsheetComponentApi } from '../types'
 import SpreadsheetStructurePreviewTable from './structure/SpreadsheetStructurePreviewTable.vue'
 import SpreadsheetStructureSheetList from './structure/SpreadsheetStructureSheetList.vue'
@@ -22,14 +23,17 @@ const sheetItems = computed(() =>
 )
 const previewRows = computed(() =>
   (activeSheet.value?.rows ?? []).map((row, index) => ({
-      absoluteIndex: index,
-      cells: row,
-    })),
+    absoluteIndex: index,
+    cells: row,
+  })),
 )
 const previewColumnCount = computed(() =>
-  Math.max(...previewRows.value.map((row) => row.cells.length), props.spreadsheet.headers.value.length, 0),
+  Math.max(
+    ...previewRows.value.map((row) => row.cells.length),
+    props.spreadsheet.headers.value.length,
+    0,
+  ),
 )
-
 </script>
 
 <template>

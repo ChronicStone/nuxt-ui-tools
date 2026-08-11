@@ -1,7 +1,8 @@
+import type { LazyTextValue, NestedPaths } from '#ui-tools/shared/types/utils'
+
 import type { SpreadsheetColumnsDefinition, SpreadsheetResolvedColumns } from './columns'
 import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
 import type { ExtractSpreadsheetValidationRow, SpreadsheetRowData } from './inference'
-import type { LazyTextValue, NestedPaths } from '#ui-tools/shared/types/utils'
 import type { SpreadsheetFieldRules, SpreadsheetRuleBuilder } from './validation'
 
 export interface SpreadsheetFileDefinition {
@@ -43,7 +44,10 @@ export interface SpreadsheetStepsDefinition {
   review?: SpreadsheetReviewStepDefinition
 }
 
-type SpreadsheetValueAtPath<TRow, TPath extends string> = TPath extends `${infer TKey}.${infer TRest}`
+type SpreadsheetValueAtPath<
+  TRow,
+  TPath extends string,
+> = TPath extends `${infer TKey}.${infer TRest}`
   ? TKey extends keyof TRow
     ? SpreadsheetValueAtPath<NonNullable<TRow[TKey]>, TRest>
     : never
@@ -65,10 +69,9 @@ export interface SpreadsheetRelationDefinition<
   ) => SpreadsheetFieldRules<SpreadsheetValueAtPath<TRow, TColumn>>
 }
 
-export type SpreadsheetRelationsDefinition<TRow> =
-  readonly {
-    [TColumn in SpreadsheetRelationPath<TRow>]: SpreadsheetRelationDefinition<TRow, TColumn>
-  }[SpreadsheetRelationPath<TRow>][]
+export type SpreadsheetRelationsDefinition<TRow> = readonly {
+  [TColumn in SpreadsheetRelationPath<TRow>]: SpreadsheetRelationDefinition<TRow, TColumn>
+}[SpreadsheetRelationPath<TRow>][]
 
 export type SpreadsheetBuildRowDefinition<TContext = unknown, TRow = unknown> = (params: {
   context: TContext
@@ -77,9 +80,8 @@ export type SpreadsheetBuildRowDefinition<TContext = unknown, TRow = unknown> = 
 
 export interface SpreadsheetSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly [],
-  TColumns extends SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>> = SpreadsheetColumnsDefinition<
-    SpreadsheetContextDataFromItems<TContextItems>
-  >,
+  TColumns extends SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>> =
+    SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>>,
   TReferences = readonly unknown[],
   TRelations = SpreadsheetRelationsDefinition<
     SpreadsheetRowData<SpreadsheetResolvedColumns<TColumns>, TReferences>
@@ -103,31 +105,28 @@ export interface SpreadsheetSchema<
   review?: SpreadsheetReviewStepDefinition
 }
 
-export interface SpreadsheetSchemaRefinement<
-  TRow,
-> {
+export interface SpreadsheetSchemaRefinement<TRow> {
   relations?: SpreadsheetRelationsDefinition<TRow>
 }
 
-export type SpreadsheetSchemaWithRefine<
-  TSchema extends { importKey: string },
-> = TSchema & {
+export type SpreadsheetSchemaWithRefine<TSchema extends { importKey: string }> = TSchema & {
   refine<
-    const TRelations extends SpreadsheetRelationsDefinition<ExtractSpreadsheetValidationRow<TSchema>>,
-  >(
-    refinement: {
-      relations: TRelations
-    },
-  ): SpreadsheetSchemaWithRefine<
-    TSchema & { relations: SpreadsheetRelationsDefinition<ExtractSpreadsheetValidationRow<TSchema>> }
+    const TRelations extends SpreadsheetRelationsDefinition<
+      ExtractSpreadsheetValidationRow<TSchema>
+    >,
+  >(refinement: {
+    relations: TRelations
+  }): SpreadsheetSchemaWithRefine<
+    TSchema & {
+      relations: SpreadsheetRelationsDefinition<ExtractSpreadsheetValidationRow<TSchema>>
+    }
   >
 }
 
 export type BuildSpreadsheetSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly [],
-  TColumns extends SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>> = SpreadsheetColumnsDefinition<
-    SpreadsheetContextDataFromItems<TContextItems>
-  >,
+  TColumns extends SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>> =
+    SpreadsheetColumnsDefinition<SpreadsheetContextDataFromItems<TContextItems>>,
   TReferences = readonly unknown[],
   TRelations = SpreadsheetRelationsDefinition<
     SpreadsheetRowData<SpreadsheetResolvedColumns<TColumns>, TReferences>

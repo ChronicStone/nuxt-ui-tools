@@ -1,5 +1,11 @@
 import type { DataTag, QueryKey } from '@tanstack/vue-query'
-import type { GenericObject, LazyRenderableValue, LazyTextValue, MaybePromise } from '../../shared/types/utils'
+
+import type {
+  GenericObject,
+  LazyRenderableValue,
+  LazyTextValue,
+  MaybePromise,
+} from '../../shared/types/utils'
 
 /**
  * Values that can be returned directly or resolved asynchronously by the form runtime.
@@ -58,14 +64,15 @@ export interface FormSyncResource<TValue> {
 /**
  * Converts a raw context source return value into the resource exposed as `ctx`.
  */
-export type FormContextResource<TValue> = TValue extends Promise<infer TResolved>
-  ? FormAsyncResource<TResolved>
-  : TValue extends { queryKey: infer TQueryKey }
-    ? TQueryKey extends DataTag<QueryKey, infer TResolved, infer TError>
-      ? FormAsyncResource<TResolved, TError>
-      : TValue extends { queryFn: (...args: readonly unknown[]) => Promise<infer TResolved> }
-        ? FormAsyncResource<TResolved>
-        : TValue extends { queryFn: (...args: readonly unknown[]) => infer TResolved }
-          ? FormAsyncResource<Awaited<TResolved>>
-          : FormAsyncResource<unknown>
-    : FormSyncResource<TValue>
+export type FormContextResource<TValue> =
+  TValue extends Promise<infer TResolved>
+    ? FormAsyncResource<TResolved>
+    : TValue extends { queryKey: infer TQueryKey }
+      ? TQueryKey extends DataTag<QueryKey, infer TResolved, infer TError>
+        ? FormAsyncResource<TResolved, TError>
+        : TValue extends { queryFn: (...args: readonly unknown[]) => Promise<infer TResolved> }
+          ? FormAsyncResource<TResolved>
+          : TValue extends { queryFn: (...args: readonly unknown[]) => infer TResolved }
+            ? FormAsyncResource<Awaited<TResolved>>
+            : FormAsyncResource<unknown>
+      : FormSyncResource<TValue>

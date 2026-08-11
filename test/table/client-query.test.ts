@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import type { GenericObject, TableKnownFieldPath, TableSourceRequestContext } from '#ui-tools/table/types'
+import type {
+  GenericObject,
+  TableKnownFieldPath,
+  TableSourceRequestContext,
+} from '#ui-tools/table/types'
 import { executeClientQuery } from '#ui-tools/table/utils/client-query'
 
 type TestRow = GenericObject & {

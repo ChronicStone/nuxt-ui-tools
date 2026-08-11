@@ -8,15 +8,10 @@ export function isSpreadsheetOptionEntry(value: unknown): value is {
   label: string
   value: unknown
 } {
-  return isSpreadsheetRecord(value)
-    && typeof value.label === 'string'
-    && 'value' in value
+  return isSpreadsheetRecord(value) && typeof value.label === 'string' && 'value' in value
 }
 
-export function resolveSpreadsheetOptionEntries<TParams>(
-  source: unknown,
-  params: TParams,
-) {
+export function resolveSpreadsheetOptionEntries<TParams>(source: unknown, params: TParams) {
   if (Array.isArray(source)) return source
   if (typeof source === 'function') return source(params)
 

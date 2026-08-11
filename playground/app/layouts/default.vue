@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import PlaygroundControls from '../components/playground/PlaygroundControls.vue'
 import PlaygroundLogo from '../components/playground/PlaygroundLogo.vue'
 import PlaygroundNavbar from '../components/playground/PlaygroundNavbar.vue'
-import PlaygroundControls from '../components/playground/PlaygroundControls.vue'
 
 const { classes } = usePlaygroundAppearance()
 const { components, groups, homeLink, items } = usePlaygroundNavigation()
@@ -23,7 +23,11 @@ const { components, groups, homeLink, items } = usePlaygroundNavigation()
 
           <div v-if="!collapsed" class="ms-auto flex items-center gap-1">
             <PlaygroundControls />
-            <UColorModeButton color="neutral" variant="ghost" class="data-[state=open]:bg-elevated" />
+            <UColorModeButton
+              color="neutral"
+              variant="ghost"
+              class="data-[state=open]:bg-elevated"
+            />
           </div>
         </template>
 

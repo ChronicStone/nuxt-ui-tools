@@ -8,4 +8,3 @@ export const numberFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

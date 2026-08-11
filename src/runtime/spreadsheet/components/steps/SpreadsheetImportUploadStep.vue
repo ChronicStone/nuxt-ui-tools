@@ -5,6 +5,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type { SpreadsheetComponentApi } from '../types'
 
 const props = defineProps<{
@@ -16,28 +17,28 @@ const { t } = useUiToolsLocale()
 const file = ref<File | null>(null)
 function getSchemaAccept(schema: { importKey: string }): readonly string[] | undefined {
   if (
-    'file' in schema
-    && schema.file
-    && typeof schema.file === 'object'
-    && 'accept' in schema.file
-    && Array.isArray(schema.file.accept)
+    'file' in schema &&
+    schema.file &&
+    typeof schema.file === 'object' &&
+    'accept' in schema.file &&
+    Array.isArray(schema.file.accept)
   )
     return schema.file.accept
 
   if (
-    'source' in schema
-    && schema.source
-    && typeof schema.source === 'object'
-    && 'accept' in schema.source
-    && Array.isArray(schema.source.accept)
+    'source' in schema &&
+    schema.source &&
+    typeof schema.source === 'object' &&
+    'accept' in schema.source &&
+    Array.isArray(schema.source.accept)
   )
     return schema.source.accept
 
   return undefined
 }
 
-const accept = computed(() =>
-  getSchemaAccept(props.spreadsheet.schema.value)?.join(',') ?? '.xlsx,.xls,.csv',
+const accept = computed(
+  () => getSchemaAccept(props.spreadsheet.schema.value)?.join(',') ?? '.xlsx,.xls,.csv',
 )
 
 watch(file, (nextFile) => {
@@ -77,11 +78,7 @@ watch(file, (nextFile) => {
     />
 
     <div class="max-w-sm">
-      <button
-        type="button"
-        class="group text-left"
-        @click="onDownloadTemplate?.()"
-      >
+      <button type="button" class="group text-left" @click="onDownloadTemplate?.()">
         <UCard class="transition-colors group-hover:border-primary/50 group-hover:bg-elevated/60">
           <div class="flex items-center gap-4">
             <UIcon name="i-lucide-file-spreadsheet" class="size-5 text-toned" />

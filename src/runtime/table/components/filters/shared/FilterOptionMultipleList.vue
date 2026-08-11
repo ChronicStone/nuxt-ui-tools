@@ -17,21 +17,20 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  select: [options: {
-    event: MouseEvent
-    entry: TableResolvedFilterOptionEntry & { selected?: boolean; icon?: string }
-    index: number
-    sectionKey: string
-  }]
+  select: [
+    options: {
+      event: MouseEvent
+      entry: TableResolvedFilterOptionEntry & { selected?: boolean; icon?: string }
+      index: number
+      sectionKey: string
+    },
+  ]
 }>()
 </script>
 
 <template>
   <div class="grid gap-0.5">
-    <template
-      v-for="section in props.sections"
-      :key="section.key"
-    >
+    <template v-for="section in props.sections" :key="section.key">
       <div
         v-if="section.dividerBefore && section.entries.length"
         class="my-1 border-t border-default"

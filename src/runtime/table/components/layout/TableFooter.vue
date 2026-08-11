@@ -4,6 +4,7 @@ import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { useTableInternals } from '../../composables/use-table-internals'
 
 const internals = useTableInternals()
@@ -30,10 +31,12 @@ function formatCount(value: number) {
     class="flex flex-col gap-3 px-4 py-3 text-sm text-muted sm:px-5 lg:flex-row lg:items-center lg:justify-between"
   >
     <div>
-      {{ t('table.footer.rowsSelected', {
-        selected: formatCount(internals.selection.selectedCount.value),
-        total: formatCount(internals.pagination.rowCount.value),
-      }) }}
+      {{
+        t('table.footer.rowsSelected', {
+          selected: formatCount(internals.selection.selectedCount.value),
+          total: formatCount(internals.pagination.rowCount.value),
+        })
+      }}
     </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">

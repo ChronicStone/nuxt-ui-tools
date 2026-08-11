@@ -25,15 +25,15 @@ type ExtractResponsiveToken<TValue extends string> = TValue extends `${string}:$
   ? Output
   : TValue
 
-export type InferResponsiveValue<TValue extends ResponsiveValueInput> =
-  TValue extends string ? ExtractResponsiveToken<SplitLitteral<TValue, ' '>[number]> : TValue
+export type InferResponsiveValue<TValue extends ResponsiveValueInput> = TValue extends string
+  ? ExtractResponsiveToken<SplitLitteral<TValue, ' '>[number]>
+  : TValue
 
-export type ResponsiveTransformResult<TTransform> = TTransform extends ResponsiveTransformer<
-  infer TOutput
->
-  ? TOutput
-  : TTransform extends 'boolean'
-    ? boolean
-    : TTransform extends 'integer' | 'float'
-      ? number
-      : string
+export type ResponsiveTransformResult<TTransform> =
+  TTransform extends ResponsiveTransformer<infer TOutput>
+    ? TOutput
+    : TTransform extends 'boolean'
+      ? boolean
+      : TTransform extends 'integer' | 'float'
+        ? number
+        : string

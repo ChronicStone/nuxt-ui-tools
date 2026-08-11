@@ -39,21 +39,21 @@ function createDerivedReferencesSchema() {
           match: {
             headers: ['Candidate'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('productLabelRaw', {
           match: {
             headers: ['Product'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
       ],
     },
-    references: reference => [
+    references: (reference) => [
       reference.select('productId', {
         source: 'productLabelRaw',
         options: products,
-        rules: v => [
+        rules: (v) => [
           v.required({
             message: 'A product match is required before import',
           }),

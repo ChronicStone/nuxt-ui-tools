@@ -3,15 +3,19 @@ import UBadge from '@nuxt/ui/components/Badge.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { formatSpreadsheetCell } from '../../utils/display'
 import { getSpreadsheetObjectEntries, isSpreadsheetRecord } from '../../utils/object'
 
-const props = withDefaults(defineProps<{
-  value: unknown
-  compact?: boolean
-}>(), {
-  compact: false,
-})
+const props = withDefaults(
+  defineProps<{
+    value: unknown
+    compact?: boolean
+  }>(),
+  {
+    compact: false,
+  },
+)
 
 const compactLimit = 2
 const { t } = useUiToolsLocale()
@@ -45,7 +49,10 @@ function getArraySummary(value: readonly unknown[]) {
 <template>
   <span v-if="value == null" class="text-muted">—</span>
 
-  <span v-else-if="typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'" class="text-current">
+  <span
+    v-else-if="typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'"
+    class="text-current"
+  >
     {{ formatSpreadsheetCell(value) }}
   </span>
 
@@ -53,7 +60,10 @@ function getArraySummary(value: readonly unknown[]) {
     v-else-if="Array.isArray(value)"
     mode="hover"
     :content="{ side: 'top', align: 'start', sideOffset: 10 }"
-    :ui="{ content: 'w-80 max-w-[calc(100vw-2rem)] overflow-hidden border border-default/70 bg-default p-0 shadow-lg' }"
+    :ui="{
+      content:
+        'w-80 max-w-[calc(100vw-2rem)] overflow-hidden border border-default/70 bg-default p-0 shadow-lg',
+    }"
   >
     <div class="flex flex-wrap items-center gap-2">
       <UBadge color="neutral" variant="subtle" size="xs" class="font-mono">
@@ -77,7 +87,9 @@ function getArraySummary(value: readonly unknown[]) {
     <template #content>
       <div class="grid gap-3 p-3">
         <div class="flex items-center justify-between gap-3">
-          <span class="text-sm font-semibold text-highlighted">{{ t('spreadsheet.common.arrayValue') }}</span>
+          <span class="text-sm font-semibold text-highlighted">{{
+            t('spreadsheet.common.arrayValue')
+          }}</span>
           <UBadge color="neutral" variant="subtle" size="xs" class="font-mono">
             {{ getArraySummary(value) }}
           </UBadge>
@@ -102,7 +114,10 @@ function getArraySummary(value: readonly unknown[]) {
     v-else-if="isSpreadsheetRecord(value)"
     mode="hover"
     :content="{ side: 'top', align: 'start', sideOffset: 10 }"
-    :ui="{ content: 'w-96 max-w-[calc(100vw-2rem)] overflow-hidden border border-default/70 bg-default p-0 shadow-lg' }"
+    :ui="{
+      content:
+        'w-96 max-w-[calc(100vw-2rem)] overflow-hidden border border-default/70 bg-default p-0 shadow-lg',
+    }"
   >
     <div class="flex flex-wrap items-center gap-2">
       <UBadge color="neutral" variant="subtle" size="xs" class="font-mono">
@@ -117,7 +132,10 @@ function getArraySummary(value: readonly unknown[]) {
       >
         {{ key }}
       </UBadge>
-      <span v-if="props.compact && getSpreadsheetObjectEntries(value).length > compactLimit" class="text-[11px] text-muted">
+      <span
+        v-if="props.compact && getSpreadsheetObjectEntries(value).length > compactLimit"
+        class="text-[11px] text-muted"
+      >
         +{{ getSpreadsheetObjectEntries(value).length - compactLimit }}
       </span>
     </div>
@@ -125,7 +143,9 @@ function getArraySummary(value: readonly unknown[]) {
     <template #content>
       <div class="grid gap-3 p-3">
         <div class="flex items-center justify-between gap-3">
-          <span class="text-sm font-semibold text-highlighted">{{ t('spreadsheet.common.objectValue') }}</span>
+          <span class="text-sm font-semibold text-highlighted">{{
+            t('spreadsheet.common.objectValue')
+          }}</span>
           <UBadge color="neutral" variant="subtle" size="xs" class="font-mono">
             {{ getObjectSummary(value) }}
           </UBadge>
@@ -169,7 +189,9 @@ function getArraySummary(value: readonly unknown[]) {
                 class="flex items-start justify-between gap-3 rounded-md border border-default/50 bg-default px-3 py-2"
               >
                 <span class="font-mono text-[11px] text-muted">{{ nestedKey }}</span>
-                <span class="max-w-[70%] text-right text-sm text-toned">{{ formatSpreadsheetCell(nestedValue) }}</span>
+                <span class="max-w-[70%] text-right text-sm text-toned">{{
+                  formatSpreadsheetCell(nestedValue)
+                }}</span>
               </div>
             </div>
 

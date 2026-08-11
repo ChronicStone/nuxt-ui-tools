@@ -1,3 +1,5 @@
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type {
   GenericObject,
   TableBooleanFilterDefinition,
@@ -34,7 +36,6 @@ import type {
   TableTextValue,
   TableUiFilterDefinition,
 } from '../../types'
-import { useUiToolsLocale } from '#ui-tools/i18n'
 import { getFilterLabelText, getFilterTextValue } from './common'
 
 const DEFAULT_FILTER_TRIGGER_ICONS = {
@@ -460,7 +461,8 @@ function resolveOptionSelectionMode(options: {
   configured: 'auto' | 'single' | 'multiple' | undefined
   operator: TableOptionFilterOperator | undefined
 }) {
-  if (options.configured === 'single' || options.configured === 'multiple') return options.configured
+  if (options.configured === 'single' || options.configured === 'multiple')
+    return options.configured
   if (options.operator === 'isAnyOf') return 'multiple'
   return 'single'
 }
@@ -548,7 +550,8 @@ function getNumberScalarOperatorOverride(
     operator === 'gte' ||
     operator === 'lt' ||
     operator === 'lte'
-  ) return editor?.operators?.[operator]?.scalar
+  )
+    return editor?.operators?.[operator]?.scalar
 
   return undefined
 }
@@ -565,12 +568,8 @@ function getDateScalarOperatorOverride(
   editor: TableDateFilterEditorConfig | undefined,
   operator: TableDateFilterOperator | undefined,
 ) {
-  if (
-    operator === 'is' ||
-    operator === 'isNot' ||
-    operator === 'before' ||
-    operator === 'after'
-  ) return editor?.operators?.[operator]?.scalar
+  if (operator === 'is' || operator === 'isNot' || operator === 'before' || operator === 'after')
+    return editor?.operators?.[operator]?.scalar
 
   return undefined
 }

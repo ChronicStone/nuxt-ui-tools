@@ -48,13 +48,13 @@ It should not be thought of as:
 
 ### UX positioning
 
-| Aim for | Avoid |
-|---|---|
-| Business processing tool | Generic wizard |
-| Strong reading hierarchy | Card pile |
-| Useful density | Empty interface |
-| Control + clarity | Excessive magic |
-| Operational trust | Marketing UI |
+| Aim for                  | Avoid           |
+| ------------------------ | --------------- |
+| Business processing tool | Generic wizard  |
+| Strong reading hierarchy | Card pile       |
+| Useful density           | Empty interface |
+| Control + clarity        | Excessive magic |
+| Operational trust        | Marketing UI    |
 
 ---
 
@@ -210,11 +210,11 @@ The main reference scenario is an **assessment import** flow.
 
 ## 8. Target users
 
-| Profile | Technical level | Main need |
-|---|---|---|
-| Ops / admin | Low to medium | Move fast and avoid mistakes |
-| Support / implementation | Medium to high | Understand the system logic and handle harder cases |
-| Recurrent business user | Low | Be guided without losing control |
+| Profile                  | Technical level | Main need                                           |
+| ------------------------ | --------------- | --------------------------------------------------- |
+| Ops / admin              | Low to medium   | Move fast and avoid mistakes                        |
+| Support / implementation | Medium to high  | Understand the system logic and handle harder cases |
+| Recurrent business user  | Low             | Be guided without losing control                    |
 
 ### What they all want
 
@@ -234,13 +234,13 @@ It manipulates multiple information layers.
 
 ### Important layers
 
-| Layer | Description | UX implication |
-|---|---|---|
-| Source | Raw file, sheets, raw rows | Needs structural reading |
-| Structure | Active sheet, active header row | Conditions everything downstream |
-| Matching | Source columns ↔ expected fields | Must be inspectable and trustworthy |
-| Reconciliation | External values ↔ internal entities | Must feel like a real business tool |
-| Review | Valid rows, invalid rows, issues, final payload | Must support decision-making |
+| Layer          | Description                                     | UX implication                      |
+| -------------- | ----------------------------------------------- | ----------------------------------- |
+| Source         | Raw file, sheets, raw rows                      | Needs structural reading            |
+| Structure      | Active sheet, active header row                 | Conditions everything downstream    |
+| Matching       | Source columns ↔ expected fields                | Must be inspectable and trustworthy |
+| Reconciliation | External values ↔ internal entities             | Must feel like a real business tool |
+| Review         | Valid rows, invalid rows, issues, final payload | Must support decision-making        |
 
 ### UX consequence
 
@@ -349,8 +349,8 @@ Map imported external values to internal platform entities.
 
 ### Concrete case
 
-| Imported value | Internal value |
-|---|---|
+| Imported value     | Internal value   |
+| ------------------ | ---------------- |
 | External exam name | Internal product |
 
 ### Essential structural rule
@@ -603,14 +603,14 @@ The design should therefore be ambitious, but realistic within that system.
 
 ## 19. Expected deliverables
 
-| Deliverable | Expected outcome |
-|---|---|
-| Experience overview | A strong proposal for the overall workflow structure |
-| Wireframes | Clear information hierarchy and surface organization |
-| Detailed desktop screens | Main stages and critical states |
-| State variations | Errors, ambiguities, blockers, resolved cases |
-| Reusable patterns | Global summary, structure tools, reconciliation, review, statuses |
-| Responsive principles | Rules for non-desktop adaptation |
+| Deliverable              | Expected outcome                                                  |
+| ------------------------ | ----------------------------------------------------------------- |
+| Experience overview      | A strong proposal for the overall workflow structure              |
+| Wireframes               | Clear information hierarchy and surface organization              |
+| Detailed desktop screens | Main stages and critical states                                   |
+| State variations         | Errors, ambiguities, blockers, resolved cases                     |
+| Reusable patterns        | Global summary, structure tools, reconciliation, review, statuses |
+| Responsive principles    | Rules for non-desktop adaptation                                  |
 
 ---
 

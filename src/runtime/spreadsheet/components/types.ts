@@ -1,5 +1,5 @@
-import type { SpreadsheetImportApi } from '../types'
 import type { SpreadsheetInternals } from '../composables/use-spreadsheet-internals'
+import type { SpreadsheetImportApi } from '../types'
 
 export type SpreadsheetComponentApi = SpreadsheetImportApi<{
   importKey: string

@@ -1,3 +1,5 @@
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type {
   SpreadsheetColumnDefinition,
   SpreadsheetDynamicCollectionItemDefinition,
@@ -11,7 +13,6 @@ import type {
   SpreadsheetStaticColumn,
   SpreadsheetStaticColumnGroup,
 } from '../../types'
-import { useUiToolsLocale } from '#ui-tools/i18n'
 import { isSpreadsheetRecord } from '../object'
 import {
   getSpreadsheetOptionLabel,
@@ -38,14 +39,15 @@ export function applySpreadsheetNormalization(
   const nextValue = String(value ?? '').trim()
   if (!normalize?.length) return nextValue
 
-  return normalize.reduce((result, token) => {
-    if (token === 'trim') return result.trim()
-    if (token === 'case-insensitive') return result.toLowerCase()
-    if (token === 'accent-insensitive')
-      return result.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return normalize
+    .reduce((result, token) => {
+      if (token === 'trim') return result.trim()
+      if (token === 'case-insensitive') return result.toLowerCase()
+      if (token === 'accent-insensitive')
+        return result.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
-    return result
-  }, nextValue)
+      return result
+    }, nextValue)
     .replace(/\s*\*\s*$/g, '')
     .replace(/\s*\(required\)\s*$/gi, '')
 }
@@ -74,7 +76,9 @@ export function isSpreadsheetStaticColumn(value: unknown): value is SpreadsheetS
 }
 
 export function isSpreadsheetColumnGroup(value: unknown): value is SpreadsheetStaticColumnGroup {
-  return isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'group' && 'columns' in value
+  return (
+    isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'group' && 'columns' in value
+  )
 }
 
 export function isSpreadsheetDynamicOptionGroupsColumn(
@@ -101,10 +105,7 @@ function hasSpreadsheetColumnResolve<TContext>(
   return 'resolve' in column && Boolean(column.resolve)
 }
 
-function resolveSpreadsheetColumnOptionEntries<TContext>(
-  options: unknown,
-  context: TContext,
-) {
+function resolveSpreadsheetColumnOptionEntries<TContext>(options: unknown, context: TContext) {
   return resolveSpreadsheetOptionEntries(options, { context })
 }
 
@@ -120,7 +121,7 @@ function resolveSpreadsheetMultipleConfig(
 function splitSpreadsheetMultipleTokens(value: string, separator: string | undefined) {
   return value
     .split(separator ?? ',')
-    .map(entry => entry.trim())
+    .map((entry) => entry.trim())
     .filter(Boolean)
 }
 
@@ -164,8 +165,10 @@ export function getSpreadsheetIssueText() {
 
   return {
     unrecognizedValue: (value: string) => t('spreadsheet.validation.unrecognizedValue', { value }),
-    invalidNumberInput: (value: string) => t('spreadsheet.validation.invalidNumberInput', { value }),
-    invalidBooleanInput: (value: string) => t('spreadsheet.validation.invalidBooleanInput', { value }),
+    invalidNumberInput: (value: string) =>
+      t('spreadsheet.validation.invalidNumberInput', { value }),
+    invalidBooleanInput: (value: string) =>
+      t('spreadsheet.validation.invalidBooleanInput', { value }),
     missingValue: (field: string) => t('spreadsheet.validation.missingValue', { field }),
     parseFailed: (field: string) => t('spreadsheet.validation.parseFailed', { field }),
   }
@@ -192,7 +195,9 @@ function parseSpreadsheetEnumColumnValue<TContext>(
     const candidate = String(option)
     if (!multipleConfig?.itemModifiers) return candidate === token
 
-    return applySpreadsheetNormalization(candidate, multipleConfig.itemModifiers) === normalizedToken
+    return (
+      applySpreadsheetNormalization(candidate, multipleConfig.itemModifiers) === normalizedToken
+    )
   })
   if (match !== undefined) return match
 
@@ -233,14 +238,18 @@ function parseSpreadsheetOptionColumnValue<TContext>(
     const by = multipleConfig?.matchBy
 
     if (by === 'label')
-      return (multipleConfig?.itemModifiers
-        ? applySpreadsheetNormalization(label, multipleConfig.itemModifiers)
-        : label) === normalizedToken
+      return (
+        (multipleConfig?.itemModifiers
+          ? applySpreadsheetNormalization(label, multipleConfig.itemModifiers)
+          : label) === normalizedToken
+      )
 
     if (by === 'value')
-      return (multipleConfig?.itemModifiers
-        ? applySpreadsheetNormalization(String(value ?? ''), multipleConfig.itemModifiers)
-        : String(value ?? '')) === normalizedToken
+      return (
+        (multipleConfig?.itemModifiers
+          ? applySpreadsheetNormalization(String(value ?? ''), multipleConfig.itemModifiers)
+          : String(value ?? '')) === normalizedToken
+      )
 
     return token === label || token === String(value ?? '')
   })
@@ -288,8 +297,7 @@ function parseSpreadsheetSingleBuiltInValue<TContext>(
   issues: SpreadsheetRowIssue[],
 ) {
   const issueText = getSpreadsheetIssueText()
-  if (column.kind === 'text' || column.kind === 'email' || column.kind === 'date')
-    return token
+  if (column.kind === 'text' || column.kind === 'email' || column.kind === 'date') return token
   if (column.kind === 'number') {
     const value = parseSpreadsheetNumberValue(token)
     if (value !== undefined) return value
@@ -353,12 +361,13 @@ function parseSpreadsheetBuiltInCellValue<TContext>(
 
   if (!nextCell.text) return []
 
-  return splitSpreadsheetMultipleTokens(nextCell.text, multipleConfig.separator)
-    .flatMap((token) => {
+  return splitSpreadsheetMultipleTokens(nextCell.text, multipleConfig.separator).flatMap(
+    (token) => {
       const nextToken = applySpreadsheetModifiers(token, multipleConfig.itemModifiers)
       const value = parseSpreadsheetSingleBuiltInValue(column, nextToken, nextCell, context, issues)
       return value === undefined ? [] : [value]
-    })
+    },
+  )
 }
 
 export async function parseSpreadsheetCellValue<TContext>(
@@ -395,18 +404,22 @@ export async function parseSpreadsheetCellValue<TContext>(
           rules: column.rules,
         })
 
-    issues.push(...validationIssues.map((issue: {
-      ruleKey?: string
-      level: 'error' | 'warning' | 'info'
-      code: string
-      message: string
-    }) => ({
-      ...issue,
-      rowIndex: cell.rowIndex,
-      columnKey: column.key,
-      columnIndex: cell.columnIndex,
-      header: cell.header,
-    })))
+    issues.push(
+      ...validationIssues.map(
+        (issue: {
+          ruleKey?: string
+          level: 'error' | 'warning' | 'info'
+          code: string
+          message: string
+        }) => ({
+          ...issue,
+          rowIndex: cell.rowIndex,
+          columnKey: column.key,
+          columnIndex: cell.columnIndex,
+          header: cell.header,
+        }),
+      ),
+    )
 
     if (isEmpty && !column.parse) return undefined
     return value
@@ -414,9 +427,7 @@ export async function parseSpreadsheetCellValue<TContext>(
     issues.push({
       level: 'error',
       code: 'cell.parse_failed',
-      message: error instanceof Error
-        ? error.message
-        : issueText.parseFailed(cell.header),
+      message: error instanceof Error ? error.message : issueText.parseFailed(cell.header),
       rowIndex: cell.rowIndex,
       columnKey: column.key,
       columnIndex: cell.columnIndex,

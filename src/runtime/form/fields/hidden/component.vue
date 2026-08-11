@@ -8,5 +8,5 @@ defineProps<{
 </script>
 
 <template>
-  <input type="hidden" :name="path.join('.')">
+  <input type="hidden" :name="path.join('.')" />
 </template>

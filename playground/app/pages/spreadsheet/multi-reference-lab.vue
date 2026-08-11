@@ -40,7 +40,7 @@ function createMultiReferenceSchema() {
           match: {
             headers: ['Candidate'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('productLabels', {
           match: {
@@ -49,7 +49,7 @@ function createMultiReferenceSchema() {
           multiple: {
             separator: ',',
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('notes', {
           match: {
@@ -58,10 +58,10 @@ function createMultiReferenceSchema() {
         }),
       ],
     },
-    references: reference => [
+    references: (reference) => [
       reference.select('productIds', {
         source: 'productLabels',
-        options: products.map(product => ({
+        options: products.map((product) => ({
           label: product.name,
           value: product.id,
         })),

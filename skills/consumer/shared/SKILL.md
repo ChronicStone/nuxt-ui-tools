@@ -18,4 +18,3 @@ Use this skill for package-consumer tasks involving:
 - `skills/consumer/package/SKILL.md`
 - `skills/consumer/shared/references/overview.md`
 - `skills/consumer/shared/references/getting-started.md`
-

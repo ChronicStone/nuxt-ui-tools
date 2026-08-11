@@ -37,7 +37,7 @@ These questions should be answered before locking the V2 public surface.
 
 20. Should `group` and `object` remain distinct concepts?
 21. If they remain distinct, what is the exact difference in V2:
-   visual grouping, layout, transform semantics, field-kind restrictions, or all of the above?
+    visual grouping, layout, transform semantics, field-kind restrictions, or all of the above?
 22. The legacy `group` field restricts child field kinds more than `object`. Do we want to keep that constraint?
 23. Should group/object wrappers own any extra state, or only scope child state?
 
@@ -46,7 +46,7 @@ These questions should be answered before locking the V2 public surface.
 24. Do we keep both `preformat` and `transform`, or rename them to more explicit phases?
 25. Should transform typing continue to directly affect output inference?
 26. Should dependency reads target:
-   raw input shape, current internal form shape, or transformed output shape?
+    raw input shape, current internal form shape, or transformed output shape?
 27. For fields like grouped editable wrappers, do dependencies see the wrapper object or only its transformed output?
 
 ## Typed API Surface
@@ -72,11 +72,11 @@ These questions should be answered before locking the V2 public surface.
 ## Async Resolvers
 
 39. What should the public async resolver contract look like when both of these must be supported:
-   plain promises and TanStack Query?
+    plain promises and TanStack Query?
 40. Where should TanStack-specific affordances live:
-   directly in schema, in helper wrappers, or behind adapters over a normalized async resolver contract?
+    directly in schema, in helper wrappers, or behind adapters over a normalized async resolver contract?
 41. Which async surfaces need this dual support on day one:
-   options, create-option, dependency reactions, initial data hydration, or all of them?
+    options, create-option, dependency reactions, initial data hydration, or all of them?
 
 ## Renderer And Runtime Split
 
@@ -89,17 +89,17 @@ These questions should be answered before locking the V2 public surface.
 45. Which properties are truly global across almost all field kinds?
 46. Which properties should move into capability-specific layers instead of living on the generic base field?
 47. Do we want field contracts composed from capabilities such as:
-   `conditional`, `option-bearing`, `actionable`, `structural`, `transformable`?
+    `conditional`, `option-bearing`, `actionable`, `structural`, `transformable`?
 48. Which current legacy properties are actually implementation residue and should disappear from the public surface?
 49. How should global field defaults be declared:
-   form-level config, provider-level config, module-level config, or all three?
+    form-level config, provider-level config, module-level config, or all three?
 50. Should global field defaults support per-field-kind overrides?
 
 ## Compatibility And Migration
 
 51. Are we explicitly comfortable breaking backward compatibility for the form DSL, as was done in `typed-xlsx` planning?
 52. If yes, which legacy ideas are non-negotiable to preserve:
-   stepped forms, arrays, typed output, create-option, dependency-driven conditions?
+    stepped forms, arrays, typed output, create-option, dependency-driven conditions?
 53. Do we need any temporary migration notes or compatibility wrappers, or should V2 be clean-slate only?
 
 ## Documentation And Teaching

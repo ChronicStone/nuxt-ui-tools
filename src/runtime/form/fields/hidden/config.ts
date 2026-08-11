@@ -6,4 +6,3 @@ export const hiddenFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

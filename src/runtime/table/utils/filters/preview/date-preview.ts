@@ -1,4 +1,8 @@
-import type { TableDateFilterDefinition, TableDateFilterOperator, TableQueryStateFilterRule } from '../../../types'
+import type {
+  TableDateFilterDefinition,
+  TableDateFilterOperator,
+  TableQueryStateFilterRule,
+} from '../../../types'
 import { formatFilterDate, getDateRangeValue, toDateFilterValue, toMaybeDate } from '../common'
 import { resolveDateFilterUi } from '../ui'
 import type { FilterPreviewResult } from './types'
@@ -40,12 +44,17 @@ export function buildDateFilterPreview(options: {
     count: date ? 1 : 0,
     tags: [],
     summary: date
-      ? prefixPreviewLabel(preview.label, preview.formatter?.(date) ?? formatFilterDate({ value: date }))
+      ? prefixPreviewLabel(
+          preview.label,
+          preview.formatter?.(date) ?? formatFilterDate({ value: date }),
+        )
       : '',
   }
 }
 
-function resolveDateOperator(value: TableQueryStateFilterRule['operator']): TableDateFilterOperator {
+function resolveDateOperator(
+  value: TableQueryStateFilterRule['operator'],
+): TableDateFilterOperator {
   if (value === 'isNot' || value === 'before' || value === 'after' || value === 'between') {
     return value
   }

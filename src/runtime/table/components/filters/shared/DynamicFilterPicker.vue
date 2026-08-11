@@ -5,6 +5,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type { TableUiFilterDefinition } from '../../../types'
 import { resolveFilterTriggerIcon } from '../../../utils'
 import FilterSearchablePanel from './FilterSearchablePanel.vue'

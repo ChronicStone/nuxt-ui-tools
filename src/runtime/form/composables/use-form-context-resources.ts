@@ -1,8 +1,13 @@
-import { computed, reactive } from 'vue'
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
-import type { GenericObject } from '../../shared/types/utils'
+import { computed, reactive } from 'vue'
 
-import type { FormAsyncResource, FormRuntimeContext, FormRuntimeQueryOptions, FormSyncResource } from '../types'
+import type { GenericObject } from '../../shared/types/utils'
+import type {
+  FormAsyncResource,
+  FormRuntimeContext,
+  FormRuntimeQueryOptions,
+  FormSyncResource,
+} from '../types'
 import { isRecord } from '../utils/path'
 
 type RuntimeResource = FormSyncResource<unknown> | FormAsyncResource<unknown>
@@ -11,8 +16,7 @@ export function useFormContextResources() {
   const queryClient = useQueryClient()
 
   function setContext(definition: GenericObject | undefined) {
-    for (const key of Object.keys(context))
-      delete context[key]
+    for (const key of Object.keys(context)) delete context[key]
 
     if (!definition) return
 
@@ -80,9 +84,9 @@ function createResource(source: unknown, queryClient: QueryClient): RuntimeResou
         if (!nextSource?.queryFn) return undefined
         return await nextSource.queryFn()
       },
-      enabled: computed(() =>
-        querySource.value?.enabled !== false
-        && typeof querySource.value?.queryFn === 'function',
+      enabled: computed(
+        () =>
+          querySource.value?.enabled !== false && typeof querySource.value?.queryFn === 'function',
       ),
     })
 

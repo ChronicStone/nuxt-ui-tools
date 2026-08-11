@@ -8,4 +8,3 @@ export const fileFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

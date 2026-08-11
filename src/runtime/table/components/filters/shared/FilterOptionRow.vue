@@ -28,11 +28,7 @@ defineProps<{
       :ui="{ base: '!rounded-md', indicator: '!rounded-none' }"
     />
 
-    <UIcon
-      v-if="leadingIcon"
-      :name="leadingIcon"
-      class="size-4 shrink-0 text-muted"
-    />
+    <UIcon v-if="leadingIcon" :name="leadingIcon" class="size-4 shrink-0 text-muted" />
 
     <span class="min-w-0 flex-1" :class="(truncate ?? true) ? 'truncate' : ''">{{ label }}</span>
     <USkeleton v-if="countLoading" class="ml-3 h-3.5 w-6 shrink-0" />

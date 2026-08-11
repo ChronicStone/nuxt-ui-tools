@@ -28,10 +28,7 @@ export function useSpreadsheetContext(params: UseSpreadsheetContextParams) {
   const contextResults = computed(() => context.value)
 
   const contextData = computed(() =>
-    createSpreadsheetContextData(
-      contextItems.value,
-      contextResults.value,
-    ),
+    createSpreadsheetContextData(contextItems.value, contextResults.value),
   )
 
   const status = computed(() => createSpreadsheetContextStatus(contextResults.value))

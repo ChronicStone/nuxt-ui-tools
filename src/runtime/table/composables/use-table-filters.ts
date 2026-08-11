@@ -69,14 +69,16 @@ export function useTableFilters(params: UseTableFiltersParams) {
         ? [rule.value]
         : []
 
-    return flattenFilterOptionEntries(resolveFilterOptionEntries({
-      definition,
-      rows: [],
-      options: input.entries,
-      facetCounts: input.facetCounts,
-      selectedValues,
-      deriveCounts: false,
-    })).filter(
+    return flattenFilterOptionEntries(
+      resolveFilterOptionEntries({
+        definition,
+        rows: [],
+        options: input.entries,
+        facetCounts: input.facetCounts,
+        selectedValues,
+        deriveCounts: false,
+      }),
+    ).filter(
       (entry): entry is typeof entry & { value: string | number | boolean } => entry.value != null,
     )
   }
@@ -190,8 +192,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
         )
       : currentRule?.value != null
         ? typeof currentRule.value === 'string' ||
-            typeof currentRule.value === 'number' ||
-            typeof currentRule.value === 'boolean'
+          typeof currentRule.value === 'number' ||
+          typeof currentRule.value === 'boolean'
           ? [currentRule.value]
           : []
         : []
@@ -248,7 +250,10 @@ export function useTableFilters(params: UseTableFiltersParams) {
     }
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
-      ui: [...params.state.queryState.filters.value.ui.filter((filter) => filter.key !== key), nextRule],
+      ui: [
+        ...params.state.queryState.filters.value.ui.filter((filter) => filter.key !== key),
+        nextRule,
+      ],
     }
   }
 
@@ -338,11 +343,7 @@ function getFilterOperatorsForDefinition(
 
   const defaultOperator =
     definition.behavior?.defaultOperator ??
-    (definition.kind === 'text'
-      ? 'contains'
-      : definition.kind === 'option'
-        ? 'isAnyOf'
-        : 'is')
+    (definition.kind === 'text' ? 'contains' : definition.kind === 'option' ? 'isAnyOf' : 'is')
 
   return [...new Set([defaultOperator, ...(definition.behavior?.operators ?? [])])]
 }

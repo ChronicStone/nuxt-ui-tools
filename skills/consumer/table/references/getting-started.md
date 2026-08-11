@@ -15,8 +15,8 @@ export default defineNuxtConfig({
 Keep the standard Nuxt UI CSS import from the official setup as well:
 
 ```css
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 ```
 
 ```ts

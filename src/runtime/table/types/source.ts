@@ -100,7 +100,9 @@ export type TableRemoteFacetSource<
   TKey extends string = TableKnownFieldPath<TRow> | string,
 > =
   | true
-  | ((ctx: TableFacetsContext<TRow, TContext, TKey>) => TableQueryDefinition<TableFacetExecutionResult<TKey>>)
+  | ((
+      ctx: TableFacetsContext<TRow, TContext, TKey>,
+    ) => TableQueryDefinition<TableFacetExecutionResult<TKey>>)
 
 export interface TableRemoteSource<
   TRow extends GenericObject = GenericObject,
@@ -127,7 +129,10 @@ export type TableSource<
   | TableRemoteSource<
       TRow,
       TContext,
-      Extract<TResult, TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>> extends never
+      Extract<
+        TResult,
+        TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+      > extends never
         ? TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
         : Extract<TResult, TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>>
     >

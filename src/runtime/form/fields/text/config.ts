@@ -8,4 +8,3 @@ export const textFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

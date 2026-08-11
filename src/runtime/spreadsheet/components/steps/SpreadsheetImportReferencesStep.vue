@@ -2,8 +2,12 @@
 import { computed, ref, watch } from 'vue'
 
 import type { SpreadsheetReferenceCandidate, SpreadsheetReferenceResolution } from '../../types'
+import {
+  humanizeSpreadsheetKey,
+  resolveSpreadsheetDisplayLabel,
+  snakeCaseSpreadsheetKey,
+} from '../../utils/display'
 import type { SpreadsheetComponentApi } from '../types'
-import { humanizeSpreadsheetKey, resolveSpreadsheetDisplayLabel, snakeCaseSpreadsheetKey } from '../../utils/display'
 import SpreadsheetReferencesAccordion from './references/SpreadsheetReferencesAccordion.vue'
 import SpreadsheetReferencesSummary from './references/SpreadsheetReferencesSummary.vue'
 
@@ -15,9 +19,14 @@ const internals = props.spreadsheet.__internals
 const expandedResolutionKey = ref<string | undefined>(undefined)
 
 function getSourceLabel(sourceField: string) {
-  const staticColumn = internals.rows.staticColumns.value.find(column => column.key === sourceField)
+  const staticColumn = internals.rows.staticColumns.value.find(
+    (column) => column.key === sourceField,
+  )
   if (staticColumn)
-    return resolveSpreadsheetDisplayLabel(staticColumn.label, humanizeSpreadsheetKey(staticColumn.key))
+    return resolveSpreadsheetDisplayLabel(
+      staticColumn.label,
+      humanizeSpreadsheetKey(staticColumn.key),
+    )
 
   return humanizeSpreadsheetKey(sourceField)
 }
@@ -28,7 +37,7 @@ function getOutputLabel(outputField: string) {
 
 function getBestScore(candidates: readonly SpreadsheetReferenceCandidate[]) {
   if (!candidates.length) return null
-  return Math.round(Math.max(...candidates.map(candidate => candidate.score)) * 100)
+  return Math.round(Math.max(...candidates.map((candidate) => candidate.score)) * 100)
 }
 
 function getRowCountLabel(count: number) {
@@ -37,16 +46,16 @@ function getRowCountLabel(count: number) {
 
 function getSelectItems(resolution: SpreadsheetReferenceResolution) {
   const recommendedOptions = resolution.candidates
-    .filter(candidate => candidate.score > 0)
-    .map(candidate => ({
+    .filter((candidate) => candidate.score > 0)
+    .map((candidate) => ({
       kind: 'option' as const,
       value: candidate.value,
       label: candidate.label,
       description: `${Math.round(candidate.score * 100)}% match`,
     }))
   const remainingOptions = resolution.candidates
-    .filter(candidate => candidate.score <= 0)
-    .map(candidate => ({
+    .filter((candidate) => candidate.score <= 0)
+    .map((candidate) => ({
       kind: 'option' as const,
       value: candidate.value,
       label: candidate.label,
@@ -54,23 +63,24 @@ function getSelectItems(resolution: SpreadsheetReferenceResolution) {
 
   return [
     ...recommendedOptions,
-    ...(
-      recommendedOptions.length && remainingOptions.length
-        ? [{
+    ...(recommendedOptions.length && remainingOptions.length
+      ? [
+          {
             kind: 'divider' as const,
             label: 'Other options',
             disabled: true,
-          }]
-        : []
-    ),
-    ...(recommendedOptions.length ? remainingOptions : resolution.candidates.map(candidate => ({
-      kind: 'option' as const,
-      value: candidate.value,
-      label: candidate.label,
-      description: candidate.score > 0
-        ? `${Math.round(candidate.score * 100)}% match`
-        : undefined,
-    }))),
+          },
+        ]
+      : []),
+    ...(recommendedOptions.length
+      ? remainingOptions
+      : resolution.candidates.map((candidate) => ({
+          kind: 'option' as const,
+          value: candidate.value,
+          label: candidate.label,
+          description:
+            candidate.score > 0 ? `${Math.round(candidate.score * 100)}% match` : undefined,
+        }))),
   ]
 }
 
@@ -85,7 +95,7 @@ const groupedColumns = computed(() => {
   return Array.from(groups.entries()).map(([referenceField, items]) => {
     const sourceField = items[0]?.sourceField ?? referenceField
     const outputField = items[0]?.outputField ?? referenceField
-    const resolvedCount = items.filter(item => item.status === 'matched').length
+    const resolvedCount = items.filter((item) => item.status === 'matched').length
     const unresolvedCount = items.length - resolvedCount
 
     return {
@@ -112,7 +122,9 @@ const summaryItems = computed(() => [
   {
     key: 'resolved',
     label: 'Values resolved',
-    value: props.spreadsheet.referenceResolutions.value.filter(resolution => resolution.status === 'matched').length,
+    value: props.spreadsheet.referenceResolutions.value.filter(
+      (resolution) => resolution.status === 'matched',
+    ).length,
     barClass: 'bg-success',
   },
   {
@@ -131,19 +143,18 @@ const summaryItems = computed(() => [
 
 const unresolvedGroupKeys = computed(() =>
   groupedColumns.value
-    .filter(group => group.unresolvedCount > 0)
-    .map(group => group.resolutionKey),
+    .filter((group) => group.unresolvedCount > 0)
+    .map((group) => group.resolutionKey),
 )
 
 function getNextExpandableKey(currentKey: string) {
-  const currentIndex = groupedColumns.value.findIndex(group => group.resolutionKey === currentKey)
+  const currentIndex = groupedColumns.value.findIndex((group) => group.resolutionKey === currentKey)
   if (currentIndex < 0)
     return unresolvedGroupKeys.value[0] ?? groupedColumns.value[0]?.resolutionKey
 
   for (let index = currentIndex + 1; index < groupedColumns.value.length; index += 1) {
     const nextGroup = groupedColumns.value[index]
-    if (nextGroup?.unresolvedCount)
-      return nextGroup.resolutionKey
+    if (nextGroup?.unresolvedCount) return nextGroup.resolutionKey
   }
 
   return unresolvedGroupKeys.value[0] ?? currentKey
@@ -162,13 +173,17 @@ watch(
       return
     }
 
-    const currentGroup = nextGroups.find(group => group.resolutionKey === expandedResolutionKey.value)
+    const currentGroup = nextGroups.find(
+      (group) => group.resolutionKey === expandedResolutionKey.value,
+    )
     if (!currentGroup) {
       expandedResolutionKey.value = unresolvedGroupKeys.value[0] ?? nextGroups[0]?.resolutionKey
       return
     }
 
-    const previousGroup = previousGroups?.find(group => group.resolutionKey === expandedResolutionKey.value)
+    const previousGroup = previousGroups?.find(
+      (group) => group.resolutionKey === expandedResolutionKey.value,
+    )
     if (!previousGroup) return
     if (!previousGroup.unresolvedCount || currentGroup.unresolvedCount) return
 
@@ -190,18 +205,16 @@ function getMetaTone(resolution: SpreadsheetReferenceResolution) {
 }
 
 function getResolutionBadge(resolution: SpreadsheetReferenceResolution) {
-  if (resolution.status === 'matched')
-    return { label: 'Resolved', color: 'success' as const }
+  if (resolution.status === 'matched') return { label: 'Resolved', color: 'success' as const }
 
   const bestScore = getBestScore(resolution.candidates)
-  if (bestScore === null)
-    return { label: 'No options', color: 'error' as const }
+  if (bestScore === null) return { label: 'No options', color: 'error' as const }
 
   return { label: 'Needs review', color: 'warning' as const }
 }
 
 function handleSelect(resolution: SpreadsheetReferenceResolution, value: unknown) {
-  const candidate = resolution.candidates.find(entry => entry.value === value)
+  const candidate = resolution.candidates.find((entry) => entry.value === value)
   if (!candidate) return
 
   props.spreadsheet.selectReference({

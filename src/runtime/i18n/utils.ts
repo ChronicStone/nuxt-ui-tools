@@ -1,9 +1,6 @@
 import { computed, unref, type MaybeRef, type Ref } from 'vue'
 
-import type {
-  UiToolsDirection,
-  UiToolsLocale,
-} from '#ui-tools/i18n/types'
+import type { UiToolsDirection, UiToolsLocale } from '#ui-tools/i18n/types'
 import { getObjectProperty } from '#ui-tools/shared/utils/object'
 
 export type UiToolsTranslatorOption = Record<string, string | number>

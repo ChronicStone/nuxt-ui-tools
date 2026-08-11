@@ -25,12 +25,16 @@ const { t } = useI18n()
   >
     <div class="flex items-start justify-between gap-4">
       <div class="grid gap-2">
-        <div class="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+        <div
+          class="inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted"
+        >
           <span class="size-2 rounded-full bg-primary/70" />
           {{ t('playground.spreadsheetIndex.variantLabel') }}
         </div>
         <div class="flex items-center gap-3">
-          <div class="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/8 text-primary">
+          <div
+            class="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/8 text-primary"
+          >
             <UIcon :name="icon" class="size-5" />
           </div>
           <div class="grid gap-1">

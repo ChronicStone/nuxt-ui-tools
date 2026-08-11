@@ -17,11 +17,14 @@ const normalizedHeaders = computed(() =>
 
 const tableRows = computed(() =>
   props.rows.map((row, rowIndex) =>
-    normalizedHeaders.value.reduce<Record<string, unknown>>((acc, header) => ({
-      ...acc,
-      __rowLabel: rowIndex + 1,
-      [header.key]: row[header.index] ?? '',
-    }), {}),
+    normalizedHeaders.value.reduce<Record<string, unknown>>(
+      (acc, header) => ({
+        ...acc,
+        __rowLabel: rowIndex + 1,
+        [header.key]: row[header.index] ?? '',
+      }),
+      {},
+    ),
   ),
 )
 
@@ -38,10 +41,5 @@ const columns = computed(() => [
 </script>
 
 <template>
-  <UTable
-    :data="tableRows"
-    :columns="columns"
-    sticky="header"
-    class="border-t border-default/70"
-  />
+  <UTable :data="tableRows" :columns="columns" sticky="header" class="border-t border-default/70" />
 </template>

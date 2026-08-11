@@ -14,7 +14,10 @@ export type ViewportLike = {
   queries: { value: Record<string, { size: number }> }
 }
 
-export function parseResponsiveValue(value: string, breakpointKeys: string[]): Record<string, string | null> {
+export function parseResponsiveValue(
+  value: string,
+  breakpointKeys: string[],
+): Record<string, string | null> {
   const tokens = value
     .trim()
     .split(/\s+/)
@@ -66,7 +69,8 @@ export function resolveResponsiveValueAtBreakpoint(
 ): unknown | null {
   if (typeof value !== 'string') return value
 
-  const resolvedValue = parseResponsiveValue(value, context.breakpointKeys)[context.breakpoint] ?? null
+  const resolvedValue =
+    parseResponsiveValue(value, context.breakpointKeys)[context.breakpoint] ?? null
   if (resolvedValue === null) return null
 
   return transformResponsiveValue(resolvedValue, transform)
@@ -84,10 +88,8 @@ function transformResponsiveValue(value: string, transform?: ResponsiveTransform
   if (transform === 'boolean') return value === 'true'
   if (transform === 'integer') return Number.parseInt(value, 10)
   if (transform === 'float') return Number.parseFloat(value)
-  if (transform === 'grid-cols')
-    return `grid-template-columns: repeat(${value}, minmax(0, 1fr))`
-  if (transform === 'grid-rows')
-    return `grid-template-rows: repeat(${value}, minmax(0, 1fr))`
+  if (transform === 'grid-cols') return `grid-template-columns: repeat(${value}, minmax(0, 1fr))`
+  if (transform === 'grid-rows') return `grid-template-rows: repeat(${value}, minmax(0, 1fr))`
   if (transform === 'col') return `grid-column: span ${value} / span ${value}`
   if (transform === 'row') return `grid-row: span ${value} / span ${value}`
   if (transform === 'maxWidth') return `max-width: ${value}`

@@ -1,25 +1,28 @@
 <script setup lang="ts">
+import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import { computed } from 'vue'
 
-import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
-
-import type { FormRadioField } from '../../types'
-import { useFieldControl } from '../../composables/use-field-control'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import { useFieldControl } from '../../composables/use-field-control'
+import type { FormRadioField } from '../../types'
 
 const props = defineProps<{
   field: FormRadioField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(() => props.field, () => props.path)
+const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
 const model = computed<string | number | boolean | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+      return value
     return undefined
   },
-  set: value => form.setValue(props.path, value),
+  set: (value) => form.setValue(props.path, value),
 })
 const items = computed(() => [...options.items.value])
 </script>

@@ -89,31 +89,31 @@ export function createFormFieldInstance<const TField extends FormField>(
   return {
     raw,
     is,
-    isAny: states => states.some(is),
+    isAny: (states) => states.some(is),
     has,
-    hasAny: capabilities => capabilities.some(has),
-    hasAll: capabilities => capabilities.every(has),
+    hasAny: (capabilities) => capabilities.some(has),
+    hasAll: (capabilities) => capabilities.every(has),
     type: {
       value: raw.type,
-      is: type => raw.type === type,
-      isAny: types => types.some(type => raw.type === type),
+      is: (type) => raw.type === type,
+      isAny: (types) => types.some((type) => raw.type === type),
     },
     config,
     state: {
       value: state,
       is,
-      isAny: states => states.some(is),
+      isAny: (states) => states.some(is),
     },
     capability: {
       has,
-      hasAny: capabilities => capabilities.some(has),
-      hasAll: capabilities => capabilities.every(has),
+      hasAny: (capabilities) => capabilities.some(has),
+      hasAll: (capabilities) => capabilities.every(has),
     },
   }
 }
 
 export function getFormFieldKind(type: FormFieldType | string): FormFieldKind | null {
-  return formFieldKinds.find(kind => kind.type === type) ?? null
+  return formFieldKinds.find((kind) => kind.type === type) ?? null
 }
 
 export function isRegisteredFormFieldType(type: string): type is FormFieldType {

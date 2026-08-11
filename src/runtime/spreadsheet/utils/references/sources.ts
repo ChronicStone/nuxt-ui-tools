@@ -1,6 +1,4 @@
-import type {
-  SpreadsheetParsedRow,
-} from '../../types'
+import type { SpreadsheetParsedRow } from '../../types'
 import { getSpreadsheetValueAtPath } from '../object'
 import { normalizeSpreadsheetRuntimeResolutions } from './guards'
 
@@ -33,12 +31,14 @@ export function collectSpreadsheetReferenceSources(
       }
     }
 
-    return [{
-      reference: entry,
-      entries: Array.from(entries.entries()).map(([value, rowIndexes]) => ({
-        value,
-        rowIndexes,
-      })),
-    }]
+    return [
+      {
+        reference: entry,
+        entries: Array.from(entries.entries()).map(([value, rowIndexes]) => ({
+          value,
+          rowIndexes,
+        })),
+      },
+    ]
   })
 }

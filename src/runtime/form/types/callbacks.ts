@@ -19,6 +19,10 @@ export interface FormFieldCallbackParams<
 /**
  * Function receiving field callback parameters.
  */
-export type FormFieldCallback<TResult, TContext = {}, TDeps = {}, TValue = unknown, TOption = unknown> = (
-  params: FormFieldCallbackParams<TContext, TDeps, TValue, TOption>,
-) => TResult
+export type FormFieldCallback<
+  TResult,
+  TContext = {},
+  TDeps = {},
+  TValue = unknown,
+  TOption = unknown,
+> = (params: FormFieldCallbackParams<TContext, TDeps, TValue, TOption>) => TResult

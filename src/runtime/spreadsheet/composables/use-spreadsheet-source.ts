@@ -33,15 +33,9 @@ export function useSpreadsheetSource(params: UseSpreadsheetSourceParams) {
   const error = shallowRef<unknown>(null)
   let runId = 0
 
-  const sheet = computed(() =>
-    getSpreadsheetSheet(workbook.value, selection.value.sheetName),
-  )
-  const headers = computed(() =>
-    getSpreadsheetHeaders(sheet.value, selection.value.headerRowIndex),
-  )
-  const rows = computed(() =>
-    getSpreadsheetDataRows(sheet.value, selection.value.headerRowIndex),
-  )
+  const sheet = computed(() => getSpreadsheetSheet(workbook.value, selection.value.sheetName))
+  const headers = computed(() => getSpreadsheetHeaders(sheet.value, selection.value.headerRowIndex))
+  const rows = computed(() => getSpreadsheetDataRows(sheet.value, selection.value.headerRowIndex))
 
   async function refreshWorkbook() {
     const source = params.source.value

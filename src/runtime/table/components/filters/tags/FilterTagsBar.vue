@@ -37,7 +37,11 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       v-for="definition in visibleDefinitions"
       :key="definition.key"
       :definition="definition"
-      :dynamic="internals.filterPresentation.activeDynamicDefinitions.value.some(item => item.key === definition.key)"
+      :dynamic="
+        internals.filterPresentation.activeDynamicDefinitions.value.some(
+          (item) => item.key === definition.key,
+        )
+      "
       @dismiss="internals.filterPresentation.releaseDynamicSession({ key: definition.key })"
     />
 
@@ -48,9 +52,17 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       :definition="dynamicSessionDefinition"
       dynamic
       session
-      :activation-token="internals.filterPresentation.getDynamicActivationToken({ key: dynamicSessionDefinition.key })"
-      @dismiss="internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })"
-      @session-closed="internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })"
+      :activation-token="
+        internals.filterPresentation.getDynamicActivationToken({
+          key: dynamicSessionDefinition.key,
+        })
+      "
+      @dismiss="
+        internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })
+      "
+      @session-closed="
+        internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })
+      "
     />
 
     <DynamicFilterPicker

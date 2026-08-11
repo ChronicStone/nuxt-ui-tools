@@ -46,14 +46,15 @@ const contextItems = [
     query: () =>
       ({
         queryKey: ['products', 'tc_123'],
-        queryFn: async () => [
-          { id: 'prod_1', name: 'Business English 4 Skills' },
-          { id: 'prod_2', name: 'Reading Placement Test' },
-        ] as const,
+        queryFn: async () =>
+          [
+            { id: 'prod_1', name: 'Business English 4 Skills' },
+            { id: 'prod_2', name: 'Reading Placement Test' },
+          ] as const,
       }) satisfies SpreadsheetQueryDefinition<
         readonly [
-          { id: 'prod_1', name: 'Business English 4 Skills' },
-          { id: 'prod_2', name: 'Reading Placement Test' },
+          { id: 'prod_1'; name: 'Business English 4 Skills' },
+          { id: 'prod_2'; name: 'Reading Placement Test' },
         ]
       >,
   },
@@ -62,8 +63,8 @@ const contextItems = [
   SpreadsheetContextItem<
     'products',
     readonly [
-      { id: 'prod_1', name: 'Business English 4 Skills' },
-      { id: 'prod_2', name: 'Reading Placement Test' },
+      { id: 'prod_1'; name: 'Business English 4 Skills' },
+      { id: 'prod_2'; name: 'Reading Placement Test' },
     ]
   >,
 ]
@@ -78,13 +79,13 @@ const schema = defineSpreadsheetSchema({
   columns: {
     static: (column) => [
       column.text('testCenterId', {
-        rules: v => [v.required()],
+        rules: (v) => [v.required()],
         match: {
           headers: ['Test center ID'],
         },
       }),
       column.text('examNameRaw', {
-        rules: v => [v.required()],
+        rules: (v) => [v.required()],
         match: {
           headers: ['Exam name'],
         },
@@ -99,7 +100,7 @@ const schema = defineSpreadsheetSchema({
       }),
       column.option('productIds', {
         options: ({ context: queryContext }) =>
-          queryContext.products.map(product => ({
+          queryContext.products.map((product) => ({
             label: product.name,
             value: product.id,
           })),
@@ -114,17 +115,18 @@ const schema = defineSpreadsheetSchema({
       dynamic.optionGroups({
         key: 'affiliations',
         source: affiliationGroups,
-        itemKey: group => group.id,
-        itemLabel: group => group.name,
-        targetKey: group => group.slug,
+        itemKey: (group) => group.id,
+        itemLabel: (group) => group.name,
+        targetKey: (group) => group.slug,
         header: {
           strategy: 'template',
           template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
         },
-        options: group => group.items.map(item => ({
-          label: item.name,
-          value: item.id,
-        })),
+        options: (group) =>
+          group.items.map((item) => ({
+            label: item.name,
+            value: item.id,
+          })),
         values: {
           mode: 'csv',
           separator: ',',
@@ -136,7 +138,7 @@ const schema = defineSpreadsheetSchema({
       }),
     ],
   },
-  references: reference => [
+  references: (reference) => [
     reference.select('productId', {
       source: 'examNameRaw',
       options: [
@@ -164,11 +166,11 @@ const resolveSchema = defineSpreadsheetSchema({
             { label: 'Reading Placement Test', value: 'prod_2' },
           ],
         },
-        rules: v => [
+        rules: (v) => [
           v.required(),
           v.validate({
             name: 'allowedProduct',
-            validator: value => value !== 'prod_2',
+            validator: (value) => value !== 'prod_2',
             message: 'Product is not allowed',
           }),
         ],
@@ -213,8 +215,8 @@ const resolveSchema = defineSpreadsheetSchema({
   relations: [
     {
       column: 'resolvedProductId',
-      condition: row => row.reviewStatus === 'Done',
-      rules: v => [
+      condition: (row) => row.reviewStatus === 'Done',
+      rules: (v) => [
         v.required({
           message: 'Resolved product is required when reviewStatus is Done',
         }),

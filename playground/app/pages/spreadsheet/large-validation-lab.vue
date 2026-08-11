@@ -53,13 +53,17 @@ type SpreadsheetAffiliationOption = {
 
 const batchCodeRule = createSheetRule<string, [], {}>({
   name: 'batchCode',
-  validator: value => !value.startsWith('_'),
+  validator: (value) => !value.startsWith('_'),
   message: ({ value }) => `"${value}" cannot start with underscore`,
 })
 
-const centerMatchRule = createSheetRule<string, [expectedId: string], {
-  expectedId: string
-}>({
+const centerMatchRule = createSheetRule<
+  string,
+  [expectedId: string],
+  {
+    expectedId: string
+  }
+>({
   name: 'testCenterMatch',
   validator: (value, expectedId) => ({
     $valid: value === expectedId,
@@ -68,10 +72,14 @@ const centerMatchRule = createSheetRule<string, [expectedId: string], {
   message: ({ params: [expectedId] }) => `Row test center must be ${expectedId}`,
 })
 
-const scoreBandRule = createSheetRule<number, [min: number, max: number], {
-  min: number
-  max: number
-}>({
+const scoreBandRule = createSheetRule<
+  number,
+  [min: number, max: number],
+  {
+    min: number
+    max: number
+  }
+>({
   name: 'scoreBand',
   validator: (value, min, max) => ({
     $valid: !Number.isNaN(value) && value >= min && value <= max,
@@ -95,59 +103,50 @@ function createLargeValidationSchema() {
       static: (column) => [
         column.text('testCenterId', {
           match: { headers: ['Test center ID'] },
-          rules: v => [
-            v.required(),
-            centerMatchRule(center.id),
-          ],
+          rules: (v) => [v.required(), centerMatchRule(center.id)],
         }),
         column.text('secureCode', {
           match: { headers: ['Secure code'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('examNameRaw', {
           match: { headers: ['Exam name'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('firstName', {
           match: { headers: ['First name'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('lastName', {
           match: { headers: ['Last name'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.email('email', {
           match: { headers: ['Email'] },
           parse: ({ cell }) => cell.text.trim().toLowerCase(),
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.date('completionDate', {
           match: { headers: ['Completed date'] },
           parse: ({ cell }) => new Date(`${cell.text.trim()} UTC`).toISOString(),
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('status', {
           match: { headers: ['Status'] },
-          rules: v => [
-            v.required(),
-            v.oneOf(['Done']),
-          ],
+          rules: (v) => [v.required(), v.oneOf(['Done'])],
         }),
         column.text('country', {
           match: { headers: ['Tc country'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('batchName', {
           match: { headers: ['Batch'] },
-          rules: v => [
-            v.required(),
-            batchCodeRule(),
-          ],
+          rules: (v) => [v.required(), batchCodeRule()],
         }),
         column.number('scores.general', {
           match: { headers: ['General score'] },
           parse: ({ cell }) => Number(cell.text.trim()),
-          rules: v => [
+          rules: (v) => [
             v.number({
               message: 'General score must be numeric',
             }),
@@ -157,7 +156,7 @@ function createLargeValidationSchema() {
         column.number('scores.listening', {
           match: { headers: ['Listening score'] },
           parse: ({ cell }) => Number(cell.text.trim()),
-          rules: v => [
+          rules: (v) => [
             v.number({
               message: 'Listening score must be numeric',
             }),
@@ -169,9 +168,9 @@ function createLargeValidationSchema() {
         dynamic.optionGroups({
           key: 'affiliations',
           source: center.affiliationGroups,
-          itemKey: group => group.id,
-          itemLabel: group => group.name,
-          targetKey: group => group.slug,
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          targetKey: (group) => group.slug,
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
@@ -193,7 +192,7 @@ function createLargeValidationSchema() {
         }),
       ],
     },
-    references: reference => [
+    references: (reference) => [
       reference.select('productId', {
         source: 'examNameRaw',
         options: center.products.map((product: SpreadsheetProduct) => ({
@@ -206,8 +205,8 @@ function createLargeValidationSchema() {
     relations: [
       {
         column: 'scores.general',
-        condition: row => row.status === 'Done',
-        rules: v => [
+        condition: (row) => row.status === 'Done',
+        rules: (v) => [
           v.required({
             message: 'General score is required when status is Done',
           }),

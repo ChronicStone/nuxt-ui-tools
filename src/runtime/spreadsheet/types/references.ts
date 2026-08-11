@@ -3,20 +3,27 @@ import type {
   SpreadsheetOptionItem,
   SpreadsheetOptionsSource,
 } from './options'
-import type { SpreadsheetFieldRulesInput } from './validation'
 import type {
   SpreadsheetReferenceSourcePath,
   SpreadsheetReferenceValueAtPath,
   SpreadsheetResolutionQueryResolver,
   SpreadsheetResolvedSelectionValue,
 } from './resolution'
+import type { SpreadsheetFieldRulesInput } from './validation'
 
 type SpreadsheetReferenceSelectBaseConfig<TOption extends SpreadsheetOptionItem> = {
   source: string
-  options?: SpreadsheetOptionsSource<{
-    context: Record<string, unknown>
-  }, TOption>
-  getOptions?: SpreadsheetResolutionQueryResolver<Record<string, unknown>, Record<string, unknown>, TOption>
+  options?: SpreadsheetOptionsSource<
+    {
+      context: Record<string, unknown>
+    },
+    TOption
+  >
+  getOptions?: SpreadsheetResolutionQueryResolver<
+    Record<string, unknown>,
+    Record<string, unknown>,
+    TOption
+  >
 }
 
 export interface SpreadsheetReferenceDefinition<
@@ -24,15 +31,24 @@ export interface SpreadsheetReferenceDefinition<
   TValue = unknown,
   TOption extends SpreadsheetOptionItem = SpreadsheetOptionItem,
   TSource extends string = string,
-  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
+  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
+    | SpreadsheetFieldRulesInput<TValue>
+    | undefined,
 > {
   kind: 'select'
   field: TField
   source: TSource
-  options?: SpreadsheetOptionsSource<{
-    context: Record<string, unknown>
-  }, TOption>
-  getOptions?: SpreadsheetResolutionQueryResolver<Record<string, unknown>, Record<string, unknown>, TOption>
+  options?: SpreadsheetOptionsSource<
+    {
+      context: Record<string, unknown>
+    },
+    TOption
+  >
+  getOptions?: SpreadsheetResolutionQueryResolver<
+    Record<string, unknown>,
+    Record<string, unknown>,
+    TOption
+  >
   rules?: SpreadsheetFieldRulesInput<TValue>
   __rulesInput?: TRulesInput
 }
@@ -45,20 +61,20 @@ export type SpreadsheetReferenceSelectConfig<
     SpreadsheetReferenceValueAtPath<TRow, TSource>,
     InferSpreadsheetOptionValue<TOption>
   >,
-  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
+  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
+    | SpreadsheetFieldRulesInput<TValue>
+    | undefined,
 > = Omit<SpreadsheetReferenceSelectBaseConfig<TOption>, 'source'> & {
   source: TSource
   rules?: TRulesInput
 }
 
-export type SpreadsheetReferenceValue<
+export type SpreadsheetReferenceValue<TSourceValue, TValue> = SpreadsheetResolvedSelectionValue<
   TSourceValue,
-  TValue,
-> = SpreadsheetResolvedSelectionValue<TSourceValue, TValue>
+  TValue
+>
 
-export interface SpreadsheetReferenceBuilder<
-  TRow = Record<string, unknown>,
-> {
+export interface SpreadsheetReferenceBuilder<TRow = Record<string, unknown>> {
   select: <
     TField extends string,
     TSource extends SpreadsheetReferenceSourcePath<TRow>,
@@ -67,17 +83,13 @@ export interface SpreadsheetReferenceBuilder<
       SpreadsheetReferenceValueAtPath<TRow, TSource>,
       InferSpreadsheetOptionValue<TOption>
     >,
-    TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
+    TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
+      | SpreadsheetFieldRulesInput<TValue>
+      | undefined,
   >(
     field: TField,
     config: SpreadsheetReferenceSelectConfig<TRow, TSource, TOption, TValue, TRulesInput>,
-  ) => SpreadsheetReferenceDefinition<
-    TField,
-    TValue,
-    TOption,
-    TSource,
-    TRulesInput
-  >
+  ) => SpreadsheetReferenceDefinition<TField, TValue, TOption, TSource, TRulesInput>
 }
 
 export type InferSpreadsheetReferenceValue<TReference> =

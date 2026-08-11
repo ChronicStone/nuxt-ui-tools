@@ -13,14 +13,9 @@ import type {
   TableSchemaView,
   TableSourceRequestContext,
 } from '../types'
-import {
-  executeClientFacets,
-  filterClientRows,
-  paginateClientRows,
-  sortClientRows,
-} from '../utils'
-import type { useTableState } from './use-table-state'
+import { executeClientFacets, filterClientRows, paginateClientRows, sortClientRows } from '../utils'
 import type { UseTableStartupReturn } from './use-table-startup'
+import type { useTableState } from './use-table-state'
 
 export interface UseTableDataParams {
   schema: ComputedRef<TableSchemaView>
@@ -150,16 +145,10 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     }),
   )
   const remoteSource = computed(() =>
-    params.schema.value.source.mode === 'remote'
-      ? params.schema.value.source
-      : null,
+    params.schema.value.source.mode === 'remote' ? params.schema.value.source : null,
   )
-  const hasRemoteFacetQuery = computed(
-    () => typeof remoteSource.value?.facets === 'function',
-  )
-  const usesEmbeddedRemoteFacets = computed(
-    () => remoteSource.value?.facets === true,
-  )
+  const hasRemoteFacetQuery = computed(() => typeof remoteSource.value?.facets === 'function')
+  const usesEmbeddedRemoteFacets = computed(() => remoteSource.value?.facets === true)
   const facetsContextKey = computed(() => JSON.stringify(facetsBaseContext.value))
   const lastResolvedEmbeddedFacetsKey = shallowRef<string | null>(null)
   const requestContext = computed<TableSourceRequestContext>(() => ({
@@ -183,9 +172,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const query = useQuery(
     computed(() =>
       withEnabled(
-        params.schema.value.source.query(
-          requestContext.value as never,
-        ) as TableQueryDefinition,
+        params.schema.value.source.query(requestContext.value as never) as TableQueryDefinition,
         params.startup.isActive.value && isContextReady.value,
         {
           staleTime: dataStaleTime.value,
@@ -272,8 +259,8 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     !params.startup.isActive.value
       ? []
       : params.schema.value.source.mode === 'client'
-      ? clientSortedRows.value
-      : data.value.rows,
+        ? clientSortedRows.value
+        : data.value.rows,
   )
   const clientFacetDescriptors = computed<TableFacetRequestDescriptor<string>[]>(() =>
     globalFacetDescriptors.value.map((facet) => ({
@@ -291,11 +278,9 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         facets: clientFacetDescriptors.value,
       })
 
-    if (hasRemoteFacetQuery.value)
-      return globalFacetsQuery.data.value ?? { facets: [] }
+    if (hasRemoteFacetQuery.value) return globalFacetsQuery.data.value ?? { facets: [] }
 
-    if (usesEmbeddedRemoteFacets.value)
-      return { facets: embeddedFacetsState.value }
+    if (usesEmbeddedRemoteFacets.value) return { facets: embeddedFacetsState.value }
 
     return { facets: [] }
   })
@@ -618,10 +603,7 @@ function resolveRowIdentity(options: {
   return String(resolveRowIdentityValue({ row: options.row, key: options.rowKey }) ?? options.index)
 }
 
-function resolveRowIdentityValue(options: {
-  row: GenericObject
-  key: string
-}) {
+function resolveRowIdentityValue(options: { row: GenericObject; key: string }) {
   return options.key.split('.').reduce<unknown>((value, segment) => {
     if (!value || typeof value !== 'object') return undefined
     return (value as Record<string, unknown>)[segment]

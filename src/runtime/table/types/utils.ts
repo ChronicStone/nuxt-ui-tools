@@ -1,5 +1,4 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { TableApi } from './table-api'
 
 import type {
   LazyTextValue,
@@ -9,6 +8,7 @@ import type {
   RenderableType,
   UnionToIntersection,
 } from '../../shared'
+import type { TableApi } from './table-api'
 
 export type {
   ComputedRef,

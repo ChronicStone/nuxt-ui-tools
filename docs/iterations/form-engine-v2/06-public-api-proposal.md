@@ -49,23 +49,23 @@ This is currently the strongest candidate.
 
 ```ts
 const userForm = defineFormSchema({
-  key: "user-profile",
-  title: "Edit profile",
+  key: 'user-profile',
+  title: 'Edit profile',
   fields: [
-    field.text("firstName", {
-      label: "First name",
+    field.text('firstName', {
+      label: 'First name',
       required: true,
     }),
-    field.text("lastName", {
-      label: "Last name",
+    field.text('lastName', {
+      label: 'Last name',
       required: true,
     }),
-    field.select("role", {
-      label: "Role",
+    field.select('role', {
+      label: 'Role',
       required: true,
       options: [
-        { label: "Admin", value: "ADMIN" },
-        { label: "Member", value: "MEMBER" },
+        { label: 'Admin', value: 'ADMIN' },
+        { label: 'Member', value: 'MEMBER' },
       ],
     }),
   ],
@@ -82,24 +82,24 @@ Behavior:
 
 ```ts
 const addressForm = defineFormSchema({
-  key: "address",
+  key: 'address',
   fields: [
-    field.group("address", {
-      label: "Address",
+    field.group('address', {
+      label: 'Address',
       fields: [
-        field.select("country", {
-          label: "Country",
+        field.select('country', {
+          label: 'Country',
           required: true,
           options: asyncOptions({
             resolve: async () => getCountries(),
           }),
         }),
-        field.text("city", {
-          label: "City",
+        field.text('city', {
+          label: 'City',
           required: true,
         }),
-        field.text("postalCode", {
-          label: "Postal code",
+        field.text('postalCode', {
+          label: 'Postal code',
           required: true,
         }),
       ],
@@ -118,23 +118,23 @@ Behavior:
 
 ```ts
 const organisationForm = defineFormSchema({
-  key: "organisation",
+  key: 'organisation',
   fields: [
-    field.select("type", {
-      label: "Organisation type",
+    field.select('type', {
+      label: 'Organisation type',
       required: true,
       options: [
-        { label: "Company", value: "COMPANY" },
-        { label: "Individual", value: "INDIVIDUAL" },
+        { label: 'Company', value: 'COMPANY' },
+        { label: 'Individual', value: 'INDIVIDUAL' },
       ],
     }),
-    field.text("companyName", {
-      label: "Company name",
+    field.text('companyName', {
+      label: 'Company name',
       dependencies: {
-        type: dep.previous("type"),
+        type: dep.previous('type'),
       },
-      condition: ({ deps }) => deps.type === "COMPANY",
-      required: ({ deps }) => deps.type === "COMPANY",
+      condition: ({ deps }) => deps.type === 'COMPANY',
+      required: ({ deps }) => deps.type === 'COMPANY',
     }),
   ],
 })
@@ -150,19 +150,19 @@ Behavior:
 
 ```ts
 const contactsForm = defineFormSchema({
-  key: "contacts",
+  key: 'contacts',
   fields: [
-    field.group("email", {
-      label: "Email",
+    field.group('email', {
+      label: 'Email',
       fields: [
-        field.text("value", {
+        field.text('value', {
           required: true,
           disabled: true,
         }),
-        field.button("edit", {
-          text: "Edit",
+        field.button('edit', {
+          text: 'Edit',
           dependencies: {
-            email: dep.parent("value"),
+            email: dep.parent('value'),
           },
           action: ({ deps }) => openEmailUpdateDialog({ currentEmail: deps.email }),
         }),
@@ -186,28 +186,28 @@ Behavior:
 
 ```ts
 const vehicleSearchForm = defineFormSchema({
-  key: "vehicle-search",
+  key: 'vehicle-search',
   fields: [
-    field.group("search", {
+    field.group('search', {
       fields: [
-        field.radio("hasRegistration", {
+        field.radio('hasRegistration', {
           options: [
-            { label: "Yes", value: true },
-            { label: "No", value: false },
+            { label: 'Yes', value: true },
+            { label: 'No', value: false },
           ],
           defaultValue: true,
         }),
-        field.group("query", {
+        field.group('query', {
           dependencies: {
-            hasRegistration: dep.parent("hasRegistration"),
+            hasRegistration: dep.parent('hasRegistration'),
           },
           fields: [
-            field.text("value", {
+            field.text('value', {
               dependencies: {
-                hasRegistration: dep.parent(1, "hasRegistration"),
+                hasRegistration: dep.parent(1, 'hasRegistration'),
               },
               props: ({ deps }) => ({
-                mask: deps.hasRegistration ? "AA-123-AA" : "VIN################",
+                mask: deps.hasRegistration ? 'AA-123-AA' : 'VIN################',
               }),
             }),
           ],
@@ -227,23 +227,23 @@ Behavior:
 
 ```ts
 const cityForm = defineFormSchema({
-  key: "city",
+  key: 'city',
   fields: [
-    field.select("country", {
-      label: "Country",
+    field.select('country', {
+      label: 'Country',
       required: true,
       options: asyncOptions({
         resolve: async () => getCountries(),
       }),
     }),
-    field.autoComplete("city", {
-      label: "City",
+    field.autoComplete('city', {
+      label: 'City',
       dependencies: {
-        country: dep.previous("country"),
+        country: dep.previous('country'),
         query: dep.self(),
       },
       options: asyncOptions({
-        watch: ["country", "query"],
+        watch: ['country', 'query'],
         resolve: async ({ deps }) => {
           if (!deps.country || !deps.query) return []
           return getCities({ country: deps.country, query: deps.query })
@@ -263,27 +263,27 @@ Behavior:
 
 ```ts
 const categoryForm = defineFormSchema({
-  key: "category",
+  key: 'category',
   fields: [
-    field.select("categoryId", {
-      label: "Category",
+    field.select('categoryId', {
+      label: 'Category',
       options: asyncOptions({
         query: () =>
           queryOptions({
-            queryKey: ["categories"],
+            queryKey: ['categories'],
             queryFn: () => api.categories.list(),
           }),
       }),
     }),
-    field.select("manufacturerId", {
-      label: "Manufacturer",
+    field.select('manufacturerId', {
+      label: 'Manufacturer',
       dependencies: {
-        categoryId: dep.previous("categoryId"),
+        categoryId: dep.previous('categoryId'),
       },
       options: asyncOptions({
         query: ({ deps }) =>
           queryOptions({
-            queryKey: ["manufacturers", deps.categoryId],
+            queryKey: ['manufacturers', deps.categoryId],
             queryFn: () => api.manufacturers.list({ categoryId: deps.categoryId }),
             enabled: Boolean(deps.categoryId),
           }),
@@ -304,8 +304,8 @@ Behavior:
 const formConfig = defineFormConfig({
   defaults: {
     field: {
-      size: "md",
-      labelWidth: "fit",
+      size: 'md',
+      labelWidth: 'fit',
     },
     kinds: {
       text: {
@@ -323,15 +323,15 @@ const formConfig = defineFormConfig({
 })
 
 const userForm = defineFormSchema({
-  key: "user",
+  key: 'user',
   config: formConfig,
   fields: [
-    field.text("firstName", { label: "First name" }),
-    field.select("role", {
-      label: "Role",
+    field.text('firstName', { label: 'First name' }),
+    field.select('role', {
+      label: 'Role',
       options: [
-        { label: "Admin", value: "ADMIN" },
-        { label: "Member", value: "MEMBER" },
+        { label: 'Admin', value: 'ADMIN' },
+        { label: 'Member', value: 'MEMBER' },
       ],
     }),
   ],
@@ -347,46 +347,42 @@ Behavior:
 
 ```ts
 const onboardingForm = defineFormSchema({
-  key: "onboarding",
+  key: 'onboarding',
   layout: {
-    mode: "modal",
+    mode: 'modal',
     showStepper: false,
   },
   steps: [
     {
-      key: "account",
-      title: "Account",
+      key: 'account',
+      title: 'Account',
       fields: [
-        field.text("email", {
-          label: "Email",
+        field.text('email', {
+          label: 'Email',
           required: true,
         }),
       ],
-      actions: [
-        action.next({ label: "Continue" }),
-      ],
+      actions: [action.next({ label: 'Continue' })],
     },
     {
-      key: "verification",
-      title: "Verification",
+      key: 'verification',
+      title: 'Verification',
       fields: [
-        field.otp("code", {
-          label: "Verification code",
+        field.otp('code', {
+          label: 'Verification code',
           required: true,
           dependencies: {
-            email: dep.root("email"),
+            email: dep.root('email'),
           },
           hint: ({ deps }) => `Code sent to ${deps.email}`,
         }),
       ],
-      actions: [
-        action.submit({ label: "Validate" }),
-      ],
+      actions: [action.submit({ label: 'Validate' })],
     },
   ],
   guards: {
     beforeNext: async ({ step, state, api }) => {
-      if (step.key !== "account") return true
+      if (step.key !== 'account') return true
       return sendVerificationCode({ email: state.email, api })
     },
   },
@@ -418,33 +414,33 @@ This pushes harder toward guided authoring and stronger scope typing.
 
 ```ts
 const userForm = defineFormSchema((form) => {
-  form.text("firstName", {
-    label: "First name",
+  form.text('firstName', {
+    label: 'First name',
     required: true,
   })
 
-  form.text("lastName", {
-    label: "Last name",
+  form.text('lastName', {
+    label: 'Last name',
     required: true,
   })
 
-  form.select("role", {
-    label: "Role",
+  form.select('role', {
+    label: 'Role',
     options: [
-      { label: "Admin", value: "ADMIN" },
-      { label: "Member", value: "MEMBER" },
+      { label: 'Admin', value: 'ADMIN' },
+      { label: 'Member', value: 'MEMBER' },
     ],
   })
 
-  form.group("email", { label: "Email" }, (group) => {
-    group.text("value", {
+  form.group('email', { label: 'Email' }, (group) => {
+    group.text('value', {
       required: true,
       disabled: true,
     })
 
-    group.button("edit", {
+    group.button('edit', {
       dependencies: {
-        email: group.parent("value"),
+        email: group.parent('value'),
       },
       action: ({ deps }) => openEmailUpdateDialog({ currentEmail: deps.email }),
     })
@@ -462,21 +458,21 @@ Behavior:
 
 ```ts
 const itemForm = defineFormSchema((form) => {
-  form.select("categoryId", {
-    label: "Category",
+  form.select('categoryId', {
+    label: 'Category',
     options: asyncOptions({
       query: () =>
         queryOptions({
-          queryKey: ["categories"],
+          queryKey: ['categories'],
           queryFn: api.categories.list,
         }),
     }),
   })
 
-  form.select("manufacturerId", {
-    label: "Manufacturer",
+  form.select('manufacturerId', {
+    label: 'Manufacturer',
     dependencies: {
-      categoryId: form.previous("categoryId"),
+      categoryId: form.previous('categoryId'),
     },
     options: asyncOptions({
       resolve: ({ deps }) => api.manufacturers.list({ categoryId: deps.categoryId }),
@@ -509,27 +505,27 @@ This proposal keeps fields as plain objects but moves dependencies, async, and t
 
 ```ts
 const form = defineFormSchema({
-  key: "organisation",
+  key: 'organisation',
   fields: [
     {
-      kind: "select",
-      key: "type",
-      label: "Organisation type",
+      kind: 'select',
+      key: 'type',
+      label: 'Organisation type',
       options: staticOptions([
-        { label: "Company", value: "COMPANY" },
-        { label: "Individual", value: "INDIVIDUAL" },
+        { label: 'Company', value: 'COMPANY' },
+        { label: 'Individual', value: 'INDIVIDUAL' },
       ]),
     },
     {
-      kind: "text",
-      key: "companyName",
-      label: "Company name",
+      kind: 'text',
+      key: 'companyName',
+      label: 'Company name',
       when: dependsOn({
-        type: dep.previous("type"),
-      }).condition(({ type }) => type === "COMPANY"),
+        type: dep.previous('type'),
+      }).condition(({ type }) => type === 'COMPANY'),
       required: dependsOn({
-        type: dep.previous("type"),
-      }).map(({ type }) => type === "COMPANY"),
+        type: dep.previous('type'),
+      }).map(({ type }) => type === 'COMPANY'),
     },
   ],
 })
@@ -539,25 +535,26 @@ const form = defineFormSchema({
 
 ```ts
 const form = defineFormSchema({
-  key: "item",
+  key: 'item',
   fields: [
     {
-      kind: "select",
-      key: "categoryId",
-      label: "Category",
+      kind: 'select',
+      key: 'categoryId',
+      label: 'Category',
       options: queryOptionsSource(() =>
         queryOptions({
-          queryKey: ["categories"],
+          queryKey: ['categories'],
           queryFn: api.categories.list,
-        })),
+        }),
+      ),
     },
     {
-      kind: "select",
-      key: "manufacturerId",
-      label: "Manufacturer",
+      kind: 'select',
+      key: 'manufacturerId',
+      label: 'Manufacturer',
       options: promiseOptionsSource(
         dependsOn({
-          categoryId: dep.previous("categoryId"),
+          categoryId: dep.previous('categoryId'),
         }).resolve(({ categoryId }) => api.manufacturers.list({ categoryId })),
       ),
     },
@@ -639,36 +636,36 @@ Directionally:
 
 ```ts
 const form = defineFormSchema({
-  key: "example",
+  key: 'example',
   config: defineFormConfig({
     defaults: {
-      field: { size: "md" },
+      field: { size: 'md' },
       kinds: {
         text: { props: { clearable: true } },
       },
     },
   }),
   fields: [
-    field.text("firstName", {
-      label: "First name",
+    field.text('firstName', {
+      label: 'First name',
       required: true,
     }),
-    field.select("country", {
-      label: "Country",
+    field.select('country', {
+      label: 'Country',
       options: asyncOptions({
         resolve: getCountries,
       }),
     }),
-    field.autoComplete("city", {
-      label: "City",
+    field.autoComplete('city', {
+      label: 'City',
       dependencies: {
-        country: dep.previous("country"),
+        country: dep.previous('country'),
         query: dep.self(),
       },
       options: asyncOptions({
         query: ({ deps }) =>
           queryOptions({
-            queryKey: ["cities", deps.country, deps.query],
+            queryKey: ['cities', deps.country, deps.query],
             queryFn: () => getCities({ country: deps.country, query: deps.query }),
             enabled: Boolean(deps.country && deps.query),
           }),
@@ -715,11 +712,11 @@ So the dependency model should not force a single bundled shape by default.
 The builder should feel like this:
 
 ```ts
-dependencies: dep => ({
+dependencies: (dep) => ({
   query: dep.self().state<string>(),
-  country: dep.field("meta.country").state<string | null>(),
-  manufacturerOptions: dep.field("manufacturerId").options<ManufacturerOption>(),
-  manufacturer: dep.field("manufacturerId").channels({
+  country: dep.field('meta.country').state<string | null>(),
+  manufacturerOptions: dep.field('manufacturerId').options<ManufacturerOption>(),
+  manufacturer: dep.field('manufacturerId').channels({
     state: dep.state<string | null>(),
     options: dep.options<ManufacturerOption>(),
   }),
@@ -739,8 +736,8 @@ This is better because:
 Use for current field value/state.
 
 ```ts
-dep.field("meta.country").state<string | null>()
-dep.parent("value").state<string>()
+dep.field('meta.country').state<string | null>()
+dep.parent('value').state<string>()
 dep.self().state<string>()
 ```
 
@@ -749,7 +746,7 @@ dep.self().state<string>()
 Use for option-bearing fields when the consumer cares about option collections or option loading.
 
 ```ts
-dep.field("manufacturerId").options<ManufacturerOption>()
+dep.field('manufacturerId').options<ManufacturerOption>()
 ```
 
 ### 3. `channels`
@@ -757,7 +754,7 @@ dep.field("manufacturerId").options<ManufacturerOption>()
 Use when the same alias should expose multiple channels together.
 
 ```ts
-dep.field("manufacturerId").channels({
+dep.field('manufacturerId').channels({
   state: dep.state<string | null>(),
   options: dep.options<ManufacturerOption>(),
 })
@@ -778,7 +775,7 @@ deps.manufacturer.options.refresh()
 
 ```ts
 type FormStateDependency<TValue> = {
-  kind: "state"
+  kind: 'state'
   path: string
   value: TValue
   initialValue: TValue
@@ -791,7 +788,7 @@ type FormStateDependency<TValue> = {
 
 ```ts
 type FormOptionsDependency<TOption> = {
-  kind: "options"
+  kind: 'options'
   path: string
   items: TOption[]
   loading: boolean
@@ -804,7 +801,7 @@ type FormOptionsDependency<TOption> = {
 
 ```ts
 type FormChannelsDependency<TValue, TOption> = {
-  kind: "channels"
+  kind: 'channels'
   path: string
   state: FormStateDependency<TValue>
   options: FormOptionsDependency<TOption>
@@ -816,9 +813,9 @@ type FormChannelsDependency<TValue, TOption> = {
 ### Only listen to state
 
 ```ts
-field.text("city", {
-  dependencies: dep => ({
-    country: dep.field("meta.country").state<string | null>(),
+field.text('city', {
+  dependencies: (dep) => ({
+    country: dep.field('meta.country').state<string | null>(),
   }),
   disabled: ({ deps }) => !deps.country.value,
 })
@@ -827,12 +824,12 @@ field.text("city", {
 ### Only listen to options
 
 ```ts
-field.info("manufacturer-summary", {
-  dependencies: dep => ({
-    manufacturerOptions: dep.field("manufacturerId").options<ManufacturerOption>(),
+field.info('manufacturer-summary', {
+  dependencies: (dep) => ({
+    manufacturerOptions: dep.field('manufacturerId').options<ManufacturerOption>(),
   }),
   content: ({ deps }) => {
-    if (deps.manufacturerOptions.loading) return "Loading..."
+    if (deps.manufacturerOptions.loading) return 'Loading...'
     return `${deps.manufacturerOptions.items.length} manufacturers available`
   },
 })
@@ -841,10 +838,10 @@ field.info("manufacturer-summary", {
 ### Listen to both, under separate aliases
 
 ```ts
-field.button("refreshManufacturers", {
-  dependencies: dep => ({
-    category: dep.field("categoryId").state<string | null>(),
-    manufacturerOptions: dep.field("manufacturerId").options<ManufacturerOption>(),
+field.button('refreshManufacturers', {
+  dependencies: (dep) => ({
+    category: dep.field('categoryId').state<string | null>(),
+    manufacturerOptions: dep.field('manufacturerId').options<ManufacturerOption>(),
   }),
   props: ({ deps }) => ({
     disabled: !deps.category.value,
@@ -857,18 +854,16 @@ field.button("refreshManufacturers", {
 ### Listen to both, under one alias
 
 ```ts
-field.select("manufacturerId", {
-  dependencies: dep => ({
-    manufacturer: dep.field("manufacturerId").channels({
+field.select('manufacturerId', {
+  dependencies: (dep) => ({
+    manufacturer: dep.field('manufacturerId').channels({
       state: dep.state<string | null>(),
       options: dep.options<ManufacturerOption>(),
     }),
   }),
   hint: ({ deps }) => {
     const selected = deps.manufacturer.state.value
-    const label = deps.manufacturer.options.items.find(
-      option => option.value === selected,
-    )?.label
+    const label = deps.manufacturer.options.items.find((option) => option.value === selected)?.label
 
     return label ? `Selected: ${label}` : undefined
   },
@@ -887,7 +882,7 @@ Later channels can be added without breaking the model:
 For example:
 
 ```ts
-dep.field("country").channels({
+dep.field('country').channels({
   state: dep.state<string | null>(),
   validation: dep.validation(),
 })
@@ -900,10 +895,10 @@ That is much easier to evolve than an API that assumes every dependency is prima
 The dependency API should move toward:
 
 ```ts
-dependencies: dep => ({
-  country: dep.field("meta.country").state<string | null>(),
-  manufacturerOptions: dep.field("manufacturerId").options<ManufacturerOption>(),
-  manufacturer: dep.field("manufacturerId").channels({
+dependencies: (dep) => ({
+  country: dep.field('meta.country').state<string | null>(),
+  manufacturerOptions: dep.field('manufacturerId').options<ManufacturerOption>(),
+  manufacturer: dep.field('manufacturerId').channels({
     state: dep.state<string | null>(),
     options: dep.options<ManufacturerOption>(),
   }),
@@ -913,8 +908,8 @@ dependencies: dep => ({
 instead of:
 
 ```ts
-dependencies: dep => ({
-  country: dep.field("meta.country").value<string | null>(),
+dependencies: (dep) => ({
+  country: dep.field('meta.country').value<string | null>(),
 })
 ```
 
@@ -937,12 +932,10 @@ The current leading direction is:
 Directionally:
 
 ```ts
-dependencies: dep => ({
+dependencies: (dep) => ({
   query: dep.self().state<string>(),
-  country: dep.field("meta.country").state<string | null>(),
-  manufacturer: dep.field("manufacturerId")
-    .state<string | null>()
-    .options<ManufacturerOption>(),
+  country: dep.field('meta.country').state<string | null>(),
+  manufacturer: dep.field('manufacturerId').state<string | null>().options<ManufacturerOption>(),
 })
 ```
 
@@ -990,108 +983,108 @@ Source inspiration:
 - `app/entities/user/schema.tsx`
 
 ```ts
-export function userFormSchema(params: { mode: "orga-onboarding" | "user-onboarding" | "update" }) {
+export function userFormSchema(params: { mode: 'orga-onboarding' | 'user-onboarding' | 'update' }) {
   const { $i18n, $i18nValidators } = useNuxtApp()
 
   return defineFormSchema({
-    key: "user-profile",
+    key: 'user-profile',
     controls: {
-      confirmNavOnDirty: params.mode === "update",
+      confirmNavOnDirty: params.mode === 'update',
     },
-    actions: params.mode === "update" ? undefined : [],
+    actions: params.mode === 'update' ? undefined : [],
     fields: (t) =>
       t
-        .radio("meta.title", {
-          label: () => $i18n.t("labels.gender"),
+        .radio('meta.title', {
+          label: () => $i18n.t('labels.gender'),
           required: true,
           size: 8,
           options: [
-            { label: () => $i18n.t("values.gender.MR"), value: "MR" },
-            { label: () => $i18n.t("values.gender.MRS"), value: "MRS" },
+            { label: () => $i18n.t('values.gender.MR'), value: 'MR' },
+            { label: () => $i18n.t('values.gender.MRS'), value: 'MRS' },
           ] as const,
         })
-        .text("firstName", {
-          label: () => $i18n.t("labels.firstName"),
+        .text('firstName', {
+          label: () => $i18n.t('labels.firstName'),
           required: true,
         })
-        .text("lastName", {
-          label: () => $i18n.t("labels.lastName"),
+        .text('lastName', {
+          label: () => $i18n.t('labels.lastName'),
           required: true,
         })
-        .group("email", {
-          label: () => $i18n.t("labels.email"),
+        .group('email', {
+          label: () => $i18n.t('labels.email'),
           required: true,
           input: {
             preformat: (email: string) => ({ value: email }),
-            transform: (email: { value: string }) => email?.value ?? "",
+            transform: (email: { value: string }) => email?.value ?? '',
           },
           fields: (g) =>
             g
-              .text("value", {
+              .text('value', {
                 required: true,
                 validators: {
                   email: $i18nValidators.email,
                 },
                 disabled: true,
               })
-              .button("edit", {
-                condition: () => params.mode === "update",
-                dependencies: dep => ({
-                  email: dep.parent("value").state<string>(),
+              .button('edit', {
+                condition: () => params.mode === 'update',
+                dependencies: (dep) => ({
+                  email: dep.parent('value').state<string>(),
                 }),
-                props: { icon: "heroicons-solid:pencil" },
+                props: { icon: 'heroicons-solid:pencil' },
                 action: ({ deps }) =>
                   updateUserEmail({
                     currentEmail: deps.email.state.value,
                   }),
               }),
         })
-        .select("meta.country", {
-          label: () => $i18n.t("labels.country"),
-          placeholder: () => $i18n.t("placeholders.country"),
+        .select('meta.country', {
+          label: () => $i18n.t('labels.country'),
+          placeholder: () => $i18n.t('placeholders.country'),
           required: true,
           options: asyncOptions({
             resolve: getCountries,
             external: [$i18n.locale],
           }),
         })
-        .hidden("meta.contacts.mobileCountryCode", {
+        .hidden('meta.contacts.mobileCountryCode', {
           output: t.string(),
         })
-        .group("meta.contacts.mobile", {
-          label: () => $i18n.t("labels.mobilePhone"),
+        .group('meta.contacts.mobile', {
+          label: () => $i18n.t('labels.mobilePhone'),
           required: true,
           input: {
             preformat: (value: string) => ({ value: formatPhoneNumber(value) }),
-            transform: (phone: { value: string }) => phone?.value ?? "",
+            transform: (phone: { value: string }) => phone?.value ?? '',
           },
           fields: (g) =>
             g
-              .phoneNumber("value", {
+              .phoneNumber('value', {
                 required: true,
-                dependencies: dep => ({
-                  countryCode: dep.root("meta.contacts.mobileCountryCode").state<string | null>(),
+                dependencies: (dep) => ({
+                  countryCode: dep.root('meta.contacts.mobileCountryCode').state<string | null>(),
                 }),
                 props: ({ deps }) => ({
-                  defaultCountryCode: "detect",
+                  defaultCountryCode: 'detect',
                   storedCountryCode: deps.countryCode.state.value,
                 }),
                 disabled: true,
               })
-              .button("edit", {
-                dependencies: dep => ({
+              .button('edit', {
+                dependencies: (dep) => ({
                   phone: dep.parent().state<{ value: string }>(),
                 }),
-                props: { icon: "heroicons-solid:pencil" },
+                props: { icon: 'heroicons-solid:pencil' },
                 action: async ({ api }) => {
-                  const result = await updateUserPhone({ mode: "update" })
+                  const result = await updateUserPhone({ mode: 'update' })
                   if (!result) return
 
-                  api.setValue(g.parent("value"), result.phone)
-                  api.setValue(t.root("meta.contacts.mobileCountryCode"), result.mobileCountryCode)
+                  api.setValue(g.parent('value'), result.phone)
+                  api.setValue(t.root('meta.contacts.mobileCountryCode'), result.mobileCountryCode)
                 },
               }),
-        })
+        }),
   })
 }
 ```
@@ -1335,63 +1328,70 @@ Source inspiration:
 - `app/entities/drafts/schema/item.tsx`
 
 ```ts
-export function vehicleSearchFields(params: { itemShortId: string, activeCharacteristics: Array<any> }) {
+export function vehicleSearchFields(params: {
+  itemShortId: string
+  activeCharacteristics: Array<any>
+}) {
   const { $i18n, $api, $recaptcha } = useNuxtApp()
   const userStore = useUserStore()
 
   return defineFormFields((t) =>
-    t.object("search_immatriculation", {
+    t.object('search_immatriculation', {
       omit: true,
       props: { frameless: true },
       condition: () =>
-        params.activeCharacteristics.some(c => c.model.key === CharacteristicKeys.VEHICLE_REGISTRATION_NUMBER),
+        params.activeCharacteristics.some(
+          (c) => c.model.key === CharacteristicKeys.VEHICLE_REGISTRATION_NUMBER,
+        ),
       fields: (o) =>
         o
-          .radio("hasImmatriculation", {
-            condition: () => userStore.activeOrganisation?.meta?.country === "FR",
-            label: () => $i18n.t("labels.vehiculeIsRegistered"),
+          .radio('hasImmatriculation', {
+            condition: () => userStore.activeOrganisation?.meta?.country === 'FR',
+            label: () => $i18n.t('labels.vehiculeIsRegistered'),
             defaultValue: true,
             size: 8,
             options: [
-              { value: true, label: () => $i18n.t("labels.yes") },
-              { value: false, label: () => $i18n.t("labels.no") },
+              { value: true, label: () => $i18n.t('labels.yes') },
+              { value: false, label: () => $i18n.t('labels.no') },
             ],
           })
-          .group("search", {
-            condition: () => userStore.activeOrganisation?.meta?.country === "FR",
-            dependencies: dep => ({
-              hasImmatriculation: dep.parent("hasImmatriculation").state<boolean>(),
+          .group('search', {
+            condition: () => userStore.activeOrganisation?.meta?.country === 'FR',
+            dependencies: (dep) => ({
+              hasImmatriculation: dep.parent('hasImmatriculation').state<boolean>(),
             }),
             label: ({ deps }) =>
               deps.hasImmatriculation.state.value
-                ? $i18n.t("labels.searchVehiculeRegisteredNumber")
-                : $i18n.t("labels.searchVehicleVin"),
+                ? $i18n.t('labels.searchVehiculeRegisteredNumber')
+                : $i18n.t('labels.searchVehicleVin'),
             fields: (g) =>
               g
-                .text("value", {
-                  dependencies: dep => ({
-                    hasImmatriculation: dep.parent(1, "hasImmatriculation").state<boolean>(),
+                .text('value', {
+                  dependencies: (dep) => ({
+                    hasImmatriculation: dep.parent(1, 'hasImmatriculation').state<boolean>(),
                   }),
                   props: ({ deps }) => ({
                     mask: deps.hasImmatriculation.state.value
                       ? VEHICLE_IMMATRICULATION_MASK
                       : VEHICLE_VIN_MASK,
                   }),
-                  onDependencyChange: ({ api }) => api.setValue(""),
+                  onDependencyChange: ({ api }) => api.setValue(''),
                 })
-                .button("searchButton", {
-                  text: () => $i18n.t("actions.search"),
-                  dependencies: dep => ({
-                    value: dep.parent("value").state<string>(),
-                    hasImmatriculation: dep.root("search_immatriculation.hasImmatriculation").state<boolean>(),
+                .button('searchButton', {
+                  text: () => $i18n.t('actions.search'),
+                  dependencies: (dep) => ({
+                    value: dep.parent('value').state<string>(),
+                    hasImmatriculation: dep
+                      .root('search_immatriculation.hasImmatriculation')
+                      .state<boolean>(),
                   }),
                   props: ({ deps }) => ({
-                    type: "primary",
+                    type: 'primary',
                     disabled: !deps.value.state.value,
                   }),
                   action: async ({ api, deps }) => {
-                    const recaptcha = await $recaptcha("searchVehicule")
-                    const query = deps.value.state.value?.replace(/[^A-Za-z0-9]/g, "")
+                    const recaptcha = await $recaptcha('searchVehicule')
+                    const query = deps.value.state.value?.replace(/[^A-Za-z0-9]/g, '')
 
                     const { data } = await withErrorHandling(() =>
                       deps.hasImmatriculation.state.value
@@ -1411,7 +1411,7 @@ export function vehicleSearchFields(params: { itemShortId: string, activeCharact
 
                     setVehicleCharacteristics(data.data, {
                       api,
-                      characteristics: params.activeCharacteristics.map(c => c.model),
+                      characteristics: params.activeCharacteristics.map((c) => c.model),
                     })
                   },
                 }),

@@ -7,7 +7,11 @@ import { useRangeSelect } from '../../../../shared'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableOptionFilterDefinition, TableOptionFilterOperator } from '../../../types'
+import type {
+  TableFilterOperator,
+  TableOptionFilterDefinition,
+  TableOptionFilterOperator,
+} from '../../../types'
 import { resolveFilterTriggerIcon } from '../../../utils'
 import FilterOptionPickerContent from '../shared/FilterOptionPickerContent.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
@@ -216,19 +220,19 @@ function handleSelectEntry(options: {
   sectionKey: string
 }) {
   if (options.sectionKey === 'pinned') {
-    const entry = pinnedEntries.value.find(item => String(item.value) === String(options.value))
+    const entry = pinnedEntries.value.find((item) => String(item.value) === String(options.value))
     if (!entry) return
     pinnedRangeSelect.handleClick(options.event, entry, options.index)
     return
   }
 
-  const entry = restEntries.value.find(item => String(item.value) === String(options.value))
+  const entry = restEntries.value.find((item) => String(item.value) === String(options.value))
   if (!entry) return
   restRangeSelect.handleClick(options.event, entry, options.index)
 }
 
 function handleToggleTreeEntry(entryId: string) {
-  const entry = state.visibleTreeEntries.value.find(item => item.id === entryId)
+  const entry = state.visibleTreeEntries.value.find((item) => item.id === entryId)
   if (!entry) return
   state.toggleTreeEntry(entry)
 }
@@ -259,10 +263,7 @@ function handleContentMounted() {
     />
 
     <template #content>
-      <div
-        class="w-fit max-w-[calc(100vw-1rem)] bg-default"
-        @vue:mounted="handleContentMounted"
-      >
+      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default" @vue:mounted="handleContentMounted">
         <FilterOptionPickerContent
           v-model:search-query="searchQuery"
           :flat-radio-value="state.flatRadioValue.value"
@@ -280,8 +281,20 @@ function handleContentMounted() {
           v-if="state.filterUi.value.commitMode === 'manual'"
           class="flex items-center justify-between border-t border-default p-2"
         >
-          <UButton color="neutral" variant="ghost" size="sm" :label="state.filterUi.value.actions.clear" @click="clearFilter" />
-          <UButton color="neutral" variant="subtle" size="sm" :label="state.filterUi.value.actions.apply" @click="applyFilter" />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            :label="state.filterUi.value.actions.clear"
+            @click="clearFilter"
+          />
+          <UButton
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            :label="state.filterUi.value.actions.apply"
+            @click="applyFilter"
+          />
         </div>
       </div>
     </template>

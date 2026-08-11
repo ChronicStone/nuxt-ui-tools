@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { TableResolvedFilterOptionEntry } from '#ui-tools/table/types'
+
 import {
   collectSelectableDescendantValues,
   collectSelectedBranchIds,
@@ -50,7 +51,7 @@ describe('filter tree utils', () => {
 
     expect(result.entries).toHaveLength(1)
     expect(result.entries[0]?.label).toBe('Engineering')
-    expect(result.entries[0]?.children.map(child => child.label)).toEqual(['Frontend'])
+    expect(result.entries[0]?.children.map((child) => child.label)).toEqual(['Frontend'])
     expect(result.expandedIds).toEqual(['0:engineering'])
   })
 

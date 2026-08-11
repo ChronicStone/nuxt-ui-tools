@@ -44,7 +44,7 @@ function createColumnResolveSchema() {
           match: {
             headers: ['Candidate'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('productId', {
           match: {
@@ -53,7 +53,7 @@ function createColumnResolveSchema() {
           resolve: {
             options: products,
           },
-          rules: v => [
+          rules: (v) => [
             v.required({
               message: 'Product must be resolved before import',
             }),

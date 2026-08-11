@@ -89,7 +89,10 @@ async function clearTime() {
   await handleBlur()
 }
 
-function resolveMinuteStep(configuredMinuteStep: number | undefined, secondStep: number | undefined) {
+function resolveMinuteStep(
+  configuredMinuteStep: number | undefined,
+  secondStep: number | undefined,
+) {
   if (typeof configuredMinuteStep === 'number' && configuredMinuteStep > 0)
     return Math.min(60, Math.max(1, Math.round(configuredMinuteStep)))
   if (typeof secondStep === 'number' && secondStep >= 60)

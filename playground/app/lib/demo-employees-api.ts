@@ -22,7 +22,6 @@ export interface DemoSkill {
 }
 
 export interface DemoEmployeeSkill {
-
   employeeId: string
   skillId: string
   skill: DemoSkill

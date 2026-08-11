@@ -2,12 +2,20 @@ import type { DeepPrettify, PathToObject, UnionToIntersection } from '../../shar
 import type { FormObject } from './utils'
 
 type DependencySource<TDependency> = TDependency extends readonly [infer TSource, infer _TTarget]
-  ? TSource extends string ? TSource : never
-  : TDependency extends string ? TDependency : never
+  ? TSource extends string
+    ? TSource
+    : never
+  : TDependency extends string
+    ? TDependency
+    : never
 
 type DependencyTarget<TDependency> = TDependency extends readonly [infer _TSource, infer TTarget]
-  ? TTarget extends string ? TTarget : never
-  : TDependency extends string ? TDependency : never
+  ? TTarget extends string
+    ? TTarget
+    : never
+  : TDependency extends string
+    ? TDependency
+    : never
 
 type PathValue<TSource, TPath extends string> = TPath extends '$root'
   ? TSource
@@ -21,11 +29,12 @@ type PathValue<TSource, TPath extends string> = TPath extends '$root'
         ? TSource[TPath]
         : unknown
 
-type DependencyObject<TDependency, TState> = DependencyTarget<TDependency> extends infer TTarget
-  ? TTarget extends string
-    ? PathToObject<TTarget, PathValue<TState, DependencySource<TDependency>>>
+type DependencyObject<TDependency, TState> =
+  DependencyTarget<TDependency> extends infer TTarget
+    ? TTarget extends string
+      ? PathToObject<TTarget, PathValue<TState, DependencySource<TDependency>>>
+      : {}
     : {}
-  : {}
 
 type DependenciesValue<TDependencies, TState> = TDependencies extends readonly unknown[]
   ? UnionToIntersection<DependencyObject<TDependencies[number], TState>>

@@ -4,10 +4,11 @@ import UTable from '@nuxt/ui/components/Table.vue'
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
+import TableEmptyState from '../../../table/components/table/TableEmptyState.vue'
 import { useSpreadsheetReview } from '../../composables/use-spreadsheet-review'
 import type { SpreadsheetRowIssue } from '../../types'
 import type { SpreadsheetComponentApi } from '../types'
-import TableEmptyState from '../../../table/components/table/TableEmptyState.vue'
 import SpreadsheetReviewInspection from './review/SpreadsheetReviewInspection.vue'
 import SpreadsheetReviewOverflowAlert from './review/SpreadsheetReviewOverflowAlert.vue'
 import SpreadsheetReviewStats from './review/SpreadsheetReviewStats.vue'
@@ -19,20 +20,20 @@ const { t } = useUiToolsLocale()
 
 function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
   if (
-    'file' in schema
-    && schema.file
-    && typeof schema.file === 'object'
-    && 'maxRecords' in schema.file
-    && typeof schema.file.maxRecords === 'number'
+    'file' in schema &&
+    schema.file &&
+    typeof schema.file === 'object' &&
+    'maxRecords' in schema.file &&
+    typeof schema.file.maxRecords === 'number'
   )
     return schema.file.maxRecords
 
   if (
-    'source' in schema
-    && schema.source
-    && typeof schema.source === 'object'
-    && 'maxRecords' in schema.source
-    && typeof schema.source.maxRecords === 'number'
+    'source' in schema &&
+    schema.source &&
+    typeof schema.source === 'object' &&
+    'maxRecords' in schema.source &&
+    typeof schema.source.maxRecords === 'number'
   )
     return schema.source.maxRecords
 
@@ -86,22 +87,31 @@ const summaryLimitText = computed(() => {
       @next="review.inspectNextIssueRow"
       @discard-row="review.discardRow"
       @restore-row="review.restoreRow"
-      @show-issue-rows="review.setActiveTab('invalid'); review.closeInspection()"
+      @show-issue-rows="
+        review.setActiveTab('invalid')
+        review.closeInspection()
+      "
     />
 
     <div v-else class="grid min-h-0 h-full gap-4 grid-rows-[minmax(0,1fr)_auto]">
-      <div class="grid min-h-0 h-full overflow-hidden rounded-[4px] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
+      <div
+        class="grid min-h-0 h-full overflow-hidden rounded-[4px] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]"
+      >
         <div class="grid gap-0">
-          <div class="flex min-h-11 flex-wrap items-center justify-between gap-2 border-b border-default/70 px-4">
+          <div
+            class="flex min-h-11 flex-wrap items-center justify-between gap-2 border-b border-default/70 px-4"
+          >
             <div class="flex min-w-0 items-center gap-1">
               <button
                 v-for="item in review.tabItems.value"
                 :key="item.key"
                 type="button"
                 class="h-10 border-b-2 px-3 text-[12px] font-medium transition-colors"
-                :class="review.activeTab.value === item.key
-                  ? 'border-highlighted text-highlighted'
-                  : 'border-transparent text-muted hover:text-toned'"
+                :class="
+                  review.activeTab.value === item.key
+                    ? 'border-highlighted text-highlighted'
+                    : 'border-transparent text-muted hover:text-toned'
+                "
                 @click="review.setActiveTab(item.key)"
               >
                 {{ item.label }}
@@ -114,10 +124,14 @@ const summaryLimitText = computed(() => {
                 :key="item.key"
                 type="button"
                 class="rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors"
-                :class="review.issueFilter.value === item.key
-                  ? 'bg-elevated text-highlighted'
-                  : 'text-muted hover:bg-elevated/60 hover:text-toned'"
-                :disabled="review.activeTab.value === 'valid' || review.activeTab.value === 'discarded'"
+                :class="
+                  review.issueFilter.value === item.key
+                    ? 'bg-elevated text-highlighted'
+                    : 'text-muted hover:bg-elevated/60 hover:text-toned'
+                "
+                :disabled="
+                  review.activeTab.value === 'valid' || review.activeTab.value === 'discarded'
+                "
                 @click="review.setIssueFilter(item.key)"
               >
                 {{ item.label }}
@@ -130,7 +144,11 @@ const summaryLimitText = computed(() => {
             class="flex min-h-10 flex-wrap items-center gap-2 border-b border-default/70 bg-elevated/35 px-4 py-1.5"
           >
             <span class="font-mono text-[11px] text-muted">
-              {{ t('spreadsheet.steps.review.selected', { count: review.selectedRowIndexes.value.length }) }}
+              {{
+                t('spreadsheet.steps.review.selected', {
+                  count: review.selectedRowIndexes.value.length,
+                })
+              }}
             </span>
             <UButton
               color="error"
@@ -158,13 +176,15 @@ const summaryLimitText = computed(() => {
             :data="review.visibleRows.value"
             :columns="review.reviewTableColumns.value"
             :row-selection="review.rowSelection.value"
-            :get-row-id="row => String(row.index)"
+            :get-row-id="(row) => String(row.index)"
             sticky="header"
             class="h-full min-h-0"
             :on-select="(_event, row) => review.inspectRow(row.original.index)"
             :meta="{
               class: {
-                tr: (row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } }) => review.getRowToneClass(row.original),
+                tr: (row: {
+                  original: { index: number; issues: readonly SpreadsheetRowIssue[] }
+                }) => review.getRowToneClass(row.original),
               },
             }"
             :ui="{
@@ -187,10 +207,7 @@ const summaryLimitText = computed(() => {
         </div>
       </div>
 
-      <SpreadsheetReviewStats
-        :items="review.stats.value"
-        :limit-text="summaryLimitText"
-      />
+      <SpreadsheetReviewStats :items="review.stats.value" :limit-text="summaryLimitText" />
     </div>
   </div>
 </template>

@@ -7,7 +7,11 @@ import { computed, ref, toRef, watch } from 'vue'
 
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableNumberFilterDefinition, TableNumberFilterOperator } from '../../../types'
+import type {
+  TableFilterOperator,
+  TableNumberFilterDefinition,
+  TableNumberFilterOperator,
+} from '../../../types'
 import { resolveFilterTriggerIcon, resolveNumberFilterUi } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
@@ -225,7 +229,6 @@ function updateSliderRangeValue(value: unknown) {
 function resolveIncrementConfig(hideStepper: boolean) {
   return hideStepper ? false : { variant: 'ghost' as const }
 }
-
 </script>
 
 <template>
@@ -264,7 +267,11 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
               :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
               :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
-              :ui="{ base: 'h-9 px-2', increment: 'size-7 rounded-md', decrement: 'size-7 rounded-md' }"
+              :ui="{
+                base: 'h-9 px-2',
+                increment: 'size-7 rounded-md',
+                decrement: 'size-7 rounded-md',
+              }"
               @update:model-value="updateRangeFrom"
               @keydown.enter.prevent="applyFilter"
             />
@@ -279,7 +286,11 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
               :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
               :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
-              :ui="{ base: 'h-9 px-2', increment: 'size-7 rounded-md', decrement: 'size-7 rounded-md' }"
+              :ui="{
+                base: 'h-9 px-2',
+                increment: 'size-7 rounded-md',
+                decrement: 'size-7 rounded-md',
+              }"
               @update:model-value="updateRangeTo"
               @keydown.enter.prevent="applyFilter"
             />
@@ -309,13 +320,19 @@ function resolveIncrementConfig(hideStepper: boolean) {
             :disable-wheel-change="filterUi.scalar.input.disableWheelChange"
             :increment="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
             :decrement="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
-            :ui="{ base: 'h-9 px-2', increment: 'size-7 rounded-md', decrement: 'size-7 rounded-md' }"
+            :ui="{
+              base: 'h-9 px-2',
+              increment: 'size-7 rounded-md',
+              decrement: 'size-7 rounded-md',
+            }"
             @update:model-value="updateScalarValue"
             @keydown.enter.prevent="applyFilter"
           />
 
           <USlider
-            v-if="filterUi.scalar.display === 'slider' || filterUi.scalar.display === 'input-slider'"
+            v-if="
+              filterUi.scalar.display === 'slider' || filterUi.scalar.display === 'input-slider'
+            "
             :model-value="scalarValue"
             :min="filterUi.scalar.slider.min ?? sliderBounds.min"
             :max="filterUi.scalar.slider.max ?? sliderBounds.max"
@@ -329,8 +346,20 @@ function resolveIncrementConfig(hideStepper: boolean) {
           v-if="filterUi.commitMode === 'manual'"
           class="flex items-center justify-between border-t border-default p-2"
         >
-          <UButton color="neutral" variant="ghost" size="sm" :label="filterUi.actions.clear" @click="clearFilter" />
-          <UButton color="neutral" variant="subtle" size="sm" :label="filterUi.actions.apply" @click="applyFilter" />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            :label="filterUi.actions.clear"
+            @click="clearFilter"
+          />
+          <UButton
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            :label="filterUi.actions.apply"
+            @click="applyFilter"
+          />
         </div>
       </div>
     </template>

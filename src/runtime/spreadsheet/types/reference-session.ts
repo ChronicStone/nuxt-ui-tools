@@ -14,10 +14,7 @@ export interface SpreadsheetReferenceSourceEntry {
   rowIndexes: number[]
 }
 
-export interface SpreadsheetReferenceResolution<
-  TValue = unknown,
-  TOption = unknown,
-> {
+export interface SpreadsheetReferenceResolution<TValue = unknown, TOption = unknown> {
   scope?: SpreadsheetResolutionDefinition['scope']
   resolutionField?: string
   targetField?: string
@@ -46,9 +43,5 @@ export interface SpreadsheetReferenceQueryRequest {
   targetField?: string
   referenceField: string
   sourceValue: string
-  query: ReturnType<
-    NonNullable<
-      SpreadsheetReferenceDefinition['getOptions']
-    >
-  >
+  query: ReturnType<NonNullable<SpreadsheetReferenceDefinition['getOptions']>>
 }

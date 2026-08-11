@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed, ref, toRef } from 'vue'
 
@@ -59,7 +59,7 @@ const filterUi = computed(() => resolveBooleanFilterUi(props.definition, operato
 
 const entries = computed(() =>
   optionSource.filteredEntries.value
-    .filter(entry => typeof entry.value === 'boolean')
+    .filter((entry) => typeof entry.value === 'boolean')
     .map((entry) => ({
       ...entry,
       label: entry.value === true ? filterUi.value.labels.true : filterUi.value.labels.false,
@@ -69,7 +69,7 @@ const entries = computed(() =>
 )
 
 const radioItems = computed(() =>
-  entries.value.map(entry => ({
+  entries.value.map((entry) => ({
     label: entry.label,
     value: String(entry.value),
     count: entry.count,
@@ -78,7 +78,7 @@ const radioItems = computed(() =>
 )
 
 const radioValue = computed({
-  get: () => localValue.value == null ? undefined : String(localValue.value),
+  get: () => (localValue.value == null ? undefined : String(localValue.value)),
   set: (value: string | undefined) => {
     if (value === 'true') localValue.value = true
     else if (value === 'false') localValue.value = false
@@ -139,7 +139,6 @@ function clearFilter() {
   internals.filters.clearFilter({ key: props.definition.key })
   session.close()
 }
-
 </script>
 
 <template>
@@ -190,7 +189,10 @@ function clearFilter() {
                 <span class="min-w-0 flex-1 truncate">
                   {{ item.label }}
                 </span>
-                <USkeleton v-if="optionSource.isCountLoading.value" class="ml-3 h-3.5 w-6 shrink-0" />
+                <USkeleton
+                  v-if="optionSource.isCountLoading.value"
+                  class="ml-3 h-3.5 w-6 shrink-0"
+                />
                 <span v-else-if="item.count != null" class="ml-3 shrink-0 text-muted">
                   {{ item.count }}
                 </span>
@@ -203,8 +205,20 @@ function clearFilter() {
           v-if="filterUi.commitMode === 'manual'"
           class="flex items-center justify-between border-t border-default p-2"
         >
-          <UButton color="neutral" variant="ghost" size="sm" :label="filterUi.actions.clear" @click="clearFilter" />
-          <UButton color="neutral" variant="subtle" size="sm" :label="filterUi.actions.apply" @click="applyFilter" />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            :label="filterUi.actions.clear"
+            @click="clearFilter"
+          />
+          <UButton
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            :label="filterUi.actions.apply"
+            @click="applyFilter"
+          />
         </div>
       </div>
     </template>

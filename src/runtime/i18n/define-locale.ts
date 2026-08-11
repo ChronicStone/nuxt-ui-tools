@@ -47,9 +47,10 @@ function mergeLocaleMessages<TMessages>(
 
     if (extensionValue === undefined) continue
 
-    merged[key] = isObject(baseValue) && isObject(extensionValue)
-      ? mergeLocaleMessages(baseValue, extensionValue)
-      : extensionValue
+    merged[key] =
+      isObject(baseValue) && isObject(extensionValue)
+        ? mergeLocaleMessages(baseValue, extensionValue)
+        : extensionValue
   }
 
   return merged as TMessages

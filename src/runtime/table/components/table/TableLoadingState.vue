@@ -54,11 +54,7 @@ const skeletonGridTemplate = computed(() =>
 </script>
 
 <template>
-  <div
-    ref="root"
-    class="h-full w-full pt-6"
-    :style="{ minHeight }"
-  >
+  <div ref="root" class="h-full w-full pt-6" :style="{ minHeight }">
     <div
       v-for="rowIndex in skeletonRows"
       :key="rowIndex"

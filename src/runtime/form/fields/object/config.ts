@@ -7,4 +7,3 @@ export const objectFieldKind = defineFormFieldKind({
   layout: { item: true, container: true },
   transform: true,
 })
-

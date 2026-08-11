@@ -94,7 +94,10 @@ export function useTablePagination(options: UseTablePaginationParams) {
   )
 
   watch(
-    [() => options.queryContent.data.value.rowCount, () => options.queryContent.status.value.isDataFetching],
+    [
+      () => options.queryContent.data.value.rowCount,
+      () => options.queryContent.status.value.isDataFetching,
+    ],
     ([nextRowCount, isFetching]) => {
       if (options.schema.value.source.mode !== 'remote') {
         stableRemoteRowCount.value = nextRowCount

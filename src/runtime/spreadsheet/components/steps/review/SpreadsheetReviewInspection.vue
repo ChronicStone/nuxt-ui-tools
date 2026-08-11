@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 import SpreadsheetValuePreview from '#ui-tools/spreadsheet/components/shared/SpreadsheetValuePreview.vue'
+
 import type { SpreadsheetRowIssue } from '../../../types'
 
 const emit = defineEmits<{
@@ -46,20 +47,23 @@ type InspectionGroupMode = 'property' | 'issue'
 
 const groupMode = ref<InspectionGroupMode>('property')
 
-const blockingIssueCount = computed(() =>
-  props.inspectedRow.issues.filter(issue => issue.level === 'error').length,
+const blockingIssueCount = computed(
+  () => props.inspectedRow.issues.filter((issue) => issue.level === 'error').length,
 )
-const warningIssueCount = computed(() =>
-  props.inspectedRow.issues.filter(issue => issue.level === 'warning').length,
+const warningIssueCount = computed(
+  () => props.inspectedRow.issues.filter((issue) => issue.level === 'warning').length,
 )
 const issueGroups = computed(() => {
   if (groupMode.value === 'issue') {
-    const groups = new Map<string, {
-      key: string
-      title: string
-      subtitle: string
-      issues: SpreadsheetRowIssue[]
-    }>()
+    const groups = new Map<
+      string,
+      {
+        key: string
+        title: string
+        subtitle: string
+        issues: SpreadsheetRowIssue[]
+      }
+    >()
 
     for (const issue of props.inspectedRow.issues) {
       const key = issue.ruleKey ?? issue.code
@@ -82,12 +86,15 @@ const issueGroups = computed(() => {
     return Array.from(groups.values())
   }
 
-  const groups = new Map<string, {
-    key: string
-    title: string
-    subtitle: string
-    issues: SpreadsheetRowIssue[]
-  }>()
+  const groups = new Map<
+    string,
+    {
+      key: string
+      title: string
+      subtitle: string
+      issues: SpreadsheetRowIssue[]
+    }
+  >()
 
   for (const issue of props.inspectedRow.issues) {
     const key = issue.columnKey ?? '__row__'
@@ -99,10 +106,12 @@ const issueGroups = computed(() => {
 
     groups.set(key, {
       key,
-      title: key === '__row__' ? t('spreadsheet.steps.review.rowLevelIssue') : props.humanizeKey(key),
-      subtitle: key === '__row__'
-        ? t('spreadsheet.steps.review.affectsFullRow')
-        : t('spreadsheet.steps.review.property', { key }),
+      title:
+        key === '__row__' ? t('spreadsheet.steps.review.rowLevelIssue') : props.humanizeKey(key),
+      subtitle:
+        key === '__row__'
+          ? t('spreadsheet.steps.review.affectsFullRow')
+          : t('spreadsheet.steps.review.property', { key }),
       issues: [issue],
     })
   }
@@ -111,13 +120,13 @@ const issueGroups = computed(() => {
 })
 
 function getFieldIssues(key: string) {
-  return props.inspectedRow.issues.filter(issue => issue.columnKey === key)
+  return props.inspectedRow.issues.filter((issue) => issue.columnKey === key)
 }
 
 function getFieldIssueTone(key: string) {
   const issues = getFieldIssues(key)
-  if (issues.some(issue => issue.level === 'error')) return 'error'
-  if (issues.some(issue => issue.level === 'warning')) return 'warning'
+  if (issues.some((issue) => issue.level === 'error')) return 'error'
+  if (issues.some((issue) => issue.level === 'warning')) return 'warning'
   return 'neutral'
 }
 </script>
@@ -140,11 +149,27 @@ function getFieldIssueTone(key: string) {
               {{ t('spreadsheet.steps.review.inspectingRow', { row: inspectedRow.index + 1 }) }}
             </span>
             <UBadge
-              :color="isDiscarded(inspectedRow.index) ? 'neutral' : blockingIssueCount ? 'error' : warningIssueCount ? 'warning' : 'success'"
+              :color="
+                isDiscarded(inspectedRow.index)
+                  ? 'neutral'
+                  : blockingIssueCount
+                    ? 'error'
+                    : warningIssueCount
+                      ? 'warning'
+                      : 'success'
+              "
               variant="soft"
               size="sm"
             >
-              {{ isDiscarded(inspectedRow.index) ? t('spreadsheet.steps.review.discarded') : blockingIssueCount ? t('spreadsheet.steps.review.blockingIssues') : warningIssueCount ? t('spreadsheet.steps.review.warningsOnly') : t('spreadsheet.steps.review.validRow') }}
+              {{
+                isDiscarded(inspectedRow.index)
+                  ? t('spreadsheet.steps.review.discarded')
+                  : blockingIssueCount
+                    ? t('spreadsheet.steps.review.blockingIssues')
+                    : warningIssueCount
+                      ? t('spreadsheet.steps.review.warningsOnly')
+                      : t('spreadsheet.steps.review.validRow')
+              }}
             </UBadge>
           </div>
         </div>
@@ -161,7 +186,12 @@ function getFieldIssueTone(key: string) {
           @click="emit('prev')"
         />
         <span class="font-mono text-sm text-muted">
-          {{ t('spreadsheet.steps.review.issueRowsProgress', { current: inspectedIssueRowPosition + 1, total: issueRowsLength }) }}
+          {{
+            t('spreadsheet.steps.review.issueRowsProgress', {
+              current: inspectedIssueRowPosition + 1,
+              total: issueRowsLength,
+            })
+          }}
         </span>
         <UButton
           color="neutral"
@@ -169,13 +199,17 @@ function getFieldIssueTone(key: string) {
           size="sm"
           trailing-icon="i-lucide-chevron-right"
           :label="t('spreadsheet.steps.review.next')"
-          :disabled="inspectedIssueRowPosition < 0 || inspectedIssueRowPosition >= issueRowsLength - 1"
+          :disabled="
+            inspectedIssueRowPosition < 0 || inspectedIssueRowPosition >= issueRowsLength - 1
+          "
           @click="emit('next')"
         />
       </div>
     </div>
 
-    <div class="grid gap-3 rounded-[var(--ui-radius)] border border-default/70 bg-elevated/20 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <div
+      class="grid gap-3 rounded-[var(--ui-radius)] border border-default/70 bg-elevated/20 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"
+    >
       <div class="flex flex-wrap items-center gap-2">
         <UBadge color="error" variant="soft" size="sm">
           {{ t('spreadsheet.steps.review.blocking', { count: blockingIssueCount }) }}
@@ -184,9 +218,11 @@ function getFieldIssueTone(key: string) {
           {{ t('spreadsheet.steps.review.warnings', { count: warningIssueCount }) }}
         </UBadge>
         <UBadge color="neutral" variant="subtle" size="sm">
-          {{ groupMode === 'property'
-            ? t('spreadsheet.steps.review.propertyGroups', { count: issueGroups.length })
-            : t('spreadsheet.steps.review.issueGroups', { count: issueGroups.length }) }}
+          {{
+            groupMode === 'property'
+              ? t('spreadsheet.steps.review.propertyGroups', { count: issueGroups.length })
+              : t('spreadsheet.steps.review.issueGroups', { count: issueGroups.length })
+          }}
         </UBadge>
       </div>
 
@@ -213,9 +249,15 @@ function getFieldIssueTone(key: string) {
     </div>
 
     <div class="grid min-h-0 gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-      <div class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
-        <div class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]">
-          <span class="text-[13px] font-semibold text-highlighted">{{ t('spreadsheet.steps.review.rowData') }}</span>
+      <div
+        class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]"
+      >
+        <div
+          class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]"
+        >
+          <span class="text-[13px] font-semibold text-highlighted">{{
+            t('spreadsheet.steps.review.rowData')
+          }}</span>
           <span class="font-mono text-[11px] text-muted">Row #{{ inspectedRow.index + 1 }}</span>
         </div>
 
@@ -279,10 +321,16 @@ function getFieldIssueTone(key: string) {
         </div>
       </div>
 
-      <div class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]">
-        <div class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]">
+      <div
+        class="grid min-h-0 overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default grid-rows-[auto_minmax(0,1fr)]"
+      >
+        <div
+          class="flex items-center justify-between border-b border-default/70 bg-elevated/35 px-5 py-[14px]"
+        >
           <div class="flex items-center gap-3">
-            <span class="text-[13px] font-semibold text-highlighted">{{ t('spreadsheet.steps.review.issuesOnThisRow') }}</span>
+            <span class="text-[13px] font-semibold text-highlighted">{{
+              t('spreadsheet.steps.review.issuesOnThisRow')
+            }}</span>
             <UBadge color="error" variant="soft" size="sm">{{ inspectedRow.issues.length }}</UBadge>
           </div>
 
@@ -290,7 +338,11 @@ function getFieldIssueTone(key: string) {
             <button
               type="button"
               class="rounded px-3 py-1 text-xs font-medium transition-colors"
-              :class="groupMode === 'property' ? 'bg-inverted text-inverted' : 'text-muted hover:text-toned'"
+              :class="
+                groupMode === 'property'
+                  ? 'bg-inverted text-inverted'
+                  : 'text-muted hover:text-toned'
+              "
               @click="groupMode = 'property'"
             >
               {{ t('spreadsheet.steps.review.byProperty') }}
@@ -298,7 +350,9 @@ function getFieldIssueTone(key: string) {
             <button
               type="button"
               class="rounded px-3 py-1 text-xs font-medium transition-colors"
-              :class="groupMode === 'issue' ? 'bg-inverted text-inverted' : 'text-muted hover:text-toned'"
+              :class="
+                groupMode === 'issue' ? 'bg-inverted text-inverted' : 'text-muted hover:text-toned'
+              "
               @click="groupMode = 'issue'"
             >
               {{ t('spreadsheet.steps.review.byIssueType') }}
@@ -320,7 +374,9 @@ function getFieldIssueTone(key: string) {
                       {{ group.title }}
                     </span>
                     <UBadge
-                      :color="group.issues.some(issue => issue.level === 'error') ? 'error' : 'warning'"
+                      :color="
+                        group.issues.some((issue) => issue.level === 'error') ? 'error' : 'warning'
+                      "
                       variant="soft"
                       size="sm"
                     >
@@ -342,7 +398,9 @@ function getFieldIssueTone(key: string) {
               >
                 <div class="flex flex-wrap items-center gap-3">
                   <UIcon
-                    :name="issue.level === 'error' ? 'i-lucide-circle-x' : 'i-lucide-triangle-alert'"
+                    :name="
+                      issue.level === 'error' ? 'i-lucide-circle-x' : 'i-lucide-triangle-alert'
+                    "
                     class="size-4"
                     :class="issue.level === 'error' ? 'text-error' : 'text-warning'"
                   />
@@ -359,12 +417,19 @@ function getFieldIssueTone(key: string) {
                 </div>
 
                 <div class="rounded-[var(--ui-radius)] px-4 py-3" :class="getIssueValueTone(issue)">
-                  <div class="mb-1 font-mono text-xs text-muted">{{ t('spreadsheet.steps.review.valueInFile') }}</div>
-                  <div class="text-sm" :class="issue.level === 'error' ? 'text-error' : 'text-warning'">
+                  <div class="mb-1 font-mono text-xs text-muted">
+                    {{ t('spreadsheet.steps.review.valueInFile') }}
+                  </div>
+                  <div
+                    class="text-sm"
+                    :class="issue.level === 'error' ? 'text-error' : 'text-warning'"
+                  >
                     <SpreadsheetValuePreview
-                      :value="issue.columnKey
-                        ? getIssueRawValue(inspectedRow.rowObject, issue)
-                        : getIssueValue(inspectedRow.rowObject, issue)"
+                      :value="
+                        issue.columnKey
+                          ? getIssueRawValue(inspectedRow.rowObject, issue)
+                          : getIssueValue(inspectedRow.rowObject, issue)
+                      "
                     />
                   </div>
                 </div>
@@ -379,7 +444,11 @@ function getFieldIssueTone(key: string) {
                   class="justify-self-start text-sm font-medium text-primary transition-colors hover:text-primary/80"
                   @click="emit('showIssueRows')"
                 >
-                  {{ t('spreadsheet.steps.review.viewAllRowsWithThisIssue', { count: getRelatedIssueCount(issue) }) }}
+                  {{
+                    t('spreadsheet.steps.review.viewAllRowsWithThisIssue', {
+                      count: getRelatedIssueCount(issue),
+                    })
+                  }}
                 </button>
               </div>
             </div>

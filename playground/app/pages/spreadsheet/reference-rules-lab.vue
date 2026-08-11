@@ -39,7 +39,7 @@ function createReferenceRulesSchema() {
           match: {
             headers: ['Candidate'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('optionalProductLabel', {
           match: {
@@ -53,7 +53,7 @@ function createReferenceRulesSchema() {
         }),
       ],
     },
-    references: reference => [
+    references: (reference) => [
       reference.select('optionalProductId', {
         source: 'optionalProductLabel',
         options: products,
@@ -61,7 +61,7 @@ function createReferenceRulesSchema() {
       reference.select('requiredProductId', {
         source: 'requiredProductLabel',
         options: products,
-        rules: v => [
+        rules: (v) => [
           v.required({
             message: 'Required product must be matched before import',
           }),

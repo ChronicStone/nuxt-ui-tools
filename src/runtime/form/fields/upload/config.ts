@@ -9,4 +9,3 @@ export const uploadFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

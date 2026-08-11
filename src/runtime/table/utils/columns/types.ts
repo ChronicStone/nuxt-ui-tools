@@ -15,7 +15,9 @@ export const SELECT_COLUMN_WIDTH = 56
 export const ROW_ACTIONS_COLUMN_ID = '__row-actions'
 export const ROW_ACTIONS_COLUMN_WIDTH = 52
 
-export type SchemaTableColumn = NonNullable<NonNullable<TableSchemaView['table']>['columns']>[number]
+export type SchemaTableColumn = NonNullable<
+  NonNullable<TableSchemaView['table']>['columns']
+>[number]
 
 export interface TableRuntimeColumn {
   id: string

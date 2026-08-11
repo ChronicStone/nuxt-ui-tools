@@ -26,7 +26,9 @@ export function useTableGrid<TRow extends GenericObject>(options: UseTableGridPa
   )
 
   const mode = computed<TableGridMode>(() => options.schema.value.grid?.mode ?? GRID_DEFAULTS.mode)
-  const columnCount = computed(() => clampGridUnit(resolvedGridColumns.value ?? GRID_DEFAULTS.columns))
+  const columnCount = computed(() =>
+    clampGridUnit(resolvedGridColumns.value ?? GRID_DEFAULTS.columns),
+  )
   const itemColumnSpan = computed(() =>
     Math.min(columnCount.value, clampGridUnit(resolvedItemSpan.value ?? columnCount.value)),
   )
@@ -63,15 +65,18 @@ function resolveResponsiveGridNumber(value: number | string | (() => number | st
 }
 
 function chunkRows<TRow>(options: { rows: TRow[]; cardsPerRow: number }): GridRowChunk<TRow>[] {
-  return Array.from({ length: Math.ceil(options.rows.length / options.cardsPerRow) }, (_, index) => {
-    const start = index * options.cardsPerRow
-    const end = start + options.cardsPerRow
+  return Array.from(
+    { length: Math.ceil(options.rows.length / options.cardsPerRow) },
+    (_, index) => {
+      const start = index * options.cardsPerRow
+      const end = start + options.cardsPerRow
 
-    return {
-      index,
-      start,
-      end,
-      rows: options.rows.slice(start, end),
-    }
-  })
+      return {
+        index,
+        start,
+        end,
+        rows: options.rows.slice(start, end),
+      }
+    },
+  )
 }

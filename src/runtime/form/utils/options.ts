@@ -13,8 +13,14 @@ export function normalizeOptionItem(option: unknown): ResolvedFormOption {
     const rawValue = option.value
     return {
       value: normalizeOptionValue(rawValue),
-      label: typeof option.label === 'string' || typeof option.label === 'number' ? String(option.label) : String(normalizeOptionValue(rawValue)),
-      description: typeof option.description === 'string' || typeof option.description === 'number' ? String(option.description) : undefined,
+      label:
+        typeof option.label === 'string' || typeof option.label === 'number'
+          ? String(option.label)
+          : String(normalizeOptionValue(rawValue)),
+      description:
+        typeof option.description === 'string' || typeof option.description === 'number'
+          ? String(option.description)
+          : undefined,
       disabled: option.disabled === true,
     }
   }
@@ -26,7 +32,7 @@ export function normalizeOptionItem(option: unknown): ResolvedFormOption {
 }
 
 export function normalizeOptionItems(options: readonly unknown[] | undefined) {
-  return (options ?? []).map(option => normalizeOptionItem(option))
+  return (options ?? []).map((option) => normalizeOptionItem(option))
 }
 
 export function resolveOptionSource(
@@ -44,6 +50,7 @@ export function resolveOptionSource(
 }
 
 function normalizeOptionValue(value: unknown): FormOptionValue {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    return value
   return String(value)
 }

@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'motion-v'
 import { computed, nextTick, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { useTableInternals } from '../../composables/use-table-internals'
 import { GRID_DEFAULTS } from '../../constants/grid'
 import { resolveTableRowId } from '../../utils'
@@ -196,7 +197,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
           </div>
           <div class="grid gap-1">
-            <div class="text-base font-medium text-highlighted">{{ t('table.states.gridError.title') }}</div>
+            <div class="text-base font-medium text-highlighted">
+              {{ t('table.states.gridError.title') }}
+            </div>
             <p class="text-sm leading-6 text-muted">
               {{ t('table.states.gridError.description') }}
             </p>
@@ -228,7 +231,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
               <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
             </div>
             <div class="grid gap-1">
-              <div class="text-base font-medium text-highlighted">{{ t('table.states.gridEmpty.title') }}</div>
+              <div class="text-base font-medium text-highlighted">
+                {{ t('table.states.gridEmpty.title') }}
+              </div>
               <p class="text-sm leading-6 text-muted">
                 {{ t('table.states.gridEmpty.description') }}
               </p>
@@ -260,7 +265,12 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
           :animate="{ opacity: 1, y: 0 }"
           :transition="{
             duration: canAnimateRows ? 0.22 : 0,
-            delay: canAnimateRows ? Math.min(Math.floor(index / Math.max(internals.grid.cardsPerRow.value, 1)) * 0.02, 0.14) : 0,
+            delay: canAnimateRows
+              ? Math.min(
+                  Math.floor(index / Math.max(internals.grid.cardsPerRow.value, 1)) * 0.02,
+                  0.14,
+                )
+              : 0,
             ease: [0.25, 1, 0.5, 1],
           }"
         >
@@ -304,7 +314,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
           </div>
           <div class="grid gap-1">
-            <div class="text-base font-medium text-highlighted">{{ t('table.states.gridError.title') }}</div>
+            <div class="text-base font-medium text-highlighted">
+              {{ t('table.states.gridError.title') }}
+            </div>
             <p class="text-sm leading-6 text-muted">
               {{ t('table.states.gridError.description') }}
             </p>
@@ -340,7 +352,9 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
               <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
             </div>
             <div class="grid gap-1">
-              <div class="text-base font-medium text-highlighted">{{ t('table.states.gridEmpty.title') }}</div>
+              <div class="text-base font-medium text-highlighted">
+                {{ t('table.states.gridEmpty.title') }}
+              </div>
               <p class="text-sm leading-6 text-muted">
                 {{ t('table.states.gridEmpty.description') }}
               </p>

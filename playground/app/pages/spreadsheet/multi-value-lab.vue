@@ -2,7 +2,11 @@
 import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
-import { useSpreadsheetImport, type SpreadsheetData, type SpreadsheetRowData } from '#ui-tools/spreadsheet'
+import {
+  useSpreadsheetImport,
+  type SpreadsheetData,
+  type SpreadsheetRowData,
+} from '#ui-tools/spreadsheet'
 import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
@@ -54,7 +58,7 @@ function createMultiValueSchema() {
           match: {
             headers: ['Test center ID'],
           },
-          rules: v => [
+          rules: (v) => [
             v.required(),
             v.validate({
               name: 'testCenterMatch',
@@ -67,14 +71,14 @@ function createMultiValueSchema() {
           match: {
             headers: ['Candidate'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('tags', {
           match: {
             headers: ['Tags'],
           },
           multiple: true,
-          rules: v => [
+          rules: (v) => [
             v.validate({
               name: 'tagCount',
               validator: (value: string[]) => value.length >= 2,
@@ -89,10 +93,10 @@ function createMultiValueSchema() {
           multiple: {
             separator: ';',
           },
-          rules: v => [
+          rules: (v) => [
             v.validate({
               name: 'allPassing',
-              validator: (value: number[]) => value.every(score => score >= 50),
+              validator: (value: number[]) => value.every((score) => score >= 50),
               message: 'Every score must be at least 50',
             }),
           ],
@@ -102,7 +106,7 @@ function createMultiValueSchema() {
             headers: ['Products'],
           },
           options: ({ context }) =>
-            context.products.map(product => ({
+            context.products.map((product) => ({
               label: product.name,
               value: product.id,
             })),
@@ -110,7 +114,7 @@ function createMultiValueSchema() {
             separator: ',',
             matchBy: 'label',
           },
-          rules: v => [
+          rules: (v) => [
             v.validate({
               name: 'selectedProducts',
               validator: (value: string[]) => value.length >= 1,
@@ -160,16 +164,7 @@ type output = SpreadsheetData<typeof schema>
 
 function createWorkbook() {
   const rows = [
-    [
-      'Test center ID',
-      'Candidate',
-      'Tags',
-      'Scores',
-      'Products',
-      'Statuses',
-      'Flags',
-      'Notes',
-    ],
+    ['Test center ID', 'Candidate', 'Tags', 'Scores', 'Products', 'Statuses', 'Flags', 'Notes'],
     [
       center.id,
       'Lina Martin',

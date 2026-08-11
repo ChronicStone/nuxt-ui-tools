@@ -15,9 +15,7 @@ import { useTableSelection } from './use-table-selection'
 import { useTableStartup } from './use-table-startup'
 import { useTableState } from './use-table-state'
 
-function createTableInternals<TSchema>(options: {
-  rawSchema: MaybeComputedRef<TSchema>
-}) {
+function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TSchema> }) {
   const publicSchema = computed(() => resolveSchemaSource({ schema: options.rawSchema }))
   const schema = computed(() => publicSchema.value as TableSchemaView)
   const tableApi = shallowRef<TableApi<TSchema> | null>(null)
@@ -104,9 +102,7 @@ function provideTableInternals(internals: TableInternals) {
   provide(TABLE_INTERNALS_KEY, internals)
 }
 
-function useProvideTableInternals<TSchema>(options: {
-  rawSchema: MaybeComputedRef<TSchema>
-}) {
+function useProvideTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TSchema> }) {
   const internals = createTableInternals(options)
   provideTableInternals(internals)
   return internals

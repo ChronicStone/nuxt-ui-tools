@@ -36,10 +36,7 @@ export function setSpreadsheetValueAtPath(
   }
 }
 
-export function deleteSpreadsheetValueAtPath(
-  target: Record<string, unknown>,
-  path: string,
-) {
+export function deleteSpreadsheetValueAtPath(target: Record<string, unknown>, path: string) {
   const parts = path.split('.')
   let current: Record<string, unknown> | undefined = target
 
@@ -75,8 +72,7 @@ export function getSpreadsheetLeafPaths(value: unknown, prefix = ''): string[] {
 
   return entries.flatMap(([key, entryValue]) => {
     const nextPath = prefix ? `${prefix}.${key}` : key
-    if (isSpreadsheetRecord(entryValue))
-      return getSpreadsheetLeafPaths(entryValue, nextPath)
+    if (isSpreadsheetRecord(entryValue)) return getSpreadsheetLeafPaths(entryValue, nextPath)
 
     return [nextPath]
   })

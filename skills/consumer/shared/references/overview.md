@@ -23,4 +23,3 @@ That means:
 - `md` uses `2`
 - `lg` falls back to `2`
 - `xl` uses `4`
-

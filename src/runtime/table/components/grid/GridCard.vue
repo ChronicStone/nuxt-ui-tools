@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, defineComponent } from 'vue'
 
-import type { TableSchemaView } from '../../types'
-import TableRowScopeProvider from '../actions/TableRowScopeProvider.vue'
 import { useGridRow, useProvideGridRow } from '../../composables/use-grid-row'
 import { useTableInternals } from '../../composables/use-table-internals'
+import type { TableSchemaView } from '../../types'
+import TableRowScopeProvider from '../actions/TableRowScopeProvider.vue'
 
 const props = defineProps<{
   rowIndex?: number

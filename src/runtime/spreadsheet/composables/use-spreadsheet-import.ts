@@ -13,9 +13,7 @@ import { createSpreadsheetInternals, type SpreadsheetInternals } from './use-spr
 function mapSpreadsheetParsedRows<TSchema>(
   rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[],
 ): readonly SpreadsheetParsedRow<ExtractSpreadsheetRow<TSchema>>[]
-function mapSpreadsheetParsedRows(
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[],
-) {
+function mapSpreadsheetParsedRows(rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]) {
   return rows
 }
 
@@ -52,8 +50,7 @@ async function createSpreadsheetSubmitPayloads(params: {
   context: Record<string, unknown>
   rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[]
 }) {
-  if (!params.schema.buildRow)
-    return params.rows.map((row) => row.data)
+  if (!params.schema.buildRow) return params.rows.map((row) => row.data)
 
   return Promise.all(
     params.rows.map((row) =>
@@ -92,24 +89,20 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
   })
   const status = computed(() => ({
     initialized:
-      internals.source.status.value.initialized
-      || internals.context.status.value.initialized
-      || internals.rows.status.value.initialized,
+      internals.source.status.value.initialized ||
+      internals.context.status.value.initialized ||
+      internals.rows.status.value.initialized,
     isParsingSource: internals.source.status.value.isParsing,
     isLoadingContext:
-      internals.context.status.value.isPending
-      || internals.context.status.value.isFetching,
+      internals.context.status.value.isPending || internals.context.status.value.isFetching,
     isParsingRows: internals.rows.status.value.isParsing,
     isReady:
-      internals.source.status.value.isReady
-      && internals.context.status.value.isReady
-      && internals.rows.status.value.isReady,
+      internals.source.status.value.isReady &&
+      internals.context.status.value.isReady &&
+      internals.rows.status.value.isReady,
   }))
 
-  function loadSource(params: {
-    source: SpreadsheetBinarySource
-    fileName?: string
-  }) {
+  function loadSource(params: { source: SpreadsheetBinarySource; fileName?: string }) {
     sourceRef.value = params.source
     fileNameRef.value = params.fileName
   }
@@ -139,7 +132,9 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
     submitPayloads,
     rowSummary: internals.rows.summary,
     referenceResolutions: computed(() => internals.resolutions.resolutions.value),
-    unresolvedReferenceResolutions: computed(() => internals.resolutions.unresolvedResolutions.value),
+    unresolvedReferenceResolutions: computed(
+      () => internals.resolutions.unresolvedResolutions.value,
+    ),
     status,
     sourceError: internals.source.error,
     contextError: internals.context.error,
@@ -148,7 +143,8 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
     clearSource,
     setSheetName: internals.source.setSheetName,
     setHeaderRowIndex: internals.source.setHeaderRowIndex,
-    assignColumn: ({ headerIndex, columnKey }) => internals.rows.assignColumn(headerIndex, columnKey),
+    assignColumn: ({ headerIndex, columnKey }) =>
+      internals.rows.assignColumn(headerIndex, columnKey),
     clearColumnAssignment: (headerIndex) => internals.rows.clearColumnAssignment(headerIndex),
     selectReference: internals.resolutions.selectReference,
     clearReference: internals.resolutions.clearReference,

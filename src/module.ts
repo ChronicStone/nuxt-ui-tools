@@ -1,5 +1,5 @@
-import { breakpointsTailwind } from '@vueuse/core'
 import { createResolver, defineNuxtModule, installModule } from '@nuxt/kit'
+import { breakpointsTailwind } from '@vueuse/core'
 import type { ModuleOptions as ViewportOptions } from 'nuxt-viewport'
 
 import { setupComponents } from './components'

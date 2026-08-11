@@ -8,4 +8,3 @@ export const passwordFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

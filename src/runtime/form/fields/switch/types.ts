@@ -19,8 +19,13 @@ export interface FormSwitchField<
   loading?: boolean
 }
 
-export type SwitchFieldOutput<TField> =
-  TField extends { trueValue: infer TTrue, falseValue: infer TFalse } ? TTrue | TFalse
-  : TField extends { trueValue: infer TTrue } ? TTrue | false
-  : TField extends { falseValue: infer TFalse } ? true | TFalse
-  : boolean
+export type SwitchFieldOutput<TField> = TField extends {
+  trueValue: infer TTrue
+  falseValue: infer TFalse
+}
+  ? TTrue | TFalse
+  : TField extends { trueValue: infer TTrue }
+    ? TTrue | false
+    : TField extends { falseValue: infer TFalse }
+      ? true | TFalse
+      : boolean

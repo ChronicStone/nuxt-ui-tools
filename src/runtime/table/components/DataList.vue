@@ -4,6 +4,7 @@ import type { ComputedRef } from 'vue'
 
 import { provideUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
 import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
+
 import { provideTableInternals, type TableInternals } from '../composables/use-table-internals'
 import GridRenderer from './grid/GridRenderer.vue'
 import TableFooter from './layout/TableFooter.vue'
@@ -40,13 +41,9 @@ const internals = props.table.__internals
 const tableHeight = computed(() => normalizeDimension(props.height ?? '36rem'))
 const titleText = computed(() => props.title ?? humanizeKey(props.table.schema.value.tableKey))
 const descriptionText = computed(() => props.description)
-const gridActive = computed(
-  () => internals.controls.tableLayout.value === 'grid',
-)
+const gridActive = computed(() => internals.controls.tableLayout.value === 'grid')
 const contentShellClass = computed(() =>
-  gridActive.value
-    ? 'grid gap-5'
-    : 'overflow-hidden rounded-md border border-default bg-default',
+  gridActive.value ? 'grid gap-5' : 'overflow-hidden rounded-md border border-default bg-default',
 )
 const footerClass = computed(() =>
   gridActive.value

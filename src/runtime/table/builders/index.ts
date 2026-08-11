@@ -77,10 +77,7 @@ export function createTableFilterBuilder<
       TKey extends TableKnownFieldPath<TRow>,
       TValue extends string | number | boolean,
       TPresentation extends import('../types').TableOptionFilterPresentation = 'list',
-    >(
-      key: TKey,
-      options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>,
-    ) {
+    >(key: TKey, options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>) {
       return {
         kind: 'option',
         key,

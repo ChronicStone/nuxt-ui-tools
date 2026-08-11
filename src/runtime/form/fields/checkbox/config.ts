@@ -8,4 +8,3 @@ export const checkboxFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

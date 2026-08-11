@@ -40,27 +40,25 @@ export function useTableColumns(params: UseTableColumnsParams) {
       layout: params.tableLayout.value,
     })
   })
-  const runtimeColumns = computed(() =>
-    [
-      ...createRuntimeColumns({
-        schema: params.schema.value,
-        context: params.data.contextData.value,
-      }),
-      ...(hasRowActions.value
-        ? [
-            {
-              id: ROW_ACTIONS_COLUMN_ID,
-              label: 'Actions',
-              icon: 'i-lucide-ellipsis',
-              canHide: false,
-              defaultVisible: true,
-              configurable: false,
-              pinned: 'right' as const,
-            },
-          ]
-        : []),
-    ],
-  )
+  const runtimeColumns = computed(() => [
+    ...createRuntimeColumns({
+      schema: params.schema.value,
+      context: params.data.contextData.value,
+    }),
+    ...(hasRowActions.value
+      ? [
+          {
+            id: ROW_ACTIONS_COLUMN_ID,
+            label: 'Actions',
+            icon: 'i-lucide-ellipsis',
+            canHide: false,
+            defaultVisible: true,
+            configurable: false,
+            pinned: 'right' as const,
+          },
+        ]
+      : []),
+  ])
 
   const orderedColumns = computed(() =>
     createOrderedColumns({

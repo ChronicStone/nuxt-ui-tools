@@ -48,10 +48,7 @@ const searchQuery = defineModel<string>('searchQuery', {
     >
       <slot />
 
-      <div
-        v-if="showEmpty"
-        class="px-3 py-8 text-center text-sm text-muted"
-      >
+      <div v-if="showEmpty" class="px-3 py-8 text-center text-sm text-muted">
         <slot name="empty">
           {{ emptyLabel }}
         </slot>

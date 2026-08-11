@@ -111,9 +111,7 @@ function resolveOptionEntryTree(options: {
 }): TableResolvedFilterOptionEntry[] {
   return options.entries.map((entry, index) => {
     const idPart = entry.value == null ? `group-${index}` : `${index}:${String(entry.value)}`
-    const id = options.parentId
-      ? `${options.parentId}/${idPart}`
-      : idPart
+    const id = options.parentId ? `${options.parentId}/${idPart}` : idPart
     const children = resolveOptionEntryTree({
       entries: entry.children ?? [],
       selectedValues: options.selectedValues,
@@ -145,7 +143,7 @@ function resolveOptionEntryTree(options: {
 
 function sumChildCounts(entries: TableResolvedFilterOptionEntry[]) {
   const counts = entries
-    .map(entry => entry.count)
+    .map((entry) => entry.count)
     .filter((count): count is number => typeof count === 'number')
 
   if (!counts.length) return undefined

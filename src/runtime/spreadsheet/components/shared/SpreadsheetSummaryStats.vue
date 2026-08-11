@@ -14,15 +14,17 @@ const props = defineProps<{
       v-for="item in props.items"
       :key="item.label"
       class="grid gap-1 border-l-2 pl-3"
-      :class="item.color === 'success'
-        ? 'border-success'
-        : item.color === 'warning'
-          ? 'border-warning'
-          : item.color === 'error'
-            ? 'border-error'
-            : item.color === 'primary'
-              ? 'border-primary'
-              : 'border-default/70'"
+      :class="
+        item.color === 'success'
+          ? 'border-success'
+          : item.color === 'warning'
+            ? 'border-warning'
+            : item.color === 'error'
+              ? 'border-error'
+              : item.color === 'primary'
+                ? 'border-primary'
+                : 'border-default/70'
+      "
     >
       <span class="text-xl font-semibold text-highlighted">
         {{ item.value }}

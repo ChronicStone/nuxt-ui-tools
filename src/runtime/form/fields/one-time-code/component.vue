@@ -1,24 +1,26 @@
 <script setup lang="ts">
+import UPinInput from '@nuxt/ui/components/PinInput.vue'
 import { computed } from 'vue'
 
-import UPinInput from '@nuxt/ui/components/PinInput.vue'
-
-import type { FormOneTimeCodeField } from '../../types'
-import { useFieldControl } from '../../composables/use-field-control'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import { useFieldControl } from '../../composables/use-field-control'
+import type { FormOneTimeCodeField } from '../../types'
 
 const props = defineProps<{
   field: FormOneTimeCodeField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(() => props.field, () => props.path)
+const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
 const model = computed<string[]>({
   get: () => {
     const value = form.getValue(props.path)
     return typeof value === 'string' ? value.split('') : []
   },
-  set: value => form.setValue(props.path, value.join('')),
+  set: (value) => form.setValue(props.path, value.join('')),
 })
 </script>
 

@@ -16,8 +16,7 @@ const emit = defineEmits<{
 }>()
 
 function isSelectedSheet(index: number, sheetLabel: string) {
-  return props.selectedSheetName === sheetLabel
-    || (!props.selectedSheetName && index === 0)
+  return props.selectedSheetName === sheetLabel || (!props.selectedSheetName && index === 0)
 }
 
 function formatCount(value: number) {
@@ -36,19 +35,29 @@ function formatCount(value: number) {
       :key="sheet.label"
       type="button"
       class="flex items-center gap-3 border bg-default px-4 py-3 text-left transition-colors"
-      :class="isSelectedSheet(index, sheet.label)
-        ? 'border-2 border-inverted text-default'
-        : 'border-default/70 text-toned hover:border-default'"
+      :class="
+        isSelectedSheet(index, sheet.label)
+          ? 'border-2 border-inverted text-default'
+          : 'border-default/70 text-toned hover:border-default'
+      "
       @click="emit('select', sheet.label)"
     >
       <div
         class="size-3.5 rounded-full"
-        :class="isSelectedSheet(index, sheet.label)
-          ? 'bg-inverted'
-          : 'border border-default/70 bg-default'"
+        :class="
+          isSelectedSheet(index, sheet.label)
+            ? 'bg-inverted'
+            : 'border border-default/70 bg-default'
+        "
       />
       <div class="grid gap-0.5">
-        <span class="text-[13px]" :class="isSelectedSheet(index, sheet.label) ? 'font-medium text-highlighted' : 'text-toned'">{{ sheet.label }}</span>
+        <span
+          class="text-[13px]"
+          :class="
+            isSelectedSheet(index, sheet.label) ? 'font-medium text-highlighted' : 'text-toned'
+          "
+          >{{ sheet.label }}</span
+        >
         <span class="font-mono text-[11px] text-muted">{{
           t('spreadsheet.common.sheetStats', {
             rows: formatCount(sheet.rowCount),

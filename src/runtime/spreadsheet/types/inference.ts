@@ -5,8 +5,6 @@ import type {
   PathToObject,
   UnionToIntersection,
 } from '../../shared/types/utils'
-import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
-import type { InferSpreadsheetOptionValue } from './options'
 import type {
   SpreadsheetColumnDefinition,
   SpreadsheetColumnGroupDefinition,
@@ -16,6 +14,8 @@ import type {
   SpreadsheetDynamicValueDefinition,
   SpreadsheetResolvedColumns,
 } from './columns'
+import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
+import type { InferSpreadsheetOptionValue } from './options'
 import type { InferSpreadsheetReferenceValue, SpreadsheetReferenceDefinition } from './references'
 import type { SpreadsheetFieldRules, SpreadsheetRule } from './validation'
 
@@ -46,18 +46,18 @@ type ColumnRulesOutput<TColumn> = TColumn extends {
 }
   ? TRules
   : TColumn extends {
-  __rulesInput?: (...args: infer _Args) => infer TResult
-}
+        __rulesInput?: (...args: infer _Args) => infer TResult
+      }
     ? TResult
     : TColumn extends {
-  rules?: (...args: infer _Args) => infer TResult
-}
-  ? TResult
-  : TColumn extends {
-    rules?: infer TRules extends SpreadsheetFieldRules<any>
-  }
-    ? TRules
-    : readonly []
+          rules?: (...args: infer _Args) => infer TResult
+        }
+      ? TResult
+      : TColumn extends {
+            rules?: infer TRules extends SpreadsheetFieldRules<any>
+          }
+        ? TRules
+        : readonly []
 
 type HasRequiredRule<TRules> = TRules extends readonly SpreadsheetRule<any, any>[]
   ? Extract<TRules[number], SpreadsheetRule<any, { required: true }>> extends never
@@ -65,42 +65,49 @@ type HasRequiredRule<TRules> = TRules extends readonly SpreadsheetRule<any, any>
     : true
   : false
 
-type StaticColumnOutput<TColumn> = TColumn extends SpreadsheetColumnDefinition<
-  infer TKey,
-  infer TValue,
-  infer TRequired,
-  infer _TContext,
-  infer _TRules,
-  infer _TSourceValue,
-  infer _TResolve
->
-  ? TRequired extends true
-    ? PathToObject<TKey, TValue>
-    : HasRequiredRule<ColumnRulesOutput<TColumn>> extends true
-    ? PathToObject<TKey, TValue>
-    : DeepPartial<PathToObject<TKey, TValue>>
-  : never
+type StaticColumnOutput<TColumn> =
+  TColumn extends SpreadsheetColumnDefinition<
+    infer TKey,
+    infer TValue,
+    infer TRequired,
+    infer _TContext,
+    infer _TRules,
+    infer _TSourceValue,
+    infer _TResolve
+  >
+    ? TRequired extends true
+      ? PathToObject<TKey, TValue>
+      : HasRequiredRule<ColumnRulesOutput<TColumn>> extends true
+        ? PathToObject<TKey, TValue>
+        : DeepPartial<PathToObject<TKey, TValue>>
+    : never
 
 type StaticRowOutput<TColumns> = DeepPrettify<
   DeepTransformNestedPaths<
-    IntersectionOrEmpty<StaticColumnOutput<FlattenStaticColumns<StaticEntriesFromColumns<TColumns>>>>
+    IntersectionOrEmpty<
+      StaticColumnOutput<FlattenStaticColumns<StaticEntriesFromColumns<TColumns>>>
+    >
   >
 >
 
 type ResolveDynamicValue<TValueDefinition extends SpreadsheetDynamicValueDefinition> =
-  TValueDefinition extends { kind: 'text' } ? string
-    : TValueDefinition extends { kind: 'number' } ? number
-      : TValueDefinition extends { kind: 'date' } ? string
-        : TValueDefinition extends { kind: 'boolean' } ? boolean
-          : TValueDefinition extends { kind: 'options', mode: infer TMode }
-              ? TMode extends 'multiple'
-                ? TValueDefinition extends { from: readonly (infer TOption)[] }
-                  ? InferSpreadsheetOptionValue<TOption>[]
-                  : never
-                : TValueDefinition extends { from: readonly (infer TOption)[] }
-                  ? InferSpreadsheetOptionValue<TOption>
-                  : never
-              : never
+  TValueDefinition extends { kind: 'text' }
+    ? string
+    : TValueDefinition extends { kind: 'number' }
+      ? number
+      : TValueDefinition extends { kind: 'date' }
+        ? string
+        : TValueDefinition extends { kind: 'boolean' }
+          ? boolean
+          : TValueDefinition extends { kind: 'options'; mode: infer TMode }
+            ? TMode extends 'multiple'
+              ? TValueDefinition extends { from: readonly (infer TOption)[] }
+                ? InferSpreadsheetOptionValue<TOption>[]
+                : never
+              : TValueDefinition extends { from: readonly (infer TOption)[] }
+                ? InferSpreadsheetOptionValue<TOption>
+                : never
+            : never
 
 type ResolveDynamicItemValue<TItem> =
   TItem extends SpreadsheetDynamicCollectionItemDefinition<any, infer TValueInput, any, any>
@@ -113,23 +120,24 @@ type ResolveDynamicItemValue<TItem> =
         : never
     : never
 
-type CollectionItemOutput<TItem> = TItem extends SpreadsheetDynamicCollectionItemDefinition<
-  infer TId,
-  infer _TValueInput,
-  infer _TSource,
-  infer TBuild
->
-  ? [TBuild] extends [unknown]
-    ? ResolveDynamicItemValue<TItem> extends infer TResult
-      ? TResult extends readonly unknown[]
-        ? { id: TId, values: TResult }
-        : { id: TId, value: TResult }
-      : never
-    : TBuild
-  : never
+type CollectionItemOutput<TItem> =
+  TItem extends SpreadsheetDynamicCollectionItemDefinition<
+    infer TId,
+    infer _TValueInput,
+    infer _TSource,
+    infer TBuild
+  >
+    ? [TBuild] extends [unknown]
+      ? ResolveDynamicItemValue<TItem> extends infer TResult
+        ? TResult extends readonly unknown[]
+          ? { id: TId; values: TResult }
+          : { id: TId; value: TResult }
+        : never
+      : TBuild
+    : never
 
 type CollectionRecordOutput<TItems> = TItems extends readonly (infer TItem)[]
-    ? IntersectionOrEmpty<
+  ? IntersectionOrEmpty<
       TItem extends SpreadsheetDynamicCollectionItemDefinition<
         infer TId,
         infer _TValueInput,
@@ -143,18 +151,19 @@ type CollectionRecordOutput<TItems> = TItems extends readonly (infer TItem)[]
     >
   : {}
 
-type DynamicCollectionOutput<TColumn> = TColumn extends SpreadsheetDynamicCollectionDefinition<
-  infer TRootKey,
-  infer TAs,
-  infer TItems,
-  infer _TOutput
->
-  ? TItems extends readonly unknown[]
-    ? TAs extends 'array'
-      ? Partial<PathToObject<TRootKey, readonly CollectionItemOutput<TItems[number]>[]>>
-      : Partial<PathToObject<TRootKey, DeepTransformNestedPaths<CollectionRecordOutput<TItems>>>>
+type DynamicCollectionOutput<TColumn> =
+  TColumn extends SpreadsheetDynamicCollectionDefinition<
+    infer TRootKey,
+    infer TAs,
+    infer TItems,
+    infer _TOutput
+  >
+    ? TItems extends readonly unknown[]
+      ? TAs extends 'array'
+        ? Partial<PathToObject<TRootKey, readonly CollectionItemOutput<TItems[number]>[]>>
+        : Partial<PathToObject<TRootKey, DeepTransformNestedPaths<CollectionRecordOutput<TItems>>>>
+      : never
     : never
-  : never
 
 type DynamicOptionGroupsOutput<TDynamicColumn> =
   TDynamicColumn extends SpreadsheetDynamicOptionGroupsDefinition<any, infer TInto, infer TValue>
@@ -181,16 +190,19 @@ type ResolveSchemaReferences<TSchema> = TSchema extends {
     ? Exclude<TReferences, undefined>
     : readonly []
 
-type ReferenceField<TReference> = TReference extends SpreadsheetReferenceDefinition<infer TField, any, any>
-  ? TField
-  : never
+type ReferenceField<TReference> =
+  TReference extends SpreadsheetReferenceDefinition<infer TField, any, any> ? TField : never
 
 type ReferenceOutput<TReference> = [ReferenceField<TReference>] extends [never]
   ? never
-  : DeepPartial<PathToObject<ReferenceField<TReference>, InferSpreadsheetReferenceValue<TReference>>>
+  : DeepPartial<
+      PathToObject<ReferenceField<TReference>, InferSpreadsheetReferenceValue<TReference>>
+    >
 
 type ReferenceRowOutput<TReferences> = TReferences extends readonly unknown[]
-  ? DeepPrettify<DeepTransformNestedPaths<IntersectionOrEmpty<ReferenceOutput<TReferences[number]>>>>
+  ? DeepPrettify<
+      DeepTransformNestedPaths<IntersectionOrEmpty<ReferenceOutput<TReferences[number]>>>
+    >
   : {}
 
 export type SpreadsheetRowData<TColumns, TReferences = readonly []> = DeepPrettify<
@@ -202,10 +214,10 @@ type SchemaColumns<TSchema> = TSchema extends {
 }
   ? Exclude<TColumns, undefined>
   : TSchema extends {
-  columns?: infer TColumns
-}
-  ? Exclude<TColumns, undefined>
-  : never
+        columns?: infer TColumns
+      }
+    ? Exclude<TColumns, undefined>
+    : never
 
 export type SpreadsheetData<TSchema> = SpreadsheetRowData<
   SpreadsheetResolvedColumns<SchemaColumns<TSchema>>,

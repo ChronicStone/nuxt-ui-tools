@@ -20,7 +20,7 @@ describe('filter option utils', () => {
       missingCountFallback: 0,
     })
 
-    expect(entries.map(entry => entry.count)).toEqual([3, 0])
+    expect(entries.map((entry) => entry.count)).toEqual([3, 0])
   })
 
   it('falls back missing remote boolean counts to zero when requested', () => {
@@ -36,6 +36,6 @@ describe('filter option utils', () => {
       missingCountFallback: 0,
     })
 
-    expect(entries.map(entry => entry.count)).toEqual([5, 0])
+    expect(entries.map((entry) => entry.count)).toEqual([5, 0])
   })
 })

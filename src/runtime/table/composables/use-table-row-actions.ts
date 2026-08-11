@@ -2,9 +2,9 @@ import { inject, provide, type ComputedRef, type InjectionKey } from 'vue'
 
 import type { GenericObject, TableRowActionContext } from '../types'
 
-const TABLE_ROW_ACTION_SCOPE_KEY = Symbol(
-  'nuxt-ui-tools.table.row-actions-scope',
-) as InjectionKey<ComputedRef<TableInjectedRowActionScope>>
+const TABLE_ROW_ACTION_SCOPE_KEY = Symbol('nuxt-ui-tools.table.row-actions-scope') as InjectionKey<
+  ComputedRef<TableInjectedRowActionScope>
+>
 
 export type TableInjectedRowActionScope = TableRowActionContext<
   GenericObject,
@@ -12,9 +12,7 @@ export type TableInjectedRowActionScope = TableRowActionContext<
   Record<string, unknown>
 >
 
-export function provideTableRowActionScope(
-  scope: ComputedRef<TableInjectedRowActionScope>,
-) {
+export function provideTableRowActionScope(scope: ComputedRef<TableInjectedRowActionScope>) {
   provide(TABLE_ROW_ACTION_SCOPE_KEY, scope)
 }
 

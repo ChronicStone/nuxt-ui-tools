@@ -7,6 +7,7 @@ import { computed } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { useTableInternals } from '../../composables/use-table-internals'
 
 const internals = useTableInternals()
@@ -37,9 +38,7 @@ const filteredColumns = computed(() => {
   const search = internals.controls.columnsPanelSearch.value.trim().toLowerCase()
   if (!search) return configurableColumns.value
 
-  return configurableColumns.value.filter((column) =>
-    column.label.toLowerCase().includes(search),
-  )
+  return configurableColumns.value.filter((column) => column.label.toLowerCase().includes(search))
 })
 
 const draggableColumns = computed({

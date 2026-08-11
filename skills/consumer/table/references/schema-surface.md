@@ -37,9 +37,7 @@ const schema = defineTableSchema({
     }),
   },
   table: {
-    columns: (column) => [
-      column.field('fullName', { label: 'Employee' }),
-    ],
+    columns: (column) => [column.field('fullName', { label: 'Employee' })],
   },
 })
 ```
