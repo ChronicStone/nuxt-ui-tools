@@ -1,4 +1,4 @@
-import { isArray, isDate, isObject, isString } from '../../shared'
+import { isArray, isDate, isObject, isString } from '../../shared/utils/predicate'
 import type {
   TableFacetExecutionResult,
   TableFacetOptionResult,

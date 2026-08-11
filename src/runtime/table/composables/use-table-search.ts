@@ -1,4 +1,4 @@
-import { getFilterTextValue } from '../utils'
+import { getFilterTextValue } from '../utils/filters/common'
 import { computed, type ComputedRef } from 'vue'
 
 import type { TableSchemaView } from '../types'

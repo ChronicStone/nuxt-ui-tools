@@ -8,7 +8,7 @@ import {
   stringCodec,
 } from '#ui-tools/query-state'
 
-import { isObject, isString } from '../../shared'
+import { isObject, isString } from '../../shared/utils/predicate'
 import { DEFAULT_FILTER_OPERATOR, PAGINATION_DEFAULTS } from '../constants/query-state'
 import type {
   TableFilterOperator,
