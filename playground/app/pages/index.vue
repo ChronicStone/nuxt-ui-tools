@@ -8,6 +8,12 @@ const { t } = useI18n()
 
 const entries = computed(() => [
   {
+    title: t('playground.home.entries.form.title'),
+    description: t('playground.home.entries.form.description'),
+    icon: 'i-lucide-clipboard-list',
+    to: '/form',
+  },
+  {
     title: t('playground.home.entries.spreadsheet.title'),
     description: t('playground.home.entries.spreadsheet.description'),
     icon: 'i-lucide-file-spreadsheet',
@@ -51,7 +57,7 @@ const entries = computed(() => [
         </div>
       </div>
 
-      <div class="grid gap-4 md:grid-cols-3">
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <UCard
           v-for="entry in entries"
           :key="entry.to"
@@ -59,7 +65,9 @@ const entries = computed(() => [
           :ui="{ body: 'grid h-full gap-5 p-5' }"
         >
           <div class="grid gap-4">
-            <div class="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+            <div
+              class="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary"
+            >
               <UIcon :name="entry.icon" class="size-5" />
             </div>
 

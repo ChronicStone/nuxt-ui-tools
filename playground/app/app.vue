@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import * as locales from '@nuxt/ui/locale'
+
 import * as uiToolsLocales from '#ui-tools/i18n/locales'
 
 const { locale } = useI18n()
@@ -28,9 +29,11 @@ useHead({
 <template>
   <UApp :locale="locales[locale]">
     <NutToolsProvider :locale="uiToolsLocales[locale]">
-      <NuxtLayout>
-        <NuxtPage />
-      </NuxtLayout>
+      <NutFormProvider>
+        <NuxtLayout>
+          <NuxtPage />
+        </NuxtLayout>
+      </NutFormProvider>
     </NutToolsProvider>
   </UApp>
 </template>

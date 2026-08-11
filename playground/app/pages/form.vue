@@ -6,8 +6,52 @@ import { defineFormSchema, useForm, useFormApi } from '#ui-tools/form'
 import type { ExtractFormOutput } from '#ui-tools/form'
 
 function sleep(duration: number) {
-  return new Promise<void>(resolve => setTimeout(resolve, duration))
+  return new Promise<void>((resolve) => setTimeout(resolve, duration))
 }
+
+const formApi = useFormApi()
+
+const addressOptionForm = defineFormSchema({
+  formKey: 'playground.form.address-option',
+  title: 'Create address option',
+  layout: {
+    columns: 8,
+    gap: 16,
+  },
+  fields: [
+    {
+      key: 'label',
+      type: 'text',
+      label: 'Address label',
+      placeholder: 'Paris office',
+      layout: {
+        span: 'full',
+      },
+      validation: {
+        required: true,
+      },
+    },
+    {
+      key: 'city',
+      type: 'text',
+      label: 'City',
+      placeholder: 'Paris',
+      validation: {
+        required: true,
+      },
+    },
+    {
+      key: 'country',
+      type: 'select',
+      label: 'Country',
+      options: [
+        { label: 'France', value: 'FR' },
+        { label: 'Belgium', value: 'BE' },
+        { label: 'Switzerland', value: 'CH' },
+      ],
+    },
+  ],
+})
 
 const showcaseForm = defineFormSchema({
   formKey: 'playground.form.showcase',
@@ -40,7 +84,8 @@ const showcaseForm = defineFormSchema({
     {
       key: 'intro',
       type: 'info',
-      content: 'This playground is now a field and runtime showcase: context-backed options, dotted paths, transforms, validation, arrays, uploads, and live output.',
+      content:
+        'This playground is now a field and runtime showcase: context-backed options, dotted paths, transforms, validation, arrays, uploads, and live output.',
       layout: {
         span: 'full',
       },
@@ -78,7 +123,7 @@ const showcaseForm = defineFormSchema({
       label: 'Email',
       placeholder: 'ada@example.com',
       transform: {
-        output: value => value?.trim().toLowerCase() ?? '',
+        output: (value) => value?.trim().toLowerCase() ?? '',
       },
       validation: {
         required: true,
@@ -108,7 +153,10 @@ const showcaseForm = defineFormSchema({
             validate: ({ api }) => {
               const value = api.value.get()
               if (!value) return true
-              return typeof value === 'string' && value.startsWith('+') || 'Enter a valid international phone number.'
+              return (
+                (typeof value === 'string' && value.startsWith('+')) ||
+                'Enter a valid international phone number.'
+              )
             },
           },
         ],
@@ -143,7 +191,10 @@ const showcaseForm = defineFormSchema({
       type: 'select',
       label: 'Context select',
       searchable: true,
-      options: ({ ctx }) => ctx.countries.value ?? [],
+      options: {
+        source: ({ ctx }) => ctx.countries.value ?? [],
+        allowOptionsRefresh: true,
+      },
     },
     {
       key: 'profile.role',
@@ -156,20 +207,26 @@ const showcaseForm = defineFormSchema({
       type: 'select',
       label: 'Query options depending on context',
       searchable: true,
-      options: ({ ctx }) =>
-        queryOptions({
-          queryKey: ['form-showcase-cities', ctx.countries.value?.map(country => country.value).join(',') ?? 'loading'],
-          enabled: Boolean(ctx.countries.value),
-          queryFn: async () => {
-            await sleep(500)
+      options: {
+        allowOptionsRefresh: true,
+        source: ({ ctx }) =>
+          queryOptions({
+            queryKey: [
+              'form-showcase-cities',
+              ctx.countries.value?.map((country) => country.value).join(',') ?? 'loading',
+            ],
+            enabled: Boolean(ctx.countries.value),
+            queryFn: async () => {
+              await sleep(500)
 
-            return [
-              { label: 'Paris', value: 'paris', description: 'France' },
-              { label: 'Brussels', value: 'brussels', description: 'Belgium' },
-              { label: 'Geneva', value: 'geneva', description: 'Switzerland' },
-            ]
-          },
-        }),
+              return [
+                { label: 'Paris', value: 'paris', description: 'France' },
+                { label: 'Brussels', value: 'brussels', description: 'Belgium' },
+                { label: 'Geneva', value: 'geneva', description: 'Switzerland' },
+              ]
+            },
+          }),
+      },
     },
     {
       key: 'profile.skill',
@@ -195,6 +252,8 @@ const showcaseForm = defineFormSchema({
             },
           }),
         create: {
+          label: 'Create skill',
+          revalidateFieldOptions: ['profile.city'],
           handler: async ({ label }) => {
             await sleep(450)
 
@@ -202,6 +261,55 @@ const showcaseForm = defineFormSchema({
               label,
               value: label.trim().toLowerCase().replace(/\s+/g, '-'),
               description: 'Created locally from the select menu',
+            }
+          },
+        },
+      },
+    },
+    {
+      key: 'profile.address',
+      type: 'select',
+      label: 'Explicit create action',
+      description: 'Footer create opens a nested form and appends the returned option.',
+      searchable: true,
+      options: {
+        allowOptionsRefresh: true,
+        source: async () => {
+          await sleep(650)
+
+          return [
+            { label: 'Paris office', value: 'addr-paris', description: 'FR' },
+            { label: 'Brussels warehouse', value: 'addr-brussels', description: 'BE' },
+          ]
+        },
+        create: {
+          label: 'Add address',
+          handler: async () => {
+            const result = await formApi.createForm(addressOptionForm, {
+              id: 'playground-address-create',
+              mode: 'modal',
+              onSubmit: async ({ formData }) => {
+                await sleep(500)
+                return { success: true, data: formData }
+              },
+            })
+            if (!result.isCompleted) return null
+
+            const label =
+              typeof result.formData.label === 'string' && result.formData.label.trim()
+                ? result.formData.label.trim()
+                : 'New address'
+            const city =
+              typeof result.formData.city === 'string' && result.formData.city.trim()
+                ? result.formData.city.trim()
+                : 'Unknown city'
+            const country =
+              typeof result.formData.country === 'string' ? result.formData.country : 'N/A'
+
+            return {
+              label,
+              value: `${label}-${Date.now()}`.toLowerCase().replace(/\s+/g, '-'),
+              description: `${city} · ${country}`,
             }
           },
         },
@@ -217,6 +325,52 @@ const showcaseForm = defineFormSchema({
         { label: 'Email', value: 'email', description: 'Transactional and digest messages' },
         { label: 'SMS', value: 'sms', description: 'Urgent notifications only' },
         { label: 'In-app', value: 'in-app', description: 'Product surface notifications' },
+      ],
+    },
+    {
+      key: 'profile.assignees',
+      type: 'auto-complete',
+      label: 'Autocomplete',
+      multiple: true,
+      clearable: true,
+      options: {
+        allowOptionsRefresh: true,
+        source: async () => {
+          await sleep(450)
+
+          return [
+            { label: 'Ada Lovelace', value: 'ada', description: 'Research' },
+            { label: 'Grace Hopper', value: 'grace', description: 'Engineering' },
+            { label: 'Katherine Johnson', value: 'katherine', description: 'Operations' },
+          ]
+        },
+      },
+    },
+    {
+      key: 'profile.plan',
+      type: 'radio-card',
+      label: 'Radio cards',
+      options: [
+        { label: 'Starter', value: 'starter', description: 'Light usage' },
+        { label: 'Scale', value: 'scale', description: 'Team workflows' },
+      ],
+    },
+    {
+      key: 'profile.flags',
+      type: 'checkbox-card',
+      label: 'Checkbox cards',
+      orientation: 'horizontal',
+      options: ['priority', 'audited'],
+    },
+    {
+      key: 'profile.alerts',
+      type: 'switch-group',
+      label: 'Switch group',
+      checkedIcon: 'i-lucide-check',
+      uncheckedIcon: 'i-lucide-x',
+      options: [
+        { label: 'Email alerts', value: 'email' },
+        { label: 'SMS alerts', value: 'sms' },
       ],
     },
     {
@@ -270,6 +424,19 @@ const showcaseForm = defineFormSchema({
           tooltip: true,
         },
         {
+          key: 'priority',
+          type: 'rating',
+          label: 'Priority',
+          default: 3,
+        },
+        {
+          key: 'reviewTime',
+          type: 'time',
+          label: 'Review time',
+          default: '09:30',
+          minuteStep: 5,
+        },
+        {
           key: 'tags',
           type: 'tag',
           label: 'Tags',
@@ -294,8 +461,16 @@ const showcaseForm = defineFormSchema({
         {
           key: 'accentColor',
           type: 'color-picker',
-          label: 'Accent color',
+          label: 'Accent color popover',
           default: '#00C16A',
+          format: 'hex',
+        },
+        {
+          key: 'inlineColor',
+          type: 'color-picker',
+          label: 'Inline color panel',
+          default: '#7C3AED',
+          display: 'inline',
           format: 'hex',
         },
         {
@@ -332,6 +507,45 @@ const showcaseForm = defineFormSchema({
       ],
     },
     {
+      key: 'presentationCard',
+      type: 'card',
+      label: 'Card passthrough',
+      description: 'Fields inside this card write at the current form level.',
+      headerExtra: 'Passthrough',
+      layout: {
+        span: 'full',
+        columns: 8,
+      },
+      fields: [
+        {
+          key: 'cardHeadline',
+          type: 'text',
+          label: 'Card headline',
+        },
+        {
+          key: 'cardStatus',
+          type: 'select',
+          label: 'Card status',
+          options: ['draft', 'ready', 'archived'],
+        },
+      ],
+    },
+    {
+      key: 'twoColumnComposition',
+      type: 'column',
+      layout: {
+        span: 'full',
+      },
+      fields: [
+        {
+          key: 'columnComment',
+          type: 'textarea',
+          label: 'Column passthrough',
+          placeholder: 'Column field output is not nested under the column key.',
+        },
+      ],
+    },
+    {
       key: 'section.collections',
       type: 'divider',
       label: 'Collections and files',
@@ -343,7 +557,10 @@ const showcaseForm = defineFormSchema({
       key: 'contacts',
       type: 'array-list',
       label: 'Array list',
-      description: 'Add/remove repeated object items.',
+      description: 'Add, remove, and reorder repeated object items.',
+      addItemLabel: 'Add contact',
+      emptyLabel: 'No contacts yet. Add one to exercise nested dotted state.',
+      itemLabel: 'Contact',
       layout: {
         span: 'full',
         columns: 2,
@@ -359,6 +576,35 @@ const showcaseForm = defineFormSchema({
           type: 'text',
           inputType: 'email',
           label: 'Email',
+        },
+      ],
+    },
+    {
+      key: 'milestones',
+      type: 'array-tabs',
+      label: 'Array tabs',
+      description: 'The same repeated object model rendered as tabs.',
+      addItemLabel: 'Add milestone',
+      emptyLabel: 'No milestones yet.',
+      itemLabel: 'Milestone',
+      layout: {
+        span: 'full',
+        columns: 2,
+      },
+      fields: [
+        {
+          key: 'title',
+          type: 'text',
+          label: 'Title',
+        },
+        {
+          key: 'dueDate',
+          type: 'date',
+          label: 'Due date',
+          manualInput: {
+            format: 'dd/MM/yyyy',
+            placeholder: 'dd/mm/yyyy',
+          },
         },
       ],
     },
@@ -410,7 +656,7 @@ const showcaseForm = defineFormSchema({
             validate: ({ api }) => {
               const value = api.value.get()
               if (!value) return true
-              return typeof value === 'string' && value.length === 6 || 'Enter the 6 digit code.'
+              return (typeof value === 'string' && value.length === 6) || 'Enter the 6 digit code.'
             },
           },
         ],
@@ -470,7 +716,6 @@ type ShowcaseOutput = ExtractFormOutput<typeof showcaseForm>
 
 const submitted = ref<ShowcaseOutput | null>(null)
 const overlayResult = ref<unknown | null>(null)
-const formApi = useFormApi()
 const form = useForm({
   schema: showcaseForm,
   onSubmit: async ({ formData }) => {
@@ -528,27 +773,79 @@ async function openResponsiveForm() {
     },
   })
 }
+
+async function validateAndFocus() {
+  await form.validate({ focus: true })
+}
+
+async function focusEmail() {
+  await form.focus('profile.email')
+}
+
+async function refreshCountriesFromPanel() {
+  await form.context.value.countries.refresh()
+}
 </script>
 
 <template>
   <main class="mx-auto grid w-full max-w-7xl gap-6 p-6">
     <section class="grid gap-2">
-      <h1 class="text-2xl font-semibold text-highlighted">
-        Form runtime
-      </h1>
+      <h1 class="text-2xl font-semibold text-highlighted">Form runtime</h1>
       <p class="max-w-3xl text-sm text-muted">
-        Field rendering, form context, query-backed options, validation, layout, overlays, and live output.
+        Field rendering, form context, query-backed options, validation, layout, overlays, and live
+        output.
       </p>
       <div class="flex flex-wrap gap-2">
         <UButton icon="i-lucide-square" variant="soft" @click="openModalForm">
           Open modal form
         </UButton>
-        <UButton icon="i-lucide-panel-right-open" variant="soft" color="neutral" @click="openDrawerForm">
+        <UButton
+          icon="i-lucide-panel-right-open"
+          variant="soft"
+          color="neutral"
+          @click="openDrawerForm"
+        >
           Open drawer form
         </UButton>
-        <UButton icon="i-lucide-panels-top-left" variant="soft" color="neutral" @click="openResponsiveForm">
+        <UButton
+          icon="i-lucide-panels-top-left"
+          variant="soft"
+          color="neutral"
+          @click="openResponsiveForm"
+        >
           Open responsive form
         </UButton>
+      </div>
+    </section>
+
+    <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-md border border-default bg-default p-4">
+        <h2 class="text-sm font-medium text-highlighted">Field coverage</h2>
+        <p class="mt-1 text-xs text-muted">
+          Core inputs, option fields, composed containers, arrays, file/upload, color, date, time,
+          phone, tags, rating, and OTP.
+        </p>
+      </div>
+      <div class="rounded-md border border-default bg-default p-4">
+        <h2 class="text-sm font-medium text-highlighted">Dependencies</h2>
+        <p class="mt-1 text-xs text-muted">
+          City options wait on context countries, field creation can revalidate related option
+          sources, and password confirmation consumes dependencies.
+        </p>
+      </div>
+      <div class="rounded-md border border-default bg-default p-4">
+        <h2 class="text-sm font-medium text-highlighted">Layout modes</h2>
+        <p class="mt-1 text-xs text-muted">
+          Inline, modal, drawer, responsive overlay mode, object cards, passthrough cards, input
+          groups, and nested array layouts.
+        </p>
+      </div>
+      <div class="rounded-md border border-default bg-default p-4">
+        <h2 class="text-sm font-medium text-highlighted">Action API</h2>
+        <p class="mt-1 text-xs text-muted">
+          `useForm` exposes validation, focus, submit, reset, state, output, dirty metadata, context
+          resources, and overlay creation.
+        </p>
       </div>
     </section>
 
@@ -558,11 +855,50 @@ async function openResponsiveForm() {
       </div>
 
       <aside class="grid content-start gap-4 rounded-md border border-default bg-muted/30 p-4">
+        <div class="grid gap-2">
+          <h2 class="text-sm font-medium text-highlighted">API controls</h2>
+          <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            <UButton
+              icon="i-lucide-shield-check"
+              size="sm"
+              variant="soft"
+              @click="validateAndFocus"
+            >
+              Validate + focus
+            </UButton>
+            <UButton
+              icon="i-lucide-at-sign"
+              size="sm"
+              variant="soft"
+              color="neutral"
+              @click="focusEmail"
+            >
+              Focus email
+            </UButton>
+            <UButton
+              icon="i-lucide-refresh-cw"
+              size="sm"
+              variant="soft"
+              color="neutral"
+              @click="refreshCountriesFromPanel"
+            >
+              Refresh context
+            </UButton>
+            <UButton
+              icon="i-lucide-rotate-ccw"
+              size="sm"
+              variant="soft"
+              color="neutral"
+              @click="form.reset"
+            >
+              Reset form
+            </UButton>
+          </div>
+        </div>
+
         <div class="grid gap-1">
           <div class="flex items-center justify-between gap-3">
-            <h2 class="text-sm font-medium text-highlighted">
-              Form state status
-            </h2>
+            <h2 class="text-sm font-medium text-highlighted">Form state status</h2>
             <span class="text-xs text-muted">
               {{ isDirty ? 'Dirty' : 'Pristine' }}
             </span>
@@ -573,38 +909,38 @@ async function openResponsiveForm() {
         </div>
 
         <div class="grid gap-1">
-          <h2 class="text-sm font-medium text-highlighted">
-            Live internal state
-          </h2>
-          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{ JSON.stringify(liveState, null, 2) }}</pre>
+          <h2 class="text-sm font-medium text-highlighted">Live internal state</h2>
+          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{
+            JSON.stringify(liveState, null, 2)
+          }}</pre>
         </div>
 
         <div class="grid gap-1">
-          <h2 class="text-sm font-medium text-highlighted">
-            Context resources
-          </h2>
-          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{ JSON.stringify(contextResources, null, 2) }}</pre>
+          <h2 class="text-sm font-medium text-highlighted">Context resources</h2>
+          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{
+            JSON.stringify(contextResources, null, 2)
+          }}</pre>
         </div>
 
         <div class="grid gap-1">
-          <h2 class="text-sm font-medium text-highlighted">
-            Live output
-          </h2>
-          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{ JSON.stringify(liveOutput, null, 2) }}</pre>
+          <h2 class="text-sm font-medium text-highlighted">Live output</h2>
+          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{
+            JSON.stringify(liveOutput, null, 2)
+          }}</pre>
         </div>
 
         <div class="grid gap-1">
-          <h2 class="text-sm font-medium text-highlighted">
-            Submitted output
-          </h2>
-          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{ JSON.stringify(submitted ?? {}, null, 2) }}</pre>
+          <h2 class="text-sm font-medium text-highlighted">Submitted output</h2>
+          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{
+            JSON.stringify(submitted ?? {}, null, 2)
+          }}</pre>
         </div>
 
         <div class="grid gap-1">
-          <h2 class="text-sm font-medium text-highlighted">
-            Overlay result
-          </h2>
-          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{ JSON.stringify(overlayResult ?? {}, null, 2) }}</pre>
+          <h2 class="text-sm font-medium text-highlighted">Overlay result</h2>
+          <pre class="max-h-72 overflow-auto rounded-md bg-inverted p-3 text-xs text-inverted">{{
+            JSON.stringify(overlayResult ?? {}, null, 2)
+          }}</pre>
         </div>
       </aside>
     </section>
