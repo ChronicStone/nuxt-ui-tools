@@ -83,6 +83,11 @@ function selectPart(type: 'hour' | 'minute', value: string) {
   inputValue.value = next
 }
 
+function selectTime(value: string) {
+  model.value = value
+  inputValue.value = value
+}
+
 async function clearTime() {
   model.value = undefined
   inputValue.value = ''
@@ -193,10 +198,7 @@ function padTimePart(value: number) {
               color="neutral"
               block
               @mousedown.prevent
-              @click="
-                model = '09:00'
-                inputValue = '09:00'
-              "
+              @click="selectTime('09:00')"
               >09:00</UButton
             >
             <UButton
@@ -205,10 +207,7 @@ function padTimePart(value: number) {
               color="neutral"
               block
               @mousedown.prevent
-              @click="
-                model = '12:00'
-                inputValue = '12:00'
-              "
+              @click="selectTime('12:00')"
               >12:00</UButton
             >
             <UButton
@@ -217,10 +216,7 @@ function padTimePart(value: number) {
               color="neutral"
               block
               @mousedown.prevent
-              @click="
-                model = '14:00'
-                inputValue = '14:00'
-              "
+              @click="selectTime('14:00')"
               >14:00</UButton
             >
             <UButton
@@ -229,10 +225,7 @@ function padTimePart(value: number) {
               color="neutral"
               block
               @mousedown.prevent
-              @click="
-                model = '18:00'
-                inputValue = '18:00'
-              "
+              @click="selectTime('18:00')"
               >18:00</UButton
             >
           </div>

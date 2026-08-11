@@ -54,6 +54,11 @@ const summaryLimitText = computed(() => {
     total: props.spreadsheet.resolvedRows.value.length,
   })
 })
+
+function showIssueRows() {
+  review.setActiveTab('invalid')
+  review.closeInspection()
+}
 </script>
 
 <template>
@@ -87,10 +92,7 @@ const summaryLimitText = computed(() => {
       @next="review.inspectNextIssueRow"
       @discard-row="review.discardRow"
       @restore-row="review.restoreRow"
-      @show-issue-rows="
-        review.setActiveTab('invalid')
-        review.closeInspection()
-      "
+      @show-issue-rows="showIssueRows"
     />
 
     <div v-else class="grid min-h-0 h-full gap-4 grid-rows-[minmax(0,1fr)_auto]">
