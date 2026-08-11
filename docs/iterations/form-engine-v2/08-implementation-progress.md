@@ -259,6 +259,95 @@ The playground route at `playground/app/pages/form.vue` now exposes the same acc
 
 Consumer-facing guidance was started in:
 
+## 2026-05-13
+
+### Shared-UI Action Defaults And Action Split
+
+Aligned the form action layer with the shared-ui baseline instead of keeping hardcoded root footer buttons.
+
+Added:
+
+- `types/actions.ts` for built-in and custom form action contracts
+- `composables/use-form-actions.ts` for default/overridden action resolution
+- `components/actions/FormActions.vue` for rendering and action dispatch
+
+Default behavior now matches shared-ui:
+
+- simple forms default to `submit`
+- stepped forms default to `previous`, `next`, `submit`
+- built-in defaults use the same label keys, width (`fill md:fit`), modal/inline slot behavior, conditions, and disabled behavior
+- no decorative default icons are added by V2
+
+### Focus And Validation Polish
+
+Invalid-field focusing now calls `focus({ preventScroll: true })` before smooth scrolling the registered field wrapper into view.
+This avoids the browser's instant focus jump taking over the intended smooth scroll behavior.
+
+Submit/forward navigation now marks the relevant mounted stateful field paths as touched before validation display, including nested object and input-group descendants.
+
+### Option Runtime Parity
+
+Moved the mounted option runtime closer to shared-ui:
+
+- `allowOptionsRefresh` controls whether option fields render the refresh affordance
+- `disableOnLoading` defaults to enabled unless explicitly set to `false`
+- `clearOnInvalid` clears selections that disappear from resolved options unless explicitly disabled
+- `onOptionsChange` receives resolved options and field callback params
+- created options support `selectOnCreation` and `revalidateFieldOptions`
+- field APIs expose `api.options.refreshable()`
+
+Option refresh still refreshes the inferred context resources first, then the field option source.
+
+### Expanded Field Kind Coverage
+
+Added structured per-kind folders for:
+
+- `auto-complete`
+- `radio-card`
+- `checkbox-card`
+- `switch-group`
+- `rating`
+- `time`
+
+Each field has the standard `component.vue`, `config.ts`, `types.ts`, and `index.ts` split, and the field-owned output types are wired into the global output dispatch.
+
+Focused tests now cover output inference for these field kinds:
+
+```sh
+bun run test test/form/output-inference.test.ts test/form/field-kind.test.ts
+```
+
+The playground showcase now renders the new fields and keeps the current live internal state, output, context resources, submitted output, and overlay result panels.
+
+### Overlay Header And Passthrough Containers
+
+Overlay layouts now use the Nuxt UI `content` slot as pure shells so visible header/content/footer chrome is owned by `FormRoot`.
+This avoids duplicate visible titles while still passing a dialog title to the underlying primitive for accessibility.
+
+`FormRoot` now owns the overlay close button in the same bordered header as the form title, matching the shared-ui responsibility split where layout primitives host the shell and form chrome owns title/stepper/actions.
+
+Added shared-ui passthrough structural field kinds:
+
+- `card`
+- `column`
+
+Both are registered as passthrough fields and do not create state/output nesting under their own keys.
+Runtime traversal and type inference now treat `input-group`, `card`, and `column` as flat passthrough containers while keeping `object` as a nested object container.
+
+### Stepped Lifecycle Hooks
+
+Added the shared-ui stepped lifecycle hooks to the schema contract and runtime navigation:
+
+- `onBeforeNext`
+- `onBeforePrevious`
+- `skipStep`
+- `onStepSkipped`
+
+Forward navigation validates the current step, runs `onBeforeNext`, then skips configured steps.
+Backward navigation runs `onBeforePrevious` and skips configured previous steps.
+
+Navigation pending state now feeds the form action pending surface for `next` and `previous` in addition to submit pending state.
+
 - `skills/consumer/form/SKILL.md`
 
 Focused validation after this slice:
@@ -715,11 +804,7 @@ The form runtime also exposes richer navigation controls internally:
 The `/form` playground was updated to use `useForm` and removed the previous event mirror surface:
 
 ```vue
-@submit
-@update:state
-@update:output
-@update:dirty
-@update:dirty-paths
+@submit @update:state @update:output @update:dirty @update:dirty-paths
 ```
 
 Browser validation against the running playground confirmed:
@@ -824,10 +909,11 @@ This supports the intended magic path:
 ```ts
 const schema = defineFormSchema({
   context: {
-    countries: () => queryOptions({
-      queryKey: ['countries'],
-      queryFn: () => api.countries.list(),
-    }),
+    countries: () =>
+      queryOptions({
+        queryKey: ['countries'],
+        queryFn: () => api.countries.list(),
+      }),
   },
   fields: [
     {
@@ -925,7 +1011,7 @@ Extended the field callback API with typed manual mutation helpers:
 ```ts
 options: ({ api }) => {
   api.context.set('session', { id: 'session_2' })
-  api.context.update('session', value => ({ id: value?.id ?? 'session_2' }))
+  api.context.update('session', (value) => ({ id: value?.id ?? 'session_2' }))
   api.context.patch('session', { id: 'session_3' })
   api.options.add({ label: 'Spain', value: 'ES' })
 }
