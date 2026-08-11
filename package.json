@@ -1,9 +1,11 @@
 {
   "name": "nuxt-ui-tools",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Nuxt module and runtime toolkit for UI-heavy Nuxt applications",
+  "homepage": "https://github.com/ChronicStone/nuxt-ui-tools#readme",
+  "bugs": "https://github.com/ChronicStone/nuxt-ui-tools/issues",
   "license": "MIT",
-  "repository": "cyprienthao/nuxt-ui-tools",
+  "repository": "github:ChronicStone/nuxt-ui-tools",
   "workspaces": [
     "playground"
   ],
@@ -36,7 +38,7 @@
     "dev:build": "nuxt build playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
-    "release": "npm run lint && npm run typecheck && npm run test && changelogen --release && npm publish && git push --follow-tags",
+    "release": "npm run check && npm run build && changelogen --release",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt .",
