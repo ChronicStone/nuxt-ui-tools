@@ -85,8 +85,13 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       "
       :definitions="internals.filterPresentation.dormantDynamicDefinitions.value"
       :get-label="getFilterLabel"
-      :size="dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value"
+      :size="
+        dataListUi.ui.value.addFilter?.size ??
+        dataListUi.ui.value.filterTags?.size ??
+        dataListUi.controlSize.value
+      "
       :ui="{
+        ...dataListUi.ui.value.addFilter?.ui,
         trigger: dataListUi.ui.value.filterTags?.ui?.addTrigger,
       }"
       @select="internals.filterPresentation.activateDynamicFilter({ key: $event })"

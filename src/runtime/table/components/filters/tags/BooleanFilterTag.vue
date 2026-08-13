@@ -6,11 +6,16 @@ import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed, ref, toRef } from 'vue'
 
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableBooleanFilterDefinition, TableBooleanFilterOperator } from '../../../types'
-import { resolveBooleanFilterUi, resolveFilterTriggerIcon } from '../../../utils'
+import {
+  mergeDataListUiClass,
+  resolveBooleanFilterUi,
+  resolveFilterTriggerIcon,
+} from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
@@ -25,6 +30,9 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const searchQuery = ref<string>('')
 const isSessionOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
@@ -145,7 +153,13 @@ function clearFilter() {
   <UPopover
     :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
+    :ui="{
+      content: mergeDataListUiClass(
+        'w-fit overflow-hidden p-0',
+        undefined,
+        dataListFilterUi?.popoverContent,
+      ),
+    }"
     @update:open="session.handleOpenChange"
   >
     <slot
@@ -173,21 +187,39 @@ function clearFilter() {
     </slot>
 
     <template #content>
-      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default" @vue:mounted="handleContentMounted">
-        <div class="p-2">
+      <div
+        :class="
+          mergeDataListUiClass(
+            'w-fit max-w-[calc(100vw-1rem)] bg-default',
+            undefined,
+            dataListFilterUi?.editor,
+          )
+        "
+        @vue:mounted="handleContentMounted"
+      >
+        <div :class="mergeDataListUiClass('p-2', undefined, dataListFilterUi?.list)">
           <URadioGroup
             v-model="radioValue"
             :items="radioItems"
             color="neutral"
             variant="list"
+            :size="size"
             :ui="{
               root: 'w-full',
               fieldset: 'grid gap-0.5',
-              item: 'flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated',
+              item: mergeDataListUiClass(
+                'flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated',
+                undefined,
+                dataListFilterUi?.option,
+              ),
               container: 'self-center pl-3',
               base: 'cursor-pointer',
               wrapper: 'min-w-0 flex-1 py-2 pr-3',
-              label: 'w-full cursor-pointer text-sm text-default',
+              label: mergeDataListUiClass(
+                'w-full cursor-pointer text-sm text-default',
+                undefined,
+                dataListFilterUi?.optionLabel,
+              ),
             }"
           >
             <template #label="{ item }">
@@ -195,7 +227,13 @@ function clearFilter() {
                 <UIcon
                   v-if="typeof item.icon === 'string'"
                   :name="item.icon"
-                  class="size-4 shrink-0 text-muted"
+                  :class="
+                    mergeDataListUiClass(
+                      'size-4 shrink-0 text-muted',
+                      undefined,
+                      dataListFilterUi?.optionIcon,
+                    )
+                  "
                 />
 
                 <span class="min-w-0 flex-1 truncate">
@@ -205,7 +243,16 @@ function clearFilter() {
                   v-if="optionSource.isCountLoading.value"
                   class="ml-3 h-3.5 w-6 shrink-0"
                 />
-                <span v-else-if="item.count != null" class="ml-3 shrink-0 text-muted">
+                <span
+                  v-else-if="item.count != null"
+                  :class="
+                    mergeDataListUiClass(
+                      'ml-3 shrink-0 text-muted',
+                      undefined,
+                      dataListFilterUi?.optionCount,
+                    )
+                  "
+                >
                   {{ item.count }}
                 </span>
               </div>
@@ -215,20 +262,28 @@ function clearFilter() {
 
         <div
           v-if="filterUi.commitMode === 'manual'"
-          class="flex items-center justify-between border-t border-default p-2"
+          :class="
+            mergeDataListUiClass(
+              'flex items-center justify-between border-t border-default p-2',
+              undefined,
+              dataListFilterUi?.footer,
+            )
+          "
         >
           <UButton
             color="neutral"
             variant="ghost"
-            size="sm"
+            :size="size"
             :label="filterUi.actions.clear"
+            :ui="{ base: dataListFilterUi?.clear }"
             @click="clearFilter"
           />
           <UButton
             color="neutral"
             variant="subtle"
-            size="sm"
+            :size="size"
             :label="filterUi.actions.apply"
+            :ui="{ base: dataListFilterUi?.apply }"
             @click="applyFilter"
           />
         </div>

@@ -70,7 +70,6 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
                 : false
           }
           color="neutral"
-          ui={{ base: '!rounded-md', indicator: '!rounded-none' }}
         />
       </button>
     ),
@@ -94,7 +93,6 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
         <UCheckbox
           modelValue={options.params.selection.isRowSelected({ rowId: String(row.id) })}
           color="neutral"
-          ui={{ base: '!rounded-md', indicator: '!rounded-none' }}
         />
       </button>
     ),

@@ -4,6 +4,7 @@ import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref, toRef } from 'vue'
 
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -11,7 +12,7 @@ import type {
   TableTextFilterDefinition,
   TableTextFilterOperator,
 } from '../../../types'
-import { resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
+import { mergeDataListUiClass, resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
@@ -26,6 +27,9 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const pendingOperator = ref<TableFilterOperator>()
 const localValue = ref<string>('')
 
@@ -129,7 +133,11 @@ function handleValueUpdate(value: string | number | undefined) {
     :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'w-fit overflow-hidden p-0 shadow-none',
+      content: mergeDataListUiClass(
+        'w-fit overflow-hidden p-0',
+        undefined,
+        dataListFilterUi?.popoverContent,
+      ),
     }"
     @update:open="session.handleOpenChange"
   >
@@ -158,8 +166,20 @@ function handleValueUpdate(value: string | number | undefined) {
     </slot>
 
     <template #content>
-      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
-        <div class="border-b border-default p-2">
+      <div
+        :class="
+          mergeDataListUiClass(
+            'w-fit max-w-[calc(100vw-1rem)] bg-default',
+            undefined,
+            dataListFilterUi?.editor,
+          )
+        "
+      >
+        <div
+          :class="
+            mergeDataListUiClass('border-b border-default p-2', undefined, dataListFilterUi?.inputs)
+          "
+        >
           <UInput
             :model-value="localValue"
             :type="filterUi.inputType"
@@ -169,8 +189,9 @@ function handleValueUpdate(value: string | number | undefined) {
             :autofocus="filterUi.input.autofocus"
             :highlight="filterUi.input.highlight"
             :fixed="filterUi.input.fixed"
+            :size="size"
             class="w-[min(13rem,calc(100vw-3rem))] max-w-full"
-            :ui="{ base: 'rounded-md' }"
+            :ui="{ root: dataListFilterUi?.search, base: dataListFilterUi?.searchInput }"
             @update:model-value="handleValueUpdate"
             @keydown.enter.prevent="applyFilter"
           />
@@ -178,20 +199,28 @@ function handleValueUpdate(value: string | number | undefined) {
 
         <div
           v-if="filterUi.commitMode === 'manual'"
-          class="flex items-center justify-between border-t border-default p-2"
+          :class="
+            mergeDataListUiClass(
+              'flex items-center justify-between border-t border-default p-2',
+              undefined,
+              dataListFilterUi?.footer,
+            )
+          "
         >
           <UButton
             color="neutral"
             variant="ghost"
-            size="sm"
+            :size="size"
             :label="filterUi.actions.clear"
+            :ui="{ base: dataListFilterUi?.clear }"
             @click="clearFilter"
           />
           <UButton
             color="neutral"
             variant="subtle"
-            size="sm"
+            :size="size"
             :label="filterUi.actions.apply"
+            :ui="{ base: dataListFilterUi?.apply }"
             @click="applyFilter"
           />
         </div>

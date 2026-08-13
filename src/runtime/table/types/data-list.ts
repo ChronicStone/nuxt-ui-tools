@@ -30,8 +30,41 @@ export interface DataListSearchUi {
   trailingIcon?: DataListUiClass
 }
 
-/** UI slots rendered by filter tags and their adjacent actions. */
-export interface DataListFilterTagsUi {
+/** Shared UI slots rendered by a progressive filter editor popover. */
+export interface DataListFilterEditorUi {
+  popoverContent?: DataListUiClass
+  operatorContent?: DataListUiClass
+  operatorItem?: DataListUiClass
+  operatorLabel?: DataListUiClass
+  operatorTrigger?: DataListUiClass
+  editor?: DataListUiClass
+  searchHeader?: DataListUiClass
+  search?: DataListUiClass
+  searchInput?: DataListUiClass
+  scrollArea?: DataListUiClass
+  scrollViewport?: DataListUiClass
+  list?: DataListUiClass
+  listDivider?: DataListUiClass
+  option?: DataListUiClass
+  optionCheckbox?: DataListUiClass
+  optionExpander?: DataListUiClass
+  optionSpacer?: DataListUiClass
+  optionIcon?: DataListUiClass
+  optionLabel?: DataListUiClass
+  optionCount?: DataListUiClass
+  empty?: DataListUiClass
+  footer?: DataListUiClass
+  clear?: DataListUiClass
+  apply?: DataListUiClass
+  inputs?: DataListUiClass
+  presets?: DataListUiClass
+  preset?: DataListUiClass
+  calendar?: DataListUiClass
+  slider?: DataListUiClass
+}
+
+/** UI slots rendered by filter tags, their editors, and adjacent actions. */
+export interface DataListFilterTagsUi extends DataListFilterEditorUi {
   root?: DataListUiClass
   trigger?: DataListUiClass
   label?: DataListUiClass
@@ -41,14 +74,10 @@ export interface DataListFilterTagsUi {
   clearTrigger?: DataListUiClass
 }
 
-/** UI slots rendered by the add-filter picker. */
-export interface DataListAddFilterUi {
+/** UI slots rendered by the progressive add-filter picker. */
+export interface DataListAddFilterUi extends DataListFilterEditorUi {
   trigger?: DataListUiClass
-  popoverContent?: DataListUiClass
   panel?: DataListUiClass
-  option?: DataListUiClass
-  optionIcon?: DataListUiClass
-  optionLabel?: DataListUiClass
   optionTrailingIcon?: DataListUiClass
 }
 
@@ -149,6 +178,7 @@ export interface DataListContentUi {
 
 /** UI slots rendered by the table mode. Nuxt UI table slots are forwarded unchanged. */
 export interface DataListTableUi {
+  wrapper?: DataListUiClass
   root?: DataListUiClass
   base?: DataListUiClass
   caption?: DataListUiClass
@@ -172,6 +202,7 @@ export interface DataListGridUi {
   canvas?: DataListUiClass
   row?: DataListUiClass
   item?: DataListUiClass
+  flowRoot?: DataListUiClass
   flow?: DataListUiClass
   loading?: DataListUiClass
   error?: DataListUiClass

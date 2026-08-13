@@ -89,7 +89,7 @@ const schema = defineTableSchema({
       filter.option('status', {
         label: 'Status',
         behavior: { defaultOperator: 'isAnyOf', defaultValue: ['Published'] },
-        display: { location: 'tag' },
+        display: { location: 'tag-dynamic' },
         source: {
           options: [
             { label: 'Published', value: 'Published' },
@@ -102,7 +102,7 @@ const schema = defineTableSchema({
       filter.option('format', {
         label: 'Format',
         behavior: { defaultOperator: 'isAnyOf', defaultValue: ['A4', 'Letter'] },
-        display: { location: 'tag' },
+        display: { location: 'tag-dynamic' },
         source: {
           options: [
             { label: 'A4', value: 'A4' },
@@ -190,7 +190,7 @@ onMounted(() => {
       density="compact"
       :ui="{
         search: { width: '20rem' },
-        filterTags: { size: 'xs' },
+        filterTags: { size: 'sm' },
         content: { ui: { root: 'px-5 py-4' } },
         resultCount: { ui: { root: 'text-sm text-muted tabular-nums' } },
       }"

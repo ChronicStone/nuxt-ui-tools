@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import type { TableResolvedFilterOptionEntry } from '../../../types'
+import { mergeDataListUiClass } from '../../../utils'
 import FilterOptionRow from './FilterOptionRow.vue'
 
 interface FilterOptionMultipleListSection {
@@ -26,21 +30,24 @@ const emit = defineEmits<{
     },
   ]
 }>()
+
+const dataListUi = useDataListUi()
+const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
 </script>
 
 <template>
-  <div class="grid gap-0.5">
+  <div :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
     <template v-for="section in props.sections" :key="section.key">
       <div
         v-if="section.dividerBefore && section.entries.length"
-        class="my-1 border-t border-default"
+        :class="mergeDataListUiClass('my-1 border-t border-default', undefined, ui?.listDivider)"
       />
 
       <button
         v-for="(entry, index) in section.entries"
         :key="entry.value == null ? entry.label : String(entry.value)"
         type="button"
-        class="block w-full"
+        :class="mergeDataListUiClass('block w-full', undefined, ui?.option)"
         @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
       >
         <FilterOptionRow

@@ -49,7 +49,11 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         })),
       ]"
       :content="{ side: 'bottom', align: 'start', sideOffset: 6 }"
-      :ui="{ content: 'w-fit p-1 shadow-none' }"
+      :ui="{
+        content: mergeDataListUiClass('w-fit p-1', undefined, ui?.operatorContent),
+        item: ui?.operatorItem,
+        itemLabel: ui?.operatorLabel,
+      }"
     >
       <UButton
         color="neutral"
@@ -100,6 +104,8 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         v-if="showMatchMode"
         :label="props.operatorLabel"
         :items="props.operatorItems"
+        :size="size"
+        :ui="ui"
         @select="emit('selectOperator', $event)"
       />
 

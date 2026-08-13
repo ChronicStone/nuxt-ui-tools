@@ -54,7 +54,7 @@ watch(tableEmpty, (isEmpty) => {
 
 <template>
   <div
-    :class="mergeDataListUiClass('relative overflow-hidden', undefined, ui?.root)"
+    :class="mergeDataListUiClass('relative overflow-hidden', undefined, ui?.wrapper)"
     :style="height ? { height } : undefined"
   >
     <UTable
@@ -93,7 +93,8 @@ watch(tableEmpty, (isEmpty) => {
       loading-animation="carousel"
       :class="height ? 'h-full' : undefined"
       :ui="{
-        root: ui?.base,
+        root: ui?.root,
+        base: ui?.base,
         caption: ui?.caption,
         thead: mergeDataListUiClass(
           'group/table-head after:inset-x-0 after:bottom-0 after:w-full after:z-[2] after:pointer-events-none',
@@ -159,99 +160,3 @@ watch(tableEmpty, (isEmpty) => {
     </div>
   </div>
 </template>
-
-<style scoped>
-:deep([data-slot='root']) {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklab, var(--ui-border) 82%, transparent) transparent;
-}
-
-:deep([data-slot='root']:hover) {
-  scrollbar-color: color-mix(in oklab, var(--ui-border-accented) 92%, transparent) transparent;
-}
-
-:deep([data-slot='root']::-webkit-scrollbar) {
-  width: 10px;
-  height: 10px;
-}
-
-:deep([data-slot='root']::-webkit-scrollbar-track) {
-  background: transparent;
-}
-
-:deep([data-slot='root']::-webkit-scrollbar-thumb) {
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--ui-border) 86%, transparent);
-  background-clip: padding-box;
-}
-
-:deep([data-slot='root']:hover::-webkit-scrollbar-thumb) {
-  background: color-mix(in oklab, var(--ui-border-accented) 80%, transparent);
-  background-clip: padding-box;
-}
-
-:deep([data-slot='root']::-webkit-scrollbar-thumb:hover) {
-  background: color-mix(in oklab, var(--ui-border-accented) 95%, transparent);
-  background-clip: padding-box;
-}
-
-:deep([data-slot='root']::-webkit-scrollbar-corner) {
-  background: transparent;
-}
-
-:deep(th[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg) 94%, transparent) !important;
-  background-image: none !important;
-  backdrop-filter: blur(6px) saturate(120%);
-}
-
-:deep(td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg) 96%, transparent) !important;
-  background-image: none !important;
-  backdrop-filter: none;
-}
-
-:deep(tbody tr[data-selected='true'] td) {
-  background-color: color-mix(in oklab, var(--ui-bg-elevated) 88%, transparent) !important;
-  color: var(--ui-text) !important;
-}
-
-:deep(tbody tr:hover td) {
-  background-color: color-mix(in oklab, var(--ui-bg-elevated) 18%, transparent) !important;
-}
-
-:deep(tr[data-selected='true'] td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg-elevated) 96%, transparent) !important;
-  color: var(--ui-text) !important;
-  backdrop-filter: none;
-}
-
-:deep(tbody tr:hover td[data-pinned]) {
-  background-color: color-mix(in oklab, var(--ui-bg-elevated) 68%, transparent) !important;
-  backdrop-filter: none;
-}
-
-:deep(th[data-pinned='left']),
-:deep(td[data-pinned='left']) {
-  box-shadow: 12px 0 18px -18px color-mix(in oklab, var(--ui-border-accented) 80%, transparent);
-}
-
-:deep(th[data-pinned='right']),
-:deep(td[data-pinned='right']) {
-  box-shadow: -12px 0 18px -18px color-mix(in oklab, var(--ui-border-accented) 80%, transparent);
-}
-
-:deep(thead th) {
-  border-bottom-color: var(--ui-border) !important;
-}
-
-:deep(thead tr[data-slot='separator']) {
-  border-color: var(--ui-border) !important;
-  background-color: var(--ui-border) !important;
-}
-
-:deep(tbody td) {
-  border-bottom-color: color-mix(in oklab, var(--ui-border) 34%, transparent) !important;
-}
-</style>

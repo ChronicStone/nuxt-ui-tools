@@ -4,6 +4,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref, toRef } from 'vue'
 
 import { useRangeSelect } from '../../../../shared'
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -12,7 +13,7 @@ import type {
   TableOptionFilterDefinition,
   TableOptionFilterOperator,
 } from '../../../types'
-import { resolveFilterTriggerIcon } from '../../../utils'
+import { mergeDataListUiClass, resolveFilterTriggerIcon } from '../../../utils'
 import FilterOptionPickerContent from '../shared/FilterOptionPickerContent.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
@@ -28,6 +29,9 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const searchQuery = ref<string>('')
 const isSessionOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
@@ -246,7 +250,13 @@ function handleContentMounted() {
   <UPopover
     :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
+    :ui="{
+      content: mergeDataListUiClass(
+        'w-fit overflow-hidden p-0',
+        undefined,
+        dataListFilterUi?.popoverContent,
+      ),
+    }"
     @update:open="session.handleOpenChange"
   >
     <slot
@@ -275,13 +285,24 @@ function handleContentMounted() {
     </slot>
 
     <template #content>
-      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default" @vue:mounted="handleContentMounted">
+      <div
+        :class="
+          mergeDataListUiClass(
+            'w-fit max-w-[calc(100vw-1rem)] bg-default',
+            undefined,
+            dataListFilterUi?.editor,
+          )
+        "
+        @vue:mounted="handleContentMounted"
+      >
         <FilterOptionPickerContent
           v-model:search-query="searchQuery"
           :flat-radio-value="state.flatRadioValue.value"
           :tree-radio-value="state.treeRadioValue.value"
           :state="state"
           :sections="listSections"
+          :size="size"
+          :ui="dataListFilterUi"
           @update:flat-radio-value="state.flatRadioValue.value = $event"
           @update:tree-radio-value="state.treeRadioValue.value = $event"
           @select-entry="handleSelectEntry"
@@ -291,20 +312,28 @@ function handleContentMounted() {
 
         <div
           v-if="state.filterUi.value.commitMode === 'manual'"
-          class="flex items-center justify-between border-t border-default p-2"
+          :class="
+            mergeDataListUiClass(
+              'flex items-center justify-between border-t border-default p-2',
+              undefined,
+              dataListFilterUi?.footer,
+            )
+          "
         >
           <UButton
             color="neutral"
             variant="ghost"
-            size="sm"
+            :size="size"
             :label="state.filterUi.value.actions.clear"
+            :ui="{ base: dataListFilterUi?.clear }"
             @click="clearFilter"
           />
           <UButton
             color="neutral"
             variant="subtle"
-            size="sm"
+            :size="size"
             :label="state.filterUi.value.actions.apply"
+            :ui="{ base: dataListFilterUi?.apply }"
             @click="applyFilter"
           />
         </div>

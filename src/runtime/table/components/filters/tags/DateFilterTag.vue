@@ -9,6 +9,7 @@ import { computed, ref, shallowRef, toRef, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableDateFilterOperator, TableFilterOperator } from '../../../types'
@@ -16,6 +17,7 @@ import type { TableDateFilterDefinition } from '../../../types/filters'
 import {
   formatFilterDate,
   getDateRangeValue,
+  mergeDataListUiClass,
   resolveFilterTriggerIcon,
   resolveDateFilterRangeCalendarPanels,
   resolveDateFilterRangePresets,
@@ -36,6 +38,9 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const { t } = useUiToolsLocale()
 const isMobile = useMediaQuery('(max-width: 639px)')
 const pendingOperator = ref<TableFilterOperator>()
@@ -325,7 +330,11 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
     :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
-      content: 'max-w-[calc(100vw-1rem)] overflow-hidden p-0 shadow-none',
+      content: mergeDataListUiClass(
+        'max-w-[calc(100vw-1rem)] overflow-hidden p-0',
+        undefined,
+        dataListFilterUi?.popoverContent,
+      ),
     }"
     @update:open="session.handleOpenChange"
   >
@@ -355,8 +364,13 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
     <template #content>
       <div
-        class="bg-default"
-        :class="operator === 'between' ? 'w-[min(100vw-1rem,48rem)]' : 'w-[min(100vw-1rem,22rem)]'"
+        :class="
+          mergeDataListUiClass(
+            `bg-default ${operator === 'between' ? 'w-[min(100vw-1rem,48rem)]' : 'w-[min(100vw-1rem,22rem)]'}`,
+            undefined,
+            dataListFilterUi?.editor,
+          )
+        "
       >
         <div v-if="operator === 'between'">
           <div
@@ -369,8 +383,13 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
           >
             <div
               v-if="rangePresets.length"
-              class="border-b border-default p-3"
-              :class="filterUi.range.presetsPlacement === 'side' ? 'lg:border-r lg:border-b-0' : ''"
+              :class="
+                mergeDataListUiClass(
+                  `border-b border-default p-3 ${filterUi.range.presetsPlacement === 'side' ? 'lg:border-r lg:border-b-0' : ''}`,
+                  undefined,
+                  dataListFilterUi?.presets,
+                )
+              "
             >
               <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
                 Date range
@@ -384,7 +403,14 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                   v-for="preset in rangePresets"
                   :key="preset.label"
                   :variant="isRangePresetActive(preset.value) ? 'subtle' : 'ghost'"
-                  class="justify-start rounded-lg px-3"
+                  :size="size"
+                  :class="
+                    mergeDataListUiClass(
+                      'justify-start rounded-lg px-3',
+                      undefined,
+                      dataListFilterUi?.preset,
+                    )
+                  "
                   @click="applyRangePreset(preset.value)"
                 >
                   {{ preset.label }}
@@ -392,7 +418,10 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               </div>
             </div>
 
-            <div v-if="filterUi.range.display !== 'inputs'" class="p-3">
+            <div
+              v-if="filterUi.range.display !== 'inputs'"
+              :class="mergeDataListUiClass('p-3', undefined, dataListFilterUi?.calendar)"
+            >
               <UCalendar
                 :model-value="calendarRange"
                 range
@@ -403,12 +432,16 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 :fixed-weeks="filterUi.range.calendar.fixedWeeks"
                 :maximum-days="filterUi.range.calendar.maxRangeDays"
                 :ui="{
-                  root: 'border-0 bg-transparent p-0 shadow-none',
                   header: 'px-1 pb-2',
                   body: 'gap-3',
                   grid: 'gap-y-1',
                   cell: 'p-0.5',
                   cellTrigger: 'rounded-md',
+                  root: mergeDataListUiClass(
+                    'border-0 bg-transparent p-0',
+                    undefined,
+                    dataListFilterUi?.calendar,
+                  ),
                 }"
                 @update:model-value="setCalendarRange"
               />
@@ -417,7 +450,13 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
           <div
             v-if="filterUi.range.display !== 'calendar'"
-            class="border-t border-default px-3 py-3"
+            :class="
+              mergeDataListUiClass(
+                'border-t border-default px-3 py-3',
+                undefined,
+                dataListFilterUi?.inputs,
+              )
+            "
           >
             <div class="flex items-center justify-between gap-3">
               <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
@@ -440,6 +479,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                   :hide-time-zone="filterUi.range.input.hideTimeZone"
                   :hour-cycle="filterUi.range.input.hourCycle"
                   leading-icon="i-lucide-arrow-right"
+                  :size="size"
                   class="w-full"
                   @update:model-value="setRangeStart"
                 />
@@ -456,6 +496,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                   :hide-time-zone="filterUi.range.input.hideTimeZone"
                   :hour-cycle="filterUi.range.input.hourCycle"
                   leading-icon="i-lucide-arrow-left"
+                  :size="size"
                   class="w-full"
                   @update:model-value="setRangeEnd"
                 />
@@ -464,13 +505,22 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
           </div>
         </div>
 
-        <div v-else class="grid gap-2 p-3">
-          <div v-if="scalarPresets.length" class="flex flex-wrap gap-1.5">
+        <div
+          v-else
+          :class="mergeDataListUiClass('grid gap-2 p-3', undefined, dataListFilterUi?.inputs)"
+        >
+          <div
+            v-if="scalarPresets.length"
+            :class="
+              mergeDataListUiClass('flex flex-wrap gap-1.5', undefined, dataListFilterUi?.presets)
+            "
+          >
             <UButton
               v-for="preset in scalarPresets"
               :key="preset.label"
               variant="ghost"
-              class="rounded-lg px-3"
+              :size="size"
+              :class="mergeDataListUiClass('rounded-lg px-3', undefined, dataListFilterUi?.preset)"
               @click="applyScalarPreset(preset.value)"
             >
               {{ preset.label }}
@@ -489,6 +539,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
             :hide-time-zone="filterUi.scalar.input.hideTimeZone"
             :hour-cycle="filterUi.scalar.input.hourCycle"
             leading-icon="i-lucide-calendar-days"
+            :size="size"
             class="w-full"
             @update:model-value="setSingleDate"
           />
@@ -500,7 +551,11 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
             :model-value="localDate"
             :fixed-weeks="filterUi.scalar.calendar.fixedWeeks"
             :ui="{
-              root: 'border-0 bg-transparent p-0 shadow-none',
+              root: mergeDataListUiClass(
+                'border-0 bg-transparent p-0',
+                undefined,
+                dataListFilterUi?.calendar,
+              ),
               header: 'px-1 pb-2',
               grid: 'gap-y-1',
               cell: 'p-0.5',
@@ -512,15 +567,21 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
         <div
           v-if="filterUi.commitMode === 'manual'"
-          class="flex items-center border-t border-default p-2"
-          :class="operator === 'between' ? 'justify-between' : 'justify-end'"
+          :class="
+            mergeDataListUiClass(
+              `flex items-center border-t border-default p-2 ${operator === 'between' ? 'justify-between' : 'justify-end'}`,
+              undefined,
+              dataListFilterUi?.footer,
+            )
+          "
         >
           <UButton
             v-if="operator === 'between'"
             color="neutral"
             variant="ghost"
-            size="sm"
+            :size="size"
             :label="filterUi.actions.clear"
+            :ui="{ base: dataListFilterUi?.clear }"
             @click="clearFilter"
           />
           <div class="flex items-center gap-2">
@@ -528,15 +589,17 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               v-if="operator !== 'between'"
               color="neutral"
               variant="ghost"
-              size="sm"
+              :size="size"
               :label="filterUi.actions.clear"
+              :ui="{ base: dataListFilterUi?.clear }"
               @click="clearFilter"
             />
             <UButton
               color="neutral"
               variant="subtle"
-              size="sm"
+              :size="size"
               :label="filterUi.actions.apply"
+              :ui="{ base: dataListFilterUi?.apply }"
               @click="applyFilter"
             />
           </div>

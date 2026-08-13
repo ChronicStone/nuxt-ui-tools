@@ -188,7 +188,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
       </div>
     </div>
 
-    <div v-else :class="mergeDataListUiClass('px-0 py-1', undefined, ui?.flow)">
+    <div v-else :class="mergeDataListUiClass(undefined, undefined, ui?.flowRoot)">
       <div
         v-if="showInitialLoading"
         :class="mergeDataListUiClass('grid gap-4', undefined, ui?.loading)"

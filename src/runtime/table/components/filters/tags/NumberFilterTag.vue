@@ -5,6 +5,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import USlider from '@nuxt/ui/components/Slider.vue'
 import { computed, ref, toRef, watch } from 'vue'
 
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -12,7 +13,11 @@ import type {
   TableNumberFilterDefinition,
   TableNumberFilterOperator,
 } from '../../../types'
-import { resolveFilterTriggerIcon, resolveNumberFilterUi } from '../../../utils'
+import {
+  mergeDataListUiClass,
+  resolveFilterTriggerIcon,
+  resolveNumberFilterUi,
+} from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
@@ -27,6 +32,9 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const pendingOperator = ref<TableFilterOperator>()
 const localValue = ref<string>('')
 const rangeValue = ref<{ from: string; to: string }>({ from: '', to: '' })
@@ -235,7 +243,13 @@ function resolveIncrementConfig(hideStepper: boolean) {
   <UPopover
     :open="session.isOpen.value"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
+    :ui="{
+      content: mergeDataListUiClass(
+        'w-fit overflow-hidden p-0',
+        undefined,
+        dataListFilterUi?.popoverContent,
+      ),
+    }"
     @update:open="session.handleOpenChange"
   >
     <slot
@@ -263,8 +277,25 @@ function resolveIncrementConfig(hideStepper: boolean) {
     </slot>
 
     <template #content>
-      <div class="min-w-[16rem] max-w-[calc(100vw-1rem)] bg-default">
-        <div v-if="operator === 'between'" class="grid gap-3 border-b border-default p-3">
+      <div
+        :class="
+          mergeDataListUiClass(
+            'min-w-[16rem] max-w-[calc(100vw-1rem)] bg-default',
+            undefined,
+            dataListFilterUi?.editor,
+          )
+        "
+      >
+        <div
+          v-if="operator === 'between'"
+          :class="
+            mergeDataListUiClass(
+              'grid gap-3 border-b border-default p-3',
+              undefined,
+              dataListFilterUi?.inputs,
+            )
+          "
+        >
           <div
             v-if="filterUi.range.display === 'inputs' || filterUi.range.display === 'inputs-slider'"
             class="grid grid-cols-2 gap-2"
@@ -279,6 +310,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
               :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
               :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+              :size="size"
               :ui="{
                 base: 'h-9 px-2',
                 increment: 'size-7 rounded-md',
@@ -298,6 +330,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
               :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
               :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+              :size="size"
               :ui="{
                 base: 'h-9 px-2',
                 increment: 'size-7 rounded-md',
@@ -316,11 +349,21 @@ function resolveIncrementConfig(hideStepper: boolean) {
             :step="filterUi.range.slider.step ?? filterUi.step"
             :min-steps-between-thumbs="filterUi.range.minGap"
             :tooltip="filterUi.range.slider.showTooltip"
+            :class="dataListFilterUi?.slider"
             @update:model-value="updateSliderRangeValue"
           />
         </div>
 
-        <div v-else class="grid gap-3 border-b border-default p-3">
+        <div
+          v-else
+          :class="
+            mergeDataListUiClass(
+              'grid gap-3 border-b border-default p-3',
+              undefined,
+              dataListFilterUi?.inputs,
+            )
+          "
+        >
           <UInputNumber
             v-if="filterUi.scalar.display === 'input' || filterUi.scalar.display === 'input-slider'"
             :model-value="scalarValue"
@@ -332,6 +375,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
             :disable-wheel-change="filterUi.scalar.input.disableWheelChange"
             :increment="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
             :decrement="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
+            :size="size"
             :ui="{
               base: 'h-9 px-2',
               increment: 'size-7 rounded-md',
@@ -350,26 +394,35 @@ function resolveIncrementConfig(hideStepper: boolean) {
             :max="filterUi.scalar.slider.max ?? sliderBounds.max"
             :step="filterUi.scalar.slider.step ?? filterUi.step"
             :tooltip="filterUi.scalar.slider.showTooltip"
+            :class="dataListFilterUi?.slider"
             @update:model-value="updateSliderScalarValue"
           />
         </div>
 
         <div
           v-if="filterUi.commitMode === 'manual'"
-          class="flex items-center justify-between border-t border-default p-2"
+          :class="
+            mergeDataListUiClass(
+              'flex items-center justify-between border-t border-default p-2',
+              undefined,
+              dataListFilterUi?.footer,
+            )
+          "
         >
           <UButton
             color="neutral"
             variant="ghost"
-            size="sm"
+            :size="size"
             :label="filterUi.actions.clear"
+            :ui="{ base: dataListFilterUi?.clear }"
             @click="clearFilter"
           />
           <UButton
             color="neutral"
             variant="subtle"
-            size="sm"
+            :size="size"
             :label="filterUi.actions.apply"
+            :ui="{ base: dataListFilterUi?.apply }"
             @click="applyFilter"
           />
         </div>

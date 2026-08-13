@@ -66,7 +66,7 @@ function toggle() {
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
     :ui="{
       content: mergeDataListUiClass(
-        'w-fit max-w-[calc(100vw-1rem)] overflow-hidden p-0 shadow-none',
+        'w-fit max-w-[calc(100vw-1rem)] overflow-hidden p-0',
         undefined,
         ui?.popoverContent,
       ),
@@ -111,6 +111,8 @@ function toggle() {
           :show-empty="!filteredDefinitions.length"
           :empty-label="t('table.controls.noMatchingFilters')"
           max-height-class="max-h-72"
+          :size="props.size"
+          :ui="ui"
         >
           <button
             v-for="definition in filteredDefinitions"

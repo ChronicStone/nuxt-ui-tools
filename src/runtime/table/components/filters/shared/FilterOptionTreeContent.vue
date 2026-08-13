@@ -3,6 +3,10 @@ import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
+import { computed } from 'vue'
+
+import { useDataListUi } from '../../../composables/use-data-list-ui'
+import { mergeDataListUiClass } from '../../../utils'
 
 type TreeEntry = {
   id: string
@@ -45,6 +49,10 @@ const emit = defineEmits<{
   toggleExpanded: [entryId: string]
 }>()
 
+const dataListUi = useDataListUi()
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
+
 const modelValue = defineModel<string | undefined>({
   default: undefined,
 })
@@ -57,12 +65,12 @@ function getTreeIndentStyle(depth: number) {
 </script>
 
 <template>
-  <div v-if="multiple" class="grid gap-0.5">
+  <div v-if="multiple" :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
     <button
       v-for="entry in entries"
       :key="entry.id"
       type="button"
-      class="block w-full"
+      :class="mergeDataListUiClass('block w-full', undefined, ui?.option)"
       @click="emit('toggleEntry', entry.id)"
     >
       <div
@@ -76,34 +84,60 @@ function getTreeIndentStyle(depth: number) {
           <button
             v-if="entry.expandable"
             type="button"
-            class="flex size-4 shrink-0 items-center justify-center text-muted transition-transform"
-            :class="entry.expanded ? 'rotate-90' : ''"
+            :class="
+              mergeDataListUiClass(
+                `flex size-4 shrink-0 items-center justify-center text-muted transition-transform ${entry.expanded ? 'rotate-90' : ''}`,
+                undefined,
+                ui?.optionExpander,
+              )
+            "
             @click.stop="emit('toggleExpanded', entry.id)"
           >
             <UIcon name="i-lucide-chevron-right" class="size-4" />
           </button>
-          <span v-else class="size-4 shrink-0" />
+          <span
+            v-else
+            :class="mergeDataListUiClass('size-4 shrink-0', undefined, ui?.optionSpacer)"
+          />
 
           <UCheckbox
             v-if="entry.selectable || entry.branchSelectable"
             :model-value="entry.indeterminate ? 'indeterminate' : entry.selected"
             color="neutral"
-            size="md"
+            :size="size"
             tabindex="-1"
             :icon="selectedIcon"
-            :ui="{ base: '!rounded-md', indicator: '!rounded-none' }"
+            :ui="{ base: ui?.optionCheckbox }"
           />
-          <span v-else class="size-5 shrink-0" />
+          <span
+            v-else
+            :class="mergeDataListUiClass('size-5 shrink-0', undefined, ui?.optionSpacer)"
+          />
 
-          <UIcon v-if="entry.icon" :name="entry.icon" class="size-4 shrink-0 text-muted" />
+          <UIcon
+            v-if="entry.icon"
+            :name="entry.icon"
+            :class="mergeDataListUiClass('size-4 shrink-0 text-muted', undefined, ui?.optionIcon)"
+          />
 
-          <span class="min-w-0 flex-1" :class="entry.truncate ? 'truncate' : ''">
+          <span
+            :class="
+              mergeDataListUiClass(
+                `min-w-0 flex-1 ${entry.truncate ? 'truncate' : ''}`,
+                undefined,
+                ui?.optionLabel,
+              )
+            "
+          >
             {{ entry.label }}
           </span>
         </div>
 
         <USkeleton v-if="countLoading" class="ml-3 h-3.5 w-6 shrink-0" />
-        <span v-else-if="entry.count != null" class="ml-3 shrink-0 text-muted">
+        <span
+          v-else-if="entry.count != null"
+          :class="mergeDataListUiClass('ml-3 shrink-0 text-muted', undefined, ui?.optionCount)"
+        >
           {{ entry.count }}
         </span>
       </div>
