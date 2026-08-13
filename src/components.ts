@@ -63,13 +63,6 @@ function getPublicComponents(
       filePath: `${runtimeDir}/form/components/provider/FormProvider.vue`,
       global: options.global,
     },
-
-    // Spreadsheet
-    {
-      name: `${prefix}SpreadsheetImport`,
-      filePath: `${runtimeDir}/spreadsheet/components/SpreadsheetImport.vue`,
-      global: options.global,
-    },
   ]
 }
 

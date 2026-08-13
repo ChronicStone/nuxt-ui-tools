@@ -15,7 +15,6 @@
         "motion-v": "2.0.1",
         "nuxt-viewport": "2.4.0",
         "tailwind-merge": "^3.5.0",
-        "xlsx": "0.18.5",
       },
       "devDependencies": {
         "@nuxt/module-builder": "^1.0.2",
@@ -28,6 +27,7 @@
         "typescript": "~5.9.3",
         "vitest": "^4.1.0",
         "vue-tsc": "^3.2.5",
+        "xlsx": "0.18.5",
       },
       "peerDependencies": {
         "@tanstack/vue-query": ">=5.0.0",

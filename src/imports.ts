@@ -62,12 +62,5 @@ export function setupImports(runtimeDir: string) {
       { name: 'useFormApi', from: 'form' },
       { name: 'useFormSubmit', from: 'form' },
     ]),
-
-    // Spreadsheet
-    ...withRuntime(runtimeDir, [
-      { name: 'defineSpreadsheetSchema', from: 'spreadsheet/schema' },
-      { name: 'useSpreadsheetImport', from: 'spreadsheet' },
-      { name: 'createSheetRule', from: 'spreadsheet' },
-    ]),
   ])
 }

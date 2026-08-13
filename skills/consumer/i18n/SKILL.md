@@ -11,13 +11,13 @@ Use this skill for package-consumer tasks involving:
 - custom `ui-tools` locale objects
 - Nuxt UI locale syncing
 - schema-friendly translation keys with `() => t('...')`
-- translating table and spreadsheet package surfaces
+- translating table and form package surfaces
 
 ## Read This Skill With
 
 - `skills/consumer/package/SKILL.md`
 - `skills/consumer/table/SKILL.md`
-- `skills/consumer/spreadsheet/SKILL.md`
+- `skills/consumer/form/SKILL.md`
 
 ## Root Setup
 
@@ -67,7 +67,7 @@ Use the provider locale for package-owned UI such as:
 - table footer labels
 - filter operator labels
 - column panel labels
-- spreadsheet step chrome
+- form action labels and validation messages
 - empty states, built-in buttons, and built-in prompts
 
 That copy belongs to the package and should be translated once through the locale object.
@@ -81,7 +81,7 @@ Use lazy translation values for schema-owned text such as:
 - filter placeholders
 - preset labels and descriptions
 - row action labels
-- spreadsheet step titles or descriptions that come from your scenario
+- form field labels, descriptions, and placeholders
 - option labels you provide from app data
 
 Preferred pattern:
@@ -124,27 +124,19 @@ Instead:
 2. pass lazy text values like `() => t('...')`
 3. let `ui-tools` resolve them at render time
 
-## Spreadsheet Example
+## Form Example
 
 ```ts
 const { t } = useI18n()
 
-const schema = defineSpreadsheetSchema({
-  structure: {
-    title: () => t('imports.structure.title'),
-    description: () => t('imports.structure.description'),
-  },
-  columns: {
-    static: (column) => [
-      column.text('firstName', {
-        label: () => t('imports.columns.firstName'),
-        match: {
-          headers: [t('imports.headers.firstName')],
-        },
-      }),
-    ],
-  },
+const schema = defineFormSchema({
+  fields: [
+    {
+      key: 'firstName',
+      type: 'text',
+      label: () => t('users.fields.firstName.label'),
+      placeholder: () => t('users.fields.firstName.placeholder'),
+    },
+  ],
 })
 ```
-
-Use translation keys for workbook examples too when the demo data itself is part of the visible playground experience.

@@ -7,11 +7,10 @@ Use this reference when the request is broad and you need to know which package 
 Today the main usable package surfaces are:
 
 - table runtime
+- form runtime
 - query-state runtime
 - shared responsive helpers
-- spreadsheet import runtime
-
-The `form` area exists but is not yet a mature consumer-facing surface.
+- i18n runtime
 
 ## Nuxt Module Auto-Imports
 
@@ -20,24 +19,27 @@ When the Nuxt module is installed, the main public functions are auto-imported.
 That includes the primary entrypoints for:
 
 - table schema and table runtime
+- form schema and form runtime
 - query-state
 - shared responsive helpers
-- spreadsheet import
+- i18n
 
 The module also auto-registers the main public components:
 
 - `DataList`
-- `SpreadsheetImport`
+- `Form`
+- `FormProvider`
+- `ToolsProvider`
 
 The configured module prefix still applies, so with the default module options
-those components are available as `UiDataList` and `UiSpreadsheetImport`.
+those components are available as `UiDataList`, `UiForm`, `UiFormProvider`, and `UiToolsProvider`.
 
 ## What To Import
 
 Table usage:
 
 ```ts
-import { DataList, defineTableSchema, useTable } from '#ui-tools/table'
+import { defineTableSchema, useTable } from '#ui-tools/table'
 ```
 
 Query-state usage:
@@ -62,12 +64,18 @@ Responsive shared usage:
 import { useResponsiveValue } from '#ui-tools/shared'
 ```
 
-Spreadsheet usage:
+Form usage:
 
 ```ts
-import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
-import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
+import { defineFormSchema, useForm } from '#ui-tools/form'
 ```
+
+The same domain entrypoints are available as `nuxt-ui-tools/table`,
+`nuxt-ui-tools/form`, `nuxt-ui-tools/query-state`, `nuxt-ui-tools/shared`, and
+`nuxt-ui-tools/i18n` when explicit package imports are preferable.
+
+The spreadsheet import engine remains internal and is intentionally absent from
+the package export map, Nuxt auto-imports, registered components, and consumer skills.
 
 ## How To Route
 
@@ -79,12 +87,15 @@ Use:
   for typed URL/query param state
 - `skills/consumer/shared/SKILL.md`
   for breakpoint-aware shared runtime helpers
-- `skills/consumer/spreadsheet/SKILL.md`
-  for spreadsheet import setup and usage
+- `skills/consumer/form/SKILL.md`
+  for schema-driven forms and provider-owned overlays
+- `skills/consumer/i18n/SKILL.md`
+  for locale wiring and translation-friendly text
 
 ## Which Skill To Open Next
 
 - use `skills/consumer/table/SKILL.md` for data list/table/grid questions
 - use `skills/consumer/query-state/SKILL.md` for URL/query-param state questions
 - use `skills/consumer/shared/SKILL.md` for breakpoint-driven values
-- use `skills/consumer/spreadsheet/SKILL.md` for spreadsheet import questions
+- use `skills/consumer/form/SKILL.md` for form runtime questions
+- use `skills/consumer/i18n/SKILL.md` for locale questions

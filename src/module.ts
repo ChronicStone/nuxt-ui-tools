@@ -4,6 +4,7 @@ import type { ModuleOptions as ViewportOptions } from 'nuxt-viewport'
 
 import { setupComponents } from './components'
 import { setupImports } from './imports'
+import type { FormUiConfig } from './runtime/form/types'
 import type { DataListUiConfig } from './runtime/table/types'
 import { setupTailwindCss } from './tailwindcss'
 
@@ -11,12 +12,14 @@ declare module '@nuxt/schema' {
   interface AppConfigInput {
     nuxtUiTools?: {
       dataList?: DataListUiConfig
+      form?: FormUiConfig
     }
   }
 
   interface AppConfig {
     nuxtUiTools?: {
       dataList?: DataListUiConfig
+      form?: FormUiConfig
     }
   }
 }
@@ -47,6 +50,8 @@ const optimizeDepsInclude = [
   'vue-draggable-plus',
 ] as const
 
+const publicRuntimeDomains = ['form', 'i18n', 'query-state', 'shared', 'table'] as const
+
 export default defineNuxtModule<ModuleOptions>({
   defaults: {
     prefix: 'Ui',
@@ -71,7 +76,8 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    nuxt.options.alias['#ui-tools'] = resolve('./runtime')
+    for (const domain of publicRuntimeDomains)
+      nuxt.options.alias[`#ui-tools/${domain}`] = resolve(`./runtime/${domain}`)
     nuxt.options.vite ??= {}
     nuxt.options.vite.optimizeDeps ??= {}
     nuxt.options.vite.optimizeDeps.include = mergeOptimizeDepsInclude(

@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools
-description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview, shows which surfaces are usable today, and routes you to the right package area for table, form, query-state, shared responsive helpers, or spreadsheet import usage.
+description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview, shows which surfaces are usable today, and routes you to the right package area for table, form, query-state, shared responsive helpers, or i18n usage.
 ---
 
 # nuxt-ui-tools
@@ -19,7 +19,6 @@ The current serious package surfaces are:
 - form runtime
 - query-state runtime
 - shared responsive helpers
-- spreadsheet import runtime
 
 ## Routing
 
@@ -38,10 +37,6 @@ If the task is about typed URL state, query params, codecs, or reusable URL-back
 If the task is about breakpoint-aware values driven by the current viewport, use:
 
 - `skills/consumer/shared/SKILL.md`
-
-If the task is about spreadsheet import flows, schema definition, matching, references, or the `SpreadsheetImport` component, use:
-
-- `skills/consumer/spreadsheet/SKILL.md`
 
 If the task is about package locale wiring, `UiToolsProvider`, or translation-friendly schema text, use:
 
