@@ -1,4 +1,4 @@
-import type { DropdownMenuItem } from '@nuxt/ui'
+import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 
 import type { TableSourceRequestContext } from './source'
 import type {

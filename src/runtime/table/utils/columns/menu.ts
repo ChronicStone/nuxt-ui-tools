@@ -1,3 +1,5 @@
+import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
+
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import type { TableSchemaView } from '../../types'
@@ -12,7 +14,7 @@ export function createColumnMenuItems(options: {
   setPinning: (options: { columnId: string; pinned?: 'left' | 'right' }) => void
   setVisibility: (options: { columnId: string; visible: boolean }) => void
   setSorting: (options: { key: string; dir: 'asc' | 'desc' } | null) => void
-}) {
+}): DropdownMenuItem[][] {
   const { t } = useUiToolsLocale()
   const column = options.orderedColumns.find((entry) => entry.id === options.columnId)
   const schemaColumn = findSchemaColumn({ schema: options.schema, columnId: options.columnId })
@@ -25,7 +27,7 @@ export function createColumnMenuItems(options: {
           {
             label: t('table.columnsMenu.sortAsc'),
             icon: sortState === 'asc' ? 'i-lucide-check' : 'i-lucide-chevron-up',
-            color: 'neutral',
+            color: 'neutral' as const,
             onSelect: () =>
               options.setSorting({
                 key: column.sortableKey as string,
@@ -35,7 +37,7 @@ export function createColumnMenuItems(options: {
           {
             label: t('table.columnsMenu.sortDesc'),
             icon: sortState === 'desc' ? 'i-lucide-check' : 'i-lucide-chevron-down',
-            color: 'neutral',
+            color: 'neutral' as const,
             onSelect: () =>
               options.setSorting({
                 key: column.sortableKey as string,
@@ -47,7 +49,7 @@ export function createColumnMenuItems(options: {
                 {
                   label: t('table.columnsMenu.clearSort'),
                   icon: 'i-lucide-x',
-                  color: 'neutral',
+                  color: 'neutral' as const,
                   onSelect: () => options.setSorting(null),
                 },
               ]
@@ -58,13 +60,13 @@ export function createColumnMenuItems(options: {
       {
         label: t('table.columnsMenu.pinToLeft'),
         icon: pinnedState === 'left' ? 'i-lucide-check' : 'i-lucide-pin',
-        color: 'neutral',
+        color: 'neutral' as const,
         onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'left' }),
       },
       {
         label: t('table.columnsMenu.pinToRight'),
         icon: pinnedState === 'right' ? 'i-lucide-check' : 'i-lucide-pin',
-        color: 'neutral',
+        color: 'neutral' as const,
         onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'right' }),
       },
       ...(pinnedState

@@ -119,10 +119,18 @@ Example:
 behavior: {
   operators: ['is', 'isAnyOf', 'isNot'],
   defaultOperator: 'isAnyOf',
+  defaultValue: ['active'],
   commitMode: 'manual',
   clearOnOperatorChange: true,
 }
 ```
+
+`defaultValue` is an effective filter, not only an editor placeholder. It applies when the URL has no
+override for that definition and stays omitted from the URL while unchanged. Selecting another value
+writes the override, and clearing the filter restores its schema default.
+
+When several filters declare defaults, an explicit URL value overrides only its own definition; the
+other defaults remain active.
 
 Important rule:
 

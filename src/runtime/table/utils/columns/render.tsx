@@ -4,6 +4,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
+import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import type { VNodeChild } from 'vue'
 
@@ -24,14 +25,6 @@ import {
   type TableRuntimeColumn,
   type UseTableColumnsParams,
 } from './types'
-
-type ColumnMenuItem = {
-  label?: string
-  icon?: string
-  color?: string
-  class?: string
-  onSelect?: () => void
-}
 
 type PlainRenderContextCacheState = {
   contextSource: object
@@ -70,7 +63,6 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
                 : false
           }
           color="neutral"
-          ui={{ base: '!rounded-md', indicator: '!rounded-none' }}
         />
       </button>
     ),
@@ -94,7 +86,6 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
         <UCheckbox
           modelValue={options.params.selection.isRowSelected({ rowId: String(row.id) })}
           color="neutral"
-          ui={{ base: '!rounded-md', indicator: '!rounded-none' }}
         />
       </button>
     ),
@@ -127,7 +118,7 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
 export function createDataColumns(options: {
   params: UseTableColumnsParams
   visibleOrderedColumns: TableRuntimeColumn[]
-  getMenuItems: (options: { columnId: string }) => ColumnMenuItem[][]
+  getMenuItems: (options: { columnId: string }) => DropdownMenuItem[][]
   getPinnedState: (options: { columnId: string }) => 'left' | 'right' | null
   getSortState: (options: { columnId: string }) => 'asc' | 'desc' | null
 }) {
@@ -163,6 +154,7 @@ export function createDataColumns(options: {
         }) => (
           <div class="group/column-header relative flex h-full w-full items-center">
             <UDropdownMenu
+              size="sm"
               items={options.getMenuItems({ columnId: runtimeColumn.id })}
               content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
               modal={false}
@@ -411,6 +403,7 @@ function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
         <TableRowScopeProvider scope={scope}>
           <div class="flex justify-end">
             <RowActions
+              size="sm"
               content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
               modal={false}
               portal

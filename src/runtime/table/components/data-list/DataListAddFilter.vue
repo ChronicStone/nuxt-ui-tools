@@ -8,9 +8,15 @@ import { getFilterLabelText } from '../../utils'
 import DynamicFilterPicker from '../filters/shared/DynamicFilterPicker.vue'
 
 const internals = useTableInternals()
-const props = defineProps<{ size?: DataListControlSize; ui?: DataListAddFilterUi }>()
+const props = defineProps<{
+  size?: DataListControlSize
+  ui?: DataListAddFilterUi
+}>()
 const dataListUi = useDataListUi()
 const definitions = computed(() => internals.filterPresentation.dormantDynamicDefinitions.value)
+const sessionDefinition = computed(
+  () => internals.filterPresentation.dynamicSessionDefinition.value,
+)
 const resolvedSize = computed(
   () => props.size ?? dataListUi.ui.value.addFilter?.size ?? dataListUi.controlSize.value,
 )
@@ -26,12 +32,14 @@ function getLabel(definition: TableUiFilterDefinition) {
 
 <template>
   <DynamicFilterPicker
-    v-if="definitions.length"
+    v-if="definitions.length || sessionDefinition"
     :definitions="definitions"
+    :session-definition="sessionDefinition"
     :get-label="getLabel"
     :size="resolvedSize"
     :ui="resolvedUi"
     @select="internals.filterPresentation.activateDynamicFilter({ key: $event })"
+    @release="internals.filterPresentation.releaseDynamicSession({ key: $event })"
   >
     <template v-if="$slots.trigger" #trigger="scope">
       <slot name="trigger" v-bind="scope" />

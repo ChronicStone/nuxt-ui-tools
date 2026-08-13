@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import type { TableResolvedFilterOptionEntry } from '../../../types'
+import { computed } from 'vue'
+
+import { useDataListUi } from '../../../composables/use-data-list-ui'
+import type {
+  DataListControlSize,
+  DataListFilterEditorUi,
+  TableResolvedFilterOptionEntry,
+} from '../../../types'
+import { mergeDataListUiClass } from '../../../utils'
 import FilterOptionRow from './FilterOptionRow.vue'
 
 interface FilterOptionMultipleListSection {
@@ -14,6 +22,8 @@ const props = defineProps<{
   countLoading: boolean
   selectedIcon?: string
   truncate?: boolean
+  size?: DataListControlSize
+  ui?: DataListFilterEditorUi
 }>()
 
 const emit = defineEmits<{
@@ -26,14 +36,17 @@ const emit = defineEmits<{
     },
   ]
 }>()
+
+const dataListUi = useDataListUi()
+const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
 </script>
 
 <template>
-  <div class="grid gap-0.5">
+  <div :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
     <template v-for="section in props.sections" :key="section.key">
       <div
         v-if="section.dividerBefore && section.entries.length"
-        class="my-1 border-t border-default"
+        :class="mergeDataListUiClass('my-1 border-t border-default', undefined, ui?.listDivider)"
       />
 
       <button
@@ -51,6 +64,8 @@ const emit = defineEmits<{
           :leading-icon="entry.icon"
           :selected-icon="props.selectedIcon"
           :truncate="props.truncate"
+          :size="props.size"
+          :ui="props.ui"
         />
       </button>
     </template>

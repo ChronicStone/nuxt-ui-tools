@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import UButton from '@nuxt/ui/components/Button.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
@@ -34,6 +36,9 @@ const loading = computed(
 )
 const error = computed(() => (rows.value.length ? null : internals.queryContent.error.value))
 const empty = computed(() => !loading.value && !error.value && rows.value.length === 0)
+const hasActiveQuery = computed(
+  () => internals.filters.hasActiveSearch.value || internals.filters.hasActiveUiFilters.value,
+)
 const refreshing = computed(
   () =>
     rows.value.length > 0 &&
@@ -57,6 +62,11 @@ const shellClass = computed(() =>
 
 function refresh() {
   void internals.queryContent.refreshData()()
+}
+
+function clearQuery() {
+  internals.filters.searchQuery.value = ''
+  internals.filters.clearAllFilters()
 }
 
 watch(
@@ -105,31 +115,61 @@ watch(
           )
         "
       >
-        <div :class="mergeDataListUiClass('grid max-w-sm gap-3', rootUi?.errorBody, ui?.errorBody)">
-          <div
+        <div
+          :class="
+            mergeDataListUiClass(
+              'flex max-w-md items-start gap-3 text-left',
+              rootUi?.errorBody,
+              ui?.errorBody,
+            )
+          "
+        >
+          <span
             :class="
               mergeDataListUiClass(
-                'font-medium text-highlighted',
-                rootUi?.errorTitle,
-                ui?.errorTitle,
+                'grid size-9 shrink-0 place-items-center rounded-md bg-error/10 text-error',
+                rootUi?.errorIcon,
+                ui?.errorIcon,
               )
             "
           >
-            {{ t('table.states.gridError.title') }}
+            <UIcon name="i-lucide-cloud-alert" class="size-4" />
+          </span>
+          <div :class="mergeDataListUiClass('min-w-0 flex-1', rootUi?.errorCopy, ui?.errorCopy)">
+            <div
+              :class="
+                mergeDataListUiClass(
+                  'font-medium text-highlighted',
+                  rootUi?.errorTitle,
+                  ui?.errorTitle,
+                )
+              "
+            >
+              {{ t('table.states.gridError.title') }}
+            </div>
+            <p
+              :class="
+                mergeDataListUiClass(
+                  'mt-0.5 text-sm leading-5 text-muted',
+                  rootUi?.errorDescription,
+                  ui?.errorDescription,
+                )
+              "
+            >
+              {{ t('table.states.gridError.description') }}
+            </p>
+            <UButton
+              color="neutral"
+              variant="soft"
+              size="sm"
+              icon="i-lucide-refresh-cw"
+              class="mt-3"
+              :ui="{ base: mergeDataListUiClass(rootUi?.retry, ui?.retry) }"
+              @click="refresh"
+            >
+              {{ t('table.states.gridError.action') }}
+            </UButton>
           </div>
-          <button
-            type="button"
-            :class="
-              mergeDataListUiClass(
-                'mx-auto rounded-md border border-default px-3 py-1.5 text-sm text-default hover:bg-elevated',
-                rootUi?.retry,
-                ui?.retry,
-              )
-            "
-            @click="refresh"
-          >
-            {{ t('table.states.gridError.action') }}
-          </button>
         </div>
       </div>
     </slot>
@@ -138,6 +178,8 @@ watch(
       name="empty"
       :layout="internals.controls.tableLayout.value"
       :refresh="refresh"
+      :has-active-query="hasActiveQuery"
+      :clear-query="clearQuery"
     />
     <slot
       v-else
@@ -162,7 +204,13 @@ watch(
           <DataListTable>
             <template #empty>
               <slot name="empty-table">
-                <slot name="empty" :layout="'table'" :refresh="refresh" />
+                <slot
+                  name="empty"
+                  :layout="'table'"
+                  :refresh="refresh"
+                  :has-active-query="hasActiveQuery"
+                  :clear-query="clearQuery"
+                />
               </slot>
             </template>
           </DataListTable>
@@ -171,7 +219,13 @@ watch(
           <DataListGrid>
             <template #empty>
               <slot name="empty-grid">
-                <slot name="empty" :layout="'grid'" :refresh="refresh" />
+                <slot
+                  name="empty"
+                  :layout="'grid'"
+                  :refresh="refresh"
+                  :has-active-query="hasActiveQuery"
+                  :clear-query="clearQuery"
+                />
               </slot>
             </template>
           </DataListGrid>

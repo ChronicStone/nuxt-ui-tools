@@ -2,6 +2,7 @@
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 
 import type { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
+import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
 import FilterOptionMultipleList from './FilterOptionMultipleList.vue'
 import FilterOptionSingleList from './FilterOptionSingleList.vue'
 import FilterOptionTreeContent from './FilterOptionTreeContent.vue'
@@ -16,6 +17,8 @@ interface FilterOptionMultipleListSection {
 const props = defineProps<{
   state: ReturnType<typeof useOptionFilterEditorState>
   sections?: FilterOptionMultipleListSection[]
+  size?: DataListControlSize
+  ui?: DataListFilterEditorUi
 }>()
 
 const searchQuery = defineModel<string>('searchQuery', {
@@ -72,6 +75,8 @@ function handleSelect(options: {
       !props.state.visibleTreeEntries.value.length
     "
     :empty-label="props.state.filterUi.value.labels.empty"
+    :size="props.size"
+    :ui="props.ui"
   >
     <template v-if="props.state.filterUi.value.presentation === 'tree'">
       <template v-if="props.state.optionSource.isLoading.value">
@@ -94,6 +99,8 @@ function handleSelect(options: {
           props.state.filterUi.value.row.showCounts && props.state.optionSource.isCountLoading.value
         "
         :selected-icon="props.state.filterUi.value.row.selectedIcon"
+        :size="props.size"
+        :ui="props.ui"
         @toggle-entry="emit('toggleTreeEntry', $event)"
         @toggle-expanded="emit('toggleExpanded', $event)"
       />
@@ -119,6 +126,8 @@ function handleSelect(options: {
         :count-loading="props.state.optionSource.isCountLoading.value"
         :selected-icon="props.state.filterUi.value.row.selectedIcon"
         :truncate="props.state.filterUi.value.row.truncate"
+        :size="props.size"
+        :ui="props.ui"
         @select="handleSelect($event)"
       />
     </template>
@@ -141,6 +150,8 @@ function handleSelect(options: {
         :count-loading="
           props.state.filterUi.value.row.showCounts && props.state.optionSource.isCountLoading.value
         "
+        :size="props.size"
+        :ui="props.ui"
       />
     </template>
   </FilterSearchablePanel>

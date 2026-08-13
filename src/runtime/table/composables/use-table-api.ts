@@ -9,7 +9,7 @@ import type {
   TablePaginationApi,
   TableSchemaView,
 } from '../types'
-import { getDefaultSort, mapPublicQueryState } from '../utils'
+import { getDefaultSort, mapPublicQueryState, resolveTableFilterDefaultRules } from '../utils'
 import type { useTableColumns } from './use-table-columns'
 import type { useTableControls } from './use-table-controls'
 import type { UseTableDataReturn } from './use-table-data'
@@ -125,7 +125,7 @@ export function useTableApi<TSchema = TableSchemaView>(
       params.columns.setSorting(defaultSort)
       params.state.queryState.filters.value = {
         search: '',
-        ui: [],
+        ui: resolveTableFilterDefaultRules(params.runtimeSchema.value.filters?.ui ?? []),
       }
     },
     all() {

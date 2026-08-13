@@ -15,7 +15,6 @@ export interface UseTableFilterPresentationParams {
 
 export function useTableFilterPresentation(options: UseTableFilterPresentationParams) {
   const dynamicSessionKey = ref<string | null>(null)
-  const dynamicActivationToken = ref<Record<string, number>>({})
   const panelOpen = ref<boolean>(false)
   const panelDraftFilters = ref<TableQueryStateFilterRule[]>([])
 
@@ -113,10 +112,6 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
   function activateDynamicFilter(input: { key: string }) {
     dynamicSessionKey.value = input.key
-    dynamicActivationToken.value = {
-      ...dynamicActivationToken.value,
-      [input.key]: (dynamicActivationToken.value[input.key] ?? 0) + 1,
-    }
   }
 
   function releaseDynamicSession(input: { key: string }) {
@@ -234,10 +229,6 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     panelDraftFilters.value = panelDraftFilters.value.filter((rule) => rule.key !== input.key)
   }
 
-  function getDynamicActivationToken(input: { key: string }) {
-    return dynamicActivationToken.value[input.key] ?? 0
-  }
-
   function isPanelKey(key: string) {
     return panelDefinitions.value.some((definition) => definition.key === key)
   }
@@ -262,7 +253,6 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     panelOpen,
     activateDynamicFilter,
     releaseDynamicSession,
-    getDynamicActivationToken,
     openPanel,
     closePanel,
     resetPanelDraft,

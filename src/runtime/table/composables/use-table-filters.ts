@@ -1,5 +1,7 @@
 import { computed, type ComputedRef } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type {
   TableFilterOptionEntry,
   TableFilterOperator,
@@ -14,7 +16,8 @@ import {
   createFilterValueForOperator,
   flattenFilterOptionEntries,
   getFilterLabelText,
-  getFilterOperatorLabel,
+  mergeTableFilterDefaultRules,
+  resolveTableFilterDefaultRules,
   resolveFilterOptionEntries,
 } from '../utils'
 import type { UseTableDataReturn } from './use-table-data'
@@ -28,6 +31,7 @@ export interface UseTableFiltersParams {
 }
 
 export function useTableFilters(params: UseTableFiltersParams) {
+  const { t } = useUiToolsLocale()
   const search = useTableSearch({
     schema: params.schema,
     queryState: params.state.queryState,
@@ -38,6 +42,9 @@ export function useTableFilters(params: UseTableFiltersParams) {
   )
   const activeUiFilters = computed<TableQueryStateFilterRule[]>(
     () => params.state.queryState.filters.value.ui ?? [],
+  )
+  const defaultUiFilters = computed<TableQueryStateFilterRule[]>(() =>
+    resolveTableFilterDefaultRules(definitions.value),
   )
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
 
@@ -124,9 +131,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
   function getFilterOperatorOptions(input: { key: string }) {
     return getFilterOperators(input.key).map((operator) => ({
       value: operator,
-      label: getFilterOperatorLabel({
-        operator,
-      }),
+      label: t(`table.filters.operators.${operator}`),
     }))
   }
 
@@ -267,10 +272,15 @@ export function useTableFilters(params: UseTableFiltersParams) {
   }
 
   function removeFilter(key: string) {
+    const defaultRule = defaultUiFilters.value.find((filter) => filter.key === key)
+
     params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
-      ui: params.state.queryState.filters.value.ui.filter((filter) => filter.key !== key),
+      ui: [
+        ...params.state.queryState.filters.value.ui.filter((filter) => filter.key !== key),
+        ...(defaultRule ? [defaultRule] : []),
+      ],
     }
   }
 
@@ -278,7 +288,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
     params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
-      ui: [],
+      ui: defaultUiFilters.value,
     }
   }
 
@@ -286,7 +296,10 @@ export function useTableFilters(params: UseTableFiltersParams) {
     params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
-      ui: [...input.rules],
+      ui: mergeTableFilterDefaultRules({
+        rules: input.rules,
+        definitions: definitions.value,
+      }),
     }
   }
 

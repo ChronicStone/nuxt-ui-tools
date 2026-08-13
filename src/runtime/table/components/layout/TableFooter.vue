@@ -83,6 +83,7 @@ function formatCount(value: number) {
           <span>{{ t('table.footer.rowsPerPage') }}</span>
 
           <UDropdownMenu
+            :size="controlSize"
             :items="pageSizeItems"
             :content="{ align: 'end', side: 'top', sideOffset: 10 }"
           >

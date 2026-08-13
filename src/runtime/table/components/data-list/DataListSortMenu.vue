@@ -33,6 +33,12 @@ const sortLabels = computed(() => {
   return labels
 })
 const activeKey = computed(() => internals.tableColumns.sortingState.value.key)
+const activeDirection = computed(() => internals.tableColumns.sortingState.value.dir)
+const directionIcon = computed(() =>
+  activeDirection.value === 'asc'
+    ? 'i-lucide-arrow-up-narrow-wide'
+    : 'i-lucide-arrow-down-wide-narrow',
+)
 const sortKeys = computed(() => [
   ...new Set([
     ...internals.tableColumns.sortKeys.value,
@@ -75,6 +81,7 @@ function humanize(value: string) {
 
 <template>
   <UDropdownMenu
+    :size="resolvedSize"
     :items="items"
     :content="{ align: 'end', sideOffset: 8 }"
     :ui="{
@@ -98,6 +105,7 @@ function humanize(value: string) {
         variant="outline"
         :size="resolvedSize"
         :label="`${label ?? t('table.controls.sort')}${activeLabel ? `: ${activeLabel}` : ''}`"
+        :icon="directionIcon"
         trailing-icon="i-lucide-chevron-down"
         :ui="{
           base: resolvedUi.trigger,

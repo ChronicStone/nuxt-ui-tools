@@ -3,6 +3,11 @@ import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
+import { computed } from 'vue'
+
+import { useDataListUi } from '../../../composables/use-data-list-ui'
+import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
+import { mergeDataListUiClass, resolveFilterEditorSizeClasses } from '../../../utils'
 
 type TreeEntry = {
   id: string
@@ -20,7 +25,7 @@ type TreeEntry = {
   truncate?: boolean
 }
 
-defineProps<{
+const props = defineProps<{
   entries: TreeEntry[]
   items: Array<{
     id: string
@@ -38,12 +43,21 @@ defineProps<{
   multiple: boolean
   countLoading: boolean
   selectedIcon?: string
+  size?: DataListControlSize
+  ui?: DataListFilterEditorUi
 }>()
 
 const emit = defineEmits<{
   toggleEntry: [entryId: string]
   toggleExpanded: [entryId: string]
 }>()
+
+const dataListUi = useDataListUi()
+const size = computed(
+  () => props.size ?? dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value,
+)
+const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 
 const modelValue = defineModel<string | undefined>({
   default: undefined,
@@ -57,7 +71,7 @@ function getTreeIndentStyle(depth: number) {
 </script>
 
 <template>
-  <div v-if="multiple" class="grid gap-0.5">
+  <div v-if="multiple" :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
     <button
       v-for="entry in entries"
       :key="entry.id"
@@ -66,44 +80,81 @@ function getTreeIndentStyle(depth: number) {
       @click="emit('toggleEntry', entry.id)"
     >
       <div
-        class="flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-elevated"
-        :class="entry.selected ? 'bg-elevated text-highlighted' : 'text-default'"
+        :class="
+          mergeDataListUiClass(
+            `flex items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
+            undefined,
+            ui?.option,
+          )
+        "
       >
         <div
-          class="flex min-w-0 flex-1 items-center gap-3"
+          class="flex min-w-0 flex-1 items-center gap-2"
           :style="getTreeIndentStyle(entry.depth)"
         >
           <button
             v-if="entry.expandable"
             type="button"
-            class="flex size-4 shrink-0 items-center justify-center text-muted transition-transform"
-            :class="entry.expanded ? 'rotate-90' : ''"
+            :class="
+              mergeDataListUiClass(
+                `flex size-4 shrink-0 items-center justify-center text-muted transition-transform ${entry.expanded ? 'rotate-90' : ''}`,
+                undefined,
+                ui?.optionExpander,
+              )
+            "
             @click.stop="emit('toggleExpanded', entry.id)"
           >
             <UIcon name="i-lucide-chevron-right" class="size-4" />
           </button>
-          <span v-else class="size-4 shrink-0" />
+          <span
+            v-else
+            :class="mergeDataListUiClass('size-4 shrink-0', undefined, ui?.optionSpacer)"
+          />
 
           <UCheckbox
             v-if="entry.selectable || entry.branchSelectable"
             :model-value="entry.indeterminate ? 'indeterminate' : entry.selected"
             color="neutral"
-            size="md"
+            :size="size"
             tabindex="-1"
             :icon="selectedIcon"
-            :ui="{ base: '!rounded-md', indicator: '!rounded-none' }"
+            :ui="{ base: ui?.optionCheckbox }"
           />
-          <span v-else class="size-5 shrink-0" />
+          <span
+            v-else
+            :class="mergeDataListUiClass('size-5 shrink-0', undefined, ui?.optionSpacer)"
+          />
 
-          <UIcon v-if="entry.icon" :name="entry.icon" class="size-4 shrink-0 text-muted" />
+          <UIcon
+            v-if="entry.icon"
+            :name="entry.icon"
+            :class="
+              mergeDataListUiClass(
+                `${sizeClasses.optionIcon} shrink-0 text-muted`,
+                undefined,
+                ui?.optionIcon,
+              )
+            "
+          />
 
-          <span class="min-w-0 flex-1" :class="entry.truncate ? 'truncate' : ''">
+          <span
+            :class="
+              mergeDataListUiClass(
+                `min-w-0 flex-1 ${sizeClasses.optionLabel} ${entry.truncate ? 'truncate' : ''}`,
+                undefined,
+                ui?.optionLabel,
+              )
+            "
+          >
             {{ entry.label }}
           </span>
         </div>
 
         <USkeleton v-if="countLoading" class="ml-3 h-3.5 w-6 shrink-0" />
-        <span v-else-if="entry.count != null" class="ml-3 shrink-0 text-muted">
+        <span
+          v-else-if="entry.count != null"
+          :class="mergeDataListUiClass('ml-3 shrink-0 text-muted', undefined, ui?.optionCount)"
+        >
           {{ entry.count }}
         </span>
       </div>
@@ -116,14 +167,23 @@ function getTreeIndentStyle(depth: number) {
     :items="items"
     color="neutral"
     variant="list"
+    :size="size"
     :ui="{
       root: 'w-full',
-      fieldset: 'grid gap-0.5',
-      item: 'flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated',
-      container: 'self-center pl-3',
+      fieldset: mergeDataListUiClass('grid gap-0.5', undefined, ui?.list),
+      item: mergeDataListUiClass(
+        `flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
+        undefined,
+        ui?.option,
+      ),
+      container: 'self-center',
       base: 'cursor-pointer',
-      wrapper: 'min-w-0 flex-1 py-2 pr-3',
-      label: 'w-full cursor-pointer text-sm text-default',
+      wrapper: 'min-w-0 flex-1',
+      label: mergeDataListUiClass(
+        `w-full cursor-pointer text-default ${sizeClasses.optionLabel}`,
+        undefined,
+        ui?.optionLabel,
+      ),
     }"
   >
     <template #label="{ item }">

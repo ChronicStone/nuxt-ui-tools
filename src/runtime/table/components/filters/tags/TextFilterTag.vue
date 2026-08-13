@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
-import UPopover from '@nuxt/ui/components/Popover.vue'
-import { computed, ref, toRef } from 'vue'
+import { computed, ref } from 'vue'
 
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -11,14 +11,18 @@ import type {
   TableTextFilterDefinition,
   TableTextFilterOperator,
 } from '../../../types'
-import { resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
+import { mergeDataListUiClass, resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
+import FilterMatchModePanel from '../shared/FilterMatchModePanel.vue'
+import FilterPopoverShell from '../shared/FilterPopoverShell.vue'
+import FilterStageTransition from '../shared/FilterStageTransition.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableTextFilterDefinition
   dynamic?: boolean
   session?: boolean
-  activationToken?: number
+  embedded?: boolean
+  initialOperator?: TableFilterOperator
 }>()
 const emit = defineEmits<{
   dismiss: []
@@ -26,8 +30,14 @@ const emit = defineEmits<{
 }>()
 
 const internals = useTableInternals()
-const pendingOperator = ref<TableFilterOperator>()
+const dataListUi = useDataListUi()
+const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
 const localValue = ref<string>('')
+const stage = ref<'editor' | 'match-mode'>('editor')
+const stageDirection = ref<'forward' | 'backward'>('forward')
+const stageTransitioning = ref<boolean>(false)
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
@@ -62,16 +72,17 @@ const operatorItems = computed(() =>
 const filterUi = computed(() => resolveTextFilterUi(props.definition, operator.value))
 
 function initLocalState() {
-  const value = internals.filters.getFilterState({ key: props.definition.key })?.value
+  const value = internals.filters.getFilterState({
+    key: props.definition.key,
+  })?.value
   localValue.value = value == null ? '' : String(value)
 }
 
 const session = useFilterTagSession({
-  activationToken: toRef(props, 'activationToken'),
   session: props.session,
   dynamic: props.dynamic,
+  embedded: props.embedded,
   hasCommittedState: () => internals.filters.getFilterState({ key: props.definition.key }) != null,
-  onActivated: () => handleActivate(operator.value),
   onOpen: initLocalState,
   onClose: () => {
     pendingOperator.value = undefined
@@ -82,7 +93,16 @@ const session = useFilterTagSession({
 
 function handleActivate(op: TableFilterOperator) {
   pendingOperator.value = op
-  session.openWithLock()
+  stage.value = 'editor'
+  stageDirection.value = 'backward'
+  session.open()
+}
+
+function handleRequestMatchMode() {
+  stageDirection.value = 'forward'
+  stageTransitioning.value = true
+  stage.value = 'match-mode'
+  session.open()
 }
 
 function applyFilter() {
@@ -103,12 +123,11 @@ function clearFilter() {
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
-  if (filterUi.value.clearOnOperatorChange) {
-    internals.filters.clearFilter({ key: props.definition.key })
-  }
   localValue.value = ''
-  if (filterUi.value.reopenOnOperatorChange) handleActivate(op)
-  else pendingOperator.value = op
+  pendingOperator.value = op
+  stageDirection.value = 'forward'
+  stageTransitioning.value = true
+  stage.value = 'editor'
 }
 
 function handleValueUpdate(value: string | number | undefined) {
@@ -125,13 +144,14 @@ function handleValueUpdate(value: string | number | undefined) {
 </script>
 
 <template>
-  <UPopover
+  <FilterPopoverShell
     :open="session.isOpen.value"
-    :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{
-      content: 'w-fit overflow-hidden p-0 shadow-none',
-    }"
-    @update:open="session.handleOpenChange"
+    :embedded="embedded"
+    :transitioning="stageTransitioning"
+    :content-class="
+      mergeDataListUiClass('w-fit overflow-hidden p-0', undefined, dataListFilterUi?.popoverContent)
+    "
+    @update-open="session.handleOpenChange"
   >
     <slot
       name="trigger"
@@ -147,55 +167,99 @@ function handleValueUpdate(value: string | number | undefined) {
       <TableFilterTrigger
         :label="internals.filters.getFilterLabelText({ label: definition.label })"
         :leading-icon="resolveFilterTriggerIcon(definition)"
+        :operator="operator"
         :operator-label="operatorLabel"
         :operator-items="operatorItems"
         :preview-summary="preview.summary"
         :active="preview.active"
-        @select-operator="handleOperatorChange"
         @activate="handleActivate"
+        @request-match-mode="handleRequestMatchMode"
         @clear="clearFilter"
       />
     </slot>
 
     <template #content>
-      <div class="w-fit max-w-[calc(100vw-1rem)] bg-default">
-        <div class="border-b border-default p-2">
-          <UInput
-            :model-value="localValue"
-            :type="filterUi.inputType"
-            :icon="filterUi.leadingIcon"
-            :placeholder="filterUi.placeholder"
-            :autocomplete="filterUi.autocomplete"
-            :autofocus="filterUi.input.autofocus"
-            :highlight="filterUi.input.highlight"
-            :fixed="filterUi.input.fixed"
-            class="w-[min(13rem,calc(100vw-3rem))] max-w-full"
-            :ui="{ base: 'rounded-md' }"
-            @update:model-value="handleValueUpdate"
-            @keydown.enter.prevent="applyFilter"
-          />
-        </div>
-
+      <FilterStageTransition
+        :stage-key="stage"
+        :direction="stageDirection"
+        @settled="stageTransitioning = false"
+      >
+        <FilterMatchModePanel
+          v-if="stage === 'match-mode'"
+          :items="operatorItems"
+          :selected="operator"
+          :size="size"
+          :ui="dataListFilterUi"
+          @select="handleOperatorChange"
+        />
         <div
-          v-if="filterUi.commitMode === 'manual'"
-          class="flex items-center justify-between border-t border-default p-2"
+          v-else
+          :class="
+            mergeDataListUiClass(
+              'w-fit max-w-[calc(100vw-1rem)] bg-default',
+              undefined,
+              dataListFilterUi?.editor,
+            )
+          "
         >
-          <UButton
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            :label="filterUi.actions.clear"
-            @click="clearFilter"
-          />
-          <UButton
-            color="neutral"
-            variant="subtle"
-            size="sm"
-            :label="filterUi.actions.apply"
-            @click="applyFilter"
-          />
+          <div
+            :class="
+              mergeDataListUiClass(
+                'border-b border-default p-2',
+                undefined,
+                dataListFilterUi?.inputs,
+              )
+            "
+          >
+            <UInput
+              :model-value="localValue"
+              :type="filterUi.inputType"
+              :icon="filterUi.leadingIcon"
+              :placeholder="filterUi.placeholder"
+              :autocomplete="filterUi.autocomplete"
+              :autofocus="filterUi.input.autofocus"
+              :highlight="filterUi.input.highlight"
+              :fixed="filterUi.input.fixed"
+              :size="size"
+              class="w-[min(13rem,calc(100vw-3rem))] max-w-full"
+              :ui="{
+                root: dataListFilterUi?.search,
+                base: dataListFilterUi?.searchInput,
+              }"
+              @update:model-value="handleValueUpdate"
+              @keydown.enter.prevent="applyFilter"
+            />
+          </div>
+
+          <div
+            v-if="filterUi.commitMode === 'manual'"
+            :class="
+              mergeDataListUiClass(
+                'flex items-center justify-between border-t border-default p-2',
+                undefined,
+                dataListFilterUi?.footer,
+              )
+            "
+          >
+            <UButton
+              color="neutral"
+              variant="ghost"
+              :size="size"
+              :label="filterUi.actions.clear"
+              :ui="{ base: dataListFilterUi?.clear }"
+              @click="clearFilter"
+            />
+            <UButton
+              color="neutral"
+              variant="subtle"
+              :size="size"
+              :label="filterUi.actions.apply"
+              :ui="{ base: dataListFilterUi?.apply }"
+              @click="applyFilter"
+            />
+          </div>
         </div>
-      </div>
+      </FilterStageTransition>
     </template>
-  </UPopover>
+  </FilterPopoverShell>
 </template>

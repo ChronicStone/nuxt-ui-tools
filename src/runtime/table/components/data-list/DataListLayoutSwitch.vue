@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
+import UTooltip from '@nuxt/ui/components/Tooltip.vue'
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
@@ -45,24 +46,29 @@ function setLayout(layout: TableLayout) {
       :size="resolvedSize"
       :class="resolvedUi.root"
     >
-      <UButton
+      <UTooltip
         v-for="layout in order"
         :key="layout"
-        color="neutral"
-        :variant="internals.controls.tableLayout.value === layout ? 'subtle' : 'outline'"
-        :size="resolvedSize"
-        :icon="layout === 'table' ? 'i-lucide-table-properties' : 'i-lucide-layout-grid'"
-        :label="labels ? (layout === 'table' ? 'Table' : 'Grid') : undefined"
-        :aria-label="layout === 'table' ? t('table.header.tableView') : t('table.header.gridView')"
-        :title="layout === 'table' ? t('table.header.tableView') : t('table.header.gridView')"
-        :ui="{
-          base: resolvedUi.trigger,
-          label: resolvedUi.triggerLabel,
-          leadingIcon: resolvedUi.triggerLeadingIcon,
-          trailingIcon: resolvedUi.triggerTrailingIcon,
-        }"
-        @click="setLayout(layout)"
-      />
+        :text="layout === 'table' ? t('table.header.tableView') : t('table.header.gridView')"
+      >
+        <UButton
+          color="neutral"
+          :variant="internals.controls.tableLayout.value === layout ? 'subtle' : 'outline'"
+          :size="resolvedSize"
+          :icon="layout === 'table' ? 'i-lucide-table-properties' : 'i-lucide-layout-grid'"
+          :label="labels ? (layout === 'table' ? 'Table' : 'Grid') : undefined"
+          :aria-label="
+            layout === 'table' ? t('table.header.tableView') : t('table.header.gridView')
+          "
+          :ui="{
+            base: resolvedUi.trigger,
+            label: resolvedUi.triggerLabel,
+            leadingIcon: resolvedUi.triggerLeadingIcon,
+            trailingIcon: resolvedUi.triggerTrailingIcon,
+          }"
+          @click="setLayout(layout)"
+        />
+      </UTooltip>
     </UFieldGroup>
   </slot>
 </template>

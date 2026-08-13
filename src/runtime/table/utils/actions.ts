@@ -1,4 +1,4 @@
-import type { DropdownMenuItem } from '@nuxt/ui'
+import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 
 import type { TableInjectedRowActionScope } from '../composables/use-table-row-actions'
 import type { GenericObject, TableRowAction, TableSchemaView } from '../types'
