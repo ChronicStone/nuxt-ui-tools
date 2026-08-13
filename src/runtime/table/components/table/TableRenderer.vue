@@ -137,9 +137,12 @@ watch(tableEmpty, (isEmpty) => {
       "
     >
       <template #empty>
-        <slot name="empty">
-          <div />
-        </slot>
+        <template v-if="tableEmpty">
+          <slot name="empty">
+            <div />
+          </slot>
+        </template>
+        <div v-else />
       </template>
     </UTable>
 
