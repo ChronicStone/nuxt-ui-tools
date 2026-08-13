@@ -61,18 +61,29 @@ export interface FormSyncResource<TValue> {
   value: TValue
 }
 
+type FormFunctionResult<TValue> = TValue extends (...params: infer _TParams) => infer TResult
+  ? TResult
+  : never
+
+type FormQuerySelectedValue<TValue> = TValue extends { select?: infer TSelect }
+  ? FormFunctionResult<Exclude<TSelect, undefined>>
+  : never
+
+type FormQueryFunctionValue<TValue> = TValue extends { queryFn?: infer TQueryFn }
+  ? Awaited<FormFunctionResult<Exclude<TQueryFn, undefined>>>
+  : never
+
+type FormQueryResource<TValue, TQueryKey> = [FormQuerySelectedValue<TValue>] extends [never]
+  ? TQueryKey extends DataTag<QueryKey, infer TResolved, infer TError>
+    ? FormAsyncResource<TResolved, TError>
+    : FormAsyncResource<FormQueryFunctionValue<TValue>>
+  : FormAsyncResource<FormQuerySelectedValue<TValue>>
+
 /**
  * Converts a raw context source return value into the resource exposed as `ctx`.
  */
-export type FormContextResource<TValue> =
-  TValue extends Promise<infer TResolved>
-    ? FormAsyncResource<TResolved>
-    : TValue extends { queryKey: infer TQueryKey }
-      ? TQueryKey extends DataTag<QueryKey, infer TResolved, infer TError>
-        ? FormAsyncResource<TResolved, TError>
-        : TValue extends { queryFn: (...args: readonly unknown[]) => Promise<infer TResolved> }
-          ? FormAsyncResource<TResolved>
-          : TValue extends { queryFn: (...args: readonly unknown[]) => infer TResolved }
-            ? FormAsyncResource<Awaited<TResolved>>
-            : FormAsyncResource<unknown>
-      : FormSyncResource<TValue>
+export type FormContextResource<TValue> = [TValue] extends [Promise<infer TResolved>]
+  ? FormAsyncResource<TResolved>
+  : [TValue] extends [{ queryKey: infer TQueryKey }]
+    ? FormQueryResource<TValue, TQueryKey>
+    : FormSyncResource<TValue>

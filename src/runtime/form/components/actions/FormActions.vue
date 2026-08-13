@@ -3,14 +3,17 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import { computed } from 'vue'
 
 import { getResponsiveValue } from '../../../shared/composables/use-responsive-value'
+import { useFormUi } from '../../composables/use-form-ui'
 import type { FormAction, FormActionContext, FormActionKey, FormRuntime } from '../../types'
 import { createPublicFormApi } from '../../utils/api'
 import { resolveFormText } from '../../utils/text'
+import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<{
   runtime: FormRuntime
   actions: readonly FormAction[]
 }>()
+const formUi = useFormUi()
 
 const emit = defineEmits<{
   submit: []
@@ -108,9 +111,11 @@ function resolveActionVariant(action: FormAction) {
 }
 
 function actionButtonClass(action: FormAction) {
-  return [action.class, resolveActionWidth(action) === 'fill' ? 'flex-1' : '']
-    .filter(Boolean)
-    .join(' ')
+  return mergeFormUiClass(
+    resolveActionWidth(action) === 'fill' ? 'flex-1' : undefined,
+    formUi.ui.value.actions?.ui?.button,
+    action.class,
+  )
 }
 
 function isBuiltInAction(action: FormAction, key: FormActionKey) {
@@ -129,10 +134,22 @@ function isBuiltInActionKey(value: unknown): value is FormActionKey {
 </script>
 
 <template>
-  <div class="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div
+    :class="
+      mergeFormUiClass(
+        'flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
+        formUi.ui.value.actions?.ui?.root,
+      )
+    "
+  >
     <div
       v-if="actionsLeft.length"
-      class="flex min-w-0 flex-1 flex-wrap items-center justify-start gap-4"
+      :class="
+        mergeFormUiClass(
+          'flex min-w-0 flex-1 flex-wrap items-center justify-start gap-2',
+          formUi.ui.value.actions?.ui?.left,
+        )
+      "
     >
       <UButton
         v-for="(action, index) in actionsLeft"
@@ -144,7 +161,7 @@ function isBuiltInActionKey(value: unknown): value is FormActionKey {
         :trailing-icon="action.trailingIcon === false ? undefined : action.trailingIcon"
         :color="resolveActionColor(action)"
         :variant="resolveActionVariant(action)"
-        :size="action.size"
+        :size="action.size ?? formUi.controlSize.value"
         :class="actionButtonClass(action)"
         :disabled="isActionDisabled(action)"
         :loading="isActionLoading(action)"
@@ -154,7 +171,12 @@ function isBuiltInActionKey(value: unknown): value is FormActionKey {
 
     <div
       v-if="actionsRight.length"
-      class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-4"
+      :class="
+        mergeFormUiClass(
+          'flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2',
+          formUi.ui.value.actions?.ui?.right,
+        )
+      "
     >
       <UButton
         v-for="(action, index) in actionsRight"
@@ -166,7 +188,7 @@ function isBuiltInActionKey(value: unknown): value is FormActionKey {
         :trailing-icon="action.trailingIcon === false ? undefined : action.trailingIcon"
         :color="resolveActionColor(action)"
         :variant="resolveActionVariant(action)"
-        :size="action.size"
+        :size="action.size ?? formUi.controlSize.value"
         :class="actionButtonClass(action)"
         :disabled="isActionDisabled(action)"
         :loading="isActionLoading(action)"

@@ -34,13 +34,34 @@ export function useFormState(params: {
     initialize()
   }
 
+  function resetValue(path: string | readonly string[]) {
+    setPathValue(state, path, cloneFormValue(getPathValue(initialState.value, path)))
+  }
+
+  function syncInput(input: FormObject | undefined, paths: boolean | readonly string[]) {
+    if (!paths || (Array.isArray(paths) && paths.length === 0)) return
+    if (paths === true) {
+      initialize(input)
+      return
+    }
+
+    const next = buildInitialFormState(params.schema.value, params.context, input)
+    for (const path of paths) {
+      const value = cloneFormValue(getPathValue(next, path))
+      setPathValue(state, path, value)
+      setPathValue(initialState.value, path, cloneFormValue(value))
+    }
+  }
+
   return {
     state,
     output,
     dirtyPaths,
     isDirty,
     initialize,
+    syncInput,
     reset,
+    resetValue,
     getValue: (path: string | readonly string[]) => getPathValue(state, path),
     setValue: (path: string | readonly string[], value: unknown) =>
       setPathValue(state, path, value),

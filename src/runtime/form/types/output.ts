@@ -6,10 +6,11 @@ import type {
 } from '../../shared/types/utils'
 import type {
   ArrayListFieldOutput,
+  ArrayTableFieldOutput,
   ArrayTabsFieldOutput,
-  ArrayVariantFieldOutput,
   ExtractFormFieldInternalValue,
   ObjectFieldOutput,
+  MatrixFieldOutput,
   ResolveFormFieldValue,
 } from './field-output'
 import type { FormStateMode, TransformOutputValue } from './field-output-utils'
@@ -66,13 +67,43 @@ type FieldsValue<TFields, TMode extends FormStateMode> = TFields extends readonl
   ? DeepTransformNestedPaths<UnionToIntersection<FieldObject<TFields[number], TMode>>>
   : {}
 
+type VariantValue<
+  TVariant,
+  TVariantKey extends string,
+  TMode extends FormStateMode,
+> = TVariant extends {
+  readonly key: infer TKey
+  readonly fields: infer TFields
+}
+  ? FieldsValue<TFields, TMode> & Record<TVariantKey, TKey> & VirtualFieldsValue<TVariant>
+  : never
+
+type VirtualFieldsValue<TField> = TField extends { readonly virtualFields: infer TVirtualFields }
+  ? {
+      [TKey in keyof TVirtualFields]: TVirtualFields[TKey] extends (
+        ...args: never[]
+      ) => infer TValue
+        ? TValue
+        : never
+    }
+  : {}
+
+type ArrayVariantValue<TField, TMode extends FormStateMode> = TField extends {
+  readonly variantKey: infer TVariantKey extends string
+  readonly variants: readonly (infer TVariant)[]
+}
+  ? readonly VariantValue<TVariant, TVariantKey, TMode>[]
+  : readonly unknown[]
+
 type ArrayFieldValue<TField, TMode extends FormStateMode> = TField extends { type: 'array-list' }
-  ? ArrayListFieldOutput<FieldsValue<ChildFields<TField>, TMode>>
-  : TField extends { type: 'array-tabs' }
-    ? ArrayTabsFieldOutput<FieldsValue<ChildFields<TField>, TMode>>
-    : TField extends { type: 'array-variant' }
-      ? ArrayVariantFieldOutput<FieldsValue<ChildFields<TField>, TMode>>
-      : never
+  ? ArrayListFieldOutput<FieldsValue<ChildFields<TField>, TMode> & VirtualFieldsValue<TField>>
+  : TField extends { type: 'array-table' }
+    ? ArrayTableFieldOutput<FieldsValue<ChildFields<TField>, TMode> & VirtualFieldsValue<TField>>
+    : TField extends { type: 'array-tabs' }
+      ? ArrayTabsFieldOutput<FieldsValue<ChildFields<TField>, TMode> & VirtualFieldsValue<TField>>
+      : TField extends { type: 'array-variant' }
+        ? ArrayVariantValue<TField, TMode>
+        : never
 
 type ApplyOutputMode<TField, TMode extends FormStateMode, TValue> = TMode extends 'output'
   ? TransformOutputValue<TField, TValue>
@@ -82,6 +113,18 @@ type ObjectFieldValue<TField, TMode extends FormStateMode> = ApplyOutputMode<
   TField,
   TMode,
   ObjectFieldOutput<FieldsValue<ChildFields<TField>, TMode>>
+>
+
+type MatrixRows<TField> = TField extends { readonly rows: infer TRows }
+  ? TRows extends readonly { key: string }[]
+    ? TRows
+    : readonly []
+  : readonly []
+
+type MatrixFieldValue<TField, TMode extends FormStateMode> = ApplyOutputMode<
+  TField,
+  TMode,
+  MatrixFieldOutput<MatrixRows<TField>, FieldsValue<ChildFields<TField>, TMode>>
 >
 
 type StatefulFieldObject<TField, TMode extends FormStateMode> = TMode extends 'output'
@@ -101,11 +144,13 @@ type FieldObject<TField, TMode extends FormStateMode> = TField extends {
   ? {}
   : TField extends { type: 'input-group' | 'card' | 'column' }
     ? FieldsValue<ChildFields<TField>, TMode>
-    : TField extends { type: 'object' }
+    : TField extends { type: 'object' | 'group' }
       ? FieldValueObject<TField, ObjectFieldValue<TField, TMode>>
-      : TField extends { type: 'array-list' | 'array-tabs' | 'array-variant' }
-        ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
-        : StatefulFieldObject<TField, TMode>
+      : TField extends { type: 'matrix' }
+        ? FieldValueObject<TField, MatrixFieldValue<TField, TMode>>
+        : TField extends { type: 'array-list' | 'array-table' | 'array-tabs' | 'array-variant' }
+          ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
+          : StatefulFieldObject<TField, TMode>
 
 type StepFields<TStep> = TStep extends { readonly fields: infer TFields } ? TFields : never
 

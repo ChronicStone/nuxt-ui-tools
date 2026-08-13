@@ -1,6 +1,12 @@
 import { computed, ref } from 'vue'
 
-import type { FormField, FormObject, FormRuntimeContext, FormValidationError } from '../types'
+import type {
+  FormField,
+  FormObject,
+  FormRuntimeContext,
+  FormValidationError,
+  FormValidationMode,
+} from '../types'
 import {
   collectFormFieldsPaths,
   fieldPath,
@@ -14,6 +20,7 @@ export function useFormValidation(params: {
   state: FormObject
   context: FormRuntimeContext
   apiFactory: FormFieldApiFactory
+  getValidationMode: () => FormValidationMode
 }) {
   const validationErrors = ref<readonly FormValidationError[]>([])
   const customErrors = ref<readonly FormValidationError[]>([])
@@ -27,6 +34,7 @@ export function useFormValidation(params: {
       params.state,
       params.context,
       params.apiFactory,
+      params.getValidationMode(),
     )
     touchErrorPaths(validationErrors.value)
     return errors.value.length === 0
@@ -43,6 +51,7 @@ export function useFormValidation(params: {
       ctx: params.context,
       apiFactory: params.apiFactory,
       parentPath,
+      mode: params.getValidationMode(),
     })
     if (validationRuns.get(key) !== run) return nextErrors.length === 0
 

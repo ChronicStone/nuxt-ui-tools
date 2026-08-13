@@ -2,6 +2,8 @@ import type { ComputedRef, Ref } from 'vue'
 
 import type { FormSubmitHandlerResult } from './api'
 import type { FormRendererController } from './controller'
+import type { FormDrawerConfig, FormFullscreenConfig, FormModalConfig } from './schema'
+import type { FormOverlayUi } from './ui'
 import type { FormObject } from './utils'
 
 export interface FormOverlayLayoutProps {
@@ -9,6 +11,19 @@ export interface FormOverlayLayoutProps {
   title?: string
   description?: string
   dismissible: boolean
+  ui?: FormOverlayUi
+}
+
+export interface FormModalLayoutProps extends FormOverlayLayoutProps {
+  config?: FormModalConfig
+}
+
+export interface FormDrawerLayoutProps extends FormOverlayLayoutProps {
+  config?: FormDrawerConfig
+}
+
+export interface FormFullscreenLayoutProps extends FormOverlayLayoutProps {
+  config?: FormFullscreenConfig
 }
 
 export interface FormOverlayLayoutEmits {

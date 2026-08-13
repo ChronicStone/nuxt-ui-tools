@@ -2,7 +2,7 @@ import type { FormFieldCallback } from './callbacks'
 import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
 import type { FormTransformConfig } from './transform'
-import type { FormDynamic, FormObject, FormText } from './utils'
+import type { FormDynamic, FormMaybePromise, FormObject, FormText } from './utils'
 import type { FormValidationConfig } from './validation'
 
 /**
@@ -23,6 +23,12 @@ export type FormFieldType =
   | 'checkbox-card'
   | 'select'
   | 'date'
+  | 'datetime'
+  | 'daterange'
+  | 'monthrange'
+  | 'datetimerange'
+  | 'month'
+  | 'year'
   | 'time'
   | 'phone-number'
   | 'hidden'
@@ -34,8 +40,14 @@ export type FormFieldType =
   | 'file'
   | 'upload'
   | 'array-list'
+  | 'array-table'
   | 'array-tabs'
   | 'array-variant'
+  | 'tree-select'
+  | 'cascader'
+  | 'tree'
+  | 'group'
+  | 'matrix'
   | 'slider'
   | 'color-picker'
   | 'one-time-code'
@@ -87,6 +99,24 @@ export interface FormStatefulFieldBase<
     /** Excludes the field from submitted output while keeping it in internal form state. */
     omit?: boolean
   }
+  /** Runs after this field value changes. */
+  watch?: (params: { value: TValue; api: import('./api').FormFieldApi<TValue> }) => void
+  /** Vue watch options used by the field value effect. */
+  watchOptions?: { deep?: boolean; immediate?: boolean }
+  /** Runs when the resolved dependency object changes. */
+  onDependencyChange?: FormFieldCallback<FormMaybePromise<void>, TContext, TDeps, TValue>
+  /** Runs after the field renderer is mounted. */
+  onRendered?: FormFieldCallback<FormMaybePromise<void>, TContext, TDeps, TValue>
+  /** Keeps the field in internal state while excluding it from rendering and submitted output. */
+  ignore?: boolean
+  /** Enables a field-level dirty reset affordance. */
+  dirtyCheck?: boolean
+  /** Wraps the field body in an expandable section. */
+  collapsible?: boolean
+  /** Initial collapsed state when `collapsible` is enabled. */
+  collapsed?: boolean
+  /** Debounces or throttles value/dependency effects. */
+  stateEffect?: { type: 'debounce' | 'throttle'; duration: number }
 }
 
 /**
@@ -103,6 +133,8 @@ export interface FormStatelessFieldBase<TType extends FormFieldType, TContext = 
   props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
+  /** Excludes this renderer from the runtime. */
+  ignore?: boolean
 }
 
 /**
@@ -125,4 +157,6 @@ export interface FormContainerFieldBase<TType extends FormFieldType, TContext = 
   props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
+  /** Excludes this container and its children from the runtime. */
+  ignore?: boolean
 }

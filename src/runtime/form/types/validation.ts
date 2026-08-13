@@ -28,6 +28,9 @@ export interface FormValidationRule<TValue = unknown, TContext = {}, TDeps = {}>
  */
 export type FormValidationTrigger = 'blur' | 'input' | 'submit'
 
+/** Selects which authored validation layers are evaluated. */
+export type FormValidationMode = boolean | 'required' | 'rules'
+
 /**
  * Concrete validation error stored by the form runtime.
  */

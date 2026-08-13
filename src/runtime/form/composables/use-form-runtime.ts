@@ -31,6 +31,7 @@ import { useFormFocus } from './use-form-focus'
 import { useFormOptionRegistry } from './use-form-option-registry'
 import { useFormState } from './use-form-state'
 import { useFormSubmitController } from './use-form-submit'
+import { useFormUploadRegistry } from './use-form-upload-registry'
 import { useFormValidation } from './use-form-validation'
 
 const formRuntimeKey: InjectionKey<FormRuntime> = Symbol('nuxt-ui-tools-form-runtime')
@@ -48,6 +49,7 @@ export function useFormRuntimeContext() {
 export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const { context, setContext } = useFormContextResources()
   const optionRegistry = useFormOptionRegistry()
+  const uploadRegistry = useFormUploadRegistry()
   const currentStepIndex = ref<number>(0)
   const navigationActionPending = ref<'next' | 'previous' | null>(null)
 
@@ -59,9 +61,11 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       field,
       getValue: state.getValue,
       setValue: state.setValue,
+      resetValue: state.resetValue,
       ctx: context,
       state: state.state,
       optionRegistry,
+      uploadRegistry,
       focusField: () => focus.focusField(path),
       setExternalError: (message) => validation.setError(path, message),
       clearExternalError: () => validation.clearError(path),
@@ -81,6 +85,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     state: state.state,
     context,
     apiFactory,
+    getValidationMode: () => params.validationMode?.value ?? true,
   })
 
   const focus = useFormFocus({
@@ -115,6 +120,11 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   })
 
   state.initialize()
+
+  if (params.input)
+    watch(params.input, (input) => state.syncInput(input, params.syncInput?.value ?? false), {
+      deep: true,
+    })
 
   watch(params.schema, (schema) => {
     currentStepIndex.value = 0
@@ -275,6 +285,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
         parentPath: path.slice(0, -1),
       }),
     registerFieldOptions: optionRegistry.register,
+    registerFieldUpload: uploadRegistry.register,
     refreshFieldOptions: optionRegistry.refreshMany,
     getFieldError: validation.getFieldError,
     markFieldTouched: validation.markTouched,
@@ -361,19 +372,27 @@ function createFieldApi(params: {
   field?: FormField
   getValue: (path: string | readonly string[]) => unknown
   setValue: (path: string | readonly string[], value: unknown) => void
+  resetValue: (path: string | readonly string[]) => void
   ctx: FormRuntime['context']
   state: FormObject
   optionRegistry: ReturnType<typeof useFormOptionRegistry>
+  uploadRegistry: ReturnType<typeof useFormUploadRegistry>
   focusField: () => Promise<boolean>
   setExternalError: (message: string) => void
   clearExternalError: () => void
   validateField: () => Promise<boolean>
 }): FormFieldApi {
+  function contextResource(key: string) {
+    const resource = params.ctx[key]
+    if (!resource) throw new Error(`Unknown form context resource: ${key}`)
+    return resource
+  }
+
   const api: FormFieldApi<unknown, unknown, FormRuntime['context']> = {
     value: {
       get: () => params.getValue(params.path),
       set: (value) => params.setValue(params.path, value),
-      reset: () => params.setValue(params.path, null),
+      reset: () => params.resetValue(params.path),
     },
     options: {
       get: () => params.optionRegistry.get(params.path).items.value,
@@ -388,20 +407,20 @@ function createFieldApi(params: {
       create: (label) => params.optionRegistry.get(params.path).create(label),
     },
     upload: {
-      start: async () => {},
-      cancel: async () => {},
-      retry: async () => {},
-      remove: async () => {},
+      start: async () => await params.uploadRegistry.get(params.path)?.start(),
+      cancel: async () => await params.uploadRegistry.get(params.path)?.cancel(),
+      retry: async () => await params.uploadRegistry.get(params.path)?.retry(),
+      remove: async (value) => await params.uploadRegistry.get(params.path)?.remove(value),
     },
     context: {
-      get: (key) => params.ctx[key],
+      get: (key) => contextResource(key),
       set: (key, value) => {
-        params.ctx[key].value = value
+        contextResource(key).value = value
       },
       update: (key, updater) => {
-        updateContextResourceValue(params.ctx[key], updater)
+        updateContextResourceValue(contextResource(key), updater)
       },
-      patch: (key, value) => patchContextResourceValue(params.ctx[key], value),
+      patch: (key, value) => patchContextResourceValue(contextResource(key), value),
       refresh: async (key) => {
         const resource = params.ctx[key]
         if (isRefreshableResource(resource)) await resource.refresh()

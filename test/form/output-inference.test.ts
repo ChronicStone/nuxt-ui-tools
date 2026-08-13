@@ -21,10 +21,13 @@ const schema = defineFormSchema({
     countries: () =>
       queryOptions({
         queryKey: ['countries'],
-        queryFn: async () => [
-          { label: 'France', value: 'FR' },
-          { label: 'Belgium', value: 'BE' },
-        ],
+        queryFn: async () => ({
+          items: [
+            { label: 'France', value: 'FR' },
+            { label: 'Belgium', value: 'BE' },
+          ],
+        }),
+        select: (data) => data.items,
       }),
     session: () => Promise.resolve({ id: 'session_1' }),
     tenant: { id: 'tenant_1', currency: 'EUR' },
@@ -307,6 +310,52 @@ type SwitchGroupField = {
 }
 type RatingField = { key: 'rating'; type: 'rating' }
 type TimeField = { key: 'startsAt'; type: 'time' }
+const selectedStatusOptions = queryOptions({
+  queryKey: ['selected-statuses'],
+  queryFn: async () => ({
+    items: [{ label: 'Draft', value: 'draft' }] as const,
+  }),
+  select: (data) => data.items,
+})
+type SelectedQueryField = {
+  key: 'selectedStatus'
+  type: 'select'
+  options: typeof selectedStatusOptions
+}
+const matrixSchema = defineFormSchema({
+  fields: [
+    {
+      key: 'permissions',
+      type: 'matrix',
+      rows: [
+        { key: 'users', label: 'Users' },
+        { key: 'orders', label: 'Orders' },
+      ],
+      fields: [
+        { key: 'read', type: 'switch' },
+        { key: 'scope', type: 'select', options: ['own', 'all'] },
+      ],
+    },
+    {
+      key: 'contacts',
+      type: 'array-variant',
+      variantKey: 'kind',
+      variants: [
+        {
+          key: 'email',
+          label: 'Email',
+          fields: [{ key: 'address', type: 'text' }],
+          virtualFields: { rank: (index) => index + 1 },
+        },
+        {
+          key: 'phone',
+          label: 'Phone',
+          fields: [{ key: 'number', type: 'phone-number' }],
+        },
+      ],
+    },
+  ],
+})
 
 function assertFormApiTypes(formApi: FormApiController) {
   const baseResult = formApi.createForm(schema)
@@ -428,6 +477,24 @@ describe('form output inference', () => {
     >()
     expectTypeOf<ExtractFormFieldOutputValue<RatingField>>().toEqualTypeOf<number | null>()
     expectTypeOf<ExtractFormFieldOutputValue<TimeField>>().toEqualTypeOf<string | null>()
+    expectTypeOf<ExtractFormFieldOutputValue<SelectedQueryField>>().toEqualTypeOf<'draft' | null>()
+  })
+
+  it('infers matrix rows and discriminated array variants', () => {
+    type MatrixOutput = ExtractFormOutput<typeof matrixSchema>
+
+    expectTypeOf<MatrixOutput['permissions']['users']>().toEqualTypeOf<{
+      read: boolean
+      scope: 'own' | 'all' | null
+    }>()
+    expectTypeOf<MatrixOutput['permissions']['orders']>().toEqualTypeOf<{
+      read: boolean
+      scope: 'own' | 'all' | null
+    }>()
+    expectTypeOf<MatrixOutput['contacts'][number]>().toEqualTypeOf<
+      | { kind: 'email'; address: string | null; rank: number }
+      | { kind: 'phone'; number: string | null }
+    >()
   })
 
   it('types useFormSubmit handlers from submitted output', () => {

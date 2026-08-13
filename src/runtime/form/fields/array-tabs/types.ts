@@ -1,6 +1,7 @@
 import type { FormContainerFieldBase } from '../../types/field-base'
 import type { FormText } from '../../types/utils'
-import type { FormArrayFieldActions } from '../array-list/types'
+import type { FormObject } from '../../types/utils'
+import type { FormArrayFieldActions, FormArrayVirtualFields } from '../array-list/types'
 
 export interface FormArrayTabsField<TContext = {}, TDeps = {}> extends FormContainerFieldBase<
   'array-tabs',
@@ -11,7 +12,12 @@ export interface FormArrayTabsField<TContext = {}, TDeps = {}> extends FormConta
   emptyLabel?: FormText
   itemLabel?: FormText
   compact?: boolean
-  actions?: FormArrayFieldActions
+  confirmDelete?: boolean | FormText
+  headerTemplate?: (item: FormObject, index: number, deps: TDeps) => FormText
+  transformOnCreate?: (item: FormObject, index: number, deps: TDeps) => FormObject
+  virtualFields?: FormArrayVirtualFields
+  extraProperties?: boolean
+  actions?: FormArrayFieldActions<TContext, TDeps>
 }
 
 export type ArrayTabsFieldOutput<TChildren> = readonly TChildren[]

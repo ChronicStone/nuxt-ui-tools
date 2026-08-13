@@ -4,12 +4,14 @@ import { computed } from 'vue'
 
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import { useFormFieldBare } from '../../composables/use-form-field-chrome'
 import type { FormSwitchField } from '../../types'
 
 const props = defineProps<{
   field: FormSwitchField
   path: readonly string[]
 }>()
+const bare = useFormFieldBare()
 
 const { form, controlProps, disabled, handleBlur } = useFieldControl(
   () => props.field,
@@ -29,10 +31,18 @@ const model = computed<boolean>({
 </script>
 
 <template>
-  <FormFieldShell :field="field" :path="path">
+  <FormFieldShell
+    v-slot="{ label, description, required }"
+    :field="field"
+    :path="path"
+    inline-label
+  >
     <USwitch
       v-model="model"
       v-bind="controlProps"
+      :label="bare ? undefined : label"
+      :description="bare ? undefined : description"
+      :required="required"
       :disabled="disabled"
       :checked-icon="field.checkedIcon"
       :unchecked-icon="field.uncheckedIcon"

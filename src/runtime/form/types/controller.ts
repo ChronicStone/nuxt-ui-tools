@@ -10,7 +10,7 @@ import type { ExtractFormInternalValue, ExtractFormOutput } from './output'
 import type { FormRuntime, FormRuntimeStep } from './runtime'
 import type { ExtractFormContext } from './schema'
 import type { FormObject } from './utils'
-import type { FormValidationError, FormValidationOptions } from './validation'
+import type { FormValidationError, FormValidationMode, FormValidationOptions } from './validation'
 
 /**
  * Options accepted by `useForm`.
@@ -32,6 +32,10 @@ export interface UseFormParams<TSchema, TSubmitData = unknown> {
   schema: MaybeRefOrGetter<TSchema>
   /** Optional initial internal state. Dotted field keys are still normalized by the runtime. */
   input?: MaybeRefOrGetter<FormObject | undefined>
+  /** Keeps later input changes synchronized into the mounted runtime. */
+  syncInput?: MaybeRefOrGetter<boolean | readonly string[]>
+  /** Selects required, custom-rule, all, or no validation. */
+  validate?: MaybeRefOrGetter<FormValidationMode>
   /** Optional default submit handler used by `form.submit()` and native form submit. */
   onSubmit?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>
 }
@@ -43,6 +47,8 @@ export interface UseFormParams<TSchema, TSubmitData = unknown> {
 export interface RuntimeUseFormParams {
   schema: MaybeRefOrGetter<unknown>
   input?: MaybeRefOrGetter<FormObject | undefined>
+  syncInput?: MaybeRefOrGetter<boolean | readonly string[]>
+  validate?: MaybeRefOrGetter<FormValidationMode>
   onSubmit?: FormSubmitHandler<FormObject, unknown>
 }
 
@@ -136,6 +142,10 @@ export interface FormRendererController {
   schema: ComputedRef<unknown>
   /** Initial input state bound to the controller. */
   input: ComputedRef<FormObject | undefined>
+  /** External input synchronization policy bound to the controller. */
+  syncInput: ComputedRef<boolean | readonly string[]>
+  /** Validation mode bound to the controller. */
+  validationMode: ComputedRef<FormValidationMode>
   /** Runs the controller's default submit lifecycle. */
   submit: () => Promise<boolean>
   /** Runs the controller's default submit lifecycle and returns the normalized result. */

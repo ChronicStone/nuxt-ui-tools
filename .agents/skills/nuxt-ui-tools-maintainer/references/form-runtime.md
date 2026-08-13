@@ -1,6 +1,6 @@
 # Form Runtime
 
-`src/runtime/form` is an early runtime domain.
+`src/runtime/form` is a V1 runtime domain with a curated field-kind registry.
 
 ## Current Rule
 
@@ -87,3 +87,30 @@ When adding form features, bias toward:
 - the same placement rules
 - the same inference-first public API style
 - the same example-driven consumer skill standard
+
+## Current V1 Ownership
+
+- `fields/index.ts` is the field-kind capability registry; alpha-select is intentionally excluded.
+- Each field kind owns its types and config, while shared visual implementations live in focused
+  family folders such as `date-family/` and `hierarchy/`.
+- `utils/state.ts` owns recursive defaults, validation, and output for objects, groups, arrays,
+  discriminated variants, and matrices.
+- `use-field-options.ts` and `use-form-context-resources.ts` pass complete TanStack Query options
+  into observers; never reconstruct or manually invoke a query function.
+- `use-form-option-registry.ts` and `use-form-upload-registry.ts` bridge mounted field work into
+  field APIs without moving option or upload ownership into the runtime facade.
+- Repeated fields reconcile cloned item content into stable reactive array slots through
+  `utils/array.ts`; replacing an index-addressed array while controls are mounted can let stale
+  controlled input state overwrite a moved row on the next Vue render.
+- `components/layout/` owns overlay-specific configuration; the provider and root renderer only
+  coordinate lifecycle.
+- `types/ui.ts`, `utils/ui.ts`, and `use-form-ui.ts` own the presentation contract. Preserve the
+  app config, schema, rendered-form, then field `props` precedence; every new structural renderer
+  must expose named UI slots and every Nuxt UI control must inherit the shared control size.
+- Group and input-group renderers use `UFieldGroup` with bare child renderers so intermediate
+  field nodes collapse through `display: contents`. Matrix and array-table own their semantic
+  table slots and center or contain nested controls instead of leaking cell layout into field kinds.
+
+When adding a field, update the local type/config/component, assembled union, registry, renderer,
+value/output inference, recursive state ownership where relevant, tests, playground, and consumer
+skill as one maintenance surface.

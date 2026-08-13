@@ -6,11 +6,15 @@ export interface ResolvedFormOption {
   label: string
   description?: string
   disabled?: boolean
+  children?: readonly ResolvedFormOption[]
 }
 
 export function normalizeOptionItem(option: unknown): ResolvedFormOption {
   if (isRecord(option)) {
-    const rawValue = option.value
+    const rawValue = typeof option.value === 'undefined' ? option.key : option.value
+    const children = Array.isArray(option.children)
+      ? option.children.map((child) => normalizeOptionItem(child))
+      : undefined
     return {
       value: normalizeOptionValue(rawValue),
       label:
@@ -22,6 +26,7 @@ export function normalizeOptionItem(option: unknown): ResolvedFormOption {
           ? String(option.description)
           : undefined,
       disabled: option.disabled === true,
+      children,
     }
   }
 

@@ -1,4 +1,5 @@
 import type { FormArrayListField } from '../fields/array-list/types'
+import type { FormArrayTableField } from '../fields/array-table/types'
 import type { FormArrayTabsField } from '../fields/array-tabs/types'
 import type { FormArrayVariantField } from '../fields/array-variant/types'
 import type { FormAutoCompleteField } from '../fields/auto-complete/types'
@@ -10,12 +11,27 @@ import type { FormCheckboxField } from '../fields/checkbox/types'
 import type { FormColorPickerField } from '../fields/color-picker/types'
 import type { FormColumnField } from '../fields/column/types'
 import type { FormCustomComponentField } from '../fields/custom-component/types'
+import type {
+  FormDateRangeField,
+  FormDateTimeField,
+  FormDateTimeRangeField,
+  FormMonthField,
+  FormMonthRangeField,
+  FormYearField,
+} from '../fields/date-family/types'
 import type { FormDateField } from '../fields/date/types'
 import type { FormDividerField } from '../fields/divider/types'
 import type { FormFileField } from '../fields/file/types'
+import type { FormGroupField } from '../fields/group/types'
 import type { FormHiddenField } from '../fields/hidden/types'
+import type {
+  FormCascaderField,
+  FormTreeField,
+  FormTreeSelectField,
+} from '../fields/hierarchy/types'
 import type { FormInfoField } from '../fields/info/types'
 import type { FormInputGroupField } from '../fields/input-group/types'
+import type { FormMatrixField } from '../fields/matrix/types'
 import type { FormNumberField } from '../fields/number/types'
 import type { FormObjectField } from '../fields/object/types'
 import type { FormOneTimeCodeField } from '../fields/one-time-code/types'
@@ -41,6 +57,7 @@ export type {
   FormStatelessFieldBase,
 } from './field-base'
 export type { FormArrayListField } from '../fields/array-list/types'
+export type { FormArrayTableField } from '../fields/array-table/types'
 export type { FormArrayTabsField } from '../fields/array-tabs/types'
 export type { FormArrayVariantField } from '../fields/array-variant/types'
 export type { FormAutoCompleteField } from '../fields/auto-complete/types'
@@ -53,11 +70,29 @@ export type { FormColorPickerField } from '../fields/color-picker/types'
 export type { FormColumnField } from '../fields/column/types'
 export type { FormCustomComponentField } from '../fields/custom-component/types'
 export type { FormDateField } from '../fields/date/types'
+export type {
+  FormDateFamilyField,
+  FormDateRangeField,
+  FormDateTimeField,
+  FormDateTimeRangeField,
+  FormMonthField,
+  FormMonthRangeField,
+  FormYearField,
+} from '../fields/date-family/types'
 export type { FormDividerField } from '../fields/divider/types'
 export type { FormFileField } from '../fields/file/types'
 export type { FormHiddenField } from '../fields/hidden/types'
+export type { FormGroupField } from '../fields/group/types'
+export type {
+  FormCascaderField,
+  FormHierarchyField,
+  FormHierarchyOption,
+  FormTreeField,
+  FormTreeSelectField,
+} from '../fields/hierarchy/types'
 export type { FormInfoField } from '../fields/info/types'
 export type { FormInputGroupField } from '../fields/input-group/types'
+export type { FormMatrixField, FormMatrixRow } from '../fields/matrix/types'
 export type { FormNumberField } from '../fields/number/types'
 export type { FormOneTimeCodeField } from '../fields/one-time-code/types'
 export type { FormObjectField } from '../fields/object/types'
@@ -97,17 +132,29 @@ export type FormField<TContext = {}, TDeps = {}> =
   | FormCheckboxCardField<TContext, TDeps>
   | FormSelectField<TContext, TDeps>
   | FormDateField<TContext, TDeps>
+  | FormDateTimeField<TContext, TDeps>
+  | FormDateRangeField<TContext, TDeps>
+  | FormMonthRangeField<TContext, TDeps>
+  | FormDateTimeRangeField<TContext, TDeps>
+  | FormMonthField<TContext, TDeps>
+  | FormYearField<TContext, TDeps>
   | FormTimeField<TContext, TDeps>
+  | FormTreeSelectField<TContext, TDeps>
+  | FormCascaderField<TContext, TDeps>
+  | FormTreeField<TContext, TDeps>
   | FormPhoneNumberField<TContext, TDeps>
   | FormHiddenField<TContext, TDeps>
   | FormInfoField<TContext, TDeps>
   | FormDividerField<TContext, TDeps>
   | FormInputGroupField<TContext, TDeps>
+  | FormGroupField<TContext, TDeps>
   | FormObjectField<TContext, TDeps>
+  | FormMatrixField<TContext, TDeps>
   | FormCustomComponentField<TContext, TDeps>
   | FormFileField<TContext, TDeps>
   | FormUploadField<TContext, TDeps>
   | FormArrayListField<TContext, TDeps>
+  | FormArrayTableField<TContext, TDeps>
   | FormArrayTabsField<TContext, TDeps>
   | FormArrayVariantField<TContext, TDeps>
   | FormSliderField<TContext, TDeps>

@@ -1,4 +1,5 @@
 import type { FormApiDisplayMode } from '../types'
+import type { FormDrawerConfig, FormFullscreenConfig, FormModalConfig } from '../types'
 import { isRecord } from './path'
 import { resolveFormText } from './text'
 
@@ -13,6 +14,27 @@ export function getFormOverlayTitle(schema: unknown) {
 
 export function getFormOverlayDescription(schema: unknown) {
   return getFormOverlayText(schema, 'description')
+}
+
+export function getFormModalConfig(schema: unknown): FormModalConfig | undefined {
+  return getFormOverlayConfig(schema, 'modal')
+}
+
+export function getFormDrawerConfig(schema: unknown): FormDrawerConfig | undefined {
+  return getFormOverlayConfig(schema, 'drawer')
+}
+
+export function getFormFullscreenConfig(schema: unknown): FormFullscreenConfig | undefined {
+  return getFormOverlayConfig(schema, 'fullscreen')
+}
+
+function getFormOverlayConfig(schema: unknown, key: 'modal'): FormModalConfig | undefined
+function getFormOverlayConfig(schema: unknown, key: 'drawer'): FormDrawerConfig | undefined
+function getFormOverlayConfig(schema: unknown, key: 'fullscreen'): FormFullscreenConfig | undefined
+function getFormOverlayConfig(schema: unknown, key: 'modal' | 'drawer' | 'fullscreen') {
+  if (!isRecord(schema)) return undefined
+  const value = Object.getOwnPropertyDescriptor(schema, key)?.value
+  return isRecord(value) ? value : undefined
 }
 
 function getFormOverlayText(schema: unknown, key: 'title' | 'description') {

@@ -8,8 +8,9 @@ import type { FormField } from './field'
 import type { FormFocusRequest } from './focus'
 import type { FormLayoutConfig } from './layout'
 import type { FormOptionRuntimeState } from './options-runtime'
+import type { FormUploadRuntimeState } from './upload-runtime'
 import type { FormObject } from './utils'
-import type { FormValidationError, FormValidationOptions } from './validation'
+import type { FormValidationError, FormValidationMode, FormValidationOptions } from './validation'
 
 /**
  * Parameters used to create the internal form runtime consumed by `<NutForm>`.
@@ -19,6 +20,8 @@ export interface UseFormRuntimeParams {
   schema: ComputedRef<unknown>
   /** Optional initial internal state provided by a controller or direct form usage. */
   input?: ComputedRef<FormObject | undefined>
+  syncInput?: ComputedRef<boolean | readonly string[]>
+  validationMode?: ComputedRef<FormValidationMode>
 }
 
 /**
@@ -69,6 +72,7 @@ export interface FormRuntime {
   getFieldApi: (path: readonly string[], field?: FormField) => FormFieldApi
   getFieldCallbackParams: (path: readonly string[], field: FormField) => FormFieldCallbackParams
   registerFieldOptions: (path: readonly string[], state: FormOptionRuntimeState) => () => void
+  registerFieldUpload: (path: readonly string[], state: FormUploadRuntimeState) => () => void
   refreshFieldOptions: (paths: readonly (string | readonly string[])[]) => Promise<void>
   getFieldError: (path: readonly string[]) => string | undefined
   markFieldTouched: (path: readonly string[]) => void

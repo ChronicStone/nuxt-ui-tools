@@ -10,6 +10,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import { useFormUi } from '../../composables/use-form-ui'
+import { mergeFormUiClass } from '../../utils/ui'
 import type { FormPhoneCountryOption, FormPhoneNumberField } from './types'
 
 const props = defineProps<{
@@ -22,6 +24,7 @@ const { form, controlProps, disabled, handleBlur, placeholder } = useFieldContro
   () => props.field,
   () => props.path,
 )
+const formUi = useFormUi()
 const countryCode = ref<CountryCode | undefined>(undefined)
 const phoneValue = ref<string>('')
 const syncingFromExternal = ref<boolean>(false)
@@ -163,13 +166,19 @@ function toFlagEmoji(code: CountryCode) {
 
 <template>
   <FormFieldShell :field="field" :path="path">
-    <UFieldGroup class="w-full">
+    <UFieldGroup
+      :size="formUi.controlSize.value"
+      :class="
+        mergeFormUiClass('w-full', formUi.ui.value.group?.ui?.root, formUi.ui.value.group?.ui?.base)
+      "
+    >
       <USelectMenu
         v-model="countryCode"
         class="w-auto min-w-[5.75rem] shrink-0"
         value-key="value"
         label-key="label"
         :items="[...countryOptions]"
+        :size="formUi.controlSize.value"
         :disabled="disabled"
         :search-input="true"
         :ui="{ base: 'w-auto min-w-[5.75rem]' }"

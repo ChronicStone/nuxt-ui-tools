@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 import type { QueryKey } from '@tanstack/vue-query'
 import { computed, onScopeDispose, ref, shallowRef, unref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
@@ -67,25 +67,22 @@ export function useFieldOptions(params: {
     return isRuntimeQueryOptions(source) ? source : null
   })
 
-  const optionQuery = useQuery<readonly unknown[]>({
-    queryKey: computed<QueryKey>(
-      () => querySource.value?.queryKey ?? ['form-options', params.path().join('.'), 'disabled'],
-    ),
-    queryFn: async () => {
-      const query = querySource.value
-      if (!query?.queryFn) return []
+  const optionQuery = useQuery<unknown, Error, unknown, QueryKey>(
+    computed(() => {
+      const source = querySource.value
+      if (!source)
+        return {
+          queryKey: ['form-options', params.path().join('.'), 'disabled'],
+          queryFn: async () => [],
+          enabled: false,
+        }
 
-      const result = await query.queryFn()
-      return Array.isArray(result) ? result : []
-    },
-    enabled: computed<boolean>(
-      () =>
-        Boolean(querySource.value?.queryFn) &&
-        querySource.value?.enabled !== false &&
-        !contextPending.value,
-    ),
-    placeholderData: (previous) => previous,
-  })
+      return {
+        placeholderData: keepPreviousData,
+        ...source,
+      }
+    }),
+  )
 
   watch(
     resolvedSource,
@@ -119,7 +116,10 @@ export function useFieldOptions(params: {
   )
 
   const sourceItems = computed<readonly ResolvedFormOption[]>(() => {
-    if (querySource.value) return normalizeOptionItems(unref(optionQuery.data))
+    if (querySource.value) {
+      const data = unref(optionQuery.data)
+      return normalizeOptionItems(Array.isArray(data) ? data : [])
+    }
     return normalizeOptionItems(promiseOptions.value)
   })
   const items = computed<readonly ResolvedFormOption[]>(() => [

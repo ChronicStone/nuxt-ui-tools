@@ -6,7 +6,9 @@ import type { Component } from 'vue'
 import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { fieldPath } from '../../composables/use-form-runtime'
+import { useFormUi } from '../../composables/use-form-ui'
 import type { FormField, FormInputGroupField } from '../../types'
+import { mergeFormUiClass } from '../../utils/ui'
 import NumberField from '../number/component.vue'
 import PasswordField from '../password/component.vue'
 import SelectField from '../select/component.vue'
@@ -17,6 +19,7 @@ const props = defineProps<{
   path: readonly string[]
   parentPath: readonly string[]
 }>()
+const formUi = useFormUi()
 
 const groupChildren = computed(() =>
   props.field.fields.map((child) => ({
@@ -37,7 +40,12 @@ function getGroupedRenderer(field: FormField): Component | null {
 
 <template>
   <FormFieldShell :field="field" :path="path">
-    <UFieldGroup class="w-full">
+    <UFieldGroup
+      :size="formUi.controlSize.value"
+      :class="
+        mergeFormUiClass('w-full', formUi.ui.value.group?.ui?.root, formUi.ui.value.group?.ui?.base)
+      "
+    >
       <template v-for="child in groupChildren" :key="child.field.key">
         <component
           :is="child.renderer"

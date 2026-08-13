@@ -25,6 +25,10 @@ interface FormSchemaBase<TContext extends FormContextDefinition | undefined> {
   context: TContext
   layout?: FormLayoutConfig
   showStepper?: boolean
+  controls?: import('../types').FormControlsConfig
+  modal?: import('../types').FormModalConfig
+  drawer?: import('../types').FormDrawerConfig
+  fullscreen?: import('../types').FormFullscreenConfig
   actions?: readonly FormAction[]
   onBeforeSubmit?: FormSubmitHandler<unknown, never>
   submit?: FormSchemaSubmit<TContext>

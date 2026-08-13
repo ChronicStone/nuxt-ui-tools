@@ -53,7 +53,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
         :label="item.label"
         :description="item.description"
         :disabled="disabled || item.disabled"
-        :variant="field.variant ?? 'list'"
+        :variant="field.variant === 'table' ? 'list' : (field.variant ?? 'list')"
         :indicator="field.indicator"
         @update:model-value="toggleOption(item.value, $event === true)"
         @blur="handleBlur"

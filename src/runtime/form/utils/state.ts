@@ -6,6 +6,7 @@ import type {
   FormLayoutConfig,
   FormObject,
   FormText,
+  FormValidationMode,
 } from '../types'
 import { resolveFieldDependencies } from './dependencies'
 import { createFormFieldInstance, isRegisteredFormFieldType } from './field-instance'
@@ -61,6 +62,12 @@ export function buildInitialFormState(schema: unknown, ctx: FormContextData, inp
   return state
 }
 
+export function buildInitialFormFieldsState(fields: readonly FormField[], ctx: FormContextData) {
+  const state: FormObject = {}
+  mergeMissingFieldDefaults(state, fields, ctx, [])
+  return state
+}
+
 export function buildFormOutput(
   schema: unknown,
   state: FormObject,
@@ -87,7 +94,9 @@ export async function validateFormState(
   state: FormObject,
   ctx: FormContextData,
   apiFactory: FormFieldApiFactory,
+  mode: FormValidationMode = true,
 ) {
+  if (mode === false) return []
   const errors: FormSubmitError[] = []
 
   if (isSteppedSchema(schema)) {
@@ -99,13 +108,14 @@ export async function validateFormState(
           ctx,
           apiFactory,
           step.root ? [step.root] : [],
+          mode,
         )),
       )
 
     return errors
   }
 
-  return validateFields(getSchemaFields(schema), state, ctx, apiFactory, [])
+  return validateFields(getSchemaFields(schema), state, ctx, apiFactory, [], mode)
 }
 
 export function collectFormFieldPaths(schema: unknown) {
@@ -130,13 +140,16 @@ export async function validateFormFields(params: {
   ctx: FormContextData
   apiFactory: FormFieldApiFactory
   parentPath: readonly string[]
+  mode?: FormValidationMode
 }) {
+  if (params.mode === false) return []
   return await validateFields(
     params.fields,
     params.state,
     params.ctx,
     params.apiFactory,
     params.parentPath,
+    params.mode ?? true,
   )
 }
 
@@ -152,6 +165,7 @@ export function childParentPath(parentPath: readonly string[], field: FormField)
 }
 
 export function shouldRenderField(field: FormField, params: FormFieldCallbackParams) {
+  if (field.ignore === true) return false
   const condition = Object.getOwnPropertyDescriptor(field, 'condition')?.value
   if (typeof condition !== 'function') return true
   return condition(params) === true
@@ -164,6 +178,7 @@ function mergeMissingFieldDefaults(
   parentPath: readonly string[],
 ) {
   for (const field of fields) {
+    if (field.ignore === true) continue
     const fieldInstance = createFormFieldInstance(field)
     if (fieldInstance.state.is('stateless')) continue
     if (isFlatPassthroughField(field)) {
@@ -171,16 +186,38 @@ function mergeMissingFieldDefaults(
       continue
     }
 
-    if (fieldInstance.type.is('object')) {
+    if (isObjectContainerField(field)) {
       const path = fieldPath(parentPath, field)
       if (!isRecord(getPathValue(target, path))) setPathValue(target, path, {})
       mergeMissingFieldDefaults(target, getChildFields(field), ctx, path)
       continue
     }
 
-    if (fieldInstance.type.isAny(['array-list', 'array-tabs', 'array-variant'])) {
+    if (fieldInstance.type.is('matrix')) {
       const path = fieldPath(parentPath, field)
-      if (!Array.isArray(getPathValue(target, path))) setPathValue(target, path, [])
+      if (!isRecord(getPathValue(target, path))) setPathValue(target, path, {})
+      for (const row of getMatrixRows(field)) {
+        const rowPath = [...path, row]
+        if (!isRecord(getPathValue(target, rowPath))) setPathValue(target, rowPath, {})
+        mergeMissingFieldDefaults(target, getChildFields(field), ctx, rowPath)
+      }
+      continue
+    }
+
+    if (isArrayField(field)) {
+      const path = fieldPath(parentPath, field)
+      const value = getPathValue(target, path)
+      if (!Array.isArray(value)) {
+        setPathValue(target, path, [])
+        continue
+      }
+      for (const [index, item] of value.entries()) {
+        if (!isRecord(item)) continue
+        mergeMissingFieldDefaults(target, getArrayItemFields(field, item), ctx, [
+          ...path,
+          String(index),
+        ])
+      }
       continue
     }
 
@@ -200,6 +237,7 @@ function buildFieldsOutput(
   const output: FormObject = {}
 
   for (const field of fields) {
+    if (field.ignore === true) continue
     const fieldInstance = createFormFieldInstance(field)
     if (fieldInstance.state.is('stateless')) continue
     if (isFlatPassthroughField(field)) {
@@ -223,9 +261,40 @@ function buildFieldsOutput(
     })
     if (!shouldRenderField(field, params)) continue
 
-    if (fieldInstance.type.is('object')) {
+    if (isObjectContainerField(field)) {
       const objectValue = buildFieldsOutput(getChildFields(field), state, ctx, apiFactory, path)
       setPathValue(output, field.key, applyOutputTransform(field, objectValue, params))
+      continue
+    }
+
+    if (isArrayField(field)) {
+      const value = getPathValue(state, path)
+      const items = Array.isArray(value)
+        ? value.map((item, index) => {
+            const itemValue = isRecord(item) ? item : {}
+            const itemOutput = buildFieldsOutput(
+              getArrayItemFields(field, itemValue),
+              state,
+              ctx,
+              apiFactory,
+              [...path, String(index)],
+            )
+            return completeArrayItemOutput(field, itemValue, itemOutput, index)
+          })
+        : []
+      setPathValue(output, field.key, applyOutputTransform(field, items, params))
+      continue
+    }
+
+    if (fieldInstance.type.is('matrix')) {
+      const matrixValue: FormObject = {}
+      for (const row of getMatrixRows(field))
+        setPathValue(
+          matrixValue,
+          row,
+          buildFieldsOutput(getChildFields(field), state, ctx, apiFactory, [...path, row]),
+        )
+      setPathValue(output, field.key, applyOutputTransform(field, matrixValue, params))
       continue
     }
 
@@ -241,15 +310,17 @@ async function validateFields(
   ctx: FormContextData,
   apiFactory: FormFieldApiFactory,
   parentPath: readonly string[],
+  mode: FormValidationMode,
 ) {
   const errors: FormSubmitError[] = []
 
   for (const field of fields) {
+    if (field.ignore === true) continue
     const fieldInstance = createFormFieldInstance(field)
     if (fieldInstance.state.is('stateless')) continue
     if (isFlatPassthroughField(field)) {
       errors.push(
-        ...(await validateFields(getChildFields(field), state, ctx, apiFactory, parentPath)),
+        ...(await validateFields(getChildFields(field), state, ctx, apiFactory, parentPath, mode)),
       )
       continue
     }
@@ -265,13 +336,47 @@ async function validateFields(
     })
     if (!shouldRenderField(field, params)) continue
 
-    if (fieldInstance.type.is('object')) {
-      errors.push(...(await validateFields(getChildFields(field), state, ctx, apiFactory, path)))
+    if (isObjectContainerField(field)) {
+      errors.push(
+        ...(await validateFields(getChildFields(field), state, ctx, apiFactory, path, mode)),
+      )
+      continue
+    }
+
+    if (isArrayField(field)) {
+      const value = getPathValue(state, path)
+      if (Array.isArray(value))
+        for (const index of value.keys())
+          errors.push(
+            ...(await validateFields(
+              getArrayItemFields(field, isRecord(value[index]) ? value[index] : {}),
+              state,
+              ctx,
+              apiFactory,
+              [...path, String(index)],
+              mode,
+            )),
+          )
+      continue
+    }
+
+    if (fieldInstance.type.is('matrix')) {
+      for (const row of getMatrixRows(field))
+        errors.push(
+          ...(await validateFields(
+            getChildFields(field),
+            state,
+            ctx,
+            apiFactory,
+            [...path, row],
+            mode,
+          )),
+        )
       continue
     }
 
     const value = getPathValue(state, path)
-    const required = resolveRequired(field, params)
+    const required = mode !== 'rules' && resolveRequired(field, params)
     if (required && isEmptyValue(value)) {
       errors.push({
         path: path.join('.'),
@@ -279,7 +384,7 @@ async function validateFields(
       })
     }
 
-    errors.push(...(await validateFieldRules(field, value, params, path)))
+    if (mode !== 'required') errors.push(...(await validateFieldRules(field, value, params, path)))
   }
 
   return errors
@@ -290,18 +395,46 @@ function collectFieldPaths(
   parentPath: readonly string[],
 ): readonly string[] {
   return fields.flatMap((field) => {
+    if (field.ignore === true) return []
     const fieldInstance = createFormFieldInstance(field)
     if (fieldInstance.state.is('stateless')) return []
     if (isFlatPassthroughField(field)) return collectFieldPaths(getChildFields(field), parentPath)
 
     const path = fieldPath(parentPath, field)
-    if (fieldInstance.type.is('object')) return collectFieldPaths(getChildFields(field), path)
+    if (isObjectContainerField(field)) return collectFieldPaths(getChildFields(field), path)
+    if (fieldInstance.type.is('matrix'))
+      return getMatrixRows(field).flatMap((row) =>
+        collectFieldPaths(getChildFields(field), [...path, row]),
+      )
     return [path.join('.')]
   })
 }
 
 function isFlatPassthroughField(field: FormField) {
   return createFormFieldInstance(field).type.isAny(['input-group', 'card', 'column'])
+}
+
+function isObjectContainerField(field: FormField) {
+  return createFormFieldInstance(field).type.isAny(['object', 'group'])
+}
+
+function isArrayField(field: FormField) {
+  return createFormFieldInstance(field).type.isAny([
+    'array-list',
+    'array-table',
+    'array-tabs',
+    'array-variant',
+  ])
+}
+
+function getMatrixRows(field: FormField) {
+  if (!createFormFieldInstance(field).type.is('matrix')) return []
+  const rows = Object.getOwnPropertyDescriptor(field, 'rows')?.value
+  if (!Array.isArray(rows)) return []
+  return rows.flatMap((row) => {
+    if (!isRecord(row) || typeof row.key !== 'string') return []
+    return row.key
+  })
 }
 
 function resolveFieldDefault(field: FormField, ctx: FormContextData) {
@@ -313,6 +446,11 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData) {
   if (fieldInstance.type.is('checkbox')) return false
   if (fieldInstance.type.is('switch')) return resolveSwitchDefault(field)
   if (fieldInstance.type.is('checkbox-group')) return []
+  if (
+    fieldInstance.type.isAny(['tree', 'tree-select', 'cascader']) &&
+    Object.getOwnPropertyDescriptor(field, 'multiple')?.value === true
+  )
+    return []
   if (fieldInstance.type.is('tag')) return []
   if (fieldInstance.type.is('slider')) return 0
   if (fieldInstance.type.is('one-time-code')) return ''
@@ -453,6 +591,56 @@ function isFormField(value: unknown): value is FormField {
 function getChildFields(field: FormField) {
   const fields = Object.getOwnPropertyDescriptor(field, 'fields')?.value
   return Array.isArray(fields) ? fields.filter(isFormField) : []
+}
+
+function getArrayItemFields(field: FormField, item: FormObject) {
+  if (!createFormFieldInstance(field).type.is('array-variant')) return getChildFields(field)
+  const variantKey = Object.getOwnPropertyDescriptor(field, 'variantKey')?.value
+  const variants = Object.getOwnPropertyDescriptor(field, 'variants')?.value
+  if (typeof variantKey !== 'string' || !Array.isArray(variants)) return []
+  const value = item[variantKey]
+  const variant = variants.find((candidate) => isRecord(candidate) && candidate.key === value)
+  if (!isRecord(variant)) return []
+  const fields = variant.fields
+  return Array.isArray(fields) ? fields.filter(isFormField) : []
+}
+
+function completeArrayItemOutput(
+  field: FormField,
+  input: FormObject,
+  output: FormObject,
+  index: number,
+) {
+  const result: FormObject = arrayExtraProperties(field) ? { ...input, ...output } : output
+  const variantKey = Object.getOwnPropertyDescriptor(field, 'variantKey')?.value
+  if (typeof variantKey === 'string' && typeof input[variantKey] !== 'undefined')
+    result[variantKey] = cloneFormValue(input[variantKey])
+
+  const virtualFields = getArrayVirtualFields(field, input)
+  for (const key of Object.keys(virtualFields)) {
+    const resolver = virtualFields[key]
+    if (typeof resolver === 'function') result[key] = resolver(index)
+  }
+  return result
+}
+
+function getArrayVirtualFields(field: FormField, item: FormObject) {
+  const variantKey = Object.getOwnPropertyDescriptor(field, 'variantKey')?.value
+  if (typeof variantKey === 'string') {
+    const variants = Object.getOwnPropertyDescriptor(field, 'variants')?.value
+    if (Array.isArray(variants)) {
+      const variant = variants.find(
+        (candidate) => isRecord(candidate) && candidate.key === item[variantKey],
+      )
+      if (isRecord(variant) && isRecord(variant.virtualFields)) return variant.virtualFields
+    }
+  }
+  const virtualFields = Object.getOwnPropertyDescriptor(field, 'virtualFields')?.value
+  return isRecord(virtualFields) ? virtualFields : {}
+}
+
+function arrayExtraProperties(field: FormField) {
+  return Object.getOwnPropertyDescriptor(field, 'extraProperties')?.value === true
 }
 
 function callbackParams(params: {

@@ -3,7 +3,48 @@ import type { FormApi, FormSubmitHandler } from './api'
 import type { FormContextData, FormContextDefinition } from './context'
 import type { FormField, FormFieldType } from './field'
 import type { FormLayoutConfig } from './layout'
+import type { FormUiConfig } from './ui'
 import type { FormMaybePromise, FormObject, FormText } from './utils'
+import type { FormValidationMode } from './validation'
+
+export interface FormDirtyNavigationConfig {
+  message?: FormText
+  ignorePaths?: readonly string[]
+}
+
+export interface FormControlsConfig {
+  /** Enables dirty metadata and field reset affordances. */
+  dirtyCheck?: boolean
+  /** Focuses the first field after mount, or a specific raw field path. */
+  autoFocus?: boolean | string
+  /** Warns before an inline dirty form is closed or navigated away from. */
+  confirmNavOnDirty?: boolean | FormDirtyNavigationConfig
+  /** Keeps external input changes synchronized after the initial mount. */
+  syncInput?: boolean | readonly string[]
+  /** Selects required, custom-rule, all, or no validation. */
+  validate?: FormValidationMode
+}
+
+export interface FormModalConfig {
+  maxWidth?: number | string
+  maxHeight?: number | string
+  allowOutsideClick?: boolean
+  showCloseButton?: boolean
+}
+
+export interface FormDrawerConfig {
+  placement?: 'left' | 'right' | 'top' | 'bottom'
+  allowOutsideClick?: boolean
+  showCloseButton?: boolean
+  resizable?: boolean
+  width?: number | string
+  height?: number | string
+}
+
+export interface FormFullscreenConfig {
+  allowOutsideClick?: boolean
+  showCloseButton?: boolean
+}
 
 export interface FormStepLifecycleParams<TOutput = FormObject> {
   /** Step summary targeted by the lifecycle callback. */
@@ -63,12 +104,22 @@ export interface FormSchema<
   context?: TContext
   /** Form-level field grid layout. */
   layout?: FormLayoutConfig
+  /** Form-scoped presentation overrides, merged after app defaults. */
+  ui?: FormUiConfig
   /** Fields rendered and managed by the form runtime. */
   fields?: TFields
   /** Steps rendered and managed by stepper-aware form layouts. */
   steps?: TSteps
   /** Controls whether the default stepper chrome is rendered for stepped schemas. */
   showStepper?: boolean
+  /** Runtime lifecycle and validation controls. */
+  controls?: FormControlsConfig
+  /** Modal-shell sizing and dismissal behavior. */
+  modal?: FormModalConfig
+  /** Drawer-shell placement, sizing, and dismissal behavior. */
+  drawer?: FormDrawerConfig
+  /** Fullscreen-shell dismissal behavior. */
+  fullscreen?: FormFullscreenConfig
   /** Form action configuration. Omit to use built-in reset/submit or previous/next/submit actions. */
   actions?: readonly FormAction[]
   /** Runs after validation and before the external submit handler. Return `false` to cancel submit. */

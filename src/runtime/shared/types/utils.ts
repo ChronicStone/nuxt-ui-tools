@@ -105,7 +105,11 @@ export type RemoveDotKeys<T> =
           : T[K]
       }
 
-export type DeepTransformNestedPaths<T> = DeepPrettify<
+export type DeepTransformNestedPaths<T> = T extends unknown
+  ? DeepTransformNestedPathsMember<T>
+  : never
+
+type DeepTransformNestedPathsMember<T> = DeepPrettify<
   RemoveDotKeys<
     {
       [K in keyof T]: T[K] extends Array<infer U>

@@ -77,17 +77,16 @@ function createResource(source: unknown, queryClient: QueryClient): RuntimeResou
       const nextSource = resolveResourceSource(source)
       return isQueryLike(nextSource) ? nextSource : null
     })
-    const query = useQuery({
-      queryKey: computed(() => querySource.value?.queryKey ?? ['form-context', 'disabled']),
-      queryFn: async () => {
-        const nextSource = querySource.value
-        if (!nextSource?.queryFn) return undefined
-        return await nextSource.queryFn()
-      },
-      enabled: computed(
-        () =>
-          querySource.value?.enabled !== false && typeof querySource.value?.queryFn === 'function',
-      ),
+    const query = useQuery<unknown, Error, unknown>(() => {
+      const nextSource = querySource.value
+      if (!nextSource)
+        return {
+          queryKey: ['form-context', 'disabled'],
+          queryFn: async () => undefined,
+          enabled: false,
+        }
+
+      return nextSource
     })
 
     const resource: FormAsyncResource<unknown> = {
@@ -96,7 +95,7 @@ function createResource(source: unknown, queryClient: QueryClient): RuntimeResou
       },
       set value(value) {
         const nextSource = querySource.value
-        if (nextSource) queryClient.setQueryData(nextSource.queryKey, value)
+        if (nextSource) queryClient.setQueryData<unknown, unknown>(nextSource.queryKey, value)
       },
       get error() {
         return query.error.value ?? null

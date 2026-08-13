@@ -2,7 +2,7 @@
 import UAlert from '@nuxt/ui/components/Alert.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UFileUpload from '@nuxt/ui/components/FileUpload.vue'
-import { computed, ref } from 'vue'
+import { computed, onScopeDispose, ref } from 'vue'
 
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
@@ -22,6 +22,7 @@ const { form, controlProps, disabled, handleBlur, params } = useFieldControl(
 const selectedFiles = ref<File | File[] | null>(null)
 const uploadPending = ref<boolean>(false)
 const uploadError = ref<string | null>(null)
+const uploadRun = ref<number>(0)
 const uploadedValue = computed<UploadedValue>(() => {
   const value = form.getValue(props.path)
   if (typeof value === 'string' || value === null) return value
@@ -35,6 +36,8 @@ const files = computed<readonly File[]>(() => {
 })
 
 async function uploadFiles() {
+  const run = uploadRun.value + 1
+  uploadRun.value = run
   uploadError.value = null
   if (!files.value.length) return
 
@@ -44,25 +47,47 @@ async function uploadFiles() {
       ...params.value,
       files: files.value,
     })
+    if (uploadRun.value !== run) return
     form.setValue(props.path, value)
     selectedFiles.value = null
   } catch (error) {
+    if (uploadRun.value !== run) return
     uploadError.value = error instanceof Error ? error.message : 'Upload failed.'
   } finally {
-    uploadPending.value = false
+    if (uploadRun.value === run) uploadPending.value = false
   }
 }
 
-async function removeUpload() {
+async function removeUpload(value?: unknown) {
   uploadPending.value = true
   try {
-    await props.field.upload.onDelete?.(params.value)
+    await props.field.upload.onDelete?.({
+      ...params.value,
+      value: typeof value === 'undefined' ? uploadedValue.value : value,
+    })
     form.setValue(props.path, null)
     selectedFiles.value = null
   } finally {
     uploadPending.value = false
   }
 }
+
+async function cancelUpload() {
+  uploadRun.value += 1
+  uploadPending.value = false
+}
+
+async function retryUpload() {
+  await uploadFiles()
+}
+
+const unregisterUpload = form.registerFieldUpload(props.path, {
+  start: uploadFiles,
+  cancel: cancelUpload,
+  retry: retryUpload,
+  remove: removeUpload,
+})
+onScopeDispose(unregisterUpload)
 
 function handleFileChange() {
   void handleBlur()

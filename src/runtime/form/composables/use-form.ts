@@ -10,7 +10,9 @@ import type {
   UseFormParams,
   FormRuntime,
   FormValidationOptions,
+  FormValidationMode,
 } from '../types'
+import { isRecord } from '../utils/path'
 
 export function useForm<const TSchema, TSubmitData = unknown>(
   params: UseFormParams<TSchema, TSubmitData>,
@@ -19,6 +21,16 @@ export function useForm(params: RuntimeUseFormParams) {
   const runtime = shallowRef<FormRuntime | null>(null)
   const schema = computed(() => toValue(params.schema))
   const input = computed(() => (params.input ? toValue(params.input) : undefined))
+  const syncInput = computed<boolean | readonly string[]>(() =>
+    typeof params.syncInput !== 'undefined'
+      ? toValue(params.syncInput)
+      : getSchemaSyncInput(schema.value),
+  )
+  const validationMode = computed<FormValidationMode>(() =>
+    typeof params.validate !== 'undefined'
+      ? toValue(params.validate)
+      : getSchemaValidationMode(schema.value),
+  )
   const isBound = computed(() => runtime.value !== null)
   const context = computed(() => runtime.value?.context ?? {})
   const internal = computed(() => runtime.value?.state ?? {})
@@ -147,6 +159,8 @@ export function useForm(params: RuntimeUseFormParams) {
   return {
     schema,
     input,
+    syncInput,
+    validationMode,
     context,
     state,
     meta,
@@ -170,4 +184,23 @@ export function useForm(params: RuntimeUseFormParams) {
     bind,
     unbind,
   }
+}
+
+function getSchemaSyncInput(schema: unknown): boolean | readonly string[] {
+  const controls = getSchemaControls(schema)
+  const value = controls ? Object.getOwnPropertyDescriptor(controls, 'syncInput')?.value : undefined
+  if (typeof value === 'boolean') return value
+  return Array.isArray(value) ? value.filter((path) => typeof path === 'string') : false
+}
+
+function getSchemaValidationMode(schema: unknown): FormValidationMode {
+  const controls = getSchemaControls(schema)
+  const value = controls ? Object.getOwnPropertyDescriptor(controls, 'validate')?.value : undefined
+  return value === false || value === 'required' || value === 'rules' ? value : true
+}
+
+function getSchemaControls(schema: unknown) {
+  if (!isRecord(schema)) return undefined
+  const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
+  return isRecord(controls) ? controls : undefined
 }

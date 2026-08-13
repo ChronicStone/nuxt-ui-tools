@@ -4,9 +4,18 @@ import type { CheckboxGroupFieldOutput } from '../fields/checkbox-group/types'
 import type { CheckboxFieldOutput } from '../fields/checkbox/types'
 import type { ColorPickerFieldOutput } from '../fields/color-picker/types'
 import type { CustomComponentFieldOutput } from '../fields/custom-component/types'
+import type {
+  DateRangeFieldOutput,
+  DateTimeFieldOutput,
+  DateTimeRangeFieldOutput,
+  MonthFieldOutput,
+  MonthRangeFieldOutput,
+  YearFieldOutput,
+} from '../fields/date-family/types'
 import type { DateFieldOutput } from '../fields/date/types'
 import type { FileFieldOutput } from '../fields/file/types'
 import type { HiddenFieldOutput } from '../fields/hidden/types'
+import type { HierarchyFieldOutput } from '../fields/hierarchy/types'
 import type { NumberFieldOutput } from '../fields/number/types'
 import type { ObjectFieldOutput } from '../fields/object/types'
 import type { OneTimeCodeFieldOutput } from '../fields/one-time-code/types'
@@ -27,8 +36,11 @@ import type { UploadFieldOutput } from '../fields/upload/types'
 export type { FormStateMode, NullableValue } from './field-output-utils'
 export type { ObjectFieldOutput } from '../fields/object/types'
 export type { ArrayListFieldOutput } from '../fields/array-list/types'
+export type { ArrayTableFieldOutput } from '../fields/array-table/types'
 export type { ArrayTabsFieldOutput } from '../fields/array-tabs/types'
 export type { ArrayVariantFieldOutput } from '../fields/array-variant/types'
+export type { GroupFieldOutput } from '../fields/group/types'
+export type { MatrixFieldOutput } from '../fields/matrix/types'
 
 /* eslint-disable */
 export type ResolveFormFieldValue<TField> = TField extends { type: 'text' }
@@ -79,11 +91,30 @@ export type ResolveFormFieldValue<TField> = TField extends { type: 'text' }
                                               ? RatingFieldOutput
                                               : TField extends { type: 'date' }
                                                 ? DateFieldOutput
-                                                : TField extends { type: 'time' }
-                                                  ? TimeFieldOutput
-                                                  : TField extends { type: 'object' }
-                                                    ? ObjectFieldOutput<unknown>
-                                                    : unknown
+                                                : TField extends { type: 'datetime' }
+                                                  ? DateTimeFieldOutput
+                                                  : TField extends { type: 'daterange' }
+                                                    ? DateRangeFieldOutput
+                                                    : TField extends { type: 'monthrange' }
+                                                      ? MonthRangeFieldOutput
+                                                      : TField extends { type: 'datetimerange' }
+                                                        ? DateTimeRangeFieldOutput
+                                                        : TField extends { type: 'month' }
+                                                          ? MonthFieldOutput
+                                                          : TField extends { type: 'year' }
+                                                            ? YearFieldOutput
+                                                            : TField extends { type: 'time' }
+                                                              ? TimeFieldOutput
+                                                              : TField extends {
+                                                                    type:
+                                                                      | 'tree-select'
+                                                                      | 'cascader'
+                                                                      | 'tree'
+                                                                  }
+                                                                ? HierarchyFieldOutput<TField>
+                                                                : TField extends { type: 'object' }
+                                                                  ? ObjectFieldOutput<unknown>
+                                                                  : unknown
 /* eslint-enable */
 
 export type ExtractFormFieldInternalValue<TField> = ResolveFormFieldValue<TField>

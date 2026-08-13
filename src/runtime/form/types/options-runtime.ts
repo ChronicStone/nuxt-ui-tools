@@ -1,20 +1,13 @@
-import type { QueryKey } from '@tanstack/vue-query'
-import type { ComputedRef } from 'vue'
+import type { QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type { ComputedRef, Ref } from 'vue'
 
 import type { ResolvedFormOption } from '../utils/options'
 
-/**
- * Minimal query-options shape consumed by option-capable fields.
- *
- * The authored schema can return richer TanStack Query options; the field option runtime only
- * needs these properties to detect query-backed sources, run the query lazily while the field is
- * mounted, and expose the right loading state to the field component.
- */
-export interface FormRuntimeQueryOptions {
-  queryKey: QueryKey
-  queryFn?: () => unknown
-  enabled?: boolean
-}
+/** Complete TanStack Query options retained by form-owned observers. */
+export type FormRuntimeQueryOptions = Exclude<
+  UseQueryOptions<unknown, Error, unknown, unknown, QueryKey>,
+  Ref<unknown> | ComputedRef<unknown>
+>
 
 /**
  * Runtime state registered by option-capable fields.

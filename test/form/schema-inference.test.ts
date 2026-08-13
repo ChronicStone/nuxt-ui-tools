@@ -114,9 +114,54 @@ describe('defineFormSchema inference', () => {
     expectTypeOf<(typeof fields)[number]['type']>().toMatchTypeOf<'text' | 'radio'>()
   })
 
+  it('types tree and tree-select checking behavior', () => {
+    const treeSchema = defineFormSchema({
+      fields: [
+        {
+          key: 'permissions',
+          type: 'tree',
+          multiple: true,
+          selectionControl: 'checkbox',
+          selectionBehavior: 'toggle',
+          propagateSelect: true,
+          bubbleSelect: true,
+          options: [{ key: 'catalog', label: 'Catalog' }],
+        },
+        {
+          key: 'owner',
+          type: 'tree-select',
+          selectionControl: 'radio',
+          selectionBehavior: 'replace',
+          options: [{ key: 'engineering', label: 'Engineering' }],
+        },
+      ],
+    })
+
+    expectTypeOf<(typeof treeSchema.fields)[number]['type']>().toMatchTypeOf<
+      'tree' | 'tree-select'
+    >()
+  })
+
   it('exposes the planned field-kind registry', () => {
     expect(formFieldKinds.map((kind) => kind.type)).toContain('text')
     expect(formFieldKinds.map((kind) => kind.type)).toContain('upload')
+    expect(formFieldKinds.map((kind) => kind.type)).toEqual(
+      expect.arrayContaining([
+        'datetime',
+        'daterange',
+        'monthrange',
+        'datetimerange',
+        'month',
+        'year',
+        'array-table',
+        'tree-select',
+        'cascader',
+        'group',
+        'tree',
+        'matrix',
+      ]),
+    )
+    expect(formFieldKinds.map((kind) => kind.type)).not.toContain('alpha-select')
   })
 })
 

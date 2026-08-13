@@ -16,12 +16,20 @@ export type DynamicValue<TValue> = TValue extends (...params: infer _TParams) =>
   ? TResult
   : TValue
 
-export type QueryOptionsValue<TValue> = TValue extends { queryKey: infer _TQueryKey }
-  ? TValue extends { queryKey: DataTag<QueryKey, infer TResult, infer _TError> }
-    ? TResult
-    : TValue extends { queryFn: (...params: infer _TParams) => infer TResult }
-      ? AwaitedValue<TResult>
-      : never
+type QuerySelectedValue<TValue> = TValue extends { select?: infer TSelect }
+  ? FunctionReturn<Exclude<TSelect, undefined>>
+  : never
+
+type QueryFunctionValue<TValue> = TValue extends { queryFn?: infer TQueryFn }
+  ? AwaitedValue<FunctionReturn<Exclude<TQueryFn, undefined>>>
+  : never
+
+export type QueryOptionsValue<TValue> = [TValue] extends [{ queryKey: infer TQueryKey }]
+  ? [QuerySelectedValue<TValue>] extends [never]
+    ? TQueryKey extends DataTag<QueryKey, infer TResult, infer _TError>
+      ? TResult
+      : QueryFunctionValue<TValue>
+    : QuerySelectedValue<TValue>
   : TValue
 
 export type OptionSource<TField> = TField extends { options: infer TOptions }
@@ -44,9 +52,11 @@ export type OptionItem<TField> = OptionItemFromValue<OptionSourceValue<OptionSou
 
 export type OptionValue<TOption> = TOption extends { value: infer TValue }
   ? TValue
-  : TOption extends FormOptionValue
-    ? TOption
-    : never
+  : TOption extends { key: infer TValue }
+    ? TValue
+    : TOption extends FormOptionValue
+      ? TOption
+      : never
 
 export type FieldOptionValue<TField> = FallbackNever<
   OptionValue<OptionItem<TField>>,
