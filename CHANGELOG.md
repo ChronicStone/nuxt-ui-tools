@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.1.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v0.1.0...v0.1.1)
+
+### 🚀 Enhancements
+
+- **table:** Expose composable data list styling ([eb08d53](https://github.com/ChronicStone/nuxt-ui-tools/commit/eb08d53))
+- **table:** Polish data list filters and runtime integration ([4674867](https://github.com/ChronicStone/nuxt-ui-tools/commit/4674867))
+
+### 🩹 Fixes
+
+- **form:** Polish field behavior and semantics ([c49ca2d](https://github.com/ChronicStone/nuxt-ui-tools/commit/c49ca2d))
+
+### ❤️ Contributors
+
+- THAO-Cyprien
+
 ## v0.1.0
 
 This is the first public release of `nuxt-ui-tools`.
