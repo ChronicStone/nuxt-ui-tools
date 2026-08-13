@@ -1,46 +1,39 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick, ref } from 'vue'
+import { describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
 
 import { useFilterTagSession } from '../../src/runtime/table/composables/use-filter-tag-session'
 
 describe('filter tag session', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
-      setTimeout(() => callback(0), 0),
-    )
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.useRealTimers()
-  })
-
-  it('activates only once per token value and opens through the locked session flow', async () => {
-    const activationToken = ref<number | undefined>(undefined)
-    const onActivated = vi.fn()
-
+  it('opens synchronously without a timer or animation-frame handoff', () => {
     const session = useFilterTagSession({
-      activationToken,
       hasCommittedState: () => false,
-      onActivated,
       onOpen: vi.fn(),
       onClose: vi.fn(),
       onSessionClosed: vi.fn(),
       onDismiss: vi.fn(),
     })
 
-    activationToken.value = 1
-    await nextTick()
-    expect(onActivated).toHaveBeenCalledTimes(1)
-
-    activationToken.value = 1
-    await nextTick()
-    expect(onActivated).toHaveBeenCalledTimes(1)
-
-    session.openWithLock()
-    vi.runAllTimers()
+    session.open()
     expect(session.isOpen.value).toBe(true)
+  })
+
+  it('initializes an embedded editor without scheduling an overlay handoff', async () => {
+    const onOpen = vi.fn()
+    const isOpen = ref<boolean>(false)
+    const session = useFilterTagSession({
+      isOpen,
+      embedded: true,
+      hasCommittedState: () => false,
+      onOpen,
+      onClose: vi.fn(),
+      onSessionClosed: vi.fn(),
+      onDismiss: vi.fn(),
+    })
+
+    expect(session.isOpen.value).toBe(true)
+    expect(isOpen.value).toBe(true)
+    await Promise.resolve()
+    expect(onOpen).toHaveBeenCalledTimes(1)
   })
 
   it('dismisses uncommitted dynamic sessions on close', () => {
@@ -50,7 +43,6 @@ describe('filter tag session', () => {
     const session = useFilterTagSession({
       dynamic: true,
       hasCommittedState: () => false,
-      onActivated: vi.fn(),
       onOpen: vi.fn(),
       onClose,
       onSessionClosed: vi.fn(),
@@ -72,7 +64,6 @@ describe('filter tag session', () => {
       session: true,
       dynamic: true,
       hasCommittedState: () => false,
-      onActivated: vi.fn(),
       onOpen: vi.fn(),
       onClose: vi.fn(),
       onSessionClosed,

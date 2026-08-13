@@ -38,6 +38,10 @@ export type TableFilterDisplayLocationValue = TableFilterDisplayLocation | strin
 export interface TableFilterBehaviorCommon<
   TOperator extends TableFilterOperator = TableFilterOperator,
 > {
+  /**
+   * Effective filter value when the URL has no override for this definition.
+   * The default stays active but is omitted from the URL; clearing the filter restores it.
+   */
   defaultValue?: TableQueryStateFilterValue
   operators?: TOperator[]
   defaultOperator?: TOperator

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import UInput from '@nuxt/ui/components/Input.vue'
 import UScrollArea from '@nuxt/ui/components/ScrollArea.vue'
+import { computed } from 'vue'
 
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
-import { mergeDataListUiClass } from '../../../utils'
+import { mergeDataListUiClass, resolveFilterEditorSizeClasses } from '../../../utils'
 
 const {
   searchable = false,
@@ -30,6 +31,7 @@ const {
 const searchQuery = defineModel<string>('searchQuery', {
   default: '',
 })
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size))
 </script>
 
 <template>
@@ -37,7 +39,11 @@ const searchQuery = defineModel<string>('searchQuery', {
     <div
       v-if="searchable"
       :class="
-        mergeDataListUiClass('w-full border-b border-default p-2', undefined, ui?.searchHeader)
+        mergeDataListUiClass(
+          `w-full border-b border-default ${sizeClasses.searchHeader}`,
+          undefined,
+          ui?.searchHeader,
+        )
       "
     >
       <UInput
@@ -46,7 +52,7 @@ const searchQuery = defineModel<string>('searchQuery', {
         :placeholder="searchPlaceholder"
         class="w-full"
         :loading="searchLoading"
-        variant="ghost"
+        variant="none"
         :autofocus="autofocus"
         :size="size"
         :ui="{ root: ui?.search, base: ui?.searchInput }"
@@ -55,7 +61,13 @@ const searchQuery = defineModel<string>('searchQuery', {
 
     <UScrollArea
       type="hover"
-      :class="mergeDataListUiClass(`p-2 ${maxHeightClass}`, undefined, ui?.scrollArea)"
+      :class="
+        mergeDataListUiClass(
+          `${sizeClasses.scrollArea} ${maxHeightClass}`,
+          undefined,
+          ui?.scrollArea,
+        )
+      "
       :ui="{
         root: mergeDataListUiClass(maxHeightClass, undefined, ui?.scrollArea),
         viewport: mergeDataListUiClass(maxHeightClass, undefined, ui?.scrollViewport),
@@ -66,7 +78,7 @@ const searchQuery = defineModel<string>('searchQuery', {
       <div
         v-if="showEmpty"
         :class="
-          mergeDataListUiClass('px-3 py-8 text-center text-sm text-muted', undefined, ui?.empty)
+          mergeDataListUiClass(`${sizeClasses.empty} text-center text-muted`, undefined, ui?.empty)
         "
       >
         <slot name="empty">

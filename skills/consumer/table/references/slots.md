@@ -20,7 +20,12 @@
 
   <UiDataListContent fit="fill">
     <template #initial-loading>Loading skeletons…</template>
-    <template #empty>No matching templates.</template>
+    <template #empty="{ hasActiveQuery, clearQuery }">
+      <TemplateEmptyState
+        :filtered="hasActiveQuery"
+        @clear="clearQuery"
+      />
+    </template>
     <template #error="{ retry }">
       <button @click="retry">Retry</button>
     </template>
@@ -65,6 +70,8 @@ Each popup-backed filter tag can replace its trigger without replacing the filte
 ## State slots
 
 `UiDataListContent` exposes `initial-loading` (`loading` remains an alias), `empty`, `error`, `refreshing`, `content`, `table`, `grid`, `before`, and `after`. Those states work for offset, cursor, and unpaginated data.
+
+The `empty` slot receives `layout`, `refresh`, `hasActiveQuery`, and `clearQuery`. Use `hasActiveQuery` to distinguish a truly empty collection from a search or filter with no matches; `clearQuery` clears both the search term and active UI filters without coupling the empty-state component to the table instance.
 
 `UiDataListInfiniteLoader` separately exposes `loading`, `error`, and `end`, so a failed next page keeps already loaded content visible. The default `<UiDataList />` forwards `initial-loading`, `loading`, `empty`, `empty-table`, `empty-grid`, `error`, `refreshing`, `loading-more`, `load-more-error`, and `end`.
 
@@ -124,6 +131,20 @@ Progressive filter editors use the `filterTags.ui` anatomy after activation. Thi
 >
   <!-- application-owned composition -->
 </UiDataListRoot>
+```
+
+The progressive Add-filter flow keeps one popover and one trigger anchor mounted while it advances through the filter picker, an optional match-mode step, and the chosen editor. Stage changes use a short directional transition and reduce to an opacity-only crossfade when the user requests reduced motion. Custom Add-filter triggers receive `stage` and `definition` in addition to the normal open controls, so they can update their label without replacing the anchor.
+
+The editor `size` scales the search, options, footer controls, spacing, and default width together. Default widths have explicit viewport-safe minimum and maximum bounds; when an application overrides them, set the complete width contract rather than only a large minimum:
+
+```ts
+filterTags: {
+  size: 'sm',
+  ui: {
+    popoverContent: 'w-auto max-w-[min(15rem,calc(100vw-1rem))]',
+    editor: 'w-[min(15rem,calc(100vw-1rem))] min-w-48 max-w-60',
+  },
+}
 ```
 
 Table UI follows Nuxt UI's native table anatomy. `table.ui.wrapper` belongs to the DataList renderer wrapper; `root`, `base`, `thead`, `tbody`, `tr`, `th`, `td`, and the remaining slots are forwarded to `UTable` unchanged.

@@ -41,6 +41,7 @@ const emit = defineEmits<{
 
 <template>
   <UDropdownMenu
+    :size="resolvedSize"
     :items="[
       items.map((item) => ({
         label: item.label,

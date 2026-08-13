@@ -48,42 +48,25 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
           (item) => item.key === definition.key,
         )
       "
-      @dismiss="internals.filterPresentation.releaseDynamicSession({ key: definition.key })"
+      @dismiss="
+        internals.filterPresentation.releaseDynamicSession({
+          key: definition.key,
+        })
+      "
     >
       <template v-if="$slots.filter" #trigger="scope">
         <slot name="filter" v-bind="scope" :filter="definition" />
       </template>
     </component>
 
-    <component
-      :is="resolveFilterTagComponent(dynamicSessionDefinition)"
-      v-if="dynamicSessionDefinition"
-      :key="`dynamic-session:${dynamicSessionDefinition.key}`"
-      :definition="dynamicSessionDefinition"
-      dynamic
-      session
-      :activation-token="
-        internals.filterPresentation.getDynamicActivationToken({
-          key: dynamicSessionDefinition.key,
-        })
-      "
-      @dismiss="
-        internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })
-      "
-      @session-closed="
-        internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })
-      "
-    >
-      <template v-if="$slots.filter" #trigger="scope">
-        <slot name="filter" v-bind="scope" :filter="dynamicSessionDefinition" />
-      </template>
-    </component>
-
     <DynamicFilterPicker
-      v-else-if="
-        props.showAdd && internals.filterPresentation.dormantDynamicDefinitions.value.length
+      v-if="
+        props.showAdd &&
+        (internals.filterPresentation.dormantDynamicDefinitions.value.length ||
+          dynamicSessionDefinition)
       "
       :definitions="internals.filterPresentation.dormantDynamicDefinitions.value"
+      :session-definition="dynamicSessionDefinition"
       :get-label="getFilterLabel"
       :size="
         dataListUi.ui.value.addFilter?.size ??
@@ -95,6 +78,7 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
         trigger: dataListUi.ui.value.filterTags?.ui?.addTrigger,
       }"
       @select="internals.filterPresentation.activateDynamicFilter({ key: $event })"
+      @release="internals.filterPresentation.releaseDynamicSession({ key: $event })"
     >
       <template v-if="$slots['add-filter-trigger']" #trigger="scope">
         <slot name="add-filter-trigger" v-bind="scope" />

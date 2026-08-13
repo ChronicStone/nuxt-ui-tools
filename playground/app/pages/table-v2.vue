@@ -174,13 +174,6 @@ const schema = defineTableSchema({
 })
 
 const table = useTable(schema)
-
-onMounted(() => {
-  table.filters.replace([
-    { key: 'status', operator: 'isAnyOf', value: ['Published'] },
-    { key: 'format', operator: 'isAnyOf', value: ['A4', 'Letter'] },
-  ])
-})
 </script>
 
 <template>

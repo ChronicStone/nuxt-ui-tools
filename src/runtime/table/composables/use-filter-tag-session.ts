@@ -1,12 +1,11 @@
-import { ref, watch, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 
 export interface UseFilterTagSessionParams {
   isOpen?: Ref<boolean>
-  activationToken?: Ref<number | undefined>
   session?: boolean
   dynamic?: boolean
+  embedded?: boolean
   hasCommittedState: () => boolean
-  onActivated: () => void
   onOpen: () => void
   onClose: () => void
   onSessionClosed: () => void
@@ -15,9 +14,7 @@ export interface UseFilterTagSessionParams {
 
 export function useFilterTagSession(options: UseFilterTagSessionParams) {
   const isOpen = options.isOpen ?? ref<boolean>(false)
-  const lastActivationToken = ref<number | null>(null)
-
-  let dismissLocked = false
+  if (options.embedded) isOpen.value = true
 
   function runCloseEffects() {
     options.onClose()
@@ -30,24 +27,17 @@ export function useFilterTagSession(options: UseFilterTagSessionParams) {
     if (options.dynamic && !options.hasCommittedState()) options.onDismiss()
   }
 
-  function openWithLock() {
-    dismissLocked = true
-    setTimeout(() => {
-      isOpen.value = true
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          dismissLocked = false
-        })
-      })
-    })
+  function open() {
+    if (isOpen.value) return
+    isOpen.value = true
+    options.onOpen()
   }
 
-  function handleOpenChange(open: boolean) {
-    if (!open && dismissLocked) return
-    if (!open && !isOpen.value) return
-    isOpen.value = open
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen && !isOpen.value) return
+    isOpen.value = nextOpen
 
-    if (open) {
+    if (nextOpen) {
       options.onOpen()
       return
     }
@@ -61,23 +51,11 @@ export function useFilterTagSession(options: UseFilterTagSessionParams) {
     runCloseEffects()
   }
 
-  if (options.activationToken) {
-    queueMicrotask(() => {
-      watch(
-        options.activationToken!,
-        (value) => {
-          if (value == null || value === lastActivationToken.value) return
-          lastActivationToken.value = value
-          options.onActivated()
-        },
-        { immediate: true },
-      )
-    })
-  }
+  if (options.embedded) queueMicrotask(options.onOpen)
 
   return {
     isOpen,
-    openWithLock,
+    open,
     handleOpenChange,
     close,
   }

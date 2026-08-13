@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import type { DropdownMenuProps } from '@nuxt/ui'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
+import type { DropdownMenuProps } from '@nuxt/ui/components/DropdownMenu.vue'
 import { computed, useAttrs } from 'vue'
 
 import { useTableInternals } from '../../composables/use-table-internals'
 import { useTableRowActionScope } from '../../composables/use-table-row-actions'
+import type { DataListControlSize } from '../../types'
 import { createRowActionDropdownItems, resolveVisibleTableRowActions } from '../../utils'
 
 defineOptions({
@@ -17,6 +18,7 @@ const props = defineProps<{
   portal?: DropdownMenuProps['portal']
   arrow?: DropdownMenuProps['arrow']
   disabled?: DropdownMenuProps['disabled']
+  size?: DataListControlSize
   ui?: DropdownMenuProps['ui']
 }>()
 
@@ -52,6 +54,7 @@ const items = computed(() => {
     :portal="portal"
     :arrow="props.arrow"
     :disabled="props.disabled"
+    :size="props.size"
     :ui="props.ui"
     v-bind="attrs"
   >

@@ -2,7 +2,11 @@
 import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
-import type { TableResolvedFilterOptionEntry } from '../../../types'
+import type {
+  DataListControlSize,
+  DataListFilterEditorUi,
+  TableResolvedFilterOptionEntry,
+} from '../../../types'
 import { mergeDataListUiClass } from '../../../utils'
 import FilterOptionRow from './FilterOptionRow.vue'
 
@@ -18,6 +22,8 @@ const props = defineProps<{
   countLoading: boolean
   selectedIcon?: string
   truncate?: boolean
+  size?: DataListControlSize
+  ui?: DataListFilterEditorUi
 }>()
 
 const emit = defineEmits<{
@@ -32,7 +38,7 @@ const emit = defineEmits<{
 }>()
 
 const dataListUi = useDataListUi()
-const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
+const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
 </script>
 
 <template>
@@ -47,7 +53,7 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         v-for="(entry, index) in section.entries"
         :key="entry.value == null ? entry.label : String(entry.value)"
         type="button"
-        :class="mergeDataListUiClass('block w-full', undefined, ui?.option)"
+        class="block w-full"
         @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
       >
         <FilterOptionRow
@@ -58,6 +64,8 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
           :leading-icon="entry.icon"
           :selected-icon="props.selectedIcon"
           :truncate="props.truncate"
+          :size="props.size"
+          :ui="props.ui"
         />
       </button>
     </template>

@@ -5,9 +5,10 @@ import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
-import { mergeDataListUiClass } from '../../../utils'
+import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
+import { mergeDataListUiClass, resolveFilterEditorSizeClasses } from '../../../utils'
 
-defineProps<{
+const props = defineProps<{
   label: string
   count?: number
   countLoading?: boolean
@@ -15,18 +16,23 @@ defineProps<{
   leadingIcon?: string
   selectedIcon?: string
   truncate?: boolean
+  size?: DataListControlSize
+  ui?: DataListFilterEditorUi
 }>()
 
 const dataListUi = useDataListUi()
-const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
-const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(
+  () => props.size ?? dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value,
+)
+const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 </script>
 
 <template>
   <div
     :class="
       mergeDataListUiClass(
-        `flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-elevated ${selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
+        `flex w-full items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
         undefined,
         ui?.option,
       )
@@ -44,13 +50,19 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
     <UIcon
       v-if="leadingIcon"
       :name="leadingIcon"
-      :class="mergeDataListUiClass('size-4 shrink-0 text-muted', undefined, ui?.optionIcon)"
+      :class="
+        mergeDataListUiClass(
+          `${sizeClasses.optionIcon} shrink-0 text-muted`,
+          undefined,
+          ui?.optionIcon,
+        )
+      "
     />
 
     <span
       :class="
         mergeDataListUiClass(
-          `min-w-0 flex-1 ${(truncate ?? true) ? 'truncate' : ''}`,
+          `min-w-0 flex-1 ${sizeClasses.optionLabel} ${(truncate ?? true) ? 'truncate' : ''}`,
           undefined,
           ui?.optionLabel,
         )

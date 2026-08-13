@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-import UPopover from '@nuxt/ui/components/Popover.vue'
-import { computed, ref, toRef } from 'vue'
+import { computed, ref } from 'vue'
 
 import { useRangeSelect } from '../../../../shared'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
@@ -13,15 +12,23 @@ import type {
   TableOptionFilterDefinition,
   TableOptionFilterOperator,
 } from '../../../types'
-import { mergeDataListUiClass, resolveFilterTriggerIcon } from '../../../utils'
+import {
+  mergeDataListUiClass,
+  resolveFilterEditorSizeClasses,
+  resolveFilterTriggerIcon,
+} from '../../../utils'
+import FilterMatchModePanel from '../shared/FilterMatchModePanel.vue'
 import FilterOptionPickerContent from '../shared/FilterOptionPickerContent.vue'
+import FilterPopoverShell from '../shared/FilterPopoverShell.vue'
+import FilterStageTransition from '../shared/FilterStageTransition.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableOptionFilterDefinition
   dynamic?: boolean
   session?: boolean
-  activationToken?: number
+  embedded?: boolean
+  initialOperator?: TableFilterOperator
 }>()
 const emit = defineEmits<{
   dismiss: []
@@ -32,12 +39,16 @@ const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 const searchQuery = ref<string>('')
 const isSessionOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
-const pendingOperator = ref<TableFilterOperator>()
+const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
 const localSelectedValues = ref<(string | number | boolean)[]>([])
 const pinnedValues = ref<Set<string>>(new Set())
+const stage = ref<'editor' | 'match-mode'>('editor')
+const stageDirection = ref<'forward' | 'backward'>('forward')
+const stageTransitioning = ref<boolean>(false)
 
 const operator = computed<TableOptionFilterOperator>(() => {
   const next =
@@ -64,11 +75,10 @@ const state = useOptionFilterEditorState({
 
 const session = useFilterTagSession({
   isOpen: isSessionOpen,
-  activationToken: toRef(props, 'activationToken'),
   session: props.session,
   dynamic: props.dynamic,
+  embedded: props.embedded,
   hasCommittedState: () => internals.filters.getFilterState({ key: props.definition.key }) != null,
-  onActivated: () => handleActivate(operator.value),
   onOpen: () => {
     isContentReady.value = false
     initLocalState()
@@ -145,7 +155,9 @@ const restRangeSelect = useRangeSelect({
 })
 
 function initLocalState() {
-  const committedRule = internals.filters.getFilterState({ key: props.definition.key })
+  const committedRule = internals.filters.getFilterState({
+    key: props.definition.key,
+  })
   const values: (string | number | boolean)[] = Array.isArray(committedRule?.value)
     ? committedRule.value.filter(
         (value: unknown): value is string | number | boolean =>
@@ -165,13 +177,19 @@ function initLocalState() {
 
 function handleActivate(op: TableFilterOperator) {
   pendingOperator.value = op
-  session.openWithLock()
+  stage.value = 'editor'
+  stageDirection.value = 'backward'
+  session.open()
+}
+
+function handleRequestMatchMode() {
+  stageDirection.value = 'forward'
+  stageTransitioning.value = true
+  stage.value = 'match-mode'
+  session.open()
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
-  if (state.filterUi.value.clearOnOperatorChange)
-    internals.filters.clearFilter({ key: props.definition.key })
-
   localSelectedValues.value = []
   pinnedValues.value = new Set()
   state.resetExpandedIds()
@@ -179,8 +197,10 @@ function handleOperatorChange(op: TableFilterOperator) {
   pinnedRangeSelect.reset()
   restRangeSelect.reset()
 
-  if (state.filterUi.value.reopenOnOperatorChange) handleActivate(op)
-  else pendingOperator.value = op
+  pendingOperator.value = op
+  stageDirection.value = 'forward'
+  stageTransitioning.value = true
+  stage.value = 'editor'
 }
 
 function setSelectedValues(values: Array<string | number | boolean>) {
@@ -247,17 +267,14 @@ function handleContentMounted() {
 </script>
 
 <template>
-  <UPopover
+  <FilterPopoverShell
     :open="session.isOpen.value"
-    :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{
-      content: mergeDataListUiClass(
-        'w-fit overflow-hidden p-0',
-        undefined,
-        dataListFilterUi?.popoverContent,
-      ),
-    }"
-    @update:open="session.handleOpenChange"
+    :embedded="embedded"
+    :transitioning="stageTransitioning"
+    :content-class="
+      mergeDataListUiClass('w-fit overflow-hidden p-0', undefined, dataListFilterUi?.popoverContent)
+    "
+    @update-open="session.handleOpenChange"
   >
     <slot
       name="trigger"
@@ -273,71 +290,87 @@ function handleContentMounted() {
       <TableFilterTrigger
         :label="internals.filters.getFilterLabelText({ label: definition.label })"
         :leading-icon="resolveFilterTriggerIcon(definition)"
+        :operator="operator"
         :operator-label="operatorLabel"
         :operator-items="operatorItems"
         :preview-tags="preview.tags"
         :preview-summary="preview.summary"
         :active="preview.active"
-        @select-operator="handleOperatorChange"
         @activate="handleActivate"
+        @request-match-mode="handleRequestMatchMode"
         @clear="clearFilter"
       />
     </slot>
 
     <template #content>
-      <div
-        :class="
-          mergeDataListUiClass(
-            'w-fit max-w-[calc(100vw-1rem)] bg-default',
-            undefined,
-            dataListFilterUi?.editor,
-          )
-        "
-        @vue:mounted="handleContentMounted"
+      <FilterStageTransition
+        :stage-key="stage"
+        :direction="stageDirection"
+        @settled="stageTransitioning = false"
       >
-        <FilterOptionPickerContent
-          v-model:search-query="searchQuery"
-          :flat-radio-value="state.flatRadioValue.value"
-          :tree-radio-value="state.treeRadioValue.value"
-          :state="state"
-          :sections="listSections"
+        <FilterMatchModePanel
+          v-if="stage === 'match-mode'"
+          :items="operatorItems"
+          :selected="operator"
           :size="size"
           :ui="dataListFilterUi"
-          @update:flat-radio-value="state.flatRadioValue.value = $event"
-          @update:tree-radio-value="state.treeRadioValue.value = $event"
-          @select-entry="handleSelectEntry"
-          @toggle-tree-entry="handleToggleTreeEntry"
-          @toggle-expanded="state.toggleExpanded"
+          @select="handleOperatorChange"
         />
-
         <div
-          v-if="state.filterUi.value.commitMode === 'manual'"
+          v-else
           :class="
             mergeDataListUiClass(
-              'flex items-center justify-between border-t border-default p-2',
+              `${sizeClasses.editor} max-w-[calc(100vw-1rem)] bg-default`,
               undefined,
-              dataListFilterUi?.footer,
+              dataListFilterUi?.editor,
             )
           "
+          @vue:mounted="handleContentMounted"
         >
-          <UButton
-            color="neutral"
-            variant="ghost"
+          <FilterOptionPickerContent
+            v-model:search-query="searchQuery"
+            :flat-radio-value="state.flatRadioValue.value"
+            :tree-radio-value="state.treeRadioValue.value"
+            :state="state"
+            :sections="listSections"
             :size="size"
-            :label="state.filterUi.value.actions.clear"
-            :ui="{ base: dataListFilterUi?.clear }"
-            @click="clearFilter"
+            :ui="dataListFilterUi"
+            @update:flat-radio-value="state.flatRadioValue.value = $event"
+            @update:tree-radio-value="state.treeRadioValue.value = $event"
+            @select-entry="handleSelectEntry"
+            @toggle-tree-entry="handleToggleTreeEntry"
+            @toggle-expanded="state.toggleExpanded"
           />
-          <UButton
-            color="neutral"
-            variant="subtle"
-            :size="size"
-            :label="state.filterUi.value.actions.apply"
-            :ui="{ base: dataListFilterUi?.apply }"
-            @click="applyFilter"
-          />
+
+          <div
+            v-if="state.filterUi.value.commitMode === 'manual'"
+            :class="
+              mergeDataListUiClass(
+                `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
+                undefined,
+                dataListFilterUi?.footer,
+              )
+            "
+          >
+            <UButton
+              color="neutral"
+              variant="ghost"
+              :size="size"
+              :label="state.filterUi.value.actions.clear"
+              :ui="{ base: dataListFilterUi?.clear }"
+              @click="clearFilter"
+            />
+            <UButton
+              color="neutral"
+              variant="subtle"
+              :size="size"
+              :label="state.filterUi.value.actions.apply"
+              :ui="{ base: dataListFilterUi?.apply }"
+              @click="applyFilter"
+            />
+          </div>
         </div>
-      </div>
+      </FilterStageTransition>
     </template>
-  </UPopover>
+  </FilterPopoverShell>
 </template>

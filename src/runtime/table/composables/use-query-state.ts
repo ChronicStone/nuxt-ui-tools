@@ -9,10 +9,8 @@ import {
 } from '#ui-tools/query-state'
 
 import type {
-  TableFilterOperator,
   TableLayout,
   TableQueryStateFilterRule,
-  TableQueryStateFilterValue,
   TableSchemaView,
   TableUiFilterDefinition,
 } from '../types'
@@ -22,8 +20,11 @@ import {
   getDefaultSort,
   getPaginationMode,
   normalizeFilterDefinition,
+  parseTableFilterQueryState,
+  resolveTableFilterDefaultRules,
   resolveFilterDefaultOperator,
   resolveFilterSupportedOperators,
+  serializeTableFilterQueryState,
 } from '../utils'
 
 export interface UseQueryStateParams {
@@ -136,7 +137,7 @@ export function useQueryState(params: UseQueryStateParams) {
       ui: dynamicQueryState<TableUiFilterDefinition, TableQueryStateFilterRule[]>({
         urlPrefix: 'ui',
         definitions: () => params.schema.value.filters?.ui ?? [],
-        defaultValue: [],
+        defaultValue: resolveTableFilterDefaultRules(params.schema.value.filters?.ui ?? []),
 
         resolve(filter) {
           const definition = normalizeFilterDefinition(filter)
@@ -151,48 +152,11 @@ export function useQueryState(params: UseQueryStateParams) {
         },
 
         parse(entries, definitions) {
-          const rules: TableQueryStateFilterRule[] = []
-
-          for (const filter of definitions) {
-            const definition = normalizeFilterDefinition(filter)
-            const operators = resolveFilterSupportedOperators(definition)
-            const defaultOp = resolveFilterDefaultOperator(definition)
-
-            for (const op of operators) {
-              const urlKey = op === defaultOp ? definition.key : `${definition.key}~${op}`
-              const value = entries.get(urlKey)
-
-              if (value != null) {
-                rules.push({
-                  key: definition.key,
-                  operator: op,
-                  value: value as TableQueryStateFilterValue,
-                })
-                break // first matching operator wins
-              }
-            }
-          }
-
-          return rules
+          return parseTableFilterQueryState({ entries, definitions })
         },
 
         serialize(rules, definitions) {
-          const result = new Map<string, unknown>()
-
-          for (const rule of rules) {
-            const filter = definitions.find((f) => f.key === rule.key)
-            if (!filter) continue
-
-            const definition = normalizeFilterDefinition(filter)
-            const operator: TableFilterOperator =
-              rule.operator ?? resolveFilterDefaultOperator(definition)
-            const defaultOp = resolveFilterDefaultOperator(definition)
-            const urlKey = operator === defaultOp ? definition.key : `${definition.key}~${operator}`
-
-            result.set(urlKey, rule.value)
-          }
-
-          return result
+          return serializeTableFilterQueryState({ rules, definitions })
         },
       }),
     },

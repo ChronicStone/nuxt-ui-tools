@@ -130,10 +130,10 @@
   "dependencies": {
     "@internationalized/date": "^3.12.0",
     "@nuxt/kit": "^4.4.2",
-    "@nuxt/ui": "^4.5.1",
     "@tanstack/pacer": "0.19.0",
     "@tanstack/vue-virtual": "3.13.23",
     "@vueuse/core": "14.2.1",
+    "cookiejs": "2.1.3",
     "libphonenumber-js": "1.13.1",
     "motion-v": "2.0.1",
     "nuxt-viewport": "2.4.0",
@@ -142,6 +142,7 @@
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.2",
     "@nuxt/schema": "^4.4.2",
+    "@nuxt/ui": "^4.5.1",
     "@types/node": "25.4.0",
     "changelogen": "^0.6.2",
     "nuxt": "^4.4.2",
@@ -153,6 +154,7 @@
     "xlsx": "0.18.5"
   },
   "peerDependencies": {
+    "@nuxt/ui": ">=4.5.1",
     "@tanstack/vue-query": ">=5.0.0",
     "nuxt": ">=4.4.0",
     "tailwindcss": ">=4.0.0",

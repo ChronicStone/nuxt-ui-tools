@@ -99,6 +99,8 @@ function handleSelect(options: {
           props.state.filterUi.value.row.showCounts && props.state.optionSource.isCountLoading.value
         "
         :selected-icon="props.state.filterUi.value.row.selectedIcon"
+        :size="props.size"
+        :ui="props.ui"
         @toggle-entry="emit('toggleTreeEntry', $event)"
         @toggle-expanded="emit('toggleExpanded', $event)"
       />
@@ -124,6 +126,8 @@ function handleSelect(options: {
         :count-loading="props.state.optionSource.isCountLoading.value"
         :selected-icon="props.state.filterUi.value.row.selectedIcon"
         :truncate="props.state.filterUi.value.row.truncate"
+        :size="props.size"
+        :ui="props.ui"
         @select="handleSelect($event)"
       />
     </template>
@@ -146,6 +150,8 @@ function handleSelect(options: {
         :count-loading="
           props.state.filterUi.value.row.showCounts && props.state.optionSource.isCountLoading.value
         "
+        :size="props.size"
+        :ui="props.ui"
       />
     </template>
   </FilterSearchablePanel>

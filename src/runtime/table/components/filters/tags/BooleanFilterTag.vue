@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
-import UPopover from '@nuxt/ui/components/Popover.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
-import { computed, ref, toRef } from 'vue'
+import { computed, ref } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
@@ -16,13 +15,14 @@ import {
   resolveBooleanFilterUi,
   resolveFilterTriggerIcon,
 } from '../../../utils'
+import FilterPopoverShell from '../shared/FilterPopoverShell.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = defineProps<{
   definition: TableBooleanFilterDefinition
   dynamic?: boolean
   session?: boolean
-  activationToken?: number
+  embedded?: boolean
 }>()
 const emit = defineEmits<{
   dismiss: []
@@ -98,11 +98,10 @@ const radioValue = computed({
 
 const session = useFilterTagSession({
   isOpen: isSessionOpen,
-  activationToken: toRef(props, 'activationToken'),
   session: props.session,
   dynamic: props.dynamic,
+  embedded: props.embedded,
   hasCommittedState: () => internals.filters.getFilterState({ key: props.definition.key }) != null,
-  onActivated: handleActivate,
   onOpen: initLocalState,
   onClose: () => {
     isContentReady.value = false
@@ -112,7 +111,9 @@ const session = useFilterTagSession({
 })
 
 function initLocalState() {
-  const committedRule = internals.filters.getFilterState({ key: props.definition.key })
+  const committedRule = internals.filters.getFilterState({
+    key: props.definition.key,
+  })
 
   if (committedRule?.value === true || committedRule?.value === false) {
     localValue.value = committedRule.value
@@ -123,7 +124,7 @@ function initLocalState() {
 }
 
 function handleActivate() {
-  session.openWithLock()
+  session.open()
 }
 
 function handleContentMounted() {
@@ -150,17 +151,13 @@ function clearFilter() {
 </script>
 
 <template>
-  <UPopover
+  <FilterPopoverShell
     :open="session.isOpen.value"
-    :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{
-      content: mergeDataListUiClass(
-        'w-fit overflow-hidden p-0',
-        undefined,
-        dataListFilterUi?.popoverContent,
-      ),
-    }"
-    @update:open="session.handleOpenChange"
+    :embedded="embedded"
+    :content-class="
+      mergeDataListUiClass('w-fit overflow-hidden p-0', undefined, dataListFilterUi?.popoverContent)
+    "
+    @update-open="session.handleOpenChange"
   >
     <slot
       name="trigger"
@@ -176,6 +173,7 @@ function clearFilter() {
       <TableFilterTrigger
         :label="internals.filters.getFilterLabelText({ label: definition.label })"
         :leading-icon="resolveFilterTriggerIcon(definition)"
+        :operator="operator"
         operator-label="is"
         :operator-items="[]"
         :preview-tags="preview.tags"
@@ -289,5 +287,5 @@ function clearFilter() {
         </div>
       </div>
     </template>
-  </UPopover>
+  </FilterPopoverShell>
 </template>

@@ -13,6 +13,7 @@ import { DEFAULT_FILTER_OPERATOR, PAGINATION_DEFAULTS } from '../constants/query
 import type {
   TableFilterOperator,
   TableLayout,
+  TableQueryStateFilterRule,
   TableUiFilterDefinition,
   TableQueryStateFilterDefinition,
   TableQueryStateFilterRange,
@@ -250,12 +251,182 @@ export function normalizeFilterDefinition(
   }
 }
 
+export function resolveTableFilterDefaultRules(
+  definitions: TableUiFilterDefinition[],
+): TableQueryStateFilterRule[] {
+  return definitions.flatMap((definition) => {
+    const normalizedDefinition = normalizeFilterDefinition(definition)
+    const value = normalizedDefinition.defaultValue
+
+    if (value === undefined || !hasFilterValue(value)) {
+      return []
+    }
+
+    return [
+      {
+        key: normalizedDefinition.key,
+        operator: resolveFilterDefaultOperator(normalizedDefinition),
+        value,
+      },
+    ]
+  })
+}
+
+export function mergeTableFilterDefaultRules(options: {
+  rules: TableQueryStateFilterRule[]
+  definitions: TableUiFilterDefinition[]
+}): TableQueryStateFilterRule[] {
+  const defaults = new Map(
+    resolveTableFilterDefaultRules(options.definitions).map((rule) => [rule.key, rule]),
+  )
+  const definitionKeys = new Set(options.definitions.map((definition) => definition.key))
+  const merged = options.definitions.flatMap((definition) => {
+    const rule = options.rules.find((candidate) => candidate.key === definition.key)
+    const defaultRule = defaults.get(definition.key)
+    return rule ? [rule] : defaultRule ? [defaultRule] : []
+  })
+
+  return [...merged, ...options.rules.filter((rule) => !definitionKeys.has(rule.key))]
+}
+
+export function isTableFilterRuleDefault(options: {
+  rule: TableQueryStateFilterRule
+  definition: TableUiFilterDefinition
+}): boolean {
+  const normalizedDefinition = normalizeFilterDefinition(options.definition)
+  const defaultValue = normalizedDefinition.defaultValue
+
+  return (
+    defaultValue !== undefined &&
+    (options.rule.operator ?? resolveFilterDefaultOperator(normalizedDefinition)) ===
+      resolveFilterDefaultOperator(normalizedDefinition) &&
+    areFilterValuesEqual(options.rule.value, defaultValue)
+  )
+}
+
+export function parseTableFilterQueryState(options: {
+  entries: ReadonlyMap<string, unknown>
+  definitions: TableUiFilterDefinition[]
+}): TableQueryStateFilterRule[] {
+  const rules: TableQueryStateFilterRule[] = []
+
+  for (const filter of options.definitions) {
+    const definition = normalizeFilterDefinition(filter)
+    const operators = resolveFilterSupportedOperators(definition)
+    const defaultOperator = resolveFilterDefaultOperator(definition)
+
+    for (const operator of operators) {
+      const urlKey = operator === defaultOperator ? definition.key : `${definition.key}~${operator}`
+      const value = options.entries.get(urlKey)
+
+      if (isTableFilterValue(value)) {
+        rules.push({ key: definition.key, operator, value })
+        break
+      }
+    }
+  }
+
+  return mergeTableFilterDefaultRules({ rules, definitions: options.definitions })
+}
+
+export function serializeTableFilterQueryState(options: {
+  rules: TableQueryStateFilterRule[]
+  definitions: TableUiFilterDefinition[]
+}): Map<string, unknown> {
+  const result = new Map<string, unknown>()
+
+  for (const rule of options.rules) {
+    const filter = options.definitions.find((definition) => definition.key === rule.key)
+    if (!filter || isTableFilterRuleDefault({ rule, definition: filter })) continue
+
+    const definition = normalizeFilterDefinition(filter)
+    const operator = rule.operator ?? resolveFilterDefaultOperator(definition)
+    const defaultOperator = resolveFilterDefaultOperator(definition)
+    const urlKey = operator === defaultOperator ? definition.key : `${definition.key}~${operator}`
+
+    result.set(urlKey, rule.value)
+  }
+
+  return result
+}
+
 function isRange(value: unknown): value is TableQueryStateFilterRange<unknown> {
   if (!value || typeof value !== 'object') {
     return false
   }
 
   return 'from' in value || 'to' in value
+}
+
+function hasFilterValue(value: TableQueryStateFilterValue): boolean {
+  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === 'string') return value.length > 0
+  if (isRange(value)) return value.from != null || value.to != null
+  return true
+}
+
+function isTableFilterValue(value: unknown): value is TableQueryStateFilterValue {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Date
+  ) {
+    return true
+  }
+
+  if (Array.isArray(value)) {
+    return value.every(
+      (item) => typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean',
+    )
+  }
+
+  if (!isRange(value)) return false
+
+  return [value.from, value.to].every(
+    (item) => item == null || typeof item === 'number' || item instanceof Date,
+  )
+}
+
+function areFilterValuesEqual(
+  left: TableQueryStateFilterValue,
+  right: TableQueryStateFilterValue,
+): boolean {
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false
+
+    const unmatched = [...right]
+    for (const value of left) {
+      const index = unmatched.findIndex((candidate) => Object.is(candidate, value))
+      if (index === -1) return false
+      unmatched.splice(index, 1)
+    }
+
+    return true
+  }
+
+  if (left instanceof Date || right instanceof Date) {
+    return left instanceof Date && right instanceof Date && left.getTime() === right.getTime()
+  }
+
+  if (isRange(left) || isRange(right)) {
+    if (!isRange(left) || !isRange(right)) return false
+
+    return (
+      areOptionalFilterValuesEqual(left.from, right.from) &&
+      areOptionalFilterValuesEqual(left.to, right.to)
+    )
+  }
+
+  return Object.is(left, right)
+}
+
+function areOptionalFilterValuesEqual(left: unknown, right: unknown): boolean {
+  if (left instanceof Date || right instanceof Date) {
+    return left instanceof Date && right instanceof Date && left.getTime() === right.getTime()
+  }
+
+  return Object.is(left, right)
 }
 
 function isMinMaxNumberRange(value: unknown): value is { min?: number; max?: number } {

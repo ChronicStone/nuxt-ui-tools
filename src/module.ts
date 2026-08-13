@@ -1,3 +1,6 @@
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+
 import { createResolver, defineNuxtModule, installModule } from '@nuxt/kit'
 import { breakpointsTailwind } from '@vueuse/core'
 import type { ModuleOptions as ViewportOptions } from 'nuxt-viewport'
@@ -9,6 +12,10 @@ import type { DataListUiConfig } from './runtime/table/types'
 import { setupTailwindCss } from './tailwindcss'
 
 declare module '@nuxt/schema' {
+  interface NuxtOptions {
+    viewport: ViewportOptions | false
+  }
+
   interface AppConfigInput {
     nuxtUiTools?: {
       dataList?: DataListUiConfig
@@ -40,17 +47,9 @@ const viewportDefaults = {
   feature: 'minWidth',
 } as const
 
-const optimizeDepsInclude = [
-  '@tanstack/vue-query',
-  '@tanstack/vue-virtual',
-  '@vueuse/core',
-  '@internationalized/date',
-  'motion-v',
-  'tailwind-merge',
-  'vue-draggable-plus',
-] as const
-
 const publicRuntimeDomains = ['form', 'i18n', 'query-state', 'shared', 'table'] as const
+const require = createRequire(import.meta.url)
+const cookieEsmPath = join(dirname(require.resolve('cookiejs/package.json')), 'dist/cookie.esm.js')
 
 export default defineNuxtModule<ModuleOptions>({
   defaults: {
@@ -75,14 +74,32 @@ export default defineNuxtModule<ModuleOptions>({
   },
   async setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+    const consumerRequire = createRequire(join(nuxt.options.rootDir, 'package.json'))
+    const nuxtUiComponentsDir = dirname(consumerRequire.resolve('@nuxt/ui/components/Button.vue'))
+    const nuxtUiRuntimeDir = dirname(nuxtUiComponentsDir)
+    const nuxtUiRequire = createRequire(join(nuxtUiRuntimeDir, 'package.json'))
+    const internationalizedDateDir = dirname(
+      dirname(nuxtUiRequire.resolve('@internationalized/date')),
+    )
 
     for (const domain of publicRuntimeDomains)
       nuxt.options.alias[`#ui-tools/${domain}`] = resolve(`./runtime/${domain}`)
+    nuxt.options.alias['@nuxt/ui/components'] ??= nuxtUiComponentsDir
+    nuxt.options.alias['@nuxt/ui/composables'] ??= join(nuxtUiRuntimeDir, 'composables')
+    nuxt.options.alias['@nuxt/ui/runtime'] ??= nuxtUiRuntimeDir
+    nuxt.options.alias['@internationalized/date'] ??= internationalizedDateDir
+    nuxt.options.typescript.tsConfig ??= {}
+    nuxt.options.typescript.sharedTsConfig ??= {}
+    nuxt.options.typescript.nodeTsConfig ??= {}
+    setupJsxCompilerOptions(nuxt.options.typescript.tsConfig)
+    setupJsxCompilerOptions(nuxt.options.typescript.sharedTsConfig)
+    setupJsxCompilerOptions(nuxt.options.typescript.nodeTsConfig)
     nuxt.options.vite ??= {}
-    nuxt.options.vite.optimizeDeps ??= {}
-    nuxt.options.vite.optimizeDeps.include = mergeOptimizeDepsInclude(
-      nuxt.options.vite.optimizeDeps.include,
-    )
+    nuxt.options.vite.resolve ??= {}
+    nuxt.options.vite.resolve.dedupe = [
+      ...new Set([...(nuxt.options.vite.resolve.dedupe ?? []), '@nuxt/ui']),
+    ]
+    nuxt.options.alias.cookiejs ??= cookieEsmPath
 
     const viewportOptions = normalizeViewportOptions(nuxt.options.viewport)
     nuxt.options.viewport = viewportOptions
@@ -119,6 +136,8 @@ function normalizeViewportOptions(
   return mergeViewportOptions(viewportOptions)
 }
 
-function mergeOptimizeDepsInclude(current: string[] | undefined) {
-  return [...new Set([...(current ?? []), ...optimizeDepsInclude])]
+function setupJsxCompilerOptions(config: { compilerOptions?: Record<string, unknown> }) {
+  config.compilerOptions ??= {}
+  config.compilerOptions.jsx = 'preserve'
+  config.compilerOptions.jsxImportSource = 'vue'
 }

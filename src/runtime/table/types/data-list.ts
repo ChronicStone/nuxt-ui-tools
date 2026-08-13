@@ -172,7 +172,10 @@ export interface DataListContentUi {
   root?: DataListUiClass
   error?: DataListUiClass
   errorBody?: DataListUiClass
+  errorIcon?: DataListUiClass
+  errorCopy?: DataListUiClass
   errorTitle?: DataListUiClass
+  errorDescription?: DataListUiClass
   retry?: DataListUiClass
 }
 

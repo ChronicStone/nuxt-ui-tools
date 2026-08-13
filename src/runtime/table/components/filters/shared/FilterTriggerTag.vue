@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
-import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
@@ -9,11 +8,11 @@ import { computed } from 'vue'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import type { TableFilterOperator } from '../../../types'
 import { mergeDataListUiClass } from '../../../utils'
-import FilterMatchModeButton from './FilterMatchModeButton.vue'
 
 const props = defineProps<{
   label: string
   leadingIcon: string
+  operator: TableFilterOperator
   operatorLabel: string
   operatorItems: Array<{ label: string; value: TableFilterOperator }>
   previewTags?: string[]
@@ -22,8 +21,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  selectOperator: [value: TableFilterOperator]
   activate: [operator: TableFilterOperator]
+  requestMatchMode: []
   clear: []
 }>()
 
@@ -38,30 +37,15 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
   <div
     :class="mergeDataListUiClass('inline-flex min-w-0 max-w-full align-top', undefined, ui?.root)"
   >
-    <UDropdownMenu
-      v-if="showOperatorPickerFirst"
-      :items="[
-        operatorItems.map((item) => ({
-          label: item.label,
-          onSelect: () => {
-            emit('activate', item.value)
-          },
-        })),
-      ]"
-      :content="{ side: 'bottom', align: 'start', sideOffset: 6 }"
-      :ui="{
-        content: mergeDataListUiClass('w-fit p-1', undefined, ui?.operatorContent),
-        item: ui?.operatorItem,
-        itemLabel: ui?.operatorLabel,
-      }"
-    >
+    <template v-if="showOperatorPickerFirst">
       <UButton
         color="neutral"
         :variant="props.active ? 'subtle' : 'outline'"
         :size="size"
-        :ui="{ base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger) }"
-        @pointerdown.stop
-        @click.stop
+        :ui="{
+          base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger),
+        }"
+        @click.stop="emit('requestMatchMode')"
       >
         <span
           :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)"
@@ -70,14 +54,17 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
           <span class="truncate">{{ props.label }}</span>
         </span>
       </UButton>
-    </UDropdownMenu>
+    </template>
 
     <UButton
       v-else-if="!props.active"
       color="neutral"
       variant="outline"
       :size="size"
-      :ui="{ base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger) }"
+      :ui="{
+        base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger),
+      }"
+      @click.stop="emit('activate', props.operator)"
     >
       <span :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)">
         <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
@@ -91,6 +78,7 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         variant="subtle"
         :size="size"
         :ui="{ base: mergeDataListUiClass('shrink-0', undefined, ui?.trigger) }"
+        @click.stop="emit('activate', props.operator)"
       >
         <span
           :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)"
@@ -100,20 +88,27 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         </span>
       </UButton>
 
-      <FilterMatchModeButton
+      <UButton
         v-if="showMatchMode"
-        :label="props.operatorLabel"
-        :items="props.operatorItems"
+        color="neutral"
+        variant="subtle"
         :size="size"
-        :ui="ui"
-        @select="emit('selectOperator', $event)"
+        :label="props.operatorLabel"
+        trailing-icon="i-lucide-chevron-down"
+        :ui="{
+          base: mergeDataListUiClass('shrink-0', undefined, ui?.operatorTrigger),
+        }"
+        @click.stop="emit('requestMatchMode')"
       />
 
       <UButton
         color="neutral"
         variant="subtle"
         :size="size"
-        :ui="{ base: mergeDataListUiClass('min-w-0 max-w-full', undefined, ui?.value) }"
+        :ui="{
+          base: mergeDataListUiClass('min-w-0 max-w-full', undefined, ui?.value),
+        }"
+        @click.stop="emit('activate', props.operator)"
       >
         <span class="flex min-w-0 items-center gap-2">
           <UBadge
