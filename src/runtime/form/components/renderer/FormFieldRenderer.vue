@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import UAlert from '@nuxt/ui/components/Alert.vue'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, useId, watchEffect } from 'vue'
 import type { Component } from 'vue'
 
-import { provideFormFieldBare } from '../../composables/use-form-field-chrome'
+import {
+  provideFormFieldBare,
+  provideFormFieldControlAttrs,
+} from '../../composables/use-form-field-chrome'
 import { useFormItemLayout } from '../../composables/use-form-layout'
 import {
   childParentPath,
@@ -48,21 +51,30 @@ import TextField from '../../fields/text/component.vue'
 import TextareaField from '../../fields/textarea/component.vue'
 import TimeField from '../../fields/time/component.vue'
 import UploadField from '../../fields/upload/component.vue'
-import type { FormField, FormFieldType, FormItemLayout } from '../../types'
+import type { FormField, FormFieldType, FormItemLayout, FormObject } from '../../types'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { focusFormFieldElement } from '../../utils/focus'
+import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
   field: FormField
   parentPath: readonly string[]
   bare?: boolean
+  controlLabelledby?: string
 }>()
 
 const form = useFormRuntimeContext()
 const element = ref<HTMLElement | null>(null)
 const bare = computed<boolean>(() => props.bare === true)
+const controlId = useId()
+const controlAttrs = computed<FormObject>(() => {
+  if (!bare.value) return {}
+  if (props.controlLabelledby) return { id: controlId, 'aria-labelledby': props.controlLabelledby }
+  return { id: controlId, 'aria-label': resolveControlLabel(props.field) }
+})
 
 provideFormFieldBare(bare)
+provideFormFieldControlAttrs(controlAttrs)
 const field = computed(() => createFormFieldInstance(props.field))
 const path = computed(() => fieldPath(props.parentPath, props.field))
 const childPath = computed(() => childParentPath(props.parentPath, props.field))
@@ -156,6 +168,11 @@ function resolveFieldLayout(): FormItemLayout | undefined {
 
 function isLayout(value: unknown): value is FormItemLayout {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function resolveControlLabel(controlField: FormField) {
+  if ('label' in controlField) return resolveFormText(controlField.label) ?? controlField.key
+  return controlField.key
 }
 </script>
 

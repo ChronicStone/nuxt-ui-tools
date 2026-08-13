@@ -17,6 +17,44 @@ export default defineUiToolsLocale<Messages>({
         text: {
           defaultPlaceholder: 'Saisissez une valeur',
         },
+        options: {
+          refresh: 'Actualiser',
+          create: 'Créer une option',
+          creating: 'Création…',
+          createNamed: 'Créer « {label} »',
+        },
+        hierarchy: {
+          search: 'Rechercher',
+          empty: 'Aucune option correspondante',
+          clear: 'Effacer la sélection',
+        },
+        rating: {
+          value: '{value} sur {max}',
+        },
+        date: {
+          start: 'Début',
+          end: 'Fin',
+          clear: 'Effacer la valeur',
+        },
+        time: {
+          format: 'HH:mm',
+          hour: 'Heure',
+          minute: 'Minute',
+          clear: 'Effacer l’heure',
+        },
+        color: {
+          open: 'Ouvrir le sélecteur de couleur',
+          clear: 'Effacer la couleur',
+        },
+        upload: {
+          upload: 'Téléverser',
+          remove: 'Supprimer',
+          failed: 'Échec du téléversement.',
+        },
+        phone: {
+          country: 'Indicatif du pays',
+          number: 'Numéro de téléphone',
+        },
       },
     },
     table: {

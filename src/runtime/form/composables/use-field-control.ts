@@ -7,6 +7,7 @@ import { createFormFieldInstance } from '../utils/field-instance'
 import { resolveFormText } from '../utils/text'
 import { mergeFormUiClass } from '../utils/ui'
 import { useFieldOptions } from './use-field-options'
+import { useFormFieldControlAttrs } from './use-form-field-chrome'
 import { useFormRuntimeContext } from './use-form-runtime'
 import { useFormUi } from './use-form-ui'
 
@@ -14,6 +15,7 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
   const form = useFormRuntimeContext()
   const formUi = useFormUi()
   const { t } = useUiToolsLocale()
+  const fieldControlAttrs = useFormFieldControlAttrs()
   const api = computed(() => form.getFieldApi(path(), field()))
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
   const options = useFieldOptions({
@@ -29,6 +31,7 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     const current = field()
     const fieldUi = formUi.ui.value.fields?.[current.type]
     const defaults = {
+      ...fieldControlAttrs.value,
       size: fieldUi?.size ?? formUi.controlSize.value,
       class: fieldUi?.class,
       ui: mergeControlUi(formUi.ui.value.control?.ui, fieldUi?.ui),
@@ -80,6 +83,7 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
   watchWithFilter(
     () => form.getValue(path()),
     async () => {
+      api.value.validation.clearError()
       if (!createFormFieldInstance(field()).capability.has('validation')) return
       const trigger = getValidationTrigger(field())
       if (trigger === 'submit') return

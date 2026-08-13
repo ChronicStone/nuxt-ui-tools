@@ -16,7 +16,6 @@ const props = defineProps<{
 const formUi = useFormUi()
 
 const emit = defineEmits<{
-  submit: []
   cancel: []
 }>()
 
@@ -39,10 +38,7 @@ const actionsRight = computed(() =>
 )
 
 async function runAction(action: FormAction) {
-  if (isBuiltInAction(action, 'submit')) {
-    emit('submit')
-    return
-  }
+  if (isBuiltInAction(action, 'submit')) return
   if (isBuiltInAction(action, 'next')) {
     await props.runtime.nextStep()
     return
@@ -112,7 +108,7 @@ function resolveActionVariant(action: FormAction) {
 
 function actionButtonClass(action: FormAction) {
   return mergeFormUiClass(
-    resolveActionWidth(action) === 'fill' ? 'flex-1' : undefined,
+    resolveActionWidth(action) === 'fill' ? 'flex-1 justify-center' : undefined,
     formUi.ui.value.actions?.ui?.button,
     action.class,
   )
@@ -154,7 +150,7 @@ function isBuiltInActionKey(value: unknown): value is FormActionKey {
       <UButton
         v-for="(action, index) in actionsLeft"
         :key="action.key ?? index"
-        type="button"
+        :type="isBuiltInAction(action, 'submit') ? 'submit' : 'button'"
         :to="resolveActionLink(action)"
         :label="resolveActionLabel(action)"
         :icon="action.icon === false ? undefined : action.icon"
@@ -181,7 +177,7 @@ function isBuiltInActionKey(value: unknown): value is FormActionKey {
       <UButton
         v-for="(action, index) in actionsRight"
         :key="action.key ?? index"
-        type="button"
+        :type="isBuiltInAction(action, 'submit') ? 'submit' : 'button'"
         :to="resolveActionLink(action)"
         :label="resolveActionLabel(action)"
         :icon="action.icon === false ? undefined : action.icon"

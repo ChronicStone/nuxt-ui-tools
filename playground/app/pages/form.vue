@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import ULink from '@nuxt/ui/components/Link.vue'
 import { queryOptions } from '@tanstack/vue-query'
-import { ref } from 'vue'
+import { h, ref } from 'vue'
 
 import { defineFormSchema, useForm, useFormApi } from '#ui-tools/form'
 import type { ExtractFormOutput } from '#ui-tools/form'
@@ -136,6 +137,8 @@ const showcaseForm = defineFormSchema({
       type: 'text',
       inputType: 'email',
       label: 'Email',
+      labelExtra: () =>
+        h(ULink, { href: 'mailto:support@example.com', class: 'text-xs' }, () => 'Need help?'),
       placeholder: 'ada@example.com',
       transform: {
         output: (value) => value?.trim().toLowerCase() ?? '',
@@ -910,8 +913,13 @@ const submitted = ref<ShowcaseOutput | null>(null)
 const overlayResult = ref<unknown | null>(null)
 const form = useForm({
   schema: showcaseForm,
-  onSubmit: async ({ formData }) => {
+  onSubmit: async ({ formData, api }) => {
     await sleep(500)
+    if (formData.profile.email === 'taken@example.com') {
+      api.setError('profile.email', 'This email is already in use.')
+      await api.focus('profile.email')
+      return { success: false }
+    }
     submitted.value = formData
     return { success: true, data: { savedAt: new Date().toISOString() } }
   },

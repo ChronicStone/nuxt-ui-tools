@@ -17,6 +17,44 @@ export default defineUiToolsLocale<Messages>({
         text: {
           defaultPlaceholder: 'Enter a value',
         },
+        options: {
+          refresh: 'Refresh',
+          create: 'Create option',
+          creating: 'Creating…',
+          createNamed: 'Create "{label}"',
+        },
+        hierarchy: {
+          search: 'Search',
+          empty: 'No matching options',
+          clear: 'Clear selection',
+        },
+        rating: {
+          value: '{value} of {max}',
+        },
+        date: {
+          start: 'Start',
+          end: 'End',
+          clear: 'Clear value',
+        },
+        time: {
+          format: 'HH:mm',
+          hour: 'Hour',
+          minute: 'Minute',
+          clear: 'Clear time',
+        },
+        color: {
+          open: 'Open color picker',
+          clear: 'Clear color',
+        },
+        upload: {
+          upload: 'Upload',
+          remove: 'Remove',
+          failed: 'Upload failed.',
+        },
+        phone: {
+          country: 'Country calling code',
+          number: 'Phone number',
+        },
       },
     },
     table: {

@@ -4,7 +4,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { useAppConfig } from 'nuxt/app'
 import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 import { useFormActions } from '../../composables/use-form-actions'
 import { useFormGridLayout } from '../../composables/use-form-layout'
@@ -29,6 +29,8 @@ const props = defineProps<{
   showCloseButton?: boolean
   ui?: FormUiConfig
 }>()
+
+const router = useRouter()
 
 const emit = defineEmits<{
   submit: [value: FormObject, result: { success: boolean; data?: unknown }]
@@ -90,10 +92,11 @@ if (typeof window !== 'undefined') {
   onBeforeUnmount(() => window.removeEventListener('beforeunload', handleBeforeUnload))
 }
 
-onBeforeRouteLeave(() => {
+const removeRouteGuard = router.beforeEach(() => {
   if (!shouldConfirmDirtyNavigation()) return true
   return window.confirm(getDirtyNavigationMessage())
 })
+onBeforeUnmount(removeRouteGuard)
 
 const currentStep = computed(() => getSchemaSteps(schemaRef.value)[runtime.currentStepIndex.value])
 const parentPath = computed(() =>
@@ -349,7 +352,7 @@ async function focusFirstRenderedField() {
     </div>
 
     <footer :class="footerClass">
-      <FormActions :runtime="runtime" :actions="actions" @submit="submit" @cancel="cancel" />
+      <FormActions :runtime="runtime" :actions="actions" @cancel="cancel" />
     </footer>
   </form>
 </template>

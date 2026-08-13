@@ -46,6 +46,7 @@ export interface FormFieldUi {
   description?: FormUiClass
   error?: FormUiClass
   hint?: FormUiClass
+  labelExtra?: FormUiClass
   help?: FormUiClass
   body?: FormUiClass
   content?: FormUiClass

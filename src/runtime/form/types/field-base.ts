@@ -2,7 +2,7 @@ import type { FormFieldCallback } from './callbacks'
 import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
 import type { FormTransformConfig } from './transform'
-import type { FormDynamic, FormMaybePromise, FormObject, FormText } from './utils'
+import type { FormDynamic, FormMaybePromise, FormObject, FormRenderable, FormText } from './utils'
 import type { FormValidationConfig } from './validation'
 
 /**
@@ -78,6 +78,8 @@ export interface FormStatefulFieldBase<
   description?: FormText
   /** Optional right-side hint rendered by the field wrapper. */
   hint?: FormText
+  /** Optional rich content rendered beside the label. Takes precedence over `hint`. */
+  labelExtra?: FormRenderable
   /** Placeholder forwarded to controls that support placeholders. */
   placeholder?: FormText
   /** Raw dependency paths read before evaluating callbacks. */

@@ -3,6 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 import { computed, ref } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
@@ -12,6 +13,7 @@ const props = defineProps<{
   path: readonly string[]
   bare?: boolean
 }>()
+const { t } = useUiToolsLocale()
 
 const { form, controlProps, disabled, handleBlur, options, placeholder } = useFieldControl(
   () => props.field,
@@ -29,32 +31,31 @@ const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
 })
 const items = computed(() => [...options.items.value])
 const createItem = computed<FormSelectCreateItem>(() =>
-  options.creatable.value
-    ? (props.field.createItem ?? { position: 'bottom', when: 'empty' })
-    : false,
+  options.creatable.value && props.field.createItem ? props.field.createItem : false,
 )
-const showFooterActions = computed(() => options.refreshable.value || options.creatable.value)
+const showExplicitCreate = computed<boolean>(
+  () => options.creatable.value && !props.field.createItem,
+)
+const showFooterActions = computed(() => options.refreshable.value || showExplicitCreate.value)
 const footerActionsClass = computed(() =>
-  options.refreshable.value && options.creatable.value ? 'sm:grid-cols-2' : 'grid-cols-1',
+  options.refreshable.value && showExplicitCreate.value ? 'sm:grid-cols-2' : 'grid-cols-1',
 )
-const createActionLabel = computed(() => options.createLabel.value ?? 'Create option')
+const createActionLabel = computed(
+  () => options.createLabel.value ?? t('form.fields.options.create'),
+)
 
 async function handleCreate(label: string) {
-  const option = await options.create(label)
-  if (!option) return
-  if (!options.selectCreatedOption.value) return
-
-  if (props.field.multiple) {
-    const current = Array.isArray(model.value) ? model.value.filter(isOptionValue) : []
-    model.value = [...current, option.value]
-    return
-  }
-
-  model.value = option.value
+  await options.create(label)
 }
 
 async function handleCreateAction() {
   await handleCreate(searchTerm.value)
+}
+
+async function handleNativeCreate(label: string) {
+  const normalizedLabel = label.trim()
+  if (!normalizedLabel) return
+  await handleCreate(normalizedLabel)
 }
 
 async function refreshOptions() {
@@ -83,7 +84,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
     :search-input="field.searchable ?? false"
     :clear="field.clearable === true"
     :create-item="createItem"
-    @create="handleCreate"
+    @create="handleNativeCreate"
     @blur="handleBlur"
   >
     <template #content-bottom>
@@ -102,10 +103,10 @@ function isOptionValue(value: unknown): value is FormOptionValue {
           :loading="options.pending.value || options.fetching.value"
           @click.stop="refreshOptions"
         >
-          Refresh
+          {{ t('form.fields.options.refresh') }}
         </UButton>
         <UButton
-          v-if="options.creatable.value"
+          v-if="showExplicitCreate"
           block
           size="xs"
           variant="ghost"
@@ -121,7 +122,11 @@ function isOptionValue(value: unknown): value is FormOptionValue {
     </template>
 
     <template #create-item-label="{ item }">
-      {{ options.creating.value ? 'Creating...' : `Create "${item}"` }}
+      {{
+        options.creating.value
+          ? t('form.fields.options.creating')
+          : t('form.fields.options.createNamed', { label: item })
+      }}
     </template>
   </USelectMenu>
   <FormFieldShell v-else :field="field" :path="path">
@@ -140,7 +145,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
       :search-input="field.searchable ?? false"
       :clear="field.clearable === true"
       :create-item="createItem"
-      @create="handleCreate"
+      @create="handleNativeCreate"
       @blur="handleBlur"
     >
       <template #content-bottom>
@@ -159,10 +164,10 @@ function isOptionValue(value: unknown): value is FormOptionValue {
             :loading="options.pending.value || options.fetching.value"
             @click.stop="refreshOptions"
           >
-            Refresh
+            {{ t('form.fields.options.refresh') }}
           </UButton>
           <UButton
-            v-if="options.creatable.value"
+            v-if="showExplicitCreate"
             block
             size="xs"
             variant="ghost"
@@ -178,7 +183,11 @@ function isOptionValue(value: unknown): value is FormOptionValue {
       </template>
 
       <template #create-item-label="{ item }">
-        {{ options.creating.value ? 'Creating...' : `Create "${item}"` }}
+        {{
+          options.creating.value
+            ? t('form.fields.options.creating')
+            : t('form.fields.options.createNamed', { label: item })
+        }}
       </template>
     </USelectMenu>
   </FormFieldShell>

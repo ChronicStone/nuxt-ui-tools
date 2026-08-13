@@ -1,5 +1,6 @@
 import type { ComputedRef } from 'vue'
 
+import type { NestedPaths } from '../../shared/types/utils'
 import type { FormContextData } from './context'
 import type { FormMaybePromise, FormObject } from './utils'
 import type { FormValidationOptions } from './validation'
@@ -148,15 +149,25 @@ export interface FormFieldApi<TValue = unknown, TOption = unknown, TContext = Fo
 /**
  * Public form API available from form-level callbacks.
  */
-export interface FormApi {
+export type FormFieldPath<TOutput = FormObject> = TOutput extends FormObject
+  ? FormObject extends TOutput
+    ? string
+    : NestedPaths<TOutput>
+  : string
+
+export interface FormApi<TOutput = FormObject> {
   /** Reads an internal form value by raw path. */
   get: (path: string) => unknown
   /** Writes an internal form value by raw path. */
   set: (path: string, value: unknown) => void
   /** Runs form validation. */
   validate: (options?: FormValidationOptions) => Promise<boolean>
+  /** Sets an external error on a submitted output field. */
+  setError: (path: FormFieldPath<TOutput>, message: string) => void
+  /** Clears one external field error, or every form error when no path is provided. */
+  clearError: (path?: FormFieldPath<TOutput>) => void
   /** Focuses a mounted field by raw path. */
-  focus: (path: string | readonly string[]) => Promise<boolean>
+  focus: (path: FormFieldPath<TOutput> | readonly string[]) => Promise<boolean>
   /** Submits the form through the configured submit lifecycle. */
   submit: () => Promise<void>
   /** Resets the form to configured defaults. */
@@ -175,7 +186,7 @@ export interface FormSubmitHandlerParams<TOutput = FormObject> {
   /** Submitted output value after output transforms and omitted fields are applied. */
   formData: TOutput
   /** Namespaced form API for state, validation, submit, and reset operations. */
-  api: FormApi
+  api: FormApi<TOutput>
 }
 
 export type FormSubmitHandler<TOutput = FormObject, TSubmitData = unknown> = (

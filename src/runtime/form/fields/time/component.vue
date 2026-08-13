@@ -5,6 +5,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import USelect from '@nuxt/ui/components/Select.vue'
 import { computed, ref, watch } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormTimeField } from '../../types'
@@ -13,6 +14,7 @@ const props = defineProps<{
   field: FormTimeField
   path: readonly string[]
 }>()
+const { t } = useUiToolsLocale()
 
 const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
   () => props.field,
@@ -149,7 +151,7 @@ function padTimePart(value: number) {
           class="w-full"
           inputmode="numeric"
           leading-icon="i-lucide-clock"
-          :placeholder="placeholder ?? 'HH:mm'"
+          :placeholder="placeholder ?? t('form.fields.time.format')"
           :disabled="disabled"
           @update:model-value="handleInput"
           @focus="handleFocus"
@@ -163,7 +165,7 @@ function padTimePart(value: number) {
               variant="ghost"
               size="xs"
               :disabled="disabled"
-              aria-label="Clear time"
+              :aria-label="t('form.fields.time.clear')"
               @mousedown.prevent
               @click="clearTime"
             />
@@ -179,7 +181,7 @@ function padTimePart(value: number) {
               :items="hours"
               class="min-w-0"
               size="sm"
-              placeholder="Hour"
+              :placeholder="t('form.fields.time.hour')"
               :portal="false"
             />
             <USelect
@@ -187,7 +189,7 @@ function padTimePart(value: number) {
               :items="minutes"
               class="min-w-0"
               size="sm"
-              placeholder="Minute"
+              :placeholder="t('form.fields.time.minute')"
               :portal="false"
             />
           </div>
@@ -230,7 +232,7 @@ function padTimePart(value: number) {
             >
           </div>
           <p class="text-xs text-muted">
-            {{ model ?? 'HH:mm' }}
+            {{ model ?? t('form.fields.time.format') }}
           </p>
         </div>
       </template>

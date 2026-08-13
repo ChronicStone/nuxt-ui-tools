@@ -14,7 +14,7 @@ import type {
 import { createPublicFormApi } from '../utils/api'
 import { resolveFieldDependencies } from '../utils/dependencies'
 import { resolveFormLayoutConfig } from '../utils/layout'
-import { isRecord } from '../utils/path'
+import { isRecord, pathSegments } from '../utils/path'
 import {
   childParentPath,
   collectFormFieldPaths,
@@ -119,12 +119,23 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     getContext: () => context,
   })
 
-  state.initialize()
+  let hasInitializedInput = typeof params.input?.value !== 'undefined'
+  state.initialize(params.input?.value)
 
   if (params.input)
-    watch(params.input, (input) => state.syncInput(input, params.syncInput?.value ?? false), {
-      deep: true,
-    })
+    watch(
+      params.input,
+      (input) => {
+        if (!hasInitializedInput && typeof input !== 'undefined') {
+          hasInitializedInput = true
+          state.initialize(input)
+          return
+        }
+
+        state.syncInput(input, params.syncInput?.value ?? false)
+      },
+      { deep: true },
+    )
 
   watch(params.schema, (schema) => {
     currentStepIndex.value = 0
@@ -303,6 +314,8 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       ),
     validate,
     validateCurrentStep,
+    setError: (path, message) => validation.setError(pathSegments(path), message),
+    clearError: (path) => validation.clearError(path ? pathSegments(path) : undefined),
     focusRequest: focus.request,
     registerFieldElement: focus.registerField,
     focusField: focus.focusField,

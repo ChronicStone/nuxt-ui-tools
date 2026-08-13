@@ -39,9 +39,15 @@ const hint = computed(() =>
     ? resolveFormText(props.field.hint)
     : undefined,
 )
+const labelExtra = computed(() => {
+  if (!field.value.capability.has('hint') || !('labelExtra' in props.field)) return undefined
+  const value = props.field.labelExtra
+  return typeof value === 'function' ? value() : value
+})
 const shellLabel = computed(() => (props.inlineLabel ? undefined : label.value))
 const shellDescription = computed(() => (props.inlineLabel ? undefined : description.value))
 const shellHint = computed(() => (props.inlineLabel ? undefined : hint.value))
+const shellLabelExtra = computed(() => (props.inlineLabel ? undefined : labelExtra.value))
 const error = computed(() => form.getFieldError(props.path))
 const required = computed(() => {
   if (!field.value.capability.has('validation')) return false
@@ -83,6 +89,10 @@ const nuxtFieldUi = computed(() => ({
 function resetField() {
   form.getFieldApi(props.path, props.field).value.reset()
 }
+
+function renderLabelExtra() {
+  return shellLabelExtra.value
+}
 </script>
 
 <template>
@@ -94,12 +104,17 @@ function resetField() {
     :name="path.join('.')"
     :label="shellLabel"
     :description="shellDescription"
-    :hint="shellHint"
+    :hint="shellLabelExtra === undefined || shellLabelExtra === null ? shellHint : undefined"
     :error="error"
     :required="required"
     :size="formUi.controlSize.value"
     :ui="nuxtFieldUi"
   >
+    <template v-if="shellLabelExtra !== undefined && shellLabelExtra !== null" #hint>
+      <span :class="fieldUi?.labelExtra">
+        <component :is="renderLabelExtra" />
+      </span>
+    </template>
     <UCollapsible
       v-if="collapsible"
       v-model:open="open"

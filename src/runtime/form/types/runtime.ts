@@ -80,6 +80,8 @@ export interface FormRuntime {
   shouldRender: (field: FormField, path: readonly string[]) => boolean
   validate: (options?: FormValidationOptions) => Promise<boolean>
   validateCurrentStep: (options?: FormValidationOptions) => Promise<boolean>
+  setError: (path: string | readonly string[], message: string) => void
+  clearError: (path?: string | readonly string[]) => void
   focusRequest: Ref<FormFocusRequest | null>
   registerFieldElement: (path: string | readonly string[], element: HTMLElement) => () => void
   focusField: (path: string | readonly string[]) => Promise<boolean>

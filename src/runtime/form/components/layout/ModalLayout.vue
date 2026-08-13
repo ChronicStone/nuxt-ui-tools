@@ -11,6 +11,10 @@ const contentStyle = computed(() => ({
   maxWidth: cssSize(props.config?.maxWidth),
   maxHeight: cssSize(props.config?.maxHeight),
 }))
+const contentProps = computed(() => ({
+  disableOutsidePointerEvents: undefined,
+  style: contentStyle.value,
+}))
 
 function cssSize(value: number | string | undefined) {
   return typeof value === 'number' ? `${value}px` : value
@@ -23,7 +27,7 @@ function cssSize(value: number | string | undefined) {
     :title="title"
     :description="description"
     :dismissible="dismissible && config?.allowOutsideClick !== false"
-    :style="contentStyle"
+    :content="contentProps"
     :ui="{
       overlay: ui?.overlay,
       content: mergeFormUiClass(

@@ -5,7 +5,7 @@ import UInput from '@nuxt/ui/components/Input.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 import { getCountries, getCountryCallingCode, parsePhoneNumberFromString } from 'libphonenumber-js'
 import type { CountryCode } from 'libphonenumber-js'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, useId, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
@@ -19,7 +19,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { locale } = useUiToolsLocale()
+const { locale, t } = useUiToolsLocale()
 const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
   () => props.field,
   () => props.path,
@@ -30,6 +30,7 @@ const phoneValue = ref<string>('')
 const syncingFromExternal = ref<boolean>(false)
 const syncingToForm = ref<boolean>(false)
 const mounted = ref<boolean>(false)
+const controlId = useId()
 
 const countryOptions = computed<readonly FormPhoneCountryOption[]>(() =>
   getCountries()
@@ -174,6 +175,8 @@ function toFlagEmoji(code: CountryCode) {
     >
       <USelectMenu
         v-model="countryCode"
+        :id="`${controlId}-country`"
+        :aria-label="t('form.fields.phone.country')"
         class="w-auto min-w-[5.75rem] shrink-0"
         value-key="value"
         label-key="label"
@@ -186,6 +189,8 @@ function toFlagEmoji(code: CountryCode) {
       <UInput
         v-model="phoneValue"
         v-bind="controlProps"
+        :id="`${controlId}-number`"
+        :aria-label="t('form.fields.phone.number')"
         class="min-w-0 flex-1"
         type="tel"
         :placeholder="placeholder"

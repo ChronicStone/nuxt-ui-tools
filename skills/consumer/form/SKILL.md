@@ -104,12 +104,25 @@ field. The same focus behavior is used by the built-in next/submit actions.
 Fields validate live after their first blur/touch by default, so initial focus does not show
 errors before the user has interacted with the field.
 
+The renderer uses a native form submit event. Pressing Enter from a focused single-line control
+runs the same validation and submit lifecycle as the built-in submit action, while Enter in a
+textarea keeps its normal newline behavior.
+
 `validate` accepts `true`, `false`, `'required'`, or `'rules'`. `syncInput` accepts `true` or a
 list of paths; when omitted, later input changes do not replace local edits.
 
 Schema `controls` can set `dirtyCheck`, `autoFocus`, `confirmNavOnDirty`, `syncInput`, and
 `validate`. Stateful fields can define `watch`, `onDependencyChange`, `onRendered`,
 `stateEffect`, `ignore`, `dirtyCheck`, and collapsible behavior.
+
+Use `labelExtra` for rich content beside a field label, such as a password-recovery link. It
+accepts renderable Vue content and takes precedence over the field's text-only `hint`.
+
+Submit handlers receive typed external-error controls through `api.setError(path, message)` and
+`api.clearError(path?)`. Map expected server failures to their owning fields and return
+`{ success: false }`; use one application-level toast only when the failure is not mapped. Editing
+a field clears its own external error automatically. When one error belongs to multiple fields,
+declare those fields as dependencies and clear the sibling error from `onDependencyChange`.
 
 ## Provider-Owned Overlays
 
@@ -153,9 +166,56 @@ if (result.isCompleted) {
 Schema-level `modal`, `drawer`, and `fullscreen` objects control sizing, placement, outside-click
 dismissal, close-button visibility, and drawer resizing.
 
+Every schema that can render as a modal should set an intentional `modal.maxWidth` and layout. Short
+linear forms usually work best as one column around `500px`; wider modals should be reserved for
+content that is genuinely easier to scan in multiple columns. Express changing grids with responsive
+values so mobile drawers and fullscreen forms stay linear:
+
+```ts
+defineFormSchema({
+  modal: { maxWidth: 720 },
+  layout: {
+    columns: '1 md:2',
+    fieldSpan: '1 md:2',
+  },
+  fields: [
+    { key: 'name', type: 'text', label: 'Name' },
+    { key: 'description', type: 'textarea', label: 'Description' },
+    { key: 'country', type: 'select', label: 'Country', layout: { span: 1 } },
+    { key: 'city', type: 'text', label: 'City', layout: { span: 1 } },
+  ],
+})
+```
+
+Checkboxes, switches, upload controls, and other visually dominant fields should normally span the
+full modal row instead of being paired with an unrelated text field merely because space exists.
+
 TanStack `queryOptions(...)` objects can be used directly for context or field options. The form
 observer retains the full query configuration, including `select`, retry/cache settings, meta,
 initial/placeholder data, and query-function cancellation signals.
+
+Option fields accept arrays, synchronous callbacks, promises, and TanStack query options. Use an
+option config when options can refresh or be created:
+
+```ts
+{
+  key: 'skill',
+  type: 'select',
+  createItem: true,
+  options: {
+    source: [{ label: 'TypeScript', value: 'typescript' }],
+    allowOptionsRefresh: true,
+    create: {
+      handler: ({ label }) => ({ label, value: label.toLocaleLowerCase() }),
+    },
+  },
+}
+```
+
+`createItem: true` enables the select or autocomplete's native typed-create row. Without it, the
+same create handler is exposed as an explicit footer action, which is useful when creation opens a
+nested form. A successfully created option is merged without duplicates and selected by default;
+set `selectOnCreation: false` to keep the current value.
 
 The `formData` passed to `onSubmit` is inferred from the schema output. The resolved `submitData` is inferred from the successful submit result.
 
@@ -220,6 +280,10 @@ while `multiple: true` shows checkboxes. Use `cascade: true` to select descendan
 parent and indeterminate state in both directions, or configure `propagateSelect` and
 `bubbleSelect` independently. `selectionControl: 'none'` keeps row selection without a visible
 radio or checkbox, and `selectionBehavior` accepts `toggle` or `replace`.
+
+Hierarchy options can use custom object keys through `valueKey`, `labelKey`, and `childrenKey`.
+Search only filters what is displayed; cascade and parent reconciliation still run against the
+complete option tree, so selecting a filtered child cannot accidentally select hidden siblings.
 
 ## External Controls
 
