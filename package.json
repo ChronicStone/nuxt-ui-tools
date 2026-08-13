@@ -1,6 +1,6 @@
 {
   "name": "nuxt-ui-tools",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Nuxt module and runtime toolkit for UI-heavy Nuxt applications",
   "homepage": "https://github.com/ChronicStone/nuxt-ui-tools#readme",
   "bugs": "https://github.com/ChronicStone/nuxt-ui-tools/issues",
