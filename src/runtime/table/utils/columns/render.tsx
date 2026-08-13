@@ -159,33 +159,39 @@ export function createDataColumns(options: {
               content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
               modal={false}
               ui={{ content: 'w-fit p-1 shadow-none' }}
-            >
-              <button
-                type="button"
-                class="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
-              >
-                <div class="flex min-w-0 items-center gap-2.5">
-                  {runtimeColumn.icon ? (
-                    <UIcon name={runtimeColumn.icon} class="size-4 shrink-0 text-muted" />
-                  ) : null}
-                  <TableCellEllipsis title={runtimeColumn.label} wrapperClass="min-w-0 max-w-full">
-                    {runtimeColumn.label}
-                  </TableCellEllipsis>
-                </div>
-                <UIcon
-                  name={getColumnHeaderIcon({
-                    columnId: runtimeColumn.id,
-                    canHide: tableColumn.getCanHide?.(),
-                    getSortState: options.getSortState,
-                    getPinnedState: options.getPinnedState,
-                  })}
-                  class="size-4 shrink-0 text-muted"
-                />
-                {options.getPinnedState({ columnId: runtimeColumn.id }) ? (
-                  <UIcon name="i-lucide-pin" class="size-3.5 shrink-0 text-muted" />
-                ) : null}
-              </button>
-            </UDropdownMenu>
+              v-slots={{
+                default: () => (
+                  <button
+                    type="button"
+                    class="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
+                  >
+                    <div class="flex min-w-0 items-center gap-2.5">
+                      {runtimeColumn.icon ? (
+                        <UIcon name={runtimeColumn.icon} class="size-4 shrink-0 text-muted" />
+                      ) : null}
+                      <TableCellEllipsis
+                        title={runtimeColumn.label}
+                        wrapperClass="min-w-0 max-w-full"
+                      >
+                        {runtimeColumn.label}
+                      </TableCellEllipsis>
+                    </div>
+                    <UIcon
+                      name={getColumnHeaderIcon({
+                        columnId: runtimeColumn.id,
+                        canHide: tableColumn.getCanHide?.(),
+                        getSortState: options.getSortState,
+                        getPinnedState: options.getPinnedState,
+                      })}
+                      class="size-4 shrink-0 text-muted"
+                    />
+                    {options.getPinnedState({ columnId: runtimeColumn.id }) ? (
+                      <UIcon name="i-lucide-pin" class="size-3.5 shrink-0 text-muted" />
+                    ) : null}
+                  </button>
+                ),
+              }}
+            />
 
             {column.resizable !== false ? (
               <div
