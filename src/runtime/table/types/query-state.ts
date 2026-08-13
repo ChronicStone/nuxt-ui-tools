@@ -146,9 +146,7 @@ type ExtractFilterValueFromDefinition<TDefinition> =
 export type ExtractTableFilterValue<
   TSchema,
   TKey extends ExtractTableFilterKey<TSchema>,
-> = ExtractFilterValueFromDefinition<
-  DefinitionForKeyOrFallback<TSchema, TKey>
->
+> = ExtractFilterValueFromDefinition<DefinitionForKeyOrFallback<TSchema, TKey>>
 
 export type ExtractTableFilterRule<TSchema, TKey extends ExtractTableFilterKey<TSchema>> = {
   key: TKey

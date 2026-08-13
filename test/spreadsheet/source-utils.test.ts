@@ -1,5 +1,5 @@
-import { ref } from 'vue'
 import { describe, expect, it } from 'vitest'
+import { ref } from 'vue'
 import { utils, write } from 'xlsx'
 
 import {
@@ -8,6 +8,7 @@ import {
   getSpreadsheetSheet,
   parseSpreadsheetWorkbook,
 } from '#ui-tools/spreadsheet'
+
 import { useSpreadsheetSource } from '../../src/runtime/spreadsheet/composables/use-spreadsheet-source'
 
 function createWorkbookBinary() {
@@ -17,10 +18,7 @@ function createWorkbookBinary() {
     ['Business English 4 Skills', 'John', 'Primary, Secondary'],
     ['Reading Placement Test', 'Jane', 'Primary'],
   ])
-  const secondSheet = utils.aoa_to_sheet([
-    ['Value'],
-    ['Other'],
-  ])
+  const secondSheet = utils.aoa_to_sheet([['Value'], ['Other']])
 
   utils.book_append_sheet(workbook, assessmentSheet, 'Assessments')
   utils.book_append_sheet(workbook, secondSheet, 'Other')

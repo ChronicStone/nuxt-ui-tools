@@ -1,10 +1,7 @@
 import type { DeepPrettify, PathToObject, UnionToIntersection } from '../../shared/types/utils'
 import type { SpreadsheetQueryDefinition } from './shared'
 
-export interface SpreadsheetContextItem<
-  TKey extends string = string,
-  TResult = unknown,
-> {
+export interface SpreadsheetContextItem<TKey extends string = string, TResult = unknown> {
   key: TKey
   query: () => SpreadsheetQueryDefinition<TResult>
 }

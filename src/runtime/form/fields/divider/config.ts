@@ -5,4 +5,3 @@ export const dividerFieldKind = defineFormFieldKind({
   state: 'stateless',
   layout: { item: true },
 })
-

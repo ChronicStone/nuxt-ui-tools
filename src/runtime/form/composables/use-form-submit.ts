@@ -1,7 +1,7 @@
 import { computed, ref, toValue } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
-import type { GenericObject } from '../../shared/types/utils'
 
+import type { GenericObject } from '../../shared/types/utils'
 import type {
   ExtractFormOutput,
   FormApi,
@@ -38,6 +38,7 @@ export function useFormSubmit<const TSchema extends GenericObject, TSubmitData =
 
 export function useFormSubmitController<TSubmitData = unknown>(params: {
   validate: () => Promise<boolean>
+  focusFirstInvalid?: () => Promise<boolean>
   getOutput: () => FormObject
   getApi: () => FormApi
   getSchema: () => unknown
@@ -49,7 +50,10 @@ export function useFormSubmitController<TSubmitData = unknown>(params: {
     externalSubmitHandler?: FormSubmitHandler<FormObject, TSubmitData>,
   ): Promise<FormSubmitHandlerResult<TSubmitData>> {
     const isValid = await params.validate()
-    if (!isValid) return { success: false }
+    if (!isValid) {
+      await params.focusFirstInvalid?.()
+      return { success: false }
+    }
 
     try {
       actionPending.value = 'submit'

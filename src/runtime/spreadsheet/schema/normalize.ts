@@ -1,8 +1,3 @@
-import {
-  resolveSpreadsheetColumns,
-  resolveSpreadsheetReferences,
-  createSpreadsheetDynamicBuilder,
-} from '../utils/builders'
 import type {
   SpreadsheetColumnDefinition,
   SpreadsheetColumnResolveDefinition,
@@ -14,15 +9,22 @@ import type {
   SpreadsheetDynamicBuilder,
   SpreadsheetReferenceDefinition,
 } from '../types'
+import {
+  resolveSpreadsheetColumns,
+  resolveSpreadsheetReferences,
+  createSpreadsheetDynamicBuilder,
+} from '../utils/builders'
 
 function isSpreadsheetColumnGroupDefinition(
   value: unknown,
 ): value is SpreadsheetColumnGroupDefinition<string, readonly unknown[]> {
-  return value !== null
-    && typeof value === 'object'
-    && 'kind' in value
-    && value.kind === 'group'
-    && 'columns' in value
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'kind' in value &&
+    value.kind === 'group' &&
+    'columns' in value
+  )
 }
 
 function isSpreadsheetResolvableColumnDefinition(
@@ -36,24 +38,26 @@ function isSpreadsheetResolvableColumnDefinition(
   unknown,
   SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
 > {
-  return value !== null
-    && typeof value === 'object'
-    && 'kind' in value
-    && value.kind !== 'group'
-    && 'key' in value
-    && 'resolve' in value
-    && Boolean(value.resolve)
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'kind' in value &&
+    value.kind !== 'group' &&
+    'key' in value &&
+    'resolve' in value &&
+    Boolean(value.resolve)
+  )
 }
 
-function isSpreadsheetReferenceDefinition(
-  value: unknown,
-): value is SpreadsheetReferenceDefinition {
-  return value !== null
-    && typeof value === 'object'
-    && 'kind' in value
-    && value.kind === 'select'
-    && 'field' in value
-    && 'source' in value
+function isSpreadsheetReferenceDefinition(value: unknown): value is SpreadsheetReferenceDefinition {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'kind' in value &&
+    value.kind === 'select' &&
+    'field' in value &&
+    'source' in value
+  )
 }
 
 function collectSpreadsheetResolutionColumns(
@@ -83,8 +87,7 @@ function collectSpreadsheetResolutionColumns(
       continue
     }
 
-    if (isSpreadsheetResolvableColumnDefinition(entry))
-      resolvedColumns.push(entry)
+    if (isSpreadsheetResolvableColumnDefinition(entry)) resolvedColumns.push(entry)
   }
 
   return resolvedColumns
@@ -94,11 +97,13 @@ function normalizeSpreadsheetResolutionDefinitions(params: {
   columns: readonly unknown[]
   references: readonly unknown[]
 }): readonly SpreadsheetResolutionDefinition[] {
-  const columnResolutions = collectSpreadsheetResolutionColumns(params.columns)
-    .flatMap<SpreadsheetResolutionDefinition>((column) => {
-      if (!column.resolve) return []
+  const columnResolutions = collectSpreadsheetResolutionColumns(
+    params.columns,
+  ).flatMap<SpreadsheetResolutionDefinition>((column) => {
+    if (!column.resolve) return []
 
-      return [{
+    return [
+      {
         kind: 'select',
         scope: 'column',
         targetField: column.key,
@@ -106,8 +111,9 @@ function normalizeSpreadsheetResolutionDefinitions(params: {
         options: column.resolve.options,
         getOptions: column.resolve.getOptions,
         rules: column.rules,
-      }]
-    })
+      },
+    ]
+  })
 
   const referenceResolutions: SpreadsheetResolutionDefinition[] = []
 
@@ -128,30 +134,31 @@ function normalizeSpreadsheetResolutionDefinitions(params: {
   return [...columnResolutions, ...referenceResolutions]
 }
 
-export function resolveSpreadsheetDynamicColumns<
-  TContext,
-  TResult extends readonly unknown[],
->(columns: {
-  dynamic: (params: {
-    dynamic: SpreadsheetDynamicBuilder<TContext>
-    context: TContext
-  }) => TResult
-}, context: TContext): TResult
+export function resolveSpreadsheetDynamicColumns<TContext, TResult extends readonly unknown[]>(
+  columns: {
+    dynamic: (params: {
+      dynamic: SpreadsheetDynamicBuilder<TContext>
+      context: TContext
+    }) => TResult
+  },
+  context: TContext,
+): TResult
 export function resolveSpreadsheetDynamicColumns<TContext>(
   columns: {
-    dynamic?: ((params: {
-      dynamic: SpreadsheetDynamicBuilder
-      context: TContext
-    }) => readonly unknown[]) | undefined
+    dynamic?:
+      | ((params: { dynamic: SpreadsheetDynamicBuilder; context: TContext }) => readonly unknown[])
+      | undefined
   },
   context: TContext,
 ): readonly []
 export function resolveSpreadsheetDynamicColumns<TContext>(
   columns: {
-    dynamic?: ((params: {
-      dynamic: SpreadsheetDynamicBuilder<TContext>
-      context: TContext
-    }) => readonly unknown[]) | undefined
+    dynamic?:
+      | ((params: {
+          dynamic: SpreadsheetDynamicBuilder<TContext>
+          context: TContext
+        }) => readonly unknown[])
+      | undefined
   },
   context: TContext,
 ) {
@@ -163,9 +170,7 @@ export function resolveSpreadsheetDynamicColumns<TContext>(
   })
 }
 
-export function resolveSpreadsheetBuildRow<TBuildRow>(
-  buildRow: TBuildRow,
-): TBuildRow
+export function resolveSpreadsheetBuildRow<TBuildRow>(buildRow: TBuildRow): TBuildRow
 export function resolveSpreadsheetBuildRow(buildRow: undefined): undefined
 export function resolveSpreadsheetBuildRow<TBuildRow>(buildRow: TBuildRow | undefined) {
   return buildRow
@@ -214,9 +219,7 @@ export function normalizeSpreadsheetSchema<
     buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
   }
 }
-export type {
-  NormalizeSpreadsheetSchema,
-}
+export type { NormalizeSpreadsheetSchema }
 
 function normalizeSpreadsheetSteps(schema: {
   sheet?: unknown

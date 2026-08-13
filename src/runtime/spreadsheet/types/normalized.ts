@@ -19,10 +19,10 @@ type SchemaReferences<TSchema> = TSchema extends {
 }
   ? TReferences
   : TSchema extends {
-  references?: infer TReferences extends readonly unknown[]
-}
-  ? TReferences
-  : readonly []
+        references?: infer TReferences extends readonly unknown[]
+      }
+    ? TReferences
+    : readonly []
 
 type SchemaBuildRow<TSchema> = TSchema extends {
   buildRow?: infer TBuildRow
@@ -38,21 +38,19 @@ type SchemaRelations<TSchema> = TSchema extends {
     : readonly []
   : readonly []
 
-export type SpreadsheetNormalizedStaticColumns<TSchema> = SpreadsheetResolvedColumns<
-  SchemaColumns<TSchema>
-> extends {
-  static?: infer TStaticColumns extends readonly unknown[]
-}
-  ? TStaticColumns
-  : readonly []
+export type SpreadsheetNormalizedStaticColumns<TSchema> =
+  SpreadsheetResolvedColumns<SchemaColumns<TSchema>> extends {
+    static?: infer TStaticColumns extends readonly unknown[]
+  }
+    ? TStaticColumns
+    : readonly []
 
-export type SpreadsheetNormalizedDynamicColumns<TSchema> = SpreadsheetResolvedColumns<
-  SchemaColumns<TSchema>
-> extends {
+export type SpreadsheetNormalizedDynamicColumns<TSchema> =
+  SpreadsheetResolvedColumns<SchemaColumns<TSchema>> extends {
     dynamic?: (...args: infer _Args) => infer TResult
-}
-  ? TResult
-  : readonly []
+  }
+    ? TResult
+    : readonly []
 
 export interface SpreadsheetNormalizedColumns<
   TContext = unknown,
@@ -67,10 +65,12 @@ export interface SpreadsheetNormalizedColumns<
 }
 
 export interface SpreadsheetNormalizedSchema<
-  TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly SpreadsheetContextItem<string, unknown>[],
+  TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] =
+    readonly SpreadsheetContextItem<string, unknown>[],
   TColumns = SpreadsheetNormalizedColumns,
   TReferences extends readonly unknown[] = readonly unknown[],
-  TResolutions extends readonly SpreadsheetResolutionDefinition[] = readonly SpreadsheetResolutionDefinition[],
+  TResolutions extends readonly SpreadsheetResolutionDefinition[] =
+    readonly SpreadsheetResolutionDefinition[],
   TRelations extends readonly unknown[] = readonly unknown[],
   TBuildRow = unknown,
 > {

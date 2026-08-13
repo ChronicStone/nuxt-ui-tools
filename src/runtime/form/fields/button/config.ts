@@ -5,4 +5,3 @@ export const buttonFieldKind = defineFormFieldKind({
   state: 'stateless',
   layout: { item: true },
 })
-

@@ -20,9 +20,19 @@ export function useFormOptionRegistry() {
     return states[optionStateKey(path)] ?? emptyState
   }
 
+  async function refresh(path: string | readonly string[]) {
+    await get(optionPathSegments(path)).refresh()
+  }
+
+  async function refreshMany(paths: readonly (string | readonly string[])[]) {
+    await Promise.all(paths.map((path) => refresh(path)))
+  }
+
   return {
     register,
     get,
+    refresh,
+    refreshMany,
   }
 }
 
@@ -32,8 +42,13 @@ function createEmptyOptionState(): FormOptionRuntimeState {
     pending: computed<boolean>(() => false),
     fetching: computed<boolean>(() => false),
     loading: computed<boolean>(() => false),
+    creating: computed<boolean>(() => false),
+    creatable: computed<boolean>(() => false),
+    createLabel: computed<string | undefined>(() => undefined),
     error: computed<unknown | null>(() => null),
     disableOnLoading: computed<boolean>(() => false),
+    refreshable: computed<boolean>(() => false),
+    selectCreatedOption: computed<boolean>(() => true),
     refresh: async () => {},
     add: () => {},
     create: async () => null,
@@ -42,4 +57,8 @@ function createEmptyOptionState(): FormOptionRuntimeState {
 
 function optionStateKey(path: readonly string[]) {
   return path.join('.')
+}
+
+function optionPathSegments(path: string | readonly string[]) {
+  return typeof path === 'string' ? path.split('.').filter(Boolean) : path
 }

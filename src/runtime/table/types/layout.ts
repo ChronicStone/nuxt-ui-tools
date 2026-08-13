@@ -41,7 +41,20 @@ export type PaginationConfig = {
   showPagesCount?: boolean
 }
 
-export type TablePaginationSchema = PaginationConfig
+export type TableOffsetPaginationSchema = PaginationConfig & {
+  mode?: 'offset'
+}
+
+export interface TableCursorPaginationSchema {
+  mode: 'cursor'
+  pageSize?: number | Partial<Record<TableLayout, number>>
+  count?: 'none' | 'exact'
+}
+
+export type TablePaginationSchema =
+  | false
+  | TableOffsetPaginationSchema
+  | TableCursorPaginationSchema
 
 export type TableGridMode = 'flow' | 'contained'
 

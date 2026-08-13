@@ -56,42 +56,42 @@ function createStructureStressSchema() {
       static: (column) => [
         column.text('testCenterId', {
           match: { headers: ['Test center ID'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('secureCode', {
           match: { headers: ['Secure code'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('examNameRaw', {
           match: { headers: ['Exam name'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('firstName', {
           match: { headers: ['First name'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('lastName', {
           match: { headers: ['Last name'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.email('email', {
           match: { headers: ['Email'] },
           parse: ({ cell }) => cell.text.trim().toLowerCase(),
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.date('completionDate', {
           match: { headers: ['Completed date'] },
           parse: ({ cell }) => new Date(`${cell.text.trim()} UTC`).toISOString(),
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.enum('status', {
           match: { headers: ['Status'] },
           options: ['Done'],
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('country', {
           match: { headers: ['Tc country'] },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('batchName', { match: { headers: ['Batch'] } }),
         column.text('scores.general', { match: { headers: ['General level'] } }),
@@ -101,17 +101,18 @@ function createStructureStressSchema() {
         dynamic.optionGroups({
           key: 'affiliations',
           source: center.affiliationGroups,
-          itemKey: group => group.id,
-          itemLabel: group => group.name,
-          targetKey: group => group.slug,
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          targetKey: (group) => group.slug,
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
           },
-          options: group => group.items.map(item => ({
-            label: item.name,
-            value: item.id,
-          })),
+          options: (group) =>
+            group.items.map((item) => ({
+              label: item.name,
+              value: item.id,
+            })),
           values: {
             mode: 'csv',
             separator: ',',
@@ -124,10 +125,10 @@ function createStructureStressSchema() {
         }),
       ],
     },
-    references: reference => [
+    references: (reference) => [
       reference.select('productId', {
         source: 'examNameRaw',
-        options: center.products.map(product => ({
+        options: center.products.map((product) => ({
           label: product.name,
           value: product.id,
         })),
@@ -166,7 +167,7 @@ function createWorkbook() {
       `STRESS-${String(index + 1).padStart(3, '0')}`,
       index % 5 === 0
         ? 'Unknown exam bundle'
-        : center.products[index % center.products.length]?.name ?? '',
+        : (center.products[index % center.products.length]?.name ?? ''),
       index === 10 ? '' : `Candidate ${index + 1}`,
       `Stress ${index + 1}`,
       index === 10 ? '' : `candidate.${index + 1}@example.com`,

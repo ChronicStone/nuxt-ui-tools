@@ -1,10 +1,15 @@
 import { readFileSync } from 'node:fs'
 
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import type { ComputedRef } from 'vue'
 
 import { defineTableSchema } from '#ui-tools/table/schema'
-import type { ComputedRef } from 'vue'
-import type { TableApi, TableRemoteSource } from '#ui-tools/table/types'
+import type {
+  TableApi,
+  TableCursorPaginationApi,
+  TableNoPaginationApi,
+  TableRemoteSource,
+} from '#ui-tools/table/types'
 
 describe('table package surface', () => {
   it('exports defineTableSchema from the package root', () => {
@@ -42,7 +47,13 @@ describe('table package surface', () => {
       },
     })
 
-    expectTypeOf(schema.pagination?.showPageSizePicker).toEqualTypeOf<boolean | undefined>()
+    expectTypeOf(
+      schema.pagination && typeof schema.pagination === 'object'
+        ? schema.pagination.mode === 'cursor'
+          ? undefined
+          : schema.pagination.showPageSizePicker
+        : undefined,
+    ).toMatchTypeOf<boolean | undefined>()
   })
 
   it('keeps the public table api generic compatible with inferred schemas', () => {
@@ -65,6 +76,45 @@ describe('table package surface', () => {
     }
 
     expectTypeOf<PublicTable['schema']['value']['grid']>().toEqualTypeOf<typeof schema.grid>()
+  })
+
+  it('narrows the public pagination API from the schema strategy', () => {
+    const cursorSchema = defineTableSchema({
+      tableKey: 'cursor-users',
+      rowKey: 'id',
+      pagination: { mode: 'cursor', pageSize: 20 },
+      source: {
+        mode: 'remote',
+        query: () => ({
+          queryKey: ['cursor-users'],
+          queryFn: async () => ({
+            rows: [{ id: 1 }],
+            pageInfo: {
+              mode: 'cursor' as const,
+              pageSize: 20,
+              nextCursor: null,
+              count: 'none' as const,
+              rowCount: null,
+            },
+          }),
+        }),
+      },
+    })
+    const unpaginatedSchema = defineTableSchema({
+      tableKey: 'all-users',
+      rowKey: 'id',
+      pagination: false,
+      source: {
+        query: () => ({ queryKey: ['all-users'], queryFn: async () => [{ id: 1 }] }),
+      },
+    })
+
+    expectTypeOf<
+      TableApi<typeof cursorSchema>['pagination']
+    >().toEqualTypeOf<TableCursorPaginationApi>()
+    expectTypeOf<
+      TableApi<typeof unpaginatedSchema>['pagination']
+    >().toEqualTypeOf<TableNoPaginationApi>()
   })
 
   it('requires remote sources to return rows with rowCount metadata', () => {

@@ -102,6 +102,10 @@
       "title": "Point d'entrée du playground",
       "description": "Partez d'un accueil vide, puis ouvrez la surface de playground que vous voulez inspecter. Cela garde le playground calme par défaut et rend l'intention explicite avant de charger un runtime lourd.",
       "entries": {
+        "form": {
+          "title": "Playground formulaire",
+          "description": "Runtime de formulaire piloté par schéma avec rendu inline, modale, drawer, overlays responsives, état live et output typé."
+        },
         "spreadsheet": {
           "title": "Playground spreadsheet",
           "description": "Scénarios ciblés du moteur d'import avec routes fullscreen isolées pour le matching, les références et les cas de stress."

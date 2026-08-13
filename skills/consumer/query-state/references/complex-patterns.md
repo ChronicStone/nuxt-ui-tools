@@ -51,18 +51,20 @@ const filters = useQueryStates({
       defaultValue: [],
       resolve(definition) {
         return definition.operators.map((operator) => ({
-          urlKey: operator === definition.defaultOperator
-            ? definition.key
-            : `${definition.key}~${operator}`,
+          urlKey:
+            operator === definition.defaultOperator
+              ? definition.key
+              : `${definition.key}~${operator}`,
           codec: definition.codec,
         }))
       },
       parse(entries, definitions) {
         return definitions.flatMap((definition) =>
           definition.operators.flatMap((operator) => {
-            const urlKey = operator === definition.defaultOperator
-              ? definition.key
-              : `${definition.key}~${operator}`
+            const urlKey =
+              operator === definition.defaultOperator
+                ? definition.key
+                : `${definition.key}~${operator}`
             const value = entries.get(urlKey)
             return value == null ? [] : [{ key: definition.key, operator, value }]
           }),
@@ -74,9 +76,10 @@ const filters = useQueryStates({
             const definition = definitions.find((item) => item.key === rule.key)
             if (!definition) return []
 
-            const urlKey = rule.operator === definition.defaultOperator
-              ? rule.key
-              : `${rule.key}~${rule.operator}`
+            const urlKey =
+              rule.operator === definition.defaultOperator
+                ? rule.key
+                : `${rule.key}~${rule.operator}`
 
             return [[urlKey, rule.value]]
           }),

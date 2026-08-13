@@ -6,6 +6,7 @@ import type {
   TableOptionFilterDefinition,
   TableTextFilterDefinition,
 } from '#ui-tools/table/types'
+
 import {
   resolveBooleanFilterUi,
   resolveFilterTriggerIcon,

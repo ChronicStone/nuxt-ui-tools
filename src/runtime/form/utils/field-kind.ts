@@ -20,4 +20,3 @@ export function defineFormFieldKind<const TDefinition extends FormFieldKindDefin
 ) {
   return definition
 }
-

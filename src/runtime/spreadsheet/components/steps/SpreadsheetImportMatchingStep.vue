@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
+
 import type { SpreadsheetColumnAssignmentOption } from '../../types'
 import type { SpreadsheetComponentApi } from '../types'
 import SpreadsheetMatchingSummary from './matching/SpreadsheetMatchingSummary.vue'
@@ -21,21 +22,25 @@ function getStaticColumnLabel(columnKey: string) {
   return resolveTextValue(column.label, column.key)
 }
 
-const assignedStaticKeys = computed(() => new Set(
-  internals.rows.columnMatches.value.map((match) => match.key),
-))
+const assignedStaticKeys = computed(
+  () => new Set(internals.rows.columnMatches.value.map((match) => match.key)),
+)
 
-const usedColumnIndexes = computed(() => new Set<number>([
-  ...internals.rows.columnMatches.value.map((match) => match.columnIndex),
-  ...internals.rows.dynamicColumnMatches.value.map((match) => match.columnIndex),
-]))
+const usedColumnIndexes = computed(
+  () =>
+    new Set<number>([
+      ...internals.rows.columnMatches.value.map((match) => match.columnIndex),
+      ...internals.rows.dynamicColumnMatches.value.map((match) => match.columnIndex),
+    ]),
+)
 
 const ignoredHeaderRows = computed(() =>
   props.spreadsheet.headerCells.value
     .filter((header) => !usedColumnIndexes.value.has(header.index))
     .map((header) => ({
       key: `ignored:${header.index}`,
-      fileColumn: header.text || t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
+      fileColumn:
+        header.text || t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
     })),
 )
 
@@ -50,7 +55,7 @@ const expectedFieldRows = computed(() =>
       required: Boolean(column.required),
       selectedHeaderIndex: match?.columnIndex ?? null,
       selectedFileColumn: match?.header.text ?? '',
-      status: match ? 'matched' as const : 'unmatched' as const,
+      status: match ? ('matched' as const) : ('unmatched' as const),
     }
   }),
 )
@@ -90,16 +95,26 @@ const summaryItems = computed(() => [
   },
 ])
 
-function getOptionsForRow(row: { systemFieldKey: string, selectedHeaderIndex: number | null }) {
+function getOptionsForRow(row: { systemFieldKey: string; selectedHeaderIndex: number | null }) {
   return [
-    ...props.spreadsheet.headerCells.value.map<SpreadsheetColumnAssignmentOption & { headerIndex: number }>((header) => {
-      const selectedMatch = internals.rows.columnMatches.value.find((entry) => entry.key === row.systemFieldKey)
-      const assignedMatch = internals.rows.columnMatches.value.find((entry) => entry.columnIndex === header.index)
-      const assignedToOtherField = Boolean(assignedMatch && assignedMatch.key !== row.systemFieldKey)
+    ...props.spreadsheet.headerCells.value.map<
+      SpreadsheetColumnAssignmentOption & { headerIndex: number }
+    >((header) => {
+      const selectedMatch = internals.rows.columnMatches.value.find(
+        (entry) => entry.key === row.systemFieldKey,
+      )
+      const assignedMatch = internals.rows.columnMatches.value.find(
+        (entry) => entry.columnIndex === header.index,
+      )
+      const assignedToOtherField = Boolean(
+        assignedMatch && assignedMatch.key !== row.systemFieldKey,
+      )
 
       return {
         key: row.systemFieldKey,
-        label: header.text || t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
+        label:
+          header.text ||
+          t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
         assigned: assignedToOtherField,
         headerIndex: header.index,
         selected: selectedMatch?.columnIndex === header.index,
@@ -112,13 +127,12 @@ function getOptionsForRow(row: { systemFieldKey: string, selectedHeaderIndex: nu
       headerIndex: -1,
       selected: row.selectedHeaderIndex === null,
     },
-  ]
-    .sort((left, right) => {
-      if ('selected' in left && 'selected' in right && left.selected !== right.selected)
-        return Number(right.selected) - Number(left.selected)
-      if (left.assigned !== right.assigned) return Number(left.assigned) - Number(right.assigned)
-      return left.label.localeCompare(right.label)
-    })
+  ].sort((left, right) => {
+    if ('selected' in left && 'selected' in right && left.selected !== right.selected)
+      return Number(right.selected) - Number(left.selected)
+    if (left.assigned !== right.assigned) return Number(left.assigned) - Number(right.assigned)
+    return left.label.localeCompare(right.label)
+  })
 }
 </script>
 
@@ -131,12 +145,12 @@ function getOptionsForRow(row: { systemFieldKey: string, selectedHeaderIndex: nu
       :auto-mapped-rows="autoMappedRows"
       :ignored-column-rows="ignoredHeaderRows"
       :get-options-for-row="getOptionsForRow"
-      @assign="({ headerIndex, columnKey }) => {
-        if (!columnKey)
-          spreadsheet.clearColumnAssignment(headerIndex)
-        else
-          spreadsheet.assignColumn({ headerIndex, columnKey })
-      }"
+      @assign="
+        ({ headerIndex, columnKey }) => {
+          if (!columnKey) spreadsheet.clearColumnAssignment(headerIndex)
+          else spreadsheet.assignColumn({ headerIndex, columnKey })
+        }
+      "
     />
   </div>
 </template>

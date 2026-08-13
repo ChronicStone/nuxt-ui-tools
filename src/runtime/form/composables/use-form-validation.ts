@@ -1,7 +1,12 @@
 import { computed, ref } from 'vue'
 
 import type { FormField, FormObject, FormRuntimeContext, FormValidationError } from '../types'
-import { fieldPath, validateFormFields, validateFormState } from '../utils/state'
+import {
+  collectFormFieldsPaths,
+  fieldPath,
+  validateFormFields,
+  validateFormState,
+} from '../utils/state'
 import type { FormFieldApiFactory } from './use-form-state'
 
 export function useFormValidation(params: {
@@ -17,7 +22,12 @@ export function useFormValidation(params: {
   const errors = computed(() => [...validationErrors.value, ...customErrors.value])
 
   async function validate() {
-    validationErrors.value = await validateFormState(params.schema(), params.state, params.context, params.apiFactory)
+    validationErrors.value = await validateFormState(
+      params.schema(),
+      params.state,
+      params.context,
+      params.apiFactory,
+    )
     touchErrorPaths(validationErrors.value)
     return errors.value.length === 0
   }
@@ -36,24 +46,32 @@ export function useFormValidation(params: {
     })
     if (validationRuns.get(key) !== run) return nextErrors.length === 0
 
-    const fieldKeys = fields.map(field => fieldPath(parentPath, field).join('.'))
+    const fieldKeys = collectFormFieldsPaths(fields, parentPath)
     touchPaths(fieldKeys)
-    const retained = validationErrors.value.filter(error => !fieldKeys.some(fieldKey =>
-      error.path === fieldKey || error.path.startsWith(`${fieldKey}.`),
-    ))
+    const retained = validationErrors.value.filter(
+      (error) =>
+        !fieldKeys.some(
+          (fieldKey) => error.path === fieldKey || error.path.startsWith(`${fieldKey}.`),
+        ),
+    )
     validationErrors.value = [...retained, ...nextErrors]
 
     return nextErrors.length === 0
   }
 
   function getFieldError(path: readonly string[]) {
-    return errors.value.find(error => error.path === path.join('.'))?.message
+    const key = path.join('.')
+    const customError = customErrors.value.find((error) => error.path === key)
+    if (customError) return customError.message
+    if (!touchedPaths.value.includes(key)) return undefined
+
+    return validationErrors.value.find((error) => error.path === key)?.message
   }
 
   function setError(path: readonly string[], message: string) {
     const key = path.join('.')
     customErrors.value = [
-      ...customErrors.value.filter(error => error.path !== key),
+      ...customErrors.value.filter((error) => error.path !== key),
       { path: key, message },
     ]
   }
@@ -67,12 +85,16 @@ export function useFormValidation(params: {
     }
 
     const key = path.join('.')
-    validationErrors.value = validationErrors.value.filter(error => error.path !== key)
-    customErrors.value = customErrors.value.filter(error => error.path !== key)
+    validationErrors.value = validationErrors.value.filter((error) => error.path !== key)
+    customErrors.value = customErrors.value.filter((error) => error.path !== key)
   }
 
   function markTouched(path: readonly string[]) {
     touchPaths([path.join('.')])
+  }
+
+  function markAllTouched(paths: readonly string[]) {
+    touchPaths(paths)
   }
 
   function isTouched(path: readonly string[]) {
@@ -85,7 +107,7 @@ export function useFormValidation(params: {
   }
 
   function touchErrorPaths(nextErrors: readonly FormValidationError[]) {
-    touchPaths(nextErrors.map(error => error.path))
+    touchPaths(nextErrors.map((error) => error.path))
   }
 
   return {
@@ -96,12 +118,17 @@ export function useFormValidation(params: {
     setError,
     clearError,
     markTouched,
+    markAllTouched,
     isTouched,
   }
 }
 
 function scopeKey(fields: readonly FormField[], parentPath: readonly string[]) {
-  return fields.map(field => fieldPath(parentPath, field).join('.')).join('|') || parentPath.join('.') || '$form'
+  return (
+    fields.map((field) => fieldPath(parentPath, field).join('.')).join('|') ||
+    parentPath.join('.') ||
+    '$form'
+  )
 }
 
 function unique(values: readonly string[]) {

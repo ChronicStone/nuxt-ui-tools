@@ -1,4 +1,4 @@
-import type { ComputedRef } from 'vue'
+import type { ComputedRef, WritableComputedRef } from 'vue'
 
 import type { useTableData } from '../composables/use-table-data'
 import type { TableFilterState } from './query-state'
@@ -8,16 +8,67 @@ import type {
   ExtractTablePageContextData,
   ExtractTableRow,
   TableLayout,
+  TablePaginationState,
   TableSortingDirection,
   TableSortingRule,
 } from './utils'
 
 export type PublicTableQueryState = {
   layout: TableLayout
-  pagination: { pageIndex: number; pageSize: number }
+  pagination: TablePaginationState
   sorting: { sortKey: string; sortDirection: 'asc' | 'desc' } | null
   filters: TableFilterState
 }
+
+export interface TableOffsetPaginationApi {
+  mode: 'offset'
+  state: ComputedRef<{
+    mode: 'offset'
+    pageIndex: number
+    pageSize: number
+    pageCount: number
+    loadedCount: number
+    totalCount: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+  }>
+  pageSizeOptions: ComputedRef<number[]>
+  setPage: (page: number) => void
+  setPageSize: (pageSize: number) => void
+  next: () => void
+  previous: () => void
+  reset: () => void
+}
+
+export interface TableCursorPaginationApi {
+  mode: 'cursor'
+  state: ComputedRef<{
+    mode: 'cursor'
+    loadedCount: number
+    totalCount: number | null
+    hasNextPage: boolean
+    isLoadingMore: boolean
+    loadMoreError: unknown
+  }>
+  loadMore: () => Promise<unknown>
+  reset: () => void
+}
+
+export interface TableNoPaginationApi {
+  mode: 'none'
+  state: ComputedRef<{
+    mode: 'none'
+    loadedCount: number
+    totalCount: number | null
+  }>
+  reset: () => void
+}
+
+export type TablePaginationApi<TSchema> = TSchema extends { pagination: false }
+  ? TableNoPaginationApi
+  : TSchema extends { pagination: { mode: 'cursor' } }
+    ? TableCursorPaginationApi
+    : TableOffsetPaginationApi
 
 export interface TableApi<TSchema = TableSchemaView> {
   state: {
@@ -30,9 +81,11 @@ export interface TableApi<TSchema = TableSchemaView> {
   }
   data: {
     rows: ComputedRef<ExtractTableRow<TSchema>[]>
-    rowCount: ComputedRef<number>
+    rowCount: ComputedRef<number | null>
+    loadedRowCount: ComputedRef<number>
+    totalRowCount: ComputedRef<number | null>
     rawRows: ComputedRef<ExtractTableRow<TSchema>[]>
-    rawRowCount: ComputedRef<number>
+    rawRowCount: ComputedRef<number | null>
     context: ComputedRef<ExtractTableContextData<TSchema>>
     pageContext: ComputedRef<ExtractTablePageContextData<TSchema>>
     requestContext: ReturnType<typeof useTableData>['requestContext']
@@ -46,21 +99,15 @@ export interface TableApi<TSchema = TableSchemaView> {
     state: ComputedRef<{ active: TableLayout; available: TableLayout[] }>
     set: (layout: TableLayout) => void
   }
-  pagination: {
-    state: ComputedRef<{
-      pageIndex: number
-      pageSize: number
-      pageCount: number
-      hasNextPage: boolean
-      hasPreviousPage: boolean
-    }>
-    pageSizeOptions: ComputedRef<number[]>
-    setPage: (page: number) => void
-    setPageSize: (pageSize: number) => void
-    next: () => void
-    previous: () => void
-    reset: () => void
+  filters: {
+    state: ComputedRef<TableFilterState>
+    search: WritableComputedRef<string>
+    activeCount: ComputedRef<number>
+    clear: () => void
+    remove: (key: string) => void
+    replace: (rules: TableFilterState['ui']) => void
   }
+  pagination: TablePaginationApi<TSchema>
   sorting: {
     state: ComputedRef<{
       key?: string

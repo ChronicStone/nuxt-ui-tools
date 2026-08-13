@@ -4,11 +4,15 @@ import { computed, ref } from 'vue'
 
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableOptionFilterDefinition, TableOptionFilterOperator } from '../../../types'
+import type {
+  TableFilterOperator,
+  TableOptionFilterDefinition,
+  TableOptionFilterOperator,
+} from '../../../types'
 import FilterMatchModeButton from '../shared/FilterMatchModeButton.vue'
 import FilterOptionPickerContent from '../shared/FilterOptionPickerContent.vue'
-import FilterPanelInputTrigger from './FilterPanelInputTrigger.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
+import FilterPanelInputTrigger from './FilterPanelInputTrigger.vue'
 
 const props = defineProps<{
   definition: TableOptionFilterDefinition
@@ -20,7 +24,9 @@ const pendingOperator = ref<TableOptionFilterOperator>(resolveInitialOperator())
 const isOpen = ref<boolean>(false)
 
 const selectedValues = computed(() => {
-  const value = internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value
+  const value = internals.filterPresentation.getPanelDraftFilterState({
+    key: props.definition.key,
+  })?.value
   if (Array.isArray(value)) return value.filter(isPrimitiveValue)
   return isPrimitiveValue(value) ? [value] : []
 })
@@ -37,8 +43,9 @@ const state = useOptionFilterEditorState({
   setSelectedValues,
 })
 
-const isActive = computed(() =>
-  internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+const isActive = computed(
+  () =>
+    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
 )
 const operatorItems = computed(() =>
   internals.filters.getFilterOperatorOptions({
@@ -47,7 +54,9 @@ const operatorItems = computed(() =>
 )
 
 function resolveInitialOperator() {
-  const operator = internals.filterPresentation.getPanelFilterOperator({ key: props.definition.key })
+  const operator = internals.filterPresentation.getPanelFilterOperator({
+    key: props.definition.key,
+  })
   return operator === 'is' || operator === 'isNot' ? operator : 'isAnyOf'
 }
 
@@ -81,7 +90,7 @@ function handleSelectEntry(options: { value: string | number | boolean }) {
 }
 
 function handleToggleTreeEntry(entryId: string) {
-  const entry = state.visibleTreeEntries.value.find(item => item.id === entryId)
+  const entry = state.visibleTreeEntries.value.find((item) => item.id === entryId)
   if (!entry) return
   state.toggleTreeEntry(entry)
 }
@@ -110,7 +119,10 @@ function isPrimitiveValue(value: unknown): value is string | number | boolean {
       v-model:open="isOpen"
       mode="click"
       :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-      :ui="{ content: 'w-[var(--reka-popover-trigger-width)] max-w-[var(--reka-popover-trigger-width)] overflow-hidden p-0 shadow-none' }"
+      :ui="{
+        content:
+          'w-[var(--reka-popover-trigger-width)] max-w-[var(--reka-popover-trigger-width)] overflow-hidden p-0 shadow-none',
+      }"
     >
       <FilterPanelInputTrigger
         :value="state.triggerSummary.value"

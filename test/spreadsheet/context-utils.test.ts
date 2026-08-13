@@ -1,11 +1,11 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 
-import type { SpreadsheetContextItem } from '#ui-tools/spreadsheet/types'
 import {
   createSpreadsheetContextData,
   createSpreadsheetContextQueries,
   createSpreadsheetContextStatus,
 } from '#ui-tools/spreadsheet'
+import type { SpreadsheetContextItem } from '#ui-tools/spreadsheet/types'
 
 const contextItems = [
   {

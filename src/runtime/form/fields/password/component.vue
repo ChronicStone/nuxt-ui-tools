@@ -1,11 +1,10 @@
 <script setup lang="ts">
+import UInput from '@nuxt/ui/components/Input.vue'
 import { computed } from 'vue'
 
-import UInput from '@nuxt/ui/components/Input.vue'
-
-import type { FormPasswordField } from '../../types'
-import { useFieldControl } from '../../composables/use-field-control'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import { useFieldControl } from '../../composables/use-field-control'
+import type { FormPasswordField } from '../../types'
 
 const props = defineProps<{
   field: FormPasswordField
@@ -13,13 +12,16 @@ const props = defineProps<{
   bare?: boolean
 }>()
 
-const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(() => props.field, () => props.path)
+const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
 const model = computed<string | undefined>({
   get: () => {
     const value = form.getValue(props.path)
     return typeof value === 'string' ? value : undefined
   },
-  set: value => form.setValue(props.path, value ?? null),
+  set: (value) => form.setValue(props.path, value ?? null),
 })
 </script>
 

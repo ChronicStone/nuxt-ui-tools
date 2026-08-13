@@ -20,12 +20,14 @@ export function createSpreadsheetReferenceCandidates(params: {
       const value = getSpreadsheetOptionValue(option)
       if (!label || value === undefined) return []
 
-      return [{
-        value,
-        label,
-        option,
-        score: scoreSpreadsheetReferenceCandidate(params.sourceValue, label),
-      }]
+      return [
+        {
+          value,
+          label,
+          option,
+          score: scoreSpreadsheetReferenceCandidate(params.sourceValue, label),
+        },
+      ]
     })
     .sort((left, right) => {
       if (left.score !== right.score) return right.score - left.score

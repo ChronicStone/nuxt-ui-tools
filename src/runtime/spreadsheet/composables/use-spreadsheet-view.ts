@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
+
 import type { SpreadsheetStepItem } from '../components/types'
 import type { SpreadsheetStepsDefinition } from '../types'
 
@@ -47,9 +48,9 @@ export function useSpreadsheetView(params: {
       ),
       icon: 'i-lucide-columns-3',
     },
-    ...(
-      params.hasReferences()
-        ? [{
+    ...(params.hasReferences()
+      ? [
+          {
             value: 'references',
             title: resolveTextValue(
               params.stepConfig?.()?.references?.title,
@@ -60,9 +61,9 @@ export function useSpreadsheetView(params: {
               params.t('spreadsheet.steps.references.description'),
             ),
             icon: 'i-lucide-link-2',
-          }]
-        : []
-    ),
+          },
+        ]
+      : []),
     {
       value: 'review',
       title: resolveTextValue(

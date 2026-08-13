@@ -36,7 +36,7 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ['@faker-js/faker'],
+      include: ['@faker-js/faker', 'libphonenumber-js'],
     },
   },
 })

@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools
-description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview, shows which surfaces are usable today, and routes you to the right package area for table, query-state, shared responsive helpers, or spreadsheet import usage.
+description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview, shows which surfaces are usable today, and routes you to the right package area for table, form, query-state, shared responsive helpers, or spreadsheet import usage.
 ---
 
 # nuxt-ui-tools
@@ -16,17 +16,20 @@ Read first:
 The current serious package surfaces are:
 
 - table runtime
+- form runtime
 - query-state runtime
 - shared responsive helpers
 - spreadsheet import runtime
-
-The `form` area exists but is not yet a mature consumer surface.
 
 ## Routing
 
 If the task is about table setup, schema design, columns, filters, layouts, or `DataList`, use:
 
 - `skills/consumer/table/SKILL.md`
+
+If the task is about schema-driven forms, inline form rendering, provider-owned modal/drawer forms, or `useFormApi`, use:
+
+- `skills/consumer/form/SKILL.md`
 
 If the task is about typed URL state, query params, codecs, or reusable URL-backed state, use:
 

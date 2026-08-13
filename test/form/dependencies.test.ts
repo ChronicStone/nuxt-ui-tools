@@ -1,10 +1,8 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { defineFormField, defineFormSchema } from '#ui-tools/form'
-import type {
-  ExtractFormFieldDependencies,
-  ExtractFormInternalValue,
-} from '#ui-tools/form'
+import type { ExtractFormFieldDependencies, ExtractFormInternalValue } from '#ui-tools/form'
+
 import { resolveFieldDependencies } from '../../src/runtime/form/utils/dependencies'
 
 const schema = defineFormSchema({
@@ -24,19 +22,13 @@ const schema = defineFormSchema({
     {
       key: 'confirmPassword',
       type: 'password',
-      dependencies: [
-        'password',
-        ['profile.country', 'country'],
-      ],
+      dependencies: ['password', ['profile.country', 'country']],
     },
   ],
 })
 
 type InternalValue = ExtractFormInternalValue<typeof schema>
-type ConfirmField = Extract<
-  typeof schema.fields[number],
-  { key: 'confirmPassword' }
->
+type ConfirmField = Extract<(typeof schema.fields)[number], { key: 'confirmPassword' }>
 
 describe('form field dependencies', () => {
   it('extracts typed dependency values from absolute dotted paths', () => {
@@ -70,11 +62,13 @@ describe('form field dependencies', () => {
       },
     }
 
-    expect(resolveFieldDependencies({
-      field,
-      state,
-      parentPath: ['account', 'address'],
-    })).toEqual({
+    expect(
+      resolveFieldDependencies({
+        field,
+        state,
+        parentPath: ['account', 'address'],
+      }),
+    ).toEqual({
       'account.name': 'Ada',
       country: 'FR',
       siblingCity: 'Paris',

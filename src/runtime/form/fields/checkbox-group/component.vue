@@ -1,24 +1,26 @@
 <script setup lang="ts">
+import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import { computed } from 'vue'
 
-import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
-
-import type { FormCheckboxGroupField, FormOptionValue } from '../../types'
-import { useFieldControl } from '../../composables/use-field-control'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import { useFieldControl } from '../../composables/use-field-control'
+import type { FormCheckboxGroupField, FormOptionValue } from '../../types'
 
 const props = defineProps<{
   field: FormCheckboxGroupField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(() => props.field, () => props.path)
+const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
 const model = computed<readonly FormOptionValue[]>({
   get: () => {
     const value = form.getValue(props.path)
     return Array.isArray(value) ? value.filter(isOptionValue) : []
   },
-  set: value => form.setValue(props.path, value),
+  set: (value) => form.setValue(props.path, value),
 })
 const items = computed(() => [...options.items.value])
 
@@ -29,7 +31,7 @@ function toggleOption(value: FormOptionValue, checked: boolean) {
     return
   }
 
-  model.value = current.filter(item => item !== value)
+  model.value = current.filter((item) => item !== value)
 }
 
 function isOptionValue(value: unknown): value is FormOptionValue {

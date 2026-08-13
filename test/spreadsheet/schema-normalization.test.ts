@@ -41,9 +41,7 @@ const context = [
           ] satisfies readonly DemoAffiliationGroup[],
       }) satisfies SpreadsheetQueryDefinition<readonly DemoAffiliationGroup[]>,
   },
-] satisfies readonly [
-  SpreadsheetContextItem<'affiliationGroups', readonly DemoAffiliationGroup[]>,
-]
+] satisfies readonly [SpreadsheetContextItem<'affiliationGroups', readonly DemoAffiliationGroup[]>]
 
 type ContextData = ExtractSpreadsheetContextData<{ context: typeof context }>
 
@@ -71,17 +69,18 @@ const columns = {
           ],
         },
       ] satisfies readonly DemoAffiliationGroup[],
-      itemKey: group => group.id,
-      itemLabel: group => group.name,
-      targetKey: group => group.slug,
+      itemKey: (group) => group.id,
+      itemLabel: (group) => group.name,
+      targetKey: (group) => group.slug,
       header: {
         strategy: 'template',
         template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
       },
-      options: group => group.items.map(item => ({
-        label: item.name,
-        value: item.id,
-      })),
+      options: (group) =>
+        group.items.map((item) => ({
+          label: item.name,
+          value: item.id,
+        })),
       values: {
         mode: 'csv',
         separator: ',',

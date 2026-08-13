@@ -23,10 +23,7 @@ Optional app-level API:
 ## Example 1: Straightforward admin import
 
 ```ts
-import {
-  defineSpreadsheetSchema,
-  useSpreadsheetImport,
-} from '@nuxt-ui-tools/spreadsheet'
+import { defineSpreadsheetSchema, useSpreadsheetImport } from '@nuxt-ui-tools/spreadsheet'
 
 const userImportSchema = defineSpreadsheetSchema({
   importKey: 'users.import',
@@ -179,11 +176,9 @@ const crmLeadImportSchema = defineSpreadsheetSchema({
       scoreRow: ({ row }) => {
         const joined = row.join(' ').toLowerCase()
 
-        if (joined.includes('first name') || joined.includes('email'))
-          return 100
+        if (joined.includes('first name') || joined.includes('email')) return 100
 
-        if (joined.includes('generated on'))
-          return -20
+        if (joined.includes('generated on')) return -20
 
         return 0
       },
@@ -205,17 +200,13 @@ const crmLeadImportSchema = defineSpreadsheetSchema({
         'first name',
         'given name',
         /^fname$/i,
-        ({ header }) => header.normalized === 'forename' ? 0.95 : null,
+        ({ header }) => (header.normalized === 'forename' ? 0.95 : null),
       ],
     }),
 
     column.text('company', {
       label: 'Company',
-      match: [
-        'company',
-        'organisation',
-        /^business( name)?$/i,
-      ],
+      match: ['company', 'organisation', /^business( name)?$/i],
     }),
 
     column.email('email', {
@@ -234,12 +225,7 @@ const crmLeadImportSchema = defineSpreadsheetSchema({
 
     column.phone('phone', {
       label: 'Phone',
-      match: [
-        'phone',
-        'telephone',
-        /^mobile$/i,
-        /^phone(_number)?$/i,
-      ],
+      match: ['phone', 'telephone', /^mobile$/i, /^phone(_number)?$/i],
     }),
   ],
 })
@@ -293,18 +279,20 @@ const productImportSchema = defineSpreadsheetSchema({
         }),
       },
       resolve: async ({ cell, options }) => {
-        const match = options.find((option) =>
-          option.label.toLowerCase() === cell.text.trim().toLowerCase(),
+        const match = options.find(
+          (option) => option.label.toLowerCase() === cell.text.trim().toLowerCase(),
         )
 
         return match
           ? { value: match.value }
           : {
-              issues: [{
-                level: 'error',
-                code: 'brand.not_found',
-                message: `Unknown brand: ${cell.text}`,
-              }],
+              issues: [
+                {
+                  level: 'error',
+                  code: 'brand.not_found',
+                  message: `Unknown brand: ${cell.text}`,
+                },
+              ],
             }
       },
     }),
@@ -333,8 +321,7 @@ export function assessmentImportSchema(params: {
 }) {
   const { $i18n, $client } = useNuxtApp()
 
-  const parseUTC = (value: string) =>
-    value ? new Date(`${value} UTC`).toISOString() : null
+  const parseUTC = (value: string) => (value ? new Date(`${value} UTC`).toISOString() : null)
 
   return defineSpreadsheetSchema({
     importKey: 'assessment.results',
@@ -554,8 +541,7 @@ const inventoryImportSchema = defineSpreadsheetSchema({
 
   pipeline: {
     row: async ({ row, addIssue }) => {
-      if (row.quantity === 0)
-        addIssue('quantity', 'warning', 'quantity.zero', 'Quantity is zero')
+      if (row.quantity === 0) addIssue('quantity', 'warning', 'quantity.zero', 'Quantity is zero')
 
       return {
         ...row,
@@ -621,16 +607,19 @@ But the imperative path should be in scope from the start so the architecture do
 ```ts
 const { $spreadsheetApi } = useNuxtApp()
 
-const result = await $spreadsheetApi.start(assessmentImportSchema({
-  testCenterVtestId,
-  affiliations,
-}), {
-  mode: 'inline',
-  title: 'Import assessment results',
-  onSubmit: async ({ validRows }) => {
-    await $client.assessment.import.mutate({ rows: validRows })
+const result = await $spreadsheetApi.start(
+  assessmentImportSchema({
+    testCenterVtestId,
+    affiliations,
+  }),
+  {
+    mode: 'inline',
+    title: 'Import assessment results',
+    onSubmit: async ({ validRows }) => {
+      await $client.assessment.import.mutate({ rows: validRows })
+    },
   },
-})
+)
 
 if (result.isCompleted) {
   console.log(result.data.validRows)
@@ -740,8 +729,8 @@ match: [
   'email',
   'email address',
   /^e-?mail$/i,
-  ({ header, column }) => header.normalized === column.key ? 1 : null,
-  ({ sampleValues }) => sampleValues.some((value) => value.includes('@')) ? 0.85 : null,
+  ({ header, column }) => (header.normalized === column.key ? 1 : null),
+  ({ sampleValues }) => (sampleValues.some((value) => value.includes('@')) ? 0.85 : null),
 ]
 ```
 

@@ -1,8 +1,8 @@
 /** @jsxImportSource vue */
 /// <reference types="vue/jsx" />
 
-import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
+import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import type { VNodeChild } from 'vue'
@@ -40,7 +40,10 @@ type PlainRenderContextCacheState = {
   plainPageContext: Record<string, unknown>
 }
 
-const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<UseTableColumnsParams, PlainRenderContextCacheState>()
+const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<
+  UseTableColumnsParams,
+  PlainRenderContextCacheState
+>()
 
 export function createSelectionColumn(options: { params: UseTableColumnsParams }) {
   return {
@@ -453,10 +456,7 @@ function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
   }
 }
 
-function wrapRowScope(options: {
-  scope: TableCellRenderContext
-  content: VNodeChild
-}) {
+function wrapRowScope(options: { scope: TableCellRenderContext; content: VNodeChild }) {
   return <TableRowScopeProvider scope={options.scope}>{options.content}</TableRowScopeProvider>
 }
 
@@ -469,7 +469,8 @@ function resolvePlainRenderContext(params: UseTableColumnsParams): PlainRenderCo
     cached &&
     cached.contextSource === contextSource &&
     cached.pageContextSource === pageContextSource
-  ) return cached
+  )
+    return cached
 
   const nextCache: PlainRenderContextCacheState = {
     contextSource,

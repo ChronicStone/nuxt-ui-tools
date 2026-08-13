@@ -1,9 +1,9 @@
 import type { FormFieldCallback } from './callbacks'
+import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
 import type { FormTransformConfig } from './transform'
 import type { FormDynamic, FormObject, FormText } from './utils'
 import type { FormValidationConfig } from './validation'
-import type { FormField } from './field'
 
 /**
  * Field kinds targeted by the current form runtime plan.
@@ -13,12 +13,17 @@ export type FormFieldType =
   | 'password'
   | 'textarea'
   | 'number'
+  | 'auto-complete'
   | 'checkbox'
   | 'switch'
+  | 'switch-group'
   | 'radio'
+  | 'radio-card'
   | 'checkbox-group'
+  | 'checkbox-card'
   | 'select'
   | 'date'
+  | 'time'
   | 'phone-number'
   | 'hidden'
   | 'info'
@@ -35,12 +40,20 @@ export type FormFieldType =
   | 'color-picker'
   | 'one-time-code'
   | 'tag'
+  | 'rating'
   | 'button'
+  | 'card'
+  | 'column'
 
 /**
  * Common stateful field properties.
  */
-export interface FormStatefulFieldBase<TType extends FormFieldType, TValue, TContext = {}, TDeps = {}> {
+export interface FormStatefulFieldBase<
+  TType extends FormFieldType,
+  TValue,
+  TContext = {},
+  TDeps = {},
+> {
   /** Raw path used to read/write the field value in form state. */
   key: string
   /** Discriminant used by the field registry. */
@@ -60,7 +73,7 @@ export interface FormStatefulFieldBase<TType extends FormFieldType, TValue, TCon
   /** Item layout options for this field. */
   layout?: FormItemLayout
   /** UI-library-specific props. This intentionally stays open because Nuxt UI props can evolve. */
-  props?: FormDynamic<FormObject, { ctx: TContext, deps: TDeps }>
+  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
   /** Disables the field without removing it from form state. */
   disabled?: FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Controls whether the field is rendered. Hidden fields can still be part of form state. */
@@ -87,7 +100,7 @@ export interface FormStatelessFieldBase<TType extends FormFieldType, TContext = 
   /** Item layout options for this field. */
   layout?: FormItemLayout
   /** UI-library-specific props. */
-  props?: FormDynamic<FormObject, { ctx: TContext, deps: TDeps }>
+  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
 }
@@ -109,7 +122,7 @@ export interface FormContainerFieldBase<TType extends FormFieldType, TContext = 
   /** Container layout options. */
   layout?: FormContainerLayout
   /** UI-library-specific props. */
-  props?: FormDynamic<FormObject, { ctx: TContext, deps: TDeps }>
+  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
 }

@@ -7,7 +7,11 @@ import { computed, ref, toRef, watch } from 'vue'
 
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableNumberFilterDefinition, TableNumberFilterOperator } from '../../../types'
+import type {
+  TableFilterOperator,
+  TableNumberFilterDefinition,
+  TableNumberFilterOperator,
+} from '../../../types'
 import { resolveFilterTriggerIcon, resolveNumberFilterUi } from '../../../utils'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
@@ -225,7 +229,6 @@ function updateSliderRangeValue(value: unknown) {
 function resolveIncrementConfig(hideStepper: boolean) {
   return hideStepper ? false : { variant: 'ghost' as const }
 }
-
 </script>
 
 <template>
@@ -235,17 +238,29 @@ function resolveIncrementConfig(hideStepper: boolean) {
     :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
     @update:open="session.handleOpenChange"
   >
-    <TableFilterTrigger
-      :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      :leading-icon="resolveFilterTriggerIcon(definition)"
-      :operator-label="operatorLabel"
-      :operator-items="operatorItems"
-      :preview-summary="preview.summary"
+    <slot
+      name="trigger"
+      :preview="preview"
       :active="preview.active"
-      @select-operator="handleOperatorChange"
-      @activate="handleActivate"
-      @clear="clearFilter"
-    />
+      :open="session.isOpen.value"
+      :trigger-props="{
+        type: 'button',
+        'aria-haspopup': 'dialog',
+        'aria-expanded': session.isOpen.value,
+      }"
+    >
+      <TableFilterTrigger
+        :label="internals.filters.getFilterLabelText({ label: definition.label })"
+        :leading-icon="resolveFilterTriggerIcon(definition)"
+        :operator-label="operatorLabel"
+        :operator-items="operatorItems"
+        :preview-summary="preview.summary"
+        :active="preview.active"
+        @select-operator="handleOperatorChange"
+        @activate="handleActivate"
+        @clear="clearFilter"
+      />
+    </slot>
 
     <template #content>
       <div class="min-w-[16rem] max-w-[calc(100vw-1rem)] bg-default">
@@ -264,7 +279,11 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
               :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
               :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
-              :ui="{ base: 'h-9 px-2', increment: 'size-7 rounded-md', decrement: 'size-7 rounded-md' }"
+              :ui="{
+                base: 'h-9 px-2',
+                increment: 'size-7 rounded-md',
+                decrement: 'size-7 rounded-md',
+              }"
               @update:model-value="updateRangeFrom"
               @keydown.enter.prevent="applyFilter"
             />
@@ -279,7 +298,11 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
               :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
               :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
-              :ui="{ base: 'h-9 px-2', increment: 'size-7 rounded-md', decrement: 'size-7 rounded-md' }"
+              :ui="{
+                base: 'h-9 px-2',
+                increment: 'size-7 rounded-md',
+                decrement: 'size-7 rounded-md',
+              }"
               @update:model-value="updateRangeTo"
               @keydown.enter.prevent="applyFilter"
             />
@@ -309,13 +332,19 @@ function resolveIncrementConfig(hideStepper: boolean) {
             :disable-wheel-change="filterUi.scalar.input.disableWheelChange"
             :increment="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
             :decrement="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
-            :ui="{ base: 'h-9 px-2', increment: 'size-7 rounded-md', decrement: 'size-7 rounded-md' }"
+            :ui="{
+              base: 'h-9 px-2',
+              increment: 'size-7 rounded-md',
+              decrement: 'size-7 rounded-md',
+            }"
             @update:model-value="updateScalarValue"
             @keydown.enter.prevent="applyFilter"
           />
 
           <USlider
-            v-if="filterUi.scalar.display === 'slider' || filterUi.scalar.display === 'input-slider'"
+            v-if="
+              filterUi.scalar.display === 'slider' || filterUi.scalar.display === 'input-slider'
+            "
             :model-value="scalarValue"
             :min="filterUi.scalar.slider.min ?? sliderBounds.min"
             :max="filterUi.scalar.slider.max ?? sliderBounds.max"
@@ -329,8 +358,20 @@ function resolveIncrementConfig(hideStepper: boolean) {
           v-if="filterUi.commitMode === 'manual'"
           class="flex items-center justify-between border-t border-default p-2"
         >
-          <UButton color="neutral" variant="ghost" size="sm" :label="filterUi.actions.clear" @click="clearFilter" />
-          <UButton color="neutral" variant="subtle" size="sm" :label="filterUi.actions.apply" @click="applyFilter" />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            :label="filterUi.actions.clear"
+            @click="clearFilter"
+          />
+          <UButton
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            :label="filterUi.actions.apply"
+            @click="applyFilter"
+          />
         </div>
       </div>
     </template>

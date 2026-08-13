@@ -5,13 +5,21 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
-import type { TableUiFilterDefinition } from '../../../types'
-import { resolveFilterTriggerIcon } from '../../../utils'
+
+import { useDataListUi } from '../../../composables/use-data-list-ui'
+import type {
+  DataListAddFilterUi,
+  DataListControlSize,
+  TableUiFilterDefinition,
+} from '../../../types'
+import { mergeDataListUiClass, resolveFilterTriggerIcon } from '../../../utils'
 import FilterSearchablePanel from './FilterSearchablePanel.vue'
 
 const props = defineProps<{
   definitions: TableUiFilterDefinition[]
   getLabel: (definition: TableUiFilterDefinition) => string
+  size?: DataListControlSize
+  ui?: DataListAddFilterUi
 }>()
 
 const emit = defineEmits<{
@@ -19,6 +27,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useUiToolsLocale()
+const dataListUi = useDataListUi()
 const isOpen = ref<boolean>(false)
 const searchQuery = ref<string>('')
 
@@ -36,6 +45,18 @@ function handleSelect(key: string) {
   isOpen.value = false
   searchQuery.value = ''
 }
+
+function open() {
+  isOpen.value = true
+}
+
+function close() {
+  isOpen.value = false
+}
+
+function toggle() {
+  isOpen.value = !isOpen.value
+}
 </script>
 
 <template>
@@ -43,20 +64,45 @@ function handleSelect(key: string) {
     :open="isOpen"
     mode="click"
     :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
-    :ui="{ content: 'w-fit max-w-[calc(100vw-1rem)] overflow-hidden p-0 shadow-none' }"
+    :ui="{
+      content: mergeDataListUiClass(
+        'w-fit max-w-[calc(100vw-1rem)] overflow-hidden p-0 shadow-none',
+        undefined,
+        ui?.popoverContent,
+      ),
+    }"
     @update:open="isOpen = $event"
   >
-    <UButton
-      color="neutral"
-      variant="outline"
-      size="md"
-      icon="i-lucide-plus"
-      :label="t('table.controls.addFilter')"
-      class="shrink-0 border-dashed"
-    />
+    <slot
+      name="trigger"
+      :open="open"
+      :close="close"
+      :toggle="toggle"
+      :open-state="isOpen"
+      :trigger-props="{ type: 'button', 'aria-expanded': isOpen }"
+    >
+      <UButton
+        color="neutral"
+        variant="outline"
+        :size="props.size ?? dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value"
+        icon="i-lucide-plus"
+        :label="t('table.controls.addFilter')"
+        :ui="{
+          base: mergeDataListUiClass('shrink-0 border-dashed', undefined, ui?.trigger),
+        }"
+      />
+    </slot>
 
     <template #content>
-      <div class="w-fit min-w-[18rem] max-w-[min(24rem,calc(100vw-1rem))]">
+      <div
+        :class="
+          mergeDataListUiClass(
+            'w-fit min-w-[18rem] max-w-[min(24rem,calc(100vw-1rem))]',
+            undefined,
+            ui?.panel,
+          )
+        "
+      >
         <FilterSearchablePanel
           v-model:search-query="searchQuery"
           searchable
@@ -70,17 +116,31 @@ function handleSelect(key: string) {
             v-for="definition in filteredDefinitions"
             :key="definition.key"
             type="button"
-            class="flex min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-elevated/70"
+            :class="
+              mergeDataListUiClass(
+                'flex min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-elevated/70',
+                undefined,
+                ui?.option,
+              )
+            "
             @click="handleSelect(definition.key)"
           >
             <UIcon
               :name="resolveFilterTriggerIcon(definition)"
-              class="size-4 shrink-0 text-muted"
+              :class="mergeDataListUiClass('size-4 shrink-0 text-muted', undefined, ui?.optionIcon)"
             />
-            <span class="min-w-0 flex-1 truncate text-sm text-default">
+            <span
+              :class="
+                mergeDataListUiClass(
+                  'min-w-0 flex-1 truncate text-sm text-default',
+                  undefined,
+                  ui?.optionLabel,
+                )
+              "
+            >
               {{ getLabel(definition) }}
             </span>
-            <span class="text-muted">
+            <span :class="mergeDataListUiClass('text-muted', undefined, ui?.optionTrailingIcon)">
               <UIcon name="i-lucide-arrow-right" class="size-4" />
             </span>
           </button>

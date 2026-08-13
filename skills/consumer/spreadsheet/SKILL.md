@@ -28,12 +28,7 @@ const spreadsheet = useSpreadsheetImport(schema)
 </script>
 
 <template>
-  <UiSpreadsheetImport
-    v-if="open"
-    :spreadsheet="spreadsheet"
-    closable
-    @close="open = false"
-  />
+  <UiSpreadsheetImport v-if="open" :spreadsheet="spreadsheet" closable @close="open = false" />
 </template>
 ```
 
@@ -75,7 +70,7 @@ const schema = defineSpreadsheetSchema({
       column.option('productId', {
         label: () => t('spreadsheet.columns.product'),
         options: ({ context }) =>
-          context.products.map(product => ({
+          context.products.map((product) => ({
             label: () => t(`products.${product.id}.name`),
             value: product.id,
           })),
@@ -128,7 +123,7 @@ const schema = defineSpreadsheetSchema({
           headers: ['Product'],
         },
         options: ({ context }) =>
-          context.products.map(product => ({
+          context.products.map((product) => ({
             label: product.name,
             value: product.id,
           })),
@@ -138,7 +133,7 @@ const schema = defineSpreadsheetSchema({
           headers: ['Selected product'],
         },
         options: ({ context }) =>
-          context.products.map(product => ({
+          context.products.map((product) => ({
             label: product.name,
             value: product.id,
           })),
@@ -178,12 +173,12 @@ column.text('productId', {
   },
   resolve: {
     options: ({ context }) =>
-      context.products.map(product => ({
+      context.products.map((product) => ({
         label: product.name,
         value: product.id,
       })),
   },
-  rules: v => [
+  rules: (v) => [
     v.required({
       message: 'A product match is required before import',
     }),
@@ -230,15 +225,15 @@ defineSpreadsheetSchema({
       }),
     ],
   },
-  references: reference => [
+  references: (reference) => [
     reference.select('productId', {
       source: 'productLabelRaw',
       options: ({ context }) =>
-        context.products.map(product => ({
+        context.products.map((product) => ({
           label: product.name,
           value: product.id,
         })),
-      rules: v => [
+      rules: (v) => [
         v.required({
           message: 'A product match is required before import',
         }),
@@ -285,7 +280,7 @@ Example:
 ```ts
 const allPassing = createSheetRule<number[], [], {}>({
   name: 'allPassing',
-  validator: (value) => value.every(score => score >= 50),
+  validator: (value) => value.every((score) => score >= 50),
   message: 'All scores must be at least 50',
 })
 
@@ -299,14 +294,12 @@ column.number('scores', {
   multiple: {
     separator: ';',
   },
-  rules: v => [
-    allPassing(),
-  ],
+  rules: (v) => [allPassing()],
 })
 
 column.option('productIds', {
   options: ({ context }) =>
-    context.products.map(product => ({
+    context.products.map((product) => ({
       label: product.name,
       value: product.id,
     })),
@@ -339,16 +332,13 @@ Example:
 defineSpreadsheetSchema({
   importKey: 'assessment.results',
   columns: {
-    static: (column) => [
-      column.text('status'),
-      column.number('scores.general'),
-    ],
+    static: (column) => [column.text('status'), column.number('scores.general')],
   },
 }).refine({
   relations: [
     {
       column: 'scores.general',
-      condition: row => row.status === 'Done',
+      condition: (row) => row.status === 'Done',
       rules: (v) => [
         v.required({
           message: 'General score is required when status is Done',
@@ -378,17 +368,13 @@ Example:
 defineSpreadsheetSchema({
   importKey: 'assessment.results',
   columns: {
-    static: (column) => [
-      column.text('examNameRaw'),
-    ],
+    static: (column) => [column.text('examNameRaw')],
   },
-  references: reference => [
+  references: (reference) => [
     reference.select('productId', {
       source: 'examNameRaw',
-      options: [
-        { label: 'Business English 4 Skills', value: 'prod_1' },
-      ],
-      rules: v => [
+      options: [{ label: 'Business English 4 Skills', value: 'prod_1' }],
+      rules: (v) => [
         v.required({
           message: 'A product match is required before import',
         }),

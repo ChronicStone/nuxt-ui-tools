@@ -57,12 +57,8 @@ export interface TableRowAction<
   key: string
   label?: TableTextValue
   condition?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
-  disabled?:
-    | boolean
-    | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
-  loading?:
-    | boolean
-    | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
+  disabled?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
+  loading?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
   children?: TableRowAction<TRow, TContext, TPageContext>[]
   action?: (context: TableRowActionContext<TRow, TContext, TPageContext>) => MaybePromise<unknown>
 }

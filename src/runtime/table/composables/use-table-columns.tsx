@@ -40,27 +40,25 @@ export function useTableColumns(params: UseTableColumnsParams) {
       layout: params.tableLayout.value,
     })
   })
-  const runtimeColumns = computed(() =>
-    [
-      ...createRuntimeColumns({
-        schema: params.schema.value,
-        context: params.data.contextData.value,
-      }),
-      ...(hasRowActions.value
-        ? [
-            {
-              id: ROW_ACTIONS_COLUMN_ID,
-              label: 'Actions',
-              icon: 'i-lucide-ellipsis',
-              canHide: false,
-              defaultVisible: true,
-              configurable: false,
-              pinned: 'right' as const,
-            },
-          ]
-        : []),
-    ],
-  )
+  const runtimeColumns = computed(() => [
+    ...createRuntimeColumns({
+      schema: params.schema.value,
+      context: params.data.contextData.value,
+    }),
+    ...(hasRowActions.value
+      ? [
+          {
+            id: ROW_ACTIONS_COLUMN_ID,
+            label: 'Actions',
+            icon: 'i-lucide-ellipsis',
+            canHide: false,
+            defaultVisible: true,
+            configurable: false,
+            pinned: 'right' as const,
+          },
+        ]
+      : []),
+  ])
 
   const orderedColumns = computed(() =>
     createOrderedColumns({
@@ -154,14 +152,12 @@ export function useTableColumns(params: UseTableColumnsParams) {
   }
 
   function setSorting(sorting: { key: string; dir: 'asc' | 'desc' } | null) {
-    params.state.queryState.pagination.value = {
-      ...params.state.queryState.pagination.value,
-      pageIndex: 1,
-    }
+    params.state.queryState.resetPagination()
     params.state.queryState.sorting.value = sorting
   }
 
   function setSortKey(key?: string) {
+    params.state.queryState.resetPagination()
     if (!key) {
       params.state.queryState.sorting.value = null
       return
@@ -174,6 +170,7 @@ export function useTableColumns(params: UseTableColumnsParams) {
   }
 
   function setSortDirection(direction: 'asc' | 'desc') {
+    params.state.queryState.resetPagination()
     const currentSorting = params.state.queryState.sorting.value
 
     if (!currentSorting) {

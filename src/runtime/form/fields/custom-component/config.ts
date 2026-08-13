@@ -8,4 +8,3 @@ export const customComponentFieldKind = defineFormFieldKind({
   validation: true,
   transform: true,
 })
-

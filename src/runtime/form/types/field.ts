@@ -1,10 +1,14 @@
 import type { FormArrayListField } from '../fields/array-list/types'
 import type { FormArrayTabsField } from '../fields/array-tabs/types'
 import type { FormArrayVariantField } from '../fields/array-variant/types'
+import type { FormAutoCompleteField } from '../fields/auto-complete/types'
 import type { FormButtonField } from '../fields/button/types'
-import type { FormCheckboxField } from '../fields/checkbox/types'
+import type { FormCardField } from '../fields/card/types'
+import type { FormCheckboxCardField } from '../fields/checkbox-card/types'
 import type { FormCheckboxGroupField } from '../fields/checkbox-group/types'
+import type { FormCheckboxField } from '../fields/checkbox/types'
 import type { FormColorPickerField } from '../fields/color-picker/types'
+import type { FormColumnField } from '../fields/column/types'
 import type { FormCustomComponentField } from '../fields/custom-component/types'
 import type { FormDateField } from '../fields/date/types'
 import type { FormDividerField } from '../fields/divider/types'
@@ -13,17 +17,21 @@ import type { FormHiddenField } from '../fields/hidden/types'
 import type { FormInfoField } from '../fields/info/types'
 import type { FormInputGroupField } from '../fields/input-group/types'
 import type { FormNumberField } from '../fields/number/types'
-import type { FormOneTimeCodeField } from '../fields/one-time-code/types'
 import type { FormObjectField } from '../fields/object/types'
+import type { FormOneTimeCodeField } from '../fields/one-time-code/types'
 import type { FormPasswordField } from '../fields/password/types'
 import type { FormPhoneNumberField } from '../fields/phone-number/types'
+import type { FormRadioCardField } from '../fields/radio-card/types'
 import type { FormRadioField } from '../fields/radio/types'
+import type { FormRatingField } from '../fields/rating/types'
 import type { FormSelectField } from '../fields/select/types'
 import type { FormSliderField } from '../fields/slider/types'
+import type { FormSwitchGroupField } from '../fields/switch-group/types'
 import type { FormSwitchField } from '../fields/switch/types'
 import type { FormTagField } from '../fields/tag/types'
 import type { FormTextField } from '../fields/text/types'
 import type { FormTextareaField } from '../fields/textarea/types'
+import type { FormTimeField } from '../fields/time/types'
 import type { FormUploadField } from '../fields/upload/types'
 
 export type {
@@ -35,10 +43,14 @@ export type {
 export type { FormArrayListField } from '../fields/array-list/types'
 export type { FormArrayTabsField } from '../fields/array-tabs/types'
 export type { FormArrayVariantField } from '../fields/array-variant/types'
+export type { FormAutoCompleteField } from '../fields/auto-complete/types'
 export type { FormButtonField } from '../fields/button/types'
+export type { FormCardField } from '../fields/card/types'
+export type { FormCheckboxCardField } from '../fields/checkbox-card/types'
 export type { FormCheckboxField } from '../fields/checkbox/types'
 export type { FormCheckboxGroupField } from '../fields/checkbox-group/types'
 export type { FormColorPickerField } from '../fields/color-picker/types'
+export type { FormColumnField } from '../fields/column/types'
 export type { FormCustomComponentField } from '../fields/custom-component/types'
 export type { FormDateField } from '../fields/date/types'
 export type { FormDividerField } from '../fields/divider/types'
@@ -51,13 +63,17 @@ export type { FormOneTimeCodeField } from '../fields/one-time-code/types'
 export type { FormObjectField } from '../fields/object/types'
 export type { FormPasswordField } from '../fields/password/types'
 export type { FormPhoneNumberField } from '../fields/phone-number/types'
+export type { FormRadioCardField } from '../fields/radio-card/types'
 export type { FormRadioField } from '../fields/radio/types'
+export type { FormRatingField } from '../fields/rating/types'
 export type { FormSelectCreateItem, FormSelectField } from '../fields/select/types'
 export type { FormSliderField } from '../fields/slider/types'
+export type { FormSwitchGroupField } from '../fields/switch-group/types'
 export type { FormSwitchField } from '../fields/switch/types'
 export type { FormTagField } from '../fields/tag/types'
 export type { FormTextField } from '../fields/text/types'
 export type { FormTextareaField } from '../fields/textarea/types'
+export type { FormTimeField } from '../fields/time/types'
 export type { FormUploadField } from '../fields/upload/types'
 
 /**
@@ -71,12 +87,17 @@ export type FormField<TContext = {}, TDeps = {}> =
   | FormPasswordField<TContext, TDeps>
   | FormTextareaField<TContext, TDeps>
   | FormNumberField<TContext, TDeps>
+  | FormAutoCompleteField<TContext, TDeps>
   | FormCheckboxField<TContext, TDeps>
   | FormSwitchField<TContext, TDeps>
+  | FormSwitchGroupField<TContext, TDeps>
   | FormRadioField<TContext, TDeps>
+  | FormRadioCardField<TContext, TDeps>
   | FormCheckboxGroupField<TContext, TDeps>
+  | FormCheckboxCardField<TContext, TDeps>
   | FormSelectField<TContext, TDeps>
   | FormDateField<TContext, TDeps>
+  | FormTimeField<TContext, TDeps>
   | FormPhoneNumberField<TContext, TDeps>
   | FormHiddenField<TContext, TDeps>
   | FormInfoField<TContext, TDeps>
@@ -92,5 +113,8 @@ export type FormField<TContext = {}, TDeps = {}> =
   | FormSliderField<TContext, TDeps>
   | FormColorPickerField<TContext, TDeps>
   | FormOneTimeCodeField<TContext, TDeps>
+  | FormRatingField<TContext, TDeps>
   | FormTagField<TContext, TDeps>
   | FormButtonField<TContext, TDeps>
+  | FormCardField<TContext, TDeps>
+  | FormColumnField<TContext, TDeps>

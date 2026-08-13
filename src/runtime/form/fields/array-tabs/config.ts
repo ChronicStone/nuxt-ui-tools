@@ -6,4 +6,3 @@ export const arrayTabsFieldKind = defineFormFieldKind({
   ui: { label: true, description: true },
   layout: { item: true, container: true },
 })
-

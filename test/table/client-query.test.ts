@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import type { GenericObject, TableKnownFieldPath, TableSourceRequestContext } from '#ui-tools/table/types'
+import type {
+  GenericObject,
+  TableKnownFieldPath,
+  TableSourceRequestContext,
+} from '#ui-tools/table/types'
 import { executeClientQuery } from '#ui-tools/table/utils/client-query'
 
 type TestRow = GenericObject & {
@@ -131,8 +135,10 @@ function createRequest(
     },
     sorting: [],
     pagination: {
+      mode: 'offset',
       pageIndex: 1,
       pageSize: 50,
+      count: 'exact',
     },
     filters: {
       type: 'group',
@@ -620,8 +626,10 @@ describe('executeClientQuery', () => {
             },
           ],
           pagination: {
+            mode: 'offset',
             pageIndex: 2,
             pageSize: 2,
+            count: 'exact',
           },
         }),
       })
@@ -659,8 +667,10 @@ describe('executeClientQuery', () => {
         rows,
         request: createRequest({
           pagination: {
+            mode: 'offset',
             pageIndex: 0,
             pageSize: 0,
+            count: 'exact',
           },
         }),
       })
@@ -674,14 +684,26 @@ describe('executeClientQuery', () => {
         rows,
         request: createRequest({
           pagination: {
+            mode: 'offset',
             pageIndex: 3,
             pageSize: 2,
+            count: 'exact',
           },
         }),
       })
 
       expect(result.rowCount).toBe(4)
       expect(result.rows).toEqual([])
+    })
+
+    it('does not slice client rows when pagination is disabled', () => {
+      const result = executeClientQuery({
+        rows,
+        request: createRequest({ pagination: { mode: 'none' } }),
+      })
+
+      expect(result.rowCount).toBe(4)
+      expect(result.rows).toHaveLength(4)
     })
   })
 })

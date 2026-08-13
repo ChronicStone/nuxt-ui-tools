@@ -37,24 +37,36 @@ describe('responsive value helpers', () => {
 
   it('applies built-in transforms', () => {
     expect(
-      resolveResponsiveValueAtBreakpoint('1 md:2 xl:4', {
-        breakpoint: 'xl',
-        breakpointKeys,
-      }, 'integer'),
+      resolveResponsiveValueAtBreakpoint(
+        '1 md:2 xl:4',
+        {
+          breakpoint: 'xl',
+          breakpointKeys,
+        },
+        'integer',
+      ),
     ).toBe(4)
 
     expect(
-      resolveResponsiveValueAtBreakpoint('false lg:true', {
-        breakpoint: 'lg',
-        breakpointKeys,
-      }, 'boolean'),
+      resolveResponsiveValueAtBreakpoint(
+        'false lg:true',
+        {
+          breakpoint: 'lg',
+          breakpointKeys,
+        },
+        'boolean',
+      ),
     ).toBe(true)
 
     expect(
-      resolveResponsiveValueAtBreakpoint('1 md:2', {
-        breakpoint: 'md',
-        breakpointKeys,
-      }, 'grid-cols'),
+      resolveResponsiveValueAtBreakpoint(
+        '1 md:2',
+        {
+          breakpoint: 'md',
+          breakpointKeys,
+        },
+        'grid-cols',
+      ),
     ).toBe('grid-template-columns: repeat(2, minmax(0, 1fr))')
   })
 

@@ -50,7 +50,7 @@ interface TableSourceRequestContext<TRow, TContext, TSortKey> {
   filters: TableResolvedFilterGroup
   search: TableSourceSearchRequest<TRow>
   context: TContext
-  facets?: TableGlobalFacetDescriptor[]  // injected for Path B only
+  facets?: TableGlobalFacetDescriptor[] // injected for Path B only
 }
 ```
 
@@ -62,7 +62,7 @@ Can optionally return embedded facets for Path B.
 interface TableSourceExecutionResult<TRow> {
   rows: TRow[]
   rowCount: number
-  facets?: TableFacetResult[]  // returned by server when ctx.facets was present
+  facets?: TableFacetResult[] // returned by server when ctx.facets was present
 }
 ```
 
@@ -95,7 +95,9 @@ interface TableRemoteSource<TRow, TContext, TResult> {
   query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
 
   // Path A — batched global facets, separate query, filter-context only
-  facets?: (ctx: TableFacetsContext<TRow, TContext>) => TableQueryDefinition<TableFacetExecutionResult>
+  facets?: (
+    ctx: TableFacetsContext<TRow, TContext>,
+  ) => TableQueryDefinition<TableFacetExecutionResult>
 
   // Path B — no extra field needed:
   //   when source.facets is absent, the table injects ctx.facets into query()
@@ -133,8 +135,8 @@ type TableFilterFacetSpec = TableFilterFacetMode | TableFilterFacetConfig
 
 // Context for a per-filter override query
 interface TableFilterFacetQueryContext<TRow, TContext> {
-  table: TableFacetsContext<TRow, TContext>  // filter/search/context only, no pagination/sort
-  facets: TableFacetRequestDescriptor[]       // this filter's descriptor (includes search, limit, cursor)
+  table: TableFacetsContext<TRow, TContext> // filter/search/context only, no pagination/sort
+  facets: TableFacetRequestDescriptor[] // this filter's descriptor (includes search, limit, cursor)
 }
 ```
 
@@ -223,19 +225,21 @@ Separate `useQuery` driven by `facetsRequestContext` (filter-context only).
 Does not re-fetch when pagination or sort changes.
 
 ```ts
-const globalFacetsQuery = useQuery(computed(() => {
-  if (!remoteSource.value?.facets || !globalFacetsDescriptors.value.length)
-    return { queryKey: ['global-facets', 'disabled'], enabled: false }
+const globalFacetsQuery = useQuery(
+  computed(() => {
+    if (!remoteSource.value?.facets || !globalFacetsDescriptors.value.length)
+      return { queryKey: ['global-facets', 'disabled'], enabled: false }
 
-  return withEnabled(
-    remoteSource.value.facets({
-      ...facetsRequestContext.value,
-      facets: globalFacetsDescriptors.value,
-    }),
-    isContextReady.value,
-    { staleTime: QUERY_DEFAULTS.staleTime.filterOptions },
-  )
-}))
+    return withEnabled(
+      remoteSource.value.facets({
+        ...facetsRequestContext.value,
+        facets: globalFacetsDescriptors.value,
+      }),
+      isContextReady.value,
+      { staleTime: QUERY_DEFAULTS.staleTime.filterOptions },
+    )
+  }),
+)
 ```
 
 ### Path B — embedded facets from main query
@@ -248,9 +252,7 @@ the facets-relevant context has changed** (filters or search). On pagination/sor
 // Track last facets context fingerprint to detect real changes
 const lastFacetsContextKey = shallowRef<string | null>(null)
 
-const facetsContextKey = computed(() =>
-  JSON.stringify(facetsRequestContext.value),
-)
+const facetsContextKey = computed(() => JSON.stringify(facetsRequestContext.value))
 
 // Inject facets only when filter/search context changed — not on pagination/sort
 const requestContextWithFacets = computed<TableSourceRequestContext>(() => {
@@ -266,15 +268,18 @@ const requestContextWithFacets = computed<TableSourceRequestContext>(() => {
 // Extract from response — only store when facets were actually requested
 const embeddedFacets = shallowRef<TableFacetResult[]>([])
 
-watch(() => query.data.value, (nextData) => {
-  // ...existing row sync...
+watch(
+  () => query.data.value,
+  (nextData) => {
+    // ...existing row sync...
 
-  const embedded = extractFacetsFromResponse(nextData)
-  if (embedded) {
-    embeddedFacets.value = embedded
-    lastFacetsContextKey.value = facetsContextKey.value  // mark as resolved
-  }
-})
+    const embedded = extractFacetsFromResponse(nextData)
+    if (embedded) {
+      embeddedFacets.value = embedded
+      lastFacetsContextKey.value = facetsContextKey.value // mark as resolved
+    }
+  },
+)
 ```
 
 ### Merged `facets` output
@@ -310,25 +315,29 @@ const hasPerFilterOverrideQuery = computed(
   () => typeof filterFacetConfig.value?.query === 'function',
 )
 
-const perFilterFacetQuery = useQuery(computed(() => {
-  if (!hasPerFilterOverrideQuery.value || !isRemoteTable.value)
-    return { queryKey: ['per-filter-facet', definition.key, 'disabled'], enabled: false }
+const perFilterFacetQuery = useQuery(
+  computed(() => {
+    if (!hasPerFilterOverrideQuery.value || !isRemoteTable.value)
+      return { queryKey: ['per-filter-facet', definition.key, 'disabled'], enabled: false }
 
-  return withEnabled(
-    filterFacetConfig.value!.query!({
-      table: queryContent.facetsBaseContext.value,
-      facets: [{
-        key: definition.key,
-        mode: filterFacetConfig.value!.mode,
-        search: facetSearch.value,
-        limit: filterFacetConfig.value!.limit,
-        cursor: undefined,
-      }],
-    }),
-    shouldResolveCounts.value,
-    { staleTime: QUERY_DEFAULTS.staleTime.filterOptions },
-  )
-}))
+    return withEnabled(
+      filterFacetConfig.value!.query!({
+        table: queryContent.facetsBaseContext.value,
+        facets: [
+          {
+            key: definition.key,
+            mode: filterFacetConfig.value!.mode,
+            search: facetSearch.value,
+            limit: filterFacetConfig.value!.limit,
+            cursor: undefined,
+          },
+        ],
+      }),
+      shouldResolveCounts.value,
+      { staleTime: QUERY_DEFAULTS.staleTime.filterOptions },
+    )
+  }),
+)
 ```
 
 ### Unified facet counts resolution
@@ -340,14 +349,16 @@ const facetCounts = computed<TableFacetOptionResult[]>(() => {
   if (isRemoteTable.value) {
     // Path C: per-filter override
     if (hasPerFilterOverrideQuery.value)
-      return perFilterFacetQuery.data.value?.facets.find(f => f.key === definition.key)?.options ?? []
+      return (
+        perFilterFacetQuery.data.value?.facets.find((f) => f.key === definition.key)?.options ?? []
+      )
 
     // Path A or B: global facets from use-table-data
-    return queryContent.facets.value.facets.find(f => f.key === definition.key)?.options ?? []
+    return queryContent.facets.value.facets.find((f) => f.key === definition.key)?.options ?? []
   }
 
   // Client: from use-table-data computed
-  return queryContent.facets.value.facets.find(f => f.key === definition.key)?.options ?? []
+  return queryContent.facets.value.facets.find((f) => f.key === definition.key)?.options ?? []
 })
 ```
 
@@ -508,13 +519,13 @@ filters: {
 
 ## Re-fetch behavior summary
 
-| Change                     | Path A query | Path B rows  | Path B facets | Path C query |
-|----------------------------|:------------:|:------------:|:-------------:|:------------:|
-| filters change             | ✓ re-fetch   | ✓ re-fetch   | ✓ re-fetch    | ✓ re-fetch   |
-| search changes             | ✓ re-fetch   | ✓ re-fetch   | ✓ re-fetch    | ✓ re-fetch   |
-| pagination change          | — cached     | ✓ re-fetch   | — omitted     | — cached     |
-| sort change                | — cached     | ✓ re-fetch   | — omitted     | — cached     |
-| filter search (per-filter) | — n/a        | — n/a        | — n/a         | ✓ re-fetch   |
+| Change                     | Path A query | Path B rows | Path B facets | Path C query |
+| -------------------------- | :----------: | :---------: | :-----------: | :----------: |
+| filters change             |  ✓ re-fetch  | ✓ re-fetch  |  ✓ re-fetch   |  ✓ re-fetch  |
+| search changes             |  ✓ re-fetch  | ✓ re-fetch  |  ✓ re-fetch   |  ✓ re-fetch  |
+| pagination change          |   — cached   | ✓ re-fetch  |   — omitted   |   — cached   |
+| sort change                |   — cached   | ✓ re-fetch  |   — omitted   |   — cached   |
+| filter search (per-filter) |    — n/a     |    — n/a    |     — n/a     |  ✓ re-fetch  |
 
 > **Path B mechanics:** on pagination/sort-only changes, `ctx.facets` is omitted from the request.
 > The server skips facet computation entirely and returns rows only. The client keeps its previously

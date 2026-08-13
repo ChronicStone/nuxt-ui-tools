@@ -1,7 +1,9 @@
 name: Release
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   release:
@@ -21,13 +23,32 @@ jobs:
         with:
           bun-version: 1.3.6
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
       - name: Prepare module and playground
         run: bun run dev:prepare
 
-      - name: Release
-        run: bun run release
+      - name: Verify release
+        run: bun run check && bun run build
+
+      - name: Verify tag version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          test "v${VERSION}" = "${GITHUB_REF_NAME}"
+
+      - name: Publish package
+        run: npm publish --access public --provenance
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

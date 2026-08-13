@@ -1,8 +1,22 @@
+import type { FormAction } from './actions'
 import type { FormApi, FormSubmitHandler } from './api'
 import type { FormContextData, FormContextDefinition } from './context'
 import type { FormField, FormFieldType } from './field'
 import type { FormLayoutConfig } from './layout'
-import type { FormText } from './utils'
+import type { FormMaybePromise, FormObject, FormText } from './utils'
+
+export interface FormStepLifecycleParams<TOutput = FormObject> {
+  /** Step summary targeted by the lifecycle callback. */
+  step: FormStep
+  /** Zero-based step index targeted by the lifecycle callback. */
+  stepIndex: number
+  /** Current submitted output. */
+  formData: TOutput
+  /** Current submitted output, kept for shared-ui parity and future step-scoped narrowing. */
+  stepData: TOutput
+  /** Public form API for validation, focus, state, submit, and reset. */
+  api: FormApi
+}
 
 /**
  * Step in a multi-step form schema.
@@ -23,6 +37,8 @@ export interface FormStep<
   root?: string
   /** Step-level layout override. */
   layout?: FormLayoutConfig
+  /** Step-level action override. Falls back to schema actions, then built-in actions. */
+  actions?: readonly FormAction[]
   /** Fields rendered for this step. */
   fields: TFields
 }
@@ -32,8 +48,12 @@ export interface FormStep<
  */
 export interface FormSchema<
   TContext extends FormContextDefinition | undefined = FormContextDefinition | undefined,
-  TFields extends readonly FormField<FormContextData<TContext>>[] = readonly FormField<FormContextData<TContext>>[],
-  TSteps extends readonly FormStep<FormContextData<TContext>>[] = readonly FormStep<FormContextData<TContext>>[],
+  TFields extends readonly FormField<FormContextData<TContext>>[] = readonly FormField<
+    FormContextData<TContext>
+  >[],
+  TSteps extends readonly FormStep<FormContextData<TContext>>[] = readonly FormStep<
+    FormContextData<TContext>
+  >[],
 > {
   /** Stable key used by persistence, diagnostics, and test selectors. */
   formKey?: string
@@ -49,16 +69,32 @@ export interface FormSchema<
   steps?: TSteps
   /** Controls whether the default stepper chrome is rendered for stepped schemas. */
   showStepper?: boolean
+  /** Form action configuration. Omit to use built-in reset/submit or previous/next/submit actions. */
+  actions?: readonly FormAction[]
   /** Runs after validation and before the external submit handler. Return `false` to cancel submit. */
   onBeforeSubmit?: FormSubmitHandler<unknown, never>
   /** Submit lifecycle hook. */
-  submit?: (params: { value: unknown, api: FormApi, ctx: FormContextData<TContext> }) => Promise<void> | void
+  submit?: (params: {
+    value: unknown
+    api: FormApi
+    ctx: FormContextData<TContext>
+  }) => Promise<void> | void
+  /** Runs after current-step validation and before advancing to the next step. Return `false` to stop navigation. */
+  onBeforeNext?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<boolean | void>
+  /** Runs before moving to the previous step. */
+  onBeforePrevious?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<void>
+  /** Returns true when a step should be skipped during previous/next navigation. */
+  skipStep?: (params: FormStepLifecycleParams<unknown>) => boolean
+  /** Runs when `skipStep` skips a step. */
+  onStepSkipped?: (params: Omit<FormStepLifecycleParams<unknown>, 'stepData'>) => void
 }
 
 /**
  * Extracts the typed context object exposed by a form schema.
  */
-export type ExtractFormContext<TSchema> = TSchema extends { readonly context?: infer TContext extends FormContextDefinition | undefined }
+export type ExtractFormContext<TSchema> = TSchema extends {
+  readonly context?: infer TContext extends FormContextDefinition | undefined
+}
   ? FormContextData<TContext>
   : {}
 
@@ -85,9 +121,8 @@ type FormFieldByType<TType extends FormFieldType, TContext> = Extract<
   { type: TType }
 >
 
-type NoExtraFieldProperties<TField, TExpected> = Exclude<keyof TField, keyof TExpected> extends never
-  ? TField
-  : never
+type NoExtraFieldProperties<TField, TExpected> =
+  Exclude<keyof TField, keyof TExpected> extends never ? TField : never
 
 /**
  * Strict authored field shape used by schema helpers.

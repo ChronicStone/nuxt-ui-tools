@@ -7,9 +7,10 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { useMediaQuery } from '@vueuse/core'
 import { computed, ref, shallowRef, toRef, watch } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { TableDateFilterOperator, TableFilterOperator } from '../../../types'
 import type { TableDateFilterDefinition } from '../../../types/filters'
 import {
@@ -317,7 +318,6 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
   return left.year === right.year && left.month === right.month && left.day === right.day
 }
-
 </script>
 
 <template>
@@ -329,17 +329,29 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
     }"
     @update:open="session.handleOpenChange"
   >
-    <TableFilterTrigger
-      :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      :leading-icon="resolveFilterTriggerIcon(definition)"
-      :operator-label="operatorLabel"
-      :operator-items="operatorItems"
-      :preview-summary="preview.summary"
+    <slot
+      name="trigger"
+      :preview="preview"
       :active="preview.active"
-      @select-operator="handleOperatorChange"
-      @activate="handleActivate"
-      @clear="clearFilter"
-    />
+      :open="session.isOpen.value"
+      :trigger-props="{
+        type: 'button',
+        'aria-haspopup': 'dialog',
+        'aria-expanded': session.isOpen.value,
+      }"
+    >
+      <TableFilterTrigger
+        :label="internals.filters.getFilterLabelText({ label: definition.label })"
+        :leading-icon="resolveFilterTriggerIcon(definition)"
+        :operator-label="operatorLabel"
+        :operator-items="operatorItems"
+        :preview-summary="preview.summary"
+        :active="preview.active"
+        @select-operator="handleOperatorChange"
+        @activate="handleActivate"
+        @clear="clearFilter"
+      />
+    </slot>
 
     <template #content>
       <div
@@ -349,7 +361,11 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
         <div v-if="operator === 'between'">
           <div
             class="grid gap-0"
-            :class="filterUi.range.presetsPlacement === 'side' ? 'lg:grid-cols-[14rem_minmax(0,1fr)]' : 'grid-cols-1'"
+            :class="
+              filterUi.range.presetsPlacement === 'side'
+                ? 'lg:grid-cols-[14rem_minmax(0,1fr)]'
+                : 'grid-cols-1'
+            "
           >
             <div
               v-if="rangePresets.length"
@@ -381,7 +397,9 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 :model-value="calendarRange"
                 range
                 :number-of-months="rangeCalendarPanels"
-                :paged-navigation="filterUi.range.calendar.pagedNavigation ?? rangeCalendarPanels > 1"
+                :paged-navigation="
+                  filterUi.range.calendar.pagedNavigation ?? rangeCalendarPanels > 1
+                "
                 :fixed-weeks="filterUi.range.calendar.fixedWeeks"
                 :maximum-days="filterUi.range.calendar.maxRangeDays"
                 :ui="{
@@ -397,7 +415,10 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
             </div>
           </div>
 
-          <div v-if="filterUi.range.display !== 'calendar'" class="border-t border-default px-3 py-3">
+          <div
+            v-if="filterUi.range.display !== 'calendar'"
+            class="border-t border-default px-3 py-3"
+          >
             <div class="flex items-center justify-between gap-3">
               <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
                 Custom range
@@ -457,7 +478,9 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
           </div>
 
           <UInputDate
-            v-if="filterUi.scalar.display === 'input' || filterUi.scalar.display === 'input-calendar'"
+            v-if="
+              filterUi.scalar.display === 'input' || filterUi.scalar.display === 'input-calendar'
+            "
             :model-value="localDate"
             leading
             :fixed="filterUi.scalar.input.fixed"
@@ -471,7 +494,9 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
           />
 
           <UCalendar
-            v-if="filterUi.scalar.display === 'calendar' || filterUi.scalar.display === 'input-calendar'"
+            v-if="
+              filterUi.scalar.display === 'calendar' || filterUi.scalar.display === 'input-calendar'
+            "
             :model-value="localDate"
             :fixed-weeks="filterUi.scalar.calendar.fixedWeeks"
             :ui="{
@@ -507,7 +532,13 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               :label="filterUi.actions.clear"
               @click="clearFilter"
             />
-            <UButton color="neutral" variant="subtle" size="sm" :label="filterUi.actions.apply" @click="applyFilter" />
+            <UButton
+              color="neutral"
+              variant="subtle"
+              size="sm"
+              :label="filterUi.actions.apply"
+              @click="applyFilter"
+            />
           </div>
         </div>
       </div>

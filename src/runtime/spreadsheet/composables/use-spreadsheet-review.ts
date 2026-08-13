@@ -1,8 +1,9 @@
-import { computed, ref, type ComputedRef, h } from 'vue'
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
+import { computed, ref, type ComputedRef, h } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePreview.vue'
 import type { SpreadsheetRowIssue, SpreadsheetResolvedReferenceRow } from '../types'
 import { formatSpreadsheetCell, humanizeSpreadsheetKey } from '../utils/display'
@@ -45,11 +46,11 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   }
 
   function hasBlockingIssue(issues: readonly SpreadsheetRowIssue[]) {
-    return issues.some(issue => issue.level === 'error')
+    return issues.some((issue) => issue.level === 'error')
   }
 
   function hasWarningIssue(issues: readonly SpreadsheetRowIssue[]) {
-    return issues.some(issue => issue.level === 'warning')
+    return issues.some((issue) => issue.level === 'warning')
   }
 
   function clearSelection() {
@@ -75,23 +76,23 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
 
     rowSelection.value = Object.fromEntries(
       visibleRows.value
-        .filter(row => !isOverflowRow(row.index) || activeTab.value === 'discarded')
-        .map(row => [String(row.index), true]),
+        .filter((row) => !isOverflowRow(row.index) || activeTab.value === 'discarded')
+        .map((row) => [String(row.index), true]),
     )
   }
 
   function discardSelectedRows() {
-    const discardableIndexes = selectedRowIndexes.value.filter(index => !isDiscarded(index))
-    manuallyDiscardedRowIndexes.value = Array.from(new Set([
-      ...manuallyDiscardedRowIndexes.value,
-      ...discardableIndexes,
-    ]))
+    const discardableIndexes = selectedRowIndexes.value.filter((index) => !isDiscarded(index))
+    manuallyDiscardedRowIndexes.value = Array.from(
+      new Set([...manuallyDiscardedRowIndexes.value, ...discardableIndexes]),
+    )
     clearSelection()
   }
 
   function restoreSelectedRows() {
-    manuallyDiscardedRowIndexes.value = manuallyDiscardedRowIndexes.value
-      .filter(index => !selectedRowIndexes.value.includes(index))
+    manuallyDiscardedRowIndexes.value = manuallyDiscardedRowIndexes.value.filter(
+      (index) => !selectedRowIndexes.value.includes(index),
+    )
     clearSelection()
   }
 
@@ -101,7 +102,9 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   }
 
   function restoreRow(index: number) {
-    manuallyDiscardedRowIndexes.value = manuallyDiscardedRowIndexes.value.filter(value => value !== index)
+    manuallyDiscardedRowIndexes.value = manuallyDiscardedRowIndexes.value.filter(
+      (value) => value !== index,
+    )
   }
 
   function inspectRow(index: number) {
@@ -113,40 +116,42 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   }
 
   const reviewRows = computed<SpreadsheetReviewRow[]>(() =>
-    params.resolvedRows.value.map(row => ({
+    params.resolvedRows.value.map((row) => ({
       ...row,
       rowObject: Object.fromEntries(getSpreadsheetObjectEntries(row.data)),
     })),
   )
   const validRows = computed(() =>
-    reviewRows.value.filter(row => row.isValid && !isDiscarded(row.index)),
+    reviewRows.value.filter((row) => row.isValid && !isDiscarded(row.index)),
   )
   const invalidRows = computed(() =>
-    reviewRows.value.filter(row => !row.isValid && !isDiscarded(row.index)),
+    reviewRows.value.filter((row) => !row.isValid && !isDiscarded(row.index)),
   )
-  const discardedRows = computed(() =>
-    reviewRows.value.filter(row => isDiscarded(row.index)),
-  )
+  const discardedRows = computed(() => reviewRows.value.filter((row) => isDiscarded(row.index)))
   const issueRows = computed(() =>
-    reviewRows.value.filter(row => row.issues.length > 0 && !isDiscarded(row.index)),
+    reviewRows.value.filter((row) => row.issues.length > 0 && !isDiscarded(row.index)),
   )
   const inspectedRow = computed(() =>
     inspectedRowIndex.value == null
       ? null
-      : reviewRows.value.find(row => row.index === inspectedRowIndex.value) ?? null,
+      : (reviewRows.value.find((row) => row.index === inspectedRowIndex.value) ?? null),
   )
   const inspectedIssueRowPosition = computed(() =>
     inspectedRow.value == null
       ? -1
-      : issueRows.value.findIndex(row => row.index === inspectedRow.value?.index),
+      : issueRows.value.findIndex((row) => row.index === inspectedRow.value?.index),
   )
   const blockingIssueCount = computed(() =>
-    invalidRows.value.reduce((count, row) =>
-      count + row.issues.filter(issue => issue.level === 'error').length, 0),
+    invalidRows.value.reduce(
+      (count, row) => count + row.issues.filter((issue) => issue.level === 'error').length,
+      0,
+    ),
   )
   const warningIssueCount = computed(() =>
-    invalidRows.value.reduce((count, row) =>
-      count + row.issues.filter(issue => issue.level === 'warning').length, 0),
+    invalidRows.value.reduce(
+      (count, row) => count + row.issues.filter((issue) => issue.level === 'warning').length,
+      0,
+    ),
   )
   const stats = computed(() => [
     {
@@ -186,52 +191,78 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     hasOverflow.value ? reviewRows.value.length - params.maxRecords.value : 0,
   )
   const tabItems = computed(() => [
-    { key: 'all' as const, label: t('spreadsheet.steps.review.allRows', { count: reviewRows.value.length }) },
-    { key: 'valid' as const, label: t('spreadsheet.steps.review.valid', { count: validRows.value.length }) },
-    { key: 'invalid' as const, label: t('spreadsheet.steps.review.invalid', { count: invalidRows.value.length }) },
-    { key: 'discarded' as const, label: t('spreadsheet.steps.review.discarded', { count: discardedRows.value.length }) },
+    {
+      key: 'all' as const,
+      label: t('spreadsheet.steps.review.allRows', { count: reviewRows.value.length }),
+    },
+    {
+      key: 'valid' as const,
+      label: t('spreadsheet.steps.review.valid', { count: validRows.value.length }),
+    },
+    {
+      key: 'invalid' as const,
+      label: t('spreadsheet.steps.review.invalid', { count: invalidRows.value.length }),
+    },
+    {
+      key: 'discarded' as const,
+      label: t('spreadsheet.steps.review.discarded', { count: discardedRows.value.length }),
+    },
   ])
   const issueFilterItems = computed(() => [
     { key: 'all' as const, label: t('spreadsheet.steps.review.allIssues') },
-    { key: 'blocking' as const, label: t('spreadsheet.steps.review.blocking', { count: invalidRows.value.filter(row => hasBlockingIssue(row.issues)).length }) },
-    { key: 'warning' as const, label: t('spreadsheet.steps.review.warnings', { count: invalidRows.value.filter(row => !hasBlockingIssue(row.issues) && hasWarningIssue(row.issues)).length }) },
+    {
+      key: 'blocking' as const,
+      label: t('spreadsheet.steps.review.blocking', {
+        count: invalidRows.value.filter((row) => hasBlockingIssue(row.issues)).length,
+      }),
+    },
+    {
+      key: 'warning' as const,
+      label: t('spreadsheet.steps.review.warnings', {
+        count: invalidRows.value.filter(
+          (row) => !hasBlockingIssue(row.issues) && hasWarningIssue(row.issues),
+        ).length,
+      }),
+    },
   ])
   const visibleRows = computed(() => {
-    const baseRows = activeTab.value === 'valid'
-      ? validRows.value
-      : activeTab.value === 'invalid'
-        ? invalidRows.value
-        : activeTab.value === 'discarded'
-          ? discardedRows.value
-          : reviewRows.value
+    const baseRows =
+      activeTab.value === 'valid'
+        ? validRows.value
+        : activeTab.value === 'invalid'
+          ? invalidRows.value
+          : activeTab.value === 'discarded'
+            ? discardedRows.value
+            : reviewRows.value
 
     if (activeTab.value === 'valid' || activeTab.value === 'discarded') return baseRows
     if (issueFilter.value === 'blocking')
-      return baseRows.filter(row => hasBlockingIssue(row.issues))
+      return baseRows.filter((row) => hasBlockingIssue(row.issues))
     if (issueFilter.value === 'warning')
-      return baseRows.filter(row => !hasBlockingIssue(row.issues) && hasWarningIssue(row.issues))
+      return baseRows.filter((row) => !hasBlockingIssue(row.issues) && hasWarningIssue(row.issues))
     return baseRows
   })
   const selectedRowIndexes = computed(() =>
     Object.entries(rowSelection.value)
       .filter(([, selected]) => selected)
       .map(([key]) => Number(key))
-      .filter(index => !Number.isNaN(index)),
+      .filter((index) => !Number.isNaN(index)),
   )
   const selectedRows = computed(() =>
-    visibleRows.value.filter(row => selectedRowIndexes.value.includes(row.index)),
+    visibleRows.value.filter((row) => selectedRowIndexes.value.includes(row.index)),
   )
-  const allVisibleSelected = computed(() =>
-    visibleRows.value.length > 0
-    && visibleRows.value
-      .filter(row => !isOverflowRow(row.index) || activeTab.value === 'discarded')
-      .every(row => rowSelection.value[String(row.index)]),
+  const allVisibleSelected = computed(
+    () =>
+      visibleRows.value.length > 0 &&
+      visibleRows.value
+        .filter((row) => !isOverflowRow(row.index) || activeTab.value === 'discarded')
+        .every((row) => rowSelection.value[String(row.index)]),
   )
   const canDiscardSelection = computed(() =>
-    selectedRows.value.some(row => !isDiscarded(row.index)),
+    selectedRows.value.some((row) => !isDiscarded(row.index)),
   )
   const canRestoreSelection = computed(() =>
-    selectedRows.value.some(row => isManuallyDiscarded(row.index)),
+    selectedRows.value.some((row) => isManuallyDiscarded(row.index)),
   )
   const tableColumns = computed(() => {
     const sample = visibleRows.value[0]?.data ?? reviewRows.value[0]?.data ?? {}
@@ -240,15 +271,31 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
 
   function getRowStatus(index: number, issues: readonly SpreadsheetRowIssue[]) {
     if (isDiscarded(index))
-      return { label: t('spreadsheet.steps.review.discardedStatus'), color: 'neutral' as const, icon: 'i-lucide-ban' }
+      return {
+        label: t('spreadsheet.steps.review.discardedStatus'),
+        color: 'neutral' as const,
+        icon: 'i-lucide-ban',
+      }
 
     if (hasBlockingIssue(issues))
-      return { label: t('spreadsheet.steps.review.blockingStatus'), color: 'error' as const, icon: 'i-lucide-circle-x' }
+      return {
+        label: t('spreadsheet.steps.review.blockingStatus'),
+        color: 'error' as const,
+        icon: 'i-lucide-circle-x',
+      }
 
     if (hasWarningIssue(issues))
-      return { label: t('spreadsheet.steps.review.warningStatus'), color: 'warning' as const, icon: 'i-lucide-triangle-alert' }
+      return {
+        label: t('spreadsheet.steps.review.warningStatus'),
+        color: 'warning' as const,
+        icon: 'i-lucide-triangle-alert',
+      }
 
-    return { label: t('spreadsheet.steps.review.validStatus'), color: 'success' as const, icon: 'i-lucide-circle-check' }
+    return {
+      label: t('spreadsheet.steps.review.validStatus'),
+      color: 'success' as const,
+      icon: 'i-lucide-circle-check',
+    }
   }
 
   function getIssueBadge(issue: SpreadsheetRowIssue) {
@@ -274,16 +321,17 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   }
 
   function getRelatedIssueCount(issue: SpreadsheetRowIssue) {
-    return issueRows.value.filter(row =>
-      row.issues.some(candidate =>
-        candidate.code === issue.code
-        && candidate.columnKey === issue.columnKey
-        && candidate.message === issue.message,
+    return issueRows.value.filter((row) =>
+      row.issues.some(
+        (candidate) =>
+          candidate.code === issue.code &&
+          candidate.columnKey === issue.columnKey &&
+          candidate.message === issue.message,
       ),
     ).length
   }
 
-  function getRowToneClass(row: { index: number, issues: readonly SpreadsheetRowIssue[] }) {
+  function getRowToneClass(row: { index: number; issues: readonly SpreadsheetRowIssue[] }) {
     if (isDiscarded(row.index)) return 'opacity-45'
     if (hasBlockingIssue(row.issues)) return 'bg-error/5'
     if (hasWarningIssue(row.issues)) return 'bg-warning/5'
@@ -324,22 +372,28 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
       id: 'row',
       header: t('spreadsheet.steps.review.row'),
       accessorFn: (row: { index: number }) => row.index + 1,
-      cell: ({ row }: { row: { original: { index: number, issues: readonly SpreadsheetRowIssue[] } } }) => {
+      cell: ({
+        row,
+      }: {
+        row: { original: { index: number; issues: readonly SpreadsheetRowIssue[] } }
+      }) => {
         const status = getRowStatus(row.original.index, row.original.issues)
         const issueCount = row.original.issues.length
-        const statusLabel = issueCount > 0
-          ? `${status.label} · ${issueCount}`
-          : status.label
+        const statusLabel = issueCount > 0 ? `${status.label} · ${issueCount}` : status.label
 
         return h('div', { class: 'flex items-center gap-2 whitespace-nowrap leading-none' }, [
           h('span', { class: 'font-mono text-xs text-muted' }, `#${row.original.index + 1}`),
-          h(UBadge, {
-            color: status.color,
-            variant: 'soft',
-            size: 'sm',
-            icon: status.icon,
-            class: 'font-medium',
-          }, () => statusLabel),
+          h(
+            UBadge,
+            {
+              color: status.color,
+              variant: 'soft',
+              size: 'sm',
+              icon: status.icon,
+              class: 'font-medium',
+            },
+            () => statusLabel,
+          ),
         ])
       },
       meta: {
@@ -352,7 +406,8 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     ...tableColumns.value.map((column: string) => ({
       id: column,
       header: humanizeSpreadsheetKey(column),
-      accessorFn: (row: { data: Record<string, unknown> }) => formatSpreadsheetCell(getSpreadsheetValueAtPath(row.data, column)),
+      accessorFn: (row: { data: Record<string, unknown> }) =>
+        formatSpreadsheetCell(getSpreadsheetValueAtPath(row.data, column)),
       cell: ({ row }: { row: { original: { data: Record<string, unknown> } } }) =>
         h(SpreadsheetValuePreview, {
           value: getSpreadsheetValueAtPath(row.original.data, column),

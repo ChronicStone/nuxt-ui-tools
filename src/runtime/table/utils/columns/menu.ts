@@ -1,5 +1,6 @@
-import type { TableSchemaView } from '../../types'
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
+import type { TableSchemaView } from '../../types'
 import { findSchemaColumn } from './schema'
 
 export function createColumnMenuItems(options: {

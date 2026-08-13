@@ -1,11 +1,15 @@
+import { getResponsiveValue } from '../../../shared'
 import type {
   TableFilterDisplayLocation,
   TableFilterDisplayLocationValue,
   TableUiFilterDefinition,
 } from '../../types'
-import { getResponsiveValue } from '../../../shared'
 
-const FILTER_DISPLAY_LOCATIONS = ['tag', 'panel', 'tag-dynamic'] as const satisfies TableFilterDisplayLocation[]
+const FILTER_DISPLAY_LOCATIONS = [
+  'tag',
+  'panel',
+  'tag-dynamic',
+] as const satisfies TableFilterDisplayLocation[]
 
 export function resolveFilterDisplayLocation(
   value: TableFilterDisplayLocationValue | undefined,
@@ -22,5 +26,8 @@ export function resolveFilterDisplayOrder(definition: TableUiFilterDefinition) {
 }
 
 function isFilterDisplayLocation(value: unknown): value is TableFilterDisplayLocation {
-  return typeof value === 'string' && FILTER_DISPLAY_LOCATIONS.includes(value as TableFilterDisplayLocation)
+  return (
+    typeof value === 'string' &&
+    FILTER_DISPLAY_LOCATIONS.includes(value as TableFilterDisplayLocation)
+  )
 }

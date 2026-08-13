@@ -138,10 +138,7 @@ export function useQueryState<TValue, TDefault extends TValue>(
     if (raw == null) return defaultValue as ResolveDefaultedValue<TValue, TDefault>
 
     const parsed = codec.parse(raw)
-    return (parsed === undefined ? defaultValue : parsed) as ResolveDefaultedValue<
-      TValue,
-      TDefault
-    >
+    return (parsed === undefined ? defaultValue : parsed) as ResolveDefaultedValue<TValue, TDefault>
   }
 
   function writeToClient(value: ResolveDefaultedValue<TValue, TDefault>): void {

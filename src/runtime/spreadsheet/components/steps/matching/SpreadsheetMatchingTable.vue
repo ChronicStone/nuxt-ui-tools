@@ -4,6 +4,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type { SpreadsheetColumnAssignmentOption } from '../../../types'
 
 type MatchingOption = SpreadsheetColumnAssignmentOption & {
@@ -36,19 +37,30 @@ const props = defineProps<{
   expectedFieldRows: ExpectedFieldRow[]
   autoMappedRows: AutoMappedRow[]
   ignoredColumnRows: IgnoredColumnRow[]
-  getOptionsForRow: (row: { systemFieldKey: string, selectedHeaderIndex: number | null }) => MatchingOption[]
+  getOptionsForRow: (row: {
+    systemFieldKey: string
+    selectedHeaderIndex: number | null
+  }) => MatchingOption[]
 }>()
 
 const emit = defineEmits<{
-  assign: [payload: { headerIndex: number, columnKey: string }]
+  assign: [payload: { headerIndex: number; columnKey: string }]
 }>()
 const { t } = useUiToolsLocale()
 
 function getMatchBadgeProps(status: 'matched' | 'unmatched') {
   if (status === 'matched')
-    return { color: 'success' as const, label: t('spreadsheet.steps.matching.matched'), dotClass: 'bg-success' }
+    return {
+      color: 'success' as const,
+      label: t('spreadsheet.steps.matching.matched'),
+      dotClass: 'bg-success',
+    }
 
-  return { color: 'warning' as const, label: t('spreadsheet.steps.matching.needsMatch'), dotClass: 'bg-warning' }
+  return {
+    color: 'warning' as const,
+    label: t('spreadsheet.steps.matching.needsMatch'),
+    dotClass: 'bg-warning',
+  }
 }
 
 function getLeadingDotClass(status: 'matched' | 'unmatched') {
@@ -56,7 +68,7 @@ function getLeadingDotClass(status: 'matched' | 'unmatched') {
 }
 
 function getRequiredBadgeColor(required: boolean) {
-  return required ? 'error' as const : 'neutral' as const
+  return required ? ('error' as const) : ('neutral' as const)
 }
 
 function handleAssign(row: ExpectedFieldRow, value: unknown) {
@@ -70,7 +82,7 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
     return
   }
 
-  const selectedOption = props.getOptionsForRow(row).find(option => option.key === value)
+  const selectedOption = props.getOptionsForRow(row).find((option) => option.key === value)
   const headerIndex = selectedOption?.headerIndex
   if (typeof headerIndex !== 'number') return
 
@@ -84,7 +96,9 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
 <template>
   <div class="grid min-h-0 gap-4">
     <div class="flex min-h-0 flex-col overflow-hidden border border-default/70 bg-default">
-      <div class="grid h-11 grid-cols-[40px_minmax(14rem,1fr)_120px_minmax(16rem,1.2fr)_minmax(9rem,0.8fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+      <div
+        class="grid h-11 grid-cols-[40px_minmax(14rem,1fr)_120px_minmax(16rem,1.2fr)_minmax(9rem,0.8fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
+      >
         <div />
         <div>{{ t('spreadsheet.steps.matching.systemField') }}</div>
         <div>{{ t('spreadsheet.steps.matching.requirement') }}</div>
@@ -109,8 +123,17 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
           </div>
 
           <div class="flex items-center">
-            <UBadge :color="getRequiredBadgeColor(row.required)" variant="soft" size="sm" class="font-mono">
-              {{ row.required ? t('spreadsheet.steps.matching.required') : t('spreadsheet.steps.matching.optional') }}
+            <UBadge
+              :color="getRequiredBadgeColor(row.required)"
+              variant="soft"
+              size="sm"
+              class="font-mono"
+            >
+              {{
+                row.required
+                  ? t('spreadsheet.steps.matching.required')
+                  : t('spreadsheet.steps.matching.optional')
+              }}
             </UBadge>
           </div>
 
@@ -122,7 +145,10 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
               label-key="label"
               color="neutral"
               variant="none"
-              :search-input="{ variant: 'none', placeholder: t('spreadsheet.steps.matching.searchColumns') }"
+              :search-input="{
+                variant: 'none',
+                placeholder: t('spreadsheet.steps.matching.searchColumns'),
+              }"
               :placeholder="t('spreadsheet.steps.matching.selectColumn')"
               class="w-fit max-w-full"
               :ui="{
@@ -145,14 +171,21 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
             >
               <template #item="{ item }">
                 <div class="flex items-center justify-between gap-3">
-                  <span class="truncate font-mono text-sm" :class="item.assigned ? 'text-muted' : 'text-default'">
+                  <span
+                    class="truncate font-mono text-sm"
+                    :class="item.assigned ? 'text-muted' : 'text-default'"
+                  >
                     {{ item.label }}
                   </span>
                   <span
                     class="font-mono text-[10px] uppercase tracking-[0.12em]"
                     :class="item.assigned ? 'text-muted' : 'text-success'"
                   >
-                    {{ item.assigned ? t('spreadsheet.steps.matching.assigned') : t('spreadsheet.steps.matching.available') }}
+                    {{
+                      item.assigned
+                        ? t('spreadsheet.steps.matching.assigned')
+                        : t('spreadsheet.steps.matching.available')
+                    }}
                   </span>
                 </div>
               </template>
@@ -161,7 +194,10 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
 
           <div class="flex items-center">
             <UBadge :color="getMatchBadgeProps(row.status).color" variant="soft" class="font-mono">
-              <span class="mr-1.5 inline-block size-1.5 rounded-full" :class="getMatchBadgeProps(row.status).dotClass" />
+              <span
+                class="mr-1.5 inline-block size-1.5 rounded-full"
+                :class="getMatchBadgeProps(row.status).dotClass"
+              />
               {{ getMatchBadgeProps(row.status).label }}
             </UBadge>
           </div>
@@ -169,10 +205,7 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
       </div>
     </div>
 
-    <div
-      v-if="autoMappedRows.length"
-      class="overflow-hidden border border-default/70 bg-default"
-    >
+    <div v-if="autoMappedRows.length" class="overflow-hidden border border-default/70 bg-default">
       <div
         class="grid h-10 grid-cols-[minmax(14rem,1fr)_40px_minmax(14rem,1fr)] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
       >
@@ -204,7 +237,9 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
       v-if="ignoredColumnRows.length"
       class="overflow-hidden border border-default/70 bg-default"
     >
-      <div class="grid h-10 grid-cols-[minmax(0,1fr)_auto] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+      <div
+        class="grid h-10 grid-cols-[minmax(0,1fr)_auto] items-center border-b border-default/70 bg-elevated/20 px-5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
+      >
         <div>{{ t('spreadsheet.steps.matching.ignoredColumns') }}</div>
         <div>{{ ignoredColumnRows.length }}</div>
       </div>

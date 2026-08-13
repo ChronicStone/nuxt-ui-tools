@@ -43,7 +43,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  select: [payload: { resolution: SpreadsheetReferenceResolution, value: unknown }]
+  select: [payload: { resolution: SpreadsheetReferenceResolution; value: unknown }]
 }>()
 
 function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
@@ -62,7 +62,8 @@ function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
       root: 'grid min-h-0 gap-3',
       item: 'overflow-hidden rounded-[var(--ui-radius)] border border-default/70 bg-default',
       header: 'm-0',
-      trigger: 'flex h-13 w-full items-center justify-between gap-4 px-5 text-left transition-colors hover:bg-elevated/20',
+      trigger:
+        'flex h-13 w-full items-center justify-between gap-4 px-5 text-left transition-colors hover:bg-elevated/20',
       content: 'overflow-hidden',
       body: 'p-0',
     }"
@@ -75,7 +76,10 @@ function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
         />
 
         <div class="flex min-w-0 items-center gap-3">
-          <span class="truncate text-sm" :class="open ? 'font-semibold text-highlighted' : 'font-medium text-toned'">
+          <span
+            class="truncate text-sm"
+            :class="open ? 'font-semibold text-highlighted' : 'font-medium text-toned'"
+          >
             {{ item.sourceLabel }}
           </span>
           <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 text-muted" />
@@ -98,9 +102,7 @@ function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
         </template>
 
         <template v-else>
-          <UBadge color="success" variant="soft" class="font-mono">
-            All resolved
-          </UBadge>
+          <UBadge color="success" variant="soft" class="font-mono"> All resolved </UBadge>
           <div class="h-1 w-20 overflow-hidden rounded-full bg-elevated">
             <div class="h-full w-full bg-success" />
           </div>
@@ -131,7 +133,9 @@ function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
               </UBadge>
             </div>
 
-            <div class="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-muted">
+            <div
+              class="mt-0.5 flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-muted"
+            >
               <span>{{ getRowCountLabel(resolution.rowIndexes.length) }}</span>
               <template v-if="getMetaTone(resolution)">
                 <span>&middot;</span>
@@ -157,17 +161,16 @@ function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
               description-key="description"
               variant="subtle"
               size="sm"
-              :placeholder="getResolutionTone(resolution) === 'unresolved' ? 'Select value...' : undefined"
+              :placeholder="
+                getResolutionTone(resolution) === 'unresolved' ? 'Select value...' : undefined
+              "
               :content="{ side: 'bottom', align: 'end', sideOffset: 8 }"
               class="w-56 min-w-56 max-w-56"
               :ui="{ content: 'w-80 max-w-sm' }"
               @update:model-value="emit('select', { resolution, value: $event })"
             >
               <template #item="{ item }">
-                <div
-                  v-if="item.kind === 'divider'"
-                  class="flex items-center gap-3 py-1"
-                >
+                <div v-if="item.kind === 'divider'" class="flex items-center gap-3 py-1">
                   <div class="h-px flex-1 bg-default/70" />
                   <span class="shrink-0 text-xs uppercase text-muted">
                     {{ item.label }}
@@ -176,7 +179,9 @@ function getResolutionTone(resolution: SpreadsheetReferenceResolution) {
                 </div>
 
                 <div v-else class="flex items-start justify-between gap-3">
-                  <span class="min-w-0 whitespace-normal break-words text-sm leading-5 text-default">
+                  <span
+                    class="min-w-0 whitespace-normal break-words text-sm leading-5 text-default"
+                  >
                     {{ item.label }}
                   </span>
                   <span

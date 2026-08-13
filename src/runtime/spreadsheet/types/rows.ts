@@ -77,11 +77,12 @@ export interface SpreadsheetRowSummary {
   issueCount: number
 }
 
-export type SpreadsheetStaticColumn =
-  SpreadsheetColumnDefinition<string, unknown, boolean, unknown>
+export type SpreadsheetStaticColumn = SpreadsheetColumnDefinition<string, unknown, boolean, unknown>
 
-export type SpreadsheetStaticColumnGroup =
-  SpreadsheetColumnGroupDefinition<string, readonly SpreadsheetRuntimeStaticColumnEntry[]>
+export type SpreadsheetStaticColumnGroup = SpreadsheetColumnGroupDefinition<
+  string,
+  readonly SpreadsheetRuntimeStaticColumnEntry[]
+>
 
 export type SpreadsheetRuntimeStaticColumnEntry =
   | SpreadsheetStaticColumn

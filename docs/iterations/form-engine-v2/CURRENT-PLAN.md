@@ -325,11 +325,7 @@ callbacks and submit lifecycle callbacks.
 The old event mirror pattern is no longer the intended API for normal usage:
 
 ```vue
-@submit
-@update:state
-@update:output
-@update:dirty
-@update:dirty-paths
+@submit @update:state @update:output @update:dirty @update:dirty-paths
 ```
 
 `useFormSubmit` remains available as a lower-level explicit target helper, but `useForm` should drive the default DX.

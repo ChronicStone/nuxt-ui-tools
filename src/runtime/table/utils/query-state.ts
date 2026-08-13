@@ -8,7 +8,7 @@ import {
   stringCodec,
 } from '#ui-tools/query-state'
 
-import { isObject, isString } from '../../shared'
+import { isObject, isString } from '../../shared/utils/predicate'
 import { DEFAULT_FILTER_OPERATOR, PAGINATION_DEFAULTS } from '../constants/query-state'
 import type {
   TableFilterOperator,
@@ -19,14 +19,33 @@ import type {
   TableQueryStateFilterValue,
   TableSchemaView,
   TableSortingDirection,
+  TablePaginationState,
+  TablePaginationSchema,
 } from '../types'
+
+export function getPaginationMode(schema: {
+  pagination?: TablePaginationSchema
+}): TablePaginationState['mode'] {
+  if (schema.pagination === false) return 'none'
+  if (schema.pagination?.mode === 'cursor') return 'cursor'
+  return 'offset'
+}
 
 export function getDefaultPageSize(params: {
   schema: TableSchemaView
   layout: TableLayout
 }): number {
   const paginationConf = params.schema.pagination
-  if (!isObject(paginationConf)) return PAGINATION_DEFAULTS.defaultSize[params.layout]
+  if (!paginationConf || typeof paginationConf !== 'object')
+    return PAGINATION_DEFAULTS.defaultSize[params.layout]
+  if ('mode' in paginationConf && paginationConf.mode === 'cursor') {
+    if (isObject(paginationConf.pageSize))
+      return (
+        paginationConf.pageSize[params.layout] ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
+      )
+
+    return paginationConf.pageSize ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
+  }
   if (isObject(paginationConf.defaultSize))
     return (
       paginationConf.defaultSize[params.layout] ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
@@ -41,7 +60,11 @@ export function getPageSizeOptions(params: {
 }): number[] {
   const paginationConf = params.schema.pagination
 
-  if (!isObject(paginationConf)) {
+  if (!paginationConf || typeof paginationConf !== 'object') {
+    return PAGINATION_DEFAULTS.sizes[params.layout]
+  }
+
+  if ('mode' in paginationConf && paginationConf.mode === 'cursor') {
     return PAGINATION_DEFAULTS.sizes[params.layout]
   }
 
@@ -184,13 +207,19 @@ export function normalizeFilterDefinition(
   const hasBehavior = 'behavior' in definition
   const defaultValue = hasBehavior
     ? definition.behavior?.defaultValue
-    : ('defaultValue' in definition ? definition.defaultValue : undefined)
+    : 'defaultValue' in definition
+      ? definition.defaultValue
+      : undefined
   const defaultOperator = hasBehavior
     ? definition.behavior?.defaultOperator
-    : ('defaultOperator' in definition ? definition.defaultOperator : undefined)
+    : 'defaultOperator' in definition
+      ? definition.defaultOperator
+      : undefined
   const operators = hasBehavior
     ? definition.behavior?.operators
-    : ('operators' in definition ? definition.operators : undefined)
+    : 'operators' in definition
+      ? definition.operators
+      : undefined
 
   if (definition.kind !== 'number') {
     return {

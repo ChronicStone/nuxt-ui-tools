@@ -1,5 +1,6 @@
-import type { GenericObject, TableSchemaView } from '../../types'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
+
+import type { GenericObject, TableSchemaView } from '../../types'
 import type { SchemaTableColumn, TableRuntimeColumn } from './types'
 
 export function findSchemaColumn(options: {
@@ -9,10 +10,7 @@ export function findSchemaColumn(options: {
   return (options.schema.table?.columns ?? []).find((column) => column.key === options.columnId)
 }
 
-export function createRuntimeColumns(options: {
-  schema: TableSchemaView
-  context: GenericObject
-}) {
+export function createRuntimeColumns(options: { schema: TableSchemaView; context: GenericObject }) {
   return (options.schema.table?.columns ?? [])
     .filter((column) => (column.condition?.() ?? true) && (column.enabled ?? true))
     .map(

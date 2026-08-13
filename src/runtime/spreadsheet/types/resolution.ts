@@ -1,19 +1,15 @@
 import type { NestedPaths } from '../../shared/types/utils'
 import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
-import type { SpreadsheetQueryDefinition } from './shared'
 import type {
   InferSpreadsheetOptionValue,
   SpreadsheetOptionItem,
   SpreadsheetOptionsSource,
 } from './options'
+import type { SpreadsheetQueryDefinition } from './shared'
 import type { SpreadsheetFieldRulesInput } from './validation'
 
-export type SpreadsheetResolvedSelectionValue<
-  TSourceValue,
-  TValue,
-> = NonNullable<TSourceValue> extends readonly unknown[]
-  ? TValue[]
-  : TValue
+export type SpreadsheetResolvedSelectionValue<TSourceValue, TValue> =
+  NonNullable<TSourceValue> extends readonly unknown[] ? TValue[] : TValue
 
 export type SpreadsheetResolutionQueryResolver<
   TContext,
@@ -40,20 +36,27 @@ export interface SpreadsheetColumnResolveDefinition<
 }
 
 export type InferSpreadsheetColumnResolveValue<TResolve> =
-  TResolve extends SpreadsheetColumnResolveDefinition<unknown, unknown, SpreadsheetOptionItem, infer TValue>
+  TResolve extends SpreadsheetColumnResolveDefinition<
+    unknown,
+    unknown,
+    SpreadsheetOptionItem,
+    infer TValue
+  >
     ? TValue
     : never
 
 type SpreadsheetReferencePath<TRow> = Extract<NestedPaths<TRow>, string>
 
-export type SpreadsheetReferenceValueAtPath<TRow, TPath extends string> =
-  TPath extends `${infer TKey}.${infer TRest}`
-    ? TKey extends keyof TRow
-      ? SpreadsheetReferenceValueAtPath<NonNullable<TRow[TKey]>, TRest>
-      : never
-    : TPath extends keyof TRow
-      ? TRow[TPath]
-      : never
+export type SpreadsheetReferenceValueAtPath<
+  TRow,
+  TPath extends string,
+> = TPath extends `${infer TKey}.${infer TRest}`
+  ? TKey extends keyof TRow
+    ? SpreadsheetReferenceValueAtPath<NonNullable<TRow[TKey]>, TRest>
+    : never
+  : TPath extends keyof TRow
+    ? TRow[TPath]
+    : never
 
 export interface SpreadsheetResolutionDefinition<
   TScope extends 'column' | 'reference' = 'column' | 'reference',
@@ -64,7 +67,9 @@ export interface SpreadsheetResolutionDefinition<
   TOption extends SpreadsheetOptionItem = SpreadsheetOptionItem,
   TContext = Record<string, unknown>,
   TRow = Record<string, unknown>,
-  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = SpreadsheetFieldRulesInput<TValue> | undefined,
+  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
+    | SpreadsheetFieldRulesInput<TValue>
+    | undefined,
 > {
   kind: 'select'
   scope: TScope
@@ -80,9 +85,8 @@ export interface SpreadsheetResolutionDefinition<
 
 export type SpreadsheetReferenceSourcePath<TRow> = SpreadsheetReferencePath<TRow>
 
-export type SpreadsheetSchemaContextData<TSchema> =
-  TSchema extends {
-    context?: infer TContextItems extends readonly SpreadsheetContextItem<string, unknown>[]
-  }
-    ? SpreadsheetContextDataFromItems<TContextItems>
-    : Record<string, unknown>
+export type SpreadsheetSchemaContextData<TSchema> = TSchema extends {
+  context?: infer TContextItems extends readonly SpreadsheetContextItem<string, unknown>[]
+}
+  ? SpreadsheetContextDataFromItems<TContextItems>
+  : Record<string, unknown>

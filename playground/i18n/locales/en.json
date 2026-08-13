@@ -102,6 +102,10 @@
       "title": "Playground Landing",
       "description": "Start from an empty home state, then open the specific playground surface you want to inspect. This keeps the playground calm by default and makes intent explicit before loading a heavy runtime.",
       "entries": {
+        "form": {
+          "title": "Form playground",
+          "description": "Schema-driven form runtime with inline, modal, drawer, responsive overlays, live state, and typed submit output."
+        },
         "spreadsheet": {
           "title": "Spreadsheet playground",
           "description": "Focused import-engine scenarios with isolated fullscreen routes for matching, references, and stress cases."

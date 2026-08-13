@@ -9,7 +9,13 @@ import type {
   TableSelectionSchema,
   TableTableSchema,
 } from './layout'
-import type { InferTableSourceRow, NormalizeTableSource, TableSource } from './source'
+import type {
+  InferTableSourceRow,
+  NormalizeTableSource,
+  TableCursorPageResult,
+  TableSource,
+  TableSourceExecutionResult,
+} from './source'
 import type {
   TableKnownFieldPath,
   TableLayout,
@@ -28,7 +34,11 @@ export interface TableSchema<
 > {
   tableKey: string
   rowKey: TableRowKey<TRow>
-  source: TableSource<TRow, TableContextDataFromItems<TContextItems>>
+  source: TableSource<
+    TRow,
+    TableContextDataFromItems<TContextItems>,
+    TRow[] | TableSourceExecutionResult<TRow> | TableCursorPageResult<TRow>
+  >
   defaultLayout?: TableLayout
   pagination?: TablePaginationSchema
   context?: TContextItems

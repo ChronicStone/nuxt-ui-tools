@@ -31,7 +31,14 @@ const treeRadioValue = defineModel<string | undefined>('treeRadioValue', {
 })
 
 const emit = defineEmits<{
-  selectEntry: [options: { event: MouseEvent; value: string | number | boolean; index: number; sectionKey: string }]
+  selectEntry: [
+    options: {
+      event: MouseEvent
+      value: string | number | boolean
+      index: number
+      sectionKey: string
+    },
+  ]
   toggleTreeEntry: [entryId: string]
   toggleExpanded: [entryId: string]
 }>()
@@ -106,8 +113,7 @@ function handleSelect(options: {
       <FilterOptionMultipleList
         v-else
         :sections="
-          props.sections ??
-          [{ key: 'default', entries: props.state.displayEntries.value }]
+          props.sections ?? [{ key: 'default', entries: props.state.displayEntries.value }]
         "
         :show-counts="props.state.filterUi.value.row.showCounts"
         :count-loading="props.state.optionSource.isCountLoading.value"

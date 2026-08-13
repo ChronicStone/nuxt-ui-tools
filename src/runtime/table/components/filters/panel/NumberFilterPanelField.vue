@@ -3,7 +3,11 @@ import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
 import { computed, ref } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableNumberFilterDefinition, TableNumberFilterOperator } from '../../../types'
+import type {
+  TableFilterOperator,
+  TableNumberFilterDefinition,
+  TableNumberFilterOperator,
+} from '../../../types'
 import { resolveNumberFilterUi } from '../../../utils'
 import FilterMatchModeButton from '../shared/FilterMatchModeButton.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
@@ -22,13 +26,16 @@ const operatorItems = computed(() =>
 )
 
 const filterUi = computed(() => resolveNumberFilterUi(props.definition, pendingOperator.value))
-const isActive = computed(() =>
-  internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+const isActive = computed(
+  () =>
+    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
 )
 
 const scalarValue = computed<number | undefined>({
   get() {
-    const value = internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value
+    const value = internals.filterPresentation.getPanelDraftFilterState({
+      key: props.definition.key,
+    })?.value
     return typeof value === 'number' ? value : undefined
   },
   set(value) {
@@ -42,7 +49,9 @@ const scalarValue = computed<number | undefined>({
 
 const rangeValue = computed({
   get: () => {
-    const value = internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value
+    const value = internals.filterPresentation.getPanelDraftFilterState({
+      key: props.definition.key,
+    })?.value
     if (!value || typeof value !== 'object' || Array.isArray(value) || value instanceof Date)
       return { from: undefined, to: undefined }
 
@@ -54,19 +63,22 @@ const rangeValue = computed({
   set(value: { from?: number; to?: number }) {
     internals.filterPresentation.setPanelScalarFilterValue({
       key: props.definition.key,
-      value: value.from == null && value.to == null
-        ? undefined
-        : {
-            ...(value.from == null ? {} : { from: value.from }),
-            ...(value.to == null ? {} : { to: value.to }),
-          },
+      value:
+        value.from == null && value.to == null
+          ? undefined
+          : {
+              ...(value.from == null ? {} : { from: value.from }),
+              ...(value.to == null ? {} : { to: value.to }),
+            },
       operator: pendingOperator.value,
     })
   },
 })
 
 function resolveInitialOperator() {
-  const operator = internals.filterPresentation.getPanelFilterOperator({ key: props.definition.key })
+  const operator = internals.filterPresentation.getPanelFilterOperator({
+    key: props.definition.key,
+  })
   return operator === 'isNot' ||
     operator === 'gt' ||
     operator === 'gte' ||
@@ -78,14 +90,15 @@ function resolveInitialOperator() {
 }
 
 function handleOperatorChange(operator: TableFilterOperator) {
-  pendingOperator.value = operator === 'isNot' ||
+  pendingOperator.value =
+    operator === 'isNot' ||
     operator === 'gt' ||
     operator === 'gte' ||
     operator === 'lt' ||
     operator === 'lte' ||
     operator === 'between'
-    ? operator
-    : 'is'
+      ? operator
+      : 'is'
 
   if (filterUi.value.clearOnOperatorChange)
     internals.filterPresentation.clearPanelFilter({ key: props.definition.key })

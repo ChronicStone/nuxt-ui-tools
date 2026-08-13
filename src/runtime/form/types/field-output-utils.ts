@@ -4,13 +4,9 @@ import type { FormOptionValue } from './options'
 export type FormStateMode = 'internal' | 'output'
 export type NullableValue = null
 
-export type AwaitedValue<TValue> = TValue extends Promise<infer TResolved>
-  ? TResolved
-  : TValue
+export type AwaitedValue<TValue> = TValue extends Promise<infer TResolved> ? TResolved : TValue
 
-export type FallbackNever<TValue, TFallback> = [TValue] extends [never]
-  ? TFallback
-  : TValue
+export type FallbackNever<TValue, TFallback> = [TValue] extends [never] ? TFallback : TValue
 
 export type FunctionReturn<TValue> = TValue extends (...params: infer _TParams) => infer TResult
   ? TResult
@@ -34,7 +30,9 @@ export type OptionSource<TField> = TField extends { options: infer TOptions }
     : TOptions
   : never
 
-export type OptionSourceValue<TSource> = TSource extends (...params: infer _TParams) => infer TResult
+export type OptionSourceValue<TSource> = TSource extends (
+  ...params: infer _TParams
+) => infer TResult
   ? QueryOptionsValue<AwaitedValue<TResult>>
   : QueryOptionsValue<AwaitedValue<TSource>>
 
@@ -50,12 +48,17 @@ export type OptionValue<TOption> = TOption extends { value: infer TValue }
     ? TOption
     : never
 
-export type FieldOptionValue<TField> = FallbackNever<OptionValue<OptionItem<TField>>, FormOptionValue>
+export type FieldOptionValue<TField> = FallbackNever<
+  OptionValue<OptionItem<TField>>,
+  FormOptionValue
+>
 
 export type FieldDefaultValue<TField> = TField extends { default: infer TDefault }
   ? DynamicValue<TDefault>
   : never
 
-export type TransformOutputValue<TField, TFallback> = TField extends { transform: { output: infer TOutput } }
+export type TransformOutputValue<TField, TFallback> = TField extends {
+  transform: { output: infer TOutput }
+}
   ? FallbackNever<AwaitedValue<FunctionReturn<TOutput>>, TFallback>
   : TFallback

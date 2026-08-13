@@ -38,7 +38,7 @@ const schema = defineFormSchema({
       label: 'Country',
       options: ({ ctx }) => {
         expectTypeOf(ctx.countries.value).toEqualTypeOf<
-          { label: string, value: string }[] | undefined
+          { label: string; value: string }[] | undefined
         >()
         expectTypeOf(ctx.preferredCurrency.value).toEqualTypeOf<'EUR'>()
 
@@ -80,7 +80,7 @@ type SchemaFields = ExtractFormFields<typeof schema>
 describe('defineFormSchema inference', () => {
   it('infers form-scoped context resources for fields', () => {
     expectTypeOf<SchemaContext['countries']['value']>().toEqualTypeOf<
-      { label: string, value: string }[] | undefined
+      { label: string; value: string }[] | undefined
     >()
     expectTypeOf<SchemaContext['preferredCurrency']['value']>().toEqualTypeOf<'EUR'>()
   })
@@ -111,12 +111,12 @@ describe('defineFormSchema inference', () => {
     ])
 
     expectTypeOf<typeof field.type>().toEqualTypeOf<'text'>()
-    expectTypeOf<typeof fields[number]['type']>().toMatchTypeOf<'text' | 'radio'>()
+    expectTypeOf<(typeof fields)[number]['type']>().toMatchTypeOf<'text' | 'radio'>()
   })
 
   it('exposes the planned field-kind registry', () => {
-    expect(formFieldKinds.map(kind => kind.type)).toContain('text')
-    expect(formFieldKinds.map(kind => kind.type)).toContain('upload')
+    expect(formFieldKinds.map((kind) => kind.type)).toContain('text')
+    expect(formFieldKinds.map((kind) => kind.type)).toContain('upload')
   })
 })
 
@@ -127,9 +127,7 @@ describe('form field property ownership', () => {
         {
           key: 'status',
           type: 'select',
-          options: [
-            { label: 'Draft', value: 'draft' },
-          ] satisfies FormOption[],
+          options: [{ label: 'Draft', value: 'draft' }] satisfies FormOption[],
         },
       ],
     })

@@ -1,7 +1,15 @@
-import { computed, inject, provide, toValue, type ComputedRef, type InjectionKey, type Ref } from 'vue'
+import {
+  computed,
+  inject,
+  provide,
+  toValue,
+  type ComputedRef,
+  type InjectionKey,
+  type Ref,
+} from 'vue'
 
-import type { SpreadsheetBinaryRef } from '../types'
 import { normalizeSpreadsheetSchema } from '../schema'
+import type { SpreadsheetBinaryRef } from '../types'
 import { useSpreadsheetContext } from './use-spreadsheet-context'
 import { useSpreadsheetResolutions } from './use-spreadsheet-resolutions'
 import { useSpreadsheetRows } from './use-spreadsheet-rows'
@@ -12,11 +20,7 @@ type SpreadsheetSchemaSource<TValue extends { importKey: string }> =
   | Ref<TValue>
   | ComputedRef<TValue>
   | (() => TValue)
-type SpreadsheetMaybeValue<TValue> =
-  | TValue
-  | Ref<TValue>
-  | ComputedRef<TValue>
-  | (() => TValue)
+type SpreadsheetMaybeValue<TValue> = TValue | Ref<TValue> | ComputedRef<TValue> | (() => TValue)
 
 function resolveSpreadsheetSchemaSource<TValue extends { importKey: string }>(
   schema: SpreadsheetSchemaSource<TValue>,
@@ -37,7 +41,9 @@ function createSpreadsheetInternals<TSchema extends { importKey: string }>(optio
   const schema = computed(() => normalizeSpreadsheetSchema(publicSchema.value))
   const source = useSpreadsheetSource({
     source: options.source,
-    fileName: computed(() => options.fileName ? resolveSpreadsheetValue(options.fileName) : undefined),
+    fileName: computed(() =>
+      options.fileName ? resolveSpreadsheetValue(options.fileName) : undefined,
+    ),
   })
   const context = useSpreadsheetContext({
     schema,
@@ -64,7 +70,9 @@ function createSpreadsheetInternals<TSchema extends { importKey: string }>(optio
   }
 }
 
-const SPREADSHEET_INTERNALS_KEY = Symbol('nuxt-ui-tools.spreadsheet.internals') as InjectionKey<SpreadsheetInternals>
+const SPREADSHEET_INTERNALS_KEY = Symbol(
+  'nuxt-ui-tools.spreadsheet.internals',
+) as InjectionKey<SpreadsheetInternals>
 
 function provideSpreadsheetInternals(internals: SpreadsheetInternals) {
   provide(SPREADSHEET_INTERNALS_KEY, internals)
@@ -82,7 +90,8 @@ function useProvideSpreadsheetInternals(options: {
 
 function useSpreadsheetInternals() {
   const internals = inject(SPREADSHEET_INTERNALS_KEY, null)
-  if (!internals) throw new Error('useSpreadsheetInternals must be called inside a spreadsheet provider')
+  if (!internals)
+    throw new Error('useSpreadsheetInternals must be called inside a spreadsheet provider')
   return internals
 }
 

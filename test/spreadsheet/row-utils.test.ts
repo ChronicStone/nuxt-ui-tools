@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { fr } from '#ui-tools/i18n'
 import {
   type SpreadsheetCellValue,
   type SpreadsheetRuleBuilder,
@@ -13,7 +14,6 @@ import {
   matchSpreadsheetDynamicColumns,
   parseSpreadsheetRows,
 } from '#ui-tools/spreadsheet'
-import { fr } from '#ui-tools/i18n'
 
 interface DemoDynamicAffiliationItem {
   id: string
@@ -56,29 +56,25 @@ describe('spreadsheet row utils', () => {
       },
     ])
 
-    const headers = createSpreadsheetHeaderCells([
-      'First Name',
-      'Last name',
-      'Exam name',
-    ])
+    const headers = createSpreadsheetHeaderCells(['First Name', 'Last name', 'Exam name'])
 
     const matches = matchSpreadsheetColumns(columns, headers)
     const unmatched = getSpreadsheetUnmatchedColumns(columns, matches)
 
     expect(matches).toHaveLength(3)
-    expect(matches.map((match) => match.key)).toEqual([
-      'firstName',
-      'lastName',
-      'examNameRaw',
-    ])
+    expect(matches.map((match) => match.key)).toEqual(['firstName', 'lastName', 'examNameRaw'])
     expect(unmatched).toHaveLength(0)
   })
 
   it('parses matched rows into nested output and collects validation issues', async () => {
-    const scoreBand = createSheetRule<number, [min: number, max: number], {
-      min: number
-      max: number
-    }>({
+    const scoreBand = createSheetRule<
+      number,
+      [min: number, max: number],
+      {
+        min: number
+        max: number
+      }
+    >({
       name: 'scoreBand',
       validator: (value, min, max) => ({
         $valid: value >= min && value <= max,
@@ -194,27 +190,33 @@ describe('spreadsheet row utils', () => {
           kind: 'option',
           key: 'productId',
           from: 'Product',
-          options: ({ context }: {
+          options: ({
+            context,
+          }: {
             context: {
-              products: readonly { id: string, name: string }[]
+              products: readonly { id: string; name: string }[]
             }
-          }) => context.products.map(product => ({
-            label: product.name,
-            value: product.id,
-          })),
+          }) =>
+            context.products.map((product) => ({
+              label: product.name,
+              value: product.id,
+            })),
         },
         {
           kind: 'option',
           key: 'selectedProductId',
           from: 'Selected product',
-          options: ({ context }: {
+          options: ({
+            context,
+          }: {
             context: {
-              products: readonly { id: string, name: string }[]
+              products: readonly { id: string; name: string }[]
             }
-          }) => context.products.map(product => ({
-            label: product.name,
-            value: product.id,
-          })),
+          }) =>
+            context.products.map((product) => ({
+              label: product.name,
+              value: product.id,
+            })),
         },
       ]),
       createSpreadsheetHeaderCells(['Product', 'Selected product']),
@@ -276,9 +278,7 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [
-        ['  JOHN@EXAMPLE.COM  ', ' 84 '],
-      ],
+      rows: [['  JOHN@EXAMPLE.COM  ', ' 84 ']],
       matches,
       context: {},
     })
@@ -312,9 +312,7 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [
-        ['  Alpha, BETA ,  Gamma  '],
-      ],
+      rows: [['  Alpha, BETA ,  Gamma  ']],
       matches,
       context: {},
     })
@@ -346,7 +344,7 @@ describe('spreadsheet row utils', () => {
           rules: (v: SpreadsheetRuleBuilder) => [
             v.validate({
               name: 'allPassing',
-              validator: (value: number[]) => value.every(score => score >= 50),
+              validator: (value: number[]) => value.every((score) => score >= 50),
               message: 'All scores must be at least 50',
             }),
           ],
@@ -359,14 +357,17 @@ describe('spreadsheet row utils', () => {
             separator: ',',
             matchBy: 'label',
           },
-          options: ({ context }: {
+          options: ({
+            context,
+          }: {
             context: {
-              products: readonly { id: string, name: string }[]
+              products: readonly { id: string; name: string }[]
             }
-          }) => context.products.map(product => ({
-            label: product.name,
-            value: product.id,
-          })),
+          }) =>
+            context.products.map((product) => ({
+              label: product.name,
+              value: product.id,
+            })),
         },
       ]),
       createSpreadsheetHeaderCells(['Tags', 'Scores', 'Products']),
@@ -417,11 +418,21 @@ describe('spreadsheet row utils', () => {
   })
 
   it('defines user-facing French translations for built-in spreadsheet parsing issues', () => {
-    expect(fr.messages.spreadsheet.validation.unrecognizedValue).toBe('La valeur "{value}" n est pas reconnue')
-    expect(fr.messages.spreadsheet.validation.invalidNumberInput).toBe('Saisissez un nombre valide à la place de "{value}"')
-    expect(fr.messages.spreadsheet.validation.invalidBooleanInput).toBe('Répondez par Oui ou Non à la place de "{value}"')
-    expect(fr.messages.spreadsheet.validation.missingValue).toBe('Ajoutez une valeur pour "{field}"')
-    expect(fr.messages.spreadsheet.validation.parseFailed).toBe('Impossible de lire la valeur pour "{field}"')
+    expect(fr.messages.spreadsheet.validation.unrecognizedValue).toBe(
+      'La valeur "{value}" n est pas reconnue',
+    )
+    expect(fr.messages.spreadsheet.validation.invalidNumberInput).toBe(
+      'Saisissez un nombre valide à la place de "{value}"',
+    )
+    expect(fr.messages.spreadsheet.validation.invalidBooleanInput).toBe(
+      'Répondez par Oui ou Non à la place de "{value}"',
+    )
+    expect(fr.messages.spreadsheet.validation.missingValue).toBe(
+      'Ajoutez une valeur pour "{field}"',
+    )
+    expect(fr.messages.spreadsheet.validation.parseFailed).toBe(
+      'Impossible de lire la valeur pour "{field}"',
+    )
   })
 
   it('creates a compact summary for parsed rows', () => {
@@ -495,9 +506,7 @@ describe('spreadsheet row utils', () => {
               id: 'program',
               slug: 'program',
               name: 'Program',
-              items: [
-                { id: 'business-english', name: 'Business English' },
-              ],
+              items: [{ id: 'business-english', name: 'Business English' }],
             },
           ] satisfies readonly DemoDynamicAffiliationGroup[],
           itemKey: (item) => item.id,
@@ -507,10 +516,11 @@ describe('spreadsheet row utils', () => {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
           },
-          options: item => item.items.map(option => ({
-            label: option.name,
-            value: option.id,
-          })),
+          options: (item) =>
+            item.items.map((option) => ({
+              label: option.name,
+              value: option.id,
+            })),
           values: {
             mode: 'csv',
             separator: ',',
@@ -527,18 +537,13 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [
-        ['Business English 4 Skills', 'Primary, Secondary', 'Business English'],
-      ],
+      rows: [['Business English 4 Skills', 'Primary, Secondary', 'Business English']],
       matches: staticMatches,
       dynamicMatches,
       context: {},
     })
 
-    expect(dynamicMatches.map((match) => match.targetKey)).toEqual([
-      'schoolLevel',
-      'program',
-    ])
+    expect(dynamicMatches.map((match) => match.targetKey)).toEqual(['schoolLevel', 'program'])
     expect(rows[0]).toMatchObject({
       isValid: true,
       data: {

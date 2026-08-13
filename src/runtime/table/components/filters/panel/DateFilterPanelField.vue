@@ -4,7 +4,11 @@ import UInputDate from '@nuxt/ui/components/InputDate.vue'
 import { computed, ref, shallowRef, watch } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableDateFilterDefinition, TableDateFilterOperator, TableFilterOperator } from '../../../types'
+import type {
+  TableDateFilterDefinition,
+  TableDateFilterOperator,
+  TableFilterOperator,
+} from '../../../types'
 import { getDateRangeValue, resolveDateFilterUi } from '../../../utils'
 import FilterMatchModeButton from '../shared/FilterMatchModeButton.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
@@ -23,24 +27,31 @@ const operatorItems = computed(() =>
 )
 
 const filterUi = computed(() => resolveDateFilterUi(props.definition, pendingOperator.value))
-const isActive = computed(() =>
-  internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+const isActive = computed(
+  () =>
+    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
 )
 const localDate = shallowRef<CalendarDate | undefined>(undefined)
 const localRangeStart = shallowRef<CalendarDate | undefined>(undefined)
 const localRangeEnd = shallowRef<CalendarDate | undefined>(undefined)
 
 function resolveInitialOperator() {
-  const operator = internals.filterPresentation.getPanelFilterOperator({ key: props.definition.key })
-  return operator === 'isNot' || operator === 'before' || operator === 'after' || operator === 'between'
+  const operator = internals.filterPresentation.getPanelFilterOperator({
+    key: props.definition.key,
+  })
+  return operator === 'isNot' ||
+    operator === 'before' ||
+    operator === 'after' ||
+    operator === 'between'
     ? operator
     : 'is'
 }
 
 function handleOperatorChange(operator: TableFilterOperator) {
-  pendingOperator.value = operator === 'isNot' || operator === 'before' || operator === 'after' || operator === 'between'
-    ? operator
-    : 'is'
+  pendingOperator.value =
+    operator === 'isNot' || operator === 'before' || operator === 'after' || operator === 'between'
+      ? operator
+      : 'is'
 
   if (filterUi.value.clearOnOperatorChange) clearFilter()
 }
@@ -82,7 +93,8 @@ function syncRangeDraft() {
 function resetLocalState() {
   if (pendingOperator.value === 'between') {
     const range = getDateRangeValue({
-      value: internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value,
+      value: internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })
+        ?.value,
     })
 
     localRangeStart.value = range?.from ? toCalendarDate(range.from) : undefined
@@ -91,7 +103,9 @@ function resetLocalState() {
     return
   }
 
-  const value = internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value
+  const value = internals.filterPresentation.getPanelDraftFilterState({
+    key: props.definition.key,
+  })?.value
   const date = value instanceof Date ? value : value ? new Date(String(value)) : undefined
   localDate.value = date ? toCalendarDate(date) : undefined
   localRangeStart.value = undefined

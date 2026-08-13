@@ -56,14 +56,18 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     return current === 'isAnyOf' || current === 'isNot' ? current : 'is'
   })
   const optionUi = computed(() =>
-    optionDefinition.value ? resolveOptionFilterUi(optionDefinition.value, optionOperator.value) : undefined,
+    optionDefinition.value
+      ? resolveOptionFilterUi(optionDefinition.value, optionOperator.value)
+      : undefined,
   )
   const shouldDeriveCounts = computed(() => {
     if (options.definition.kind === 'boolean') return true
     if (options.definition.kind !== 'option') return false
     return optionUi.value?.row.showCounts ?? true
   })
-  const shouldResolveCounts = computed(() => shouldDeriveCounts.value && isActive.value && isReady.value)
+  const shouldResolveCounts = computed(
+    () => shouldDeriveCounts.value && isActive.value && isReady.value,
+  )
   const isRemoteTable = computed(() => options.schema.value.source.mode === 'remote')
   const hasRemoteOptionQuery = computed(
     () =>
@@ -75,17 +79,13 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     if (!facetSpec.value || typeof facetSpec.value !== 'object') return null
     return facetSpec.value
   })
-  const hasPerFilterFacetQuery = computed(
-    () => typeof facetConfig.value?.query === 'function',
-  )
+  const hasPerFilterFacetQuery = computed(() => typeof facetConfig.value?.query === 'function')
   const usesFacetCounts = computed(
     () =>
       Boolean(facetSpec.value) &&
-      (
-        options.schema.value.source.mode === 'client'
-        || hasPerFilterFacetQuery.value
-        || (isRemoteTable.value && Boolean(remoteSource.value?.facets))
-      ),
+      (options.schema.value.source.mode === 'client' ||
+        hasPerFilterFacetQuery.value ||
+        (isRemoteTable.value && Boolean(remoteSource.value?.facets))),
   )
   const resolvedTreeSearchMode = computed(() => {
     if (optionUi.value?.presentation !== 'tree')
@@ -163,11 +163,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
   const perFilterFacetQuery = useQuery<TableFacetExecutionResult>(
     computed(() => {
-      if (
-        !isRemoteTable.value ||
-        !usesFacetCounts.value ||
-        !facetConfig.value?.query
-      ) {
+      if (!isRemoteTable.value || !usesFacetCounts.value || !facetConfig.value?.query) {
         return {
           queryKey: ['table-filter-facets', options.definition.key, 'disabled'],
           queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult,
@@ -219,18 +215,19 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const facetCounts = computed<TableFacetOptionResult[]>(() => {
     if (!usesFacetCounts.value) return []
 
-    const facets = isRemoteTable.value && hasPerFilterFacetQuery.value
-      ? (unref(perFilterFacetQuery.data)?.facets ?? [])
-      : options.queryContent.facets.value.facets
+    const facets =
+      isRemoteTable.value && hasPerFilterFacetQuery.value
+        ? (unref(perFilterFacetQuery.data)?.facets ?? [])
+        : options.queryContent.facets.value.facets
 
-    return facets.find((facet: { key: string }) => facet.key === options.definition.key)?.options ?? []
+    return (
+      facets.find((facet: { key: string }) => facet.key === options.definition.key)?.options ?? []
+    )
   })
 
   const resolvedFacetCounts = computed(() =>
     facetCounts.value.flatMap((entry) =>
-      isPrimitiveFilterOptionValue(entry.value)
-        ? [{ value: entry.value, count: entry.count }]
-        : [],
+      isPrimitiveFilterOptionValue(entry.value) ? [{ value: entry.value, count: entry.count }] : [],
     ),
   )
   const resolvedSourceTreeEntries = computed<TableResolvedFilterOptionEntry[]>(() =>
@@ -290,7 +287,8 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       )
     }
 
-    if (!normalizedSearch.value.length || hasRemoteOptionQuery.value) return selectableSourceEntries.value
+    if (!normalizedSearch.value.length || hasRemoteOptionQuery.value)
+      return selectableSourceEntries.value
 
     return selectableSourceEntries.value.filter((entry) =>
       entry.label.toLowerCase().includes(normalizedSearch.value.toLowerCase()),
@@ -300,9 +298,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const isInitialLoading = computed(
     () => optionQuery.isLoading.value && !optionQuery.isPlaceholderData.value,
   )
-  const isStaleLoading = computed(
-    () => !isInitialLoading.value && optionQuery.isFetching.value,
-  )
+  const isStaleLoading = computed(() => !isInitialLoading.value && optionQuery.isFetching.value)
   const isCountLoading = computed(
     () => isRemoteTable.value && shouldResolveCounts.value && perFilterFacetQuery.isFetching.value,
   )
@@ -323,10 +319,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   }
 }
 
-function getSelectedValues(options: {
-  filters: ReturnType<typeof useTableFilters>
-  key: string
-}) {
+function getSelectedValues(options: { filters: ReturnType<typeof useTableFilters>; key: string }) {
   const rule = options.filters.getFilterState({ key: options.key })
 
   if (Array.isArray(rule?.value)) return rule.value
@@ -334,9 +327,7 @@ function getSelectedValues(options: {
   return []
 }
 
-function isPrimitiveFilterOptionValue(
-  value: unknown,
-): value is string | number | boolean {
+function isPrimitiveFilterOptionValue(value: unknown): value is string | number | boolean {
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
 }
 

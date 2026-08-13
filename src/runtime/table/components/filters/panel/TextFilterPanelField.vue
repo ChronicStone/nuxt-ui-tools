@@ -3,7 +3,11 @@ import UInput from '@nuxt/ui/components/Input.vue'
 import { computed, ref } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableFilterOperator, TableTextFilterDefinition, TableTextFilterOperator } from '../../../types'
+import type {
+  TableFilterOperator,
+  TableTextFilterDefinition,
+  TableTextFilterOperator,
+} from '../../../types'
 import { resolveTextFilterUi } from '../../../utils'
 import FilterMatchModeButton from '../shared/FilterMatchModeButton.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
@@ -25,7 +29,9 @@ const filterUi = computed(() => resolveTextFilterUi(props.definition, pendingOpe
 
 const localValue = computed({
   get: () => {
-    const value = internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value
+    const value = internals.filterPresentation.getPanelDraftFilterState({
+      key: props.definition.key,
+    })?.value
     return value == null ? '' : String(value)
   },
   set: (value: string) => {
@@ -37,12 +43,15 @@ const localValue = computed({
   },
 })
 
-const isActive = computed(() =>
-  internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+const isActive = computed(
+  () =>
+    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
 )
 
 function resolveInitialOperator() {
-  const operator = internals.filterPresentation.getPanelFilterOperator({ key: props.definition.key })
+  const operator = internals.filterPresentation.getPanelFilterOperator({
+    key: props.definition.key,
+  })
   return operator === 'is' || operator === 'isNot' ? operator : 'contains'
 }
 

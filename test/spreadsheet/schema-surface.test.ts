@@ -56,7 +56,7 @@ describe('spreadsheet package surface', () => {
       importKey: 'demo.import',
       context: contextItems,
       columns,
-      references: reference => [
+      references: (reference) => [
         reference.select('productId', {
           source: 'examNameRaw',
           options: [{ label: 'Demo product', value: 'prod_1' }],
@@ -98,7 +98,7 @@ describe('spreadsheet package surface', () => {
               headers: ['Product'],
             },
             options: ({ context: queryContext }) =>
-              queryContext.products.map(product => ({
+              queryContext.products.map((product) => ({
                 label: product.name,
                 value: product.id,
               })),
@@ -108,7 +108,7 @@ describe('spreadsheet package surface', () => {
               headers: ['Selected product'],
             },
             options: ({ context: queryContext }) =>
-              queryContext.products.map(product => ({
+              queryContext.products.map((product) => ({
                 label: product.name,
                 value: product.id,
               })),
@@ -150,7 +150,7 @@ describe('spreadsheet package surface', () => {
           }),
         ],
       },
-      references: reference => [
+      references: (reference) => [
         reference.select('productIds', {
           source: 'productLabels',
           options: [
@@ -187,18 +187,16 @@ describe('spreadsheet package surface', () => {
           }),
         ],
       },
-      references: reference => [
+      references: (reference) => [
         reference.select('productId', {
           source: 'examNameRaw',
           options: [{ label: 'Business English', value: 'prod_1' }],
-          rules: v => [
-            v.required(),
-          ],
+          rules: (v) => [v.required()],
         }),
         reference.select('productIds', {
           source: 'productLabels',
           options: [{ label: 'Business English', value: 'prod_1' }],
-          rules: v => [
+          rules: (v) => [
             v.validate({
               name: 'nonEmptySelection',
               validator: (value: string[] | undefined) => (value?.length ?? 0) > 0,
@@ -216,7 +214,7 @@ describe('spreadsheet package surface', () => {
       columns: {
         static: (column) => [
           column.text('examNameRaw', {
-            rules: v => [v.required()],
+            rules: (v) => [v.required()],
             match: {
               headers: ['Exam name'],
             },
@@ -230,10 +228,8 @@ describe('spreadsheet package surface', () => {
       relations: [
         {
           column: 'examName',
-          condition: row => row.examName.length > 0,
-          rules: v => [
-            v.required(),
-          ],
+          condition: (row) => row.examName.length > 0,
+          rules: (v) => [v.required()],
         },
       ],
     })

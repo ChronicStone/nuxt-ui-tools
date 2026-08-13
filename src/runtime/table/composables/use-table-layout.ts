@@ -11,7 +11,9 @@ interface UseTableLayoutParams {
 
 export function useTableLayout({ schema }: UseTableLayoutParams) {
   const defaultLayout = computed(() => schema.value.defaultLayout ?? 'table')
-  const gridEnabled = useResponsiveValue(() => schema.value.grid?.enabled ?? Boolean(schema.value.grid))
+  const gridEnabled = useResponsiveValue(
+    () => schema.value.grid?.enabled ?? Boolean(schema.value.grid),
+  )
   const tableEnabled = useResponsiveValue(
     () => schema.value.table?.enabled ?? Boolean(schema.value.table),
   )

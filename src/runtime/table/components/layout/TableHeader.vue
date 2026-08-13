@@ -4,6 +4,7 @@ import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { TableLayout } from '../../types'
 import ColumnPanel from '../drawers/ColumnPanel.vue'

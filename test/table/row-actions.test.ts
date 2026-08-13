@@ -1,7 +1,8 @@
-import { computed } from 'vue'
 import { describe, expect, it } from 'vitest'
+import { computed } from 'vue'
 
 import type { TableApi } from '#ui-tools/table/types'
+
 import {
   createRowActionDropdownItems,
   hasVisibleTableRowActions,
@@ -19,7 +20,12 @@ function createTableApiStub() {
   const layout = computed<'table' | 'grid'>(() => 'table')
   const query = computed(() => ({
     layout: 'table' as const,
-    pagination: { pageIndex: 1, pageSize: 20 },
+    pagination: {
+      mode: 'offset' as const,
+      pageIndex: 1,
+      pageSize: 20,
+      count: 'exact' as const,
+    },
     sorting: null,
     filters: { search: '', ui: [] },
   }))
@@ -28,7 +34,12 @@ function createTableApiStub() {
   const context = computed<Record<string, never>>(() => ({}))
   const requestContext = computed(() => ({
     context: {},
-    pagination: { pageIndex: 1, pageSize: 20 },
+    pagination: {
+      mode: 'offset' as const,
+      pageIndex: 1,
+      pageSize: 20,
+      count: 'exact' as const,
+    },
     sorting: [],
     filters: { type: 'group' as const, combinator: 'and' as const, children: [] },
     search: { value: '', fields: [] },
@@ -56,11 +67,16 @@ function createTableApiStub() {
     partiallySelected: false,
   }))
   const paginationState = computed(() => ({
+    mode: 'offset' as const,
     pageIndex: 1,
     pageSize: 20,
     pageCount: 1,
+    loadedCount: 0,
+    totalCount: 0,
     hasNextPage: false,
     hasPreviousPage: false,
+    isLoadingMore: false,
+    loadMoreError: null,
   }))
   const sortingState = computed(() => ({
     key: undefined,
@@ -80,6 +96,8 @@ function createTableApiStub() {
     data: {
       rows,
       rowCount,
+      loadedRowCount: rowCount,
+      totalRowCount: rowCount,
       rawRows: rows,
       rawRowCount: rowCount,
       context,
@@ -97,7 +115,16 @@ function createTableApiStub() {
       state: computed(() => ({ active: 'table' as const, available: ['table', 'grid'] })),
       set: () => undefined,
     },
+    filters: {
+      state: computed(() => ({ search: '', ui: [] })),
+      search: computed({ get: () => '', set: () => undefined }),
+      activeCount: computed(() => 0),
+      clear: () => undefined,
+      remove: () => undefined,
+      replace: () => undefined,
+    },
     pagination: {
+      mode: 'offset',
       state: paginationState,
       pageSizeOptions: computed(() => [20]),
       setPage: () => undefined,

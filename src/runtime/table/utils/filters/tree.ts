@@ -1,19 +1,14 @@
-import type {
-  TableResolvedFilterOptionEntry,
-  TableVisibleFilterOptionEntry,
-} from '../../types'
+import type { TableResolvedFilterOptionEntry, TableVisibleFilterOptionEntry } from '../../types'
 
 export function flattenFilterOptionEntries(
   entries: TableResolvedFilterOptionEntry[],
 ): TableResolvedFilterOptionEntry[] {
-  return entries.flatMap(entry => [entry, ...flattenFilterOptionEntries(entry.children)])
+  return entries.flatMap((entry) => [entry, ...flattenFilterOptionEntries(entry.children)])
 }
 
 export function collectFilterOptionBranchIds(entries: TableResolvedFilterOptionEntry[]): string[] {
   return entries.flatMap((entry) =>
-    entry.children.length
-      ? [entry.id, ...collectFilterOptionBranchIds(entry.children)]
-      : [],
+    entry.children.length ? [entry.id, ...collectFilterOptionBranchIds(entry.children)] : [],
   )
 }
 
@@ -62,15 +57,15 @@ export function collectSelectableDescendantValues(options: {
   entry: TableResolvedFilterOptionEntry
   selectable: 'all' | 'leaf-only'
 }): Array<string | number | boolean> {
-  return options.entry.children.flatMap((child) => collectSelectableValues({
-    entry: child,
-    selectable: options.selectable,
-  }))
+  return options.entry.children.flatMap((child) =>
+    collectSelectableValues({
+      entry: child,
+      selectable: options.selectable,
+    }),
+  )
 }
 
-export function collectSelectedBranchIds(
-  entries: TableResolvedFilterOptionEntry[],
-): string[] {
+export function collectSelectedBranchIds(entries: TableResolvedFilterOptionEntry[]): string[] {
   const ids = new Set<string>()
 
   entries.forEach((entry) => {
@@ -115,13 +110,9 @@ function flattenVisibleEntries(options: {
 }): TableVisibleFilterOptionEntry[] {
   return options.entries.flatMap((entry) => {
     const expandable = entry.children.length > 0
-    const selectable =
-      entry.value != null &&
-      (options.selectable === 'all' || !expandable)
+    const selectable = entry.value != null && (options.selectable === 'all' || !expandable)
     const branchSelectable =
-      entry.value == null &&
-      expandable &&
-      options.branchSelection === 'children'
+      entry.value == null && expandable && options.branchSelection === 'children'
     const current: TableVisibleFilterOptionEntry = {
       id: entry.id,
       label: entry.label,
@@ -156,17 +147,18 @@ function collectSelectableValues(options: {
 }): Array<string | number | boolean> {
   const expandable = options.entry.children.length > 0
   const ownValue =
-    options.entry.value != null &&
-    (options.selectable === 'all' || !expandable)
+    options.entry.value != null && (options.selectable === 'all' || !expandable)
       ? [options.entry.value]
       : []
 
   return [
     ...ownValue,
-    ...options.entry.children.flatMap((child) => collectSelectableValues({
-      entry: child,
-      selectable: options.selectable,
-    })),
+    ...options.entry.children.flatMap((child) =>
+      collectSelectableValues({
+        entry: child,
+        selectable: options.selectable,
+      }),
+    ),
   ]
 }
 
@@ -174,7 +166,9 @@ function collectSelectedBranchIdsRecursive(
   entry: TableResolvedFilterOptionEntry,
   ids: Set<string>,
 ): boolean {
-  const hasSelectedChild = entry.children.some((child) => collectSelectedBranchIdsRecursive(child, ids))
+  const hasSelectedChild = entry.children.some((child) =>
+    collectSelectedBranchIdsRecursive(child, ids),
+  )
   const hasSelection = entry.selected || hasSelectedChild
 
   if (entry.children.length && hasSelection) ids.add(entry.id)

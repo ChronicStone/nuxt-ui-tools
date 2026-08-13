@@ -1,14 +1,11 @@
-import { createApp, effectScope, ref } from 'vue'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import { createApp, effectScope, ref } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
-import type {
-  ExtractSpreadsheetRow,
-  SpreadsheetImportApi,
-} from '#ui-tools/spreadsheet/types'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
+import type { ExtractSpreadsheetRow, SpreadsheetImportApi } from '#ui-tools/spreadsheet/types'
 
 function createWorkbookBinary() {
   const workbook = utils.book_new()
@@ -32,13 +29,13 @@ describe('useSpreadsheetImport', () => {
       columns: {
         static: (column) => [
           column.text('examNameRaw', {
-            rules: v => [v.required()],
+            rules: (v) => [v.required()],
             match: {
               headers: ['Exam name'],
             },
           }),
           column.text('firstName', {
-            rules: v => [v.required()],
+            rules: (v) => [v.required()],
             match: {
               headers: ['First name'],
             },
@@ -53,9 +50,7 @@ describe('useSpreadsheetImport', () => {
     })
 
     const scope = effectScope()
-    const api = app.runWithContext(() =>
-      scope.run(() => useSpreadsheetImport(schema)),
-    )
+    const api = app.runWithContext(() => scope.run(() => useSpreadsheetImport(schema)))
     if (!api) throw new Error('Failed to create spreadsheet import api')
 
     api.loadSource({
@@ -79,9 +74,11 @@ describe('useSpreadsheetImport', () => {
   })
 
   it('supports reactive schema sources without explicit generics', () => {
-    const schema = ref(defineSpreadsheetSchema({
-      importKey: 'demo.import',
-    }))
+    const schema = ref(
+      defineSpreadsheetSchema({
+        importKey: 'demo.import',
+      }),
+    )
 
     const app = createApp({})
     app.use(VueQueryPlugin, {
@@ -89,9 +86,7 @@ describe('useSpreadsheetImport', () => {
     })
 
     const scope = effectScope()
-    const api = app.runWithContext(() =>
-      scope.run(() => useSpreadsheetImport(schema)),
-    )
+    const api = app.runWithContext(() => scope.run(() => useSpreadsheetImport(schema)))
     if (!api) throw new Error('Failed to create spreadsheet import api')
 
     expect(api.schema.value.importKey).toBe('demo.import')

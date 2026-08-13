@@ -208,8 +208,27 @@ Purpose:
 Philosophy:
 
 - this area is not complete yet
-- it should grow from the same architectural basis as the stronger runtime domains
+- this area is a port-and-refinement of the latest `shared-ui` form engine, not a greenfield rewrite
+- for existing form-engine capabilities, `shared-ui` is the architectural baseline and must be inspected before implementation
+- it should grow from the same architectural basis as the stronger runtime domains, while preserving the hard-won structure already solved in `shared-ui`
 - build it with the same modular, config-driven, schema-friendly approach used elsewhere
+- split every non-trivial concern early: schema/type engine, field config, field component, renderer, layout, actions, provider, runtime orchestration, and pure utilities must stay isolated
+
+Mandatory form-runtime rule:
+
+- before implementing, refactoring, or simplifying an existing form feature, inspect the corresponding `shared-ui` implementation and identify the structure it used
+- treat `shared-ui` component/code breakdown as the default shape to preserve, especially for layout, actions, provider APIs, state/output inference, field config, validation, and field runtime APIs
+- adapt only when there is a concrete Nuxt UI, type-safety, reactivity, ownership, or public API reason
+- if diverging from `shared-ui`, make the new ownership model more explicit and more maintainable than the original, not merely shorter
+- never collapse multiple form-engine responsibilities into one file or component because the current slice feels small
+- do not drop existing shared-ui capability unless it is explicitly out of V1 scope or replaced by a stronger design
+
+Does not belong here:
+
+- one-off layout/provider code that bypasses the shared-ui layout architecture without an explicit reason
+- field-specific type logic inside global output/state engine files
+- broad renderer components that also own layout shell, provider lifecycle, actions, and cleanup
+- shortcuts that work in the playground but weaken long-term form-engine structure
 
 ### Future Core Areas
 
@@ -530,6 +549,15 @@ Inspect first:
 - runtime components
 - relevant composables
 - the playground route exercising the feature
+- the installed browser agent workflow and relevant skills when the task affects rendered UI, interaction, layout, or visual regressions
+
+UI work should proactively leverage the installed browser automation path.
+
+- use the browser agent and relevant skills to open the real UI
+- interact with the actual page instead of relying only on code inspection
+- capture screenshots when visual validation matters
+- query rendered content and behavior from the live page
+- use this flow for real validation of layout, interactions, regressions, and playground behavior when feasible
 
 ### Consumer usage and package guidance
 
@@ -668,6 +696,7 @@ Validation rules:
 - run the narrowest relevant checks first
 - do not default to the full suite when a targeted check is enough to validate the current change
 - if a change touches integration behavior, validate the relevant playground route or integration surface when feasible
+- if a change touches UI behavior, prefer validating through the installed browser agent and related skills so the agent can drive the page, inspect rendered output, capture screenshots, and verify live interactions
 - when reaching the end of a task and everything appears good and clear, run `bun run lint` as the final closing check and fix any issues before handing the task off
 
 ## 11.1 Commit Message Policy

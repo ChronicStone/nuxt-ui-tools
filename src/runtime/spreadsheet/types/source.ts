@@ -21,10 +21,8 @@ export interface SpreadsheetWorkbookStatus {
   isReady: boolean
 }
 
-export type SpreadsheetBinarySource =
-  | ArrayBuffer
-  | Uint8Array
-  | Blob
-  | File
+export type SpreadsheetBinarySource = ArrayBuffer | Uint8Array | Blob | File
 
-export type SpreadsheetBinaryRef = Ref<SpreadsheetBinarySource | null> | ComputedRef<SpreadsheetBinarySource | null>
+export type SpreadsheetBinaryRef =
+  | Ref<SpreadsheetBinarySource | null>
+  | ComputedRef<SpreadsheetBinarySource | null>

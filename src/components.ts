@@ -6,10 +6,13 @@ type PublicComponent = {
   global: boolean | undefined
 }
 
-function getPublicComponents(runtimeDir: string, options: {
-  prefix?: string
-  global?: boolean
-}): PublicComponent[] {
+function getPublicComponents(
+  runtimeDir: string,
+  options: {
+    prefix?: string
+    global?: boolean
+  },
+): PublicComponent[] {
   const prefix = options.prefix ?? 'Ui'
 
   return [
@@ -26,11 +29,38 @@ function getPublicComponents(runtimeDir: string, options: {
       filePath: `${runtimeDir}/table/components/DataList.vue`,
       global: options.global,
     },
+    ...[
+      'Root',
+      'Search',
+      'FilterTags',
+      'AddFilter',
+      'FilterPanel',
+      'ClearFilters',
+      'ResultCount',
+      'Refresh',
+      'ColumnPanel',
+      'SortMenu',
+      'LayoutSwitch',
+      'Content',
+      'Table',
+      'Grid',
+      'Pagination',
+      'InfiniteLoader',
+    ].map((part) => ({
+      name: `${prefix}DataList${part}`,
+      filePath: `${runtimeDir}/table/components/data-list/DataList${part}.vue`,
+      global: options.global,
+    })),
 
     // Form
     {
       name: `${prefix}Form`,
       filePath: `${runtimeDir}/form/components/root/Form.vue`,
+      global: options.global,
+    },
+    {
+      name: `${prefix}FormProvider`,
+      filePath: `${runtimeDir}/form/components/provider/FormProvider.vue`,
       global: options.global,
     },
 
@@ -43,10 +73,12 @@ function getPublicComponents(runtimeDir: string, options: {
   ]
 }
 
-export function setupComponents(runtimeDir: string, options: {
-  prefix?: string
-  global?: boolean
-}) {
-  for (const component of getPublicComponents(runtimeDir, options))
-    addComponent(component)
+export function setupComponents(
+  runtimeDir: string,
+  options: {
+    prefix?: string
+    global?: boolean
+  },
+) {
+  for (const component of getPublicComponents(runtimeDir, options)) addComponent(component)
 }

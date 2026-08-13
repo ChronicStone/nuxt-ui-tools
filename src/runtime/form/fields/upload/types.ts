@@ -1,15 +1,31 @@
-import type { FormFieldCallback } from '../../types/callbacks'
+import type { FormFieldCallback, FormFieldCallbackParams } from '../../types/callbacks'
 import type { FormStatefulFieldBase } from '../../types/field-base'
-import type { FormObject } from '../../types/utils'
 import type { NullableValue } from '../../types/field-output-utils'
+import type { FormObject } from '../../types/utils'
 
-export interface FormUploadField<TContext = {}, TDeps = {}>
-  extends FormStatefulFieldBase<'upload', string | FormObject | readonly string[] | readonly FormObject[] | null, TContext, TDeps> {
+export interface FormUploadCallbackParams<
+  TContext = {},
+  TDeps = {},
+> extends FormFieldCallbackParams<TContext, TDeps> {
+  files: readonly File[]
+}
+
+export type FormUploadHandler<TContext = {}, TDeps = {}> = (
+  params: FormUploadCallbackParams<TContext, TDeps>,
+) => Promise<string | FormObject | readonly string[] | readonly FormObject[] | null>
+
+export interface FormUploadField<TContext = {}, TDeps = {}> extends FormStatefulFieldBase<
+  'upload',
+  string | FormObject | readonly string[] | readonly FormObject[] | null,
+  TContext,
+  TDeps
+> {
   output: 'url' | 'object'
   multiple?: boolean
   accept?: string
+  autoUpload?: boolean
   upload: {
-    handler: FormFieldCallback<Promise<string | FormObject | readonly string[] | readonly FormObject[] | null>, TContext, TDeps>
+    handler: FormUploadHandler<TContext, TDeps>
     onDelete?: FormFieldCallback<Promise<void> | void, TContext, TDeps>
   }
 }

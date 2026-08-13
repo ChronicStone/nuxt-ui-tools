@@ -1,24 +1,30 @@
 <script setup lang="ts">
+import USwitch from '@nuxt/ui/components/Switch.vue'
 import { computed } from 'vue'
 
-import USwitch from '@nuxt/ui/components/Switch.vue'
-
-import type { FormSwitchField } from '../../types'
-import { useFieldControl } from '../../composables/use-field-control'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import { useFieldControl } from '../../composables/use-field-control'
+import type { FormSwitchField } from '../../types'
 
 const props = defineProps<{
   field: FormSwitchField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur } = useFieldControl(() => props.field, () => props.path)
+const { form, controlProps, disabled, handleBlur } = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
 const model = computed<boolean>({
   get: () => {
     const value = form.getValue(props.path)
     return value === (props.field.trueValue ?? true)
   },
-  set: value => form.setValue(props.path, value ? props.field.trueValue ?? true : props.field.falseValue ?? false),
+  set: (value) =>
+    form.setValue(
+      props.path,
+      value ? (props.field.trueValue ?? true) : (props.field.falseValue ?? false),
+    ),
 })
 </script>
 

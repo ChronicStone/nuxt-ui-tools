@@ -10,7 +10,13 @@ import type { FilterPreviewOptionEntry, FilterPreviewResult } from './types'
 
 export function buildOptionFilterPreview(options: {
   definition:
-    | TableOptionFilterDefinition<object, object, string, string | number | boolean, 'list' | 'tree'>
+    | TableOptionFilterDefinition<
+        object,
+        object,
+        string,
+        string | number | boolean,
+        'list' | 'tree'
+      >
     | TableBooleanFilterDefinition
   rule: TableQueryStateFilterRule
   optionEntries: FilterPreviewOptionEntry[]
@@ -41,7 +47,13 @@ export function buildOptionFilterPreview(options: {
 
 function resolveOptionPreviewLabel(options: {
   definition:
-    | TableOptionFilterDefinition<object, object, string, string | number | boolean, 'list' | 'tree'>
+    | TableOptionFilterDefinition<
+        object,
+        object,
+        string,
+        string | number | boolean,
+        'list' | 'tree'
+      >
     | TableBooleanFilterDefinition
   optionEntries: FilterPreviewOptionEntry[]
   value: unknown
@@ -55,7 +67,10 @@ function resolveOptionPreviewLabel(options: {
   }
 
   if (options.definition.kind === 'boolean') {
-    const filterUi = resolveBooleanFilterUi(options.definition, options.definition.behavior?.defaultOperator ?? 'is')
+    const filterUi = resolveBooleanFilterUi(
+      options.definition,
+      options.definition.behavior?.defaultOperator ?? 'is',
+    )
     return options.value ? filterUi.labels.true : filterUi.labels.false
   }
 
@@ -64,7 +79,13 @@ function resolveOptionPreviewLabel(options: {
 
 function resolveOptionPreview(options: {
   definition:
-    | TableOptionFilterDefinition<object, object, string, string | number | boolean, 'list' | 'tree'>
+    | TableOptionFilterDefinition<
+        object,
+        object,
+        string,
+        string | number | boolean,
+        'list' | 'tree'
+      >
     | TableBooleanFilterDefinition
   rule: TableQueryStateFilterRule
 }) {

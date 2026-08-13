@@ -253,19 +253,19 @@ For example, directionally:
 
 ```ts
 dependsOn({
-  country: root("meta.country"),
-  hasImmatriculation: parent(1, "hasImmatriculation"),
-  value: parent("value")
+  country: root('meta.country'),
+  hasImmatriculation: parent(1, 'hasImmatriculation'),
+  value: parent('value'),
 })
 ```
 
 or:
 
 ```ts
-dependencies: deps => ({
-  country: deps.root("meta.country"),
-  hasImmatriculation: deps.parent(1, "hasImmatriculation"),
-  value: deps.parent("value")
+dependencies: (deps) => ({
+  country: deps.root('meta.country'),
+  hasImmatriculation: deps.parent(1, 'hasImmatriculation'),
+  value: deps.parent('value'),
 })
 ```
 

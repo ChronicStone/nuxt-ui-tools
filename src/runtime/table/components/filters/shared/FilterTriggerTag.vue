@@ -6,7 +6,9 @@ import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
 
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import type { TableFilterOperator } from '../../../types'
+import { mergeDataListUiClass } from '../../../utils'
 import FilterMatchModeButton from './FilterMatchModeButton.vue'
 
 const props = defineProps<{
@@ -27,10 +29,15 @@ const emit = defineEmits<{
 
 const showMatchMode = computed(() => props.operatorItems.length > 1)
 const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.value)
+const dataListUi = useDataListUi()
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
 </script>
 
 <template>
-  <div class="inline-flex min-w-0 max-w-full align-top">
+  <div
+    :class="mergeDataListUiClass('inline-flex min-w-0 max-w-full align-top', undefined, ui?.root)"
+  >
     <UDropdownMenu
       v-if="showOperatorPickerFirst"
       :items="[
@@ -47,12 +54,14 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
       <UButton
         color="neutral"
         :variant="props.active ? 'subtle' : 'outline'"
-        size="md"
-        class="min-w-0 shrink-0"
+        :size="size"
+        :ui="{ base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger) }"
         @pointerdown.stop
         @click.stop
       >
-        <span class="flex min-w-0 items-center gap-2">
+        <span
+          :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)"
+        >
           <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
           <span class="truncate">{{ props.label }}</span>
         </span>
@@ -63,18 +72,25 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
       v-else-if="!props.active"
       color="neutral"
       variant="outline"
-      size="md"
-      class="min-w-0 shrink-0"
+      :size="size"
+      :ui="{ base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger) }"
     >
-      <span class="flex min-w-0 items-center gap-2">
+      <span :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)">
         <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
         <span class="truncate">{{ props.label }}</span>
       </span>
     </UButton>
 
-    <UFieldGroup v-else size="md" class="min-w-0 max-w-full">
-      <UButton color="neutral" variant="subtle" size="md" class="shrink-0">
-        <span class="flex min-w-0 items-center gap-2">
+    <UFieldGroup v-else :size="size" class="min-w-0 max-w-full">
+      <UButton
+        color="neutral"
+        variant="subtle"
+        :size="size"
+        :ui="{ base: mergeDataListUiClass('shrink-0', undefined, ui?.trigger) }"
+      >
+        <span
+          :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)"
+        >
           <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
           <span class="truncate">{{ props.label }}</span>
         </span>
@@ -87,7 +103,12 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
         @select="emit('selectOperator', $event)"
       />
 
-      <UButton color="neutral" variant="subtle" size="md" class="min-w-0 max-w-full">
+      <UButton
+        color="neutral"
+        variant="subtle"
+        :size="size"
+        :ui="{ base: mergeDataListUiClass('min-w-0 max-w-full', undefined, ui?.value) }"
+      >
         <span class="flex min-w-0 items-center gap-2">
           <UBadge
             color="neutral"
@@ -115,9 +136,9 @@ const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.va
       <UButton
         color="neutral"
         variant="subtle"
-        size="md"
+        :size="size"
         icon="i-lucide-x"
-        class="shrink-0"
+        :ui="{ base: mergeDataListUiClass('shrink-0', undefined, ui?.dismiss) }"
         @pointerdown.stop
         @click.stop="emit('clear')"
       />

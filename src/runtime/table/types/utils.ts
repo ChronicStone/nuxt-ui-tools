@@ -1,5 +1,4 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { TableApi } from './table-api'
 
 import type {
   LazyTextValue,
@@ -9,6 +8,7 @@ import type {
   RenderableType,
   UnionToIntersection,
 } from '../../shared'
+import type { TableApi } from './table-api'
 
 export type {
   ComputedRef,
@@ -66,10 +66,28 @@ export interface TableSortingRule<TKey extends string = string> {
   dir: TableSortingDirection
 }
 
-export interface TablePaginationState {
+export interface TableOffsetPaginationRequest {
+  mode: 'offset'
   pageIndex: number
   pageSize: number
+  count: 'exact'
 }
+
+export interface TableCursorPaginationRequest {
+  mode: 'cursor'
+  cursor: string | null
+  pageSize: number
+  count: 'none' | 'exact'
+}
+
+export interface TableNoPaginationRequest {
+  mode: 'none'
+}
+
+export type TablePaginationState =
+  | TableOffsetPaginationRequest
+  | TableCursorPaginationRequest
+  | TableNoPaginationRequest
 
 export interface TableRowRenderParams<
   TRow extends GenericObject = GenericObject,

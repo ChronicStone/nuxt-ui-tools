@@ -45,9 +45,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     schema: options.schema,
   })
 
-  const filterUi = computed(() =>
-    resolveOptionFilterUi(options.definition, options.operator.value),
-  )
+  const filterUi = computed(() => resolveOptionFilterUi(options.definition, options.operator.value))
 
   const displayEntries = computed(() =>
     optionSource.filteredEntries.value.map((entry) => ({
@@ -69,25 +67,28 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       filterUi: filterUi.value,
     }),
   )
-  const selectedExpandedIds = computed(() =>
-    new Set(collectSelectedBranchIds(displayTreeEntries.value)),
+  const selectedExpandedIds = computed(
+    () => new Set(collectSelectedBranchIds(displayTreeEntries.value)),
   )
 
   const effectiveExpandedIds = computed(
-    () => new Set([
-      ...optionSource.searchExpandedIds.value,
-      ...selectedExpandedIds.value,
-      ...expandedIds.value,
-    ]),
+    () =>
+      new Set([
+        ...optionSource.searchExpandedIds.value,
+        ...selectedExpandedIds.value,
+        ...expandedIds.value,
+      ]),
   )
-  const selectedValueKeys = computed(() =>
-    new Set(options.selectedValues.value.map(value => String(value))),
+  const selectedValueKeys = computed(
+    () => new Set(options.selectedValues.value.map((value) => String(value))),
   )
-  const flatTreeEntryMap = computed(() =>
-    new Map(
-      flattenFilterOptionEntries(displayTreeEntries.value)
-        .map(entry => [entry.id, entry] as const),
-    ),
+  const flatTreeEntryMap = computed(
+    () =>
+      new Map(
+        flattenFilterOptionEntries(displayTreeEntries.value).map(
+          (entry) => [entry.id, entry] as const,
+        ),
+      ),
   )
 
   const visibleTreeEntries = computed(() =>
@@ -112,7 +113,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
             selectable: filterUi.value.tree.selectable,
           })
         : []
-      const selectedCount = descendantValues.filter(value =>
+      const selectedCount = descendantValues.filter((value) =>
         selectedValueKeys.value.has(String(value)),
       ).length
 
@@ -136,11 +137,12 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   )
 
   const flatRadioValue = computed({
-    get: () => options.selectedValues.value[0] != null ? String(options.selectedValues.value[0]) : undefined,
+    get: () =>
+      options.selectedValues.value[0] != null ? String(options.selectedValues.value[0]) : undefined,
     set: (value: string | undefined) => {
       if (value == null) return
 
-      const match = displayEntries.value.find(entry => String(entry.value) === value)
+      const match = displayEntries.value.find((entry) => String(entry.value) === value)
       if (!match) return
 
       options.setSelectedValues([match.value])
@@ -175,7 +177,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     set: (value: string | undefined) => {
       if (value == null) return
 
-      const match = visibleTreeEntries.value.find(entry => entry.id === value)
+      const match = visibleTreeEntries.value.find((entry) => entry.id === value)
       if (!match || !match.selectable || match.value == null) return
 
       options.setSelectedValues([match.value])
@@ -186,11 +188,12 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     if (!options.selectedValues.value.length) return ''
 
     const labels = optionSource.sourceEntries.value
-      .filter(entry =>
-        entry.value != null &&
-        options.selectedValues.value.some(value => String(value) === String(entry.value)),
+      .filter(
+        (entry) =>
+          entry.value != null &&
+          options.selectedValues.value.some((value) => String(value) === String(entry.value)),
       )
-      .map(entry => entry.label)
+      .map((entry) => entry.label)
 
     if (!labels.length) return `${options.selectedValues.value.length} selected`
     if (labels.length === 1) return labels[0]
@@ -224,7 +227,8 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     if (
       filterUi.value.selection.max != null &&
       options.selectedValues.value.length >= filterUi.value.selection.max
-    ) return
+    )
+      return
 
     options.setSelectedValues([...options.selectedValues.value, value])
   }
@@ -273,11 +277,11 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     }
 
     const currentKeys = selectedValueKeys.value
-    const allSelected = descendantValues.every(value => currentKeys.has(String(value)))
+    const allSelected = descendantValues.every((value) => currentKeys.has(String(value)))
 
     if (allSelected) {
       const nextValues = options.selectedValues.value.filter(
-        (value) => !descendantValues.some(descendant => String(descendant) === String(value)),
+        (value) => !descendantValues.some((descendant) => String(descendant) === String(value)),
       )
 
       if (!filterUi.value.selection.allowEmpty && !nextValues.length) return
@@ -285,13 +289,11 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       return
     }
 
-    const missingValues = descendantValues.filter(value => !currentKeys.has(String(value)))
+    const missingValues = descendantValues.filter((value) => !currentKeys.has(String(value)))
     const nextValues = [...options.selectedValues.value, ...missingValues]
 
-    if (
-      filterUi.value.selection.max != null &&
-      nextValues.length > filterUi.value.selection.max
-    ) return
+    if (filterUi.value.selection.max != null && nextValues.length > filterUi.value.selection.max)
+      return
 
     options.setSelectedValues(nextValues)
   }
@@ -323,12 +325,14 @@ function resolveRowIcon(options: {
 }) {
   if (options.entry.value == null) return options.entry.icon
 
-  return options.filterUi.row.getIcon?.({
-    label: options.entry.label,
-    value: options.entry.value,
-    count: options.entry.count,
-    ...(options.entry.icon ? { icon: options.entry.icon } : {}),
-  }) ?? options.entry.icon
+  return (
+    options.filterUi.row.getIcon?.({
+      label: options.entry.label,
+      value: options.entry.value,
+      count: options.entry.count,
+      ...(options.entry.icon ? { icon: options.entry.icon } : {}),
+    }) ?? options.entry.icon
+  )
 }
 
 function mapSelectedTreeEntries(options: {

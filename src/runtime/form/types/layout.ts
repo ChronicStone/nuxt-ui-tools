@@ -27,3 +27,9 @@ export interface FormContainerLayout extends FormItemLayout {
   /** Visual variant used by structural field renderers. */
   variant?: 'plain' | 'card' | 'section' | 'fieldset'
 }
+
+/**
+ * Rendering shell used by `<NutForm>` when the same form root is placed inline or inside
+ * overlay layouts.
+ */
+export type FormRenderShell = 'inline' | 'drawer' | 'modal' | 'fullscreen'

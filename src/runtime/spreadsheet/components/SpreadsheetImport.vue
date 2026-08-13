@@ -4,10 +4,10 @@ import { computed, ref, nextTick, watch } from 'vue'
 import { provideUiToolsLocale, useUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
 import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
+
 import { useSpreadsheetView } from '../composables/use-spreadsheet-view'
-import type { SpreadsheetComponentApi } from './types'
-import SpreadsheetImportFooter from './layout/SpreadsheetImportFooter.vue'
 import SpreadsheetImportFileBar from './layout/SpreadsheetImportFileBar.vue'
+import SpreadsheetImportFooter from './layout/SpreadsheetImportFooter.vue'
 import SpreadsheetImportHeader from './layout/SpreadsheetImportHeader.vue'
 import SpreadsheetImportSidebar from './layout/SpreadsheetImportSidebar.vue'
 import SpreadsheetImportMatchingStep from './steps/SpreadsheetImportMatchingStep.vue'
@@ -15,6 +15,7 @@ import SpreadsheetImportReferencesStep from './steps/SpreadsheetImportReferences
 import SpreadsheetImportReviewStep from './steps/SpreadsheetImportReviewStep.vue'
 import SpreadsheetImportStructureStep from './steps/SpreadsheetImportStructureStep.vue'
 import SpreadsheetImportUploadStep from './steps/SpreadsheetImportUploadStep.vue'
+import type { SpreadsheetComponentApi } from './types'
 
 const props = defineProps<{
   spreadsheet: SpreadsheetComponentApi
@@ -40,19 +41,13 @@ const view = useSpreadsheetView({
   t,
 })
 
-const workspaceTitle = computed(() =>
-  props.title ?? humanizeKey(props.spreadsheet.schema.value.importKey),
+const workspaceTitle = computed(
+  () => props.title ?? humanizeKey(props.spreadsheet.schema.value.importKey),
 )
 const workspaceDescription = computed(() => props.description)
-const {
-  activeStep,
-  activeStepIndex,
-  steps,
-  goToPrevStep,
-  goToNextStep,
-} = view
-const currentStep = computed(() =>
-  steps.value.find((step) => step.value === activeStep.value) ?? steps.value[0],
+const { activeStep, activeStepIndex, steps, goToPrevStep, goToNextStep } = view
+const currentStep = computed(
+  () => steps.value.find((step) => step.value === activeStep.value) ?? steps.value[0],
 )
 const stageTitle = computed(() => {
   if (activeStep.value === 'upload')
@@ -77,10 +72,20 @@ const isPreparingNextStep = ref<boolean>(false)
 const hasWorkbook = computed(() => Boolean(props.spreadsheet.workbook.value))
 const hasHeaders = computed(() => props.spreadsheet.headers.value.length > 0)
 function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
-  if ('file' in schema && schema.file && typeof schema.file === 'object' && 'maxRecords' in schema.file)
+  if (
+    'file' in schema &&
+    schema.file &&
+    typeof schema.file === 'object' &&
+    'maxRecords' in schema.file
+  )
     return typeof schema.file.maxRecords === 'number' ? schema.file.maxRecords : undefined
 
-  if ('source' in schema && schema.source && typeof schema.source === 'object' && 'maxRecords' in schema.source)
+  if (
+    'source' in schema &&
+    schema.source &&
+    typeof schema.source === 'object' &&
+    'maxRecords' in schema.source
+  )
     return typeof schema.source.maxRecords === 'number' ? schema.source.maxRecords : undefined
 
   return undefined
@@ -105,11 +110,12 @@ const sidebarItems = computed(() =>
   steps.value.map((step, index) => ({
     ...step,
     disabled: step.value !== 'upload' && !hasWorkbook.value,
-    status: index < activeStepIndex.value
-      ? 'done' as const
-      : step.value === activeStep.value
-        ? 'active' as const
-        : 'pending' as const,
+    status:
+      index < activeStepIndex.value
+        ? ('done' as const)
+        : step.value === activeStep.value
+          ? ('active' as const)
+          : ('pending' as const),
   })),
 )
 
@@ -125,11 +131,9 @@ function humanizeKey(value: string) {
 }
 
 const actionHint = computed(() => {
-  if (activeStep.value === 'structure')
-    return t('spreadsheet.common.clickToChangeHeaderRow')
+  if (activeStep.value === 'structure') return t('spreadsheet.common.clickToChangeHeaderRow')
 
-  if (activeStep.value === 'references')
-    return t('spreadsheet.common.referencesStepHint')
+  if (activeStep.value === 'references') return t('spreadsheet.common.referencesStepHint')
 
   return undefined
 })
@@ -142,7 +146,7 @@ const primaryActionLabel = computed(() => {
 })
 
 const primaryActionColor = computed(() =>
-  activeStep.value === 'review' ? 'success' as const : 'primary' as const,
+  activeStep.value === 'review' ? ('success' as const) : ('primary' as const),
 )
 const primaryActionBusyLabel = computed(() => t('spreadsheet.common.preparingReview'))
 
@@ -152,9 +156,7 @@ function getNextStepValue() {
 
 function waitForPaint() {
   return new Promise<void>((resolve) =>
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => resolve()),
-    ),
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
   )
 }
 
@@ -195,9 +197,11 @@ watch(hasWorkbook, (nextHasWorkbook) => {
 <template>
   <div
     class="grid h-full overflow-hidden bg-default lg:grid-cols-[320px_minmax(0,1fr)]"
-      :class="isFullscreen
-      ? 'min-h-full'
-      : 'min-h-[44rem] rounded-[var(--ui-radius)] border border-default/70 shadow-sm'"
+    :class="
+      isFullscreen
+        ? 'min-h-full'
+        : 'min-h-[44rem] rounded-[var(--ui-radius)] border border-default/70 shadow-sm'
+    "
   >
     <SpreadsheetImportSidebar
       :title="workspaceTitle"
@@ -208,29 +212,40 @@ watch(hasWorkbook, (nextHasWorkbook) => {
     <div class="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] bg-default">
       <div
         class="relative min-h-0"
-        :class="activeStep === 'matching' || activeStep === 'review' ? 'overflow-hidden' : 'overflow-y-auto'"
+        :class="
+          activeStep === 'matching' || activeStep === 'review'
+            ? 'overflow-hidden'
+            : 'overflow-y-auto'
+        "
       >
         <div
           v-if="isPreparingNextStep"
           class="absolute inset-0 z-10 flex items-center justify-center bg-default/72 backdrop-blur-sm"
         >
-          <div class="flex items-center gap-3 rounded-[var(--ui-radius)] border border-default/70 bg-default px-4 py-3 shadow-sm">
-            <div class="size-4 animate-spin rounded-full border-2 border-default border-t-primary" />
+          <div
+            class="flex items-center gap-3 rounded-[var(--ui-radius)] border border-default/70 bg-default px-4 py-3 shadow-sm"
+          >
+            <div
+              class="size-4 animate-spin rounded-full border-2 border-default border-t-primary"
+            />
             <div class="grid gap-0.5">
               <span class="text-sm font-medium text-highlighted">{{ primaryActionBusyLabel }}</span>
-              <span class="text-xs text-muted">{{ t('spreadsheet.common.preparingReviewDescription') }}</span>
+              <span class="text-xs text-muted">{{
+                t('spreadsheet.common.preparingReviewDescription')
+              }}</span>
             </div>
           </div>
         </div>
 
         <div
           class="grid px-6 py-5 lg:px-10 lg:py-6"
-          :class="activeStep === 'matching' || activeStep === 'review' ? 'h-full grid-rows-[auto_minmax(0,1fr)] gap-4' : 'gap-4'"
+          :class="
+            activeStep === 'matching' || activeStep === 'review'
+              ? 'h-full grid-rows-[auto_minmax(0,1fr)] gap-4'
+              : 'gap-4'
+          "
         >
-          <div
-            class="grid gap-3"
-            :class="activeStep === 'upload' ? '' : 'pb-2'"
-          >
+          <div class="grid gap-3" :class="activeStep === 'upload' ? '' : 'pb-2'">
             <SpreadsheetImportHeader
               :title="stageTitle"
               :description="stageDescription"
@@ -268,10 +283,7 @@ watch(hasWorkbook, (nextHasWorkbook) => {
             :spreadsheet="spreadsheet"
           />
 
-          <SpreadsheetImportReviewStep
-            v-else
-            :spreadsheet="spreadsheet"
-          />
+          <SpreadsheetImportReviewStep v-else :spreadsheet="spreadsheet" />
         </div>
       </div>
 
@@ -287,7 +299,12 @@ watch(hasWorkbook, (nextHasWorkbook) => {
         :primary-icon="activeStep === 'review' ? 'i-lucide-check' : 'i-lucide-arrow-right'"
         :show-export="activeStep === 'review' && overflowRowCount > 0"
         :export-label="t('spreadsheet.common.exportDiscardedRows', { count: overflowRowCount })"
-        :meta-text="t('spreadsheet.common.importSummary', { importable: importableRowCount, total: spreadsheet.rowSummary.value.totalRows })"
+        :meta-text="
+          t('spreadsheet.common.importSummary', {
+            importable: importableRowCount,
+            total: spreadsheet.rowSummary.value.totalRows,
+          })
+        "
         @previous="goToPrevStep"
         @primary="handlePrimaryAction"
       />

@@ -2,6 +2,13 @@ import { computed } from 'vue'
 
 const playgroundPages = [
   {
+    id: 'form',
+    path: '/form',
+    labelKey: 'nav.form',
+    descriptionKey: 'nav.formDescription',
+    icon: 'i-lucide-clipboard-list',
+  },
+  {
     id: 'table-remote',
     path: '/table-remote',
     labelKey: 'nav.tableRemote',
@@ -39,8 +46,6 @@ export function usePlaygroundNavigation() {
   const route = useRoute()
   const router = useRouter()
   const { $i18n } = useNuxtApp()
-
-  console.info('i18n instance in usePlaygroundNavigation:', $i18n)
 
   const homeLink = computed(() => ({
     label: $i18n.t('nav.home'),

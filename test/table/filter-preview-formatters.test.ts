@@ -53,7 +53,7 @@ describe('filter preview formatters', () => {
         rangeFormatter: ({ from, to }: { from?: Date; to?: Date }) =>
           [from, to]
             .filter((value): value is Date => value instanceof Date)
-            .map(value => value.toISOString().slice(0, 10))
+            .map((value) => value.toISOString().slice(0, 10))
             .join(' -> '),
       },
     } satisfies TableDateFilterDefinition<{ createdAt: string }, object, 'createdAt'>

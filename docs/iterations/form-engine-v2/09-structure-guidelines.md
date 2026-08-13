@@ -6,11 +6,32 @@ The goal is not to make a smaller form engine than `shared-ui`.
 The goal is to keep the same architectural quality while adapting the API, UI library, and rough edges.
 
 `shared-ui` is the architectural baseline, not a frozen blueprint.
+For existing form-engine capabilities, always inspect the `shared-ui` implementation first and
+preserve its responsibility split unless there is a concrete reason to diverge.
+
 New concepts are allowed and some existing concepts should change, but only for a clear reason.
 
 ## Porting Standard
 
 Do not half-port important architecture.
+
+The baseline source is:
+
+```txt
+/Users/cyprienthao/Documents/DEV/ORGANISATIONS/AGORASTORE/NEW_STACK/tars-shared-ui/src/runtime/lib/form
+```
+
+Before touching an existing feature area, inspect the matching files there. This is mandatory for:
+
+- form provider and global form API
+- inline/modal/drawer/fullscreen layouts
+- layout cleanup and transition lifecycle
+- stepper and actions
+- state/output type engine
+- field config and field-owned value/output types
+- context/dependency/query orchestration
+- validation/i18n behavior
+- field runtime APIs
 
 Before simplifying a `shared-ui` concept, answer:
 
@@ -36,6 +57,9 @@ Invalid reasons to diverge:
 
 - fewer files for convenience
 - shorter code at the cost of mixed concerns
+- "the current V2 slice is small"
+- "we can wire it in the renderer for now"
+- "Nuxt UI makes it possible to do inline"
 - inline conditional type logic that hides field ownership
 - dropping a feature because it is temporarily inconvenient
 - moving logic into a broad helper instead of the owning field/config layer
@@ -53,6 +77,7 @@ Working behavior is not enough. The implementation must also preserve:
 ## Component Structure
 
 Do not flatten components into one broad directory.
+Do not let a component own multiple form-engine layers.
 
 Use concern-based folders:
 
@@ -82,6 +107,16 @@ src/runtime/form/fields/select/
 Renderer components should orchestrate rendering.
 Field components should own the UI for one field kind.
 Layout/action/provider components should not be mixed into renderer or field folders.
+
+The shared-ui layout architecture is the baseline:
+
+- a renderer/host chooses the layout
+- each layout type is a separate component
+- layouts own shell markup and transition/close events
+- form/runtime controllers own submit, cancel, and output resolution
+- cleanup is a first-class lifecycle boundary, not an incidental timeout in a broad renderer
+
+In Nuxt UI, the primitive events may differ from Naive UI, but the responsibility split should stay.
 
 ## Shared Utilities
 
@@ -145,11 +180,13 @@ The graph engine applies mode-specific behavior above the field layer.
 Long conditional type dispatch should follow the readable `shared-ui` style:
 
 ```ts
-export type ResolveFieldOutput<TField extends FormField> =
-  TField extends TextField ? TextFieldOutput
-  : TField extends SelectField ? SelectFieldOutput<TField>
-  : TField extends ObjectField ? ObjectFieldOutput<unknown>
-  : unknown
+export type ResolveFieldOutput<TField extends FormField> = TField extends TextField
+  ? TextFieldOutput
+  : TField extends SelectField
+    ? SelectFieldOutput<TField>
+    : TField extends ObjectField
+      ? ObjectFieldOutput<unknown>
+      : unknown
 ```
 
 Do not let formatters turn this into a deeply indented unreadable block.

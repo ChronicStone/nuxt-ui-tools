@@ -81,7 +81,7 @@ function createHappyPathSchema() {
           match: {
             headers: ['Test center ID'],
           },
-          rules: v => [
+          rules: (v) => [
             v.required(),
             v.validate({
               name: 'testCenterMismatch',
@@ -94,63 +94,63 @@ function createHappyPathSchema() {
           match: {
             headers: ['Secure code'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('examNameRaw', {
           match: {
             headers: ['Exam name'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.option('productId', {
           match: {
             headers: ['Product'],
           },
           options: ({ context }) =>
-            context.products.map(product => ({
+            context.products.map((product) => ({
               label: product.name,
               value: product.id,
             })),
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('firstName', {
           match: {
             headers: ['First name'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('lastName', {
           match: {
             headers: ['Last name'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.email('email', {
           match: {
             headers: ['Email'],
           },
           parse: ({ cell }) => cell.text.trim().toLowerCase(),
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.date('completionDate', {
           match: {
             headers: ['Completed date'],
           },
           parse: ({ cell }) => new Date(`${cell.text.trim()} UTC`).toISOString(),
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.enum('status', {
           match: {
             headers: ['Status'],
           },
           options: ['Done'],
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('country', {
           match: {
             headers: ['Tc country'],
           },
-          rules: v => [v.required()],
+          rules: (v) => [v.required()],
         }),
         column.text('batchName', {
           match: {
@@ -179,10 +179,11 @@ function createHappyPathSchema() {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
           },
-          options: group => group.items.map(item => ({
-            label: item.name,
-            value: item.id,
-          })),
+          options: (group) =>
+            group.items.map((item) => ({
+              label: item.name,
+              value: item.id,
+            })),
           values: {
             mode: 'csv',
             separator: ',',

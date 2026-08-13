@@ -1,7 +1,6 @@
 import { computed, shallowRef, type ComputedRef } from 'vue'
 
 import type { SpreadsheetNormalizedSchema } from '../types'
-import { createSpreadsheetDynamicBuilder } from '../utils/builders'
 import {
   createSpreadsheetHeaderCells,
   flattenSpreadsheetStaticColumns,
@@ -9,6 +8,7 @@ import {
   matchSpreadsheetColumns,
   matchSpreadsheetDynamicColumns,
 } from '../utils'
+import { createSpreadsheetDynamicBuilder } from '../utils/builders'
 
 export interface UseSpreadsheetColumnMatchingParams {
   schema: ComputedRef<SpreadsheetNormalizedSchema>
@@ -44,8 +44,9 @@ export function useSpreadsheetColumnMatching(params: UseSpreadsheetColumnMatchin
 
   function assignColumn(headerIndex: number, columnKey: string) {
     const nextAssignments = Object.fromEntries(
-      Object.entries(manualColumnAssignments.value)
-        .filter(([index, key]) => index !== String(headerIndex) && key !== columnKey),
+      Object.entries(manualColumnAssignments.value).filter(
+        ([index, key]) => index !== String(headerIndex) && key !== columnKey,
+      ),
     )
 
     manualColumnAssignments.value = {

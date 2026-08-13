@@ -19,14 +19,14 @@ export function createSpreadsheetContextQueries<
 
 export function createSpreadsheetContextData<
   TItems extends readonly SpreadsheetContextItem<string, unknown>[],
->(
-  items: TItems,
-  results: readonly Pick<SpreadsheetContextQueryResult, 'data'>[],
-) {
-  return items.reduce<Partial<SpreadsheetContextDataFromItems<TItems>>>((acc, item, index) => ({
-    ...acc,
-    [item.key]: results[index]?.data,
-  }), {})
+>(items: TItems, results: readonly Pick<SpreadsheetContextQueryResult, 'data'>[]) {
+  return items.reduce<Partial<SpreadsheetContextDataFromItems<TItems>>>(
+    (acc, item, index) => ({
+      ...acc,
+      [item.key]: results[index]?.data,
+    }),
+    {},
+  )
 }
 
 export function createSpreadsheetContextStatus(

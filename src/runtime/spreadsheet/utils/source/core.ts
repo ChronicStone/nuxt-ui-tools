@@ -13,9 +13,7 @@ async function resolveSpreadsheetBinarySource(source: SpreadsheetBinarySource) {
 }
 
 function normalizeSheetRows(rows: unknown[][]) {
-  return rows.map((row) =>
-    row.map((cell) => cell ?? ''),
-  )
+  return rows.map((row) => row.map((cell) => cell ?? ''))
 }
 
 export async function parseSpreadsheetWorkbook(params: {

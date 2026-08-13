@@ -1,4 +1,5 @@
 import type { DataTag, QueryKey } from '@tanstack/vue-query'
+
 import type { GenericObject } from '../../shared/types/utils'
 import type { FormAsyncResource, FormContextResource, FormSyncResource } from './utils'
 
@@ -33,7 +34,9 @@ type ResolveContextSource<TSource> = TSource extends () => infer TResult
 /**
  * Fully typed context object exposed to field callbacks as `ctx`.
  */
-export type FormContextData<TContext extends FormContextDefinition | undefined = FormContextDefinition> = TContext extends FormContextDefinition
+export type FormContextData<
+  TContext extends FormContextDefinition | undefined = FormContextDefinition,
+> = TContext extends FormContextDefinition
   ? { [TKey in keyof TContext]: ResolveContextSource<TContext[TKey]> }
   : {}
 

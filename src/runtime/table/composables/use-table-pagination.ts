@@ -14,25 +14,50 @@ export interface UseTablePaginationParams {
 }
 
 export function useTablePagination(options: UseTablePaginationParams) {
-  const stableRemoteRowCount = ref<number>(0)
-  const rowCount = computed(() =>
+  const stableRemoteRowCount = ref<number | null>(0)
+  const mode = computed(() => options.state.queryState.pagination.value.mode)
+  const loadedCount = computed(() => options.queryContent.data.value.rows.length)
+  const rowCount = computed<number | null>(() =>
     options.schema.value.source.mode === 'remote'
       ? stableRemoteRowCount.value
       : options.queryContent.data.value.rowCount,
   )
-  const currentPage = computed(() => options.state.queryState.pagination.value.pageIndex)
-  const pageSize = computed(() => options.state.queryState.pagination.value.pageSize)
+  const currentPage = computed(() => {
+    const pagination = options.state.queryState.pagination.value
+    return pagination.mode === 'offset' ? pagination.pageIndex : 1
+  })
+  const pageSize = computed(() => {
+    const pagination = options.state.queryState.pagination.value
+    if (pagination.mode === 'none') return Math.max(1, loadedCount.value)
+    return pagination.pageSize
+  })
   const totalPages = computed(() =>
-    Math.max(1, Math.ceil(rowCount.value / Math.max(1, pageSize.value))),
+    Math.max(1, Math.ceil((rowCount.value ?? loadedCount.value) / Math.max(1, pageSize.value))),
   )
-  const canPreviousPage = computed(() => currentPage.value > 1)
-  const canNextPage = computed(() => currentPage.value < totalPages.value)
+  const canPreviousPage = computed(() => mode.value === 'offset' && currentPage.value > 1)
+  const canNextPage = computed(() => {
+    if (mode.value === 'cursor') return infiniteHasNextPage.value
+    if (mode.value === 'none') return false
+    return currentPage.value < totalPages.value
+  })
+  const infiniteHasNextPage = computed(() => options.queryContent.infiniteQuery.hasNextPage.value)
+  const isLoadingMore = computed(() => options.queryContent.infiniteQuery.isFetchingNextPage.value)
+  const loadMoreError = computed(() =>
+    options.queryContent.infiniteQuery.isFetchNextPageError.value
+      ? options.queryContent.infiniteQuery.error.value
+      : null,
+  )
   const state = computed(() => ({
+    mode: mode.value,
     pageIndex: currentPage.value,
     pageSize: pageSize.value,
     pageCount: totalPages.value,
+    loadedCount: loadedCount.value,
+    totalCount: rowCount.value,
     hasNextPage: canNextPage.value,
     hasPreviousPage: canPreviousPage.value,
+    isLoadingMore: isLoadingMore.value,
+    loadMoreError: loadMoreError.value,
   }))
   const pageSizeOptions = computed(() =>
     getPageSizeOptions({
@@ -50,19 +75,16 @@ export function useTablePagination(options: UseTablePaginationParams) {
   })
 
   function setPage(page: number) {
-    const nextPage = Math.max(1, Math.min(page, totalPages.value))
-
-    options.state.queryState.pagination.value = {
-      ...options.state.queryState.pagination.value,
-      pageIndex: nextPage,
-    }
+    if (mode.value !== 'offset') return
+    options.state.queryState.setOffsetPagination({
+      pageIndex: Math.max(1, Math.min(page, totalPages.value)),
+      pageSize: pageSize.value,
+    })
   }
 
   function setPageSize(nextPageSize: number) {
-    options.state.queryState.pagination.value = {
-      pageIndex: 1,
-      pageSize: nextPageSize,
-    }
+    if (mode.value !== 'offset') return
+    options.state.queryState.setOffsetPagination({ pageIndex: 1, pageSize: nextPageSize })
   }
 
   function next() {
@@ -74,17 +96,18 @@ export function useTablePagination(options: UseTablePaginationParams) {
   }
 
   function reset() {
-    setPageSize(
-      getDefaultPageSize({
-        schema: options.schema.value,
-        layout: options.layout.activeLayout.value,
-      }),
-    )
+    options.state.queryState.resetPagination()
+  }
+
+  async function loadMore() {
+    if (mode.value !== 'cursor' || !infiniteHasNextPage.value || isLoadingMore.value) return
+    return options.queryContent.infiniteQuery.fetchNextPage()
   }
 
   watch(
     [pageSizeOptions, compatiblePageSize],
     ([optionsList, nextPageSize]) => {
+      if (mode.value !== 'offset') return
       if (optionsList.includes(pageSize.value)) return
       if (nextPageSize === pageSize.value) return
 
@@ -94,7 +117,10 @@ export function useTablePagination(options: UseTablePaginationParams) {
   )
 
   watch(
-    [() => options.queryContent.data.value.rowCount, () => options.queryContent.status.value.isDataFetching],
+    [
+      () => options.queryContent.data.value.rowCount,
+      () => options.queryContent.status.value.isDataFetching,
+    ],
     ([nextRowCount, isFetching]) => {
       if (options.schema.value.source.mode !== 'remote') {
         stableRemoteRowCount.value = nextRowCount
@@ -108,12 +134,16 @@ export function useTablePagination(options: UseTablePaginationParams) {
   )
 
   return {
+    mode,
     rowCount,
+    loadedCount,
     currentPage,
     pageSize,
     totalPages,
     canPreviousPage,
     canNextPage,
+    isLoadingMore,
+    loadMoreError,
     state,
     pageSizeOptions,
     setPage,
@@ -121,5 +151,6 @@ export function useTablePagination(options: UseTablePaginationParams) {
     next,
     previous,
     reset,
+    loadMore,
   }
 }

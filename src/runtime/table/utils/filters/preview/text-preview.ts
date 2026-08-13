@@ -1,4 +1,8 @@
-import type { TableQueryStateFilterRule, TableTextFilterDefinition, TableTextFilterOperator } from '../../../types'
+import type {
+  TableQueryStateFilterRule,
+  TableTextFilterDefinition,
+  TableTextFilterOperator,
+} from '../../../types'
 import { resolveTextFilterUi } from '../ui'
 import type { FilterPreviewResult } from './types'
 

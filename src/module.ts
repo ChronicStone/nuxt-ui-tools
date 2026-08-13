@@ -1,10 +1,25 @@
-import { breakpointsTailwind } from '@vueuse/core'
 import { createResolver, defineNuxtModule, installModule } from '@nuxt/kit'
+import { breakpointsTailwind } from '@vueuse/core'
 import type { ModuleOptions as ViewportOptions } from 'nuxt-viewport'
 
 import { setupComponents } from './components'
 import { setupImports } from './imports'
+import type { DataListUiConfig } from './runtime/table/types'
 import { setupTailwindCss } from './tailwindcss'
+
+declare module '@nuxt/schema' {
+  interface AppConfigInput {
+    nuxtUiTools?: {
+      dataList?: DataListUiConfig
+    }
+  }
+
+  interface AppConfig {
+    nuxtUiTools?: {
+      dataList?: DataListUiConfig
+    }
+  }
+}
 
 export interface ModuleOptions {
   prefix?: string
@@ -28,6 +43,7 @@ const optimizeDepsInclude = [
   '@vueuse/core',
   '@internationalized/date',
   'motion-v',
+  'tailwind-merge',
   'vue-draggable-plus',
 ] as const
 

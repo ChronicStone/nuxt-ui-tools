@@ -1,20 +1,17 @@
 import type { ComputedRef, ShallowRef } from 'vue'
 
-import type {
-  ExtractSpreadsheetRow,
-  ExtractSpreadsheetSubmitPayload,
-} from './inference'
+import type { ExtractSpreadsheetRow, ExtractSpreadsheetSubmitPayload } from './inference'
 import type {
   SpreadsheetReferenceResolution,
   SpreadsheetResolvedReferenceRow,
 } from './reference-session'
+import type { SpreadsheetHeaderCell, SpreadsheetParsedRow, SpreadsheetRowSummary } from './rows'
 import type {
   SpreadsheetBinarySource,
   SpreadsheetWorkbookData,
   SpreadsheetWorkbookSelection,
   SpreadsheetWorkbookSheet,
 } from './source'
-import type { SpreadsheetHeaderCell, SpreadsheetParsedRow, SpreadsheetRowSummary } from './rows'
 
 export interface SpreadsheetImportStatus {
   initialized: boolean
@@ -33,7 +30,9 @@ export interface SpreadsheetImportApi<TSchema> {
   headerCells: ComputedRef<SpreadsheetHeaderCell[]>
   rows: ComputedRef<readonly (readonly unknown[])[]>
   parsedRows: ComputedRef<readonly SpreadsheetParsedRow<ExtractSpreadsheetRow<TSchema>>[]>
-  resolvedRows: ComputedRef<readonly SpreadsheetResolvedReferenceRow<ExtractSpreadsheetRow<TSchema>>[]>
+  resolvedRows: ComputedRef<
+    readonly SpreadsheetResolvedReferenceRow<ExtractSpreadsheetRow<TSchema>>[]
+  >
   rowData: ComputedRef<readonly ExtractSpreadsheetRow<TSchema>[]>
   submitPayloads: ComputedRef<readonly ExtractSpreadsheetSubmitPayload<TSchema>[]>
   rowSummary: ShallowRef<SpreadsheetRowSummary>
@@ -43,17 +42,11 @@ export interface SpreadsheetImportApi<TSchema> {
   sourceError: ShallowRef<unknown>
   contextError: ComputedRef<unknown>
   rowError: ShallowRef<unknown>
-  loadSource: (params: {
-    source: SpreadsheetBinarySource
-    fileName?: string
-  }) => void
+  loadSource: (params: { source: SpreadsheetBinarySource; fileName?: string }) => void
   clearSource: () => void
   setSheetName: (sheetName: string) => void
   setHeaderRowIndex: (headerRowIndex: number) => void
-  assignColumn: (params: {
-    headerIndex: number
-    columnKey: string
-  }) => void
+  assignColumn: (params: { headerIndex: number; columnKey: string }) => void
   clearColumnAssignment: (headerIndex: number) => void
   selectReference: (params: {
     referenceField: string
@@ -61,9 +54,6 @@ export interface SpreadsheetImportApi<TSchema> {
     selectedValue: unknown
     selectedLabel: string
   }) => void
-  clearReference: (params: {
-    referenceField: string
-    sourceValue: string
-  }) => void
+  clearReference: (params: { referenceField: string; sourceValue: string }) => void
   refresh: () => Promise<void>
 }

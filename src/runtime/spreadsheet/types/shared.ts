@@ -33,9 +33,7 @@ export type SpreadsheetModifier =
 export type SpreadsheetHeaderMatcher =
   | string
   | RegExp
-  | ((params: {
-      header: SpreadsheetHeaderMatchInput
-    }) => number | null)
+  | ((params: { header: SpreadsheetHeaderMatchInput }) => number | null)
 
 export interface SpreadsheetMatchDefinition {
   headers: readonly SpreadsheetHeaderMatcher[]

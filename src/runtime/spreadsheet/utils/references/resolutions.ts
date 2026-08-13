@@ -15,21 +15,20 @@ import {
 import { resolveSpreadsheetOptionEntries } from '../options'
 import { executeSpreadsheetRules, resolveSpreadsheetRelationRules } from '../validation/core'
 import { createSpreadsheetReferenceCandidates } from './candidates'
-import {
-  isSpreadsheetResolutionDefinition,
-  normalizeSpreadsheetRuntimeResolutions,
-} from './guards'
+import { isSpreadsheetResolutionDefinition, normalizeSpreadsheetRuntimeResolutions } from './guards'
 import { collectSpreadsheetReferenceSources, collectSpreadsheetReferenceTokens } from './sources'
 
 function isSpreadsheetRelationDefinition(
   value: unknown,
 ): value is SpreadsheetRelationDefinition<Record<string, unknown>> {
-  return value !== null
-    && typeof value === 'object'
-    && 'column' in value
-    && typeof value.column === 'string'
-    && 'rules' in value
-    && typeof value.rules === 'function'
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'column' in value &&
+    typeof value.column === 'string' &&
+    'rules' in value &&
+    typeof value.rules === 'function'
+  )
 }
 
 export function createSpreadsheetReferenceResolutions(params: {
@@ -37,8 +36,8 @@ export function createSpreadsheetReferenceResolutions(params: {
   rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
   context: Record<string, unknown>
 }) {
-  return collectSpreadsheetReferenceSources(params.references, params.rows)
-    .flatMap(({ reference, entries }) =>
+  return collectSpreadsheetReferenceSources(params.references, params.rows).flatMap(
+    ({ reference, entries }) =>
       entries.map<SpreadsheetReferenceResolution>((entry) => {
         const candidates = createSpreadsheetReferenceCandidates({
           sourceValue: entry.value,
@@ -65,7 +64,7 @@ export function createSpreadsheetReferenceResolutions(params: {
           candidates,
         }
       }),
-    )
+  )
 }
 
 export function applySpreadsheetReferenceResolutions(params: {
@@ -75,7 +74,9 @@ export function applySpreadsheetReferenceResolutions(params: {
   relations?: readonly unknown[]
 }) {
   const resolutionDefinitions = normalizeSpreadsheetRuntimeResolutions(params.references)
-  const resolutionsBySourceField = params.resolutions.reduce<Map<string, SpreadsheetReferenceResolution[]>>((groups, resolution) => {
+  const resolutionsBySourceField = params.resolutions.reduce<
+    Map<string, SpreadsheetReferenceResolution[]>
+  >((groups, resolution) => {
     const entries = groups.get(resolution.sourceField) ?? []
     groups.set(resolution.sourceField, [...entries, resolution])
     return groups
@@ -97,15 +98,14 @@ export function applySpreadsheetReferenceResolutions(params: {
       if (!sourceTokens.length) continue
 
       for (const sourceValue of sourceTokens) {
-        const resolution = resolutions.find(entry => entry.sourceValue === sourceValue)
+        const resolution = resolutions.find((entry) => entry.sourceValue === sourceValue)
         if (!resolution) continue
 
         if (resolution.selectedValue !== undefined) {
           if (Array.isArray(rawValue)) {
             const values = multiValueOutputs.get(resolution.outputField) ?? []
             multiValueOutputs.set(resolution.outputField, [...values, resolution.selectedValue])
-          }
-          else {
+          } else {
             setSpreadsheetValueAtPath(data, resolution.outputField, resolution.selectedValue)
           }
           continue
@@ -124,16 +124,20 @@ export function applySpreadsheetReferenceResolutions(params: {
         rules: reference.rules,
       })
 
-      issues.push(...referenceIssues.map((issue: {
-        ruleKey?: string
-        level: 'error' | 'warning' | 'info'
-        code: string
-        message: string
-      }) => ({
-        ...issue,
-        rowIndex: row.index,
-        columnKey: reference.targetField,
-      })))
+      issues.push(
+        ...referenceIssues.map(
+          (issue: {
+            ruleKey?: string
+            level: 'error' | 'warning' | 'info'
+            code: string
+            message: string
+          }) => ({
+            ...issue,
+            rowIndex: row.index,
+            columnKey: reference.targetField,
+          }),
+        ),
+      )
     }
 
     for (const relation of params.relations ?? []) {
@@ -148,16 +152,20 @@ export function applySpreadsheetReferenceResolutions(params: {
         }),
       })
 
-      issues.push(...relationIssues.map((issue: {
-        ruleKey?: string
-        level: 'error' | 'warning' | 'info'
-        code: string
-        message: string
-      }) => ({
-        ...issue,
-        rowIndex: row.index,
-        columnKey: relation.column,
-      })))
+      issues.push(
+        ...relationIssues.map(
+          (issue: {
+            ruleKey?: string
+            level: 'error' | 'warning' | 'info'
+            code: string
+            message: string
+          }) => ({
+            ...issue,
+            rowIndex: row.index,
+            columnKey: relation.column,
+          }),
+        ),
+      )
     }
 
     return {
@@ -180,8 +188,8 @@ export function createSpreadsheetReferenceQueryRequests(params: {
     rows: params.rows,
     context: params.context,
   }).flatMap<SpreadsheetReferenceQueryRequest>((resolution) => {
-    const referenceEntry = normalizeSpreadsheetRuntimeResolutions(params.references).find((entry) =>
-      entry.targetField === (resolution.targetField ?? resolution.referenceField),
+    const referenceEntry = normalizeSpreadsheetRuntimeResolutions(params.references).find(
+      (entry) => entry.targetField === (resolution.targetField ?? resolution.referenceField),
     )
     if (!isSpreadsheetResolutionDefinition(referenceEntry)) return []
 
@@ -191,17 +199,19 @@ export function createSpreadsheetReferenceQueryRequests(params: {
     const sourceRow = params.rows.find((row) => row.index === resolution.rowIndexes[0])
     if (!sourceRow) return []
 
-    return [{
-      scope: reference.scope,
-      resolutionField: reference.targetField,
-      targetField: reference.targetField,
-      referenceField: reference.targetField,
-      sourceValue: resolution.sourceValue,
-      query: reference.getOptions({
-        context: params.context,
-        row: sourceRow.data,
-        search: resolution.sourceValue,
-      }),
-    }]
+    return [
+      {
+        scope: reference.scope,
+        resolutionField: reference.targetField,
+        targetField: reference.targetField,
+        referenceField: reference.targetField,
+        sourceValue: resolution.sourceValue,
+        query: reference.getOptions({
+          context: params.context,
+          row: sourceRow.data,
+          search: resolution.sourceValue,
+        }),
+      },
+    ]
   })
 }

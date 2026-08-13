@@ -22,8 +22,8 @@ function createResolutionId(resolution: SpreadsheetReferenceResolution) {
 }
 
 export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParams) {
-  const resolutionDefinitions = computed(() =>
-    params.schema.value.resolutions ?? params.schema.value.references ?? [],
+  const resolutionDefinitions = computed(
+    () => params.schema.value.resolutions ?? params.schema.value.references ?? [],
   )
   const autoResolutions = computed(() =>
     createSpreadsheetReferenceResolutions({
@@ -84,10 +84,7 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
     }
   }
 
-  function clearResolution(selection: {
-    resolutionField: string
-    sourceValue: string
-  }) {
+  function clearResolution(selection: { resolutionField: string; sourceValue: string }) {
     const key = `${selection.resolutionField}::${selection.sourceValue}`
     const nextSelections = { ...manualSelections.value }
     delete nextSelections[key]
@@ -120,10 +117,7 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
         selectedValue: selection.selectedValue,
         selectedLabel: selection.selectedLabel,
       }),
-    clearReference: (selection: {
-      referenceField: string
-      sourceValue: string
-    }) =>
+    clearReference: (selection: { referenceField: string; sourceValue: string }) =>
       clearResolution({
         resolutionField: selection.referenceField,
         sourceValue: selection.sourceValue,

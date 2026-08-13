@@ -27,13 +27,14 @@ const optionSource = useTableFilterOptions({
 })
 
 const filterUi = computed(() => resolveBooleanFilterUi(props.definition, 'is'))
-const isActive = computed(() =>
-  internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+const isActive = computed(
+  () =>
+    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
 )
 
 const entries = computed(() =>
   optionSource.filteredEntries.value
-    .filter(entry => typeof entry.value === 'boolean')
+    .filter((entry) => typeof entry.value === 'boolean')
     .map((entry) => ({
       ...entry,
       label: entry.value === true ? filterUi.value.labels.true : filterUi.value.labels.false,
@@ -42,7 +43,7 @@ const entries = computed(() =>
 )
 
 const radioItems = computed(() =>
-  entries.value.map(entry => ({
+  entries.value.map((entry) => ({
     label: entry.label,
     value: String(entry.value),
     count: entry.count,
@@ -52,7 +53,9 @@ const radioItems = computed(() =>
 
 const radioValue = computed({
   get: () => {
-    const value = internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value
+    const value = internals.filterPresentation.getPanelDraftFilterState({
+      key: props.definition.key,
+    })?.value
     return value === true || value === false ? String(value) : undefined
   },
   set: (value: string | undefined) => {

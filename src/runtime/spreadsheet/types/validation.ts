@@ -4,10 +4,7 @@ export type SpreadsheetLazyMessage<
   TValue,
   TParams extends unknown[] = [],
   TMeta extends Record<string, unknown> = {},
-> =
-  | string
-  | (() => string)
-  | ((ctx: SpreadsheetMessageContext<TValue, TParams, TMeta>) => string)
+> = string | (() => string) | ((ctx: SpreadsheetMessageContext<TValue, TParams, TMeta>) => string)
 
 export type SpreadsheetValidatorResult<TMeta extends Record<string, unknown> = {}> =
   | boolean
@@ -57,14 +54,10 @@ export interface SpreadsheetRule<
   }['bivarianceHack']
 }
 
-export type SpreadsheetFieldRules<TValue> =
-  readonly SpreadsheetRule<TValue, SpreadsheetRuleFlags>[]
+export type SpreadsheetFieldRules<TValue> = readonly SpreadsheetRule<TValue, SpreadsheetRuleFlags>[]
 
 export interface SpreadsheetRuleBuilder {
-  validate: <
-    TValue,
-    TMeta extends Record<string, unknown> = {},
-  >(options: {
+  validate: <TValue, TMeta extends Record<string, unknown> = {}>(options: {
     name?: string
     validator: (value: TValue) => SpreadsheetValidatorResult<TMeta>
     message: SpreadsheetLazyMessage<TValue, [], TMeta>
@@ -75,13 +68,21 @@ export interface SpreadsheetRuleBuilder {
   number: CreateSpreadsheetRuleReturn<number, [], {}>
   min: CreateSpreadsheetRuleReturn<number, [min: number], { min: number }>
   max: CreateSpreadsheetRuleReturn<number, [max: number], { max: number }>
-  between: CreateSpreadsheetRuleReturn<number, [min: number, max: number], {
-    min: number
-    max: number
-  }>
+  between: CreateSpreadsheetRuleReturn<
+    number,
+    [min: number, max: number],
+    {
+      min: number
+      max: number
+    }
+  >
   oneOf: <const TValues extends readonly unknown[]>(
     values: TValues,
-    overrides?: SpreadsheetRuleOverrides<SpreadsheetWidenLiteral<TValues[number]>, [TValues], { values: TValues }>,
+    overrides?: SpreadsheetRuleOverrides<
+      SpreadsheetWidenLiteral<TValues[number]>,
+      [TValues],
+      { values: TValues }
+    >,
   ) => SpreadsheetRule<SpreadsheetWidenLiteral<TValues[number]>>
 }
 
@@ -94,16 +95,21 @@ export type CreateSpreadsheetRuleReturn<
   TParams extends unknown[],
   TMeta extends Record<string, unknown>,
   TFlags extends SpreadsheetRuleFlags = {},
-> =
-  TParams extends []
-    ? (overrides?: SpreadsheetRuleOverrides<TValue, TParams, TMeta>) => SpreadsheetRule<TValue, TFlags>
-    : (...args: [...TParams, overrides?: SpreadsheetRuleOverrides<TValue, TParams, TMeta>]) => SpreadsheetRule<TValue, TFlags>
+> = TParams extends []
+  ? (
+      overrides?: SpreadsheetRuleOverrides<TValue, TParams, TMeta>,
+    ) => SpreadsheetRule<TValue, TFlags>
+  : (
+      ...args: [...TParams, overrides?: SpreadsheetRuleOverrides<TValue, TParams, TMeta>]
+    ) => SpreadsheetRule<TValue, TFlags>
 
-export type SpreadsheetWidenLiteral<TValue> =
-  TValue extends string ? string
-    : TValue extends number ? number
-      : TValue extends boolean ? boolean
-        : TValue
+export type SpreadsheetWidenLiteral<TValue> = TValue extends string
+  ? string
+  : TValue extends number
+    ? number
+    : TValue extends boolean
+      ? boolean
+      : TValue
 
 export type CreateSpreadsheetRule = <
   TValue,

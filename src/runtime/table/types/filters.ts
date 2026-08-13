@@ -33,11 +33,11 @@ export type TableScalarDateFilterOperator = Exclude<TableDateFilterOperator, 'be
 export type TableFilterCommitMode = 'manual' | 'auto'
 export type TableFilterPreviewMode = 'auto' | 'summary' | 'tags'
 export type TableFilterDisplayLocation = 'tag' | 'panel' | 'tag-dynamic'
-export type TableFilterDisplayLocationValue =
-  | TableFilterDisplayLocation
-  | string
+export type TableFilterDisplayLocationValue = TableFilterDisplayLocation | string
 
-export interface TableFilterBehaviorCommon<TOperator extends TableFilterOperator = TableFilterOperator> {
+export interface TableFilterBehaviorCommon<
+  TOperator extends TableFilterOperator = TableFilterOperator,
+> {
   defaultValue?: TableQueryStateFilterValue
   operators?: TOperator[]
   defaultOperator?: TOperator
@@ -97,9 +97,14 @@ export interface TableTextFilterEditorConfig {
   leadingIcon?: string
   autocomplete?: 'on' | 'off' | string
   input?: TableTextFilterUiInputConfig
-  operators?: Partial<Record<TableTextFilterOperator, {
-    placeholder?: TableTextValue
-  }>>
+  operators?: Partial<
+    Record<
+      TableTextFilterOperator,
+      {
+        placeholder?: TableTextValue
+      }
+    >
+  >
 }
 
 export type TableOptionFilterSelectionMode = 'auto' | 'single' | 'multiple'
@@ -497,7 +502,7 @@ export interface TableNumberFilterUiResolved {
       showTooltip: boolean
     }
     preview: TableNumberFilterPreviewConfigResolved
-}
+  }
 }
 
 export interface TableDateFilterUiResolved {
@@ -549,7 +554,7 @@ export interface TableDateFilterUiResolved {
       maxRangeDays: number | undefined
     }
     preview: TableDateFilterPreviewConfigResolved
-}
+  }
 }
 
 export interface TableFilterOptionValueEntry<TValue = TableFilterPrimitiveValue> {
@@ -649,9 +654,7 @@ export type TableFilterFacetSpec<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
   TKey extends string = TableKnownFieldPath<TRow>,
-> =
-  | TableFilterFacetMode
-  | TableFilterFacetConfig<TRow, TContext, TKey>
+> = TableFilterFacetMode | TableFilterFacetConfig<TRow, TContext, TKey>
 
 export interface TableStaticFilterRule<
   TRow extends GenericObject = GenericObject,
@@ -736,21 +739,15 @@ export interface TableOptionFilterDefinition<
   TKey extends string = TableKnownFieldPath<TRow>,
   TValue = TableFilterPrimitiveValue,
   TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
-> extends TableFilterDefinitionBase<
-  TRow,
-  TContext,
-  TKey,
-  TValue[],
-  TableOptionFilterOperator
-> {
+> extends TableFilterDefinitionBase<TRow, TContext, TKey, TValue[], TableOptionFilterOperator> {
   kind: 'option'
   source?: {
     options?: ReadonlyArray<TableOptionEntryForPresentation<TValue, TPresentation>>
     query?: (
       context: TableFilterOptionQueryContext,
     ) => TableQueryDefinition<
-      TableOptionEntryForPresentation<TValue, TPresentation>[] |
-      TableFilterOptionQueryResultForPresentation<TValue, TPresentation>
+      | TableOptionEntryForPresentation<TValue, TPresentation>[]
+      | TableFilterOptionQueryResultForPresentation<TValue, TPresentation>
     >
     facet?: TableFilterFacetSpec<TRow, TContext, TKey>
     sort?: 'alpha' | 'count'

@@ -1,10 +1,9 @@
 <script setup lang="ts">
+import UAlert from '@nuxt/ui/components/Alert.vue'
 import { computed } from 'vue'
 
-import UAlert from '@nuxt/ui/components/Alert.vue'
-
-import type { FormInfoField } from '../../types'
 import { useFieldControl } from '../../composables/use-field-control'
+import type { FormInfoField } from '../../types'
 import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
@@ -12,7 +11,10 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { params } = useFieldControl(() => props.field, () => props.path)
+const { params } = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
 
 const description = computed(() => {
   const content = props.field.content
@@ -29,10 +31,5 @@ const description = computed(() => {
 </script>
 
 <template>
-  <UAlert
-    color="neutral"
-    variant="soft"
-    icon="i-lucide-info"
-    :description="description"
-  />
+  <UAlert color="neutral" variant="soft" icon="i-lucide-info" :description="description" />
 </template>

@@ -10,7 +10,9 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex min-h-10 flex-wrap items-center gap-3 border border-default/70 bg-default px-4 py-2.5">
+  <div
+    class="flex min-h-10 flex-wrap items-center gap-3 border border-default/70 bg-default px-4 py-2.5"
+  >
     <template v-if="hasWorkbook">
       <UIcon name="i-lucide-file-spreadsheet" class="size-4 text-success" />
       <span class="font-mono text-xs font-medium text-highlighted">
@@ -24,9 +26,7 @@ defineProps<{
 
     <template v-else>
       <UIcon name="i-lucide-file-spreadsheet" class="size-[18px] text-muted" />
-      <span class="font-mono text-[11px] text-muted">
-        No file loaded
-      </span>
+      <span class="font-mono text-[11px] text-muted"> No file loaded </span>
     </template>
   </div>
 </template>

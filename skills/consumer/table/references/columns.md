@@ -46,7 +46,7 @@ column.composite('skillsSummary', {
 ```ts
 column.display('statusBadge', {
   label: 'Status',
-  render: ({ row }) => row.isActive ? 'Online' : 'Paused',
+  render: ({ row }) => (row.isActive ? 'Online' : 'Paused'),
 })
 ```
 

@@ -47,14 +47,14 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
   const tagDefinitions = computed(() =>
     definitions.value.filter((definition) => {
-      const presentation = resolved.value.find(item => item.key === definition.key)
+      const presentation = resolved.value.find((item) => item.key === definition.key)
       return presentation?.location === 'tag'
     }),
   )
 
   const activeDynamicDefinitions = computed(() =>
     definitions.value.filter((definition) => {
-      const presentation = resolved.value.find(item => item.key === definition.key)
+      const presentation = resolved.value.find((item) => item.key === definition.key)
       return (
         presentation?.location === 'tag-dynamic' &&
         presentation.visible &&
@@ -65,7 +65,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
   const dormantDynamicDefinitions = computed(() =>
     definitions.value.filter((definition) => {
-      const presentation = resolved.value.find(item => item.key === definition.key)
+      const presentation = resolved.value.find((item) => item.key === definition.key)
       return (
         presentation?.location === 'tag-dynamic' &&
         !presentation.visible &&
@@ -81,14 +81,17 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
   const panelDefinitions = computed(() =>
     definitions.value.filter((definition) => {
-      const presentation = resolved.value.find(item => item.key === definition.key)
+      const presentation = resolved.value.find((item) => item.key === definition.key)
       return presentation?.location === 'panel'
     }),
   )
 
   const hasPanelFilters = computed(() => panelDefinitions.value.length > 0)
-  const activePanelCount = computed(() =>
-    panelDefinitions.value.filter(definition => options.filters.getFilterState({ key: definition.key }) != null).length,
+  const activePanelCount = computed(
+    () =>
+      panelDefinitions.value.filter(
+        (definition) => options.filters.getFilterState({ key: definition.key }) != null,
+      ).length,
   )
 
   const panelSections = computed(() => {
@@ -124,7 +127,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   function openPanel() {
     panelDraftFilters.value = options.filters.activeUiFilters.value
       .filter((rule) => isPanelKey(rule.key))
-      .map(rule => ({ ...rule }))
+      .map((rule) => ({ ...rule }))
     panelOpen.value = true
   }
 
@@ -135,20 +138,24 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   function resetPanelDraft() {
     panelDraftFilters.value = options.filters.activeUiFilters.value
       .filter((rule) => isPanelKey(rule.key))
-      .map(rule => ({ ...rule }))
+      .map((rule) => ({ ...rule }))
   }
 
   function clearPanelDraft() {
     panelDraftFilters.value = []
-    const preservedRules = options.filters.activeUiFilters.value.filter(rule => !isPanelKey(rule.key))
+    const preservedRules = options.filters.activeUiFilters.value.filter(
+      (rule) => !isPanelKey(rule.key),
+    )
     options.filters.replaceFilters({
       rules: preservedRules,
     })
   }
 
   function applyPanelDraft() {
-    const nextPanelRules = panelDraftFilters.value.map(rule => ({ ...rule }))
-    const preservedRules = options.filters.activeUiFilters.value.filter(rule => !isPanelKey(rule.key))
+    const nextPanelRules = panelDraftFilters.value.map((rule) => ({ ...rule }))
+    const preservedRules = options.filters.activeUiFilters.value.filter(
+      (rule) => !isPanelKey(rule.key),
+    )
     options.filters.replaceFilters({
       rules: [...preservedRules, ...nextPanelRules],
     })
@@ -156,7 +163,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   }
 
   function getPanelDraftFilterState(input: { key: string }) {
-    return panelDraftFilters.value.find(rule => rule.key === input.key)
+    return panelDraftFilters.value.find((rule) => rule.key === input.key)
   }
 
   function getPanelFilterOperator(input: { key: string }) {
@@ -224,7 +231,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   }
 
   function clearPanelFilter(input: { key: string }) {
-    panelDraftFilters.value = panelDraftFilters.value.filter(rule => rule.key !== input.key)
+    panelDraftFilters.value = panelDraftFilters.value.filter((rule) => rule.key !== input.key)
   }
 
   function getDynamicActivationToken(input: { key: string }) {
@@ -232,12 +239,12 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   }
 
   function isPanelKey(key: string) {
-    return panelDefinitions.value.some(definition => definition.key === key)
+    return panelDefinitions.value.some((definition) => definition.key === key)
   }
 
   function upsertPanelRule(rule: TableQueryStateFilterRule) {
     panelDraftFilters.value = [
-      ...panelDraftFilters.value.filter(item => item.key !== rule.key),
+      ...panelDraftFilters.value.filter((item) => item.key !== rule.key),
       rule,
     ]
   }

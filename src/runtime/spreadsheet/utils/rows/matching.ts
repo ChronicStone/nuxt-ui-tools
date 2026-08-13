@@ -39,18 +39,14 @@ function getDefaultMatchDefinition(column: SpreadsheetStaticColumn): Spreadsheet
   }
 }
 
-function scoreHeaderMatcher(
-  header: SpreadsheetHeaderCell,
-  matcher: SpreadsheetHeaderMatcher,
-) {
+function scoreHeaderMatcher(header: SpreadsheetHeaderCell, matcher: SpreadsheetHeaderMatcher) {
   if (typeof matcher === 'string') {
     const left = applySpreadsheetNormalization(header.text, defaultHeaderModifiers)
     const right = applySpreadsheetNormalization(matcher, defaultHeaderModifiers)
     return left === right ? 1 : null
   }
 
-  if (matcher instanceof RegExp)
-    return matcher.test(header.text) ? 0.95 : null
+  if (matcher instanceof RegExp) return matcher.test(header.text) ? 0.95 : null
 
   return matcher({
     header: {
@@ -84,12 +80,10 @@ function findHeaderMatch(
   if (!candidates.length) return null
   if (definition.prefer !== 'best-score') return candidates[0]
 
-  return candidates
-    .slice()
-    .sort((left, right) => {
-      if (left.score !== right.score) return right.score - left.score
-      return left.header.index - right.header.index
-    })[0]
+  return candidates.slice().sort((left, right) => {
+    if (left.score !== right.score) return right.score - left.score
+    return left.header.index - right.header.index
+  })[0]
 }
 
 function getDynamicHeaderPatterns(
@@ -102,8 +96,7 @@ function getDynamicHeaderPatterns(
   if (strategy === 'template' && column.header?.template)
     return [column.header.template({ source })]
 
-  if (strategy === 'patterns' && column.header?.patterns)
-    return column.header.patterns({ source })
+  if (strategy === 'patterns' && column.header?.patterns) return column.header.patterns({ source })
 
   return [label]
 }
@@ -122,11 +115,9 @@ export function flattenSpreadsheetStaticColumns(
   entries: readonly unknown[],
 ): SpreadsheetStaticColumn[] {
   return entries.flatMap((entry) => {
-    if (isSpreadsheetColumnGroup(entry))
-      return flattenSpreadsheetStaticColumns(entry.columns)
+    if (isSpreadsheetColumnGroup(entry)) return flattenSpreadsheetStaticColumns(entry.columns)
 
-    if (isSpreadsheetStaticColumn(entry))
-      return [entry]
+    if (isSpreadsheetStaticColumn(entry)) return [entry]
 
     return []
   })
@@ -166,12 +157,14 @@ export function matchSpreadsheetColumns(
 
     usedHeaderIndexes.add(match.header.index)
 
-    return [{
-      key: column.key,
-      columnIndex: match.header.index,
-      header: match.header,
-      column,
-    }]
+    return [
+      {
+        key: column.key,
+        columnIndex: match.header.index,
+        header: match.header,
+        column,
+      },
+    ]
   })
 
   return [...manualMatches, ...automaticMatches]
@@ -191,15 +184,17 @@ function matchCollectionColumn(
 
     reservedHeaderIndexes.add(match.header.index)
 
-    return [{
-      key: column.rootKey,
-      targetKey: item.id,
-      columnIndex: match.header.index,
-      header: match.header,
-      column,
-      source: item.source,
-      item,
-    }]
+    return [
+      {
+        key: column.rootKey,
+        targetKey: item.id,
+        columnIndex: match.header.index,
+        header: match.header,
+        column,
+        source: item.source,
+        item,
+      },
+    ]
   })
 }
 
@@ -211,19 +206,26 @@ function matchOptionGroupsColumn(
   const sourceItems = column.source ?? []
 
   return sourceItems.flatMap((source) => {
-    const match = findHeaderMatch(headers, createOptionGroupsMatchDefinition(column, source), reservedHeaderIndexes)
+    const match = findHeaderMatch(
+      headers,
+      createOptionGroupsMatchDefinition(column, source),
+      reservedHeaderIndexes,
+    )
     if (!match) return []
 
     reservedHeaderIndexes.add(match.header.index)
 
-    return [{
-      key: column.output.into,
-      targetKey: column.targetKey?.(source) ?? column.itemKey?.(source) ?? String(match.header.index),
-      columnIndex: match.header.index,
-      header: match.header,
-      column,
-      source,
-    }]
+    return [
+      {
+        key: column.output.into,
+        targetKey:
+          column.targetKey?.(source) ?? column.itemKey?.(source) ?? String(match.header.index),
+        columnIndex: match.header.index,
+        header: match.header,
+        column,
+        source,
+      },
+    ]
   })
 }
 
@@ -255,8 +257,6 @@ export function getSpreadsheetUnmatchedColumns(
   const matchedKeys = new Set(matches.map((match) => match.key))
 
   return columns.flatMap((column) =>
-    matchedKeys.has(column.key)
-      ? []
-      : [{ key: column.key, column }],
+    matchedKeys.has(column.key) ? [] : [{ key: column.key, column }],
   )
 }

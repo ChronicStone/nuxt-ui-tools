@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { TableDateFilterDefinition } from '#ui-tools/table/types'
+
 import {
   resolveDateFilterRangeCalendarPanels,
   resolveDateFilterRangePresets,
@@ -27,11 +28,7 @@ describe('date filter utils', () => {
       now,
     })
 
-    expect(presets.map((preset) => preset.label)).toEqual([
-      'Today',
-      '7 days ago',
-      'Start of month',
-    ])
+    expect(presets.map((preset) => preset.label)).toEqual(['Today', '7 days ago', 'Start of month'])
     expect(presets[1]?.value.getFullYear()).toBe(2026)
     expect(presets[1]?.value.getMonth()).toBe(2)
     expect(presets[1]?.value.getDate()).toBe(12)
@@ -81,8 +78,12 @@ describe('date filter utils', () => {
       'Last month',
       'Year to date',
     ])
-    expect(resolveDateFilterRangeCalendarPanels({ definition: baseDefinition, mobile: true })).toBe(1)
-    expect(resolveDateFilterRangeCalendarPanels({ definition: baseDefinition, mobile: false })).toBe(1)
+    expect(resolveDateFilterRangeCalendarPanels({ definition: baseDefinition, mobile: true })).toBe(
+      1,
+    )
+    expect(
+      resolveDateFilterRangeCalendarPanels({ definition: baseDefinition, mobile: false }),
+    ).toBe(1)
   })
 
   it('allows disabling presets and overriding responsive panel counts', () => {
