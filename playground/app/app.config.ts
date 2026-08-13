@@ -18,6 +18,19 @@ export default defineAppConfig({
         },
       },
     },
+    form: {
+      density: 'default',
+      field: {
+        ui: {
+          label: 'tracking-tight',
+        },
+      },
+      matrix: {
+        ui: {
+          columnHeader: 'playground-form-matrix-header',
+        },
+      },
+    },
   },
   playground: {
     surface: 'mist',

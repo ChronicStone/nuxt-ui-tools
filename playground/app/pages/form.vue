@@ -60,6 +60,21 @@ const showcaseForm = defineFormSchema({
     columns: 8,
     gap: 16,
   },
+  controls: {
+    dirtyCheck: true,
+    confirmNavOnDirty: true,
+    syncInput: true,
+    validate: true,
+  },
+  modal: {
+    maxWidth: 1100,
+    maxHeight: '90dvh',
+  },
+  drawer: {
+    width: 720,
+    resizable: true,
+    placement: 'right',
+  },
   context: {
     countries: () =>
       queryOptions({
@@ -609,6 +624,182 @@ const showcaseForm = defineFormSchema({
       ],
     },
     {
+      key: 'section.v1',
+      type: 'divider',
+      label: 'V1 advanced fields',
+      layout: { span: 'full' },
+    },
+    {
+      key: 'schedule.startsAt',
+      type: 'datetime',
+      label: 'Date and time',
+      clearable: true,
+    },
+    {
+      key: 'schedule.period',
+      type: 'daterange',
+      label: 'Date range',
+      clearable: true,
+    },
+    {
+      key: 'schedule.months',
+      type: 'monthrange',
+      label: 'Month range',
+    },
+    {
+      key: 'schedule.window',
+      type: 'datetimerange',
+      label: 'Date-time range',
+    },
+    { key: 'schedule.month', type: 'month', label: 'Month' },
+    { key: 'schedule.year', type: 'year', label: 'Year', min: 2020, max: 2040 },
+    {
+      key: 'taxonomy.category',
+      type: 'tree-select',
+      label: 'Tree select',
+      selectionControl: 'radio',
+      searchable: true,
+      showPath: true,
+      options: [
+        {
+          key: 'engineering',
+          label: 'Engineering',
+          children: [
+            { key: 'frontend', label: 'Frontend' },
+            { key: 'backend', label: 'Backend' },
+          ],
+        },
+        { key: 'operations', label: 'Operations' },
+      ],
+    },
+    {
+      key: 'taxonomy.path',
+      type: 'cascader',
+      label: 'Cascader',
+      leafOnly: true,
+      options: [
+        {
+          key: 'europe',
+          label: 'Europe',
+          children: [
+            { key: 'france', label: 'France' },
+            { key: 'belgium', label: 'Belgium' },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'taxonomy.categories',
+      type: 'tree-select',
+      label: 'Checkbox tree select',
+      multiple: true,
+      cascade: true,
+      clearable: true,
+      options: [
+        {
+          key: 'products',
+          label: 'Products',
+          children: [
+            { key: 'auctions', label: 'Auctions' },
+            { key: 'direct-sales', label: 'Direct sales' },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'taxonomy.scopes',
+      type: 'tree',
+      label: 'Checkbox tree',
+      multiple: true,
+      cascade: true,
+      props: { defaultExpanded: ['catalog'] },
+      options: [
+        {
+          key: 'catalog',
+          label: 'Catalog',
+          children: [
+            { key: 'catalog.read', label: 'Read' },
+            { key: 'catalog.write', label: 'Write' },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'taxonomy.owner',
+      type: 'tree',
+      label: 'Radio tree',
+      selectionControl: 'radio',
+      props: { defaultExpanded: ['teams'] },
+      options: [
+        {
+          key: 'teams',
+          label: 'Teams',
+          children: [
+            { key: 'engineering', label: 'Engineering' },
+            { key: 'operations', label: 'Operations' },
+          ],
+        },
+      ],
+    },
+    {
+      key: 'compactIdentity',
+      type: 'group',
+      label: 'Grouped controls',
+      fields: [
+        { key: 'code', type: 'text', placeholder: 'Code' },
+        { key: 'region', type: 'select', options: ['EU', 'US'] },
+      ],
+      layout: { span: 'full' },
+    },
+    {
+      key: 'permissions',
+      type: 'matrix',
+      label: 'Permission matrix',
+      rows: [
+        { key: 'catalog', label: 'Catalog' },
+        { key: 'orders', label: 'Orders' },
+        { key: 'users', label: 'Users' },
+      ],
+      fields: [
+        { key: 'enabled', type: 'switch', label: 'Enabled' },
+        { key: 'scope', type: 'select', label: 'Scope', options: ['own', 'all'] },
+      ],
+      layout: { span: 'full' },
+    },
+    {
+      key: 'lineItems',
+      type: 'array-table',
+      label: 'Array table',
+      fields: [
+        { key: 'label', type: 'text', label: 'Label', validation: { required: true } },
+        { key: 'quantity', type: 'number', label: 'Quantity', default: 1 },
+      ],
+      draggable: true,
+      confirmDelete: true,
+      virtualFields: { position: (index) => index + 1 },
+      layout: { span: 'full' },
+    },
+    {
+      key: 'contactMethods',
+      type: 'array-variant',
+      label: 'Discriminated contacts',
+      variantKey: 'kind',
+      variants: [
+        {
+          key: 'email',
+          label: 'Email',
+          fields: [{ key: 'address', type: 'text', label: 'Email address' }],
+        },
+        {
+          key: 'phone',
+          label: 'Phone',
+          fields: [{ key: 'number', type: 'phone-number', label: 'Phone number' }],
+        },
+      ],
+      displayMode: 'tabs',
+      layout: { span: 'full' },
+    },
+    {
       key: 'avatar',
       type: 'file',
       label: 'File',
@@ -692,7 +883,8 @@ const showcaseForm = defineFormSchema({
             validate: ({ api, deps }) => {
               const value = api.value.get()
               if (!value) return true
-              return value === deps.securityPassword || 'Passwords do not match.'
+              const password = 'password' in deps ? deps.password : null
+              return value === password || 'Passwords do not match.'
             },
           },
         ],
