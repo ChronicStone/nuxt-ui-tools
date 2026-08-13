@@ -9,12 +9,14 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useTableInternals } from '../../composables/use-table-internals'
 import { GRID_DEFAULTS } from '../../constants/grid'
-import { resolveTableRowId } from '../../utils'
+import type { DataListGridUi } from '../../types'
+import { mergeDataListUiClass, resolveTableRowId } from '../../utils'
 import GridCard from './GridCard.vue'
 import GridSkeleton from './GridSkeleton.vue'
 
 const props = defineProps<{
-  height: string
+  height?: string
+  ui?: DataListGridUi
 }>()
 
 const internals = useTableInternals()
@@ -33,7 +35,9 @@ const gridTemplateColumns = computed(
 const gridColumn = computed(
   () => `span ${internals.grid.itemColumnSpan.value} / span ${internals.grid.itemColumnSpan.value}`,
 )
-const minHeight = computed(() => (isContained.value ? `calc(${props.height} - 6rem)` : '24rem'))
+const minHeight = computed(() =>
+  isContained.value && props.height ? `calc(${props.height} - 6rem)` : '24rem',
+)
 const showInitialLoading = computed(
   () =>
     internals.queryContent.status.value.isBooting ||
@@ -127,20 +131,25 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
 <template>
   <div
     ref="hostRef"
-    class="relative"
     :class="
-      isContained ? 'overflow-hidden rounded-md border border-accented bg-default shadow-sm' : ''
+      mergeDataListUiClass(
+        isContained
+          ? 'relative overflow-hidden rounded-md border border-accented bg-default shadow-sm'
+          : 'relative',
+        undefined,
+        ui?.root,
+      )
     "
   >
     <div
       v-if="isContained"
       ref="viewportRef"
-      class="overflow-auto px-4 py-4 sm:px-5"
-      :style="{ height }"
+      :class="mergeDataListUiClass('overflow-auto px-4 py-4 sm:px-5', undefined, ui?.viewport)"
+      :style="height ? { height } : undefined"
     >
       <div
         v-if="!internals.queryContent.status.value.isBooting"
-        class="relative"
+        :class="mergeDataListUiClass('relative', undefined, ui?.canvas)"
         :style="{ height: `${totalSize}px`, minHeight }"
       >
         <AnimatePresence mode="popLayout">
@@ -148,14 +157,17 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             v-for="virtualRow in virtualRows"
             :key="String(virtualRow.key)"
             :ref="measureVirtualRow"
-            class="absolute left-0 top-0 w-full"
+            :class="mergeDataListUiClass('absolute left-0 top-0 w-full', undefined, ui?.row)"
             :style="{ transform: `translateY(${virtualRow.start}px)` }"
             :initial="canAnimateRows ? { opacity: 0, y: 6, scale: 0.995 } : false"
             :animate="{ opacity: 1, y: 0, scale: 1 }"
             :exit="canAnimateRows ? { opacity: 0, y: 4, scale: 0.995 } : undefined"
             :transition="{ duration: canAnimateRows ? 0.22 : 0, ease: [0.25, 1, 0.5, 1] }"
           >
-            <div class="grid gap-4" :style="{ gridTemplateColumns }">
+            <div
+              :class="mergeDataListUiClass('grid gap-4', undefined, ui?.flow)"
+              :style="{ gridTemplateColumns }"
+            >
               <div
                 v-for="(row, offset) in rowChunks[virtualRow.index]?.rows ?? []"
                 :key="
@@ -165,7 +177,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
                     index: (rowChunks[virtualRow.index]?.start ?? 0) + offset,
                   })
                 "
-                class="min-w-0 self-stretch h-full"
+                :class="mergeDataListUiClass('h-full min-w-0 self-stretch', undefined, ui?.item)"
                 :style="{ gridColumn }"
               >
                 <GridCard :row-index="rowChunks[virtualRow.index]!.start + offset" />
@@ -176,8 +188,12 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
       </div>
     </div>
 
-    <div v-else class="px-0 py-1">
-      <div v-if="showInitialLoading" class="grid gap-4" :style="{ gridTemplateColumns, minHeight }">
+    <div v-else :class="mergeDataListUiClass('px-0 py-1', undefined, ui?.flow)">
+      <div
+        v-if="showInitialLoading"
+        :class="mergeDataListUiClass('grid gap-4', undefined, ui?.loading)"
+        :style="{ gridTemplateColumns, minHeight }"
+      >
         <div v-for="row in skeletonRows" :key="row" :style="{ gridColumn }">
           <GridSkeleton />
         </div>
@@ -185,22 +201,52 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
 
       <div
         v-else-if="showError"
-        class="flex items-center justify-center px-4 py-10"
+        :class="
+          mergeDataListUiClass('flex items-center justify-center px-4 py-10', undefined, ui?.error)
+        "
         :style="{ minHeight }"
       >
         <div
-          class="grid max-w-md justify-items-center gap-4 rounded-[28px] border border-danger/20 bg-default/95 px-6 py-8 text-center shadow-lg backdrop-blur"
+          :class="
+            mergeDataListUiClass(
+              'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-danger/20 bg-default/95 px-6 py-8 text-center shadow-lg backdrop-blur',
+              undefined,
+              ui?.errorCard,
+            )
+          "
         >
           <div
-            class="flex size-12 items-center justify-center rounded-2xl border border-danger/20 bg-danger/5"
+            :class="
+              mergeDataListUiClass(
+                'flex size-12 items-center justify-center rounded-2xl border border-danger/20 bg-danger/5',
+                undefined,
+                ui?.errorIcon,
+              )
+            "
           >
             <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
           </div>
-          <div class="grid gap-1">
-            <div class="text-base font-medium text-highlighted">
+          <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.errorCopy)">
+            <div
+              :class="
+                mergeDataListUiClass(
+                  'text-base font-medium text-highlighted',
+                  undefined,
+                  ui?.errorTitle,
+                )
+              "
+            >
               {{ t('table.states.gridError.title') }}
             </div>
-            <p class="text-sm leading-6 text-muted">
+            <p
+              :class="
+                mergeDataListUiClass(
+                  'text-sm leading-6 text-muted',
+                  undefined,
+                  ui?.errorDescription,
+                )
+              "
+            >
               {{ t('table.states.gridError.description') }}
             </p>
           </div>
@@ -209,6 +255,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             variant="soft"
             size="lg"
             icon="i-lucide-refresh-cw"
+            :ui="{ base: ui?.retry }"
             @click="refreshData"
           >
             {{ t('table.states.gridError.action') }}
@@ -218,23 +265,53 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
 
       <div
         v-else-if="showEmpty"
-        class="flex items-center justify-center px-4 py-10"
+        :class="
+          mergeDataListUiClass('flex items-center justify-center px-4 py-10', undefined, ui?.empty)
+        "
         :style="{ minHeight }"
       >
         <slot name="empty">
           <div
-            class="grid max-w-md justify-items-center gap-4 rounded-[28px] border border-default/70 bg-gradient-to-br from-default via-default to-elevated/60 px-6 py-9 text-center shadow-sm"
+            :class="
+              mergeDataListUiClass(
+                'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-default/70 bg-gradient-to-br from-default via-default to-elevated/60 px-6 py-9 text-center shadow-sm',
+                undefined,
+                ui?.emptyCard,
+              )
+            "
           >
             <div
-              class="flex size-12 items-center justify-center rounded-2xl border border-default/80 bg-elevated/80"
+              :class="
+                mergeDataListUiClass(
+                  'flex size-12 items-center justify-center rounded-2xl border border-default/80 bg-elevated/80',
+                  undefined,
+                  ui?.emptyIcon,
+                )
+              "
             >
               <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
             </div>
-            <div class="grid gap-1">
-              <div class="text-base font-medium text-highlighted">
+            <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.emptyCopy)">
+              <div
+                :class="
+                  mergeDataListUiClass(
+                    'text-base font-medium text-highlighted',
+                    undefined,
+                    ui?.emptyTitle,
+                  )
+                "
+              >
                 {{ t('table.states.gridEmpty.title') }}
               </div>
-              <p class="text-sm leading-6 text-muted">
+              <p
+                :class="
+                  mergeDataListUiClass(
+                    'text-sm leading-6 text-muted',
+                    undefined,
+                    ui?.emptyDescription,
+                  )
+                "
+              >
                 {{ t('table.states.gridEmpty.description') }}
               </p>
             </div>
@@ -244,7 +321,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
 
       <motion.div
         v-else
-        class="grid auto-rows-fr gap-4"
+        :class="mergeDataListUiClass('grid auto-rows-fr gap-4', undefined, ui?.flow)"
         :style="{ gridTemplateColumns }"
         :initial="{ opacity: 0 }"
         :animate="{ opacity: 1 }"
@@ -259,7 +336,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
               index,
             })
           "
-          class="min-w-0 h-full self-stretch"
+          :class="mergeDataListUiClass('h-full min-w-0 self-stretch', undefined, ui?.item)"
           :style="{ gridColumn }"
           :initial="canAnimateRows ? { opacity: 0, y: 6 } : false"
           :animate="{ opacity: 1, y: 0 }"
@@ -283,13 +360,16 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
       <motion.div
         v-if="showInitialLoading"
         key="grid-loading"
-        class="absolute inset-0 z-20"
+        :class="mergeDataListUiClass('absolute inset-0 z-20', undefined, ui?.loading)"
         :initial="{ opacity: 0 }"
         :animate="{ opacity: 1 }"
         :exit="{ opacity: 0 }"
         :transition="{ duration: 0.18, ease: [0.25, 1, 0.5, 1] }"
       >
-        <div class="grid gap-4 px-4 py-4 sm:px-5" :style="{ gridTemplateColumns, minHeight }">
+        <div
+          :class="mergeDataListUiClass('grid gap-4 px-4 py-4 sm:px-5', undefined, ui?.flow)"
+          :style="{ gridTemplateColumns, minHeight }"
+        >
           <div v-for="row in skeletonRows" :key="row" :style="{ gridColumn }">
             <GridSkeleton />
           </div>
@@ -299,25 +379,59 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
       <motion.div
         v-else-if="showError"
         key="grid-error"
-        class="absolute inset-0 z-20 flex items-center justify-center px-4 py-10"
+        :class="
+          mergeDataListUiClass(
+            'absolute inset-0 z-20 flex items-center justify-center px-4 py-10',
+            undefined,
+            ui?.error,
+          )
+        "
         :initial="{ opacity: 0, y: 8 }"
         :animate="{ opacity: 1, y: 0 }"
         :exit="{ opacity: 0, y: 4 }"
         :transition="{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }"
       >
         <div
-          class="grid max-w-md justify-items-center gap-4 rounded-[28px] border border-danger/20 bg-default/95 px-6 py-8 text-center shadow-lg backdrop-blur"
+          :class="
+            mergeDataListUiClass(
+              'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-danger/20 bg-default/95 px-6 py-8 text-center shadow-lg backdrop-blur',
+              undefined,
+              ui?.errorCard,
+            )
+          "
         >
           <div
-            class="flex size-12 items-center justify-center rounded-2xl border border-danger/20 bg-danger/5"
+            :class="
+              mergeDataListUiClass(
+                'flex size-12 items-center justify-center rounded-2xl border border-danger/20 bg-danger/5',
+                undefined,
+                ui?.errorIcon,
+              )
+            "
           >
             <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
           </div>
-          <div class="grid gap-1">
-            <div class="text-base font-medium text-highlighted">
+          <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.errorCopy)">
+            <div
+              :class="
+                mergeDataListUiClass(
+                  'text-base font-medium text-highlighted',
+                  undefined,
+                  ui?.errorTitle,
+                )
+              "
+            >
               {{ t('table.states.gridError.title') }}
             </div>
-            <p class="text-sm leading-6 text-muted">
+            <p
+              :class="
+                mergeDataListUiClass(
+                  'text-sm leading-6 text-muted',
+                  undefined,
+                  ui?.errorDescription,
+                )
+              "
+            >
               {{ t('table.states.gridError.description') }}
             </p>
           </div>
@@ -326,6 +440,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
             variant="soft"
             size="lg"
             icon="i-lucide-refresh-cw"
+            :ui="{ base: ui?.retry }"
             @click="refreshData"
           >
             {{ t('table.states.gridError.action') }}
@@ -336,7 +451,13 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
       <motion.div
         v-else-if="showEmpty"
         key="grid-empty"
-        class="absolute inset-0 z-20 flex items-center justify-center px-4 py-10"
+        :class="
+          mergeDataListUiClass(
+            'absolute inset-0 z-20 flex items-center justify-center px-4 py-10',
+            undefined,
+            ui?.empty,
+          )
+        "
         :initial="{ opacity: 0, y: 8 }"
         :animate="{ opacity: 1, y: 0 }"
         :exit="{ opacity: 0, y: 4 }"
@@ -344,18 +465,46 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
       >
         <slot name="empty">
           <div
-            class="grid max-w-md justify-items-center gap-4 rounded-[28px] border border-default/70 bg-gradient-to-br from-default via-default to-elevated/60 px-6 py-9 text-center shadow-sm"
+            :class="
+              mergeDataListUiClass(
+                'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-default/70 bg-gradient-to-br from-default via-default to-elevated/60 px-6 py-9 text-center shadow-sm',
+                undefined,
+                ui?.emptyCard,
+              )
+            "
           >
             <div
-              class="flex size-12 items-center justify-center rounded-2xl border border-default/80 bg-elevated/80"
+              :class="
+                mergeDataListUiClass(
+                  'flex size-12 items-center justify-center rounded-2xl border border-default/80 bg-elevated/80',
+                  undefined,
+                  ui?.emptyIcon,
+                )
+              "
             >
               <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
             </div>
-            <div class="grid gap-1">
-              <div class="text-base font-medium text-highlighted">
+            <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.emptyCopy)">
+              <div
+                :class="
+                  mergeDataListUiClass(
+                    'text-base font-medium text-highlighted',
+                    undefined,
+                    ui?.emptyTitle,
+                  )
+                "
+              >
                 {{ t('table.states.gridEmpty.title') }}
               </div>
-              <p class="text-sm leading-6 text-muted">
+              <p
+                :class="
+                  mergeDataListUiClass(
+                    'text-sm leading-6 text-muted',
+                    undefined,
+                    ui?.emptyDescription,
+                  )
+                "
+              >
                 {{ t('table.states.gridEmpty.description') }}
               </p>
             </div>
@@ -366,15 +515,35 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
 
     <motion.div
       v-if="showRefreshing"
-      class="pointer-events-none absolute inset-x-0 top-0 z-10"
+      :class="
+        mergeDataListUiClass(
+          'pointer-events-none absolute inset-x-0 top-0 z-10',
+          undefined,
+          ui?.refreshing,
+        )
+      "
       :initial="{ opacity: 0 }"
       :animate="{ opacity: 1 }"
       :exit="{ opacity: 0 }"
       :transition="{ duration: 0.18, ease: [0.25, 1, 0.5, 1] }"
     >
-      <div class="h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
       <div
-        class="h-12 bg-gradient-to-b from-default/80 via-default/15 to-transparent backdrop-blur-[1.5px]"
+        :class="
+          mergeDataListUiClass(
+            'h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent',
+            undefined,
+            ui?.refreshingLine,
+          )
+        "
+      />
+      <div
+        :class="
+          mergeDataListUiClass(
+            'h-12 bg-gradient-to-b from-default/80 via-default/15 to-transparent backdrop-blur-[1.5px]',
+            undefined,
+            ui?.refreshingVeil,
+          )
+        "
       />
     </motion.div>
   </div>

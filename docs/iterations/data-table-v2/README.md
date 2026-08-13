@@ -15,6 +15,7 @@ Supporting files:
 - [`04-migration-notes.md`](./04-migration-notes.md): migration framing from V1 to V2
 - [`05-decisions-log.md`](./05-decisions-log.md): compact current decision summary
 - [`09-v1-architecture-reference.md`](./09-v1-architecture-reference.md): preserved reference for the original organization style
+- [`13-granular-rendering-api-spec.md`](./13-granular-rendering-api-spec.md): draft root-and-parts rendering, UI configuration, and cursor-loading proposal
 
 Important:
 

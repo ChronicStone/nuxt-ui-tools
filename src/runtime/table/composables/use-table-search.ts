@@ -13,10 +13,7 @@ export function useTableSearch(options: UseTableSearchParams) {
   const searchQuery = computed({
     get: () => String(options.queryState.filters.value.search ?? ''),
     set: (value: string) => {
-      options.queryState.pagination.value = {
-        ...options.queryState.pagination.value,
-        pageIndex: 1,
-      }
+      options.queryState.resetPagination()
       options.queryState.filters.value = {
         ...options.queryState.filters.value,
         search: value,

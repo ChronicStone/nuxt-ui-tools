@@ -1,4 +1,4 @@
-import type { QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type { InfiniteData, QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
 
 import type { TableResolvedFilterGroup } from './filters'
 import type {
@@ -12,7 +12,24 @@ import type {
 
 export type TableQueryDefinition<TData = unknown> = Omit<UseQueryOptions<TData>, 'queryFn'> & {
   queryKey: QueryKey
-  queryFn?: QueryFunction<TData>
+  queryFn?: QueryFunction<TData, QueryKey, string | null>
+}
+
+export interface TableInfiniteQueryDefinition<TData = unknown> {
+  queryKey: QueryKey
+  queryFn: QueryFunction<TData, QueryKey, string | null>
+  initialPageParam: string | null
+  getNextPageParam: (
+    lastPage: TData,
+    allPages: TData[],
+    lastPageParam: string | null,
+    allPageParams: Array<string | null>,
+  ) => string | null | undefined
+  enabled?: boolean
+  staleTime?: number
+  gcTime?: number
+  refetchOnWindowFocus?: boolean
+  initialData?: InfiniteData<TData, string | null> | (() => InfiniteData<TData, string | null>)
 }
 
 export type TableSourceMode = 'client' | 'remote'
@@ -23,6 +40,31 @@ export interface TableSourceExecutionResult<
 > {
   rows: TRow[]
   rowCount: number
+  facets?: TableFacetResult<TKey>[]
+}
+
+export type TableCursorPageInfo =
+  | {
+      mode: 'cursor'
+      pageSize: number
+      nextCursor: string | null
+      count: 'none'
+      rowCount: null
+    }
+  | {
+      mode: 'cursor'
+      pageSize: number
+      nextCursor: string | null
+      count: 'exact'
+      rowCount: number
+    }
+
+export interface TableCursorPageResult<
+  TRow extends GenericObject = GenericObject,
+  TKey extends string = string,
+> {
+  rows: TRow[]
+  pageInfo: TableCursorPageInfo
   facets?: TableFacetResult<TKey>[]
 }
 
@@ -107,7 +149,9 @@ export type TableRemoteFacetSource<
 export interface TableRemoteSource<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
-  TResult = TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>,
+  TResult =
+    | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+    | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>,
 > {
   mode: 'remote'
   query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
@@ -131,10 +175,17 @@ export type TableSource<
       TContext,
       Extract<
         TResult,
-        TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+        | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+        | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>
       > extends never
-        ? TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
-        : Extract<TResult, TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>>
+        ?
+            | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+            | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>
+        : Extract<
+            TResult,
+            | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+            | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>
+          >
     >
 
 export type NormalizeTableSource<TSource, TContext extends GenericObject> = TSource extends {

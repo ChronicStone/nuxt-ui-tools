@@ -43,6 +43,8 @@ export default defineUiToolsLocale<Messages>({
         searchColumns: 'Search columns...',
         configurableColumns: '{count} configurable columns',
         resetColumns: 'Reset',
+        sort: 'Sort',
+        loadMore: 'Load more',
       },
       columnsMenu: {
         sortAsc: 'Sort asc',
@@ -86,6 +88,8 @@ export default defineUiToolsLocale<Messages>({
         },
       },
       states: {
+        loaded: '{count} loaded',
+        loadingMore: 'Loading more…',
         empty: {
           title: 'Nothing matches this view',
           description: 'Try adjusting filters, search, or layout to surface more rows.',

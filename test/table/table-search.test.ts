@@ -16,8 +16,10 @@ describe('table search orchestration', () => {
       ui: [],
     })
     const pagination = ref({
+      mode: 'offset' as const,
       pageIndex: 2,
       pageSize: 20,
+      count: 'exact' as const,
     })
     const searchState = useTableSearch({
       schema: computed(() => ({
@@ -34,6 +36,9 @@ describe('table search orchestration', () => {
       queryState: {
         filters,
         pagination,
+        resetPagination: () => {
+          pagination.value = { ...pagination.value, pageIndex: 1 }
+        },
       } as never,
     })
 

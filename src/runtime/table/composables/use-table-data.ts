@@ -1,19 +1,36 @@
-import { useQueries, useQuery } from '@tanstack/vue-query'
+import {
+  useInfiniteQuery,
+  useQueries,
+  useQuery,
+  type InfiniteData,
+  type QueryKey,
+} from '@tanstack/vue-query'
 import { computed, shallowRef, watch, type ComputedRef } from 'vue'
 
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
   GenericObject,
+  TableCursorPageResult,
   TableExternalState,
   TableFacetExecutionResult,
   TableFacetResult,
   TableFacetRequestDescriptor,
   TableGlobalFacetDescriptor,
+  TableInfiniteQueryDefinition,
   TableQueryDefinition,
   TableSchemaView,
+  TableSourceExecutionResult,
   TableSourceRequestContext,
 } from '../types'
-import { executeClientFacets, filterClientRows, paginateClientRows, sortClientRows } from '../utils'
+import {
+  executeClientFacets,
+  filterClientRows,
+  flattenTableCursorPages,
+  isTableCursorPageResult,
+  paginateClientRows,
+  resolveTableRowId,
+  sortClientRows,
+} from '../utils'
 import type { UseTableStartupReturn } from './use-table-startup'
 import type { useTableState } from './use-table-state'
 
@@ -36,6 +53,7 @@ export interface UseTableDataReturn {
   requestContext: ComputedRef<TableSourceRequestContext>
   searchParams: ComputedRef<TableSourceRequestContext>
   query: ReturnType<typeof useQuery>
+  infiniteQuery: ReturnType<typeof useInfiniteQuery>
   rawData: ComputedRef<TableExternalState>
   data: ComputedRef<TableExternalState>
   selectableRows: ComputedRef<GenericObject[]>
@@ -57,7 +75,9 @@ export interface UseTableDataReturn {
     isPageContextFetching: boolean
   }>
   refreshContext: () => Promise<unknown[]>
-  refreshData: () => ReturnType<typeof useQuery>['refetch']
+  refreshData: () => (
+    ...args: Parameters<ReturnType<typeof useQuery>['refetch']>
+  ) => Promise<unknown>
   refreshPageContext: () => Promise<unknown[]>
   updateRows: (rows: GenericObject[]) => void
 }
@@ -72,6 +92,8 @@ type CombinedQueryResult = {
   isRefetching?: boolean
   refetch: () => Promise<unknown>
 }
+
+type TableRuntimeSourceResult = GenericObject[] | TableSourceExecutionResult | TableCursorPageResult
 
 export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const contextItems = computed(() =>
@@ -168,18 +190,48 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const searchParams = requestContext
 
   const dataStaleTime = computed(() => QUERY_DEFAULTS.staleTime.data)
+  const isCursorPagination = computed(() => requestPagination.value.mode === 'cursor')
 
-  const query = useQuery(
-    computed(() =>
-      withEnabled(
-        params.schema.value.source.query(requestContext.value as never) as TableQueryDefinition,
+  const query = useQuery<TableRuntimeSourceResult, Error, TableRuntimeSourceResult, QueryKey>(
+    computed(() => {
+      const definition = resolveSourceDefinition({
+        source: params.schema.value.source,
+        request: requestContext.value,
+        context: contextData.value,
+      })
+
+      if (isCursorPagination.value) return disabledQueryDefinition('cursor')
+
+      return withEnabled(definition, params.startup.isActive.value && isContextReady.value, {
+        staleTime: dataStaleTime.value,
+        refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+      })
+    }),
+  )
+  const infiniteQuery = useInfiniteQuery<
+    TableRuntimeSourceResult,
+    Error,
+    InfiniteData<TableRuntimeSourceResult, string | null>,
+    QueryKey,
+    string | null
+  >(
+    computed(() => {
+      if (!isCursorPagination.value) return disabledInfiniteQueryDefinition()
+
+      return withInfiniteEnabled(
+        createCursorQueryDefinition({
+          source: params.schema.value.source,
+          request: requestContext.value,
+          context: contextData.value,
+          revision: params.state.queryState.paginationRevision.value,
+        }),
         params.startup.isActive.value && isContextReady.value,
         {
           staleTime: dataStaleTime.value,
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
         },
-      ),
-    ),
+      )
+    }),
   )
   const globalFacetsQuery = useQuery<TableFacetExecutionResult<string>>(
     computed(() => {
@@ -219,9 +271,28 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     rows: [],
     rowCount: 0,
   })
+  const cursorRowOverrides = shallowRef<Map<string, GenericObject>>(new Map())
   const embeddedFacetsState = shallowRef<TableFacetResult<string>[]>([])
 
-  const rawData = computed<TableExternalState>(() => rawDataState.value)
+  const cursorRawData = computed<TableExternalState>(() => {
+    const flattened = flattenTableCursorPages({
+      pages: infiniteQuery.data.value?.pages ?? [],
+      rowKey: params.schema.value.rowKey,
+    })
+    if (!cursorRowOverrides.value.size) return flattened
+
+    return {
+      rows: mergeRowsByKey({
+        currentRows: flattened.rows,
+        nextRows: [...cursorRowOverrides.value.values()],
+        rowKey: params.schema.value.rowKey,
+      }),
+      rowCount: flattened.rowCount,
+    }
+  })
+  const rawData = computed<TableExternalState>(() =>
+    isCursorPagination.value ? cursorRawData.value : rawDataState.value,
+  )
   const clientFilteredRows = computed(() => {
     if (!params.startup.isActive.value) return []
     if (params.schema.value.source.mode !== 'client') return rawData.value.rows
@@ -288,13 +359,28 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const pageContextItems = computed(() =>
     (params.schema.value.pageContext ?? []).filter((item) => item?.condition?.() ?? true),
   )
+  const isActiveDataSuccess = computed(() =>
+    isCursorPagination.value ? infiniteQuery.isSuccess.value : query.isSuccess.value,
+  )
+  const isActiveDataFetching = computed(() =>
+    isCursorPagination.value ? infiniteQuery.isFetching.value : query.isFetching.value,
+  )
+  const isActiveDataPending = computed(() =>
+    isCursorPagination.value ? infiniteQuery.isPending.value : query.isPending.value,
+  )
+  const isActiveDataRefetching = computed(() =>
+    isCursorPagination.value ? infiniteQuery.isRefetching.value : query.isRefetching.value,
+  )
+  const activeDataError = computed(() =>
+    isCursorPagination.value ? infiniteQuery.error.value : query.error.value,
+  )
 
   const isPageContextEnabled = computed(
     () =>
       params.startup.isActive.value &&
       isContextReady.value &&
-      query.isSuccess.value &&
-      !query.isFetching.value,
+      isActiveDataSuccess.value &&
+      !isActiveDataFetching.value,
   )
 
   const pageContext = useQueries({
@@ -348,7 +434,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
   const initialized = computed(
     () =>
-      query.isSuccess.value &&
+      isActiveDataSuccess.value &&
       (!pageContextItems.value.length ||
         pageContextResults.value.every((item) => Boolean(item.isSuccess))),
   )
@@ -359,8 +445,8 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       return contextError
     }
 
-    if (query.error.value) {
-      return query.error.value
+    if (activeDataError.value) {
+      return activeDataError.value
     }
 
     return pageContextResults.value.find((item) => item.error)?.error
@@ -385,11 +471,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       }
     }
 
-    const isDataPending = query.isPending.value
-    const isDataFetching = query.isFetching.value
+    const isDataPending = isActiveDataPending.value
+    const isDataFetching = isActiveDataFetching.value
     const isRefreshing =
       context.value.some((item) => Boolean(item.isRefetching)) ||
-      query.isRefetching.value ||
+      isActiveDataRefetching.value ||
       pageContextResults.value.some((item) => Boolean(item.isRefetching))
 
     return {
@@ -398,11 +484,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       isBooting: false,
       isPending:
         isContextPending.value ||
-        (!query.isSuccess.value && isDataPending) ||
+        (!isActiveDataSuccess.value && isDataPending) ||
         (!initialized.value && isPageContextPending.value),
       isFetching: isContextFetching.value || isDataFetching || isPageContextFetching.value,
       isRefreshing,
-      isRevalidating: query.isRefetching.value && rawData.value.rows.length > 0,
+      isRevalidating: isActiveDataRefetching.value && rawData.value.rows.length > 0,
       isContextPending: isContextPending.value,
       isContextFetching: isContextFetching.value,
       isDataPending,
@@ -429,6 +515,27 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     { immediate: true },
   )
 
+  watch(
+    () => infiniteQuery.data.value?.pages,
+    (pages) => {
+      if (!pages) return
+
+      for (let index = pages.length - 1; index >= 0; index--) {
+        const embeddedFacets = extractEmbeddedFacets(pages[index])
+        if (!embeddedFacets) continue
+
+        embeddedFacetsState.value = embeddedFacets
+        lastResolvedEmbeddedFacetsKey.value = facetsContextKey.value
+        return
+      }
+    },
+    { immediate: true },
+  )
+
+  watch([requestContext, () => params.state.queryState.paginationRevision.value], () => {
+    cursorRowOverrides.value = new Map()
+  })
+
   async function refreshContext() {
     params.startup.start()
     return Promise.all(contextResults.value.map((item) => item.refetch()))
@@ -437,6 +544,10 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   function refreshData() {
     return (...args: Parameters<typeof query.refetch>) => {
       params.startup.start()
+      if (isCursorPagination.value) {
+        cursorRowOverrides.value = new Map()
+        return infiniteQuery.refetch(...args)
+      }
       return query.refetch(...args)
     }
   }
@@ -448,6 +559,17 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
   function updateRows(rows: GenericObject[]) {
     if (!rows.length) return
+
+    if (isCursorPagination.value) {
+      const nextOverrides = new Map(cursorRowOverrides.value)
+      for (const [index, row] of rows.entries())
+        nextOverrides.set(
+          resolveTableRowId({ rowKey: params.schema.value.rowKey, row, index }),
+          row,
+        )
+      cursorRowOverrides.value = nextOverrides
+      return
+    }
 
     const nextRawRows = mergeRowsByKey({
       currentRows: rawDataState.value.rows,
@@ -472,6 +594,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     requestContext,
     searchParams,
     query,
+    infiniteQuery,
     rawData,
     data,
     selectableRows,
@@ -578,36 +701,15 @@ function mergeRowsByKey(options: {
 }) {
   const replacements = new Map(
     options.nextRows.map((row, index) => [
-      resolveRowIdentity({ rowKey: options.rowKey, row, index }),
+      resolveTableRowId({ rowKey: options.rowKey, row, index }),
       row,
     ]),
   )
 
   return options.currentRows.map((row, index) => {
-    const nextRow = replacements.get(resolveRowIdentity({ rowKey: options.rowKey, row, index }))
+    const nextRow = replacements.get(resolveTableRowId({ rowKey: options.rowKey, row, index }))
     return nextRow ?? row
   })
-}
-
-function resolveRowIdentity(options: {
-  rowKey: TableSchemaView['rowKey']
-  row: GenericObject
-  index: number
-}) {
-  if (Array.isArray(options.rowKey)) {
-    return options.rowKey
-      .map((key) => String(resolveRowIdentityValue({ row: options.row, key }) ?? ''))
-      .join('::')
-  }
-
-  return String(resolveRowIdentityValue({ row: options.row, key: options.rowKey }) ?? options.index)
-}
-
-function resolveRowIdentityValue(options: { row: GenericObject; key: string }) {
-  return options.key.split('.').reduce<unknown>((value, segment) => {
-    if (!value || typeof value !== 'object') return undefined
-    return (value as Record<string, unknown>)[segment]
-  }, options.row)
 }
 
 function withEnabled<TData = unknown>(
@@ -620,4 +722,87 @@ function withEnabled<TData = unknown>(
     ...(defaults ?? {}),
     enabled: enabled && (query as { enabled?: boolean }).enabled !== false,
   } as TableQueryDefinition<TData> & { enabled: boolean }
+}
+
+function resolveSourceDefinition(options: {
+  source: TableSchemaView['source']
+  request: TableSourceRequestContext
+  context: Record<string, unknown>
+}): TableQueryDefinition<TableRuntimeSourceResult> {
+  return options.source.query({ ...options.request, context: options.context })
+}
+
+function createCursorQueryDefinition(options: {
+  source: TableSchemaView['source']
+  request: TableSourceRequestContext
+  context: Record<string, unknown>
+  revision: number
+}): TableInfiniteQueryDefinition<TableRuntimeSourceResult> {
+  const firstPageDefinition = resolveSourceDefinition(options)
+  const pagination = options.request.pagination
+  if (pagination.mode !== 'cursor')
+    throw new Error('Cursor query definitions require cursor pagination.')
+
+  return {
+    queryKey: [...firstPageDefinition.queryKey, { tableCursorRevision: options.revision }],
+    initialPageParam: null,
+    async queryFn(queryContext) {
+      const definition = resolveSourceDefinition({
+        ...options,
+        request: {
+          ...options.request,
+          pagination: {
+            mode: 'cursor',
+            cursor: queryContext.pageParam,
+            pageSize: pagination.pageSize,
+            count: pagination.count,
+          },
+        },
+      })
+
+      if (!definition.queryFn) throw new Error('Cursor table sources must provide a queryFn.')
+      return definition.queryFn(queryContext)
+    },
+    getNextPageParam(lastPage) {
+      return isTableCursorPageResult(lastPage)
+        ? (lastPage.pageInfo.nextCursor ?? undefined)
+        : undefined
+    },
+    enabled: isQueryDefinitionEnabled(firstPageDefinition),
+  }
+}
+
+function isQueryDefinitionEnabled(query: TableQueryDefinition<TableRuntimeSourceResult>) {
+  if (!('enabled' in query)) return true
+  return query.enabled !== false
+}
+
+function disabledQueryDefinition(reason: string) {
+  return {
+    queryKey: ['table-data-disabled', reason],
+    queryFn: async () => [],
+    enabled: false,
+  } satisfies TableQueryDefinition<TableRuntimeSourceResult> & { enabled: false }
+}
+
+function disabledInfiniteQueryDefinition() {
+  return {
+    queryKey: ['table-infinite-data-disabled'],
+    queryFn: async () => [],
+    initialPageParam: null,
+    getNextPageParam: () => undefined,
+    enabled: false,
+  } satisfies TableInfiniteQueryDefinition<TableRuntimeSourceResult> & { enabled: false }
+}
+
+function withInfiniteEnabled<TData = unknown>(
+  query: TableInfiniteQueryDefinition<TData>,
+  enabled: boolean,
+  defaults?: { staleTime?: number; refetchOnWindowFocus?: boolean },
+): TableInfiniteQueryDefinition<TData> & { enabled: boolean } {
+  return {
+    ...query,
+    ...(defaults ?? {}),
+    enabled: enabled && query.enabled !== false,
+  }
 }

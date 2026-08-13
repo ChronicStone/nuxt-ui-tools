@@ -29,6 +29,28 @@ function getPublicComponents(
       filePath: `${runtimeDir}/table/components/DataList.vue`,
       global: options.global,
     },
+    ...[
+      'Root',
+      'Search',
+      'FilterTags',
+      'AddFilter',
+      'FilterPanel',
+      'ClearFilters',
+      'ResultCount',
+      'Refresh',
+      'ColumnPanel',
+      'SortMenu',
+      'LayoutSwitch',
+      'Content',
+      'Table',
+      'Grid',
+      'Pagination',
+      'InfiniteLoader',
+    ].map((part) => ({
+      name: `${prefix}DataList${part}`,
+      filePath: `${runtimeDir}/table/components/data-list/DataList${part}.vue`,
+      global: options.global,
+    })),
 
     // Form
     {

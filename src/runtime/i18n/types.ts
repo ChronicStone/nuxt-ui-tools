@@ -24,6 +24,8 @@ export interface UiToolsTableMessages {
     searchColumns: string
     configurableColumns: string
     resetColumns: string
+    sort: string
+    loadMore: string
   }
   columnsMenu: {
     sortAsc: string
@@ -67,6 +69,8 @@ export interface UiToolsTableMessages {
     }
   }
   states: {
+    loaded: string
+    loadingMore: string
     empty: {
       title: string
       description: string

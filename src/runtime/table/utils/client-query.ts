@@ -314,6 +314,11 @@ function paginateRows<TRow extends GenericObject>(
   rows: Iterable<TRow>,
   pagination: TableSourceRequestContext<TRow>['pagination'],
 ): TableSourceExecutionResult<TRow> {
+  if (pagination.mode !== 'offset') {
+    const collected = [...rows]
+    return { rows: collected, rowCount: collected.length }
+  }
+
   const pageIndex = Math.max(1, pagination.pageIndex || 1)
   const pageSize = Math.max(1, pagination.pageSize || 1)
   const start = (pageIndex - 1) * pageSize

@@ -329,17 +329,29 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
     }"
     @update:open="session.handleOpenChange"
   >
-    <TableFilterTrigger
-      :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      :leading-icon="resolveFilterTriggerIcon(definition)"
-      :operator-label="operatorLabel"
-      :operator-items="operatorItems"
-      :preview-summary="preview.summary"
+    <slot
+      name="trigger"
+      :preview="preview"
       :active="preview.active"
-      @select-operator="handleOperatorChange"
-      @activate="handleActivate"
-      @clear="clearFilter"
-    />
+      :open="session.isOpen.value"
+      :trigger-props="{
+        type: 'button',
+        'aria-haspopup': 'dialog',
+        'aria-expanded': session.isOpen.value,
+      }"
+    >
+      <TableFilterTrigger
+        :label="internals.filters.getFilterLabelText({ label: definition.label })"
+        :leading-icon="resolveFilterTriggerIcon(definition)"
+        :operator-label="operatorLabel"
+        :operator-items="operatorItems"
+        :preview-summary="preview.summary"
+        :active="preview.active"
+        @select-operator="handleOperatorChange"
+        @activate="handleActivate"
+        @clear="clearFilter"
+      />
+    </slot>
 
     <template #content>
       <div

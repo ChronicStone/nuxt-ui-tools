@@ -148,17 +148,29 @@ function clearFilter() {
     :ui="{ content: 'w-fit overflow-hidden p-0 shadow-none' }"
     @update:open="session.handleOpenChange"
   >
-    <TableFilterTrigger
-      :label="internals.filters.getFilterLabelText({ label: definition.label })"
-      :leading-icon="resolveFilterTriggerIcon(definition)"
-      operator-label="is"
-      :operator-items="[]"
-      :preview-tags="preview.tags"
-      :preview-summary="preview.summary"
+    <slot
+      name="trigger"
+      :preview="preview"
       :active="preview.active"
-      @activate="handleActivate"
-      @clear="clearFilter"
-    />
+      :open="session.isOpen.value"
+      :trigger-props="{
+        type: 'button',
+        'aria-haspopup': 'dialog',
+        'aria-expanded': session.isOpen.value,
+      }"
+    >
+      <TableFilterTrigger
+        :label="internals.filters.getFilterLabelText({ label: definition.label })"
+        :leading-icon="resolveFilterTriggerIcon(definition)"
+        operator-label="is"
+        :operator-items="[]"
+        :preview-tags="preview.tags"
+        :preview-summary="preview.summary"
+        :active="preview.active"
+        @activate="handleActivate"
+        @clear="clearFilter"
+      />
+    </slot>
 
     <template #content>
       <div class="w-fit max-w-[calc(100vw-1rem)] bg-default" @vue:mounted="handleContentMounted">

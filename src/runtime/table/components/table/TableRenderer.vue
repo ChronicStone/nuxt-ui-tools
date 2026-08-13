@@ -3,13 +3,16 @@ import UTable from '@nuxt/ui/components/Table.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 
 import { useTableInternals } from '../../composables/use-table-internals'
+import type { DataListTableUi } from '../../types'
+import { mergeDataListUiClass } from '../../utils'
 import { createDefaultColumnState, resolveTableRowId } from '../../utils'
 import TableEmptyState from './TableEmptyState.vue'
 import TableLoadingState from './TableLoadingState.vue'
 
 const internals = useTableInternals()
 const props = defineProps<{
-  height: string
+  height?: string
+  ui?: DataListTableUi
 }>()
 const tableRef = ref<{ $el?: Element | null } | null>(null)
 
@@ -28,7 +31,9 @@ const showRefreshing = computed(
       internals.queryContent.status.value.isRevalidating),
 )
 const tableEmpty = computed(() => !showInitialLoading.value && tableRows.value.length === 0)
-const bodyPlaceholderMinHeight = computed(() => `calc(${props.height} - 7rem)`)
+const bodyPlaceholderMinHeight = computed(() =>
+  props.height ? `calc(${props.height} - 7rem)` : '24rem',
+)
 const bodyOverlayTop = '2.625rem'
 const defaultColumnState = createDefaultColumnState()
 
@@ -48,7 +53,10 @@ watch(tableEmpty, (isEmpty) => {
 </script>
 
 <template>
-  <div class="relative overflow-hidden" :style="{ height }">
+  <div
+    :class="mergeDataListUiClass('relative overflow-hidden', undefined, ui?.root)"
+    :style="height ? { height } : undefined"
+  >
     <UTable
       v-if="!internals.queryContent.status.value.isBooting"
       ref="tableRef"
@@ -83,21 +91,37 @@ watch(tableEmpty, (isEmpty) => {
       :loading="showRefreshing"
       loading-color="primary"
       loading-animation="carousel"
-      class="h-full"
+      :class="height ? 'h-full' : undefined"
       :ui="{
-        thead:
+        root: ui?.base,
+        caption: ui?.caption,
+        thead: mergeDataListUiClass(
           'group/table-head after:inset-x-0 after:bottom-0 after:w-full after:z-[2] after:pointer-events-none',
-        tr: 'transition-colors',
+          undefined,
+          ui?.thead,
+        ),
+        tbody: ui?.tbody,
+        tfoot: ui?.tfoot,
+        tr: mergeDataListUiClass('transition-colors', undefined, ui?.tr),
+        th: ui?.th,
+        td: ui?.td,
+        separator: ui?.separator,
+        empty: ui?.empty,
+        loading: ui?.loading,
       }"
-      :virtualize="{
-        enabled: true,
-        getItemKey: (index: number) =>
-          resolveTableRowId({
-            rowKey: internals.schema.value.rowKey,
-            row: getVirtualRow(index),
-            index,
-          }),
-      }"
+      :virtualize="
+        height
+          ? {
+              enabled: true,
+              getItemKey: (index: number) =>
+                resolveTableRowId({
+                  rowKey: internals.schema.value.rowKey,
+                  row: getVirtualRow(index),
+                  index,
+                }),
+            }
+          : false
+      "
     >
       <template #empty>
         <slot name="empty">
@@ -108,7 +132,13 @@ watch(tableEmpty, (isEmpty) => {
 
     <div
       v-if="showInitialLoading"
-      class="pointer-events-none absolute inset-x-0 bottom-0 z-10"
+      :class="
+        mergeDataListUiClass(
+          'pointer-events-none absolute inset-x-0 bottom-0 z-10',
+          undefined,
+          ui?.loadingOverlay,
+        )
+      "
       :style="{ top: bodyOverlayTop }"
     >
       <TableLoadingState :min-height="bodyPlaceholderMinHeight" />
@@ -116,7 +146,13 @@ watch(tableEmpty, (isEmpty) => {
 
     <div
       v-if="tableEmpty"
-      class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center"
+      :class="
+        mergeDataListUiClass(
+          'pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center',
+          undefined,
+          ui?.emptyOverlay,
+        )
+      "
       :style="{ top: bodyOverlayTop }"
     >
       <TableEmptyState :min-height="bodyPlaceholderMinHeight" />

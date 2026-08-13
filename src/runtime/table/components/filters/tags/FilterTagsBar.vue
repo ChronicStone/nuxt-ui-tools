@@ -2,13 +2,19 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import { computed } from 'vue'
 
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableUiFilterDefinition } from '../../../types'
-import { getFilterLabelText } from '../../../utils'
+import { getFilterLabelText, mergeDataListUiClass } from '../../../utils'
 import DynamicFilterPicker from '../shared/DynamicFilterPicker.vue'
 import { resolveFilterTagComponent } from './registry'
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const props = withDefaults(defineProps<{ showAdd?: boolean; showClear?: boolean }>(), {
+  showAdd: true,
+  showClear: true,
+})
 
 const visibleDefinitions = computed(() => [
   ...internals.filterPresentation.tagDefinitions.value,
@@ -30,7 +36,7 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       internals.filterPresentation.dormantDynamicDefinitions.value.length ||
       internals.filters.hasActiveUiFilters.value
     "
-    class="contents"
+    :class="mergeDataListUiClass('contents', undefined, dataListUi.ui.value.filterTags?.ui?.root)"
   >
     <component
       :is="resolveFilterTagComponent(definition)"
@@ -43,7 +49,11 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
         )
       "
       @dismiss="internals.filterPresentation.releaseDynamicSession({ key: definition.key })"
-    />
+    >
+      <template v-if="$slots.filter" #trigger="scope">
+        <slot name="filter" v-bind="scope" :filter="definition" />
+      </template>
+    </component>
 
     <component
       :is="resolveFilterTagComponent(dynamicSessionDefinition)"
@@ -63,23 +73,45 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       @session-closed="
         internals.filterPresentation.releaseDynamicSession({ key: dynamicSessionDefinition.key })
       "
-    />
+    >
+      <template v-if="$slots.filter" #trigger="scope">
+        <slot name="filter" v-bind="scope" :filter="dynamicSessionDefinition" />
+      </template>
+    </component>
 
     <DynamicFilterPicker
-      v-else-if="internals.filterPresentation.dormantDynamicDefinitions.value.length"
+      v-else-if="
+        props.showAdd && internals.filterPresentation.dormantDynamicDefinitions.value.length
+      "
       :definitions="internals.filterPresentation.dormantDynamicDefinitions.value"
       :get-label="getFilterLabel"
+      :size="dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value"
+      :ui="{
+        trigger: dataListUi.ui.value.filterTags?.ui?.addTrigger,
+      }"
       @select="internals.filterPresentation.activateDynamicFilter({ key: $event })"
-    />
+    >
+      <template v-if="$slots['add-filter-trigger']" #trigger="scope">
+        <slot name="add-filter-trigger" v-bind="scope" />
+      </template>
+    </DynamicFilterPicker>
 
     <UButton
-      v-if="internals.filters.hasActiveUiFilters.value"
+      v-if="props.showClear && internals.filters.hasActiveUiFilters.value"
       color="neutral"
       variant="outline"
-      size="md"
+      :size="dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value"
       icon="i-lucide-x"
-      class="shrink-0 border-dashed"
+      :ui="{
+        base: mergeDataListUiClass(
+          'shrink-0 border-dashed',
+          undefined,
+          dataListUi.ui.value.filterTags?.ui?.clearTrigger,
+        ),
+      }"
       @click="internals.filters.clearAllFilters()"
-    />
+    >
+      <slot name="clear-filter-label" />
+    </UButton>
   </div>
 </template>

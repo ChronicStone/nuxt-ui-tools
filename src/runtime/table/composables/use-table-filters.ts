@@ -244,10 +244,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
       value,
     }
 
-    params.state.queryState.pagination.value = {
-      ...params.state.queryState.pagination.value,
-      pageIndex: 1,
-    }
+    params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
       ui: [
@@ -270,10 +267,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
   }
 
   function removeFilter(key: string) {
-    params.state.queryState.pagination.value = {
-      ...params.state.queryState.pagination.value,
-      pageIndex: 1,
-    }
+    params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
       ui: params.state.queryState.filters.value.ui.filter((filter) => filter.key !== key),
@@ -281,10 +275,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
   }
 
   function clearAllFilters() {
-    params.state.queryState.pagination.value = {
-      ...params.state.queryState.pagination.value,
-      pageIndex: 1,
-    }
+    params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
       ui: [],
@@ -292,10 +283,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
   }
 
   function replaceFilters(input: { rules: TableQueryStateFilterRule[] }) {
-    params.state.queryState.pagination.value = {
-      ...params.state.queryState.pagination.value,
-      pageIndex: 1,
-    }
+    params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
       ui: [...input.rules],

@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools-table
-description: Use this skill when building or debugging table usage with nuxt-ui-tools as a package consumer. Covers defineTableSchema, useTable, DataList, columns, filters, sorting, pagination, layouts, actions, selection, context, and URL state with concrete examples.
+description: Use this skill when building or debugging table usage with nuxt-ui-tools as a package consumer. Covers defineTableSchema, useTable, DataList, granular composition, columns, filters, sorting, offset or cursor loading, layouts, actions, selection, context, and URL state with concrete examples.
 ---
 
 # nuxt-ui-tools Table
@@ -10,10 +10,12 @@ Use this skill for package-consumer tasks involving:
 - `defineTableSchema(...)`
 - `useTable(...)`
 - `DataList`
+- `DataListRoot` and granular rendering parts
 - table columns
 - table filters
 - client or remote table setup
 - table query-state integration
+- cursor infinite loading and no-pagination mode
 
 ## Read This Skill With
 

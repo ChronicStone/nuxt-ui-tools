@@ -72,6 +72,7 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     selection,
     controls,
     columns: tableColumns,
+    filters,
     pagination,
     queryContent,
   })

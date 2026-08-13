@@ -14,6 +14,7 @@
         "libphonenumber-js": "1.13.1",
         "motion-v": "2.0.1",
         "nuxt-viewport": "2.4.0",
+        "tailwind-merge": "^3.5.0",
         "xlsx": "0.18.5",
       },
       "devDependencies": {

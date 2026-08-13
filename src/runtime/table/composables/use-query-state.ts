@@ -1,4 +1,4 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed, ref, type ComputedRef } from 'vue'
 
 import {
   useQueryStates,
@@ -20,6 +20,7 @@ import {
   createTableFilterValueCodec,
   getDefaultPageSize,
   getDefaultSort,
+  getPaginationMode,
   normalizeFilterDefinition,
   resolveFilterDefaultOperator,
   resolveFilterSupportedOperators,
@@ -45,14 +46,59 @@ export function useQueryState(params: UseQueryStateParams) {
   // Pagination — URL keys: p.page, p.size
   // ---------------------------------------------------------------------------
 
-  const pagination = useQueryStates({
-    prefix: 'p',
-    schema: {
-      pageIndex: { urlKey: 'page', codec: numberCodec, defaultValue: 1 },
-      pageSize: { urlKey: 'size', codec: numberCodec, defaultValue: defaultPageSize },
-    },
-    historyMode: 'push',
+  const paginationMode = getPaginationMode(params.schema.value)
+  const paginationRevision = ref<number>(0)
+  const offsetPagination =
+    paginationMode === 'offset'
+      ? useQueryStates({
+          prefix: 'p',
+          schema: {
+            pageIndex: { urlKey: 'page', codec: numberCodec, defaultValue: 1 },
+            pageSize: { urlKey: 'size', codec: numberCodec, defaultValue: defaultPageSize },
+          },
+          historyMode: 'push',
+        })
+      : null
+  const pagination = computed(() => {
+    if (paginationMode === 'none') return { mode: 'none' } as const
+    if (paginationMode === 'cursor')
+      return {
+        mode: 'cursor',
+        cursor: null,
+        pageSize: defaultPageSize,
+        count:
+          params.schema.value.pagination &&
+          typeof params.schema.value.pagination === 'object' &&
+          'mode' in params.schema.value.pagination &&
+          params.schema.value.pagination.mode === 'cursor'
+            ? (params.schema.value.pagination.count ?? 'none')
+            : 'none',
+      } as const
+
+    return {
+      mode: 'offset',
+      pageIndex: offsetPagination?.value.pageIndex ?? 1,
+      pageSize: offsetPagination?.value.pageSize ?? defaultPageSize,
+      count: 'exact',
+    } as const
   })
+
+  function resetPagination() {
+    if (paginationMode === 'cursor') {
+      paginationRevision.value++
+      return
+    }
+    if (!offsetPagination) return
+    offsetPagination.value = {
+      pageIndex: 1,
+      pageSize: offsetPagination.value.pageSize,
+    }
+  }
+
+  function setOffsetPagination(value: { pageIndex: number; pageSize: number }) {
+    if (!offsetPagination) return
+    offsetPagination.value = value
+  }
 
   // ---------------------------------------------------------------------------
   // Sorting — URL keys: s.key, s.dir
@@ -155,6 +201,10 @@ export function useQueryState(params: UseQueryStateParams) {
 
   return {
     pagination,
+    paginationMode,
+    paginationRevision,
+    resetPagination,
+    setOffsetPagination,
     sorting,
     filters,
   }

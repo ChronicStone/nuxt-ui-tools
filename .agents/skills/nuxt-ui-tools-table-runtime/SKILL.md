@@ -68,6 +68,10 @@ Start from these depending on the task:
   `src/runtime/table/utils/filters/*`
 - rendering shell:
   `src/runtime/table/components/DataList.vue`
+  `src/runtime/table/components/data-list/*`
+- data-list UI and viewport contexts:
+  `src/runtime/table/composables/use-data-list-ui.ts`
+  `src/runtime/table/composables/use-data-list-viewport.ts`
 
 ## Important Current Reality
 
@@ -132,8 +136,20 @@ Avoid:
 
 ### Components
 
-- `DataList.vue` is a shell/composition boundary
+- `DataListRoot.vue` owns provider and lifecycle behavior while rendering no mandatory wrapper
+- `DataList.vue` is the stable assembled recipe and must be built from the same public parts consumers compose directly
+- granular parts own rendering only and must consume prepared state from table internals
+- popup parts expose a standard custom trigger slot; full and incremental data states stay separate
+- every granular part exposes a typed flat `ui` slot map; page defaults belong to `DataListRoot.ui`, while underlying Nuxt UI primitives retain application theme inheritance
 - renderer internals should consume prepared state rather than reinvent logic
+
+### Pagination
+
+- pagination is a `none`, `offset`, or `cursor` strategy selected by schema
+- only offset page and size state is URL-backed; cursor accumulation stays in TanStack infinite-query state
+- filter, search, and sorting owners call the pagination reset command instead of writing page fields
+- cursor pages flatten and de-duplicate by `rowKey`; loaded and total counts remain distinct
+- the public API is conditional so offset-only and cursor-only commands do not leak across schema modes
 
 ## When To Reorganize
 

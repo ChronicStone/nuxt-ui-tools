@@ -6,12 +6,14 @@ import type {
   ExtractTableRow,
   PublicTableQueryState,
   TableApi,
+  TablePaginationApi,
   TableSchemaView,
 } from '../types'
 import { getDefaultSort, mapPublicQueryState } from '../utils'
 import type { useTableColumns } from './use-table-columns'
 import type { useTableControls } from './use-table-controls'
 import type { UseTableDataReturn } from './use-table-data'
+import type { useTableFilters } from './use-table-filters'
 import type { useTableLayout } from './use-table-layout'
 import type { useTablePagination } from './use-table-pagination'
 import type { useTableSelection } from './use-table-selection'
@@ -24,6 +26,7 @@ export interface UseTableApiParams {
   selection: ReturnType<typeof useTableSelection>
   controls: ReturnType<typeof useTableControls>
   columns: ReturnType<typeof useTableColumns>
+  filters: ReturnType<typeof useTableFilters>
   pagination: ReturnType<typeof useTablePagination>
   queryContent: UseTableDataReturn
 }
@@ -48,6 +51,8 @@ export function useTableApi<TSchema = TableSchemaView>(
   const data: TableApi<TSchema>['data'] = {
     rows: computed(() => params.queryContent.data.value.rows as ExtractTableRow<TSchema>[]),
     rowCount: computed(() => params.queryContent.data.value.rowCount),
+    loadedRowCount: computed(() => params.queryContent.data.value.rows.length),
+    totalRowCount: computed(() => params.queryContent.data.value.rowCount),
     rawRows: computed(() => params.queryContent.rawData.value.rows as ExtractTableRow<TSchema>[]),
     rawRowCount: computed(() => params.queryContent.rawData.value.rowCount),
     context: computed(
@@ -73,15 +78,16 @@ export function useTableApi<TSchema = TableSchemaView>(
     set: params.controls.setTableLayout,
   }
 
-  const pagination: TableApi<TSchema>['pagination'] = {
-    state: params.pagination.state,
-    pageSizeOptions: params.pagination.pageSizeOptions,
-    setPage: params.pagination.setPage,
-    setPageSize: params.pagination.setPageSize,
-    next: params.pagination.next,
-    previous: params.pagination.previous,
-    reset: params.pagination.reset,
+  const filters: TableApi<TSchema>['filters'] = {
+    state: computed(() => params.state.queryState.filters.value),
+    search: params.filters.searchQuery,
+    activeCount: computed(() => params.filters.activeUiFilters.value.length),
+    clear: params.filters.clearAllFilters,
+    remove: (key) => params.filters.clearFilter({ key }),
+    replace: (rules) => params.filters.replaceFilters({ rules }),
   }
+
+  const pagination = createPublicPaginationApi<TSchema>(params.pagination)
 
   const sorting: TableApi<TSchema>['sorting'] = {
     state: params.columns.sortingState,
@@ -132,6 +138,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     state,
     data,
     layout: layoutApi,
+    filters,
     pagination,
     sorting,
     selection,
@@ -139,5 +146,36 @@ export function useTableApi<TSchema = TableSchemaView>(
     refresh: params.queryContent.refreshData(),
     updateRow: data.updateRow,
     updateRows: data.updateRows,
+  }
+}
+
+function createPublicPaginationApi<TSchema>(
+  pagination: ReturnType<typeof useTablePagination>,
+): TablePaginationApi<TSchema>
+function createPublicPaginationApi(pagination: ReturnType<typeof useTablePagination>): unknown {
+  if (pagination.mode.value === 'cursor')
+    return {
+      mode: 'cursor',
+      state: pagination.state,
+      loadMore: pagination.loadMore,
+      reset: pagination.reset,
+    }
+
+  if (pagination.mode.value === 'none')
+    return {
+      mode: 'none',
+      state: pagination.state,
+      reset: pagination.reset,
+    }
+
+  return {
+    mode: 'offset',
+    state: pagination.state,
+    pageSizeOptions: pagination.pageSizeOptions,
+    setPage: pagination.setPage,
+    setPageSize: pagination.setPageSize,
+    next: pagination.next,
+    previous: pagination.previous,
+    reset: pagination.reset,
   }
 }

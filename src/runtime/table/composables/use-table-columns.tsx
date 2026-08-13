@@ -152,14 +152,12 @@ export function useTableColumns(params: UseTableColumnsParams) {
   }
 
   function setSorting(sorting: { key: string; dir: 'asc' | 'desc' } | null) {
-    params.state.queryState.pagination.value = {
-      ...params.state.queryState.pagination.value,
-      pageIndex: 1,
-    }
+    params.state.queryState.resetPagination()
     params.state.queryState.sorting.value = sorting
   }
 
   function setSortKey(key?: string) {
+    params.state.queryState.resetPagination()
     if (!key) {
       params.state.queryState.sorting.value = null
       return
@@ -172,6 +170,7 @@ export function useTableColumns(params: UseTableColumnsParams) {
   }
 
   function setSortDirection(direction: 'asc' | 'desc') {
+    params.state.queryState.resetPagination()
     const currentSorting = params.state.queryState.sorting.value
 
     if (!currentSorting) {

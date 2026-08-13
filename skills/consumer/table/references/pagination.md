@@ -1,60 +1,75 @@
 # Table Pagination
 
-Pagination is configured through the `pagination` section.
+The schema supports numbered offset pages, cursor-backed incremental loading, and complete unpaginated results. Omitted pagination keeps the existing offset behavior.
 
-## Example
+## Offset pagination
 
 ```ts
 pagination: {
-  defaultSize: {
-    table: 20,
-    grid: 12,
-  },
-  sizeOptions: {
-    table: [10, 20, 50, 100],
-    grid: [12, 24, 48],
-  },
+  mode: 'offset',
+  defaultSize: { table: 20, grid: 12 },
+  sizeOptions: { table: [20, 50, 100], grid: [12, 24, 48] },
   showPageSizePicker: true,
   showPagesList: true,
   showPagesCount: true,
 }
 ```
 
-This produces a page-size picker and URL-backed pagination state for both layouts.
+The source receives `{ mode: 'offset', pageIndex, pageSize, count: 'exact' }`. Page and size remain URL-backed as `?p.page=3&p.size=50`, and `<UiDataListPagination />` renders the numbered footer.
 
-## URL Result
+## Cursor pagination
 
-```txt
-?p.page=3&p.size=50
-```
-
-## What Changes Between Layouts
-
-With the config above:
-
-- table layout defaults to `20`
-- grid layout defaults to `12`
-- switching layout keeps using the same `p.page` and `p.size` keys
-
-## Common Pattern
+Cursor mode is for remote sources and accumulates pages with TanStack Query. The request and response are structurally compatible with Drizzle Resource 2.0 without adding it as a dependency.
 
 ```ts
 const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
+  pagination: { mode: 'cursor', pageSize: 24, count: 'none' },
   source: {
     mode: 'remote',
     query: (request) => ({
-      queryKey: ['employees', request.pagination],
+      queryKey: ['employees', request],
       queryFn: async () => api.listEmployees(request),
     }),
   },
-  pagination: {
-    defaultSize: { table: 20, grid: 12 },
-    sizeOptions: { table: [20, 50, 100], grid: [12, 24, 48] },
-  },
-  table: {
-    columns: (column) => [column.field('fullName', { label: 'Employee' })],
-  },
 })
 ```
+
+Each request contains:
+
+```ts
+{
+  mode: 'cursor',
+  cursor: string | null,
+  pageSize: 24,
+  count: 'none' | 'exact',
+}
+```
+
+Return one page at a time:
+
+```ts
+{
+  rows,
+  pageInfo: {
+    mode: 'cursor',
+    pageSize: 24,
+    nextCursor: 'opaque-cursor-or-null',
+    count: 'none',
+    rowCount: null,
+  },
+}
+```
+
+Use `<UiDataListInfiniteLoader />` inside `<UiDataListContent>` for automatic loading, or set `:auto="false"` for a load-more button. Cursor values and accumulated pages are never written to the URL. Changing search, filters, sorting, or page size resets accumulation to a null cursor.
+
+`table.data.loadedRowCount` is always the rendered row count. `table.data.totalRowCount` is `null` with `count: 'none'` and the exact filtered total with `count: 'exact'`.
+
+## No pagination
+
+```ts
+pagination: false
+```
+
+The source receives `{ mode: 'none' }`. Client data is not sliced, no `p.*` URL keys are created, and neither the numbered footer nor infinite loader renders.

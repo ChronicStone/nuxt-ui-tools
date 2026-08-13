@@ -1,6 +1,7 @@
 export type * from './actions'
 export type * from './columns'
 export type * from './context'
+export type * from './data-list'
 export type * from './filters'
 export type * from './layout'
 export type * from './query-state'

@@ -43,6 +43,8 @@ export default defineUiToolsLocale<Messages>({
         searchColumns: 'Rechercher des colonnes...',
         configurableColumns: '{count} colonnes configurables',
         resetColumns: 'Réinitialiser',
+        sort: 'Trier',
+        loadMore: 'Charger plus',
       },
       columnsMenu: {
         sortAsc: 'Tri croissant',
@@ -86,6 +88,8 @@ export default defineUiToolsLocale<Messages>({
         },
       },
       states: {
+        loaded: '{count} chargés',
+        loadingMore: 'Chargement en cours…',
         empty: {
           title: 'Aucun résultat pour cette vue',
           description:
