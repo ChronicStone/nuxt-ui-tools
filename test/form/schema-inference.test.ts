@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/vue-query'
 import { describe, expect, expectTypeOf, it } from 'vitest'
+import { h } from 'vue'
 
 import { defineFormField, defineFormFields, defineFormSchema, formFieldKinds } from '#ui-tools/form'
 import type {
@@ -28,6 +29,7 @@ const schema = defineFormSchema({
       key: 'name',
       type: 'text',
       label: 'Name',
+      labelExtra: () => h('a', { href: '/help' }, 'Help'),
       validation: {
         required: true,
       },

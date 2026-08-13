@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import USwitch from '@nuxt/ui/components/Switch.vue'
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormOptionValue, FormSwitchGroupField } from '../../types'
+import { formOptionKey } from '../../utils/options'
 
 const props = defineProps<{
   field: FormSwitchGroupField
@@ -23,6 +24,7 @@ const model = computed<readonly FormOptionValue[]>({
   set: (value) => form.setValue(props.path, value),
 })
 const items = computed(() => [...options.items.value])
+const groupId = useId()
 
 function toggleOption(value: FormOptionValue, checked: boolean) {
   const current = model.value
@@ -42,15 +44,18 @@ function isOptionValue(value: unknown): value is FormOptionValue {
 <template>
   <FormFieldShell :field="field" :path="path">
     <div
-      v-bind="controlProps"
+      role="group"
       class="grid gap-3"
       :class="field.orientation === 'horizontal' ? 'sm:flex sm:flex-wrap' : ''"
     >
       <USwitch
         v-for="item in items"
-        :key="String(item.value)"
+        :id="`${groupId}:${formOptionKey(item.value)}`"
+        :key="formOptionKey(item.value)"
+        v-bind="controlProps"
         :model-value="model.includes(item.value)"
         :label="item.label"
+        :aria-label="item.label"
         :description="item.description"
         :disabled="disabled || item.disabled"
         :checked-icon="field.checkedIcon"

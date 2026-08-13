@@ -4,6 +4,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UFileUpload from '@nuxt/ui/components/FileUpload.vue'
 import { computed, onScopeDispose, ref } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormObject, FormUploadField } from '../../types'
@@ -14,6 +15,7 @@ const props = defineProps<{
   field: FormUploadField
   path: readonly string[]
 }>()
+const { t } = useUiToolsLocale()
 
 const { form, controlProps, disabled, handleBlur, params } = useFieldControl(
   () => props.field,
@@ -52,7 +54,7 @@ async function uploadFiles() {
     selectedFiles.value = null
   } catch (error) {
     if (uploadRun.value !== run) return
-    uploadError.value = error instanceof Error ? error.message : 'Upload failed.'
+    uploadError.value = error instanceof Error ? error.message : t('form.fields.upload.failed')
   } finally {
     if (uploadRun.value === run) uploadPending.value = false
   }
@@ -119,7 +121,7 @@ function isFormObject(value: unknown): value is FormObject {
           :disabled="disabled || !files.length"
           @click="uploadFiles"
         >
-          Upload
+          {{ t('form.fields.upload.upload') }}
         </UButton>
         <UButton
           v-if="uploadedValue"
@@ -130,7 +132,7 @@ function isFormObject(value: unknown): value is FormObject {
           :disabled="disabled"
           @click="removeUpload"
         >
-          Remove
+          {{ t('form.fields.upload.remove') }}
         </UButton>
       </div>
 

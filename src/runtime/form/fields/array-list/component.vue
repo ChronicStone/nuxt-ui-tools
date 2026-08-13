@@ -121,6 +121,10 @@ function itemHeading(item: FormObject, index: number) {
   )
 }
 
+function selectTab(index: number) {
+  activeIndex.value = index
+}
+
 function resolveAction(condition: FormArrayActionCondition | undefined, index: number) {
   if (typeof condition === 'boolean') return condition
   if (typeof condition !== 'function') return true
@@ -285,7 +289,7 @@ function isFormObject(value: unknown): value is FormObject {
           :color="activeIndex === index ? 'primary' : 'neutral'"
           :variant="activeIndex === index ? 'solid' : 'ghost'"
           :class="mergeFormUiClass('shrink-0', formUi.ui.value.arrayList?.ui?.tab)"
-          @click="activeIndex = index"
+          @click="selectTab(index)"
         >
           {{ itemHeading(items[index] ?? {}, index) }}
         </UButton>

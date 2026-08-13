@@ -503,10 +503,15 @@ describe('form output inference', () => {
     useFormSubmit({
       formRef,
       schema,
-      onSubmit: ({ formData }) => {
+      onSubmit: ({ formData, api }) => {
         expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
         expectTypeOf(formData.meta.score).toEqualTypeOf<string>()
         expectTypeOf(formData.roles).toEqualTypeOf<readonly ('admin' | 'reviewer')[] | null>()
+        api.setError('profile.name', 'This name is unavailable.')
+        api.clearError('profile.name')
+        api.clearError()
+        // @ts-expect-error external errors target fields in the inferred submitted output
+        api.setError('missing', 'Unknown field.')
 
         return { success: true }
       },

@@ -17,6 +17,10 @@ const contentStyle = computed(() => ({
       : 'horizontal'
     : undefined,
 }))
+const contentProps = computed(() => ({
+  disableOutsidePointerEvents: undefined,
+  style: contentStyle.value,
+}))
 
 function cssSize(value: number | string | undefined) {
   return typeof value === 'number' ? `${value}px` : value
@@ -30,7 +34,7 @@ function cssSize(value: number | string | undefined) {
     :description="description"
     :direction="direction"
     :dismissible="dismissible && config?.allowOutsideClick !== false"
-    :style="contentStyle"
+    :content="contentProps"
     :handle="false"
     :ui="{
       overlay: ui?.overlay,

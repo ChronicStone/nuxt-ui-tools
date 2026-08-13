@@ -241,6 +241,44 @@ export interface UiToolsFormMessages {
     text: {
       defaultPlaceholder: string
     }
+    options: {
+      refresh: string
+      create: string
+      creating: string
+      createNamed: string
+    }
+    hierarchy: {
+      search: string
+      empty: string
+      clear: string
+    }
+    rating: {
+      value: string
+    }
+    date: {
+      start: string
+      end: string
+      clear: string
+    }
+    time: {
+      format: string
+      hour: string
+      minute: string
+      clear: string
+    }
+    color: {
+      open: string
+      clear: string
+    }
+    upload: {
+      upload: string
+      remove: string
+      failed: string
+    }
+    phone: {
+      country: string
+      number: string
+    }
   }
 }
 

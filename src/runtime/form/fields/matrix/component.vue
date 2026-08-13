@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 
 import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
@@ -14,11 +14,12 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 const formUi = useFormUi()
+const matrixInstanceId = useId()
 
 const visibleFields = computed(() =>
   props.field.fields.filter((field) => field.type !== 'hidden' && field.ignore !== true),
 )
-const matrixId = computed<string>(() => props.path.join('-'))
+const matrixId = computed<string>(() => `${matrixInstanceId}-${props.path.join('-')}`)
 const minWidth = computed(() =>
   typeof props.field.minWidth === 'number'
     ? `${props.field.minWidth}px`
@@ -136,7 +137,12 @@ function controlClass(field: FormField) {
               "
             >
               <div :class="controlClass(column)">
-                <FormFieldRenderer :field="column" :parent-path="rowPath(row)" bare />
+                <FormFieldRenderer
+                  :field="column"
+                  :parent-path="rowPath(row)"
+                  :control-labelledby="`${rowLabelId(row)} ${columnLabelId(column)}`"
+                  bare
+                />
               </div>
             </td>
           </tr>

@@ -1,10 +1,10 @@
 import { useLocale as useNuxtUiLocale } from '@nuxt/ui/composables/useLocale'
 import { computed, inject, provide, type InjectionKey, type Ref } from 'vue'
 
-import { fr } from '#ui-tools/i18n/locales'
-import en from '#ui-tools/i18n/locales/en'
-import type { Locale, Messages } from '#ui-tools/i18n/types'
-import { buildUiToolsLocaleContext } from '#ui-tools/i18n/utils'
+import { fr } from './locales'
+import en from './locales/en'
+import type { Locale, Messages } from './types'
+import { buildUiToolsLocaleContext } from './utils'
 
 export const uiToolsLocaleContextInjectionKey: InjectionKey<Ref<Locale<Messages> | undefined>> =
   Symbol.for('nuxt-ui-tools.locale-context')

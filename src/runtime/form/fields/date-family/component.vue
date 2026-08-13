@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormDateFamilyField } from './types'
@@ -11,6 +12,8 @@ const props = defineProps<{
   field: FormDateFamilyField
   path: readonly string[]
 }>()
+const { t } = useUiToolsLocale()
+const rangeId = useId()
 
 const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
   () => props.field,
@@ -76,24 +79,26 @@ async function clear() {
         <UInput
           v-model="startModel"
           v-bind="controlProps"
+          :id="`${rangeId}-start`"
           class="min-w-0 flex-1"
           :type="inputType"
           :min="min"
           :max="max"
           :disabled="disabled"
-          aria-label="Start"
+          :aria-label="t('form.fields.date.start')"
           @blur="handleBlur"
         />
         <span class="text-sm text-muted" aria-hidden="true">–</span>
         <UInput
           v-model="endModel"
           v-bind="controlProps"
+          :id="`${rangeId}-end`"
           class="min-w-0 flex-1"
           :type="inputType"
           :min="startModel || min"
           :max="max"
           :disabled="disabled"
-          aria-label="End"
+          :aria-label="t('form.fields.date.end')"
           @blur="handleBlur"
         />
       </template>
@@ -116,7 +121,7 @@ async function clear() {
         variant="ghost"
         size="xs"
         :disabled="disabled"
-        aria-label="Clear value"
+        :aria-label="t('form.fields.date.clear')"
         @click="clear"
       />
     </div>

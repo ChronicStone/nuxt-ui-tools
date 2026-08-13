@@ -5,6 +5,7 @@ import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormColorPickerField } from '../../types'
@@ -14,6 +15,7 @@ const props = defineProps<{
   field: FormColorPickerField
   path: readonly string[]
 }>()
+const { t } = useUiToolsLocale()
 
 const { form, controlProps, disabled } = useFieldControl(
   () => props.field,
@@ -58,7 +60,7 @@ function clearColor() {
           color="neutral"
           variant="outline"
           :disabled="disabled"
-          aria-label="Open color picker"
+          :aria-label="t('form.fields.color.open')"
         >
           <span
             class="size-5 rounded-sm border border-default"
@@ -90,7 +92,7 @@ function clearColor() {
                 variant="ghost"
                 size="xs"
                 :disabled="disabled"
-                aria-label="Clear color"
+                :aria-label="t('form.fields.color.clear')"
                 @mousedown.prevent
                 @click="clearColor"
               />

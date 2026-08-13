@@ -445,9 +445,17 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData) {
 
   if (fieldInstance.type.is('checkbox')) return false
   if (fieldInstance.type.is('switch')) return resolveSwitchDefault(field)
-  if (fieldInstance.type.is('checkbox-group')) return []
+  if (fieldInstance.type.isAny(['checkbox-group', 'checkbox-card', 'switch-group'])) return []
   if (
-    fieldInstance.type.isAny(['tree', 'tree-select', 'cascader']) &&
+    fieldInstance.type.isAny([
+      'auto-complete',
+      'select',
+      'file',
+      'upload',
+      'tree',
+      'tree-select',
+      'cascader',
+    ]) &&
     Object.getOwnPropertyDescriptor(field, 'multiple')?.value === true
   )
     return []
