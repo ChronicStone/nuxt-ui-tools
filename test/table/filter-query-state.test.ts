@@ -4,6 +4,7 @@ import type { TableUiFilterDefinition } from '#ui-tools/table/types'
 import {
   mergeTableFilterDefaultRules,
   parseTableFilterQueryState,
+  resolveTableActiveFilterRules,
   resolveTableFilterDefaultRules,
   serializeTableFilterQueryState,
 } from '#ui-tools/table/utils/query-state'
@@ -89,6 +90,28 @@ describe('table filter query defaults', () => {
         definitions,
       }),
     ).toEqual(new Map([['status', ['archived']]]))
+  })
+
+  it('treats effective defaults as inactive and keeps only deviations active', () => {
+    expect(
+      resolveTableActiveFilterRules({
+        rules: [
+          { key: 'status', operator: 'isAnyOf', value: ['published'] },
+          { key: 'format', operator: 'isAnyOf', value: ['letter', 'a4'] },
+        ],
+        definitions,
+      }),
+    ).toEqual([])
+
+    expect(
+      resolveTableActiveFilterRules({
+        rules: [
+          { key: 'status', operator: 'isAnyOf', value: ['published', 'archived'] },
+          { key: 'format', operator: 'isAnyOf', value: ['a4', 'letter'] },
+        ],
+        definitions,
+      }),
+    ).toEqual([{ key: 'status', operator: 'isAnyOf', value: ['published', 'archived'] }])
   })
 
   it('keeps false and zero defaults while ignoring empty defaults', () => {

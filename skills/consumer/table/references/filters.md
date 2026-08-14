@@ -125,12 +125,15 @@ behavior: {
 }
 ```
 
-`defaultValue` is an effective filter, not only an editor placeholder. It applies when the URL has no
-override for that definition and stays omitted from the URL while unchanged. Selecting another value
-writes the override, and clearing the filter restores its schema default.
+`defaultValue` defines the effective baseline state. It applies when the URL has no override and stays
+omitted from the URL while unchanged, but it does not count as an active filter in tags, panel badges,
+the public `filters.activeCount`, or filtered empty states. Editors still open with the default value
+selected. Any value or operator that differs from the baseline is active, and clearing the filter
+restores its schema default.
 
 When several filters declare defaults, an explicit URL value overrides only its own definition; the
-other defaults remain active.
+other defaults remain effective without becoming active. Panel clear actions restore these defaults
+instead of leaving defaulted filters empty.
 
 Important rule:
 

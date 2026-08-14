@@ -78,7 +78,8 @@ const session = useFilterTagSession({
   session: props.session,
   dynamic: props.dynamic,
   embedded: props.embedded,
-  hasCommittedState: () => internals.filters.getFilterState({ key: props.definition.key }) != null,
+  hasCommittedState: () =>
+    internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
   onOpen: () => {
     isContentReady.value = false
     initLocalState()

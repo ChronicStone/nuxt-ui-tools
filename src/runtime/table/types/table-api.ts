@@ -102,6 +102,7 @@ export interface TableApi<TSchema = TableSchemaView> {
   filters: {
     state: ComputedRef<TableFilterState>
     search: WritableComputedRef<string>
+    /** Number of UI filter rules that differ from their configured defaults. */
     activeCount: ComputedRef<number>
     clear: () => void
     remove: (key: string) => void

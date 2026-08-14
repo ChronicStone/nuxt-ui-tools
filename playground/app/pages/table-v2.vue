@@ -88,8 +88,8 @@ const schema = defineTableSchema({
     ui: (filter) => [
       filter.option('status', {
         label: 'Status',
-        behavior: { defaultOperator: 'isAnyOf', defaultValue: ['Published'] },
-        display: { location: 'tag-dynamic' },
+        behavior: { defaultOperator: 'isAnyOf', defaultValue: ['Published', 'Draft'] },
+        display: { location: 'panel md:tag-dynamic' },
         source: {
           options: [
             { label: 'Published', value: 'Published' },
@@ -239,6 +239,7 @@ const table = useTable(schema)
         class="flex min-h-14 flex-wrap items-center gap-2 border-b border-default bg-elevated/25 px-5 py-2"
       >
         <NutDataListFilterTags />
+        <NutDataListFilterPanel />
         <NutDataListAddFilter />
         <div class="ml-auto flex items-center gap-4">
           <NutDataListResultCount>

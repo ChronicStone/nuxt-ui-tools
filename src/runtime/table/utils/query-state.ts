@@ -304,6 +304,24 @@ export function isTableFilterRuleDefault(options: {
   )
 }
 
+/**
+ * Returns only filter rules that deviate from their schema defaults.
+ *
+ * The full rule set remains effective for data queries, while this subset drives active-filter UI,
+ * counts, and reset affordances. Rules without a matching UI definition are treated as active.
+ */
+export function resolveTableActiveFilterRules(options: {
+  /** Effective filter rules, including materialized schema defaults. */
+  rules: TableQueryStateFilterRule[]
+  /** UI filter definitions that own the default baseline. */
+  definitions: TableUiFilterDefinition[]
+}): TableQueryStateFilterRule[] {
+  return options.rules.filter((rule) => {
+    const definition = options.definitions.find((candidate) => candidate.key === rule.key)
+    return !definition || !isTableFilterRuleDefault({ rule, definition })
+  })
+}
+
 export function parseTableFilterQueryState(options: {
   entries: ReadonlyMap<string, unknown>
   definitions: TableUiFilterDefinition[]

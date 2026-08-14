@@ -40,7 +40,8 @@ export interface TableFilterBehaviorCommon<
 > {
   /**
    * Effective filter value when the URL has no override for this definition.
-   * The default stays active but is omitted from the URL; clearing the filter restores it.
+   * The default drives queries but is omitted from the URL and does not count as active UI state.
+   * Clearing an override restores this value.
    */
   defaultValue?: TableQueryStateFilterValue
   operators?: TOperator[]

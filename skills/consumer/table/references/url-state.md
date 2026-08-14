@@ -35,8 +35,9 @@ This means:
 
 UI filters use the `f.ui.*` namespace.
 
-Schema defaults from `filter.behavior.defaultValue` remain active without producing query params. For
-example, a status filter whose default is `['published']` keeps the base list URL clean:
+Schema defaults from `filter.behavior.defaultValue` remain effective without counting as active or
+producing query params. For example, a status filter whose default is `['published']` keeps the base
+list URL clean:
 
 ```txt
 /templates
@@ -48,7 +49,7 @@ Choosing Archived replaces that one default and produces:
 /templates?f.ui.status=archived
 ```
 
-Other filter defaults remain active, and clearing the override returns to the clean default URL.
+Other filter defaults remain effective, and clearing the override returns to the clean default URL.
 
 If the active operator is the filter's default operator, the operator is omitted from the key:
 

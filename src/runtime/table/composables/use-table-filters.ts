@@ -17,6 +17,7 @@ import {
   flattenFilterOptionEntries,
   getFilterLabelText,
   mergeTableFilterDefaultRules,
+  resolveTableActiveFilterRules,
   resolveTableFilterDefaultRules,
   resolveFilterOptionEntries,
 } from '../utils'
@@ -40,11 +41,17 @@ export function useTableFilters(params: UseTableFiltersParams) {
   const definitions = computed<TableUiFilterDefinition[]>(
     () => params.schema.value.filters?.ui ?? [],
   )
-  const activeUiFilters = computed<TableQueryStateFilterRule[]>(
+  const effectiveUiFilters = computed<TableQueryStateFilterRule[]>(
     () => params.state.queryState.filters.value.ui ?? [],
   )
   const defaultUiFilters = computed<TableQueryStateFilterRule[]>(() =>
     resolveTableFilterDefaultRules(definitions.value),
+  )
+  const activeUiFilters = computed<TableQueryStateFilterRule[]>(() =>
+    resolveTableActiveFilterRules({
+      rules: effectiveUiFilters.value,
+      definitions: definitions.value,
+    }),
   )
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
 
@@ -55,7 +62,17 @@ export function useTableFilters(params: UseTableFiltersParams) {
   }
 
   function getFilterState(input: { key: string }) {
+    return effectiveUiFilters.value.find(
+      (rule: TableQueryStateFilterRule) => rule.key === input.key,
+    )
+  }
+
+  function getActiveFilterState(input: { key: string }) {
     return activeUiFilters.value.find((rule: TableQueryStateFilterRule) => rule.key === input.key)
+  }
+
+  function getDefaultFilterState(input: { key: string }) {
+    return defaultUiFilters.value.find((rule: TableQueryStateFilterRule) => rule.key === input.key)
   }
 
   function getFilterOptionEntries(input: {
@@ -106,11 +123,16 @@ export function useTableFilters(params: UseTableFiltersParams) {
       })
     }
 
-    return buildFilterPreview({
+    const preview = buildFilterPreview({
       definition,
       rule: getFilterState({ key: input.key }),
       optionEntries: input.entries,
     })
+
+    return {
+      ...preview,
+      active: getActiveFilterState({ key: input.key }) != null,
+    }
   }
 
   function getFilterOperator(input: { key: string }) {
@@ -308,10 +330,13 @@ export function useTableFilters(params: UseTableFiltersParams) {
     searchPlaceholder: search.searchPlaceholder,
     hasActiveSearch: search.hasActiveSearch,
     definitions,
+    effectiveUiFilters,
     activeUiFilters,
     hasActiveUiFilters,
     getDefinition,
     getFilterState,
+    getActiveFilterState,
+    getDefaultFilterState,
     getFilterOptionEntries,
     getFilterPreview,
     getFilterOperator,
