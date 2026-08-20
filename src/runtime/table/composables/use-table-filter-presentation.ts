@@ -1,13 +1,20 @@
 import { computed, ref } from 'vue'
 
 import type {
+  DataListFilterPanelCommitMode,
   TableFilterOperator,
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
   TableResolvedFilterPresentation,
 } from '../types'
-import { resolveFilterDisplayLocation, resolveFilterDisplayOrder } from '../utils'
+import { resolvePanelCommitRules, resolvePanelDefaultRules } from '../utils/filter-presentation'
+import {
+  resolveFilterDisplayLocation,
+  resolveFilterDisplayOrder,
+} from '../utils/filters/presentation'
 import type { useTableFilters } from './use-table-filters'
+
+export { resolvePanelCommitRules, resolvePanelDefaultRules } from '../utils/filter-presentation'
 
 export interface UseTableFilterPresentationParams {
   filters: ReturnType<typeof useTableFilters>
@@ -16,6 +23,7 @@ export interface UseTableFilterPresentationParams {
 export function useTableFilterPresentation(options: UseTableFilterPresentationParams) {
   const dynamicSessionKey = ref<string | null>(null)
   const panelOpen = ref<boolean>(false)
+  const panelCommitMode = ref<DataListFilterPanelCommitMode>('submit')
   const panelDraftFilters = ref<TableQueryStateFilterRule[]>([])
 
   const definitions = computed(() =>
@@ -120,10 +128,13 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   }
 
   function openPanel() {
-    panelDraftFilters.value = options.filters.effectiveUiFilters.value
-      .filter((rule) => isPanelKey(rule.key))
-      .map((rule) => ({ ...rule }))
+    syncPanelDraft()
     panelOpen.value = true
+  }
+
+  function setPanelCommitMode(mode: DataListFilterPanelCommitMode) {
+    panelCommitMode.value = mode
+    syncPanelDraft()
   }
 
   function closePanel() {
@@ -131,33 +142,30 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   }
 
   function resetPanelDraft() {
-    panelDraftFilters.value = options.filters.effectiveUiFilters.value
-      .filter((rule) => isPanelKey(rule.key))
-      .map((rule) => ({ ...rule }))
+    syncPanelDraft()
   }
 
   function clearPanelDraft() {
-    panelDraftFilters.value = panelDefinitions.value.flatMap((definition) => {
-      const defaultRule = options.filters.getDefaultFilterState({ key: definition.key })
-      return defaultRule ? [{ ...defaultRule }] : []
+    panelDraftFilters.value = resolvePanelDefaultRules({
+      definitions: panelDefinitions.value,
+      getDefault: (key) => options.filters.getDefaultFilterState({ key }),
     })
-    const preservedRules = options.filters.effectiveUiFilters.value.filter(
-      (rule) => !isPanelKey(rule.key),
-    )
-    options.filters.replaceFilters({
-      rules: [...preservedRules, ...panelDraftFilters.value],
-    })
+    if (panelCommitMode.value === 'live') commitPanelDraft({ close: false })
   }
 
   function applyPanelDraft() {
-    const nextPanelRules = panelDraftFilters.value.map((rule) => ({ ...rule }))
-    const preservedRules = options.filters.effectiveUiFilters.value.filter(
-      (rule) => !isPanelKey(rule.key),
-    )
+    commitPanelDraft({ close: true })
+  }
+
+  function commitPanelDraft(input: { close?: boolean } = {}) {
     options.filters.replaceFilters({
-      rules: [...preservedRules, ...nextPanelRules],
+      rules: resolvePanelCommitRules({
+        currentRules: options.filters.effectiveUiFilters.value,
+        panelKeys: panelDefinitions.value.map((definition) => definition.key),
+        panelRules: panelDraftFilters.value,
+      }),
     })
-    panelOpen.value = false
+    if (input.close !== false) panelOpen.value = false
   }
 
   function getPanelDraftFilterState(input: { key: string }) {
@@ -234,6 +242,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
       ...panelDraftFilters.value.filter((rule) => rule.key !== input.key),
       ...(defaultRule ? [{ ...defaultRule }] : []),
     ]
+    if (panelCommitMode.value === 'live') commitPanelDraft({ close: false })
   }
 
   function isPanelKey(key: string) {
@@ -245,6 +254,13 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
       ...panelDraftFilters.value.filter((item) => item.key !== rule.key),
       rule,
     ]
+    if (panelCommitMode.value === 'live') commitPanelDraft({ close: false })
+  }
+
+  function syncPanelDraft() {
+    panelDraftFilters.value = options.filters.effectiveUiFilters.value
+      .filter((rule) => isPanelKey(rule.key))
+      .map((rule) => ({ ...rule }))
   }
 
   return {
@@ -258,13 +274,16 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     hasPanelFilters,
     activePanelCount,
     panelOpen,
+    panelCommitMode,
     activateDynamicFilter,
     releaseDynamicSession,
     openPanel,
+    setPanelCommitMode,
     closePanel,
     resetPanelDraft,
     clearPanelDraft,
     applyPanelDraft,
+    commitPanelDraft,
     getPanelDraftFilterState,
     getPanelFilterOperator,
     setPanelFilterOperator,

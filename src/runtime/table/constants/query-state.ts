@@ -1,12 +1,12 @@
 import type { TableFilterOperator, TableQueryStateFilterKind } from '../types/query-state'
 
-export const DEFAULT_FILTER_OPERATOR: Record<TableQueryStateFilterKind, TableFilterOperator> = {
+export const DEFAULT_FILTER_OPERATOR = {
   text: 'contains',
   option: 'isAnyOf',
   boolean: 'is',
   number: 'is',
   date: 'is',
-}
+} satisfies Record<TableQueryStateFilterKind, TableFilterOperator>
 
 export const PAGINATION_DEFAULTS = {
   defaultSize: { grid: 10, table: 50 },

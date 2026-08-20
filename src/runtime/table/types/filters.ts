@@ -668,7 +668,7 @@ export interface TableStaticFilterRule<
 > {
   key: TKey
   operator: TableFilterOperator
-  value: unknown | ((context: TContext) => unknown)
+  value: TableQueryStateFilterValue | ((context: TContext) => TableQueryStateFilterValue)
 }
 
 export interface TableResolvedFilterCondition<TKey extends string = string, TValue = unknown> {
@@ -704,8 +704,9 @@ export interface TableFilterResolveContext<
   context?: TContext
 }
 
-export type TableFilterResolveResult<TKey extends string = string> =
-  TableResolvedFilterNode<TKey> | null
+export type TableFilterResolveResult<
+  TKey extends string = string,
+> = TableResolvedFilterNode<TKey> | null
 
 interface TableFilterDefinitionBase<
   TRow extends GenericObject = GenericObject,

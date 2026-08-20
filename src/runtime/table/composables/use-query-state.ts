@@ -8,6 +8,7 @@ import {
   createEnumCodec,
 } from '#ui-tools/query-state'
 
+import { isObject } from '../../shared/utils/predicate'
 import type {
   TableLayout,
   TableQueryStateFilterRule,
@@ -69,7 +70,7 @@ export function useQueryState(params: UseQueryStateParams) {
         pageSize: defaultPageSize,
         count:
           params.schema.value.pagination &&
-          typeof params.schema.value.pagination === 'object' &&
+          isObject(params.schema.value.pagination) &&
           'mode' in params.schema.value.pagination &&
           params.schema.value.pagination.mode === 'cursor'
             ? (params.schema.value.pagination.count ?? 'none')
