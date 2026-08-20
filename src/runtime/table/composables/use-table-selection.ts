@@ -1,7 +1,7 @@
 import { computed, ref, watch, type ComputedRef } from 'vue'
 
 import type { GenericObject, TableSchemaView } from '../types'
-import { resolveTableRowId } from '../utils'
+import { hasConfiguredTableActions, resolveTableRowId } from '../utils'
 import type { useTableData } from './use-table-data'
 
 export interface UseTableSelectionParams {
@@ -17,7 +17,9 @@ export function useTableSelection(options: UseTableSelectionParams) {
   const selectionEnabled = computed(() => {
     const mode =
       options.schema.value.table?.selection ?? options.schema.value.selection?.mode ?? 'auto'
-    return mode !== false
+    if (mode !== 'auto') return mode
+
+    return hasConfiguredTableActions(options.schema.value)
   })
   const selectionScope = computed<'page' | 'all'>(() => {
     if (options.schema.value.source.mode === 'remote') return 'page'
