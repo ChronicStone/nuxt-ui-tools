@@ -26,6 +26,7 @@ export interface UiToolsTableMessages {
     resetColumns: string
     sort: string
     loadMore: string
+    clearSelection: string
   }
   columnsMenu: {
     sortAsc: string
@@ -41,6 +42,7 @@ export interface UiToolsTableMessages {
       trigger: string
       clearAll: string
       apply: string
+      matchMode: string
     }
     options: {
       empty: string
@@ -237,9 +239,20 @@ export interface UiToolsFormMessages {
     cancelButton: string
     resetButton: string
   }
+  states: {
+    contextError: {
+      title: string
+      description: string
+      action: string
+    }
+  }
   fields: {
     text: {
       defaultPlaceholder: string
+    }
+    password: {
+      show: string
+      hide: string
     }
     options: {
       refresh: string
@@ -259,6 +272,7 @@ export interface UiToolsFormMessages {
       start: string
       end: string
       clear: string
+      confirm: string
     }
     time: {
       format: string
@@ -278,6 +292,7 @@ export interface UiToolsFormMessages {
     phone: {
       country: string
       number: string
+      clear: string
     }
   }
 }

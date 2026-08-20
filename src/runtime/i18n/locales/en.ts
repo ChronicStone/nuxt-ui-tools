@@ -13,9 +13,20 @@ export default defineUiToolsLocale<Messages>({
         cancelButton: 'Cancel',
         resetButton: 'Reset',
       },
+      states: {
+        contextError: {
+          title: 'Form data unavailable',
+          description: 'Some form data could not be loaded.',
+          action: 'Retry',
+        },
+      },
       fields: {
         text: {
           defaultPlaceholder: 'Enter a value',
+        },
+        password: {
+          show: 'Show password',
+          hide: 'Hide password',
         },
         options: {
           refresh: 'Refresh',
@@ -35,6 +46,7 @@ export default defineUiToolsLocale<Messages>({
           start: 'Start',
           end: 'End',
           clear: 'Clear value',
+          confirm: 'Confirm',
         },
         time: {
           format: 'HH:mm',
@@ -54,6 +66,7 @@ export default defineUiToolsLocale<Messages>({
         phone: {
           country: 'Country calling code',
           number: 'Phone number',
+          clear: 'Clear phone number',
         },
       },
     },
@@ -83,6 +96,7 @@ export default defineUiToolsLocale<Messages>({
         resetColumns: 'Reset',
         sort: 'Sort',
         loadMore: 'Load more',
+        clearSelection: 'Clear selection',
       },
       columnsMenu: {
         sortAsc: 'Sort asc',
@@ -98,6 +112,7 @@ export default defineUiToolsLocale<Messages>({
           trigger: 'Filters',
           clearAll: 'Clear all',
           apply: 'Apply',
+          matchMode: 'Match mode',
         },
         options: {
           empty: 'No matching options.',
@@ -115,11 +130,11 @@ export default defineUiToolsLocale<Messages>({
           contains: 'contains',
           is: 'is',
           isNot: 'is not',
-          isAnyOf: 'is any of',
+          isAnyOf: 'any of',
           gt: 'greater than',
-          gte: 'greater than or equal to',
+          gte: 'at least',
           lt: 'less than',
-          lte: 'less than or equal to',
+          lte: 'at most',
           before: 'before',
           after: 'after',
           between: 'between',

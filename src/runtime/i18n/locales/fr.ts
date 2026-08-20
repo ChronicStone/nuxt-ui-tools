@@ -13,9 +13,20 @@ export default defineUiToolsLocale<Messages>({
         cancelButton: 'Annuler',
         resetButton: 'Réinitialiser',
       },
+      states: {
+        contextError: {
+          title: 'Données du formulaire indisponibles',
+          description: "Certaines données du formulaire n'ont pas pu être chargées.",
+          action: 'Réessayer',
+        },
+      },
       fields: {
         text: {
           defaultPlaceholder: 'Saisissez une valeur',
+        },
+        password: {
+          show: 'Afficher le mot de passe',
+          hide: 'Masquer le mot de passe',
         },
         options: {
           refresh: 'Actualiser',
@@ -35,6 +46,7 @@ export default defineUiToolsLocale<Messages>({
           start: 'Début',
           end: 'Fin',
           clear: 'Effacer la valeur',
+          confirm: 'Confirmer',
         },
         time: {
           format: 'HH:mm',
@@ -54,6 +66,7 @@ export default defineUiToolsLocale<Messages>({
         phone: {
           country: 'Indicatif du pays',
           number: 'Numéro de téléphone',
+          clear: 'Effacer le numéro',
         },
       },
     },
@@ -83,6 +96,7 @@ export default defineUiToolsLocale<Messages>({
         resetColumns: 'Réinitialiser',
         sort: 'Trier',
         loadMore: 'Charger plus',
+        clearSelection: 'Effacer la sélection',
       },
       columnsMenu: {
         sortAsc: 'Tri croissant',
@@ -98,6 +112,7 @@ export default defineUiToolsLocale<Messages>({
           trigger: 'Filtres',
           clearAll: 'Tout effacer',
           apply: 'Appliquer',
+          matchMode: 'Mode de correspondance',
         },
         options: {
           empty: 'Aucune option correspondante.',
@@ -115,11 +130,11 @@ export default defineUiToolsLocale<Messages>({
           contains: 'contient',
           is: 'est',
           isNot: "n'est pas",
-          isAnyOf: "est l'un de",
+          isAnyOf: 'parmi',
           gt: 'supérieur à',
-          gte: 'supérieur ou égal à',
+          gte: 'au moins',
           lt: 'inférieur à',
-          lte: 'inférieur ou égal à',
+          lte: 'au plus',
           before: 'avant',
           after: 'après',
           between: 'entre',
