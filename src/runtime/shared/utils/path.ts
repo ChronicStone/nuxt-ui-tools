@@ -1,15 +1,19 @@
 import type { GenericObject } from '../types/utils'
+import { isObject, isString } from './predicate'
+
+type PathValue = GenericObject[string]
+type PathContainer = GenericObject | PathValue[]
 
 export function pathSegments(path: string | readonly string[]) {
-  const rawSegments = typeof path === 'string' ? path.split('.') : path
+  const rawSegments = isString(path) ? path.split('.') : path
   return rawSegments.flatMap((segment: string) => segment.split('.')).filter(Boolean)
 }
 
-export function getPathValue(source: unknown, path: string | readonly string[]) {
-  return pathSegments(path).reduce<unknown>((current: unknown, segment: string) => {
+export function getPathValue<T>(source: T, path: string | readonly string[]) {
+  return pathSegments(path).reduce<PathValue | undefined>((current, segment: string) => {
     if (!isPathContainer(current)) return undefined
     return getContainerValue(current, segment)
-  }, source)
+  }, isPathContainer(source) ? source : undefined)
 }
 
 export function relativePathSegments(parentPath: readonly string[], key = '') {
@@ -34,10 +38,10 @@ export function getScopedPathValue(
   return getPathValue(source, key)
 }
 
-export function setPathValue(
-  target: GenericObject,
+export function setPathValue<T extends GenericObject>(
+  target: T,
   path: string | readonly string[],
-  value: unknown,
+  value: PathValue,
 ) {
   const segments = pathSegments(path)
   let current: PathContainer = target
@@ -54,13 +58,13 @@ export function setPathValue(
       return
     }
 
-    const next = shouldCreateArray(segments[index + 1]) ? [] : {}
+    const next: PathContainer = shouldCreateArray(segments[index + 1]) ? [] : {}
     setContainerValue(current, segment, next)
     current = next
   })
 }
 
-export function cloneValue(value: unknown): unknown {
+export function cloneValue<T>(value: T): PathValue {
   if (Array.isArray(value)) return value.map((item) => cloneValue(item))
   if (!isRecord(value)) return value
 
@@ -81,13 +85,11 @@ export function mergeObjects(target: GenericObject, source: GenericObject) {
   }
 }
 
-export function isRecord(value: unknown): value is GenericObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+export function isRecord<T>(value: T): value is T & GenericObject {
+  return isObject(value) && !Array.isArray(value)
 }
 
-type PathContainer = GenericObject | unknown[]
-
-function isPathContainer(value: unknown): value is PathContainer {
+function isPathContainer<T>(value: T): value is T & PathContainer {
   return isRecord(value) || Array.isArray(value)
 }
 
@@ -96,7 +98,7 @@ function getContainerValue(container: PathContainer, segment: string) {
   return container[segment]
 }
 
-function setContainerValue(container: PathContainer, segment: string, value: unknown) {
+function setContainerValue(container: PathContainer, segment: string, value: PathValue) {
   if (Array.isArray(container)) {
     container[Number(segment)] = value
     return
@@ -106,7 +108,7 @@ function setContainerValue(container: PathContainer, segment: string, value: unk
 }
 
 function shouldCreateArray(segment: string | undefined) {
-  return typeof segment === 'string' && /^\d+$/.test(segment)
+  return segment !== undefined && /^\d+$/u.test(segment)
 }
 
 function scopedPathOffset(key: string) {
