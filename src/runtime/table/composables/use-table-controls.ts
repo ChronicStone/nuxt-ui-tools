@@ -14,13 +14,12 @@ export function useTableControls(options: UseTableControlsParams) {
 
   const tableLayout = options.layout.activeLayout
   const gridEnabled = options.layout.gridEnabled
-  const layoutState = computed(() => ({
-    active: tableLayout.value,
-    available: [
-      ...(options.layout.tableEnabled.value ? ['table'] : []),
-      ...(options.layout.gridEnabled.value ? ['grid'] : []),
-    ] as TableLayout[],
-  }))
+  const layoutState = computed(() => {
+    const available: TableLayout[] = []
+    if (options.layout.tableEnabled.value) available.push('table')
+    if (options.layout.gridEnabled.value) available.push('grid')
+    return { active: tableLayout.value, available }
+  })
 
   function setTableLayout(layout: TableLayout) {
     options.layout.activeLayout.value = layout

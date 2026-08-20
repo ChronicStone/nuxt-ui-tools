@@ -5,6 +5,7 @@ import type {
   TableGridSortOption,
   TableLayout,
   TableRowRenderParams,
+  RenderableType,
   TableSortKey,
 } from './utils'
 
@@ -66,8 +67,8 @@ export interface TableGridSchema<
 > {
   enabled?: boolean | string | (() => boolean | string)
   mode?: TableGridMode
-  renderItem?: (params: TableRowRenderParams<TRow, TContext, TPageContext>) => unknown
-  renderSkeleton?: (params: { layout?: 'grid' }) => unknown
+  renderItem?: (params: TableRowRenderParams<TRow, TContext, TPageContext>) => RenderableType
+  renderSkeleton?: (params: { layout?: 'grid' }) => RenderableType
   gridSize?: number | string | (() => number | string)
   itemSize?: number | string | (() => number | string)
   sortOptions?: TableGridSortOption<TSortKey>[]

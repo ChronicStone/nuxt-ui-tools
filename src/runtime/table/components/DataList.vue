@@ -4,7 +4,7 @@ import type { ComputedRef } from 'vue'
 import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 
 import type { TableInternals } from '../composables/use-table-internals'
-import type { DataListDensity, DataListUiConfig } from '../types'
+import type { DataListControlSize, DataListDensity, DataListUiConfig } from '../types'
 import DataListDefault from './data-list/DataListDefault.vue'
 import DataListRoot from './data-list/DataListRoot.vue'
 
@@ -20,12 +20,13 @@ defineProps<{
   height?: string | number
   locale?: UiToolsLocale<UiToolsMessages>
   density?: DataListDensity
+  size?: DataListControlSize
   ui?: DataListUiConfig
 }>()
 </script>
 
 <template>
-  <DataListRoot :table="table" :locale="locale" :density="density" :ui="ui">
+  <DataListRoot :table="table" :locale="locale" :density="density" :size="size" :ui="ui">
     <DataListDefault :title="title" :description="description" :height="height">
       <template v-if="$slots.title" #title>
         <slot name="title" />

@@ -5,6 +5,7 @@ import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { TableLayout } from '../../types'
 import ColumnPanel from '../drawers/ColumnPanel.vue'
@@ -22,6 +23,7 @@ defineProps<{
 const searchQuery = defineModel<string>('searchQuery', { required: true })
 const tableLayout = defineModel<TableLayout>('tableLayout', { required: true })
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
 const { t } = useUiToolsLocale()
 const refreshLoading = computed(
   () =>
@@ -59,6 +61,7 @@ function refreshData() {
           v-model="searchQuery"
           :loading="searchLoading"
           :placeholder="searchPlaceholder"
+          :size="dataListUi.controlSize.value"
         />
 
         <TableFiltersBar />
@@ -74,7 +77,7 @@ function refreshData() {
         <UButton
           color="neutral"
           variant="outline"
-          size="md"
+          :size="dataListUi.controlSize.value"
           icon="i-lucide-refresh-cw"
           :loading="refreshLoading"
           :aria-label="t('table.header.refreshData')"
@@ -82,11 +85,11 @@ function refreshData() {
           @click="refreshData"
         />
 
-        <UFieldGroup v-if="gridEnabled" size="md" class="shrink-0">
+        <UFieldGroup v-if="gridEnabled" :size="dataListUi.controlSize.value" class="shrink-0">
           <UButton
             color="neutral"
             :variant="tableLayout === 'table' ? 'subtle' : 'outline'"
-            size="md"
+            :size="dataListUi.controlSize.value"
             icon="i-lucide-table-properties"
             :aria-label="t('table.header.tableView')"
             :title="t('table.header.tableView')"
@@ -95,7 +98,7 @@ function refreshData() {
           <UButton
             color="neutral"
             :variant="tableLayout === 'grid' ? 'subtle' : 'outline'"
-            size="md"
+            :size="dataListUi.controlSize.value"
             icon="i-lucide-layout-grid"
             :aria-label="t('table.header.gridView')"
             :title="t('table.header.gridView')"

@@ -2,6 +2,7 @@ import { computed, type ComputedRef } from 'vue'
 
 import { getResponsiveValue } from '#ui-tools/shared'
 
+import { isFunction, isNumber } from '../../shared/utils/predicate'
 import { GRID_DEFAULTS } from '../constants/grid'
 import type { GenericObject, TableExternalState, TableGridMode, TableSchemaView } from '../types'
 
@@ -58,10 +59,16 @@ function clampGridUnit(value: number) {
 }
 
 function resolveResponsiveGridNumber(value: number | string | (() => number | string)) {
-  const resolvedValue = typeof value === 'function' ? value() : value
-  if (typeof resolvedValue === 'number') return resolvedValue
+  const resolvedValue = isResponsiveGridValueResolver(value) ? value() : value
+  if (isNumber(resolvedValue)) return resolvedValue
 
   return getResponsiveValue(resolvedValue, 'integer')
+}
+
+function isResponsiveGridValueResolver(
+  value: number | string | (() => number | string),
+): value is () => number | string {
+  return isFunction(value)
 }
 
 function chunkRows<TRow>(options: { rows: TRow[]; cardsPerRow: number }): GridRowChunk<TRow>[] {

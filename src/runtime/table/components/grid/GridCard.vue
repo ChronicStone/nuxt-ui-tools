@@ -3,7 +3,7 @@ import { computed, defineComponent } from 'vue'
 
 import { useGridRow, useProvideGridRow } from '../../composables/use-grid-row'
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { TableSchemaView } from '../../types'
+import type { GenericObject, TableSchemaView } from '../../types'
 import TableRowScopeProvider from '../actions/TableRowScopeProvider.vue'
 
 const props = defineProps<{
@@ -41,7 +41,7 @@ function createGridRenderParams(params: GridRenderParams) {
   return params
 }
 
-function toPlainRecord(value: object) {
+function toPlainRecord(value: GenericObject) {
   return Object.fromEntries(Object.entries(value))
 }
 </script>
