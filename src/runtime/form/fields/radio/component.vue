@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRadioField } from '../../types'
+import { isBoolean, isNumber, isString } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormRadioField
@@ -18,8 +19,7 @@ const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
 const model = computed<string | number | boolean | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
-      return value
+    if (isString(value) || isNumber(value) || isBoolean(value)) return value
     return undefined
   },
   set: (value) => form.setValue(props.path, value),

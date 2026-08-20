@@ -13,8 +13,10 @@ import FormCompositeControl from '../../components/renderer/FormCompositeControl
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormUi } from '../../composables/use-form-ui'
+import type { FormValue } from '../../types'
 import type { FormOptionValue } from '../../types'
 import { formOptionKey, type ResolvedFormOption } from '../../utils/options'
+import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 import SelectionCheckbox from './SelectionCheckbox.vue'
@@ -40,11 +42,20 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, controlSize, disabled, handleBlur, options, placeholder } =
-  useFieldControl(
-    () => props.field,
-    () => props.path,
-  )
+const {
+  form,
+  controlProps,
+  controlSize,
+  disabled,
+  handleBlur,
+  interactionOwnerClass,
+  options,
+  placeholder,
+  validationPending,
+} = useFieldControl(
+  () => props.field,
+  () => props.path,
+)
 const formUi = useFormUi()
 const isTree = computed<boolean>(() => props.field.type === 'tree')
 const isTreeSelect = computed<boolean>(() => props.field.type === 'tree-select')
@@ -109,6 +120,10 @@ const treeSelectLabel = computed<string>(() => {
     : String(selected.label)
 })
 const fieldLabel = computed<string | undefined>(() => resolveFormText(props.field.label))
+const ownedControlUi = computed(() => ({
+  ...controlProps.value.ui,
+  content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
+}))
 
 watch(treeSelectOpen, (open) => {
   if (!open) treeSearch.value = ''
@@ -151,13 +166,16 @@ function toTreeItems(
   items: readonly ResolvedFormOption[],
   labels: readonly string[] = [],
 ): TreeHierarchyItem[] {
-  return items.map((item) => ({
-    ...item,
-    label: treeItemLabel(item),
-    pathLabel: [...labels, item.label].join(separator.value),
-    children: item.children ? toTreeItems(item.children, [...labels, item.label]) : undefined,
-    ...(treeSelectionControl.value === 'none' ? {} : { onSelect: preventTreeSelection }),
-  }))
+  return items.map((item) => {
+    const treeItem: TreeHierarchyItem = {
+      ...item,
+      label: treeItemLabel(item),
+      pathLabel: [...labels, item.label].join(separator.value),
+      children: item.children ? toTreeItems(item.children, [...labels, item.label]) : undefined,
+    }
+    if (treeSelectionControl.value !== 'none') treeItem.onSelect = preventTreeSelection
+    return treeItem
+  })
 }
 
 function preventTreeSelection(event: { preventDefault: () => void }) {
@@ -269,8 +287,8 @@ function treeVirtualize(field: FormHierarchyField) {
   return field.type === 'tree' ? field.virtualize : undefined
 }
 
-function isOptionValue(value: unknown): value is FormOptionValue {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+function isOptionValue(value: FormValue): value is FormOptionValue {
+  return isString(value) || isNumber(value) || isBoolean(value)
 }
 </script>
 
@@ -358,6 +376,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
         :ui="{
           content: mergeFormUiClass(
             'w-(--reka-popper-anchor-width) min-w-72 p-0',
+            interactionOwnerClass,
             formUi.ui.value.treeSelect?.ui?.content,
           ),
         }"
@@ -369,7 +388,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
           variant="outline"
           :size="controlSize"
           :disabled="disabled"
-          :loading="options.loading.value"
+          :loading="validationPending || options.loading.value"
           :trailing-icon="treeSelectOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
           :class="
             mergeFormUiClass(
@@ -516,7 +535,8 @@ function isOptionValue(value: unknown): value is FormOptionValue {
         :clear="field.clearable === true"
         :placeholder="placeholder"
         :disabled="disabled"
-        :loading="options.loading.value"
+        :loading="validationPending || options.loading.value"
+        :ui="ownedControlUi"
         @blur="handleBlur"
       />
     </FormCompositeControl>

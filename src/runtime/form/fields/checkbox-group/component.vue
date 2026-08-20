@@ -4,8 +4,11 @@ import { computed } from 'vue'
 
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import type { FormValue } from '../../types'
 import type { FormCheckboxGroupField, FormOptionValue } from '../../types'
 import { formOptionKey } from '../../utils/options'
+import { isBoolean, isNumber, isString, isUndefined } from '../../utils/predicate'
+import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<{
   field: FormCheckboxGroupField
@@ -29,16 +32,23 @@ const model = computed<string[]>({
       props.path,
       value.flatMap((key) => {
         const optionValue = valueByKey.value.get(key)
-        return typeof optionValue === 'undefined' ? [] : [optionValue]
+        return isUndefined(optionValue) ? [] : [optionValue]
       }),
     ),
 })
 const items = computed(() =>
   options.items.value.map((item) => ({ ...item, value: formOptionKey(item.value) })),
 )
+const groupUi = computed(() => ({
+  ...controlProps.value.ui,
+  fieldset: mergeFormUiClass(
+    controlProps.value.ui?.fieldset,
+    props.field.orientation === 'horizontal' ? 'flex-wrap' : undefined,
+  ),
+}))
 
-function isOptionValue(value: unknown): value is FormOptionValue {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+function isOptionValue(value: FormValue): value is FormOptionValue {
+  return isString(value) || isNumber(value) || isBoolean(value)
 }
 </script>
 
@@ -52,6 +62,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
       label-key="label"
       description-key="description"
       :orientation="field.orientation"
+      :ui="groupUi"
       :variant="field.variant === 'table' ? 'list' : (field.variant ?? 'list')"
       :indicator="field.indicator"
       :disabled="disabled"
