@@ -33,6 +33,7 @@ Current important internal skills include:
 - `.agents/skills/nuxt-ui-tools-typescript/`
 - `.agents/skills/nuxt-ui-tools-reactivity/`
 - `.agents/skills/nuxt-ui-tools-config-driven/`
+- `.agents/skills/nuxt-ui-tools-playground/` for playground shell, content modes, navigation, and example route architecture
 
 Internal and consumer guidance must stay strictly separated:
 

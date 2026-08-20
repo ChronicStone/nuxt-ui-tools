@@ -1,5 +1,5 @@
 <template>
-  <div class="h-dvh overflow-hidden bg-default">
+  <PlaygroundShell>
     <slot />
-  </div>
+  </PlaygroundShell>
 </template>

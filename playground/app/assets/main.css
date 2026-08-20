@@ -1,26 +1,66 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 20rem;
+  overflow-x: hidden;
+  background: var(--ui-bg);
+}
+
+@layer theme {
+  :root,
+  .light {
+    --ui-color-primary-500: #000 !important;
+    --ui-color-primary-600: #000 !important;
+    --ui-color-primary-700: #000 !important;
+    --ui-color-primary-800: #000 !important;
+    --ui-color-primary-900: #000 !important;
+    --ui-color-primary-950: #000 !important;
+  }
+
+  .dark {
+    --ui-color-primary-400: #fafafa !important;
+    --ui-color-primary-500: #fafafa !important;
+    --ui-color-primary-600: #fff !important;
+    --ui-color-primary-700: #fff !important;
+    --ui-color-primary-800: #fff !important;
+    --ui-color-primary-900: #fff !important;
+    --ui-color-primary-950: #fff !important;
+  }
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 639px) {
+  .playground-examples-trigger [data-slot='label'],
+  .playground-examples-trigger [data-slot='trailingIcon'] {
+    display: none;
+  }
+}
+
 .playground-page-enter-active,
 .playground-page-leave-active {
-  transition:
-    opacity 220ms ease,
-    transform 220ms ease,
-    filter 220ms ease;
+  transition: opacity 160ms ease;
 }
 
 .playground-page-enter-from,
 .playground-page-leave-to {
   opacity: 0;
-  transform: translateY(12px) scale(0.985);
-  filter: blur(6px);
 }
 
 .playground-page-enter-to,
 .playground-page-leave-from {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
