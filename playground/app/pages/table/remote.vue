@@ -4,12 +4,15 @@ import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import {
-  demoEmployeesClient,
-} from '../lib/demo-employees-api'
-
+  defineTableSchema,
+  useTable,
+  type TableFilterOptionEntry,
+} from '#ui-tools/table'
 import DataList from '#ui-tools/table/components/DataList.vue'
-import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
+
+import { demoEmployeesClient } from '../../lib/demo-employees-api'
 const { locale, t } = useI18n()
+const { tableSize } = usePlaygroundShell()
 const countryTreeOptions = [
   {
     label: () => translateRegion('Europe'),
@@ -21,15 +24,11 @@ const countryTreeOptions = [
   },
   {
     label: () => translateRegion('North America'),
-    children: [
-      { label: () => translateCountry('United States'), value: 'United States' },
-    ],
+    children: [{ label: () => translateCountry('United States'), value: 'United States' }],
   },
   {
     label: () => translateRegion('Asia'),
-    children: [
-      { label: () => translateCountry('Japan'), value: 'Japan' },
-    ],
+    children: [{ label: () => translateCountry('Japan'), value: 'Japan' }],
   },
 ] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
 
@@ -59,13 +58,7 @@ const remoteSchema = defineTableSchema({
         if (params.pagination.mode !== 'offset')
           throw new Error('The remote employee demo uses offset pagination.')
 
-        return demoEmployeesClient.queryTable({
-          ...params,
-          pagination: {
-            pageIndex: params.pagination.pageIndex,
-            pageSize: params.pagination.pageSize,
-          },
-        })
+        return demoEmployeesClient.queryTable(params)
       },
     }),
   },
@@ -117,7 +110,7 @@ const remoteSchema = defineTableSchema({
           },
         },
       }),
-      filter.option('department.companyId', {
+      filter.option('department.company.name', {
         label: () => t('playground.tableCommon.cards.company'),
         behavior: {
           defaultOperator: 'isAnyOf',
@@ -126,17 +119,7 @@ const remoteSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         source: {
-          facet: true,
-          query: ({ search, limit, cursor }) => ({
-            queryKey: ['demo-filter-options', 'companies', search, limit, cursor],
-            queryFn: async () => demoEmployeesClient.filterOptions.companies({
-              request: {
-                search,
-                limit,
-                cursor: cursor ?? undefined,
-              },
-            }),
-          }),
+          facet: 'exclude-self',
         },
         editor: {
           searchable: true,
@@ -149,7 +132,7 @@ const remoteSchema = defineTableSchema({
           },
         },
       }),
-      filter.option('employeeSkills.skillId', {
+      filter.option('employeeSkills.skill.label', {
         label: () => t('playground.tableCommon.filters.skill'),
         behavior: {
           defaultOperator: 'isAnyOf',
@@ -158,25 +141,20 @@ const remoteSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         source: {
-          facet: true,
-          query: ({ search, limit, cursor }) => ({
-            queryKey: ['demo-filter-options', 'skills', search, limit, cursor],
-            queryFn: async () => demoEmployeesClient.filterOptions.skills({
-              request: {
-                search,
-                limit,
-                cursor: cursor ?? undefined,
-              },
-            }),
-          }),
+          facet: 'exclude-self',
         },
         editor: {
+          searchable: true,
+          closeOnSelect: false,
           row: {
-            showCounts: false,
+            showCounts: true,
+          },
+          selection: {
+            mode: 'multiple',
           },
         },
       }),
-      filter.option('departmentId', {
+      filter.option('department.name', {
         label: () => t('playground.tableCommon.filters.department'),
         behavior: {
           defaultOperator: 'isAnyOf',
@@ -185,23 +163,16 @@ const remoteSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         source: {
-          facet: true,
+          facet: 'exclude-self',
           sort: 'count',
-          query: ({ search, limit, cursor }) => ({
-            queryKey: ['demo-filter-options', 'departments', search, limit, cursor],
-            queryFn: async () => demoEmployeesClient.filterOptions.departments({
-              request: {
-                search,
-                limit,
-                cursor: cursor ?? undefined,
-              },
-            }),
-          }),
         },
         editor: {
           searchable: false,
           selection: {
             mode: 'multiple',
+          },
+          row: {
+            showCounts: true,
           },
         },
       }),
@@ -323,7 +294,11 @@ const remoteSchema = defineTableSchema({
               <div class="truncate font-medium text-highlighted">{row.fullName}</div>
               <div class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted">
                 <UIcon name="i-lucide-sparkles" class="size-3 shrink-0" />
-                <span class="truncate">{row.employeeSkills[0]?.skill.label ? translateSkill(row.employeeSkills[0].skill.label) : t('playground.tableCommon.generalist')}</span>
+                <span class="truncate">
+                  {row.employeeSkills[0]?.skill.label
+                    ? translateSkill(row.employeeSkills[0].skill.label)
+                    : t('playground.tableCommon.generalist')}
+                </span>
               </div>
             </div>
           </div>
@@ -338,7 +313,9 @@ const remoteSchema = defineTableSchema({
             <div class="truncate text-highlighted">{row.email}</div>
             <div class="mt-1 flex items-center gap-1.5 text-xs text-muted">
               <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
-              <span class="truncate">{row.department?.company?.name ?? t('playground.tableRemote.noCompany')}</span>
+              <span class="truncate">
+                {row.department?.company?.name ?? t('playground.tableRemote.noCompany')}
+              </span>
             </div>
           </div>
         ),
@@ -354,7 +331,13 @@ const remoteSchema = defineTableSchema({
               .map((entry) => entry.skill.label)
               .slice(0, 3)
               .map((skill) => (
-                <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={translateSkill(skill)} />
+                <UBadge
+                  key={skill}
+                  color="neutral"
+                  variant="subtle"
+                  size="sm"
+                  label={translateSkill(skill)}
+                />
               ))}
           </div>
         ),
@@ -366,7 +349,9 @@ const remoteSchema = defineTableSchema({
         render: ({ value }) => (
           <div class="flex items-center gap-2">
             <span class="text-base leading-none">{getCountryFlag(String(value ?? ''))}</span>
-            <span class="truncate text-highlighted">{translateCountry(String(value ?? 'Unknown'))}</span>
+            <span class="truncate text-highlighted">
+              {translateCountry(String(value ?? 'Unknown'))}
+            </span>
           </div>
         ),
       }),
@@ -387,7 +372,11 @@ const remoteSchema = defineTableSchema({
             color={value ? 'success' : 'neutral'}
             variant={value ? 'soft' : 'subtle'}
             size="sm"
-            label={value ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
+            label={
+              value
+                ? t('playground.tableCommon.status.online')
+                : t('playground.tableCommon.status.paused')
+            }
           />
         ),
       }),
@@ -416,9 +405,13 @@ const remoteSchema = defineTableSchema({
     gridSize: '1 md:2 xl:3',
     renderItem: ({ row }) => {
       const employeeSkills = row.employeeSkills.map((entry) => translateSkill(entry.skill.label))
-      const departmentName = row.department?.name ? translateDepartment(row.department.name) : t('playground.tableRemote.noDepartment')
+      const departmentName = row.department?.name
+        ? translateDepartment(row.department.name)
+        : t('playground.tableRemote.noDepartment')
       const companyName = row.department?.company?.name ?? t('playground.tableRemote.noCompany')
-      const countryName = row.department?.company?.country ? translateCountry(row.department.company.country) : t('playground.tableCommon.countries.unknown')
+      const countryName = row.department?.company?.country
+        ? translateCountry(row.department.company.country)
+        : t('playground.tableCommon.countries.unknown')
       const salary = row.salary ?? 0
       const hiredAt = row.hiredAt ?? new Date().toISOString()
 
@@ -451,7 +444,11 @@ const remoteSchema = defineTableSchema({
                   color={row.isActive ? 'success' : 'neutral'}
                   variant={row.isActive ? 'soft' : 'subtle'}
                   size="sm"
-                  label={row.isActive ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
+                  label={
+                    row.isActive
+                      ? t('playground.tableCommon.status.online')
+                      : t('playground.tableCommon.status.paused')
+                  }
                 />
               </div>
             ),
@@ -459,7 +456,9 @@ const remoteSchema = defineTableSchema({
               <>
                 <div class="grid gap-3 sm:grid-cols-2">
                   <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                    <div class="text-xs text-muted">{t('playground.tableCommon.cards.country')}</div>
+                    <div class="text-xs text-muted">
+                      {t('playground.tableCommon.cards.country')}
+                    </div>
                     <div class="flex items-center gap-2 text-sm font-medium text-highlighted">
                       <span class="inline-flex h-4 w-4 items-center justify-center text-sm leading-none">
                         {getCountryFlag(countryName)}
@@ -470,9 +469,7 @@ const remoteSchema = defineTableSchema({
 
                   <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
                     <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
-                    <div class="text-sm font-medium text-highlighted">
-                      {formatCurrency(salary)}
-                    </div>
+                    <div class="text-sm font-medium text-highlighted">{formatCurrency(salary)}</div>
                   </div>
                 </div>
 
@@ -485,9 +482,7 @@ const remoteSchema = defineTableSchema({
             ),
             footer: () => (
               <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
-                <div class="min-w-0 flex-1 truncate">
-                  {companyName}
-                </div>
+                <div class="min-w-0 flex-1 truncate">{companyName}</div>
                 <div class="shrink-0">{formatDate(hiredAt)}</div>
               </div>
             ),
@@ -526,7 +521,7 @@ function getInitials(value: string) {
   return value
     .split(/\s+/)
     .slice(0, 2)
-    .map(part => part[0]?.toUpperCase() ?? '')
+    .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
 }
 
@@ -547,44 +542,44 @@ function formatDate(value: string) {
 }
 
 function getCountryFlag(country: string) {
-  const flags: Record<string, string> = {
+  const flags = {
     France: '🇫🇷',
     Germany: '🇩🇪',
     Japan: '🇯🇵',
     'United Kingdom': '🇬🇧',
     'United States': '🇺🇸',
-  }
+  } satisfies Record<string, string>
 
   return flags[country] ?? '🌍'
 }
 
 function translateCountry(value: string) {
-  const keyByCountry: Record<string, string> = {
+  const keyByCountry = {
     France: 'france',
     Germany: 'germany',
     Japan: 'japan',
     'United Kingdom': 'unitedKingdom',
     'United States': 'unitedStates',
     Unknown: 'unknown',
-  }
+  } satisfies Record<string, string>
 
   const key = keyByCountry[value]
   return key ? t(`playground.tableCommon.countries.${key}`) : value
 }
 
 function translateRegion(value: string) {
-  const keyByRegion: Record<string, string> = {
+  const keyByRegion = {
     Europe: 'europe',
     'North America': 'northAmerica',
     Asia: 'asia',
-  }
+  } satisfies Record<string, string>
 
   const key = keyByRegion[value]
   return key ? t(`playground.tableCommon.regions.${key}`) : value
 }
 
 function translateDepartment(value: string) {
-  const keyByDepartment: Record<string, string> = {
+  const keyByDepartment = {
     Engineering: 'engineering',
     Platform: 'platform',
     Operations: 'operations',
@@ -595,14 +590,14 @@ function translateDepartment(value: string) {
     Data: 'data',
     Support: 'support',
     Growth: 'growth',
-  }
+  } satisfies Record<string, string>
 
   const key = keyByDepartment[value]
   return key ? t(`playground.tableCommon.departments.${key}`) : value
 }
 
 function translateSkill(value: string) {
-  const keyBySkill: Record<string, string> = {
+  const keyBySkill = {
     TypeScript: 'typescript',
     Go: 'go',
     Kubernetes: 'kubernetes',
@@ -619,7 +614,7 @@ function translateSkill(value: string) {
     'Incident Response': 'incidentResponse',
     'Product Strategy': 'productStrategy',
     'UX Research': 'uxResearch',
-  }
+  } satisfies Record<string, string>
 
   const key = keyBySkill[value]
   return key ? t(`playground.tableCommon.skills.${key}`) : value
@@ -627,7 +622,13 @@ function translateSkill(value: string) {
 </script>
 
 <template>
-  <div class="p-6">
-    <DataList :table="table" :height="'38rem'" />
-  </div>
+  <PlaygroundContent mode="scroll" class="p-4 lg:p-6">
+    <DataList
+      :table="table"
+      :size="tableSize"
+      :height="'38rem'"
+      title="Remote employees"
+      description="Drizzle Resource + Drizzle ORM + SQLite through one Nuxt server endpoint."
+    />
+  </PlaygroundContent>
 </template>
