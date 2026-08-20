@@ -53,7 +53,7 @@ const schema = defineTableSchema({
       key: 'organisationId',
       query: () => ({
         queryKey: ['organisation'],
-        queryFn: async () => 'org_123' as string,
+        queryFn: async () => 'org_123',
       }),
     },
   ],

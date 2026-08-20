@@ -1,4 +1,4 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed, toValue, type ComputedRef } from 'vue'
 
 import type { useTableState } from '../composables/use-table-state'
 import type { MaybeComputedRef, PublicTableQueryState, TableLayout } from '../types'
@@ -6,15 +6,7 @@ import type { MaybeComputedRef, PublicTableQueryState, TableLayout } from '../ty
 export function resolveSchemaSource<TSchema>(options: {
   schema: MaybeComputedRef<TSchema>
 }): TSchema {
-  if (typeof options.schema === 'function') {
-    return (options.schema as () => TSchema)()
-  }
-
-  if (options.schema && typeof options.schema === 'object' && 'value' in options.schema) {
-    return options.schema.value
-  }
-
-  return options.schema
+  return toValue(options.schema)
 }
 
 export function mapPublicQueryState(options: {
