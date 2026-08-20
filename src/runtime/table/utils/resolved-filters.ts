@@ -1,3 +1,4 @@
+import { isArray, isObject } from '../../shared/utils/predicate'
 import type {
   GenericObject,
   TableFilterState,
@@ -8,11 +9,15 @@ import type {
 } from '../types'
 import { normalizeFilterDefinition, resolveFilterDefaultOperator } from './query-state'
 
-export function createResolvedFilterState(params: {
-  definitions: Array<TableUiFilterDefinition<GenericObject, GenericObject, string>>
-  filters: TableFilterState<string>
-  staticFilters?: Array<TableStaticFilterNode<GenericObject, GenericObject, string>>
-  context?: GenericObject
+export function createResolvedFilterState<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TKey extends string = string,
+>(params: {
+  definitions: Array<TableUiFilterDefinition<TRow, TContext, TKey>>
+  filters: TableFilterState<TKey>
+  staticFilters?: Array<TableStaticFilterNode<TRow, TContext, TKey>>
+  context?: TContext
 }): TableResolvedFilterGroup<string> {
   const children: TableResolvedFilterNode<string>[] = []
 
@@ -63,9 +68,11 @@ export function createResolvedFilterState(params: {
   }
 }
 
-function normalizeStaticFilterNode(
-  filter: TableStaticFilterNode<GenericObject, GenericObject, string>,
-): TableResolvedFilterNode<string> {
+function normalizeStaticFilterNode<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+  TKey extends string,
+>(filter: TableStaticFilterNode<TRow, TContext, TKey>): TableResolvedFilterNode<string> {
   if (isResolvedFilterGroup(filter)) {
     return {
       ...filter,
@@ -94,15 +101,17 @@ function normalizeResolvedFilterNode(
   return node
 }
 
-function isResolvedFilterGroup(
-  value: TableStaticFilterNode<GenericObject, GenericObject, string>,
-): value is TableResolvedFilterGroup<string> {
+function isResolvedFilterGroup<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+  TKey extends string,
+>(value: TableStaticFilterNode<TRow, TContext, TKey>): value is TableResolvedFilterGroup<TKey> {
   return (
     !!value &&
-    typeof value === 'object' &&
+    isObject(value) &&
     'type' in value &&
     value.type === 'group' &&
     'children' in value &&
-    Array.isArray(value.children)
+    isArray(value.children)
   )
 }

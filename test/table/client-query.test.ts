@@ -531,6 +531,7 @@ describe('executeClientQuery', () => {
               {
                 type: 'condition',
                 key: 'score',
+                // SAFETY: this case intentionally verifies that an unsupported runtime operator is rejected.
                 operator: 'unknown' as never,
                 value: 12,
               },

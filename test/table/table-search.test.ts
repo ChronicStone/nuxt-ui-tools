@@ -21,6 +21,7 @@ describe('table search orchestration', () => {
       pageSize: 20,
       count: 'exact' as const,
     })
+    // SAFETY: this focused test supplies only the query-state members useTableSearch reads.
     const searchState = useTableSearch({
       schema: computed(() => ({
         tableKey: 'users',

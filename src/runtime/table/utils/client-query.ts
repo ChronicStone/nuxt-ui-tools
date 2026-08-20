@@ -1,4 +1,11 @@
-import { isArray, isDate, isObject, isString } from '../../shared/utils/predicate'
+import {
+  isArray,
+  isBoolean,
+  isDate,
+  isNumber,
+  isObject,
+  isString,
+} from '../../shared/utils/predicate'
 import type {
   TableFacetExecutionResult,
   TableFacetOptionResult,
@@ -206,7 +213,7 @@ function matchSearchPathSegments(options: {
   }
 
   return matchSearchPathSegments({
-    value: (options.value as Record<string, unknown>)[head],
+    value: options.value[head],
     segments: tail,
     search: options.search,
   })
@@ -299,7 +306,10 @@ function findInsertIndex<TRow>(options: {
   while (low < high) {
     const mid = Math.floor((low + high) / 2)
 
-    if (options.compare(options.value, options.rows[mid] as TRow) < 0) {
+    const row = options.rows[mid]
+    if (row === undefined) throw new RangeError(`Missing row at sorted insert index ${mid}.`)
+
+    if (options.compare(options.value, row) < 0) {
       high = mid
       continue
     }
@@ -385,13 +395,12 @@ function countFacetOptions<TRow extends GenericObject>(options: {
     const seenInRow = new Set<string>()
 
     for (const value of toValueList(getFilterTargetValue({ source: row, key: options.key }))) {
-      if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean')
-        continue
+      if (!isString(value) && !isNumber(value) && !isBoolean(value)) continue
 
       const searchValue = String(value).toLocaleLowerCase()
       if (normalizedSearch.length && !searchValue.includes(normalizedSearch)) continue
 
-      const mapKey = `${typeof value}:${String(value)}`
+      const mapKey = `${resolvePrimitiveValueKind(value)}:${String(value)}`
       if (seenInRow.has(mapKey)) continue
 
       seenInRow.add(mapKey)
@@ -480,21 +489,17 @@ function matchesFilterCondition<TRow extends GenericObject>(
   }
 }
 
-function getFilterTargetValue(options: { source: unknown; key: string }): unknown {
+function getFilterTargetValue<TSource>(options: { source: TSource; key: string }) {
   return options.key.split('.').reduce<unknown>((current, segment) => {
     if (isArray(current)) {
-      return current.map((item) =>
-        item != null && typeof item === 'object'
-          ? (item as Record<string, unknown>)[segment]
-          : undefined,
-      )
+      return current.map((item) => (isObject(item) ? item[segment] : undefined))
     }
 
-    if (!current || typeof current !== 'object') {
+    if (!isObject(current)) {
       return undefined
     }
 
-    return (current as Record<string, unknown>)[segment]
+    return current[segment]
   }, options.source)
 }
 
@@ -535,14 +540,8 @@ function matchBetween(options: { value: unknown; filter: unknown }): boolean {
     return false
   }
 
-  const from =
-    'from' in options.filter
-      ? normalizeComparable((options.filter as Record<string, unknown>).from)
-      : null
-  const to =
-    'to' in options.filter
-      ? normalizeComparable((options.filter as Record<string, unknown>).to)
-      : null
+  const from = 'from' in options.filter ? normalizeComparable(options.filter.from) : null
+  const to = 'to' in options.filter ? normalizeComparable(options.filter.to) : null
 
   return toValueList(options.value).some((item) => {
     const comparable = normalizeComparable(item)
@@ -593,7 +592,7 @@ function matchComparison(options: {
   })
 }
 
-function toValueList(value: unknown): unknown[] {
+function toValueList<TValue>(value: TValue): unknown[] {
   if (!isArray(value)) {
     return [value]
   }
@@ -627,7 +626,7 @@ function compareUnknownValues(options: { left: unknown; right: unknown }): numbe
     return -1
   }
 
-  if (typeof leftComparable === 'string' && typeof rightComparable === 'string') {
+  if (isString(leftComparable) && isString(rightComparable)) {
     return leftComparable.localeCompare(rightComparable, undefined, {
       numeric: true,
       sensitivity: 'base',
@@ -641,7 +640,7 @@ function compareUnknownValues(options: { left: unknown; right: unknown }): numbe
   return leftComparable < rightComparable ? -1 : 1
 }
 
-function normalizeComparableForSort(value: unknown): number | string | null {
+function normalizeComparableForSort<TValue>(value: TValue): number | string | null {
   if (isArray(value)) {
     return normalizeComparableForSort(value[0])
   }
@@ -650,11 +649,11 @@ function normalizeComparableForSort(value: unknown): number | string | null {
     return value.getTime()
   }
 
-  if (typeof value === 'number') {
-    return Number.isNaN(value) ? null : value
+  if (isNumber(value)) {
+    return value
   }
 
-  if (typeof value === 'boolean') {
+  if (isBoolean(value)) {
     return value ? 1 : 0
   }
 
@@ -669,16 +668,16 @@ function normalizeComparableForSort(value: unknown): number | string | null {
   return String(value).toLocaleLowerCase()
 }
 
-function normalizeComparable(value: unknown): number | string | null {
+function normalizeComparable<TValue>(value: TValue): number | string | null {
   if (isDate(value)) {
     return value.getTime()
   }
 
-  if (typeof value === 'number') {
-    return Number.isNaN(value) ? null : value
+  if (isNumber(value)) {
+    return value
   }
 
-  if (typeof value === 'string') {
+  if (isString(value)) {
     const maybeTimestamp = Date.parse(value)
 
     if (!Number.isNaN(maybeTimestamp) && /\d{4}-\d{2}-\d{2}/.test(value)) {
@@ -688,17 +687,23 @@ function normalizeComparable(value: unknown): number | string | null {
     return value.toLocaleLowerCase()
   }
 
-  if (typeof value === 'boolean') {
+  if (isBoolean(value)) {
     return value ? 1 : 0
   }
 
   return null
 }
 
-function normalizeString(value: unknown): string {
+function normalizeString<TValue>(value: TValue): string {
   if (value == null) {
     return ''
   }
 
   return String(value).toLocaleLowerCase()
+}
+
+function resolvePrimitiveValueKind<TValue>(value: TValue): 'string' | 'number' | 'boolean' {
+  if (isString(value)) return 'string'
+  if (isNumber(value)) return 'number'
+  return 'boolean'
 }
