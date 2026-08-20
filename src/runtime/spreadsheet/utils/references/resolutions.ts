@@ -3,14 +3,18 @@ import type {
   SpreadsheetReferenceQueryRequest,
   SpreadsheetRelationDefinition,
   SpreadsheetReferenceResolution,
+  SpreadsheetRecord,
   SpreadsheetResolvedReferenceRow,
   SpreadsheetRowIssue,
+  SpreadsheetValue,
 } from '../../types'
+import { isFunction, isString } from '#ui-tools/shared/utils/predicate'
 import {
   cloneSpreadsheetRowData,
   deleteSpreadsheetValueAtPath,
   getSpreadsheetValueAtPath,
   setSpreadsheetValueAtPath,
+  isSpreadsheetRecord,
 } from '../object'
 import { resolveSpreadsheetOptionEntries } from '../options'
 import { executeSpreadsheetRules, resolveSpreadsheetRelationRules } from '../validation/core'
@@ -19,22 +23,21 @@ import { isSpreadsheetResolutionDefinition, normalizeSpreadsheetRuntimeResolutio
 import { collectSpreadsheetReferenceSources, collectSpreadsheetReferenceTokens } from './sources'
 
 function isSpreadsheetRelationDefinition(
-  value: unknown,
-): value is SpreadsheetRelationDefinition<Record<string, unknown>> {
+  value: SpreadsheetValue,
+): value is SpreadsheetRelationDefinition<SpreadsheetRecord> {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isSpreadsheetRecord(value) &&
     'column' in value &&
-    typeof value.column === 'string' &&
+    isString(value.column) &&
     'rules' in value &&
-    typeof value.rules === 'function'
+    isFunction(value.rules)
   )
 }
 
 export function createSpreadsheetReferenceResolutions(params: {
   references: readonly unknown[]
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
-  context: Record<string, unknown>
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[]
+  context: SpreadsheetRecord
 }) {
   return collectSpreadsheetReferenceSources(params.references, params.rows).flatMap(
     ({ reference, entries }) =>
@@ -68,7 +71,7 @@ export function createSpreadsheetReferenceResolutions(params: {
 }
 
 export function applySpreadsheetReferenceResolutions(params: {
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[]
   references: readonly unknown[]
   resolutions: readonly SpreadsheetReferenceResolution[]
   relations?: readonly unknown[]
@@ -82,7 +85,7 @@ export function applySpreadsheetReferenceResolutions(params: {
     return groups
   }, new Map<string, SpreadsheetReferenceResolution[]>())
 
-  return params.rows.map<SpreadsheetResolvedReferenceRow<Record<string, unknown>>>((row) => {
+  return params.rows.map<SpreadsheetResolvedReferenceRow<SpreadsheetRecord>>((row) => {
     const data = cloneSpreadsheetRowData(row.data)
     const issues: SpreadsheetRowIssue[] = [...row.issues]
     const multiValueOutputs = new Map<string, unknown[]>()
@@ -180,8 +183,8 @@ export function applySpreadsheetReferenceResolutions(params: {
 
 export function createSpreadsheetReferenceQueryRequests(params: {
   references: readonly unknown[]
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
-  context: Record<string, unknown>
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[]
+  context: SpreadsheetRecord
 }) {
   return createSpreadsheetReferenceResolutions({
     references: params.references,

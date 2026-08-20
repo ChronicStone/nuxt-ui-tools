@@ -1,4 +1,6 @@
-export function normalizeSpreadsheetReferenceText(value: unknown) {
+import type { SpreadsheetValue } from '../../types'
+
+export function normalizeSpreadsheetReferenceText(value: SpreadsheetValue) {
   return String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

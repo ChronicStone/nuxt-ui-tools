@@ -1,8 +1,12 @@
-import type { SpreadsheetReferenceDefinition, SpreadsheetResolutionDefinition } from '../../types'
+import type {
+  SpreadsheetReferenceDefinition,
+  SpreadsheetResolutionDefinition,
+  SpreadsheetValue,
+} from '../../types'
 import { isSpreadsheetRecord } from '../object'
 
 export function isSpreadsheetResolutionDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetResolutionDefinition {
   return (
     isSpreadsheetRecord(value) &&
@@ -14,7 +18,7 @@ export function isSpreadsheetResolutionDefinition(
 }
 
 export function isSpreadsheetPublicReferenceDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetReferenceDefinition {
   return (
     isSpreadsheetRecord(value) &&

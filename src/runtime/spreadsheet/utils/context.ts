@@ -1,4 +1,8 @@
-import type { SpreadsheetContextItem, SpreadsheetContextDataFromItems } from '../types'
+import type {
+  SpreadsheetContextItem,
+  SpreadsheetContextDataFromItems,
+  SpreadsheetValue,
+} from '../types'
 
 export interface SpreadsheetContextQueryResult {
   key?: string
@@ -8,7 +12,7 @@ export interface SpreadsheetContextQueryResult {
   isFetching?: boolean
   isSuccess?: boolean
   isRefetching?: boolean
-  refetch: () => Promise<unknown>
+  refetch: () => Promise<SpreadsheetValue>
 }
 
 export function createSpreadsheetContextQueries<
