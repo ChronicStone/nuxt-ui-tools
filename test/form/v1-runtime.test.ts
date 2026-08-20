@@ -92,7 +92,12 @@ function apiFactory(path: readonly string[]): FormFieldApi {
       retry: async () => {},
       remove: async () => {},
     },
-    validation: { validate: async () => true, setError: () => {}, clearError: () => {} },
+    validation: {
+      validate: async () => true,
+      pending: () => false,
+      setError: () => {},
+      clearError: () => {},
+    },
     focus: async () => path.length > 0,
   }
 }
