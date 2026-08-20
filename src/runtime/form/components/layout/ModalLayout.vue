@@ -3,6 +3,7 @@ import UModal from '@nuxt/ui/components/Modal.vue'
 import { computed } from 'vue'
 
 import type { FormModalLayoutProps, FormOverlayLayoutEmits } from '../../types'
+import { isNumber } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<FormModalLayoutProps>()
@@ -17,7 +18,7 @@ const contentProps = computed(() => ({
 }))
 
 function cssSize(value: number | string | undefined) {
-  return typeof value === 'number' ? `${value}px` : value
+  return isNumber(value) ? `${value}px` : value
 }
 </script>
 

@@ -1,5 +1,6 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 
+import type { FormValue } from '../types'
 import type {
   FormApiRuntimeInstance,
   FormObject,
@@ -41,7 +42,7 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
     formApi.removeRuntimeControls(instance.id, runtimeControls)
   })
 
-  function handleSubmitted(formData: FormObject, result: FormSubmitHandlerResult<unknown>) {
+  function handleSubmitted(formData: FormObject, result: FormSubmitHandlerResult<FormValue>) {
     requestComplete(formData, result.data)
   }
 
@@ -66,7 +67,7 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
     requestCancel()
   }
 
-  function requestComplete(formData: FormObject, submitData?: unknown) {
+  function requestComplete(formData: FormObject, submitData?: FormValue) {
     closeWithResolution({ type: 'complete', formData, submitData })
   }
 
