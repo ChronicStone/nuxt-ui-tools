@@ -5,9 +5,13 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import DataList from '#ui-tools/table/components/DataList.vue'
+import {
+  defineTableSchema,
+  useTable,
+  type TableFilterOptionEntry,
+} from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
-import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
+import DataList from '#ui-tools/table/components/DataList.vue'
 
 const { locale, t } = useI18n()
 const clientRows = createClientRows(5000)
@@ -48,11 +52,11 @@ type DemoSkillName =
 type EmploymentType = 'Full-time' | 'Contract' | 'Part-time'
 type WorkMode = 'Remote' | 'Hybrid' | 'On-site'
 
-const skillOptions = [...new Set(clientRows.flatMap(row => row.skills))].sort((left, right) =>
+const skillOptions = [...new Set(clientRows.flatMap((row) => row.skills))].sort((left, right) =>
   left.localeCompare(right),
 )
-const departmentOptions = [...new Set(clientRows.map(row => row.department.name))].sort((left, right) =>
-  left.localeCompare(right),
+const departmentOptions = [...new Set(clientRows.map((row) => row.department.name))].sort(
+  (left, right) => left.localeCompare(right),
 )
 const countryTreeOptions = buildCountryTreeOptions(clientRows)
 const skillTreeOptions = buildSkillTreeOptions()
@@ -314,7 +318,7 @@ const clientSchema = defineTableSchema({
           rangeFormatter: ({ from, to }) =>
             [from, to]
               .filter((value): value is Date => value instanceof Date)
-              .map(value => formatDate(value.toISOString()))
+              .map((value) => formatDate(value.toISOString()))
               .join(' - '),
         },
       }),
@@ -331,9 +335,10 @@ const clientSchema = defineTableSchema({
     },
     {
       key: row.isActive ? 'pause-employee' : 'resume-employee',
-      label: () => row.isActive
-        ? t('playground.tableClient.actions.pauseEmployee')
-        : t('playground.tableClient.actions.resumeEmployee'),
+      label: () =>
+        row.isActive
+          ? t('playground.tableClient.actions.pauseEmployee')
+          : t('playground.tableClient.actions.resumeEmployee'),
       icon: row.isActive ? 'i-lucide-pause' : 'i-lucide-play',
       action: () => {
         tableApi.updateRow({
@@ -400,7 +405,11 @@ const clientSchema = defineTableSchema({
               <div class="truncate font-medium text-highlighted">{row.fullName}</div>
               <div class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
                 <UIcon name="i-lucide-sparkles" class="size-3 shrink-0" />
-                <span class="truncate">{row.skills[0] ? translateSkill(row.skills[0]) : t('playground.tableCommon.generalist')}</span>
+                <span class="truncate">
+                  {row.skills[0]
+                    ? translateSkill(row.skills[0])
+                    : t('playground.tableCommon.generalist')}
+                </span>
               </div>
             </div>
           </div>
@@ -428,7 +437,13 @@ const clientSchema = defineTableSchema({
         render: ({ row }) => (
           <div class="flex flex-wrap gap-1.5">
             {row.skills.slice(0, 3).map((skill) => (
-              <UBadge key={skill} color="neutral" variant="subtle" size="sm" label={translateSkill(skill)} />
+              <UBadge
+                key={skill}
+                color="neutral"
+                variant="subtle"
+                size="sm"
+                label={translateSkill(skill)}
+              />
             ))}
           </div>
         ),
@@ -440,7 +455,9 @@ const clientSchema = defineTableSchema({
         render: ({ value }) => (
           <div class="flex items-center gap-2">
             <span class="text-base leading-none">{getCountryFlag(String(value ?? ''))}</span>
-            <span class="truncate text-highlighted">{translateCountry(String(value ?? 'Unknown'))}</span>
+            <span class="truncate text-highlighted">
+              {translateCountry(String(value ?? 'Unknown'))}
+            </span>
           </div>
         ),
       }),
@@ -462,7 +479,11 @@ const clientSchema = defineTableSchema({
             color={value ? 'success' : 'neutral'}
             variant={value ? 'soft' : 'subtle'}
             size="sm"
-            label={value ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
+            label={
+              value
+                ? t('playground.tableCommon.status.online')
+                : t('playground.tableCommon.status.paused')
+            }
           />
         ),
       }),
@@ -519,9 +540,16 @@ const clientSchema = defineTableSchema({
                   color={row.isActive ? 'success' : 'neutral'}
                   variant={row.isActive ? 'soft' : 'subtle'}
                   size="sm"
-                  label={row.isActive ? t('playground.tableCommon.status.online') : t('playground.tableCommon.status.paused')}
+                  label={
+                    row.isActive
+                      ? t('playground.tableCommon.status.online')
+                      : t('playground.tableCommon.status.paused')
+                  }
                 />
-                <UiRowActions content={{ align: 'end', side: 'bottom', sideOffset: 8 }} modal={false}>
+                <UiRowActions
+                  content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
+                  modal={false}
+                >
                   <UButton
                     color="neutral"
                     variant="ghost"
@@ -530,7 +558,7 @@ const clientSchema = defineTableSchema({
                     square
                   />
                 </UiRowActions>
-               </div>
+              </div>
             </div>
           ),
           default: () => (
@@ -553,7 +581,13 @@ const clientSchema = defineTableSchema({
 
               <div class="flex flex-wrap gap-2">
                 {row.skills.slice(0, 4).map((skill) => (
-                  <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={translateSkill(skill)} />
+                  <UBadge
+                    key={skill}
+                    color="neutral"
+                    variant="subtle"
+                    size="xs"
+                    label={translateSkill(skill)}
+                  />
                 ))}
               </div>
             </>
@@ -580,7 +614,7 @@ const clientSchema = defineTableSchema({
 })
 
 const table = useTable(clientSchema)
-
+const { tableSize } = usePlaygroundShell()
 
 function atStartOfDay(value: Date) {
   const next = new Date(value)
@@ -607,8 +641,6 @@ function getInitials(value: string) {
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
 }
-
-
 
 function createClientRows(count: number) {
   faker.seed(42)
@@ -653,7 +685,7 @@ function createClientRows(count: number) {
     'Product Strategy',
     'UX Research',
   ]
-  const salaryBaseByDepartment: Record<DemoDepartmentName, number> = {
+  const salaryBaseByDepartment = {
     Engineering: 128000,
     Platform: 142000,
     Operations: 96000,
@@ -664,7 +696,7 @@ function createClientRows(count: number) {
     Data: 136000,
     Support: 82000,
     Growth: 98000,
-  }
+  } satisfies Record<DemoDepartmentName, number>
   const employmentTypes: EmploymentType[] = ['Full-time', 'Contract', 'Part-time']
   const workModes: WorkMode[] = ['Remote', 'Hybrid', 'On-site']
   const highlightCatalog = [
@@ -700,7 +732,10 @@ function createClientRows(count: number) {
     return {
       id: `client-${index + 1}`,
       fullName,
-      email: faker.internet.email({ firstName: fullName.split(' ')[0], lastName: fullName.split(' ').at(-1) }),
+      email: faker.internet.email({
+        firstName: fullName.split(' ')[0],
+        lastName: fullName.split(' ').at(-1),
+      }),
       salary,
       isActive,
       hiredAt,
@@ -751,7 +786,7 @@ function formatDate(value: string) {
 }
 
 function getSkillTaxonomyValues(skill: string) {
-  const entries: Record<string, string[]> = {
+  const entries = {
     TypeScript: ['cat:engineering', 'cat:application', 'skill:typescript'],
     Go: ['cat:engineering', 'cat:services', 'skill:go'],
     Kubernetes: ['cat:engineering', 'cat:infrastructure', 'skill:kubernetes'],
@@ -768,7 +803,7 @@ function getSkillTaxonomyValues(skill: string) {
     'Incident Response': ['cat:engineering', 'cat:reliability', 'skill:incident-response'],
     'Product Strategy': ['cat:product', 'cat:planning', 'skill:product-strategy'],
     'UX Research': ['cat:design', 'cat:research', 'skill:ux-research'],
-  }
+  } satisfies Record<string, string[]>
 
   return entries[skill] ?? [skill]
 }
@@ -814,7 +849,10 @@ function buildSkillTreeOptions() {
           children: [
             { label: () => translateSkill('Kubernetes'), value: 'skill:kubernetes' },
             { label: () => translateSkill('Terraform'), value: 'skill:terraform' },
-            { label: () => translateSkill('Distributed Systems'), value: 'skill:distributed-systems' },
+            {
+              label: () => translateSkill('Distributed Systems'),
+              value: 'skill:distributed-systems',
+            },
           ],
         },
         {
@@ -828,9 +866,7 @@ function buildSkillTreeOptions() {
         {
           label: () => translateCategory('Security'),
           value: 'cat:security',
-          children: [
-            { label: () => translateSkill('Security'), value: 'skill:security' },
-          ],
+          children: [{ label: () => translateSkill('Security'), value: 'skill:security' }],
         },
         {
           label: () => translateCategory('Services'),
@@ -849,9 +885,7 @@ function buildSkillTreeOptions() {
         {
           label: () => translateCategory('Analysis'),
           value: 'cat:analysis',
-          children: [
-            { label: () => translateSkill('Python'), value: 'skill:python' },
-          ],
+          children: [{ label: () => translateSkill('Python'), value: 'skill:python' }],
         },
         {
           label: () => translateCategory('Intelligence'),
@@ -863,9 +897,7 @@ function buildSkillTreeOptions() {
         {
           label: () => translateCategory('Platform'),
           value: 'cat:platform',
-          children: [
-            { label: () => translateSkill('PostgreSQL'), value: 'skill:postgresql' },
-          ],
+          children: [{ label: () => translateSkill('PostgreSQL'), value: 'skill:postgresql' }],
         },
       ],
     },
@@ -876,9 +908,7 @@ function buildSkillTreeOptions() {
         {
           label: () => translateCategory('Research'),
           value: 'cat:research',
-          children: [
-            { label: () => translateSkill('UX Research'), value: 'skill:ux-research' },
-          ],
+          children: [{ label: () => translateSkill('UX Research'), value: 'skill:ux-research' }],
         },
         {
           label: () => translateCategory('Systems'),
@@ -906,7 +936,7 @@ function buildSkillTreeOptions() {
 }
 
 function getCountryFlag(country: string) {
-  const flags: Record<string, string> = {
+  const flags = {
     France: '🇫🇷',
     Germany: '🇩🇪',
     Japan: '🇯🇵',
@@ -918,7 +948,7 @@ function getCountryFlag(country: string) {
 }
 
 function translateCountry(value: string) {
-  const keyByCountry: Record<string, string> = {
+  const keyByCountry = {
     France: 'france',
     Germany: 'germany',
     Japan: 'japan',
@@ -928,25 +958,25 @@ function translateCountry(value: string) {
     Singapore: 'singapore',
     Spain: 'spain',
     Unknown: 'unknown',
-  }
+  } satisfies Record<string, string>
 
   const key = keyByCountry[value]
   return key ? t(`playground.tableCommon.countries.${key}`) : value
 }
 
 function translateRegion(value: string) {
-  const keyByRegion: Record<string, string> = {
+  const keyByRegion = {
     Europe: 'europe',
     'North America': 'northAmerica',
     Asia: 'asia',
-  }
+  } satisfies Record<string, string>
 
   const key = keyByRegion[value]
   return key ? t(`playground.tableCommon.regions.${key}`) : value
 }
 
 function translateDepartment(value: string) {
-  const keyByDepartment: Record<string, string> = {
+  const keyByDepartment = {
     Engineering: 'engineering',
     Platform: 'platform',
     Operations: 'operations',
@@ -957,14 +987,14 @@ function translateDepartment(value: string) {
     Data: 'data',
     Support: 'support',
     Growth: 'growth',
-  }
+  } satisfies Record<string, string>
 
   const key = keyByDepartment[value]
   return key ? t(`playground.tableCommon.departments.${key}`) : value
 }
 
 function translateCategory(value: string) {
-  const keyByCategory: Record<string, string> = {
+  const keyByCategory = {
     Engineering: 'engineering',
     Application: 'application',
     Infrastructure: 'infrastructure',
@@ -980,14 +1010,14 @@ function translateCategory(value: string) {
     Systems: 'systems',
     Product: 'product',
     Planning: 'planning',
-  }
+  } satisfies Record<string, string>
 
   const key = keyByCategory[value]
   return key ? t(`playground.tableCommon.categories.${key}`) : value
 }
 
 function translateSkill(value: string) {
-  const keyBySkill: Record<string, string> = {
+  const keyBySkill = {
     TypeScript: 'typescript',
     Go: 'go',
     Kubernetes: 'kubernetes',
@@ -1004,7 +1034,7 @@ function translateSkill(value: string) {
     'Incident Response': 'incidentResponse',
     'Product Strategy': 'productStrategy',
     'UX Research': 'uxResearch',
-  }
+  } satisfies Record<string, string>
 
   const key = keyBySkill[value]
   return key ? t(`playground.tableCommon.skills.${key}`) : value
@@ -1012,7 +1042,13 @@ function translateSkill(value: string) {
 </script>
 
 <template>
-  <div class="p-4 lg:p-6">
-    <DataList :table="table" :height="'38rem'" />
-  </div>
+  <PlaygroundContent mode="scroll" class="p-4 lg:p-6">
+    <DataList
+      :table="table"
+      :size="tableSize"
+      :height="'38rem'"
+      title="Client employees"
+      description="Five thousand local rows exercising client filtering, faceting, sorting, and layouts."
+    />
+  </PlaygroundContent>
 </template>
