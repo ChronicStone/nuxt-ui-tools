@@ -19,6 +19,8 @@ import type {
   SpreadsheetModifier,
   SpreadsheetOptionItem,
 } from '../../types'
+import { isFunction, isObject } from '#ui-tools/shared/utils/predicate'
+import type { SpreadsheetValue } from '../../types'
 import { resolveSpreadsheetRules } from '../validation'
 
 export function createSpreadsheetColumnBuilder<
@@ -273,7 +275,7 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
 function isSpreadsheetDynamicValueResolver<TValueDefinition>(
   definition: TValueDefinition | ((value: SpreadsheetDynamicValueBuilder) => TValueDefinition),
 ): definition is (value: SpreadsheetDynamicValueBuilder) => TValueDefinition {
-  return typeof definition === 'function'
+  return isFunction(definition)
 }
 
 function buildSpreadsheetCollectionItems<
@@ -284,7 +286,7 @@ function buildSpreadsheetCollectionItems<
   context: TContext
   from: (params: { context: TContext }) => TSource
   each: (source: TSource[number]) => TItem
-  resolveValue: (item: TItem) => unknown
+  resolveValue: (item: TItem) => SpreadsheetValue
 }) {
   return params.from({ context: params.context }).map((source) => {
     const item = params.each(source)
@@ -415,7 +417,7 @@ function isSpreadsheetReferenceResolver<TRow, TReferences>(
     | ((reference: SpreadsheetReferenceBuilder<TRow>) => TReferences)
     | undefined,
 ): references is (reference: SpreadsheetReferenceBuilder<TRow>) => TReferences {
-  return typeof references === 'function'
+  return isFunction(references)
 }
 
 export function resolveSpreadsheetReferences<TReferences>(references: TReferences): TReferences
@@ -438,7 +440,7 @@ export function resolveSpreadsheetReferences<TRow, TReferences>(
 function isCollectionResolver<TBuilderTuple extends readonly unknown[], TResult>(
   collection: TResult | ((...builders: TBuilderTuple) => TResult),
 ): collection is (...builders: TBuilderTuple) => TResult {
-  return typeof collection === 'function'
+  return isFunction(collection)
 }
 
 export function resolveCollection<TBuilderTuple extends readonly unknown[], TResult>(
@@ -464,7 +466,7 @@ export function resolveSpreadsheetColumns<TColumns>(
   ? SpreadsheetResolvedColumns<TColumns>
   : TColumns
 export function resolveSpreadsheetColumns(columns: SpreadsheetColumnsDefinition | undefined) {
-  if (!columns || typeof columns !== 'object') return columns
+  if (!columns || !isObject(columns)) return columns
 
   const staticColumns =
     'static' in columns

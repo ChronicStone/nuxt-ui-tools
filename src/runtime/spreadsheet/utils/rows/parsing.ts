@@ -12,6 +12,8 @@ import type {
   SpreadsheetDynamicColumnMatch,
   SpreadsheetParsedRow,
   SpreadsheetRowIssue,
+  SpreadsheetRecord,
+  SpreadsheetValue,
 } from '../../types'
 import { setSpreadsheetValueAtPath } from '../object'
 import {
@@ -97,6 +99,7 @@ function resolveCollectionCellValue(params: {
   const item = params.match.item
   if (!item) return undefined
 
+  // SAFETY: collection items are normalized before parsing, so each item.value is a value definition here.
   const valueDefinition = item.value as SpreadsheetDynamicValueDefinition
   const text = String(params.raw ?? '').trim()
   if (!text) return undefined
@@ -119,10 +122,10 @@ function resolveCollectionCellValue(params: {
 }
 
 function applyCollectionValue(params: {
-  data: Record<string, unknown>
+  data: SpreadsheetRecord
   column: SpreadsheetDynamicCollectionDefinition<string, 'array' | 'record'>
   match: SpreadsheetDynamicColumnMatch
-  resolvedValue: unknown
+  resolvedValue: SpreadsheetValue
 }) {
   const item = params.match.item
   if (!item) return
@@ -162,8 +165,8 @@ function applyCollectionValue(params: {
 
 function resolveSpreadsheetDynamicCellValues(
   column: SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>,
-  source: unknown,
-  raw: unknown,
+  source: SpreadsheetValue,
+  raw: SpreadsheetValue,
   issues: SpreadsheetRowIssue[],
   rowIndex: number,
   columnIndex: number,
@@ -186,11 +189,11 @@ function resolveSpreadsheetDynamicCellValues(
       : [text]
 
   const options = resolveSpreadsheetOptionEntries(optionsConfig, source)
-  const resolvedValues: unknown[] = []
+  const resolvedValues: SpreadsheetValue[] = []
 
   for (const token of tokens) {
     const normalizedToken = applySpreadsheetNormalization(token, valuesConfig.itemModifiers)
-    const match = options.find((option: unknown) => {
+    const match = options.find((option: SpreadsheetValue) => {
       const candidate =
         valuesConfig.resolve === 'label'
           ? getSpreadsheetOptionLabel(option)
@@ -227,12 +230,12 @@ export async function parseSpreadsheetRows<TContext>(params: {
   >[]
   dynamicMatches?: readonly SpreadsheetDynamicColumnMatch[]
   context: TContext
-}): Promise<SpreadsheetParsedRow<Record<string, unknown>>[]> {
-  const parsedRows: SpreadsheetParsedRow<Record<string, unknown>>[] = []
+}): Promise<SpreadsheetParsedRow<SpreadsheetRecord>[]> {
+  const parsedRows: SpreadsheetParsedRow<SpreadsheetRecord>[] = []
 
   for (const [rowIndex, source] of params.rows.entries()) {
     const issues: SpreadsheetRowIssue[] = []
-    const data: Record<string, unknown> = {}
+    const data: SpreadsheetRecord = {}
 
     for (const match of params.matches) {
       const raw = source[match.columnIndex]

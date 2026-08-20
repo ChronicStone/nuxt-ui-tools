@@ -1,7 +1,11 @@
+import { isBoolean, isFunction, isNumber, isString } from '#ui-tools/shared/utils/predicate'
+
+import type { SpreadsheetValue } from '../types'
+
 export type SpreadsheetDisplayLabel = string | number | (() => string | number) | undefined
 
 export function resolveSpreadsheetDisplayLabel(value: SpreadsheetDisplayLabel, fallback: string) {
-  if (typeof value === 'function') return String(value())
+  if (isFunction(value)) return String(value())
 
   return value == null ? fallback : String(value)
 }
@@ -20,9 +24,9 @@ export function snakeCaseSpreadsheetKey(value: string) {
     .toLowerCase()
 }
 
-export function formatSpreadsheetCell(value: unknown) {
+export function formatSpreadsheetCell(value: SpreadsheetValue) {
   if (value == null) return '—'
-  if (typeof value === 'string') return value
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (isString(value)) return value
+  if (isNumber(value) || isBoolean(value)) return String(value)
   return JSON.stringify(value)
 }

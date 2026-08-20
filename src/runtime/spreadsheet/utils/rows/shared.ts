@@ -12,6 +12,7 @@ import type {
   SpreadsheetRowIssue,
   SpreadsheetStaticColumn,
   SpreadsheetStaticColumnGroup,
+  SpreadsheetValue,
 } from '../../types'
 import { isSpreadsheetRecord } from '../object'
 import {
@@ -21,7 +22,7 @@ import {
 } from '../options'
 import { executeSpreadsheetRules } from '../validation'
 
-export function normalizeSpreadsheetText(value: unknown) {
+export function normalizeSpreadsheetText(value: SpreadsheetValue) {
   return String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -33,7 +34,7 @@ export function normalizeSpreadsheetText(value: unknown) {
 }
 
 export function applySpreadsheetNormalization(
-  value: unknown,
+  value: SpreadsheetValue,
   normalize: readonly SpreadsheetModifier[] | undefined,
 ) {
   const nextValue = String(value ?? '').trim()
@@ -53,7 +54,7 @@ export function applySpreadsheetNormalization(
 }
 
 export function applySpreadsheetModifiers(
-  value: unknown,
+  value: SpreadsheetValue,
   modifiers: readonly string[] | undefined,
 ) {
   const nextValue = String(value ?? '')
@@ -71,30 +72,30 @@ export function applySpreadsheetModifiers(
   }, nextValue)
 }
 
-export function isSpreadsheetStaticColumn(value: unknown): value is SpreadsheetStaticColumn {
+export function isSpreadsheetStaticColumn(value: SpreadsheetValue): value is SpreadsheetStaticColumn {
   return isSpreadsheetRecord(value) && 'kind' in value && value.kind !== 'group' && 'key' in value
 }
 
-export function isSpreadsheetColumnGroup(value: unknown): value is SpreadsheetStaticColumnGroup {
+export function isSpreadsheetColumnGroup(value: SpreadsheetValue): value is SpreadsheetStaticColumnGroup {
   return (
     isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'group' && 'columns' in value
   )
 }
 
 export function isSpreadsheetDynamicOptionGroupsColumn(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown> {
   return isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'option-groups'
 }
 
 export function isSpreadsheetDynamicCollectionColumn(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetDynamicCollectionDefinition<string, 'array' | 'record'> {
   return isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'collection'
 }
 
 export function isSpreadsheetDynamicCollectionItem(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetDynamicCollectionItemDefinition {
   return isSpreadsheetRecord(value) && 'id' in value && 'match' in value && 'value' in value
 }
@@ -105,7 +106,10 @@ function hasSpreadsheetColumnResolve<TContext>(
   return 'resolve' in column && Boolean(column.resolve)
 }
 
-function resolveSpreadsheetColumnOptionEntries<TContext>(options: unknown, context: TContext) {
+function resolveSpreadsheetColumnOptionEntries<TContext>(
+  options: SpreadsheetValue,
+  context: TContext,
+) {
   return resolveSpreadsheetOptionEntries(options, { context })
 }
 
@@ -232,7 +236,7 @@ function parseSpreadsheetOptionColumnValue<TContext>(
   const normalizedToken = multipleConfig?.itemModifiers
     ? applySpreadsheetNormalization(token, multipleConfig.itemModifiers)
     : token
-  const match = options.find((option: unknown) => {
+  const match = options.find((option: SpreadsheetValue) => {
     const label = getSpreadsheetOptionLabel(option)
     const value = getSpreadsheetOptionValue(option)
     const by = multipleConfig?.matchBy
