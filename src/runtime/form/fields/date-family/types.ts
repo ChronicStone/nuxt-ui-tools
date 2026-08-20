@@ -1,16 +1,38 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { NullableValue } from '../../types/field-output-utils'
 
+export interface FormDateFamilyCalendarOptions {
+  monthControls?: boolean
+  yearControls?: boolean
+  weekNumbers?: boolean
+  numberOfMonths?: number
+  yearRange?: readonly [number, number]
+}
+
+export interface FormDateManualInputOptions {
+  enabled?: boolean
+  mask?: boolean
+  format?: string
+  placeholder?: string
+}
+
+export type FormDateManualInput = boolean | FormDateManualInputOptions
+
 export interface FormDateFamilyOptions {
   min?: string
   max?: string
   clearable?: boolean
+  manualInput?: FormDateManualInput
+  manualInputFormat?: string
+  calendar?: FormDateFamilyCalendarOptions
 }
 
 export interface FormDateTimeField<TContext = {}, TDeps = {}>
   extends
     FormStatefulFieldBase<'datetime', string | null, TContext, TDeps>,
-    FormDateFamilyOptions {}
+    FormDateFamilyOptions {
+  minuteStep?: number
+}
 
 export interface FormDateRangeField<TContext = {}, TDeps = {}>
   extends
@@ -25,7 +47,9 @@ export interface FormMonthRangeField<TContext = {}, TDeps = {}>
 export interface FormDateTimeRangeField<TContext = {}, TDeps = {}>
   extends
     FormStatefulFieldBase<'datetimerange', readonly [string, string] | null, TContext, TDeps>,
-    FormDateFamilyOptions {}
+    FormDateFamilyOptions {
+  minuteStep?: number
+}
 
 export interface FormMonthField<TContext = {}, TDeps = {}>
   extends FormStatefulFieldBase<'month', string | null, TContext, TDeps>, FormDateFamilyOptions {}
@@ -33,7 +57,7 @@ export interface FormMonthField<TContext = {}, TDeps = {}>
 export interface FormYearField<TContext = {}, TDeps = {}>
   extends
     FormStatefulFieldBase<'year', string | null, TContext, TDeps>,
-    Pick<FormDateFamilyOptions, 'clearable'> {
+    Pick<FormDateFamilyOptions, 'clearable' | 'manualInput' | 'manualInputFormat' | 'calendar'> {
   min?: number
   max?: number
 }
