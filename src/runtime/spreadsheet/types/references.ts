@@ -10,18 +10,19 @@ import type {
   SpreadsheetResolvedSelectionValue,
 } from './resolution'
 import type { SpreadsheetFieldRulesInput } from './validation'
+import type { SpreadsheetRecord } from './shared'
 
 type SpreadsheetReferenceSelectBaseConfig<TOption extends SpreadsheetOptionItem> = {
   source: string
   options?: SpreadsheetOptionsSource<
     {
-      context: Record<string, unknown>
+      context: SpreadsheetRecord
     },
     TOption
   >
   getOptions?: SpreadsheetResolutionQueryResolver<
-    Record<string, unknown>,
-    Record<string, unknown>,
+    SpreadsheetRecord,
+    SpreadsheetRecord,
     TOption
   >
 }
@@ -40,13 +41,13 @@ export interface SpreadsheetReferenceDefinition<
   source: TSource
   options?: SpreadsheetOptionsSource<
     {
-      context: Record<string, unknown>
+      context: SpreadsheetRecord
     },
     TOption
   >
   getOptions?: SpreadsheetResolutionQueryResolver<
-    Record<string, unknown>,
-    Record<string, unknown>,
+    SpreadsheetRecord,
+    SpreadsheetRecord,
     TOption
   >
   rules?: SpreadsheetFieldRulesInput<TValue>
@@ -74,7 +75,7 @@ export type SpreadsheetReferenceValue<TSourceValue, TValue> = SpreadsheetResolve
   TValue
 >
 
-export interface SpreadsheetReferenceBuilder<TRow = Record<string, unknown>> {
+export interface SpreadsheetReferenceBuilder<TRow = SpreadsheetRecord> {
   select: <
     TField extends string,
     TSource extends SpreadsheetReferenceSourcePath<TRow>,

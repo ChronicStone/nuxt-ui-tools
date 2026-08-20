@@ -1,21 +1,22 @@
 import type { SpreadsheetIssueLevel } from './shared'
+import type { SpreadsheetRecord } from './shared'
 
 export type SpreadsheetLazyMessage<
   TValue,
   TParams extends unknown[] = [],
-  TMeta extends Record<string, unknown> = {},
+  TMeta extends SpreadsheetRecord = {},
 > = string | (() => string) | ((ctx: SpreadsheetMessageContext<TValue, TParams, TMeta>) => string)
 
-export type SpreadsheetValidatorResult<TMeta extends Record<string, unknown> = {}> =
+export type SpreadsheetValidatorResult<TMeta extends SpreadsheetRecord = {}> =
   | boolean
   | ({ $valid: boolean } & TMeta)
 
 export type SpreadsheetMessageContext<
   TValue,
   TParams extends unknown[] = [],
-  TMeta extends Record<string, unknown> = {},
+  TMeta extends SpreadsheetRecord = {},
 > = {
-  [key: string]: unknown
+  [key: string]: SpreadsheetRecord[string]
   $valid?: boolean
   value: TValue
   params: TParams
@@ -24,7 +25,7 @@ export type SpreadsheetMessageContext<
 export interface SpreadsheetRuleOverrides<
   TValue,
   TParams extends unknown[] = [],
-  TMeta extends Record<string, unknown> = {},
+  TMeta extends SpreadsheetRecord = {},
 > {
   message?: SpreadsheetLazyMessage<TValue, TParams, TMeta>
 }
@@ -34,7 +35,7 @@ export interface SpreadsheetRuleFlags {
 }
 
 export interface SpreadsheetRuleExecutionResult<
-  TMeta extends Record<string, unknown> = Record<string, unknown>,
+  TMeta extends SpreadsheetRecord = SpreadsheetRecord,
 > {
   $valid: boolean
   $message: string | null
@@ -57,7 +58,7 @@ export interface SpreadsheetRule<
 export type SpreadsheetFieldRules<TValue> = readonly SpreadsheetRule<TValue, SpreadsheetRuleFlags>[]
 
 export interface SpreadsheetRuleBuilder {
-  validate: <TValue, TMeta extends Record<string, unknown> = {}>(options: {
+  validate: <TValue, TMeta extends SpreadsheetRecord = {}>(options: {
     name?: string
     validator: (value: TValue) => SpreadsheetValidatorResult<TMeta>
     message: SpreadsheetLazyMessage<TValue, [], TMeta>
@@ -93,7 +94,7 @@ export type SpreadsheetFieldRulesInput<TValue> =
 export type CreateSpreadsheetRuleReturn<
   TValue,
   TParams extends unknown[],
-  TMeta extends Record<string, unknown>,
+  TMeta extends SpreadsheetRecord,
   TFlags extends SpreadsheetRuleFlags = {},
 > = TParams extends []
   ? (
@@ -114,7 +115,7 @@ export type SpreadsheetWidenLiteral<TValue> = TValue extends string
 export type CreateSpreadsheetRule = <
   TValue,
   TParams extends unknown[],
-  TMeta extends Record<string, unknown> = {},
+  TMeta extends SpreadsheetRecord = {},
   TFlags extends SpreadsheetRuleFlags = {},
 >(options: {
   name?: string

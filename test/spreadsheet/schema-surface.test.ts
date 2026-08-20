@@ -18,6 +18,7 @@ describe('spreadsheet package surface', () => {
   })
 
   it('declares TanStack Query on the package boundary', () => {
+    // SAFETY: package.json is the repository-owned file read immediately above and has this peer dependency shape.
     const packageJson = JSON.parse(
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
     ) as { peerDependencies?: Record<string, string> }

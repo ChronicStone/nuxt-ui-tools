@@ -4,6 +4,7 @@ import type { SpreadsheetColumnsDefinition, SpreadsheetResolvedColumns } from '.
 import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
 import type { ExtractSpreadsheetValidationRow, SpreadsheetRowData } from './inference'
 import type { SpreadsheetFieldRules, SpreadsheetRuleBuilder } from './validation'
+import type { SpreadsheetValue } from './shared'
 
 export interface SpreadsheetFileDefinition {
   accept?: readonly string[]
@@ -76,7 +77,7 @@ export type SpreadsheetRelationsDefinition<TRow> = readonly {
 export type SpreadsheetBuildRowDefinition<TContext = unknown, TRow = unknown> = (params: {
   context: TContext
   row: TRow
-}) => unknown | Promise<unknown>
+}) => SpreadsheetValue | Promise<SpreadsheetValue>
 
 export interface SpreadsheetSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly [],

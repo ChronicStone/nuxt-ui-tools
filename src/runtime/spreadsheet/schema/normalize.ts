@@ -8,7 +8,10 @@ import type {
   SpreadsheetContextItem,
   SpreadsheetDynamicBuilder,
   SpreadsheetReferenceDefinition,
+  SpreadsheetRecord,
+  SpreadsheetValue,
 } from '../types'
+import { isSpreadsheetRecord } from '../utils/object'
 import {
   resolveSpreadsheetColumns,
   resolveSpreadsheetReferences,
@@ -16,11 +19,10 @@ import {
 } from '../utils/builders'
 
 function isSpreadsheetColumnGroupDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetColumnGroupDefinition<string, readonly unknown[]> {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isSpreadsheetRecord(value) &&
     'kind' in value &&
     value.kind === 'group' &&
     'columns' in value
@@ -28,19 +30,18 @@ function isSpreadsheetColumnGroupDefinition(
 }
 
 function isSpreadsheetResolvableColumnDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetColumnDefinition<
   string,
   unknown,
   boolean,
-  Record<string, unknown>,
+  SpreadsheetRecord,
   undefined,
   unknown,
-  SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+  SpreadsheetColumnResolveDefinition<SpreadsheetRecord, unknown>
 > {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isSpreadsheetRecord(value) &&
     'kind' in value &&
     value.kind !== 'group' &&
     'key' in value &&
@@ -49,10 +50,9 @@ function isSpreadsheetResolvableColumnDefinition(
   )
 }
 
-function isSpreadsheetReferenceDefinition(value: unknown): value is SpreadsheetReferenceDefinition {
+function isSpreadsheetReferenceDefinition(value: SpreadsheetValue): value is SpreadsheetReferenceDefinition {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isSpreadsheetRecord(value) &&
     'kind' in value &&
     value.kind === 'select' &&
     'field' in value &&
@@ -66,19 +66,19 @@ function collectSpreadsheetResolutionColumns(
   string,
   unknown,
   boolean,
-  Record<string, unknown>,
+  SpreadsheetRecord,
   undefined,
   unknown,
-  SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+  SpreadsheetColumnResolveDefinition<SpreadsheetRecord, unknown>
 >[] {
   const resolvedColumns: SpreadsheetColumnDefinition<
     string,
     unknown,
     boolean,
-    Record<string, unknown>,
+    SpreadsheetRecord,
     undefined,
     unknown,
-    SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+    SpreadsheetColumnResolveDefinition<SpreadsheetRecord, unknown>
   >[] = []
 
   for (const entry of entries) {
@@ -256,10 +256,10 @@ function normalizeSpreadsheetSteps(schema: {
   }
 }
 
-function toRecord(value: unknown) {
+function toRecord(value: SpreadsheetValue): SpreadsheetRecord {
   return isRecord(value) ? value : {}
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object'
+function isRecord<T>(value: T): value is T & SpreadsheetRecord {
+  return isSpreadsheetRecord(value)
 }

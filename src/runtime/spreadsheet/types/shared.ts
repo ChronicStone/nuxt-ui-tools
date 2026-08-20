@@ -1,4 +1,11 @@
 import type { QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type { GenericObject } from '#ui-tools/shared/types/utils'
+
+/** Runtime values decoded from spreadsheet cells, rows, and external references. */
+export type SpreadsheetValue = GenericObject[string]
+
+/** Named row/context contract for spreadsheet data that is decoded at runtime. */
+export type SpreadsheetRecord = { [key: string]: SpreadsheetValue }
 
 export type SpreadsheetQueryDefinition<TData = unknown> = Omit<
   UseQueryOptions<TData>,
