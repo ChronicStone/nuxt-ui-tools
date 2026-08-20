@@ -40,7 +40,7 @@ const table = useTable(schema)
 ```
 
 ```vue
-<DataList :table="table" />
+<DataList :table="table" size="sm" />
 ```
 
 ## Coverage Map
