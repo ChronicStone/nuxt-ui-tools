@@ -1,9 +1,18 @@
 import { debounceFilter, throttleFilter, watchWithFilter } from '@vueuse/core'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onScopeDispose } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
-import type { FormControlSize, FormField, FormObject, FormValidationTrigger } from '../types'
+import type { FormValue } from '../types'
+import type {
+  FormControlSize,
+  FormControlUi,
+  FormField,
+  FormObject,
+  FormUiClass,
+  FormValidationTrigger,
+} from '../types'
 import { createFormFieldInstance } from '../utils/field-instance'
+import { isFunction, isNumber, isObject, isString } from '../utils/predicate'
 import { resolveFormText } from '../utils/text'
 import { mergeFormUiClass } from '../utils/ui'
 import { useFieldOptions } from './use-field-options'
@@ -26,22 +35,37 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     register: form.registerFieldOptions,
     refreshFieldOptions: form.refreshFieldOptions,
   })
+  const validationPending = computed<boolean>(() => api.value.validation.pending())
+  const interactionOwner = computed<string>(() => path().join('.'))
+  const interactionOwnerClass = computed<string>(
+    () => `nut-form-field-owner:${encodeURIComponent(interactionOwner.value)}`,
+  )
 
-  const controlProps = computed<FormObject>(() => {
+  type FormControlProps = FormObject & {
+    size?: FormControlSize
+    class?: FormUiClass
+    ui?: FormControlUi
+    loading?: boolean
+    trailing?: boolean
+  }
+  const controlProps = computed<FormControlProps>(() => {
     const current = field()
     const fieldUi = formUi.ui.value.fields?.[current.type]
+    const bareClass = isString(fieldControlAttrs.value.class)
+      ? fieldControlAttrs.value.class
+      : undefined
     const defaults = {
       ...fieldControlAttrs.value,
       size: fieldUi?.size ?? formUi.controlSize.value,
-      class: fieldUi?.class,
-      ui: mergeControlUi(formUi.ui.value.control?.ui, fieldUi?.ui),
+      class: mergeFormUiClass(bareClass, fieldUi?.class),
+      ui: mergeControlUi(fieldControlAttrs.value.ui, formUi.ui.value.control?.ui, fieldUi?.ui),
     }
     if (!('props' in current)) return defaults
     const value = Object.getOwnPropertyDescriptor(current, 'props')?.value
-    if (typeof value === 'function') {
+    if (isFunction(value)) {
       const result = value(params.value)
-      const resolved =
-        typeof result === 'object' && result !== null && !Array.isArray(result) ? result : {}
+      const resolved: FormControlProps =
+        isObject(result) && result !== null && !Array.isArray(result) ? result : {}
       return {
         ...defaults,
         ...resolved,
@@ -49,8 +73,8 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
         ui: mergeControlUi(formUi.ui.value.control?.ui, fieldUi?.ui, resolved.ui),
       }
     }
-    const resolved =
-      typeof value === 'object' && value !== null && !Array.isArray(value) ? value : {}
+    const resolved: FormControlProps =
+      isObject(value) && value !== null && !Array.isArray(value) ? value : {}
     return {
       ...defaults,
       ...resolved,
@@ -66,14 +90,14 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
   const disabled = computed(() => {
     const current = field()
     const value = Object.getOwnPropertyDescriptor(current, 'disabled')?.value
-    const disabledByCallback = typeof value === 'function' ? value(params.value) === true : false
+    const disabledByCallback = isFunction(value) ? value(params.value) === true : false
     return disabledByCallback || (options.disableOnLoading.value && options.loading.value)
   })
 
   const placeholder = computed(() => {
     const current = field()
     const value = Object.getOwnPropertyDescriptor(current, 'placeholder')?.value
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'function') {
+    if (isString(value) || isNumber(value) || isFunction(value)) {
       return resolveFormText(value) ?? t('form.fields.text.defaultPlaceholder')
     }
 
@@ -99,7 +123,7 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     () => form.getValue(path()),
     (value) => {
       const effect = Object.getOwnPropertyDescriptor(field(), 'watch')?.value
-      if (typeof effect === 'function') effect({ value, api: api.value })
+      if (isFunction(effect)) effect({ value, api: api.value })
     },
     {
       ...resolveWatchOptions(field()),
@@ -111,22 +135,106 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     () => params.value.deps,
     () => {
       const effect = Object.getOwnPropertyDescriptor(field(), 'onDependencyChange')?.value
-      if (typeof effect === 'function') void effect(params.value)
+      if (isFunction(effect)) void effect(params.value)
     },
     { deep: true, eventFilter: resolveEffectFilter(field()) },
   )
 
   onMounted(() => {
     const effect = Object.getOwnPropertyDescriptor(field(), 'onRendered')?.value
-    if (typeof effect === 'function') void effect(params.value)
+    if (isFunction(effect)) void effect(params.value)
   })
 
-  async function handleBlur() {
-    if (!createFormFieldInstance(field()).capability.has('validation')) return
-    if (getValidationTrigger(field()) === 'submit') return
+  let blurBoundaryListening = false
+  onScopeDispose(stopBlurBoundaryWatch)
 
+  function handleBlur(event?: Event) {
+    if (!canBlurValidate()) return
+
+    const relatedTarget = event instanceof FocusEvent ? event.relatedTarget : null
+    if (isOwnedOverlayTarget(relatedTarget)) {
+      startBlurBoundaryWatch()
+      return
+    }
+    if (isFieldRootTarget(relatedTarget)) return
+
+    setTimeout(() => {
+      if (isFieldRootTarget(document.activeElement)) return
+      if (isOwnedOverlayTarget(document.activeElement)) {
+        startBlurBoundaryWatch()
+        return
+      }
+      if (document.activeElement === document.body && hasOwnedInteractionSurface()) {
+        startBlurBoundaryWatch()
+        return
+      }
+
+      commitBlurValidation()
+    })
+  }
+
+  function canBlurValidate() {
+    if (!createFormFieldInstance(field()).capability.has('validation')) return false
+    return getValidationTrigger(field()) !== 'submit'
+  }
+
+  function commitBlurValidation() {
+    stopBlurBoundaryWatch()
+    if (!canBlurValidate()) return
+
+    const trigger = getValidationTrigger(field())
     form.markFieldTouched(path())
-    await api.value.validation.validate()
+    if (trigger === 'input') return
+    void api.value.validation.validate()
+  }
+
+  function startBlurBoundaryWatch() {
+    if (blurBoundaryListening) return
+    blurBoundaryListening = true
+    document.addEventListener('focusin', handleBoundaryFocusIn, true)
+    document.addEventListener('pointerdown', handleBoundaryPointerDown, true)
+  }
+
+  function stopBlurBoundaryWatch() {
+    if (!blurBoundaryListening) return
+    blurBoundaryListening = false
+    document.removeEventListener('focusin', handleBoundaryFocusIn, true)
+    document.removeEventListener('pointerdown', handleBoundaryPointerDown, true)
+  }
+
+  function handleBoundaryFocusIn(event: FocusEvent) {
+    if (isFieldRootTarget(event.target)) {
+      stopBlurBoundaryWatch()
+      return
+    }
+    if (isOwnedOverlayTarget(event.target)) return
+    commitBlurValidation()
+  }
+
+  function handleBoundaryPointerDown(event: PointerEvent) {
+    if (isFieldRootTarget(event.target) || isOwnedOverlayTarget(event.target)) return
+    setTimeout(commitBlurValidation)
+  }
+
+  function isFieldRootTarget(target: EventTarget | null) {
+    if (!(target instanceof Node)) return false
+    const owner = interactionOwner.value
+    for (const element of document.querySelectorAll<HTMLElement>('[data-form-field]')) {
+      if (element.dataset.formField === owner && element.contains(target)) return true
+    }
+    return false
+  }
+
+  function isOwnedOverlayTarget(target: EventTarget | null) {
+    if (!(target instanceof Node)) return false
+    for (const element of document.getElementsByClassName(interactionOwnerClass.value)) {
+      if (element.contains(target)) return true
+    }
+    return false
+  }
+
+  function hasOwnedInteractionSurface() {
+    return document.getElementsByClassName(interactionOwnerClass.value).length > 0
   }
 
   return {
@@ -139,29 +247,33 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     options,
     placeholder,
     controlSize,
+    validationPending,
+    interactionOwner,
+    interactionOwnerClass,
   }
 }
 
-function mergeControlUi(...configs: readonly unknown[]): FormObject {
-  return configs.reduce<FormObject>((merged, config) => {
-    if (typeof config !== 'object' || config === null || Array.isArray(config)) return merged
-    return { ...merged, ...config }
-  }, {})
+function mergeControlUi(...configs: readonly FormValue[]): FormControlUi {
+  const merged: FormControlUi = {}
+  for (const config of configs) {
+    if (!isObject(config) || config === null || Array.isArray(config)) continue
+    for (const [slot, value] of Object.entries(config))
+      if (isString(value)) merged[slot] = value
+  }
+  return merged
 }
 
-function mergeControlClass(defaults: string | undefined, local: unknown) {
-  if (typeof local === 'string') return mergeFormUiClass(defaults, local)
-  if (typeof local === 'undefined') return defaults
-  return [defaults, local]
+function mergeControlClass(defaults: string | undefined, local: FormValue) {
+  return isString(local) ? mergeFormUiClass(defaults, local) : defaults
 }
 
-function isFormControlSize(value: unknown): value is FormControlSize {
+function isFormControlSize(value: FormValue): value is FormControlSize {
   return value === 'xs' || value === 'sm' || value === 'md' || value === 'lg' || value === 'xl'
 }
 
 function resolveWatchOptions(field: FormField) {
   const options = Object.getOwnPropertyDescriptor(field, 'watchOptions')?.value
-  if (typeof options !== 'object' || options === null || Array.isArray(options)) return {}
+  if (!isObject(options) || options === null || Array.isArray(options)) return {}
   return {
     deep: options.deep === true,
     immediate: options.immediate === true,
@@ -170,8 +282,8 @@ function resolveWatchOptions(field: FormField) {
 
 function resolveEffectFilter(field: FormField) {
   const effect = Object.getOwnPropertyDescriptor(field, 'stateEffect')?.value
-  if (typeof effect !== 'object' || effect === null || Array.isArray(effect)) return undefined
-  const duration = typeof effect.duration === 'number' ? effect.duration : 0
+  if (!isObject(effect) || effect === null || Array.isArray(effect)) return undefined
+  const duration = isNumber(effect.duration) ? effect.duration : 0
   if (effect.type === 'debounce') return debounceFilter(duration)
   if (effect.type === 'throttle') return throttleFilter(duration)
   return undefined
@@ -180,8 +292,7 @@ function resolveEffectFilter(field: FormField) {
 function getValidationTrigger(field: FormField): FormValidationTrigger {
   if (!createFormFieldInstance(field).capability.has('validation')) return 'blur'
   const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
-  if (typeof validation !== 'object' || validation === null || Array.isArray(validation))
-    return 'blur'
+  if (!isObject(validation) || validation === null || Array.isArray(validation)) return 'blur'
 
   const trigger = Object.getOwnPropertyDescriptor(validation, 'trigger')?.value
   return trigger === 'input' || trigger === 'submit' ? trigger : 'blur'

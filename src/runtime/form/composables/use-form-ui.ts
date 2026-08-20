@@ -3,11 +3,11 @@ import { computed, type ComputedRef } from 'vue'
 
 import type { FormControlSize, FormDensity, FormUiConfig } from '../types'
 
-const densitySizes: Record<FormDensity, FormControlSize> = {
+const densitySizes = {
   compact: 'sm',
   default: 'md',
   comfortable: 'lg',
-}
+} satisfies Record<FormDensity, FormControlSize>
 
 const [provideFormUiState, useInjectedFormUiState] = createInjectionState(
   (ui: ComputedRef<FormUiConfig>) => {

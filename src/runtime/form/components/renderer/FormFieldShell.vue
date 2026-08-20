@@ -2,6 +2,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UCollapsible from '@nuxt/ui/components/Collapsible.vue'
 import UFormField from '@nuxt/ui/components/FormField.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref } from 'vue'
 
 import { useFormFieldBare } from '../../composables/use-form-field-chrome'
@@ -10,6 +11,7 @@ import { useFormUi } from '../../composables/use-form-ui'
 import type { FormField } from '../../types'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { isRecord } from '../../utils/path'
+import { isBoolean, isFunction, isObject } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -42,22 +44,21 @@ const hint = computed(() =>
 const labelExtra = computed(() => {
   if (!field.value.capability.has('hint') || !('labelExtra' in props.field)) return undefined
   const value = props.field.labelExtra
-  return typeof value === 'function' ? value() : value
+  return isFunction(value) ? value() : value
 })
 const shellLabel = computed(() => (props.inlineLabel ? undefined : label.value))
 const shellDescription = computed(() => (props.inlineLabel ? undefined : description.value))
 const shellHint = computed(() => (props.inlineLabel ? undefined : hint.value))
 const shellLabelExtra = computed(() => (props.inlineLabel ? undefined : labelExtra.value))
 const error = computed(() => form.getFieldError(props.path))
+const pending = computed(() => form.getFieldApi(props.path, props.field).validation.pending())
 const required = computed(() => {
   if (!field.value.capability.has('validation')) return false
   const validation = Object.getOwnPropertyDescriptor(props.field, 'validation')?.value
-  if (typeof validation !== 'object' || validation === null || Array.isArray(validation))
-    return false
+  if (!isObject(validation) || validation === null || Array.isArray(validation)) return false
   const value = Object.getOwnPropertyDescriptor(validation, 'required')?.value
-  if (typeof value === 'function')
-    return value(form.getFieldCallbackParams(props.path, props.field)) === true
-  return typeof value === 'boolean' ? value : false
+  if (isFunction(value)) return value(form.getFieldCallbackParams(props.path, props.field)) === true
+  return isBoolean(value) ? value : false
 })
 const dirty = computed(
   () =>
@@ -134,6 +135,12 @@ function renderLabelExtra() {
           <div :class="mergeFormUiClass('min-w-0 flex-1', fieldUi?.content)">
             <slot :label="label" :description="description" :hint="hint" :required="required" />
           </div>
+          <UIcon
+            v-if="pending"
+            name="i-lucide-loader-circle"
+            aria-hidden="true"
+            :class="mergeFormUiClass('mt-2 size-4 shrink-0 animate-spin text-muted', fieldUi?.pending)"
+          />
           <UButton
             v-if="dirty"
             icon="i-lucide-rotate-ccw"
@@ -151,6 +158,12 @@ function renderLabelExtra() {
       <div :class="mergeFormUiClass('min-w-0 flex-1', fieldUi?.content)">
         <slot :label="label" :description="description" :hint="hint" :required="required" />
       </div>
+      <UIcon
+        v-if="pending"
+        name="i-lucide-loader-circle"
+        aria-hidden="true"
+        :class="mergeFormUiClass('mt-2 size-4 shrink-0 animate-spin text-muted', fieldUi?.pending)"
+      />
       <UButton
         v-if="dirty"
         icon="i-lucide-rotate-ccw"

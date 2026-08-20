@@ -1,6 +1,13 @@
 import { twMerge } from 'tailwind-merge'
 
-import type { FormFieldControlConfigs, FormUiClass, FormUiConfig, FormUiPartConfig } from '../types'
+import type {
+  FormFieldControlConfigs,
+  FormUiClass,
+  FormUiConfig,
+  FormUiPartConfig,
+  FormValue,
+} from '../types'
+import { isObject } from './predicate'
 
 /** Merges form slot classes with the same conflict resolution used by Nuxt UI. */
 export function mergeFormUiClass(defaults?: FormUiClass, root?: FormUiClass, local?: FormUiClass) {
@@ -11,11 +18,12 @@ export function mergeFormUi(...configs: readonly (FormUiConfig | undefined)[]): 
   return configs.reduce<FormUiConfig>(mergeFormUiPair, {})
 }
 
-export function resolveAppFormUi(config: object): FormUiConfig | undefined {
-  if (!('nuxtUiTools' in config) || !config.nuxtUiTools || typeof config.nuxtUiTools !== 'object')
-    return undefined
-  if (!('form' in config.nuxtUiTools)) return undefined
-  return isFormUiConfig(config.nuxtUiTools.form) ? config.nuxtUiTools.form : undefined
+export function resolveAppFormUi(config: FormValue): FormUiConfig | undefined {
+  if (!isObject(config)) return undefined
+  const nuxtUiTools = Object.getOwnPropertyDescriptor(config, 'nuxtUiTools')?.value
+  if (!isObject(nuxtUiTools)) return undefined
+  const form = Object.getOwnPropertyDescriptor(nuxtUiTools, 'form')?.value
+  return isFormUiConfig(form) ? form : undefined
 }
 
 function mergeFormUiPair(current: FormUiConfig, next: FormUiConfig | undefined): FormUiConfig {
@@ -75,6 +83,6 @@ function mergePart<TUi extends object>(
   }
 }
 
-function isFormUiConfig(value: unknown): value is FormUiConfig {
-  return Boolean(value) && typeof value === 'object'
+function isFormUiConfig(value: FormValue): value is FormUiConfig {
+  return Boolean(value) && isObject(value)
 }
