@@ -4,17 +4,25 @@ import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed, ref } from 'vue'
 
+import { isBoolean, isString } from '../../../../shared/utils/predicate'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { TableBooleanFilterDefinition } from '../../../types'
-import { resolveBooleanFilterUi } from '../../../utils'
+import type { DataListControlSize, TableBooleanFilterDefinition } from '../../../types'
+import {
+  resolveBooleanFilterUi,
+  resolveDataListControlGeometry,
+  resolveFilterEditorSizeClasses,
+} from '../../../utils'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 
 const props = defineProps<{
   definition: TableBooleanFilterDefinition
+  size: DataListControlSize
 }>()
 
 const internals = useTableInternals()
+const geometry = computed(() => resolveDataListControlGeometry(props.size))
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(props.size))
 const searchQuery = ref<string>('')
 
 const optionSource = useTableFilterOptions({
@@ -34,7 +42,7 @@ const isActive = computed(
 
 const entries = computed(() =>
   optionSource.filteredEntries.value
-    .filter((entry) => typeof entry.value === 'boolean')
+    .filter((entry) => isBoolean(entry.value))
     .map((entry) => ({
       ...entry,
       label: entry.value === true ? filterUi.value.labels.true : filterUi.value.labels.false,
@@ -84,35 +92,37 @@ const radioValue = computed({
   <FilterPanelFieldShell
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
+    :size="size"
   >
     <URadioGroup
       v-model="radioValue"
       :items="radioItems"
+      :size="size"
       color="neutral"
       variant="list"
       :ui="{
         root: 'w-full',
         fieldset: 'grid gap-0.5',
-        item: 'flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated',
-        container: 'self-center pl-3',
+        item: `flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
+        container: 'self-center',
         base: 'cursor-pointer',
-        wrapper: 'min-w-0 flex-1 py-2 pr-3',
-        label: 'w-full cursor-pointer text-sm text-default',
+        wrapper: 'min-w-0 flex-1',
+        label: `w-full cursor-pointer text-default ${sizeClasses.optionLabel}`,
       }"
     >
       <template #label="{ item }">
-        <div class="flex min-w-0 items-center gap-3">
+        <div :class="['flex min-w-0 items-center', geometry.toolbarGap]">
           <UIcon
-            v-if="typeof item.icon === 'string'"
+            v-if="isString(item.icon)"
             :name="item.icon"
-            class="size-4 shrink-0 text-muted"
+            :class="[sizeClasses.optionIcon, 'shrink-0 text-muted']"
           />
 
           <span class="min-w-0 flex-1 truncate">
             {{ item.label }}
           </span>
-          <USkeleton v-if="optionSource.isCountLoading.value" class="ml-3 h-3.5 w-6 shrink-0" />
-          <span v-else-if="item.count != null" class="ml-3 shrink-0 text-muted">
+          <USkeleton v-if="optionSource.isCountLoading.value" class="h-3.5 w-6 shrink-0" />
+          <span v-else-if="item.count != null" class="shrink-0 text-muted">
             {{ item.count }}
           </span>
         </div>

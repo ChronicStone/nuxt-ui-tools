@@ -2,17 +2,29 @@
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import USlideover from '@nuxt/ui/components/Slideover.vue'
-import { computed } from 'vue'
+import { computed, onMounted, watch, type VNodeChild } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { DataListControlSize, DataListFilterPanelUi } from '../../../types'
-import { mergeDataListUiClass } from '../../../utils'
-import { resolveFilterPanelComponent } from './registry'
+import type { DataListFilterPanelCommitMode, DataListFilterPanelMode } from '../../../types'
+import { mergeDataListUiClass, resolveDataListControlGeometry } from '../../../utils'
+import FilterPanelFields from './FilterPanelFields.vue'
 
-const props = defineProps<{ size?: DataListControlSize; ui?: DataListFilterPanelUi }>()
+const props = withDefaults(
+  defineProps<{
+    size?: DataListControlSize
+    ui?: DataListFilterPanelUi
+    mode?: DataListFilterPanelMode
+    commitMode?: DataListFilterPanelCommitMode
+  }>(),
+  {
+    mode: 'drawer',
+    commitMode: 'submit',
+  },
+)
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const { t } = useUiToolsLocale()
@@ -20,6 +32,10 @@ const resolvedUi = computed<DataListFilterPanelUi>(() => ({
   ...dataListUi.ui.value.filterPanel?.ui,
   ...props.ui,
 }))
+const resolvedSize = computed(
+  () => props.size ?? dataListUi.ui.value.filterPanel?.size ?? dataListUi.controlSize.value,
+)
+const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.value))
 
 defineSlots<{
   trigger?: (props: {
@@ -28,17 +44,63 @@ defineSlots<{
     toggle: () => void
     openState: boolean
     triggerProps: { type: 'button'; 'aria-expanded': boolean }
-  }) => unknown
+  }) => VNodeChild
 }>()
 
 function toggle() {
   if (internals.filterPresentation.panelOpen.value) internals.filterPresentation.closePanel()
   else internals.filterPresentation.openPanel()
 }
+
+watch(
+  () => props.commitMode,
+  (mode) => internals.filterPresentation.setPanelCommitMode(mode),
+  { immediate: true },
+)
+
+onMounted(() => {
+  if (props.mode === 'panel') internals.filterPresentation.openPanel()
+})
 </script>
 
 <template>
+  <section
+    v-if="props.mode === 'panel'"
+    :class="mergeDataListUiClass(`grid ${geometry.panelGap}`, undefined, resolvedUi.wrapper)"
+  >
+    <FilterPanelFields :size="resolvedSize" :ui="resolvedUi" />
+
+    <div
+      v-if="props.commitMode === 'submit'"
+      :class="
+        mergeDataListUiClass(
+          `flex w-full items-center justify-between border-t border-default ${geometry.toolbarGap} pt-3`,
+          undefined,
+          resolvedUi.footerActions,
+        )
+      "
+    >
+      <UButton
+        color="neutral"
+        variant="ghost"
+        :size="resolvedSize"
+        :label="t('table.filters.panel.clearAll')"
+        :ui="{ base: resolvedUi.clear }"
+        @click="internals.filterPresentation.clearPanelDraft()"
+      />
+      <UButton
+        color="neutral"
+        variant="subtle"
+        :size="resolvedSize"
+        :label="t('table.filters.panel.apply')"
+        :ui="{ base: resolvedUi.apply }"
+        @click="internals.filterPresentation.applyPanelDraft()"
+      />
+    </div>
+  </section>
+
   <USlideover
+    v-else
     :open="internals.filterPresentation.panelOpen.value"
     side="right"
     inset
@@ -73,7 +135,7 @@ function toggle() {
       <UButton
         color="neutral"
         variant="outline"
-        :size="props.size ?? dataListUi.ui.value.filterPanel?.size ?? dataListUi.controlSize.value"
+        :size="resolvedSize"
         icon="i-lucide-funnel"
         :ui="{
           base: mergeDataListUiClass('shrink-0', undefined, resolvedUi.trigger),
@@ -89,7 +151,7 @@ function toggle() {
             v-if="internals.filterPresentation.activePanelCount.value > 0"
             color="neutral"
             variant="subtle"
-            size="sm"
+            :size="resolvedSize"
             :label="String(internals.filterPresentation.activePanelCount.value)"
             :class="resolvedUi.count"
           />
@@ -99,14 +161,7 @@ function toggle() {
 
     <template #body>
       <div class="min-h-0 overflow-y-auto">
-        <div :class="mergeDataListUiClass('grid gap-5', undefined, resolvedUi.fields)">
-          <component
-            :is="resolveFilterPanelComponent(definition)"
-            v-for="definition in internals.filterPresentation.panelDefinitions.value"
-            :key="definition.key"
-            :definition="definition"
-          />
-        </div>
+        <FilterPanelFields :size="resolvedSize" :ui="resolvedUi" />
       </div>
     </template>
 
@@ -114,7 +169,7 @@ function toggle() {
       <div
         :class="
           mergeDataListUiClass(
-            'flex w-full items-center justify-between gap-3',
+            `flex w-full items-center justify-between ${geometry.toolbarGap}`,
             undefined,
             resolvedUi.footerActions,
           )
@@ -123,7 +178,7 @@ function toggle() {
         <UButton
           color="neutral"
           variant="ghost"
-          size="sm"
+          :size="resolvedSize"
           :label="t('table.filters.panel.clearAll')"
           :ui="{ base: resolvedUi.clear }"
           @click="internals.filterPresentation.clearPanelDraft()"
@@ -132,7 +187,7 @@ function toggle() {
         <UButton
           color="neutral"
           variant="subtle"
-          size="sm"
+          :size="resolvedSize"
           :label="t('table.filters.panel.apply')"
           :ui="{ base: resolvedUi.apply }"
           @click="internals.filterPresentation.applyPanelDraft()"

@@ -2,21 +2,25 @@
 import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
 import { computed, ref } from 'vue'
 
+import { isDate, isNumber, isObject } from '../../../../shared/utils/predicate'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
+  DataListControlSize,
   TableFilterOperator,
   TableNumberFilterDefinition,
   TableNumberFilterOperator,
 } from '../../../types'
-import { resolveNumberFilterUi } from '../../../utils'
+import { resolveDataListControlGeometry, resolveNumberFilterUi } from '../../../utils'
 import FilterMatchModeButton from '../shared/FilterMatchModeButton.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 
 const props = defineProps<{
   definition: TableNumberFilterDefinition
+  size: DataListControlSize
 }>()
 
 const internals = useTableInternals()
+const geometry = computed(() => resolveDataListControlGeometry(props.size))
 const pendingOperator = ref<TableNumberFilterOperator>(resolveInitialOperator())
 
 const operatorItems = computed(() =>
@@ -36,7 +40,7 @@ const scalarValue = computed<number | undefined>({
     const value = internals.filterPresentation.getPanelDraftFilterState({
       key: props.definition.key,
     })?.value
-    return typeof value === 'number' ? value : undefined
+    return isNumber(value) ? value : undefined
   },
   set(value) {
     internals.filterPresentation.setPanelScalarFilterValue({
@@ -52,12 +56,11 @@ const rangeValue = computed({
     const value = internals.filterPresentation.getPanelDraftFilterState({
       key: props.definition.key,
     })?.value
-    if (!value || typeof value !== 'object' || Array.isArray(value) || value instanceof Date)
-      return { from: undefined, to: undefined }
+    if (!isObject(value) || isDate(value)) return { from: undefined, to: undefined }
 
     return {
-      from: typeof value.from === 'number' ? value.from : undefined,
-      to: typeof value.to === 'number' ? value.to : undefined,
+      from: 'from' in value && isNumber(value.from) ? value.from : undefined,
+      to: 'to' in value && isNumber(value.to) ? value.to : undefined,
     }
   },
   set(value: { from?: number; to?: number }) {
@@ -66,10 +69,12 @@ const rangeValue = computed({
       value:
         value.from == null && value.to == null
           ? undefined
-          : {
-              ...(value.from == null ? {} : { from: value.from }),
-              ...(value.to == null ? {} : { to: value.to }),
-            },
+          : Object.fromEntries(
+              [
+                value.from == null ? undefined : ['from', value.from],
+                value.to == null ? undefined : ['to', value.to],
+              ].filter((entry): entry is [string, number] => entry !== undefined),
+            ),
       operator: pendingOperator.value,
     })
   },
@@ -127,19 +132,22 @@ function resolveIncrementConfig(hideStepper: boolean) {
   <FilterPanelFieldShell
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
+    :size="size"
   >
     <template #actions>
       <FilterMatchModeButton
-        v-if="operatorItems.length > 1"
+        v-if="operatorItems.length"
         :label="operatorItems.find((item) => item.value === pendingOperator)?.label ?? 'is'"
         :items="operatorItems"
+        :selected="pendingOperator"
+        :size="size"
         variant="compact"
         @select="handleOperatorChange"
       />
     </template>
 
-    <div v-if="pendingOperator === 'between'" class="grid gap-3">
-      <div class="grid grid-cols-2 gap-2">
+    <div v-if="pendingOperator === 'between'" :class="['grid', geometry.toolbarGap]">
+      <div :class="['grid grid-cols-2', geometry.toolbarGap]">
         <UInputNumber
           :model-value="rangeValue.from"
           :placeholder="filterUi.range.inputs.fromPlaceholder"
@@ -150,6 +158,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
           :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
           :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
           :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+          :size="size"
           class="w-full"
           @update:model-value="updateRangeFrom"
         />
@@ -164,6 +173,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
           :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
           :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
           :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+          :size="size"
           class="w-full"
           @update:model-value="updateRangeTo"
         />
@@ -181,6 +191,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
         :disable-wheel-change="filterUi.scalar.input.disableWheelChange"
         :increment="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
         :decrement="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
+        :size="size"
         class="w-full"
         @update:model-value="scalarValue = $event"
       />

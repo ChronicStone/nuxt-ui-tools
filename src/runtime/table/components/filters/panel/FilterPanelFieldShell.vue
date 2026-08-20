@@ -1,27 +1,36 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+import { useDataListUi } from '../../../composables/use-data-list-ui'
+import type { DataListControlSize } from '../../../types'
+import { resolveDataListControlGeometry } from '../../../utils'
+
+const props = defineProps<{
   label: string
   active?: boolean
+  size?: DataListControlSize
 }>()
 
 defineSlots<{
   actions?: () => any
   default?: () => any
 }>()
+
+const dataListUi = useDataListUi()
+const resolvedSize = computed(() => props.size ?? dataListUi.controlSize.value)
+const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.value))
 </script>
 
 <template>
-  <section class="relative grid gap-1.5">
-    <div class="min-w-0 pr-24">
-      <div class="min-w-0">
-        <h3 class="truncate text-sm font-medium text-highlighted">
-          {{ label }}
-        </h3>
-      </div>
-    </div>
+  <section :class="['grid', geometry.toolbarGap]">
+    <div :class="['flex min-w-0 items-center justify-between', geometry.toolbarGap]">
+      <h3 :class="['min-w-0 flex-1 truncate font-medium text-highlighted', geometry.text]">
+        {{ label }}
+      </h3>
 
-    <div class="absolute right-0 top-0 flex shrink-0 items-center gap-2">
-      <slot name="actions" />
+      <div v-if="$slots.actions" :class="['flex shrink-0 items-center', geometry.toolbarGap]">
+        <slot name="actions" />
+      </div>
     </div>
 
     <slot />
