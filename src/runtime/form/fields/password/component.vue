@@ -26,7 +26,9 @@ type PasswordVisibilityConfig = Exclude<NonNullable<FormPasswordField['visibilit
 const visible = ref(false)
 const visibilityToggleEnabled = computed(() => props.field.visibilityToggle !== false)
 const visibilityToggleConfig = computed(() =>
-  isPasswordVisibilityConfig(props.field.visibilityToggle) ? props.field.visibilityToggle : undefined,
+  isPasswordVisibilityConfig(props.field.visibilityToggle)
+    ? props.field.visibilityToggle
+    : undefined,
 )
 const inputType = computed(() => (visible.value ? 'text' : 'password'))
 const visibilityLabel = computed(() => {

@@ -8,13 +8,13 @@ import type {
   ResponsiveValueInput,
   ResponsiveTransformer,
 } from '../types/responsive'
+import { isFunction, isObject, isString } from '../utils/predicate'
 import {
   getOrderedBreakpointKeys,
   resolveResponsiveValueAtBreakpoint,
   type ResponsiveRuntimeValue,
   type ViewportLike,
 } from '../utils/responsive'
-import { isFunction, isObject, isString } from '../utils/predicate'
 
 export function getResponsiveValue<TValue extends ResponsiveValueInput>(
   value: TValue,
@@ -33,8 +33,7 @@ export function getResponsiveValue(
     breakpointKeys: getOrderedBreakpointKeys(viewport),
   }
 
-  if (!isString(resolvedValue))
-    return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
+  if (!isString(resolvedValue)) return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
   if (transform === undefined) return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
 
   return resolveResponsiveValueAtBreakpoint(resolvedValue, context, transform)
@@ -72,9 +71,7 @@ function unwrapResponsiveValue(value: ResponsiveValueInput): string | number | b
   return currentValue
 }
 
-function isResponsiveValueGetter<T>(
-  value: T,
-): value is T & (() => ResponsiveValueInput) {
+function isResponsiveValueGetter<T>(value: T): value is T & (() => ResponsiveValueInput) {
   return isFunction(value)
 }
 

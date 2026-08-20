@@ -3,8 +3,8 @@ import { computed, ref, nextTick, watch } from 'vue'
 
 import { provideUiToolsLocale, useUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
 import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
-import { resolveTextValue } from '#ui-tools/shared/utils/render'
 import { isNumber, isObject } from '#ui-tools/shared'
+import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
 import { useSpreadsheetView } from '../composables/use-spreadsheet-view'
 import SpreadsheetImportFileBar from './layout/SpreadsheetImportFileBar.vue'
@@ -73,12 +73,7 @@ const isPreparingNextStep = ref<boolean>(false)
 const hasWorkbook = computed(() => Boolean(props.spreadsheet.workbook.value))
 const hasHeaders = computed(() => props.spreadsheet.headers.value.length > 0)
 function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
-  if (
-    'file' in schema &&
-    schema.file &&
-    isObject(schema.file) &&
-    'maxRecords' in schema.file
-  )
+  if ('file' in schema && schema.file && isObject(schema.file) && 'maxRecords' in schema.file)
     return isNumber(schema.file.maxRecords) ? schema.file.maxRecords : undefined
 
   if (

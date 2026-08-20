@@ -67,9 +67,27 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Text',
     description: 'Text inputs, native input types, hints, validation, and disabled state.',
     fields: [
-      { key: 'name', type: 'text', label: 'Name', placeholder: 'Ada Lovelace', validation: required },
-      { key: 'email', type: 'text', inputType: 'email', label: 'Email', placeholder: 'ada@example.com' },
-      { key: 'disabled', type: 'text', label: 'Disabled', default: 'Read only', disabled: () => true },
+      {
+        key: 'name',
+        type: 'text',
+        label: 'Name',
+        placeholder: 'Ada Lovelace',
+        validation: required,
+      },
+      {
+        key: 'email',
+        type: 'text',
+        inputType: 'email',
+        label: 'Email',
+        placeholder: 'ada@example.com',
+      },
+      {
+        key: 'disabled',
+        type: 'text',
+        label: 'Disabled',
+        default: 'Read only',
+        disabled: () => true,
+      },
     ],
   },
   {
@@ -77,8 +95,20 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Password',
     description: 'Password visibility controls, validation, and sizing.',
     fields: [
-      { key: 'password', type: 'password', label: 'Default reveal control', placeholder: 'Enter a password', validation: required },
-      { key: 'fixed', type: 'password', label: 'Reveal disabled', placeholder: 'Always masked', visibilityToggle: false },
+      {
+        key: 'password',
+        type: 'password',
+        label: 'Default reveal control',
+        placeholder: 'Enter a password',
+        validation: required,
+      },
+      {
+        key: 'fixed',
+        type: 'password',
+        label: 'Reveal disabled',
+        placeholder: 'Always masked',
+        visibilityToggle: false,
+      },
       {
         key: 'customReveal',
         type: 'password',
@@ -91,11 +121,25 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           hideLabel: 'Mask secret',
         },
       },
-      { key: 'disabled', type: 'password', label: 'Disabled', default: 'secret-value', disabled: () => true },
+      {
+        key: 'disabled',
+        type: 'password',
+        label: 'Disabled',
+        default: 'secret-value',
+        disabled: () => true,
+      },
     ],
     groups: [
-      { label: 'Visibility behavior', description: 'Default reveal, disabled reveal, and authored reveal controls.', before: 'password' },
-      { label: 'States', description: 'Disabled controls keep the same geometry and affordances.', before: 'disabled' },
+      {
+        label: 'Visibility behavior',
+        description: 'Default reveal, disabled reveal, and authored reveal controls.',
+        before: 'password',
+      },
+      {
+        label: 'States',
+        description: 'Disabled controls keep the same geometry and affordances.',
+        before: 'disabled',
+      },
     ],
   },
   {
@@ -103,8 +147,20 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Textarea',
     description: 'Long-form input, placeholder behavior, validation, and disabled state.',
     fields: [
-      { key: 'summary', type: 'textarea', label: 'Summary', placeholder: 'Describe the change…', validation: required },
-      { key: 'disabled', type: 'textarea', label: 'Disabled', default: 'This content is locked.', disabled: () => true },
+      {
+        key: 'summary',
+        type: 'textarea',
+        label: 'Summary',
+        placeholder: 'Describe the change…',
+        validation: required,
+      },
+      {
+        key: 'disabled',
+        type: 'textarea',
+        label: 'Disabled',
+        default: 'This content is locked.',
+        disabled: () => true,
+      },
     ],
   },
   {
@@ -122,8 +178,21 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Autocomplete',
     description: 'Searchable option input, multiple selection, creation, and clear behavior.',
     fields: [
-      { key: 'role', type: 'auto-complete', label: 'Search + clear', options: roleOptions, clearable: true },
-      { key: 'roles', type: 'auto-complete', label: 'Multiple values', options: roleOptions, multiple: true, clearable: true },
+      {
+        key: 'role',
+        type: 'auto-complete',
+        label: 'Search + clear',
+        options: roleOptions,
+        clearable: true,
+      },
+      {
+        key: 'roles',
+        type: 'auto-complete',
+        label: 'Multiple values',
+        options: roleOptions,
+        multiple: true,
+        clearable: true,
+      },
       {
         key: 'asyncRole',
         type: 'auto-complete',
@@ -167,9 +236,21 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
     ],
     groups: [
-      { label: 'Selection modes', description: 'Single and multiple autocomplete behavior.', before: 'role' },
-      { label: 'Async options', description: 'Promise-backed options expose loading and an explicit refresh action.', before: 'asyncRole' },
-      { label: 'Creation', description: 'Missing values can be authored from the search term.', before: 'createdRole' },
+      {
+        label: 'Selection modes',
+        description: 'Single and multiple autocomplete behavior.',
+        before: 'role',
+      },
+      {
+        label: 'Async options',
+        description: 'Promise-backed options expose loading and an explicit refresh action.',
+        before: 'asyncRole',
+      },
+      {
+        label: 'Creation',
+        description: 'Missing values can be authored from the search term.',
+        before: 'createdRole',
+      },
     ],
   },
   {
@@ -177,9 +258,21 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Checkbox',
     description: 'Boolean checkbox alignment with labels, descriptions, and disabled state.',
     fields: [
-      { key: 'terms', type: 'checkbox', label: 'Accept the terms', description: 'Required before continuing.', validation: required },
+      {
+        key: 'terms',
+        type: 'checkbox',
+        label: 'Accept the terms',
+        description: 'Required before continuing.',
+        validation: required,
+      },
       { key: 'marketing', type: 'checkbox', label: 'Product updates', default: true },
-      { key: 'disabled', type: 'checkbox', label: 'Disabled option', default: true, disabled: () => true },
+      {
+        key: 'disabled',
+        type: 'checkbox',
+        label: 'Disabled option',
+        default: true,
+        disabled: () => true,
+      },
     ],
   },
   {
@@ -187,7 +280,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Switch',
     description: 'Boolean and custom-value switches with icons, loading, and disabled states.',
     fields: [
-      { key: 'autosave', type: 'switch', label: 'Autosave', default: true, checkedIcon: 'i-lucide-check', uncheckedIcon: 'i-lucide-x' },
+      {
+        key: 'autosave',
+        type: 'switch',
+        label: 'Autosave',
+        default: true,
+        checkedIcon: 'i-lucide-check',
+        uncheckedIcon: 'i-lucide-x',
+      },
       { key: 'notifications', type: 'switch', label: 'Notifications', default: false },
       { key: 'disabled', type: 'switch', label: 'Disabled', default: true, disabled: () => true },
     ],
@@ -197,8 +297,21 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Switch group',
     description: 'Option-driven switch groups in vertical and horizontal layouts.',
     fields: [
-      { key: 'alerts', type: 'switch-group', label: 'Alerts', options: roleOptions, orientation: 'vertical', default: ['owner'] },
-      { key: 'compact', type: 'switch-group', label: 'Horizontal', options: planOptions, orientation: 'horizontal' },
+      {
+        key: 'alerts',
+        type: 'switch-group',
+        label: 'Alerts',
+        options: roleOptions,
+        orientation: 'vertical',
+        default: ['owner'],
+      },
+      {
+        key: 'compact',
+        type: 'switch-group',
+        label: 'Horizontal',
+        options: planOptions,
+        orientation: 'horizontal',
+      },
     ],
   },
   {
@@ -207,7 +320,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Single-choice radio options with labels, descriptions, and validation.',
     fields: [
       { key: 'plan', type: 'radio', label: 'Plan', options: planOptions, validation: required },
-      { key: 'disabled', type: 'radio', label: 'Disabled', options: planOptions, default: 'starter', disabled: () => true },
+      {
+        key: 'disabled',
+        type: 'radio',
+        label: 'Disabled',
+        options: planOptions,
+        default: 'starter',
+        disabled: () => true,
+      },
     ],
   },
   {
@@ -215,8 +335,22 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Radio cards',
     description: 'Card-style single selection with horizontal and vertical presentations.',
     fields: [
-      { key: 'plan', type: 'radio-card', label: 'Plan', options: planOptions, orientation: 'horizontal', validation: required },
-      { key: 'fallback', type: 'radio-card', label: 'Vertical', options: planOptions, orientation: 'vertical', default: 'scale' },
+      {
+        key: 'plan',
+        type: 'radio-card',
+        label: 'Plan',
+        options: planOptions,
+        orientation: 'horizontal',
+        validation: required,
+      },
+      {
+        key: 'fallback',
+        type: 'radio-card',
+        label: 'Vertical',
+        options: planOptions,
+        orientation: 'vertical',
+        default: 'scale',
+      },
     ],
   },
   {
@@ -224,8 +358,22 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Checkbox group',
     description: 'Multi-choice option groups across list, card, and horizontal layouts.',
     fields: [
-      { key: 'roles', type: 'checkbox-group', label: 'Roles', options: roleOptions, variant: 'list', default: ['manager'] },
-      { key: 'plans', type: 'checkbox-group', label: 'Card variant', options: planOptions, variant: 'card', orientation: 'horizontal' },
+      {
+        key: 'roles',
+        type: 'checkbox-group',
+        label: 'Roles',
+        options: roleOptions,
+        variant: 'list',
+        default: ['manager'],
+      },
+      {
+        key: 'plans',
+        type: 'checkbox-group',
+        label: 'Card variant',
+        options: planOptions,
+        variant: 'card',
+        orientation: 'horizontal',
+      },
     ],
   },
   {
@@ -233,7 +381,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Checkbox cards',
     description: 'Card-style multi-selection with richer option copy.',
     fields: [
-      { key: 'plans', type: 'checkbox-card', label: 'Enabled plans', options: planOptions, orientation: 'horizontal', default: ['starter'] },
+      {
+        key: 'plans',
+        type: 'checkbox-card',
+        label: 'Enabled plans',
+        options: planOptions,
+        orientation: 'horizontal',
+        default: ['starter'],
+      },
     ],
   },
   {
@@ -241,8 +396,24 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Select',
     description: 'Searchable, clearable, and multi-select menu behavior.',
     fields: [
-      { key: 'role', type: 'select', label: 'Searchable + clear', options: roleOptions, searchable: true, clearable: true, validation: required },
-      { key: 'roles', type: 'select', label: 'Multiple selection', options: roleOptions, searchable: true, multiple: true, clearable: true },
+      {
+        key: 'role',
+        type: 'select',
+        label: 'Searchable + clear',
+        options: roleOptions,
+        searchable: true,
+        clearable: true,
+        validation: required,
+      },
+      {
+        key: 'roles',
+        type: 'select',
+        label: 'Multiple selection',
+        options: roleOptions,
+        searchable: true,
+        multiple: true,
+        clearable: true,
+      },
       {
         key: 'asyncRole',
         type: 'select',
@@ -287,12 +458,31 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           },
         },
       },
-      { key: 'disabled', type: 'select', label: 'Disabled', options: roleOptions, default: 'owner', disabled: () => true },
+      {
+        key: 'disabled',
+        type: 'select',
+        label: 'Disabled',
+        options: roleOptions,
+        default: 'owner',
+        disabled: () => true,
+      },
     ],
     groups: [
-      { label: 'Core selection', description: 'Search, clear, validation, and multiple selection.', before: 'role' },
-      { label: 'Async & refresh', description: 'Remote-like options with pending and refresh states.', before: 'asyncRole' },
-      { label: 'Creation', description: 'Create and immediately select values that are not in the source.', before: 'createdRole' },
+      {
+        label: 'Core selection',
+        description: 'Search, clear, validation, and multiple selection.',
+        before: 'role',
+      },
+      {
+        label: 'Async & refresh',
+        description: 'Remote-like options with pending and refresh states.',
+        before: 'asyncRole',
+      },
+      {
+        label: 'Creation',
+        description: 'Create and immediately select values that are not in the source.',
+        before: 'createdRole',
+      },
       { label: 'States', before: 'disabled' },
     ],
   },
@@ -337,10 +527,26 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
     ],
     groups: [
-      { label: 'Editable input', description: 'Typing keeps focus while the anchored calendar remains interactive.', before: 'launchDate' },
-      { label: 'Formatting', description: 'Manual parsing and preview formats are independently authored.', before: 'usDate' },
-      { label: 'Calendar chrome', description: 'Month/year controls can be hidden without changing date semantics.', before: 'minimalCalendar' },
-      { label: 'Constraints & output', description: 'Min/max limits and output representation stay schema-controlled.', before: 'boundedDate' },
+      {
+        label: 'Editable input',
+        description: 'Typing keeps focus while the anchored calendar remains interactive.',
+        before: 'launchDate',
+      },
+      {
+        label: 'Formatting',
+        description: 'Manual parsing and preview formats are independently authored.',
+        before: 'usDate',
+      },
+      {
+        label: 'Calendar chrome',
+        description: 'Month/year controls can be hidden without changing date semantics.',
+        before: 'minimalCalendar',
+      },
+      {
+        label: 'Constraints & output',
+        description: 'Min/max limits and output representation stay schema-controlled.',
+        before: 'boundedDate',
+      },
     ],
   },
   {
@@ -348,25 +554,33 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Date-time',
     description: 'Date-time manual controls, popup behavior, and clearing.',
     fields: [
-      { key: 'startsAt', type: 'datetime', label: 'Starts at', clearable: true, validation: required },
-      { key: 'disabled', type: 'datetime', label: 'Disabled', default: '2026-08-20T09:30', disabled: () => true },
+      {
+        key: 'startsAt',
+        type: 'datetime',
+        label: 'Starts at',
+        clearable: true,
+        validation: required,
+      },
+      {
+        key: 'disabled',
+        type: 'datetime',
+        label: 'Disabled',
+        default: '2026-08-20T09:30',
+        disabled: () => true,
+      },
     ],
   },
   {
     id: 'daterange',
     label: 'Date range',
     description: 'Two-ended date range editing, clearing, and responsive layout.',
-    fields: [
-      { key: 'window', type: 'daterange', label: 'Date window', clearable: true },
-    ],
+    fields: [{ key: 'window', type: 'daterange', label: 'Date window', clearable: true }],
   },
   {
     id: 'monthrange',
     label: 'Month range',
     description: 'Month-range editing with compact grouped controls.',
-    fields: [
-      { key: 'period', type: 'monthrange', label: 'Reporting period', clearable: true },
-    ],
+    fields: [{ key: 'period', type: 'monthrange', label: 'Reporting period', clearable: true }],
   },
   {
     id: 'datetimerange',
@@ -380,9 +594,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     id: 'month',
     label: 'Month',
     description: 'Month selection and clear behavior.',
-    fields: [
-      { key: 'month', type: 'month', label: 'Billing month', clearable: true },
-    ],
+    fields: [{ key: 'month', type: 'month', label: 'Billing month', clearable: true }],
   },
   {
     id: 'year',
@@ -397,8 +609,22 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Time',
     description: 'Time popup placement, minute stepping, bounds, and clear behavior.',
     fields: [
-      { key: 'reviewTime', type: 'time', label: 'Review time', default: '09:30', minuteStep: 15, clearable: true },
-      { key: 'bounded', type: 'time', label: 'Business hours', min: '08:00', max: '18:00', minuteStep: 30 },
+      {
+        key: 'reviewTime',
+        type: 'time',
+        label: 'Review time',
+        default: '09:30',
+        minuteStep: 15,
+        clearable: true,
+      },
+      {
+        key: 'bounded',
+        type: 'time',
+        label: 'Business hours',
+        min: '08:00',
+        max: '18:00',
+        minuteStep: 30,
+      },
     ],
   },
   {
@@ -440,10 +666,27 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
     ],
     groups: [
-      { label: 'Display vs value', description: 'Valid input formats nationally in-place while the stored value keeps its authored format.', before: 'phone' },
-      { label: 'Country policy', description: 'Country availability and output format are independent controls.', before: 'restricted' },
-      { label: 'Presentation behavior', description: 'Live normalization and validity feedback can both be disabled.', before: 'raw' },
-      { label: 'Number policy', description: 'Restrict accepted phone-number types without changing the input UI.', before: 'mobile' },
+      {
+        label: 'Display vs value',
+        description:
+          'Valid input formats nationally in-place while the stored value keeps its authored format.',
+        before: 'phone',
+      },
+      {
+        label: 'Country policy',
+        description: 'Country availability and output format are independent controls.',
+        before: 'restricted',
+      },
+      {
+        label: 'Presentation behavior',
+        description: 'Live normalization and validity feedback can both be disabled.',
+        before: 'raw',
+      },
+      {
+        label: 'Number policy',
+        description: 'Restrict accepted phone-number types without changing the input UI.',
+        before: 'mobile',
+      },
     ],
   },
   {
@@ -453,17 +696,33 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     fields: [
       { key: 'internalId', type: 'hidden', default: 'draft_001' },
       { key: 'omitted', type: 'hidden', default: 'never-submit', submit: { omit: true } },
-      { key: 'visibleCompanion', type: 'text', label: 'Visible companion', default: 'Inspect live state below' },
+      {
+        key: 'visibleCompanion',
+        type: 'text',
+        label: 'Visible companion',
+        default: 'Inspect live state below',
+      },
     ],
-    notes: ['Hidden fields intentionally render no control; inspect the state/output panels to verify behavior.'],
+    notes: [
+      'Hidden fields intentionally render no control; inspect the state/output panels to verify behavior.',
+    ],
   },
   {
     id: 'info',
     label: 'Info',
     description: 'Informational content inside the form grid.',
     fields: [
-      { key: 'info', type: 'info', content: 'This information block should align cleanly with surrounding form content.' },
-      { key: 'companion', type: 'text', label: 'Companion field', placeholder: 'Check vertical rhythm' },
+      {
+        key: 'info',
+        type: 'info',
+        content: 'This information block should align cleanly with surrounding form content.',
+      },
+      {
+        key: 'companion',
+        type: 'text',
+        label: 'Companion field',
+        placeholder: 'Check vertical rhythm',
+      },
     ],
   },
   {
@@ -488,7 +747,13 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         label: 'Weighted phone group',
         fields: [
           { key: 'prefix', type: 'text', label: 'Prefix', default: '+33', layout: { span: 2 } },
-          { key: 'number', type: 'text', label: 'Phone', placeholder: '6 12 34 56 78', layout: { span: 6 } },
+          {
+            key: 'number',
+            type: 'text',
+            label: 'Phone',
+            placeholder: '6 12 34 56 78',
+            layout: { span: 6 },
+          },
         ],
       },
       {
@@ -496,8 +761,23 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         type: 'input-group',
         label: 'Mixed controls',
         fields: [
-          { key: 'currency', type: 'select', label: 'Currency', options: ['EUR', 'USD', 'GBP'], default: 'EUR', layout: { span: 2 } },
-          { key: 'amount', type: 'number', label: 'Amount', min: 0, step: 10, placeholder: '2500', layout: { span: 5 } },
+          {
+            key: 'currency',
+            type: 'select',
+            label: 'Currency',
+            options: ['EUR', 'USD', 'GBP'],
+            default: 'EUR',
+            layout: { span: 2 },
+          },
+          {
+            key: 'amount',
+            type: 'number',
+            label: 'Amount',
+            min: 0,
+            step: 10,
+            placeholder: '2500',
+            layout: { span: 5 },
+          },
         ],
       },
       {
@@ -512,9 +792,23 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
     ],
     groups: [
-      { label: 'Weighted layout', description: 'Child spans become actual FieldGroup flex weights instead of arbitrary equal widths.', before: 'phoneParts' },
-      { label: 'Mixed controls', description: 'Select, number, and other Nuxt UI controls join with native group radii and focus treatment.', before: 'money' },
-      { label: 'Orientation', description: 'The same primitive supports vertical control stacks.', before: 'verticalCredentials' },
+      {
+        label: 'Weighted layout',
+        description:
+          'Child spans become actual FieldGroup flex weights instead of arbitrary equal widths.',
+        before: 'phoneParts',
+      },
+      {
+        label: 'Mixed controls',
+        description:
+          'Select, number, and other Nuxt UI controls join with native group radii and focus treatment.',
+        before: 'money',
+      },
+      {
+        label: 'Orientation',
+        description: 'The same primitive supports vertical control stacks.',
+        before: 'verticalCredentials',
+      },
     ],
   },
   {
@@ -577,7 +871,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         upload: {
           handler: async ({ files }) => {
             await new Promise<void>((resolve) => setTimeout(resolve, 450))
-            return files[0] ? `https://example.test/uploads/${encodeURIComponent(files[0].name)}` : null
+            return files[0]
+              ? `https://example.test/uploads/${encodeURIComponent(files[0].name)}`
+              : null
           },
         },
       },
@@ -592,7 +888,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         upload: {
           handler: async ({ files }) => {
             await new Promise<void>((resolve) => setTimeout(resolve, 450))
-            return files.map((file) => ({ name: file.name, url: `https://example.test/uploads/${encodeURIComponent(file.name)}` }))
+            return files.map((file) => ({
+              name: file.name,
+              url: `https://example.test/uploads/${encodeURIComponent(file.name)}`,
+            }))
           },
         },
       },
@@ -622,7 +921,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
   {
     id: 'array-table',
     label: 'Array table',
-    description: 'Compact repeated rows, semantic table layout, nested validation, and row actions.',
+    description:
+      'Compact repeated rows, semantic table layout, nested validation, and row actions.',
     fields: [
       {
         key: 'items',
@@ -655,7 +955,12 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
-    input: { milestones: [{ title: 'Beta', date: '2026-09-15' }, { title: 'Launch', date: '2026-11-01' }] },
+    input: {
+      milestones: [
+        { title: 'Beta', date: '2026-09-15' },
+        { title: 'Launch', date: '2026-11-01' },
+      ],
+    },
   },
   {
     id: 'array-variant',
@@ -673,14 +978,26 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
             key: 'email',
             label: 'Email',
             fields: [
-              { key: 'address', type: 'text', label: 'Email address', inputType: 'email', validation: required },
+              {
+                key: 'address',
+                type: 'text',
+                label: 'Email address',
+                inputType: 'email',
+                validation: required,
+              },
             ],
           },
           {
             key: 'phone',
             label: 'Phone',
             fields: [
-              { key: 'number', type: 'phone-number', label: 'Phone number', defaultCountryCode: 'FR', validation: required },
+              {
+                key: 'number',
+                type: 'phone-number',
+                label: 'Phone number',
+                defaultCountryCode: 'FR',
+                validation: required,
+              },
             ],
           },
         ],
@@ -691,10 +1008,28 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
   {
     id: 'tree-select',
     label: 'Tree select',
-    description: 'Popover tree selection, path display, searching, multiple selection, and cascade behavior.',
+    description:
+      'Popover tree selection, path display, searching, multiple selection, and cascade behavior.',
     fields: [
-      { key: 'team', type: 'tree-select', label: 'Team', options: hierarchyOptions, searchable: true, clearable: true, showPath: true },
-      { key: 'teams', type: 'tree-select', label: 'Multiple teams', options: hierarchyOptions, searchable: true, multiple: true, selectionControl: 'checkbox', cascade: true },
+      {
+        key: 'team',
+        type: 'tree-select',
+        label: 'Team',
+        options: hierarchyOptions,
+        searchable: true,
+        clearable: true,
+        showPath: true,
+      },
+      {
+        key: 'teams',
+        type: 'tree-select',
+        label: 'Multiple teams',
+        options: hierarchyOptions,
+        searchable: true,
+        multiple: true,
+        selectionControl: 'checkbox',
+        cascade: true,
+      },
     ],
   },
   {
@@ -702,16 +1037,40 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Cascader',
     description: 'Hierarchical cascader popup with path presentation and leaf-only selection.',
     fields: [
-      { key: 'category', type: 'cascader', label: 'Category', options: hierarchyOptions, searchable: true, clearable: true, leafOnly: true, separator: ' / ' },
+      {
+        key: 'category',
+        type: 'cascader',
+        label: 'Category',
+        options: hierarchyOptions,
+        searchable: true,
+        clearable: true,
+        leafOnly: true,
+        separator: ' / ',
+      },
     ],
   },
   {
     id: 'tree',
     label: 'Tree',
-    description: 'Inline tree selection, checkbox/radio controls, propagation, and responsive layout.',
+    description:
+      'Inline tree selection, checkbox/radio controls, propagation, and responsive layout.',
     fields: [
-      { key: 'teams', type: 'tree', label: 'Teams', options: hierarchyOptions, multiple: true, selectionControl: 'checkbox', cascade: true },
-      { key: 'owner', type: 'tree', label: 'Single owner group', options: hierarchyOptions, selectionControl: 'radio' },
+      {
+        key: 'teams',
+        type: 'tree',
+        label: 'Teams',
+        options: hierarchyOptions,
+        multiple: true,
+        selectionControl: 'checkbox',
+        cascade: true,
+      },
+      {
+        key: 'owner',
+        type: 'tree',
+        label: 'Single owner group',
+        options: hierarchyOptions,
+        selectionControl: 'radio',
+      },
     ],
   },
   {
@@ -772,8 +1131,17 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
     ],
     groups: [
-      { label: 'Bordered matrix', description: 'Semantic row headers stay left-aligned while data controls remain centered.', before: 'permissions' },
-      { label: 'Presentation variants', description: 'Borders, striping, hover behavior, compact density, and row-label width are authored props.', before: 'approvalMatrix' },
+      {
+        label: 'Bordered matrix',
+        description: 'Semantic row headers stay left-aligned while data controls remain centered.',
+        before: 'permissions',
+      },
+      {
+        label: 'Presentation variants',
+        description:
+          'Borders, striping, hover behavior, compact density, and row-label width are authored props.',
+        before: 'approvalMatrix',
+      },
     ],
   },
   {
@@ -781,8 +1149,27 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Slider',
     description: 'Single and range sliders with tooltips, defaults, and disabled state.',
     fields: [
-      { key: 'confidence', type: 'slider', label: 'Confidence', min: 0, max: 100, step: 5, default: 65, tooltip: true },
-      { key: 'range', type: 'slider', label: 'Range', min: 0, max: 100, step: 5, multiple: true, default: [25, 75], tooltip: true },
+      {
+        key: 'confidence',
+        type: 'slider',
+        label: 'Confidence',
+        min: 0,
+        max: 100,
+        step: 5,
+        default: 65,
+        tooltip: true,
+      },
+      {
+        key: 'range',
+        type: 'slider',
+        label: 'Range',
+        min: 0,
+        max: 100,
+        step: 5,
+        multiple: true,
+        default: [25, 75],
+        tooltip: true,
+      },
     ],
   },
   {
@@ -790,14 +1177,50 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Color picker',
     description: 'Popover, inline, and swatch color editing modes.',
     fields: [
-      { key: 'accent', type: 'color-picker', label: 'Input + popover · HEX', display: 'popover', format: 'hex', default: '#111827', clearable: true },
-      { key: 'brand', type: 'color-picker', label: 'Inline · RGB', display: 'inline', format: 'rgb', default: 'rgb(124, 58, 237)' },
-      { key: 'swatch', type: 'color-picker', label: 'Swatch · HSL', display: 'swatch', format: 'hsl', default: 'hsl(199, 89%, 48%)', clearable: true },
+      {
+        key: 'accent',
+        type: 'color-picker',
+        label: 'Input + popover · HEX',
+        display: 'popover',
+        format: 'hex',
+        default: '#111827',
+        clearable: true,
+      },
+      {
+        key: 'brand',
+        type: 'color-picker',
+        label: 'Inline · RGB',
+        display: 'inline',
+        format: 'rgb',
+        default: 'rgb(124, 58, 237)',
+      },
+      {
+        key: 'swatch',
+        type: 'color-picker',
+        label: 'Swatch · HSL',
+        display: 'swatch',
+        format: 'hsl',
+        default: 'hsl(199, 89%, 48%)',
+        clearable: true,
+      },
     ],
     groups: [
-      { label: 'Anchored input', description: 'Popover focus stays in the text input and the panel aligns to its start edge.', before: 'accent' },
-      { label: 'Inline editor', description: 'Use the picker directly when persistent color editing is appropriate.', before: 'brand' },
-      { label: 'Compact swatch', description: 'A button-only trigger keeps the same format and size contract.', before: 'swatch' },
+      {
+        label: 'Anchored input',
+        description:
+          'Popover focus stays in the text input and the panel aligns to its start edge.',
+        before: 'accent',
+      },
+      {
+        label: 'Inline editor',
+        description: 'Use the picker directly when persistent color editing is appropriate.',
+        before: 'brand',
+      },
+      {
+        label: 'Compact swatch',
+        description: 'A button-only trigger keeps the same format and size contract.',
+        before: 'swatch',
+      },
     ],
   },
   {
@@ -805,14 +1228,43 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'One-time code',
     description: 'OTP pin sizing, mask behavior, and validation.',
     fields: [
-      { key: 'otp', type: 'one-time-code', label: 'Verification code', length: 6, otp: true, placeholder: '•', validation: required },
-      { key: 'masked', type: 'one-time-code', label: 'Masked PIN', length: 4, mask: true, inputType: 'number', placeholder: '•' },
+      {
+        key: 'otp',
+        type: 'one-time-code',
+        label: 'Verification code',
+        length: 6,
+        otp: true,
+        placeholder: '•',
+        validation: required,
+      },
+      {
+        key: 'masked',
+        type: 'one-time-code',
+        label: 'Masked PIN',
+        length: 4,
+        mask: true,
+        inputType: 'number',
+        placeholder: '•',
+      },
       { key: 'compact', type: 'one-time-code', label: 'Short code', length: 4, placeholder: '0' },
     ],
     groups: [
-      { label: 'OTP', description: 'Single-character placeholders fit the pin cells and preserve native one-time-code semantics.', before: 'otp' },
-      { label: 'Masked numeric PIN', description: 'Masking and numeric input behavior are independent authored props.', before: 'masked' },
-      { label: 'Length & placeholder', description: 'Cell count and placeholder remain schema-controlled.', before: 'compact' },
+      {
+        label: 'OTP',
+        description:
+          'Single-character placeholders fit the pin cells and preserve native one-time-code semantics.',
+        before: 'otp',
+      },
+      {
+        label: 'Masked numeric PIN',
+        description: 'Masking and numeric input behavior are independent authored props.',
+        before: 'masked',
+      },
+      {
+        label: 'Length & placeholder',
+        description: 'Cell count and placeholder remain schema-controlled.',
+        before: 'compact',
+      },
     ],
   },
   {
@@ -820,7 +1272,12 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Tags',
     description: 'Token input wrapping, deletion, keyboard behavior, and long-value overflow.',
     fields: [
-      { key: 'tags', type: 'tag', label: 'Tags', default: ['priority', 'customer-facing', 'needs-review'] },
+      {
+        key: 'tags',
+        type: 'tag',
+        label: 'Tags',
+        default: ['priority', 'customer-facing', 'needs-review'],
+      },
       { key: 'empty', type: 'tag', label: 'Empty tags', placeholder: 'Add a tag' },
     ],
   },
@@ -830,7 +1287,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Keyboard-accessible rating control, clear behavior, and custom scale.',
     fields: [
       { key: 'quality', type: 'rating', label: 'Quality', max: 5, default: 3, clearable: true },
-      { key: 'confidence', type: 'rating', label: 'Confidence', max: 10, default: 7, icon: 'i-lucide-circle' },
+      {
+        key: 'confidence',
+        type: 'rating',
+        label: 'Confidence',
+        max: 10,
+        default: 7,
+        icon: 'i-lucide-circle',
+      },
     ],
   },
   {
@@ -838,9 +1302,28 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Button',
     description: 'Stateless form actions with root size propagation and disabled state.',
     fields: [
-      { key: 'primary', type: 'button', label: 'Primary action', icon: 'i-lucide-sparkles', onClick: async () => {} },
-      { key: 'secondary', type: 'button', label: 'Secondary action', color: 'neutral', variant: 'outline', onClick: async () => {} },
-      { key: 'disabled', type: 'button', label: 'Disabled action', disabled: () => true, onClick: async () => {} },
+      {
+        key: 'primary',
+        type: 'button',
+        label: 'Primary action',
+        icon: 'i-lucide-sparkles',
+        onClick: async () => {},
+      },
+      {
+        key: 'secondary',
+        type: 'button',
+        label: 'Secondary action',
+        color: 'neutral',
+        variant: 'outline',
+        onClick: async () => {},
+      },
+      {
+        key: 'disabled',
+        type: 'button',
+        label: 'Disabled action',
+        disabled: () => true,
+        onClick: async () => {},
+      },
     ],
   },
   {
@@ -855,7 +1338,12 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         description: 'Children write at the current form level.',
         fields: [
           { key: 'headline', type: 'text', label: 'Headline', validation: required },
-          { key: 'status', type: 'select', label: 'Status', options: ['draft', 'review', 'published'] },
+          {
+            key: 'status',
+            type: 'select',
+            label: 'Status',
+            options: ['draft', 'review', 'published'],
+          },
         ],
       },
     ],

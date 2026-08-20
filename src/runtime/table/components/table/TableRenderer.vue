@@ -102,11 +102,7 @@ watch(tableEmpty, (isEmpty) => {
       :class="height ? 'h-full min-h-0' : undefined"
       :ui="{
         root: mergeDataListUiClass(
-          externalScroll
-            ? 'overflow-visible'
-            : height
-              ? 'h-full min-h-0 overflow-auto'
-              : undefined,
+          externalScroll ? 'overflow-visible' : height ? 'h-full min-h-0 overflow-auto' : undefined,
           undefined,
           ui?.root,
         ),

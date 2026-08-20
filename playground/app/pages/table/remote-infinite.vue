@@ -142,7 +142,8 @@ const table = useTable(schema)
                 <NutDataListResultCount />
               </div>
               <p class="mt-0.5 text-sm text-muted">
-                Real cursor pagination from Drizzle Resource. Existing rows stay visible while more load.
+                Real cursor pagination from Drizzle Resource. Existing rows stay visible while more
+                load.
               </p>
             </div>
 

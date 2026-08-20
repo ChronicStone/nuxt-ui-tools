@@ -1,8 +1,5 @@
 import type { QueryPrefetchRuntimeRoute } from '#ui-tools/query-prefetch/types/page'
-import type {
-  QueryPrefetchOption,
-  QueryPrefetchQueries,
-} from '#ui-tools/query-prefetch/types/plan'
+import type { QueryPrefetchOption, QueryPrefetchQueries } from '#ui-tools/query-prefetch/types/plan'
 import { defineQueryPrefetchPlan } from '#ui-tools/query-prefetch/utils/plan'
 
 import {
@@ -138,7 +135,10 @@ function resolveTableQueries(options: {
   const entries: Array<readonly [string, QueryPrefetchOption]> = [
     [
       'source',
-      withQueryDefaults(options.schema.source.query(options.request), QUERY_DEFAULTS.staleTime.data),
+      withQueryDefaults(
+        options.schema.source.query(options.request),
+        QUERY_DEFAULTS.staleTime.data,
+      ),
     ],
   ]
   const definitions = options.schema.filters?.ui ?? []
@@ -325,14 +325,18 @@ function withQueryDefaults<TQuery extends QueryPrefetchOption>(
 ): TQuery & Required<QueryWithDefaults> {
   return {
     ...query,
-    staleTime: isQueryWithDefaults(query) && isNumber(query.staleTime) ? query.staleTime : staleTime,
-    refetchOnWindowFocus: isQueryWithDefaults(query) && isBoolean(query.refetchOnWindowFocus)
-      ? query.refetchOnWindowFocus
-      : QUERY_DEFAULTS.refetchOnWindowFocus,
+    staleTime:
+      isQueryWithDefaults(query) && isNumber(query.staleTime) ? query.staleTime : staleTime,
+    refetchOnWindowFocus:
+      isQueryWithDefaults(query) && isBoolean(query.refetchOnWindowFocus)
+        ? query.refetchOnWindowFocus
+        : QUERY_DEFAULTS.refetchOnWindowFocus,
   }
 }
 
-function isQueryWithDefaults(value: QueryPrefetchOption): value is QueryPrefetchOption & QueryWithDefaults {
+function isQueryWithDefaults(
+  value: QueryPrefetchOption,
+): value is QueryPrefetchOption & QueryWithDefaults {
   return isObject(value)
 }
 

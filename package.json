@@ -9,9 +9,6 @@
   "workspaces": [
     "playground"
   ],
-  "overrides": {
-    "@tiptap/y-tiptap": "3.0.9"
-  },
   "files": [
     "dist"
   ],
@@ -184,5 +181,8 @@
     "vue": ">=3.5.41",
     "vue-draggable-plus": ">=0.6.1",
     "vue-router": ">=4.6.4"
+  },
+  "overrides": {
+    "@tiptap/y-tiptap": "3.0.9"
   }
 }

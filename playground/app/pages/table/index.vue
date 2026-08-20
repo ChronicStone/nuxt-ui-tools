@@ -40,7 +40,9 @@ const groups = computed(() => currentAbstraction.value?.navigation ?? [])
               :to="entry.path"
               class="group flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-elevated/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
-              <span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-border transition-colors group-hover:bg-primary" />
+              <span
+                class="mt-1.5 size-1.5 shrink-0 rounded-full bg-border transition-colors group-hover:bg-primary"
+              />
               <span class="min-w-0 flex-1">
                 <span class="block text-sm font-medium text-highlighted">{{ entry.label }}</span>
                 <span v-if="entry.description" class="mt-0.5 block text-xs leading-5 text-muted">

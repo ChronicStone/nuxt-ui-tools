@@ -139,7 +139,9 @@ function renderLabelExtra() {
             v-if="pending"
             name="i-lucide-loader-circle"
             aria-hidden="true"
-            :class="mergeFormUiClass('mt-2 size-4 shrink-0 animate-spin text-muted', fieldUi?.pending)"
+            :class="
+              mergeFormUiClass('mt-2 size-4 shrink-0 animate-spin text-muted', fieldUi?.pending)
+            "
           />
           <UButton
             v-if="dirty"

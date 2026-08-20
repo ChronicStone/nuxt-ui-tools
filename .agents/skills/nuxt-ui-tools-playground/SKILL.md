@@ -129,7 +129,7 @@ Before handoff, verify the following for each changed route:
 | fixed composition     | shell header plus one runtime viewport, no body scroll       | controls wrap or stack, runtime viewport remains usable |
 | scroll-contained page | exactly one internal scroll boundary                         | touch scrolling stays inside the intended region        |
 | canvas/fullscreen     | one deliberate canvas boundary                               | close/back action remains reachable                     |
-| navigation            | active tree branch, collapse control, keyboard focus          | drawer remains reachable; active hierarchy is preserved |
+| navigation            | active tree branch, collapse control, keyboard focus         | drawer remains reachable; active hierarchy is preserved |
 | color mode            | neutral contrast in light and dark                           | controls retain visible focus and disabled states       |
 
 Focused commands from the repository root are:

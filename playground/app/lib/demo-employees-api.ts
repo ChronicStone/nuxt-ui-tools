@@ -39,7 +39,11 @@ export interface DemoEmployeeRow extends GenericObject {
   employeeSkills: DemoEmployeeSkill[]
 }
 
-export type DemoEmployeesTableRequest = TableSourceRequestContext<DemoEmployeeRow, GenericObject, string>
+export type DemoEmployeesTableRequest = TableSourceRequestContext<
+  DemoEmployeeRow,
+  GenericObject,
+  string
+>
 
 export type DemoEmployeesTableResponse =
   | TableOffsetPageResult<DemoEmployeeRow, string>

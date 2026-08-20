@@ -3,8 +3,8 @@ import UBadge from '@nuxt/ui/components/Badge.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
-import type { SpreadsheetRecord, SpreadsheetValue } from '../../types'
 
+import type { SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import { formatSpreadsheetCell } from '../../utils/display'
 import { getSpreadsheetObjectEntries, isSpreadsheetRecord } from '../../utils/object'
 

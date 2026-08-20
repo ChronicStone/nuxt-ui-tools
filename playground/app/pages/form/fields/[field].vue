@@ -137,7 +137,12 @@ const next = computed(() =>
                 </div>
               </div>
               <div class="flex flex-wrap gap-2">
-                <UButton size="xs" color="neutral" variant="outline" @click="form.validate({ focus: true })">
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="outline"
+                  @click="form.validate({ focus: true })"
+                >
                   Validate + focus
                 </UButton>
                 <UButton size="xs" color="neutral" variant="ghost" @click="form.reset">
@@ -146,7 +151,10 @@ const next = computed(() =>
               </div>
             </section>
 
-            <section v-if="definition?.notes?.length" class="grid gap-1.5 border-t border-default pt-4">
+            <section
+              v-if="definition?.notes?.length"
+              class="grid gap-1.5 border-t border-default pt-4"
+            >
               <h2 class="text-xs font-semibold uppercase tracking-wide text-muted">Notes</h2>
               <p v-for="note in definition.notes" :key="note" class="text-xs leading-5 text-muted">
                 {{ note }}
@@ -154,18 +162,26 @@ const next = computed(() =>
             </section>
 
             <section class="grid gap-1.5 border-t border-default pt-4">
-              <h2 class="text-xs font-semibold uppercase tracking-wide text-muted">Internal state</h2>
-              <pre class="max-h-60 overflow-auto rounded-md bg-elevated p-3 text-[11px] leading-5 text-muted">{{ JSON.stringify(form.state.internal.value, null, 2) }}</pre>
+              <h2 class="text-xs font-semibold uppercase tracking-wide text-muted">
+                Internal state
+              </h2>
+              <pre
+                class="max-h-60 overflow-auto rounded-md bg-elevated p-3 text-[11px] leading-5 text-muted"
+                >{{ JSON.stringify(form.state.internal.value, null, 2) }}</pre>
             </section>
 
             <section class="grid gap-1.5 border-t border-default pt-4">
               <h2 class="text-xs font-semibold uppercase tracking-wide text-muted">Output</h2>
-              <pre class="max-h-60 overflow-auto rounded-md bg-elevated p-3 text-[11px] leading-5 text-muted">{{ JSON.stringify(form.state.output.value, null, 2) }}</pre>
+              <pre
+                class="max-h-60 overflow-auto rounded-md bg-elevated p-3 text-[11px] leading-5 text-muted"
+                >{{ JSON.stringify(form.state.output.value, null, 2) }}</pre>
             </section>
 
             <section class="grid gap-1.5 border-t border-default pt-4">
               <h2 class="text-xs font-semibold uppercase tracking-wide text-muted">Submitted</h2>
-              <pre class="max-h-48 overflow-auto rounded-md bg-elevated p-3 text-[11px] leading-5 text-muted">{{ JSON.stringify(submitted ?? {}, null, 2) }}</pre>
+              <pre
+                class="max-h-48 overflow-auto rounded-md bg-elevated p-3 text-[11px] leading-5 text-muted"
+                >{{ JSON.stringify(submitted ?? {}, null, 2) }}</pre>
             </section>
           </div>
         </aside>

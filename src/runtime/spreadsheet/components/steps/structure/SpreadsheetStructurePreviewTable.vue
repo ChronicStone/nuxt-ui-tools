@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/vue-virtual'
 import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import type { SpreadsheetValue } from '../../../types'
 
 const props = defineProps<{

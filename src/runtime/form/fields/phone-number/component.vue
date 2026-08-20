@@ -25,9 +25,9 @@ const props = defineProps<{
 const { locale, t } = useUiToolsLocale()
 const { form, controlProps, disabled, handleBlur, interactionOwnerClass, placeholder } =
   useFieldControl(
-  () => props.field,
-  () => props.path,
-)
+    () => props.field,
+    () => props.path,
+  )
 const formUi = useFormUi()
 const countryCode = ref<CountryCode | undefined>(undefined)
 const phoneValue = ref<string>('')

@@ -23,9 +23,7 @@ describe('date-family manual input', () => {
   it('masks and parses a single date without changing its canonical value', () => {
     expect(applyDateManualMask('20082026', 'dd/MM/yyyy', false)).toBe('20/08/2026')
     expect(parseDateManualValue('20/08/2026', 'dd/MM/yyyy', 'date')).toBe('2026-08-20')
-    expect(formatDateManualValue(['2026-08-20', ''], 'dd/MM/yyyy', 'date')).toBe(
-      '20/08/2026',
-    )
+    expect(formatDateManualValue(['2026-08-20', ''], 'dd/MM/yyyy', 'date')).toBe('20/08/2026')
   })
 
   it('parses date ranges from one manual input and preserves ordering', () => {
@@ -36,7 +34,9 @@ describe('date-family manual input', () => {
       '2026-08-20',
       '2026-08-25',
     ])
-    expect(parseDateManualValue('25/08/2026 – 20/08/2026', 'dd/MM/yyyy', 'daterange')).toBeUndefined()
+    expect(
+      parseDateManualValue('25/08/2026 – 20/08/2026', 'dd/MM/yyyy', 'daterange'),
+    ).toBeUndefined()
   })
 
   it('supports datetime, month, month-range, and year manual formats', () => {

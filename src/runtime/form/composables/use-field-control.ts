@@ -257,8 +257,7 @@ function mergeControlUi(...configs: readonly FormValue[]): FormControlUi {
   const merged: FormControlUi = {}
   for (const config of configs) {
     if (!isObject(config) || config === null || Array.isArray(config)) continue
-    for (const [slot, value] of Object.entries(config))
-      if (isString(value)) merged[slot] = value
+    for (const [slot, value] of Object.entries(config)) if (isString(value)) merged[slot] = value
   }
   return merged
 }

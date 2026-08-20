@@ -5,11 +5,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import {
-  defineTableSchema,
-  useTable,
-  type TableFilterOptionEntry,
-} from '#ui-tools/table'
+import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
 import DataList from '#ui-tools/table/components/DataList.vue'
 

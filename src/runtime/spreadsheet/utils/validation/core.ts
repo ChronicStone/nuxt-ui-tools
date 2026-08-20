@@ -1,6 +1,7 @@
 import { useUiToolsLocale } from '#ui-tools/i18n'
 import { isBoolean, isFunction } from '#ui-tools/shared/utils/predicate'
 
+import type { SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import type {
   CreateSpreadsheetRule,
   CreateSpreadsheetRuleReturn,
@@ -14,7 +15,6 @@ import type {
   SpreadsheetRuleExecutionResult,
   SpreadsheetValidatorResult,
 } from '../../types/validation'
-import type { SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import { isSpreadsheetRecord } from '../object'
 
 type SpreadsheetMessageResolver = (context: {
@@ -24,7 +24,9 @@ type SpreadsheetMessageResolver = (context: {
   params: SpreadsheetValue[]
 }) => string
 
-function isSpreadsheetMessageResolver(value: SpreadsheetValue): value is SpreadsheetMessageResolver {
+function isSpreadsheetMessageResolver(
+  value: SpreadsheetValue,
+): value is SpreadsheetMessageResolver {
   return isFunction(value)
 }
 

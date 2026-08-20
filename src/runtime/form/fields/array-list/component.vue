@@ -5,6 +5,7 @@ import USelect from '@nuxt/ui/components/Select.vue'
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
 
 import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
+import FormDirectionalTransition from '../../components/utils/FormDirectionalTransition.vue'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
@@ -22,7 +23,6 @@ import { buildInitialFormFieldsState } from '../../utils/state'
 import { resolveFormBoundaryText, resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 import type { FormArrayAction, FormArrayBaseAction } from './types'
-import FormDirectionalTransition from '../../components/utils/FormDirectionalTransition.vue'
 
 const props = defineProps<{
   field: FormArrayListField | FormArrayTabsField | FormArrayVariantField
@@ -56,9 +56,14 @@ const containerLayout = useFormContainerLayout({
 const title = computed(() => resolveFormText(props.field.label))
 const description = computed(() => resolveFormText(props.field.description))
 const addItemLabel = computed(() =>
-  resolveArrayActionLabel(props.field.actions?.addItem, resolveFormText(props.field.addItemLabel) ?? 'Add item'),
+  resolveArrayActionLabel(
+    props.field.actions?.addItem,
+    resolveFormText(props.field.addItemLabel) ?? 'Add item',
+  ),
 )
-const addItemIcon = computed(() => resolveArrayActionIcon(props.field.actions?.addItem, 'i-lucide-plus'))
+const addItemIcon = computed(() =>
+  resolveArrayActionIcon(props.field.actions?.addItem, 'i-lucide-plus'),
+)
 const emptyLabel = computed(() => resolveFormText(props.field.emptyLabel) ?? 'No items yet')
 const itemLabel = computed(() => resolveFormText(props.field.itemLabel) ?? 'Item')
 const canAdd = computed(() => resolveAction(props.field.actions?.addItem, -1))

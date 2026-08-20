@@ -43,11 +43,7 @@ export function omit<T extends GenericObject, K extends NestedPaths<T>>(
 
     const firstPart = parts[0]
     const lastPart = parts.at(-1)
-    if (
-      firstPart !== undefined &&
-      lastPart !== undefined &&
-      !Array.isArray(result[firstPart])
-    )
+    if (firstPart !== undefined && lastPart !== undefined && !Array.isArray(result[firstPart]))
       delete current[lastPart]
   }
 
@@ -93,8 +89,11 @@ export function pick<T extends GenericObject, K extends NestedPaths<T>>(
 type ObjectPropertyValue = GenericObject[string]
 
 export function getObjectProperty<T>(source: T, path: string): ObjectPropertyValue | undefined {
-  return path.split('.').reduce<ObjectPropertyValue | undefined>((current, segment) => {
-    if (!isObject(current)) return undefined
-    return current[segment]
-  }, isObject(source) ? source : undefined)
+  return path.split('.').reduce<ObjectPropertyValue | undefined>(
+    (current, segment) => {
+      if (!isObject(current)) return undefined
+      return current[segment]
+    },
+    isObject(source) ? source : undefined,
+  )
 }

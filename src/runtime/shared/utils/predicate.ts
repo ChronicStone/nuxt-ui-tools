@@ -191,9 +191,7 @@ export function hasProperties<T, K extends PropertyKey>(
 export function hasTypedProperty<T, K extends string, TValue>(
   value: T,
   key: K,
-  predicate: (
-    property: GenericObject[string],
-  ) => property is GenericObject[string] & TValue,
+  predicate: (property: GenericObject[string]) => property is GenericObject[string] & TValue,
 ): boolean {
   if (!isObject(value) || !(key in value)) return false
   return predicate(value[key])

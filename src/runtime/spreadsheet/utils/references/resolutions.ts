@@ -1,3 +1,5 @@
+import { isFunction, isString } from '#ui-tools/shared/utils/predicate'
+
 import type {
   SpreadsheetParsedRow,
   SpreadsheetReferenceQueryRequest,
@@ -8,7 +10,6 @@ import type {
   SpreadsheetRowIssue,
   SpreadsheetValue,
 } from '../../types'
-import { isFunction, isString } from '#ui-tools/shared/utils/predicate'
 import {
   cloneSpreadsheetRowData,
   deleteSpreadsheetValueAtPath,

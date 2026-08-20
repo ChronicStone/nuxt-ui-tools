@@ -79,7 +79,9 @@ const groups = [
           >
             <span class="text-sm font-medium text-highlighted">{{ entry.label }}</span>
             <span class="min-w-0 text-xs leading-5 text-muted">{{ entry.description }}</span>
-            <span class="inline-flex items-center gap-1 text-xs text-muted group-hover:text-highlighted">
+            <span
+              class="inline-flex items-center gap-1 text-xs text-muted group-hover:text-highlighted"
+            >
               {{ entry.id }}
               <UIcon name="i-lucide-arrow-right" class="size-3.5" />
             </span>

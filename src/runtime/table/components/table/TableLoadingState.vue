@@ -19,7 +19,9 @@ const dataListUi = useDataListUi()
 const rootRef = useTemplateRef<HTMLDivElement>('root')
 const { height } = useElementSize(rootRef)
 const tableSize = computed(() =>
-  resolveDataListTableSize(props.size ?? dataListUi.ui.value.table?.size ?? dataListUi.controlSize.value),
+  resolveDataListTableSize(
+    props.size ?? dataListUi.ui.value.table?.size ?? dataListUi.controlSize.value,
+  ),
 )
 
 const skeletonRows = computed(() => {
@@ -113,10 +115,7 @@ function resolveCssColumnSize(size: number | string) {
           column.align === 'end' ? 'justify-end' : 'justify-start',
         ]"
       >
-        <USkeleton
-          v-if="column.kind === 'checkbox'"
-          class="size-4 rounded-md"
-        />
+        <USkeleton v-if="column.kind === 'checkbox'" class="size-4 rounded-md" />
         <USkeleton
           v-else
           class="h-3.5 max-w-full rounded-full"

@@ -153,7 +153,13 @@ watch(
             <UIcon name="i-lucide-cloud-alert" class="size-4" />
           </span>
           <div
-            :class="mergeDataListUiClass(`min-w-0 flex-1 ${geometry.text}`, rootUi?.errorCopy, ui?.errorCopy)"
+            :class="
+              mergeDataListUiClass(
+                `min-w-0 flex-1 ${geometry.text}`,
+                rootUi?.errorCopy,
+                ui?.errorCopy,
+              )
+            "
           >
             <div
               :class="

@@ -1,9 +1,6 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { NullableValue } from '../../types/field-output-utils'
-import type {
-  FormDateFamilyCalendarOptions,
-  FormDateManualInput,
-} from '../date-family/types'
+import type { FormDateFamilyCalendarOptions, FormDateManualInput } from '../date-family/types'
 
 export type { FormDateFamilyCalendarOptions as FormDateCalendarOptions } from '../date-family/types'
 

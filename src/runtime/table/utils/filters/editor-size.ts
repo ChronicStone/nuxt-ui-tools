@@ -3,7 +3,8 @@ import type { DataListControlSize } from '../../types'
 const filterEditorSizeClasses = {
   xs: {
     editor: 'w-[min(13rem,calc(100vw-1rem))] min-w-44 max-w-52',
-    wideEditor: 'w-[min(30rem,calc(100vw-1rem))] min-w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
+    wideEditor:
+      'w-[min(30rem,calc(100vw-1rem))] min-w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
     searchHeader: 'p-1',
     scrollArea: 'p-1',
     option: 'gap-1.5 px-1.5 py-1 text-xs',
@@ -16,7 +17,8 @@ const filterEditorSizeClasses = {
   },
   sm: {
     editor: 'w-[min(15rem,calc(100vw-1rem))] min-w-48 max-w-60',
-    wideEditor: 'w-[min(34rem,calc(100vw-1rem))] min-w-[min(19rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
+    wideEditor:
+      'w-[min(34rem,calc(100vw-1rem))] min-w-[min(19rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
     searchHeader: 'p-1.5',
     scrollArea: 'p-1',
     option: 'gap-2 px-2 py-1.5 text-xs',
@@ -29,7 +31,8 @@ const filterEditorSizeClasses = {
   },
   md: {
     editor: 'w-[min(17rem,calc(100vw-1rem))] min-w-52 max-w-68',
-    wideEditor: 'w-[min(38rem,calc(100vw-1rem))] min-w-[min(20rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
+    wideEditor:
+      'w-[min(38rem,calc(100vw-1rem))] min-w-[min(20rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
     searchHeader: 'p-2',
     scrollArea: 'p-2',
     option: 'gap-3 px-3 py-2 text-sm',
@@ -42,7 +45,8 @@ const filterEditorSizeClasses = {
   },
   lg: {
     editor: 'w-[min(19rem,calc(100vw-1rem))] min-w-56 max-w-76',
-    wideEditor: 'w-[min(42rem,calc(100vw-1rem))] min-w-[min(21rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
+    wideEditor:
+      'w-[min(42rem,calc(100vw-1rem))] min-w-[min(21rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
     searchHeader: 'p-2.5',
     scrollArea: 'p-2.5',
     option: 'gap-3 px-3.5 py-2.5 text-sm',
@@ -55,7 +59,8 @@ const filterEditorSizeClasses = {
   },
   xl: {
     editor: 'w-[min(21rem,calc(100vw-1rem))] min-w-60 max-w-84',
-    wideEditor: 'w-[min(46rem,calc(100vw-1rem))] min-w-[min(22rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
+    wideEditor:
+      'w-[min(46rem,calc(100vw-1rem))] min-w-[min(22rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
     searchHeader: 'p-3',
     scrollArea: 'p-3',
     option: 'gap-3.5 px-4 py-3 text-base',

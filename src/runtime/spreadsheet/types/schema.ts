@@ -3,8 +3,8 @@ import type { LazyTextValue, NestedPaths } from '#ui-tools/shared/types/utils'
 import type { SpreadsheetColumnsDefinition, SpreadsheetResolvedColumns } from './columns'
 import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
 import type { ExtractSpreadsheetValidationRow, SpreadsheetRowData } from './inference'
-import type { SpreadsheetFieldRules, SpreadsheetRuleBuilder } from './validation'
 import type { SpreadsheetValue } from './shared'
+import type { SpreadsheetFieldRules, SpreadsheetRuleBuilder } from './validation'
 
 export interface SpreadsheetFileDefinition {
   accept?: readonly string[]

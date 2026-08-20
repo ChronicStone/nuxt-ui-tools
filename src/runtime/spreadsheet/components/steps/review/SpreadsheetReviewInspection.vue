@@ -37,7 +37,10 @@ const props = defineProps<{
   }
   getIssueValueTone: (issue: SpreadsheetRowIssue) => string
   getIssueValue: (rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) => string
-  getIssueRawValue: (rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) => SpreadsheetValue | undefined
+  getIssueRawValue: (
+    rowData: SpreadsheetRecord,
+    issue: SpreadsheetRowIssue,
+  ) => SpreadsheetValue | undefined
   getRelatedIssueCount: (issue: SpreadsheetRowIssue) => number
   isDiscarded: (index: number) => boolean
   isManuallyDiscarded: (index: number) => boolean

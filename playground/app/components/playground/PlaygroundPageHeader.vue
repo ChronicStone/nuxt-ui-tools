@@ -18,9 +18,7 @@ const parentLabel = computed(() => {
   return parent?.label ?? currentAbstraction.value.label
 })
 const showTableSize = computed(
-  () =>
-    currentAbstraction.value?.id === 'table' &&
-    currentPage.value.mode !== 'document',
+  () => currentAbstraction.value?.id === 'table' && currentPage.value.mode !== 'document',
 )
 
 async function toggleLocale() {

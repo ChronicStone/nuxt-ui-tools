@@ -118,11 +118,7 @@ function activateTreeEntry(entry: TreeEntry) {
       <span
         v-else
         :class="
-          mergeDataListUiClass(
-            `${sizeClasses.optionIcon} shrink-0`,
-            undefined,
-            ui?.optionSpacer,
-          )
+          mergeDataListUiClass(`${sizeClasses.optionIcon} shrink-0`, undefined, ui?.optionSpacer)
         "
       />
 

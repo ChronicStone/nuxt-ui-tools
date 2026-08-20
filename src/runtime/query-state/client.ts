@@ -8,6 +8,7 @@
  * - Pluggable router adapter (vue-router, custom, or manual)
  */
 import type { Router, LocationQuery } from 'vue-router'
+
 import { isString } from '#ui-tools/shared/utils/predicate'
 
 // ---------------------------------------------------------------------------
@@ -214,7 +215,7 @@ export class QueryStateClient {
         routeValue == null
           ? null
           : Array.isArray(routeValue)
-            ? routeValue[0] ?? null
+            ? (routeValue[0] ?? null)
             : isString(routeValue)
               ? routeValue
               : null

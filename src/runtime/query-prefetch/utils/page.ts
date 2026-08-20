@@ -1,5 +1,7 @@
 import type { QueryClient } from '@tanstack/vue-query'
 
+import { hasProperty, isFunction, isObject } from '#ui-tools/shared/utils/predicate'
+
 import type {
   QueryPrefetchDefinition,
   QueryPrefetchOptions,
@@ -9,7 +11,6 @@ import type {
 } from '../types/page'
 import type { QueryPrefetchEntry, QueryPrefetchOption } from '../types/plan'
 import type { QueryPrefetchContext } from '../types/plan'
-import { hasProperty, isFunction, isObject } from '#ui-tools/shared/utils/predicate'
 import { executeQueryPrefetchPlan, isQueryPrefetchPlan } from './plan'
 
 /**
@@ -97,7 +98,9 @@ function isQueryPrefetchEntry(value: QueryPrefetchOptions): value is QueryPrefet
 
 type QueryPrefetchSelector = (data: QueryPrefetchContext[string]) => QueryPrefetchContext[string]
 
-function isQueryPrefetchSelector(value: QueryPrefetchContext[string]): value is QueryPrefetchSelector {
+function isQueryPrefetchSelector(
+  value: QueryPrefetchContext[string],
+): value is QueryPrefetchSelector {
   return isFunction(value)
 }
 

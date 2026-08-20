@@ -162,9 +162,7 @@ function resolveFlag(options: {
   return options.value ?? false
 }
 
-function isRowActionResolver(
-  value: TableSchemaView['rowActions'],
-): value is TableRowActionFactory {
+function isRowActionResolver(value: TableSchemaView['rowActions']): value is TableRowActionFactory {
   return isFunction(value)
 }
 

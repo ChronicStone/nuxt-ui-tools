@@ -11,21 +11,18 @@ import type {
   SpreadsheetRecord,
   SpreadsheetValue,
 } from '../types'
-import { isSpreadsheetRecord } from '../utils/object'
 import {
   resolveSpreadsheetColumns,
   resolveSpreadsheetReferences,
   createSpreadsheetDynamicBuilder,
 } from '../utils/builders'
+import { isSpreadsheetRecord } from '../utils/object'
 
 function isSpreadsheetColumnGroupDefinition(
   value: SpreadsheetValue,
 ): value is SpreadsheetColumnGroupDefinition<string, readonly unknown[]> {
   return (
-    isSpreadsheetRecord(value) &&
-    'kind' in value &&
-    value.kind === 'group' &&
-    'columns' in value
+    isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'group' && 'columns' in value
   )
 }
 
@@ -50,7 +47,9 @@ function isSpreadsheetResolvableColumnDefinition(
   )
 }
 
-function isSpreadsheetReferenceDefinition(value: SpreadsheetValue): value is SpreadsheetReferenceDefinition {
+function isSpreadsheetReferenceDefinition(
+  value: SpreadsheetValue,
+): value is SpreadsheetReferenceDefinition {
   return (
     isSpreadsheetRecord(value) &&
     'kind' in value &&

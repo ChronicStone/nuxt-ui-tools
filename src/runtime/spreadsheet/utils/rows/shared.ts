@@ -72,11 +72,15 @@ export function applySpreadsheetModifiers(
   }, nextValue)
 }
 
-export function isSpreadsheetStaticColumn(value: SpreadsheetValue): value is SpreadsheetStaticColumn {
+export function isSpreadsheetStaticColumn(
+  value: SpreadsheetValue,
+): value is SpreadsheetStaticColumn {
   return isSpreadsheetRecord(value) && 'kind' in value && value.kind !== 'group' && 'key' in value
 }
 
-export function isSpreadsheetColumnGroup(value: SpreadsheetValue): value is SpreadsheetStaticColumnGroup {
+export function isSpreadsheetColumnGroup(
+  value: SpreadsheetValue,
+): value is SpreadsheetStaticColumnGroup {
   return (
     isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'group' && 'columns' in value
   )

@@ -428,9 +428,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
             <div
               class="grid gap-0"
               :class="
-                filterUi.range.presetsPlacement === 'side'
-                  ? rangePresetColumnClass
-                  : 'grid-cols-1'
+                filterUi.range.presetsPlacement === 'side' ? rangePresetColumnClass : 'grid-cols-1'
               "
             >
               <div
@@ -474,7 +472,11 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               <div
                 v-if="filterUi.range.display !== 'inputs'"
                 :class="
-                  mergeDataListUiClass(sizeClasses.searchHeader, undefined, dataListFilterUi?.calendar)
+                  mergeDataListUiClass(
+                    sizeClasses.searchHeader,
+                    undefined,
+                    dataListFilterUi?.calendar,
+                  )
                 "
               >
                 <UCalendar

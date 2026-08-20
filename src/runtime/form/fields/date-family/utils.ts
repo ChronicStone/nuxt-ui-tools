@@ -24,9 +24,7 @@ export interface FormTimeRangeValue {
 
 type DateFormatToken = 'yyyy' | 'MM' | 'dd' | 'HH' | 'mm'
 
-type DateFormatPart =
-  | { type: 'token'; value: DateFormatToken }
-  | { type: 'literal'; value: string }
+type DateFormatPart = { type: 'token'; value: DateFormatToken } | { type: 'literal'; value: string }
 
 interface DateParts {
   year: number
@@ -367,7 +365,14 @@ function validYear(year: number) {
 }
 
 function isValidTime(hour: number, minute: number) {
-  return Number.isInteger(hour) && Number.isInteger(minute) && hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59
+  return (
+    Number.isInteger(hour) &&
+    Number.isInteger(minute) &&
+    hour >= 0 &&
+    hour <= 23 &&
+    minute >= 0 &&
+    minute <= 59
+  )
 }
 
 function pad(value: number) {

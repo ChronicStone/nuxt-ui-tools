@@ -84,7 +84,10 @@ export function getOrderedBreakpointKeys(viewport: ViewportLike): string[] {
     .map(([breakpoint]) => breakpoint)
 }
 
-function transformResponsiveValue(value: string, transform?: ResponsiveTransform): ResponsiveRuntimeValue {
+function transformResponsiveValue(
+  value: string,
+  transform?: ResponsiveTransform,
+): ResponsiveRuntimeValue {
   if (transform === undefined || transform === 'string') return value
   if (isResponsiveTransformer(transform)) return transform(value)
   if (transform === 'boolean') return value === 'true'

@@ -249,10 +249,7 @@ function clearFilter() {
                 <span class="min-w-0 flex-1 truncate">
                   {{ item.label }}
                 </span>
-                <USkeleton
-                  v-if="optionSource.isCountLoading.value"
-                  class="h-3.5 w-6 shrink-0"
-                />
+                <USkeleton v-if="optionSource.isCountLoading.value" class="h-3.5 w-6 shrink-0" />
                 <span
                   v-else-if="item.count != null"
                   :class="

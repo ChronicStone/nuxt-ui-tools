@@ -2,7 +2,8 @@
 const examples = [
   {
     label: 'Field labs',
-    description: 'Dedicated visual, sizing, interaction, and validation pages for every field kind.',
+    description:
+      'Dedicated visual, sizing, interaction, and validation pages for every field kind.',
     to: '/form/fields',
   },
   {

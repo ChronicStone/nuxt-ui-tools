@@ -1,4 +1,5 @@
 import type { QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+
 import type { GenericObject } from '#ui-tools/shared/types/utils'
 
 /** Runtime values decoded from spreadsheet cells, rows, and external references. */

@@ -75,7 +75,9 @@ function clearSelection() {
             <span :class="['px-1 font-medium text-highlighted', geometry.text]" role="status">
               {{ summary }}
             </span>
-            <div :class="['flex min-w-0 flex-wrap items-center justify-center', geometry.toolbarGap]">
+            <div
+              :class="['flex min-w-0 flex-wrap items-center justify-center', geometry.toolbarGap]"
+            >
               <template v-for="action in actions" :key="action.definition.key">
                 <slot name="action" v-bind="action">
                   <UButton

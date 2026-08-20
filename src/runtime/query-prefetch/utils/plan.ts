@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/vue-query'
-import { hasProperty, isFunction } from '#ui-tools/shared/utils/predicate'
+
 import type { MaybePromise } from '#ui-tools/shared/types/utils'
+import { hasProperty, isFunction } from '#ui-tools/shared/utils/predicate'
 
 import type {
   QueryPrefetchContext,
@@ -12,9 +13,7 @@ import type {
 } from '../types/plan'
 
 type QueryPrefetchCandidate = QueryPrefetchEntry | readonly QueryPrefetchEntry[]
-type QueryPrefetchResolver<Context, Queries> = (
-  context: Readonly<Context>,
-) => MaybePromise<Queries>
+type QueryPrefetchResolver<Context, Queries> = (context: Readonly<Context>) => MaybePromise<Queries>
 
 const queryPrefetchStages = new WeakMap<QueryPrefetchPlan, readonly QueryPrefetchStage[]>()
 
@@ -28,9 +27,7 @@ function createQueryPrefetchPlan<Context extends object>(
     ) {
       const stage: QueryPrefetchStage = {
         resolve(context: Readonly<Context>) {
-          return isQueryPrefetchResolver<Context, Queries>(queries)
-            ? queries(context)
-            : queries
+          return isQueryPrefetchResolver<Context, Queries>(queries) ? queries(context) : queries
         },
       }
       return createQueryPrefetchPlan([...stages, stage])
@@ -113,7 +110,9 @@ function executeQuery(query: QueryPrefetchOption, queryClient: QueryClient) {
 
 type QueryPrefetchSelector = (data: QueryPrefetchContext[string]) => QueryPrefetchContext[string]
 
-function isQueryPrefetchSelector(value: QueryPrefetchContext[string]): value is QueryPrefetchSelector {
+function isQueryPrefetchSelector(
+  value: QueryPrefetchContext[string],
+): value is QueryPrefetchSelector {
   return isFunction(value)
 }
 

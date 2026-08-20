@@ -20,10 +20,7 @@ const modeClasses = {
 </script>
 
 <template>
-  <div
-    :class="[modeClasses[props.mode], props.class]"
-    :data-playground-content-mode="props.mode"
-  >
+  <div :class="[modeClasses[props.mode], props.class]" :data-playground-content-mode="props.mode">
     <slot />
   </div>
 </template>

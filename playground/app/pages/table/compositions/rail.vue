@@ -306,7 +306,13 @@ const { tableSize } = usePlaygroundShell()
             <div class="grid min-h-64 place-items-center gap-3 text-center">
               <UIcon name="i-lucide-cloud-alert" class="mx-auto size-7 text-danger" />
               <p class="text-sm text-muted">Knowledge documents could not be loaded.</p>
-              <UButton :size="tableSize" color="neutral" variant="outline" label="Retry" @click="retry" />
+              <UButton
+                :size="tableSize"
+                color="neutral"
+                variant="outline"
+                label="Retry"
+                @click="retry"
+              />
             </div>
           </template>
           <template #empty>

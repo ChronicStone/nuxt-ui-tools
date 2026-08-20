@@ -28,10 +28,7 @@ const showTableSize = computed(
       </main>
     </div>
 
-    <div
-      v-if="mobileNavigationOpen"
-      class="fixed inset-x-0 bottom-0 top-14 z-50 flex lg:hidden"
-    >
+    <div v-if="mobileNavigationOpen" class="fixed inset-x-0 bottom-0 top-14 z-50 flex lg:hidden">
       <button
         type="button"
         class="absolute inset-0 bg-default/70 backdrop-blur-[2px]"

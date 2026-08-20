@@ -1,12 +1,11 @@
-import { isSpreadsheetRecord } from './object'
 import { isBoolean, isFunction, isNumber, isString } from '#ui-tools/shared/utils/predicate'
+
 import type { SpreadsheetValue } from '../types'
+import { isSpreadsheetRecord } from './object'
 
 export type SpreadsheetOptionEntry = { label: string; value: SpreadsheetValue }
 
-type SpreadsheetOptionResolver<TParams> = (
-  params: TParams,
-) => readonly SpreadsheetValue[]
+type SpreadsheetOptionResolver<TParams> = (params: TParams) => readonly SpreadsheetValue[]
 
 function isSpreadsheetOptionResolver<TParams>(
   value: SpreadsheetValue,
@@ -27,7 +26,7 @@ export function isSpreadsheetOptionEntry<T>(value: T): value is T & SpreadsheetO
 export function resolveSpreadsheetOptionEntries<TParams>(
   source: SpreadsheetValue,
   params: TParams,
-) : readonly SpreadsheetValue[] {
+): readonly SpreadsheetValue[] {
   if (Array.isArray(source)) return source
   if (isSpreadsheetOptionResolver<TParams>(source)) return source(params)
 

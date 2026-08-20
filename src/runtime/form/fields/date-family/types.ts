@@ -28,9 +28,7 @@ export interface FormDateFamilyOptions {
 }
 
 export interface FormDateTimeField<TContext = {}, TDeps = {}>
-  extends
-    FormStatefulFieldBase<'datetime', string | null, TContext, TDeps>,
-    FormDateFamilyOptions {
+  extends FormStatefulFieldBase<'datetime', string | null, TContext, TDeps>, FormDateFamilyOptions {
   minuteStep?: number
 }
 

@@ -80,7 +80,11 @@ function formatCount(value: number) {
         :options="internals.pagination.pageSizeOptions.value"
         :set-page-size="internals.pagination.setPageSize"
       >
-        <div :class="mergeDataListUiClass(`flex items-center ${geometry.toolbarGap}`, undefined, ui.pageSize)">
+        <div
+          :class="
+            mergeDataListUiClass(`flex items-center ${geometry.toolbarGap}`, undefined, ui.pageSize)
+          "
+        >
           <span>{{ t('table.footer.rowsPerPage') }}</span>
 
           <UDropdownMenu
@@ -102,7 +106,11 @@ function formatCount(value: number) {
         </div>
       </slot>
 
-      <div :class="mergeDataListUiClass(`flex items-center ${geometry.toolbarGap}`, undefined, ui.pages)">
+      <div
+        :class="
+          mergeDataListUiClass(`flex items-center ${geometry.toolbarGap}`, undefined, ui.pages)
+        "
+      >
         <slot
           name="page-count"
           :current="internals.pagination.currentPage.value"
@@ -123,7 +131,15 @@ function formatCount(value: number) {
           :next="internals.pagination.next"
           :previous="internals.pagination.previous"
         >
-          <div :class="mergeDataListUiClass(`flex items-center ${geometry.toolbarGap}`, undefined, ui.controls)">
+          <div
+            :class="
+              mergeDataListUiClass(
+                `flex items-center ${geometry.toolbarGap}`,
+                undefined,
+                ui.controls,
+              )
+            "
+          >
             <UButton
               color="neutral"
               variant="outline"

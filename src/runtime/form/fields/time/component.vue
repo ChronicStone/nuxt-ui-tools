@@ -31,7 +31,9 @@ const model = computed<Time | undefined>({
   },
   set: (value) => form.setValue(props.path, value ? serializeTime(value) : null),
 })
-const minuteStep = computed<number>(() => resolveMinuteStep(props.field.minuteStep, props.field.step))
+const minuteStep = computed<number>(() =>
+  resolveMinuteStep(props.field.minuteStep, props.field.step),
+)
 const timeStep = computed<{ minute: number }>(() => ({ minute: minuteStep.value }))
 const minValue = computed<Time | undefined>(() => parseTime(props.field.min))
 const maxValue = computed<Time | undefined>(() => parseTime(props.field.max))
@@ -49,7 +51,10 @@ function clearTime() {
   model.value = undefined
 }
 
-function resolveMinuteStep(configuredMinuteStep: number | undefined, secondStep: number | undefined) {
+function resolveMinuteStep(
+  configuredMinuteStep: number | undefined,
+  secondStep: number | undefined,
+) {
   if (isNumber(configuredMinuteStep) && configuredMinuteStep > 0)
     return Math.min(60, Math.max(1, Math.round(configuredMinuteStep)))
   if (isNumber(secondStep) && secondStep >= 60)

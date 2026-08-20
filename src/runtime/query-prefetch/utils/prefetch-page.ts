@@ -1,6 +1,7 @@
 import { useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { preloadRouteComponents, useNuxtApp, useRouter } from 'nuxt/app'
 import type { RouteLocationRaw } from 'vue-router'
+
 import { isString } from '#ui-tools/shared/utils/predicate'
 
 import { executeQueryPrefetch } from './page'

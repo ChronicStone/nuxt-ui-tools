@@ -1,3 +1,5 @@
+import { isFunction, isObject } from '#ui-tools/shared/utils/predicate'
+
 import type {
   InferSpreadsheetOptionValue,
   SpreadsheetColumnBaseOptions,
@@ -19,7 +21,6 @@ import type {
   SpreadsheetModifier,
   SpreadsheetOptionItem,
 } from '../../types'
-import { isFunction, isObject } from '#ui-tools/shared/utils/predicate'
 import type { SpreadsheetValue } from '../../types'
 import { resolveSpreadsheetRules } from '../validation'
 

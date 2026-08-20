@@ -192,11 +192,9 @@ export type DeepRemoveIndexSignature<T> = T extends object
   ? T extends Array<infer U>
     ? Array<DeepRemoveIndexSignature<U>>
     : {
-        [K in keyof T as string extends K
-          ? never
-          : number extends K
-            ? never
-            : K]: DeepRemoveIndexSignature<T[K]>
+        [
+          K in keyof T as string extends K ? never : number extends K ? never : K
+        ]: DeepRemoveIndexSignature<T[K]>
       }
   : T
 

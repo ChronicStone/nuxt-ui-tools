@@ -35,11 +35,7 @@ import {
   timeRangeFromCanonical,
   timeValueFromCanonical,
 } from './utils'
-import type {
-  FormCalendarRangeValue,
-  FormDateFamilyType,
-  FormTimeRangeValue,
-} from './utils'
+import type { FormCalendarRangeValue, FormDateFamilyType, FormTimeRangeValue } from './utils'
 
 interface ResolvedManualInput extends FormDateManualInputOptions {
   enabled: boolean
@@ -102,9 +98,7 @@ const manualFormat = computed(
 const placeholder = computed(() => {
   const explicitlyConfigured = Object.getOwnPropertyDescriptor(props.field, 'placeholder')?.value
   if (explicitlyConfigured !== undefined) return fieldPlaceholder.value
-  return (
-    manualInput.value.placeholder ?? dateManualPlaceholder(manualFormat.value, isRange.value)
-  )
+  return manualInput.value.placeholder ?? dateManualPlaceholder(manualFormat.value, isRange.value)
 })
 const previewValue = computed(() => {
   if (!isRange.value) return formatPreviewPart(selectedValues.value[0])
@@ -244,13 +238,7 @@ function updateSingleTime(next: TimeInputModel) {
 }
 
 function updateRangeTime(next: TimeRangeInputModel) {
-  if (
-    !next?.start ||
-    !next.end ||
-    !selectedValues.value[0] ||
-    !selectedValues.value[1]
-  )
-    return
+  if (!next?.start || !next.end || !selectedValues.value[0] || !selectedValues.value[1]) return
   setStoredRange(
     serializeTimeValue(selectedValues.value[0], next.start),
     serializeTimeValue(selectedValues.value[1], next.end),
@@ -362,8 +350,6 @@ function isCalendarRangeValue(
 ): candidate is FormCalendarRangeValue {
   return 'start' in candidate || 'end' in candidate
 }
-
-
 </script>
 
 <template>

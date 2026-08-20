@@ -102,7 +102,9 @@ function handleSelect(options: {
       />
       <FilterOptionMultipleList
         v-else
-        :sections="props.sections ?? [{ key: 'default', entries: props.state.displayEntries.value }]"
+        :sections="
+          props.sections ?? [{ key: 'default', entries: props.state.displayEntries.value }]
+        "
         :show-counts="props.state.filterUi.value.row.showCounts"
         :count-loading="props.state.optionSource.isCountLoading.value"
         :selected-icon="props.state.filterUi.value.row.selectedIcon"

@@ -11,7 +11,10 @@ export function findSchemaColumn(options: {
   return (options.schema.table?.columns ?? []).find((column) => column.key === options.columnId)
 }
 
-export function createRuntimeColumns(options: { schema: TableSchemaView; context: TableRuntimeRecord }) {
+export function createRuntimeColumns(options: {
+  schema: TableSchemaView
+  context: TableRuntimeRecord
+}) {
   return (options.schema.table?.columns ?? [])
     .filter((column) => (column.condition?.() ?? true) && (column.enabled ?? true))
     .map((column): TableRuntimeColumn => ({

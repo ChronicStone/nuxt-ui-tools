@@ -69,10 +69,7 @@ const operatorHints = {
         @click="emit('select', item.value)"
       >
         <span class="flex w-3 shrink-0 items-center justify-start">
-          <span
-            v-if="item.value === selected"
-            class="size-1.5 rounded-full bg-primary"
-          />
+          <span v-if="item.value === selected" class="size-1.5 rounded-full bg-primary" />
         </span>
         <span
           :class="

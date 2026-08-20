@@ -28,9 +28,9 @@ const {
   placeholder,
   validationPending,
 } = useFieldControl(
-    () => props.field,
-    () => props.path,
-  )
+  () => props.field,
+  () => props.path,
+)
 const searchTerm = ref<string>('')
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
   get: () => {

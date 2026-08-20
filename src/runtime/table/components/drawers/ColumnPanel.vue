@@ -412,7 +412,9 @@ function toggle() {
           "
         >
           <div
-            :class="mergeDataListUiClass(`${geometry.text} text-muted`, undefined, ui.footerSummary)"
+            :class="
+              mergeDataListUiClass(`${geometry.text} text-muted`, undefined, ui.footerSummary)
+            "
           >
             {{ t('table.controls.configurableColumns', { count: configurableColumns.length }) }}
           </div>

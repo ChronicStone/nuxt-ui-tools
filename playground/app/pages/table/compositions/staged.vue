@@ -150,7 +150,9 @@ const { tableSize } = usePlaygroundShell()
       <header class="border-b border-default px-4 py-4 sm:px-6">
         <div class="mx-auto flex w-full max-w-[92rem] flex-wrap items-center justify-between gap-4">
           <div class="flex min-w-0 items-center gap-4">
-            <div class="grid size-10 shrink-0 place-items-center rounded-md bg-inverted text-inverted">
+            <div
+              class="grid size-10 shrink-0 place-items-center rounded-md bg-inverted text-inverted"
+            >
               <UIcon name="i-lucide-receipt-text" class="size-5" />
             </div>
             <div class="min-w-0">
@@ -161,12 +163,7 @@ const { tableSize } = usePlaygroundShell()
               <p class="truncate text-sm text-muted">Finance workspace · August 2026</p>
             </div>
           </div>
-          <UButton
-            :size="tableSize"
-            color="primary"
-            icon="i-lucide-plus"
-            label="New invoice"
-          />
+          <UButton :size="tableSize" color="primary" icon="i-lucide-plus" label="New invoice" />
         </div>
       </header>
 
@@ -185,7 +182,10 @@ const { tableSize } = usePlaygroundShell()
 
       <main class="mx-auto flex min-h-0 w-full max-w-[92rem] flex-1 flex-col px-4 py-4 sm:px-6">
         <div class="mb-3 flex items-center justify-between gap-3 text-sm text-muted">
-          <span>Filter tags apply immediately; the Filters drawer stages panel fields until Apply.</span>
+          <span
+            >Filter tags apply immediately; the Filters drawer stages panel fields until
+            Apply.</span
+          >
           <NutDataListClearFilters label="Reset" />
         </div>
         <NutDataListContent fit="fill" surface="contained" class="min-h-0 flex-1" />

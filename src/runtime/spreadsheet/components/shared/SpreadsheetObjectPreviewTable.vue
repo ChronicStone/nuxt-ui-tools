@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UTable from '@nuxt/ui/components/Table.vue'
 import { computed } from 'vue'
+
 import type { SpreadsheetRecord } from '../../types'
 import { isSpreadsheetRecord } from '../../utils/object'
 

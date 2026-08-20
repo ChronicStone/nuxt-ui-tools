@@ -737,7 +737,7 @@ function isRemoteFacetQuery<
 >(
   value: TableRemoteFacetSource<TRow, TContext, TKey> | undefined,
 ): value is (
-  context: TableFacetsContext<TRow, TContext, TKey>
+  context: TableFacetsContext<TRow, TContext, TKey>,
 ) => TableQueryDefinition<TableFacetExecutionResult<TKey>> {
   return isFunction(value)
 }

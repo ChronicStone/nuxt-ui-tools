@@ -9,8 +9,8 @@ import type {
   SpreadsheetResolutionQueryResolver,
   SpreadsheetResolvedSelectionValue,
 } from './resolution'
-import type { SpreadsheetFieldRulesInput } from './validation'
 import type { SpreadsheetRecord } from './shared'
+import type { SpreadsheetFieldRulesInput } from './validation'
 
 type SpreadsheetReferenceSelectBaseConfig<TOption extends SpreadsheetOptionItem> = {
   source: string
@@ -20,11 +20,7 @@ type SpreadsheetReferenceSelectBaseConfig<TOption extends SpreadsheetOptionItem>
     },
     TOption
   >
-  getOptions?: SpreadsheetResolutionQueryResolver<
-    SpreadsheetRecord,
-    SpreadsheetRecord,
-    TOption
-  >
+  getOptions?: SpreadsheetResolutionQueryResolver<SpreadsheetRecord, SpreadsheetRecord, TOption>
 }
 
 export interface SpreadsheetReferenceDefinition<
@@ -45,11 +41,7 @@ export interface SpreadsheetReferenceDefinition<
     },
     TOption
   >
-  getOptions?: SpreadsheetResolutionQueryResolver<
-    SpreadsheetRecord,
-    SpreadsheetRecord,
-    TOption
-  >
+  getOptions?: SpreadsheetResolutionQueryResolver<SpreadsheetRecord, SpreadsheetRecord, TOption>
   rules?: SpreadsheetFieldRulesInput<TValue>
   __rulesInput?: TRulesInput
 }

@@ -186,19 +186,22 @@ const schema = defineTableSchema({
         <div class="grid gap-2 border-t border-default pt-4 text-sm">
           <div class="flex items-center justify-between gap-3">
             <span class="flex items-center gap-2 text-muted">
-              <UIcon name="i-lucide-users" class="size-4" /> Team
+              <UIcon name="i-lucide-users" class="size-4" />{' '}
+              Team
             </span>
             <UBadge color="neutral" variant="subtle" size="sm" label={row.team} />
           </div>
           <div class="flex items-center justify-between gap-3">
             <span class="flex items-center gap-2 text-muted">
-              <UIcon name="i-lucide-map-pin" class="size-4" /> Presence
+              <UIcon name="i-lucide-map-pin" class="size-4" />{' '}
+              Presence
             </span>
             <span class="font-medium text-highlighted">{row.presence}</span>
           </div>
           <div class="flex items-center justify-between gap-3">
             <span class="flex items-center gap-2 text-muted">
-              <UIcon name="i-lucide-clock-3" class="size-4" /> Timezone
+              <UIcon name="i-lucide-clock-3" class="size-4" />{' '}
+              Timezone
             </span>
             <span class="text-highlighted">{row.timezone}</span>
           </div>

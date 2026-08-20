@@ -1,8 +1,8 @@
 import Database from 'better-sqlite3'
-import { createQueryEngine } from 'drizzle-resource'
 import { defineRelationsPart } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { createQueryEngine } from 'drizzle-resource'
 
 export const companies = sqliteTable('companies', {
   id: text('id').primaryKey(),

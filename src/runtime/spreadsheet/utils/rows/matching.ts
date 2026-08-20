@@ -1,3 +1,5 @@
+import { isString } from '#ui-tools/shared/utils/predicate'
+
 import type {
   SpreadsheetDynamicCollectionDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
@@ -12,7 +14,6 @@ import type {
   SpreadsheetUnmatchedColumn,
   SpreadsheetValue,
 } from '../../types'
-import { isString } from '#ui-tools/shared/utils/predicate'
 import {
   applySpreadsheetNormalization,
   isSpreadsheetColumnGroup,

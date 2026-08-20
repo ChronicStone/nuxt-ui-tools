@@ -18,11 +18,7 @@ const linkInset = computed(() => `${Math.min(resolvedDepth.value, 3) * 0.75}rem`
 </script>
 
 <template>
-  <details
-    v-if="hasChildren"
-    class="group/tree"
-    :open="containsCurrentPath"
-  >
+  <details v-if="hasChildren" class="group/tree" :open="containsCurrentPath">
     <summary
       class="flex min-h-8 cursor-pointer list-none items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted transition-colors hover:bg-elevated/65 hover:text-default [&::-webkit-details-marker]:hidden"
       :style="{ paddingLeft: `calc(0.5rem + ${linkInset})` }"
@@ -43,7 +39,10 @@ const linkInset = computed(() => `${Math.min(resolvedDepth.value, 3) * 0.75}rem`
       <span v-else class="min-w-0 flex-1 truncate">{{ node.label }}</span>
     </summary>
 
-    <div class="relative mt-0.5 grid gap-0.5 before:absolute before:bottom-1 before:left-[calc(1rem+var(--tree-inset))] before:top-1 before:w-px before:bg-border/80" :style="{ '--tree-inset': linkInset }">
+    <div
+      class="relative mt-0.5 grid gap-0.5 before:absolute before:bottom-1 before:left-[calc(1rem+var(--tree-inset))] before:top-1 before:w-px before:bg-border/80"
+      :style="{ '--tree-inset': linkInset }"
+    >
       <PlaygroundTreeNode
         v-for="child in node.children"
         :key="child.id"

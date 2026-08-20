@@ -102,9 +102,7 @@ Pair a table page with the `defineQueryPrefetch(...)` macro when links should wa
 destination state before navigation:
 
 ```ts
-defineQueryPrefetch('employees', ({ route }) =>
-  prefetchTable({ route, schema: employeesSchema() }),
-)
+defineQueryPrefetch('employees', ({ route }) => prefetchTable({ route, schema: employeesSchema() }))
 ```
 
 `prefetchTable(...)` resolves the route's `l`, `p.*`, `s.*`, and `f.*` query keys and stages context,
