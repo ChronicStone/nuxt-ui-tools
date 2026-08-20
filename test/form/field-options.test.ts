@@ -54,6 +54,69 @@ describe('form field options', () => {
     scope.stop()
   })
 
+  it('normalizes creation labels and ignores concurrent creation attempts', async () => {
+    let resolveCreation: ((value: { label: string; value: string }) => void) | undefined
+    const labels: string[] = []
+    const schema = computed(() =>
+      defineFormSchema({
+        fields: [
+          {
+            key: 'skill',
+            type: 'select',
+            options: {
+              source: [],
+              create: {
+                handler: ({ label }) => {
+                  labels.push(label)
+                  return new Promise<{ label: string; value: string }>((resolve) => {
+                    resolveCreation = resolve
+                  })
+                },
+              },
+            },
+          },
+        ],
+      }),
+    )
+    const scope = effectScope()
+    const app = createApp({})
+    app.use(VueQueryPlugin, { queryClient: new QueryClient() })
+    const result = app.runWithContext(() =>
+      scope.run(() => {
+        const runtime = useFormRuntime({ schema })
+        const field = getSchemaFields(schema.value)[0]
+        if (!field) throw new Error('Missing option field')
+        const path = ['skill']
+        const options = useFieldOptions({
+          field: () => field,
+          path: () => path,
+          api: computed(() => runtime.getFieldApi(path, field)),
+          callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
+          register: runtime.registerFieldOptions,
+          refreshFieldOptions: runtime.refreshFieldOptions,
+        })
+        return { runtime, options }
+      }),
+    )
+    if (!result) throw new Error('Failed to create option runtime')
+
+    const firstCreation = result.options.create('  Platform  ')
+    const concurrentCreation = result.options.create('Ignored')
+
+    expect(result.options.creating.value).toBe(true)
+    expect(await concurrentCreation).toBeNull()
+    expect(labels).toEqual(['Platform'])
+
+    resolveCreation?.({ label: 'Platform', value: 'platform' })
+    await firstCreation
+
+    expect(result.options.creating.value).toBe(false)
+    expect(result.runtime.getValue('skill')).toBe('platform')
+    expect(await result.options.create('   ')).toBeNull()
+    expect(labels).toEqual(['Platform'])
+    scope.stop()
+  })
+
   it('reinvokes a promise-backed source when refreshed', async () => {
     let runs = 0
     const schema = computed(() =>

@@ -1,3 +1,4 @@
+import type { FormValue } from './'
 import type { FormFieldCallback, FormFieldCallbackParams } from './callbacks'
 import type { FormQueryOptions } from './context'
 import type { FormMaybePromise, FormText } from './utils'
@@ -31,7 +32,7 @@ export type FormOptionItem<TValue extends FormOptionValue = FormOptionValue> =
 /**
  * A static, sync-derived, promise-backed, or TanStack Query-backed option source.
  */
-export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = unknown> =
+export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = FormValue> =
   | readonly TOption[]
   | FormQueryOptions<readonly TOption[]>
   | FormFieldCallback<
@@ -48,14 +49,14 @@ export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = unkno
 export interface FormCreateOptionParams<
   TContext = {},
   TDeps = {},
-  TValue = unknown,
-  TOption = unknown,
+  TValue = FormValue,
+  TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
   /** User-entered label that should be converted into a concrete option. */
   label: string
 }
 
-export interface FormCreateOption<TOption, TContext = {}, TDeps = {}, TValue = unknown> {
+export interface FormCreateOption<TOption, TContext = {}, TDeps = {}, TValue = FormValue> {
   /** Label shown by the create affordance. */
   label?: FormText
   /** Selects the newly-created option immediately. Defaults to `true`. */
@@ -71,8 +72,8 @@ export interface FormCreateOption<TOption, TContext = {}, TDeps = {}, TValue = u
 export interface FormOptionsChangeParams<
   TContext = {},
   TDeps = {},
-  TValue = unknown,
-  TOption = unknown,
+  TValue = FormValue,
+  TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
   /** Previously resolved normalized options. */
   previousOptions: readonly TOption[]
@@ -81,7 +82,7 @@ export interface FormOptionsChangeParams<
 /**
  * Shared option configuration for option-based fields.
  */
-export interface FormOptionConfig<TOption, TContext = {}, TDeps = {}, TValue = unknown> {
+export interface FormOptionConfig<TOption, TContext = {}, TDeps = {}, TValue = FormValue> {
   /** Static, sync-derived, promise-backed, or query-backed options. */
   source: FormOptionsSource<TOption, TContext, TDeps, TValue>
   /** Optional creation behavior for missing options. */
