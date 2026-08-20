@@ -5,6 +5,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
+import { hasProperty, isArray, isString } from '#ui-tools/shared/utils/predicate'
 import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
 import DataList from '#ui-tools/table/components/DataList.vue'
@@ -801,7 +802,9 @@ function getSkillTaxonomyValues(skill: string) {
     'UX Research': ['cat:design', 'cat:research', 'skill:ux-research'],
   } satisfies Record<string, string[]>
 
-  return entries[skill] ?? [skill]
+  if (!hasProperty(entries, skill)) return [skill]
+  const taxonomy = entries[skill]
+  return isArray(taxonomy) ? taxonomy.filter(isString) : [skill]
 }
 
 function buildCountryTreeOptions(rows: DemoClientRow[]) {
@@ -940,7 +943,7 @@ function getCountryFlag(country: string) {
     'United States': '🇺🇸',
   }
 
-  return flags[country] ?? '🌍'
+  return hasProperty(flags, country) && isString(flags[country]) ? flags[country] : '🌍'
 }
 
 function translateCountry(value: string) {
@@ -956,7 +959,7 @@ function translateCountry(value: string) {
     Unknown: 'unknown',
   } satisfies Record<string, string>
 
-  const key = keyByCountry[value]
+  const key = hasProperty(keyByCountry, value) ? keyByCountry[value] : undefined
   return key ? t(`playground.tableCommon.countries.${key}`) : value
 }
 
@@ -967,7 +970,7 @@ function translateRegion(value: string) {
     Asia: 'asia',
   } satisfies Record<string, string>
 
-  const key = keyByRegion[value]
+  const key = hasProperty(keyByRegion, value) ? keyByRegion[value] : undefined
   return key ? t(`playground.tableCommon.regions.${key}`) : value
 }
 
@@ -985,7 +988,7 @@ function translateDepartment(value: string) {
     Growth: 'growth',
   } satisfies Record<string, string>
 
-  const key = keyByDepartment[value]
+  const key = hasProperty(keyByDepartment, value) ? keyByDepartment[value] : undefined
   return key ? t(`playground.tableCommon.departments.${key}`) : value
 }
 
@@ -1008,7 +1011,7 @@ function translateCategory(value: string) {
     Planning: 'planning',
   } satisfies Record<string, string>
 
-  const key = keyByCategory[value]
+  const key = hasProperty(keyByCategory, value) ? keyByCategory[value] : undefined
   return key ? t(`playground.tableCommon.categories.${key}`) : value
 }
 
@@ -1032,7 +1035,7 @@ function translateSkill(value: string) {
     'UX Research': 'uxResearch',
   } satisfies Record<string, string>
 
-  const key = keyBySkill[value]
+  const key = hasProperty(keyBySkill, value) ? keyBySkill[value] : undefined
   return key ? t(`playground.tableCommon.skills.${key}`) : value
 }
 </script>
