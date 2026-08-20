@@ -9,17 +9,24 @@
  * Uses shallowRef internally to avoid deep reactive proxying.
  */
 
-import { computed, onScopeDispose, shallowRef, type WritableComputedRef } from 'vue'
-import { useRouter } from 'vue-router'
+import {
+  computed,
+  onScopeDispose,
+  shallowRef,
+  type WritableComputedRef,
+} from "vue";
+import { useRouter, type Router } from "vue-router";
+import { hasProperty, isObject } from "#ui-tools/shared/utils/predicate";
+import type { GenericObject } from "#ui-tools/shared/types/utils";
 
-import { QueryStateClient, type HistoryMode } from './client'
-import type { QueryCodec } from './codecs'
+import { QueryStateClient, type HistoryMode } from "./client";
+import type { QueryCodec } from "./codecs";
 
 // ---------------------------------------------------------------------------
 // Client registry
 // ---------------------------------------------------------------------------
 
-const clientRegistry = new WeakMap<object, QueryStateClient>()
+const clientRegistry = new WeakMap<Router, QueryStateClient>();
 
 /**
  * Pre-register a query-state client for a router instance.
@@ -33,8 +40,11 @@ const clientRegistry = new WeakMap<object, QueryStateClient>()
  * registerQueryStateClient(router, client)
  * ```
  */
-export function registerQueryStateClient(router: object, client: QueryStateClient): void {
-  clientRegistry.set(router, client)
+export function registerQueryStateClient(
+  router: Router,
+  client: QueryStateClient,
+): void {
+  clientRegistry.set(router, client);
 }
 
 /**
@@ -51,24 +61,24 @@ export function registerQueryStateClient(router: object, client: QueryStateClien
  */
 export function useQueryStateClient(options?: {
   /** History mode used by the lazily created client when individual writes omit one. */
-  defaultHistoryMode?: HistoryMode
+  defaultHistoryMode?: HistoryMode;
 }): QueryStateClient {
-  const router = useRouter()
+  const router = useRouter();
 
-  let client = clientRegistry.get(router)
+  let client = clientRegistry.get(router);
   if (!client) {
     client = new QueryStateClient({
       router,
       defaultHistoryMode: options?.defaultHistoryMode,
-    })
-    clientRegistry.set(router, client)
+    });
+    clientRegistry.set(router, client);
 
     router.afterEach(() => {
-      client!.syncFromRoute()
-    })
+      client!.syncFromRoute();
+    });
   }
 
-  return client
+  return client;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,18 +87,18 @@ export function useQueryStateClient(options?: {
 
 type ResolveDefaultedValue<TValue, TDefault> = undefined extends TDefault
   ? TValue
-  : Exclude<TValue, undefined>
+  : Exclude<TValue, undefined>;
 
 type UseQueryStateBaseOptions<TValue> = {
   /** Query-string key to read from and write to. */
-  key: string
+  key: string;
   /** Codec that maps between raw query values and the typed runtime value. */
-  codec: QueryCodec<TValue>
+  codec: QueryCodec<TValue>;
   /** Remove the key when the serialized value matches `defaultValue`. Defaults to `true`. */
-  omitDefault?: boolean
+  omitDefault?: boolean;
   /** Override the router history mode for writes from this state. */
-  historyMode?: HistoryMode
-}
+  historyMode?: HistoryMode;
+};
 
 /**
  * Options for a single typed query-state binding.
@@ -96,17 +106,23 @@ type UseQueryStateBaseOptions<TValue> = {
  * When `defaultValue` excludes `undefined`, the returned ref is narrowed so
  * downstream code can treat missing or invalid query values as already resolved.
  */
-export type UseQueryStateOptions<TValue, TDefault = TValue> = UseQueryStateBaseOptions<TValue> & {
+export type UseQueryStateOptions<
+  TValue,
+  TDefault = TValue,
+> = UseQueryStateBaseOptions<TValue> & {
   /** Fallback used when the key is missing or the codec returns `undefined`. */
-  defaultValue: TDefault
-}
+  defaultValue: TDefault;
+};
 
 export function useQueryState<TValue>(
   options: UseQueryStateBaseOptions<TValue> & { defaultValue: undefined },
-): WritableComputedRef<TValue>
-export function useQueryState<TValue, TDefault extends Exclude<TValue, undefined>>(
+): WritableComputedRef<TValue>;
+export function useQueryState<
+  TValue,
+  TDefault extends Exclude<TValue, undefined>,
+>(
   options: UseQueryStateBaseOptions<TValue> & { defaultValue: TDefault },
-): WritableComputedRef<Exclude<TValue, undefined>>
+): WritableComputedRef<Exclude<TValue, undefined>>;
 /**
  * Binds one query-string key to a writable computed ref.
  *
@@ -127,53 +143,65 @@ export function useQueryState<TValue, TDefault extends Exclude<TValue, undefined
 export function useQueryState<TValue, TDefault extends TValue>(
   options: UseQueryStateOptions<TValue, TDefault>,
 ): WritableComputedRef<ResolveDefaultedValue<TValue, TDefault>> {
-  const client = useQueryStateClient()
-  const { key, codec, defaultValue, historyMode } = options
-  const omitDefault = options.omitDefault ?? true
+  const client = useQueryStateClient();
+  const { key, codec, defaultValue, historyMode } = options;
+  const omitDefault = options.omitDefault ?? true;
 
-  const internal = shallowRef<ResolveDefaultedValue<TValue, TDefault>>(readFromClient())
+  const internal =
+    shallowRef<ResolveDefaultedValue<TValue, TDefault>>(readFromClient());
 
   function readFromClient(): ResolveDefaultedValue<TValue, TDefault> {
-    const raw = client.get(key)
-    if (raw == null) return defaultValue as ResolveDefaultedValue<TValue, TDefault>
+    const raw = client.get(key);
+    if (raw == null) {
+      // SAFETY: a non-undefined default is narrowed by the overload contract.
+      return defaultValue as ResolveDefaultedValue<TValue, TDefault>;
+    }
 
-    const parsed = codec.parse(raw)
-    return (parsed === undefined ? defaultValue : parsed) as ResolveDefaultedValue<TValue, TDefault>
+    const parsed = codec.parse(raw);
+    // SAFETY: parsed and defaultValue are both TValue; the overload removes undefined when applicable.
+    return (
+      parsed === undefined ? defaultValue : parsed
+    ) as ResolveDefaultedValue<TValue, TDefault>;
   }
 
   function writeToClient(value: ResolveDefaultedValue<TValue, TDefault>): void {
-    const serialized = codec.serialize(value)
-    const shouldOmit = omitDefault && serialized === codec.serialize(defaultValue)
-    client.set(key, shouldOmit ? null : serialized, historyMode)
+    const serialized = codec.serialize(value);
+    const shouldOmit =
+      omitDefault && serialized === codec.serialize(defaultValue);
+    client.set(key, shouldOmit ? null : serialized, historyMode);
   }
 
   const unsubscribe = client.subscribe((changedKey, rawValue) => {
-    if (changedKey !== key) return
-    internal.value =
-      rawValue == null
-        ? (defaultValue as ResolveDefaultedValue<TValue, TDefault>)
-        : ((() => {
-            const parsed = codec.parse(rawValue)
-            return parsed === undefined ? defaultValue : parsed
-          })() as ResolveDefaultedValue<TValue, TDefault>)
-  })
+    if (changedKey !== key) return;
+    if (rawValue == null) {
+      // SAFETY: a non-undefined default is narrowed by the overload contract.
+      internal.value = defaultValue as ResolveDefaultedValue<TValue, TDefault>;
+      return;
+    }
 
-  onScopeDispose(unsubscribe)
+    const parsed = codec.parse(rawValue);
+    // SAFETY: parsed and defaultValue are both TValue; the overload removes undefined when applicable.
+    internal.value = (
+      parsed === undefined ? defaultValue : parsed
+    ) as ResolveDefaultedValue<TValue, TDefault>;
+  });
+
+  onScopeDispose(unsubscribe);
 
   return computed({
     get: () => internal.value,
     set: (value) => {
-      internal.value = value
-      writeToClient(value)
+      internal.value = value;
+      writeToClient(value);
     },
-  })
+  });
 }
 
 // ---------------------------------------------------------------------------
 // dynamicQueryState — factory for dynamic key sets
 // ---------------------------------------------------------------------------
 
-const DYNAMIC_MARKER = Symbol('dynamicQueryState')
+const DYNAMIC_MARKER = Symbol("dynamicQueryState");
 
 /**
  * Configuration for a grouped query-state field whose URL keys are discovered at
@@ -184,31 +212,39 @@ const DYNAMIC_MARKER = Symbol('dynamicQueryState')
  */
 export interface DynamicQueryStateOptions<TDefinition, TValue> {
   /** URL prefix for all keys this dynamic state owns, relative to the parent `prefix`. */
-  urlPrefix: string
+  urlPrefix: string;
   /** Returns the current definitions that determine which query keys exist. */
-  definitions: () => TDefinition[]
+  definitions: () => TDefinition[];
   /**
    * For one runtime definition, return every query key it may occupy together
    * with the codec that should parse and serialize that key.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resolve: (definition: TDefinition) => Array<{ urlKey: string; codec: QueryCodec<any> }>
+  resolve: (
+    definition: TDefinition,
+  ) => Array<{ urlKey: string; codec: QueryCodec<any> }>;
   /** Build the consumer-facing value from the parsed query entries and current definitions. */
-  parse: (entries: ReadonlyMap<string, unknown>, definitions: TDefinition[]) => TValue
+  parse: (
+    entries: ReadonlyMap<string, unknown>,
+    definitions: TDefinition[],
+  ) => TValue;
   /**
    * Map the consumer-facing value back into query entries.
    *
    * Use `null` values in the returned map to clear individual query keys.
    */
-  serialize: (value: TValue, definitions: TDefinition[]) => Map<string, unknown>
+  serialize: (
+    value: TValue,
+    definitions: TDefinition[],
+  ) => Map<string, unknown>;
   /** Value returned when no relevant query keys are currently present. */
-  defaultValue: TValue
+  defaultValue: TValue;
 }
 
 export interface DynamicQueryStateDef<TValue> {
-  [DYNAMIC_MARKER]: true
+  [DYNAMIC_MARKER]: true;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _options: DynamicQueryStateOptions<any, TValue>
+  options: DynamicQueryStateOptions<any, TValue>;
 }
 
 /**
@@ -233,12 +269,16 @@ export function dynamicQueryState<TDefinition, TValue>(
 ): DynamicQueryStateDef<TValue> {
   return {
     [DYNAMIC_MARKER]: true,
-    _options: options,
-  }
+    options,
+  };
 }
 
-function isDynamicDef(value: unknown): value is DynamicQueryStateDef<unknown> {
-  return value != null && typeof value === 'object' && DYNAMIC_MARKER in value
+type QueryStateValue = GenericObject[string];
+
+function isDynamicDef(
+  value: QueryStatesSchemaEntry,
+): value is DynamicQueryStateDef<QueryStateValue> {
+  return isObject(value) && hasProperty(value, DYNAMIC_MARKER);
 }
 
 // ---------------------------------------------------------------------------
@@ -253,15 +293,15 @@ function isDynamicDef(value: unknown): value is DynamicQueryStateDef<unknown> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface StaticQueryStateOptions<TValue = any, TDefault = TValue> {
   /** Codec used to parse the raw query value and serialize writes back to the URL. */
-  codec: QueryCodec<TValue>
+  codec: QueryCodec<TValue>;
   /** Fallback used when the query key is missing or the codec returns `undefined`. */
-  defaultValue: TDefault
+  defaultValue: TDefault;
   /** Override the URL key for this property. Defaults to the property name. */
-  urlKey?: string
+  urlKey?: string;
   /** Remove the key when the serialized value matches `defaultValue`. Defaults to `true`. */
-  omitDefault?: boolean
+  omitDefault?: boolean;
   /** Override the history mode for this property when `useQueryStates(...)` writes. */
-  historyMode?: HistoryMode
+  historyMode?: HistoryMode;
 }
 
 /**
@@ -272,34 +312,40 @@ export interface StaticQueryStateOptions<TValue = any, TDefault = TValue> {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type QueryStatesSchemaEntry<TValue = any, TDefault = TValue> =
-  | StaticQueryStateOptions<TValue, TDefault>
-  | DynamicQueryStateDef<TValue>
+  StaticQueryStateOptions<TValue, TDefault> | DynamicQueryStateDef<TValue>;
 
 /**
  * Schema accepted by `useQueryStates(...)`.
  *
  * Each object key becomes a property on the returned writable computed state.
  */
-export type QueryStatesSchema = Record<string, QueryStatesSchemaEntry>
+export type QueryStatesSchema = Record<string, QueryStatesSchemaEntry>;
 
 type InferEntryValue<E> =
   E extends DynamicQueryStateDef<infer TValue>
     ? TValue
     : E extends StaticQueryStateOptions<infer TValue, infer TDefault>
       ? ResolveDefaultedValue<TValue, TDefault>
-      : never
+      : never;
 
 type QueryStatesValues<T extends QueryStatesSchema> = {
-  [K in keyof T]: InferEntryValue<T[K]>
+  [K in keyof T]: InferEntryValue<T[K]>;
+};
+
+function resolveQueryStatesValues<T extends QueryStatesSchema>(
+  values: GenericObject,
+): QueryStatesValues<T> {
+  // SAFETY: callers populate `values` from the same schema's complete static and dynamic key lists.
+  return values as QueryStatesValues<T>;
 }
 
 export interface UseQueryStatesOptions<T extends QueryStatesSchema> {
   /** Optional prefix prepended to every static and dynamic query key in this schema. */
-  prefix?: string
+  prefix?: string;
   /** Schema describing the typed grouped state and how each property maps to the URL. */
-  schema: T
+  schema: T;
   /** Default history mode used when the grouped state writes to the router. */
-  historyMode?: HistoryMode
+  historyMode?: HistoryMode;
 }
 
 /**
@@ -323,173 +369,190 @@ export interface UseQueryStatesOptions<T extends QueryStatesSchema> {
 export function useQueryStates<T extends QueryStatesSchema>(
   options: UseQueryStatesOptions<T>,
 ): WritableComputedRef<QueryStatesValues<T>> {
-  const client = useQueryStateClient()
-  const { schema, historyMode, prefix } = options
+  const client = useQueryStateClient();
+  const { schema, historyMode, prefix } = options;
 
-  const keys = Object.keys(schema) as Array<keyof T & string>
-  const staticKeys: string[] = []
-  const dynamicKeys: string[] = []
+  // SAFETY: Object.keys returns every runtime key of the schema object.
+  const keys = Object.keys(schema) as Array<keyof T & string>;
+  const staticKeys: string[] = [];
+  const dynamicKeys: string[] = [];
 
   // Classify keys and precompute URL key mappings for static entries
-  const staticUrlKeys = new Map<string, string>() // propertyName → full URL key
+  const staticUrlKeys = new Map<string, string>(); // propertyName → full URL key
 
   for (const k of keys) {
-    const entry = schema[k]!
+    const entry = schema[k]!;
     if (isDynamicDef(entry)) {
-      dynamicKeys.push(k)
+      dynamicKeys.push(k);
     } else {
-      staticKeys.push(k)
-      const def = entry as StaticQueryStateOptions
-      const urlSegment = def.urlKey ?? k
-      staticUrlKeys.set(k, prefix ? `${prefix}.${urlSegment}` : urlSegment)
+      staticKeys.push(k);
+      // SAFETY: isDynamicDef excluded the dynamic schema variant above.
+      const def = entry as StaticQueryStateOptions;
+      const urlSegment = def.urlKey ?? k;
+      staticUrlKeys.set(k, prefix ? `${prefix}.${urlSegment}` : urlSegment);
     }
   }
 
   // Internal store — shallowRef to avoid deep proxying
-  const internal = shallowRef<QueryStatesValues<T>>(readAll())
+  const internal = shallowRef<QueryStatesValues<T>>(readAll());
 
   // --- Static field helpers ---
 
-  function readStatic(propKey: string): unknown {
-    const def = schema[propKey] as StaticQueryStateOptions
-    const urlKey = staticUrlKeys.get(propKey)!
-    const raw = client.get(urlKey)
-    if (raw == null) return def.defaultValue
-    const parsed = def.codec.parse(raw)
-    return parsed === undefined ? def.defaultValue : parsed
+  function readStatic(propKey: string): QueryStateValue {
+    // SAFETY: propKey comes from the schema key lists built above.
+    const def = schema[propKey] as StaticQueryStateOptions;
+    const urlKey = staticUrlKeys.get(propKey)!;
+    const raw = client.get(urlKey);
+    if (raw == null) return def.defaultValue;
+    const parsed = def.codec.parse(raw);
+    return parsed === undefined ? def.defaultValue : parsed;
   }
 
   // --- Dynamic field helpers ---
 
-  function readDynamic(propKey: string): unknown {
-    const dynDef = (schema[propKey] as DynamicQueryStateDef<unknown>)._options
-    const definitions = dynDef.definitions()
-    if (!definitions.length) return dynDef.defaultValue
+  function readDynamic(propKey: string): QueryStateValue {
+    // SAFETY: propKey comes from the dynamic schema key list built above.
+    const dynDef = (schema[propKey] as DynamicQueryStateDef<unknown>).options;
+    const definitions = dynDef.definitions();
+    if (!definitions.length) return dynDef.defaultValue;
 
-    const fullPrefix = prefix ? `${prefix}.${dynDef.urlPrefix}` : dynDef.urlPrefix
-    const entries = new Map<string, unknown>()
+    const fullPrefix = prefix
+      ? `${prefix}.${dynDef.urlPrefix}`
+      : dynDef.urlPrefix;
+    const entries = new Map<string, unknown>();
 
     for (const def of definitions) {
-      const resolvedKeys = dynDef.resolve(def)
+      const resolvedKeys = dynDef.resolve(def);
       for (const { urlKey, codec } of resolvedKeys) {
-        const fullKey = `${fullPrefix}.${urlKey}`
-        const raw = client.get(fullKey)
-        if (raw != null && raw !== '') {
-          entries.set(urlKey, codec.parse(raw))
+        const fullKey = `${fullPrefix}.${urlKey}`;
+        const raw = client.get(fullKey);
+        if (raw != null && raw !== "") {
+          entries.set(urlKey, codec.parse(raw));
         }
       }
     }
 
-    if (entries.size === 0) return dynDef.defaultValue
-    return dynDef.parse(entries, definitions)
+    if (entries.size === 0) return dynDef.defaultValue;
+    return dynDef.parse(entries, definitions);
   }
 
   function writeDynamic(
     propKey: string,
-    value: unknown,
+    value: QueryStateValue,
   ): Array<{ key: string; value: string | null }> {
-    const dynDef = (schema[propKey] as DynamicQueryStateDef<unknown>)._options
-    const definitions = dynDef.definitions()
-    const fullPrefix = prefix ? `${prefix}.${dynDef.urlPrefix}` : dynDef.urlPrefix
+    // SAFETY: propKey comes from the dynamic schema key list built above.
+    const dynDef = (schema[propKey] as DynamicQueryStateDef<unknown>).options;
+    const definitions = dynDef.definitions();
+    const fullPrefix = prefix
+      ? `${prefix}.${dynDef.urlPrefix}`
+      : dynDef.urlPrefix;
 
-    const updates: Array<{ key: string; value: string | null }> = []
+    const updates: Array<{ key: string; value: string | null }> = [];
 
     // Clear all known keys for this dynamic field
     for (const def of definitions) {
-      const resolvedKeys = dynDef.resolve(def)
+      const resolvedKeys = dynDef.resolve(def);
       for (const { urlKey } of resolvedKeys) {
-        updates.push({ key: `${fullPrefix}.${urlKey}`, value: null })
+        updates.push({ key: `${fullPrefix}.${urlKey}`, value: null });
       }
     }
 
     // Set active values
-    const serialized = dynDef.serialize(value, definitions)
+    const serialized = dynDef.serialize(value, definitions);
     for (const [urlKey, val] of serialized) {
-      const fullKey = `${fullPrefix}.${urlKey}`
+      const fullKey = `${fullPrefix}.${urlKey}`;
       // Find the codec for this urlKey
-      let codec: QueryCodec<unknown> | undefined
+      let codec: QueryCodec<unknown> | undefined;
       for (const def of definitions) {
-        const resolved = dynDef.resolve(def)
-        const match = resolved.find((r) => r.urlKey === urlKey)
+        const resolved = dynDef.resolve(def);
+        const match = resolved.find((r) => r.urlKey === urlKey);
         if (match) {
-          codec = match.codec
-          break
+          codec = match.codec;
+          break;
         }
       }
 
       if (codec && val != null) {
-        const existing = updates.findIndex((u) => u.key === fullKey)
-        const serializedValue = codec.serialize(val)
+        const existing = updates.findIndex((u) => u.key === fullKey);
+        const serializedValue = codec.serialize(val);
         if (existing >= 0) {
-          updates[existing]!.value = serializedValue
+          updates[existing]!.value = serializedValue;
         } else {
-          updates.push({ key: fullKey, value: serializedValue })
+          updates.push({ key: fullKey, value: serializedValue });
         }
       }
     }
 
-    return updates
+    return updates;
   }
 
   // --- Read/write all ---
 
   function readAll(): QueryStatesValues<T> {
-    const result = {} as Record<string, unknown>
-    for (const k of staticKeys) result[k] = readStatic(k)
-    for (const k of dynamicKeys) result[k] = readDynamic(k)
-    return result as QueryStatesValues<T>
+    const result: GenericObject = {};
+    for (const k of staticKeys) result[k] = readStatic(k);
+    for (const k of dynamicKeys) result[k] = readDynamic(k);
+    return resolveQueryStatesValues<T>(result);
   }
 
   function writeAll(values: QueryStatesValues<T>): void {
-    const updates: Array<{ key: string; value: string | null }> = []
+    const updates: Array<{ key: string; value: string | null }> = [];
 
     for (const k of staticKeys) {
-      const def = schema[k] as StaticQueryStateOptions
-      const urlKey = staticUrlKeys.get(k)!
-      const value = (values as Record<string, unknown>)[k]
-      const serialized = def.codec.serialize(value)
-      const omit = (def.omitDefault ?? true) && serialized === def.codec.serialize(def.defaultValue)
-      updates.push({ key: urlKey, value: omit ? null : serialized })
+      // SAFETY: staticKeys contains only entries rejected by isDynamicDef.
+      const def = schema[k] as StaticQueryStateOptions;
+      const urlKey = staticUrlKeys.get(k)!;
+      // SAFETY: k is a runtime key from the schema and values mirrors that schema.
+      const value = (values as GenericObject)[k];
+      const serialized = def.codec.serialize(value);
+      const omit =
+        (def.omitDefault ?? true) &&
+        serialized === def.codec.serialize(def.defaultValue);
+      updates.push({ key: urlKey, value: omit ? null : serialized });
     }
 
     for (const k of dynamicKeys) {
-      const dynUpdates = writeDynamic(k, (values as Record<string, unknown>)[k])
-      updates.push(...dynUpdates)
+      // SAFETY: k is a runtime key from the dynamic schema and values mirrors that schema.
+      const dynUpdates = writeDynamic(k, (values as GenericObject)[k]);
+      updates.push(...dynUpdates);
     }
 
-    client.setBatch(updates, historyMode)
+    client.setBatch(updates, historyMode);
   }
 
   // --- Subscribe to external changes ---
 
   // Collect all URL keys we care about for fast filtering
-  const allStaticUrlKeyValues = new Set(staticUrlKeys.values())
+  const allStaticUrlKeyValues = new Set(staticUrlKeys.values());
 
   const unsubscribe = client.subscribe((changedKey) => {
     // Check static keys
     if (allStaticUrlKeyValues.has(changedKey)) {
-      internal.value = readAll()
-      return
+      internal.value = readAll();
+      return;
     }
 
     // Check dynamic key prefixes
     for (const k of dynamicKeys) {
-      const dynDef = (schema[k] as DynamicQueryStateDef<unknown>)._options
-      const fullPrefix = prefix ? `${prefix}.${dynDef.urlPrefix}` : dynDef.urlPrefix
-      if (changedKey.startsWith(fullPrefix + '.')) {
-        internal.value = readAll()
-        return
+      // SAFETY: k comes from dynamicKeys, which is populated only by isDynamicDef.
+      const dynDef = (schema[k] as DynamicQueryStateDef<unknown>).options;
+      const fullPrefix = prefix
+        ? `${prefix}.${dynDef.urlPrefix}`
+        : dynDef.urlPrefix;
+      if (changedKey.startsWith(fullPrefix + ".")) {
+        internal.value = readAll();
+        return;
       }
     }
-  })
+  });
 
-  onScopeDispose(unsubscribe)
+  onScopeDispose(unsubscribe);
 
   return computed({
     get: () => internal.value,
     set: (value: QueryStatesValues<T>) => {
-      internal.value = value
-      writeAll(value)
+      internal.value = value;
+      writeAll(value);
     },
-  })
+  });
 }

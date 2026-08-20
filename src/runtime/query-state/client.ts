@@ -8,6 +8,7 @@
  * - Pluggable router adapter (vue-router, custom, or manual)
  */
 import type { Router, LocationQuery } from 'vue-router'
+import { isString } from '#ui-tools/shared/utils/predicate'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,7 +85,12 @@ export class QueryStateClient {
   private readFromRoute(key: string): string | null {
     const value = this.router.currentRoute.value.query[key]
     if (value == null) return null
-    return Array.isArray(value) ? (value[0] as string | null) : (value as string)
+    if (Array.isArray(value)) {
+      // SAFETY: vue-router query arrays contain only strings or null values.
+      return value[0] ?? null
+    }
+    // SAFETY: vue-router LocationQueryScalar is a string or null at this boundary.
+    return isString(value) ? value : null
   }
 
   // ---------------------------------------------------------------------------
@@ -208,8 +214,10 @@ export class QueryStateClient {
         routeValue == null
           ? null
           : Array.isArray(routeValue)
-            ? (routeValue[0] as string | null)
-            : (routeValue as string)
+            ? routeValue[0] ?? null
+            : isString(routeValue)
+              ? routeValue
+              : null
 
       if (rawRoute !== cached) {
         this.cache.set(key, rawRoute)
