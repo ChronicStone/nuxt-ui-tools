@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 const bare = useFormFieldBare()
 
-const { form, controlProps, disabled, handleBlur } = useFieldControl(
+const { form, controlProps, disabled, handleBlur, validationPending } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -46,7 +46,7 @@ const model = computed<boolean>({
       :disabled="disabled"
       :checked-icon="field.checkedIcon"
       :unchecked-icon="field.uncheckedIcon"
-      :loading="field.loading"
+      :loading="validationPending || field.loading"
       @change="handleBlur"
     />
   </FormFieldShell>

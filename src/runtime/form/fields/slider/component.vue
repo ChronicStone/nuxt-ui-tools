@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormSliderField } from '../../types'
+import { isNumber } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormSliderField
@@ -18,8 +19,8 @@ const { form, controlProps, disabled, handleBlur } = useFieldControl(
 const model = computed<number | number[] | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    if (typeof value === 'number') return value
-    if (Array.isArray(value) && value.every((item) => typeof item === 'number')) return value
+    if (isNumber(value)) return value
+    if (Array.isArray(value) && value.every((item) => isNumber(item))) return value
     return props.field.multiple ? [] : undefined
   },
   set: (value) => form.setValue(props.path, value ?? (props.field.multiple ? [] : null)),
