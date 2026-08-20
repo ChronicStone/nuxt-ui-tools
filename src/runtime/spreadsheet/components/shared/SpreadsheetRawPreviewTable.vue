@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UTable from '@nuxt/ui/components/Table.vue'
 import { computed } from 'vue'
+import type { SpreadsheetRecord } from '../../types'
 
 const props = defineProps<{
   headers: readonly unknown[]
@@ -17,7 +18,7 @@ const normalizedHeaders = computed(() =>
 
 const tableRows = computed(() =>
   props.rows.map((row, rowIndex) =>
-    normalizedHeaders.value.reduce<Record<string, unknown>>(
+    normalizedHeaders.value.reduce<SpreadsheetRecord>(
       (acc, header) => ({
         ...acc,
         __rowLabel: rowIndex + 1,

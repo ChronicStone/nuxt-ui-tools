@@ -4,6 +4,7 @@ import { computed, ref, nextTick, watch } from 'vue'
 import { provideUiToolsLocale, useUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
 import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
+import { isNumber, isObject } from '#ui-tools/shared'
 
 import { useSpreadsheetView } from '../composables/use-spreadsheet-view'
 import SpreadsheetImportFileBar from './layout/SpreadsheetImportFileBar.vue'
@@ -75,18 +76,18 @@ function getSchemaMaxRecords(schema: { importKey: string }): number | undefined 
   if (
     'file' in schema &&
     schema.file &&
-    typeof schema.file === 'object' &&
+    isObject(schema.file) &&
     'maxRecords' in schema.file
   )
-    return typeof schema.file.maxRecords === 'number' ? schema.file.maxRecords : undefined
+    return isNumber(schema.file.maxRecords) ? schema.file.maxRecords : undefined
 
   if (
     'source' in schema &&
     schema.source &&
-    typeof schema.source === 'object' &&
+    isObject(schema.source) &&
     'maxRecords' in schema.source
   )
-    return typeof schema.source.maxRecords === 'number' ? schema.source.maxRecords : undefined
+    return isNumber(schema.source.maxRecords) ? schema.source.maxRecords : undefined
 
   return undefined
 }

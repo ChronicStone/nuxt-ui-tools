@@ -4,6 +4,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+import { isNumber } from '#ui-tools/shared'
 
 import type { SpreadsheetColumnAssignmentOption } from '../../../types'
 
@@ -71,8 +72,7 @@ function getRequiredBadgeColor(required: boolean) {
   return required ? ('error' as const) : ('neutral' as const)
 }
 
-function handleAssign(row: ExpectedFieldRow, value: unknown) {
-  if (typeof value !== 'string') return
+function handleAssign(row: ExpectedFieldRow, value: string) {
   if (value === '__ignore__') {
     if (row.selectedHeaderIndex == null) return
     emit('assign', {
@@ -84,7 +84,7 @@ function handleAssign(row: ExpectedFieldRow, value: unknown) {
 
   const selectedOption = props.getOptionsForRow(row).find((option) => option.key === value)
   const headerIndex = selectedOption?.headerIndex
-  if (typeof headerIndex !== 'number') return
+  if (!isNumber(headerIndex)) return
 
   emit('assign', {
     headerIndex,

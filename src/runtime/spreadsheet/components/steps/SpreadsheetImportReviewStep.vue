@@ -4,6 +4,7 @@ import UTable from '@nuxt/ui/components/Table.vue'
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+import { isNumber, isObject } from '#ui-tools/shared'
 
 import TableEmptyState from '../../../table/components/table/TableEmptyState.vue'
 import { useSpreadsheetReview } from '../../composables/use-spreadsheet-review'
@@ -22,18 +23,18 @@ function getSchemaMaxRecords(schema: { importKey: string }): number | undefined 
   if (
     'file' in schema &&
     schema.file &&
-    typeof schema.file === 'object' &&
+    isObject(schema.file) &&
     'maxRecords' in schema.file &&
-    typeof schema.file.maxRecords === 'number'
+    isNumber(schema.file.maxRecords)
   )
     return schema.file.maxRecords
 
   if (
     'source' in schema &&
     schema.source &&
-    typeof schema.source === 'object' &&
+    isObject(schema.source) &&
     'maxRecords' in schema.source &&
-    typeof schema.source.maxRecords === 'number'
+    isNumber(schema.source.maxRecords)
   )
     return schema.source.maxRecords
 

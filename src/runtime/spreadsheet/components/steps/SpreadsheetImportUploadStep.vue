@@ -5,6 +5,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
+import { isObject } from '#ui-tools/shared'
 
 import type { SpreadsheetComponentApi } from '../types'
 
@@ -19,7 +20,7 @@ function getSchemaAccept(schema: { importKey: string }): readonly string[] | und
   if (
     'file' in schema &&
     schema.file &&
-    typeof schema.file === 'object' &&
+    isObject(schema.file) &&
     'accept' in schema.file &&
     Array.isArray(schema.file.accept)
   )
@@ -28,7 +29,7 @@ function getSchemaAccept(schema: { importKey: string }): readonly string[] | und
   if (
     'source' in schema &&
     schema.source &&
-    typeof schema.source === 'object' &&
+    isObject(schema.source) &&
     'accept' in schema.source &&
     Array.isArray(schema.source.accept)
   )

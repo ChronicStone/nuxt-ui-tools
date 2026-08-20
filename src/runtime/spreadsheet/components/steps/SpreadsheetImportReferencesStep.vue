@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import type { SpreadsheetReferenceCandidate, SpreadsheetReferenceResolution } from '../../types'
+import type {
+  SpreadsheetReferenceCandidate,
+  SpreadsheetReferenceResolution,
+  SpreadsheetValue,
+} from '../../types'
 import {
   humanizeSpreadsheetKey,
   resolveSpreadsheetDisplayLabel,
@@ -213,7 +217,7 @@ function getResolutionBadge(resolution: SpreadsheetReferenceResolution) {
   return { label: 'Needs review', color: 'warning' as const }
 }
 
-function handleSelect(resolution: SpreadsheetReferenceResolution, value: unknown) {
+function handleSelect(resolution: SpreadsheetReferenceResolution, value: SpreadsheetValue) {
   const candidate = resolution.candidates.find((entry) => entry.value === value)
   if (!candidate) return
 
