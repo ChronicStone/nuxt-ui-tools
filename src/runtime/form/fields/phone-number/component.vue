@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UButton from '@nuxt/ui/components/Button.vue'
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
@@ -11,6 +12,8 @@ import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormUi } from '../../composables/use-form-ui'
+import type { FormValue } from '../../types'
+import { isFunction, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 import type { FormPhoneCountryOption, FormPhoneNumberField } from './types'
 
@@ -20,10 +23,11 @@ const props = defineProps<{
 }>()
 
 const { locale, t } = useUiToolsLocale()
-const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
-  () => props.field,
-  () => props.path,
-)
+const { form, controlProps, disabled, handleBlur, interactionOwnerClass, placeholder } =
+  useFieldControl(
+    () => props.field,
+    () => props.path,
+  )
 const formUi = useFormUi()
 const countryCode = ref<CountryCode | undefined>(undefined)
 const phoneValue = ref<string>('')
@@ -92,7 +96,7 @@ function createCountryOption(code: CountryCode): FormPhoneCountryOption {
 function isCountryAllowed(option: FormPhoneCountryOption) {
   const allowed = props.field.countryCodes
   if (!allowed) return true
-  return typeof allowed === 'function' ? allowed(option) : allowed.includes(option.code)
+  return isFunction(allowed) ? allowed(option) : allowed.includes(option.code)
 }
 
 function resolveDefaultCountryCode() {
@@ -120,10 +124,10 @@ function isCountryCodeAvailable(code: CountryCode) {
   return countryOptions.value.some((option) => option.value === code)
 }
 
-function syncFromExternalValue(value: unknown) {
+function syncFromExternalValue(value: FormValue) {
   syncingFromExternal.value = true
 
-  if (typeof value !== 'string' || !value) {
+  if (!isString(value) || !value) {
     phoneValue.value = ''
     countryCode.value = resolveDefaultCountryCode()
     syncingFromExternal.value = false
@@ -146,9 +150,20 @@ function syncFromExternalValue(value: unknown) {
 function syncToFormValue() {
   syncingToForm.value = true
   form.setValue(props.path, phoneValue.value ? (processedValue.value.value ?? '') : null)
+
+  if (processedValue.value.valid && props.field.displayFormat !== 'raw' && countryCode.value) {
+    const parsed = parsePhoneNumberFromString(phoneValue.value, countryCode.value)
+    if (parsed?.isValid()) phoneValue.value = parsed.formatNational()
+  }
+
   queueMicrotask(() => {
     syncingToForm.value = false
   })
+}
+
+function clearPhone() {
+  phoneValue.value = ''
+  form.setValue(props.path, null)
 }
 
 function formatPhoneNumber(parsed: NonNullable<ReturnType<typeof parsePhoneNumberFromString>>) {
@@ -184,7 +199,10 @@ function toFlagEmoji(code: CountryCode) {
         :size="formUi.controlSize.value"
         :disabled="disabled"
         :search-input="true"
-        :ui="{ base: 'w-auto min-w-[5.75rem]' }"
+        :ui="{
+          base: 'w-auto min-w-[5.75rem]',
+          content: interactionOwnerClass,
+        }"
       />
       <UInput
         v-model="phoneValue"
@@ -198,11 +216,27 @@ function toFlagEmoji(code: CountryCode) {
         @blur="handleBlur"
       >
         <template v-if="phoneValue && countryCode" #trailing>
-          <UIcon
-            :name="processedValue.valid ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
-            class="size-4"
-            :class="processedValue.valid ? 'text-success' : 'text-error'"
-          />
+          <div class="flex items-center gap-1">
+            <UIcon
+              v-if="field.validityIndicator !== false"
+              :name="processedValue.valid ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+              class="size-4"
+              :class="processedValue.valid ? 'text-success' : 'text-error'"
+            />
+            <UButton
+              v-if="field.clearable === true"
+              type="button"
+              color="neutral"
+              variant="link"
+              size="xs"
+              icon="i-lucide-x"
+              :aria-label="t('form.fields.phone.clear')"
+              :disabled="disabled"
+              :ui="{ base: 'p-0' }"
+              @mousedown.prevent
+              @click.stop="clearPhone"
+            />
+          </div>
         </template>
       </UInput>
     </UFieldGroup>

@@ -5,6 +5,7 @@ import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed, ref } from 'vue'
 
+import { isBoolean } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
@@ -12,7 +13,9 @@ import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableBooleanFilterDefinition, TableBooleanFilterOperator } from '../../../types'
 import {
   mergeDataListUiClass,
+  resolveDataListControlGeometry,
   resolveBooleanFilterUi,
+  resolveFilterEditorSizeClasses,
   resolveFilterTriggerIcon,
 } from '../../../utils'
 import FilterPopoverShell from '../shared/FilterPopoverShell.vue'
@@ -33,6 +36,8 @@ const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
 const searchQuery = ref<string>('')
 const isSessionOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
@@ -67,7 +72,7 @@ const filterUi = computed(() => resolveBooleanFilterUi(props.definition, operato
 
 const entries = computed(() =>
   optionSource.filteredEntries.value
-    .filter((entry) => typeof entry.value === 'boolean')
+    .filter((entry) => isBoolean(entry.value))
     .map((entry) => ({
       ...entry,
       label: entry.value === true ? filterUi.value.labels.true : filterUi.value.labels.false,
@@ -156,7 +161,11 @@ function clearFilter() {
     :open="session.isOpen.value"
     :embedded="embedded"
     :content-class="
-      mergeDataListUiClass('w-fit overflow-hidden p-0', undefined, dataListFilterUi?.popoverContent)
+      mergeDataListUiClass(
+        `${sizeClasses.editor} overflow-hidden p-0`,
+        undefined,
+        dataListFilterUi?.popoverContent,
+      )
     "
     @update-open="session.handleOpenChange"
   >
@@ -189,14 +198,16 @@ function clearFilter() {
       <div
         :class="
           mergeDataListUiClass(
-            'w-fit max-w-[calc(100vw-1rem)] bg-default',
+            `${sizeClasses.editor} w-full min-w-0 max-w-full bg-default`,
             undefined,
             dataListFilterUi?.editor,
           )
         "
         @vue:mounted="handleContentMounted"
       >
-        <div :class="mergeDataListUiClass('p-2', undefined, dataListFilterUi?.list)">
+        <div
+          :class="mergeDataListUiClass(sizeClasses.scrollArea, undefined, dataListFilterUi?.list)"
+        >
           <URadioGroup
             v-model="radioValue"
             :items="radioItems"
@@ -207,28 +218,28 @@ function clearFilter() {
               root: 'w-full',
               fieldset: 'grid gap-0.5',
               item: mergeDataListUiClass(
-                'flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated',
+                `flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
                 undefined,
                 dataListFilterUi?.option,
               ),
-              container: 'self-center pl-3',
+              container: 'self-center',
               base: 'cursor-pointer',
-              wrapper: 'min-w-0 flex-1 py-2 pr-3',
+              wrapper: 'min-w-0 flex-1',
               label: mergeDataListUiClass(
-                'w-full cursor-pointer text-sm text-default',
+                `w-full cursor-pointer text-default ${sizeClasses.optionLabel}`,
                 undefined,
                 dataListFilterUi?.optionLabel,
               ),
             }"
           >
             <template #label="{ item }">
-              <div class="flex min-w-0 items-center gap-3">
+              <div :class="['flex min-w-0 items-center', geometry.toolbarGap]">
                 <UIcon
                   v-if="typeof item.icon === 'string'"
                   :name="item.icon"
                   :class="
                     mergeDataListUiClass(
-                      'size-4 shrink-0 text-muted',
+                      `${sizeClasses.optionIcon} shrink-0 text-muted`,
                       undefined,
                       dataListFilterUi?.optionIcon,
                     )
@@ -238,15 +249,12 @@ function clearFilter() {
                 <span class="min-w-0 flex-1 truncate">
                   {{ item.label }}
                 </span>
-                <USkeleton
-                  v-if="optionSource.isCountLoading.value"
-                  class="ml-3 h-3.5 w-6 shrink-0"
-                />
+                <USkeleton v-if="optionSource.isCountLoading.value" class="h-3.5 w-6 shrink-0" />
                 <span
                   v-else-if="item.count != null"
                   :class="
                     mergeDataListUiClass(
-                      'ml-3 shrink-0 text-muted',
+                      'shrink-0 text-muted',
                       undefined,
                       dataListFilterUi?.optionCount,
                     )
@@ -263,7 +271,7 @@ function clearFilter() {
           v-if="filterUi.commitMode === 'manual'"
           :class="
             mergeDataListUiClass(
-              'flex items-center justify-between border-t border-default p-2',
+              `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
               undefined,
               dataListFilterUi?.footer,
             )

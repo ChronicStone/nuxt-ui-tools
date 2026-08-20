@@ -6,8 +6,10 @@ import type {
   ResponsiveTransformer,
   ResponsiveValueInput,
 } from '../types/responsive'
+import { isFunction, isString } from './predicate'
 
-type ResponsiveTransform = ResponsiveTransformKey | ResponsiveTransformer<unknown>
+export type ResponsiveRuntimeValue = string | number | boolean | object | null
+type ResponsiveTransform = ResponsiveTransformKey | ResponsiveTransformer<ResponsiveRuntimeValue>
 
 export type ViewportLike = {
   breakpoint: { value: string }
@@ -66,8 +68,8 @@ export function resolveResponsiveValueAtBreakpoint(
   value: ResponsiveValueInput,
   context: ResponsiveBreakpointContext,
   transform?: ResponsiveTransform,
-): unknown | null {
-  if (typeof value !== 'string') return value
+): ResponsiveValueInput | ResponsiveRuntimeValue {
+  if (!isString(value)) return value
 
   const resolvedValue =
     parseResponsiveValue(value, context.breakpointKeys)[context.breakpoint] ?? null
@@ -82,9 +84,12 @@ export function getOrderedBreakpointKeys(viewport: ViewportLike): string[] {
     .map(([breakpoint]) => breakpoint)
 }
 
-function transformResponsiveValue(value: string, transform?: ResponsiveTransform): unknown {
+function transformResponsiveValue(
+  value: string,
+  transform?: ResponsiveTransform,
+): ResponsiveRuntimeValue {
   if (transform === undefined || transform === 'string') return value
-  if (typeof transform === 'function') return transform(value)
+  if (isResponsiveTransformer(transform)) return transform(value)
   if (transform === 'boolean') return value === 'true'
   if (transform === 'integer') return Number.parseInt(value, 10)
   if (transform === 'float') return Number.parseFloat(value)
@@ -95,4 +100,10 @@ function transformResponsiveValue(value: string, transform?: ResponsiveTransform
   if (transform === 'maxWidth') return `max-width: ${value}`
 
   return `max-height: ${value}`
+}
+
+function isResponsiveTransformer<T>(
+  value: T,
+): value is T & ResponsiveTransformer<ResponsiveRuntimeValue> {
+  return isFunction(value)
 }

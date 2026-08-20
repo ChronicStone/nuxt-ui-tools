@@ -11,15 +11,20 @@ import type {
   TableRemoteSource,
 } from '#ui-tools/table/types'
 
+import { isObject } from '../../src/runtime/shared/utils/predicate'
+
 describe('table package surface', () => {
   it('exports defineTableSchema from the package root', () => {
     expectTypeOf(defineTableSchema).toBeFunction()
   })
 
   it('declares TanStack Query on the package boundary', () => {
-    const packageJson = JSON.parse(
+    interface PackageMetadata {
+      peerDependencies?: Record<string, string>
+    }
+    const packageJson: PackageMetadata = JSON.parse(
       readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
-    ) as { peerDependencies?: Record<string, string> }
+    )
 
     expect(packageJson.peerDependencies?.['@tanstack/vue-query']).toBeDefined()
   })
@@ -48,7 +53,7 @@ describe('table package surface', () => {
     })
 
     expectTypeOf(
-      schema.pagination && typeof schema.pagination === 'object'
+      schema.pagination && isObject(schema.pagination)
         ? schema.pagination.mode === 'cursor'
           ? undefined
           : schema.pagination.showPageSizePicker

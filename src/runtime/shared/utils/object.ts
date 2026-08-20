@@ -1,6 +1,7 @@
-import type { DeepOmit, DeepPick, NestedPaths, Prettify } from '../types/utils'
+import type { DeepOmit, DeepPick, GenericObject, NestedPaths, Prettify } from '../types/utils'
+import { isObject } from './predicate'
 
-export function omit<T extends Record<PropertyKey, any>, K extends NestedPaths<T>>(
+export function omit<T extends GenericObject, K extends NestedPaths<T>>(
   obj: T,
   keys: K[],
 ): Prettify<DeepOmit<T, K>> {
@@ -10,81 +11,89 @@ export function omit<T extends Record<PropertyKey, any>, K extends NestedPaths<T
     const parts = path.split('.')
 
     if (parts.length === 1) {
-      delete result?.[parts?.[0] ?? '']
+      delete result[parts[0] ?? '']
       continue
     }
 
-    let current: any = result
+    let current: GenericObject = result
 
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i] ?? ''
+    for (let index = 0; index < parts.length - 1; index++) {
+      const part = parts[index] ?? ''
+      const child = current[part]
 
-      if (current === undefined || current === null) break
-
-      if (Array.isArray(current[part])) {
-        const remainingPath = parts.slice(i + 1).join('.')
-        const remainingParts = remainingPath.split('.')
-
-        for (const item of current[part]) {
-          if (item && typeof item === 'object') {
-            let itemCurrent = item
-            for (let j = 0; j < remainingParts.length - 1; j++) {
-              if (itemCurrent === undefined || itemCurrent === null) break
-              itemCurrent = itemCurrent[remainingParts[j] ?? '']
-            }
-            if (itemCurrent !== undefined && itemCurrent !== null) {
-              delete itemCurrent[remainingParts[remainingParts.length - 1] ?? '']
-            }
+      if (Array.isArray(child)) {
+        const remainingParts = parts.slice(index + 1)
+        for (const item of child) {
+          if (!isObject(item)) continue
+          let itemCurrent: GenericObject = item
+          for (const remainingPart of remainingParts.slice(0, -1)) {
+            const nested = itemCurrent[remainingPart]
+            if (!isObject(nested)) break
+            itemCurrent = nested
           }
+          const lastPart = remainingParts.at(-1)
+          if (lastPart !== undefined) delete itemCurrent[lastPart]
         }
         break
-      } else {
-        current = current[part]
       }
+
+      if (!isObject(child)) break
+      current = child
     }
 
-    if (current !== undefined && current !== null && !Array.isArray(result[parts[0] ?? ''])) {
-      const lastPart = parts[parts.length - 1]
-      delete current[lastPart ?? '']
-    }
+    const firstPart = parts[0]
+    const lastPart = parts.at(-1)
+    if (firstPart !== undefined && lastPart !== undefined && !Array.isArray(result[firstPart]))
+      delete current[lastPart]
   }
 
+  // SAFETY: `result` is a structured clone of `obj`; omit only removes paths permitted by `K`.
   return result as Prettify<DeepOmit<T, K>>
 }
 
-export function pick<T extends Record<PropertyKey, any>, K extends NestedPaths<T>>(
+export function pick<T extends GenericObject, K extends NestedPaths<T>>(
   obj: T,
   keys: K[],
 ): Prettify<DeepPick<T, K>> {
-  const result: any = {}
+  const result: GenericObject = {}
 
   for (const path of keys) {
     const parts = path.split('.')
-    let current = obj
+    let current: GenericObject = obj
     let target = result
 
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i] ?? ''
-      const isLast = i === parts.length - 1
-
-      if (current === undefined || current === null) break
+    for (let index = 0; index < parts.length; index++) {
+      const part = parts[index]
+      if (part === undefined) continue
+      const isLast = index === parts.length - 1
 
       if (isLast) {
         target[part] = current[part]
-      } else {
-        target[part] = target[part] || {}
-        target = target[part]
-        current = current[part]
+        continue
       }
+
+      const nextTarget = isObject(target[part]) ? target[part] : {}
+      target[part] = nextTarget
+      target = nextTarget
+
+      const nextCurrent = current[part]
+      if (!isObject(nextCurrent)) break
+      current = nextCurrent
     }
   }
 
+  // SAFETY: each selected path is constrained by `NestedPaths<T>` and is copied from `obj`.
   return result as Prettify<DeepPick<T, K>>
 }
 
-export function getObjectProperty(source: unknown, path: string) {
-  return path.split('.').reduce<unknown>((current, segment) => {
-    if (!current || typeof current !== 'object') return undefined
-    return (current as Record<string, unknown>)[segment]
-  }, source)
+type ObjectPropertyValue = GenericObject[string]
+
+export function getObjectProperty<T>(source: T, path: string): ObjectPropertyValue | undefined {
+  return path.split('.').reduce<ObjectPropertyValue | undefined>(
+    (current, segment) => {
+      if (!isObject(current)) return undefined
+      return current[segment]
+    },
+    isObject(source) ? source : undefined,
+  )
 }

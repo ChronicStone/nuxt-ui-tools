@@ -2,6 +2,7 @@ import { computed, unref, type MaybeRef, type Ref } from 'vue'
 
 import type { UiToolsDirection, UiToolsLocale } from '#ui-tools/i18n/types'
 import { getObjectProperty } from '#ui-tools/shared/utils/object'
+import { isString } from '#ui-tools/shared/utils/predicate'
 
 export type UiToolsTranslatorOption = Record<string, string | number>
 export type UiToolsTranslator = (path: string, option?: UiToolsTranslatorOption) => string
@@ -21,7 +22,7 @@ export function translateUiToolsMessage<TMessages>(
 ) {
   const message = getObjectProperty(locale.messages, path)
 
-  if (typeof message !== 'string') return path
+  if (!isString(message)) return path
 
   return message.replace(/\{(\w+)\}/g, (_, key: string) => `${option?.[key] ?? `{${key}}`}`)
 }

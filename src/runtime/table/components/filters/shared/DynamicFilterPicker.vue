@@ -16,7 +16,9 @@ import type {
 } from '../../../types'
 import {
   mergeDataListUiClass,
+  resolveDataListControlGeometry,
   resolveFilterEditorSizeClasses,
+  resolveDataListPopoverContentClass,
   resolveFilterTriggerIcon,
 } from '../../../utils'
 import { resolveFilterTagComponent } from '../tags/registry'
@@ -52,6 +54,7 @@ const size = computed(
   () => props.size ?? dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value,
 )
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
 
 const selectedDefinition = computed(() => {
   if (selectedKey.value == null) return undefined
@@ -157,10 +160,13 @@ function toggle() {
       onFocusOutside: handleFocusOutside,
     }"
     :ui="{
-      content: mergeDataListUiClass(
-        'w-fit max-w-[calc(100vw-1rem)] overflow-hidden p-0',
-        undefined,
-        ui?.popoverContent,
+      content: resolveDataListPopoverContentClass(
+        'fit',
+        mergeDataListUiClass(
+          `${sizeClasses.editor} overflow-hidden p-0`,
+          undefined,
+          ui?.popoverContent,
+        ),
       ),
     }"
     @update:open="handleOpenChange"
@@ -251,7 +257,7 @@ function toggle() {
                 {{ getLabel(definition) }}
               </span>
               <span :class="mergeDataListUiClass('text-muted', undefined, ui?.optionTrailingIcon)">
-                <UIcon name="i-lucide-arrow-right" class="size-4" />
+                <UIcon name="i-lucide-arrow-right" :class="geometry.icon" />
               </span>
             </button>
           </FilterSearchablePanel>

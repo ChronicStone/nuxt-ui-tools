@@ -5,7 +5,7 @@ import type {
   SpreadsheetDynamicCollectionItemDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
 } from './columns'
-import type { SpreadsheetIssueLevel } from './shared'
+import type { SpreadsheetIssueLevel, SpreadsheetRecord } from './shared'
 
 export interface SpreadsheetHeaderCell {
   index: number
@@ -62,7 +62,7 @@ export interface SpreadsheetRowIssue {
   header?: string
 }
 
-export interface SpreadsheetParsedRow<TRow = Record<string, unknown>> {
+export interface SpreadsheetParsedRow<TRow = SpreadsheetRecord> {
   index: number
   source: readonly unknown[]
   data: TRow

@@ -30,20 +30,22 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
     const focused =
       (await focusFormFieldElement(fieldElements.get(key) ?? null)) || (await focusFormField(path))
     if (focused) return true
+    if (!import.meta.client) return false
 
     await waitForFocusRequest()
     const element = fieldElements.get(key)
     return Boolean(document.activeElement && element?.contains(document.activeElement))
   }
 
-  async function focusFirstInvalid(errors = params.getErrors()) {
+  async function focusFirstInvalid(errors?: readonly FormValidationError[]) {
     await nextTick()
-    for (const error of errors) {
+    const resolvedErrors = errors ?? params.getErrors()
+    for (const error of resolvedErrors) {
       const focused = await focusField(error.path)
       if (focused) return true
     }
 
-    return focusFirstInvalidFormField(errors)
+    return focusFirstInvalidFormField(resolvedErrors)
   }
 
   return {
@@ -55,5 +57,5 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
 }
 
 function waitForFocusRequest() {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, 160))
+  return new Promise<void>((resolve) => setTimeout(resolve, 160))
 }

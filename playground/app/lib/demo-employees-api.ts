@@ -1,5 +1,5 @@
-import type { TableSourceExecutionResult } from '#ui-tools/table'
-import type { GenericObject, TableResolvedFilterGroup } from '#ui-tools/table/types'
+import type { TableCursorPageResult, TableOffsetPageResult } from '#ui-tools/table'
+import type { GenericObject, TableSourceRequestContext } from '#ui-tools/table/types'
 
 export interface DemoCompany {
   id: string
@@ -39,29 +39,15 @@ export interface DemoEmployeeRow extends GenericObject {
   employeeSkills: DemoEmployeeSkill[]
 }
 
-export interface DemoEmployeesTableRequest {
-  pagination: {
-    pageIndex: number
-    pageSize: number
-  }
-  sorting: Array<{
-    key: string
-    dir: 'asc' | 'desc'
-  }>
-  filters: TableResolvedFilterGroup<string>
-  search: {
-    value: string
-    fields: string[]
-  }
-  context: Record<string, unknown>
-  facets?: Array<{
-    key: string
-    mode?: 'exclude-self' | 'include-self'
-    limit?: number
-  }>
-}
+export type DemoEmployeesTableRequest = TableSourceRequestContext<
+  DemoEmployeeRow,
+  GenericObject,
+  string
+>
 
-export type DemoEmployeesTableResponse = TableSourceExecutionResult<DemoEmployeeRow, string>
+export type DemoEmployeesTableResponse =
+  | TableOffsetPageResult<DemoEmployeeRow, string>
+  | TableCursorPageResult<DemoEmployeeRow, string>
 
 export interface FilterOptionsRequest {
   search?: string

@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
+  DataListControlSize,
   TableFilterOperator,
   TableTextFilterDefinition,
   TableTextFilterOperator,
@@ -14,6 +15,7 @@ import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 
 const props = defineProps<{
   definition: TableTextFilterDefinition
+  size: DataListControlSize
 }>()
 
 const internals = useTableInternals()
@@ -77,12 +79,15 @@ function handleOperatorChange(operator: TableFilterOperator) {
   <FilterPanelFieldShell
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
+    :size="size"
   >
     <template #actions>
       <FilterMatchModeButton
-        v-if="operatorItems.length > 1"
+        v-if="operatorItems.length"
         :label="operatorItems.find((item) => item.value === pendingOperator)?.label ?? 'contains'"
         :items="operatorItems"
+        :selected="pendingOperator"
+        :size="size"
         variant="compact"
         @select="handleOperatorChange"
       />
@@ -96,6 +101,7 @@ function handleOperatorChange(operator: TableFilterOperator) {
       :autocomplete="filterUi.autocomplete"
       :highlight="filterUi.input.highlight"
       :fixed="filterUi.input.fixed"
+      :size="size"
       color="neutral"
       variant="outline"
       class="w-full"

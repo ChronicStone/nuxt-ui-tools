@@ -2,6 +2,7 @@ import { computed, ref, toValue } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
 
 import type { GenericObject } from '../../shared/types/utils'
+import type { FormValue } from '../types'
 import type {
   ExtractFormOutput,
   FormApi,
@@ -14,8 +15,12 @@ import type {
   FormSubmitTarget,
 } from '../types'
 import { isRecord } from '../utils/path'
+import { isFunction } from '../utils/predicate'
 
-export function useFormSubmit<const TSchema extends GenericObject, TSubmitData = unknown>(params: {
+export function useFormSubmit<
+  const TSchema extends GenericObject,
+  TSubmitData = FormValue,
+>(params: {
   formRef: Ref<FormSubmitTarget<ExtractFormOutput<TSchema>, TSubmitData> | null | undefined>
   schema: MaybeRefOrGetter<TSchema>
   onSubmit: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>
@@ -36,12 +41,13 @@ export function useFormSubmit<const TSchema extends GenericObject, TSubmitData =
   }
 }
 
-export function useFormSubmitController<TSubmitData = unknown>(params: {
+export function useFormSubmitController<TSubmitData = FormValue>(params: {
   validate: () => Promise<boolean>
+  beforeNext?: () => Promise<boolean>
   focusFirstInvalid?: () => Promise<boolean>
   getOutput: () => FormObject
   getApi: () => FormApi
-  getSchema: () => unknown
+  getSchema: () => FormValue
   getContext: () => FormContextData
 }) {
   const actionPending = ref<FormSubmitAction | null>(null)
@@ -49,14 +55,26 @@ export function useFormSubmitController<TSubmitData = unknown>(params: {
   async function submitHandler(
     externalSubmitHandler?: FormSubmitHandler<FormObject, TSubmitData>,
   ): Promise<FormSubmitHandlerResult<TSubmitData>> {
-    const isValid = await params.validate()
-    if (!isValid) {
-      await params.focusFirstInvalid?.()
-      return { success: false }
-    }
+    if (actionPending.value) return { success: false }
 
+    actionPending.value = 'submit'
     try {
-      actionPending.value = 'submit'
+      const isValid = await params.validate()
+      if (!isValid) {
+        await params.focusFirstInvalid?.()
+        return { success: false }
+      }
+
+      if (params.beforeNext) {
+        actionPending.value = 'next'
+        try {
+          const beforeNextResult = await params.beforeNext()
+          if (!beforeNextResult) return { success: false }
+        } finally {
+          actionPending.value = 'submit'
+        }
+      }
+
       const beforeSubmit = getBeforeSubmit(params.getSchema())
       const beforeResult = await beforeSubmit?.({
         formData: params.getOutput(),
@@ -92,22 +110,28 @@ function normalizeSubmitResult<TSubmitData>(
 ): FormSubmitHandlerResult<TSubmitData> {
   if (result === false) return { success: false }
   if (isRecord(result) && result.success === false) return { success: false }
-  if (isRecord(result) && result.success === true) return { success: true, data: result.data }
+  if (isSuccessfulSubmitResult<TSubmitData>(result)) return { success: true, data: result.data }
   return { success: true }
+}
+
+function isSuccessfulSubmitResult<TSubmitData>(
+  result: FormSubmitResult<TSubmitData> | undefined,
+): result is { success: true; data: TSubmitData } {
+  return isRecord(result) && result.success === true
 }
 
 function isCancelled(result: FormSubmitResult<never> | undefined) {
   return result === false || (isRecord(result) && result.success === false)
 }
 
-function getBeforeSubmit(schema: unknown): FormSubmitHandler<FormObject, never> | undefined {
+function getBeforeSubmit(schema: FormValue): FormSubmitHandler<FormObject, never> | undefined {
   if (!isRecord(schema)) return undefined
   const handler = Object.getOwnPropertyDescriptor(schema, 'onBeforeSubmit')?.value
-  return typeof handler === 'function' ? handler : undefined
+  return isFunction(handler) ? handler : undefined
 }
 
-function getSchemaSubmit(schema: unknown) {
+function getSchemaSubmit(schema: FormValue) {
   if (!isRecord(schema)) return undefined
   const submit = Object.getOwnPropertyDescriptor(schema, 'submit')?.value
-  return typeof submit === 'function' ? submit : undefined
+  return isFunction(submit) ? submit : undefined
 }

@@ -19,9 +19,10 @@ export function filterFilterOptionTree(options: {
   const normalizedSearch = options.search.trim().toLowerCase()
 
   if (!normalizedSearch.length) {
+    const expandedIds: string[] = []
     return {
       entries: options.entries,
-      expandedIds: [] as string[],
+      expandedIds,
     }
   }
 

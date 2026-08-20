@@ -1,4 +1,5 @@
 import type { GenericObject } from '../../shared/types/utils'
+import type { FormValue } from '../types'
 import type {
   FormAction,
   FormApi,
@@ -14,7 +15,7 @@ import type {
 } from '../types'
 
 type FormSchemaSubmit<TContext extends FormContextDefinition | undefined> = (params: {
-  value: unknown
+  value: FormValue
   api: FormApi
   ctx: FormContextData<TContext>
 }) => Promise<void> | void
@@ -30,12 +31,12 @@ interface FormSchemaBase<TContext extends FormContextDefinition | undefined> {
   drawer?: import('../types').FormDrawerConfig
   fullscreen?: import('../types').FormFullscreenConfig
   actions?: readonly FormAction[]
-  onBeforeSubmit?: FormSubmitHandler<unknown, never>
+  onBeforeSubmit?: FormSubmitHandler<FormValue, never>
   submit?: FormSchemaSubmit<TContext>
-  onBeforeNext?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<boolean | void>
-  onBeforePrevious?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<void>
-  skipStep?: (params: FormStepLifecycleParams<unknown>) => boolean
-  onStepSkipped?: (params: Omit<FormStepLifecycleParams<unknown>, 'stepData'>) => void
+  onBeforeNext?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<boolean | void>
+  onBeforePrevious?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<void>
+  skipStep?: (params: FormStepLifecycleParams<FormValue>) => boolean
+  onStepSkipped?: (params: Omit<FormStepLifecycleParams<FormValue>, 'stepData'>) => void
 }
 
 interface FormSchemaWithContextFields<
@@ -97,7 +98,7 @@ export function defineFormSchema<const TSchema>(
   schema: TSchema extends {
     readonly context?: undefined
     readonly fields?: never
-    readonly steps: readonly unknown[]
+    readonly steps: readonly FormValue[]
   }
     ? TSchema
     : never,
@@ -124,7 +125,7 @@ export function defineFormSchema<
 >(
   schema: TSchema & FormSchemaWithoutContextSteps<TSteps>,
 ): TSchema & FormSchemaWithoutContextSteps<TSteps>
-export function defineFormSchema(schema: unknown) {
+export function defineFormSchema(schema: FormValue) {
   return schema
 }
 

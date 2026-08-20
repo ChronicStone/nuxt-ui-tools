@@ -1,6 +1,12 @@
 export type DataListDensity = 'compact' | 'default' | 'comfortable'
-export type DataListControlSize = 'xs' | 'sm' | 'md' | 'lg'
+export type DataListControlSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+/** Controls whether a granular content part owns its table boundary. */
+export type DataListContentSurface = 'plain' | 'contained'
+/** Selects the width contract for table popover content. */
+export type DataListPopoverSizing = 'fit' | 'trigger' | 'independent'
 export type DataListContentFit = 'content' | 'height' | 'fill'
+export type DataListFilterPanelMode = 'drawer' | 'panel'
+export type DataListFilterPanelCommitMode = 'live' | 'submit'
 
 /** A Tailwind class override for a named DataList UI slot. */
 export type DataListUiClass = string
@@ -101,6 +107,13 @@ export interface DataListFilterPanelUi {
   apply?: DataListUiClass
 }
 
+export interface DataListFilterPanelConfig extends DataListPartConfig<DataListFilterPanelUi> {
+  /** Renders the filter fields inline instead of inside a slideover. */
+  mode?: DataListFilterPanelMode
+  /** Applies each field change immediately or waits for the Apply command. */
+  commitMode?: DataListFilterPanelCommitMode
+}
+
 /** UI slots rendered by the clear-filters control. */
 export interface DataListClearFiltersUi {
   [slot: string]: DataListUiClass | undefined
@@ -177,6 +190,12 @@ export interface DataListContentUi {
   errorTitle?: DataListUiClass
   errorDescription?: DataListUiClass
   retry?: DataListUiClass
+}
+
+/** Render the content boundary here or leave it to the surrounding composition. */
+export interface DataListContentOptions {
+  /** Use `contained` for an assembled boundary, or `plain` for consumer-owned composition. */
+  surface?: DataListContentSurface
 }
 
 /** UI slots rendered by the table mode. Nuxt UI table slots are forwarded unchanged. */
@@ -273,16 +292,16 @@ export interface DataListUiConfig {
   search?: DataListSearchConfig
   filterTags?: DataListPartConfig<DataListFilterTagsUi>
   addFilter?: DataListPartConfig<DataListAddFilterUi>
-  filterPanel?: DataListPartConfig<DataListFilterPanelUi>
+  filterPanel?: DataListFilterPanelConfig
   clearFilters?: DataListPartConfig<DataListClearFiltersUi>
-  resultCount?: { ui?: DataListResultCountUi }
+  resultCount?: DataListPartConfig<DataListResultCountUi>
   refresh?: DataListPartConfig<DataListRefreshUi>
   columnPanel?: DataListPartConfig<DataListColumnPanelUi>
   sortMenu?: DataListPartConfig<DataListSortMenuUi>
   layoutSwitch?: DataListPartConfig<DataListLayoutSwitchUi>
-  content?: { ui?: DataListContentUi }
-  table?: { ui?: DataListTableUi }
-  grid?: { ui?: DataListGridUi }
+  content?: DataListPartConfig<DataListContentUi>
+  table?: DataListPartConfig<DataListTableUi>
+  grid?: DataListPartConfig<DataListGridUi>
   pagination?: DataListPartConfig<DataListPaginationUi>
   infiniteLoader?: DataListPartConfig<DataListInfiniteLoaderUi>
 }

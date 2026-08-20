@@ -1,17 +1,44 @@
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 
+import { isFunction, isNumber } from '../../shared/utils/predicate'
 import type { TableInjectedRowActionScope } from '../composables/use-table-row-actions'
-import type { GenericObject, TableRowAction, TableSchemaView } from '../types'
+import type {
+  GenericObject,
+  TableRowAction,
+  TableRuntimeRecord,
+  TableApi,
+  TableLayout,
+  TableSchemaView,
+  TableTextValue,
+} from '../types'
 
 type RowActionSchemaSource = {
   rowActions?: TableSchemaView['rowActions']
 }
 
-type ResolvedRowAction = TableRowAction<
-  GenericObject,
-  Record<string, unknown>,
-  Record<string, unknown>
->
+export function hasConfiguredTableActions(
+  schema: Pick<TableSchemaView, 'actions' | 'toolbarActions' | 'rowActions'>,
+) {
+  return Boolean(schema.actions?.length)
+}
+
+export function resolveTableActionDefinitions(
+  schema: Pick<TableSchemaView, 'actions' | 'toolbarActions'>,
+) {
+  return {
+    bulkActions: schema.actions ?? [],
+    toolbarActions: schema.toolbarActions ?? [],
+  }
+}
+
+type ResolvedRowAction = TableRowAction<GenericObject, TableRuntimeRecord, TableRuntimeRecord>
+type TableRowActionFactory = (params: {
+  row: GenericObject
+  context: TableRuntimeRecord
+  pageContext: TableRuntimeRecord
+  tableApi: TableApi
+  layout: TableLayout
+}) => ResolvedRowAction[]
 
 export function resolveTableRowActions(options: {
   schema: RowActionSchemaSource
@@ -20,7 +47,7 @@ export function resolveTableRowActions(options: {
   const source = options.schema.rowActions
 
   if (!source) return []
-  if (typeof source === 'function') return source(options.scope)
+  if (isRowActionResolver(source)) return source(options.scope)
 
   return source
 }
@@ -103,16 +130,20 @@ function mapRowActionToDropdownItem(options: {
 }
 
 function resolveActionLabel(action: ResolvedRowAction) {
-  if (typeof action.label === 'function') return String(action.label())
-  if (typeof action.label === 'number') return String(action.label)
-  return action.label
+  return resolveTableActionLabel(action.label)
+}
+
+export function resolveTableActionLabel(label: TableTextValue | undefined) {
+  if (isFunction(label)) return String(label())
+  if (isNumber(label)) return String(label)
+  return label
 }
 
 function resolveConditionalBoolean(options: {
   value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined
   scope: TableInjectedRowActionScope
 }) {
-  if (typeof options.value === 'function') return options.value(options.scope)
+  if (isRowActionBooleanResolver(options.value)) return options.value(options.scope)
   return options.value ?? true
 }
 
@@ -127,8 +158,18 @@ function resolveFlag(options: {
   value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined
   scope: TableInjectedRowActionScope
 }) {
-  if (typeof options.value === 'function') return options.value(options.scope)
+  if (isRowActionBooleanResolver(options.value)) return options.value(options.scope)
   return options.value ?? false
+}
+
+function isRowActionResolver(value: TableSchemaView['rowActions']): value is TableRowActionFactory {
+  return isFunction(value)
+}
+
+function isRowActionBooleanResolver(
+  value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined,
+): value is (scope: TableInjectedRowActionScope) => boolean {
+  return isFunction(value)
 }
 
 function pruneTableRowActions(options: {
@@ -166,6 +207,6 @@ function isActionItemSelectable(action: ResolvedRowAction) {
   return false
 }
 
-function toPlainRecord(value: object) {
+function toPlainRecord(value: GenericObject): TableRuntimeRecord {
   return Object.fromEntries(Object.entries(value))
 }

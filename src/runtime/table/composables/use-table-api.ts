@@ -6,6 +6,9 @@ import type {
   ExtractTableRow,
   PublicTableQueryState,
   TableApi,
+  TableCursorPaginationApi,
+  TableNoPaginationApi,
+  TableOffsetPaginationApi,
   TablePaginationApi,
   TableSchemaView,
 } from '../types'
@@ -19,8 +22,9 @@ import type { useTablePagination } from './use-table-pagination'
 import type { useTableSelection } from './use-table-selection'
 import type { useTableState } from './use-table-state'
 
-export interface UseTableApiParams {
+export interface UseTableApiParams<TSchema = TableSchemaView> {
   runtimeSchema: ComputedRef<TableSchemaView>
+  publicSchema: ComputedRef<TSchema>
   layout: ReturnType<typeof useTableLayout>
   state: ReturnType<typeof useTableState>
   selection: ReturnType<typeof useTableSelection>
@@ -32,7 +36,7 @@ export interface UseTableApiParams {
 }
 
 export function useTableApi<TSchema = TableSchemaView>(
-  params: UseTableApiParams,
+  params: UseTableApiParams<TSchema>,
 ): TableApi<TSchema> {
   const state: TableApi<TSchema>['state'] = {
     layout: params.layout.activeLayout,
@@ -49,16 +53,20 @@ export function useTableApi<TSchema = TableSchemaView>(
   }
 
   const data: TableApi<TSchema>['data'] = {
+    // SAFETY: runtime rows are decoded by the schema source; this projects the public generic row type.
     rows: computed(() => params.queryContent.data.value.rows as ExtractTableRow<TSchema>[]),
     rowCount: computed(() => params.queryContent.data.value.rowCount),
     loadedRowCount: computed(() => params.queryContent.data.value.rows.length),
     totalRowCount: computed(() => params.queryContent.data.value.rowCount),
+    // SAFETY: raw rows follow the same schema source contract before client-side shaping.
     rawRows: computed(() => params.queryContent.rawData.value.rows as ExtractTableRow<TSchema>[]),
     rawRowCount: computed(() => params.queryContent.rawData.value.rowCount),
     context: computed(
+      // SAFETY: context keys are decoded from the schema context items before publication.
       () => params.queryContent.contextData.value as ExtractTableContextData<TSchema>,
     ),
     pageContext: computed(
+      // SAFETY: page-context keys are decoded from the schema page-context items before publication.
       () => params.queryContent.pageContextData.value as ExtractTablePageContextData<TSchema>,
     ),
     requestContext: params.queryContent.requestContext,
@@ -87,7 +95,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     replace: (rules) => params.filters.replaceFilters({ rules }),
   }
 
-  const pagination = createPublicPaginationApi<TSchema>(params.pagination)
+  const pagination = createPublicPaginationApi(params.pagination, params.publicSchema)
 
   const sorting: TableApi<TSchema>['sorting'] = {
     state: params.columns.sortingState,
@@ -151,12 +159,16 @@ export function useTableApi<TSchema = TableSchemaView>(
 
 function createPublicPaginationApi<TSchema>(
   pagination: ReturnType<typeof useTablePagination>,
+  schema: ComputedRef<TSchema>,
 ): TablePaginationApi<TSchema>
-function createPublicPaginationApi(pagination: ReturnType<typeof useTablePagination>): unknown {
+function createPublicPaginationApi(
+  pagination: ReturnType<typeof useTablePagination>,
+  _schema: ComputedRef<unknown>,
+): TableNoPaginationApi | TableCursorPaginationApi | TableOffsetPaginationApi {
   if (pagination.mode.value === 'cursor')
     return {
       mode: 'cursor',
-      state: pagination.state,
+      state: pagination.cursorState,
       loadMore: pagination.loadMore,
       reset: pagination.reset,
     }
@@ -164,13 +176,13 @@ function createPublicPaginationApi(pagination: ReturnType<typeof useTablePaginat
   if (pagination.mode.value === 'none')
     return {
       mode: 'none',
-      state: pagination.state,
+      state: pagination.noneState,
       reset: pagination.reset,
     }
 
   return {
     mode: 'offset',
-    state: pagination.state,
+    state: pagination.offsetState,
     pageSizeOptions: pagination.pageSizeOptions,
     setPage: pagination.setPage,
     setPageSize: pagination.setPageSize,

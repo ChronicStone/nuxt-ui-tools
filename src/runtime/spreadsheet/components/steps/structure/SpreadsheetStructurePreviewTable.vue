@@ -4,6 +4,8 @@ import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import type { SpreadsheetValue } from '../../../types'
+
 const props = defineProps<{
   rows: Array<{
     absoluteIndex: number
@@ -31,11 +33,11 @@ const rowVirtualizer = useVirtualizer(
 const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize())
 
-function formatHeaderCell(cell: unknown) {
+function formatHeaderCell(cell: SpreadsheetValue) {
   return String(cell ?? '').trim()
 }
 
-function getStatusCellTone(value: unknown) {
+function getStatusCellTone(value: SpreadsheetValue) {
   return String(value ?? '').toLowerCase() === 'fail' ? 'text-error' : 'text-toned'
 }
 </script>

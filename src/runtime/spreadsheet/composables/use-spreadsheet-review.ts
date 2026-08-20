@@ -5,7 +5,12 @@ import { computed, ref, type ComputedRef, h } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePreview.vue'
-import type { SpreadsheetRowIssue, SpreadsheetResolvedReferenceRow } from '../types'
+import type {
+  SpreadsheetRecord,
+  SpreadsheetRowIssue,
+  SpreadsheetResolvedReferenceRow,
+  SpreadsheetValue,
+} from '../types'
 import { formatSpreadsheetCell, humanizeSpreadsheetKey } from '../utils/display'
 import {
   getSpreadsheetLeafPaths,
@@ -16,12 +21,12 @@ import {
 export type SpreadsheetReviewTab = 'all' | 'valid' | 'invalid' | 'discarded'
 export type SpreadsheetReviewIssueFilter = 'all' | 'blocking' | 'warning'
 
-interface SpreadsheetReviewRow extends SpreadsheetResolvedReferenceRow<Record<string, unknown>> {
-  rowObject: Record<string, unknown>
+interface SpreadsheetReviewRow extends SpreadsheetResolvedReferenceRow<SpreadsheetRecord> {
+  rowObject: SpreadsheetRecord
 }
 
 export interface UseSpreadsheetReviewParams {
-  resolvedRows: ComputedRef<readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[]>
+  resolvedRows: ComputedRef<readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[]>
   maxRecords: ComputedRef<number>
 }
 
@@ -68,7 +73,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     clearSelection()
   }
 
-  function selectAllVisible(checked: boolean | 'indeterminate') {
+  function selectAllVisible(checked: SpreadsheetValue) {
     if (checked !== true) {
       clearSelection()
       return
@@ -310,12 +315,12 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     return 'bg-warning/10'
   }
 
-  function getIssueValue(rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) {
+  function getIssueValue(rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) {
     if (!issue.columnKey) return t('spreadsheet.steps.review.noValue')
     return formatSpreadsheetCell(getSpreadsheetValueAtPath(rowData, issue.columnKey))
   }
 
-  function getIssueRawValue(rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) {
+  function getIssueRawValue(rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) {
     if (!issue.columnKey) return undefined
     return getSpreadsheetValueAtPath(rowData, issue.columnKey)
   }
@@ -353,7 +358,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
           h(UCheckbox, {
             modelValue: rowSelection.value[String(row.original.index)] ?? false,
             disabled: isOverflowRow(row.original.index) && activeTab.value !== 'discarded',
-            'onUpdate:modelValue': (value: boolean | 'indeterminate') => {
+            'onUpdate:modelValue': (value: SpreadsheetValue) => {
               rowSelection.value = {
                 ...rowSelection.value,
                 [String(row.original.index)]: value === true,
@@ -406,9 +411,9 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     ...tableColumns.value.map((column: string) => ({
       id: column,
       header: humanizeSpreadsheetKey(column),
-      accessorFn: (row: { data: Record<string, unknown> }) =>
+      accessorFn: (row: { data: SpreadsheetRecord }) =>
         formatSpreadsheetCell(getSpreadsheetValueAtPath(row.data, column)),
-      cell: ({ row }: { row: { original: { data: Record<string, unknown> } } }) =>
+      cell: ({ row }: { row: { original: { data: SpreadsheetRecord } } }) =>
         h(SpreadsheetValuePreview, {
           value: getSpreadsheetValueAtPath(row.original.data, column),
           compact: true,

@@ -1,27 +1,39 @@
 <script setup lang="ts">
+import UAlert from '@nuxt/ui/components/Alert.vue'
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { useAppConfig } from 'nuxt/app'
-import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useFormActions } from '../../composables/use-form-actions'
 import { useFormGridLayout } from '../../composables/use-form-layout'
 import { provideFormRuntime, useFormRuntime } from '../../composables/use-form-runtime'
 import { provideFormUi } from '../../composables/use-form-ui'
+import type { FormValue } from '../../types'
 import type { FormObject, FormRendererController, FormRenderShell, FormUiConfig } from '../../types'
 import type { FormValidationMode } from '../../types'
 import { isRecord } from '../../utils/path'
-import { getSchemaSteps } from '../../utils/state'
+import {
+  isBoolean,
+  isFunction,
+  isNumber,
+  isString,
+  isUndefined,
+  stringArray,
+} from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUi, mergeFormUiClass, resolveAppFormUi } from '../../utils/ui'
 import FormActions from '../actions/FormActions.vue'
 import FormFieldRenderer from '../renderer/FormFieldRenderer.vue'
+import FormDirectionalTransition from '../utils/FormDirectionalTransition.vue'
 
 const props = defineProps<{
   form?: FormRendererController
-  schema?: unknown
+  schema?: FormValue
   input?: FormObject
   shell?: FormRenderShell
   syncInput?: boolean | readonly string[]
@@ -33,9 +45,10 @@ const props = defineProps<{
 const router = useRouter()
 
 const emit = defineEmits<{
-  submit: [value: FormObject, result: { success: boolean; data?: unknown }]
+  submit: [value: FormObject, result: { success: boolean; data?: FormValue }]
   cancel: [value: FormObject]
 }>()
+const { t } = useUiToolsLocale()
 
 const schemaRef = computed(() => props.form?.schema.value ?? props.schema ?? {})
 const appConfig = useAppConfig()
@@ -75,14 +88,14 @@ onBeforeUnmount(() => props.form?.unbind(runtime))
 onMounted(async () => {
   await nextTick()
   const target = getSchemaAutoFocus(schemaRef.value)
-  if (typeof target === 'string') {
+  if (isString(target)) {
     await runtime.focusField(target)
     return
   }
   if (target === true) await focusFirstRenderedField()
 })
 
-if (typeof window !== 'undefined') {
+if (import.meta.client) {
   const handleBeforeUnload = (event: BeforeUnloadEvent) => {
     if (!shouldConfirmDirtyNavigation()) return
     event.preventDefault()
@@ -98,7 +111,18 @@ const removeRouteGuard = router.beforeEach(() => {
 })
 onBeforeUnmount(removeRouteGuard)
 
-const currentStep = computed(() => getSchemaSteps(schemaRef.value)[runtime.currentStepIndex.value])
+const displayedStepIndex = ref<number>(runtime.currentStepIndex.value)
+const stepTransitionDirection = ref<'forward' | 'backward'>('forward')
+const stepTransitioning = ref<boolean>(false)
+watch(
+  () => runtime.currentStepIndex.value,
+  (nextIndex) => {
+    stepTransitionDirection.value = nextIndex > displayedStepIndex.value ? 'forward' : 'backward'
+    nextTick(() => {
+      displayedStepIndex.value = nextIndex
+    })
+  },
+)
 const parentPath = computed(() =>
   runtime.currentStepRoot.value ? [runtime.currentStepRoot.value] : [],
 )
@@ -111,7 +135,10 @@ const isOverlayShell = computed(
 )
 const rootClass = computed(() =>
   mergeFormUiClass(
-    isOverlayShell.value ? 'flex h-full min-h-0 flex-col' : 'grid gap-5',
+    isOverlayShell.value
+      ? 'flex h-full min-h-0 w-full min-w-0 flex-col'
+      : 'flex min-w-0 flex-col gap-4',
+    stepTransitioning.value ? 'overflow-hidden' : undefined,
     formUi.ui.value.root?.ui?.root,
   ),
 )
@@ -123,7 +150,11 @@ const headerClass = computed(() =>
 )
 const viewportClass = computed(() =>
   mergeFormUiClass(
-    isOverlayShell.value ? 'min-h-0 flex-1 overflow-y-auto px-5 py-5' : '',
+    isOverlayShell.value
+      ? `min-h-0 flex-1 overflow-y-auto px-5 py-5${stepTransitioning.value ? ' overflow-hidden' : ''}`
+      : stepTransitioning.value
+        ? 'overflow-hidden'
+        : '',
     formUi.ui.value.root?.ui?.viewport,
   ),
 )
@@ -138,10 +169,21 @@ const footerClass = computed(() =>
 const actions = useFormActions({ runtime, shell })
 const contextPending = computed<boolean>(() =>
   Object.values(runtime.context).some(
-    (resource) =>
-      'pending' in resource && resource.pending && typeof resource.value === 'undefined',
+    (resource) => 'pending' in resource && resource.pending && isUndefined(resource.value),
   ),
 )
+const contextLoading = computed<boolean>(() =>
+  Object.values(runtime.context).some((resource) => 'loading' in resource && resource.loading),
+)
+const contextError = computed<string | undefined>(() => {
+  for (const resource of Object.values(runtime.context)) {
+    if (!('error' in resource) || !resource.error) continue
+    if (resource.error instanceof Error) return resource.error.message
+    if (isString(resource.error)) return resource.error
+    return t('form.states.contextError.description')
+  }
+  return undefined
+})
 
 async function submit() {
   if (props.form) {
@@ -152,6 +194,14 @@ async function submit() {
 
   const result = await runtime.submitHandler()
   if (result.success) emit('submit', runtime.output.value, result)
+}
+
+async function refreshContext() {
+  await Promise.all(
+    Object.values(runtime.context).flatMap((resource) =>
+      'refresh' in resource ? [resource.refresh()] : [],
+    ),
+  )
 }
 
 function cancel() {
@@ -180,49 +230,47 @@ function stepLabel(index: number) {
   return runtime.steps.value[index]?.label ?? `Step ${index + 1}`
 }
 
-function getSchemaTitle(schema: unknown) {
+function getSchemaTitle(schema: FormValue) {
   if (!isRecord(schema)) return undefined
   const value = Object.getOwnPropertyDescriptor(schema, 'title')?.value
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'function'
-    ? value
-    : undefined
+  return isString(value) || isNumber(value) || isFunction(value) ? value : undefined
 }
 
-function getSchemaUi(schema: unknown): FormUiConfig | undefined {
+function getSchemaUi(schema: FormValue): FormUiConfig | undefined {
   if (!isRecord(schema)) return undefined
   const value = Object.getOwnPropertyDescriptor(schema, 'ui')?.value
   return isRecord(value) ? value : undefined
 }
 
-function getSchemaShowStepper(schema: unknown) {
+function getSchemaShowStepper(schema: FormValue) {
   if (!isRecord(schema)) return true
   const value = Object.getOwnPropertyDescriptor(schema, 'showStepper')?.value
   return value !== false
 }
 
-function getSchemaSyncInput(schema: unknown): boolean | readonly string[] {
+function getSchemaSyncInput(schema: FormValue): boolean | readonly string[] {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'syncInput')?.value : undefined
-  if (typeof value === 'boolean') return value
-  return Array.isArray(value) ? value.filter((path) => typeof path === 'string') : false
+  if (isBoolean(value)) return value
+  return stringArray(value)
 }
 
-function getSchemaValidationMode(schema: unknown): FormValidationMode {
+function getSchemaValidationMode(schema: FormValue): FormValidationMode {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'validate')?.value : undefined
   return value === false || value === 'required' || value === 'rules' ? value : true
 }
 
-function getSchemaControls(schema: unknown) {
+function getSchemaControls(schema: FormValue) {
   if (!isRecord(schema)) return undefined
   const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
   return isRecord(controls) ? controls : undefined
 }
 
-function getSchemaAutoFocus(schema: unknown) {
+function getSchemaAutoFocus(schema: FormValue) {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'autoFocus')?.value : undefined
-  return typeof value === 'string' || typeof value === 'boolean' ? value : false
+  return isString(value) || isBoolean(value) ? value : false
 }
 
 function dirtyNavigationConfig() {
@@ -237,9 +285,7 @@ function shouldConfirmDirtyNavigation() {
   const config = dirtyNavigationConfig()
   if (!config) return false
   if (!isRecord(config)) return config === true
-  const ignored = Array.isArray(config.ignorePaths)
-    ? config.ignorePaths.filter((path) => typeof path === 'string')
-    : []
+  const ignored = stringArray(config.ignorePaths)
   return runtime.dirtyPaths.value.some(
     (path) =>
       !ignored.some((ignoredPath) => path === ignoredPath || path.startsWith(`${ignoredPath}.`)),
@@ -254,17 +300,15 @@ function getDirtyNavigationMessage() {
 }
 
 async function focusFirstRenderedField() {
-  const path = runtime.currentFields.value
-    .map(
-      (field) => `${parentPath.value.join('.')}${parentPath.value.length ? '.' : ''}${field.key}`,
-    )
-    .find(Boolean)
-  if (path) await runtime.focusField(path)
+  const paths = runtime.currentFields.value.map(
+    (field) => `${parentPath.value.join('.')}${parentPath.value.length ? '.' : ''}${field.key}`,
+  )
+  for (const path of paths) if (await runtime.focusField(path)) return
 }
 </script>
 
 <template>
-  <form :class="rootClass" @submit.prevent="submit">
+  <form novalidate :class="rootClass" @submit.prevent="submit">
     <header v-if="title || runtime.isStepped.value || isOverlayShell" :class="headerClass">
       <div
         v-if="title || isOverlayShell"
@@ -322,6 +366,28 @@ async function focusFirstRenderedField() {
     </header>
 
     <div :class="viewportClass">
+      <UAlert
+        v-if="contextError"
+        color="error"
+        variant="soft"
+        icon="i-lucide-circle-alert"
+        :title="t('form.states.contextError.title')"
+        :description="contextError"
+        class="mb-4"
+      >
+        <template #actions>
+          <UButton
+            type="button"
+            color="error"
+            variant="outline"
+            size="xs"
+            :loading="contextLoading"
+            @click="refreshContext"
+          >
+            {{ t('form.states.contextError.action') }}
+          </UButton>
+        </template>
+      </UAlert>
       <div
         v-if="contextPending"
         data-form-skeleton
@@ -341,13 +407,32 @@ async function focusFirstRenderedField() {
           />
         </div>
       </div>
-      <div v-else :class="formUi.ui.value.root?.ui?.grid" :style="grid.style.value">
-        <FormFieldRenderer
-          v-for="field in runtime.currentFields.value"
-          :key="`${parentPath.join('.')}:${field.key}`"
-          :field="field"
-          :parent-path="parentPath"
-        />
+      <div v-else class="relative min-w-0">
+        <FormDirectionalTransition
+          :direction="stepTransitionDirection"
+          @before-enter="stepTransitioning = true"
+          @after-enter="stepTransitioning = false"
+        >
+          <div
+            :key="displayedStepIndex"
+            class="grid min-w-0"
+            style="grid-template-rows: minmax(0, 1fr)"
+          >
+            <div
+              :class="
+                mergeFormUiClass('h-full min-w-0 gap-4 text-left', formUi.ui.value.root?.ui?.grid)
+              "
+              :style="grid.style.value"
+            >
+              <FormFieldRenderer
+                v-for="field in runtime.currentFields.value"
+                :key="`${parentPath.join('.')}:${field.key}`"
+                :field="field"
+                :parent-path="parentPath"
+              />
+            </div>
+          </div>
+        </FormDirectionalTransition>
       </div>
     </div>
 

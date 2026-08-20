@@ -17,12 +17,13 @@ export function createColumnMenuItems(options: {
 }): DropdownMenuItem[][] {
   const { t } = useUiToolsLocale()
   const column = options.orderedColumns.find((entry) => entry.id === options.columnId)
+  const sortableKey = column?.sortableKey
   const schemaColumn = findSchemaColumn({ schema: options.schema, columnId: options.columnId })
   const sortState = options.getSortState({ columnId: options.columnId })
   const pinnedState = options.getPinnedState({ columnId: options.columnId })
 
   return [
-    column?.sortableKey
+    sortableKey
       ? [
           {
             label: t('table.columnsMenu.sortAsc'),
@@ -30,7 +31,7 @@ export function createColumnMenuItems(options: {
             color: 'neutral' as const,
             onSelect: () =>
               options.setSorting({
-                key: column.sortableKey as string,
+                key: sortableKey,
                 dir: 'asc',
               }),
           },
@@ -40,7 +41,7 @@ export function createColumnMenuItems(options: {
             color: 'neutral' as const,
             onSelect: () =>
               options.setSorting({
-                key: column.sortableKey as string,
+                key: sortableKey,
                 dir: 'desc',
               }),
           },

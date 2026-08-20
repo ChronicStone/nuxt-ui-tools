@@ -3,8 +3,10 @@ import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
 import UInputDate from '@nuxt/ui/components/InputDate.vue'
 import { computed, ref, shallowRef, watch } from 'vue'
 
+import { isDate, isNumber, isObject, isString } from '../../../../shared/utils/predicate'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
+  DataListControlSize,
   TableDateFilterDefinition,
   TableDateFilterOperator,
   TableFilterOperator,
@@ -15,7 +17,9 @@ import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 
 const props = defineProps<{
   definition: TableDateFilterDefinition
+  size: DataListControlSize
 }>()
+type PendingDateRange = { from?: Date; to?: Date }
 
 const internals = useTableInternals()
 const pendingOperator = ref<TableDateFilterOperator>(resolveInitialOperator())
@@ -56,17 +60,17 @@ function handleOperatorChange(operator: TableFilterOperator) {
   if (filterUi.value.clearOnOperatorChange) clearFilter()
 }
 
-function setSingleDate(value: unknown) {
+function setSingleDate<TValue>(value: TValue) {
   localDate.value = coerceCalendarDate(value)
   syncScalarDraft()
 }
 
-function setRangeStart(value: unknown) {
+function setRangeStart<TValue>(value: TValue) {
   localRangeStart.value = coerceCalendarDate(value)
   syncRangeDraft()
 }
 
-function setRangeEnd(value: unknown) {
+function setRangeEnd<TValue>(value: TValue) {
   localRangeEnd.value = coerceCalendarDate(value)
   syncRangeDraft()
 }
@@ -82,10 +86,13 @@ function syncScalarDraft() {
 function syncRangeDraft() {
   const from = localRangeStart.value ? toJsDate(localRangeStart.value) : undefined
   const to = localRangeEnd.value ? toJsDate(localRangeEnd.value) : undefined
+  const value: PendingDateRange = {}
+  if (from) value.from = from
+  if (to) value.to = to
 
   internals.filterPresentation.setPanelScalarFilterValue({
     key: props.definition.key,
-    value: from || to ? { ...(from ? { from } : {}), ...(to ? { to } : {}) } : undefined,
+    value: from || to ? value : undefined,
     operator: pendingOperator.value,
   })
 }
@@ -119,16 +126,16 @@ function clearFilter() {
   localRangeEnd.value = undefined
 }
 
-function coerceCalendarDate(value: unknown) {
+function coerceCalendarDate<TValue>(value: TValue) {
   if (
     value &&
-    typeof value === 'object' &&
+    isObject(value) &&
     'year' in value &&
     'month' in value &&
     'day' in value &&
-    typeof value.year === 'number' &&
-    typeof value.month === 'number' &&
-    typeof value.day === 'number'
+    isNumber(value.year) &&
+    isNumber(value.month) &&
+    isNumber(value.day)
   ) {
     return new CalendarDate(value.year, value.month, value.day)
   }
@@ -136,9 +143,8 @@ function coerceCalendarDate(value: unknown) {
   return undefined
 }
 
-function toCalendarDate(value: unknown) {
-  if (!(value instanceof Date) && typeof value !== 'string' && typeof value !== 'number')
-    return undefined
+function toCalendarDate<TValue>(value: TValue) {
+  if (!isDate(value) && !isString(value) && !isNumber(value)) return undefined
 
   const resolvedDate = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(resolvedDate.getTime())) return undefined
@@ -184,12 +190,15 @@ watch(
   <FilterPanelFieldShell
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
+    :size="size"
   >
     <template #actions>
       <FilterMatchModeButton
-        v-if="operatorItems.length > 1"
+        v-if="operatorItems.length"
         :label="operatorItems.find((item) => item.value === pendingOperator)?.label ?? 'is'"
         :items="operatorItems"
+        :selected="pendingOperator"
+        :size="size"
         variant="compact"
         @select="handleOperatorChange"
       />
@@ -204,6 +213,7 @@ watch(
         :granularity="filterUi.range.input.granularity"
         :hide-time-zone="filterUi.range.input.hideTimeZone"
         :hour-cycle="filterUi.range.input.hourCycle"
+        :size="size"
         leading-icon="i-lucide-calendar-days"
         class="w-full"
         @update:model-value="setRangeStart"
@@ -217,6 +227,7 @@ watch(
         :granularity="filterUi.range.input.granularity"
         :hide-time-zone="filterUi.range.input.hideTimeZone"
         :hour-cycle="filterUi.range.input.hourCycle"
+        :size="size"
         leading-icon="i-lucide-calendar-days"
         class="w-full"
         @update:model-value="setRangeEnd"
@@ -232,6 +243,7 @@ watch(
       :granularity="filterUi.scalar.input.granularity"
       :hide-time-zone="filterUi.scalar.input.hideTimeZone"
       :hour-cycle="filterUi.scalar.input.hourCycle"
+      :size="size"
       leading-icon="i-lucide-calendar-days"
       class="w-full"
       @update:model-value="setSingleDate"

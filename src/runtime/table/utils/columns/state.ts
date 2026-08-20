@@ -14,7 +14,7 @@ export function createDefaultColumnState() {
       deltaOffset: null,
       deltaPercentage: null,
       isResizingColumn: false as const,
-      columnSizingStart: [] as Array<[string, number]>,
+      columnSizingStart: [],
     },
     sorting: [],
   }
@@ -74,10 +74,10 @@ export function updateColumnVisibilityState(options: {
   columnId: string
   visible: boolean
 }) {
-  const left = ((options.currentState.columnPinning?.left as string[] | undefined) ?? []).filter(
+  const left = (options.currentState.columnPinning?.left ?? []).filter(
     (id) => options.visible || id !== options.columnId,
   )
-  const right = ((options.currentState.columnPinning?.right as string[] | undefined) ?? []).filter(
+  const right = (options.currentState.columnPinning?.right ?? []).filter(
     (id) => options.visible || id !== options.columnId,
   )
 
@@ -103,10 +103,10 @@ export function updateColumnPinningState(options: {
   columnId: string
   pinned?: 'left' | 'right'
 }) {
-  const left = ((options.currentState.columnPinning?.left as string[] | undefined) ?? []).filter(
+  const left = (options.currentState.columnPinning?.left ?? []).filter(
     (id) => id !== options.columnId,
   )
-  const right = ((options.currentState.columnPinning?.right as string[] | undefined) ?? []).filter(
+  const right = (options.currentState.columnPinning?.right ?? []).filter(
     (id) => id !== options.columnId,
   )
 
@@ -221,9 +221,7 @@ function sanitizeColumnPinning(options: {
             }) === 'left',
         )
         .map((column) => column.id),
-      ...((options.currentPinning?.left as string[] | undefined) ?? []).filter((columnId) =>
-        columnIds.includes(columnId),
-      ),
+      ...(options.currentPinning?.left ?? []).filter((columnId) => columnIds.includes(columnId)),
     ],
   }).filter(
     (columnId) => columnId === SELECT_COLUMN_ID || options.visibleColumnIds.includes(columnId),
@@ -242,9 +240,7 @@ function sanitizeColumnPinning(options: {
               }) === 'right',
           )
           .map((column) => column.id),
-        ...((options.currentPinning?.right as string[] | undefined) ?? []).filter((columnId) =>
-          columnIds.includes(columnId),
-        ),
+        ...(options.currentPinning?.right ?? []).filter((columnId) => columnIds.includes(columnId)),
       ],
     }).filter(
       (columnId) => options.visibleColumnIds.includes(columnId) && !pinnedLeft.includes(columnId),

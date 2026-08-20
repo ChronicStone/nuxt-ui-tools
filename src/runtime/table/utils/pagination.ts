@@ -1,3 +1,4 @@
+import { isArray, isObject } from '../../shared/utils/predicate'
 import type {
   GenericObject,
   TableCursorPageResult,
@@ -6,11 +7,12 @@ import type {
 } from '../types'
 import { resolveTableRowId } from './rows'
 
-export function isTableCursorPageResult(value: unknown): value is TableCursorPageResult {
-  if (!value || typeof value !== 'object') return false
+export function isTableCursorPageResult<TValue>(
+  value: TValue,
+): value is TValue & TableCursorPageResult {
+  if (!isObject(value)) return false
   if (!('rows' in value) || !('pageInfo' in value)) return false
-  if (!Array.isArray(value.rows) || !value.pageInfo || typeof value.pageInfo !== 'object')
-    return false
+  if (!isArray(value.rows) || !isObject(value.pageInfo)) return false
   if (!('mode' in value.pageInfo)) return false
 
   return value.pageInfo.mode === 'cursor'

@@ -1,8 +1,8 @@
-import type { SpreadsheetParsedRow } from '../../types'
+import type { SpreadsheetParsedRow, SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import { getSpreadsheetValueAtPath } from '../object'
 import { normalizeSpreadsheetRuntimeResolutions } from './guards'
 
-export function collectSpreadsheetReferenceTokens(value: unknown) {
+export function collectSpreadsheetReferenceTokens(value: SpreadsheetValue) {
   const items = Array.isArray(value) ? value : [value]
   const tokens: string[] = []
 
@@ -18,7 +18,7 @@ export function collectSpreadsheetReferenceTokens(value: unknown) {
 
 export function collectSpreadsheetReferenceSources(
   references: readonly unknown[],
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[],
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[],
 ) {
   return normalizeSpreadsheetRuntimeResolutions(references).flatMap((entry) => {
     const entries = new Map<string, number[]>()

@@ -1,4 +1,5 @@
 import type { FormValidationError } from '../types'
+import { isString } from './predicate'
 
 const focusableSelector = [
   'input:not([disabled]):not([type="hidden"])',
@@ -9,11 +10,11 @@ const focusableSelector = [
 ].join(',')
 
 export function normalizeFormFocusPath(path: string | readonly string[]) {
-  return typeof path === 'string' ? path : path.join('.')
+  return isString(path) ? path : path.join('.')
 }
 
 export async function focusFormField(path: string | readonly string[]) {
-  if (typeof document === 'undefined') return false
+  if (!import.meta.client) return false
 
   const fieldElement = findFieldElement(normalizeFormFocusPath(path))
   return focusFormFieldElement(fieldElement)

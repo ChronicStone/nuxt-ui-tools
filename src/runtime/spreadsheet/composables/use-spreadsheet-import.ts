@@ -6,49 +6,50 @@ import type {
   SpreadsheetBinarySource,
   SpreadsheetImportApi,
   SpreadsheetParsedRow,
+  SpreadsheetRecord,
   SpreadsheetResolvedReferenceRow,
 } from '../types'
 import { createSpreadsheetInternals, type SpreadsheetInternals } from './use-spreadsheet-internals'
 
 function mapSpreadsheetParsedRows<TSchema>(
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[],
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[],
 ): readonly SpreadsheetParsedRow<ExtractSpreadsheetRow<TSchema>>[]
-function mapSpreadsheetParsedRows(rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]) {
+function mapSpreadsheetParsedRows(rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[]) {
   return rows
 }
 
 function mapSpreadsheetResolvedRows<TSchema>(
-  rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[],
+  rows: readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[],
 ): readonly SpreadsheetResolvedReferenceRow<ExtractSpreadsheetRow<TSchema>>[]
 function mapSpreadsheetResolvedRows(
-  rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[],
+  rows: readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[],
 ) {
   return rows
 }
 
 function mapSpreadsheetRowData<TSchema>(
-  rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[],
+  rows: readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[],
 ): readonly ExtractSpreadsheetRow<TSchema>[]
 function mapSpreadsheetRowData(
-  rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[],
+  rows: readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[],
 ) {
   return rows.map((row) => row.data)
 }
 
 async function createSpreadsheetSubmitPayloads<TSchema>(params: {
   schema: TSchema
-  context: Record<string, unknown>
-  rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[]
+  context: SpreadsheetRecord
+  rows: readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[]
 }): Promise<readonly ExtractSpreadsheetSubmitPayload<TSchema>[]>
 async function createSpreadsheetSubmitPayloads(params: {
   schema: {
     buildRow?: (params: {
-      context: Record<string, unknown>
-      row: Record<string, unknown>
-    }) => Promise<unknown> | unknown
+      context: SpreadsheetRecord
+      row: SpreadsheetRecord
+    }) => Promise<SpreadsheetRecord> | SpreadsheetRecord
   }
-  context: Record<string, unknown>
-  rows: readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[]
+  context: SpreadsheetRecord
+  rows: readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[]
 }) {
   if (!params.schema.buildRow) return params.rows.map((row) => row.data)
 
@@ -155,8 +156,8 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
 
 function computedAsyncPayloads<TSchema>(params: {
   schema: ComputedRef<TSchema>
-  context: ComputedRef<Record<string, unknown>>
-  rows: ComputedRef<readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[]>
+  context: ComputedRef<SpreadsheetRecord>
+  rows: ComputedRef<readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[]>
 }) {
   const payloads = shallowRef<readonly ExtractSpreadsheetSubmitPayload<TSchema>[]>([])
 

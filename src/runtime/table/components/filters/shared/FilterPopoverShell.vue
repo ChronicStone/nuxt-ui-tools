@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import UPopover from '@nuxt/ui/components/Popover.vue'
+import { computed } from 'vue'
+
+import { resolveDataListPopoverContentClass } from '../../../utils'
 
 const props = defineProps<{
   open: boolean
@@ -7,6 +10,9 @@ const props = defineProps<{
   contentClass?: string
   transitioning?: boolean
 }>()
+const resolvedContentClass = computed(() =>
+  resolveDataListPopoverContentClass('fit', props.contentClass),
+)
 
 const emit = defineEmits<{
   updateOpen: [value: boolean]
@@ -30,7 +36,7 @@ function handleFocusOutside(event: Event) {
       sideOffset: 8,
       onFocusOutside: handleFocusOutside,
     }"
-    :ui="{ content: contentClass }"
+    :ui="{ content: resolvedContentClass }"
     @update:open="emit('updateOpen', $event)"
   >
     <slot />

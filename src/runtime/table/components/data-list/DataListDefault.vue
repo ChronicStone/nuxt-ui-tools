@@ -4,7 +4,8 @@ import { computed } from 'vue'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { DataListDefaultUi } from '../../types'
-import { mergeDataListUiClass } from '../../utils'
+import { mergeDataListUiClass, resolveDataListControlGeometry } from '../../utils'
+import DataListActionsDropdown from './DataListActionsDropdown.vue'
 import DataListColumnPanel from './DataListColumnPanel.vue'
 import DataListContent from './DataListContent.vue'
 import DataListFilterPanel from './DataListFilterPanel.vue'
@@ -14,6 +15,7 @@ import DataListLayoutSwitch from './DataListLayoutSwitch.vue'
 import DataListPagination from './DataListPagination.vue'
 import DataListRefresh from './DataListRefresh.vue'
 import DataListSearch from './DataListSearch.vue'
+import DataListSelectionActions from './DataListSelectionActions.vue'
 
 const props = defineProps<{
   title?: string
@@ -26,6 +28,7 @@ const dataListUi = useDataListUi()
 const titleText = computed(() => props.title ?? humanizeKey(internals.schema.value.tableKey))
 const contentHeight = computed(() => props.height ?? '36rem')
 const rootUi = computed(() => dataListUi.ui.value.default?.ui)
+const geometry = computed(() => resolveDataListControlGeometry(dataListUi.controlSize.value))
 
 function humanizeKey(value: string) {
   return (
@@ -40,8 +43,8 @@ function humanizeKey(value: string) {
 </script>
 
 <template>
-  <div :class="mergeDataListUiClass('grid gap-4', rootUi?.root, ui?.root)">
-    <header :class="mergeDataListUiClass('grid gap-3', rootUi?.header, ui?.header)">
+  <div :class="mergeDataListUiClass(`grid ${geometry.panelGap}`, rootUi?.root, ui?.root)">
+    <header :class="mergeDataListUiClass(`grid ${geometry.fieldGap}`, rootUi?.header, ui?.header)">
       <div
         v-if="$slots.title || titleText || description"
         :class="mergeDataListUiClass('grid gap-1', rootUi?.heading, ui?.heading)"
@@ -70,7 +73,7 @@ function humanizeKey(value: string) {
       <div
         :class="
           mergeDataListUiClass(
-            'flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between',
+            `flex flex-col lg:flex-row lg:items-start lg:justify-between ${geometry.fieldGap}`,
             rootUi?.toolbar,
             ui?.toolbar,
           )
@@ -79,7 +82,7 @@ function humanizeKey(value: string) {
         <div
           :class="
             mergeDataListUiClass(
-              'flex min-w-0 flex-1 flex-wrap items-center gap-2',
+              `flex min-w-0 flex-1 flex-wrap items-center ${geometry.toolbarGap}`,
               rootUi?.primaryActions,
               ui?.primaryActions,
             )
@@ -87,12 +90,13 @@ function humanizeKey(value: string) {
         >
           <DataListSearch />
           <DataListFilterTags show-add show-clear />
+          <DataListActionsDropdown v-if="!$slots.actions" />
           <slot name="actions" />
         </div>
         <div
           :class="
             mergeDataListUiClass(
-              'flex shrink-0 self-start items-start justify-end gap-2',
+              `flex shrink-0 self-start items-start justify-end ${geometry.toolbarGap}`,
               rootUi?.secondaryActions,
               ui?.secondaryActions,
             )
@@ -106,7 +110,7 @@ function humanizeKey(value: string) {
       </div>
     </header>
 
-    <DataListContent fit="height" :height="contentHeight">
+    <DataListContent fit="height" surface="contained" :height="contentHeight">
       <template v-if="$slots['initial-loading']" #initial-loading="scope">
         <slot name="initial-loading" v-bind="scope" />
       </template>
@@ -130,6 +134,8 @@ function humanizeKey(value: string) {
         </DataListInfiniteLoader>
       </template>
     </DataListContent>
+
+    <DataListSelectionActions />
 
     <DataListPagination />
   </div>

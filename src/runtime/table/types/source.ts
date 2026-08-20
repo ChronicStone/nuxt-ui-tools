@@ -43,6 +43,22 @@ export interface TableSourceExecutionResult<
   facets?: TableFacetResult<TKey>[]
 }
 
+export interface TableOffsetPageResult<
+  TRow extends GenericObject = GenericObject,
+  TKey extends string = string,
+> {
+  rows: TRow[]
+  pageInfo: {
+    mode: 'offset'
+    pageIndex: number
+    pageSize: number
+    hasNextPage: boolean
+    count: 'exact'
+    rowCount: number
+  }
+  facets?: TableFacetResult<TKey>[]
+}
+
 export type TableCursorPageInfo =
   | {
       mode: 'cursor'
@@ -151,6 +167,7 @@ export interface TableRemoteSource<
   TContext extends GenericObject = GenericObject,
   TResult =
     | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+    | TableOffsetPageResult<TRow, TableKnownFieldPath<TRow> | string>
     | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>,
 > {
   mode: 'remote'
@@ -176,14 +193,17 @@ export type TableSource<
       Extract<
         TResult,
         | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+        | TableOffsetPageResult<TRow, TableKnownFieldPath<TRow> | string>
         | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>
       > extends never
         ?
             | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+            | TableOffsetPageResult<TRow, TableKnownFieldPath<TRow> | string>
             | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>
         : Extract<
             TResult,
             | TableSourceExecutionResult<TRow, TableKnownFieldPath<TRow> | string>
+            | TableOffsetPageResult<TRow, TableKnownFieldPath<TRow> | string>
             | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>
           >
     >

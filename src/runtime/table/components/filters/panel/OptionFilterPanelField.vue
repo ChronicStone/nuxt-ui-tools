@@ -2,13 +2,16 @@
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
+import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
+  DataListControlSize,
   TableFilterOperator,
   TableOptionFilterDefinition,
   TableOptionFilterOperator,
 } from '../../../types'
+import { resolveDataListPopoverContentClass } from '../../../utils'
 import FilterMatchModeButton from '../shared/FilterMatchModeButton.vue'
 import FilterOptionPickerContent from '../shared/FilterOptionPickerContent.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
@@ -16,6 +19,7 @@ import FilterPanelInputTrigger from './FilterPanelInputTrigger.vue'
 
 const props = defineProps<{
   definition: TableOptionFilterDefinition
+  size: DataListControlSize
 }>()
 
 const internals = useTableInternals()
@@ -95,8 +99,8 @@ function handleToggleTreeEntry(entryId: string) {
   state.toggleTreeEntry(entry)
 }
 
-function isPrimitiveValue(value: unknown): value is string | number | boolean {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+function isPrimitiveValue<TValue>(value: TValue): value is TValue & (string | number | boolean) {
+  return isString(value) || isNumber(value) || isBoolean(value)
 }
 </script>
 
@@ -104,12 +108,15 @@ function isPrimitiveValue(value: unknown): value is string | number | boolean {
   <FilterPanelFieldShell
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
+    :size="size"
   >
     <template #actions>
       <FilterMatchModeButton
-        v-if="operatorItems.length > 1"
+        v-if="operatorItems.length"
         :label="operatorItems.find((item) => item.value === pendingOperator)?.label ?? 'is any of'"
         :items="operatorItems"
+        :selected="pendingOperator"
+        :size="size"
         variant="compact"
         @select="handleOperatorChange"
       />
@@ -120,13 +127,13 @@ function isPrimitiveValue(value: unknown): value is string | number | boolean {
       mode="click"
       :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
       :ui="{
-        content:
-          'w-[var(--reka-popover-trigger-width)] max-w-[var(--reka-popover-trigger-width)] overflow-hidden p-0 shadow-none',
+        content: resolveDataListPopoverContentClass('trigger', 'p-0 shadow-none'),
       }"
     >
       <FilterPanelInputTrigger
         :value="state.triggerSummary.value"
         :placeholder="state.filterUi.value.labels.searchPlaceholder"
+        :size="size"
       />
 
       <template #content>
@@ -135,6 +142,7 @@ function isPrimitiveValue(value: unknown): value is string | number | boolean {
           :flat-radio-value="state.flatRadioValue.value"
           :tree-radio-value="state.treeRadioValue.value"
           :state="state"
+          :size="size"
           @update:flat-radio-value="state.flatRadioValue.value = $event"
           @update:tree-radio-value="state.treeRadioValue.value = $event"
           @select-entry="handleSelectEntry"

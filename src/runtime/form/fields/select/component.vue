@@ -6,7 +6,10 @@ import { computed, ref } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import type { FormValue } from '../../types'
 import type { FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
+import { isBoolean, isNumber, isString } from '../../utils/predicate'
+import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<{
   field: FormSelectField
@@ -15,7 +18,16 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, disabled, handleBlur, options, placeholder } = useFieldControl(
+const {
+  form,
+  controlProps,
+  disabled,
+  handleBlur,
+  interactionOwnerClass,
+  options,
+  placeholder,
+  validationPending,
+} = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -30,6 +42,10 @@ const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
   set: (value) => form.setValue(props.path, value),
 })
 const items = computed(() => [...options.items.value])
+const controlUi = computed(() => ({
+  ...controlProps.value.ui,
+  content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
+}))
 const createItem = computed<FormSelectCreateItem>(() =>
   options.creatable.value && props.field.createItem ? props.field.createItem : false,
 )
@@ -62,8 +78,8 @@ async function refreshOptions() {
   await options.refresh()
 }
 
-function isOptionValue(value: unknown): value is FormOptionValue {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+function isOptionValue(value: FormValue): value is FormOptionValue {
+  return isString(value) || isNumber(value) || isBoolean(value)
 }
 </script>
 
@@ -80,10 +96,14 @@ function isOptionValue(value: unknown): value is FormOptionValue {
     :multiple="field.multiple"
     :placeholder="placeholder"
     :disabled="disabled"
-    :loading="options.loading.value || options.creating.value"
+    :loading="
+      validationPending || options.loading.value || options.fetching.value || options.creating.value
+    "
+    :trailing="true"
     :search-input="field.searchable ?? false"
     :clear="field.clearable === true"
     :create-item="createItem"
+    :ui="controlUi"
     @create="handleNativeCreate"
     @blur="handleBlur"
   >
@@ -141,10 +161,17 @@ function isOptionValue(value: unknown): value is FormOptionValue {
       :multiple="field.multiple"
       :placeholder="placeholder"
       :disabled="disabled"
-      :loading="options.loading.value || options.creating.value"
+      :loading="
+        validationPending ||
+        options.loading.value ||
+        options.fetching.value ||
+        options.creating.value
+      "
+      :trailing="true"
       :search-input="field.searchable ?? false"
       :clear="field.clearable === true"
       :create-item="createItem"
+      :ui="controlUi"
       @create="handleNativeCreate"
       @blur="handleBlur"
     >

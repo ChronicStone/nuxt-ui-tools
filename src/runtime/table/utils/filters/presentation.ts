@@ -1,4 +1,5 @@
 import { getResponsiveValue } from '../../../shared'
+import { isString } from '../../../shared/utils/predicate'
 import type {
   TableFilterDisplayLocation,
   TableFilterDisplayLocationValue,
@@ -25,9 +26,8 @@ export function resolveFilterDisplayOrder(definition: TableUiFilterDefinition) {
   return definition.display?.order ?? Number.MAX_SAFE_INTEGER
 }
 
-function isFilterDisplayLocation(value: unknown): value is TableFilterDisplayLocation {
-  return (
-    typeof value === 'string' &&
-    FILTER_DISPLAY_LOCATIONS.includes(value as TableFilterDisplayLocation)
-  )
+function isFilterDisplayLocation<TValue>(
+  value: TValue,
+): value is TValue & TableFilterDisplayLocation {
+  return isString(value) && FILTER_DISPLAY_LOCATIONS.some((location) => location === value)
 }

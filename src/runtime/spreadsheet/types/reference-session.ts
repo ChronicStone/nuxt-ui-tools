@@ -29,7 +29,9 @@ export interface SpreadsheetReferenceResolution<TValue = unknown, TOption = unkn
   candidates: SpreadsheetReferenceCandidate<TValue, TOption>[]
 }
 
-export interface SpreadsheetResolvedReferenceRow<TRow = Record<string, unknown>> {
+import type { SpreadsheetRecord } from './shared'
+
+export interface SpreadsheetResolvedReferenceRow<TRow = SpreadsheetRecord> {
   index: number
   source: readonly unknown[]
   data: TRow

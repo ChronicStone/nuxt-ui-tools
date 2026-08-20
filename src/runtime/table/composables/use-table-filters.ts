@@ -2,6 +2,7 @@ import { computed, type ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isBoolean, isNumber, isString } from '../../shared/utils/predicate'
 import type {
   TableFilterOptionEntry,
   TableFilterOperator,
@@ -214,19 +215,17 @@ export function useTableFilters(params: UseTableFiltersParams) {
     const currentRule = getFilterState({ key: input.key })
     const currentValues = Array.isArray(currentRule?.value)
       ? currentRule.value.filter(
-          (value: unknown): value is string | number | boolean =>
-            typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean',
+          <TValue>(value: TValue): value is TValue & (string | number | boolean) =>
+            isString(value) || isNumber(value) || isBoolean(value),
         )
       : currentRule?.value != null
-        ? typeof currentRule.value === 'string' ||
-          typeof currentRule.value === 'number' ||
-          typeof currentRule.value === 'boolean'
+        ? isString(currentRule.value) || isNumber(currentRule.value) || isBoolean(currentRule.value)
           ? [currentRule.value]
           : []
         : []
 
-    const nextValues = currentValues.some((value: unknown) => String(value) === String(input.value))
-      ? currentValues.filter((value: unknown) => String(value) !== String(input.value))
+    const nextValues = currentValues.some((value) => String(value) === String(input.value))
+      ? currentValues.filter((value) => String(value) !== String(input.value))
       : [...currentValues, input.value]
 
     setOptionFilterValues({
@@ -265,11 +264,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
     value: TableQueryStateFilterValue,
     options?: { operator?: TableFilterOperator },
   ) {
-    const nextRule: TableQueryStateFilterRule = {
-      key,
-      ...(options?.operator ? { operator: options.operator } : {}),
-      value,
-    }
+    const nextRule: TableQueryStateFilterRule = { key, value }
+    if (options?.operator) nextRule.operator = options.operator
 
     params.state.queryState.resetPagination()
     params.state.queryState.filters.value = {

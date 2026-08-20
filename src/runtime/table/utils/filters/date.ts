@@ -1,5 +1,6 @@
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
+import { isFunction } from '../../../shared/utils/predicate'
 import type {
   TableDateFilterDefinition,
   TableDateFilterOperator,
@@ -32,14 +33,14 @@ export function resolveDateFilterScalarPresets(options: {
   const presetDefinitions = getScalarPresetDefinitions(options)
   const now = options.now ?? new Date()
 
-  return presetDefinitions.map((preset) => ({
-    label: resolveTextValue(preset.label),
-    ...(preset.description ? { description: resolveTextValue(preset.description) } : {}),
-    value: resolveScalarPresetValue({
-      preset,
-      now,
-    }),
-  }))
+  return presetDefinitions.map((preset) => {
+    const resolved: ResolvedTableDateFilterScalarPreset = {
+      label: resolveTextValue(preset.label),
+      value: resolveScalarPresetValue({ preset, now }),
+    }
+    if (preset.description) resolved.description = resolveTextValue(preset.description)
+    return resolved
+  })
 }
 
 export function resolveDateFilterRangePresets(options: {
@@ -49,14 +50,14 @@ export function resolveDateFilterRangePresets(options: {
   const presetDefinitions = getRangePresetDefinitions(options.definition)
   const now = options.now ?? new Date()
 
-  return presetDefinitions.map((preset) => ({
-    label: resolveTextValue(preset.label),
-    ...(preset.description ? { description: resolveTextValue(preset.description) } : {}),
-    value: resolveRangePresetValue({
-      preset,
-      now,
-    }),
-  }))
+  return presetDefinitions.map((preset) => {
+    const resolved: ResolvedTableDateFilterRangePreset = {
+      label: resolveTextValue(preset.label),
+      value: resolveRangePresetValue({ preset, now }),
+    }
+    if (preset.description) resolved.description = resolveTextValue(preset.description)
+    return resolved
+  })
 }
 
 export function resolveDateFilterRangeCalendarPanels(options: {
@@ -139,13 +140,19 @@ function resolveRangePresetValue(options: { preset: TableDateFilterRangePreset; 
   from?: Date
   to?: Date
 } {
-  if (typeof options.preset.value === 'function') {
+  if (isRangePresetResolver(options.preset.value)) {
     return options.preset.value({
       now: options.now,
     })
   }
 
   return options.preset.value
+}
+
+function isRangePresetResolver(
+  value: TableDateFilterRangePreset['value'],
+): value is (context: { now: Date }) => { from?: Date; to?: Date } {
+  return isFunction(value)
 }
 
 function startOfDay(value: Date): Date {
@@ -178,77 +185,76 @@ function startOfYear(value: Date): Date {
   return new Date(value.getFullYear(), 0, 1)
 }
 
-const DEFAULT_SCALAR_PRESETS: Record<TableScalarDateFilterOperator, TableDateFilterScalarPreset[]> =
-  {
-    is: [
-      {
-        label: 'Today',
-        description: 'Use the current day.',
-        value: ({ now }) => startOfDay(now),
-      },
-      {
-        label: 'Yesterday',
-        description: 'Use the previous day.',
-        value: ({ now }) => startOfDay(addDays(now, -1)),
-      },
-      {
-        label: 'Start of month',
-        description: 'Jump to the first day of this month.',
-        value: ({ now }) => startOfMonth(now),
-      },
-    ],
-    isNot: [
-      {
-        label: 'Today',
-        description: 'Exclude the current day.',
-        value: ({ now }) => startOfDay(now),
-      },
-      {
-        label: 'Yesterday',
-        description: 'Exclude the previous day.',
-        value: ({ now }) => startOfDay(addDays(now, -1)),
-      },
-      {
-        label: 'Start of month',
-        description: 'Exclude the first day of this month.',
-        value: ({ now }) => startOfMonth(now),
-      },
-    ],
-    before: [
-      {
-        label: 'Today',
-        description: 'Everything earlier than today.',
-        value: ({ now }) => startOfDay(now),
-      },
-      {
-        label: '7 days ago',
-        description: 'Everything earlier than the last 7 days.',
-        value: ({ now }) => startOfDay(addDays(now, -7)),
-      },
-      {
-        label: 'Start of month',
-        description: 'Everything before this month.',
-        value: ({ now }) => startOfMonth(now),
-      },
-    ],
-    after: [
-      {
-        label: 'Today',
-        description: 'Everything after today.',
-        value: ({ now }) => startOfDay(now),
-      },
-      {
-        label: '7 days ago',
-        description: 'Everything after the last 7 days.',
-        value: ({ now }) => startOfDay(addDays(now, -7)),
-      },
-      {
-        label: 'Start of year',
-        description: 'Everything after the first day of this year.',
-        value: ({ now }) => startOfYear(now),
-      },
-    ],
-  }
+const DEFAULT_SCALAR_PRESETS = {
+  is: [
+    {
+      label: 'Today',
+      description: 'Use the current day.',
+      value: ({ now }) => startOfDay(now),
+    },
+    {
+      label: 'Yesterday',
+      description: 'Use the previous day.',
+      value: ({ now }) => startOfDay(addDays(now, -1)),
+    },
+    {
+      label: 'Start of month',
+      description: 'Jump to the first day of this month.',
+      value: ({ now }) => startOfMonth(now),
+    },
+  ],
+  isNot: [
+    {
+      label: 'Today',
+      description: 'Exclude the current day.',
+      value: ({ now }) => startOfDay(now),
+    },
+    {
+      label: 'Yesterday',
+      description: 'Exclude the previous day.',
+      value: ({ now }) => startOfDay(addDays(now, -1)),
+    },
+    {
+      label: 'Start of month',
+      description: 'Exclude the first day of this month.',
+      value: ({ now }) => startOfMonth(now),
+    },
+  ],
+  before: [
+    {
+      label: 'Today',
+      description: 'Everything earlier than today.',
+      value: ({ now }) => startOfDay(now),
+    },
+    {
+      label: '7 days ago',
+      description: 'Everything earlier than the last 7 days.',
+      value: ({ now }) => startOfDay(addDays(now, -7)),
+    },
+    {
+      label: 'Start of month',
+      description: 'Everything before this month.',
+      value: ({ now }) => startOfMonth(now),
+    },
+  ],
+  after: [
+    {
+      label: 'Today',
+      description: 'Everything after today.',
+      value: ({ now }) => startOfDay(now),
+    },
+    {
+      label: '7 days ago',
+      description: 'Everything after the last 7 days.',
+      value: ({ now }) => startOfDay(addDays(now, -7)),
+    },
+    {
+      label: 'Start of year',
+      description: 'Everything after the first day of this year.',
+      value: ({ now }) => startOfYear(now),
+    },
+  ],
+} satisfies Record<TableScalarDateFilterOperator, TableDateFilterScalarPreset[]>
 
 const DEFAULT_RANGE_PRESETS: TableDateFilterRangePreset[] = [
   {

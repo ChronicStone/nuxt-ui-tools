@@ -5,6 +5,7 @@ import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isString } from '../../../shared/utils/predicate'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { DataListControlSize, DataListSortMenuUi } from '../../types'
@@ -27,7 +28,7 @@ const resolvedUi = computed<DataListSortMenuUi>(() => ({
 const sortLabels = computed(() => {
   const labels = new Map<string, string>()
   for (const option of internals.schema.value.grid?.sortOptions ?? [])
-    labels.set(option.key, typeof option.label === 'string' ? option.label : String(option.label()))
+    labels.set(option.key, isString(option.label) ? option.label : String(option.label()))
   for (const column of internals.tableColumns.runtimeColumns.value)
     if (column.sortableKey) labels.set(column.sortableKey, column.label)
   return labels

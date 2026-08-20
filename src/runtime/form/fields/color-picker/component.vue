@@ -9,6 +9,7 @@ import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormColorPickerField } from '../../types'
+import { isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
@@ -17,7 +18,7 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, disabled } = useFieldControl(
+const { form, controlProps, controlSize, disabled, interactionOwnerClass } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -27,13 +28,17 @@ const placeholder = computed(() => resolveFormText(props.field.placeholder) ?? '
 const model = computed<string | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    return typeof value === 'string' ? value : undefined
+    return isString(value) ? value : undefined
   },
   set: (value) => form.setValue(props.path, value ?? null),
 })
 
 function clearColor() {
   model.value = undefined
+}
+
+function preventPopoverAutoFocus(event: Event) {
+  event.preventDefault()
 }
 </script>
 
@@ -50,7 +55,15 @@ function clearColor() {
     <UPopover
       v-else
       v-model:open="open"
-      :content="{ side: 'bottom', sideOffset: 8, collisionPadding: 12, avoidCollisions: true }"
+      :content="{
+        side: 'bottom',
+        align: 'start',
+        sideOffset: 8,
+        collisionPadding: 12,
+        avoidCollisions: true,
+        onOpenAutoFocus: preventPopoverAutoFocus,
+      }"
+      :ui="{ content: interactionOwnerClass }"
       :class="display === 'swatch' ? 'w-fit' : 'w-full'"
     >
       <template #anchor>
@@ -59,8 +72,10 @@ function clearColor() {
           type="button"
           color="neutral"
           variant="outline"
+          :size="controlSize"
           :disabled="disabled"
           :aria-label="t('form.fields.color.open')"
+          @click="open = true"
         >
           <span
             class="size-5 rounded-sm border border-default"
@@ -94,7 +109,7 @@ function clearColor() {
                 :disabled="disabled"
                 :aria-label="t('form.fields.color.clear')"
                 @mousedown.prevent
-                @click="clearColor"
+                @click.stop="clearColor"
               />
             </div>
           </template>
@@ -102,9 +117,10 @@ function clearColor() {
       </template>
 
       <template #content>
-        <div class="p-1">
+        <div class="p-2">
           <UColorPicker
             v-model="model"
+            :size="controlSize"
             :disabled="disabled"
             :format="field.format ?? 'hex'"
             :throttle="field.throttle"

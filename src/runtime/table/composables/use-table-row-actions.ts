@@ -1,15 +1,16 @@
 import { inject, provide, type ComputedRef, type InjectionKey } from 'vue'
 
-import type { GenericObject, TableRowActionContext } from '../types'
+import type { GenericObject, TableRowActionContext, TableRuntimeRecord } from '../types'
 
+// SAFETY: the symbol is module-private and all providers/injectors share this exact scope contract.
 const TABLE_ROW_ACTION_SCOPE_KEY = Symbol('nuxt-ui-tools.table.row-actions-scope') as InjectionKey<
   ComputedRef<TableInjectedRowActionScope>
 >
 
 export type TableInjectedRowActionScope = TableRowActionContext<
   GenericObject,
-  Record<string, unknown>,
-  Record<string, unknown>
+  TableRuntimeRecord,
+  TableRuntimeRecord
 >
 
 export function provideTableRowActionScope(scope: ComputedRef<TableInjectedRowActionScope>) {

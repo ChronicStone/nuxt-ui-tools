@@ -9,7 +9,7 @@ import {
   createSpreadsheetReferenceResolutions,
 } from '#ui-tools/spreadsheet'
 import { defineSpreadsheetSchema, normalizeSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
-import type { SpreadsheetParsedRow } from '#ui-tools/spreadsheet/types'
+import type { SpreadsheetParsedRow, SpreadsheetRecord } from '#ui-tools/spreadsheet/types'
 
 import { useSpreadsheetReferences } from '../../src/runtime/spreadsheet/composables/use-spreadsheet-references'
 
@@ -32,7 +32,7 @@ describe('spreadsheet reference utils', () => {
     },
   ]
 
-  const rows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+  const rows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
     {
       index: 0,
       source: ['Business English 4 Skills'],
@@ -159,7 +159,7 @@ describe('spreadsheet reference utils', () => {
   })
 
   it('resolves array-bound references into array outputs', () => {
-    const multiRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+    const multiRows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
       {
         index: 0,
         source: ['Business English 4 Skills', 'Reading Placement Test'],
@@ -337,7 +337,7 @@ describe('spreadsheet reference utils', () => {
     })
     const normalizedSchema = normalizeSpreadsheetSchema(schema)
 
-    const parsedRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+    const parsedRows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
       {
         index: 0,
         source: ['Business English 4 Skills'],
@@ -412,7 +412,7 @@ describe('spreadsheet reference utils', () => {
     })
     const normalizedSchema = normalizeSpreadsheetSchema(schema)
 
-    const parsedRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+    const parsedRows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
       {
         index: 0,
         source: ['Unknown External Product'],

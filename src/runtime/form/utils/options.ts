@@ -1,5 +1,7 @@
+import type { FormValue } from '../types'
 import type { FormFieldCallbackParams, FormOptionItem, FormOptionValue } from '../types'
 import { isRecord } from './path'
+import { isBoolean, isFunction, isNumber, isString, isUndefined } from './predicate'
 import { resolveFormText } from './text'
 
 export interface FormOptionKeys {
@@ -17,25 +19,26 @@ export interface ResolvedFormOption {
 }
 
 export function normalizeOptionItem(
-  option: unknown,
+  option: FormValue,
   keys: FormOptionKeys = {},
 ): ResolvedFormOption {
   if (isRecord(option)) {
     const rawValue = readOptionProperty(option, keys.value ?? 'value')
-    const fallbackValue = typeof rawValue === 'undefined' ? option.key : rawValue
+    const fallbackValue = isUndefined(rawValue) ? option.key : rawValue
     const rawChildren = readOptionProperty(option, keys.children ?? 'children')
     const rawDescription = readOptionProperty(option, 'description')
     const children = Array.isArray(rawChildren)
       ? rawChildren.map((child) => normalizeOptionItem(child, keys))
       : undefined
     const value = normalizeOptionValue(fallbackValue)
-    return {
+    const normalized: ResolvedFormOption = {
       value,
       label: resolveFormText(readOptionProperty(option, keys.label ?? 'label')) ?? String(value),
       description: isFormText(rawDescription) ? resolveFormText(rawDescription) : undefined,
       disabled: option.disabled === true,
-      ...(children ? { children } : {}),
     }
+    if (children) normalized.children = children
+    return normalized
   }
 
   return {
@@ -45,14 +48,21 @@ export function normalizeOptionItem(
 }
 
 export function normalizeOptionItems(
-  options: readonly unknown[] | undefined,
+  options: readonly FormValue[] | undefined,
   keys: FormOptionKeys = {},
 ) {
   return (options ?? []).map((option) => normalizeOptionItem(option, keys))
 }
 
 export function formOptionKey(value: FormOptionValue) {
-  return `${typeof value}:${String(value)}`
+  const type = isString(value)
+    ? 'string'
+    : isNumber(value)
+      ? 'number'
+      : isBoolean(value)
+        ? 'boolean'
+        : 'unknown'
+  return `${type}:${String(value)}`
 }
 
 export function flattenResolvedOptions(
@@ -75,7 +85,7 @@ export function mergeResolvedOptions(
   )
 }
 
-export function normalizeOptionSelection(value: unknown, options: readonly ResolvedFormOption[]) {
+export function normalizeOptionSelection(value: FormValue, options: readonly ResolvedFormOption[]) {
   const validKeys = new Set(
     flattenResolvedOptions(options).map((option) => formOptionKey(option.value)),
   )
@@ -89,17 +99,17 @@ export function normalizeOptionSelection(value: unknown, options: readonly Resol
       return true
     })
   }
-  if (value === null || typeof value === 'undefined') return value
+  if (value === null || isUndefined(value)) return value
   return isOptionValue(value) && validKeys.has(formOptionKey(value)) ? value : null
 }
 
 export function resolveOptionSource(
-  source: unknown,
+  source: FormValue,
   params: FormFieldCallbackParams,
 ): readonly FormOptionItem[] {
   if (!source) return []
   if (Array.isArray(source)) return source
-  if (typeof source === 'function') {
+  if (isFunction(source)) {
     const value = source(params)
     if (Array.isArray(value)) return value
     return []
@@ -107,20 +117,19 @@ export function resolveOptionSource(
   return []
 }
 
-function normalizeOptionValue(value: unknown): FormOptionValue {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
-    return value
+function normalizeOptionValue(value: FormValue): FormOptionValue {
+  if (isString(value) || isNumber(value) || isBoolean(value)) return value
   return String(value)
 }
 
-function readOptionProperty(option: Record<string, unknown>, key: string) {
+function readOptionProperty(option: Record<string, FormValue>, key: string) {
   return Object.getOwnPropertyDescriptor(option, key)?.value
 }
 
-function isFormText(value: unknown): value is string | number | (() => string | number) {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'function'
+function isFormText(value: FormValue): value is string | number | (() => string | number) {
+  return isString(value) || isNumber(value) || isFunction(value)
 }
 
-function isOptionValue(value: unknown): value is FormOptionValue {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+function isOptionValue(value: FormValue): value is FormOptionValue {
+  return isString(value) || isNumber(value) || isBoolean(value)
 }

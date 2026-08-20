@@ -2,11 +2,10 @@
 import UTable from '@nuxt/ui/components/Table.vue'
 import { computed } from 'vue'
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+import type { SpreadsheetRecord } from '../../types'
+import { isSpreadsheetRecord } from '../../utils/object'
 
-function flattenRecord(value: Record<string, unknown>, prefix = ''): Record<string, string> {
+function flattenRecord(value: SpreadsheetRecord, prefix = ''): Record<string, string> {
   return Object.entries(value).reduce<Record<string, string>>((acc, [key, nextValue]) => {
     const nextKey = prefix ? `${prefix}.${key}` : key
     if (Array.isArray(nextValue))
@@ -15,7 +14,7 @@ function flattenRecord(value: Record<string, unknown>, prefix = ''): Record<stri
         [nextKey]: nextValue.join(', '),
       }
 
-    if (isRecord(nextValue))
+    if (isSpreadsheetRecord(nextValue))
       return {
         ...acc,
         ...flattenRecord(nextValue, nextKey),
@@ -29,7 +28,7 @@ function flattenRecord(value: Record<string, unknown>, prefix = ''): Record<stri
 }
 
 const props = defineProps<{
-  rows: readonly Record<string, unknown>[]
+  rows: readonly SpreadsheetRecord[]
 }>()
 
 const flattenedRows = computed(() =>

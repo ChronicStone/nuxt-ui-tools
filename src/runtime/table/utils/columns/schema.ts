@@ -1,6 +1,7 @@
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
-import type { GenericObject, TableSchemaView } from '../../types'
+import { isFunction, isNumber, isString } from '../../../shared/utils/predicate'
+import type { TableRuntimeRecord, TableSchemaView } from '../../types'
 import type { SchemaTableColumn, TableRuntimeColumn } from './types'
 
 export function findSchemaColumn(options: {
@@ -10,24 +11,29 @@ export function findSchemaColumn(options: {
   return (options.schema.table?.columns ?? []).find((column) => column.key === options.columnId)
 }
 
-export function createRuntimeColumns(options: { schema: TableSchemaView; context: GenericObject }) {
+export function createRuntimeColumns(options: {
+  schema: TableSchemaView
+  context: TableRuntimeRecord
+}) {
   return (options.schema.table?.columns ?? [])
     .filter((column) => (column.condition?.() ?? true) && (column.enabled ?? true))
-    .map(
-      (column): TableRuntimeColumn => ({
-        id: column.key,
-        label: resolveColumnLabel({ column }),
-        icon: column.icon,
-        sortableKey: getSortableKey({ column }),
-        canHide: !column.required,
-        defaultVisible: resolveColumnVisibility({
-          column,
-          context: options.context,
-        }),
-        configurable: true,
-        pinned: column.pinned,
+    .map((column): TableRuntimeColumn => ({
+      id: column.key,
+      label: resolveColumnLabel({ column }),
+      icon: column.icon,
+      width: column.width,
+      minWidth: column.minWidth,
+      maxWidth: column.maxWidth,
+      align: column.align,
+      sortableKey: getSortableKey({ column }),
+      canHide: !column.required,
+      defaultVisible: resolveColumnVisibility({
+        column,
+        context: options.context,
       }),
-    )
+      configurable: true,
+      pinned: column.pinned,
+    }))
 }
 
 export function createOrderedColumns(options: {
@@ -50,9 +56,9 @@ export function createVisibleOrderedColumns(options: {
 }
 
 export function resolveColumnLabel(options: { column: SchemaTableColumn }) {
-  if (typeof options.column.label === 'function') {
+  if (isFunction(options.column.label)) {
     const resolved = options.column.label()
-    return typeof resolved === 'string' || typeof resolved === 'number'
+    return isString(resolved) || isNumber(resolved)
       ? String(resolved)
       : humanizeKey({ value: options.column.key })
   }
@@ -62,13 +68,19 @@ export function resolveColumnLabel(options: { column: SchemaTableColumn }) {
 
 export function resolveColumnVisibility(options: {
   column: SchemaTableColumn
-  context: GenericObject
+  context: TableRuntimeRecord
 }) {
-  if (typeof options.column.visible === 'function') {
-    return options.column.visible(options.context as never)
+  if (isVisibilityResolver(options.column.visible)) {
+    return options.column.visible(options.context)
   }
 
   return options.column.visible ?? true
+}
+
+function isVisibilityResolver(
+  value: SchemaTableColumn['visible'],
+): value is Exclude<SchemaTableColumn['visible'], boolean | undefined> {
+  return isFunction(value)
 }
 
 export function getSortableKey(options: { column: SchemaTableColumn }) {

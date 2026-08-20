@@ -30,6 +30,9 @@ export type FormRenderable = LazyRenderableValue
  */
 export type FormObject = GenericObject
 
+/** Value crossing a form runtime boundary before its owning parser narrows it. */
+export type FormValue = FormObject[string]
+
 /**
  * A value that can be static or derived from the current field callback context.
  */

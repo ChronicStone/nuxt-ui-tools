@@ -4,7 +4,9 @@ import { computed } from 'vue'
 
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import type { FormValue } from '../../types'
 import type { FormFileField } from '../../types'
+import { isDefined } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormFileField
@@ -30,8 +32,8 @@ function normalizeFiles(value: File | File[] | null) {
   return value ? [value] : []
 }
 
-function isFile(value: unknown): value is File {
-  return typeof File !== 'undefined' && value instanceof File
+function isFile(value: FormValue): value is File {
+  return import.meta.client && isDefined(globalThis.File) && value instanceof globalThis.File
 }
 </script>
 

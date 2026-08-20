@@ -15,6 +15,7 @@ import type {
   SpreadsheetMatchDefinition,
   SpreadsheetModifier,
 } from './shared'
+import type { SpreadsheetValue } from './shared'
 import type { SpreadsheetFieldRulesInput } from './validation'
 
 export interface SpreadsheetColumnDefinition<
@@ -453,7 +454,7 @@ export interface SpreadsheetDynamicValueBuilder {
 
 type SpreadsheetDynamicValueInput =
   | SpreadsheetDynamicValueDefinition
-  | ((value: SpreadsheetDynamicValueBuilder) => unknown)
+  | ((value: SpreadsheetDynamicValueBuilder) => SpreadsheetValue)
 
 type ResolveSpreadsheetDynamicValueInput<TValueInput> = TValueInput extends (
   ...args: infer _Args
@@ -465,7 +466,7 @@ type ResolveSpreadsheetDynamicValueInput<TValueInput> = TValueInput extends (
     ? TValueInput
     : never
 
-type SpreadsheetDynamicCollectionItemShape<TSource = unknown> = {
+type SpreadsheetDynamicCollectionItemContract<TSource = unknown> = {
   id: string
   match: SpreadsheetMatchDefinition
   value: SpreadsheetDynamicValueInput
@@ -609,7 +610,7 @@ export interface SpreadsheetDynamicBuilder<TContext = unknown> {
   arrayFromCollection: <
     TRootKey extends string,
     TSource extends readonly unknown[],
-    TItem extends SpreadsheetDynamicCollectionItemShape<TSource[number]>,
+    TItem extends SpreadsheetDynamicCollectionItemContract<TSource[number]>,
   >(
     rootKey: TRootKey,
     config: {
@@ -629,7 +630,7 @@ export interface SpreadsheetDynamicBuilder<TContext = unknown> {
   recordFromCollection: <
     TRootKey extends string,
     TSource extends readonly unknown[],
-    TItem extends SpreadsheetDynamicCollectionItemShape<TSource[number]>,
+    TItem extends SpreadsheetDynamicCollectionItemContract<TSource[number]>,
   >(
     rootKey: TRootKey,
     config: {

@@ -4,8 +4,10 @@ import { computed } from 'vue'
 
 import { getResponsiveValue } from '../../../shared/composables/use-responsive-value'
 import { useFormUi } from '../../composables/use-form-ui'
+import type { FormValue } from '../../types'
 import type { FormAction, FormActionContext, FormActionKey, FormRuntime } from '../../types'
 import { createPublicFormApi } from '../../utils/api'
+import { invokeFormFunction, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -75,7 +77,9 @@ function resolveActionWidth(action: FormAction) {
 
 function resolveActionLink(action: FormAction) {
   if (!('link' in action)) return undefined
-  return typeof action.link === 'function' ? action.link(actionContext.value) : action.link
+  if (isString(action.link)) return action.link
+  const link = invokeFormFunction(action.link, [actionContext.value])
+  return isString(link) ? link : undefined
 }
 
 function isActionDisabled(action: FormAction) {
@@ -89,9 +93,7 @@ function isActionLoading(action: FormAction) {
   if (!isBuiltInActionKey(action.key)) return false
   const pending = props.runtime.actionPending.value
   if (pending === null) return false
-  if (pending === 'submit' || pending === 'next')
-    return action.key === 'submit' || action.key === 'next'
-  return false
+  return action.key === pending
 }
 
 function resolveActionColor(action: FormAction) {
@@ -118,7 +120,7 @@ function isBuiltInAction(action: FormAction, key: FormActionKey) {
   return action.key === key
 }
 
-function isBuiltInActionKey(value: unknown): value is FormActionKey {
+function isBuiltInActionKey(value: FormValue): value is FormActionKey {
   return (
     value === 'reset' ||
     value === 'cancel' ||

@@ -8,13 +8,14 @@ import type {
   TableRowRenderParams,
   TableSortKey,
   TableTextValue,
+  TableRuntimeRecord,
 } from './utils'
 
 export interface TableColumnCellDataAttributes {
   [key: `data-${string}`]: string | number | boolean | undefined
 }
 
-export type TableColumnCellProps = Record<string, unknown> & TableColumnCellDataAttributes
+export type TableColumnCellProps = TableRuntimeRecord & TableColumnCellDataAttributes
 
 interface TableColumnBase<
   TRow extends GenericObject = GenericObject,
@@ -37,7 +38,7 @@ interface TableColumnBase<
   pinned?: TableColumnPinned
   align?: TableColumnAlign
   labelAlign?: TableColumnAlign
-  ellipsis?: boolean | Record<string, unknown>
+  ellipsis?: boolean | TableRuntimeRecord
   resizable?: boolean
   condition?: () => boolean
   enabled?: boolean
@@ -70,7 +71,7 @@ interface TableFieldColumnBase<
   TRow,
   TContext,
   TPageContext,
-  Extract<TField, string>,
+  TField,
   TableFieldRenderParams<TRow, TContext, TPageContext, TField>
 > {
   kind: 'field'
@@ -154,7 +155,7 @@ export interface TableColumnBuilder<
   TPageContext extends GenericObject = GenericObject,
   TSortKey extends string = TableSortKey<TRow>,
 > {
-  field<TField extends TableKnownFieldPath<TRow>>(
+  field<TField extends TableKnownFieldPath<TRow> & string>(
     field: TField,
     options?: TableFieldColumnOptions<TRow, TContext, TPageContext, TField>,
   ): TableFieldColumn<TRow, TContext, TPageContext, TField>

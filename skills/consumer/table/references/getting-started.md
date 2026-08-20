@@ -45,7 +45,7 @@ const table = useTable(schema)
 Render it with:
 
 ```vue
-<DataList :table="table" />
+<DataList :table="table" size="sm" />
 ```
 
 ## What You Get

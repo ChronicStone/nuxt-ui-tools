@@ -31,6 +31,9 @@ function getPublicComponents(
     },
     ...[
       'Root',
+      'ActionsDropdown',
+      'ActionsToolbar',
+      'SelectionActions',
       'Search',
       'FilterTags',
       'AddFilter',

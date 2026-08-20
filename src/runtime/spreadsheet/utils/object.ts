@@ -1,19 +1,26 @@
-export function isSpreadsheetRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+import { isObject } from '#ui-tools/shared/utils/predicate'
+
+import type { SpreadsheetRecord, SpreadsheetValue } from '../types'
+
+export function isSpreadsheetRecord<T>(value: T): value is T & SpreadsheetRecord {
+  return isObject(value)
 }
 
-export function getSpreadsheetValueAtPath(data: Record<string, unknown>, path: string) {
-  return path.split('.').reduce<unknown>((current, part) => {
+export function getSpreadsheetValueAtPath(
+  data: SpreadsheetRecord,
+  path: string,
+): SpreadsheetValue | undefined {
+  return path.split('.').reduce<SpreadsheetValue | undefined>((current, part) => {
     if (!isSpreadsheetRecord(current)) return undefined
     return current[part]
   }, data)
 }
 
 export function setSpreadsheetValueAtPath(
-  target: Record<string, unknown>,
+  target: SpreadsheetRecord,
   path: string,
-  value: unknown,
-) {
+  value: SpreadsheetValue,
+): void {
   const parts = path.split('.')
   let current = target
 
@@ -24,21 +31,21 @@ export function setSpreadsheetValueAtPath(
       continue
     }
 
-    const nextValue: unknown = current[part]
+    const nextValue: SpreadsheetValue = current[part]
     if (isSpreadsheetRecord(nextValue)) {
       current = nextValue
       continue
     }
 
-    const nextRecord: Record<string, unknown> = {}
+    const nextRecord: SpreadsheetRecord = {}
     current[part] = nextRecord
     current = nextRecord
   }
 }
 
-export function deleteSpreadsheetValueAtPath(target: Record<string, unknown>, path: string) {
+export function deleteSpreadsheetValueAtPath(target: SpreadsheetRecord, path: string): void {
   const parts = path.split('.')
-  let current: Record<string, unknown> | undefined = target
+  let current: SpreadsheetRecord | undefined = target
 
   for (const [index, part] of parts.entries()) {
     if (!current) return
@@ -49,22 +56,22 @@ export function deleteSpreadsheetValueAtPath(target: Record<string, unknown>, pa
       return
     }
 
-    const nextValue: unknown = current[part]
+    const nextValue: SpreadsheetValue = current[part]
     if (!isSpreadsheetRecord(nextValue)) return
     current = nextValue
   }
 }
 
-export function getSpreadsheetObjectEntries(value: unknown) {
-  if (!isSpreadsheetRecord(value)) return [] as Array<[string, unknown]>
+export function getSpreadsheetObjectEntries<T>(value: T): Array<[string, SpreadsheetValue]> {
+  if (!isSpreadsheetRecord(value)) return []
   return Object.entries(value)
 }
 
-export function getSpreadsheetObjectKeys(value: unknown) {
+export function getSpreadsheetObjectKeys<T>(value: T): string[] {
   return getSpreadsheetObjectEntries(value).map(([key]) => key)
 }
 
-export function getSpreadsheetLeafPaths(value: unknown, prefix = ''): string[] {
+export function getSpreadsheetLeafPaths<T>(value: T, prefix = ''): string[] {
   if (!isSpreadsheetRecord(value)) return prefix ? [prefix] : []
 
   const entries = getSpreadsheetObjectEntries(value)
@@ -78,6 +85,6 @@ export function getSpreadsheetLeafPaths(value: unknown, prefix = ''): string[] {
   })
 }
 
-export function cloneSpreadsheetRowData(data: Record<string, unknown>) {
+export function cloneSpreadsheetRowData(data: SpreadsheetRecord): SpreadsheetRecord {
   return structuredClone(data)
 }

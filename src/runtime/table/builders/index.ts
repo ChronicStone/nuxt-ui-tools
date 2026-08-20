@@ -1,3 +1,4 @@
+import { isFunction } from '../../shared/utils/predicate'
 import type {
   GenericObject,
   TableBooleanFilterOptions,
@@ -24,13 +25,13 @@ export function createTableColumnBuilder<
   TSortKey extends string = TableSortKey<TRow>,
 >(): TableColumnBuilder<TRow, TContext, TPageContext, TSortKey> {
   return {
-    field<TField extends TableKnownFieldPath<TRow>>(
+    field<TField extends TableKnownFieldPath<TRow> & string>(
       field: TField,
       options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField> = {},
     ) {
       return {
         kind: 'field',
-        key: field as Extract<TField, string>,
+        key: field,
         field,
         ...options,
       }
@@ -125,11 +126,17 @@ export function resolveCollection<TBuilder, TResult>(
     return undefined
   }
 
-  if (typeof collection === 'function') {
-    return (collection as (builder: TBuilder) => TResult)(builder)
+  if (isCollectionResolver<TBuilder, TResult>(collection)) {
+    return collection(builder)
   }
 
   return collection
+}
+
+function isCollectionResolver<TBuilder, TResult>(
+  value: TResult | ((builder: TBuilder) => TResult),
+): value is (builder: TBuilder) => TResult {
+  return isFunction(value)
 }
 
 export function resolveColumns<
@@ -141,6 +148,7 @@ export function resolveColumns<
     | TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey>
     | undefined = TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey> | undefined,
 >(columns: TColumns): TColumns extends (...args: never[]) => infer TResult ? TResult : TColumns {
+  // SAFETY: resolveCollection returns the exact conditional TResult selected by TColumns.
   return resolveCollection(
     columns,
     createTableColumnBuilder<TRow, TContext, TPageContext, TSortKey>(),

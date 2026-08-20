@@ -4,12 +4,13 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import type { SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import { formatSpreadsheetCell } from '../../utils/display'
 import { getSpreadsheetObjectEntries, isSpreadsheetRecord } from '../../utils/object'
 
 const props = withDefaults(
   defineProps<{
-    value: unknown
+    value: SpreadsheetValue
     compact?: boolean
   }>(),
   {
@@ -24,19 +25,19 @@ function getCompactArrayItems(value: readonly unknown[]) {
   return props.compact ? value.slice(0, compactLimit) : value
 }
 
-function getCompactObjectEntries(value: Record<string, unknown>) {
+function getCompactObjectEntries(value: SpreadsheetRecord) {
   const entries = getSpreadsheetObjectEntries(value)
   return props.compact ? entries.slice(0, compactLimit) : entries
 }
 
-function getValueKind(value: unknown) {
+function getValueKind(value: SpreadsheetValue) {
   if (value == null) return 'empty'
   if (Array.isArray(value)) return 'array'
   if (isSpreadsheetRecord(value)) return 'object'
   return 'primitive'
 }
 
-function getObjectSummary(value: Record<string, unknown>) {
+function getObjectSummary(value: SpreadsheetRecord) {
   const entries = getSpreadsheetObjectEntries(value)
   return t('spreadsheet.common.objectSummary', { count: entries.length })
 }

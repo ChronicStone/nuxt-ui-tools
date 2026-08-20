@@ -12,6 +12,8 @@ export interface FormArrayTabsField<TContext = {}, TDeps = {}> extends FormConta
   emptyLabel?: FormText
   itemLabel?: FormText
   compact?: boolean
+  /** Enables drag-to-reorder tabs. Defaults to `true`. */
+  draggable?: boolean
   confirmDelete?: boolean | FormText
   headerTemplate?: (item: FormObject, index: number, deps: TDeps) => FormText
   transformOnCreate?: (item: FormObject, index: number, deps: TDeps) => FormObject

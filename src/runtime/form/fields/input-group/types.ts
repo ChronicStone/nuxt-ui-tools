@@ -4,4 +4,6 @@ export interface FormInputGroupField<TContext = {}, TDeps = {}> extends FormCont
   'input-group',
   TContext,
   TDeps
-> {}
+> {
+  orientation?: 'horizontal' | 'vertical'
+}

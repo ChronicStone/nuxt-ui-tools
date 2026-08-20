@@ -4,7 +4,9 @@ export type Not<T, R> = T extends R ? never : R
 
 export type Primitive = string | number | symbol
 
-export type GenericObject = Record<Primitive, unknown>
+type GenericValue = never extends never ? unknown : never
+
+export type GenericObject = { [K in Primitive]: GenericValue }
 
 export type BuildTuple<L extends number, T extends any[] = []> = T['length'] extends L
   ? T
@@ -190,11 +192,9 @@ export type DeepRemoveIndexSignature<T> = T extends object
   ? T extends Array<infer U>
     ? Array<DeepRemoveIndexSignature<U>>
     : {
-        [K in keyof T as string extends K
-          ? never
-          : number extends K
-            ? never
-            : K]: DeepRemoveIndexSignature<T[K]>
+        [
+          K in keyof T as string extends K ? never : number extends K ? never : K
+        ]: DeepRemoveIndexSignature<T[K]>
       }
   : T
 

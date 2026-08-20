@@ -8,7 +8,7 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { DataListControlSize, DataListPaginationUi } from '../../types'
-import { mergeDataListUiClass } from '../../utils'
+import { mergeDataListUiClass, resolveDataListControlGeometry } from '../../utils'
 
 const props = defineProps<{ size?: DataListControlSize; ui?: DataListPaginationUi }>()
 const internals = useTableInternals()
@@ -17,13 +17,14 @@ const { locale, t } = useUiToolsLocale()
 const controlSize = computed(
   () => props.size ?? dataListUi.ui.value.pagination?.size ?? dataListUi.controlSize.value,
 )
+const geometry = computed(() => resolveDataListControlGeometry(controlSize.value))
 const ui = computed<DataListPaginationUi>(() => ({
   ...dataListUi.ui.value.pagination?.ui,
   ...props.ui,
 }))
 
 const pageSizeItems = computed(() =>
-  internals.tableApi.pagination.pageSizeOptions.value.map((size: number) => [
+  internals.pagination.pageSizeOptions.value.map((size: number) => [
     {
       label: t('table.footer.pageSizeOption', {
         count: formatCount(size),
@@ -43,7 +44,7 @@ function formatCount(value: number) {
     v-if="internals.pagination.mode.value === 'offset'"
     :class="
       mergeDataListUiClass(
-        'flex flex-col gap-3 px-4 py-3 text-sm text-muted sm:px-5 lg:flex-row lg:items-center lg:justify-between',
+        `flex flex-col text-muted lg:flex-row lg:items-center lg:justify-between ${geometry.footer}`,
         undefined,
         ui.root,
       )
@@ -67,7 +68,7 @@ function formatCount(value: number) {
     <div
       :class="
         mergeDataListUiClass(
-          'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end',
+          `flex flex-col sm:flex-row sm:items-center sm:justify-end ${geometry.toolbarGap}`,
           undefined,
           ui.inner,
         )
@@ -79,7 +80,11 @@ function formatCount(value: number) {
         :options="internals.pagination.pageSizeOptions.value"
         :set-page-size="internals.pagination.setPageSize"
       >
-        <div :class="mergeDataListUiClass('flex items-center gap-3', undefined, ui.pageSize)">
+        <div
+          :class="
+            mergeDataListUiClass(`flex items-center ${geometry.toolbarGap}`, undefined, ui.pageSize)
+          "
+        >
           <span>{{ t('table.footer.rowsPerPage') }}</span>
 
           <UDropdownMenu
@@ -101,7 +106,11 @@ function formatCount(value: number) {
         </div>
       </slot>
 
-      <div :class="mergeDataListUiClass('flex items-center gap-3', undefined, ui.pages)">
+      <div
+        :class="
+          mergeDataListUiClass(`flex items-center ${geometry.toolbarGap}`, undefined, ui.pages)
+        "
+      >
         <slot
           name="page-count"
           :current="internals.pagination.currentPage.value"
@@ -122,7 +131,15 @@ function formatCount(value: number) {
           :next="internals.pagination.next"
           :previous="internals.pagination.previous"
         >
-          <div :class="mergeDataListUiClass('flex items-center gap-2', undefined, ui.controls)">
+          <div
+            :class="
+              mergeDataListUiClass(
+                `flex items-center ${geometry.toolbarGap}`,
+                undefined,
+                ui.controls,
+              )
+            "
+          >
             <UButton
               color="neutral"
               variant="outline"

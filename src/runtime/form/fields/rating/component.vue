@@ -6,6 +6,7 @@ import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRatingField } from '../../types'
+import { isNumber } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormRatingField
@@ -20,7 +21,7 @@ const { form, controlProps, disabled, handleBlur } = useFieldControl(
 const model = computed<number | null>({
   get: () => {
     const value = form.getValue(props.path)
-    return typeof value === 'number' ? value : null
+    return isNumber(value) ? value : null
   },
   set: (value) => form.setValue(props.path, value),
 })

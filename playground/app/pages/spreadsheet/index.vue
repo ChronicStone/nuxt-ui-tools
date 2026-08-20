@@ -74,40 +74,45 @@ const variants = computed(() => [
 </script>
 
 <template>
-  <section class="mx-auto grid max-w-4xl gap-5 px-6 py-8 lg:px-10">
-    <div class="grid gap-2">
-      <h1 class="text-2xl font-semibold text-highlighted">
-        {{ t('playground.spreadsheetIndex.title') }}
-      </h1>
-      <p class="text-sm text-muted">
-        {{ t('playground.spreadsheetIndex.description') }}
-      </p>
-    </div>
+  <PlaygroundContent mode="document">
+    <section class="mx-auto grid max-w-4xl gap-8 px-4 py-8 sm:px-6 lg:px-8">
+      <header class="grid gap-2">
+        <p class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+          Spreadsheet / variants
+        </p>
+        <h1 class="text-2xl font-semibold tracking-tight text-highlighted">
+          {{ t('playground.spreadsheetIndex.title') }}
+        </h1>
+        <p class="max-w-2xl text-sm leading-6 text-muted">
+          {{ t('playground.spreadsheetIndex.description') }}
+        </p>
+      </header>
 
-    <div class="grid gap-3">
-      <div
-        v-for="variant in variants"
-        :key="variant.id"
-        class="flex flex-col gap-3 rounded-xl border border-default/70 bg-default px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div class="min-w-0">
-          <div class="text-sm font-medium text-highlighted">
-            {{ variant.title }}
+      <div class="grid border-y border-default">
+        <div
+          v-for="variant in variants"
+          :key="variant.id"
+          class="flex flex-col gap-3 border-b border-default px-1 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:px-3"
+        >
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-highlighted">
+              {{ variant.title }}
+            </div>
+            <div class="text-sm text-muted">
+              {{ variant.description }}
+            </div>
           </div>
-          <div class="text-sm text-muted">
-            {{ variant.description }}
-          </div>
+
+          <UButton
+            :to="variant.to"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-arrow-right"
+            trailing
+            :label="t('playground.common.open')"
+          />
         </div>
-
-        <UButton
-          :to="variant.to"
-          color="neutral"
-          variant="soft"
-          icon="i-lucide-arrow-right"
-          trailing
-          :label="t('playground.common.open')"
-        />
       </div>
-    </div>
-  </section>
+    </section>
+  </PlaygroundContent>
 </template>

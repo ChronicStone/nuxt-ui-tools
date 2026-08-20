@@ -1,7 +1,9 @@
 import { computed, shallowReactive } from 'vue'
 
+import type { FormValue } from '../types'
 import type { FormOptionRuntimeState } from '../types'
 import type { ResolvedFormOption } from '../utils/options'
+import { isString } from '../utils/predicate'
 
 export function useFormOptionRegistry() {
   const states = shallowReactive<Record<string, FormOptionRuntimeState>>({})
@@ -45,7 +47,7 @@ function createEmptyOptionState(): FormOptionRuntimeState {
     creating: computed<boolean>(() => false),
     creatable: computed<boolean>(() => false),
     createLabel: computed<string | undefined>(() => undefined),
-    error: computed<unknown | null>(() => null),
+    error: computed<FormValue | null>(() => null),
     disableOnLoading: computed<boolean>(() => false),
     refreshable: computed<boolean>(() => false),
     selectCreatedOption: computed<boolean>(() => true),
@@ -60,5 +62,5 @@ function optionStateKey(path: readonly string[]) {
 }
 
 function optionPathSegments(path: string | readonly string[]) {
-  return typeof path === 'string' ? path.split('.').filter(Boolean) : path
+  return isString(path) ? path.split('.').filter(Boolean) : path
 }

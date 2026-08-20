@@ -35,7 +35,7 @@ const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size))
 </script>
 
 <template>
-  <div :class="mergeDataListUiClass('bg-default', undefined, ui?.editor)">
+  <div :class="mergeDataListUiClass('w-full min-w-0 max-w-full bg-default', undefined, ui?.editor)">
     <div
       v-if="searchable"
       :class="

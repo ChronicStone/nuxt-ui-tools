@@ -2,6 +2,7 @@ import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
 import { computed, reactive } from 'vue'
 
 import type { GenericObject } from '../../shared/types/utils'
+import type { FormValue } from '../types'
 import type {
   FormAsyncResource,
   FormRuntimeContext,
@@ -9,8 +10,9 @@ import type {
   FormSyncResource,
 } from '../types'
 import { isRecord } from '../utils/path'
+import { isFunction, isPromise, isUndefined } from '../utils/predicate'
 
-type RuntimeResource = FormSyncResource<unknown> | FormAsyncResource<unknown>
+type RuntimeResource = FormSyncResource<FormValue> | FormAsyncResource<FormValue>
 export function useFormContextResources() {
   const context = reactive<FormRuntimeContext>({})
   const queryClient = useQueryClient()
@@ -32,17 +34,17 @@ export function useFormContextResources() {
   }
 }
 
-export function getSchemaContext(schema: unknown) {
+export function getSchemaContext(schema: FormValue) {
   if (!isRecord(schema)) return undefined
   const context = Object.getOwnPropertyDescriptor(schema, 'context')?.value
   return isRecord(context) ? context : undefined
 }
 
-function createResource(source: unknown, queryClient: QueryClient): RuntimeResource {
+function createResource(source: FormValue, queryClient: QueryClient): RuntimeResource {
   const raw = resolveResourceSource(source)
 
   if (isPromise(raw)) {
-    const resource: FormAsyncResource<unknown> = {
+    const resource: FormAsyncResource<FormValue> = {
       value: undefined,
       error: null,
       pending: true,
@@ -53,8 +55,8 @@ function createResource(source: unknown, queryClient: QueryClient): RuntimeResou
 
     resource.refresh = async () => {
       const nextSource = resolveResourceSource(source)
-      resource.pending = typeof resource.value === 'undefined'
-      resource.fetching = typeof resource.value !== 'undefined'
+      resource.pending = isUndefined(resource.value)
+      resource.fetching = !isUndefined(resource.value)
       resource.loading = resource.pending
       try {
         resource.value = await nextSource
@@ -77,7 +79,7 @@ function createResource(source: unknown, queryClient: QueryClient): RuntimeResou
       const nextSource = resolveResourceSource(source)
       return isQueryLike(nextSource) ? nextSource : null
     })
-    const query = useQuery<unknown, Error, unknown>(() => {
+    const query = useQuery<FormValue, Error, FormValue>(() => {
       const nextSource = querySource.value
       if (!nextSource)
         return {
@@ -89,13 +91,13 @@ function createResource(source: unknown, queryClient: QueryClient): RuntimeResou
       return nextSource
     })
 
-    const resource: FormAsyncResource<unknown> = {
+    const resource: FormAsyncResource<FormValue> = {
       get value() {
         return query.data.value
       },
       set value(value) {
         const nextSource = querySource.value
-        if (nextSource) queryClient.setQueryData<unknown, unknown>(nextSource.queryKey, value)
+        if (nextSource) queryClient.setQueryData<FormValue, FormValue>(nextSource.queryKey, value)
       },
       get error() {
         return query.error.value ?? null
@@ -120,15 +122,11 @@ function createResource(source: unknown, queryClient: QueryClient): RuntimeResou
   return { value: raw }
 }
 
-function resolveResourceSource(source: unknown) {
-  return typeof source === 'function' ? source() : source
+function resolveResourceSource(source: FormValue) {
+  return isFunction(source) ? source() : source
 }
 
-function isPromise(value: unknown): value is Promise<unknown> {
-  return isRecord(value) && typeof value.then === 'function'
-}
-
-function isQueryLike(value: unknown): value is FormRuntimeQueryOptions {
+function isQueryLike(value: FormValue): value is FormRuntimeQueryOptions {
   if (!isRecord(value)) return false
   const queryKey = Object.getOwnPropertyDescriptor(value, 'queryKey')?.value
   return Array.isArray(queryKey)

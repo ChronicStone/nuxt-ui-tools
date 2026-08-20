@@ -1,6 +1,7 @@
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 
 import type { TableSourceRequestContext } from './source'
+import type { TableApi } from './table-api'
 import type {
   GenericObject,
   MaybePromise,
@@ -39,6 +40,34 @@ export interface TableBulkAction<
   TPageContext extends GenericObject = GenericObject,
 > extends TableToolbarAction<TRow, TContext, TPageContext> {
   requiresSelection?: boolean
+}
+
+/** Runtime state exposed for a configured toolbar or bulk action. */
+export interface TableActionState {
+  visible: boolean
+  disabled: boolean
+  loading: boolean
+  running: boolean
+}
+
+/**
+ * Headless action data for custom table toolbars.
+ *
+ * The action definition remains available alongside resolved state so a custom
+ * renderer can keep package behavior while owning the actual button markup.
+ */
+export interface TableActionSlotProps<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TPageContext extends GenericObject = GenericObject,
+> {
+  definition:
+    | TableBulkAction<TRow, TContext, TPageContext>
+    | TableToolbarAction<TRow, TContext, TPageContext>
+  state: TableActionState
+  running: boolean
+  selection: TableApi['selection']
+  execute: () => Promise<void>
 }
 
 export interface TableRowActionContext<

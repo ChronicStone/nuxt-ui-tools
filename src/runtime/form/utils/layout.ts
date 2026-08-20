@@ -1,4 +1,5 @@
 import type { FormLayoutConfig } from '../types'
+import { isNumber } from './predicate'
 
 export const FORM_LAYOUT_DEFAULTS = {
   columns: 8,
@@ -19,7 +20,7 @@ export function resolveFormLayoutConfig(
 
 export function normalizeFormLayoutGap(value: number | string | undefined) {
   const gap = value ?? FORM_LAYOUT_DEFAULTS.gap
-  if (typeof gap === 'number') return `${gap}px`
+  if (isNumber(gap)) return `${gap}px`
   return gap
 }
 

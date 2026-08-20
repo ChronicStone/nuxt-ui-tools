@@ -4,6 +4,7 @@ import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
 import USlider from '@nuxt/ui/components/Slider.vue'
 import { computed, ref, watch } from 'vue'
 
+import { isArray, isDate, isNumber, isObject } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -14,6 +15,8 @@ import type {
 } from '../../../types'
 import {
   mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveFilterEditorSizeClasses,
   resolveFilterTriggerIcon,
   resolveNumberFilterUi,
 } from '../../../utils'
@@ -38,6 +41,8 @@ const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
 const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
 const localValue = ref<string>('')
 const rangeValue = ref<{ from: string; to: string }>({ from: '', to: '' })
@@ -131,7 +136,7 @@ function initLocalState() {
   })?.value
 
   if (operator.value === 'between') {
-    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+    if (isObject(value) && !isDate(value)) {
       rangeValue.value = {
         from: value.from == null ? '' : String(value.from),
         to: value.to == null ? '' : String(value.to),
@@ -186,10 +191,12 @@ function applyFilter() {
       value:
         rangeValue.value.from === '' && rangeValue.value.to === ''
           ? undefined
-          : {
-              ...(rangeValue.value.from === '' ? {} : { from: Number(rangeValue.value.from) }),
-              ...(rangeValue.value.to === '' ? {} : { to: Number(rangeValue.value.to) }),
-            },
+          : Object.fromEntries(
+              [
+                rangeValue.value.from === '' ? undefined : ['from', Number(rangeValue.value.from)],
+                rangeValue.value.to === '' ? undefined : ['to', Number(rangeValue.value.to)],
+              ].filter((entry): entry is [string, number] => entry !== undefined),
+            ),
       operator: nextOperator,
     })
     session.close()
@@ -230,17 +237,17 @@ function updateRangeTo(value: number | undefined) {
   commitIfAuto()
 }
 
-function updateSliderScalarValue(value: unknown) {
-  if (typeof value !== 'number') return
+function updateSliderScalarValue<TValue>(value: TValue) {
+  if (!isNumber(value)) return
   scalarValue.value = value
   commitIfAuto()
 }
 
-function updateSliderRangeValue(value: unknown) {
-  if (!Array.isArray(value) || value.length < 2) return
+function updateSliderRangeValue<TValue>(value: TValue) {
+  if (!isArray(value) || value.length < 2) return
 
   const [from, to] = value
-  if (typeof from !== 'number' || typeof to !== 'number') return
+  if (!isNumber(from) || !isNumber(to)) return
 
   rangeValue.value = {
     from: String(from),
@@ -260,7 +267,11 @@ function resolveIncrementConfig(hideStepper: boolean) {
     :embedded="embedded"
     :transitioning="stageTransitioning"
     :content-class="
-      mergeDataListUiClass('w-fit overflow-hidden p-0', undefined, dataListFilterUi?.popoverContent)
+      mergeDataListUiClass(
+        `${sizeClasses.editor} overflow-hidden p-0`,
+        undefined,
+        dataListFilterUi?.popoverContent,
+      )
     "
     @update-open="session.handleOpenChange"
   >
@@ -307,7 +318,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
           v-else
           :class="
             mergeDataListUiClass(
-              'min-w-[16rem] max-w-[calc(100vw-1rem)] bg-default',
+              `${sizeClasses.editor} w-full min-w-0 max-w-full bg-default`,
               undefined,
               dataListFilterUi?.editor,
             )
@@ -317,7 +328,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
             v-if="operator === 'between'"
             :class="
               mergeDataListUiClass(
-                'grid gap-3 border-b border-default p-3',
+                `grid border-b border-default ${geometry.toolbarGap} ${sizeClasses.searchHeader}`,
                 undefined,
                 dataListFilterUi?.inputs,
               )
@@ -327,7 +338,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
               v-if="
                 filterUi.range.display === 'inputs' || filterUi.range.display === 'inputs-slider'
               "
-              class="grid grid-cols-2 gap-2"
+              :class="['grid grid-cols-2', geometry.toolbarGap]"
             >
               <UInputNumber
                 :model-value="rangeValue.from === '' ? undefined : Number(rangeValue.from)"
@@ -340,11 +351,6 @@ function resolveIncrementConfig(hideStepper: boolean) {
                 :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
                 :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
                 :size="size"
-                :ui="{
-                  base: 'h-9 px-2',
-                  increment: 'size-7 rounded-md',
-                  decrement: 'size-7 rounded-md',
-                }"
                 @update:model-value="updateRangeFrom"
                 @keydown.enter.prevent="applyFilter"
               />
@@ -360,11 +366,6 @@ function resolveIncrementConfig(hideStepper: boolean) {
                 :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
                 :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
                 :size="size"
-                :ui="{
-                  base: 'h-9 px-2',
-                  increment: 'size-7 rounded-md',
-                  decrement: 'size-7 rounded-md',
-                }"
                 @update:model-value="updateRangeTo"
                 @keydown.enter.prevent="applyFilter"
               />
@@ -389,7 +390,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
             v-else
             :class="
               mergeDataListUiClass(
-                'grid gap-3 border-b border-default p-3',
+                `grid border-b border-default ${geometry.toolbarGap} ${sizeClasses.searchHeader}`,
                 undefined,
                 dataListFilterUi?.inputs,
               )
@@ -409,11 +410,6 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :increment="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
               :decrement="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
               :size="size"
-              :ui="{
-                base: 'h-9 px-2',
-                increment: 'size-7 rounded-md',
-                decrement: 'size-7 rounded-md',
-              }"
               @update:model-value="updateScalarValue"
               @keydown.enter.prevent="applyFilter"
             />
@@ -436,7 +432,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
             v-if="filterUi.commitMode === 'manual'"
             :class="
               mergeDataListUiClass(
-                'flex items-center justify-between border-t border-default p-2',
+                `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
                 undefined,
                 dataListFilterUi?.footer,
               )

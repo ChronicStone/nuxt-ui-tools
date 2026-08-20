@@ -6,6 +6,7 @@ import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import type { FormCardField } from '../../types'
+import { invokeFormFunction, isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
@@ -31,8 +32,8 @@ const footer = computed(() => resolveRenderable(props.field.footer))
 const action = computed(() => resolveRenderable(props.field.action))
 
 function resolveRenderable(value: FormCardField['header']) {
-  const resolved = typeof value === 'function' ? value(params.value) : value
-  return typeof resolved === 'string' || typeof resolved === 'number' ? String(resolved) : undefined
+  const resolved = invokeFormFunction(value, [params.value]) ?? value
+  return isString(resolved) || isNumber(resolved) ? String(resolved) : undefined
 }
 </script>
 

@@ -3,10 +3,11 @@ import UDrawer from '@nuxt/ui/components/Drawer.vue'
 import { computed } from 'vue'
 
 import type { FormDrawerLayoutProps, FormOverlayLayoutEmits } from '../../types'
+import { isNumber } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<FormDrawerLayoutProps>()
-defineEmits<FormOverlayLayoutEmits>()
+const emit = defineEmits<FormOverlayLayoutEmits>()
 const direction = computed(() => props.config?.placement ?? 'right')
 const contentStyle = computed(() => ({
   width: cssSize(props.config?.width),
@@ -23,7 +24,11 @@ const contentProps = computed(() => ({
 }))
 
 function cssSize(value: number | string | undefined) {
-  return typeof value === 'number' ? `${value}px` : value
+  return isNumber(value) ? `${value}px` : value
+}
+
+function handleAnimationEnd(open: boolean) {
+  if (!open) emit('after-close')
 }
 </script>
 
@@ -38,13 +43,10 @@ function cssSize(value: number | string | undefined) {
     :handle="false"
     :ui="{
       overlay: ui?.overlay,
-      content: mergeFormUiClass(
-        'h-dvh overflow-hidden border-l border-default p-0 md:max-w-xl',
-        ui?.content,
-      ),
+      content: mergeFormUiClass('h-dvh max-w-full overflow-hidden border-default p-0', ui?.content),
     }"
     @update:open="$emit('update:open', $event)"
-    @animation-end="$emit('after-close')"
+    @animation-end="handleAnimationEnd"
   >
     <template #content>
       <slot />

@@ -104,6 +104,18 @@ field. The same focus behavior is used by the built-in next/submit actions.
 Fields validate live after their first blur/touch by default, so initial focus does not show
 errors before the user has interacted with the field.
 
+Validation is implemented with Regle internally. The runtime owns the Regle tree, required and
+authored rule execution, async completion, collection (`array-list`, `array-table`, and variants)
+paths, and stable field error mapping; consumers only author the existing `validation` config and
+do not need to create a second validator or pass a Standard Schema adapter.
+
+Mounted field callbacks can read `api.validation.pending()`. It is derived directly from the
+Regle field and rule status, so it is `true` only while that field's asynchronous rules are
+running, including nested array paths, and returns to `false` for both resolved and stale runs.
+Built-in text, number, select, autocomplete, tree, switch, and button controls pass this state to
+their Nuxt UI loading chrome; synchronous rules never flash a loader. Errors from an async run are
+revealed after the promise settles, not while it is pending.
+
 The renderer uses a native form submit event. Pressing Enter from a focused single-line control
 runs the same validation and submit lifecycle as the built-in submit action, while Enter in a
 textarea keeps its normal newline behavior.
@@ -123,6 +135,16 @@ Submit handlers receive typed external-error controls through `api.setError(path
 `{ success: false }`; use one application-level toast only when the failure is not mapped. Editing
 a field clears its own external error automatically. When one error belongs to multiple fields,
 declare those fields as dependencies and clear the sibling error from `onDependencyChange`.
+
+In stepped forms, the built-in `Next` action validates only the visible step, then awaits
+`onBeforeNext`. `actionPending` stays `'next'` for that entire transaction, so the Next button
+shows its loader and other actions are disabled; duplicate calls return `false`. An async
+`onBeforePrevious` hook similarly uses `'previous'` while the Previous action awaits. A stepped
+submit also runs `onBeforeNext` after validation, then continues through `onBeforeSubmit` and
+`submit`; its pending action changes from `'next'` to `'submit'` at that boundary. Return `false`
+from `onBeforeNext` to cancel; a `void` result continues for compatibility with the Nuxt schema
+contract. Next commits touched/error state for every invalid field in the visible step before it
+focuses the first invalid control.
 
 ## Provider-Owned Overlays
 
@@ -162,6 +184,10 @@ if (result.isCompleted) {
 ```
 
 `mode` accepts `modal`, `drawer`, `fullscreen`, or a responsive value such as `drawer md:modal`.
+
+Overlay forms keep their header and action footer outside the scrollable field viewport. Drawer
+close resolution waits for the Nuxt UI close animation before completing or cancelling the provider
+promise, and submit/close controls are disabled while an action is pending.
 
 Schema-level `modal`, `drawer`, and `fullscreen` objects control sizing, placement, outside-click
 dismissal, close-button visibility, and drawer resizing.

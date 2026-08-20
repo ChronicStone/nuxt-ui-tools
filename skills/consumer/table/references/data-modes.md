@@ -61,14 +61,33 @@ What your `request` contains:
 - search
 - context
 
-What your API should return:
+What your API may return for offset pagination:
 
 ```ts
+// compact table-native shape
 {
   rows: EmployeeRow[],
   rowCount: number
 }
+
+// resource-style shape, accepted directly (for example drizzle-resource)
+{
+  rows: EmployeeRow[],
+  pageInfo: {
+    mode: 'offset',
+    pageIndex: number,
+    pageSize: number,
+    hasNextPage: boolean,
+    count: 'exact',
+    rowCount: number,
+  },
+  facets?: TableFacetResult[],
+}
 ```
+
+Cursor sources return the matching `pageInfo: { mode: 'cursor', nextCursor, ... }` shape. This lets
+query-resource backends pass their page result straight through without an adapter that only moves
+`pageInfo.rowCount` to the root.
 
 Remote mode can also provide:
 
@@ -76,6 +95,19 @@ Remote mode can also provide:
 - remote filter-option queries
 
 Remote facet counts are configured on the filter with `source.facet` and implemented on the source with `source.facets(...)`.
+
+## Route prefetch
+
+Pair a table page with the `defineQueryPrefetch(...)` macro when links should warm the exact
+destination state before navigation:
+
+```ts
+defineQueryPrefetch('employees', ({ route }) => prefetchTable({ route, schema: employeesSchema() }))
+```
+
+`prefetchTable(...)` resolves the route's `l`, `p.*`, `s.*`, and `f.*` query keys and stages context,
+source/facet/option, then page-context queries in dependency order. The mounted table reuses the
+same TanStack Query cache entries.
 
 ## Choosing Between Them
 

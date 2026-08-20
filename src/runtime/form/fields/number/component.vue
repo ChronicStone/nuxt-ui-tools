@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormNumberField } from '../../types'
+import { isNumber } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormNumberField
@@ -19,7 +20,7 @@ const { form, controlProps, disabled, handleBlur, placeholder } = useFieldContro
 const model = computed<number | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    return typeof value === 'number' ? value : undefined
+    return isNumber(value) ? value : undefined
   },
   set: (value) => form.setValue(props.path, value ?? null),
 })

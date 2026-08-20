@@ -21,7 +21,11 @@ const formUi = useFormUi()
     <UFieldGroup
       :size="formUi.controlSize.value"
       :class="
-        mergeFormUiClass('w-full', formUi.ui.value.group?.ui?.root, formUi.ui.value.group?.ui?.base)
+        mergeFormUiClass(
+          'w-full [&>button:has(+input[data-hidden]:last-child)]:rounded-e-md',
+          formUi.ui.value.group?.ui?.root,
+          formUi.ui.value.group?.ui?.base,
+        )
       "
     >
       <FormFieldRenderer

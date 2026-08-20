@@ -2,11 +2,12 @@ import type { QueryKey, UseQueryOptions } from '@tanstack/vue-query'
 import type { ComputedRef, Ref } from 'vue'
 
 import type { ResolvedFormOption } from '../utils/options'
+import type { FormValue } from './'
 
 /** Complete TanStack Query options retained by form-owned observers. */
 export type FormRuntimeQueryOptions = Exclude<
-  UseQueryOptions<unknown, Error, unknown, unknown, QueryKey>,
-  Ref<unknown> | ComputedRef<unknown>
+  UseQueryOptions<FormValue, Error, FormValue, FormValue, QueryKey>,
+  Ref<FormValue> | ComputedRef<FormValue>
 >
 
 /**
@@ -32,7 +33,7 @@ export interface FormOptionRuntimeState {
   /** Optional label for the explicit create affordance. */
   createLabel: ComputedRef<string | undefined>
   /** Last option-source error, if any. */
-  error: ComputedRef<unknown | null>
+  error: ComputedRef<FormValue | null>
   /** True when the field should disable interactions while `loading` is true. */
   disableOnLoading: ComputedRef<boolean>
   /** True when the field should render a refresh affordance. */
@@ -42,7 +43,7 @@ export interface FormOptionRuntimeState {
   /** Re-runs the field option source. */
   refresh: () => Promise<void>
   /** Appends a local option to the field option list without calling the async create handler. */
-  add: (option: unknown) => void
+  add: (option: FormValue) => void
   /** Creates and appends a local option when configured by the field. */
   create: (label: string) => Promise<ResolvedFormOption | null>
 }

@@ -70,6 +70,7 @@ function createSpreadsheetInternals<TSchema extends { importKey: string }>(optio
   }
 }
 
+// SAFETY: this module creates and provides the only value stored under this injection key.
 const SPREADSHEET_INTERNALS_KEY = Symbol(
   'nuxt-ui-tools.spreadsheet.internals',
 ) as InjectionKey<SpreadsheetInternals>

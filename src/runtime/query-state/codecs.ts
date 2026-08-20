@@ -61,7 +61,10 @@ export function createEnumCodec<const T extends readonly string[]>(
   const set = new Set<string>(values)
   return {
     parse(raw) {
-      if (set.has(raw)) return raw as T[number]
+      if (set.has(raw)) {
+        // SAFETY: the set was created from `values`, so a present raw value is one of T[number].
+        return raw as T[number]
+      }
       return undefined
     },
     serialize(value) {

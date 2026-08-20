@@ -1,97 +1,68 @@
 <script setup lang="ts">
-import UBadge from '@nuxt/ui/components/Badge.vue'
-import UButton from '@nuxt/ui/components/Button.vue'
-import UCard from '@nuxt/ui/components/Card.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
-
-const { t } = useI18n()
-
-const entries = computed(() => [
+const entries = [
   {
-    title: t('playground.home.entries.form.title'),
-    description: t('playground.home.entries.form.description'),
-    icon: 'i-lucide-clipboard-list',
+    label: 'Forms',
+    description: 'Schema fields, validation, overlays, settings, and typed output.',
+    group: 'Abstraction',
     to: '/form',
   },
   {
-    title: t('playground.home.entries.spreadsheet.title'),
-    description: t('playground.home.entries.spreadsheet.description'),
-    icon: 'i-lucide-file-spreadsheet',
+    label: 'Tables',
+    description: 'Client, remote, and composable data-list runtime examples.',
+    group: 'Abstraction',
+    to: '/table',
+  },
+  {
+    label: 'Spreadsheet',
+    description: 'Import-engine scenarios for matching, references, and validation.',
+    group: 'Abstraction',
     to: '/spreadsheet',
   },
-  {
-    title: t('playground.home.entries.remoteTable.title'),
-    description: t('playground.home.entries.remoteTable.description'),
-    icon: 'i-lucide-database-zap',
-    to: '/table-remote',
-  },
-  {
-    title: t('playground.home.entries.clientTable.title'),
-    description: t('playground.home.entries.clientTable.description'),
-    icon: 'i-lucide-table-properties',
-    to: '/table-client',
-  },
-])
+] as const
 </script>
 
 <template>
-  <section class="grid min-h-full place-items-center px-6 py-10">
-    <div class="grid w-full max-w-5xl gap-8">
-      <div class="grid gap-4 text-center">
-        <div class="flex flex-wrap items-center justify-center gap-2">
-          <UBadge color="neutral" variant="subtle" size="sm" class="font-mono">
-            {{ t('playground.home.badges.home') }}
-          </UBadge>
-          <UBadge color="primary" variant="soft" size="sm" class="font-mono">
-            {{ t('playground.home.badges.idle') }}
-          </UBadge>
-        </div>
+  <PlaygroundContent mode="document">
+    <section class="mx-auto grid w-full max-w-5xl gap-10 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <header class="grid max-w-2xl gap-4">
+        <p class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+          Playground overview
+        </p>
+        <h1 class="text-3xl font-semibold tracking-tight text-highlighted sm:text-4xl">
+          Isolated examples for the package runtime.
+        </h1>
+        <p class="text-base leading-7 text-muted">
+          Choose one abstraction or variant at a time. Each route owns its content sizing, runtime
+          controls, and validation surface so comparisons stay readable.
+        </p>
+      </header>
 
-        <div class="grid gap-3">
-          <h1 class="text-3xl font-semibold tracking-tight text-highlighted">
-            {{ t('playground.home.title') }}
-          </h1>
-          <p class="mx-auto max-w-3xl text-sm leading-6 text-muted">
-            {{ t('playground.home.description') }}
-          </p>
-        </div>
-      </div>
-
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <UCard
+      <nav class="grid border-y border-default" aria-label="Playground examples">
+        <NuxtLink
           v-for="entry in entries"
           :key="entry.to"
-          class="h-full border-default/70 bg-default shadow-sm"
-          :ui="{ body: 'grid h-full gap-5 p-5' }"
+          :to="entry.to"
+          class="group grid gap-2 border-b border-default px-1 py-5 transition-colors last:border-b-0 hover:bg-elevated/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:px-3"
         >
-          <div class="grid gap-4">
-            <div
-              class="flex size-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary"
-            >
-              <UIcon :name="entry.icon" class="size-5" />
-            </div>
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+            {{ entry.group }}
+          </span>
+          <span class="grid gap-1">
+            <span class="text-base font-medium text-highlighted">{{ entry.label }}</span>
+            <span class="text-sm leading-6 text-muted">{{ entry.description }}</span>
+          </span>
+          <UIcon
+            name="i-lucide-arrow-up-right"
+            class="size-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          />
+        </NuxtLink>
+      </nav>
 
-            <div class="grid gap-2">
-              <h2 class="text-lg font-semibold text-highlighted">
-                {{ entry.title }}
-              </h2>
-              <p class="text-sm leading-6 text-toned">
-                {{ entry.description }}
-              </p>
-            </div>
-          </div>
-
-          <div class="mt-auto">
-            <UButton
-              :to="entry.to"
-              color="primary"
-              variant="soft"
-              trailing-icon="i-lucide-arrow-right"
-              :label="t('playground.common.open')"
-            />
-          </div>
-        </UCard>
-      </div>
-    </div>
-  </section>
+      <footer class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
+        <span>Content modes are declared by each route.</span>
+        <span class="hidden h-3 w-px bg-border sm:block" aria-hidden="true" />
+        <span>Light and dark modes use the same neutral baseline.</span>
+      </footer>
+    </section>
+  </PlaygroundContent>
 </template>

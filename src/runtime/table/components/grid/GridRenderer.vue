@@ -7,20 +7,26 @@ import { computed, nextTick, onMounted, ref, watch, type ComponentPublicInstance
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import { GRID_DEFAULTS } from '../../constants/grid'
-import type { DataListGridUi } from '../../types'
+import type { DataListControlSize, DataListGridUi } from '../../types'
 import { mergeDataListUiClass, resolveTableRowId } from '../../utils'
 import GridCard from './GridCard.vue'
 import GridSkeleton from './GridSkeleton.vue'
 
 const props = defineProps<{
   height?: string
+  size?: DataListControlSize
   ui?: DataListGridUi
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
 const { t } = useUiToolsLocale()
+const resolvedSize = computed(
+  () => props.size ?? dataListUi.ui.value.grid?.size ?? dataListUi.controlSize.value,
+)
 const viewportRef = ref<HTMLElement | null>(null)
 const hostRef = ref<HTMLElement | null>(null)
 const animationsReady = ref<boolean>(false)
@@ -84,7 +90,7 @@ onMounted(() => {
 })
 
 watch(
-  () => internals.tableApi.pagination.state.value.pageIndex,
+  () => internals.pagination.currentPage.value,
   () => scrollToTop(),
 )
 
@@ -129,22 +135,11 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
 </script>
 
 <template>
-  <div
-    ref="hostRef"
-    :class="
-      mergeDataListUiClass(
-        isContained
-          ? 'relative overflow-hidden rounded-md border border-accented bg-default shadow-sm'
-          : 'relative',
-        undefined,
-        ui?.root,
-      )
-    "
-  >
+  <div ref="hostRef" :class="mergeDataListUiClass('relative overflow-hidden', undefined, ui?.root)">
     <div
       v-if="isContained"
       ref="viewportRef"
-      :class="mergeDataListUiClass('overflow-auto px-4 py-4 sm:px-5', undefined, ui?.viewport)"
+      :class="mergeDataListUiClass('overflow-auto', undefined, ui?.viewport)"
       :style="height ? { height } : undefined"
     >
       <div
@@ -253,7 +248,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
           <UButton
             color="neutral"
             variant="soft"
-            size="lg"
+            :size="resolvedSize"
             icon="i-lucide-refresh-cw"
             :ui="{ base: ui?.retry }"
             @click="refreshData"
@@ -367,7 +362,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
         :transition="{ duration: 0.18, ease: [0.25, 1, 0.5, 1] }"
       >
         <div
-          :class="mergeDataListUiClass('grid gap-4 px-4 py-4 sm:px-5', undefined, ui?.flow)"
+          :class="mergeDataListUiClass('grid gap-4', undefined, ui?.flow)"
           :style="{ gridTemplateColumns, minHeight }"
         >
           <div v-for="row in skeletonRows" :key="row" :style="{ gridColumn }">
@@ -438,7 +433,7 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
           <UButton
             color="neutral"
             variant="soft"
-            size="lg"
+            :size="resolvedSize"
             icon="i-lucide-refresh-cw"
             :ui="{ base: ui?.retry }"
             @click="refreshData"

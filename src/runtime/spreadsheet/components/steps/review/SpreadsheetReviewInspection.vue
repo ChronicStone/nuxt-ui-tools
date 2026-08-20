@@ -7,7 +7,7 @@ import { computed, ref } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 import SpreadsheetValuePreview from '#ui-tools/spreadsheet/components/shared/SpreadsheetValuePreview.vue'
 
-import type { SpreadsheetRowIssue } from '../../../types'
+import type { SpreadsheetRecord, SpreadsheetRowIssue, SpreadsheetValue } from '../../../types'
 
 const emit = defineEmits<{
   close: []
@@ -22,22 +22,25 @@ const { t } = useUiToolsLocale()
 const props = defineProps<{
   inspectedRow: {
     index: number
-    rowObject: Record<string, unknown>
+    rowObject: SpreadsheetRecord
     issues: readonly SpreadsheetRowIssue[]
   }
   tableColumns: string[]
   issueRowsLength: number
   inspectedIssueRowPosition: number
-  formatCell: (value: unknown) => string
-  getObjectEntries: (value: unknown) => Array<[string, unknown]>
+  formatCell: (value: SpreadsheetValue) => string
+  getObjectEntries: (value: SpreadsheetValue) => Array<[string, SpreadsheetValue]>
   humanizeKey: (value: string) => string
   getIssueBadge: (issue: SpreadsheetRowIssue) => {
     label: string
     color: 'error' | 'warning'
   }
   getIssueValueTone: (issue: SpreadsheetRowIssue) => string
-  getIssueValue: (rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) => string
-  getIssueRawValue: (rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) => unknown
+  getIssueValue: (rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) => string
+  getIssueRawValue: (
+    rowData: SpreadsheetRecord,
+    issue: SpreadsheetRowIssue,
+  ) => SpreadsheetValue | undefined
   getRelatedIssueCount: (issue: SpreadsheetRowIssue) => number
   isDiscarded: (index: number) => boolean
   isManuallyDiscarded: (index: number) => boolean

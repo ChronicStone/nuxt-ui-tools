@@ -50,6 +50,7 @@ export interface FormFieldUi {
   help?: FormUiClass
   body?: FormUiClass
   content?: FormUiClass
+  pending?: FormUiClass
   collapsible?: FormUiClass
   collapseTrigger?: FormUiClass
   reset?: FormUiClass

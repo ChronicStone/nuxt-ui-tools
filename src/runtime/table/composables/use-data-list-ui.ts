@@ -3,17 +3,26 @@ import { computed, type ComputedRef } from 'vue'
 
 import type { DataListControlSize, DataListDensity, DataListUiConfig } from '../types'
 
-const densitySizes: Record<DataListDensity, DataListControlSize> = {
+const densitySizes = {
   compact: 'sm',
   default: 'md',
   comfortable: 'lg',
-}
+} satisfies Record<DataListDensity, DataListControlSize>
+const sizeDensities = {
+  xs: 'compact',
+  sm: 'compact',
+  md: 'default',
+  lg: 'comfortable',
+  xl: 'comfortable',
+} satisfies Record<DataListControlSize, DataListDensity>
 
 const [provideDataListUiState, useInjectedDataListUiState] = createInjectionState(
   (ui: ComputedRef<DataListUiConfig>) => {
-    const density = computed<DataListDensity>(() => ui.value.density ?? 'default')
     const controlSize = computed<DataListControlSize>(
-      () => ui.value.control?.size ?? densitySizes[density.value],
+      () => ui.value.control?.size ?? densitySizes[ui.value.density ?? 'default'],
+    )
+    const density = computed<DataListDensity>(
+      () => ui.value.density ?? sizeDensities[controlSize.value],
     )
 
     return { ui, density, controlSize }

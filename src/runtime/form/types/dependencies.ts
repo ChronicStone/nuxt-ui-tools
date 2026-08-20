@@ -1,4 +1,5 @@
 import type { DeepPrettify, PathToObject, UnionToIntersection } from '../../shared/types/utils'
+import type { FormValue } from './'
 import type { FormObject } from './utils'
 
 type DependencySource<TDependency> = TDependency extends readonly [infer TSource, infer _TTarget]
@@ -20,14 +21,14 @@ type DependencyTarget<TDependency> = TDependency extends readonly [infer _TSourc
 type PathValue<TSource, TPath extends string> = TPath extends '$root'
   ? TSource
   : TPath extends `$parent${string}`
-    ? unknown
+    ? FormValue
     : TPath extends `${infer THead}.${infer TTail}`
       ? THead extends keyof TSource
         ? PathValue<TSource[THead], TTail>
-        : unknown
+        : FormValue
       : TPath extends keyof TSource
         ? TSource[TPath]
-        : unknown
+        : FormValue
 
 type DependencyObject<TDependency, TState> =
   DependencyTarget<TDependency> extends infer TTarget
@@ -36,7 +37,7 @@ type DependencyObject<TDependency, TState> =
       : {}
     : {}
 
-type DependenciesValue<TDependencies, TState> = TDependencies extends readonly unknown[]
+type DependenciesValue<TDependencies, TState> = TDependencies extends readonly FormValue[]
   ? UnionToIntersection<DependencyObject<TDependencies[number], TState>>
   : {}
 

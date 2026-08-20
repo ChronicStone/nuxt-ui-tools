@@ -51,9 +51,11 @@ import TextField from '../../fields/text/component.vue'
 import TextareaField from '../../fields/textarea/component.vue'
 import TimeField from '../../fields/time/component.vue'
 import UploadField from '../../fields/upload/component.vue'
+import type { FormValue } from '../../types'
 import type { FormField, FormFieldType, FormItemLayout, FormObject } from '../../types'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { focusFormFieldElement } from '../../utils/focus'
+import { isObject } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
@@ -61,6 +63,7 @@ const props = defineProps<{
   parentPath: readonly string[]
   bare?: boolean
   controlLabelledby?: string
+  controlAttrs?: FormObject
 }>()
 
 const form = useFormRuntimeContext()
@@ -69,8 +72,13 @@ const bare = computed<boolean>(() => props.bare === true)
 const controlId = useId()
 const controlAttrs = computed<FormObject>(() => {
   if (!bare.value) return {}
-  if (props.controlLabelledby) return { id: controlId, 'aria-labelledby': props.controlLabelledby }
-  return { id: controlId, 'aria-label': resolveControlLabel(props.field) }
+  const attrs = {
+    ...props.controlAttrs,
+    'data-form-field': fieldPath(props.parentPath, props.field).join('.'),
+  }
+  if (props.controlLabelledby)
+    return { ...attrs, id: controlId, 'aria-labelledby': props.controlLabelledby }
+  return { ...attrs, id: controlId, 'aria-label': resolveControlLabel(props.field) }
 })
 
 provideFormFieldBare(bare)
@@ -166,8 +174,8 @@ function resolveFieldLayout(): FormItemLayout | undefined {
   return isLayout(layout) ? layout : undefined
 }
 
-function isLayout(value: unknown): value is FormItemLayout {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isLayout(value: FormValue): value is FormItemLayout {
+  return isObject(value) && value !== null && !Array.isArray(value)
 }
 
 function resolveControlLabel(controlField: FormField) {
@@ -177,11 +185,23 @@ function resolveControlLabel(controlField: FormField) {
 </script>
 
 <template>
+  <template v-if="visible && bare">
+    <component :is="renderer" v-if="renderer" v-bind="rendererProps" />
+    <UAlert
+      v-else
+      color="neutral"
+      variant="soft"
+      icon="i-lucide-construction"
+      title="Unsupported field"
+      :description="`The ${field.type.value} field renderer is not implemented in this slice.`"
+    />
+  </template>
+
   <div
-    v-if="visible"
+    v-else-if="visible"
     ref="element"
     :data-form-field="path.join('.')"
-    :style="bare ? { display: 'contents' } : itemLayout.style.value"
+    :style="itemLayout.style.value"
   >
     <component :is="renderer" v-if="renderer" v-bind="rendererProps" />
     <UAlert

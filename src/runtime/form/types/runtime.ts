@@ -1,5 +1,6 @@
 import type { ComputedRef, Ref } from 'vue'
 
+import type { FormValue } from './'
 import type { FormFieldApi } from './api'
 import type { FormSubmitAction, FormSubmitHandler, FormSubmitHandlerResult } from './api'
 import type { FormFieldCallbackParams } from './callbacks'
@@ -17,7 +18,7 @@ import type { FormValidationError, FormValidationMode, FormValidationOptions } f
  */
 export interface UseFormRuntimeParams {
   /** Authored schema currently rendered by the form. */
-  schema: ComputedRef<unknown>
+  schema: ComputedRef<FormValue>
   /** Optional initial internal state provided by a controller or direct form usage. */
   input?: ComputedRef<FormObject | undefined>
   syncInput?: ComputedRef<boolean | readonly string[]>
@@ -48,7 +49,7 @@ export interface FormRuntimeStep {
  * exposed as top-level consumer API without deliberate design.
  */
 export interface FormRuntime {
-  schema: ComputedRef<unknown>
+  schema: ComputedRef<FormValue>
   state: FormObject
   output: ComputedRef<FormObject>
   dirtyPaths: ComputedRef<readonly string[]>
@@ -67,8 +68,8 @@ export interface FormRuntime {
   isLastStep: ComputedRef<boolean>
   canGoPrevious: ComputedRef<boolean>
   canGoNext: ComputedRef<boolean>
-  getValue: (path: string | readonly string[]) => unknown
-  setValue: (path: string | readonly string[], value: unknown) => void
+  getValue: (path: string | readonly string[]) => FormValue
+  setValue: (path: string | readonly string[], value: FormValue) => void
   getFieldApi: (path: readonly string[], field?: FormField) => FormFieldApi
   getFieldCallbackParams: (path: readonly string[], field: FormField) => FormFieldCallbackParams
   registerFieldOptions: (path: readonly string[], state: FormOptionRuntimeState) => () => void

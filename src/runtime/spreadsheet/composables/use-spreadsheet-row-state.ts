@@ -4,13 +4,14 @@ import type {
   SpreadsheetColumnMatch,
   SpreadsheetDynamicColumnMatch,
   SpreadsheetParsedRow,
+  SpreadsheetRecord,
   SpreadsheetRowSummary,
 } from '../types'
 import { createSpreadsheetRowSummary, parseSpreadsheetRows } from '../utils'
 
 export interface UseSpreadsheetRowStateParams {
   rows: ComputedRef<readonly (readonly unknown[])[]>
-  contextData: ComputedRef<Record<string, unknown>>
+  contextData: ComputedRef<SpreadsheetRecord>
   columnMatches: ComputedRef<readonly SpreadsheetColumnMatch[]>
   dynamicColumnMatches: ComputedRef<readonly SpreadsheetDynamicColumnMatch[]>
   refreshSources: readonly unknown[]

@@ -1,3 +1,5 @@
+import { isString } from '#ui-tools/shared/utils/predicate'
+
 import type {
   SpreadsheetDynamicCollectionDefinition,
   SpreadsheetDynamicOptionGroupsDefinition,
@@ -10,6 +12,7 @@ import type {
   SpreadsheetColumnMatch,
   SpreadsheetDynamicColumnMatch,
   SpreadsheetUnmatchedColumn,
+  SpreadsheetValue,
 } from '../../types'
 import {
   applySpreadsheetNormalization,
@@ -40,7 +43,7 @@ function getDefaultMatchDefinition(column: SpreadsheetStaticColumn): Spreadsheet
 }
 
 function scoreHeaderMatcher(header: SpreadsheetHeaderCell, matcher: SpreadsheetHeaderMatcher) {
-  if (typeof matcher === 'string') {
+  if (isString(matcher)) {
     const left = applySpreadsheetNormalization(header.text, defaultHeaderModifiers)
     const right = applySpreadsheetNormalization(matcher, defaultHeaderModifiers)
     return left === right ? 1 : null
@@ -88,7 +91,7 @@ function findHeaderMatch(
 
 function getDynamicHeaderPatterns(
   column: SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>,
-  source: unknown,
+  source: SpreadsheetValue,
 ) {
   const label = column.itemLabel?.(source) ?? column.itemKey?.(source) ?? column.key
   const strategy = column.header?.strategy ?? 'exact'
@@ -103,7 +106,7 @@ function getDynamicHeaderPatterns(
 
 function createOptionGroupsMatchDefinition(
   column: SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>,
-  source: unknown,
+  source: SpreadsheetValue,
 ): SpreadsheetMatchDefinition {
   return {
     headers: getDynamicHeaderPatterns(column, source),

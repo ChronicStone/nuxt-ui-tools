@@ -7,7 +7,11 @@ import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import type { TableFilterOperator } from '../../../types'
-import { mergeDataListUiClass } from '../../../utils'
+import {
+  mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveDataListNestedControlSize,
+} from '../../../utils'
 
 const props = defineProps<{
   label: string
@@ -30,7 +34,10 @@ const showMatchMode = computed(() => props.operatorItems.length > 1)
 const showOperatorPickerFirst = computed(() => !props.active && showMatchMode.value)
 const dataListUi = useDataListUi()
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const nestedSize = computed(() => resolveDataListNestedControlSize(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
 const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
+const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.toolbarGap}`)
 </script>
 
 <template>
@@ -42,15 +49,11 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         color="neutral"
         :variant="props.active ? 'subtle' : 'outline'"
         :size="size"
-        :ui="{
-          base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger),
-        }"
+        :ui="{ base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger) }"
         @click.stop="emit('requestMatchMode')"
       >
-        <span
-          :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)"
-        >
-          <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
+        <span :class="mergeDataListUiClass(labelClass, undefined, ui?.label)">
+          <UIcon :name="props.leadingIcon" :class="[geometry.icon, 'shrink-0 text-muted']" />
           <span class="truncate">{{ props.label }}</span>
         </span>
       </UButton>
@@ -61,13 +64,11 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
       color="neutral"
       variant="outline"
       :size="size"
-      :ui="{
-        base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger),
-      }"
+      :ui="{ base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger) }"
       @click.stop="emit('activate', props.operator)"
     >
-      <span :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)">
-        <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
+      <span :class="mergeDataListUiClass(labelClass, undefined, ui?.label)">
+        <UIcon :name="props.leadingIcon" :class="[geometry.icon, 'shrink-0 text-muted']" />
         <span class="truncate">{{ props.label }}</span>
       </span>
     </UButton>
@@ -77,13 +78,11 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         color="neutral"
         variant="subtle"
         :size="size"
-        :ui="{ base: mergeDataListUiClass('shrink-0', undefined, ui?.trigger) }"
+        :ui="{ base: mergeDataListUiClass('min-w-0 shrink-0', undefined, ui?.trigger) }"
         @click.stop="emit('activate', props.operator)"
       >
-        <span
-          :class="mergeDataListUiClass('flex min-w-0 items-center gap-2', undefined, ui?.label)"
-        >
-          <UIcon :name="props.leadingIcon" class="size-4 shrink-0 text-muted" />
+        <span :class="mergeDataListUiClass(labelClass, undefined, ui?.label)">
+          <UIcon :name="props.leadingIcon" :class="[geometry.icon, 'shrink-0 text-muted']" />
           <span class="truncate">{{ props.label }}</span>
         </span>
       </UButton>
@@ -95,9 +94,7 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         :size="size"
         :label="props.operatorLabel"
         trailing-icon="i-lucide-chevron-down"
-        :ui="{
-          base: mergeDataListUiClass('shrink-0', undefined, ui?.operatorTrigger),
-        }"
+        :ui="{ base: mergeDataListUiClass('shrink-0', undefined, ui?.operatorTrigger) }"
         @click.stop="emit('requestMatchMode')"
       />
 
@@ -106,28 +103,33 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         variant="subtle"
         :size="size"
         :ui="{
-          base: mergeDataListUiClass('min-w-0 max-w-full', undefined, ui?.value),
+          base: mergeDataListUiClass(
+            'min-w-0 max-w-[min(22rem,45vw)] overflow-hidden',
+            undefined,
+            ui?.value,
+          ),
         }"
         @click.stop="emit('activate', props.operator)"
       >
-        <span class="flex min-w-0 items-center gap-2">
+        <span class="flex min-w-0 items-center gap-1.5 overflow-hidden">
           <UBadge
-            color="neutral"
-            size="sm"
-            variant="subtle"
             v-for="tag in props.previewTags ?? []"
             :key="tag"
+            color="neutral"
+            :size="nestedSize"
+            variant="subtle"
+            class="max-w-28 min-w-0 shrink"
           >
-            {{ tag }}
+            <span class="truncate">{{ tag }}</span>
           </UBadge>
 
-          <span v-if="props.previewSummary">
+          <span v-if="props.previewSummary" class="min-w-0 truncate">
             {{ props.previewSummary }}
           </span>
 
           <span
             v-if="!(props.previewTags?.length ?? 0) && !props.previewSummary"
-            class="text-muted"
+            class="truncate text-muted"
           >
             Select…
           </span>
@@ -139,6 +141,8 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
         variant="subtle"
         :size="size"
         icon="i-lucide-x"
+        square
+        aria-label="Clear filter"
         :ui="{ base: mergeDataListUiClass('shrink-0', undefined, ui?.dismiss) }"
         @pointerdown.stop
         @click.stop="emit('clear')"

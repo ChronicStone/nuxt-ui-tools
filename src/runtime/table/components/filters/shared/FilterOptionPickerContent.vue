@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import USkeleton from '@nuxt/ui/components/Skeleton.vue'
-
 import type { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
+import FilterOptionLoadingList from './FilterOptionLoadingList.vue'
 import FilterOptionMultipleList from './FilterOptionMultipleList.vue'
 import FilterOptionSingleList from './FilterOptionSingleList.vue'
 import FilterOptionTreeContent from './FilterOptionTreeContent.vue'
@@ -21,17 +20,9 @@ const props = defineProps<{
   ui?: DataListFilterEditorUi
 }>()
 
-const searchQuery = defineModel<string>('searchQuery', {
-  default: '',
-})
-
-const flatRadioValue = defineModel<string | undefined>('flatRadioValue', {
-  default: undefined,
-})
-
-const treeRadioValue = defineModel<string | undefined>('treeRadioValue', {
-  default: undefined,
-})
+const searchQuery = defineModel<string>('searchQuery', { default: '' })
+const flatRadioValue = defineModel<string | undefined>('flatRadioValue', { default: undefined })
+const treeRadioValue = defineModel<string | undefined>('treeRadioValue', { default: undefined })
 
 const emit = defineEmits<{
   selectEntry: [
@@ -79,16 +70,12 @@ function handleSelect(options: {
     :ui="props.ui"
   >
     <template v-if="props.state.filterUi.value.presentation === 'tree'">
-      <template v-if="props.state.optionSource.isLoading.value">
-        <div class="grid gap-0.5">
-          <div v-for="i in 5" :key="i" class="flex items-center gap-3 rounded-md px-3 py-2">
-            <USkeleton class="size-4 shrink-0 rounded-full" />
-            <USkeleton class="h-3.5 min-w-0 flex-1" />
-            <USkeleton class="h-3.5 w-6 shrink-0" />
-          </div>
-        </div>
-      </template>
-
+      <FilterOptionLoadingList
+        v-if="props.state.optionSource.isLoading.value"
+        :size="props.size"
+        :ui="props.ui"
+        indicator="checkbox"
+      />
       <FilterOptionTreeContent
         v-else
         v-model="treeRadioValue"
@@ -107,16 +94,12 @@ function handleSelect(options: {
     </template>
 
     <template v-else-if="props.state.filterUi.value.selection.mode === 'multiple'">
-      <template v-if="props.state.optionSource.isLoading.value">
-        <div class="grid gap-0.5">
-          <div v-for="i in 5" :key="i" class="flex items-center gap-3 rounded-md px-3 py-2">
-            <USkeleton class="size-4 shrink-0 rounded-md" />
-            <USkeleton class="h-3.5 min-w-0 flex-1" />
-            <USkeleton class="h-3.5 w-6 shrink-0" />
-          </div>
-        </div>
-      </template>
-
+      <FilterOptionLoadingList
+        v-if="props.state.optionSource.isLoading.value"
+        :size="props.size"
+        :ui="props.ui"
+        indicator="checkbox"
+      />
       <FilterOptionMultipleList
         v-else
         :sections="
@@ -133,16 +116,12 @@ function handleSelect(options: {
     </template>
 
     <template v-else>
-      <template v-if="props.state.optionSource.isLoading.value">
-        <div class="grid gap-0.5">
-          <div v-for="i in 5" :key="i" class="flex items-center gap-3 rounded-md px-3 py-2">
-            <USkeleton class="size-4 shrink-0 rounded-full" />
-            <USkeleton class="h-3.5 min-w-0 flex-1" />
-            <USkeleton class="h-3.5 w-6 shrink-0" />
-          </div>
-        </div>
-      </template>
-
+      <FilterOptionLoadingList
+        v-if="props.state.optionSource.isLoading.value"
+        :size="props.size"
+        :ui="props.ui"
+        indicator="radio"
+      />
       <FilterOptionSingleList
         v-else
         v-model="flatRadioValue"
