@@ -1,10 +1,13 @@
-export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
+import type { QueryRequestInput } from 'drizzle-resource'
 
-  return $fetch('http://localhost:3333/api/table/demo-employees/query', {
-    method: 'POST',
-    body,
-  }).then((res) => {
-    return res
-  })
+import { employeesResource } from '../../../utils/demo-employees-db'
+
+export default defineEventHandler(async (event) => {
+  const request = await readBody<QueryRequestInput>(event)
+  const result = await employeesResource.query({ request })
+
+  // Keep the local playground honest about background loading without needing a second service.
+  await new Promise((resolve) => setTimeout(resolve, 450))
+
+  return result
 })
