@@ -16,6 +16,11 @@ export interface FormMatrixField<TContext = {}, TDeps = {}> extends FormStateful
   rows: readonly FormMatrixRow[]
   fields: readonly FormField<TContext, TDeps>[]
   minWidth?: number | string
+  rowHeaderWidth?: number | string
+  bordered?: boolean
+  striped?: boolean
+  hoverable?: boolean
+  compact?: boolean
 }
 
 export type MatrixFieldOutput<TRows extends readonly FormMatrixRow[], TChildren> = {
