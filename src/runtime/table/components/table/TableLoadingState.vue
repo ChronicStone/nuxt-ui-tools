@@ -1,82 +1,127 @@
 <script setup lang="ts">
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { useElementSize } from '@vueuse/core'
-import { computed } from 'vue'
-import { useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 
+import { isNumber } from '../../../shared/utils/predicate'
+import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
+import type { DataListControlSize } from '../../types'
+import { ROW_ACTIONS_COLUMN_ID, resolveDataListTableSize } from '../../utils'
 
 const props = defineProps<{
   minHeight: string
+  size?: DataListControlSize
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
 const rootRef = useTemplateRef<HTMLDivElement>('root')
 const { height } = useElementSize(rootRef)
-const rowHeight = 48
-const topPadding = 24
+const tableSize = computed(() =>
+  resolveDataListTableSize(props.size ?? dataListUi.ui.value.table?.size ?? dataListUi.controlSize.value),
+)
 
 const skeletonRows = computed(() => {
-  const availableHeight = Math.max(height.value - topPadding, 0)
-  const count = Math.max(1, Math.ceil(availableHeight / rowHeight))
+  const measuredHeight = height.value
+  const fallbackHeight = tableSize.value.rowHeight * 8
+  const availableHeight = measuredHeight > 0 ? measuredHeight : fallbackHeight
+  const count = Math.max(1, Math.ceil(availableHeight / tableSize.value.rowHeight))
   return Array.from({ length: count }, (_, index) => index)
 })
 
-const skeletonColumns = computed(() => [
-  {
-    id: '__select',
-    width: '3rem',
-    align: 'start' as const,
-    kind: 'checkbox' as const,
-    skeletonWidth: '1rem',
-  },
-  ...internals.tableColumns.visibleOrderedColumns.value.map((column, index) => ({
-    id: column.id,
-    width: index === 0 ? '1.3fr' : index === 1 ? '1.15fr' : '0.95fr',
-    align: index >= 3 ? ('end' as const) : ('start' as const),
-    kind: 'text' as const,
-    skeletonWidth:
-      index === 0
-        ? '10rem'
-        : index === 1
-          ? '12rem'
-          : index === 2
-            ? '8rem'
-            : index === 3
-              ? '9rem'
-              : '7rem',
-  })),
-])
+const skeletonColumns = computed(() => {
+  const dataColumns = internals.tableColumns.visibleOrderedColumns.value.map((column, index) => {
+    const isRowActions = column.id === ROW_ACTIONS_COLUMN_ID
+
+    return {
+      id: column.id,
+      width: isRowActions
+        ? '3.25rem'
+        : resolveSkeletonColumnWidth({ columnId: column.id, columnIndex: index }),
+      align: isRowActions || column.align === 'right' ? ('end' as const) : ('start' as const),
+      kind: isRowActions ? ('action' as const) : ('text' as const),
+      skeletonWidth: isRowActions
+        ? '1rem'
+        : index === 0
+          ? 'min(10rem, 72%)'
+          : index === 1
+            ? 'min(12rem, 78%)'
+            : index === 2
+              ? 'min(8rem, 68%)'
+              : index === 3
+                ? 'min(9rem, 72%)'
+                : 'min(7rem, 64%)',
+    }
+  })
+
+  if (!internals.selection.selectionEnabled.value) return dataColumns
+
+  return [
+    {
+      id: '__select',
+      width: '3.5rem',
+      align: 'start' as const,
+      kind: 'checkbox' as const,
+      skeletonWidth: '1rem',
+    },
+    ...dataColumns,
+  ]
+})
 
 const skeletonGridTemplate = computed(() =>
   skeletonColumns.value.map((column) => column.width).join(' '),
 )
+
+function resolveSkeletonColumnWidth(options: { columnId: string; columnIndex: number }) {
+  const column = internals.tableColumns.visibleOrderedColumns.value[options.columnIndex]
+  const configuredSize = internals.tableColumns.tableState.value.columnSizing[options.columnId]
+  if (configuredSize) return `${configuredSize}px`
+  if (column?.width !== undefined) return resolveCssColumnSize(column.width)
+  if (column?.minWidth !== undefined) return `minmax(${resolveCssColumnSize(column.minWidth)}, 1fr)`
+  return 'minmax(120px, 1fr)'
+}
+
+function resolveCssColumnSize(size: number | string) {
+  return isNumber(size) ? `${size}px` : size
+}
 </script>
 
 <template>
-  <div ref="root" class="h-full w-full pt-6" :style="{ minHeight }">
+  <div
+    ref="root"
+    data-table-loading-state
+    class="h-full min-h-0 w-full overflow-hidden"
+    :style="{ minHeight }"
+  >
     <div
       v-for="rowIndex in skeletonRows"
       :key="rowIndex"
-      class="grid h-12 items-center gap-3 border-b px-4"
-      style="border-bottom-color: color-mix(in oklab, var(--ui-border) 14%, transparent)"
-      :style="{ gridTemplateColumns: skeletonGridTemplate }"
+      data-table-loading-row
+      class="grid w-full items-stretch border-b border-default/40"
+      :style="{
+        gridTemplateColumns: skeletonGridTemplate,
+        minHeight: `${tableSize.rowHeight}px`,
+      }"
     >
       <div
         v-for="column in skeletonColumns"
         :key="`${rowIndex}-${column.id}`"
-        class="flex items-center"
         :class="[
+          'flex min-w-0 items-center',
+          tableSize.cell,
           column.align === 'end' ? 'justify-end' : 'justify-start',
-          column.kind === 'checkbox' ? 'pl-0' : '',
         ]"
       >
-        <template v-if="column.kind === 'checkbox'">
-          <USkeleton class="size-4 rounded-md" />
-        </template>
-        <template v-else>
-          <USkeleton class="h-4 rounded-full" :style="{ width: column.skeletonWidth }" />
-        </template>
+        <USkeleton
+          v-if="column.kind === 'checkbox'"
+          class="size-4 rounded-md"
+        />
+        <USkeleton
+          v-else
+          class="h-3.5 max-w-full rounded-full"
+          :style="{ width: column.skeletonWidth }"
+        />
       </div>
     </div>
   </div>

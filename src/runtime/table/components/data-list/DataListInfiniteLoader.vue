@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import { useIntersectionObserver } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
@@ -64,7 +65,16 @@ useIntersectionObserver(
     "
   >
     <slot v-if="state.isLoadingMore" name="loading" :loaded-count="state.loadedCount">
-      <span :class="mergeDataListUiClass('text-sm text-muted', rootUi?.ui?.loading, ui?.loading)">
+      <span
+        :class="
+          mergeDataListUiClass(
+            'inline-flex items-center gap-2 text-sm text-muted',
+            rootUi?.ui?.loading,
+            ui?.loading,
+          )
+        "
+      >
+        <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" />
         {{ t('table.states.loadingMore') }}
       </span>
     </slot>

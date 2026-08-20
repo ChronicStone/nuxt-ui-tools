@@ -2,12 +2,12 @@
 import UInput from '@nuxt/ui/components/Input.vue'
 import { ref, watch } from 'vue'
 
-import type { DataListSearchUi } from '../../types'
+import type { DataListControlSize, DataListSearchUi } from '../../types'
 
 const props = defineProps<{
   placeholder: string
   loading?: boolean
-  size?: 'xs' | 'sm' | 'md' | 'lg'
+  size: DataListControlSize
   ui?: DataListSearchUi
 }>()
 const model = defineModel<string>({ required: true })
@@ -31,7 +31,7 @@ function commitValue() {
 <template>
   <UInput
     :model-value="localValue"
-    :size="props.size ?? 'md'"
+    :size="props.size"
     color="primary"
     variant="outline"
     icon="i-lucide-search"

@@ -2,39 +2,42 @@
 import UTable from '@nuxt/ui/components/Table.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 
+import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { DataListTableUi } from '../../types'
-import { mergeDataListUiClass } from '../../utils'
+import type { DataListControlSize, DataListTableUi } from '../../types'
+import { mergeDataListUiClass, resolveDataListTableSize } from '../../utils'
 import { createDefaultColumnState, resolveTableRowId } from '../../utils'
 import TableEmptyState from './TableEmptyState.vue'
 import TableLoadingState from './TableLoadingState.vue'
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
 const props = defineProps<{
   height?: string
+  size?: DataListControlSize
+  externalScroll?: boolean
   ui?: DataListTableUi
 }>()
 const tableRef = ref<{ $el?: Element | null } | null>(null)
 
-const tableRows = computed(
-  () => internals.queryContent.data.value.rows as Array<Record<string, unknown>>,
-)
+const tableRows = computed(() => internals.queryContent.data.value.rows)
 const showInitialLoading = computed(
   () =>
     internals.queryContent.status.value.isBooting ||
     (internals.queryContent.status.value.isPending && tableRows.value.length === 0),
 )
 const showRefreshing = computed(
-  () =>
-    tableRows.value.length > 0 &&
-    (internals.queryContent.status.value.isRefreshing ||
-      internals.queryContent.status.value.isRevalidating),
+  () => tableRows.value.length > 0 && internals.queryContent.status.value.isFetching,
 )
 const tableEmpty = computed(() => !showInitialLoading.value && tableRows.value.length === 0)
-const bodyPlaceholderMinHeight = computed(() =>
-  props.height ? `calc(${props.height} - 7rem)` : '24rem',
+const resolvedSize = computed(
+  () => props.size ?? dataListUi.ui.value.table?.size ?? dataListUi.controlSize.value,
 )
-const bodyOverlayTop = '2.625rem'
+const tableSizeClasses = computed(() => resolveDataListTableSize(resolvedSize.value))
+const bodyPlaceholderMinHeight = computed(() =>
+  props.height ? `calc(${props.height} - ${tableSizeClasses.value.rowHeight}px)` : '24rem',
+)
+const bodyOverlayTop = computed(() => `${tableSizeClasses.value.rowHeight}px`)
 const defaultColumnState = createDefaultColumnState()
 
 function getVirtualRow(index: number) {
@@ -54,11 +57,16 @@ watch(tableEmpty, (isEmpty) => {
 
 <template>
   <div
-    :class="mergeDataListUiClass('relative overflow-hidden', undefined, ui?.wrapper)"
+    :class="
+      mergeDataListUiClass(
+        externalScroll ? 'relative min-h-full overflow-visible' : 'relative overflow-hidden',
+        undefined,
+        ui?.wrapper,
+      )
+    "
     :style="height ? { height } : undefined"
   >
     <UTable
-      v-if="!internals.queryContent.status.value.isBooting"
       ref="tableRef"
       :data="tableRows"
       :columns="internals.tableColumns.tableColumns.value"
@@ -91,13 +99,21 @@ watch(tableEmpty, (isEmpty) => {
       :loading="showRefreshing"
       loading-color="primary"
       loading-animation="carousel"
-      :class="height ? 'h-full' : undefined"
+      :class="height ? 'h-full min-h-0' : undefined"
       :ui="{
-        root: ui?.root,
+        root: mergeDataListUiClass(
+          externalScroll
+            ? 'overflow-visible'
+            : height
+              ? 'h-full min-h-0 overflow-auto'
+              : undefined,
+          undefined,
+          ui?.root,
+        ),
         base: ui?.base,
         caption: ui?.caption,
         thead: mergeDataListUiClass(
-          'group/table-head after:inset-x-0 after:bottom-0 after:w-full after:z-[2] after:pointer-events-none',
+          'group/table-head bg-default after:inset-x-0 after:bottom-0 after:w-full after:z-[12] after:pointer-events-none',
           undefined,
           ui?.thead,
         ),
@@ -108,13 +124,17 @@ watch(tableEmpty, (isEmpty) => {
         ),
         tfoot: ui?.tfoot,
         tr: mergeDataListUiClass(
-          'border-b border-default transition-colors last:border-b',
+          `${tableSizeClasses.row} border-b border-default transition-colors last:border-b`,
           undefined,
           ui?.tr,
         ),
-        th: ui?.th,
+        th: mergeDataListUiClass(
+          `${tableSizeClasses.header} [&[data-pinned=left]]:z-[11] [&[data-pinned=left]]:bg-default [&[data-pinned=right]]:z-[11] [&[data-pinned=right]]:bg-default`,
+          undefined,
+          ui?.th,
+        ),
         td: mergeDataListUiClass(
-          '[&[data-pinned=left]]:bg-inherit [&[data-pinned=right]]:bg-inherit',
+          `${tableSizeClasses.cell} [&[data-pinned=left]]:bg-default [&[data-pinned=right]]:bg-default`,
           undefined,
           ui?.td,
         ),
@@ -157,7 +177,7 @@ watch(tableEmpty, (isEmpty) => {
       "
       :style="{ top: bodyOverlayTop }"
     >
-      <TableLoadingState :min-height="bodyPlaceholderMinHeight" />
+      <TableLoadingState :min-height="bodyPlaceholderMinHeight" :size="resolvedSize" />
     </div>
 
     <div
@@ -171,7 +191,7 @@ watch(tableEmpty, (isEmpty) => {
       "
       :style="{ top: bodyOverlayTop }"
     >
-      <TableEmptyState :min-height="bodyPlaceholderMinHeight" />
+      <TableEmptyState :min-height="bodyPlaceholderMinHeight" :size="resolvedSize" />
     </div>
   </div>
 </template>

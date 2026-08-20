@@ -5,11 +5,21 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isNumber } from '../../../shared/utils/predicate'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { provideDataListViewport } from '../../composables/use-data-list-viewport'
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { DataListContentFit, DataListContentUi } from '../../types'
-import { mergeDataListUiClass } from '../../utils'
+import type {
+  DataListContentFit,
+  DataListContentSurface,
+  DataListContentUi,
+  DataListControlSize,
+} from '../../types'
+import {
+  mergeDataListUiClass,
+  resolveDataListContentShellClass,
+  resolveDataListControlGeometry,
+} from '../../utils'
 import DataListGrid from './DataListGrid.vue'
 import DataListTable from './DataListTable.vue'
 
@@ -17,10 +27,12 @@ const props = withDefaults(
   defineProps<{
     fit?: DataListContentFit
     height?: string | number
+    surface?: DataListContentSurface
     transition?: boolean
+    size?: DataListControlSize
     ui?: DataListContentUi
   }>(),
-  { fit: 'content', transition: true },
+  { fit: 'content', surface: 'plain', transition: true },
 )
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
@@ -46,7 +58,7 @@ const refreshing = computed(
       internals.queryContent.status.value.isRevalidating),
 )
 const normalizedHeight = computed(() =>
-  typeof props.height === 'number' ? `${props.height}px` : props.height,
+  isNumber(props.height) ? `${props.height}px` : props.height,
 )
 const viewportStyle = computed(() => {
   if (props.fit === 'fill') return { minHeight: 0 }
@@ -54,10 +66,15 @@ const viewportStyle = computed(() => {
   return undefined
 })
 const rootUi = computed(() => dataListUi.ui.value.content?.ui)
+const resolvedSize = computed(
+  () => props.size ?? dataListUi.ui.value.content?.size ?? dataListUi.controlSize.value,
+)
+const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.value))
 const shellClass = computed(() =>
-  internals.controls.tableLayout.value === 'grid'
-    ? 'grid gap-5'
-    : 'overflow-hidden rounded-md border border-default bg-default',
+  resolveDataListContentShellClass({
+    layout: internals.controls.tableLayout.value,
+    surface: props.surface,
+  }),
 )
 
 function refresh() {
@@ -118,7 +135,7 @@ watch(
         <div
           :class="
             mergeDataListUiClass(
-              'flex max-w-md items-start gap-3 text-left',
+              `flex max-w-md items-start text-left ${geometry.toolbarGap}`,
               rootUi?.errorBody,
               ui?.errorBody,
             )
@@ -135,7 +152,9 @@ watch(
           >
             <UIcon name="i-lucide-cloud-alert" class="size-4" />
           </span>
-          <div :class="mergeDataListUiClass('min-w-0 flex-1', rootUi?.errorCopy, ui?.errorCopy)">
+          <div
+            :class="mergeDataListUiClass(`min-w-0 flex-1 ${geometry.text}`, rootUi?.errorCopy, ui?.errorCopy)"
+          >
             <div
               :class="
                 mergeDataListUiClass(
@@ -150,7 +169,7 @@ watch(
             <p
               :class="
                 mergeDataListUiClass(
-                  'mt-0.5 text-sm leading-5 text-muted',
+                  'mt-0.5 leading-5 text-muted',
                   rootUi?.errorDescription,
                   ui?.errorDescription,
                 )
@@ -161,7 +180,7 @@ watch(
             <UButton
               color="neutral"
               variant="soft"
-              size="sm"
+              :size="resolvedSize"
               icon="i-lucide-refresh-cw"
               class="mt-3"
               :ui="{ base: mergeDataListUiClass(rootUi?.retry, ui?.retry) }"
@@ -201,7 +220,7 @@ watch(
         mode="out-in"
       >
         <slot v-if="internals.controls.tableLayout.value === 'table'" name="table" :rows="rows">
-          <DataListTable>
+          <DataListTable :size="resolvedSize" :external-scroll="fit !== 'content'">
             <template #empty>
               <slot name="empty-table">
                 <slot
@@ -216,7 +235,7 @@ watch(
           </DataListTable>
         </slot>
         <slot v-else name="grid" :rows="rows">
-          <DataListGrid>
+          <DataListGrid :size="resolvedSize">
             <template #empty>
               <slot name="empty-grid">
                 <slot
