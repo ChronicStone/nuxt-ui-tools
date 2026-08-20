@@ -3,6 +3,7 @@ import { computed, shallowRef, watch, type ComputedRef } from 'vue'
 import type {
   SpreadsheetNormalizedSchema,
   SpreadsheetParsedRow,
+  SpreadsheetRecord,
   SpreadsheetReferenceResolution,
 } from '../types'
 import {
@@ -13,8 +14,8 @@ import {
 
 export interface UseSpreadsheetResolutionsParams {
   schema: ComputedRef<SpreadsheetNormalizedSchema>
-  contextData: ComputedRef<Record<string, unknown>>
-  rows: ComputedRef<readonly SpreadsheetParsedRow<Record<string, unknown>>[]>
+  contextData: ComputedRef<SpreadsheetRecord>
+  rows: ComputedRef<readonly SpreadsheetParsedRow<SpreadsheetRecord>[]>
 }
 
 function createResolutionId(resolution: SpreadsheetReferenceResolution) {

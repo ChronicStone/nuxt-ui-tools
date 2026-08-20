@@ -1,12 +1,12 @@
 import type { ComputedRef } from 'vue'
 
-import type { SpreadsheetNormalizedSchema } from '../types'
+import type { SpreadsheetNormalizedSchema, SpreadsheetRecord } from '../types'
 import { useSpreadsheetColumnMatching } from './use-spreadsheet-column-matching'
 import { useSpreadsheetRowState } from './use-spreadsheet-row-state'
 
 export interface UseSpreadsheetRowsParams {
   schema: ComputedRef<SpreadsheetNormalizedSchema>
-  contextData: ComputedRef<Record<string, unknown>>
+  contextData: ComputedRef<SpreadsheetRecord>
   headers: ComputedRef<readonly unknown[]>
   rows: ComputedRef<readonly (readonly unknown[])[]>
 }
