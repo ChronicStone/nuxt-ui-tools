@@ -21,10 +21,12 @@ const { form, controlProps, controlSize, disabled, handleBlur, placeholder } = u
   () => props.field,
   () => props.path,
 )
+type PasswordVisibilityConfig = Exclude<NonNullable<FormPasswordField['visibilityToggle']>, boolean>
+
 const visible = ref(false)
 const visibilityToggleEnabled = computed(() => props.field.visibilityToggle !== false)
 const visibilityToggleConfig = computed(() =>
-  isObject(props.field.visibilityToggle) ? props.field.visibilityToggle : undefined,
+  isPasswordVisibilityConfig(props.field.visibilityToggle) ? props.field.visibilityToggle : undefined,
 )
 const inputType = computed(() => (visible.value ? 'text' : 'password'))
 const visibilityLabel = computed(() => {
@@ -41,6 +43,12 @@ const visibilityIcon = computed(() =>
     ? (visibilityToggleConfig.value?.hideIcon ?? 'i-lucide-eye-off')
     : (visibilityToggleConfig.value?.showIcon ?? 'i-lucide-eye'),
 )
+function isPasswordVisibilityConfig(
+  value: FormPasswordField['visibilityToggle'],
+): value is PasswordVisibilityConfig {
+  return isObject(value)
+}
+
 const model = computed<string | undefined>({
   get: () => {
     const value = form.getValue(props.path)
