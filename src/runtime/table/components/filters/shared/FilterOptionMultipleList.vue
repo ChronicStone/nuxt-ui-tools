@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
+import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
@@ -7,8 +10,11 @@ import type {
   DataListFilterEditorUi,
   TableResolvedFilterOptionEntry,
 } from '../../../types'
-import { mergeDataListUiClass } from '../../../utils'
-import FilterOptionRow from './FilterOptionRow.vue'
+import {
+  mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveFilterEditorSizeClasses,
+} from '../../../utils'
 
 interface FilterOptionMultipleListSection {
   key: string
@@ -38,7 +44,12 @@ const emit = defineEmits<{
 }>()
 
 const dataListUi = useDataListUi()
+const size = computed(
+  () => props.size ?? dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value,
+)
 const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
 </script>
 
 <template>
@@ -49,25 +60,67 @@ const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
         :class="mergeDataListUiClass('my-1 border-t border-default', undefined, ui?.listDivider)"
       />
 
-      <button
+      <div
         v-for="(entry, index) in section.entries"
         :key="entry.value == null ? entry.label : String(entry.value)"
-        type="button"
-        class="block w-full"
-        @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
+        :class="
+          mergeDataListUiClass(
+            `flex items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
+            undefined,
+            ui?.option,
+          )
+        "
       >
-        <FilterOptionRow
-          :label="entry.label"
-          :count="props.showCounts ? entry.count : undefined"
-          :count-loading="props.showCounts && props.countLoading"
-          :selected="entry.selected ?? false"
-          :leading-icon="entry.icon"
-          :selected-icon="props.selectedIcon"
-          :truncate="props.truncate"
-          :size="props.size"
-          :ui="props.ui"
+        <UCheckbox
+          :model-value="entry.selected ?? false"
+          color="neutral"
+          :size="size"
+          :aria-label="entry.label"
+          :icon="props.selectedIcon"
+          :ui="{ base: ui?.optionCheckbox }"
+          @click.stop="emit('select', { event: $event, entry, index, sectionKey: section.key })"
         />
-      </button>
+
+        <button
+          type="button"
+          :class="['flex min-w-0 flex-1 items-center text-left', geometry.toolbarGap]"
+          @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
+        >
+          <UIcon
+            v-if="entry.icon"
+            :name="entry.icon"
+            :class="
+              mergeDataListUiClass(
+                `${sizeClasses.optionIcon} shrink-0 text-muted`,
+                undefined,
+                ui?.optionIcon,
+              )
+            "
+          />
+          <span
+            :class="
+              mergeDataListUiClass(
+                `min-w-0 flex-1 ${sizeClasses.optionLabel} ${(props.truncate ?? true) ? 'truncate' : ''}`,
+                undefined,
+                ui?.optionLabel,
+              )
+            "
+          >
+            {{ entry.label }}
+          </span>
+        </button>
+
+        <USkeleton
+          v-if="props.showCounts && props.countLoading"
+          :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
+        />
+        <span
+          v-else-if="props.showCounts && entry.count != null"
+          :class="mergeDataListUiClass('shrink-0 text-muted', undefined, ui?.optionCount)"
+        >
+          {{ entry.count }}
+        </span>
+      </div>
     </template>
   </div>
 </template>

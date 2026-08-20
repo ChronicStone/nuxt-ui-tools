@@ -1,3 +1,4 @@
+import { isNumber } from '../../../shared/utils/predicate'
 import type {
   TableBooleanFilterDefinition,
   TableFilterOptionEntry,
@@ -142,9 +143,7 @@ function resolveOptionEntryTree(options: {
 }
 
 function sumChildCounts(entries: TableResolvedFilterOptionEntry[]) {
-  const counts = entries
-    .map((entry) => entry.count)
-    .filter((count): count is number => typeof count === 'number')
+  const counts = entries.map((entry) => entry.count).filter(isNumber)
 
   if (!counts.length) return undefined
   return counts.reduce((total, count) => total + count, 0)

@@ -6,7 +6,11 @@ import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
-import { mergeDataListUiClass, resolveFilterEditorSizeClasses } from '../../../utils'
+import {
+  mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveFilterEditorSizeClasses,
+} from '../../../utils'
 
 const props = defineProps<{
   items: Array<{
@@ -27,6 +31,7 @@ const size = computed(
 )
 const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
 
 const modelValue = defineModel<string | undefined>({
   default: undefined,
@@ -60,7 +65,7 @@ const modelValue = defineModel<string | undefined>({
     }"
   >
     <template #label="{ item }">
-      <div class="flex min-w-0 items-center gap-2">
+      <div :class="['flex min-w-0 items-center', geometry.toolbarGap]">
         <UIcon
           v-if="typeof item.icon === 'string'"
           :name="item.icon"
@@ -76,8 +81,11 @@ const modelValue = defineModel<string | undefined>({
         <span class="min-w-0 flex-1" :class="item.truncate ? 'truncate' : ''">
           {{ item.label }}
         </span>
-        <USkeleton v-if="countLoading" class="ml-3 h-3.5 w-6 shrink-0" />
-        <span v-else-if="item.count != null" class="ml-3 shrink-0 text-muted">
+        <USkeleton
+          v-if="countLoading"
+          :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
+        />
+        <span v-else-if="item.count != null" class="shrink-0 text-muted">
           {{ item.count }}
         </span>
       </div>

@@ -1,6 +1,7 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 
 import type {
+  TableFilterOptionEntry,
   TableOptionFilterDefinition,
   TableOptionFilterOperator,
   TableResolvedFilterOptionEntry,
@@ -325,14 +326,13 @@ function resolveRowIcon(options: {
 }) {
   if (options.entry.value == null) return options.entry.icon
 
-  return (
-    options.filterUi.row.getIcon?.({
-      label: options.entry.label,
-      value: options.entry.value,
-      count: options.entry.count,
-      ...(options.entry.icon ? { icon: options.entry.icon } : {}),
-    }) ?? options.entry.icon
-  )
+  const iconOptions: TableFilterOptionEntry = {
+    label: options.entry.label,
+    value: options.entry.value,
+    count: options.entry.count,
+  }
+  if (options.entry.icon) iconOptions.icon = options.entry.icon
+  return options.filterUi.row.getIcon?.(iconOptions) ?? options.entry.icon
 }
 
 function mapSelectedTreeEntries(options: {
