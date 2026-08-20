@@ -1,3 +1,4 @@
+import type { FormValue } from './'
 import type { FormFieldCallback } from './callbacks'
 import type { FormMaybePromise, FormText } from './utils'
 
@@ -9,7 +10,7 @@ export type FormValidationResult = boolean | string | null | undefined
 /**
  * A single validation rule.
  */
-export interface FormValidationRule<TValue = unknown, TContext = {}, TDeps = {}> {
+export interface FormValidationRule<TValue = FormValue, TContext = {}, TDeps = {}> {
   /** Stable rule name used for debugging, i18n, and external error mapping. */
   name: string
   /** Returns true for valid values, false/string for invalid values. */
@@ -59,7 +60,7 @@ export interface FormValidationOptions {
 /**
  * Field validation configuration.
  */
-export interface FormValidationConfig<TValue = unknown, TContext = {}, TDeps = {}> {
+export interface FormValidationConfig<TValue = FormValue, TContext = {}, TDeps = {}> {
   /** Defines when the field starts showing validation feedback while editing. */
   trigger?: FormValidationTrigger
   /** Marks the field as required. */
