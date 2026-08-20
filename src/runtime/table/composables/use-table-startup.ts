@@ -11,15 +11,15 @@ export function useTableStartup() {
   const isActive = computed(() => phase.value === 'active')
 
   function dispose() {
-    if (typeof window === 'undefined') return
+    if (!('window' in globalThis)) return
 
     if (firstFrameId.value != null) {
-      window.cancelAnimationFrame(firstFrameId.value)
+      globalThis.window.cancelAnimationFrame(firstFrameId.value)
       firstFrameId.value = null
     }
 
     if (secondFrameId.value != null) {
-      window.cancelAnimationFrame(secondFrameId.value)
+      globalThis.window.cancelAnimationFrame(secondFrameId.value)
       secondFrameId.value = null
     }
   }
@@ -31,16 +31,16 @@ export function useTableStartup() {
 
   function scheduleStart() {
     if (phase.value === 'active') return
-    if (typeof window === 'undefined') {
+    if (!('window' in globalThis)) {
       start()
       return
     }
 
     dispose()
     phase.value = 'scheduled'
-    firstFrameId.value = window.requestAnimationFrame(() => {
+    firstFrameId.value = globalThis.window.requestAnimationFrame(() => {
       firstFrameId.value = null
-      secondFrameId.value = window.requestAnimationFrame(() => {
+      secondFrameId.value = globalThis.window.requestAnimationFrame(() => {
         secondFrameId.value = null
         start()
       })

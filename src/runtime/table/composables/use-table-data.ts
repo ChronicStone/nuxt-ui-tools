@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useQueries,
   useQuery,
@@ -7,25 +8,32 @@ import {
 } from '@tanstack/vue-query'
 import { computed, shallowRef, watch, type ComputedRef } from 'vue'
 
+import { isArray, isFunction, isNumber, isObject, isString } from '../../shared/utils/predicate'
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
   GenericObject,
   TableCursorPageResult,
   TableExternalState,
   TableFacetExecutionResult,
+  TableFacetsContext,
   TableFacetResult,
   TableFacetRequestDescriptor,
   TableGlobalFacetDescriptor,
   TableInfiniteQueryDefinition,
+  TableOffsetPageResult,
   TableQueryDefinition,
+  TableRemoteFacetSource,
   TableSchemaView,
   TableSourceExecutionResult,
   TableSourceRequestContext,
+  TableRefreshResult,
+  TableRuntimeRecord,
 } from '../types'
 import {
   executeClientFacets,
   filterClientRows,
   flattenTableCursorPages,
+  resolveTableGlobalFacetDescriptors,
   isTableCursorPageResult,
   paginateClientRows,
   resolveTableRowId,
@@ -42,13 +50,13 @@ export interface UseTableDataParams {
 
 export interface UseTableDataReturn {
   context: ReturnType<typeof useQueries>
-  contextData: ComputedRef<Record<string, unknown>>
+  contextData: ComputedRef<TableRuntimeRecord>
   pageContext: ReturnType<typeof useQueries>
-  pageContextData: ComputedRef<Record<string, unknown>>
+  pageContextData: ComputedRef<TableRuntimeRecord>
   facetsBaseContext: ComputedRef<{
     filters: TableSourceRequestContext['filters']
     search: TableSourceRequestContext['search']
-    context: Record<string, unknown>
+    context: TableRuntimeRecord
   }>
   requestContext: ComputedRef<TableSourceRequestContext>
   searchParams: ComputedRef<TableSourceRequestContext>
@@ -74,11 +82,11 @@ export interface UseTableDataReturn {
     isPageContextPending: boolean
     isPageContextFetching: boolean
   }>
-  refreshContext: () => Promise<unknown[]>
+  refreshContext: () => Promise<TableRefreshResult[]>
   refreshData: () => (
     ...args: Parameters<ReturnType<typeof useQuery>['refetch']>
-  ) => Promise<unknown>
-  refreshPageContext: () => Promise<unknown[]>
+  ) => Promise<TableRefreshResult>
+  refreshPageContext: () => Promise<TableRefreshResult[]>
   updateRows: (rows: GenericObject[]) => void
 }
 
@@ -90,10 +98,14 @@ type CombinedQueryResult = {
   isFetching?: boolean
   isSuccess?: boolean
   isRefetching?: boolean
-  refetch: () => Promise<unknown>
+  refetch: () => Promise<TableRefreshResult>
 }
 
-type TableRuntimeSourceResult = GenericObject[] | TableSourceExecutionResult | TableCursorPageResult
+type TableRuntimeSourceResult =
+  | GenericObject[]
+  | TableSourceExecutionResult
+  | TableOffsetPageResult
+  | TableCursorPageResult
 
 export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const contextItems = computed(() =>
@@ -115,10 +127,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       })),
   })
 
+  // SAFETY: the `combine` callback above adds the optional key while preserving TanStack result fields.
   const contextResults = computed(() => context.value as CombinedQueryResult[])
 
   const contextData = computed(() =>
-    contextResults.value.reduce<Record<string, unknown>>((acc, item) => {
+    contextResults.value.reduce<TableRuntimeRecord>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -155,26 +168,17 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     context: contextData.value,
   }))
   const globalFacetDescriptors = computed<TableGlobalFacetDescriptor<string>[]>(() =>
-    (params.schema.value.filters?.ui ?? []).flatMap((definition) => {
-      if (definition.kind !== 'option' && definition.kind !== 'boolean') return []
-
-      const descriptor = toGlobalFacetDescriptor({
-        key: definition.key,
-        facet: definition.source?.facet,
-      })
-
-      return descriptor ? [descriptor] : []
-    }),
+    resolveTableGlobalFacetDescriptors(params.schema.value.filters?.ui ?? []),
   )
   const remoteSource = computed(() =>
     params.schema.value.source.mode === 'remote' ? params.schema.value.source : null,
   )
-  const hasRemoteFacetQuery = computed(() => typeof remoteSource.value?.facets === 'function')
+  const hasRemoteFacetQuery = computed(() => isRemoteFacetQuery(remoteSource.value?.facets))
   const usesEmbeddedRemoteFacets = computed(() => remoteSource.value?.facets === true)
   const facetsContextKey = computed(() => JSON.stringify(facetsBaseContext.value))
   const lastResolvedEmbeddedFacetsKey = shallowRef<string | null>(null)
   const requestContext = computed<TableSourceRequestContext>(() => ({
-    context: contextData.value as TableSourceRequestContext['context'],
+    context: contextData.value,
     pagination: requestPagination.value,
     sorting: requestSorting.value,
     filters: requestFilters.value,
@@ -205,6 +209,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       return withEnabled(definition, params.startup.isActive.value && isContextReady.value, {
         staleTime: dataStaleTime.value,
         refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+        placeholderData: keepPreviousData,
       })
     }),
   )
@@ -239,12 +244,12 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
       if (
         !hasRemoteFacetQuery.value ||
-        typeof facetsSource !== 'function' ||
+        !isRemoteFacetQuery(facetsSource) ||
         !globalFacetDescriptors.value.length
       ) {
         return {
           queryKey: ['table-global-facets', 'disabled'],
-          queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult<string>,
+          queryFn: async (): Promise<TableFacetExecutionResult<string>> => ({ facets: [] }),
           enabled: false,
         } satisfies TableQueryDefinition<TableFacetExecutionResult<string>> & {
           enabled: boolean
@@ -393,7 +398,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         withEnabled(
           item.query({
             rows: data.value.rows,
-            context: contextData.value as never,
+            context: contextData.value,
           }),
           true,
           {
@@ -410,10 +415,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       })),
   })
 
+  // SAFETY: the `combine` callback above adds the optional key while preserving TanStack result fields.
   const pageContextResults = computed(() => pageContext.value as CombinedQueryResult[])
 
   const pageContextData = computed(() =>
-    pageContextResults.value.reduce<Record<string, unknown>>((acc, item) => {
+    pageContextResults.value.reduce<TableRuntimeRecord>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -608,8 +614,8 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   }
 }
 
-function normalizeExternalState(result: unknown): TableExternalState {
-  if (Array.isArray(result)) {
+function normalizeExternalState<TValue>(result: TValue): TableExternalState {
+  if (isArray(result)) {
     return {
       rows: result,
       rowCount: result.length,
@@ -623,60 +629,56 @@ function normalizeExternalState(result: unknown): TableExternalState {
     }
   }
 
+  if (isTableOffsetPageResult(result)) {
+    return {
+      rows: result.rows,
+      rowCount: result.pageInfo.rowCount,
+    }
+  }
+
   return {
     rows: [],
     rowCount: 0,
   }
 }
 
-function extractEmbeddedFacets(result: unknown): TableFacetResult<string>[] | undefined {
-  if (!result || typeof result !== 'object' || !('facets' in result)) return undefined
+function extractEmbeddedFacets<TValue>(result: TValue): TableFacetResult<string>[] | undefined {
+  if (!isObject(result) || !('facets' in result)) return undefined
 
-  const { facets } = result as { facets?: unknown }
-  if (!Array.isArray(facets)) return undefined
+  const facets = result.facets
+  if (!isArray(facets)) return undefined
 
-  return facets as TableFacetResult<string>[]
+  return facets.filter(isTableFacetResult)
 }
 
-function toGlobalFacetDescriptor(options: {
-  key: string
-  facet: GlobalFacetSpec | undefined
-}): TableGlobalFacetDescriptor<string> | null {
-  if (!options.facet) return null
-  if (hasPerFilterFacetQuery(options.facet)) return null
-
-  return {
-    key: options.key,
-    mode: resolveFacetMode(options.facet),
-    limit: typeof options.facet === 'object' ? options.facet.limit : undefined,
-  }
-}
-
-function hasPerFilterFacetQuery(facet: GlobalFacetSpec) {
-  return typeof facet === 'object' && typeof facet.query === 'function'
-}
-
-function resolveFacetMode(facet: GlobalFacetSpec): 'exclude-self' | 'include-self' {
-  if (facet === 'include-self') return 'include-self'
-  if (typeof facet === 'object' && facet.mode === 'include-self') return 'include-self'
-  return 'exclude-self'
-}
-
-type GlobalFacetSpec =
-  | boolean
-  | 'exclude-self'
-  | 'include-self'
-  | {
-      mode?: 'exclude-self' | 'include-self'
-      limit?: number
-      query?: unknown
-    }
-
-function isTableExternalState(value: unknown): value is TableExternalState {
-  if (!value || typeof value !== 'object') return false
+function isTableExternalState<TValue>(value: TValue): value is TValue & TableExternalState {
+  if (!isObject(value)) return false
   if (!('rows' in value) || !('rowCount' in value)) return false
 
-  return Array.isArray(value.rows) && typeof value.rowCount === 'number'
+  return isArray(value.rows) && isNumber(value.rowCount)
+}
+
+function isTableOffsetPageResult<TValue>(value: TValue): value is TValue & TableOffsetPageResult {
+  if (!isObject(value) || !('rows' in value) || !('pageInfo' in value)) return false
+  if (!isArray(value.rows) || !isObject(value.pageInfo)) return false
+  if (!('mode' in value.pageInfo) || value.pageInfo.mode !== 'offset') return false
+  if (!('rowCount' in value.pageInfo)) return false
+
+  return isNumber(value.pageInfo.rowCount)
+}
+
+function isTableFacetResult<TValue>(value: TValue): value is TValue & TableFacetResult<string> {
+  return (
+    isObject(value) &&
+    'key' in value &&
+    isStringKey(value.key) &&
+    'options' in value &&
+    isArray(value.options)
+  )
+}
+
+function isStringKey<TValue>(value: TValue): value is TValue & string {
+  return isString(value)
 }
 
 function sameExternalState(left: TableExternalState, right: TableExternalState) {
@@ -713,21 +715,37 @@ function mergeRowsByKey(options: {
 }
 
 function withEnabled<TData = unknown>(
-  query: TableQueryDefinition<TData>,
+  query: TableQueryDefinition<TData> & { enabled?: boolean },
   enabled: boolean,
-  defaults?: { staleTime?: number; refetchOnWindowFocus?: boolean },
-): TableQueryDefinition<TData> & { enabled: boolean } {
+  defaults?: {
+    staleTime?: number
+    refetchOnWindowFocus?: boolean
+    placeholderData?: typeof keepPreviousData
+  },
+): TableQueryDefinition<TData> & { enabled: boolean; placeholderData?: typeof keepPreviousData } {
   return {
     ...query,
     ...(defaults ?? {}),
-    enabled: enabled && (query as { enabled?: boolean }).enabled !== false,
-  } as TableQueryDefinition<TData> & { enabled: boolean }
+    enabled: enabled && query.enabled !== false,
+  }
+}
+
+function isRemoteFacetQuery<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+  TKey extends string,
+>(
+  value: TableRemoteFacetSource<TRow, TContext, TKey> | undefined,
+): value is (
+  context: TableFacetsContext<TRow, TContext, TKey>
+) => TableQueryDefinition<TableFacetExecutionResult<TKey>> {
+  return isFunction(value)
 }
 
 function resolveSourceDefinition(options: {
   source: TableSchemaView['source']
   request: TableSourceRequestContext
-  context: Record<string, unknown>
+  context: TableRuntimeRecord
 }): TableQueryDefinition<TableRuntimeSourceResult> {
   return options.source.query({ ...options.request, context: options.context })
 }
@@ -735,7 +753,7 @@ function resolveSourceDefinition(options: {
 function createCursorQueryDefinition(options: {
   source: TableSchemaView['source']
   request: TableSourceRequestContext
-  context: Record<string, unknown>
+  context: TableRuntimeRecord
   revision: number
 }): TableInfiniteQueryDefinition<TableRuntimeSourceResult> {
   const firstPageDefinition = resolveSourceDefinition(options)

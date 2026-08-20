@@ -23,6 +23,9 @@ export type {
 
 export type GenericObject = object
 
+/** Runtime records retain arbitrary decoded values while keeping dictionary ownership explicit. */
+export type TableRuntimeRecord = import('../../shared/types/utils').GenericObject
+
 export type TypeFromPath<
   TValue,
   TPath extends string,

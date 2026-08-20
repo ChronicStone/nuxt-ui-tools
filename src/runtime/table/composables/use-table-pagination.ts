@@ -59,6 +59,29 @@ export function useTablePagination(options: UseTablePaginationParams) {
     isLoadingMore: isLoadingMore.value,
     loadMoreError: loadMoreError.value,
   }))
+  const offsetState = computed(() => ({
+    mode: 'offset' as const,
+    pageIndex: currentPage.value,
+    pageSize: pageSize.value,
+    pageCount: totalPages.value,
+    loadedCount: loadedCount.value,
+    totalCount: rowCount.value ?? loadedCount.value,
+    hasNextPage: canNextPage.value,
+    hasPreviousPage: canPreviousPage.value,
+  }))
+  const cursorState = computed(() => ({
+    mode: 'cursor' as const,
+    loadedCount: loadedCount.value,
+    totalCount: rowCount.value,
+    hasNextPage: canNextPage.value,
+    isLoadingMore: isLoadingMore.value,
+    loadMoreError: loadMoreError.value,
+  }))
+  const noneState = computed(() => ({
+    mode: 'none' as const,
+    loadedCount: loadedCount.value,
+    totalCount: rowCount.value,
+  }))
   const pageSizeOptions = computed(() =>
     getPageSizeOptions({
       schema: options.schema.value,
@@ -145,6 +168,9 @@ export function useTablePagination(options: UseTablePaginationParams) {
     isLoadingMore,
     loadMoreError,
     state,
+    offsetState,
+    cursorState,
+    noneState,
     pageSizeOptions,
     setPage,
     setPageSize,
