@@ -15,9 +15,13 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="grid overflow-hidden">
+  <div data-filter-stage class="grid w-full min-w-0 overflow-hidden">
     <Transition :name="`filter-stage-${direction}`" @after-leave="emit('settled')">
-      <div :key="stageKey" class="col-start-1 row-start-1 min-w-0">
+      <div
+        :key="stageKey"
+        data-filter-stage-content
+        class="col-start-1 row-start-1 w-full min-w-0 max-w-full"
+      >
         <slot />
       </div>
     </Transition>

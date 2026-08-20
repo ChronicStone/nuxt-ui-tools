@@ -3,6 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import { computed, ref } from 'vue'
 
 import { useRangeSelect } from '../../../../shared'
+import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
@@ -161,13 +162,13 @@ function initLocalState() {
   })
   const values: (string | number | boolean)[] = Array.isArray(committedRule?.value)
     ? committedRule.value.filter(
-        (value: unknown): value is string | number | boolean =>
-          typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean',
+        <TValue>(value: TValue): value is TValue & (string | number | boolean) =>
+          isString(value) || isNumber(value) || isBoolean(value),
       )
     : committedRule?.value != null &&
-        (typeof committedRule.value === 'string' ||
-          typeof committedRule.value === 'number' ||
-          typeof committedRule.value === 'boolean')
+        (isString(committedRule.value) ||
+          isNumber(committedRule.value) ||
+          isBoolean(committedRule.value))
       ? [committedRule.value]
       : []
 
@@ -273,7 +274,11 @@ function handleContentMounted() {
     :embedded="embedded"
     :transitioning="stageTransitioning"
     :content-class="
-      mergeDataListUiClass('w-fit overflow-hidden p-0', undefined, dataListFilterUi?.popoverContent)
+      mergeDataListUiClass(
+        `${sizeClasses.editor} overflow-hidden p-0`,
+        undefined,
+        dataListFilterUi?.popoverContent,
+      )
     "
     @update-open="session.handleOpenChange"
   >
@@ -321,7 +326,7 @@ function handleContentMounted() {
           v-else
           :class="
             mergeDataListUiClass(
-              `${sizeClasses.editor} max-w-[calc(100vw-1rem)] bg-default`,
+              `${sizeClasses.editor} w-full min-w-0 max-w-full bg-default`,
               undefined,
               dataListFilterUi?.editor,
             )

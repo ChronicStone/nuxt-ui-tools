@@ -11,7 +11,12 @@ import type {
   TableTextFilterDefinition,
   TableTextFilterOperator,
 } from '../../../types'
-import { mergeDataListUiClass, resolveFilterTriggerIcon, resolveTextFilterUi } from '../../../utils'
+import {
+  mergeDataListUiClass,
+  resolveFilterEditorSizeClasses,
+  resolveFilterTriggerIcon,
+  resolveTextFilterUi,
+} from '../../../utils'
 import FilterMatchModePanel from '../shared/FilterMatchModePanel.vue'
 import FilterPopoverShell from '../shared/FilterPopoverShell.vue'
 import FilterStageTransition from '../shared/FilterStageTransition.vue'
@@ -33,6 +38,7 @@ const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
 const localValue = ref<string>('')
 const stage = ref<'editor' | 'match-mode'>('editor')
@@ -150,7 +156,11 @@ function handleValueUpdate(value: string | number | undefined) {
     :embedded="embedded"
     :transitioning="stageTransitioning"
     :content-class="
-      mergeDataListUiClass('w-fit overflow-hidden p-0', undefined, dataListFilterUi?.popoverContent)
+      mergeDataListUiClass(
+        `${sizeClasses.editor} overflow-hidden p-0`,
+        undefined,
+        dataListFilterUi?.popoverContent,
+      )
     "
     @update-open="session.handleOpenChange"
   >
@@ -197,7 +207,7 @@ function handleValueUpdate(value: string | number | undefined) {
           v-else
           :class="
             mergeDataListUiClass(
-              'w-fit max-w-[calc(100vw-1rem)] bg-default',
+              `${sizeClasses.editor} w-full min-w-0 max-w-full bg-default`,
               undefined,
               dataListFilterUi?.editor,
             )
@@ -206,7 +216,7 @@ function handleValueUpdate(value: string | number | undefined) {
           <div
             :class="
               mergeDataListUiClass(
-                'border-b border-default p-2',
+                `border-b border-default ${sizeClasses.searchHeader}`,
                 undefined,
                 dataListFilterUi?.inputs,
               )
@@ -222,7 +232,7 @@ function handleValueUpdate(value: string | number | undefined) {
               :highlight="filterUi.input.highlight"
               :fixed="filterUi.input.fixed"
               :size="size"
-              class="w-[min(13rem,calc(100vw-3rem))] max-w-full"
+              class="w-full min-w-0 max-w-full"
               :ui="{
                 root: dataListFilterUi?.search,
                 base: dataListFilterUi?.searchInput,
@@ -236,7 +246,7 @@ function handleValueUpdate(value: string | number | undefined) {
             v-if="filterUi.commitMode === 'manual'"
             :class="
               mergeDataListUiClass(
-                'flex items-center justify-between border-t border-default p-2',
+                `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
                 undefined,
                 dataListFilterUi?.footer,
               )

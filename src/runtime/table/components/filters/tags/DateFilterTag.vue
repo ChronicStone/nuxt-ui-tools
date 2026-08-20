@@ -8,6 +8,7 @@ import { computed, ref, shallowRef, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isArray, isDate, isNumber, isObject, isString } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -17,6 +18,8 @@ import {
   formatFilterDate,
   getDateRangeValue,
   mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveFilterEditorSizeClasses,
   resolveFilterTriggerIcon,
   resolveDateFilterRangeCalendarPanels,
   resolveDateFilterRangePresets,
@@ -35,6 +38,7 @@ const props = defineProps<{
   embedded?: boolean
   initialOperator?: TableFilterOperator
 }>()
+type PendingDateRange = { from?: Date; to?: Date }
 const emit = defineEmits<{
   dismiss: []
   sessionClosed: []
@@ -44,6 +48,8 @@ const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
 const { t } = useUiToolsLocale()
 const isMobile = useMediaQuery('(max-width: 639px)')
 const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
@@ -111,6 +117,20 @@ const rangeCalendarPanels = computed(() =>
     mobile: isMobile.value,
   }),
 )
+const editorWidthClass = computed(() =>
+  operator.value === 'between' &&
+  filterUi.value.range.display !== 'inputs' &&
+  (rangeCalendarPanels.value > 1 || filterUi.value.range.presetsPlacement === 'side')
+    ? sizeClasses.value.wideEditor
+    : sizeClasses.value.editor,
+)
+const rangePresetColumnClass = computed(() => {
+  if (size.value === 'xs') return 'lg:grid-cols-[10rem_minmax(0,1fr)]'
+  if (size.value === 'sm') return 'lg:grid-cols-[11rem_minmax(0,1fr)]'
+  if (size.value === 'md') return 'lg:grid-cols-[12rem_minmax(0,1fr)]'
+  if (size.value === 'lg') return 'lg:grid-cols-[13rem_minmax(0,1fr)]'
+  return 'lg:grid-cols-[14rem_minmax(0,1fr)]'
+})
 
 const calendarRange = computed<
   | {
@@ -206,10 +226,13 @@ function applyFilter() {
   if (currentOperator === 'between') {
     const from = localRangeStart.value ? toJsDate(localRangeStart.value) : undefined
     const to = localRangeEnd.value ? toJsDate(localRangeEnd.value) : undefined
+    const value: PendingDateRange = {}
+    if (from) value.from = from
+    if (to) value.to = to
 
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
-      value: from || to ? { ...(from ? { from } : {}), ...(to ? { to } : {}) } : undefined,
+      value: from || to ? value : undefined,
       operator: nextOperator,
     })
     session.close()
@@ -260,27 +283,27 @@ function isRangePresetActive(value: { from?: Date; to?: Date }) {
   return fromMatches && toMatches
 }
 
-function setSingleDate(value: unknown) {
+function setSingleDate<TValue>(value: TValue) {
   localDate.value = coerceCalendarDate(value)
   if (filterUi.value.commitMode === 'auto') applyFilter()
 }
 
-function setRangeStart(value: unknown) {
+function setRangeStart<TValue>(value: TValue) {
   localRangeStart.value = coerceCalendarDate(value)
   if (filterUi.value.commitMode === 'auto' && filterUi.value.range.display === 'inputs') {
     applyFilter()
   }
 }
 
-function setRangeEnd(value: unknown) {
+function setRangeEnd<TValue>(value: TValue) {
   localRangeEnd.value = coerceCalendarDate(value)
   if (filterUi.value.commitMode === 'auto' && filterUi.value.range.display === 'inputs') {
     applyFilter()
   }
 }
 
-function setCalendarRange(value: unknown) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+function setCalendarRange<TValue>(value: TValue) {
+  if (!isObject(value) || isArray(value)) {
     localRangeStart.value = undefined
     localRangeEnd.value = undefined
     return
@@ -294,16 +317,16 @@ function setCalendarRange(value: unknown) {
   }
 }
 
-function coerceCalendarDate(value: unknown) {
+function coerceCalendarDate<TValue>(value: TValue) {
   if (
     value &&
-    typeof value === 'object' &&
+    isObject(value) &&
     'year' in value &&
     'month' in value &&
     'day' in value &&
-    typeof value.year === 'number' &&
-    typeof value.month === 'number' &&
-    typeof value.day === 'number'
+    isNumber(value.year) &&
+    isNumber(value.month) &&
+    isNumber(value.day)
   ) {
     return new CalendarDate(value.year, value.month, value.day)
   }
@@ -311,8 +334,8 @@ function coerceCalendarDate(value: unknown) {
   return undefined
 }
 
-function toCalendarDate(value: unknown) {
-  if (!(value instanceof Date) && typeof value !== 'string' && typeof value !== 'number') {
+function toCalendarDate<TValue>(value: TValue) {
+  if (!isDate(value) && !isString(value) && !isNumber(value)) {
     return undefined
   }
 
@@ -345,7 +368,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
     :transitioning="stageTransitioning"
     :content-class="
       mergeDataListUiClass(
-        'max-w-[calc(100vw-1rem)] overflow-hidden p-0',
+        `${editorWidthClass} overflow-hidden p-0`,
         undefined,
         dataListFilterUi?.popoverContent,
       )
@@ -395,7 +418,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
           v-else
           :class="
             mergeDataListUiClass(
-              `bg-default ${operator === 'between' ? 'w-[min(100vw-1rem,48rem)]' : 'w-[min(100vw-1rem,22rem)]'}`,
+              `${editorWidthClass} w-full min-w-0 max-w-full bg-default`,
               undefined,
               dataListFilterUi?.editor,
             )
@@ -406,7 +429,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               class="grid gap-0"
               :class="
                 filterUi.range.presetsPlacement === 'side'
-                  ? 'lg:grid-cols-[14rem_minmax(0,1fr)]'
+                  ? rangePresetColumnClass
                   : 'grid-cols-1'
               "
             >
@@ -414,19 +437,24 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 v-if="rangePresets.length"
                 :class="
                   mergeDataListUiClass(
-                    `border-b border-default p-3 ${filterUi.range.presetsPlacement === 'side' ? 'lg:border-r lg:border-b-0' : ''}`,
+                    `border-b border-default ${sizeClasses.searchHeader} ${filterUi.range.presetsPlacement === 'side' ? 'lg:border-r lg:border-b-0' : ''}`,
                     undefined,
                     dataListFilterUi?.presets,
                   )
                 "
               >
-                <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+                <div
+                  :class="[geometry.caption, 'font-medium uppercase tracking-[0.14em] text-muted']"
+                >
                   Date range
                 </div>
 
                 <div
-                  class="mt-3 flex gap-1.5"
-                  :class="filterUi.range.presetsPlacement === 'side' ? 'flex-col' : 'flex-wrap'"
+                  :class="[
+                    'mt-2 flex',
+                    geometry.toolbarGap,
+                    filterUi.range.presetsPlacement === 'side' ? 'flex-col' : 'flex-wrap',
+                  ]"
                 >
                   <UButton
                     v-for="preset in rangePresets"
@@ -434,11 +462,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                     :variant="isRangePresetActive(preset.value) ? 'subtle' : 'ghost'"
                     :size="size"
                     :class="
-                      mergeDataListUiClass(
-                        'justify-start rounded-lg px-3',
-                        undefined,
-                        dataListFilterUi?.preset,
-                      )
+                      mergeDataListUiClass('justify-start', undefined, dataListFilterUi?.preset)
                     "
                     @click="applyRangePreset(preset.value)"
                   >
@@ -449,10 +473,13 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
               <div
                 v-if="filterUi.range.display !== 'inputs'"
-                :class="mergeDataListUiClass('p-3', undefined, dataListFilterUi?.calendar)"
+                :class="
+                  mergeDataListUiClass(sizeClasses.searchHeader, undefined, dataListFilterUi?.calendar)
+                "
               >
                 <UCalendar
                   :model-value="calendarRange"
+                  :size="size"
                   range
                   :number-of-months="rangeCalendarPanels"
                   :paged-navigation="
@@ -461,10 +488,6 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                   :fixed-weeks="filterUi.range.calendar.fixedWeeks"
                   :maximum-days="filterUi.range.calendar.maxRangeDays"
                   :ui="{
-                    header: 'px-1 pb-2',
-                    body: 'gap-3',
-                    grid: 'gap-y-1',
-                    cell: 'p-0.5',
                     cellTrigger: 'rounded-md',
                     root: mergeDataListUiClass(
                       'border-0 bg-transparent p-0',
@@ -481,24 +504,26 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               v-if="filterUi.range.display !== 'calendar'"
               :class="
                 mergeDataListUiClass(
-                  'border-t border-default px-3 py-3',
+                  `border-t border-default ${sizeClasses.searchHeader}`,
                   undefined,
                   dataListFilterUi?.inputs,
                 )
               "
             >
-              <div class="flex items-center justify-between gap-3">
-                <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted">
+              <div :class="['flex items-center justify-between', geometry.toolbarGap]">
+                <div
+                  :class="[geometry.caption, 'font-medium uppercase tracking-[0.14em] text-muted']"
+                >
                   Custom range
                 </div>
-                <div class="truncate text-xs text-muted">
+                <div :class="[geometry.caption, 'truncate text-muted']">
                   {{ rangeSummary }}
                 </div>
               </div>
 
-              <div class="mt-3 grid gap-2 sm:grid-cols-2">
+              <div :class="['mt-2 grid sm:grid-cols-2', geometry.toolbarGap]">
                 <div class="space-y-1">
-                  <span class="px-1 text-xs text-muted">Start</span>
+                  <span :class="[geometry.caption, 'px-1 text-muted']">Start</span>
                   <UInputDate
                     :model-value="localRangeStart"
                     leading
@@ -515,7 +540,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 </div>
 
                 <div class="space-y-1">
-                  <span class="px-1 text-xs text-muted">End</span>
+                  <span :class="[geometry.caption, 'px-1 text-muted']">End</span>
                   <UInputDate
                     :model-value="localRangeEnd"
                     leading
@@ -536,12 +561,22 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
           <div
             v-else
-            :class="mergeDataListUiClass('grid gap-2 p-3', undefined, dataListFilterUi?.inputs)"
+            :class="
+              mergeDataListUiClass(
+                `grid ${geometry.toolbarGap} ${sizeClasses.searchHeader}`,
+                undefined,
+                dataListFilterUi?.inputs,
+              )
+            "
           >
             <div
               v-if="scalarPresets.length"
               :class="
-                mergeDataListUiClass('flex flex-wrap gap-1.5', undefined, dataListFilterUi?.presets)
+                mergeDataListUiClass(
+                  `flex flex-wrap ${geometry.toolbarGap}`,
+                  undefined,
+                  dataListFilterUi?.presets,
+                )
               "
             >
               <UButton
@@ -549,9 +584,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 :key="preset.label"
                 variant="ghost"
                 :size="size"
-                :class="
-                  mergeDataListUiClass('rounded-lg px-3', undefined, dataListFilterUi?.preset)
-                "
+                :class="mergeDataListUiClass(undefined, undefined, dataListFilterUi?.preset)"
                 @click="applyScalarPreset(preset.value)"
               >
                 {{ preset.label }}
@@ -581,6 +614,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 filterUi.scalar.display === 'input-calendar'
               "
               :model-value="localDate"
+              :size="size"
               :fixed-weeks="filterUi.scalar.calendar.fixedWeeks"
               :ui="{
                 root: mergeDataListUiClass(
@@ -588,9 +622,6 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                   undefined,
                   dataListFilterUi?.calendar,
                 ),
-                header: 'px-1 pb-2',
-                grid: 'gap-y-1',
-                cell: 'p-0.5',
                 cellTrigger: 'rounded-md',
               }"
               @update:model-value="setSingleDate"
@@ -601,7 +632,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
             v-if="filterUi.commitMode === 'manual'"
             :class="
               mergeDataListUiClass(
-                `flex items-center border-t border-default p-2 ${operator === 'between' ? 'justify-between' : 'justify-end'}`,
+                `flex items-center border-t border-default ${sizeClasses.footer} ${operator === 'between' ? 'justify-between' : 'justify-end'}`,
                 undefined,
                 dataListFilterUi?.footer,
               )
@@ -616,7 +647,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               :ui="{ base: dataListFilterUi?.clear }"
               @click="clearFilter"
             />
-            <div class="flex items-center gap-2">
+            <div :class="['flex items-center', geometry.toolbarGap]">
               <UButton
                 v-if="operator !== 'between'"
                 color="neutral"
