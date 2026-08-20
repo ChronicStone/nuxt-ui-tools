@@ -29,6 +29,15 @@ export function setupImports(runtimeDir: string) {
       { name: 'useQueryStates', from: 'query-state' },
     ]),
 
+    // Query prefetch
+    ...withRuntime(runtimeDir, [
+      { name: 'defineQueryPrefetch', from: 'query-prefetch' },
+      { name: 'defineQueryPrefetchPlan', from: 'query-prefetch' },
+      { name: 'executeQueryPrefetch', from: 'query-prefetch' },
+      { name: 'executeQueryPrefetchPlan', from: 'query-prefetch' },
+      { name: 'prefetchPage', from: 'query-prefetch' },
+    ]),
+
     // I18n
     ...withRuntime(runtimeDir, [
       { name: 'defineUiToolsLocale', from: 'i18n' },
@@ -50,6 +59,7 @@ export function setupImports(runtimeDir: string) {
       { name: 'createTableColumnBuilder', from: 'table' },
       { name: 'createTableFilterBuilder', from: 'table' },
       { name: 'defineTableSchema', from: 'table' },
+      { name: 'prefetchTable', from: 'table' },
       { name: 'useTable', from: 'table' },
     ]),
 
