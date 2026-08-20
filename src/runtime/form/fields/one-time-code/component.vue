@@ -5,20 +5,23 @@ import { computed } from 'vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormOneTimeCodeField } from '../../types'
+import { isString } from '../../utils/predicate'
+import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
   field: FormOneTimeCodeField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
+const { form, controlProps, disabled, handleBlur } = useFieldControl(
   () => props.field,
   () => props.path,
 )
+const placeholder = computed(() => resolveFormText(props.field.placeholder) ?? '·')
 const model = computed<string[]>({
   get: () => {
     const value = form.getValue(props.path)
-    return typeof value === 'string' ? value.split('') : []
+    return isString(value) ? value.split('') : []
   },
   set: (value) => form.setValue(props.path, value.join('')),
 })

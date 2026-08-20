@@ -21,7 +21,12 @@ export interface FormPhoneNumberField<TContext = {}, TDeps = {}> extends FormSta
   defaultCountryCode?: 'detect' | CountryCode
   storedCountryCode?: CountryCode
   numberType?: readonly NumberType[]
+  /** Stored/submitted value format. Defaults to international. */
   format?: 'international' | 'national' | 'uri' | 'e164'
+  /** How a valid number is rendered back into the editable input. Defaults to national. */
+  displayFormat?: 'national' | 'raw'
+  /** Shows the trailing valid/invalid indicator while a value is present. Defaults to true. */
+  validityIndicator?: boolean
   resetOnCountryChange?: boolean
   clearable?: boolean
 }
