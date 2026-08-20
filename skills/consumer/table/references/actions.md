@@ -165,3 +165,61 @@ These helpers are also available under `tableApi.data`, but the top-level method
 - `actions`: bulk actions that depend on selected rows
 - `toolbarActions`: actions shown at the table level
 - `rowActions`: per-row actions shown in the synthetic row-actions column and reusable through `<RowActions>`
+
+## Built-in Toolbar And Selection Actions
+
+`<UiDataListActionsDropdown />` renders a basic dropdown for configured `toolbarActions`.
+It disappears when no toolbar action resolves for the current table, so a page can include it
+in a shared toolbar without a separate visibility condition. Bulk `actions` stay out of this
+permanent toolbar so they don't duplicate the selected-row action surface.
+
+`<UiDataListSelectionActions />` renders a fixed action bar only while rows are selected and
+only when `actions` are configured. Its built-in surface includes the selected count, bulk action
+buttons, pending state, and a clear-selection button:
+
+```vue
+<UiDataListSelectionActions />
+```
+
+Use the `default` slot for a fully headless bar. It receives `actions`, `selectedCount`, the
+table `selection` API, and `clearSelection`; the `action` slot receives the same controller
+shape as the toolbar:
+
+```vue
+<UiDataListSelectionActions>
+  <template #default="{ actions, selectedCount, clearSelection }">
+    <div class="flex gap-2">
+      <span>{{ selectedCount }} selected</span>
+      <button v-for="action in actions" :key="action.definition.key" @click="action.execute">
+        {{ action.definition.label }}
+      </button>
+      <button @click="clearSelection">Clear</button>
+    </div>
+  </template>
+</UiDataListSelectionActions>
+```
+
+When using the default `<UiDataList>` assembly, the selection bar is included automatically;
+render it directly when composing granular `<UiDataListContent>` parts.
+
+For fully custom markup, use `<UiDataListActionsToolbar />`. Its default or `action`
+slot receives the original `definition`, resolved `state`, `running` boolean,
+the table `selection` API, and an `execute` function:
+
+```vue
+<UiDataListActionsToolbar>
+  <template #action="{ definition, state, running, selection, execute }">
+    <UButton
+      :label="String(definition.label ?? definition.key)"
+      :loading="running || state.loading"
+      :disabled="state.disabled"
+      :badge="selection.state.value.selectedCount"
+      @click="execute"
+    />
+  </template>
+</UiDataListActionsToolbar>
+```
+
+`state.disabled` includes `requiresSelection`, while `state.loading` reflects the
+schema callback. The controller also prevents duplicate execution while an action
+is running.

@@ -77,3 +77,8 @@ Selection is most useful when your table supports:
 - row selection
 - bulk workflows
 - action toolbars
+
+With the default `'auto'` mode, the selection column is omitted when the schema has
+no bulk actions. Toolbar and row actions do not imply row selection. Set
+`selection.mode` to `true` when an application needs selection for a custom workflow
+that is not represented by bulk actions.
