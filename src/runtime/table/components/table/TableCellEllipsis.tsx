@@ -43,11 +43,11 @@ export default defineComponent({
     }
 
     function startObserver() {
-      if (resizeObserver || typeof ResizeObserver === 'undefined' || !contentRef.value) {
+      if (resizeObserver || !('ResizeObserver' in globalThis) || !contentRef.value) {
         return
       }
 
-      resizeObserver = new ResizeObserver(() => {
+      resizeObserver = new globalThis.ResizeObserver(() => {
         measureOverflow()
       })
 

@@ -4,10 +4,12 @@ import type { UseTableDataReturn } from '../../composables/use-table-data'
 import type { useTableState } from '../../composables/use-table-state'
 import type {
   TableApi,
+  TableColumnAlign,
   TableColumnPinned,
   GenericObject,
   TableLayout,
   TableSchemaView,
+  TableRuntimeRecord,
 } from '../../types'
 
 export const SELECT_COLUMN_ID = '__select'
@@ -23,6 +25,10 @@ export interface TableRuntimeColumn {
   id: string
   label: string
   icon?: string
+  width?: number | string
+  minWidth?: number | string
+  maxWidth?: number | string
+  align?: TableColumnAlign
   sortableKey?: string
   canHide: boolean
   defaultVisible: boolean
@@ -78,8 +84,8 @@ export interface TableColumnRenderParams {
 export interface TableCellRenderContext {
   row: GenericObject
   index: number
-  context: Record<string, unknown>
-  pageContext: Record<string, unknown>
+  context: TableRuntimeRecord
+  pageContext: TableRuntimeRecord
   tableApi: TableApi<unknown>
   layout: TableLayout
 }

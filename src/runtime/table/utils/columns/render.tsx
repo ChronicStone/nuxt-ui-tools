@@ -1,17 +1,16 @@
 /** @jsxImportSource vue */
 /// <reference types="vue/jsx" />
 
-import UButton from '@nuxt/ui/components/Button.vue'
-import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
-import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import type { VNodeChild } from 'vue'
 
-import RowActions from '../../components/actions/RowActions.vue'
+import { isArray, isFunction, isNumber, isObject, isString } from '../../../shared/utils/predicate'
 import TableRowScopeProvider from '../../components/actions/TableRowScopeProvider.vue'
 import TableCellEllipsis from '../../components/table/TableCellEllipsis'
-import type { GenericObject } from '../../types'
+import TableColumnHeader from '../../components/table/TableColumnHeader.vue'
+import TableRowActionsControl from '../../components/table/TableRowActionsControl.vue'
+import TableSelectionControl from '../../components/table/TableSelectionControl.vue'
+import type { GenericObject, TableRuntimeRecord } from '../../types'
 import { getColumnHeaderIcon } from './menu'
 import { findSchemaColumn } from './schema'
 import {
@@ -29,8 +28,8 @@ import {
 type PlainRenderContextCacheState = {
   contextSource: object
   pageContextSource: object
-  plainContext: Record<string, unknown>
-  plainPageContext: Record<string, unknown>
+  plainContext: TableRuntimeRecord
+  plainPageContext: TableRuntimeRecord
 }
 
 const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<
@@ -43,52 +42,38 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
     id: SELECT_COLUMN_ID,
 
     header: () => (
-      <button
-        type="button"
-        class="inline-flex items-center"
-        onClick={(event: MouseEvent) => {
-          event.preventDefault()
-          event.stopPropagation()
+      <TableSelectionControl
+        modelValue={
+          options.params.selection.allSelected.value
+            ? true
+            : options.params.selection.partiallySelected.value
+              ? 'indeterminate'
+              : false
+        }
+        ariaLabel="Select all rows"
+        onToggle={() =>
           options.params.selection.toggleAllRows({
             selected: !options.params.selection.allSelected.value,
           })
-        }}
-      >
-        <UCheckbox
-          modelValue={
-            options.params.selection.allSelected.value
-              ? true
-              : options.params.selection.partiallySelected.value
-                ? 'indeterminate'
-                : false
+        }
+      />
+    ),
+    cell: ({ row }: { row: { id: string } }) => {
+      const rowId = String(row.id)
+      return (
+        <TableSelectionControl
+          modelValue={options.params.selection.isRowSelected({ rowId })}
+          ariaLabel="Select row"
+          onToggle={(event: MouseEvent) =>
+            options.params.selection.toggleRowSelection({
+              rowId,
+              selected: !options.params.selection.isRowSelected({ rowId }),
+              shiftKey: event.shiftKey,
+            })
           }
-          color="neutral"
         />
-      </button>
-    ),
-    cell: ({ row }: { row: { id: string } }) => (
-      <button
-        type="button"
-        class="inline-flex items-center"
-        onClick={(event: MouseEvent) => {
-          event.preventDefault()
-          event.stopPropagation()
-
-          const rowId = String(row.id)
-
-          options.params.selection.toggleRowSelection({
-            rowId,
-            selected: !options.params.selection.isRowSelected({ rowId }),
-            shiftKey: event.shiftKey,
-          })
-        }}
-      >
-        <UCheckbox
-          modelValue={options.params.selection.isRowSelected({ rowId: String(row.id) })}
-          color="neutral"
-        />
-      </button>
-    ),
+      )
+    },
     size: SELECT_COLUMN_WIDTH,
     enableSorting: false,
     enableHiding: false,
@@ -152,75 +137,22 @@ export function createDataColumns(options: {
           column: { getCanHide?: () => boolean; resetSize?: () => void }
           header: { getIsResizing?: () => boolean; getResizeHandler?: () => (event: Event) => void }
         }) => (
-          <div class="group/column-header relative flex h-full w-full items-center">
-            <UDropdownMenu
-              size="sm"
-              items={options.getMenuItems({ columnId: runtimeColumn.id })}
-              content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
-              modal={false}
-              ui={{ content: 'w-fit p-1 shadow-none' }}
-              v-slots={{
-                default: () => (
-                  <button
-                    type="button"
-                    class="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
-                  >
-                    <div class="flex min-w-0 items-center gap-2.5">
-                      {runtimeColumn.icon ? (
-                        <UIcon name={runtimeColumn.icon} class="size-4 shrink-0 text-muted" />
-                      ) : null}
-                      <TableCellEllipsis
-                        title={runtimeColumn.label}
-                        wrapperClass="min-w-0 max-w-full"
-                      >
-                        {runtimeColumn.label}
-                      </TableCellEllipsis>
-                    </div>
-                    <UIcon
-                      name={getColumnHeaderIcon({
-                        columnId: runtimeColumn.id,
-                        canHide: tableColumn.getCanHide?.(),
-                        getSortState: options.getSortState,
-                        getPinnedState: options.getPinnedState,
-                      })}
-                      class="size-4 shrink-0 text-muted"
-                    />
-                    {options.getPinnedState({ columnId: runtimeColumn.id }) ? (
-                      <UIcon name="i-lucide-pin" class="size-3.5 shrink-0 text-muted" />
-                    ) : null}
-                  </button>
-                ),
-              }}
-            />
-
-            {column.resizable !== false ? (
-              <div
-                aria-label={`Resize ${runtimeColumn.label} column`}
-                role="separator"
-                class={[
-                  'absolute inset-y-1 -right-1 z-20 w-3 cursor-col-resize touch-none select-none opacity-0',
-                  "transition-opacity duration-150 after:absolute after:inset-y-0 after:left-1/2 after:w-px after:-translate-x-1/2 after:rounded-full after:content-['']",
-                  header.getIsResizing?.()
-                    ? 'opacity-100 after:bg-primary'
-                    : 'group-hover/table-head:opacity-100 hover:opacity-100 after:bg-accented/70',
-                ]}
-                onDblclick={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  tableColumn.resetSize?.()
-                }}
-                onMousedown={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  header.getResizeHandler?.()(event)
-                }}
-                onTouchstart={(event: TouchEvent) => {
-                  event.stopPropagation()
-                  header.getResizeHandler?.()(event)
-                }}
-              />
-            ) : null}
-          </div>
+          <TableColumnHeader
+            label={runtimeColumn.label}
+            icon={runtimeColumn.icon}
+            headerIcon={getColumnHeaderIcon({
+              columnId: runtimeColumn.id,
+              canHide: tableColumn.getCanHide?.(),
+              getSortState: options.getSortState,
+              getPinnedState: options.getPinnedState,
+            })}
+            pinned={Boolean(options.getPinnedState({ columnId: runtimeColumn.id }))}
+            items={options.getMenuItems({ columnId: runtimeColumn.id })}
+            resizable={column.resizable !== false}
+            resizing={header.getIsResizing?.() ?? false}
+            resetSize={tableColumn.resetSize}
+            resize={header.getResizeHandler?.()}
+          />
         ),
         cell: ({ row }: { row: { original: GenericObject; index: number } }) =>
           renderColumnCell({
@@ -277,8 +209,10 @@ export function renderColumnCell(options: TableColumnRenderParams) {
         scope: cellContext,
         content: wrapEllipsisContent({
           column: options.column,
+          // SAFETY: field-column render receives the schema-derived row/value context.
           content: options.column.render({
             ...cellContext,
+            // SAFETY: path resolution is checked by the schema field contract at column creation.
             value: value as never,
           } as never),
           title: resolveEllipsisTitle({
@@ -314,6 +248,7 @@ export function renderColumnCell(options: TableColumnRenderParams) {
     scope: cellContext,
     content: wrapEllipsisContent({
       column: options.column,
+      // SAFETY: composite/display render receives the schema-derived row context.
       content: options.column.render(cellContext as never),
       title: resolveEllipsisTitle({
         column: options.column,
@@ -363,11 +298,11 @@ export function getColumnCellClass(options: { column: SchemaTableColumn }) {
 }
 
 export function normalizeColumnSize(options: { size?: number | string }) {
-  if (typeof options.size === 'number') {
+  if (isNumber(options.size)) {
     return options.size
   }
 
-  if (typeof options.size === 'string') {
+  if (isString(options.size)) {
     const parsed = Number.parseFloat(options.size)
     return Number.isFinite(parsed) ? parsed : undefined
   }
@@ -407,25 +342,7 @@ function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
 
       return (
         <TableRowScopeProvider scope={scope}>
-          <div class="flex justify-end">
-            <RowActions
-              size="sm"
-              content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
-              modal={false}
-              portal
-              ui={{ content: 'z-[80] min-w-48' }}
-            >
-              <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-ellipsis-vertical"
-                size="sm"
-                square
-                aria-label="Row actions"
-                class="bg-transparent text-muted shadow-none ring-0 hover:bg-accented/60 hover:text-default focus-visible:bg-accented/60 focus-visible:text-default"
-              />
-            </RowActions>
-          </div>
+          <TableRowActionsControl />
         </TableRowScopeProvider>
       )
     },
@@ -482,7 +399,7 @@ function resolvePlainRenderContext(params: UseTableColumnsParams): PlainRenderCo
   return nextCache
 }
 
-function toPlainRecord(value: object) {
+function toPlainRecord(value: GenericObject): TableRuntimeRecord {
   return Object.fromEntries(Object.entries(value))
 }
 
@@ -495,7 +412,7 @@ function resolveEllipsisTitle(options: {
     return null
   }
 
-  if (typeof options.column.ellipsis === 'object' && options.column.ellipsis !== null) {
+  if (isObject(options.column.ellipsis)) {
     const title = 'title' in options.column.ellipsis ? options.column.ellipsis.title : undefined
 
     if (isEllipsisTitleResolver(title)) {
@@ -510,8 +427,10 @@ function resolveEllipsisTitle(options: {
   return options.fallbackValue == null ? null : String(options.fallbackValue)
 }
 
-function isEllipsisTitleResolver(value: unknown): value is (params: unknown) => unknown {
-  return typeof value === 'function'
+function isEllipsisTitleResolver<TValue>(
+  value: TValue,
+): value is TValue & ((params: TValue) => VNodeChild) {
+  return isFunction(value)
 }
 
 function formatCellValue(options: { value: unknown }) {
@@ -523,11 +442,11 @@ function formatCellValue(options: { value: unknown }) {
     return options.value.toLocaleString()
   }
 
-  if (Array.isArray(options.value)) {
+  if (isArray(options.value)) {
     return options.value.join(', ')
   }
 
-  if (typeof options.value === 'object') {
+  if (isObject(options.value)) {
     return JSON.stringify(options.value)
   }
 
@@ -536,10 +455,10 @@ function formatCellValue(options: { value: unknown }) {
 
 function getPathValue(options: { row: GenericObject; path: string }) {
   return options.path.split('.').reduce<unknown>((value, key) => {
-    if (value == null || typeof value !== 'object') {
+    if (!isObject(value)) {
       return undefined
     }
 
-    return (value as Record<string, unknown>)[key]
+    return value[key]
   }, options.row)
 }

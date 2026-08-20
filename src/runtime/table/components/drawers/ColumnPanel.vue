@@ -3,7 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
-import { computed } from 'vue'
+import { computed, type VNodeChild } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
@@ -11,7 +11,11 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { DataListColumnPanelUi, DataListControlSize } from '../../types'
-import { mergeDataListUiClass } from '../../utils'
+import {
+  mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveDataListPopoverContentClass,
+} from '../../utils'
 
 const props = defineProps<{ size?: DataListControlSize; ui?: DataListColumnPanelUi }>()
 const internals = useTableInternals()
@@ -21,6 +25,10 @@ const ui = computed<DataListColumnPanelUi>(() => ({
   ...dataListUi.ui.value.columnPanel?.ui,
   ...props.ui,
 }))
+const resolvedSize = computed(
+  () => props.size ?? dataListUi.ui.value.columnPanel?.size ?? dataListUi.controlSize.value,
+)
+const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.value))
 
 defineSlots<{
   trigger?: (props: {
@@ -29,7 +37,7 @@ defineSlots<{
     toggle: () => void
     openState: boolean
     triggerProps: { type: 'button'; 'aria-expanded': boolean }
-  }) => unknown
+  }) => VNodeChild
 }>()
 const configurableColumns = computed(() =>
   internals.tableColumns.orderedColumns.value.filter((column) => column.configurable !== false),
@@ -98,7 +106,7 @@ function toggle() {
     :content="{ side: 'bottom', align: 'end', sideOffset: 8 }"
     :ui="{
       content: mergeDataListUiClass(
-        'w-fit overflow-hidden p-0 shadow-none',
+        resolveDataListPopoverContentClass('independent', 'p-0 shadow-none'),
         undefined,
         ui.popoverContent,
       ),
@@ -118,7 +126,7 @@ function toggle() {
       <UButton
         color="neutral"
         variant="outline"
-        :size="props.size ?? dataListUi.ui.value.columnPanel?.size ?? dataListUi.controlSize.value"
+        :size="resolvedSize"
         icon="i-lucide-sliders-horizontal"
         :label="t('table.controls.view')"
         :ui="{ base: ui.trigger }"
@@ -127,17 +135,21 @@ function toggle() {
 
     <template #content>
       <div
-        :class="
-          mergeDataListUiClass('w-fit max-w-[calc(100vw-1rem)] bg-default', undefined, ui.panel)
-        "
+        :class="mergeDataListUiClass('w-full min-w-0 max-w-full bg-default', undefined, ui.panel)"
       >
         <div
-          :class="mergeDataListUiClass('border-b border-default p-2', undefined, ui.searchHeader)"
+          :class="
+            mergeDataListUiClass(
+              `border-b border-default ${geometry.panelPadding}`,
+              undefined,
+              ui.searchHeader,
+            )
+          "
         >
           <UInput
             :model-value="internals.controls.columnsPanelSearch.value"
             @update:model-value="internals.controls.columnsPanelSearch.value = String($event ?? '')"
-            size="sm"
+            :size="resolvedSize"
             icon="i-lucide-search"
             :placeholder="t('table.controls.searchColumns')"
             color="neutral"
@@ -148,7 +160,11 @@ function toggle() {
 
         <div
           :class="
-            mergeDataListUiClass('grid max-h-80 gap-1 overflow-y-auto p-2', undefined, ui.list)
+            mergeDataListUiClass(
+              `grid max-h-80 gap-1 overflow-y-auto ${geometry.listPadding}`,
+              undefined,
+              ui.list,
+            )
           "
         >
           <div
@@ -160,7 +176,7 @@ function toggle() {
               :key="column.id"
               :class="
                 mergeDataListUiClass(
-                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70',
+                  `flex items-center rounded-md transition-colors hover:bg-elevated/70 ${geometry.row}`,
                   undefined,
                   ui.row,
                 )
@@ -223,7 +239,7 @@ function toggle() {
                 :key="column.id"
                 :class="
                   mergeDataListUiClass(
-                    'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70',
+                    `flex items-center rounded-md transition-colors hover:bg-elevated/70 ${geometry.row}`,
                     undefined,
                     ui.row,
                   )
@@ -280,7 +296,7 @@ function toggle() {
               :key="column.id"
               :class="
                 mergeDataListUiClass(
-                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-elevated/70',
+                  `flex items-center rounded-md transition-colors hover:bg-elevated/70 ${geometry.row}`,
                   undefined,
                   ui.row,
                 )
@@ -334,7 +350,7 @@ function toggle() {
               type="button"
               :class="
                 mergeDataListUiClass(
-                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-elevated/70',
+                  `flex items-center rounded-md text-left transition-colors hover:bg-elevated/70 ${geometry.row}`,
                   undefined,
                   ui.row,
                 )
@@ -389,20 +405,22 @@ function toggle() {
         <div
           :class="
             mergeDataListUiClass(
-              'flex items-center justify-between gap-3 border-t border-default px-3 py-2',
+              `flex items-center justify-between border-t border-default ${geometry.footer}`,
               undefined,
               ui.footer,
             )
           "
         >
-          <div :class="mergeDataListUiClass('text-sm text-muted', undefined, ui.footerSummary)">
+          <div
+            :class="mergeDataListUiClass(`${geometry.text} text-muted`, undefined, ui.footerSummary)"
+          >
             {{ t('table.controls.configurableColumns', { count: configurableColumns.length }) }}
           </div>
 
           <UButton
             color="neutral"
             variant="ghost"
-            size="sm"
+            :size="resolvedSize"
             icon="i-lucide-rotate-ccw"
             :label="t('table.controls.resetColumns')"
             :ui="{ base: ui.reset }"
