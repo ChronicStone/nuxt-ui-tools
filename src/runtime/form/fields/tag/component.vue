@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormTagField } from '../../types'
+import { isString } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormTagField
@@ -18,7 +19,7 @@ const { form, controlProps, disabled, handleBlur, placeholder } = useFieldContro
 const model = computed<string[]>({
   get: () => {
     const value = form.getValue(props.path)
-    return Array.isArray(value) ? value.filter((item) => typeof item === 'string') : []
+    return Array.isArray(value) ? value.filter((item) => isString(item)) : []
   },
   set: (value) => form.setValue(props.path, value),
 })
