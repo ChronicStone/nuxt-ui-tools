@@ -1,3 +1,4 @@
+import type { FormValue } from '../../types'
 import type { FormFieldCallbackParams } from '../../types/callbacks'
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { NullableValue } from '../../types/field-output-utils'
@@ -18,7 +19,7 @@ export interface FormUploadDeleteParams<TContext = {}, TDeps = {}> extends FormF
   TContext,
   TDeps
 > {
-  value: unknown
+  value: FormValue
 }
 
 export interface FormUploadField<TContext = {}, TDeps = {}> extends FormStatefulFieldBase<

@@ -7,7 +7,9 @@ import { computed, onScopeDispose, ref } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import type { FormValue } from '../../types'
 import type { FormObject, FormUploadField } from '../../types'
+import { isObject, isString, isUndefined } from '../../utils/predicate'
 
 type UploadedValue = string | FormObject | readonly string[] | readonly FormObject[] | null
 
@@ -17,7 +19,7 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, disabled, handleBlur, params } = useFieldControl(
+const { form, controlProps, disabled, handleBlur, params, validationPending } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -27,8 +29,8 @@ const uploadError = ref<string | null>(null)
 const uploadRun = ref<number>(0)
 const uploadedValue = computed<UploadedValue>(() => {
   const value = form.getValue(props.path)
-  if (typeof value === 'string' || value === null) return value
-  if (Array.isArray(value) && value.every((item) => typeof item === 'string')) return value
+  if (isString(value) || value === null) return value
+  if (Array.isArray(value) && value.every((item) => isString(item))) return value
   if (Array.isArray(value) && value.every(isFormObject)) return value
   return isFormObject(value) ? value : null
 })
@@ -60,12 +62,12 @@ async function uploadFiles() {
   }
 }
 
-async function removeUpload(value?: unknown) {
+async function removeUpload(value?: FormValue) {
   uploadPending.value = true
   try {
     await props.field.upload.onDelete?.({
       ...params.value,
-      value: typeof value === 'undefined' ? uploadedValue.value : value,
+      value: isUndefined(value) ? uploadedValue.value : value,
     })
     form.setValue(props.path, null)
     selectedFiles.value = null
@@ -96,8 +98,8 @@ function handleFileChange() {
   if (props.field.autoUpload ?? false) void uploadFiles()
 }
 
-function isFormObject(value: unknown): value is FormObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isFormObject(value: FormValue): value is FormObject {
+  return isObject(value) && value !== null && !Array.isArray(value)
 }
 </script>
 
@@ -110,7 +112,7 @@ function isFormObject(value: unknown): value is FormObject {
         class="w-full"
         :accept="field.accept"
         :multiple="field.multiple"
-        :disabled="disabled || uploadPending"
+        :disabled="disabled || uploadPending || validationPending"
         @change="handleFileChange"
       />
 
