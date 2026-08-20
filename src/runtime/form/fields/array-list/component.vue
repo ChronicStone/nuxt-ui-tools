@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import USelect from '@nuxt/ui/components/Select.vue'
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
 
@@ -7,6 +8,7 @@ import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
+import type { FormValue } from '../../types'
 import type {
   FormArrayListField,
   FormArrayTabsField,
@@ -15,10 +17,12 @@ import type {
 } from '../../types'
 import type { FormObject } from '../../types/utils'
 import { syncFormArrayItems } from '../../utils/array'
+import { isBoolean, isFunction, isNumber, isObject, isString } from '../../utils/predicate'
 import { buildInitialFormFieldsState } from '../../utils/state'
-import { resolveFormText } from '../../utils/text'
+import { resolveFormBoundaryText, resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
-import type { FormArrayActionCondition } from './types'
+import type { FormArrayAction, FormArrayBaseAction } from './types'
+import FormDirectionalTransition from '../../components/utils/FormDirectionalTransition.vue'
 
 const props = defineProps<{
   field: FormArrayListField | FormArrayTabsField | FormArrayVariantField
@@ -32,15 +36,18 @@ const VueDraggable = defineAsyncComponent(() =>
 const form = useFormRuntimeContext()
 const formUi = useFormUi()
 const activeIndex = ref<number>(0)
+const tabTransitionDirection = ref<'forward' | 'backward'>('forward')
+const tabTransitioning = ref<boolean>(false)
 const itemKeys = new WeakMap<FormObject, string>()
 let nextItemKey = 0
 const items = computed<readonly FormObject[]>(() => {
   const value = form.getValue(props.path)
   return Array.isArray(value) ? value.filter(isFormObject) : []
 })
+const activeItem = computed(() => items.value[activeIndex.value])
 const dragItems = computed<FormObject[]>({
   get: () => [...items.value],
-  set: updateItems,
+  set: updateDraggedItems,
 })
 const containerLayout = useFormContainerLayout({
   layout: () => props.field.layout,
@@ -48,13 +55,14 @@ const containerLayout = useFormContainerLayout({
 })
 const title = computed(() => resolveFormText(props.field.label))
 const description = computed(() => resolveFormText(props.field.description))
-const addItemLabel = computed(() => resolveFormText(props.field.addItemLabel) ?? 'Add item')
+const addItemLabel = computed(() =>
+  resolveArrayActionLabel(props.field.actions?.addItem, resolveFormText(props.field.addItemLabel) ?? 'Add item'),
+)
+const addItemIcon = computed(() => resolveArrayActionIcon(props.field.actions?.addItem, 'i-lucide-plus'))
 const emptyLabel = computed(() => resolveFormText(props.field.emptyLabel) ?? 'No items yet')
 const itemLabel = computed(() => resolveFormText(props.field.itemLabel) ?? 'Item')
 const canAdd = computed(() => resolveAction(props.field.actions?.addItem, -1))
-const isDraggable = computed<boolean>(() =>
-  props.field.type === 'array-tabs' ? false : props.field.draggable === true,
-)
+const isDraggable = computed<boolean>(() => props.field.draggable !== false)
 const isTabsMode = computed(
   () =>
     props.field.type === 'array-tabs' ||
@@ -82,18 +90,28 @@ function addItem() {
   item = applyVirtualFields(item, index)
   if (props.field.transformOnCreate)
     item = props.field.transformOnCreate(item, index, actionParams(index).deps)
+
+  tabTransitionDirection.value = 'forward'
   updateItems([...items.value, item])
   activeIndex.value = index
 }
 
 function removeItem(index: number) {
-  const message =
-    typeof props.field.confirmDelete === 'string' || typeof props.field.confirmDelete === 'function'
-      ? resolveFormText(props.field.confirmDelete)
-      : 'Remove this item?'
+  const message = resolveFormBoundaryText(props.field.confirmDelete) ?? 'Remove this item?'
   if (props.field.confirmDelete && !window.confirm(message)) return
+
+  const currentActiveIndex = activeIndex.value
+  const removingActiveItem = currentActiveIndex === index
+  const hasNextItem = index + 1 < items.value.length
+  if (removingActiveItem) tabTransitionDirection.value = hasNextItem ? 'forward' : 'backward'
+
   updateItems(items.value.filter((_, itemIndex) => itemIndex !== index))
-  if (activeIndex.value >= index) activeIndex.value = Math.max(0, activeIndex.value - 1)
+  if (currentActiveIndex < index) return
+  if (currentActiveIndex > index) {
+    activeIndex.value = currentActiveIndex - 1
+    return
+  }
+  activeIndex.value = hasNextItem ? index : Math.max(0, index - 1)
 }
 
 function fieldsForItem(item: FormObject): readonly FormField[] {
@@ -122,14 +140,31 @@ function itemHeading(item: FormObject, index: number) {
 }
 
 function selectTab(index: number) {
+  if (index === activeIndex.value) return
+  tabTransitionDirection.value = index > activeIndex.value ? 'forward' : 'backward'
   activeIndex.value = index
 }
 
-function resolveAction(condition: FormArrayActionCondition | undefined, index: number) {
-  if (typeof condition === 'boolean') return condition
-  if (typeof condition !== 'function') return true
+function isArrayActionConfig(action: FormArrayAction | undefined): action is FormArrayBaseAction {
+  return isObject(action) && !isFunction(action)
+}
+
+function resolveAction(action: FormArrayAction | undefined, index: number) {
+  const condition = isArrayActionConfig(action) ? action.condition : action
+  if (isBoolean(condition)) return condition
+  if (!isFunction(condition)) return true
   const item = items.value[index] ?? {}
   return condition(actionParams(index))
+}
+
+function resolveArrayActionLabel(action: FormArrayAction | undefined, fallback: string) {
+  if (!isArrayActionConfig(action)) return fallback
+  return resolveFormText(action.label) ?? fallback
+}
+
+function resolveArrayActionIcon(action: FormArrayAction | undefined, fallback: string) {
+  if (!isArrayActionConfig(action) || !isString(action.icon)) return fallback
+  return action.icon
 }
 
 function updateVariant(item: FormObject, index: number, value: string | number) {
@@ -150,7 +185,7 @@ function variantValue(item: FormObject | undefined) {
   const field = props.field
   if (field.type !== 'array-variant' || !item) return undefined
   const value = item[field.variantKey]
-  return typeof value === 'string' || typeof value === 'number' ? value : undefined
+  return isString(value) || isNumber(value) ? value : undefined
 }
 
 async function runCustomAction(index: number, actionIndex: number) {
@@ -167,18 +202,12 @@ function customActionVisible(index: number, actionIndex: number) {
   return action.condition?.(actionParams(index)) ?? true
 }
 
-function moveItem(index: number, direction: -1 | 1) {
-  const nextIndex = index + direction
-  if (nextIndex < 0 || nextIndex >= items.value.length) return
-
-  const nextItems = [...items.value]
-  const current = nextItems[index]
-  const next = nextItems[nextIndex]
-  if (!current || !next) return
-
-  nextItems[index] = next
-  nextItems[nextIndex] = current
-  updateItems(nextItems)
+function updateDraggedItems(value: readonly FormObject[]) {
+  const activeItem = items.value[activeIndex.value]
+  updateItems(value)
+  if (!activeItem) return
+  const nextActiveIndex = value.indexOf(activeItem)
+  if (nextActiveIndex >= 0) activeIndex.value = nextActiveIndex
 }
 
 function updateItems(value: readonly FormObject[]) {
@@ -224,15 +253,15 @@ function actionParams(index: number) {
     ctx: callback.ctx,
     deps: callback.deps,
     getValue: (key: string) => form.getValue([...itemPath(index), ...key.split('.')]),
-    setValue: (key: string, value: unknown) =>
+    setValue: (key: string, value: FormValue) =>
       form.setValue([...itemPath(index), ...key.split('.')], value),
     getOptions: (key: string) =>
       form.getFieldApi([...itemPath(index), ...key.split('.')]).options.get(),
   }
 }
 
-function isFormObject(value: unknown): value is FormObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isFormObject(value: FormValue): value is FormObject {
+  return isObject(value) && value !== null && !Array.isArray(value)
 }
 </script>
 
@@ -273,98 +302,113 @@ function isFormObject(value: unknown): value is FormObject {
       {{ emptyLabel }}
     </div>
 
-    <div v-else-if="isTabsMode" class="grid gap-3">
-      <div
-        :class="
-          mergeFormUiClass(
-            'flex gap-1 overflow-x-auto rounded-lg bg-elevated p-1',
-            formUi.ui.value.arrayList?.ui?.tabs,
-          )
-        "
-      >
-        <UButton
-          v-for="(item, index) in items"
-          :key="itemRenderKey(item, index)"
-          size="xs"
-          :color="activeIndex === index ? 'primary' : 'neutral'"
-          :variant="activeIndex === index ? 'solid' : 'ghost'"
-          :class="mergeFormUiClass('shrink-0', formUi.ui.value.arrayList?.ui?.tab)"
-          @click="selectTab(index)"
-        >
-          {{ itemHeading(items[index] ?? {}, index) }}
-        </UButton>
-      </div>
-
-      <div
-        :class="[
-          mergeFormUiClass(
-            'grid rounded-lg border border-default bg-default',
-            formUi.ui.value.arrayList?.ui?.item,
-          ),
-          field.compact ? 'gap-3 p-3' : 'gap-4 p-4',
-        ]"
-      >
-        <div
+    <div
+      v-else-if="isTabsMode"
+      :class="
+        mergeFormUiClass(
+          'overflow-hidden rounded-lg border border-default bg-default',
+          formUi.ui.value.arrayList?.ui?.item,
+        )
+      "
+    >
+      <div class="flex min-w-0 items-stretch border-b border-default bg-elevated/25">
+        <VueDraggable
+          v-model="dragItems"
+          tag="div"
+          role="tablist"
+          :aria-label="title ?? itemLabel"
+          :disabled="!isDraggable"
+          handle=".array-tab-drag-handle"
+          :animation="150"
           :class="
             mergeFormUiClass(
-              'flex items-center justify-between gap-3',
-              formUi.ui.value.arrayList?.ui?.itemHeader,
+              'flex min-w-0 flex-1 items-stretch overflow-x-auto',
+              formUi.ui.value.arrayList?.ui?.tabs,
             )
           "
         >
-          <span
-            :class="
-              mergeFormUiClass(
-                'text-sm font-medium text-highlighted',
-                formUi.ui.value.arrayList?.ui?.itemTitle,
-              )
-            "
-          >
-            {{ itemHeading(items[activeIndex] ?? {}, activeIndex) }}
-          </span>
           <div
+            v-for="(item, index) in items"
+            :key="itemRenderKey(item, index)"
             :class="
               mergeFormUiClass(
-                'flex items-center gap-1',
-                formUi.ui.value.arrayList?.ui?.itemActions,
+                [
+                  'relative flex min-h-11 shrink-0 items-stretch transition-colors',
+                  activeIndex === index
+                    ? 'bg-default text-highlighted'
+                    : 'text-muted hover:bg-elevated/60 hover:text-default',
+                ].join(' '),
+                formUi.ui.value.arrayList?.ui?.tab,
               )
             "
           >
-            <UButton
-              v-if="resolveAction(field.actions?.moveUp, activeIndex)"
-              icon="i-lucide-arrow-up"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="formUi.ui.value.arrayList?.ui?.action"
-              :disabled="activeIndex === 0"
-              aria-label="Move item up"
-              @click="moveItem(activeIndex, -1)"
-            />
-            <UButton
-              v-if="resolveAction(field.actions?.moveDown, activeIndex)"
-              icon="i-lucide-arrow-down"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="formUi.ui.value.arrayList?.ui?.action"
-              :disabled="activeIndex === items.length - 1"
-              aria-label="Move item down"
-              @click="moveItem(activeIndex, 1)"
-            />
-            <UButton
-              v-if="resolveAction(field.actions?.deleteItem, activeIndex)"
-              icon="i-lucide-trash-2"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="formUi.ui.value.arrayList?.ui?.action"
-              aria-label="Remove item"
-              @click="removeItem(activeIndex)"
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="activeIndex === index"
+              class="array-tab-drag-handle flex min-w-0 items-center gap-2 px-3 py-2.5 text-sm font-medium"
+              :class="isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'"
+              @click="selectTab(index)"
+            >
+              <UIcon
+                v-if="isDraggable"
+                name="i-lucide-grip-vertical"
+                class="size-3.5 shrink-0 text-dimmed"
+                aria-hidden="true"
+              />
+              <span class="max-w-48 truncate">{{ itemHeading(item, index) }}</span>
+            </button>
+
+            <div class="flex items-center gap-0.5 pr-1">
+              <UButton
+                v-for="(action, actionIndex) in field.actions?.custom ?? []"
+                v-show="customActionVisible(index, actionIndex)"
+                :key="actionIndex"
+                type="button"
+                :icon="action.icon"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :class="formUi.ui.value.arrayList?.ui?.action"
+                @click.stop="runCustomAction(index, actionIndex)"
+              >
+                {{ action.icon ? undefined : resolveFormText(action.label) }}
+              </UButton>
+              <UButton
+                v-if="resolveAction(field.actions?.deleteItem, index)"
+                type="button"
+                icon="i-lucide-trash-2"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :class="formUi.ui.value.arrayList?.ui?.action"
+                aria-label="Remove item"
+                @click.stop="removeItem(index)"
+              />
+            </div>
+
+            <span
+              class="absolute inset-x-2 bottom-0 h-0.5 rounded-full transition-opacity"
+              :class="activeIndex === index ? 'bg-primary opacity-100' : 'opacity-0'"
+              aria-hidden="true"
             />
           </div>
+        </VueDraggable>
+        <div v-if="canAdd" class="flex shrink-0 items-center border-l border-default px-1.5">
+          <UButton
+            type="button"
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="ghost"
+            :size="formUi.controlSize.value"
+            :aria-label="addItemLabel"
+            :title="addItemLabel"
+            @click="addItem"
+          />
         </div>
+      </div>
 
+      <div :class="field.compact ? 'grid gap-3 p-3' : 'grid gap-4 p-4'">
         <USelect
           v-if="field.type === 'array-variant'"
           :model-value="variantValue(items[activeIndex])"
@@ -449,28 +493,6 @@ function isFormObject(value: unknown): value is FormObject {
               aria-label="Drag item"
             />
             <UButton
-              v-if="resolveAction(field.actions?.moveUp, index)"
-              icon="i-lucide-arrow-up"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="formUi.ui.value.arrayList?.ui?.action"
-              :disabled="index === 0"
-              aria-label="Move item up"
-              @click="moveItem(index, -1)"
-            />
-            <UButton
-              v-if="resolveAction(field.actions?.moveDown, index)"
-              icon="i-lucide-arrow-down"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="formUi.ui.value.arrayList?.ui?.action"
-              :disabled="index === items.length - 1"
-              aria-label="Move item down"
-              @click="moveItem(index, 1)"
-            />
-            <UButton
               v-if="resolveAction(field.actions?.deleteItem, index)"
               icon="i-lucide-trash-2"
               color="neutral"
@@ -521,9 +543,10 @@ function isFormObject(value: unknown): value is FormObject {
     </component>
 
     <UButton
-      v-if="canAdd"
+      v-if="canAdd && (!isTabsMode || items.length === 0)"
       icon="i-lucide-plus"
-      variant="soft"
+      color="neutral"
+      variant="outline"
       :size="formUi.controlSize.value"
       :class="mergeFormUiClass('justify-self-start', formUi.ui.value.arrayList?.ui?.add)"
       @click="addItem"

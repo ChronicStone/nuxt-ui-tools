@@ -1,7 +1,8 @@
+import type { FormValue } from '../types'
 import type { FormObject } from '../types'
 import { cloneFormValue, isRecord } from './path'
 
-export function syncFormArrayItems(target: unknown, source: readonly FormObject[]) {
+export function syncFormArrayItems(target: FormValue, source: readonly FormObject[]) {
   if (!Array.isArray(target)) return false
 
   const snapshots = source.map((item) => {

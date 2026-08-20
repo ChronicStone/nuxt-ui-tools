@@ -5,13 +5,15 @@ import { computed, defineAsyncComponent } from 'vue'
 import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
+import type { FormValue } from '../../types'
 import type { FormObject } from '../../types'
 import type { FormField } from '../../types'
 import { syncFormArrayItems } from '../../utils/array'
+import { isBoolean, isFunction, isNumber, isObject, isString } from '../../utils/predicate'
 import { buildInitialFormFieldsState } from '../../utils/state'
-import { resolveFormText } from '../../utils/text'
+import { resolveFormBoundaryText, resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
-import type { FormArrayActionCondition } from '../array-list/types'
+import type { FormArrayAction, FormArrayBaseAction } from '../array-list/types'
 import type { FormArrayTableField } from './types'
 
 const props = defineProps<{
@@ -35,10 +37,10 @@ const columns = computed(() =>
   props.field.fields.filter((field) => field.type !== 'hidden' && field.ignore !== true),
 )
 const minWidth = computed(() =>
-  typeof props.field.minWidth === 'number' ? `${props.field.minWidth}px` : props.field.minWidth,
+  isNumber(props.field.minWidth) ? `${props.field.minWidth}px` : props.field.minWidth,
 )
 const canAdd = computed<boolean>(() => resolveAction(props.field.actions?.addItem, -1))
-const isDraggable = computed<boolean>(() => props.field.draggable === true)
+const isDraggable = computed<boolean>(() => props.field.draggable !== false)
 const dragItems = computed<FormObject[]>({
   get: () => [...items.value],
   set: updateItems,
@@ -54,24 +56,9 @@ function addItem() {
 }
 
 function removeItem(index: number) {
-  const message =
-    typeof props.field.confirmDelete === 'string' || typeof props.field.confirmDelete === 'function'
-      ? resolveFormText(props.field.confirmDelete)
-      : 'Remove this row?'
+  const message = resolveFormBoundaryText(props.field.confirmDelete) ?? 'Remove this row?'
   if (props.field.confirmDelete && !window.confirm(message)) return
   updateItems(items.value.filter((_, itemIndex) => itemIndex !== index))
-}
-
-function moveItem(index: number, direction: -1 | 1) {
-  const target = index + direction
-  if (target < 0 || target >= items.value.length) return
-  const current = items.value[index]
-  const next = items.value[target]
-  if (!current || !next) return
-  const values = [...items.value]
-  values[index] = next
-  values[target] = current
-  updateItems(values)
 }
 
 function updateItems(value: readonly FormObject[]) {
@@ -97,9 +84,14 @@ function applyVirtualFields(item: FormObject, index: number) {
   return item
 }
 
-function resolveAction(condition: FormArrayActionCondition | undefined, index: number) {
-  if (typeof condition === 'boolean') return condition
-  if (typeof condition !== 'function') return true
+function isArrayActionConfig(action: FormArrayAction | undefined): action is FormArrayBaseAction {
+  return isObject(action) && !isFunction(action)
+}
+
+function resolveAction(action: FormArrayAction | undefined, index: number) {
+  const condition = isArrayActionConfig(action) ? action.condition : action
+  if (isBoolean(condition)) return condition
+  if (!isFunction(condition)) return true
   const item = items.value[index] ?? {}
   return condition(actionParams(index))
 }
@@ -122,8 +114,6 @@ function hasRowActions(index: number) {
   return (
     isDraggable.value ||
     resolveAction(props.field.actions?.deleteItem, index) ||
-    resolveAction(props.field.actions?.moveUp, index) ||
-    resolveAction(props.field.actions?.moveDown, index) ||
     Boolean(
       props.field.actions?.custom?.some((_action, actionIndex) =>
         customActionVisible(index, actionIndex),
@@ -163,15 +153,15 @@ function actionParams(index: number) {
     ctx: callback.ctx,
     deps: callback.deps,
     getValue: (key: string) => form.getValue([...rowPath(index), ...key.split('.')]),
-    setValue: (key: string, value: unknown) =>
+    setValue: (key: string, value: FormValue) =>
       form.setValue([...rowPath(index), ...key.split('.')], value),
     getOptions: (key: string) =>
       form.getFieldApi([...rowPath(index), ...key.split('.')]).options.get(),
   }
 }
 
-function isFormObject(value: unknown): value is FormObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isFormObject(value: FormValue): value is FormObject {
+  return isObject(value) && value !== null && !Array.isArray(value)
 }
 
 function fieldLabel(field: FormField) {
@@ -293,28 +283,6 @@ function fieldLabel(field: FormField) {
                   )
                 "
                 aria-label="Drag row"
-              />
-              <UButton
-                v-if="resolveAction(field.actions?.moveUp, index)"
-                icon="i-lucide-arrow-up"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                :class="formUi.ui.value.arrayTable?.ui?.action"
-                :disabled="index === 0"
-                aria-label="Move row up"
-                @click="moveItem(index, -1)"
-              />
-              <UButton
-                v-if="resolveAction(field.actions?.moveDown, index)"
-                icon="i-lucide-arrow-down"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                :class="formUi.ui.value.arrayTable?.ui?.action"
-                :disabled="index === items.length - 1"
-                aria-label="Move row down"
-                @click="moveItem(index, 1)"
               />
               <UButton
                 v-if="resolveAction(field.actions?.deleteItem, index)"

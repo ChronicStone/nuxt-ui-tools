@@ -1,8 +1,9 @@
+import type { FormValue } from '../../types'
 import type { FormContainerFieldBase } from '../../types/field-base'
 import type { FormMaybePromise, FormObject, FormText } from '../../types/utils'
 
 export interface FormArrayVirtualFields {
-  [key: string]: (index: number) => unknown
+  [key: string]: (index: number) => FormValue
 }
 
 export interface FormArrayActionParams<TContext = {}, TDeps = {}> {
@@ -11,9 +12,9 @@ export interface FormArrayActionParams<TContext = {}, TDeps = {}> {
   items: readonly FormObject[]
   ctx: TContext
   deps: TDeps
-  getValue: (key: string) => unknown
-  setValue: (key: string, value: unknown) => void
-  getOptions: (key: string) => readonly unknown[]
+  getValue: (key: string) => FormValue
+  setValue: (key: string, value: FormValue) => void
+  getOptions: (key: string) => readonly FormValue[]
 }
 
 export interface FormArrayCustomAction<TContext = {}, TDeps = {}> {
@@ -27,11 +28,19 @@ export type FormArrayActionCondition<TContext = {}, TDeps = {}> =
   | boolean
   | ((params: FormArrayActionParams<TContext, TDeps>) => boolean)
 
+export interface FormArrayBaseAction<TContext = {}, TDeps = {}> {
+  label?: FormText
+  icon?: string
+  condition?: FormArrayActionCondition<TContext, TDeps>
+}
+
+export type FormArrayAction<TContext = {}, TDeps = {}> =
+  | FormArrayActionCondition<TContext, TDeps>
+  | FormArrayBaseAction<TContext, TDeps>
+
 export interface FormArrayFieldActions<TContext = {}, TDeps = {}> {
-  addItem?: FormArrayActionCondition<TContext, TDeps>
-  deleteItem?: FormArrayActionCondition<TContext, TDeps>
-  moveUp?: FormArrayActionCondition<TContext, TDeps>
-  moveDown?: FormArrayActionCondition<TContext, TDeps>
+  addItem?: FormArrayAction<TContext, TDeps>
+  deleteItem?: FormArrayAction<TContext, TDeps>
   custom?: readonly FormArrayCustomAction<TContext, TDeps>[]
 }
 
@@ -44,6 +53,7 @@ export interface FormArrayListField<TContext = {}, TDeps = {}> extends FormConta
   emptyLabel?: FormText
   itemLabel?: FormText
   compact?: boolean
+  /** Enables drag-to-reorder. Defaults to `true`. */
   draggable?: boolean
   confirmDelete?: boolean | FormText
   headerTemplate?: (item: FormObject, index: number, deps: TDeps) => FormText
