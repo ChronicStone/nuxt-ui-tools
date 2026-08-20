@@ -1,5 +1,6 @@
 import type { ComputedRef } from 'vue'
 
+import type { FormValue } from './'
 import type { FormSubmitHandler } from './api'
 import type { FormController } from './controller'
 import type { ExtractFormOutput } from './output'
@@ -18,9 +19,16 @@ export interface FormApiCreateBaseOptions {
   mode?: FormApiDisplayModeInput
 }
 
+export interface FormResolvedCreateOptions {
+  id?: string
+  input?: FormObject
+  mode: FormApiDisplayModeInput
+  onSubmit?: FormSubmitHandler<FormObject, FormValue>
+}
+
 export interface FormApiCreateOptions<
   TSchema,
-  TSubmitData = unknown,
+  TSubmitData = FormValue,
 > extends FormApiCreateBaseOptions {
   /** Optional submit handler owned by the form overlay. Keeps submit buttons pending until it settles. */
   onSubmit?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>
@@ -36,11 +44,11 @@ export type FormApiCreateResult<TOutput, TSubmitData = undefined> =
 
 export interface FormApiRuntimeInstance {
   id: string
-  schema: unknown
+  schema: FormValue
   input?: FormObject
   mode: FormApiDisplayModeInput
-  onSubmit?: FormSubmitHandler<FormObject, unknown>
-  complete: (formData: FormObject, submitData?: unknown) => void
+  onSubmit?: FormSubmitHandler<FormObject, FormValue>
+  complete: (formData: FormObject, submitData?: FormValue) => void
   cancel: (formData: FormObject) => void
 }
 
@@ -50,9 +58,9 @@ export interface FormApiRuntimeControls {
 }
 
 export interface FormApiControllerRegistry {
-  getController: (id: string) => FormController<unknown, unknown> | null
-  setController: (id: string, controller: FormController<unknown, unknown>) => void
-  removeController: (id: string, controller: FormController<unknown, unknown>) => void
+  getController: (id: string) => FormController<FormValue, FormValue> | null
+  setController: (id: string, controller: FormController<FormValue, FormValue>) => void
+  removeController: (id: string, controller: FormController<FormValue, FormValue>) => void
   setRuntimeControls: (id: string, controls: FormApiRuntimeControls) => void
   removeRuntimeControls: (id: string, controls: FormApiRuntimeControls) => void
 }

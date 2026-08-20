@@ -1,3 +1,4 @@
+import type { FormValue } from './'
 import type { FormFieldCallback } from './callbacks'
 import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
@@ -95,7 +96,7 @@ export interface FormStatefulFieldBase<
   /** Validation behavior for this field. */
   validation?: FormValidationConfig<TValue, TContext, TDeps>
   /** Input/output transforms for this field. */
-  transform?: FormTransformConfig<TValue, unknown, TContext, TDeps>
+  transform?: FormTransformConfig<TValue, FormValue, TContext, TDeps>
   /** Submit/output behavior for this field. */
   submit?: {
     /** Excludes the field from submitted output while keeping it in internal form state. */

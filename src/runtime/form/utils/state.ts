@@ -1,3 +1,4 @@
+import type { FormValue } from '../types'
 import type {
   FormContextData,
   FormField,
@@ -11,6 +12,14 @@ import type {
 import { resolveFieldDependencies } from './dependencies'
 import { createFormFieldInstance, isRegisteredFormFieldType } from './field-instance'
 import { cloneFormValue, getPathValue, isRecord, mergeFormObjects, setPathValue } from './path'
+import {
+  invokeFormFunction,
+  isBoolean,
+  isFunction,
+  isNumber,
+  isString,
+  isUndefined,
+} from './predicate'
 
 export interface FormSubmitError {
   path: string
@@ -25,29 +34,29 @@ export interface RuntimeFormStep {
   fields: readonly FormField[]
 }
 
-export function getSchemaFields(schema: unknown) {
+export function getSchemaFields(schema: FormValue) {
   if (!isRecord(schema)) return []
   const fields = Object.getOwnPropertyDescriptor(schema, 'fields')?.value
   return Array.isArray(fields) ? fields.filter(isFormField) : []
 }
 
-export function getSchemaSteps(schema: unknown) {
+export function getSchemaSteps(schema: FormValue) {
   if (!isRecord(schema)) return []
   const steps = Object.getOwnPropertyDescriptor(schema, 'steps')?.value
   if (!Array.isArray(steps)) return []
   return steps.map(normalizeStep).filter(isRuntimeStep)
 }
 
-export function isSteppedSchema(schema: unknown) {
+export function isSteppedSchema(schema: FormValue) {
   return getSchemaSteps(schema).length > 0
 }
 
-export function getSchemaLayout(schema: unknown): FormLayoutConfig | undefined {
+export function getSchemaLayout(schema: FormValue): FormLayoutConfig | undefined {
   if (!isRecord(schema)) return undefined
   return normalizeLayout(Object.getOwnPropertyDescriptor(schema, 'layout')?.value)
 }
 
-export function buildInitialFormState(schema: unknown, ctx: FormContextData, input?: FormObject) {
+export function buildInitialFormState(schema: FormValue, ctx: FormContextData, input?: FormObject) {
   const state: FormObject = {}
   if (input) mergeFormObjects(state, input)
 
@@ -69,7 +78,7 @@ export function buildInitialFormFieldsState(fields: readonly FormField[], ctx: F
 }
 
 export function buildFormOutput(
-  schema: unknown,
+  schema: FormValue,
   state: FormObject,
   ctx: FormContextData,
   apiFactory: FormFieldApiFactory,
@@ -90,7 +99,7 @@ export function buildFormOutput(
 }
 
 export async function validateFormState(
-  schema: unknown,
+  schema: FormValue,
   state: FormObject,
   ctx: FormContextData,
   apiFactory: FormFieldApiFactory,
@@ -118,7 +127,7 @@ export async function validateFormState(
   return validateFields(getSchemaFields(schema), state, ctx, apiFactory, [], mode)
 }
 
-export function collectFormFieldPaths(schema: unknown) {
+export function collectFormFieldPaths(schema: FormValue) {
   if (isSteppedSchema(schema))
     return getSchemaSteps(schema).flatMap((step) =>
       collectFormFieldsPaths(step.fields, step.root ? [step.root] : []),
@@ -167,7 +176,7 @@ export function childParentPath(parentPath: readonly string[], field: FormField)
 export function shouldRenderField(field: FormField, params: FormFieldCallbackParams) {
   if (field.ignore === true) return false
   const condition = Object.getOwnPropertyDescriptor(field, 'condition')?.value
-  if (typeof condition !== 'function') return true
+  if (!isFunction(condition)) return true
   return condition(params) === true
 }
 
@@ -222,7 +231,7 @@ function mergeMissingFieldDefaults(
     }
 
     const path = fieldPath(parentPath, field)
-    if (typeof getPathValue(target, path) === 'undefined')
+    if (isUndefined(getPathValue(target, path)))
       setPathValue(target, path, resolveFieldDefault(field, ctx))
   }
 }
@@ -410,15 +419,15 @@ function collectFieldPaths(
   })
 }
 
-function isFlatPassthroughField(field: FormField) {
+export function isFlatPassthroughField(field: FormField) {
   return createFormFieldInstance(field).type.isAny(['input-group', 'card', 'column'])
 }
 
-function isObjectContainerField(field: FormField) {
+export function isObjectContainerField(field: FormField) {
   return createFormFieldInstance(field).type.isAny(['object', 'group'])
 }
 
-function isArrayField(field: FormField) {
+export function isArrayField(field: FormField) {
   return createFormFieldInstance(field).type.isAny([
     'array-list',
     'array-table',
@@ -427,12 +436,12 @@ function isArrayField(field: FormField) {
   ])
 }
 
-function getMatrixRows(field: FormField) {
+export function getMatrixRows(field: FormField) {
   if (!createFormFieldInstance(field).type.is('matrix')) return []
   const rows = Object.getOwnPropertyDescriptor(field, 'rows')?.value
   if (!Array.isArray(rows)) return []
   return rows.flatMap((row) => {
-    if (!isRecord(row) || typeof row.key !== 'string') return []
+    if (!isRecord(row) || !isString(row.key)) return []
     return row.key
   })
 }
@@ -440,8 +449,10 @@ function getMatrixRows(field: FormField) {
 function resolveFieldDefault(field: FormField, ctx: FormContextData) {
   const fieldInstance = createFormFieldInstance(field)
   const value = Object.getOwnPropertyDescriptor(field, 'default')?.value
-  if (typeof value !== 'undefined')
-    return typeof value === 'function' ? cloneFormValue(value({ ctx })) : cloneFormValue(value)
+  if (!isUndefined(value)) {
+    if (isFunction(value)) return cloneFormValue(invokeFormFunction(value, [{ ctx }]))
+    return cloneFormValue(value)
+  }
 
   if (fieldInstance.type.is('checkbox')) return false
   if (fieldInstance.type.is('switch')) return resolveSwitchDefault(field)
@@ -467,42 +478,37 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData) {
 
 function resolveSwitchDefault(field: FormField) {
   const trueValue = Object.getOwnPropertyDescriptor(field, 'trueValue')?.value
-  return typeof trueValue === 'string' ||
-    typeof trueValue === 'number' ||
-    typeof trueValue === 'boolean'
-    ? trueValue
-    : false
+  return isString(trueValue) || isNumber(trueValue) || isBoolean(trueValue) ? trueValue : false
 }
 
-function applyOutputTransform(field: FormField, value: unknown, params: FormFieldCallbackParams) {
+function applyOutputTransform(field: FormField, value: FormValue, params: FormFieldCallbackParams) {
   const transform = Object.getOwnPropertyDescriptor(field, 'transform')?.value
-  if (isRecord(transform) && typeof transform.output === 'function')
-    return transform.output(value, params)
+  if (isRecord(transform) && isFunction(transform.output)) return transform.output(value, params)
 
   return cloneFormValue(value)
 }
 
-function resolveRequired(field: FormField, params: FormFieldCallbackParams) {
+export function resolveRequired(field: FormField, params: FormFieldCallbackParams) {
   const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
   if (!isRecord(validation)) return false
   const required = validation.required
-  if (typeof required === 'function') return required(params)
+  if (isFunction(required)) return required(params)
   return required ?? false
 }
 
-function resolveRequiredMessage(field: FormField): string {
+export function resolveRequiredMessage(field: FormField): string {
   const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
   if (!isRecord(validation)) return 'This field is required.'
   const message = validation.requiredMessage
-  if (typeof message === 'function') return String(message())
-  if (typeof message === 'number') return String(message)
-  if (typeof message === 'string') return message
+  if (isFunction(message)) return String(message())
+  if (isNumber(message)) return String(message)
+  if (isString(message)) return message
   return 'This field is required.'
 }
 
 async function validateFieldRules(
   field: FormField,
-  value: unknown,
+  value: FormValue,
   params: FormFieldCallbackParams,
   path: readonly string[],
 ) {
@@ -515,40 +521,40 @@ async function validateFieldRules(
   for (const rule of rules) {
     if (!isRecord(rule)) continue
     const validate = Object.getOwnPropertyDescriptor(rule, 'validate')?.value
-    if (typeof validate !== 'function') continue
+    if (!isFunction(validate)) continue
 
     const result = await validate({
       ...params,
       api: params.api,
     })
 
-    if (result === true || result === null || typeof result === 'undefined') continue
+    if (result === true || result === null || isUndefined(result)) continue
 
     errors.push({
       path: path.join('.'),
-      message: typeof result === 'string' ? result : resolveRuleMessage(rule, value),
+      message: isString(result) ? result : resolveRuleMessage(rule, value),
     })
   }
 
   return errors
 }
 
-function resolveRuleMessage(rule: FormObject, _value: unknown) {
+function resolveRuleMessage(rule: FormObject, _value: FormValue) {
   const message = Object.getOwnPropertyDescriptor(rule, 'message')?.value
-  if (typeof message === 'function') return String(message())
-  if (typeof message === 'string' || typeof message === 'number') return String(message)
+  if (isFunction(message)) return String(message())
+  if (isString(message) || isNumber(message)) return String(message)
   const name = Object.getOwnPropertyDescriptor(rule, 'name')?.value
-  return typeof name === 'string' ? `Invalid value for ${name}.` : 'Invalid value.'
+  return isString(name) ? `Invalid value for ${name}.` : 'Invalid value.'
 }
 
-function isEmptyValue(value: unknown) {
-  if (value === null || typeof value === 'undefined') return true
-  if (typeof value === 'string') return value.trim().length === 0
+export function isEmptyValue(value: FormValue) {
+  if (value === null || isUndefined(value)) return true
+  if (isString(value)) return value.trim().length === 0
   if (Array.isArray(value)) return value.length === 0
   return false
 }
 
-function normalizeStep(value: unknown): RuntimeFormStep | null {
+function normalizeStep(value: FormValue): RuntimeFormStep | null {
   if (!isRecord(value)) return null
   const fields = Object.getOwnPropertyDescriptor(value, 'fields')?.value
   const key = Object.getOwnPropertyDescriptor(value, 'key')?.value
@@ -557,9 +563,9 @@ function normalizeStep(value: unknown): RuntimeFormStep | null {
   const layout = Object.getOwnPropertyDescriptor(value, 'layout')?.value
 
   return {
-    key: typeof key === 'string' ? key : undefined,
+    key: isString(key) ? key : undefined,
     title: isFormText(title) ? title : undefined,
-    root: typeof root === 'string' ? root : undefined,
+    root: isString(root) ? root : undefined,
     layout: normalizeLayout(layout),
     fields: Array.isArray(fields) ? fields.filter(isFormField) : [],
   }
@@ -569,7 +575,7 @@ function isRuntimeStep(value: RuntimeFormStep | null): value is RuntimeFormStep 
   return value !== null
 }
 
-function normalizeLayout(value: unknown): FormLayoutConfig | undefined {
+function normalizeLayout(value: FormValue): FormLayoutConfig | undefined {
   if (!isRecord(value)) return undefined
 
   const columns = Object.getOwnPropertyDescriptor(value, 'columns')?.value
@@ -577,23 +583,20 @@ function normalizeLayout(value: unknown): FormLayoutConfig | undefined {
   const gap = Object.getOwnPropertyDescriptor(value, 'gap')?.value
 
   return {
-    columns: typeof columns === 'string' || typeof columns === 'number' ? columns : undefined,
-    fieldSpan:
-      typeof fieldSpan === 'string' || typeof fieldSpan === 'number' ? fieldSpan : undefined,
-    gap: typeof gap === 'string' || typeof gap === 'number' ? gap : undefined,
+    columns: isString(columns) || isNumber(columns) ? columns : undefined,
+    fieldSpan: isString(fieldSpan) || isNumber(fieldSpan) ? fieldSpan : undefined,
+    gap: isString(gap) || isNumber(gap) ? gap : undefined,
   }
 }
 
-function isFormText(value: unknown): value is FormText {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'function'
+function isFormText(value: FormValue): value is FormText {
+  return isString(value) || isNumber(value) || isFunction(value)
 }
 
-function isFormField(value: unknown): value is FormField {
+function isFormField(value: FormValue): value is FormField {
   if (!isRecord(value)) return false
   const type = Object.getOwnPropertyDescriptor(value, 'type')?.value
-  return (
-    typeof value.key === 'string' && typeof type === 'string' && isRegisteredFormFieldType(type)
-  )
+  return isString(value.key) && isString(type) && isRegisteredFormFieldType(type)
 }
 
 function getChildFields(field: FormField) {
@@ -601,11 +604,11 @@ function getChildFields(field: FormField) {
   return Array.isArray(fields) ? fields.filter(isFormField) : []
 }
 
-function getArrayItemFields(field: FormField, item: FormObject) {
+export function getArrayItemFields(field: FormField, item: FormObject) {
   if (!createFormFieldInstance(field).type.is('array-variant')) return getChildFields(field)
   const variantKey = Object.getOwnPropertyDescriptor(field, 'variantKey')?.value
   const variants = Object.getOwnPropertyDescriptor(field, 'variants')?.value
-  if (typeof variantKey !== 'string' || !Array.isArray(variants)) return []
+  if (!isString(variantKey) || !Array.isArray(variants)) return []
   const value = item[variantKey]
   const variant = variants.find((candidate) => isRecord(candidate) && candidate.key === value)
   if (!isRecord(variant)) return []
@@ -621,20 +624,20 @@ function completeArrayItemOutput(
 ) {
   const result: FormObject = arrayExtraProperties(field) ? { ...input, ...output } : output
   const variantKey = Object.getOwnPropertyDescriptor(field, 'variantKey')?.value
-  if (typeof variantKey === 'string' && typeof input[variantKey] !== 'undefined')
+  if (isString(variantKey) && !isUndefined(input[variantKey]))
     result[variantKey] = cloneFormValue(input[variantKey])
 
   const virtualFields = getArrayVirtualFields(field, input)
   for (const key of Object.keys(virtualFields)) {
     const resolver = virtualFields[key]
-    if (typeof resolver === 'function') result[key] = resolver(index)
+    if (isFunction(resolver)) result[key] = resolver(index)
   }
   return result
 }
 
 function getArrayVirtualFields(field: FormField, item: FormObject) {
   const variantKey = Object.getOwnPropertyDescriptor(field, 'variantKey')?.value
-  if (typeof variantKey === 'string') {
+  if (isString(variantKey)) {
     const variants = Object.getOwnPropertyDescriptor(field, 'variants')?.value
     if (Array.isArray(variants)) {
       const variant = variants.find(

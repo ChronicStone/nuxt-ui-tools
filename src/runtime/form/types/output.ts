@@ -4,11 +4,11 @@ import type {
   PathToObject,
   UnionToIntersection,
 } from '../../shared/types/utils'
+import type { FormValue } from './'
 import type {
   ArrayListFieldOutput,
   ArrayTableFieldOutput,
   ArrayTabsFieldOutput,
-  ExtractFormFieldInternalValue,
   ObjectFieldOutput,
   MatrixFieldOutput,
   ResolveFormFieldValue,
@@ -56,14 +56,14 @@ type OptionalFieldValueObject<TField, TValue> =
     : {}
 
 type ChildFields<TField> = TField extends { readonly fields: infer TFields }
-  ? TFields extends readonly unknown[]
+  ? TFields extends readonly FormValue[]
     ? number extends TFields['length']
       ? readonly []
       : TFields
     : never
   : never
 
-type FieldsValue<TFields, TMode extends FormStateMode> = TFields extends readonly unknown[]
+type FieldsValue<TFields, TMode extends FormStateMode> = TFields extends readonly FormValue[]
   ? DeepTransformNestedPaths<UnionToIntersection<FieldObject<TFields[number], TMode>>>
   : {}
 
@@ -93,7 +93,7 @@ type ArrayVariantValue<TField, TMode extends FormStateMode> = TField extends {
   readonly variants: readonly (infer TVariant)[]
 }
   ? readonly VariantValue<TVariant, TVariantKey, TMode>[]
-  : readonly unknown[]
+  : readonly FormValue[]
 
 type ArrayFieldValue<TField, TMode extends FormStateMode> = TField extends { type: 'array-list' }
   ? ArrayListFieldOutput<FieldsValue<ChildFields<TField>, TMode> & VirtualFieldsValue<TField>>
@@ -154,7 +154,7 @@ type FieldObject<TField, TMode extends FormStateMode> = TField extends {
 
 type StepFields<TStep> = TStep extends { readonly fields: infer TFields } ? TFields : never
 
-type StepObject<TStep, TMode extends FormStateMode> = TStep extends unknown
+type StepObject<TStep, TMode extends FormStateMode> = TStep extends FormValue
   ? TStep extends { readonly root: infer TRoot }
     ? TRoot extends string
       ? string extends TRoot
@@ -164,7 +164,7 @@ type StepObject<TStep, TMode extends FormStateMode> = TStep extends unknown
     : FieldsValue<StepFields<TStep>, TMode>
   : never
 
-type StepsValue<TSteps, TMode extends FormStateMode> = TSteps extends readonly unknown[]
+type StepsValue<TSteps, TMode extends FormStateMode> = TSteps extends readonly FormValue[]
   ? DeepTransformNestedPaths<UnionToIntersection<StepObject<TSteps[number], TMode>>>
   : {}
 

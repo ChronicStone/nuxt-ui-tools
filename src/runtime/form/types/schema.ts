@@ -1,3 +1,4 @@
+import type { FormValue } from './'
 import type { FormAction } from './actions'
 import type { FormApi, FormSubmitHandler } from './api'
 import type { FormContextData, FormContextDefinition } from './context'
@@ -123,21 +124,21 @@ export interface FormSchema<
   /** Form action configuration. Omit to use built-in reset/submit or previous/next/submit actions. */
   actions?: readonly FormAction[]
   /** Runs after validation and before the external submit handler. Return `false` to cancel submit. */
-  onBeforeSubmit?: FormSubmitHandler<unknown, never>
+  onBeforeSubmit?: FormSubmitHandler<FormValue, never>
   /** Submit lifecycle hook. */
   submit?: (params: {
-    value: unknown
+    value: FormValue
     api: FormApi
     ctx: FormContextData<TContext>
   }) => Promise<void> | void
   /** Runs after current-step validation and before advancing to the next step. Return `false` to stop navigation. */
-  onBeforeNext?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<boolean | void>
+  onBeforeNext?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<boolean | void>
   /** Runs before moving to the previous step. */
-  onBeforePrevious?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<void>
+  onBeforePrevious?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<void>
   /** Returns true when a step should be skipped during previous/next navigation. */
-  skipStep?: (params: FormStepLifecycleParams<unknown>) => boolean
+  skipStep?: (params: FormStepLifecycleParams<FormValue>) => boolean
   /** Runs when `skipStep` skips a step. */
-  onStepSkipped?: (params: Omit<FormStepLifecycleParams<unknown>, 'stepData'>) => void
+  onStepSkipped?: (params: Omit<FormStepLifecycleParams<FormValue>, 'stepData'>) => void
 }
 
 /**

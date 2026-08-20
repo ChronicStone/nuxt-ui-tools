@@ -1,10 +1,11 @@
+import type { FormValue } from './'
 import type { FormFieldCallbackParams } from './callbacks'
 
 /**
  * Input/output transform hooks for a stateful field.
  */
 export interface FormTransformConfig<
-  TInternal = unknown,
+  TInternal = FormValue,
   TExternal = TInternal,
   TContext = {},
   TDeps = {},

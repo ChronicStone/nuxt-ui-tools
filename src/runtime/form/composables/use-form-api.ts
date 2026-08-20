@@ -1,6 +1,7 @@
 import { computed, inject, provide, ref } from 'vue'
 import type { InjectionKey } from 'vue'
 
+import type { FormValue } from '../types'
 import type {
   ExtractFormOutput,
   FormApiController,
@@ -12,9 +13,11 @@ import type {
   FormApiRuntimeInstance,
   FormController,
   FormObject,
+  FormResolvedCreateOptions,
   FormSubmitHandler,
 } from '../types'
 import { isRecord } from '../utils/path'
+import { isFunction, isString } from '../utils/predicate'
 
 const formApiKey: InjectionKey<FormApiController> = Symbol('nuxt-ui-tools-form-api')
 
@@ -32,7 +35,7 @@ export function useFormApi() {
 
 function createFormApi(): FormApiController {
   const formInstances = ref<readonly FormApiRuntimeInstance[]>([])
-  const controllers = new Map<string, FormController<unknown, unknown>>()
+  const controllers = new Map<string, FormController<FormValue, FormValue>>()
   const runtimeControls = new Map<string, FormApiRuntimeControls>()
   let nextInstanceIndex = 0
 
@@ -53,11 +56,11 @@ function createFormApi(): FormApiController {
     schema: TSchema,
     options: FormApiCreateOptions<TSchema, TSubmitData>,
   ): Promise<FormApiCreateResult<ExtractFormOutput<TSchema>, TSubmitData>>
-  function createForm(schema: unknown, inputOrOptions?: unknown) {
+  function createForm(schema: FormValue, inputOrOptions?: FormValue) {
     const options = resolveCreateOptions(inputOrOptions)
     const id = options.id ?? createInstanceId()
 
-    return new Promise<FormApiCreateResult<FormObject, unknown>>((resolve) => {
+    return new Promise<FormApiCreateResult<FormObject, FormValue>>((resolve) => {
       const instance: FormApiRuntimeInstance = {
         id,
         schema,
@@ -130,7 +133,7 @@ function createFormApi(): FormApiController {
     }
   }
 
-  function setController(id: string, controller: FormController<unknown, unknown>) {
+  function setController(id: string, controller: FormController<FormValue, FormValue>) {
     controllers.set(id, controller)
   }
 
@@ -138,7 +141,7 @@ function createFormApi(): FormApiController {
     return controllers.get(id) ?? null
   }
 
-  function removeController(id: string, controller: FormController<unknown, unknown>) {
+  function removeController(id: string, controller: FormController<FormValue, FormValue>) {
     if (controllers.get(id) === controller) controllers.delete(id)
   }
 
@@ -177,15 +180,10 @@ function createFormApi(): FormApiController {
   }
 }
 
-function resolveCreateOptions(inputOrOptions: unknown): {
-  id?: string
-  input?: FormObject
-  mode: FormApiDisplayModeInput
-  onSubmit?: FormSubmitHandler<FormObject, unknown>
-} {
+function resolveCreateOptions(inputOrOptions: FormValue): FormResolvedCreateOptions {
   if (isCreateOptions(inputOrOptions)) {
     return {
-      id: typeof inputOrOptions.id === 'string' ? inputOrOptions.id : undefined,
+      id: isString(inputOrOptions.id) ? inputOrOptions.id : undefined,
       input: isRecord(inputOrOptions.input) ? inputOrOptions.input : undefined,
       mode: resolveDisplayMode(inputOrOptions.mode),
       onSubmit: isSubmitHandler(inputOrOptions.onSubmit) ? inputOrOptions.onSubmit : undefined,
@@ -198,11 +196,11 @@ function resolveCreateOptions(inputOrOptions: unknown): {
   }
 }
 
-function isCreateOptions(value: unknown): value is {
-  id?: unknown
-  input?: unknown
-  mode?: unknown
-  onSubmit?: unknown
+function isCreateOptions(value: FormValue): value is {
+  id?: FormValue
+  input?: FormValue
+  mode?: FormValue
+  onSubmit?: FormValue
 } {
   return (
     isRecord(value) &&
@@ -213,26 +211,26 @@ function isCreateOptions(value: unknown): value is {
   )
 }
 
-function resolveDisplayMode(value: unknown): FormApiDisplayModeInput {
+function resolveDisplayMode(value: FormValue): FormApiDisplayModeInput {
   if (isDisplayModeInput(value)) return value
   return 'modal'
 }
 
-function isDisplayModeInput(value: unknown): value is FormApiDisplayModeInput {
-  return typeof value === 'string' || typeof value === 'function'
+function isDisplayModeInput(value: FormValue): value is FormApiDisplayModeInput {
+  return isString(value) || isFunction(value)
 }
 
-function isSubmitHandler(value: unknown): value is FormSubmitHandler<FormObject, unknown> {
-  return typeof value === 'function'
+function isSubmitHandler(value: FormValue): value is FormSubmitHandler<FormObject, FormValue> {
+  return isFunction(value)
 }
 
-function getSchemaFormKey(schema: unknown) {
+function getSchemaFormKey(schema: FormValue) {
   if (!isRecord(schema)) return undefined
   const formKey = Object.getOwnPropertyDescriptor(schema, 'formKey')?.value
-  return typeof formKey === 'string' ? formKey : undefined
+  return isString(formKey) ? formKey : undefined
 }
 
-function resolveControllerOutput(controller: FormController<unknown, unknown> | undefined) {
+function resolveControllerOutput(controller: FormController<FormValue, FormValue> | undefined) {
   const output = controller?.output.value
   return isRecord(output) ? output : {}
 }

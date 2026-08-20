@@ -1,5 +1,6 @@
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
+import type { FormValue } from './'
 import type {
   FormSubmitAction,
   FormSubmitHandler,
@@ -27,7 +28,7 @@ import type { FormValidationError, FormValidationMode, FormValidationOptions } f
  * })
  * ```
  */
-export interface UseFormParams<TSchema, TSubmitData = unknown> {
+export interface UseFormParams<TSchema, TSubmitData = FormValue> {
   /** Schema owned by this form controller and passed to `<NutForm :form="form" />`. */
   schema: MaybeRefOrGetter<TSchema>
   /** Optional initial internal state. Dotted field keys are still normalized by the runtime. */
@@ -45,11 +46,11 @@ export interface UseFormParams<TSchema, TSubmitData = unknown> {
  * Vue runtime boundary.
  */
 export interface RuntimeUseFormParams {
-  schema: MaybeRefOrGetter<unknown>
+  schema: MaybeRefOrGetter<FormValue>
   input?: MaybeRefOrGetter<FormObject | undefined>
   syncInput?: MaybeRefOrGetter<boolean | readonly string[]>
   validate?: MaybeRefOrGetter<FormValidationMode>
-  onSubmit?: FormSubmitHandler<FormObject, unknown>
+  onSubmit?: FormSubmitHandler<FormObject, FormValue>
 }
 
 export interface FormControllerState<TInternal = FormObject, TOutput = FormObject> {
@@ -58,9 +59,9 @@ export interface FormControllerState<TInternal = FormObject, TOutput = FormObjec
   /** Current submitted output after transforms, step roots, and omissions. */
   output: ComputedRef<TOutput>
   /** Reads an internal form value by raw path. Dotted paths address nested state. */
-  get: (path: string) => unknown
+  get: (path: string) => FormValue
   /** Writes an internal form value by raw path. Dotted paths create nested state. */
-  set: (path: string, value: unknown) => void
+  set: (path: string, value: FormValue) => void
   /** Resets internal state to schema defaults and configured input. */
   reset: () => void
 }
@@ -93,7 +94,7 @@ export interface FormControllerValidation {
   clear: () => void
 }
 
-export interface FormControllerSubmission<TOutput = FormObject, TSubmitData = unknown> {
+export interface FormControllerSubmission<TOutput = FormObject, TSubmitData = FormValue> {
   /** Current pending submit/navigation action. */
   actionPending: ComputedRef<FormSubmitAction | null>
   /** True while the form submit lifecycle is pending. */
@@ -139,7 +140,7 @@ export interface FormControllerNavigation {
  */
 export interface FormRendererController {
   /** Schema bound to the controller. */
-  schema: ComputedRef<unknown>
+  schema: ComputedRef<FormValue>
   /** Initial input state bound to the controller. */
   input: ComputedRef<FormObject | undefined>
   /** External input synchronization policy bound to the controller. */
@@ -149,7 +150,7 @@ export interface FormRendererController {
   /** Runs the controller's default submit lifecycle. */
   submit: () => Promise<boolean>
   /** Runs the controller's default submit lifecycle and returns the normalized result. */
-  submitHandler: () => Promise<FormSubmitHandlerResult<unknown>>
+  submitHandler: () => Promise<FormSubmitHandlerResult<FormValue>>
   /** Binds a mounted runtime instance to the controller. */
   bind: (runtime: FormRuntime) => void
   /** Unbinds a mounted runtime instance from the controller. */
@@ -163,7 +164,7 @@ export interface FormRendererController {
  * state inspection, autosave flows, custom action bars, wizard navigation, and explicit
  * submit handling.
  */
-export interface FormController<TSchema = FormObject, TSubmitData = unknown>
+export interface FormController<TSchema = FormObject, TSubmitData = FormValue>
   extends FormSubmitTarget<ExtractFormOutput<TSchema>, TSubmitData>, FormRendererController {
   /** Schema bound to this controller. */
   schema: ComputedRef<TSchema>

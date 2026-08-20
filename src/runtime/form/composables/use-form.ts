@@ -1,5 +1,6 @@
 import { computed, shallowRef, toValue } from 'vue'
 
+import type { FormValue } from '../types'
 import type {
   FormController,
   FormObject,
@@ -13,8 +14,9 @@ import type {
   FormValidationMode,
 } from '../types'
 import { isRecord } from '../utils/path'
+import { isBoolean, isUndefined, stringArray } from '../utils/predicate'
 
-export function useForm<const TSchema, TSubmitData = unknown>(
+export function useForm<const TSchema, TSubmitData = FormValue>(
   params: UseFormParams<TSchema, TSubmitData>,
 ): FormController<TSchema, TSubmitData>
 export function useForm(params: RuntimeUseFormParams) {
@@ -22,12 +24,10 @@ export function useForm(params: RuntimeUseFormParams) {
   const schema = computed(() => toValue(params.schema))
   const input = computed(() => (params.input ? toValue(params.input) : undefined))
   const syncInput = computed<boolean | readonly string[]>(() =>
-    typeof params.syncInput !== 'undefined'
-      ? toValue(params.syncInput)
-      : getSchemaSyncInput(schema.value),
+    !isUndefined(params.syncInput) ? toValue(params.syncInput) : getSchemaSyncInput(schema.value),
   )
   const validationMode = computed<FormValidationMode>(() =>
-    typeof params.validate !== 'undefined'
+    !isUndefined(params.validate)
       ? toValue(params.validate)
       : getSchemaValidationMode(schema.value),
   )
@@ -54,14 +54,14 @@ export function useForm(params: RuntimeUseFormParams) {
   const canGoNext = computed(() => runtime.value?.canGoNext.value ?? false)
 
   async function submitHandler(
-    externalSubmitHandler?: FormSubmitHandler<FormObject, unknown>,
-  ): Promise<FormSubmitHandlerResult<unknown>> {
+    externalSubmitHandler?: FormSubmitHandler<FormObject, FormValue>,
+  ): Promise<FormSubmitHandlerResult<FormValue>> {
     const current = runtime.value
     if (!current) return { success: false }
     return await current.submitHandler(externalSubmitHandler ?? params.onSubmit)
   }
 
-  async function submit(externalSubmitHandler?: FormSubmitHandler<FormObject, unknown>) {
+  async function submit(externalSubmitHandler?: FormSubmitHandler<FormObject, FormValue>) {
     const result = await submitHandler(externalSubmitHandler)
     return result.success
   }
@@ -118,7 +118,7 @@ export function useForm(params: RuntimeUseFormParams) {
     internal,
     output,
     get: (path: string) => runtime.value?.getValue(path),
-    set: (path: string, value: unknown) => runtime.value?.setValue(path, value),
+    set: (path: string, value: FormValue) => runtime.value?.setValue(path, value),
     reset,
   }
   const meta = {
@@ -186,20 +186,20 @@ export function useForm(params: RuntimeUseFormParams) {
   }
 }
 
-function getSchemaSyncInput(schema: unknown): boolean | readonly string[] {
+function getSchemaSyncInput(schema: FormValue): boolean | readonly string[] {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'syncInput')?.value : undefined
-  if (typeof value === 'boolean') return value
-  return Array.isArray(value) ? value.filter((path) => typeof path === 'string') : false
+  if (isBoolean(value)) return value
+  return stringArray(value)
 }
 
-function getSchemaValidationMode(schema: unknown): FormValidationMode {
+function getSchemaValidationMode(schema: FormValue): FormValidationMode {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'validate')?.value : undefined
   return value === false || value === 'required' || value === 'rules' ? value : true
 }
 
-function getSchemaControls(schema: unknown) {
+function getSchemaControls(schema: FormValue) {
   if (!isRecord(schema)) return undefined
   const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
   return isRecord(controls) ? controls : undefined

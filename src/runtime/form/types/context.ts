@@ -1,12 +1,13 @@
 import type { DataTag, QueryKey } from '@tanstack/vue-query'
 
 import type { GenericObject } from '../../shared/types/utils'
+import type { FormValue } from './'
 import type { FormAsyncResource, FormContextResource, FormSyncResource } from './utils'
 
 /**
  * Query options accepted by form context and option sources.
  */
-export interface FormQueryOptions<_TValue = unknown> {
+export interface FormQueryOptions<_TValue = FormValue> {
   queryKey: QueryKey
 }
 
@@ -16,7 +17,7 @@ export interface FormQueryOptions<_TValue = unknown> {
  * Sources do not receive other context values. This keeps the context graph easy to infer and
  * matches the intended form-scoped data model.
  */
-export type FormContextSource<TValue = unknown> =
+export type FormContextSource<TValue = FormValue> =
   | TValue
   | Promise<TValue>
   | FormQueryOptions<TValue>
@@ -41,7 +42,7 @@ export type FormContextData<
   : {}
 
 export type FormRuntimeContext = {
-  [key: string]: FormSyncResource<unknown> | FormAsyncResource<unknown>
+  [key: string]: FormSyncResource<FormValue> | FormAsyncResource<FormValue>
 }
 
 export type { DataTag, QueryKey }

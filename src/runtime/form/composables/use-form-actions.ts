@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
+import type { FormValue } from '../types'
 import type { FormAction, FormActionKey, FormRenderShell, FormRuntime } from '../types'
 import { isRecord } from '../utils/path'
 
@@ -93,7 +94,7 @@ function getBaseFormAction(
   }
 }
 
-function getSchemaActions(schema: unknown) {
+function getSchemaActions(schema: FormValue) {
   if (!isRecord(schema)) return undefined
   const actions = Object.getOwnPropertyDescriptor(schema, 'actions')?.value
   return isFormActionList(actions) ? actions : undefined
@@ -114,7 +115,7 @@ function getCurrentStepActions(runtime: FormRuntime) {
   return isFormActionList(actions) ? actions : undefined
 }
 
-function isFormActionList(value: unknown): value is readonly FormAction[] {
+function isFormActionList(value: FormValue): value is readonly FormAction[] {
   return Array.isArray(value)
 }
 
@@ -122,7 +123,7 @@ function isBaseFormAction(action: FormAction): action is FormAction & { key: For
   return isFormActionKey(action.key)
 }
 
-function isFormActionKey(value: unknown): value is FormActionKey {
+function isFormActionKey(value: FormValue): value is FormActionKey {
   return (
     value === 'reset' ||
     value === 'cancel' ||

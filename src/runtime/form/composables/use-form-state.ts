@@ -1,6 +1,7 @@
 import { computed, reactive, ref } from 'vue'
 import type { ComputedRef } from 'vue'
 
+import type { FormValue } from '../types'
 import type { FormField, FormFieldApi, FormObject } from '../types'
 import type { FormRuntimeContext } from '../types'
 import { cloneFormValue, getPathValue, isRecord, setPathValue } from '../utils/path'
@@ -9,7 +10,7 @@ import { buildFormOutput, buildInitialFormState } from '../utils/state'
 export type FormFieldApiFactory = (path: readonly string[], field?: FormField) => FormFieldApi
 
 export function useFormState(params: {
-  schema: ComputedRef<unknown>
+  schema: ComputedRef<FormValue>
   input?: ComputedRef<FormObject | undefined>
   context: FormRuntimeContext
   apiFactory: FormFieldApiFactory
@@ -63,7 +64,7 @@ export function useFormState(params: {
     reset,
     resetValue,
     getValue: (path: string | readonly string[]) => getPathValue(state, path),
-    setValue: (path: string | readonly string[], value: unknown) =>
+    setValue: (path: string | readonly string[], value: FormValue) =>
       setPathValue(state, path, value),
   }
 }
@@ -74,8 +75,8 @@ function cloneFormObject(value: FormObject) {
 }
 
 function collectDirtyPaths(
-  initial: unknown,
-  current: unknown,
+  initial: FormValue,
+  current: FormValue,
   path: readonly string[] = [],
 ): readonly string[] {
   if (Array.isArray(initial) || Array.isArray(current))
@@ -98,8 +99,8 @@ function collectDirtyPaths(
 }
 
 function collectArrayDirtyPaths(
-  initial: readonly unknown[],
-  current: readonly unknown[],
+  initial: readonly FormValue[],
+  current: readonly FormValue[],
   path: readonly string[],
 ) {
   if (initial.length !== current.length) return [path.join('.')]
