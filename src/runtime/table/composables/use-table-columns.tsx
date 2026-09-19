@@ -1,5 +1,6 @@
 /// <reference types="vue/jsx" />
 
+import { useCookie } from 'nuxt/app'
 import { computed, ref, watch } from 'vue'
 
 import {
@@ -88,6 +89,28 @@ export function useTableColumns(params: UseTableColumnsParams) {
       })
     },
     { immediate: true },
+  )
+
+  const persistPreferences = computed(() => params.schema.value.persistence?.preferences !== false)
+  const preferencesCookie = useCookie<PersistedColumnPreferences | null>(
+    `${params.schema.value.tableKey}::columns`,
+    { default: () => null, maxAge: 60 * 60 * 24 * 365 },
+  )
+  if (persistPreferences.value && preferencesCookie.value) {
+    tableState.value = applyPersistedPreferences(tableState.value, preferencesCookie.value)
+  }
+  watch(
+    tableState,
+    (state) => {
+      if (!persistPreferences.value) {
+        return
+      }
+      const next = toPersistedPreferences(state)
+      if (JSON.stringify(next) !== JSON.stringify(preferencesCookie.value)) {
+        preferencesCookie.value = next
+      }
+    },
+    { deep: true },
   )
 
   watch(
@@ -267,5 +290,50 @@ export function useTableColumns(params: UseTableColumnsParams) {
     tableState,
     toggleSorting,
     visibleOrderedColumns,
+  }
+}
+
+interface PersistedColumnPreferences {
+  order: string[]
+  pinning: { left?: string[]; right?: string[] }
+  sizing: Record<string, number>
+  visibility: Record<string, boolean>
+}
+
+function toPersistedPreferences(state: TableColumnState): PersistedColumnPreferences {
+  return {
+    order: state.columnOrder,
+    pinning: state.columnPinning,
+    sizing: state.columnSizing,
+    visibility: state.columnVisibility,
+  }
+}
+
+function applyPersistedPreferences(
+  state: TableColumnState,
+  persisted: PersistedColumnPreferences,
+): TableColumnState {
+  const known = new Set(state.columnOrder)
+  return {
+    ...state,
+    columnOrder: [
+      ...persisted.order.filter((id) => known.has(id)),
+      ...state.columnOrder.filter((id) => !persisted.order.includes(id)),
+    ],
+    columnPinning: {
+      left: (persisted.pinning.left ?? state.columnPinning.left ?? []).filter((id) =>
+        known.has(id),
+      ),
+      right: (persisted.pinning.right ?? state.columnPinning.right ?? []).filter((id) =>
+        known.has(id),
+      ),
+    },
+    columnSizing: Object.fromEntries(
+      Object.entries(persisted.sizing).filter(([id]) => known.has(id)),
+    ),
+    columnVisibility: {
+      ...state.columnVisibility,
+      ...Object.fromEntries(Object.entries(persisted.visibility).filter(([id]) => known.has(id))),
+    },
   }
 }

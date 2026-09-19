@@ -13,6 +13,7 @@ import type { DataListControlSize, DataListDensity, DataListUiConfig } from '#ui
 
 import { setAppConfig, setBreakpoint } from './nuxt-state'
 import type { BreakpointKey } from './nuxt-state'
+import { resetCookies } from './stubs/nuxt-app'
 
 export interface MountOptions {
   schema: unknown
@@ -44,6 +45,7 @@ export interface Harness {
 export async function mountDataList(options: MountOptions): Promise<Harness> {
   setBreakpoint(options.breakpoint ?? 'xl')
   setAppConfig(options.appConfig ?? {})
+  resetCookies()
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ component: { render: () => h('div') }, path: '/' }],
