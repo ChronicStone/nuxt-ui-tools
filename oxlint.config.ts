@@ -17,4 +17,8 @@ export default defineConfig({
     '.cursor/**',
     'dist/**',
   ],
+  rules: {
+    'func-style': ['error', 'declaration'],
+    'no-use-before-define': ['error', { classes: true, functions: false, variables: true }],
+  },
 })
