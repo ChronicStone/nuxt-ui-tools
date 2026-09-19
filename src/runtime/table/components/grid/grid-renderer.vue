@@ -36,6 +36,47 @@ const animationsReady = ref<boolean>(false)
 const isContained = computed(() => internals.grid.mode.value === 'contained')
 const rowChunks = computed(() => internals.grid.rowChunks.value)
 const tableRows = computed(() => internals.grid.rows.value)
+const flipPositions = new Map<string, { left: number; top: number }>()
+watch(
+  tableRows,
+  () => {
+    flipPositions.clear()
+    if (!isContained.value) {
+      return
+    }
+    const items =
+      viewportRef.value?.querySelectorAll<HTMLElement>('.nut-dl-grid__item[data-row-id]') ?? []
+    for (const item of items) {
+      const rect = item.getBoundingClientRect()
+      flipPositions.set(item.dataset.rowId ?? '', { left: rect.left, top: rect.top })
+    }
+  },
+  { flush: 'pre' },
+)
+watch(tableRows, () => nextTick(flipCards), { flush: 'post' })
+function flipCards() {
+  if (!flipPositions.size) {
+    return
+  }
+  const items =
+    viewportRef.value?.querySelectorAll<HTMLElement>('.nut-dl-grid__item[data-row-id]') ?? []
+  for (const item of items) {
+    const previous = flipPositions.get(item.dataset.rowId ?? '')
+    if (!previous) {
+      continue
+    }
+    const rect = item.getBoundingClientRect()
+    const dx = previous.left - rect.left
+    const dy = previous.top - rect.top
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+      item.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], {
+        duration: 240,
+        easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
+      })
+    }
+  }
+  flipPositions.clear()
+}
 const status = computed(() => internals.queryContent.status.value)
 const gridTemplateColumns = computed(
   () => `repeat(${internals.grid.columnCount.value}, minmax(0, 1fr))`,
@@ -297,6 +338,7 @@ function refreshData() {
             :key="rowId(row, (rowChunks[virtualRow.index]?.start ?? 0) + offset)"
             :class="mergeDataListUiClass('nut-dl-grid__item min-w-0', undefined, ui?.item)"
             :style="{ gridColumn }"
+            :data-row-id="rowId(row, (rowChunks[virtualRow.index]?.start ?? 0) + offset)"
           >
             <GridCard :row-index="(rowChunks[virtualRow.index]?.start ?? 0) + offset" />
           </div>

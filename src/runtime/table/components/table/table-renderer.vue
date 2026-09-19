@@ -8,6 +8,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  shallowRef,
   TransitionGroup,
   useTemplateRef,
   watch,
@@ -415,11 +416,47 @@ function renderSummary(columnId: string) {
   return () => h('span', formatNumber(value))
 }
 
-const dataEpoch = ref(0)
 const animateEpoch = ref(false)
-const enterFrom = ref(0)
+const enterFrom = ref(Number.POSITIVE_INFINITY)
+const previousIds = shallowRef<Set<string>>(new Set())
+const flipPositions = new Map<string, number>()
+watch(
+  rows,
+  () => {
+    previousIds.value = new Set(rows.value.map((row, index) => getRowId(row, index)))
+    flipPositions.clear()
+    const elements =
+      scrollRef.value?.querySelectorAll<HTMLElement>('tr.nut-dl-row[data-row-id]') ?? []
+    for (const element of elements) {
+      flipPositions.set(element.dataset.rowId ?? '', element.getBoundingClientRect().top)
+    }
+  },
+  { flush: 'pre' },
+)
+watch(rows, () => nextTick(flipRows), { flush: 'post' })
+function flipRows() {
+  if (!flipPositions.size) {
+    return
+  }
+  const elements =
+    scrollRef.value?.querySelectorAll<HTMLElement>('tr.nut-dl-row[data-row-id]') ?? []
+  for (const element of elements) {
+    const previous = flipPositions.get(element.dataset.rowId ?? '')
+    if (previous === undefined) {
+      continue
+    }
+    const delta = previous - element.getBoundingClientRect().top
+    if (Math.abs(delta) > 1) {
+      element.animate([{ transform: `translateY(${delta}px)` }, { transform: 'none' }], {
+        duration: 240,
+        easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
+      })
+    }
+  }
+  flipPositions.clear()
+}
 let animateTimer = 0
-function armAnimation(from = 0) {
+function armAnimation(from = Number.POSITIVE_INFINITY) {
   enterFrom.value = from
   animateEpoch.value = true
   window.clearTimeout(animateTimer)
@@ -439,7 +476,6 @@ watch(
     if (!rowsMounted.value || cursorMode.value) {
       return
     }
-    dataEpoch.value += 1
     rowHeights.clear()
     armAnimation()
     scrollRef.value?.scrollTo({ top: 0 })
@@ -670,7 +706,7 @@ defineExpose({ resetColumnSizing })
 
         <component
           :is="virtualized ? 'tbody' : TransitionGroup"
-          :key="virtualized ? dataEpoch : 'rows'"
+          :key="virtualized ? 'virtual' : 'rows'"
           :tag="virtualized ? undefined : 'tbody'"
           :class="mergeDataListUiClass('nut-dl-table__body', undefined, ui?.tbody)"
           :move-class="virtualized ? undefined : 'nut-dl-row--moving'"
@@ -701,7 +737,9 @@ defineExpose({ resetColumnSizing })
             :data-index="virtual.index"
             :data-row-id="row.id"
             :style="
-              virtualized && animateEpoch && virtual.index >= enterFrom
+              virtualized &&
+              animateEpoch &&
+              (virtual.index >= enterFrom || !previousIds.has(String(row.id)))
                 ? {
                     '--nut-dl-i': Math.min(
                       virtual.index - Math.max(enterFrom, virtualRows[0]?.index ?? 0),
