@@ -48,7 +48,7 @@ describe('DataListSortMenu desktop', () => {
       dir: 'asc',
       key: 'status',
     })
-    await must(w.findAll('.nut-dl-sort__row').at(-1)).trigger('click')
+    await must(w.findAll('.nut-dl-sort__dir button').at(-1)).trigger('click')
     await harness.flush()
     expect([
       harness.internals.tableColumns.sortingState.value.dir,
