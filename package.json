@@ -7,7 +7,8 @@
   "license": "MIT",
   "repository": "github:ChronicStone/nuxt-ui-tools",
   "workspaces": [
-    "playground"
+    "playground",
+    "playground-table"
   ],
   "files": [
     "dist"
@@ -140,7 +141,9 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest watch",
-    "clean": "rm -rf dist .nuxt node_modules playground/.nuxt playground/.output playground/node_modules"
+    "clean": "rm -rf dist .nuxt node_modules playground/.nuxt playground/.output playground/node_modules",
+    "dev:table": "npm run dev:prepare:table && nuxt dev playground-table --port 3100",
+    "dev:prepare:table": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground-table"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.3",
@@ -148,6 +151,7 @@
     "@regle/core": "1.29.1",
     "@regle/rules": "1.29.1",
     "@tanstack/pacer": "0.22.0",
+    "@tanstack/vue-table": "9.2.3",
     "@tanstack/vue-virtual": "3.13.36",
     "@vueuse/core": "14.4.0",
     "cookiejs": "2.1.4",
