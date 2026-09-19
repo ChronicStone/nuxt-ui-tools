@@ -289,6 +289,17 @@ export interface UiToolsFormMessages {
     text: {
       defaultPlaceholder: string
     }
+    array: {
+      addItem: string
+      removeItem: string
+      dragItem: string
+      confirmDelete: string
+      empty: string
+      item: string
+      expand: string
+      collapse: string
+      unique: string
+    }
     password: {
       show: string
       hide: string

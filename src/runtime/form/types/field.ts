@@ -1,4 +1,6 @@
+import type { FormArrayCollapseField } from '../fields/array-collapse/types'
 import type { FormArrayListField } from '../fields/array-list/types'
+import type { FormArrayPrimitiveField } from '../fields/array-primitive/types'
 import type { FormArrayTableField } from '../fields/array-table/types'
 import type { FormArrayTabsField } from '../fields/array-tabs/types'
 import type { FormArrayVariantField } from '../fields/array-variant/types'
@@ -57,7 +59,12 @@ export type {
   FormStatefulFieldBase,
   FormStatelessFieldBase,
 } from './field-base'
+export type { FormArrayCollapseField } from '../fields/array-collapse/types'
 export type { FormArrayListField } from '../fields/array-list/types'
+export type {
+  FormArrayPrimitiveField,
+  FormArrayPrimitiveItemField,
+} from '../fields/array-primitive/types'
 export type { FormArrayTableField } from '../fields/array-table/types'
 export type { FormArrayTabsField } from '../fields/array-tabs/types'
 export type { FormArrayVariantField } from '../fields/array-variant/types'
@@ -160,6 +167,8 @@ export type FormField<TContext = NonNullable<unknown>, TDeps = NonNullable<unkno
   | FormArrayTableField<TContext, TDeps>
   | FormArrayTabsField<TContext, TDeps>
   | FormArrayVariantField<TContext, TDeps>
+  | FormArrayCollapseField<TContext, TDeps>
+  | FormArrayPrimitiveField<TContext, TDeps>
   | FormSliderField<TContext, TDeps>
   | FormColorPickerField<TContext, TDeps>
   | FormOneTimeCodeField<TContext, TDeps>

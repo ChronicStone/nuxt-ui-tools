@@ -14,7 +14,9 @@ import {
   fieldPath,
   useFormRuntimeContext,
 } from '../../composables/use-form-runtime'
+import ArrayCollapseField from '../../fields/array-collapse/component.vue'
 import ArrayListField from '../../fields/array-list/component.vue'
+import ArrayPrimitiveField from '../../fields/array-primitive/component.vue'
 import ArrayTableField from '../../fields/array-table/component.vue'
 import AutoCompleteField from '../../fields/auto-complete/component.vue'
 import ButtonField from '../../fields/button/component.vue'
@@ -172,6 +174,8 @@ const fieldRenderers = new Map<FormFieldType, Component>([
   ['array-table', ArrayTableField],
   ['array-tabs', ArrayListField],
   ['array-variant', ArrayListField],
+  ['array-collapse', ArrayCollapseField],
+  ['array-primitive', ArrayPrimitiveField],
   ['slider', SliderField],
   ['color-picker', ColorPickerField],
   ['one-time-code', OneTimeCodeField],

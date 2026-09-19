@@ -13,6 +13,17 @@ export default defineUiToolsLocale<Messages>({
         submitButton: 'Soumettre',
       },
       fields: {
+        array: {
+          addItem: 'Ajouter un élément',
+          collapse: 'Replier',
+          confirmDelete: 'Supprimer cet élément ?',
+          dragItem: 'Déplacer l’élément',
+          empty: 'Aucun élément',
+          expand: 'Déplier',
+          item: 'Élément',
+          removeItem: 'Supprimer l’élément',
+          unique: 'Cette valeur est déjà dans la liste',
+        },
         color: {
           clear: 'Effacer la couleur',
           open: 'Ouvrir le sélecteur de couleur',

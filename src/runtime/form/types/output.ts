@@ -6,7 +6,9 @@ import type {
 } from '../../shared/types/utils'
 import type { FormValue } from './'
 import type {
+  ArrayCollapseFieldOutput,
   ArrayListFieldOutput,
+  ArrayPrimitiveFieldOutput,
   ArrayTableFieldOutput,
   ArrayTabsFieldOutput,
   ObjectFieldOutput,
@@ -103,7 +105,11 @@ type ArrayFieldValue<TField, TMode extends FormStateMode> = TField extends { typ
       ? ArrayTabsFieldOutput<FieldsValue<ChildFields<TField>, TMode> & VirtualFieldsValue<TField>>
       : TField extends { type: 'array-variant' }
         ? ArrayVariantValue<TField, TMode>
-        : never
+        : TField extends { type: 'array-collapse' }
+          ? ArrayCollapseFieldOutput<
+              FieldsValue<ChildFields<TField>, TMode> & VirtualFieldsValue<TField>
+            >
+          : never
 
 type ApplyOutputMode<TField, TMode extends FormStateMode, TValue> = TMode extends 'output'
   ? TransformOutputValue<TField, TValue>
@@ -148,9 +154,16 @@ type FieldObject<TField, TMode extends FormStateMode> = TField extends {
       ? FieldValueObject<TField, ObjectFieldValue<TField, TMode>>
       : TField extends { type: 'matrix' }
         ? FieldValueObject<TField, MatrixFieldValue<TField, TMode>>
-        : TField extends { type: 'array-list' | 'array-table' | 'array-tabs' | 'array-variant' }
+        : TField extends {
+              type: 'array-list' | 'array-table' | 'array-tabs' | 'array-variant' | 'array-collapse'
+            }
           ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
-          : StatefulFieldObject<TField, TMode>
+          : TField extends { type: 'array-primitive' }
+            ? FieldValueObject<
+                TField,
+                ApplyOutputMode<TField, TMode, ArrayPrimitiveFieldOutput<TField>>
+              >
+            : StatefulFieldObject<TField, TMode>
 
 type StepFields<TStep> = TStep extends { readonly fields: infer TFields } ? TFields : never
 

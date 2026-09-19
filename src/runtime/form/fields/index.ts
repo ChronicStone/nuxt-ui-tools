@@ -1,4 +1,6 @@
+import { arrayCollapseFieldKind } from './array-collapse/config'
 import { arrayListFieldKind } from './array-list/config'
+import { arrayPrimitiveFieldKind } from './array-primitive/config'
 import { arrayTableFieldKind } from './array-table/config'
 import { arrayTabsFieldKind } from './array-tabs/config'
 import { arrayVariantFieldKind } from './array-variant/config'
@@ -82,6 +84,8 @@ export const formFieldKinds = [
   arrayTableFieldKind,
   arrayTabsFieldKind,
   arrayVariantFieldKind,
+  arrayCollapseFieldKind,
+  arrayPrimitiveFieldKind,
   sliderFieldKind,
   tagFieldKind,
   buttonFieldKind,

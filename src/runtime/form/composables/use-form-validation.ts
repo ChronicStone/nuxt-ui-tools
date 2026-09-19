@@ -1,7 +1,7 @@
 import { useRegle } from '@regle/core'
 import type { RegleRuleRaw } from '@regle/core'
 import { withAsync, withMessage } from '@regle/rules'
-import { computed, nextTick, ref, unref } from 'vue'
+import { computed, nextTick, reactive, ref, unref, watch } from 'vue'
 import type { Ref } from 'vue'
 
 import type {
@@ -30,14 +30,17 @@ import {
   fieldPath,
   getArrayItemFields,
   getMatrixRows,
+  getPrimitiveArrayItemField,
   isArrayField,
   isEmptyValue,
   isFlatPassthroughField,
   isObjectContainerField,
+  isPrimitiveArrayField,
   resolveRequired,
   resolveRequiredMessage,
   shouldRenderField,
 } from '../utils/state'
+import { resolveFormBoundaryText } from '../utils/text'
 import type { FormFieldApiFactory } from './use-form-state'
 
 type RegleRule = (value: FormValue) => boolean | Promise<boolean>
@@ -49,6 +52,7 @@ interface RegleRuleTree {
 }
 interface RegleCollectionRules {
   $each: (item: { value: FormValue }, index: number) => RegleRuleTree
+  [key: string]: RegleRuleValue | RegleCollectionRules['$each'] | undefined
 }
 /**
  * Connects schema-owned field rules to Regle's validation tree.
@@ -64,6 +68,7 @@ export function useFormValidation(params: {
   apiFactory: FormFieldApiFactory
   getValidationMode: () => FormValidationMode
   getRequiredMessage?: () => string
+  getUniqueMessage?: () => string
 }) {
   const customErrors = ref<readonly FormValidationError[]>([])
   const touchedPaths = ref<readonly string[]>([])
@@ -80,6 +85,7 @@ export function useFormValidation(params: {
         context: params.context,
         dynamicMessages,
         getRequiredMessage: params.getRequiredMessage,
+        getUniqueMessage: params.getUniqueMessage,
         includeAsync: true,
         mode: params.getValidationMode(),
         schema: params.schema(),
@@ -95,6 +101,7 @@ export function useFormValidation(params: {
         context: params.context,
         dynamicMessages,
         getRequiredMessage: params.getRequiredMessage,
+        getUniqueMessage: params.getUniqueMessage,
         includeAsync: false,
         mode: params.getValidationMode(),
         schema: params.schema(),
@@ -102,6 +109,87 @@ export function useFormValidation(params: {
       }),
     { autoDirty: false, debounce: 0, lazy: true },
   )
+
+  const itemsMirror = reactive<FormObject>({})
+  const itemsRegle = useRegle(
+    itemsMirror,
+    () =>
+      buildPrimitiveItemRules({
+        apiFactory: params.apiFactory,
+        context: params.context,
+        dynamicMessages,
+        getRequiredMessage: params.getRequiredMessage,
+        getUniqueMessage: params.getUniqueMessage,
+        includeAsync: true,
+        mode: params.getValidationMode(),
+        schema: params.schema(),
+        state: params.state,
+      }),
+    { autoDirty: false, debounce: 0, lazy: true },
+  )
+  const itemsSyncRegle = useRegle(
+    itemsMirror,
+    () =>
+      buildPrimitiveItemRules({
+        apiFactory: params.apiFactory,
+        context: params.context,
+        dynamicMessages,
+        getRequiredMessage: params.getRequiredMessage,
+        getUniqueMessage: params.getUniqueMessage,
+        includeAsync: false,
+        mode: params.getValidationMode(),
+        schema: params.schema(),
+        state: params.state,
+      }),
+    { autoDirty: false, debounce: 0, lazy: true },
+  )
+
+  watch(
+    () =>
+      collectPrimitiveArraysForSchema(params.schema(), params.state).map((target) => ({
+        items: getPathValue(params.state, target.path),
+        key: target.key,
+      })),
+    syncItemsMirror,
+    { deep: true, flush: 'sync', immediate: true },
+  )
+
+  function syncItemsMirror(targets: readonly { key: string; items: FormValue }[]) {
+    const keys = new Set(targets.map((target) => target.key))
+    for (const key of Object.keys(itemsMirror)) {
+      if (!keys.has(key)) {
+        Reflect.deleteProperty(itemsMirror, key)
+      }
+    }
+    for (const target of targets) {
+      const items = Array.isArray(target.items) ? target.items : []
+      if (!Array.isArray(itemsMirror[target.key])) {
+        itemsMirror[target.key] = []
+      }
+      const holders = itemsMirror[target.key]
+      if (!Array.isArray(holders)) {
+        continue
+      }
+      for (const [index, item] of items.entries()) {
+        const holder = holders[index]
+        if (isRecord(holder)) {
+          holder.value = item
+        } else {
+          holders[index] = { value: item }
+        }
+      }
+      if (holders.length > items.length) {
+        holders.splice(items.length)
+      }
+    }
+  }
+
+  function resetRegleRoots() {
+    regle.r$.$reset()
+    syncRegle.r$.$reset()
+    itemsRegle.r$.$reset()
+    itemsSyncRegle.r$.$reset()
+  }
 
   const validationErrors = computed<readonly FormValidationError[]>(() =>
     collectFormFieldsPathsForSchema(params.schema(), params.state).flatMap((path: string) => {
@@ -116,16 +204,20 @@ export function useFormValidation(params: {
   async function validate() {
     const run = nextValidationRun(validationRuns, '$form')
     if (params.getValidationMode() === false) {
-      regle.r$.$reset()
+      resetRegleRoots()
       return true
     }
 
-    regle.r$.$reset()
-    syncRegle.r$.$reset()
+    resetRegleRoots()
     const paths = collectFormFieldsPathsForSchema(params.schema(), params.state)
     clearDynamicMessages(paths)
     clearValidatedMessages(paths)
-    const prepared = prepareReglePaths(regle.r$, syncRegle.r$, paths, params.state)
+    const prepared = prepareReglePaths(
+      { items: itemsRegle.r$, main: regle.r$ },
+      { items: itemsSyncRegle.r$, main: syncRegle.r$ },
+      paths,
+      params.state,
+    )
     const potentialAsyncPaths = prepared.regleStatuses
       .filter(({ status }) => hasAsyncRegleRule(status))
       .map(({ fieldPath: currentPath }) => currentPath)
@@ -177,7 +269,12 @@ export function useFormValidation(params: {
 
     clearDynamicMessages(paths)
     clearValidatedMessages(paths)
-    const prepared = prepareReglePaths(regle.r$, syncRegle.r$, paths, params.state)
+    const prepared = prepareReglePaths(
+      { items: itemsRegle.r$, main: regle.r$ },
+      { items: itemsSyncRegle.r$, main: syncRegle.r$ },
+      paths,
+      params.state,
+    )
     const potentialAsyncPaths = prepared.regleStatuses
       .filter(({ status }) => hasAsyncRegleRule(status))
       .map(({ fieldPath: currentPath }) => currentPath)
@@ -251,8 +348,7 @@ export function useFormValidation(params: {
       touchedPaths.value = []
       dynamicMessages.value = new Map()
       validatedMessages.value = new Map()
-      regle.r$.$reset()
-      syncRegle.r$.$reset()
+      resetRegleRoots()
       return
     }
 
@@ -280,8 +376,7 @@ export function useFormValidation(params: {
     touchedPaths.value = []
     dynamicMessages.value = new Map()
     validatedMessages.value = new Map()
-    regle.r$.$reset()
-    syncRegle.r$.$reset()
+    resetRegleRoots()
   }
 
   function clearDynamicMessages(paths: readonly string[]) {
@@ -326,7 +421,9 @@ export function useFormValidation(params: {
     if (pendingPaths.value.get(key)?.size) {
       return true
     }
-    const status = resolveRegleStatus(regle.r$, toReglePath(path.join('.'), params.state))
+    const status =
+      resolveRegleStatus(regle.r$, toReglePath(path.join('.'), params.state)) ??
+      resolvePrimitiveItemStatus(itemsRegle.r$, path.join('.'))
     if (!isPendingRegleStatus(status)) {
       return false
     }
@@ -364,6 +461,7 @@ function buildRegleRules(params: {
   mode: FormValidationMode
   dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
+  getUniqueMessage?: () => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
   if (isSteppedSchemaForRules(params.schema)) {
@@ -400,6 +498,7 @@ function buildFieldRules(params: {
   mode: FormValidationMode
   dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
+  getUniqueMessage?: () => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
 
@@ -459,6 +558,11 @@ function buildFieldRules(params: {
         })
       }
       setRegleRuleNode(rules, field.key, matrixRules)
+      continue
+    }
+
+    if (isPrimitiveArrayField(field)) {
+      setRegleRuleNode(rules, field.key, buildLeafRules({ ...params, callbackParams, field, path }))
       continue
     }
 
@@ -528,6 +632,7 @@ function buildLeafRules(params: {
   mode: FormValidationMode
   dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
+  getUniqueMessage?: () => string
 }): RegleRuleTree {
   const output: RegleRuleTree = {}
   const validation = Object.getOwnPropertyDescriptor(params.field, 'validation')?.value
@@ -721,6 +826,13 @@ function collectFormFieldsPathsForFields(
         collectFormFieldsPathsForFields(getChildFieldsForRules(field), state, [...path, row]),
       )
     }
+    if (isPrimitiveArrayField(field)) {
+      const value = getPathValue(state, path)
+      const itemPaths = Array.isArray(value)
+        ? value.map((_item, index) => [...path, String(index)].join('.'))
+        : []
+      return [path.join('.'), ...itemPaths]
+    }
     if (isArrayField(field)) {
       const value = getPathValue(state, path)
       if (!Array.isArray(value)) {
@@ -790,6 +902,162 @@ function isFormFieldForRules(value: FormValue): value is FormField {
     return false
   }
   return isString(value.key) && isString(value.type)
+}
+
+interface PrimitiveArrayTarget {
+  field: FormField
+  path: readonly string[]
+  key: string
+}
+
+function mirrorKey(path: readonly string[]) {
+  return path.join('/')
+}
+
+function resolvePrimitiveItemStatus(root: FormValue, path: string): FormValue {
+  const segments = pathSegments(path)
+  const index = segments.at(-1)
+  if (index === undefined || !/^\d+$/u.test(index)) {
+    return undefined
+  }
+  const key = mirrorKey(segments.slice(0, -1))
+  if (resolveRegleStatus(root, key) === undefined) {
+    return undefined
+  }
+  return resolveRegleStatus(root, `${key}.$each.${index}.value`)
+}
+
+function collectPrimitiveArraysForSchema(
+  schema: FormValue,
+  state: FormObject,
+): readonly PrimitiveArrayTarget[] {
+  if (isSteppedSchemaForRules(schema)) {
+    return getSchemaStepsForRules(schema).flatMap((step) =>
+      collectPrimitiveArraysForFields(step.fields, state, step.root ? [step.root] : []),
+    )
+  }
+  return collectPrimitiveArraysForFields(getSchemaFieldsForRules(schema), state, [])
+}
+
+function collectPrimitiveArraysForFields(
+  fields: readonly FormField[],
+  state: FormObject,
+  parentPath: readonly string[],
+): readonly PrimitiveArrayTarget[] {
+  return fields.flatMap((field) => {
+    if (field.ignore === true) {
+      return []
+    }
+    const fieldInstance = createFormFieldInstance(field)
+    if (fieldInstance.state.is('stateless')) {
+      return []
+    }
+    if (isFlatPassthroughField(field)) {
+      return collectPrimitiveArraysForFields(getChildFieldsForRules(field), state, parentPath)
+    }
+    const path = fieldPath(parentPath, field)
+    if (isObjectContainerField(field)) {
+      return collectPrimitiveArraysForFields(getChildFieldsForRules(field), state, path)
+    }
+    if (fieldInstance.type.is('matrix')) {
+      return getMatrixRows(field).flatMap((row) =>
+        collectPrimitiveArraysForFields(getChildFieldsForRules(field), state, [...path, row]),
+      )
+    }
+    if (isPrimitiveArrayField(field)) {
+      return [{ field, key: mirrorKey(path), path }]
+    }
+    if (isArrayField(field)) {
+      const value = getPathValue(state, path)
+      if (!Array.isArray(value)) {
+        return []
+      }
+      return value.flatMap((item, index) =>
+        collectPrimitiveArraysForFields(
+          getArrayItemFields(field, isRecord(item) ? item : {}),
+          state,
+          [...path, String(index)],
+        ),
+      )
+    }
+    return []
+  })
+}
+
+function buildPrimitiveItemRules(params: {
+  schema: FormValue
+  state: FormObject
+  context: FormRuntimeContext
+  apiFactory: FormFieldApiFactory
+  includeAsync: boolean
+  mode: FormValidationMode
+  dynamicMessages: Ref<Map<string, string>>
+  getRequiredMessage?: () => string
+  getUniqueMessage?: () => string
+}): RegleRuleTree {
+  const rules: RegleRuleTree = {}
+  for (const target of collectPrimitiveArraysForSchema(params.schema, params.state)) {
+    const deps = resolveFieldDependencies({
+      field: target.field,
+      parentPath: target.path.slice(0, -1),
+      state: params.state,
+    })
+    const collection: RegleCollectionRules = {
+      $each: (_item: { value: FormValue }, index: number) => {
+        const itemField = getPrimitiveArrayItemField(target.field, index)
+        if (!itemField) {
+          return {}
+        }
+        const itemPath = [...target.path, String(index)]
+        const itemRules = buildLeafRules({
+          ...params,
+          callbackParams: {
+            api: params.apiFactory(itemPath, itemField),
+            ctx: params.context,
+            deps,
+          },
+          field: itemField,
+          path: itemPath,
+        })
+        if (params.mode !== 'required' && isUniqueArrayField(target.field)) {
+          itemRules.unique = withMessage(
+            (value: FormValue) =>
+              countArrayValue(getPathValue(params.state, target.path), value) <= 1,
+            resolveUniqueMessage(target.field, params.getUniqueMessage?.()),
+          )
+        }
+        return { value: itemRules }
+      },
+    }
+    rules[target.key] = collection
+  }
+  return rules
+}
+
+function isUniqueArrayField(field: FormField) {
+  return Object.getOwnPropertyDescriptor(field, 'unique')?.value === true
+}
+
+function resolveUniqueMessage(field: FormField, fallback: string | undefined) {
+  const message = Object.getOwnPropertyDescriptor(field, 'uniqueMessage')?.value
+  return resolveFormBoundaryText(message) ?? fallback ?? 'This value is already in the list'
+}
+
+function sameArrayValue(left: FormValue, right: FormValue) {
+  if (left === right) {
+    return true
+  }
+  if (!isRecord(left) && !Array.isArray(left)) {
+    return false
+  }
+  return JSON.stringify(left) === JSON.stringify(right)
+}
+
+function countArrayValue(values: FormValue, value: FormValue) {
+  if (!Array.isArray(values) || isEmptyValue(value)) {
+    return 0
+  }
+  return values.filter((candidate) => sameArrayValue(candidate, value)).length
 }
 
 function unique(values: readonly string[]) {
@@ -863,9 +1131,14 @@ interface ReglePathStatus {
   status: RegleValidatableStatus
 }
 
+interface RegleRoots {
+  main: FormValue
+  items: FormValue
+}
+
 function prepareReglePaths(
-  regle: FormValue,
-  syncRegle: FormValue,
+  regle: RegleRoots,
+  syncRegle: RegleRoots,
   paths: readonly string[],
   state: FormObject,
 ) {
@@ -892,13 +1165,14 @@ async function validateSyncRegleStatuses(statuses: readonly ReglePathStatus[]) {
 }
 
 function collectRegleStatuses(
-  regle: FormValue,
+  regle: RegleRoots,
   paths: readonly string[],
   state: FormObject,
 ): readonly ReglePathStatus[] {
   return unique(paths).flatMap((candidatePath) => {
     const path = toReglePath(candidatePath, state)
-    const status = resolveRegleStatus(regle, path)
+    const status =
+      resolveRegleStatus(regle.main, path) ?? resolvePrimitiveItemStatus(regle.items, candidatePath)
     return isValidatableRegleStatus(status) ? [{ fieldPath: candidatePath, path, status }] : []
   })
 }

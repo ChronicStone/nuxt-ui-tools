@@ -22,11 +22,11 @@ Goal: bring `src/runtime/form` to production parity with the tars-monorepo V1 en
 
 | Kind | V1 | V2 | Action |
 | --- | --- | --- | --- |
-| `alpha-select` | full (mobile drawer, letter groups, quick nav) | missing | add, mobile-first |
-| `array-collapse` | full (accordion, summaryTemplate, defaultExpanded, draggable) | missing | add |
-| `array-primitive` | full (single item field, preview, unique) | missing | add; needed for chip lists (metadata levels, affiliation values) |
-| `array-tabs` | component | types + config only | add component (UTabs, lazyPanels, tabActionTemplate) |
-| `array-variant` | component | types + config only | add component (variantKey, tabs or list) |
+| `alpha-select` | full (mobile drawer, letter groups, quick nav) | missing | dropped (2026-09-19): not needed in V2 |
+| `array-collapse` | full (accordion, summaryTemplate, defaultExpanded, draggable) | done (2026-09-19) | index-based expanded state, invalid items reveal themselves |
+| `array-primitive` | full (single item field, preview, unique) | done (2026-09-19) | items validated through a Regle mirror; pending item is `undefined` |
+| `array-tabs` | component | shared array-list component | `tabAction` added; panels render the active item only |
+| `array-variant` | component | shared array-list component | present |
 | `cascader` | component | types + config only | add (UPopover + column browser) |
 | `tree-select`, `tree` | component, lazy remote children, `resolveSelected` paths, `selectionControl`, `showChildrenCount`, `expandParentOnClick` | shared `hierarchy/component.vue` eager only | port remote lazy loading + paginated roots + selection controls |
 | `datetime`, `daterange`, `datetimerange`, `month`, `monthrange`, `year` | one `DateField.vue` with Naive picker + maskito manual input | `date-family/component.vue` shared, no config for the 6 sibling kinds beyond types | finish siblings, verify manual input, shortcuts, ranges |
@@ -103,7 +103,7 @@ Field patterns to add for parity with the maquette: `eyebrow`, `tabs`, `section`
 
 1. **Foundation**: DOM form harness + stubs, port V1 behaviour suites as failing specs, `playground-table` forms section (nav, `/forms` index, one page per maquette form, modal launcher).
 2. **Options runtime**: remote pagination (page + cursor), search, `resolveSelected`, `refreshOn`, `externalDependencies`, infinite scroll in select and tree-select, remote lazy tree. Green on ported V1 remote suites.
-3. **Missing kinds**: alpha-select, array-collapse, array-primitive, array-tabs, array-variant, cascader components, date siblings, rich-text.
+3. **Missing kinds**: array-collapse, array-primitive, array-tabs polish, array-variant, cascader component, date siblings, rich-text. `alpha-select` dropped.
 4. **Parity props**: labelPosition, description variants, text mask/prefix/suffix, number formatting, select max/tags, upload progress, form sizes, eyebrow, tabs, sections, notes.
 5. **Design polish**: every field at md/sm/lg against Atelier tokens (7px radius, hairlines, orange focus ring 3px, 34px controls, 12.5px labels, 11.5px hints), light and dark, desktop and 390px.
 6. **Maquette forms**: build all schemas, shoot each vs `identity4.html` with `goFull(page)` / `openModal(kind)`, pxdiff, iterate.
@@ -120,3 +120,22 @@ Field patterns to add for parity with the maquette: `eyebrow`, `tabs`, `section`
 8. Custom errors set through the API are non-blocking by default and block submit only when set with `blocking: true`. A value change clears them.
 9. Accessibility and keyboard behaviour are part of parity: Enter submits from any single-line control, invalid submit focuses the first invalid field and announces its error, every control is labelled (aria-labelledby or aria-label), overlays trap and restore focus, option menus and trees are fully keyboard operable. Covered by a dedicated DOM spec.
 6. Pixel comparison against `identity4.html` with `shot.mjs` / `pxdiff` when the render can be isolated; otherwise side-by-side screenshots.
+
+## Progress log
+
+### 2026-09-19
+
+- DOM form harness (`test/dom/form/harness.ts`) with Nuxt UI stubs for every form primitive; ported V1 suites: submission, state, sync input, dependencies, dependency reset, stepped forms, array tables, dirty navigation, remote options, remote trees.
+- Field callbacks receive `api.form` (get/set/initial/state/output/focus/errors/steps) with `$parent` and `$root` paths; `transform.input` runs on initial state; dependency and watch effects are tracked so `reset()` awaits them and rebaselines; controls disable while an action is pending; `controls.ignoreDirtyPaths`; sync input catches up when `syncInput` turns on; stepped roots nest their output.
+- Custom errors: non-blocking by default, `blocking: true` blocks submit and step navigation, cleared on value change.
+- Remote options (`mode: 'remote'`): page and cursor pagination driven by the list scroll within `prefetchDistance` (default one viewport), debounced search with `minLength`, stale-run rejection, next-page failure keeps loaded options and shows a retry line, `resolveSelected` hydration, `refreshOn` + `clearOnInvalid`, lazy tree children (`isLeaf: false`), roots pagination in tree-select. Menu footer hosts refresh and create only.
+- Schema `eyebrow` and `description` render in the form header; `section` field kind (uppercase caption + hairline + inline description); `help` text under controls; required marker honours the field-level flag; secondary actions default to neutral outline.
+- Module ships thin overlay-style scrollbars for every scroll container (opt-out `scrollbars: false`); table overlay scrollbars share the tokens.
+- Playground `/forms` page renders the maquette contact form inline and as a modal with a remote paginated account picker.
+
+- Array kinds: shared `useFormArrayItems` composable behind array-list, array-table, array-tabs, array-variant and the new `array-collapse` (accordion, `defaultExpanded`, `summaryTemplate`, `arrowPlacement`, drag keeps expanded state, invalid items reveal themselves through `FormFieldStatus`). `array-tabs` gained `tabAction`. New `array-primitive` kind: one item field per entry, `preview`, `unique`, pending item (`undefined`) blocks a second add and is dropped from output, item transforms.
+- Regle does not create per-item statuses for primitive arrays in rules mode and crashes on a `null` item, so `use-form-validation` runs a second Regle instance on a mirror where each primitive array item is a `{ value }` holder synced in place; the form state, `deps`, `api`, output and sync input keep plain primitives. Item paths (`contacts.1`) resolve to the mirror.
+- Engine fix: field value and dependency watches now compare a deep snapshot before acting, because Vue runs a deep watch callback whenever a dependency triggers. A parent re-render passing a fresh path array used to clear the field's error and re-run `watch`/`onDependencyChange`.
+- Decision: `alpha-select` dropped.
+
+Backlog noted along the way: primitive `preview` resolves remote options only while the item control is registered, native `window.confirm` for array removals pending an engine confirm overlay, typed `deps` in callbacks (currently `{}`), label/description/hint callbacks with dependency params, modal chrome polish (eyebrow ink, borderless close, 14px radius, submit icon), a11y verification in the real browser, `prefetchDistance` naming on the table infinite loader.

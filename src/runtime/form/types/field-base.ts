@@ -46,6 +46,8 @@ export type FormFieldType =
   | 'array-table'
   | 'array-tabs'
   | 'array-variant'
+  | 'array-collapse'
+  | 'array-primitive'
   | 'tree-select'
   | 'cascader'
   | 'tree'

@@ -150,6 +150,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     apiFactory,
     context,
     getRequiredMessage: () => t('form.validation.required'),
+    getUniqueMessage: () => t('form.fields.array.unique'),
     getValidationMode: () => params.validationMode?.value ?? true,
     schema: () => params.schema.value,
     state: state.state,

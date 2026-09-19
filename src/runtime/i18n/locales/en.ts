@@ -13,6 +13,17 @@ export default defineUiToolsLocale<Messages>({
         submitButton: 'Submit',
       },
       fields: {
+        array: {
+          addItem: 'Add item',
+          collapse: 'Collapse',
+          confirmDelete: 'Remove this item?',
+          dragItem: 'Drag item',
+          empty: 'No items yet',
+          expand: 'Expand',
+          item: 'Item',
+          removeItem: 'Remove item',
+          unique: 'This value is already in the list',
+        },
         color: {
           clear: 'Clear color',
           open: 'Open color picker',

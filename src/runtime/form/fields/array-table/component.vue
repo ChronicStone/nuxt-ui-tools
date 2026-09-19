@@ -5,15 +5,11 @@ import { computed, defineAsyncComponent, ref } from 'vue'
 
 import FormFieldError from '../../components/renderer/form-field-error.vue'
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
-import { useFormRuntimeContext } from '../../composables/use-form-runtime'
-import { useFormUi } from '../../composables/use-form-ui'
-import type { FormValue, FormObject, FormField } from '../../types'
-import { syncFormArrayItems } from '../../utils/array'
-import { isBoolean, isFunction, isNumber, isObject, isString } from '../../utils/predicate'
-import { buildInitialFormFieldsState } from '../../utils/state'
-import { resolveFormBoundaryText, resolveFormText } from '../../utils/text'
+import type { FormField, FormObject } from '../../types'
+import { isNumber } from '../../utils/predicate'
+import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
-import type { FormArrayAction, FormArrayBaseAction } from '../array-list/types'
+import { useFormArrayItems } from '../array-list/use-array-items'
 import type { FormArrayTableField } from './types'
 
 const props = defineProps<{
@@ -21,169 +17,50 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const VueDraggable = defineAsyncComponent(() =>
-  import('vue-draggable-plus').then(({ VueDraggable: draggableComponent }) => draggableComponent),
-)
+const VueDraggable = defineAsyncComponent(async () => {
+  const { VueDraggable: draggableComponent } = await import('vue-draggable-plus')
+  return draggableComponent
+})
 
-const form = useFormRuntimeContext()
-const formUi = useFormUi()
+const {
+  addItem,
+  addItemLabel,
+  canAdd,
+  canDelete,
+  customActionVisible,
+  emptyLabel,
+  formUi,
+  hasCustomActions,
+  isDraggable,
+  itemPath,
+  itemRenderKey,
+  items,
+  removeItem,
+  runCustomAction,
+  t,
+  updateItems,
+} = useFormArrayItems(
+  () => props.field,
+  () => props.path,
+)
 const viewportRef = ref<HTMLElement | null>(null)
 const viewportShadow = useScrollShadow(viewportRef, { orientation: 'horizontal', size: 20 })
-const itemKeys = new WeakMap<FormObject, string>()
-let nextItemKey = 0
-const items = computed<readonly FormObject[]>(() => {
-  const value = form.getValue(props.path)
-  return Array.isArray(value) ? value.filter(isFormObject) : []
-})
+const ui = computed(() => formUi.ui.value.arrayTable?.ui)
 const columns = computed(() =>
   props.field.fields.filter((field) => field.type !== 'hidden' && field.ignore !== true),
 )
 const minWidth = computed(() =>
   isNumber(props.field.minWidth) ? `${props.field.minWidth}px` : props.field.minWidth,
 )
-const canAdd = computed<boolean>(() => resolveAction(props.field.actions?.addItem, -1))
-const isDraggable = computed<boolean>(() => props.field.draggable !== false)
 const dragItems = computed<FormObject[]>({
   get: () => [...items.value],
   set: updateItems,
 })
-
-function addItem() {
-  const index = items.value.length
-  let item = buildInitialFormFieldsState(props.field.fields, form.context)
-  item = applyVirtualFields(item, index)
-  if (props.field.transformOnCreate) {
-    item = props.field.transformOnCreate(item, index, actionParams(index).deps)
-  }
-  updateItems([...items.value, item])
-}
-
-function removeItem(index: number) {
-  const message = resolveFormBoundaryText(props.field.confirmDelete) ?? 'Remove this row?'
-  if (props.field.confirmDelete && !window.confirm(message)) {
-    return
-  }
-  updateItems(items.value.filter((_, itemIndex) => itemIndex !== index))
-}
-
-function updateItems(value: readonly FormObject[]) {
-  const current = form.getValue(props.path)
-  if (!syncFormArrayItems(current, value)) {
-    form.setValue(
-      props.path,
-      value.map((item, index) => applyVirtualFields(item, index)),
-    )
-    return
-  }
-
-  if (Array.isArray(current)) {
-    current.forEach((item, index) => {
-      if (isFormObject(item)) {
-        applyVirtualFields(item, index)
-      }
-    })
-  }
-}
-
-function applyVirtualFields(item: FormObject, index: number) {
-  if (!props.field.virtualFields) {
-    return item
-  }
-  for (const [key, resolver] of Object.entries(props.field.virtualFields)) {
-    item[key] = resolver(index)
-  }
-  return item
-}
-
-function isArrayActionConfig(action: FormArrayAction | undefined): action is FormArrayBaseAction {
-  return isObject(action) && !isFunction(action)
-}
-
-function resolveAction(action: FormArrayAction | undefined, index: number) {
-  const condition = isArrayActionConfig(action) ? action.condition : action
-  if (isBoolean(condition)) {
-    return condition
-  }
-  if (!isFunction(condition)) {
-    return true
-  }
-  const item = items.value[index] ?? {}
-  return condition(actionParams(index))
-}
-
-async function runCustomAction(index: number, actionIndex: number) {
-  const action = props.field.actions?.custom?.[actionIndex]
-  const item = items.value[index]
-  if (!action || !item) {
-    return
-  }
-  await action.action(actionParams(index))
-}
-
-function customActionVisible(index: number, actionIndex: number) {
-  const action = props.field.actions?.custom?.[actionIndex]
-  const item = items.value[index]
-  if (!action || !item) {
-    return false
-  }
-  return action.condition?.(actionParams(index)) ?? true
-}
-
-function hasRowActions(index: number) {
-  return (
-    isDraggable.value ||
-    resolveAction(props.field.actions?.deleteItem, index) ||
-    Boolean(
-      props.field.actions?.custom?.some((_action, actionIndex) =>
-        customActionVisible(index, actionIndex),
-      ),
-    )
-  )
-}
-
 const showActionsColumn = computed<boolean>(() =>
-  items.value.some((_item, index) => hasRowActions(index)),
+  items.value.some(
+    (_item, index) => isDraggable.value || canDelete(index) || hasCustomActions(index),
+  ),
 )
-
-function rowPath(index: number) {
-  return [...props.path, String(index)]
-}
-
-function itemKey(item: FormObject) {
-  const existing = itemKeys.get(item)
-  if (existing) {
-    return existing
-  }
-  nextItemKey += 1
-  const key = `array-table-item-${nextItemKey}`
-  itemKeys.set(item, key)
-  return key
-}
-
-function itemRenderKey(item: FormObject, index: number) {
-  return `${itemKey(item)}:${index}`
-}
-
-function actionParams(index: number) {
-  const item = items.value[index] ?? {}
-  const callback = form.getFieldCallbackParams(props.path, props.field)
-  return {
-    ctx: callback.ctx,
-    deps: callback.deps,
-    getOptions: (key: string) =>
-      form.getFieldApi([...rowPath(index), ...key.split('.')]).options.get(),
-    getValue: (key: string) => form.getValue([...rowPath(index), ...key.split('.')]),
-    index,
-    item,
-    items: items.value,
-    setValue: (key: string, value: FormValue) =>
-      form.setValue([...rowPath(index), ...key.split('.')], value),
-  }
-}
-
-function isFormObject(value: FormValue): value is FormObject {
-  return isObject(value) && value !== null && !Array.isArray(value)
-}
 
 function fieldLabel(field: FormField) {
   return 'label' in field ? (resolveFormText(field.label) ?? field.key) : field.key
@@ -191,35 +68,23 @@ function fieldLabel(field: FormField) {
 </script>
 
 <template>
-  <section :class="mergeFormUiClass('grid gap-3', formUi.ui.value.arrayTable?.ui?.root)">
+  <section :class="mergeFormUiClass('grid gap-3', ui?.root)">
     <div
       ref="viewportRef"
       :class="
         mergeFormUiClass(
           'w-full overflow-x-auto rounded-lg border border-default bg-default',
-          formUi.ui.value.arrayTable?.ui?.viewport,
+          ui?.viewport,
         )
       "
       :style="viewportShadow.style.value"
     >
       <table
-        :class="
-          mergeFormUiClass(
-            'w-full table-fixed border-collapse text-sm',
-            formUi.ui.value.arrayTable?.ui?.table,
-          )
-        "
+        :class="mergeFormUiClass('w-full table-fixed border-collapse text-sm', ui?.table)"
         :style="{ minWidth }"
       >
-        <thead
-          :class="
-            mergeFormUiClass(
-              'bg-elevated/70 text-left text-muted',
-              formUi.ui.value.arrayTable?.ui?.head,
-            )
-          "
-        >
-          <tr :class="formUi.ui.value.arrayTable?.ui?.headerRow">
+        <thead :class="mergeFormUiClass('bg-elevated/70 text-left text-muted', ui?.head)">
+          <tr :class="ui?.headerRow">
             <th
               v-for="column in columns"
               :key="column.key"
@@ -227,7 +92,7 @@ function fieldLabel(field: FormField) {
               :class="
                 mergeFormUiClass(
                   'border-b border-r border-default px-3 py-2.5 font-medium last:border-r-0',
-                  formUi.ui.value.arrayTable?.ui?.headerCell,
+                  ui?.headerCell,
                 )
               "
             >
@@ -236,12 +101,7 @@ function fieldLabel(field: FormField) {
             <th
               v-if="showActionsColumn"
               scope="col"
-              :class="
-                mergeFormUiClass(
-                  'w-36 border-b border-default px-2 py-2',
-                  formUi.ui.value.arrayTable?.ui?.actionsHeader,
-                )
-              "
+              :class="mergeFormUiClass('w-36 border-b border-default px-2 py-2', ui?.actionsHeader)"
             />
           </tr>
         </thead>
@@ -249,7 +109,7 @@ function fieldLabel(field: FormField) {
           :is="isDraggable ? VueDraggable : 'tbody'"
           v-model="dragItems"
           :tag="isDraggable ? 'tbody' : undefined"
-          :class="formUi.ui.value.arrayTable?.ui?.body"
+          :class="ui?.body"
           handle=".array-table-drag-handle"
           :animation="150"
         >
@@ -259,7 +119,7 @@ function fieldLabel(field: FormField) {
             :class="
               mergeFormUiClass(
                 'align-middle transition-colors hover:bg-elevated/35 [&>*]:border-b [&>*]:border-default [&:last-child>*]:border-b-0',
-                formUi.ui.value.arrayTable?.ui?.row,
+                ui?.row,
               )
             "
           >
@@ -267,37 +127,20 @@ function fieldLabel(field: FormField) {
               v-for="column in columns"
               :key="column.key"
               :class="
-                mergeFormUiClass(
-                  'border-r border-default px-3 py-2 last:border-r-0',
-                  formUi.ui.value.arrayTable?.ui?.cell,
-                )
+                mergeFormUiClass('border-r border-default px-3 py-2 last:border-r-0', ui?.cell)
               "
             >
-              <div
-                :class="
-                  mergeFormUiClass(
-                    'flex min-h-9 w-full items-center',
-                    formUi.ui.value.arrayTable?.ui?.control,
-                  )
-                "
-              >
-                <FormFieldRenderer :field="column" :parent-path="rowPath(index)" bare />
+              <div :class="mergeFormUiClass('flex min-h-9 w-full items-center', ui?.control)">
+                <FormFieldRenderer :field="column" :parent-path="itemPath(index)" bare />
               </div>
               <FormFieldError
-                :path="[...rowPath(index), column.key]"
-                :class="
-                  mergeFormUiClass('mt-1 text-xs text-error', formUi.ui.value.arrayTable?.ui?.error)
-                "
+                :path="[...itemPath(index), column.key]"
+                :class="mergeFormUiClass('mt-1 text-xs text-error', ui?.error)"
               />
             </td>
             <td
               v-if="showActionsColumn"
-              :class="
-                mergeFormUiClass(
-                  'whitespace-nowrap px-2 py-2 text-right',
-                  formUi.ui.value.arrayTable?.ui?.actionsCell,
-                )
-              "
+              :class="mergeFormUiClass('whitespace-nowrap px-2 py-2 text-right', ui?.actionsCell)"
             >
               <UButton
                 v-if="isDraggable"
@@ -308,19 +151,19 @@ function fieldLabel(field: FormField) {
                 :class="
                   mergeFormUiClass(
                     'array-table-drag-handle cursor-grab active:cursor-grabbing',
-                    formUi.ui.value.arrayTable?.ui?.action,
+                    ui?.action,
                   )
                 "
-                aria-label="Drag row"
+                :aria-label="t('form.fields.array.dragItem')"
               />
               <UButton
-                v-if="resolveAction(field.actions?.deleteItem, index)"
+                v-if="canDelete(index)"
                 icon="i-lucide-trash-2"
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                :class="formUi.ui.value.arrayTable?.ui?.action"
-                aria-label="Remove row"
+                :class="ui?.action"
+                :aria-label="t('form.fields.array.removeItem')"
                 @click="removeItem(index)"
               />
               <UButton
@@ -331,7 +174,7 @@ function fieldLabel(field: FormField) {
                 color="neutral"
                 variant="ghost"
                 size="xs"
-                :class="formUi.ui.value.arrayTable?.ui?.action"
+                :class="ui?.action"
                 @click="runCustomAction(index, actionIndex)"
               >
                 {{ resolveFormText(action.label) }}
@@ -341,14 +184,9 @@ function fieldLabel(field: FormField) {
           <tr v-if="items.length === 0">
             <td
               :colspan="columns.length + (showActionsColumn ? 1 : 0)"
-              :class="
-                mergeFormUiClass(
-                  'px-3 py-10 text-center text-muted',
-                  formUi.ui.value.arrayTable?.ui?.empty,
-                )
-              "
+              :class="mergeFormUiClass('px-3 py-10 text-center text-muted', ui?.empty)"
             >
-              {{ resolveFormText(field.emptyLabel) ?? 'No items yet' }}
+              {{ emptyLabel }}
             </td>
           </tr>
         </component>
@@ -359,10 +197,10 @@ function fieldLabel(field: FormField) {
       icon="i-lucide-plus"
       variant="soft"
       :size="formUi.controlSize.value"
-      :class="mergeFormUiClass('justify-self-start', formUi.ui.value.arrayTable?.ui?.add)"
-      @click="addItem"
+      :class="mergeFormUiClass('justify-self-start', ui?.add)"
+      @click="addItem()"
     >
-      {{ resolveFormText(field.addItemLabel) ?? 'Add row' }}
+      {{ addItemLabel }}
     </UButton>
   </section>
 </template>

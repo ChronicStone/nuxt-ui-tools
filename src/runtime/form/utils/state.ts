@@ -135,6 +135,10 @@ function applyInputTransforms(
       }
       continue
     }
+    if (isPrimitiveArrayField(field)) {
+      applyPrimitiveArrayInputTransforms(target, field, value, ctx, path, apiFactory)
+      continue
+    }
     if (isArrayField(field)) {
       if (!Array.isArray(value)) {
         continue
@@ -418,6 +422,19 @@ function buildFieldsOutput(
       continue
     }
 
+    if (isPrimitiveArrayField(field)) {
+      const items = buildPrimitiveArrayOutput(
+        field,
+        getPathValue(state, path),
+        state,
+        ctx,
+        apiFactory,
+        path,
+      )
+      setPathValue(output, field.key, applyOutputTransform(field, items, params))
+      continue
+    }
+
     if (isArrayField(field)) {
       const value = getPathValue(state, path)
       const items = Array.isArray(value)
@@ -499,6 +516,20 @@ async function validateFields(
         ...(await validateFields(getChildFields(field), state, ctx, apiFactory, path, mode)),
       )
       continue
+    }
+
+    if (isPrimitiveArrayField(field)) {
+      errors.push(
+        ...(await validatePrimitiveArrayItems(
+          field,
+          getPathValue(state, path),
+          state,
+          ctx,
+          apiFactory,
+          path,
+          mode,
+        )),
+      )
     }
 
     if (isArrayField(field)) {
@@ -596,7 +627,121 @@ export function isArrayField(field: FormField) {
     'array-table',
     'array-tabs',
     'array-variant',
+    'array-collapse',
   ])
+}
+
+function applyPrimitiveArrayInputTransforms(
+  target: FormObject,
+  field: FormField,
+  value: FormValue,
+  ctx: FormContextData,
+  path: readonly string[],
+  apiFactory?: FormFieldApiFactory,
+) {
+  if (!Array.isArray(value)) {
+    return
+  }
+  for (const [index, item] of value.entries()) {
+    const itemPath = [...path, String(index)]
+    const normalized = item === null ? undefined : item
+    const itemField = getPrimitiveArrayItemField(field, index)
+    const transform = itemField
+      ? Object.getOwnPropertyDescriptor(itemField, 'transform')?.value
+      : undefined
+    if (!itemField || !isRecord(transform) || !isFunction(transform.input)) {
+      if (normalized !== item) {
+        setPathValue(target, itemPath, normalized)
+      }
+      continue
+    }
+    const itemApi = apiFactory?.(itemPath, itemField)
+    const itemParams = itemApi
+      ? callbackParams({ api: itemApi, ctx, field: itemField, parentPath: path, state: target })
+      : undefined
+    setPathValue(target, itemPath, transform.input(normalized, itemParams))
+  }
+}
+
+function buildPrimitiveArrayOutput(
+  field: FormField,
+  value: FormValue,
+  state: FormObject,
+  ctx: FormContextData,
+  apiFactory: FormFieldApiFactory,
+  path: readonly string[],
+): FormValue[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.flatMap((item, index) => {
+    if (isUndefined(item)) {
+      return []
+    }
+    const itemField = getPrimitiveArrayItemField(field, index)
+    if (!itemField) {
+      return [cloneFormValue(item)]
+    }
+    const itemPath = [...path, String(index)]
+    const itemParams = callbackParams({
+      api: apiFactory(itemPath, itemField),
+      ctx,
+      field: itemField,
+      parentPath: path,
+      state,
+    })
+    return [applyOutputTransform(itemField, item, itemParams)]
+  })
+}
+
+async function validatePrimitiveArrayItems(
+  field: FormField,
+  value: FormValue,
+  state: FormObject,
+  ctx: FormContextData,
+  apiFactory: FormFieldApiFactory,
+  path: readonly string[],
+  mode: FormValidationMode,
+) {
+  const errors: FormSubmitError[] = []
+  if (!Array.isArray(value)) {
+    return errors
+  }
+  for (const [index, item] of value.entries()) {
+    const itemField = getPrimitiveArrayItemField(field, index)
+    if (!itemField) {
+      continue
+    }
+    const itemPath = [...path, String(index)]
+    const itemParams = callbackParams({
+      api: apiFactory(itemPath, itemField),
+      ctx,
+      field: itemField,
+      parentPath: path,
+      state,
+    })
+    if (mode !== 'rules' && resolveRequired(itemField, itemParams) && isEmptyValue(item)) {
+      errors.push({ message: resolveRequiredMessage(itemField), path: itemPath.join('.') })
+    }
+    if (mode !== 'required') {
+      // oxlint-disable-next-line no-await-in-loop -- item rules run in order so messages stay index-aligned
+      errors.push(...(await validateFieldRules(itemField, item, itemParams, itemPath)))
+    }
+  }
+  return errors
+}
+
+export function isPrimitiveArrayField(field: FormField) {
+  return createFormFieldInstance(field).type.is('array-primitive')
+}
+
+export function getPrimitiveArrayItemField(field: FormField, index: number): FormField | null {
+  const itemField = Object.getOwnPropertyDescriptor(field, 'field')?.value
+  if (!isRecord(itemField)) {
+    return null
+  }
+  const candidate = { ...itemField, key: String(index) }
+  return isFormField(candidate) ? candidate : null
 }
 
 export function getMatrixRows(field: FormField) {
@@ -648,7 +793,7 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData, api?: FormF
   ) {
     return []
   }
-  if (fieldInstance.type.is('tag')) {
+  if (fieldInstance.type.isAny(['tag', 'array-primitive'])) {
     return []
   }
   if (fieldInstance.type.is('slider')) {

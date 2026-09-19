@@ -134,6 +134,36 @@ export interface FormArrayListUi {
   action?: FormUiClass
 }
 
+export interface FormArrayCollapseUi {
+  root?: FormUiClass
+  header?: FormUiClass
+  title?: FormUiClass
+  description?: FormUiClass
+  empty?: FormUiClass
+  list?: FormUiClass
+  item?: FormUiClass
+  itemHeader?: FormUiClass
+  trigger?: FormUiClass
+  arrow?: FormUiClass
+  itemTitle?: FormUiClass
+  summary?: FormUiClass
+  itemActions?: FormUiClass
+  body?: FormUiClass
+  fields?: FormUiClass
+  add?: FormUiClass
+  action?: FormUiClass
+}
+
+export interface FormArrayPrimitiveUi {
+  root?: FormUiClass
+  empty?: FormUiClass
+  item?: FormUiClass
+  preview?: FormUiClass
+  control?: FormUiClass
+  action?: FormUiClass
+  add?: FormUiClass
+}
+
 export interface FormArrayTableUi {
   root?: FormUiClass
   viewport?: FormUiClass
@@ -186,6 +216,8 @@ export interface FormUiConfig {
   matrix?: FormUiPartConfig<FormMatrixUi>
   arrayList?: FormUiPartConfig<FormArrayListUi>
   arrayTable?: FormUiPartConfig<FormArrayTableUi>
+  arrayCollapse?: FormUiPartConfig<FormArrayCollapseUi>
+  arrayPrimitive?: FormUiPartConfig<FormArrayPrimitiveUi>
   modal?: FormUiPartConfig<FormOverlayUi>
   drawer?: FormUiPartConfig<FormOverlayUi>
   fullscreen?: FormUiPartConfig<FormOverlayUi>
