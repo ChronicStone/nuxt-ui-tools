@@ -216,7 +216,6 @@ function handleOperatorChange(op: TableFilterOperator) {
 
 function setSelectedValues(values: (string | number | boolean)[]) {
   localSelectedValues.value = values
-  pinnedValues.value = new Set(values.map(String))
   if (state.filterUi.value.commitMode === 'auto') {
     commitSelection()
   }

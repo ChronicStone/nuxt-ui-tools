@@ -456,7 +456,6 @@ const listUi = {
   addFilter: { props: { trigger: { label: 'Filtre' } } },
   columnPanel: {
     props: {
-      count: { color: 'neutral', size: 'sm', variant: 'soft' },
       trigger: { color: 'neutral', icon: 'i-lucide-layers', variant: 'outline' },
     },
   },
