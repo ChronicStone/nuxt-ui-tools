@@ -56,6 +56,8 @@ export function useTableActions(options: UseTableActionsParams) {
     TableActionContext<GenericObject, TableRuntimeRecord, TableRuntimeRecord>
   >(() => ({
     selectedRows: options.selection.selectedRows.value,
+    scope: options.selection.bulkScope.value,
+    matchingCount: options.queryContent.data.value.rowCount ?? null,
     context: toPlainRecord(options.queryContent.contextData.value),
     pageContext: toPlainRecord(options.queryContent.pageContextData.value),
     request: {

@@ -11,6 +11,7 @@ export interface UseTableSelectionParams {
 
 export function useTableSelection(options: UseTableSelectionParams) {
   const selectedKeys = ref<string[]>([])
+  const bulkScope = ref<'selection' | 'all'>('selection')
   const lastTouchedRowId = ref<string | null>(null)
   const pageRows = computed<GenericObject[]>(() => options.queryContent.data.value.rows)
 
@@ -183,10 +184,20 @@ export function useTableSelection(options: UseTableSelectionParams) {
     { immediate: true },
   )
 
+  function setBulkScope(scope: 'selection' | 'all') {
+    bulkScope.value = scope
+  }
+
+  watch(selectedCount, (count) => {
+    if (count === 0) bulkScope.value = 'selection'
+  })
+
   return {
     selectionEnabled,
     rowSelection,
     selectedKeys,
+    bulkScope,
+    setBulkScope,
     selectedRows,
     selectedCount,
     allSelected,

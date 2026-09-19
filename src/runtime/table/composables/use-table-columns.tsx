@@ -2,6 +2,7 @@
 
 import { computed, ref, watch } from 'vue'
 
+import { createColumnDefs } from '../utils/columns/defs'
 import {
   ROW_ACTIONS_COLUMN_ID,
   hasVisibleTableRowActions,
@@ -214,6 +215,7 @@ export function useTableColumns(params: UseTableColumnsParams) {
   function getMenuItems(options: { columnId: string }) {
     return createColumnMenuItems({
       columnId: options.columnId,
+      label: orderedColumns.value.find((column) => column.id === options.columnId)?.label,
       schema: params.schema.value,
       orderedColumns: orderedColumns.value,
       getSortState,
@@ -237,9 +239,14 @@ export function useTableColumns(params: UseTableColumnsParams) {
     return params.selection.selectionEnabled.value ? [selectionColumn, ...dataColumns] : dataColumns
   })
 
+  const columnDefs = computed(() =>
+    createColumnDefs({ params, visibleOrderedColumns: visibleOrderedColumns.value }),
+  )
+
   return {
     tableState,
     tableColumns,
+    columnDefs,
     runtimeColumns,
     orderedColumns,
     visibleOrderedColumns,

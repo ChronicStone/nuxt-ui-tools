@@ -133,6 +133,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       value: String(entry.value),
       count: filterUi.value.row.showCounts ? entry.count : undefined,
       icon: entry.icon,
+      color: entry.color,
       truncate: filterUi.value.row.truncate,
     })),
   )
@@ -157,6 +158,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       value: entry.id,
       count: filterUi.value.row.showCounts ? entry.count : undefined,
       icon: entry.icon,
+      color: entry.color,
       truncate: filterUi.value.row.truncate,
       depth: entry.depth,
       expandable: entry.expandable,

@@ -14,6 +14,7 @@ export function useTableControls(options: UseTableControlsParams) {
 
   const tableLayout = options.layout.activeLayout
   const gridEnabled = options.layout.gridEnabled
+  const tableEnabled = options.layout.tableEnabled
   const layoutState = computed(() => {
     const available: TableLayout[] = []
     if (options.layout.tableEnabled.value) available.push('table')
@@ -30,6 +31,7 @@ export function useTableControls(options: UseTableControlsParams) {
     columnsPanelSearch,
     tableLayout,
     gridEnabled,
+    tableEnabled,
     layoutState,
     setTableLayout,
   }

@@ -12,6 +12,7 @@ import type {
   TableSchemaView,
   TableUiFilterDefinition,
 } from '../types'
+import type { FilterPreviewOptionEntry } from '../utils/filters/preview'
 import {
   buildFilterPreview,
   createFilterValueForOperator,
@@ -108,20 +109,21 @@ export function useTableFilters(params: UseTableFiltersParams) {
     )
   }
 
-  function getFilterPreview(input: {
-    key: string
-    entries?: Array<{ label: string; value: string | number | boolean }>
-  }) {
+  function getFilterPreview(input: { key: string; entries?: FilterPreviewOptionEntry[] }) {
     const definition = getDefinition({ key: input.key })
 
     if (!definition) {
-      return buildFilterPreview({
-        definition: {
-          kind: 'text',
-          key: input.key,
-          label: input.key,
-        },
-      })
+      return {
+        ...buildFilterPreview({
+          definition: {
+            kind: 'text',
+            key: input.key,
+            label: input.key,
+          },
+        }),
+        active: false,
+        dirty: false,
+      }
     }
 
     const preview = buildFilterPreview({
@@ -130,9 +132,13 @@ export function useTableFilters(params: UseTableFiltersParams) {
       optionEntries: input.entries,
     })
 
+    const rule = getFilterState({ key: input.key })
+    const hasValue = Boolean(preview.tags?.length) || Boolean(preview.summary)
+
     return {
       ...preview,
-      active: getActiveFilterState({ key: input.key }) != null,
+      active: rule != null && hasValue,
+      dirty: getActiveFilterState({ key: input.key }) != null,
     }
   }
 

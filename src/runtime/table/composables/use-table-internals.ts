@@ -14,6 +14,7 @@ import { useTableLayout } from './use-table-layout'
 import { useTablePagination } from './use-table-pagination'
 import { useTableSelection } from './use-table-selection'
 import { useTableStartup } from './use-table-startup'
+import { useTableSummaries } from './use-table-summaries'
 import { useTableState } from './use-table-state'
 
 function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TSchema> }) {
@@ -60,6 +61,12 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     tableLayout: controls.tableLayout,
     tableApi,
   })
+  const summaries = useTableSummaries({
+    schema,
+    queryContent,
+    selection,
+    runtimeColumns: tableColumns.runtimeColumns,
+  })
   const pagination = useTablePagination({
     schema,
     layout,
@@ -105,6 +112,7 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     controls,
     tableColumns,
     pagination,
+    summaries,
   }
 }
 
