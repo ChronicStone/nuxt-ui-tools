@@ -68,17 +68,17 @@ function resolveMinuteStep(
 
 function parseTime(value: string | undefined) {
   if (!value) {
-    return undefined
+    return
   }
   const match = /^(\d{1,2})(?::(\d{1,2}))?$/u.exec(value)
   if (!match) {
-    return undefined
+    return
   }
 
   const hour = Number(match[1])
   const minute = Number(match[2] ?? 0)
   if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-    return undefined
+    return
   }
   return new Time(hour, minute)
 }

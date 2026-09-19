@@ -148,7 +148,7 @@ function getBeforeSubmit(schema: FormValue): FormSubmitHandler<FormObject, never
 
 function getSchemaSubmit(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const submit = Object.getOwnPropertyDescriptor(schema, 'submit')?.value
   return isFunction(submit) ? submit : undefined

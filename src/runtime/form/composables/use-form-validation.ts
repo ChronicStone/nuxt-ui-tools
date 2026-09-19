@@ -221,7 +221,7 @@ export function useFormValidation(params: {
       return customError.message
     }
     if (!touchedPaths.value.includes(key)) {
-      return undefined
+      return
     }
 
     return resolveFieldErrors(key)[0]
@@ -907,7 +907,7 @@ function resolveRegleStatus(regle: FormValue, path: string): FormValue {
       return current[Number(segment)]
     }
     if (!isObject(current)) {
-      return undefined
+      return
     }
     return current[segment]
   }, regle)
@@ -954,7 +954,7 @@ function readBooleanProperty(value: FormValue, key: string) {
 
 function readReactiveProperty(value: FormValue, key: string) {
   if (!isRecord(value)) {
-    return undefined
+    return
   }
   return unref(Object.getOwnPropertyDescriptor(value, key)?.value)
 }

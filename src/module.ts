@@ -146,7 +146,7 @@ export default defineNuxtModule<ModuleOptions>({
 })
 
 function mergeViewportOptions(
-  viewportOptions: Partial<ViewportOptions> | undefined,
+  viewportOptions?: Partial<ViewportOptions>,
 ): ViewportOptions {
   return {
     breakpoints: {
@@ -167,7 +167,7 @@ function normalizeViewportOptions(
   viewportOptions: Partial<ViewportOptions> | false | undefined,
 ): ViewportOptions {
   if (viewportOptions === false) {
-    return mergeViewportOptions(undefined)
+    return mergeViewportOptions()
   }
   return mergeViewportOptions(viewportOptions)
 }

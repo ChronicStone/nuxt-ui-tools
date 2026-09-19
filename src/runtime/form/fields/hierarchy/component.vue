@@ -326,7 +326,7 @@ function treeBubbleSelect(field: FormHierarchyField) {
 
 function treeSelectionBehavior(field: FormHierarchyField) {
   if (field.type !== 'tree' && field.type !== 'tree-select') {
-    return undefined
+    return
   }
   return field.selectionBehavior ?? (treeMultiple.value ? 'toggle' : 'replace')
 }

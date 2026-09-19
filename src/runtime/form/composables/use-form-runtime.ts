@@ -158,7 +158,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   })
   const currentStepRoot = computed(() => {
     if (!isSteppedSchema(params.schema.value)) {
-      return undefined
+      return
     }
     return getSchemaSteps(params.schema.value)[currentStepIndex.value]?.root
   })
@@ -543,7 +543,7 @@ function isRefreshableResource(value: FormValue): value is { refresh: () => Prom
 
 function getSchemaLifecycleHandler(schema: FormValue, key: string) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const handler = Object.getOwnPropertyDescriptor(schema, key)?.value
   return isFunction(handler) ? handler : undefined

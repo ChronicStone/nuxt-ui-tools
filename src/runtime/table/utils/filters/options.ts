@@ -153,7 +153,7 @@ function sumChildCounts(entries: TableResolvedFilterOptionEntry[]) {
   const counts = entries.map((entry) => entry.count).filter(isNumber)
 
   if (!counts.length) {
-    return undefined
+    return
   }
   return counts.reduce((total, count) => total + count, 0)
 }

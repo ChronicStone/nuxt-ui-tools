@@ -221,7 +221,7 @@ function updateVariant(item: FormObject, index: number, value: string | number) 
 function variantValue(item: FormObject | undefined) {
   const { field } = props
   if (field.type !== 'array-variant' || !item) {
-    return undefined
+    return
   }
   const value = item[field.variantKey]
   return isString(value) || isNumber(value) ? value : undefined

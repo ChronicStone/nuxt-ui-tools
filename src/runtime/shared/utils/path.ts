@@ -13,7 +13,7 @@ export function getPathValue<T>(source: T, path: string | readonly string[]) {
   return pathSegments(path).reduce<PathValue | undefined>(
     (current, segment: string) => {
       if (!isPathContainer(current)) {
-        return undefined
+        return
       }
       return getContainerValue(current, segment)
     },

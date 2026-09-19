@@ -270,7 +270,7 @@ export function usePlaygroundNavigation() {
   const abstractions = computed(() => playgroundAbstractions)
   const currentAbstraction = computed<PlaygroundAbstraction | undefined>(() => {
     if (route.path === '/') {
-      return undefined
+      return
     }
 
     return abstractions.value.find(

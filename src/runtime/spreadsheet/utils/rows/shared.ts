@@ -156,7 +156,7 @@ function splitSpreadsheetMultipleTokens(value: string, separator: string | undef
 function parseSpreadsheetNumberValue(value: string) {
   const nextValue = Number(value)
   if (Number.isNaN(nextValue) || !Number.isFinite(nextValue)) {
-    return undefined
+    return
   }
 
   return nextValue
@@ -217,7 +217,7 @@ function parseSpreadsheetEnumColumnValue<TContext>(
 ) {
   const issueText = getSpreadsheetIssueText()
   if (!token) {
-    return undefined
+    return
   }
 
   const multipleConfig = resolveSpreadsheetMultipleConfig(column.multiple)
@@ -262,7 +262,7 @@ function parseSpreadsheetOptionColumnValue<TContext>(
 ) {
   const issueText = getSpreadsheetIssueText()
   if (!token) {
-    return undefined
+    return
   }
 
   const options = resolveSpreadsheetColumnOptionEntries(column.options, context)
@@ -475,7 +475,7 @@ export async function parseSpreadsheetCellValue<TContext>(
     )
 
     if (isEmpty && !column.parse) {
-      return undefined
+      return
     }
     return value
   } catch (error) {

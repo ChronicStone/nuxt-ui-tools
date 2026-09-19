@@ -43,7 +43,7 @@ const hint = computed(() =>
 )
 const labelExtra = computed(() => {
   if (!field.value.capability.has('hint') || !('labelExtra' in props.field)) {
-    return undefined
+    return
   }
   const value = props.field.labelExtra
   return isFunction(value) ? value() : value

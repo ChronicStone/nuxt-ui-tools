@@ -44,7 +44,7 @@ function getFormOverlayConfig(
 ): FormFullscreenConfig | undefined
 function getFormOverlayConfig(schema: FormValue, key: 'modal' | 'drawer' | 'fullscreen') {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const value = Object.getOwnPropertyDescriptor(schema, key)?.value
   return isRecord(value) ? value : undefined
@@ -52,12 +52,12 @@ function getFormOverlayConfig(schema: FormValue, key: 'modal' | 'drawer' | 'full
 
 function getFormOverlayText(schema: FormValue, key: 'title' | 'description') {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
 
   const value = Object.getOwnPropertyDescriptor(schema, key)?.value
   if (!isString(value) && !isNumber(value) && !isFunction(value)) {
-    return undefined
+    return
   }
 
   const resolvedValue = resolveFormText(value)

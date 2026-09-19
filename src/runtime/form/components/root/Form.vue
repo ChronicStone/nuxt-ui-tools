@@ -254,7 +254,7 @@ function stepLabel(index: number) {
 
 function getSchemaTitle(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const value = Object.getOwnPropertyDescriptor(schema, 'title')?.value
   return isString(value) || isNumber(value) || isFunction(value) ? value : undefined
@@ -293,7 +293,7 @@ function getSchemaValidationMode(schema: FormValue): FormValidationMode {
 
 function getSchemaControls(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
   return isRecord(controls) ? controls : undefined

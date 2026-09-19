@@ -240,7 +240,7 @@ function isSubmitHandler(value: FormValue): value is FormSubmitHandler<FormObjec
 
 function getSchemaFormKey(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const formKey = Object.getOwnPropertyDescriptor(schema, 'formKey')?.value
   return isString(formKey) ? formKey : undefined

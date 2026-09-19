@@ -865,7 +865,7 @@ function disabledQueryDefinition(reason: string) {
 function disabledInfiniteQueryDefinition() {
   return {
     enabled: false,
-    getNextPageParam: () => undefined,
+    getNextPageParam: () => null,
     initialPageParam: null,
     queryFn: async () => [],
     queryKey: ['table-infinite-data-disabled'],

@@ -100,55 +100,55 @@ function createTableApiStub() {
       rows,
       status,
       totalRowCount: rowCount,
-      updateRow: () => undefined,
-      updateRows: () => undefined,
+      updateRow: () => {},
+      updateRows: () => {},
     },
     filters: {
       activeCount: computed(() => 0),
-      clear: () => undefined,
-      remove: () => undefined,
-      replace: () => undefined,
-      search: computed({ get: () => '', set: () => undefined }),
+      clear: () => {},
+      remove: () => {},
+      replace: () => {},
+      search: computed({ get: () => '', set: () => {} }),
       state: computed(() => ({ search: '', ui: [] })),
     },
     layout: {
-      set: () => undefined,
+      set: () => {},
       state: computed(() => ({ active: 'table' as const, available: ['table', 'grid'] })),
     },
     pagination: {
       mode: 'offset',
-      next: () => undefined,
+      next: () => {},
       pageSizeOptions: computed(() => [20]),
-      previous: () => undefined,
-      reset: () => undefined,
-      setPage: () => undefined,
-      setPageSize: () => undefined,
+      previous: () => {},
+      reset: () => {},
+      setPage: () => {},
+      setPageSize: () => {},
       state: paginationState,
     },
     refresh: async () => {
       throw new Error('not implemented')
     },
     reset: {
-      all: () => undefined,
-      query: () => undefined,
+      all: () => {},
+      query: () => {},
     },
     selection: {
-      clear: () => undefined,
+      clear: () => {},
       isSelected: () => false,
-      selectAll: () => undefined,
-      selectRows: () => undefined,
+      selectAll: () => {},
+      selectRows: () => {},
       state: selectionState,
-      toggle: () => undefined,
-      unselectRows: () => undefined,
+      toggle: () => {},
+      unselectRows: () => {},
     },
     sorting: {
-      clear: () => undefined,
-      set: () => undefined,
-      setDirection: () => undefined,
-      setKey: () => undefined,
+      clear: () => {},
+      set: () => {},
+      setDirection: () => {},
+      setKey: () => {},
       sortKeys: computed(() => []),
       state: sortingState,
-      toggle: () => undefined,
+      toggle: () => {},
     },
     state: {
       initialized: trueValue,
@@ -158,8 +158,8 @@ function createTableApiStub() {
       layout,
       query,
     },
-    updateRow: () => undefined,
-    updateRows: () => undefined,
+    updateRow: () => {},
+    updateRows: () => {},
   }
 
   return tableApi
@@ -181,7 +181,7 @@ describe('row actions', () => {
     const schema = {
       rowActions: [
         {
-          action: () => undefined,
+          action: () => {},
           condition: () => false,
           key: 'hidden',
           label: 'Hidden',
@@ -189,7 +189,7 @@ describe('row actions', () => {
         {
           children: [
             {
-              action: () => undefined,
+              action: () => {},
               condition: () => false,
               key: 'group-hidden',
               label: 'Group hidden',
@@ -199,7 +199,7 @@ describe('row actions', () => {
           label: 'Group',
         },
         {
-          action: () => undefined,
+          action: () => {},
           key: 'toggle',
           label: () => 'Pause',
         },
@@ -226,7 +226,7 @@ describe('row actions', () => {
         {
           children: [
             {
-              action: () => undefined,
+              action: () => {},
               condition: () => false,
               key: 'hidden-child',
               label: 'Hidden child',
@@ -252,7 +252,7 @@ describe('row actions', () => {
     const schema = {
       rowActions: [
         {
-          action: () => undefined,
+          action: () => {},
           condition: () => false,
           key: 'never',
           label: 'Never',
@@ -276,12 +276,12 @@ describe('row actions', () => {
     const schema = {
       rowActions: [
         {
-          action: () => undefined,
+          action: () => {},
           key: 'copy',
           label: () => '1 copy',
         },
         {
-          action: () => undefined,
+          action: () => {},
           condition: () => false,
           key: 'hidden',
           label: 'Hidden',

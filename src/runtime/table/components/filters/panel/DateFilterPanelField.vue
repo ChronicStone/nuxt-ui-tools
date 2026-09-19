@@ -156,12 +156,12 @@ function coerceCalendarDate<TValue>(value: TValue) {
 
 function toCalendarDate<TValue>(value: TValue) {
   if (!isDate(value) && !isString(value) && !isNumber(value)) {
-    return undefined
+    return
   }
 
   const resolvedDate = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(resolvedDate.getTime())) {
-    return undefined
+    return
   }
 
   return new CalendarDate(

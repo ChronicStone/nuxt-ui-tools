@@ -205,7 +205,7 @@ function getSchemaValidationMode(schema: FormValue): FormValidationMode {
 
 function getSchemaControls(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
   return isRecord(controls) ? controls : undefined

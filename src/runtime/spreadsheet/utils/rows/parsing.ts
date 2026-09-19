@@ -102,14 +102,14 @@ function resolveCollectionCellValue(params: {
 }) {
   const { item } = params.match
   if (!item) {
-    return undefined
+    return
   }
 
   // SAFETY: collection items are normalized before parsing, so each item.value is a value definition here.
   const valueDefinition = item.value as SpreadsheetDynamicValueDefinition
   const text = String(params.raw ?? '').trim()
   if (!text) {
-    return undefined
+    return
   }
 
   if (valueDefinition.kind === 'text') {

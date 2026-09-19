@@ -340,7 +340,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
 
   function getIssueRawValue(rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) {
     if (!issue.columnKey) {
-      return undefined
+      return
     }
     return getSpreadsheetValueAtPath(rowData, issue.columnKey)
   }

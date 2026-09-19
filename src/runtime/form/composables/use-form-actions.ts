@@ -104,7 +104,7 @@ function getBaseFormAction(
 
 function getSchemaActions(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const actions = Object.getOwnPropertyDescriptor(schema, 'actions')?.value
   return isFormActionList(actions) ? actions : undefined
@@ -112,21 +112,21 @@ function getSchemaActions(schema: FormValue) {
 
 function getCurrentStepActions(runtime: FormRuntime) {
   if (!runtime.isStepped.value) {
-    return undefined
+    return
   }
   const schema = runtime.schema.value
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
 
   const steps = Object.getOwnPropertyDescriptor(schema, 'steps')?.value
   if (!Array.isArray(steps)) {
-    return undefined
+    return
   }
 
   const step = steps[runtime.currentStepIndex.value]
   if (!isRecord(step)) {
-    return undefined
+    return
   }
 
   const actions = Object.getOwnPropertyDescriptor(step, 'actions')?.value

@@ -330,7 +330,7 @@ function queryValue(route: Pick<QueryPrefetchRuntimeRoute, 'query'>, key: string
 
 function positiveInteger(value: string | undefined) {
   if (!value) {
-    return undefined
+    return
   }
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined

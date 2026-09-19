@@ -434,7 +434,7 @@ export function resolveSpreadsheetReferences<TRow, TReferences>(
     | undefined,
 ) {
   if (!references) {
-    return undefined
+    return
   }
   if (isSpreadsheetReferenceResolver<TRow, TReferences>(references)) {
     return references(createSpreadsheetReferenceBuilder<unknown, TRow>())

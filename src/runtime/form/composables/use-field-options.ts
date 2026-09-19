@@ -398,7 +398,7 @@ function resolveOptionKeys(field: FormField): FormOptionKeys {
 
 function resolveStringProperty(value: FormValue, key: string) {
   if (!isObject(value)) {
-    return undefined
+    return
   }
   const property = Object.getOwnPropertyDescriptor(value, key)?.value
   return isString(property) ? property : undefined

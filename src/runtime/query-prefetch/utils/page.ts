@@ -79,7 +79,7 @@ function executeQueryOptions(queries: readonly QueryPrefetchOption[], queryClien
   return Promise.all(
     queries.map(async (query) => {
       if (hasProperty(query, 'enabled') && query.enabled === false) {
-        return undefined
+        return
       }
 
       try {
@@ -88,7 +88,7 @@ function executeQueryOptions(queries: readonly QueryPrefetchOption[], queryClien
         const select = hasProperty(query, 'select') ? query.select : undefined
         return data !== undefined && isQueryPrefetchSelector(select) ? select(data) : data
       } catch {
-        return undefined
+        return
       }
     }),
   )

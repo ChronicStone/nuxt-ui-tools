@@ -102,7 +102,7 @@ export function isQueryPrefetchOption(value: QueryPrefetchCandidate): value is Q
 
 function executeQuery(query: QueryPrefetchOption, queryClient: QueryClient) {
   if (hasProperty(query, 'enabled') && query.enabled === false) {
-    return Promise.resolve(undefined)
+    return Promise.resolve()
   }
 
   return queryClient

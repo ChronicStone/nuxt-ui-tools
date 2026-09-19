@@ -33,7 +33,7 @@ const modalConfig = getFormModalConfig(props.instance.schema)
 
 function resolveSchemaUi(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const value = Object.getOwnPropertyDescriptor(schema, 'ui')?.value
   return isRecord(value) ? value : undefined

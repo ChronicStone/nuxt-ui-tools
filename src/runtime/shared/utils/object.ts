@@ -105,7 +105,7 @@ export function getObjectProperty<T>(source: T, path: string): ObjectPropertyVal
   return path.split('.').reduce<ObjectPropertyValue | undefined>(
     (current, segment) => {
       if (!isObject(current)) {
-        return undefined
+        return
       }
       return current[segment]
     },

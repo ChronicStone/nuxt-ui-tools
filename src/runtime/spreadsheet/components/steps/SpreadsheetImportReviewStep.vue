@@ -52,7 +52,7 @@ const tableHasRows = computed(() => review.visibleRows.value.length > 0)
 
 const summaryLimitText = computed(() => {
   if (!Number.isFinite(maxRecords.value)) {
-    return undefined
+    return
   }
   return t('spreadsheet.steps.review.importLimit', {
     importable: Math.min(props.spreadsheet.resolvedRows.value.length, maxRecords.value),

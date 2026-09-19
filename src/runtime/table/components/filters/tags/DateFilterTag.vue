@@ -158,7 +158,7 @@ const calendarRange = computed<
   | undefined
 >(() => {
   if (!localRangeStart.value || !localRangeEnd.value) {
-    return undefined
+    return
   }
 
   return {
@@ -377,7 +377,7 @@ function toCalendarDate<TValue>(value: TValue) {
 
   const resolvedDate = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(resolvedDate.getTime())) {
-    return undefined
+    return
   }
 
   return new CalendarDate(

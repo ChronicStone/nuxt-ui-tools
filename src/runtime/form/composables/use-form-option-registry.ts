@@ -1,8 +1,10 @@
-import { computed, shallowReactive } from 'vue'
+import { computed, ref, shallowReactive } from 'vue'
 
 import type { FormValue, FormOptionRuntimeState } from '../types'
 import type { ResolvedFormOption } from '../utils/options'
 import { isString } from '../utils/predicate'
+
+const emptyLabel = ref<string | undefined>()
 
 export function useFormOptionRegistry() {
   const states = shallowReactive<Record<string, FormOptionRuntimeState>>({})
@@ -44,7 +46,7 @@ function createEmptyOptionState(): FormOptionRuntimeState {
     add: () => {},
     creatable: computed<boolean>(() => false),
     create: async () => null,
-    createLabel: computed<string | undefined>(() => undefined),
+    createLabel: computed<string | undefined>(() => emptyLabel.value),
     creating: computed<boolean>(() => false),
     disableOnLoading: computed<boolean>(() => false),
     error: computed<FormValue | null>(() => null),

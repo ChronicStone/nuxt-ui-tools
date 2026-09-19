@@ -73,7 +73,7 @@ const triggerProps = computed(() =>
 
 const selectedDefinition = computed(() => {
   if (isNullish(selectedKey.value)) {
-    return undefined
+    return
   }
   if (props.sessionDefinition?.key === selectedKey.value) {
     return props.sessionDefinition

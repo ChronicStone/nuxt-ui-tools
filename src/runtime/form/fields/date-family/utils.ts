@@ -140,7 +140,7 @@ export function formatDateManualValue(
 
 export function calendarValueFromCanonical(type: FormDateFamilyType, value: string) {
   if (!value) {
-    return undefined
+    return
   }
 
   if (type === 'year') {
@@ -150,14 +150,14 @@ export function calendarValueFromCanonical(type: FormDateFamilyType, value: stri
 
   const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?/u.exec(value)
   if (!match) {
-    return undefined
+    return
   }
 
   const year = Number(match[1])
   const month = Number(match[2])
   const day = Number(match[3] ?? 1)
   if (!isValidCalendarDate(year, month, day)) {
-    return undefined
+    return
   }
   return new CalendarDate(year, month, day)
 }
@@ -198,13 +198,13 @@ export function serializeCalendarValue(
 export function timeValueFromCanonical(value: string) {
   const match = /T(\d{2}):(\d{2})/u.exec(value)
   if (!match) {
-    return undefined
+    return
   }
 
   const hour = Number(match[1])
   const minute = Number(match[2])
   if (!isValidTime(hour, minute)) {
-    return undefined
+    return
   }
   return new Time(hour, minute)
 }
@@ -239,7 +239,7 @@ export function canonicalDateFromValue(value: FormDateSeedValue) {
 export function canonicalDateToJsDate(value: string) {
   const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?(?:T(\d{2}):(\d{2}))?/u.exec(value)
   if (!match) {
-    return undefined
+    return
   }
 
   const year = Number(match[1])
@@ -248,7 +248,7 @@ export function canonicalDateToJsDate(value: string) {
   const hour = Number(match[4] ?? 0)
   const minute = Number(match[5] ?? 0)
   if (!isValidCalendarDate(year, month, day) || !isValidTime(hour, minute)) {
-    return undefined
+    return
   }
   return new Date(year, month - 1, day, hour, minute)
 }

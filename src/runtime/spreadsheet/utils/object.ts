@@ -12,7 +12,7 @@ export function getSpreadsheetValueAtPath(
 ): SpreadsheetValue | undefined {
   return path.split('.').reduce<SpreadsheetValue | undefined>((current, part) => {
     if (!isSpreadsheetRecord(current)) {
-      return undefined
+      return
     }
     return current[part]
   }, data)

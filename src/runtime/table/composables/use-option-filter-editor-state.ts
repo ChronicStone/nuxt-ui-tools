@@ -180,7 +180,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     get: () => {
       const selected = options.selectedValues.value[0]
       if (isNullish(selected)) {
-        return undefined
+        return
       }
 
       return visibleTreeEntries.value.find(

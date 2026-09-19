@@ -138,7 +138,7 @@ function resolveLocaleRegionCode() {
   const segments = locale.value.code.split('-')
   const region = segments.length > 1 ? segments.at(-1)?.toUpperCase() : undefined
   if (!region) {
-    return undefined
+    return
   }
 
   return getCountries().find((code) => code === region)

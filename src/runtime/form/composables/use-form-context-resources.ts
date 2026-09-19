@@ -41,7 +41,7 @@ export function useFormContextResources() {
 
 export function getSchemaContext(schema: FormValue) {
   if (!isRecord(schema)) {
-    return undefined
+    return
   }
   const context = Object.getOwnPropertyDescriptor(schema, 'context')?.value
   return isRecord(context) ? context : undefined
@@ -91,7 +91,7 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
       if (!nextSource) {
         return {
           enabled: false,
-          queryFn: async () => undefined,
+          queryFn: async () => {},
           queryKey: ['form-context', 'disabled'],
         }
       }

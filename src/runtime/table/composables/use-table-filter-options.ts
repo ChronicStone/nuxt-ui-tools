@@ -58,7 +58,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   )
   const optionOperator = computed<TableOptionFilterOperator | undefined>(() => {
     if (options.definition.kind !== 'option') {
-      return undefined
+      return
     }
 
     const current = options.filters.getFilterOperator({
@@ -114,10 +114,10 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   })
   const querySearch = computed(() => {
     if (!hasRemoteOptionQuery.value) {
-      return undefined
+      return
     }
     if (resolvedTreeSearchMode.value === 'local') {
-      return undefined
+      return
     }
     return normalizedSearch.value || undefined
   })

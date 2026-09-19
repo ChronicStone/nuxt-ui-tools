@@ -86,7 +86,7 @@ function resolveActionWidth(action: FormAction) {
 
 function resolveActionLink(action: FormAction) {
   if (!('link' in action)) {
-    return undefined
+    return
   }
   if (isString(action.link)) {
     return action.link

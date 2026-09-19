@@ -334,7 +334,7 @@ function resolveWatchOptions(field: FormField) {
 function resolveEffectFilter(field: FormField) {
   const effect = Object.getOwnPropertyDescriptor(field, 'stateEffect')?.value
   if (!isObject(effect) || effect === null || Array.isArray(effect)) {
-    return undefined
+    return
   }
   const duration = isNumber(effect.duration) ? effect.duration : 0
   if (effect.type === 'debounce') {
