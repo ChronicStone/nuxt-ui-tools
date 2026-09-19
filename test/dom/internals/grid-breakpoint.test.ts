@@ -16,10 +16,12 @@ describe('grid geometry', () => {
   it('resolves responsive grid columns and chunks rows accordingly', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const { grid } = harness.internals
-    expect(grid.mode.value).toBe('contained')
-    expect(grid.columnCount.value).toBe(3)
-    expect(grid.itemColumnSpan.value).toBe(1)
-    expect(grid.cardsPerRow.value).toBe(3)
+    expect([
+      grid.mode.value,
+      grid.columnCount.value,
+      grid.itemColumnSpan.value,
+      grid.cardsPerRow.value,
+    ]).toEqual(['contained', 3, 1, 3])
     expect(grid.rowChunks.value).toHaveLength(7)
     expect(grid.rowChunks.value[0]).toMatchObject({ end: 3, index: 0, start: 0 })
     expect(grid.rowChunks.value.at(-1)?.rows).toHaveLength(2)

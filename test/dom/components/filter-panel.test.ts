@@ -33,10 +33,12 @@ describe('filter slideover trigger', () => {
   it('renders the trigger with icon, label and an active count badge', async () => {
     harness = await mountPanel({ open: false })
     const trigger = harness.wrapper.find('.nut-dl-fpanel-trigger')
-    expect(trigger.attributes('data-icon')).toBe('i-lucide-funnel')
-    expect(trigger.attributes('data-variant')).toBe('outline')
-    expect(trigger.attributes('aria-expanded')).toBe('false')
-    expect(trigger.text()).toBe('Filtres')
+    expect([
+      trigger.attributes('data-icon'),
+      trigger.attributes('data-variant'),
+      trigger.attributes('aria-expanded'),
+      trigger.text(),
+    ]).toEqual(['i-lucide-funnel', 'outline', 'false', 'Filtres'])
     expect(trigger.find('.nut-dl-fpanel-trigger__count').exists()).toBeFalsy()
     expect(harness.wrapper.find('[data-ui="USlideover"]').attributes('data-open')).toBe('false')
 
@@ -61,20 +63,34 @@ describe('filter slideover content', () => {
     harness = await mountPanel()
     const w = harness.wrapper
     const panel = w.find('[data-ui="USlideover"]')
-    expect(panel.attributes('data-open')).toBe('true')
-    expect(panel.attributes('data-side')).toBe('right')
+    expect([panel.attributes('data-open'), panel.attributes('data-side')]).toEqual([
+      'true',
+      'right',
+    ])
     expect(panel.attributes('data-ui-content')).toContain('max-w-[480px]')
-    expect(w.find('.nut-dl-fpanel__title').text()).toBe('Filtres')
-    expect(w.find('.nut-dl-fpanel__results').text()).toBe('60 résultats')
-    expect(w.find('.nut-dl-fpanel__close').attributes('aria-label')).toBe('Fermer')
-    expect(texts(w, '.nut-dl-fpanel__caption')).toStrictEqual(['Identité', 'Volumes'])
-    expect(texts(w, '.nut-dl-fpanel__label')).toStrictEqual(['Pays', 'Entité légale', 'Contrats'])
-    expect(w.find('.nut-dl-fpanel__matching').text()).toBe('60 résultats correspondent')
-    expect(w.find('.nut-dl-fpanel__reset').attributes('data-label')).toBe('Réinitialiser')
+    expect([
+      w.find('.nut-dl-fpanel__title').text(),
+      w.find('.nut-dl-fpanel__results').text(),
+      w.find('.nut-dl-fpanel__close').attributes('aria-label'),
+      texts(w, '.nut-dl-fpanel__caption'),
+      texts(w, '.nut-dl-fpanel__label'),
+      w.find('.nut-dl-fpanel__matching').text(),
+      w.find('.nut-dl-fpanel__reset').attributes('data-label'),
+    ]).toEqual([
+      'Filtres',
+      '60 résultats',
+      'Fermer',
+      ['Identité', 'Volumes'],
+      ['Pays', 'Entité légale', 'Contrats'],
+      '60 résultats correspondent',
+      'Réinitialiser',
+    ])
     expect(w.find('.nut-dl-fpanel__reset').attributes('disabled')).toBeDefined()
-    expect(w.find('.nut-dl-fpanel__apply').attributes('data-label')).toBe('Appliquer')
-    expect(w.find('.nut-dl-fpanel__apply').attributes('data-color')).toBe('primary')
-    expect(w.find('input[data-ui="UInput"]').attributes('placeholder')).toBe('Entité…')
+    expect([
+      w.find('.nut-dl-fpanel__apply').attributes('data-label'),
+      w.find('.nut-dl-fpanel__apply').attributes('data-color'),
+      w.find('input[data-ui="UInput"]').attributes('placeholder'),
+    ]).toEqual(['Appliquer', 'primary', 'Entité…'])
     expect(w.find('input[data-ui="UInputNumber"]').exists()).toBeTruthy()
   })
 
@@ -82,25 +98,21 @@ describe('filter slideover content', () => {
     harness = await mountPanel()
     const w = harness.wrapper
     const chips = w.findAll('.nut-dl-chip')
-    expect(chips.map((chip) => chip.find('.nut-dl-chip__label').text())).toStrictEqual([
-      'FR',
-      'DE',
-      'ES',
-    ])
-    expect(chips.map((chip) => chip.find('.nut-dl-chip__count').text())).toStrictEqual([
-      '20',
-      '20',
-      '20',
-    ])
-    expect(must(chips[0]).attributes('aria-pressed')).toBe('false')
+    expect([
+      chips.map((chip) => chip.find('.nut-dl-chip__label').text()),
+      chips.map((chip) => chip.find('.nut-dl-chip__count').text()),
+      must(chips[0]).attributes('aria-pressed'),
+    ]).toEqual([['FR', 'DE', 'ES'], ['20', '20', '20'], 'false'])
     expect(w.find('.nut-dl-fpanel__meta').exists()).toBeFalsy()
 
     await must(chips[0]).trigger('click')
     await harness.flush()
     expect(w.find('.nut-dl-chip[data-value="FR"]').classes()).toContain('nut-dl-chip--active')
-    expect(w.find('.nut-dl-chip[data-value="FR"]').attributes('aria-pressed')).toBe('true')
-    expect(w.find('.nut-dl-fpanel__meta').text()).toBe('1 sélectionnés')
-    expect(w.find('.nut-dl-fpanel__field').attributes('data-active')).toBe('true')
+    expect([
+      w.find('.nut-dl-chip[data-value="FR"]').attributes('aria-pressed'),
+      w.find('.nut-dl-fpanel__meta').text(),
+      w.find('.nut-dl-fpanel__field').attributes('data-active'),
+    ]).toEqual(['true', '1 sélectionnés', 'true'])
     expect(harness.internals.filters.getFilterState({ key: 'country' })).toBeUndefined()
     expect(w.find('.nut-dl-fpanel__reset').attributes('disabled')).toBeUndefined()
 
@@ -110,12 +122,11 @@ describe('filter slideover content', () => {
     await w.find('.nut-dl-fpanel__apply').trigger('click')
     await harness.flush()
     expect(harness.internals.filterPresentation.panelOpen.value).toBeFalsy()
-    expect(harness.internals.filters.getFilterState({ key: 'country' })?.value).toStrictEqual([
-      'FR',
-      'DE',
-    ])
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(40)
-    expect(w.find('.nut-dl-fpanel-trigger__count').attributes('data-label')).toBe('1')
+    expect([
+      harness.internals.filters.getFilterState({ key: 'country' })?.value,
+      harness.internals.queryContent.data.value.rowCount,
+      w.find('.nut-dl-fpanel-trigger__count').attributes('data-label'),
+    ]).toEqual([['FR', 'DE'], 40, '1'])
   })
 
   it('edits text and number fields and resets the draft', async () => {
@@ -148,13 +159,13 @@ describe('filter slideover content', () => {
     expect(w.find('.nut-dl-fpanel__apply').attributes('data-label')).toBe('Terminé')
     await w.find('.nut-dl-chip[data-value="ES"]').trigger('click')
     await harness.flush()
-    expect(harness.internals.filters.getFilterState({ key: 'country' })?.value).toStrictEqual([
-      'ES',
-    ])
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(20)
-    expect(w.find('.nut-dl-fpanel__matching').text()).toBe('20 résultats correspondent')
-    expect(w.find('.nut-dl-fpanel__results').text()).toBe('20 résultats')
-    expect(w.find('.nut-dl-chip[data-value="ES"] .nut-dl-chip__count').text()).toBe('20')
+    expect([
+      harness.internals.filters.getFilterState({ key: 'country' })?.value,
+      harness.internals.queryContent.data.value.rowCount,
+      w.find('.nut-dl-fpanel__matching').text(),
+      w.find('.nut-dl-fpanel__results').text(),
+      w.find('.nut-dl-chip[data-value="ES"] .nut-dl-chip__count').text(),
+    ]).toEqual([['ES'], 20, '20 résultats correspondent', '20 résultats', '20'])
     await w.find('.nut-dl-fpanel__apply').trigger('click')
     await harness.flush()
     expect(harness.internals.filterPresentation.panelOpen.value).toBeFalsy()
@@ -216,9 +227,11 @@ describe('filter slideover content', () => {
     })
     const w = harness.wrapper
     const trigger = w.find('.nut-dl-fpanel-trigger')
-    expect(trigger.attributes('data-variant')).toBe('soft')
-    expect(trigger.attributes('data-size')).toBe('sm')
-    expect(trigger.text()).toBe('Affiner')
+    expect([
+      trigger.attributes('data-variant'),
+      trigger.attributes('data-size'),
+      trigger.text(),
+    ]).toEqual(['soft', 'sm', 'Affiner'])
     expect(w.find('[data-ui="USlideover"]').attributes('data-ui-content')).toContain('content-x')
     expect(w.find('.nut-dl-fpanel__title').classes()).toContain('title-x')
     expect(w.find('.nut-dl-fpanel__description').text()).toBe('Affinez la liste.')
@@ -226,8 +239,10 @@ describe('filter slideover content', () => {
     expect(w.find('.nut-dl-fpanel__field').classes()).toContain('field-x')
     expect(w.find('.nut-dl-chip').exists()).toBeFalsy()
     expect(w.find('[data-ui="UPopover"] [data-ui="UButton"]').exists()).toBeTruthy()
-    expect(w.find('.nut-dl-fpanel__apply').attributes('data-color')).toBe('neutral')
-    expect(w.find('.nut-dl-fpanel__reset').attributes('data-variant')).toBe('link')
+    expect([
+      w.find('.nut-dl-fpanel__apply').attributes('data-color'),
+      w.find('.nut-dl-fpanel__reset').attributes('data-variant'),
+    ]).toEqual(['neutral', 'link'])
     harness.internals.filters.replaceFilters({
       rules: [{ key: 'country', operator: 'isAnyOf', value: ['FR'] }],
     })
@@ -258,11 +273,13 @@ describe('filter slideover content', () => {
     const field = must(w.findAll('.nut-dl-fpanel__field').at(-1))
     expect(field.find('.nut-dl-fpanel__label').text()).toBe('Synchronisation EDOF')
     const chips = field.findAll('.nut-dl-chip')
-    expect(chips.map((chip) => chip.find('.nut-dl-chip__label').text())).toStrictEqual([
-      'Oui',
-      'Non',
+    expect([
+      chips.map((chip) => chip.find('.nut-dl-chip__label').text()),
+      chips.map((chip) => chip.find('.nut-dl-chip__count').text()),
+    ]).toEqual([
+      ['Oui', 'Non'],
+      ['30', '30'],
     ])
-    expect(chips.map((chip) => chip.find('.nut-dl-chip__count').text())).toStrictEqual(['30', '30'])
     await must(chips[0]).trigger('click')
     await harness.flush()
     expect(

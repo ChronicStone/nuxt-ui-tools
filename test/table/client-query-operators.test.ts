@@ -29,12 +29,14 @@ describe('client filter operators', () => {
   })
 
   it('matches array fields and comparison operators', () => {
-    expect(ids(group('tags', 'is', 'b'))).toStrictEqual([1, 2])
-    expect(ids(group('tags', 'isNot', ['a']))).toStrictEqual([2, 3])
-    expect(ids(group('score', 'gt', 10))).toStrictEqual([2, 3])
-    expect(ids(group('score', 'lte', 20))).toStrictEqual([1, 2])
-    expect(ids(group('score', 'between', { from: 15, to: 30 }))).toStrictEqual([2, 3])
-    expect(ids(group('name', 'contains', 'am'))).toStrictEqual([3])
+    expect([
+      ids(group('tags', 'is', 'b')),
+      ids(group('tags', 'isNot', ['a'])),
+      ids(group('score', 'gt', 10)),
+      ids(group('score', 'lte', 20)),
+      ids(group('score', 'between', { from: 15, to: 30 })),
+      ids(group('name', 'contains', 'am')),
+    ]).toEqual([[1, 2], [2, 3], [2, 3], [1, 2], [2, 3], [3]])
   })
 
   it('applies the search over configured fields', () => {

@@ -17,34 +17,40 @@ const base = {
 
 describe('pagination helpers', () => {
   it('reads defaults per layout with schema overrides', () => {
-    expect(getPaginationMode(base)).toBe('offset')
-    expect(getPaginationMode({ pagination: false })).toBe('none')
-    expect(getPaginationMode({ pagination: { mode: 'cursor' } })).toBe('cursor')
-    expect(getDefaultPageSize({ layout: 'table', schema: base })).toBe(50)
-    expect(getDefaultPageSize({ layout: 'grid', schema: base })).toBe(10)
+    expect([
+      getPaginationMode(base),
+      getPaginationMode({ pagination: false }),
+      getPaginationMode({ pagination: { mode: 'cursor' } }),
+      getDefaultPageSize({ layout: 'table', schema: base }),
+      getDefaultPageSize({ layout: 'grid', schema: base }),
+    ]).toEqual(['offset', 'none', 'cursor', 50, 10])
     const custom = {
       ...base,
       pagination: { defaultSize: { table: 25 }, sizeOptions: { table: [25, 75] } },
     } as unknown as TableSchemaView
-    expect(getDefaultPageSize({ layout: 'table', schema: custom })).toBe(25)
-    expect(getDefaultPageSize({ layout: 'grid', schema: custom })).toBe(10)
-    expect(getPageSizeOptions({ layout: 'table', schema: custom })).toStrictEqual([25, 75])
-    expect(getPageSizeOptions({ layout: 'grid', schema: custom })).toStrictEqual([10, 20, 50, 100])
+    expect([
+      getDefaultPageSize({ layout: 'table', schema: custom }),
+      getDefaultPageSize({ layout: 'grid', schema: custom }),
+      getPageSizeOptions({ layout: 'table', schema: custom }),
+      getPageSizeOptions({ layout: 'grid', schema: custom }),
+    ]).toEqual([25, 10, [25, 75], [10, 20, 50, 100]])
     const flat = {
       ...base,
       pagination: { defaultSize: 30, sizeOptions: [30, 60] },
     } as unknown as TableSchemaView
-    expect(getDefaultPageSize({ layout: 'grid', schema: flat })).toBe(30)
-    expect(getPageSizeOptions({ layout: 'grid', schema: flat })).toStrictEqual([30, 60])
+    expect([
+      getDefaultPageSize({ layout: 'grid', schema: flat }),
+      getPageSizeOptions({ layout: 'grid', schema: flat }),
+    ]).toEqual([30, [30, 60]])
     const cursor = {
       ...base,
       pagination: { mode: 'cursor', pageSize: { grid: 8 } },
     } as unknown as TableSchemaView
-    expect(getDefaultPageSize({ layout: 'grid', schema: cursor })).toBe(8)
-    expect(getDefaultPageSize({ layout: 'table', schema: cursor })).toBe(50)
-    expect(getPageSizeOptions({ layout: 'table', schema: cursor })).toStrictEqual([
-      10, 20, 50, 100, 200, 500,
-    ])
+    expect([
+      getDefaultPageSize({ layout: 'grid', schema: cursor }),
+      getDefaultPageSize({ layout: 'table', schema: cursor }),
+      getPageSizeOptions({ layout: 'table', schema: cursor }),
+    ]).toEqual([8, 50, [10, 20, 50, 100, 200, 500]])
   })
 
   it('derives default sorts and sort keys per layout', () => {

@@ -51,18 +51,19 @@ describe('selection actions part', () => {
     await harness.flush()
     const w = harness.wrapper
     const actions = w.findAll('.nut-dl-selbar__action')
-    expect(actions.map((a) => a.attributes('data-label'))).toStrictEqual([
-      'Exporter',
-      'Synchroniser',
-      'Archiver',
+    expect([
+      actions.map((a) => a.attributes('data-label')),
+      must(actions[0]).attributes('data-icon'),
+      must(actions[0]).attributes('data-variant'),
+      texts(w, '.nut-dl-selbar__actions [data-ui-item]'),
+      w.find('.nut-dl-selbar__more').attributes('aria-label'),
+    ]).toEqual([
+      ['Exporter', 'Synchroniser', 'Archiver'],
+      'i-lucide-download',
+      'ghost',
+      ['Passer inactif', 'Supprimer'],
+      'Plus d’actions',
     ])
-    expect(must(actions[0]).attributes('data-icon')).toBe('i-lucide-download')
-    expect(must(actions[0]).attributes('data-variant')).toBe('ghost')
-    expect(texts(w, '.nut-dl-selbar__actions [data-ui-item]')).toStrictEqual([
-      'Passer inactif',
-      'Supprimer',
-    ])
-    expect(w.find('.nut-dl-selbar__more').attributes('aria-label')).toBe('Plus d’actions')
 
     await must(actions[0]).trigger('click')
     await harness.flush()
@@ -127,8 +128,10 @@ describe('selection actions part', () => {
     const w = harness.wrapper
     expect(w.find('.nut-dl-selbar__bar').classes()).toContain('bar-x')
     const action = w.find('.nut-dl-selbar__action')
-    expect(action.attributes('data-variant')).toBe('soft')
-    expect(action.attributes('data-size')).toBe('md')
+    expect([action.attributes('data-variant'), action.attributes('data-size')]).toEqual([
+      'soft',
+      'md',
+    ])
     expect(action.classes()).toContain('act-x')
     const dismiss = w.find('.nut-dl-selbar__dismiss')
     expect(dismiss.attributes('data-color')).toBe('error')

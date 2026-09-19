@@ -97,23 +97,35 @@ describe('table query prefetch', () => {
 
     await executeQueryPrefetchPlan(plan, { queryClient })
 
-    expect(sourceRequest?.context).toStrictEqual({ account: { id: 'account-1' } })
-    expect(sourceRequest?.pagination).toStrictEqual({
-      count: 'exact',
-      mode: 'offset',
-      pageIndex: 2,
-      pageSize: 25,
-    })
-    expect(sourceRequest?.sorting).toStrictEqual([{ dir: 'desc', key: 'name' }])
-    expect(sourceRequest?.search).toStrictEqual({ fields: ['name'], value: 'ada' })
-    expect(sourceRequest?.filters).toStrictEqual({
-      children: [{ key: 'status', operator: 'isAnyOf', type: 'condition', value: ['active'] }],
-      combinator: 'and',
-      type: 'group',
-    })
-    expect(optionQueryCalls).toBe(1)
-    expect(facetQueryCalls).toBe(1)
-    expect(pageContextRows).toBe(1)
-    expect(pageContextAccount).toStrictEqual({ id: 'account-1' })
+    expect([
+      sourceRequest?.context,
+      sourceRequest?.pagination,
+      sourceRequest?.sorting,
+      sourceRequest?.search,
+      sourceRequest?.filters,
+      optionQueryCalls,
+      facetQueryCalls,
+      pageContextRows,
+      pageContextAccount,
+    ]).toEqual([
+      { account: { id: 'account-1' } },
+      {
+        count: 'exact',
+        mode: 'offset',
+        pageIndex: 2,
+        pageSize: 25,
+      },
+      [{ dir: 'desc', key: 'name' }],
+      { fields: ['name'], value: 'ada' },
+      {
+        children: [{ key: 'status', operator: 'isAnyOf', type: 'condition', value: ['active'] }],
+        combinator: 'and',
+        type: 'group',
+      },
+      1,
+      1,
+      1,
+      { id: 'account-1' },
+    ])
   })
 })

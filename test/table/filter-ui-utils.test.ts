@@ -93,14 +93,25 @@ describe('filter ui utils', () => {
 
     expect(optionUi.searchable).toBeFalsy()
     expect(optionUi.closeOnSelect).toBeTruthy()
-    expect(optionUi.presentation).toBe('tree')
-    expect(optionUi.tree.selectable).toBe('leaf-only')
-    expect(optionUi.tree.searchMode).toBe('remote')
-    expect(optionUi.tree.branchSelection).toBe('children')
-    expect(optionUi.labels.searchPlaceholder).toBe('Pick a status')
-    expect(optionUi.selection.mode).toBe('multiple')
-    expect(booleanUi.labels.true).toBe('Online')
-    expect(booleanUi.labels.false).toBe('Paused')
+    expect([
+      optionUi.presentation,
+      optionUi.tree.selectable,
+      optionUi.tree.searchMode,
+      optionUi.tree.branchSelection,
+      optionUi.labels.searchPlaceholder,
+      optionUi.selection.mode,
+      booleanUi.labels.true,
+      booleanUi.labels.false,
+    ]).toEqual([
+      'tree',
+      'leaf-only',
+      'remote',
+      'children',
+      'Pick a status',
+      'multiple',
+      'Online',
+      'Paused',
+    ])
   })
 
   it('switches number active control from scalar to range based on operator', () => {

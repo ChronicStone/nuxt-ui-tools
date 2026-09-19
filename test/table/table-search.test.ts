@@ -43,15 +43,19 @@ describe('table search orchestration', () => {
       })),
     })
 
-    expect(searchState.searchQuery.value).toBe('Ada')
-    expect(searchState.searchPlaceholder.value).toBe('Search team')
+    expect([searchState.searchQuery.value, searchState.searchPlaceholder.value]).toEqual([
+      'Ada',
+      'Search team',
+    ])
     expect(searchState.hasActiveSearch.value).toBeTruthy()
 
     searchState.searchQuery.value = 'Grace'
 
-    expect(searchState.searchQuery.value).toBe('Grace')
-    expect(filters.value.search).toBe('Grace')
-    expect(pagination.value.pageIndex).toBe(1)
+    expect([
+      searchState.searchQuery.value,
+      filters.value.search,
+      pagination.value.pageIndex,
+    ]).toEqual(['Grace', 'Grace', 1])
   })
 })
 

@@ -60,31 +60,37 @@ describe('TableRenderer skeleton and tokens', () => {
 
   it('exposes size tokens and gutter as CSS variables', async () => {
     harness = await mountTable({ schema: createAccountsSchema() })
-    expect(cssVar(harness, '--nut-dl-row-h')).toBe('44px')
-    expect(cssVar(harness, '--nut-dl-head-h')).toBe('42px')
-    expect(cssVar(harness, '--nut-dl-foot-h')).toBe('40px')
-    expect(cssVar(harness, '--nut-dl-cell-x')).toBe('14px')
-    expect(cssVar(harness, '--nut-dl-gutter')).toBe('14px')
-    expect(cssVar(harness, '--nut-dl-font')).toBe('13px')
-    expect(harness.wrapper.find('.nut-dl-table').attributes('data-size')).toBe('md')
-    expect(harness.wrapper.find('.nut-dl-table').attributes('data-loading')).toBe('false')
+    expect([
+      cssVar(harness, '--nut-dl-row-h'),
+      cssVar(harness, '--nut-dl-head-h'),
+      cssVar(harness, '--nut-dl-foot-h'),
+      cssVar(harness, '--nut-dl-cell-x'),
+      cssVar(harness, '--nut-dl-gutter'),
+      cssVar(harness, '--nut-dl-font'),
+      harness.wrapper.find('.nut-dl-table').attributes('data-size'),
+      harness.wrapper.find('.nut-dl-table').attributes('data-loading'),
+    ]).toEqual(['44px', '42px', '40px', '14px', '14px', '13px', 'md', 'false'])
     harness.unmount()
 
     harness = await mountTable({
       schema: createAccountsSchema(),
       ui: { table: { gutter: 20, size: 'sm' } },
     })
-    expect(cssVar(harness, '--nut-dl-row-h')).toBe('36px')
-    expect(cssVar(harness, '--nut-dl-gutter')).toBe('20px')
-    expect(harness.wrapper.find('.nut-dl-table').attributes('data-size')).toBe('sm')
+    expect([
+      cssVar(harness, '--nut-dl-row-h'),
+      cssVar(harness, '--nut-dl-gutter'),
+      harness.wrapper.find('.nut-dl-table').attributes('data-size'),
+    ]).toEqual(['36px', '20px', 'sm'])
     harness.unmount()
 
     harness = await mountTable({
       schema: createAccountsSchema(),
       tableProps: { gutter: 8, size: 'lg' },
     })
-    expect(cssVar(harness, '--nut-dl-row-h')).toBe('52px')
-    expect(cssVar(harness, '--nut-dl-gutter')).toBe('8px')
+    expect([cssVar(harness, '--nut-dl-row-h'), cssVar(harness, '--nut-dl-gutter')]).toEqual([
+      '52px',
+      '8px',
+    ])
   })
 })
 
@@ -123,17 +129,16 @@ describe('TableRenderer structure', () => {
 
     const rows = w.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')
     expect(rows).toHaveLength(20)
-    expect(must(rows[0]).attributes('data-row-id')).toBe('acc-1')
-    expect(must(rows[0]).attributes('data-index')).toBe('0')
-    expect(texts(w, 'td[data-col="name"] b.name').slice(0, 3)).toStrictEqual([
-      'Compte 001',
-      'Compte 002',
-      'Compte 003',
-    ])
-    expect(texts(w, 'td[data-col="status"]').slice(0, 3)).toStrictEqual([
-      'Actif',
-      'En attente',
-      'Inactif',
+    expect([
+      must(rows[0]).attributes('data-row-id'),
+      must(rows[0]).attributes('data-index'),
+      texts(w, 'td[data-col="name"] b.name').slice(0, 3),
+      texts(w, 'td[data-col="status"]').slice(0, 3),
+    ]).toEqual([
+      'acc-1',
+      '0',
+      ['Compte 001', 'Compte 002', 'Compte 003'],
+      ['Actif', 'En attente', 'Inactif'],
     ])
     expect(w.find('td[data-col="contracts"]').classes()).toContain('text-right')
     expect(w.find('td[data-col="contracts"] .nut-dl-td__inner').classes()).toContain('justify-end')
@@ -143,10 +148,10 @@ describe('TableRenderer structure', () => {
       ),
     ).toBe('2')
     expect(w.find('td[data-col="__row-actions"]').classes()).toContain('nut-dl-td--actions')
-    expect(w.find('td[data-col="__row-actions"] .nut-dl-rowbtn').attributes('data-icon')).toBe(
-      'i-lucide-ellipsis',
-    )
-    expect(w.find('.nut-dl-table').attributes('data-virtualized')).toBe('false')
+    expect([
+      w.find('td[data-col="__row-actions"] .nut-dl-rowbtn').attributes('data-icon'),
+      w.find('.nut-dl-table').attributes('data-virtualized'),
+    ]).toEqual(['i-lucide-ellipsis', 'false'])
     expect(w.find('colgroup col').attributes('style')).toContain('width: 44px')
   })
 
@@ -190,21 +195,23 @@ describe('TableRenderer structure', () => {
     const w = harness.wrapper
     const status = w.find('th[data-col="status"]')
     const items = status.findAll('[data-ui-item]')
-    expect(items.map((item) => item.text())).toStrictEqual([
-      'Trier A → Z',
-      'Trier Z → A',
-      'Ne plus trier',
-      'Épingler à gauche',
-      'Épingler à droite',
-      'Masquer la colonne',
+    expect([items.map((item) => item.text()), status.find('[data-ui-item-label]').text()]).toEqual([
+      [
+        'Trier A → Z',
+        'Trier Z → A',
+        'Ne plus trier',
+        'Épingler à gauche',
+        'Épingler à droite',
+        'Masquer la colonne',
+      ],
+      'Statut',
     ])
-    expect(status.find('[data-ui-item-label]').text()).toBe('Statut')
     await must(items[1]).trigger('click')
     await harness.flush()
-    expect(harness.internals.tableColumns.getSortState({ columnId: 'status' })).toBe('desc')
-    expect(w.find('th[data-col="status"] .nut-dl-th__sort').attributes('data-name')).toBe(
-      'i-lucide-arrow-down',
-    )
+    expect([
+      harness.internals.tableColumns.getSortState({ columnId: 'status' }),
+      w.find('th[data-col="status"] .nut-dl-th__sort').attributes('data-name'),
+    ]).toEqual(['desc', 'i-lucide-arrow-down'])
     expect(w.find('th[data-col="name"] .nut-dl-th__btn').classes()).not.toContain(
       'nut-dl-th__btn--sorted',
     )
@@ -264,8 +271,10 @@ describe('TableRenderer summaries', () => {
     const w = harness.wrapper
     const foot = w.find('tfoot.nut-dl-table__foot')
     expect(foot.exists()).toBeTruthy()
-    expect(foot.find('td[data-col="name"] .nut-dl-tf__caption').text()).toBe('Total')
-    expect(foot.find('td[data-col="name"] .nut-dl-tf__count').text()).toBe('60')
+    expect([
+      foot.find('td[data-col="name"] .nut-dl-tf__caption').text(),
+      foot.find('td[data-col="name"] .nut-dl-tf__count').text(),
+    ]).toEqual(['Total', '60'])
     expect(foot.find('td[data-col="name"]').classes()).toContain('nut-dl-pin--start')
     expect(foot.find('td[data-col="contracts"] .nut-dl-tf__value').text()).toBe(
       String(sum('contracts')),
@@ -324,9 +333,11 @@ describe('TableRenderer empty state', () => {
     harness = await mountTable({ schema: createAccountsSchema({ rows: [] }) })
     const empty = harness.wrapper.find('.nut-dl-empty')
     expect(empty.exists()).toBeTruthy()
-    expect(empty.attributes('role')).toBe('status')
-    expect(empty.find('.nut-dl-empty__icon').attributes('data-name')).toBe('i-lucide-inbox')
-    expect(empty.find('.nut-dl-empty__title').text()).toBe('Rien à afficher pour l’instant')
+    expect([
+      empty.attributes('role'),
+      empty.find('.nut-dl-empty__icon').attributes('data-name'),
+      empty.find('.nut-dl-empty__title').text(),
+    ]).toEqual(['status', 'i-lucide-inbox', 'Rien à afficher pour l’instant'])
     expect(empty.find('.nut-dl-empty__description').text()).toContain('apparaîtront ici')
     expect(empty.find('.nut-dl-empty__actions').exists()).toBeFalsy()
     expect(harness.wrapper.find('tfoot').exists()).toBeFalsy()
@@ -338,11 +349,15 @@ describe('TableRenderer empty state', () => {
     harness.internals.filters.searchQuery.value = 'zzz'
     await harness.until(() => must(harness).wrapper.find('.nut-dl-empty').exists())
     const empty = harness.wrapper.find('.nut-dl-empty')
-    expect(empty.find('.nut-dl-empty__icon').attributes('data-name')).toBe('i-lucide-search-x')
-    expect(empty.find('.nut-dl-empty__title').text()).toBe('Aucun résultat pour ces filtres')
+    expect([
+      empty.find('.nut-dl-empty__icon').attributes('data-name'),
+      empty.find('.nut-dl-empty__title').text(),
+    ]).toEqual(['i-lucide-search-x', 'Aucun résultat pour ces filtres'])
     const reset = empty.find('.nut-dl-empty__actions [data-ui="UButton"]')
-    expect(reset.attributes('data-label')).toBe('Réinitialiser les filtres')
-    expect(reset.attributes('data-icon')).toBe('i-lucide-rotate-ccw')
+    expect([reset.attributes('data-label'), reset.attributes('data-icon')]).toEqual([
+      'Réinitialiser les filtres',
+      'i-lucide-rotate-ccw',
+    ])
     await reset.trigger('click')
     await harness.until(() => !must(harness).wrapper.find('.nut-dl-empty').exists())
     expect(harness.internals.filters.searchQuery.value).toBe('')

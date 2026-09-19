@@ -45,13 +45,15 @@ describe('data-list UI', () => {
     expect(resolveDataListContentShellClass({ layout: 'grid', surface: 'contained' })).toContain(
       'rounded-md border',
     )
-    expect(resolveDataListContentShellClass({ layout: 'grid', surface: 'plain' })).toBe(
-      'grid gap-5',
-    )
-    expect(resolveDataListTableDensity('compact').rowHeight).toBe(40)
+    expect([
+      resolveDataListContentShellClass({ layout: 'grid', surface: 'plain' }),
+      resolveDataListTableDensity('compact').rowHeight,
+    ]).toEqual(['grid gap-5', 40])
     expect(resolveDataListTableDensity('comfortable').row).toContain('min-h-14')
-    expect(resolveDataListTableSize('xs').rowHeight).toBe(36)
-    expect(resolveDataListTableSize('xl').rowHeight).toBe(64)
+    expect([
+      resolveDataListTableSize('xs').rowHeight,
+      resolveDataListTableSize('xl').rowHeight,
+    ]).toEqual([36, 64])
   })
 
   it('scales the complete filter editor surface with its control size', () => {

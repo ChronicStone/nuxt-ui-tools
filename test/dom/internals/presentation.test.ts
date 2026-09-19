@@ -11,26 +11,19 @@ describe('filter presentation', () => {
   it('partitions definitions by display location and order', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema({ panelFilters: true }) })
     const presentation = harness.internals.filterPresentation
-    expect(presentation.tagDefinitions.value.map((definition) => definition.key)).toStrictEqual([
-      'status',
-    ])
-    expect(
+    expect([
+      presentation.tagDefinitions.value.map((definition) => definition.key),
       presentation.dormantDynamicDefinitions.value.map((definition) => definition.key),
-    ).toStrictEqual(['edofSync'])
-    expect(presentation.activeDynamicDefinitions.value).toStrictEqual([])
-    expect(presentation.panelDefinitions.value.map((definition) => definition.key)).toStrictEqual([
-      'country',
-      'legalEntity',
-      'contracts',
-    ])
+      presentation.activeDynamicDefinitions.value,
+      presentation.panelDefinitions.value.map((definition) => definition.key),
+    ]).toEqual([['status'], ['edofSync'], [], ['country', 'legalEntity', 'contracts']])
     expect(presentation.hasPanelFilters.value).toBeTruthy()
-    expect(presentation.panelSections.value.map((section) => section.label)).toStrictEqual([
-      'Identité',
-      'Volumes',
-    ])
-    expect(presentation.panelSections.value[0]?.items.map((item) => item.key)).toStrictEqual([
-      'country',
-      'legalEntity',
+    expect([
+      presentation.panelSections.value.map((section) => section.label),
+      presentation.panelSections.value[0]?.items.map((item) => item.key),
+    ]).toEqual([
+      ['Identité', 'Volumes'],
+      ['country', 'legalEntity'],
     ])
     expect(presentation.resolved.value.find((item) => item.key === 'edofSync')).toMatchObject({
       active: false,
@@ -48,22 +41,20 @@ describe('filter presentation', () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const presentation = harness.internals.filterPresentation
     presentation.activateDynamicFilter({ key: 'country' })
-    expect(presentation.dynamicSessionDefinition.value?.key).toBe('country')
-    expect(
+    expect([
+      presentation.dynamicSessionDefinition.value?.key,
       presentation.dormantDynamicDefinitions.value.map((definition) => definition.key),
-    ).toStrictEqual(['edofSync'])
-    expect(presentation.activeDynamicDefinitions.value).toStrictEqual([])
+      presentation.activeDynamicDefinitions.value,
+    ]).toEqual(['country', ['edofSync'], []])
 
     harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['FR'] })
     await harness.flush()
     presentation.releaseDynamicSession({ key: 'country' })
     expect(presentation.dynamicSessionDefinition.value).toBeUndefined()
-    expect(
+    expect([
       presentation.activeDynamicDefinitions.value.map((definition) => definition.key),
-    ).toStrictEqual(['country'])
-    expect(
       presentation.dormantDynamicDefinitions.value.map((definition) => definition.key),
-    ).toStrictEqual(['edofSync'])
+    ]).toEqual([['country'], ['edofSync']])
 
     presentation.releaseDynamicSession({ key: 'edofSync' })
     harness.internals.filters.clearFilter({ key: 'country' })
@@ -91,9 +82,11 @@ describe('filter presentation', () => {
     presentation.applyPanelDraft()
     await harness.flush()
     expect(presentation.panelOpen.value).toBeFalsy()
-    expect(harness.internals.filters.getFilterState({ key: 'legalEntity' })?.value).toBe('Entité 1')
-    expect(presentation.activePanelCount.value).toBe(1)
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(11)
+    expect([
+      harness.internals.filters.getFilterState({ key: 'legalEntity' })?.value,
+      presentation.activePanelCount.value,
+      harness.internals.queryContent.data.value.rowCount,
+    ]).toEqual(['Entité 1', 1, 11])
 
     presentation.openPanel()
     presentation.setPanelFilterOperator({ key: 'legalEntity', operator: 'is' })

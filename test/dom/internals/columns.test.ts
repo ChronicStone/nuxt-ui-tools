@@ -40,11 +40,11 @@ describe('table columns', () => {
     expect(
       columns.runtimeColumns.value.find((column) => column.id === 'legalEntity')?.ellipsis,
     ).toBeTruthy()
-    expect(columns.runtimeColumns.value.find((column) => column.id === 'contracts')?.summary).toBe(
-      'sum',
-    )
-    expect(columns.getPinnedState({ columnId: 'name' })).toBe('left')
-    expect(columns.getPinnedState({ columnId: ROW_ACTIONS_COLUMN_ID })).toBe('right')
+    expect([
+      columns.runtimeColumns.value.find((column) => column.id === 'contracts')?.summary,
+      columns.getPinnedState({ columnId: 'name' }),
+      columns.getPinnedState({ columnId: ROW_ACTIONS_COLUMN_ID }),
+    ]).toEqual(['sum', 'left', 'right'])
   })
 
   it('creates TanStack column defs with internal columns and header floors', async () => {
@@ -117,13 +117,9 @@ describe('table columns', () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const columns = harness.internals.tableColumns
     const menu = columns.getMenuItems({ columnId: 'status' })
-    expect(menu[0]).toStrictEqual([
-      { class: 'nut-dl-colmenu__title', label: 'Statut', type: 'label' },
-    ])
-    expect(menu[1]?.map((item) => item.label)).toStrictEqual([
-      'Trier A → Z',
-      'Trier Z → A',
-      'Ne plus trier',
+    expect([menu[0], menu[1]?.map((item) => item.label)]).toEqual([
+      [{ class: 'nut-dl-colmenu__title', label: 'Statut', type: 'label' }],
+      ['Trier A → Z', 'Trier Z → A', 'Ne plus trier'],
     ])
     expect(menu[1]?.[2]?.disabled).toBeTruthy()
     expect(menu[2]?.map((item) => item.label)).toStrictEqual([
@@ -134,31 +130,27 @@ describe('table columns', () => {
 
     menu[1]?.[1]?.onSelect?.(new Event('select'))
     await harness.flush()
-    expect(columns.getSortState({ columnId: 'status' })).toBe('desc')
-    expect(columns.getMenuItems({ columnId: 'status' })[1]?.[1]?.class).toBe(
-      'nut-dl-colmenu__item--active',
-    )
+    expect([
+      columns.getSortState({ columnId: 'status' }),
+      columns.getMenuItems({ columnId: 'status' })[1]?.[1]?.class,
+    ]).toEqual(['desc', 'nut-dl-colmenu__item--active'])
 
     const nameMenu = columns.getMenuItems({ columnId: 'name' })
     expect(nameMenu.at(-1)?.[0]).toMatchObject({ disabled: true, label: 'Masquer la colonne' })
     expect(nameMenu[2]?.[0]?.label).toBe('Désépingler')
     const actions = columns.getMenuItems({ columnId: ROW_ACTIONS_COLUMN_ID })
-    expect(actions.map((group) => group.length)).toStrictEqual([1, 1, 1])
-    expect(actions[1]?.[0]?.label).toBe('Désépingler')
+    expect([actions.map((group) => group.length), actions[1]?.[0]?.label]).toEqual([
+      [1, 1, 1],
+      'Désépingler',
+    ])
   })
 
   it('sorts through the query state and resets pagination', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const columns = harness.internals.tableColumns
-    expect(columns.sortingState.value).toStrictEqual({ active: true, dir: 'asc', key: 'name' })
-    expect(columns.sortKeys.value).toStrictEqual([
-      'name',
-      'status',
-      'country',
-      'legalEntity',
-      'edofSync',
-      'contracts',
-      'consumption',
+    expect([columns.sortingState.value, columns.sortKeys.value]).toEqual([
+      { active: true, dir: 'asc', key: 'name' },
+      ['name', 'status', 'country', 'legalEntity', 'edofSync', 'contracts', 'consumption'],
     ])
     expect(harness.query()['s.key']).toBeUndefined()
 
@@ -167,16 +159,20 @@ describe('table columns', () => {
     columns.toggleSorting('status')
     await harness.flush()
     expect(columns.sortingState.value).toMatchObject({ dir: 'asc', key: 'status' })
-    expect(harness.internals.pagination.currentPage.value).toBe(1)
-    expect(harness.query()['s.key']).toBe('status')
+    expect([harness.internals.pagination.currentPage.value, harness.query()['s.key']]).toEqual([
+      1,
+      'status',
+    ])
     expect(harness.query()['s.dir']).toBeUndefined()
     expect(rows<AccountRow>(harness)[0]?.status).toBe('active')
 
     columns.toggleSorting('status')
     await harness.flush()
-    expect(columns.getSortState({ columnId: 'status' })).toBe('desc')
-    expect(harness.query()['s.dir']).toBe('desc')
-    expect(rows<AccountRow>(harness)[0]?.status).toBe('pending')
+    expect([
+      columns.getSortState({ columnId: 'status' }),
+      harness.query()['s.dir'],
+      rows<AccountRow>(harness)[0]?.status,
+    ]).toEqual(['desc', 'desc', 'pending'])
 
     columns.setSortDirection('asc')
     await harness.flush()

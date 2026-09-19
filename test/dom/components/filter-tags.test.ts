@@ -33,8 +33,10 @@ describe('filter tags bar', () => {
     expect(dormant.find('[data-ui="UIcon"]').exists()).toBeTruthy()
     expect(w.find('.nut-dl-tag--active').exists()).toBeFalsy()
     const add = w.find('.nut-dl-tag--add')
-    expect(add.attributes('data-label')).toBe('Ajouter un filtre')
-    expect(add.attributes('data-icon')).toBe('i-lucide-plus')
+    expect([add.attributes('data-label'), add.attributes('data-icon')]).toEqual([
+      'Ajouter un filtre',
+      'i-lucide-plus',
+    ])
     expect(add.classes()).toContain('border-dashed')
     expect(w.find('.nut-dl-tag--clear').exists()).toBeFalsy()
   })
@@ -46,16 +48,20 @@ describe('filter tags bar', () => {
     const w = harness.wrapper
     const active = w.find('.nut-dl-tag--active')
     expect(active.exists()).toBeTruthy()
-    expect(active.find('.nut-dl-tag__label').text()).toBe('Statut')
-    expect(texts(w, '.nut-dl-tag__text')).toStrictEqual(['Actif', 'En attente'])
+    expect([active.find('.nut-dl-tag__label').text(), texts(w, '.nut-dl-tag__text')]).toEqual([
+      'Statut',
+      ['Actif', 'En attente'],
+    ])
     const dots = w.findAll('.nut-dl-tag__dot')
     expect(dots).toHaveLength(2)
     expect(must(dots[0]).attributes('style')).toContain(STATUS_COLOR.active)
     expect(w.find('.nut-dl-tag__sep').exists()).toBeFalsy()
     expect(w.find('[data-ui="UBadge"]').exists()).toBeFalsy()
     const dismiss = w.find('.nut-dl-tag__dismiss')
-    expect(dismiss.attributes('data-icon')).toBe('i-lucide-chevron-down')
-    expect(dismiss.attributes('aria-label')).toBe('Statut')
+    expect([dismiss.attributes('data-icon'), dismiss.attributes('aria-label')]).toEqual([
+      'i-lucide-chevron-down',
+      'Statut',
+    ])
     expect(w.find('.nut-dl-tag--clear').exists()).toBeFalsy()
   })
 
@@ -65,17 +71,21 @@ describe('filter tags bar', () => {
     await harness.flush()
     const w = harness.wrapper
     const active = w.find('.nut-dl-tag--active')
-    expect(active.find('.nut-dl-tag__label').text()).toBe('Pays')
-    expect(texts(active, '.nut-dl-tag__text')).toStrictEqual(['FR', 'DE'])
+    expect([active.find('.nut-dl-tag__label').text(), texts(active, '.nut-dl-tag__text')]).toEqual([
+      'Pays',
+      ['FR', 'DE'],
+    ])
     expect(active.findAll('.nut-dl-tag__sep')).toHaveLength(1)
     expect(active.find('[data-label="parmi"]').exists()).toBeTruthy()
     expect(active.find('[data-label="parmi"]').attributes('data-trailing-icon')).toBe(
       'i-lucide-chevron-down',
     )
     const dismiss = active.find('.nut-dl-tag__dismiss')
-    expect(dismiss.attributes('data-icon')).toBe('i-lucide-x')
-    expect(w.find('.nut-dl-tag--clear').attributes('data-icon')).toBe('i-lucide-rotate-ccw')
-    expect(w.find('.nut-dl-tag--clear').text()).toBe('Réinitialiser')
+    expect([
+      dismiss.attributes('data-icon'),
+      w.find('.nut-dl-tag--clear').attributes('data-icon'),
+      w.find('.nut-dl-tag--clear').text(),
+    ]).toEqual(['i-lucide-x', 'i-lucide-rotate-ccw', 'Réinitialiser'])
 
     await dismiss.trigger('click')
     await harness.flush()
@@ -98,11 +108,11 @@ describe('filter tags bar', () => {
     expect(w.find('.nut-dl-picker__title').text()).toBe('Ajouter un filtre')
     expect(w.find('input[data-ui="UInput"]').exists()).toBeFalsy()
     const rows = w.findAll('[data-filter-stage-content] button.rounded-md')
-    expect(rows.map((row) => row.text())).toStrictEqual(['Pays', 'Synchronisation EDOF'])
-    expect(must(rows[0]).find('[data-ui="UIcon"]').attributes('data-name')).toBe('i-lucide-plus')
-    expect(must(rows[0]!.findAll('[data-ui="UIcon"]').at(-1)).attributes('data-name')).toBe(
-      'i-lucide-chevron-right',
-    )
+    expect([
+      rows.map((row) => row.text()),
+      must(rows[0]).find('[data-ui="UIcon"]').attributes('data-name'),
+      must(rows[0]!.findAll('[data-ui="UIcon"]').at(-1)).attributes('data-name'),
+    ]).toEqual([['Pays', 'Synchronisation EDOF'], 'i-lucide-plus', 'i-lucide-chevron-right'])
 
     await must(rows[0]).trigger('click')
     await harness.flush()
@@ -115,8 +125,10 @@ describe('filter tags bar', () => {
     ])
     await must(operators[0]).trigger('click')
     await harness.flush()
-    expect(harness.internals.filterPresentation.dynamicSessionDefinition.value?.key).toBe('country')
-    expect(w.find('.nut-dl-tag--add').attributes('data-label')).toBe('Pays')
+    expect([
+      harness.internals.filterPresentation.dynamicSessionDefinition.value?.key,
+      w.find('.nut-dl-tag--add').attributes('data-label'),
+    ]).toEqual(['country', 'Pays'])
     await harness.until(() => must(harness).wrapper.find('.nut-dl-editor__head').exists())
     const head = w.find('.nut-dl-editor__head')
     expect(head.find('.nut-dl-editor__back').exists()).toBeTruthy()
@@ -199,8 +211,10 @@ describe('mobile filter sheet', () => {
     expect(must(rows[0]).find('.nut-dl-sheet__value .rounded-full').attributes('style')).toContain(
       STATUS_COLOR.active,
     )
-    expect(must(rows[1]).find('.nut-dl-sheet__value').text()).toBe('')
-    expect(w.find('.nut-dl-sheet__footer button:last-child').text()).toBe('Terminé')
+    expect([
+      must(rows[1]).find('.nut-dl-sheet__value').text(),
+      w.find('.nut-dl-sheet__footer button:last-child').text(),
+    ]).toEqual(['', 'Terminé'])
     expect(w.find('.nut-dl-sheet__footer button:first-child').attributes('disabled')).toBeDefined()
 
     await must(rows[1]).trigger('click')

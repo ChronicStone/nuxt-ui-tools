@@ -28,17 +28,17 @@ describe('TableFooter desktop', () => {
     harness = await mountFooter()
     const w = harness.wrapper
     expect(w.find('footer.nut-dl-footer').exists()).toBeTruthy()
-    expect(w.find('.nut-dl-footer__range').text()).toBe('1–20 sur 60')
-    expect(w.find('.nut-dl-footer__range').attributes('role')).toBe('status')
-    expect(w.find('.nut-dl-footer__size-label').text()).toBe('Par page')
+    expect([
+      w.find('.nut-dl-footer__range').text(),
+      w.find('.nut-dl-footer__range').attributes('role'),
+      w.find('.nut-dl-footer__size-label').text(),
+    ]).toEqual(['1–20 sur 60', 'status', 'Par page'])
     const select = w.find('select[data-ui="USelect"]')
-    expect(select.findAll('option').map((option) => option.text())).toStrictEqual([
-      '10',
-      '20',
-      '50',
-    ])
-    expect((select.element as HTMLSelectElement).value).toBe('20')
-    expect(select.attributes('data-variant')).toBe('none')
+    expect([
+      select.findAll('option').map((option) => option.text()),
+      (select.element as HTMLSelectElement).value,
+      select.attributes('data-variant'),
+    ]).toEqual([['10', '20', '50'], '20', 'none'])
     const pager = w.find('[data-ui="UPagination"]')
     expect(pager.attributes()).toMatchObject({
       'data-active-variant': 'solid',
@@ -57,8 +57,10 @@ describe('TableFooter desktop', () => {
     const w = harness.wrapper
     await w.find('[data-ui-page="2"]').trigger('click')
     await harness.flush()
-    expect(harness.internals.pagination.currentPage.value).toBe(2)
-    expect(w.find('.nut-dl-footer__range').text()).toBe('21–40 sur 60')
+    expect([
+      harness.internals.pagination.currentPage.value,
+      w.find('.nut-dl-footer__range').text(),
+    ]).toEqual([2, '21–40 sur 60'])
     await w.find('[data-ui-page-next]').trigger('click')
     await harness.flush()
     expect(w.find('.nut-dl-footer__range').text()).toBe('41–60 sur 60')
@@ -67,9 +69,11 @@ describe('TableFooter desktop', () => {
     ;(select.element as HTMLSelectElement).value = '50'
     await select.trigger('change')
     await harness.flush()
-    expect(harness.internals.pagination.pageSize.value).toBe(50)
-    expect(w.find('.nut-dl-footer__range').text()).toBe('1–50 sur 60')
-    expect(w.find('[data-ui="UPagination"]').attributes('data-pages')).toBe('2')
+    expect([
+      harness.internals.pagination.pageSize.value,
+      w.find('.nut-dl-footer__range').text(),
+      w.find('[data-ui="UPagination"]').attributes('data-pages'),
+    ]).toEqual([50, '1–50 sur 60', '2'])
   })
 
   it('applies props layers and hides first/last buttons on demand', async () => {
@@ -89,9 +93,11 @@ describe('TableFooter desktop', () => {
     })
     const w = harness.wrapper
     const pager = w.find('[data-ui="UPagination"]')
-    expect(pager.attributes('data-variant')).toBe('outline')
-    expect(pager.attributes('data-active-color')).toBe('primary')
-    expect(pager.attributes('data-size')).toBe('sm')
+    expect([
+      pager.attributes('data-variant'),
+      pager.attributes('data-active-color'),
+      pager.attributes('data-size'),
+    ]).toEqual(['outline', 'primary', 'sm'])
     expect(pager.find('[data-ui-page-first]').classes()).toContain('hidden')
     expect(pager.find('[data-ui-page-last]').classes()).toContain('hidden')
     expect(pager.find('[data-ui-page="1"]').classes()).toContain('btn-x')
@@ -135,13 +141,17 @@ describe('TableFooter compact', () => {
     expect(pager.find('.nut-dl-pager__of').text()).toBe('1 / 3')
     const buttons = pager.findAll('[data-ui="UButton"]')
     expect(must(buttons[0]).attributes('disabled')).toBeDefined()
-    expect(must(buttons[0]).attributes('data-icon')).toBe('i-lucide-chevron-left')
-    expect(must(buttons[0]).attributes('data-square')).toBe('true')
-    expect(must(buttons[0]).attributes('aria-label')).toBe('Page précédente')
+    expect([
+      must(buttons[0]).attributes('data-icon'),
+      must(buttons[0]).attributes('data-square'),
+      must(buttons[0]).attributes('aria-label'),
+    ]).toEqual(['i-lucide-chevron-left', 'true', 'Page précédente'])
     await must(buttons[1]).trigger('click')
     await harness.flush()
-    expect(pager.find('.nut-dl-pager__of').text()).toBe('2 / 3')
-    expect(w.find('.nut-dl-footer__range').text()).toBe('21–40 sur 60')
+    expect([
+      pager.find('.nut-dl-pager__of').text(),
+      w.find('.nut-dl-footer__range').text(),
+    ]).toEqual(['2 / 3', '21–40 sur 60'])
   })
 
   it('forwards named slots to the footer', async () => {

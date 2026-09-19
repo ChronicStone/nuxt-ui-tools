@@ -71,12 +71,21 @@ describe('data list UI config', () => {
       },
     })
     const { ui } = read(harness)
-    expect(ui.search.width).toBe('300px')
-    expect(ui.search.props.input).toStrictEqual({ color: 'neutral', variant: 'outline' })
-    expect(ui.filterTags.props).toStrictEqual({ icon: false, trigger: { size: 'xs' } })
-    expect(ui.filterTags.ui).toStrictEqual({ trigger: 'app-trigger', value: 'root-value' })
-    expect(ui.table.gutter).toBe(20)
-    expect(ui.table.ui.td).toBe('font-light')
+    expect([
+      ui.search.width,
+      ui.search.props.input,
+      ui.filterTags.props,
+      ui.filterTags.ui,
+      ui.table.gutter,
+      ui.table.ui.td,
+    ]).toEqual([
+      '300px',
+      { color: 'neutral', variant: 'outline' },
+      { icon: false, trigger: { size: 'xs' } },
+      { trigger: 'app-trigger', value: 'root-value' },
+      20,
+      'font-light',
+    ])
   })
 
   it('applies mobile overrides only below the md breakpoint', async () => {
@@ -94,18 +103,22 @@ describe('data list UI config', () => {
       },
     })
     let state = read(harness)
-    expect(state.size).toBe('md')
-    expect(state.ui.search.width).toBe('340px')
-    expect(state.ui.pagination.ui.root).toBe('px-5')
+    expect([state.size, state.ui.search.width, state.ui.pagination.ui.root]).toEqual([
+      'md',
+      '340px',
+      'px-5',
+    ])
 
     setBreakpoint('sm')
     await harness.flush()
     state = read(harness)
-    expect(state.size).toBe('lg')
-    expect(state.density).toBe('comfortable')
-    expect(state.ui.search.width).toBe('100%')
-    expect(state.ui.pagination.size).toBe('md')
-    expect(state.ui.pagination.ui.root).toBe('px-4')
+    expect([
+      state.size,
+      state.density,
+      state.ui.search.width,
+      state.ui.pagination.size,
+      state.ui.pagination.ui.root,
+    ]).toEqual(['lg', 'comfortable', '100%', 'md', 'px-4'])
     expect(state.ui.mobile).toBeDefined()
   })
 })

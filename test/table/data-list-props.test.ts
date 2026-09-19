@@ -88,30 +88,34 @@ describe(mergeDataListUiConfig, () => {
         table: { gutter: 20, props: { checkbox: { color: 'primary' } } },
       },
     )
-    expect(merged.search).toStrictEqual({
-      props: { input: { color: 'neutral', variant: 'outline' } },
-      ui: { base: 'cmp-base', root: 'app-root' },
-      width: '300px',
-    })
-    expect(merged.filterTags).toStrictEqual({
-      props: { icon: false, trigger: { size: 'xs' } },
-      size: 'sm',
-      ui: { trigger: 'app-trigger', value: 'cmp-value' },
-    })
+    expect([merged.search, merged.filterTags]).toEqual([
+      {
+        props: { input: { color: 'neutral', variant: 'outline' } },
+        ui: { base: 'cmp-base', root: 'app-root' },
+        width: '300px',
+      },
+      {
+        props: { icon: false, trigger: { size: 'xs' } },
+        size: 'sm',
+        ui: { trigger: 'app-trigger', value: 'cmp-value' },
+      },
+    ])
     expect(merged.filterPanel).toMatchObject({
       commitMode: 'live',
       mode: 'panel',
       props: { chips: 4 },
       ui: { chip: 'cmp-chip' },
     })
-    expect(merged.table).toStrictEqual({
-      gutter: 20,
-      props: { checkbox: { color: 'primary' } },
-      ui: { td: 'app-td' },
-    })
-    expect(merged.grid).toStrictEqual({ gap: 12, props: {}, ui: {} })
-    expect(merged.pagination).toStrictEqual({ props: { firstLast: false }, size: 'sm', ui: {} })
-    expect(merged.selectionActions).toStrictEqual({ props: {}, ui: { bar: 'app-bar' } })
+    expect([merged.table, merged.grid, merged.pagination, merged.selectionActions]).toEqual([
+      {
+        gutter: 20,
+        props: { checkbox: { color: 'primary' } },
+        ui: { td: 'app-td' },
+      },
+      { gap: 12, props: {}, ui: {} },
+      { props: { firstLast: false }, size: 'sm', ui: {} },
+      { props: {}, ui: { bar: 'app-bar' } },
+    ])
   })
 
   it('keeps mobile overrides for the root to apply later', () => {

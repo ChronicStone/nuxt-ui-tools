@@ -39,8 +39,10 @@ describe('table layout', () => {
       schema: createAccountsSchema({ tableEnabled: 'false md:true' }),
     })
     expect(harness.internals.layout.tableEnabled.value).toBeFalsy()
-    expect(harness.internals.controls.tableLayout.value).toBe('grid')
-    expect(harness.internals.controls.layoutState.value.available).toStrictEqual(['grid'])
+    expect([
+      harness.internals.controls.tableLayout.value,
+      harness.internals.controls.layoutState.value.available,
+    ]).toEqual(['grid', ['grid']])
     expect(harness.query().l).toBeUndefined()
 
     setBreakpoint('xl')

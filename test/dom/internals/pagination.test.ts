@@ -12,12 +12,14 @@ describe('offset pagination', () => {
   it('derives page geometry from the schema defaults', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const { pagination } = harness.internals
-    expect(pagination.mode.value).toBe('offset')
-    expect(pagination.pageSize.value).toBe(20)
-    expect(pagination.currentPage.value).toBe(1)
-    expect(pagination.totalPages.value).toBe(3)
-    expect(pagination.rowCount.value).toBe(60)
-    expect(pagination.loadedCount.value).toBe(20)
+    expect([
+      pagination.mode.value,
+      pagination.pageSize.value,
+      pagination.currentPage.value,
+      pagination.totalPages.value,
+      pagination.rowCount.value,
+      pagination.loadedCount.value,
+    ]).toEqual(['offset', 20, 1, 3, 60, 20])
     expect(pagination.canPreviousPage.value).toBeFalsy()
     expect(pagination.canNextPage.value).toBeTruthy()
     expect(pagination.pageSizeOptions.value).toStrictEqual([10, 20, 50])
@@ -34,9 +36,11 @@ describe('offset pagination', () => {
     const { pagination } = harness.internals
     pagination.next()
     await harness.flush()
-    expect(pagination.currentPage.value).toBe(2)
-    expect(harness.query()['p.page']).toBe('2')
-    expect(rows<AccountRow>(harness)[0]?.id).toBe('acc-21')
+    expect([
+      pagination.currentPage.value,
+      harness.query()['p.page'],
+      rows<AccountRow>(harness)[0]?.id,
+    ]).toEqual([2, '2', 'acc-21'])
 
     pagination.setPage(99)
     await harness.flush()
@@ -111,19 +115,23 @@ describe('no pagination', () => {
   it('loads every row and disables navigation', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema({ pagination: false }) })
     const { pagination } = harness.internals
-    expect(pagination.mode.value).toBe('none')
-    expect(pagination.loadedCount.value).toBe(60)
-    expect(pagination.pageSize.value).toBe(60)
+    expect([
+      pagination.mode.value,
+      pagination.loadedCount.value,
+      pagination.pageSize.value,
+    ]).toEqual(['none', 60, 60])
     expect(pagination.canNextPage.value).toBeFalsy()
     expect(pagination.canPreviousPage.value).toBeFalsy()
     pagination.next()
     await harness.flush()
-    expect(pagination.currentPage.value).toBe(1)
-    expect(pagination.noneState.value).toStrictEqual({
-      loadedCount: 60,
-      mode: 'none',
-      totalCount: 60,
-    })
+    expect([pagination.currentPage.value, pagination.noneState.value]).toEqual([
+      1,
+      {
+        loadedCount: 60,
+        mode: 'none',
+        totalCount: 60,
+      },
+    ])
   })
 })
 
@@ -132,9 +140,11 @@ describe('cursor pagination', () => {
     const onPage = vi.fn()
     harness = await mountLoaded({ schema: createAuditSchema({ onPage, pageSize: 20, total: 45 }) })
     const { pagination } = harness.internals
-    expect(pagination.mode.value).toBe('cursor')
-    expect(pagination.loadedCount.value).toBe(20)
-    expect(pagination.rowCount.value).toBe(45)
+    expect([
+      pagination.mode.value,
+      pagination.loadedCount.value,
+      pagination.rowCount.value,
+    ]).toEqual(['cursor', 20, 45])
     expect(pagination.canNextPage.value).toBeTruthy()
     expect(pagination.canPreviousPage.value).toBeFalsy()
     expect(onPage).toHaveBeenLastCalledWith(null)

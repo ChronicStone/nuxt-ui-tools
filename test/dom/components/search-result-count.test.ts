@@ -17,10 +17,12 @@ describe('search part', () => {
     harness = await mountLoaded({ render: () => h(DataListSearch), schema: createAccountsSchema() })
     const w = harness.wrapper
     const input = w.find('input[data-ui="UInput"]')
-    expect(input.attributes('placeholder')).toBe('Rechercher un compte…')
-    expect(input.attributes('data-icon')).toBe('i-lucide-search')
-    expect(input.attributes('data-variant')).toBe('outline')
-    expect(input.attributes('data-size')).toBe('md')
+    expect([
+      input.attributes('placeholder'),
+      input.attributes('data-icon'),
+      input.attributes('data-variant'),
+      input.attributes('data-size'),
+    ]).toEqual(['Rechercher un compte…', 'i-lucide-search', 'outline', 'md'])
     expect(input.attributes('style')).toContain('width: 21rem')
     expect(input.classes()).toContain('nut-dl-search')
 
@@ -28,8 +30,10 @@ describe('search part', () => {
     expect(harness.internals.filters.searchQuery.value).toBe('')
     await input.trigger('keydown', { key: 'Enter' })
     await harness.flush()
-    expect(harness.internals.filters.searchQuery.value).toBe('Compte 01')
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(10)
+    expect([
+      harness.internals.filters.searchQuery.value,
+      harness.internals.queryContent.data.value.rowCount,
+    ]).toEqual(['Compte 01', 10])
 
     await input.setValue('Compte 02')
     await input.trigger('blur')
@@ -56,10 +60,12 @@ describe('search part', () => {
     })
     const input = harness.wrapper.find('input[data-ui="UInput"]')
     expect(input.attributes('style')).toContain('width: 340px')
-    expect(input.attributes('data-size')).toBe('lg')
-    expect(input.attributes('data-variant')).toBe('soft')
-    expect(input.attributes('data-color')).toBe('primary')
-    expect(input.attributes('placeholder')).toBe('Custom')
+    expect([
+      input.attributes('data-size'),
+      input.attributes('data-variant'),
+      input.attributes('data-color'),
+      input.attributes('placeholder'),
+    ]).toEqual(['lg', 'soft', 'primary', 'Custom'])
     expect(input.classes()).toContain('root-x')
   })
 

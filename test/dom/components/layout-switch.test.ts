@@ -30,22 +30,26 @@ describe('layout switch part', () => {
     expect(w.find('.nut-dl-layout').exists()).toBeTruthy()
     const buttons = w.findAll('.nut-dl-layout__btn')
     expect(buttons).toHaveLength(2)
-    expect(buttons.map((b) => b.attributes('aria-label'))).toStrictEqual([
-      'Vue tableau',
-      'Vue grille',
+    expect([
+      buttons.map((b) => b.attributes('aria-label')),
+      buttons.map((b) => b.attributes('data-icon')),
+      must(buttons[0]).attributes('data-active'),
+      must(buttons[0]).attributes('data-variant'),
+      must(buttons[1]).attributes('data-variant'),
+    ]).toEqual([
+      ['Vue tableau', 'Vue grille'],
+      ['i-lucide-menu', 'i-lucide-box'],
+      'true',
+      'soft',
+      'ghost',
     ])
-    expect(buttons.map((b) => b.attributes('data-icon'))).toStrictEqual([
-      'i-lucide-menu',
-      'i-lucide-box',
-    ])
-    expect(must(buttons[0]).attributes('data-active')).toBe('true')
-    expect(must(buttons[0]).attributes('data-variant')).toBe('soft')
-    expect(must(buttons[1]).attributes('data-variant')).toBe('ghost')
     expect(must(buttons[0]).attributes('data-label')).toBeUndefined()
     await must(buttons[1]).trigger('click')
     await harness.flush()
-    expect(harness.internals.controls.tableLayout.value).toBe('grid')
-    expect(must(w.findAll('.nut-dl-layout__btn')[1]).attributes('data-active')).toBe('true')
+    expect([
+      harness.internals.controls.tableLayout.value,
+      must(w.findAll('.nut-dl-layout__btn')[1]).attributes('data-active'),
+    ]).toEqual(['grid', 'true'])
   })
 
   it('honours order, labels, icons and props layers', async () => {
@@ -64,10 +68,12 @@ describe('layout switch part', () => {
       },
     })
     const buttons = harness.wrapper.findAll('.nut-dl-layout__btn')
-    expect(buttons.map((b) => b.attributes('data-label'))).toStrictEqual(['Grid', 'Table'])
-    expect(must(buttons[1]).attributes('data-icon')).toBe('i-lucide-rows-3')
-    expect(must(buttons[1]).attributes('data-variant')).toBe('ghost')
-    expect(must(buttons[1]).attributes('data-size')).toBe('sm')
+    expect([
+      buttons.map((b) => b.attributes('data-label')),
+      must(buttons[1]).attributes('data-icon'),
+      must(buttons[1]).attributes('data-variant'),
+      must(buttons[1]).attributes('data-size'),
+    ]).toEqual([['Grid', 'Table'], 'i-lucide-rows-3', 'ghost', 'sm'])
     expect(must(buttons[1]).classes()).toContain('btn-x')
     expect(harness.wrapper.find('.nut-dl-layout').classes()).toContain('root-x')
   })

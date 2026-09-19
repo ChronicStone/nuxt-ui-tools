@@ -18,22 +18,29 @@ describe('table summaries', () => {
     harness = await mountLoaded({ schema: createAccountsSchema({ rows }) })
     const { summaries } = harness.internals
     expect(summaries.enabled.value).toBeTruthy()
-    expect(summaries.columns.value.map((column) => column.id)).toStrictEqual([
-      'contracts',
-      'consumption',
+    expect([
+      summaries.columns.value.map((column) => column.id),
+      summaries.scope.value,
+      summaries.scopes.value,
+      summaries.count.value,
+      summaries.cell('contracts'),
+    ]).toEqual([
+      ['contracts', 'consumption'],
+      'filtered',
+      ['filtered', 'page', 'selection'],
+      60,
+      {
+        error: null,
+        loading: false,
+        value: sum(rows, 'contracts'),
+      },
     ])
-    expect(summaries.scope.value).toBe('filtered')
-    expect(summaries.scopes.value).toStrictEqual(['filtered', 'page', 'selection'])
-    expect(summaries.count.value).toBe(60)
-    expect(summaries.cell('contracts')).toStrictEqual({
-      error: null,
-      loading: false,
-      value: sum(rows, 'contracts'),
-    })
     await harness.until(() => !summaries.cell('consumption').loading)
-    expect(summaries.cell('consumption').value).toBe(sum(rows, 'consumption'))
-    expect(summaries.format('consumption')).toBe(`${sum(rows, 'consumption')} t`)
-    expect(summaries.format('contracts')).toBe(sum(rows, 'contracts'))
+    expect([
+      summaries.cell('consumption').value,
+      summaries.format('consumption'),
+      summaries.format('contracts'),
+    ]).toEqual([sum(rows, 'consumption'), `${sum(rows, 'consumption')} t`, sum(rows, 'contracts')])
     expect(summaries.loading.value).toBeFalsy()
   })
 
@@ -43,21 +50,27 @@ describe('table summaries', () => {
     summaries.setScope('page')
     await harness.flush()
     const page = rows.slice(0, 20)
-    expect(summaries.count.value).toBe(20)
-    expect(summaries.cell('contracts').value).toBe(sum(page, 'contracts'))
+    expect([summaries.count.value, summaries.cell('contracts').value]).toEqual([
+      20,
+      sum(page, 'contracts'),
+    ])
 
     harness.internals.selection.selectRows({ rowIds: ['acc-1', 'acc-2'] })
     summaries.setScope('selection')
     await harness.flush()
-    expect(summaries.count.value).toBe(2)
-    expect(summaries.cell('contracts').value).toBe(sum(rows.slice(0, 2), 'contracts'))
+    expect([summaries.count.value, summaries.cell('contracts').value]).toEqual([
+      2,
+      sum(rows.slice(0, 2), 'contracts'),
+    ])
 
     summaries.setScope('filtered')
     harness.internals.filters.setOptionFilterValues({ key: 'status', values: ['active'] })
     await harness.flush()
     const active = rows.filter((row) => row.status === 'active')
-    expect(summaries.count.value).toBe(active.length)
-    expect(summaries.cell('contracts').value).toBe(sum(active, 'contracts'))
+    expect([summaries.count.value, summaries.cell('contracts').value]).toEqual([
+      active.length,
+      sum(active, 'contracts'),
+    ])
   })
 
   it('merges schema-level resolvers over derived cells', async () => {

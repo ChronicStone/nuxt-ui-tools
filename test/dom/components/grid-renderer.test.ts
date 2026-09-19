@@ -47,8 +47,10 @@ describe('grid renderer part', () => {
     const w = harness.wrapper
     const root = w.find('.nut-dl-grid')
     expect(root.classes()).toContain('root-x')
-    expect((root.element as HTMLElement).style.getPropertyValue('--nut-dl-grid-gap')).toBe('12px')
-    expect(root.attributes('data-loading')).toBe('false')
+    expect([
+      (root.element as HTMLElement).style.getPropertyValue('--nut-dl-grid-gap'),
+      root.attributes('data-loading'),
+    ]).toEqual(['12px', 'false'])
     await harness.until(() => w.find('.nut-dl-grid').attributes('data-animated') === 'true')
     expect(w.find('.nut-dl-grid__viewport').classes()).toContain('vp-x')
     const flow = w.find('.nut-dl-grid__flow')
@@ -58,8 +60,10 @@ describe('grid renderer part', () => {
     expect(items).toHaveLength(12)
     expect(must(items[0]).classes()).toContain('item-x')
     expect(must(items[0]).attributes('style')).toContain('span 1 / span 1')
-    expect(must(items[0]).find('article.card').attributes('data-row')).toBe('acc-1')
-    expect(must(items[0]).find('article.card').text()).toBe('Compte 001')
+    expect([
+      must(items[0]).find('article.card').attributes('data-row'),
+      must(items[0]).find('article.card').text(),
+    ]).toEqual(['acc-1', 'Compte 001'])
     expect(w.find('.nut-dl-grid__canvas').exists()).toBeFalsy()
   })
 

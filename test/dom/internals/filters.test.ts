@@ -44,10 +44,12 @@ describe('table filters', () => {
     })
     expect(preview.active).toBeTruthy()
     expect(preview.dirty).toBeFalsy()
-    expect(preview.tags).toStrictEqual(['Actif', 'En attente'])
-    expect(preview.entries).toStrictEqual([
-      { color: STATUS_COLOR.active, icon: undefined, label: 'Actif' },
-      { color: STATUS_COLOR.pending, icon: undefined, label: 'En attente' },
+    expect([preview.tags, preview.entries]).toEqual([
+      ['Actif', 'En attente'],
+      [
+        { color: STATUS_COLOR.active, icon: undefined, label: 'Actif' },
+        { color: STATUS_COLOR.pending, icon: undefined, label: 'En attente' },
+      ],
     ])
     expect(filters.hasActiveUiFilters.value).toBeFalsy()
     expect(harness.query()['f.ui.status']).toBeUndefined()
@@ -86,8 +88,10 @@ describe('table filters', () => {
 
     filters.toggleOptionFilterValue({ key: 'country', value: 'FR' })
     await harness.flush()
-    expect(filters.getFilterState({ key: 'country' })?.value).toStrictEqual(['DE'])
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(20)
+    expect([
+      filters.getFilterState({ key: 'country' })?.value,
+      harness.internals.queryContent.data.value.rowCount,
+    ]).toEqual([['DE'], 20])
     expect(filters.getFilterPreview({ key: 'country' })).toMatchObject({
       count: 1,
       summary: '',
@@ -103,14 +107,16 @@ describe('table filters', () => {
   it('handles operators and scalar values', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const { filters } = harness.internals
-    expect(filters.getFilterOperator({ key: 'country' })).toBe('isAnyOf')
-    expect(
+    expect([
+      filters.getFilterOperator({ key: 'country' }),
       filters.getFilterOperatorOptions({ key: 'country' }).map((item) => item.label),
-    ).toStrictEqual(['parmi', 'est', "n'est pas"])
+    ]).toEqual(['isAnyOf', ['parmi', 'est', "n'est pas"]])
     filters.setOptionFilterValues({ key: 'country', operator: 'isNot', values: ['FR'] })
     await harness.flush()
-    expect(filters.getFilterOperator({ key: 'country' })).toBe('isNot')
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(40)
+    expect([
+      filters.getFilterOperator({ key: 'country' }),
+      harness.internals.queryContent.data.value.rowCount,
+    ]).toEqual(['isNot', 40])
     expect(harness.query()['f.ui.country~isNot']).toBeDefined()
 
     filters.setScalarFilterValue({ key: 'edofSync', value: true })
@@ -154,8 +160,10 @@ describe('table filters', () => {
 
     filters.replaceFilters({ rules: [{ key: 'country', operator: 'isAnyOf', value: ['ES'] }] })
     await harness.flush()
-    expect(filters.getFilterState({ key: 'country' })?.value).toStrictEqual(['ES'])
-    expect(harness.table.filters.activeCount.value).toBe(1)
+    expect([
+      filters.getFilterState({ key: 'country' })?.value,
+      harness.table.filters.activeCount.value,
+    ]).toEqual([['ES'], 1])
     harness.table.filters.remove('country')
     await harness.flush()
     expect(harness.table.filters.activeCount.value).toBe(0)

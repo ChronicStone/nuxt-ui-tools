@@ -60,22 +60,19 @@ describe('spreadsheet source utils', () => {
     await sourceTick()
 
     expect(source.workbook.value?.sheets).toHaveLength(2)
-    expect(source.headers.value).toStrictEqual([
-      'Exam name',
-      'First name',
-      'School level: PRÉREQUIS CECR',
-    ])
-    expect(source.rows.value).toStrictEqual([
-      ['Business English 4 Skills', 'John', 'Primary, Secondary'],
-      ['Reading Placement Test', 'Jane', 'Primary'],
+    expect([source.headers.value, source.rows.value]).toEqual([
+      ['Exam name', 'First name', 'School level: PRÉREQUIS CECR'],
+      [
+        ['Business English 4 Skills', 'John', 'Primary, Secondary'],
+        ['Reading Placement Test', 'Jane', 'Primary'],
+      ],
     ])
 
     source.setSheetName('Other')
     expect(source.headers.value).toStrictEqual(['Value'])
 
     source.setHeaderRowIndex(1)
-    expect(source.headers.value).toStrictEqual(['Other'])
-    expect(source.rows.value).toStrictEqual([])
+    expect([source.headers.value, source.rows.value]).toEqual([['Other'], []])
   })
 })
 

@@ -115,11 +115,11 @@ describe('runtime columns', () => {
 
   it('resolves labels, sortable keys and header icons', () => {
     const score = must(findSchemaColumn({ columnId: 'score', schema }))
-    expect(resolveColumnLabel({ column: score })).toBe('Score total')
-    expect(resolveColumnLabel({ column: { ...score, label: () => ({}) as never } })).toBe('Score')
-    expect(
+    expect([
+      resolveColumnLabel({ column: score }),
+      resolveColumnLabel({ column: { ...score, label: () => ({}) as never } }),
       getSortableKey({ column: must(findSchemaColumn({ columnId: 'firstName', schema })) }),
-    ).toBe('firstName')
+    ]).toEqual(['Score total', 'Score', 'firstName'])
     expect(getSortableKey({ column: score })).toBeUndefined()
     expect(
       getSortableKey({ column: must(findSchemaColumn({ columnId: 'created_at_label', schema })) }),
@@ -128,27 +128,26 @@ describe('runtime columns', () => {
     function none() {
       return null
     }
-    expect(
+    expect([
       getColumnHeaderIcon({ columnId: 'a', getPinnedState: none, getSortState: () => 'asc' }),
-    ).toBe('i-lucide-arrow-up')
-    expect(
       getColumnHeaderIcon({ columnId: 'a', getPinnedState: none, getSortState: () => 'desc' }),
-    ).toBe('i-lucide-arrow-down')
-    expect(
       getColumnHeaderIcon({
         canHide: true,
         columnId: 'a',
         getPinnedState: none,
         getSortState: none,
       }),
-    ).toBe('i-lucide-chevrons-up-down')
-    expect(
       getColumnHeaderIcon({
         canHide: false,
         columnId: 'a',
         getPinnedState: none,
         getSortState: none,
       }),
-    ).toBe('i-lucide-grip-vertical')
+    ]).toEqual([
+      'i-lucide-arrow-up',
+      'i-lucide-arrow-down',
+      'i-lucide-chevrons-up-down',
+      'i-lucide-grip-vertical',
+    ])
   })
 })
