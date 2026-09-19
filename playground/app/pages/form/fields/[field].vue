@@ -39,7 +39,7 @@ const formUi = computed<FormUiConfig>(() => ({
 }))
 const form = useForm({
   input,
-  onSubmit: async ({ formData }) => {
+  onSubmit: ({ formData }) => {
     submitted.value = formData
     return { data: formData, success: true }
   },

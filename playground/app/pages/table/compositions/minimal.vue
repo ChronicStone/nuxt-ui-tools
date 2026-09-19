@@ -195,7 +195,7 @@ const schema = defineTableSchema({
   source: {
     mode: 'client',
     query: () => ({
-      queryFn: async () => contacts,
+      queryFn: () => contacts,
       queryKey: ['table-composition-directory'],
     }),
   },

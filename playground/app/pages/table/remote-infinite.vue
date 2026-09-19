@@ -62,7 +62,7 @@ const schema = defineTableSchema({
     facets: true,
     mode: 'remote',
     query: (request) => ({
-      queryFn: async () => demoEmployeesClient.queryTable(request),
+      queryFn: () => demoEmployeesClient.queryTable(request),
       queryKey: ['demo-employees-infinite', request],
     }),
   },

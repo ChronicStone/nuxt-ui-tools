@@ -133,7 +133,7 @@ function createMultiValueSchema() {
       {
         key: 'products',
         query: () => ({
-          queryFn: async () => center.products,
+          queryFn: () => center.products,
           queryKey: ['playground', 'spreadsheet', 'multi-value-lab', 'products'],
         }),
       },

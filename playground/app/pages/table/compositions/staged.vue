@@ -123,7 +123,7 @@ const schema = defineTableSchema({
   source: {
     mode: 'client',
     query: () => ({
-      queryFn: async () => invoices,
+      queryFn: () => invoices,
       queryKey: ['table-composition-staged-invoices'],
     }),
   },

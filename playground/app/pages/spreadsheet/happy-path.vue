@@ -186,14 +186,14 @@ function createHappyPathSchema() {
       {
         key: 'products',
         query: () => ({
-          queryFn: async () => center.products,
+          queryFn: () => center.products,
           queryKey: ['playground', 'spreadsheet', 'happy-path', 'products'],
         }),
       },
       {
         key: 'affiliationGroups',
         query: () => ({
-          queryFn: async () => center.affiliationGroups,
+          queryFn: () => center.affiliationGroups,
           queryKey: ['playground', 'spreadsheet', 'happy-path', 'affiliation-groups'],
         }),
       },

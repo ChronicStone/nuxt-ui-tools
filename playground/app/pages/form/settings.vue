@@ -78,7 +78,7 @@ const settingsSchema = defineFormSchema({
 })
 
 const form = useForm({
-  onSubmit: async () => {
+  onSubmit: () => {
     saved.value = true
     return { success: true }
   },

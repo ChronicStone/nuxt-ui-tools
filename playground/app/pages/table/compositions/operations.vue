@@ -81,14 +81,14 @@ const operations: OperationRow[] = [
 const schema = defineTableSchema({
   actions: [
     {
-      action: async () => Promise.resolve(),
+      action: () => Promise.resolve(),
       icon: 'i-lucide-check-check',
       key: 'mark-ready',
       label: 'Mark ready',
       requiresSelection: true,
     },
     {
-      action: async () => Promise.resolve(),
+      action: () => Promise.resolve(),
       icon: 'i-lucide-refresh-cw',
       key: 'retry-selected',
       label: 'Retry selected',
@@ -118,7 +118,7 @@ const schema = defineTableSchema({
   source: {
     mode: 'client',
     query: () => ({
-      queryFn: async () => operations,
+      queryFn: () => operations,
       queryKey: ['table-composition-operations'],
     }),
   },

@@ -358,7 +358,7 @@ const remoteSchema = defineTableSchema({
     facets: true,
     mode: 'remote',
     query: (params) => ({
-      queryFn: async () => {
+      queryFn: () => {
         if (params.pagination.mode !== 'offset') {
           throw new Error('The remote employee demo uses offset pagination.')
         }
