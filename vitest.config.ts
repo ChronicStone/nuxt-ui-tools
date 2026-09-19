@@ -8,11 +8,15 @@ export default defineConfig({
   plugins: [vue(), vueJsx()],
   resolve: {
     alias: [
-      { find: /^#ui-tools\/(.*)$/u, replacement: `${root}src/runtime/$1` },
+      { find: /^#ui-tools\/(?<path>.*)$/u, replacement: `${root}src/runtime/$<path>` },
       { find: /^nuxt\/app$/u, replacement: `${root}test/dom/stubs/nuxt-app.ts` },
       {
         find: /^@nuxt\/ui\/composables\/useLocale$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui-locale.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/Alert\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/alert.ts`,
       },
       {
         find: /^@nuxt\/ui\/components\/Badge\.vue$/u,
@@ -27,8 +31,24 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/calendar.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/Card\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/card.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Checkbox\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/checkbox.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/CheckboxGroup\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/checkbox-group.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/Collapsible\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/collapsible.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/ColorPicker\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/color-picker.ts`,
       },
       {
         find: /^@nuxt\/ui\/components\/Drawer\.vue$/u,
@@ -43,6 +63,14 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/field-group.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/FileUpload\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/file-upload.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/FormField\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/form-field.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Icon\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/icon.ts`,
       },
@@ -55,12 +83,32 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/input-date.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/InputMenu\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/input-menu.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/InputNumber\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/input-number.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/InputTags\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/input-tags.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/InputTime\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/input-time.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/Modal\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/modal.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Pagination\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/pagination.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/PinInput\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/pin-input.ts`,
       },
       {
         find: /^@nuxt\/ui\/components\/Popover\.vue$/u,
@@ -79,6 +127,14 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/select.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/SelectMenu\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/select-menu.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/Separator\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/separator.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Skeleton\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/skeleton.ts`,
       },
@@ -91,8 +147,20 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/slider.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/Switch\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/switch.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/Textarea\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/textarea.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Tooltip\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/tooltip.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/Tree\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/tree.ts`,
       },
       { find: /^vue-draggable-plus$/u, replacement: `${root}test/dom/stubs/vue-draggable-plus.ts` },
     ],

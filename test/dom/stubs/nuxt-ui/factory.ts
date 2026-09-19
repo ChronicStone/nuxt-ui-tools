@@ -1,24 +1,45 @@
 import { defineComponent, h } from 'vue'
-import type { PropType, VNodeChild } from 'vue'
+import type { VNodeChild } from 'vue'
 
-import { isNullish } from '#ui-tools/shared/utils/predicate'
+import { isFunction, isString } from '#ui-tools/shared/utils/predicate'
 
-type Any = Record<string, unknown>
+import {
+  asRecord,
+  asRecords,
+  asScalar,
+  dataValue,
+  inputElement,
+  optional,
+  scalarText,
+} from './props'
+import type { StubRecord, StubScalar, StubValue } from './props'
+
+type StubProps = Readonly<Record<string, StubValue>>
+type Handler = (event: Event) => void
+
 interface MenuItem {
   label?: string
   icon?: string
   type?: string
   class?: string
   disabled?: boolean
-  onSelect?: (event: Event) => void
+  onSelect?: Handler
+  group: number
 }
 
-const optional = { default: undefined, type: null as unknown as PropType<unknown> }
+function noop() {
+  return null
+}
 
-function dataAttributes(props: Any, keys: string[]) {
-  const out: Any = {}
+function asHandler(value: StubValue): Handler | undefined {
+  // SAFETY: stub menu items only ever receive DOM events; the authored callback signature is (event) => void.
+  return isFunction(value) ? (value as Handler) : undefined
+}
+
+function dataAttributes(props: StubProps, keys: string[]) {
+  const out: Record<string, string> = {}
   for (const key of keys) {
-    const value = props[key]
+    const value = asScalar(props[key])
     if (value === undefined || value === null || value === false) {
       continue
     }
@@ -28,56 +49,75 @@ function dataAttributes(props: Any, keys: string[]) {
   return out
 }
 
-function uiAttributes(ui: unknown) {
-  const out: Any = {}
-  if (!ui || typeof ui !== 'object') {
+function uiAttributes(ui: StubValue) {
+  const out: Record<string, string> = {}
+  const record = asRecord(ui)
+  if (!record) {
     return out
   }
-  for (const [slot, value] of Object.entries(ui as Any)) {
-    if (typeof value === 'string' && value) {
+  for (const [slot, value] of Object.entries(record)) {
+    if (isString(value) && value) {
       out[`data-slot-${slot.toLowerCase()}`] = value
     }
   }
   return out
 }
 
-function flattenItems(items: unknown): (MenuItem & { group: number })[] {
+function uiClass(ui: StubValue, slot: string) {
+  return dataValue(asRecord(ui)?.[slot])
+}
+
+function toMenuItem(record: StubRecord, group: number): MenuItem {
+  return {
+    class: dataValue(record.class),
+    disabled: record.disabled === true,
+    group,
+    icon: dataValue(record.icon),
+    label: dataValue(record.label),
+    onSelect: asHandler(record.onSelect),
+    type: dataValue(record.type),
+  }
+}
+
+function flattenItems(items: StubValue): MenuItem[] {
   if (!Array.isArray(items)) {
     return []
   }
-  const groups = Array.isArray(items[0]) ? (items as MenuItem[][]) : [items as MenuItem[]]
-  return groups.flatMap((group, index) => group.map((item) => ({ ...item, group: index })))
+  const groups = Array.isArray(items[0]) ? items : [items]
+  return groups.flatMap((group, index) =>
+    asRecords(group).map((record) => toMenuItem(record, index)),
+  )
 }
 
-function renderItems(items: unknown) {
+function renderItem(item: MenuItem, index: number) {
+  if (item.type === 'label') {
+    return h('span', { class: item.class, 'data-ui-item-label': '', key: index }, item.label)
+  }
+  if (item.type === 'separator') {
+    return h('hr', { 'data-ui-item-separator': '', key: index })
+  }
+  return h(
+    'button',
+    {
+      class: item.class,
+      'data-group': item.group,
+      'data-icon': item.icon,
+      'data-ui-item': '',
+      disabled: item.disabled,
+      key: index,
+      onClick: (event: Event) => item.onSelect?.(event),
+      type: 'button',
+    },
+    item.label,
+  )
+}
+
+function renderItems(items: StubValue) {
   const flat = flattenItems(items)
   if (!flat.length) {
     return null
   }
-  return h(
-    'div',
-    { 'data-ui-items': '' },
-    flat.map((item, index) =>
-      item.type === 'label'
-        ? h('span', { class: item.class, 'data-ui-item-label': '', key: index }, item.label)
-        : item.type === 'separator'
-          ? h('hr', { 'data-ui-item-separator': '', key: index })
-          : h(
-              'button',
-              {
-                class: item.class,
-                'data-group': item.group,
-                'data-icon': item.icon,
-                'data-ui-item': '',
-                disabled: item.disabled,
-                key: index,
-                onClick: (event: Event) => item.onSelect?.(event),
-                type: 'button',
-              },
-              item.label,
-            ),
-    ),
-  )
+  return h('div', { 'data-ui-items': '' }, flat.map(renderItem))
 }
 
 const controlKeys = [
@@ -131,13 +171,12 @@ export function createControlStub(name: string, tag = 'div') {
     },
     setup(props, { slots, attrs }) {
       return () => {
-        const ui = props.ui as Any | undefined
         const children: VNodeChild[] = []
         if (slots.leading) {
           children.push(h('span', { 'data-ui-slot': 'leading' }, slots.leading()))
         }
-        if (!isNullish(props.label)) {
-          children.push(h('span', { 'data-ui-label': '' }, String(props.label)))
+        if (props.label !== undefined && props.label !== null) {
+          children.push(h('span', { 'data-ui-label': '' }, scalarText(props.label)))
         }
         if (slots.default) {
           children.push(...(slots.default() ?? []))
@@ -149,11 +188,11 @@ export function createControlStub(name: string, tag = 'div') {
           tag,
           {
             ...attrs,
-            class: [attrs.class, ui?.base, ui?.root],
+            class: [attrs.class, uiClass(props.ui, 'base'), uiClass(props.ui, 'root')],
             'data-ui': name,
             disabled: tag === 'button' ? Boolean(props.disabled) : undefined,
             type: tag === 'button' ? 'button' : undefined,
-            ...dataAttributes(props as Any, controlKeys),
+            ...dataAttributes(props, controlKeys),
             ...uiAttributes(props.ui),
           },
           children,
@@ -186,55 +225,57 @@ export function createOverlayStub(name: string) {
       ui: optional,
     },
     setup(props, { slots, attrs, emit }) {
+      function renderSlot(slot: 'header' | 'content' | 'body' | 'footer') {
+        const render = slots[slot]
+        return render ? h('div', { 'data-ui-slot': slot }, render({ close: noop })) : null
+      }
       return () => {
-        const ui = props.ui as Any | undefined
         const open = props.open !== false
-        const content: VNodeChild[] = []
-        if (open) {
-          if (props.title) {
-            content.push(h('h2', { 'data-ui-title': '' }, String(props.title)))
-          }
-          if (slots.header) {
-            content.push(h('div', { 'data-ui-slot': 'header' }, slots.header({ close: () => {} })))
-          }
-          if (slots.content) {
-            content.push(
-              h('div', { 'data-ui-slot': 'content' }, slots.content({ close: () => {} })),
-            )
-          }
-          if (slots.body) {
-            content.push(h('div', { 'data-ui-slot': 'body' }, slots.body({ close: () => {} })))
-          }
-          if (slots.footer) {
-            content.push(h('div', { 'data-ui-slot': 'footer' }, slots.footer({ close: () => {} })))
-          }
-        }
-        const items = renderItems(props.items)
+        const content: VNodeChild[] = open
+          ? [
+              props.title ? h('h2', { 'data-ui-title': '' }, scalarText(props.title)) : null,
+              renderSlot('header'),
+              renderSlot('content'),
+              renderSlot('body'),
+              renderSlot('footer'),
+            ]
+          : []
         return h(
           'div',
           {
             ...attrs,
-            class: [attrs.class, ui?.root],
+            class: [attrs.class, uiClass(props.ui, 'root')],
             'data-open': String(open),
             'data-ui': name,
-            ...dataAttributes(props as Any, controlKeys),
+            ...dataAttributes(props, controlKeys),
             ...uiAttributes(props.ui),
           },
           [
             h(
               'div',
               { 'data-ui-trigger': '', onClick: () => emit('update:open', !open) },
-              slots.default?.({ close: () => {}, open }),
+              slots.default?.({ close: noop, open }),
             ),
             open
-              ? h('div', { class: [ui?.content, ui?.body], 'data-ui-content': '' }, content)
+              ? h(
+                  'div',
+                  {
+                    class: [uiClass(props.ui, 'content'), uiClass(props.ui, 'body')],
+                    'data-ui-content': '',
+                  },
+                  content,
+                )
               : null,
-            items,
+            renderItems(props.items),
           ],
         )
       }
     },
   })
+}
+
+function numberInputValue(value: string) {
+  return value === '' ? undefined : Number(value)
 }
 
 export function createInputStub(
@@ -264,51 +305,49 @@ export function createInputStub(
     },
     setup(props, { slots, attrs, emit }) {
       return () => {
-        const ui = props.ui as Any | undefined
         const shared = {
           ...attrs,
-          class: [attrs.class, ui?.root, ui?.base],
+          class: [attrs.class, uiClass(props.ui, 'root'), uiClass(props.ui, 'base')],
           'data-ui': name,
           disabled: Boolean(props.disabled),
-          ...dataAttributes(props as Any, controlKeys),
+          ...dataAttributes(props, controlKeys),
           ...uiAttributes(props.ui),
         }
+        const model = scalarText(props.modelValue)
         if (kind === 'select') {
-          const items = (props.items as Array<{ label: string; value: unknown }> | undefined) ?? []
           return h(
             'select',
             {
               ...shared,
               onChange: (event: Event) =>
-                emit('update:modelValue', (event.target as HTMLSelectElement).value),
-              value: String(props.modelValue ?? ''),
+                emit(
+                  'update:modelValue',
+                  event.target instanceof HTMLSelectElement ? event.target.value : '',
+                ),
+              value: model,
             },
-            items.map((item) =>
+            asRecords(props.items).map((item) =>
               h(
                 'option',
-                {
-                  selected: String(item.value) === String(props.modelValue),
-                  value: String(item.value),
-                },
-                item.label,
+                { selected: scalarText(item.value) === model, value: scalarText(item.value) },
+                scalarText(item.label),
               ),
             ),
           )
         }
         if (kind === 'radio') {
-          const items = (props.items as Array<{ label: string; value: unknown }> | undefined) ?? []
           return h(
             'div',
             { ...shared, role: 'radiogroup' },
-            items.map((item) =>
-              h('label', { 'data-ui-radio': String(item.value) }, [
+            asRecords(props.items).map((item) =>
+              h('label', { 'data-ui-radio': scalarText(item.value) }, [
                 h('input', {
-                  checked: String(item.value) === String(props.modelValue),
+                  checked: scalarText(item.value) === model,
                   onChange: () => emit('update:modelValue', item.value),
                   type: 'radio',
-                  value: String(item.value),
+                  value: scalarText(item.value),
                 }),
-                item.label,
+                scalarText(item.label),
               ]),
             ),
           )
@@ -322,19 +361,16 @@ export function createInputStub(
             type: 'checkbox',
           })
         }
-        return h('span', { class: ui?.root, 'data-ui-wrap': name }, [
+        return h('span', { class: uiClass(props.ui, 'root'), 'data-ui-wrap': name }, [
           h('input', {
             ...shared,
             onInput: (event: Event) => {
-              const { value } = event.target as HTMLInputElement
-              emit(
-                'update:modelValue',
-                kind === 'number' ? (value === '' ? undefined : Number(value)) : value,
-              )
+              const value = inputElement(event)?.value ?? ''
+              emit('update:modelValue', kind === 'number' ? numberInputValue(value) : value)
             },
-            placeholder: props.placeholder,
-            type: kind === 'number' ? 'number' : ((props.type as string | undefined) ?? 'text'),
-            value: isNullish(props.modelValue) ? '' : String(props.modelValue),
+            placeholder: dataValue(props.placeholder),
+            type: kind === 'number' ? 'number' : (dataValue(props.type) ?? 'text'),
+            value: model,
           }),
           slots.trailing?.(),
         ])
@@ -368,47 +404,46 @@ export const UPaginationStub = defineComponent({
         1,
         Math.ceil(Number(props.total ?? 0) / Math.max(1, Number(props.itemsPerPage ?? 1))),
       )
-      const ui = props.ui as Any | undefined
+      function pageButton(
+        slot: string,
+        marker: string,
+        label: string,
+        target: number,
+        disabled = false,
+      ) {
+        return h(
+          'button',
+          {
+            class: uiClass(props.ui, slot),
+            [marker]: '',
+            disabled,
+            onClick: () => emit('update:page', target),
+            type: 'button',
+          },
+          label,
+        )
+      }
       return h(
         'nav',
         {
           ...attrs,
-          class: [attrs.class, ui?.root],
-          'data-items-per-page': String(props.itemsPerPage ?? ''),
+          class: [attrs.class, uiClass(props.ui, 'root')],
+          'data-items-per-page': scalarText(props.itemsPerPage),
           'data-page': String(page),
           'data-pages': String(pages),
-          'data-total': String(props.total ?? ''),
+          'data-total': scalarText(props.total),
           'data-ui': 'UPagination',
-          ...dataAttributes(props as Any, controlKeys),
+          ...dataAttributes(props, controlKeys),
           ...uiAttributes(props.ui),
         },
         [
-          h(
-            'button',
-            {
-              class: ui?.first,
-              'data-ui-page-first': '',
-              onClick: () => emit('update:page', 1),
-              type: 'button',
-            },
-            '«',
-          ),
-          h(
-            'button',
-            {
-              class: ui?.prev,
-              'data-ui-page-prev': '',
-              disabled: page <= 1,
-              onClick: () => emit('update:page', page - 1),
-              type: 'button',
-            },
-            '‹',
-          ),
+          pageButton('first', 'data-ui-page-first', '«', 1),
+          pageButton('prev', 'data-ui-page-prev', '‹', page - 1, page <= 1),
           ...Array.from({ length: pages }, (_, index) =>
             h(
               'button',
               {
-                class: ui?.item,
+                class: uiClass(props.ui, 'item'),
                 'data-active': String(index + 1 === page),
                 'data-ui-page': String(index + 1),
                 onClick: () => emit('update:page', index + 1),
@@ -417,29 +452,177 @@ export const UPaginationStub = defineComponent({
               String(index + 1),
             ),
           ),
-          h(
-            'button',
-            {
-              class: ui?.next,
-              'data-ui-page-next': '',
-              disabled: page >= pages,
-              onClick: () => emit('update:page', page + 1),
-              type: 'button',
-            },
-            '›',
-          ),
-          h(
-            'button',
-            {
-              class: ui?.last,
-              'data-ui-page-last': '',
-              onClick: () => emit('update:page', pages),
-              type: 'button',
-            },
-            '»',
-          ),
+          pageButton('next', 'data-ui-page-next', '›', page + 1, page >= pages),
+          pageButton('last', 'data-ui-page-last', '»', pages),
         ],
       )
     }
   },
 })
+
+export function createMenuStub(name: string) {
+  return defineComponent({
+    emits: ['update:modelValue', 'update:searchTerm', 'update:open', 'create', 'blur'],
+    inheritAttrs: false,
+    name,
+    props: {
+      clear: optional,
+      color: optional,
+      createItem: optional,
+      disabled: optional,
+      items: optional,
+      labelKey: optional,
+      loading: optional,
+      modelValue: optional,
+      multiple: optional,
+      open: optional,
+      placeholder: optional,
+      searchInput: optional,
+      searchTerm: optional,
+      size: optional,
+      trailing: optional,
+      ui: optional,
+      valueKey: optional,
+      variant: optional,
+    },
+    setup(props, { slots, attrs, emit }) {
+      function optionValue(option: StubValue): StubScalar {
+        const record = asRecord(option)
+        return record ? asScalar(record[scalarText(props.valueKey, 'value')]) : asScalar(option)
+      }
+      function optionLabel(option: StubValue) {
+        const record = asRecord(option)
+        if (!record) {
+          return scalarText(option)
+        }
+        const label = record[scalarText(props.labelKey, 'label')]
+        return scalarText(label ?? record[scalarText(props.valueKey, 'value')])
+      }
+      function flatItems(): StubValue[] {
+        const { items } = props
+        if (!Array.isArray(items)) {
+          return []
+        }
+        return items.flatMap((entry) => (Array.isArray(entry) ? entry : [entry]))
+      }
+      function selectedValues(): StubScalar[] {
+        if (props.multiple) {
+          return Array.isArray(props.modelValue) ? props.modelValue.map(asScalar) : []
+        }
+        const single = asScalar(props.modelValue)
+        return single === undefined || single === null ? [] : [single]
+      }
+      function select(option: StubValue) {
+        const value = optionValue(option)
+        if (props.multiple) {
+          const current = selectedValues()
+          emit(
+            'update:modelValue',
+            current.includes(value)
+              ? current.filter((entry) => entry !== value)
+              : [...current, value],
+          )
+          return
+        }
+        emit('update:modelValue', value)
+        emit('update:open', false)
+      }
+      function renderTriggerText(items: StubValue[], selected: StubScalar[]) {
+        if (!selected.length) {
+          return scalarText(props.placeholder)
+        }
+        return selected
+          .map((value) => {
+            const match = items.find((option) => optionValue(option) === value)
+            return match === undefined ? scalarText(value) : optionLabel(match)
+          })
+          .join(', ')
+      }
+      function renderContent(items: StubValue[], selected: StubScalar[], search: string) {
+        const showCreate =
+          Boolean(props.createItem) &&
+          search.length > 0 &&
+          !items.some((option) => optionLabel(option).toLowerCase() === search.toLowerCase())
+        return h('div', { class: uiClass(props.ui, 'content'), 'data-ui-content': '' }, [
+          props.searchInput
+            ? h('input', {
+                'data-ui-search': '',
+                onInput: (event: Event) =>
+                  emit('update:searchTerm', inputElement(event)?.value ?? ''),
+                type: 'text',
+                value: search,
+              })
+            : null,
+          slots['content-top']?.(),
+          h(
+            'div',
+            { 'data-ui-items': '', role: 'listbox' },
+            items.map((option) =>
+              h(
+                'button',
+                {
+                  'aria-selected': selected.includes(optionValue(option)) ? 'true' : 'false',
+                  'data-ui-item': scalarText(optionValue(option)),
+                  disabled: asRecord(option)?.disabled === true,
+                  onClick: () => select(option),
+                  role: 'option',
+                  type: 'button',
+                },
+                slots.item ? slots.item({ item: option }) : optionLabel(option),
+              ),
+            ),
+          ),
+          !items.length && slots.empty ? h('div', { 'data-ui-empty': '' }, slots.empty()) : null,
+          showCreate
+            ? h(
+                'button',
+                { 'data-ui-create': '', onClick: () => emit('create', search), type: 'button' },
+                slots['create-item-label'] ? slots['create-item-label']({ item: search }) : search,
+              )
+            : null,
+          slots['content-bottom']?.(),
+        ])
+      }
+      return () => {
+        const items = flatItems()
+        const selected = selectedValues()
+        const search = scalarText(props.searchTerm)
+        const open = props.open !== false
+        return h(
+          'div',
+          {
+            ...attrs,
+            class: [attrs.class, uiClass(props.ui, 'root'), uiClass(props.ui, 'base')],
+            'data-loading': props.loading ? 'true' : undefined,
+            'data-multiple': props.multiple ? 'true' : undefined,
+            'data-open': String(open),
+            'data-ui': name,
+            ...dataAttributes(props, controlKeys),
+            ...uiAttributes(props.ui),
+          },
+          [
+            h(
+              'button',
+              {
+                'data-ui-trigger': '',
+                disabled: Boolean(props.disabled),
+                onBlur: (event: Event) => emit('blur', event),
+                onClick: () => emit('update:open', !open),
+                type: 'button',
+              },
+              renderTriggerText(items, selected),
+            ),
+            props.clear && selected.length
+              ? h('button', {
+                  'data-ui-clear': '',
+                  onClick: () => emit('update:modelValue', props.multiple ? [] : null),
+                  type: 'button',
+                })
+              : null,
+            open ? renderContent(items, selected, search) : null,
+          ],
+        )
+      }
+    },
+  })
+}
