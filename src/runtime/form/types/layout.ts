@@ -16,6 +16,8 @@ export interface FormLayoutConfig {
 export interface FormItemLayout {
   /** Column span for this field inside the owning layout grid. Replaces legacy `size`. */
   span?: number | string
+  /** Fixed width used by renderers that lay fields out as columns, such as array tables. */
+  width?: number | string
 }
 
 /**

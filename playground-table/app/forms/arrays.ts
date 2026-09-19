@@ -70,6 +70,39 @@ export function arraysFormSchema() {
           isNumber(item.volume) ? `${item.volume} ${String(item.currency ?? '')}` : '',
         type: 'array-collapse',
       },
+      { key: 'productsSection', label: 'Produits du contrat', type: 'section' },
+      {
+        addItemLabel: 'Ajouter un produit',
+        confirmDelete: false,
+        fields: [
+          {
+            key: 'product',
+            label: 'Produit',
+            placeholder: 'Nom du produit',
+            required: true,
+            type: 'text',
+          },
+          {
+            key: 'code',
+            label: 'Code',
+            layout: { width: 130 },
+            placeholder: 'ABC-123',
+            type: 'text',
+          },
+          { key: 'price', label: 'Prix HT', layout: { width: 150 }, min: 0, type: 'number' },
+          {
+            key: 'currency',
+            label: 'Devise',
+            layout: { width: 120 },
+            options: CURRENCIES,
+            type: 'select',
+          },
+          { key: 'active', label: 'Actif', layout: { width: 80 }, type: 'checkbox' },
+        ],
+        key: 'products',
+        label: 'Produits',
+        type: 'array-table',
+      },
       { key: 'translationsSection', label: 'Traductions', type: 'section' },
       {
         addItemLabel: 'Ajouter une langue',
@@ -103,6 +136,16 @@ export function arraysFormSchema() {
 
 export const arraysFormInput = {
   levels: ['A2', 'B1'],
+  products: [
+    {
+      active: true,
+      code: 'TOEIC-LR',
+      currency: 'EUR',
+      price: 129,
+      product: 'TOEIC Listening & Reading',
+    },
+    { active: false, code: 'BRIGHT-EN', currency: 'EUR', price: 89, product: 'Bright English' },
+  ],
   recipients: ['direction@exassess.com'],
   targets: [
     {

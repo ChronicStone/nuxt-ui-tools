@@ -263,20 +263,31 @@ function bodyId(index: number) {
           </div>
 
           <div
-            v-show="isExpanded(index)"
             :id="bodyId(index)"
-            :class="[
-              mergeFormUiClass('grid border-t border-default', ui?.body),
-              field.compact ? 'gap-3 p-3' : 'gap-4 p-4',
-            ]"
+            class="grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none"
+            :style="{ gridTemplateRows: isExpanded(index) ? '1fr' : '0fr' }"
+            :aria-hidden="!isExpanded(index)"
+            :data-form-array-body="index"
           >
-            <div :class="mergeFormUiClass('grid', ui?.fields)" :style="containerLayout.style.value">
-              <FormFieldRenderer
-                v-for="child in fieldsForItem(item)"
-                :key="child.key"
-                :field="child"
-                :parent-path="itemPath(index)"
-              />
+            <div class="min-h-0 overflow-hidden">
+              <div
+                :class="[
+                  mergeFormUiClass('grid border-t border-default', ui?.body),
+                  field.compact ? 'gap-3 p-3' : 'gap-4 p-4',
+                ]"
+              >
+                <div
+                  :class="mergeFormUiClass('grid', ui?.fields)"
+                  :style="containerLayout.style.value"
+                >
+                  <FormFieldRenderer
+                    v-for="child in fieldsForItem(item)"
+                    :key="child.key"
+                    :field="child"
+                    :parent-path="itemPath(index)"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
