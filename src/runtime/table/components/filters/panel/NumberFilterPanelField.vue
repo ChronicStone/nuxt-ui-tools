@@ -6,6 +6,7 @@ import { isDate, isNumber, isObject } from '../../../../shared/utils/predicate'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
   DataListControlSize,
+  DataListFilterPanelUi,
   TableFilterOperator,
   TableNumberFilterDefinition,
   TableNumberFilterOperator,
@@ -17,6 +18,7 @@ import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 const props = defineProps<{
   definition: TableNumberFilterDefinition
   size: DataListControlSize
+  ui?: DataListFilterPanelUi
 }>()
 
 const internals = useTableInternals()
@@ -133,6 +135,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
     :size="size"
+    :ui="ui"
   >
     <template #actions>
       <FilterMatchModeButton

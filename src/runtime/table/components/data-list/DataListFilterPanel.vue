@@ -7,13 +7,16 @@ import type {
   DataListControlSize,
   DataListFilterPanelCommitMode,
   DataListFilterPanelMode,
+  DataListFilterPanelProps,
   DataListFilterPanelUi,
 } from '../../types'
 import FilterPanel from '../filters/panel/FilterPanel.vue'
 
 const props = defineProps<{
   size?: DataListControlSize
+  description?: string
   ui?: DataListFilterPanelUi
+  props?: DataListFilterPanelProps
   mode?: DataListFilterPanelMode
   commitMode?: DataListFilterPanelCommitMode
 }>()
@@ -30,7 +33,9 @@ const resolvedCommitMode = computed(() => props.commitMode ?? config.value?.comm
   <FilterPanel
     v-if="internals.filterPresentation.hasPanelFilters.value"
     :size="resolvedSize"
+    :description="description"
     :ui="resolvedUi"
+    :props="props.props"
     :mode="resolvedMode"
     :commit-mode="resolvedCommitMode"
   >

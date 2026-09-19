@@ -1,28 +1,21 @@
 <script setup lang="ts">
-import UIcon from '@nuxt/ui/components/Icon.vue'
-import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
-import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed, ref } from 'vue'
 
-import { isBoolean, isString } from '../../../../shared/utils/predicate'
+import { isBoolean } from '../../../../shared/utils/predicate'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { DataListControlSize, TableBooleanFilterDefinition } from '../../../types'
-import {
-  resolveBooleanFilterUi,
-  resolveDataListControlGeometry,
-  resolveFilterEditorSizeClasses,
-} from '../../../utils'
+import type { DataListControlSize, DataListFilterPanelUi, TableBooleanFilterDefinition } from '../../../types'
+import { resolveBooleanFilterUi } from '../../../utils'
+import FilterPanelChips from './FilterPanelChips.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 
 const props = defineProps<{
   definition: TableBooleanFilterDefinition
   size: DataListControlSize
+  ui?: DataListFilterPanelUi
 }>()
 
 const internals = useTableInternals()
-const geometry = computed(() => resolveDataListControlGeometry(props.size))
-const sizeClasses = computed(() => resolveFilterEditorSizeClasses(props.size))
 const searchQuery = ref<string>('')
 
 const optionSource = useTableFilterOptions({
@@ -35,57 +28,30 @@ const optionSource = useTableFilterOptions({
 })
 
 const filterUi = computed(() => resolveBooleanFilterUi(props.definition, 'is'))
-const isActive = computed(
-  () =>
-    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
-)
-
+const current = computed(() => {
+  const value = internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key })?.value
+  return value === true || value === false ? value : undefined
+})
+const isActive = computed(() => current.value !== undefined)
 const entries = computed(() =>
   optionSource.filteredEntries.value
     .filter((entry) => isBoolean(entry.value))
     .map((entry) => ({
-      ...entry,
+      value: entry.value as boolean,
       label: entry.value === true ? filterUi.value.labels.true : filterUi.value.labels.false,
       icon: entry.value === true ? filterUi.value.icons.true : filterUi.value.icons.false,
+      count: entry.count,
+      selected: current.value === entry.value,
     })),
 )
 
-const radioItems = computed(() =>
-  entries.value.map((entry) => ({
-    label: entry.label,
-    value: String(entry.value),
-    count: entry.count,
-    icon: entry.icon,
-  })),
-)
-
-const radioValue = computed({
-  get: () => {
-    const value = internals.filterPresentation.getPanelDraftFilterState({
-      key: props.definition.key,
-    })?.value
-    return value === true || value === false ? String(value) : undefined
-  },
-  set: (value: string | undefined) => {
-    if (value === 'true') {
-      internals.filterPresentation.setPanelScalarFilterValue({
-        key: props.definition.key,
-        value: true,
-      })
-      return
-    }
-
-    if (value === 'false') {
-      internals.filterPresentation.setPanelScalarFilterValue({
-        key: props.definition.key,
-        value: false,
-      })
-      return
-    }
-
+function toggle(value: string | number | boolean) {
+  if (current.value === value) {
     internals.filterPresentation.clearPanelFilter({ key: props.definition.key })
-  },
-})
+    return
+  }
+  internals.filterPresentation.setPanelScalarFilterValue({ key: props.definition.key, value: value === true })
+}
 </script>
 
 <template>
@@ -93,40 +59,15 @@ const radioValue = computed({
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
     :size="size"
+    :ui="ui"
   >
-    <URadioGroup
-      v-model="radioValue"
-      :items="radioItems"
-      :size="size"
-      color="neutral"
-      variant="list"
-      :ui="{
-        root: 'w-full',
-        fieldset: 'grid gap-0.5',
-        item: `flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
-        container: 'self-center',
-        base: 'cursor-pointer',
-        wrapper: 'min-w-0 flex-1',
-        label: `w-full cursor-pointer text-default ${sizeClasses.optionLabel}`,
-      }"
-    >
-      <template #label="{ item }">
-        <div :class="['flex min-w-0 items-center', geometry.toolbarGap]">
-          <UIcon
-            v-if="isString(item.icon)"
-            :name="item.icon"
-            :class="[sizeClasses.optionIcon, 'shrink-0 text-muted']"
-          />
-
-          <span class="min-w-0 flex-1 truncate">
-            {{ item.label }}
-          </span>
-          <USkeleton v-if="optionSource.isCountLoading.value" class="h-3.5 w-6 shrink-0" />
-          <span v-else-if="item.count != null" class="shrink-0 text-muted">
-            {{ item.count }}
-          </span>
-        </div>
-      </template>
-    </URadioGroup>
+    <FilterPanelChips
+      :entries="entries"
+      :loading="optionSource.isLoading.value"
+      :count-loading="optionSource.isCountLoading.value"
+      show-counts
+      :ui="ui"
+      @toggle="toggle"
+    />
   </FilterPanelFieldShell>
 </template>

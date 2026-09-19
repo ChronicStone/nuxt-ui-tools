@@ -2,11 +2,15 @@
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
+import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
   DataListControlSize,
+  DataListFilterPanelUi,
   TableFilterOperator,
   TableOptionFilterDefinition,
   TableOptionFilterOperator,
@@ -14,15 +18,19 @@ import type {
 import { resolveDataListPopoverContentClass } from '../../../utils'
 import FilterMatchModeButton from '../shared/FilterMatchModeButton.vue'
 import FilterOptionPickerContent from '../shared/FilterOptionPickerContent.vue'
+import FilterPanelChips from './FilterPanelChips.vue'
 import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 import FilterPanelInputTrigger from './FilterPanelInputTrigger.vue'
 
 const props = defineProps<{
   definition: TableOptionFilterDefinition
   size: DataListControlSize
+  ui?: DataListFilterPanelUi
 }>()
 
 const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const { t } = useUiToolsLocale()
 const searchQuery = ref<string>('')
 const pendingOperator = ref<TableOptionFilterOperator>(resolveInitialOperator())
 const isOpen = ref<boolean>(false)
@@ -55,6 +63,33 @@ const operatorItems = computed(() =>
   internals.filters.getFilterOperatorOptions({
     key: props.definition.key,
   }),
+)
+const chipLimit = computed(() => dataListUi.ui.value.filterPanel?.props?.chips ?? 8)
+const staticCount = computed(() =>
+  Array.isArray(props.definition.source?.options) ? props.definition.source.options.length : Number.POSITIVE_INFINITY,
+)
+const chips = computed(
+  () =>
+    chipLimit.value !== false &&
+    state.filterUi.value.presentation !== 'tree' &&
+    staticCount.value <= chipLimit.value,
+)
+const chipEntries = computed(() =>
+  state.displayEntries.value
+    .filter((entry) => entry.value != null)
+    .map((entry) => ({
+      value: entry.value as string | number | boolean,
+      label: entry.label,
+      count: entry.count,
+      selected: Boolean(entry.selected),
+      color: entry.color,
+      icon: entry.icon,
+    })),
+)
+const meta = computed(() =>
+  selectedValues.value.length
+    ? t('table.filters.preview.selected', { count: selectedValues.value.length })
+    : '',
 )
 
 function resolveInitialOperator() {
@@ -107,12 +142,14 @@ function isPrimitiveValue<TValue>(value: TValue): value is TValue & (string | nu
 <template>
   <FilterPanelFieldShell
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
+    :meta="meta"
     :active="isActive"
     :size="size"
+    :ui="ui"
   >
     <template #actions>
       <FilterMatchModeButton
-        v-if="operatorItems.length"
+        v-if="operatorItems.length > 1"
         :label="operatorItems.find((item) => item.value === pendingOperator)?.label ?? 'is any of'"
         :items="operatorItems"
         :selected="pendingOperator"
@@ -122,7 +159,18 @@ function isPrimitiveValue<TValue>(value: TValue): value is TValue & (string | nu
       />
     </template>
 
+    <FilterPanelChips
+      v-if="chips"
+      :entries="chipEntries"
+      :loading="state.optionSource.isLoading.value"
+      :count-loading="state.optionSource.isCountLoading.value"
+      :show-counts="state.filterUi.value.row.showCounts"
+      :ui="ui"
+      @toggle="state.toggleValue"
+    />
+
     <UPopover
+      v-else
       v-model:open="isOpen"
       mode="click"
       :content="{ side: 'bottom', align: 'start', sideOffset: 8 }"
@@ -132,7 +180,7 @@ function isPrimitiveValue<TValue>(value: TValue): value is TValue & (string | nu
     >
       <FilterPanelInputTrigger
         :value="state.triggerSummary.value"
-        :placeholder="state.filterUi.value.labels.searchPlaceholder"
+        :placeholder="t('table.filters.preview.empty')"
         :size="size"
       />
 

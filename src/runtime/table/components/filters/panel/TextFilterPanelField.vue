@@ -5,6 +5,7 @@ import { computed, ref } from 'vue'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
   DataListControlSize,
+  DataListFilterPanelUi,
   TableFilterOperator,
   TableTextFilterDefinition,
   TableTextFilterOperator,
@@ -16,6 +17,7 @@ import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 const props = defineProps<{
   definition: TableTextFilterDefinition
   size: DataListControlSize
+  ui?: DataListFilterPanelUi
 }>()
 
 const internals = useTableInternals()
@@ -80,6 +82,7 @@ function handleOperatorChange(operator: TableFilterOperator) {
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
     :size="size"
+    :ui="ui"
   >
     <template #actions>
       <FilterMatchModeButton

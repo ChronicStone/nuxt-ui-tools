@@ -8,34 +8,70 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type { DataListControlSize, DataListFilterPanelUi } from '../../../types'
-import type { DataListFilterPanelCommitMode, DataListFilterPanelMode } from '../../../types'
-import { mergeDataListUiClass, resolveDataListControlGeometry } from '../../../utils'
+import type {
+  DataListBadgeProps,
+  DataListButtonProps,
+  DataListControlSize,
+  DataListFilterPanelCommitMode,
+  DataListFilterPanelMode,
+  DataListFilterPanelProps,
+  DataListFilterPanelUi,
+} from '../../../types'
+import { mergeDataListProps, mergeDataListUiClass } from '../../../utils'
 import FilterPanelFields from './FilterPanelFields.vue'
 
 const props = withDefaults(
   defineProps<{
     size?: DataListControlSize
+    description?: string
     ui?: DataListFilterPanelUi
+    props?: DataListFilterPanelProps
     mode?: DataListFilterPanelMode
     commitMode?: DataListFilterPanelCommitMode
   }>(),
-  {
-    mode: 'drawer',
-    commitMode: 'submit',
-  },
+  { mode: 'drawer', commitMode: 'submit' },
 )
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
-const { t } = useUiToolsLocale()
-const resolvedUi = computed<DataListFilterPanelUi>(() => ({
-  ...dataListUi.ui.value.filterPanel?.ui,
-  ...props.ui,
-}))
-const resolvedSize = computed(
-  () => props.size ?? dataListUi.ui.value.filterPanel?.size ?? dataListUi.controlSize.value,
+const { locale, t } = useUiToolsLocale()
+const config = computed(() => dataListUi.ui.value.filterPanel)
+const resolvedUi = computed<DataListFilterPanelUi>(() => ({ ...config.value?.ui, ...props.ui }))
+const resolvedSize = computed(() => props.size ?? config.value?.size ?? dataListUi.controlSize.value)
+const controlProps = computed<DataListFilterPanelProps>(() => mergeDataListProps(config.value?.props, props.props))
+const triggerProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>(
+    { color: 'neutral', variant: 'outline', size: resolvedSize.value, icon: 'i-lucide-funnel' },
+    controlProps.value.trigger,
+  ),
 )
-const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.value))
+const triggerBind = computed(() => {
+  const { label: _label, ...rest } = triggerProps.value
+  return rest
+})
+const triggerLabel = computed(() => triggerProps.value.label ?? t('table.filters.panel.trigger'))
+const countProps = computed(() =>
+  controlProps.value.count === false
+    ? null
+    : mergeDataListProps<DataListBadgeProps>({ color: 'neutral', variant: 'solid', size: 'xs' }, controlProps.value.count),
+)
+const closeProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>(
+    { color: 'neutral', variant: 'ghost', size: 'sm', icon: 'i-lucide-x', square: true },
+    controlProps.value.close,
+  ),
+)
+const clearProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>({ color: 'neutral', variant: 'ghost', size: resolvedSize.value }, controlProps.value.clear),
+)
+const applyProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>({ color: 'primary', variant: 'solid', size: resolvedSize.value }, controlProps.value.apply),
+)
+const presentation = internals.filterPresentation
+const open = computed(() => presentation.panelOpen.value)
+const activeCount = computed(() => presentation.activePanelCount.value)
+const matchingCount = computed(() => internals.pagination.rowCount.value ?? internals.pagination.loadedCount.value)
+const live = computed(() => props.commitMode === 'live')
+const hasDraft = computed(() => presentation.panelDefinitions.value.some((definition) => presentation.getPanelDraftFilterState({ key: definition.key }) != null))
 
 defineSlots<{
   trigger?: (props: {
@@ -43,156 +79,162 @@ defineSlots<{
     close: () => void
     toggle: () => void
     openState: boolean
+    activeCount: number
     triggerProps: { type: 'button'; 'aria-expanded': boolean }
   }) => VNodeChild
 }>()
 
-function toggle() {
-  if (internals.filterPresentation.panelOpen.value) internals.filterPresentation.closePanel()
-  else internals.filterPresentation.openPanel()
+function formatCount(value: number) {
+  return new Intl.NumberFormat(locale.value.code).format(value).replace(/ /g, ' ')
 }
 
-watch(
-  () => props.commitMode,
-  (mode) => internals.filterPresentation.setPanelCommitMode(mode),
-  { immediate: true },
-)
+function toggle() {
+  if (open.value) presentation.closePanel()
+  else presentation.openPanel()
+}
+
+function primary() {
+  if (live.value) presentation.closePanel()
+  else presentation.applyPanelDraft()
+}
+
+watch(() => props.commitMode, (mode) => presentation.setPanelCommitMode(mode), { immediate: true })
 
 onMounted(() => {
-  if (props.mode === 'panel') internals.filterPresentation.openPanel()
+  if (props.mode === 'panel') presentation.openPanel()
 })
 </script>
 
 <template>
   <section
     v-if="props.mode === 'panel'"
-    :class="mergeDataListUiClass(`grid ${geometry.panelGap}`, undefined, resolvedUi.wrapper)"
+    :class="mergeDataListUiClass('nut-dl-fpanel nut-dl-fpanel--inline grid gap-6', undefined, resolvedUi.wrapper)"
   >
     <FilterPanelFields :size="resolvedSize" :ui="resolvedUi" />
 
     <div
-      v-if="props.commitMode === 'submit'"
-      :class="
-        mergeDataListUiClass(
-          `flex w-full items-center justify-between border-t border-default ${geometry.toolbarGap} pt-3`,
-          undefined,
-          resolvedUi.footerActions,
-        )
-      "
+      :class="mergeDataListUiClass('nut-dl-fpanel__foot flex items-center gap-2.5 border-t border-default pt-4 text-[12.5px] text-muted', undefined, resolvedUi.footerActions)"
     >
+      <span :class="mergeDataListUiClass('nut-dl-fpanel__matching min-w-0 truncate tabular-nums', undefined, resolvedUi.matching)">
+        {{ t('table.filters.panel.matching', { count: formatCount(matchingCount) }) }}
+      </span>
+      <span class="flex-1" />
       <UButton
-        color="neutral"
-        variant="ghost"
-        :size="resolvedSize"
-        :label="t('table.filters.panel.clearAll')"
-        :ui="{ base: resolvedUi.clear }"
-        @click="internals.filterPresentation.clearPanelDraft()"
+        v-bind="clearProps"
+        :label="t('table.filters.panel.reset')"
+        :disabled="!hasDraft"
+        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel__reset', undefined, resolvedUi.clear) }"
+        @click="presentation.clearPanelDraft()"
       />
       <UButton
-        color="neutral"
-        variant="subtle"
-        :size="resolvedSize"
+        v-if="!live"
+        v-bind="applyProps"
         :label="t('table.filters.panel.apply')"
-        :ui="{ base: resolvedUi.apply }"
-        @click="internals.filterPresentation.applyPanelDraft()"
+        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel__apply', undefined, resolvedUi.apply) }"
+        @click="presentation.applyPanelDraft()"
       />
     </div>
   </section>
 
   <USlideover
     v-else
-    :open="internals.filterPresentation.panelOpen.value"
+    :open="open"
     side="right"
-    inset
     :overlay="true"
     :title="t('table.filters.panel.trigger')"
+    :description="description"
+    :close="false"
     :ui="{
-      overlay: resolvedUi.overlay,
-      content: resolvedUi.content,
-      header: resolvedUi.header,
-      wrapper: resolvedUi.wrapper,
-      body: resolvedUi.body,
-      footer: resolvedUi.footer,
-      title: resolvedUi.title,
-      description: resolvedUi.description,
-      close: resolvedUi.close,
+      overlay: mergeDataListUiClass('nut-dl-fpanel__overlay', undefined, resolvedUi.overlay),
+      content: mergeDataListUiClass(
+        'nut-dl-fpanel w-screen max-w-[480px] rounded-none divide-y-0 bg-default shadow-[-24px_0_60px_-30px_rgb(31_29_26/0.45)]',
+        undefined,
+        resolvedUi.content,
+      ),
+      header: mergeDataListUiClass('nut-dl-fpanel__head flex items-start gap-3 px-6 pt-6 pb-4', undefined, resolvedUi.header),
+      wrapper: mergeDataListUiClass('min-w-0 flex-1', undefined, resolvedUi.wrapper),
+      body: mergeDataListUiClass('nut-dl-fpanel__body flex-1 overflow-y-auto px-6 py-5', undefined, resolvedUi.body),
+      footer: mergeDataListUiClass('nut-dl-fpanel__foot flex items-center gap-2.5 border-t border-default px-6 py-4 text-[12.5px] text-muted', undefined, resolvedUi.footer),
+      title: mergeDataListUiClass('nut-dl-fpanel__title text-[20px] font-medium tracking-[-0.01em] text-highlighted', undefined, resolvedUi.title),
+      description: mergeDataListUiClass('nut-dl-fpanel__description mt-1 text-[12.5px] text-muted', undefined, resolvedUi.description),
     }"
-    @update:open="
-      $event ? internals.filterPresentation.openPanel() : internals.filterPresentation.closePanel()
-    "
+    @update:open="$event ? presentation.openPanel() : presentation.closePanel()"
   >
     <slot
       name="trigger"
-      :open="internals.filterPresentation.openPanel"
-      :close="internals.filterPresentation.closePanel"
+      :open="presentation.openPanel"
+      :close="presentation.closePanel"
       :toggle="toggle"
-      :open-state="internals.filterPresentation.panelOpen.value"
-      :trigger-props="{
-        type: 'button',
-        'aria-expanded': internals.filterPresentation.panelOpen.value,
-      }"
+      :open-state="open"
+      :active-count="activeCount"
+      :trigger-props="{ type: 'button', 'aria-expanded': open }"
     >
       <UButton
-        color="neutral"
-        variant="outline"
-        :size="resolvedSize"
-        icon="i-lucide-funnel"
-        :ui="{
-          base: mergeDataListUiClass('shrink-0', undefined, resolvedUi.trigger),
-        }"
+        v-bind="triggerBind"
+        :aria-expanded="open"
+        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel-trigger shrink-0', undefined, resolvedUi.trigger) }"
       >
-        <span
-          :class="
-            mergeDataListUiClass('flex items-center gap-2', undefined, resolvedUi.triggerContent)
-          "
-        >
-          <span>{{ t('table.filters.panel.trigger') }}</span>
+        <span :class="mergeDataListUiClass('flex items-center gap-2', undefined, resolvedUi.triggerContent)">
+          <span>{{ triggerLabel }}</span>
           <UBadge
-            v-if="internals.filterPresentation.activePanelCount.value > 0"
-            color="neutral"
-            variant="subtle"
-            :size="resolvedSize"
-            :label="String(internals.filterPresentation.activePanelCount.value)"
-            :class="resolvedUi.count"
+            v-if="countProps && activeCount > 0"
+            v-bind="countProps"
+            :label="formatCount(activeCount)"
+            :class="mergeDataListUiClass('nut-dl-fpanel-trigger__count tabular-nums', undefined, resolvedUi.count)"
           />
         </span>
       </UButton>
     </slot>
 
-    <template #body>
-      <div class="min-h-0 overflow-y-auto">
-        <FilterPanelFields :size="resolvedSize" :ui="resolvedUi" />
+    <template #header>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-baseline gap-2.5">
+          <h2 :class="mergeDataListUiClass('nut-dl-fpanel__title text-[20px] font-medium tracking-[-0.01em] text-highlighted', undefined, resolvedUi.title)">
+            {{ t('table.filters.panel.trigger') }}
+          </h2>
+          <span
+            :class="mergeDataListUiClass('nut-dl-fpanel__results text-[10.5px] font-semibold tracking-[0.08em] text-dimmed uppercase tabular-nums', undefined, resolvedUi.results)"
+          >
+            {{ t('table.filters.panel.results', { count: formatCount(matchingCount) }) }}
+          </span>
+        </div>
+        <p
+          v-if="description"
+          :class="mergeDataListUiClass('nut-dl-fpanel__description mt-1 text-[12.5px] text-muted', undefined, resolvedUi.description)"
+        >
+          {{ description }}
+        </p>
       </div>
+      <UButton
+        v-bind="closeProps"
+        :aria-label="t('table.controls.close')"
+        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel__close -mt-1 -mr-2 text-muted hover:text-default', undefined, resolvedUi.close) }"
+        @click="presentation.closePanel()"
+      />
+    </template>
+
+    <template #body>
+      <FilterPanelFields :size="resolvedSize" :ui="resolvedUi" />
     </template>
 
     <template #footer>
-      <div
-        :class="
-          mergeDataListUiClass(
-            `flex w-full items-center justify-between ${geometry.toolbarGap}`,
-            undefined,
-            resolvedUi.footerActions,
-          )
-        "
-      >
-        <UButton
-          color="neutral"
-          variant="ghost"
-          :size="resolvedSize"
-          :label="t('table.filters.panel.clearAll')"
-          :ui="{ base: resolvedUi.clear }"
-          @click="internals.filterPresentation.clearPanelDraft()"
-        />
-
-        <UButton
-          color="neutral"
-          variant="subtle"
-          :size="resolvedSize"
-          :label="t('table.filters.panel.apply')"
-          :ui="{ base: resolvedUi.apply }"
-          @click="internals.filterPresentation.applyPanelDraft()"
-        />
-      </div>
+      <span :class="mergeDataListUiClass('nut-dl-fpanel__matching min-w-0 truncate tabular-nums', undefined, resolvedUi.matching)">
+        {{ t('table.filters.panel.matching', { count: formatCount(matchingCount) }) }}
+      </span>
+      <span class="flex-1" />
+      <UButton
+        v-bind="clearProps"
+        :label="t('table.filters.panel.reset')"
+        :disabled="!hasDraft"
+        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel__reset', undefined, resolvedUi.clear) }"
+        @click="presentation.clearPanelDraft()"
+      />
+      <UButton
+        v-bind="applyProps"
+        :label="live ? t('table.filters.panel.done') : t('table.filters.panel.apply')"
+        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel__apply', undefined, resolvedUi.apply) }"
+        @click="primary"
+      />
     </template>
   </USlideover>
 </template>

@@ -7,6 +7,7 @@ import { isDate, isNumber, isObject, isString } from '../../../../shared/utils/p
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
   DataListControlSize,
+  DataListFilterPanelUi,
   TableDateFilterDefinition,
   TableDateFilterOperator,
   TableFilterOperator,
@@ -18,6 +19,7 @@ import FilterPanelFieldShell from './FilterPanelFieldShell.vue'
 const props = defineProps<{
   definition: TableDateFilterDefinition
   size: DataListControlSize
+  ui?: DataListFilterPanelUi
 }>()
 type PendingDateRange = { from?: Date; to?: Date }
 
@@ -191,6 +193,7 @@ watch(
     :label="internals.filters.getFilterLabelText({ label: definition.label })"
     :active="isActive"
     :size="size"
+    :ui="ui"
   >
     <template #actions>
       <FilterMatchModeButton
