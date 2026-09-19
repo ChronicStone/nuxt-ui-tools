@@ -20,6 +20,7 @@ export default defineConfig({
   rules: {
     'func-style': ['error', 'declaration'],
     'import/no-cycle': ['error', { ignoreTypes: true }],
+    'oxc/no-barrel-file': ['error', { threshold: 1000 }],
     'no-use-before-define': ['error', { classes: true, functions: false, variables: true }],
   },
 })
