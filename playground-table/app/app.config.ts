@@ -83,7 +83,7 @@ export default defineAppConfig({
       compoundVariants: [
         {
           class:
-            'bg-[var(--ex-surface)] ring-[var(--ui-border)] focus-visible:ring-2 focus-visible:ring-primary',
+            'bg-[var(--ex-surface)] ring-[var(--ui-border)] outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]',
           color: 'neutral',
           variant: 'outline',
         },

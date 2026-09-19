@@ -54,3 +54,9 @@ function commitValue() {
     @keydown.enter.prevent="commitValue"
   />
 </template>
+
+<style>
+.nut-dl-search input {
+  text-overflow: ellipsis;
+}
+</style>
