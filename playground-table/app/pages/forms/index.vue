@@ -21,7 +21,9 @@ import {
 import { contactFormSchema } from '../../forms/contact'
 import { contractFormSchema } from '../../forms/contract'
 import { sendDemandFormSchema } from '../../forms/demand'
+import { loginFormSchema } from '../../forms/login'
 import { parityFormInput, parityFormSchema } from '../../forms/parity'
+import { profileFormInput, profileFormSchema } from '../../forms/profile'
 import {
   groupFormSchema,
   inviteFormSchema,
@@ -168,6 +170,17 @@ const entries: FormEntry[] = [
   ),
   register('billedBulk', 'Marquer la facturation', 'Liste radio.', billedBulkFormSchema(), {}),
   register('confirm', 'Résilier le contrat', 'Confirmation dangereuse.', confirmFormSchema(), {}),
+  register(
+    'profile',
+    'Profil et préférences',
+    'Onglets, mot de passe, notifications.',
+    profileFormSchema(),
+    profileFormInput,
+  ),
+  register('login', 'Connexion', 'Formulaire d’authentification.', loginFormSchema(), {
+    email: 'thao@exassess.com',
+    remember: true,
+  }),
 ]
 
 async function openModal(entry: FormEntry) {
