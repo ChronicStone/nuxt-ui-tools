@@ -162,12 +162,12 @@ defineExpose({ measure: schedule })
 <template>
   <div
     v-if="hasVertical"
-    class="nut-dl-sb pointer-events-none absolute top-0.5 right-0.5 bottom-2 z-[6] w-1.5 opacity-0 transition-opacity duration-150 motion-reduce:transition-none"
+    class="nut-dl-sb pointer-events-none absolute top-0.5 right-0.5 bottom-2 z-[6] w-[5px] opacity-0 transition-opacity duration-150 motion-reduce:transition-none"
     :class="{ 'pointer-events-auto opacity-100': visible }"
   >
     <span
-      class="absolute top-0 left-0 w-full rounded-full bg-black/25 transition-colors duration-150 will-change-transform hover:bg-black/40 dark:bg-white/25 dark:hover:bg-white/40"
-      :class="{ 'bg-black/45 dark:bg-white/45': dragging === 'vertical' }"
+      class="absolute top-0 left-0 w-full rounded-full bg-(--nut-scrollbar-thumb) transition-colors duration-150 will-change-transform hover:bg-(--nut-scrollbar-thumb-hover)"
+      :class="{ 'bg-(--nut-scrollbar-thumb-active)': dragging === 'vertical' }"
       :style="{
         height: `${verticalThumb.size}px`,
         transform: `translateY(${verticalThumb.offset}px)`,
@@ -177,12 +177,12 @@ defineExpose({ measure: schedule })
   </div>
   <div
     v-if="hasHorizontal"
-    class="nut-dl-sb pointer-events-none absolute right-2 bottom-0.5 left-0.5 z-[6] h-1.5 opacity-0 transition-opacity duration-150 motion-reduce:transition-none"
+    class="nut-dl-sb pointer-events-none absolute right-2 bottom-0.5 left-0.5 z-[6] h-[5px] opacity-0 transition-opacity duration-150 motion-reduce:transition-none"
     :class="{ 'pointer-events-auto opacity-100': visible }"
   >
     <span
-      class="absolute top-0 left-0 h-full rounded-full bg-black/25 transition-colors duration-150 will-change-transform hover:bg-black/40 dark:bg-white/25 dark:hover:bg-white/40"
-      :class="{ 'bg-black/45 dark:bg-white/45': dragging === 'horizontal' }"
+      class="absolute top-0 left-0 h-full rounded-full bg-(--nut-scrollbar-thumb) transition-colors duration-150 will-change-transform hover:bg-(--nut-scrollbar-thumb-hover)"
+      :class="{ 'bg-(--nut-scrollbar-thumb-active)': dragging === 'horizontal' }"
       :style="{
         width: `${horizontalThumb.size}px`,
         transform: `translateX(${horizontalThumb.offset}px)`,

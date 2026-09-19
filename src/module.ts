@@ -43,6 +43,8 @@ declare module '@nuxt/schema' {
 export interface ModuleOptions {
   prefix?: string
   global?: boolean
+  /** Ships the thin overlay-style scrollbar stylesheet applied to every scroll container. Defaults to `true`. */
+  scrollbars?: boolean
 }
 
 const viewportDefaults = {
@@ -123,6 +125,9 @@ export default defineNuxtModule<ModuleOptions>({
     await installModule('nuxt-viewport', viewportOptions)
 
     setupTailwindCss(nuxt, resolve('./runtime'))
+    if (options.scrollbars !== false) {
+      nuxt.options.css.push(resolve('./runtime/shared/styles/scrollbars.css'))
+    }
     setupImports(resolve('./runtime'))
     setupComponents(resolve('./runtime'), options)
     addPlugin(resolve('./runtime/query-prefetch/plugins/link-prefetch.client'))
