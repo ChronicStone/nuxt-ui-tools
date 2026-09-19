@@ -546,6 +546,7 @@ const table = useTable(schema)
           <NutDataListSortMenu label="Tri" />
           <NutDataListColumnPanel />
           <NutDataListLayoutSwitch />
+          <NutDataListRefresh />
         </div>
       </div>
       <div class="relative flex min-h-0 flex-1 flex-col">

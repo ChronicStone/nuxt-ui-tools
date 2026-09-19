@@ -6,9 +6,20 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { DataListControlSize, DataListRefreshUi } from '../../types'
+import type {
+  DataListButtonProps,
+  DataListControlSize,
+  DataListRefreshProps,
+  DataListRefreshUi,
+} from '../../types'
+import { mergeDataListProps, mergeDataListUiClass } from '../../utils'
 
-const props = defineProps<{ label?: string; size?: DataListControlSize; ui?: DataListRefreshUi }>()
+const props = defineProps<{
+  label?: string
+  size?: DataListControlSize
+  ui?: DataListRefreshUi
+  props?: DataListRefreshProps
+}>()
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const { t } = useUiToolsLocale()
@@ -25,6 +36,13 @@ const resolvedUi = computed<DataListRefreshUi>(() => ({
   ...dataListUi.ui.value.refresh?.ui,
   ...props.ui,
 }))
+const buttonProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>(
+    { color: 'neutral', icon: 'i-lucide-refresh-cw', size: resolvedSize.value, variant: 'outline' },
+    dataListUi.ui.value.refresh?.props?.button,
+    props.props?.button,
+  ),
+)
 
 function refresh() {
   void internals.queryContent.refreshData()()
@@ -38,16 +56,33 @@ function refresh() {
     :trigger-props="{ type: 'button', disabled: loading, onClick: refresh }"
   >
     <UButton
-      color="neutral"
-      variant="outline"
-      :size="resolvedSize"
-      icon="i-lucide-refresh-cw"
+      v-bind="buttonProps"
       :label="label"
-      :loading="loading"
+      :square="!label"
       :aria-label="t('table.header.refreshData')"
       :title="t('table.header.refreshData')"
-      :ui="resolvedUi"
+      :data-refreshing="loading"
+      :ui="{
+        ...resolvedUi,
+        base: mergeDataListUiClass('nut-dl-refresh', undefined, resolvedUi.base),
+        leadingIcon: mergeDataListUiClass(
+          loading ? 'nut-dl-refresh__icon--spinning' : 'nut-dl-refresh__icon',
+          undefined,
+          resolvedUi.leadingIcon,
+        ),
+      }"
       @click="refresh"
     />
   </slot>
 </template>
+
+<style>
+.nut-dl-refresh__icon--spinning {
+  animation: nut-dl-refresh-spin 0.7s linear infinite;
+}
+@keyframes nut-dl-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
