@@ -103,7 +103,7 @@ describe('spreadsheet row utils', () => {
           from: 'General level',
           key: 'scores.general',
           kind: 'number',
-          parse: async ({ cell }: { cell: SpreadsheetCellValue }) => Number(cell.text),
+          parse: ({ cell }: { cell: SpreadsheetCellValue }) => Number(cell.text),
           rules: (v: SpreadsheetRuleBuilder) => [
             v.number({
               message: 'Score must be numeric',

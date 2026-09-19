@@ -26,7 +26,7 @@ const context = [
     key: 'affiliationGroups',
     query: () =>
       ({
-        queryFn: async () =>
+        queryFn: () =>
           [
             {
               id: 'school-level',

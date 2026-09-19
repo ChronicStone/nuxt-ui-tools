@@ -20,7 +20,7 @@ describe('page query prefetch', () => {
   it('prefetches a simple query and applies select output', async () => {
     const definition = defineQueryPrefetch('products-id', () =>
       queryOptions({
-        queryFn: async () => ({ id: '42', title: 'Drill' }),
+        queryFn: () => ({ id: '42', title: 'Drill' }),
         queryKey: ['product', '42'] as const,
         select: (product) => product.title,
       }),

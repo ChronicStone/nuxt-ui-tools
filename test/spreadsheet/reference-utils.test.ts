@@ -23,7 +23,7 @@ describe('spreadsheet reference utils', () => {
     {
       field: 'productId',
       getOptions: ({ search }: { search: string }) => ({
-        queryFn: async () => [],
+        queryFn: () => [],
         queryKey: ['products', search],
       }),
       kind: 'select' as const,
@@ -283,7 +283,7 @@ describe('spreadsheet reference utils', () => {
       references: (reference) => [
         reference.select('productId', {
           getOptions: ({ search }) => ({
-            queryFn: async () => [],
+            queryFn: () => [],
             queryKey: ['products', search],
           }),
           options: productOptions,

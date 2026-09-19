@@ -45,7 +45,7 @@ describe('table package surface', () => {
       rowKey: 'id',
       source: {
         query: () => ({
-          queryFn: async () => [{ id: 1 }],
+          queryFn: () => [{ id: 1 }],
           queryKey: ['users'],
         }),
       },
@@ -69,7 +69,7 @@ describe('table package surface', () => {
       rowKey: 'id',
       source: {
         query: () => ({
-          queryFn: async () => [{ email: 'ada@example.com', id: 'user_1' }],
+          queryFn: () => [{ email: 'ada@example.com', id: 'user_1' }],
           queryKey: ['users'],
         }),
       },
@@ -90,7 +90,7 @@ describe('table package surface', () => {
       source: {
         mode: 'remote',
         query: () => ({
-          queryFn: async () => ({
+          queryFn: () => ({
             pageInfo: {
               count: 'none' as const,
               mode: 'cursor' as const,
@@ -109,7 +109,7 @@ describe('table package surface', () => {
       pagination: false,
       rowKey: 'id',
       source: {
-        query: () => ({ queryFn: async () => [{ id: 1 }], queryKey: ['all-users'] }),
+        query: () => ({ queryFn: () => [{ id: 1 }], queryKey: ['all-users'] }),
       },
       tableKey: 'all-users',
     })
@@ -128,7 +128,7 @@ describe('table package surface', () => {
       query: () => ({
         queryKey: ['remote-users'],
         // @ts-expect-error remote queries must resolve { rows, rowCount }
-        queryFn: async () => [{ id: 1 }],
+        queryFn: () => [{ id: 1 }],
       }),
     }
 
@@ -140,7 +140,7 @@ describe('table package surface', () => {
       facets: true,
       mode: 'remote',
       query: (ctx) => ({
-        queryFn: async () => ({
+        queryFn: () => ({
           facets: [],
           rowCount: 1,
           rows: [{ id: 1 }],

@@ -92,7 +92,7 @@ function createTableApiStub() {
       pageContext: context,
       rawRowCount: rowCount,
       rawRows: rows,
-      refresh: async () => {
+      refresh: () => {
         throw new Error('not implemented')
       },
       requestContext,
@@ -125,7 +125,7 @@ function createTableApiStub() {
       setPageSize: () => {},
       state: paginationState,
     },
-    refresh: async () => {
+    refresh: () => {
       throw new Error('not implemented')
     },
     reset: {

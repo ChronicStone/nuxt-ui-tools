@@ -11,14 +11,14 @@ const contextItems = [
   {
     key: 'affiliationGroups',
     query: () => ({
-      queryFn: async () => [{ id: 'group_1', name: 'School level' }],
+      queryFn: () => [{ id: 'group_1', name: 'School level' }],
       queryKey: ['affiliation-groups', 'tc_123'],
     }),
   },
   {
     key: 'products',
     query: () => ({
-      queryFn: async () => [{ id: 'prod_1', name: 'Business English 4 Skills' }],
+      queryFn: () => [{ id: 'prod_1', name: 'Business English 4 Skills' }],
       queryKey: ['products', 'tc_123'],
     }),
   },
@@ -81,7 +81,7 @@ describe('spreadsheet context utils', () => {
   })
 
   it('keeps refresh functions compatible with the query result contract', async () => {
-    const refetch = vi.fn(async () => ({ ok: true }))
+    const refetch = vi.fn(() => ({ ok: true }))
 
     const results = [
       {

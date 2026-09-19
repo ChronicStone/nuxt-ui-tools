@@ -9,7 +9,7 @@ import {
 describe('query prefetch plans', () => {
   it('preserves selected data across ordered stages', () => {
     const productQuery = queryOptions({
-      queryFn: async () => ({ categoryId: 'tools', id: '42' }),
+      queryFn: () => ({ categoryId: 'tools', id: '42' }),
       queryKey: ['product', '42'] as const,
       select: (product) => ({ id: product.id }),
     })
@@ -21,7 +21,7 @@ describe('query prefetch plans', () => {
         expectTypeOf(product).toEqualTypeOf<{ id: string }>()
         return {
           category: queryOptions({
-            queryFn: async () => product.id,
+            queryFn: () => product.id,
             queryKey: ['category', product.id] as const,
           }),
         }
@@ -32,7 +32,7 @@ describe('query prefetch plans', () => {
     defineQueryPrefetchPlan()
       .stage({
         product: {
-          queryFn: async () => ({ id: '42' }),
+          queryFn: () => ({ id: '42' }),
           queryKey: ['product', '42'],
         },
       })
@@ -45,7 +45,7 @@ describe('query prefetch plans', () => {
   it('accepts query functions with TanStack query context parameters', () => {
     defineQueryPrefetchPlan().stage({
       product: queryOptions({
-        queryFn: async ({ queryKey }) => ({ id: String(queryKey[1]) }),
+        queryFn: ({ queryKey }) => ({ id: String(queryKey[1]) }),
         queryKey: ['product', '42'],
       }),
     })
@@ -56,7 +56,7 @@ describe('query prefetch plans', () => {
     const plan = defineQueryPrefetchPlan()
       .stage({
         product: queryOptions({
-          queryFn: async () => {
+          queryFn: () => {
             order.push('product')
             return { id: '42' }
           },
@@ -67,7 +67,7 @@ describe('query prefetch plans', () => {
         order.push(`category:${product.id}`)
         return {
           category: queryOptions({
-            queryFn: async () => 'tools',
+            queryFn: () => 'tools',
             queryKey: ['category', product.id] as const,
           }),
         }
@@ -86,14 +86,14 @@ describe('query prefetch plans', () => {
     const client = new QueryClient()
     const plan = defineQueryPrefetchPlan().stage({
       broken: queryOptions({
-        queryFn: async () => {
+        queryFn: () => {
           throw new Error('expected prefetch failure')
         },
         queryKey: ['broken'] as const,
         retry: false,
       }),
       healthy: queryOptions({
-        queryFn: async () => 'ready',
+        queryFn: () => 'ready',
         queryKey: ['healthy'] as const,
       }),
     })

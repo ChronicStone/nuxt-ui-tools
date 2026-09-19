@@ -30,7 +30,7 @@ const schema = defineTableSchema({
     {
       key: 'organisationId',
       query: () => ({
-        queryFn: async () => 'org_123',
+        queryFn: () => 'org_123',
         queryKey: ['organisation'],
       }),
     },
@@ -70,7 +70,7 @@ const schema = defineTableSchema({
     {
       key: 'rowCountLabel',
       query: ({ rows, context }) => ({
-        queryFn: async () => `${rows.length}:${context.organisationId}`,
+        queryFn: () => `${rows.length}:${context.organisationId}`,
         queryKey: ['summary', rows.length, context.organisationId],
       }),
     },
@@ -80,7 +80,7 @@ const schema = defineTableSchema({
     facets: true,
     mode: 'remote',
     query: (ctx: TableSourceRequestContext) => ({
-      queryFn: async () => ({
+      queryFn: () => ({
         rowCount: 1,
         rows: [
           {
@@ -177,7 +177,7 @@ describe('defineTableSchema inference', () => {
       source: {
         query: () =>
           ({
-            queryFn: async () =>
+            queryFn: () =>
               ({
                 rowCount: 1,
                 rows: [

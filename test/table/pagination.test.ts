@@ -7,7 +7,7 @@ import { getPaginationMode } from '#ui-tools/table/utils/query-state'
 describe('table pagination strategies', () => {
   it('resolves offset, cursor, and none from schema configuration', () => {
     const source = {
-      query: () => ({ queryFn: async () => [{ id: 'row-1' }], queryKey: ['rows'] }),
+      query: () => ({ queryFn: () => [{ id: 'row-1' }], queryKey: ['rows'] }),
     }
     const offset = defineTableSchema({ rowKey: 'id', source, tableKey: 'offset' })
     const cursor = defineTableSchema({
@@ -16,7 +16,7 @@ describe('table pagination strategies', () => {
       source: {
         mode: 'remote',
         query: () => ({
-          queryFn: async () => ({
+          queryFn: () => ({
             pageInfo: {
               count: 'none' as const,
               mode: 'cursor' as const,

@@ -34,7 +34,7 @@ describe('spreadsheet package surface', () => {
         query: () =>
           ({
             queryKey: ['products', 'org_123'],
-            queryFn: async () => [{ id: 'prod_1', name: 'Demo product' }],
+            queryFn: () => [{ id: 'prod_1', name: 'Demo product' }],
           }) satisfies SpreadsheetQueryDefinition<readonly { id: string; name: string }[]>,
       },
     ] satisfies readonly SpreadsheetContextItem<string, unknown>[]
@@ -80,7 +80,7 @@ describe('spreadsheet package surface', () => {
         query: () =>
           ({
             queryKey: ['products', 'org_456'],
-            queryFn: async () => [
+            queryFn: () => [
               { id: 'prod_1', name: 'Demo product' },
               { id: 'prod_2', name: 'Advanced product' },
             ],

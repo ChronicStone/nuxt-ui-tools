@@ -19,7 +19,7 @@ describe('table query prefetch', () => {
         {
           key: 'account',
           query: () => ({
-            queryFn: async () => ({ id: 'account-1' }),
+            queryFn: () => ({ id: 'account-1' }),
             queryKey: ['account'],
           }),
         },
@@ -32,7 +32,7 @@ describe('table query prefetch', () => {
             source: {
               facet: true,
               query: () => ({
-                queryFn: async () => {
+                queryFn: () => {
                   optionQueryCalls += 1
                   return [{ label: 'Active', value: 'active' }]
                 },
@@ -46,7 +46,7 @@ describe('table query prefetch', () => {
         {
           key: 'summary',
           query: ({ rows, context }) => ({
-            queryFn: async () => {
+            queryFn: () => {
               pageContextRows = rows.length
               pageContextAccount = context.account
               return { visible: rows.length }
@@ -59,7 +59,7 @@ describe('table query prefetch', () => {
       rowKey: 'id',
       source: {
         facets: (request) => ({
-          queryFn: async () => {
+          queryFn: () => {
             facetQueryCalls += 1
             return { facets: [] }
           },
@@ -67,7 +67,7 @@ describe('table query prefetch', () => {
         }),
         mode: 'remote',
         query: (request) => ({
-          queryFn: async () => {
+          queryFn: () => {
             sourceRequest = request
             return { rowCount: 1, rows: [{ id: 'user-1', name: 'Ada', status: 'active' }] }
           },
