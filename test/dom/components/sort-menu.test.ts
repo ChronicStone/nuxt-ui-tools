@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import DataListSortMenu from '#ui-tools/table/components/data-list/DataListSortMenu.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded, texts } from '../harness'
 import type { Harness } from '../harness'
@@ -45,15 +46,15 @@ describe('DataListSortMenu desktop', () => {
       'Trier A → Z',
       'Trier Z → A',
     ])
-    expect(items[0]!.attributes('data-icon')).toBe('i-lucide-check')
+    expect(must(items[0]).attributes('data-icon')).toBe('i-lucide-check')
 
-    await items[1]!.trigger('click')
+    await must(items[1]).trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.sortingState.value).toMatchObject({
       dir: 'asc',
       key: 'status',
     })
-    await w.findAll('[data-ui-item]').at(-1)!.trigger('click')
+    await must(w.findAll('[data-ui-item]').at(-1)).trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.sortingState.value.dir).toBe('desc')
     expect(w.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/gu, '')).toBe('TriStatut')
@@ -117,17 +118,19 @@ describe('DataListSortMenu mobile sheet', () => {
       'Contrats',
       'Conso.',
     ])
-    expect(rows[0]!.classes()).toContain('font-semibold')
-    expect(rows[0]!.find('[data-ui="UIcon"][data-name="i-lucide-arrow-up"]').exists()).toBeTruthy()
-    await rows[2]!.trigger('click')
+    expect(must(rows[0]).classes()).toContain('font-semibold')
+    expect(
+      must(rows[0]).find('[data-ui="UIcon"][data-name="i-lucide-arrow-up"]').exists(),
+    ).toBeTruthy()
+    await must(rows[2]).trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.sortingState.value.key).toBe('country')
     const order = w.findAll('.grid-cols-2 button')
     expect(order.map((b) => b.text().trim())).toStrictEqual(['A → Z', 'Z → A'])
-    expect(order[0]!.classes()).toContain('bg-default')
-    await order[1]!.trigger('click')
+    expect(must(order[0]).classes()).toContain('bg-default')
+    await must(order[1]).trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.sortingState.value.dir).toBe('desc')
-    expect(w.findAll('.grid-cols-2 button')[1]!.classes()).toContain('bg-default')
+    expect(must(w.findAll('.grid-cols-2 button')[1]).classes()).toContain('bg-default')
   })
 })

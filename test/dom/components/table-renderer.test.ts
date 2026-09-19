@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import TableRenderer from '#ui-tools/table/components/table/TableRenderer.vue'
 
+import { must } from '../../helpers/must'
 import { createAccounts, createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
 import { mountDataList, mountLoaded, texts } from '../harness'
 import type { Harness } from '../harness'
@@ -44,15 +45,15 @@ describe('TableRenderer skeleton and tokens', () => {
     expect(root.attributes('data-loading')).toBe('true')
     const skeletons = harness.wrapper.findAll('tr.nut-dl-row--skeleton')
     expect(skeletons.length).toBeGreaterThanOrEqual(6)
-    const first = skeletons[0]!
+    const first = must(skeletons[0])
     expect(first.attributes('style')).toContain('--nut-dl-i')
     expect(first.find('td:nth-child(1) .nut-dl-skeleton.size-4').exists()).toBeTruthy()
     expect(first.find('td[class*="nut-dl-td"]:nth-child(2) .size-7').exists()).toBeTruthy()
     const cells = first.findAll('td')
-    expect(cells[2]!.find('.rounded-full.size-\\[7px\\]').exists()).toBeTruthy()
-    expect(cells[4]!.find('.nut-dl-skeleton.size-4.rounded-\\[4px\\]').exists()).toBeTruthy()
-    expect(cells[5]!.find('.ml-auto').exists()).toBeTruthy()
-    expect(cells.at(-1)!.text()).toBe('')
+    expect(must(cells[2]).find('.rounded-full.size-\\[7px\\]').exists()).toBeTruthy()
+    expect(must(cells[4]).find('.nut-dl-skeleton.size-4.rounded-\\[4px\\]').exists()).toBeTruthy()
+    expect(must(cells[5]).find('.ml-auto').exists()).toBeTruthy()
+    expect(must(cells.at(-1)).text()).toBe('')
     expect(harness.wrapper.find('tfoot').exists()).toBeFalsy()
     expect(harness.wrapper.find('tr.nut-dl-row:not(.nut-dl-row--skeleton)').exists()).toBeFalsy()
   })
@@ -122,8 +123,8 @@ describe('TableRenderer structure', () => {
 
     const rows = w.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')
     expect(rows).toHaveLength(20)
-    expect(rows[0]!.attributes('data-row-id')).toBe('acc-1')
-    expect(rows[0]!.attributes('data-index')).toBe('0')
+    expect(must(rows[0]).attributes('data-row-id')).toBe('acc-1')
+    expect(must(rows[0]).attributes('data-index')).toBe('0')
     expect(texts(w, 'td[data-col="name"] b.name').slice(0, 3)).toStrictEqual([
       'Compte 001',
       'Compte 002',
@@ -198,7 +199,7 @@ describe('TableRenderer structure', () => {
       'Masquer la colonne',
     ])
     expect(status.find('[data-ui-item-label]').text()).toBe('Statut')
-    await items[1]!.trigger('click')
+    await must(items[1]).trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.getSortState({ columnId: 'status' })).toBe('desc')
     expect(w.find('th[data-col="status"] .nut-dl-th__sort').attributes('data-name')).toBe(
@@ -209,7 +210,7 @@ describe('TableRenderer structure', () => {
     )
     expect(w.find('td[data-col="status"]').text()).toBe('En attente')
 
-    await w.find('th[data-col="status"]').findAll('[data-ui-item]').at(-1)!.trigger('click')
+    await must(w.find('th[data-col="status"]').findAll('[data-ui-item]').at(-1)).trigger('click')
     await harness.flush()
     expect(w.find('th[data-col="status"]').exists()).toBeFalsy()
   })
@@ -235,13 +236,16 @@ describe('TableRenderer structure', () => {
   it('renders row action menus per row', async () => {
     harness = await mountTable({ schema: createAccountsSchema() })
     const cells = harness.wrapper.findAll('td[data-col="__row-actions"]')
-    expect(cells[0]!.findAll('[data-ui-item]').map((item) => item.text())).toStrictEqual([
-      'Voir la fiche',
-    ])
-    expect(cells[1]!.findAll('[data-ui-item]').map((item) => item.text())).toStrictEqual([
-      'Voir la fiche',
-      'Activer',
-    ])
+    expect(
+      must(cells[0])
+        .findAll('[data-ui-item]')
+        .map((item) => item.text()),
+    ).toStrictEqual(['Voir la fiche'])
+    expect(
+      must(cells[1])
+        .findAll('[data-ui-item]')
+        .map((item) => item.text()),
+    ).toStrictEqual(['Voir la fiche', 'Activer'])
   })
 
   it('virtualizes long pages', async () => {
@@ -268,7 +272,7 @@ describe('TableRenderer summaries', () => {
     )
     expect(foot.find('td[data-col="contracts"]').classes()).toContain('text-right')
     expect(foot.find('td[data-col="status"]').text()).toBe('')
-    await harness.until(() => !harness!.internals.summaries.cell('consumption').loading)
+    await harness.until(() => !must(harness).internals.summaries.cell('consumption').loading)
     expect(w.find('tfoot td[data-col="consumption"] .nut-dl-tf__value').text()).toBe(
       `${sum('consumption')} t`,
     )
@@ -288,7 +292,7 @@ describe('TableRenderer summaries', () => {
     ).toBeTruthy()
     release(1_234_567)
     await harness.until(() =>
-      harness!.wrapper.find('tfoot td[data-col="consumption"] .nut-dl-tf__value').exists(),
+      must(harness).wrapper.find('tfoot td[data-col="consumption"] .nut-dl-tf__value').exists(),
     )
     expect(harness.wrapper.find('tfoot td[data-col="consumption"] .nut-dl-tf__value').text()).toBe(
       '1 234 567',
@@ -297,7 +301,7 @@ describe('TableRenderer summaries', () => {
 
   it('uses a custom label and render function', async () => {
     const schema = createAccountsSchema({ rows: rows60 })
-    schema.table!.summaries = { label: 'Somme', scope: 'page' }
+    must(schema.table).summaries = { label: 'Somme', scope: 'page' }
     const column = schema.table?.columns?.find((entry) => entry.key === 'contracts')
     if (column) {
       column.summary = {
@@ -332,7 +336,7 @@ describe('TableRenderer empty state', () => {
   it('renders the filtered empty state with a working reset action', async () => {
     harness = await mountTable({ schema: createAccountsSchema() })
     harness.internals.filters.searchQuery.value = 'zzz'
-    await harness.until(() => harness!.wrapper.find('.nut-dl-empty').exists())
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-empty').exists())
     const empty = harness.wrapper.find('.nut-dl-empty')
     expect(empty.find('.nut-dl-empty__icon').attributes('data-name')).toBe('i-lucide-search-x')
     expect(empty.find('.nut-dl-empty__title').text()).toBe('Aucun résultat pour ces filtres')
@@ -340,7 +344,7 @@ describe('TableRenderer empty state', () => {
     expect(reset.attributes('data-label')).toBe('Réinitialiser les filtres')
     expect(reset.attributes('data-icon')).toBe('i-lucide-rotate-ccw')
     await reset.trigger('click')
-    await harness.until(() => !harness!.wrapper.find('.nut-dl-empty').exists())
+    await harness.until(() => !must(harness).wrapper.find('.nut-dl-empty').exists())
     expect(harness.internals.filters.searchQuery.value).toBe('')
     expect(harness.wrapper.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')).toHaveLength(20)
   })
@@ -368,11 +372,11 @@ describe('TableRenderer cursor mode', () => {
     harness = await mountTable({
       schema: createAuditSchema({ delay: 60, pageSize: 20, total: 45 }),
     })
-    await harness.until(() => harness!.wrapper.find('.nut-dl-row--loading-more').exists())
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-row--loading-more').exists())
     expect(harness.wrapper.find('.nut-dl-loading-more').text()).toBe('Chargement…')
     expect(harness.wrapper.find('.nut-dl-loading-more .nut-dl-spinner').exists()).toBeTruthy()
-    await harness.until(() => harness!.internals.pagination.loadedCount.value === 45, 4000)
-    await harness.until(() => !harness!.wrapper.find('.nut-dl-row--loading-more').exists())
+    await harness.until(() => must(harness).internals.pagination.loadedCount.value === 45, 4000)
+    await harness.until(() => !must(harness).wrapper.find('.nut-dl-row--loading-more').exists())
     expect(harness.wrapper.find('.nut-dl-table').attributes('data-virtualized')).toBe('true')
     expect(harness.internals.pagination.canNextPage.value).toBeFalsy()
   })

@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import DataListPagination from '#ui-tools/table/components/data-list/DataListPagination.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
 import { mountDataList, mountLoaded } from '../harness'
 import type { Harness } from '../harness'
@@ -133,11 +134,11 @@ describe('TableFooter compact', () => {
     expect(w.find('[data-ui="UPagination"]').exists()).toBeFalsy()
     expect(pager.find('.nut-dl-pager__of').text()).toBe('1 / 3')
     const buttons = pager.findAll('[data-ui="UButton"]')
-    expect(buttons[0]!.attributes('disabled')).toBeDefined()
-    expect(buttons[0]!.attributes('data-icon')).toBe('i-lucide-chevron-left')
-    expect(buttons[0]!.attributes('data-square')).toBe('true')
-    expect(buttons[0]!.attributes('aria-label')).toBe('Page précédente')
-    await buttons[1]!.trigger('click')
+    expect(must(buttons[0]).attributes('disabled')).toBeDefined()
+    expect(must(buttons[0]).attributes('data-icon')).toBe('i-lucide-chevron-left')
+    expect(must(buttons[0]).attributes('data-square')).toBe('true')
+    expect(must(buttons[0]).attributes('aria-label')).toBe('Page précédente')
+    await must(buttons[1]).trigger('click')
     await harness.flush()
     expect(pager.find('.nut-dl-pager__of').text()).toBe('2 / 3')
     expect(w.find('.nut-dl-footer__range').text()).toBe('21–40 sur 60')

@@ -10,6 +10,7 @@ import {
   flattenFilterOptionEntries,
   flattenVisibleFilterOptionTree,
 } from '../../src/runtime/table/utils/filters/tree'
+import { must } from '../helpers/must'
 
 const entries: TableResolvedFilterOptionEntry[] = [
   {
@@ -73,14 +74,14 @@ describe('filter tree utils', () => {
   it('collects selectable descendant values for branch selection', () => {
     expect(
       collectSelectableDescendantValues({
-        entry: entries[0]!,
+        entry: must(entries[0]),
         selectable: 'leaf-only',
       }),
     ).toStrictEqual(['frontend', 'backend'])
 
     expect(
       collectSelectableDescendantValues({
-        entry: entries[0]!,
+        entry: must(entries[0]),
         selectable: 'all',
       }),
     ).toStrictEqual(['frontend', 'backend'])
@@ -90,13 +91,13 @@ describe('filter tree utils', () => {
     expect(
       collectSelectedBranchIds([
         {
-          ...entries[0]!,
+          ...must(entries[0]),
           children: [
             {
-              ...entries[0]!.children[0]!,
+              ...must(entries[0]!.children[0]),
               selected: true,
             },
-            entries[0]!.children[1]!,
+            must(entries[0]!.children[1]),
           ],
         },
       ]),

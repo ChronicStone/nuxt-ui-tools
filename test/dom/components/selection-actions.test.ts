@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import DataListSelectionActions from '#ui-tools/table/components/data-list/DataListSelectionActions.vue'
 
+import { must } from '../../helpers/must'
 import { bulkActionCalls, createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded, texts } from '../harness'
 import type { Harness } from '../harness'
@@ -37,11 +38,11 @@ describe('selection actions part', () => {
       'Sélection2',
       'Touslesrésultats60',
     ])
-    expect(scope[0]!.classes()).toContain('bg-white/16')
-    await scope[1]!.trigger('click')
+    expect(must(scope[0]).classes()).toContain('bg-white/16')
+    await must(scope[1]).trigger('click')
     await harness.flush()
     expect(harness.internals.selection.bulkScope.value).toBe('all')
-    expect(w.findAll('.nut-dl-selbar__scope-btn')[1]!.classes()).toContain('bg-white/16')
+    expect(must(w.findAll('.nut-dl-selbar__scope-btn')[1]).classes()).toContain('bg-white/16')
   })
 
   it('renders three inline actions, an overflow menu and a dismiss control', async () => {
@@ -55,15 +56,15 @@ describe('selection actions part', () => {
       'Synchroniser',
       'Archiver',
     ])
-    expect(actions[0]!.attributes('data-icon')).toBe('i-lucide-download')
-    expect(actions[0]!.attributes('data-variant')).toBe('ghost')
+    expect(must(actions[0]).attributes('data-icon')).toBe('i-lucide-download')
+    expect(must(actions[0]).attributes('data-variant')).toBe('ghost')
     expect(texts(w, '.nut-dl-selbar__actions [data-ui-item]')).toStrictEqual([
       'Passer inactif',
       'Supprimer',
     ])
     expect(w.find('.nut-dl-selbar__more').attributes('aria-label')).toBe('Plus d’actions')
 
-    await actions[0]!.trigger('click')
+    await must(actions[0]).trigger('click')
     await harness.flush()
     expect(bulkActionCalls).toContain('export')
     await w.find('.nut-dl-selbar__actions [data-ui-item]:nth-child(2)').trigger('click')
@@ -75,7 +76,7 @@ describe('selection actions part', () => {
     await dismiss.trigger('click')
     await harness.flush()
     expect(harness.internals.selection.selectedCount.value).toBe(0)
-    await harness.until(() => !harness!.wrapper.find('.nut-dl-selbar').exists())
+    await harness.until(() => !must(harness).wrapper.find('.nut-dl-selbar').exists())
   })
 
   it('keeps one inline action on mobile and honours maxVisible', async () => {

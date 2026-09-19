@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
+import { must } from '../../helpers/must'
 import { createAccounts, createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded } from '../harness'
 import type { Harness } from '../harness'
@@ -97,7 +98,7 @@ describe('table summaries', () => {
     const schema = createAccountsSchema({ rows })
     const columns = schema.table?.columns ?? []
     function byKey(key: string) {
-      return columns.find((entry) => entry.key === key)!
+      return must(columns.find((entry) => entry.key === key))
     }
     byKey('contracts').summary = 'avg'
     byKey('consumption').summary = 'max'

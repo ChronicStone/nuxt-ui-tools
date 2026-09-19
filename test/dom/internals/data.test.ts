@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'
 import type { AccountRow } from '../fixtures/accounts'
 import { mountDataList, mountLoaded, rows, rawRows } from '../harness'
@@ -34,7 +35,7 @@ describe('table data lifecycle', () => {
 
   it('schedules startup from the root component mount', async () => {
     harness = await mountDataList({ schema: createAccountsSchema(), start: false })
-    await harness.until(() => harness!.internals.startup.isActive.value)
+    await harness.until(() => must(harness).internals.startup.isActive.value)
     expect(harness.internals.startup.phase.value).toBe('active')
   })
 
@@ -50,7 +51,7 @@ describe('table data lifecycle', () => {
 
   it('surfaces source errors and clears rows', async () => {
     harness = await mountDataList({ schema: createAccountsSchema({ fail: true }) })
-    await harness.until(() => Boolean(harness!.internals.queryContent.error.value))
+    await harness.until(() => Boolean(must(harness).internals.queryContent.error.value))
     expect((harness.internals.queryContent.error.value as Error).message).toBe('boom')
     expect(harness.internals.queryContent.data.value.rows).toStrictEqual([])
     expect(harness.internals.queryContent.status.value.isPending).toBeFalsy()
@@ -77,7 +78,7 @@ describe('table data lifecycle', () => {
 
   it('updates rows in place through the public API', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
-    harness.table.updateRow({ ...harness.table.data.rows.value[0]!, name: 'Zed' })
+    harness.table.updateRow({ ...must(harness.table.data.rows.value[0]), name: 'Zed' })
     await harness.flush()
     expect(rawRows<AccountRow>(harness).some((row) => row.name === 'Zed')).toBeTruthy()
     expect(rows<AccountRow>(harness).some((row) => row.id === 'acc-1')).toBeFalsy()

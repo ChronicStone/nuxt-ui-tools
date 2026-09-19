@@ -1,5 +1,7 @@
 import { computed, ref } from 'vue'
 
+import { must } from '../helpers/must'
+
 export const BREAKPOINTS = { lg: 1024, md: 768, sm: 640, xl: 1280, xs: 0 } as const
 export type BreakpointKey = keyof typeof BREAKPOINTS
 
@@ -7,7 +9,7 @@ const order: BreakpointKey[] = ['xs', 'sm', 'md', 'lg', 'xl']
 const breakpoint = ref<BreakpointKey>('xl')
 
 function mediaQueryFor(index: number) {
-  const min = BREAKPOINTS[order[index]!]
+  const min = BREAKPOINTS[must(order[index])]
   const next = order[index + 1]
   return next
     ? `(min-width: ${min}px) and (max-width: ${BREAKPOINTS[next] - 1}px)`
@@ -15,7 +17,7 @@ function mediaQueryFor(index: number) {
 }
 
 export function currentMediaQuery() {
-  return viewport.queries.value[breakpoint.value]!.mediaQuery
+  return must(viewport.queries.value[breakpoint.value]).mediaQuery
 }
 
 export const viewport = {

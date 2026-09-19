@@ -4,6 +4,7 @@ import { h } from 'vue'
 import DataListResultCount from '#ui-tools/table/components/data-list/DataListResultCount.vue'
 import DataListSearch from '#ui-tools/table/components/data-list/DataListSearch.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
 import { mountLoaded } from '../harness'
 import type { Harness } from '../harness'
@@ -68,7 +69,7 @@ describe('search part', () => {
       schema: createAccountsSchema({ delay: 40 }),
     })
     function input() {
-      return harness!.wrapper.find('input[data-ui="UInput"]')
+      return must(harness).wrapper.find('input[data-ui="UInput"]')
     }
     expect(input().attributes('data-loading')).toBeUndefined()
     const refresh = harness.internals.queryContent.refreshData()()

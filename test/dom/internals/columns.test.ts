@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { ROW_ACTIONS_COLUMN_ID, SELECT_COLUMN_ID } from '#ui-tools/table/utils/columns/types'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'
 import type { AccountRow } from '../fixtures/accounts'
 import { mountLoaded, rows } from '../harness'
@@ -27,7 +28,7 @@ describe('table columns', () => {
     expect(columns.visibleOrderedColumns.value.map((column) => column.id)).not.toContain(
       'legalEntity',
     )
-    const name = columns.runtimeColumns.value[0]!
+    const name = must(columns.runtimeColumns.value[0])
     expect(name).toMatchObject({
       canHide: false,
       pinned: 'left',
@@ -63,7 +64,7 @@ describe('table columns', () => {
     })
     expect(defs.at(-1)?.meta).toMatchObject({ align: 'right', internal: 'actions' })
     function byId(id: string) {
-      return defs.find((def) => def.id === id)!
+      return must(defs.find((def) => def.id === id))
     }
     expect(byId('name')).toMatchObject({ enableResizing: true, minSize: 200, size: 228 })
     expect(byId('name').meta).toMatchObject({ canHide: false, skeleton: 'avatar', sortable: true })

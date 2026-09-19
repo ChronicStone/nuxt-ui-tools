@@ -4,6 +4,7 @@ import { h } from 'vue'
 import DataListGrid from '#ui-tools/table/components/data-list/DataListGrid.vue'
 import GridRenderer from '#ui-tools/table/components/grid/GridRenderer.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
 import { mountDataList, mountLoaded } from '../harness'
 import type { Harness } from '../harness'
@@ -13,7 +14,7 @@ afterEach(() => harness?.unmount())
 
 function flowSchema(options: Parameters<typeof createAccountsSchema>[0] = {}) {
   const schema = createAccountsSchema(options)
-  schema.grid!.mode = 'flow'
+  must(schema.grid).mode = 'flow'
   return schema
 }
 
@@ -30,7 +31,7 @@ describe('grid renderer part', () => {
     expect(root.attributes('data-loading')).toBe('true')
     const skeletons = harness.wrapper.findAll('.nut-dl-grid__skeleton')
     expect(skeletons).toHaveLength(6)
-    expect(skeletons[2]!.attributes('style')).toContain('--nut-dl-i: 2')
+    expect(must(skeletons[2]).attributes('style')).toContain('--nut-dl-i: 2')
     expect(harness.wrapper.find('.nut-dl-grid__flow').attributes('style')).toContain(
       'repeat(3, minmax(0, 1fr))',
     )
@@ -55,10 +56,10 @@ describe('grid renderer part', () => {
     expect(flow.attributes('style')).toContain('repeat(3, minmax(0, 1fr))')
     const items = w.findAll('.nut-dl-grid__item')
     expect(items).toHaveLength(12)
-    expect(items[0]!.classes()).toContain('item-x')
-    expect(items[0]!.attributes('style')).toContain('span 1 / span 1')
-    expect(items[0]!.find('article.card').attributes('data-row')).toBe('acc-1')
-    expect(items[0]!.find('article.card').text()).toBe('Compte 001')
+    expect(must(items[0]).classes()).toContain('item-x')
+    expect(must(items[0]).attributes('style')).toContain('span 1 / span 1')
+    expect(must(items[0]).find('article.card').attributes('data-row')).toBe('acc-1')
+    expect(must(items[0]).find('article.card').text()).toBe('Compte 001')
     expect(w.find('.nut-dl-grid__canvas').exists()).toBeFalsy()
   })
 
@@ -92,7 +93,7 @@ describe('grid renderer part', () => {
       render: () => h(GridRenderer),
       schema: flowSchema({ fail: true }),
     })
-    await harness.until(() => harness!.wrapper.find('.nut-dl-grid__state').exists())
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-grid__state').exists())
     const state = harness.wrapper.find('.nut-dl-grid__state')
     expect(state.text()).toContain('Impossible de charger cette grille')
     const retry = state.find('[data-ui="UButton"]')
@@ -102,7 +103,7 @@ describe('grid renderer part', () => {
 
   it('shows the loading-more footer while cursor pages stream in flow mode', async () => {
     const schema = createAuditSchema({ delay: 60, pageSize: 20, total: 45 })
-    schema.grid!.mode = 'flow'
+    must(schema.grid).mode = 'flow'
     harness = await mountLoaded({
       query: { l: 'grid' },
       render: () => h(GridRenderer, { height: '300px' }),
@@ -110,10 +111,10 @@ describe('grid renderer part', () => {
     })
     expect(harness.wrapper.findAll('.nut-dl-grid__item')).toHaveLength(20)
     const pending = harness.internals.pagination.loadMore()
-    await harness.until(() => harness!.wrapper.find('.nut-dl-grid__more').exists())
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-grid__more').exists())
     expect(harness.wrapper.find('.nut-dl-grid__more').text()).toBe('Chargement…')
     await pending
-    await harness.until(() => harness!.wrapper.findAll('.nut-dl-grid__item').length === 40)
+    await harness.until(() => must(harness).wrapper.findAll('.nut-dl-grid__item').length === 40)
     expect(harness.wrapper.find('.nut-dl-grid__more').exists()).toBeFalsy()
   })
 })

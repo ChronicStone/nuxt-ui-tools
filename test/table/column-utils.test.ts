@@ -12,6 +12,8 @@ import {
   resolveColumnLabel,
 } from '#ui-tools/table/utils/columns/schema'
 
+import { must } from '../helpers/must'
+
 const schema = defineTableSchema({
   rowKey: 'id',
   source: {
@@ -112,15 +114,15 @@ describe('runtime columns', () => {
   })
 
   it('resolves labels, sortable keys and header icons', () => {
-    const score = findSchemaColumn({ columnId: 'score', schema })!
+    const score = must(findSchemaColumn({ columnId: 'score', schema }))
     expect(resolveColumnLabel({ column: score })).toBe('Score total')
     expect(resolveColumnLabel({ column: { ...score, label: () => ({}) as never } })).toBe('Score')
-    expect(getSortableKey({ column: findSchemaColumn({ columnId: 'firstName', schema })! })).toBe(
-      'firstName',
-    )
+    expect(
+      getSortableKey({ column: must(findSchemaColumn({ columnId: 'firstName', schema })) }),
+    ).toBe('firstName')
     expect(getSortableKey({ column: score })).toBeUndefined()
     expect(
-      getSortableKey({ column: findSchemaColumn({ columnId: 'created_at_label', schema })! }),
+      getSortableKey({ column: must(findSchemaColumn({ columnId: 'created_at_label', schema })) }),
     ).toBe('createdAt')
     expect(findSchemaColumn({ columnId: 'nope', schema })).toBeUndefined()
     function none() {

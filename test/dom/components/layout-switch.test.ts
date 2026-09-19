@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import DataListLayoutSwitch from '#ui-tools/table/components/data-list/DataListLayoutSwitch.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded } from '../harness'
 import type { Harness } from '../harness'
@@ -37,14 +38,14 @@ describe('layout switch part', () => {
       'i-lucide-menu',
       'i-lucide-box',
     ])
-    expect(buttons[0]!.attributes('data-active')).toBe('true')
-    expect(buttons[0]!.attributes('data-variant')).toBe('soft')
-    expect(buttons[1]!.attributes('data-variant')).toBe('ghost')
-    expect(buttons[0]!.attributes('data-label')).toBeUndefined()
-    await buttons[1]!.trigger('click')
+    expect(must(buttons[0]).attributes('data-active')).toBe('true')
+    expect(must(buttons[0]).attributes('data-variant')).toBe('soft')
+    expect(must(buttons[1]).attributes('data-variant')).toBe('ghost')
+    expect(must(buttons[0]).attributes('data-label')).toBeUndefined()
+    await must(buttons[1]).trigger('click')
     await harness.flush()
     expect(harness.internals.controls.tableLayout.value).toBe('grid')
-    expect(w.findAll('.nut-dl-layout__btn')[1]!.attributes('data-active')).toBe('true')
+    expect(must(w.findAll('.nut-dl-layout__btn')[1]).attributes('data-active')).toBe('true')
   })
 
   it('honours order, labels, icons and props layers', async () => {
@@ -64,10 +65,10 @@ describe('layout switch part', () => {
     })
     const buttons = harness.wrapper.findAll('.nut-dl-layout__btn')
     expect(buttons.map((b) => b.attributes('data-label'))).toStrictEqual(['Grid', 'Table'])
-    expect(buttons[1]!.attributes('data-icon')).toBe('i-lucide-rows-3')
-    expect(buttons[1]!.attributes('data-variant')).toBe('ghost')
-    expect(buttons[1]!.attributes('data-size')).toBe('sm')
-    expect(buttons[1]!.classes()).toContain('btn-x')
+    expect(must(buttons[1]).attributes('data-icon')).toBe('i-lucide-rows-3')
+    expect(must(buttons[1]).attributes('data-variant')).toBe('ghost')
+    expect(must(buttons[1]).attributes('data-size')).toBe('sm')
+    expect(must(buttons[1]).classes()).toContain('btn-x')
     expect(harness.wrapper.find('.nut-dl-layout').classes()).toContain('root-x')
   })
 

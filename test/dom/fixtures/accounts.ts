@@ -7,6 +7,8 @@ import type {
   TableSummariesSchema,
 } from '#ui-tools/table/types'
 
+import { must } from '../../helpers/must'
+
 export type AccountStatus = 'active' | 'pending' | 'inactive'
 
 export interface AccountRow {
@@ -30,12 +32,12 @@ export function createAccounts(count: number): AccountRow[] {
   return Array.from({ length: count }, (_, index) => ({
     consumption: (index + 1) * 10,
     contracts: (index % 7) + 1,
-    country: COUNTRIES[index % 3]!,
+    country: must(COUNTRIES[index % 3]),
     edofSync: index % 2 === 0,
     id: `acc-${index + 1}`,
     legalEntity: `Entité ${index + 1}`,
     name: `Compte ${String(index + 1).padStart(3, '0')}`,
-    status: STATUSES[index % 3]!,
+    status: must(STATUSES[index % 3]),
     updatedAt: new Date(Date.UTC(2026, 0, 1 + (index % 28))).toISOString(),
   }))
 }

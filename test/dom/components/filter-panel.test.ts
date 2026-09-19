@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import DataListFilterPanel from '#ui-tools/table/components/data-list/DataListFilterPanel.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded, texts } from '../harness'
 import type { Harness } from '../harness'
@@ -91,10 +92,10 @@ describe('filter slideover content', () => {
       '20',
       '20',
     ])
-    expect(chips[0]!.attributes('aria-pressed')).toBe('false')
+    expect(must(chips[0]).attributes('aria-pressed')).toBe('false')
     expect(w.find('.nut-dl-fpanel__meta').exists()).toBeFalsy()
 
-    await chips[0]!.trigger('click')
+    await must(chips[0]).trigger('click')
     await harness.flush()
     expect(w.find('.nut-dl-chip[data-value="FR"]').classes()).toContain('nut-dl-chip--active')
     expect(w.find('.nut-dl-chip[data-value="FR"]').attributes('aria-pressed')).toBe('true')
@@ -236,7 +237,7 @@ describe('filter slideover content', () => {
 
   it('hides counts when no facet source backs the options', async () => {
     const schema = createAccountsSchema({ panelFilters: true })
-    const country = schema.filters!.ui!.find((definition) => definition.key === 'country')!
+    const country = must(schema.filters!.ui!.find((definition) => definition.key === 'country'))
     Object.assign(country, {
       source: {
         options: (country as unknown as { source: { options: unknown[] } }).source.options,
@@ -249,12 +250,12 @@ describe('filter slideover content', () => {
 
   it('renders boolean filters as two chips', async () => {
     const schema = createAccountsSchema({ panelFilters: true })
-    const edof = schema.filters!.ui!.find((definition) => definition.key === 'edofSync')!
+    const edof = must(schema.filters!.ui!.find((definition) => definition.key === 'edofSync'))
     edof.display = { group: 'Volumes', location: 'panel', order: 6 }
     Object.assign(edof, { source: { facet: 'exclude-self' } })
     harness = await mountPanel({ schema })
     const w = harness.wrapper
-    const field = w.findAll('.nut-dl-fpanel__field').at(-1)!
+    const field = must(w.findAll('.nut-dl-fpanel__field').at(-1))
     expect(field.find('.nut-dl-fpanel__label').text()).toBe('Synchronisation EDOF')
     const chips = field.findAll('.nut-dl-chip')
     expect(chips.map((chip) => chip.find('.nut-dl-chip__label').text())).toStrictEqual([
@@ -262,7 +263,7 @@ describe('filter slideover content', () => {
       'Non',
     ])
     expect(chips.map((chip) => chip.find('.nut-dl-chip__count').text())).toStrictEqual(['30', '30'])
-    await chips[0]!.trigger('click')
+    await must(chips[0]).trigger('click')
     await harness.flush()
     expect(
       harness.internals.filterPresentation.getPanelDraftFilterState({ key: 'edofSync' })?.value,

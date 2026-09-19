@@ -3,6 +3,7 @@ import { defineComponent, h } from 'vue'
 
 import { useDataListBreakpoint } from '#ui-tools/table/composables/use-data-list-breakpoint'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded } from '../harness'
 import type { Harness } from '../harness'
@@ -54,7 +55,7 @@ describe('breakpoint composable', () => {
       schema: createAccountsSchema(),
     })
     function probe() {
-      return harness!.wrapper.find('[data-mobile]')
+      return must(harness).wrapper.find('[data-mobile]')
     }
     expect(probe().attributes('data-mobile')).toBe('true')
     expect(probe().attributes('data-tablet')).toBe('false')

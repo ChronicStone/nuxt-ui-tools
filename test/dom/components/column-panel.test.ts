@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import DataListColumnPanel from '#ui-tools/table/components/data-list/DataListColumnPanel.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded, texts } from '../harness'
 import type { Harness } from '../harness'
@@ -52,19 +53,19 @@ describe('ColumnPanel', () => {
       'Contrats',
       'Conso.',
     ])
-    expect(rows[0]!.find('input[type="checkbox"]').attributes('disabled')).toBeDefined()
-    expect(rows[0]!.find('[data-ui="UIcon"][data-name="i-lucide-pin"]').exists()).toBeTruthy()
-    expect(rows[1]!.find('.column-drag-handle').exists()).toBeTruthy()
-    expect(rows[3]!.find('input[type="checkbox"]').attributes('checked')).toBeUndefined()
-    expect(rows[1]!.find('input[type="checkbox"]').attributes('data-color')).toBe('primary')
+    expect(must(rows[0]).find('input[type="checkbox"]').attributes('disabled')).toBeDefined()
+    expect(must(rows[0]).find('[data-ui="UIcon"][data-name="i-lucide-pin"]').exists()).toBeTruthy()
+    expect(must(rows[1]).find('.column-drag-handle').exists()).toBeTruthy()
+    expect(must(rows[3]).find('input[type="checkbox"]').attributes('checked')).toBeUndefined()
+    expect(must(rows[1]).find('input[type="checkbox"]').attributes('data-color')).toBe('primary')
 
-    await rows[1]!.find('input[type="checkbox"]').trigger('click')
+    await must(rows[1]).find('input[type="checkbox"]').trigger('click')
     await harness.flush()
     expect(
       harness.internals.tableColumns.visibleOrderedColumns.value.map((c) => c.id),
     ).not.toContain('status')
     expect(w.find('.nut-dl-colbtn__count').attributes('data-label')).toBe('5')
-    await w.findAll('.nut-dl-colpanel__row')[3]!.find('button.flex-1').trigger('click')
+    await must(w.findAll('.nut-dl-colpanel__row')[3]).find('button.flex-1').trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.visibleOrderedColumns.value.map((c) => c.id)).toContain(
       'legalEntity',

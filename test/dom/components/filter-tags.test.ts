@@ -3,6 +3,7 @@ import { h } from 'vue'
 
 import DataListFilterTags from '#ui-tools/table/components/data-list/DataListFilterTags.vue'
 
+import { must } from '../../helpers/must'
 import { createAccountsSchema, STATUS_COLOR } from '../fixtures/accounts'
 import { mountLoaded, texts } from '../harness'
 import type { Harness } from '../harness'
@@ -49,7 +50,7 @@ describe('filter tags bar', () => {
     expect(texts(w, '.nut-dl-tag__text')).toStrictEqual(['Actif', 'En attente'])
     const dots = w.findAll('.nut-dl-tag__dot')
     expect(dots).toHaveLength(2)
-    expect(dots[0]!.attributes('style')).toContain(STATUS_COLOR.active)
+    expect(must(dots[0]).attributes('style')).toContain(STATUS_COLOR.active)
     expect(w.find('.nut-dl-tag__sep').exists()).toBeFalsy()
     expect(w.find('[data-ui="UBadge"]').exists()).toBeFalsy()
     const dismiss = w.find('.nut-dl-tag__dismiss')
@@ -79,7 +80,7 @@ describe('filter tags bar', () => {
     await dismiss.trigger('click')
     await harness.flush()
     expect(harness.internals.filters.getFilterState({ key: 'country' })).toBeUndefined()
-    await harness.until(() => !harness!.wrapper.find('.nut-dl-tag--active').exists())
+    await harness.until(() => !must(harness).wrapper.find('.nut-dl-tag--active').exists())
 
     harness.internals.filters.searchQuery.value = 'abc'
     await harness.flush()
@@ -98,12 +99,12 @@ describe('filter tags bar', () => {
     expect(w.find('input[data-ui="UInput"]').exists()).toBeFalsy()
     const rows = w.findAll('[data-filter-stage-content] button.rounded-md')
     expect(rows.map((row) => row.text())).toStrictEqual(['Pays', 'Synchronisation EDOF'])
-    expect(rows[0]!.find('[data-ui="UIcon"]').attributes('data-name')).toBe('i-lucide-plus')
-    expect(rows[0]!.findAll('[data-ui="UIcon"]').at(-1)!.attributes('data-name')).toBe(
+    expect(must(rows[0]).find('[data-ui="UIcon"]').attributes('data-name')).toBe('i-lucide-plus')
+    expect(must(rows[0]!.findAll('[data-ui="UIcon"]').at(-1)).attributes('data-name')).toBe(
       'i-lucide-chevron-right',
     )
 
-    await rows[0]!.trigger('click')
+    await must(rows[0]).trigger('click')
     await harness.flush()
     expect(harness.internals.filterPresentation.dynamicSessionDefinition.value).toBeUndefined()
     const operators = w.findAll('[data-filter-stage-content] button')
@@ -112,11 +113,11 @@ describe('filter tags bar', () => {
       'est=',
       "n'estpas≠",
     ])
-    await operators[0]!.trigger('click')
+    await must(operators[0]).trigger('click')
     await harness.flush()
     expect(harness.internals.filterPresentation.dynamicSessionDefinition.value?.key).toBe('country')
     expect(w.find('.nut-dl-tag--add').attributes('data-label')).toBe('Pays')
-    await harness.until(() => harness!.wrapper.find('.nut-dl-editor__head').exists())
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-editor__head').exists())
     const head = w.find('.nut-dl-editor__head')
     expect(head.find('.nut-dl-editor__back').exists()).toBeTruthy()
     expect(head.text()).toContain('Pays')
@@ -155,7 +156,7 @@ describe('filter tags bar', () => {
     const rowIcons = w.findAll(
       '[data-filter-stage-content] button.rounded-md [data-ui="UIcon"]:first-child',
     )
-    expect(rowIcons[0]!.attributes('data-name')).not.toBe('i-lucide-plus')
+    expect(must(rowIcons[0]).attributes('data-name')).not.toBe('i-lucide-plus')
     await w.find('[data-filter-stage-content] input[data-ui="UInput"]').setValue('edof')
     await harness.flush()
     expect(texts(w, '[data-filter-stage-content] button.rounded-md')).toStrictEqual([
@@ -165,7 +166,7 @@ describe('filter tags bar', () => {
 
   it('renders nothing when no tag or dynamic filters exist', async () => {
     const schema = createAccountsSchema()
-    schema.filters!.ui = []
+    must(schema.filters).ui = []
     harness = await mountTags({ schema })
     expect(harness.wrapper.find('.nut-dl-tags').exists()).toBeFalsy()
   })
@@ -194,15 +195,15 @@ describe('mobile filter sheet', () => {
       'Pays',
       'Synchronisation EDOF',
     ])
-    expect(rows[0]!.find('.nut-dl-sheet__value').text()).toContain('Actif')
-    expect(rows[0]!.find('.nut-dl-sheet__value .rounded-full').attributes('style')).toContain(
+    expect(must(rows[0]).find('.nut-dl-sheet__value').text()).toContain('Actif')
+    expect(must(rows[0]).find('.nut-dl-sheet__value .rounded-full').attributes('style')).toContain(
       STATUS_COLOR.active,
     )
-    expect(rows[1]!.find('.nut-dl-sheet__value').text()).toBe('')
+    expect(must(rows[1]).find('.nut-dl-sheet__value').text()).toBe('')
     expect(w.find('.nut-dl-sheet__footer button:last-child').text()).toBe('Terminé')
     expect(w.find('.nut-dl-sheet__footer button:first-child').attributes('disabled')).toBeDefined()
 
-    await rows[1]!.trigger('click')
+    await must(rows[1]).trigger('click')
     await harness.flush()
     const detail = w.find('.nut-dl-sheet__detail')
     expect(detail.exists()).toBeTruthy()
