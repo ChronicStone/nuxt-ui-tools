@@ -393,6 +393,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
         :operator-label="operatorLabel"
         :operator-items="operatorItems"
         :preview-summary="preview.summary"
+        :dynamic="dynamic"
         :active="preview.active"
         @activate="handleActivate"
         @request-match-mode="handleRequestMatchMode"

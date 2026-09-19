@@ -293,6 +293,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
         :operator-label="operatorLabel"
         :operator-items="operatorItems"
         :preview-summary="preview.summary"
+        :dynamic="dynamic"
         :active="preview.active"
         @activate="handleActivate"
         @request-match-mode="handleRequestMatchMode"

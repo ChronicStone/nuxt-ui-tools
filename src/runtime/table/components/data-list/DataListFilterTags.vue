@@ -1,26 +1,32 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 import { provideDataListUi, useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { DataListControlSize, DataListFilterTagsUi } from '../../types'
 import { mergeDataListUiClass } from '../../utils'
+import FilterSheet from '../filters/sheet/FilterSheet.vue'
 import FilterTagsBar from '../filters/tags/FilterTagsBar.vue'
 
 const props = withDefaults(
   defineProps<{
     showAdd?: boolean
     showClear?: boolean
+    /** `sheet` collapses the tags into a bottom sheet on mobile; `tags` keeps inline tags everywhere. */
+    mobile?: 'sheet' | 'tags'
     size?: DataListControlSize
     ui?: DataListFilterTagsUi
   }>(),
   {
     showAdd: false,
     showClear: false,
+    mobile: 'sheet',
   },
 )
 const dataListUi = useDataListUi()
 const internals = useTableInternals()
+const { isMobile } = useDataListBreakpoint()
 provideDataListUi(
   computed(() => ({
     ...dataListUi.ui.value,
@@ -47,7 +53,8 @@ provideDataListUi(
       :active-filters="internals.filters.activeUiFilters.value"
       :clear="internals.filters.clearAllFilters"
     >
-      <FilterTagsBar :show-add="showAdd" :show-clear="showClear">
+      <FilterSheet v-if="isMobile && mobile === 'sheet'" :show-clear="showClear" />
+      <FilterTagsBar v-else :show-add="showAdd" :show-clear="showClear">
         <template v-if="$slots.filter" #filter="scope">
           <slot name="filter" v-bind="scope" />
         </template>

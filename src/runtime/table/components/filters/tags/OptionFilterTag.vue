@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref } from 'vue'
 
 import { useRangeSelect } from '../../../../shared'
 import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
@@ -24,20 +27,26 @@ import FilterPopoverShell from '../shared/FilterPopoverShell.vue'
 import FilterStageTransition from '../shared/FilterStageTransition.vue'
 import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
-const props = defineProps<{
+const props = withDefaults(
+  defineProps<{
   definition: TableOptionFilterDefinition
   dynamic?: boolean
   session?: boolean
   embedded?: boolean
+  header?: boolean
   initialOperator?: TableFilterOperator
-}>()
+}>(),
+  { header: true },
+)
 const emit = defineEmits<{
+  back: []
   dismiss: []
   sessionClosed: []
 }>()
 
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
+const { t } = useUiToolsLocale()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
@@ -300,7 +309,9 @@ function handleContentMounted() {
         :operator-label="operatorLabel"
         :operator-items="operatorItems"
         :preview-tags="preview.tags"
+        :preview-entries="preview.entries"
         :preview-summary="preview.summary"
+        :dynamic="dynamic"
         :active="preview.active"
         @activate="handleActivate"
         @request-match-mode="handleRequestMatchMode"
@@ -333,6 +344,31 @@ function handleContentMounted() {
           "
           @vue:mounted="handleContentMounted"
         >
+          <div
+            v-if="header !== false && dataListUi.ui.value.filterTags?.props?.editorHeader !== false"
+            :class="mergeDataListUiClass('nut-dl-editor__head flex items-center gap-2 border-b border-default py-2 pr-3', embedded ? 'pl-1.5' : 'pl-3', dataListFilterUi?.editorHeader)"
+          >
+            <button
+              v-if="embedded"
+              type="button"
+              class="nut-dl-editor__back flex size-6 items-center justify-center rounded-md text-muted hover:bg-elevated hover:text-default"
+              :aria-label="t('table.filters.sheet.back')"
+              @click="emit('back')"
+            >
+              <UIcon name="i-lucide-arrow-left" class="size-4" />
+            </button>
+            <span class="min-w-0 flex-1 truncate text-[13px] font-semibold text-highlighted">
+              {{ internals.filters.getFilterLabelText({ label: definition.label }) }}
+            </span>
+            <button
+              type="button"
+              class="rounded text-[12.5px] font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40"
+              :disabled="!preview.active"
+              @click="clearFilter"
+            >
+              {{ t('table.filters.editor.clear') }}
+            </button>
+          </div>
           <FilterOptionPickerContent
             v-model:search-query="searchQuery"
             :flat-radio-value="state.flatRadioValue.value"

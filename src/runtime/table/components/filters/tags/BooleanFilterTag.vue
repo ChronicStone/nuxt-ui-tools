@@ -87,6 +87,7 @@ const radioItems = computed(() =>
     value: String(entry.value),
     count: entry.count,
     icon: entry.icon,
+    color: entry.color,
   })),
 )
 
@@ -187,7 +188,9 @@ function clearFilter() {
         operator-label="is"
         :operator-items="[]"
         :preview-tags="preview.tags"
+        :preview-entries="preview.entries"
         :preview-summary="preview.summary"
+        :dynamic="dynamic"
         :active="preview.active"
         @activate="handleActivate"
         @clear="clearFilter"

@@ -182,6 +182,7 @@ function handleValueUpdate(value: string | number | undefined) {
         :operator-label="operatorLabel"
         :operator-items="operatorItems"
         :preview-summary="preview.summary"
+        :dynamic="dynamic"
         :active="preview.active"
         @activate="handleActivate"
         @request-match-mode="handleRequestMatchMode"

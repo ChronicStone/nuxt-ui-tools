@@ -6,11 +6,13 @@ import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import type {
+  DataListCheckboxProps,
   DataListControlSize,
   DataListFilterEditorUi,
   TableResolvedFilterOptionEntry,
 } from '../../../types'
 import {
+  mergeDataListProps,
   mergeDataListUiClass,
   resolveDataListControlGeometry,
   resolveFilterEditorSizeClasses,
@@ -49,6 +51,12 @@ const size = computed(
 )
 const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const checkboxProps = computed(() =>
+  mergeDataListProps<DataListCheckboxProps>(
+    { color: 'primary' },
+    dataListUi.ui.value.filterTags?.props?.optionCheckbox,
+  ),
+)
 const geometry = computed(() => resolveDataListControlGeometry(size.value))
 </script>
 
@@ -65,7 +73,7 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
         :key="entry.value == null ? entry.label : String(entry.value)"
         :class="
           mergeDataListUiClass(
-            `flex items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
+            `nut-dl-option flex items-center rounded-md text-left outline-none transition-colors hover:bg-elevated focus-within:ring-2 focus-within:ring-primary/30 ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
             undefined,
             ui?.option,
           )
@@ -73,7 +81,7 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
       >
         <UCheckbox
           :model-value="entry.selected ?? false"
-          color="neutral"
+          v-bind="checkboxProps"
           :size="size"
           :aria-label="entry.label"
           :icon="props.selectedIcon"
@@ -86,8 +94,14 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
           :class="['flex min-w-0 flex-1 items-center text-left', geometry.toolbarGap]"
           @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
         >
+          <span
+            v-if="entry.color"
+            class="nut-dl-option__dot size-[7px] shrink-0 rounded-full"
+            :style="{ background: entry.color }"
+            aria-hidden="true"
+          />
           <UIcon
-            v-if="entry.icon"
+            v-else-if="entry.icon"
             :name="entry.icon"
             :class="
               mergeDataListUiClass(
