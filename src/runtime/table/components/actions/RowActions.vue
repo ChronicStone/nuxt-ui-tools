@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import UDrawer from '@nuxt/ui/components/Drawer.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import type { DropdownMenuProps } from '@nuxt/ui/components/DropdownMenu.vue'
-import { computed, useAttrs } from 'vue'
+import { computed, ref, useAttrs } from 'vue'
+
+import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 
 import { useTableInternals } from '../../composables/use-table-internals'
 import { useTableRowActionScope } from '../../composables/use-table-row-actions'
@@ -24,6 +28,28 @@ const props = defineProps<{
 
 const attrs = useAttrs()
 const internals = useTableInternals()
+const { isMobile } = useDataListBreakpoint()
+const sheetOpen = ref<boolean>(false)
+type SheetItem = {
+  label?: string
+  icon?: string
+  color?: string
+  disabled?: boolean
+  onSelect?: (event: Event) => void
+  dividerBefore: boolean
+}
+const sheetItems = computed<SheetItem[]>(() => {
+  const groups = (Array.isArray(items.value[0]) ? items.value : [items.value]) as Array<
+    Array<Omit<SheetItem, 'dividerBefore'>>
+  >
+  return groups.flatMap((group, index) =>
+    group.map((item, itemIndex) => ({ ...item, dividerBefore: index > 0 && itemIndex === 0 })),
+  )
+})
+function runSheetItem(item: SheetItem) {
+  sheetOpen.value = false
+  item.onSelect?.(new Event('select'))
+}
 const scope = useTableRowActionScope()
 const portal = computed(() => props.portal ?? true)
 const visibleActions = computed(() => {
@@ -46,8 +72,33 @@ const items = computed(() => {
 </script>
 
 <template>
+  <UDrawer
+    v-if="scope && visibleActions.length && items.length && isMobile"
+    v-model:open="sheetOpen"
+    direction="bottom"
+    :ui="{ content: 'nut-dl-sheet rounded-t-[16px]', container: 'gap-0 p-0', body: 'p-0 pb-4' }"
+  >
+    <slot :items="items" :open="sheetOpen" />
+    <template #body>
+      <div class="px-[10px] pt-2">
+        <template v-for="(item, index) in sheetItems" :key="index">
+          <div v-if="item.dividerBefore" class="my-1 border-t border-default" />
+          <button
+            type="button"
+            class="nut-dl-sheet__row flex h-[46px] w-full items-center gap-[10px] rounded-lg px-[10px] text-left text-[15px] text-highlighted active:bg-elevated disabled:opacity-40"
+            :class="item.color === 'error' ? 'text-error' : ''"
+            :disabled="Boolean(item.disabled)"
+            @click="runSheetItem(item)"
+          >
+            <UIcon v-if="item.icon" :name="item.icon" class="size-4 shrink-0 text-muted" :class="item.color === 'error' ? 'text-error' : ''" />
+            <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+          </button>
+        </template>
+      </div>
+    </template>
+  </UDrawer>
   <UDropdownMenu
-    v-if="scope && visibleActions.length && items.length"
+    v-else-if="scope && visibleActions.length && items.length"
     :items="items"
     :content="props.content"
     :modal="props.modal"
