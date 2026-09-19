@@ -47,7 +47,7 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
     tag="div"
     :class="
       mergeDataListUiClass(
-        'nut-dl-tags contents',
+        'nut-dl-tags relative flex min-w-0 flex-wrap items-center gap-2',
         undefined,
         dataListUi.ui.value.filterTags?.ui?.root,
       )
