@@ -2,6 +2,7 @@
 import { useForm, useFormApi } from '#ui-tools/form'
 import type { FormController, FormObject, FormSchema, FormValue } from '#ui-tools/form'
 
+import { accountFormSchema } from '../../forms/account'
 import { arraysFormInput, arraysFormSchema } from '../../forms/arrays'
 import {
   billedBulkFormSchema,
@@ -59,6 +60,20 @@ function register(
 }
 
 const entries: FormEntry[] = [
+  register(
+    'accountNew',
+    'Nouveau compte',
+    'Type, identité, contacts, adresse, facturation et documents.',
+    accountFormSchema(contacts, 'new'),
+    { accountType: 'customer' },
+  ),
+  register(
+    'account',
+    'Modifier le compte',
+    'Type, identité, contacts, adresse, facturation et documents.',
+    accountFormSchema(contacts, 'edit'),
+    { ...accounts[2] },
+  ),
   register(
     'contact',
     'Contact',
