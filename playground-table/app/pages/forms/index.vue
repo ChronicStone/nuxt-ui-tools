@@ -19,6 +19,7 @@ import {
   versionTypeFormSchema,
 } from '../../forms/catalogue'
 import { contactFormSchema } from '../../forms/contact'
+import { contractFormSchema } from '../../forms/contract'
 import { parityFormInput, parityFormSchema } from '../../forms/parity'
 import {
   groupFormSchema,
@@ -73,6 +74,13 @@ const entries: FormEntry[] = [
     'Type, identité, contacts, adresse, facturation et documents.',
     accountFormSchema(contacts, 'edit'),
     { ...accounts[2] },
+  ),
+  register(
+    'contract',
+    'Nouveau contrat',
+    'Général, produits, objectifs et documents.',
+    contractFormSchema(accounts),
+    { currency: 'EUR', paymentTerm: '30', products: [{ active: true }] },
   ),
   register(
     'contact',
