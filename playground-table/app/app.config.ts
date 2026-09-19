@@ -146,9 +146,9 @@ export default defineAppConfig({
       ],
       variants: {
         size: {
-          lg: { base: 'h-[38px] px-2.5 text-[13px] gap-2' },
-          md: { base: 'h-[34px] px-2.5 text-[13px] gap-2' },
-          sm: { base: 'h-7 px-2.5 text-[12.5px]' },
+          lg: 'h-[38px] px-2.5 text-[13px] gap-2',
+          md: 'h-[34px] px-2.5 text-[13px] gap-2',
+          sm: 'h-7 px-2.5 text-[12.5px]',
         },
       },
     },
