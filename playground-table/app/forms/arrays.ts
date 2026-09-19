@@ -130,7 +130,7 @@ export function arraysFormSchema() {
       eyebrow: 'Démo',
       title: 'Tableaux et listes',
     },
-    modal: { maxWidth: 760 },
+    modal: { size: 'lg' },
   })
 }
 

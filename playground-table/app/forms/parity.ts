@@ -234,7 +234,7 @@ export function parityFormSchema() {
       eyebrow: 'Démo',
       title: 'Propriétés de parité',
     },
-    modal: { maxWidth: 720 },
+    modal: { size: 'lg' },
   })
 }
 

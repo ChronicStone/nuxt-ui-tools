@@ -112,6 +112,6 @@ export function contactFormSchema(accounts: readonly Account[]) {
       eyebrow: 'Contact',
       title: 'Nouveau contact',
     },
-    modal: { maxWidth: 760 },
+    modal: { size: 'lg' },
   })
 }
