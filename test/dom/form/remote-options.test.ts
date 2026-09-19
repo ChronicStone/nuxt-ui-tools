@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { defineFormSchema } from '#ui-tools/form'
 import type { FormObject, FormOptionValue } from '#ui-tools/form'
 
-import { deferred, mountForm } from './harness'
+import { deferred, mountForm, scrollToEnd } from './harness'
 import type { FormHarness } from './harness'
 
 interface Option {
@@ -79,8 +79,7 @@ async function typeSearch(harness: FormHarness, path: string, term: string) {
 }
 
 async function loadMore(harness: FormHarness, path: string) {
-  await harness.field(path).find('[data-form-option-load-more]').trigger('click')
-  await harness.flush()
+  await scrollToEnd(harness, path, '[data-ui-items]')
 }
 
 describe('remote field options', () => {
@@ -127,7 +126,7 @@ describe('remote field options', () => {
     })
     await harness.until(() => itemValues(harness, 'organisation').length === 3)
     expect(itemValues(harness, 'organisation')).toStrictEqual(['acme', 'beta', 'delta'])
-    expect(harness.field('organisation').find('[data-form-option-load-more]').exists()).toBeFalsy()
+    expect(harness.wrapper.find('[data-form-option-error]').exists()).toBeFalsy()
     harness.unmount()
   })
 

@@ -20,7 +20,7 @@ export function contactFormSchema(accounts: readonly Account[]) {
       { key: 'submit', label: 'Enregistrer' },
     ],
     fields: [
-      { key: 'identity', label: 'Identité', type: 'divider' },
+      { key: 'identity', label: 'Identité', type: 'section' },
       { key: 'firstName', label: 'Prénom', required: true, type: 'text' },
       { key: 'lastName', label: 'Nom', required: true, type: 'text' },
       {
@@ -39,7 +39,12 @@ export function contactFormSchema(accounts: readonly Account[]) {
         placeholder: 'Directrice pédagogique, gestionnaire plateforme…',
         type: 'text',
       },
-      { key: 'links', label: 'Rattachements', type: 'divider' },
+      {
+        description: 'les rôles obligatoires d’un compte se choisissent depuis sa fiche',
+        key: 'links',
+        label: 'Rattachements',
+        type: 'section',
+      },
       {
         key: 'accounts',
         label: 'Comptes',
@@ -91,7 +96,7 @@ export function contactFormSchema(accounts: readonly Account[]) {
         ],
         type: 'select',
       },
-      { key: 'access', label: 'Accès', type: 'divider' },
+      { key: 'access', label: 'Accès', type: 'section' },
       {
         description: 'Envoie l’e-mail d’invitation à la création',
         key: 'invite',
@@ -100,6 +105,9 @@ export function contactFormSchema(accounts: readonly Account[]) {
         type: 'checkbox',
       },
     ],
+    description:
+      'Une personne physique rattachée à un ou plusieurs comptes. L’accès à l’espace client se donne ensuite par invitation.',
+    eyebrow: 'Contact',
     formKey: 'contact',
     modal: { maxWidth: 760 },
     title: 'Nouveau contact',

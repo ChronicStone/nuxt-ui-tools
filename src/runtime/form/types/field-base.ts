@@ -36,6 +36,7 @@ export type FormFieldType =
   | 'hidden'
   | 'info'
   | 'divider'
+  | 'section'
   | 'input-group'
   | 'object'
   | 'custom-component'

@@ -77,20 +77,35 @@ export default defineComponent({
           const key = keyOf(item)
           const children = asRecords(item.children)
           const expanded = asStrings(props.expanded).includes(key)
+          const wrapper = slots['item-wrapper']
+          const row = wrapper
+            ? h(
+                'div',
+                { 'data-ui-tree-row': key },
+                wrapper({
+                  expanded,
+                  handleToggle: () => toggle(key, expanded),
+                  indeterminate: false,
+                  item,
+                  selected: isSelected(item),
+                  ui: { link: () => '', linkLabel: () => '', linkTrailingIcon: () => '' },
+                }),
+              )
+            : h(
+                'button',
+                {
+                  'aria-selected': isSelected(item) ? 'true' : 'false',
+                  disabled: Boolean(props.disabled) || item.disabled === true,
+                  onClick: () => select(item),
+                  type: 'button',
+                },
+                slots.item
+                  ? slots.item({ item, selected: isSelected(item) })
+                  : scalarText(item.label),
+              )
           return h('li', { 'data-ui-tree-item': key, role: 'treeitem' }, [
-            h(
-              'button',
-              {
-                'aria-selected': isSelected(item) ? 'true' : 'false',
-                disabled: Boolean(props.disabled) || item.disabled === true,
-                onClick: () => select(item),
-                type: 'button',
-              },
-              slots.item
-                ? slots.item({ item, selected: isSelected(item) })
-                : scalarText(item.label),
-            ),
-            children.length
+            row,
+            children.length && !wrapper
               ? h('button', {
                   'data-ui-tree-toggle': '',
                   onClick: () => toggle(key, expanded),

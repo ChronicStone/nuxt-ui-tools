@@ -101,8 +101,12 @@ export interface FormSchema<
 > {
   /** Stable key used by persistence, diagnostics, and test selectors. */
   formKey?: string
+  /** Optional small caption rendered above the title, such as the entity name. */
+  eyebrow?: FormText
   /** Optional user-facing title for full-form renderers. */
   title?: FormText
+  /** Optional supporting copy rendered under the title. */
+  description?: FormText
   /** Form-scoped data sources exposed to fields as `ctx`. */
   context?: TContext
   /** Form-level field grid layout. */

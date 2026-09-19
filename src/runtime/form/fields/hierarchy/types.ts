@@ -1,6 +1,6 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FieldOptionValue, FallbackNever, NullableValue } from '../../types/field-output-utils'
-import type { FormOptionConfig, FormOptionValue, FormOptionsSource } from '../../types/options'
+import type { FormAnyOptionConfig, FormOptionValue } from '../../types/options'
 import type { FormText } from '../../types/utils'
 
 export type FormHierarchyOption<TValue extends FormOptionValue = FormOptionValue> = {
@@ -8,6 +8,8 @@ export type FormHierarchyOption<TValue extends FormOptionValue = FormOptionValue
   description?: FormText
   disabled?: boolean
   children?: readonly FormHierarchyOption<TValue>[]
+  /** `false` marks a remote node whose children load when it expands. */
+  isLeaf?: boolean
 } & ({ value: TValue; key?: TValue } | { key: TValue; value?: TValue })
 
 interface FormHierarchyFieldOptions<
@@ -16,9 +18,7 @@ interface FormHierarchyFieldOptions<
   TValue extends FormOptionValue,
   TOption extends FormHierarchyOption<TValue>,
 > {
-  options:
-    | FormOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
-    | FormOptionsSource<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
+  options: FormAnyOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
   multiple?: boolean
   searchable?: boolean
   clearable?: boolean

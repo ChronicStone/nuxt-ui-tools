@@ -43,6 +43,7 @@ import PhoneNumberField from '../../fields/phone-number/component.vue'
 import RadioCardField from '../../fields/radio-card/component.vue'
 import RadioField from '../../fields/radio/component.vue'
 import RatingField from '../../fields/rating/component.vue'
+import SectionField from '../../fields/section/component.vue'
 import SelectField from '../../fields/select/component.vue'
 import SliderField from '../../fields/slider/component.vue'
 import SwitchGroupField from '../../fields/switch-group/component.vue'
@@ -159,6 +160,7 @@ const fieldRenderers = new Map<FormFieldType, Component>([
   ['hidden', HiddenField],
   ['info', InfoField],
   ['divider', DividerField],
+  ['section', SectionField],
   ['input-group', InputGroupField],
   ['group', GroupField],
   ['object', ObjectField],

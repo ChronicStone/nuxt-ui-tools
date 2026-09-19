@@ -351,7 +351,22 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
       return running
     }
     const domain = selectionGeneration.value
-    const request = (async () => {
+    const request = loadChildrenPage(config, option, key, domain)
+    childRequests.set(key, request)
+    try {
+      await request
+    } finally {
+      childRequests.delete(key)
+    }
+  }
+
+  async function loadChildrenPage(
+    config: FormRemoteOptionConfig<FormValue>,
+    option: ResolvedFormOption,
+    key: string,
+    domain: number,
+  ) {
+    try {
       const result = await resolveRemoteResult(
         config.source({
           ...params.callbackParams.value,
@@ -367,12 +382,11 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
       loaded.value = replaceChildren(loaded.value, key, parsed.options)
       retained.value = replaceChildren(retained.value, key, parsed.options)
       retainSelected(loaded.value)
-    })()
-    childRequests.set(key, request)
-    try {
-      await request
-    } finally {
-      childRequests.delete(key)
+      sourceError.value = null
+    } catch (error) {
+      if (domain === selectionGeneration.value) {
+        sourceError.value = error
+      }
     }
   }
 

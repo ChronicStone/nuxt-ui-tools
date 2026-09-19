@@ -101,7 +101,7 @@ describe('form submission', () => {
     const harness = await mountForm({ input: { email: 'taken@exassess.com' }, onSubmit, schema })
 
     await harness.form.submit(({ api }) => {
-      api.setError('email', 'Already registered')
+      api.setError('email', 'Already registered', { blocking: true })
       return false
     })
     await harness.flush()
@@ -126,7 +126,7 @@ describe('form submission', () => {
     const harness = await mountForm({ input: { email: 'a@b.fr' }, onSubmit, schema })
 
     await harness.form.submit(({ api }) => {
-      api.setError('email', 'Unusual domain', { blocking: false })
+      api.setError('email', 'Unusual domain')
       return false
     })
     await harness.flush()

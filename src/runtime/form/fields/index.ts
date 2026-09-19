@@ -33,6 +33,7 @@ import { phoneNumberFieldKind } from './phone-number/config'
 import { radioCardFieldKind } from './radio-card/config'
 import { radioFieldKind } from './radio/config'
 import { ratingFieldKind } from './rating/config'
+import { sectionFieldKind } from './section/config'
 import { selectFieldKind } from './select/config'
 import { sliderFieldKind } from './slider/config'
 import { switchGroupFieldKind } from './switch-group/config'
@@ -60,6 +61,7 @@ export const formFieldKinds = [
   hiddenFieldKind,
   infoFieldKind,
   dividerFieldKind,
+  sectionFieldKind,
   inputGroupFieldKind,
   objectFieldKind,
   customComponentFieldKind,

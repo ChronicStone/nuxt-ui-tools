@@ -15,6 +15,8 @@ export interface ResolvedFormOption {
   description?: string
   disabled?: boolean
   children?: readonly ResolvedFormOption[]
+  /** True when the option has children that load on demand. */
+  lazy?: boolean
 }
 
 export function normalizeOptionItem(
@@ -29,6 +31,7 @@ export function normalizeOptionItem(
     const children = Array.isArray(rawChildren)
       ? rawChildren.map((child) => normalizeOptionItem(child, keys))
       : undefined
+    const lazy = option.isLeaf === false || option.hasChildren === true
     const value = normalizeOptionValue(fallbackValue)
     const normalized: ResolvedFormOption = {
       description: isFormText(rawDescription) ? resolveFormText(rawDescription) : undefined,
@@ -38,6 +41,11 @@ export function normalizeOptionItem(
     }
     if (children) {
       normalized.children = children
+    } else if (lazy) {
+      normalized.children = []
+    }
+    if (lazy) {
+      normalized.lazy = true
     }
     return normalized
   }

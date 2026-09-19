@@ -23,7 +23,9 @@ export interface FormRootUi {
   header?: FormUiClass
   headerContent?: FormUiClass
   heading?: FormUiClass
+  eyebrow?: FormUiClass
   title?: FormUiClass
+  description?: FormUiClass
   stepper?: FormUiClass
   step?: FormUiClass
   viewport?: FormUiClass
@@ -54,6 +56,12 @@ export interface FormFieldUi {
   collapsible?: FormUiClass
   collapseTrigger?: FormUiClass
   reset?: FormUiClass
+}
+
+export interface FormSectionUi {
+  root?: FormUiClass
+  label?: FormUiClass
+  description?: FormUiClass
 }
 
 export interface FormActionsUi {
@@ -171,6 +179,7 @@ export interface FormUiConfig {
   root?: FormUiPartConfig<FormRootUi>
   field?: FormUiPartConfig<FormFieldUi>
   actions?: FormUiPartConfig<FormActionsUi>
+  section?: FormUiPartConfig<FormSectionUi>
   group?: FormUiPartConfig<FormGroupUi>
   tree?: FormUiPartConfig<FormTreeUi>
   treeSelect?: FormUiPartConfig<FormTreeSelectUi>

@@ -235,13 +235,13 @@ export function useFormValidation(params: {
     const key = path.join('.')
     customErrors.value = [
       ...customErrors.value.filter((error) => error.path !== key),
-      { blocking: options?.blocking !== false, message, path: key },
+      { blocking: options?.blocking === true, message, path: key },
     ]
   }
 
   function hasBlockingErrors(paths: readonly string[]) {
     return customErrors.value.some(
-      (error) => error.blocking !== false && paths.some((path) => isScopedPath(error.path, path)),
+      (error) => error.blocking === true && paths.some((path) => isScopedPath(error.path, path)),
     )
   }
 

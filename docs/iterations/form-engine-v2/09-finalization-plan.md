@@ -117,6 +117,6 @@ Field patterns to add for parity with the maquette: `eyebrow`, `tabs`, `section`
 4. Keep curated V2 props, but expose real control and power: every Nuxt UI primitive prop that matters (pickers, selects, editors, uploads) gets a typed field property or a typed `props` passthrough. Never leave a behaviour reachable only by forking the component.
 5. The sticky section navigation on long page forms is app-level composition, not an engine feature. The engine only guarantees stable section anchors and inline `NutForm` blocks that share one controller.
 7. Keep V2's field-scoped property typing (no shared properties leaking onto kinds that cannot use them). Parity means behaviours and features, not V1's type shapes.
-8. Behaviour diffs to audit against V1, first known one: custom errors set through the API must block submit (V1 does, V2 apparently not). Decide default plus an opt-out when porting the submission suite.
+8. Custom errors set through the API are non-blocking by default and block submit only when set with `blocking: true`. A value change clears them.
 9. Accessibility and keyboard behaviour are part of parity: Enter submits from any single-line control, invalid submit focuses the first invalid field and announces its error, every control is labelled (aria-labelledby or aria-label), overlays trap and restore focus, option menus and trees are fully keyboard operable. Covered by a dedicated DOM spec.
 6. Pixel comparison against `identity4.html` with `shot.mjs` / `pxdiff` when the render can be isolated; otherwise side-by-side screenshots.

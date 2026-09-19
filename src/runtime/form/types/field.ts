@@ -40,6 +40,7 @@ import type { FormPhoneNumberField } from '../fields/phone-number/types'
 import type { FormRadioCardField } from '../fields/radio-card/types'
 import type { FormRadioField } from '../fields/radio/types'
 import type { FormRatingField } from '../fields/rating/types'
+import type { FormSectionField } from '../fields/section/types'
 import type { FormSelectField } from '../fields/select/types'
 import type { FormSliderField } from '../fields/slider/types'
 import type { FormSwitchGroupField } from '../fields/switch-group/types'
@@ -80,6 +81,7 @@ export type {
   FormYearField,
 } from '../fields/date-family/types'
 export type { FormDividerField } from '../fields/divider/types'
+export type { FormSectionField } from '../fields/section/types'
 export type { FormFileField } from '../fields/file/types'
 export type { FormHiddenField } from '../fields/hidden/types'
 export type { FormGroupField } from '../fields/group/types'
@@ -146,6 +148,7 @@ export type FormField<TContext = NonNullable<unknown>, TDeps = NonNullable<unkno
   | FormHiddenField<TContext, TDeps>
   | FormInfoField<TContext, TDeps>
   | FormDividerField<TContext, TDeps>
+  | FormSectionField<TContext, TDeps>
   | FormInputGroupField<TContext, TDeps>
   | FormGroupField<TContext, TDeps>
   | FormObjectField<TContext, TDeps>

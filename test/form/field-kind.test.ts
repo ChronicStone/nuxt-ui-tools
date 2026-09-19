@@ -32,9 +32,9 @@ describe('form field kinds', () => {
       'hidden',
       'info',
       'divider',
+      'section',
       'input-group',
       'object',
-      'custom-component',
     ])
   })
 

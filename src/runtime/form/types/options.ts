@@ -98,6 +98,8 @@ export interface FormOptionConfig<
   TDeps = NonNullable<unknown>,
   TValue = FormValue,
 > {
+  /** Local option configs never declare a mode; `mode: 'remote'` selects the remote config. */
+  mode?: never
   /** Static, sync-derived, promise-backed, or query-backed options. */
   source: FormOptionsSource<TOption, TContext, TDeps, TValue>
   /** Optional creation behavior for missing options. */
@@ -146,7 +148,7 @@ export interface FormRemoteOptionsRequest<
   /** Requested page. `cursor` is set for cursor pagination and `index` for page pagination. */
   page: { index: number; cursor: string | null; size: number }
   /** Parent option whose direct children are requested. Undefined for root pages. */
-  parent?: TOption
+  parent?: NoInfer<TOption>
 }
 
 export interface FormRemoteSelectedRequest<

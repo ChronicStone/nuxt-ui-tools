@@ -105,7 +105,7 @@ describe('Regle-owned form validation', () => {
     await expect(validation.validate()).resolves.toBeTruthy()
   })
 
-  it('blocks validation on custom errors unless they are marked non-blocking', async () => {
+  it('keeps custom errors visible and only blocks validation when asked to', async () => {
     const schema = defineFormSchema({
       fields: [{ key: 'email', type: 'text' }],
     })
@@ -118,20 +118,20 @@ describe('Regle-owned form validation', () => {
       state,
     })
 
-    validation.setError(['email'], 'This email is already registered.')
-
-    expect(validation.getFieldError(['email'])).toBe('This email is already registered.')
-    expect(validation.errors.value).toStrictEqual([
-      { blocking: true, message: 'This email is already registered.', path: 'email' },
-    ])
-    await expect(validation.validate()).resolves.toBeFalsy()
-    await expect(validation.validateFields(schema.fields, [])).resolves.toBeFalsy()
-
-    validation.setError(['email'], 'Double-check this address.', { blocking: false })
+    validation.setError(['email'], 'Double-check this address.')
 
     expect(validation.getFieldError(['email'])).toBe('Double-check this address.')
+    expect(validation.errors.value).toStrictEqual([
+      { blocking: false, message: 'Double-check this address.', path: 'email' },
+    ])
     await expect(validation.validate()).resolves.toBeTruthy()
     await expect(validation.validateFields(schema.fields, [])).resolves.toBeTruthy()
+
+    validation.setError(['email'], 'This email is already registered.', { blocking: true })
+
+    expect(validation.getFieldError(['email'])).toBe('This email is already registered.')
+    await expect(validation.validate()).resolves.toBeFalsy()
+    await expect(validation.validateFields(schema.fields, [])).resolves.toBeFalsy()
   })
 
   it('runs required and callback rules through the Regle tree', async () => {

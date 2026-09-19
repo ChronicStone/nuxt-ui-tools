@@ -279,6 +279,17 @@ async function swallow(promise: Promise<unknown>) {
   return null
 }
 
+export async function scrollToEnd(harness: FormHarness, path: string, selector: string) {
+  const { element } = harness.field(path).find(selector)
+  Object.defineProperties(element, {
+    clientHeight: { configurable: true, value: 100 },
+    scrollHeight: { configurable: true, value: 300 },
+    scrollTop: { configurable: true, value: 150 },
+  })
+  element.dispatchEvent(new Event('scroll'))
+  await harness.flush()
+}
+
 export function labels(harness: FormHarness) {
   return harness.wrapper
     .findAll('[data-ui="UFormField"] > [data-ui-label-wrapper] > [data-ui-label]')

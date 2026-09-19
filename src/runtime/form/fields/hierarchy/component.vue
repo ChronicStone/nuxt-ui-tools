@@ -11,10 +11,12 @@ import { computed, ref, watch } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormCompositeControl from '../../components/renderer/form-composite-control.vue'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormOptionMenuFooter from '../../components/utils/form-option-menu-footer.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormValue, FormOptionValue } from '../../types'
-import { formOptionKey, type ResolvedFormOption } from '../../utils/options'
+import { formOptionKey } from '../../utils/options'
+import type { ResolvedFormOption } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
@@ -32,6 +34,7 @@ interface FlatHierarchyOption extends ResolvedFormOption {
 interface TreeHierarchyItem extends TreeItem {
   value: FormOptionValue
   pathLabel: string
+  lazy?: boolean
   children?: TreeHierarchyItem[]
 }
 
@@ -96,8 +99,9 @@ const selectableItems = computed<readonly FlatHierarchyOption[]>(() =>
 const selectItems = computed<FlatHierarchyOption[]>(() => [...selectableItems.value])
 const treeItems = computed<TreeHierarchyItem[]>(() => toTreeItems(options.items.value))
 const visibleTreeItems = computed<TreeHierarchyItem[]>(() =>
-  filterTreeItems(treeItems.value, treeSearch.value),
+  options.remote.value ? treeItems.value : filterTreeItems(treeItems.value, treeSearch.value),
 )
+const loadingKeys = ref<string[]>([])
 const model = computed<FormOptionValue | FormOptionValue[] | null>({
   get: () => {
     const value = form.getValue(props.path)
@@ -130,7 +134,7 @@ const treeSelectLabel = computed<string>(() => {
   if (treeMultiple.value) {
     return selectedTreeItems.value.map((item) => item.pathLabel).join(', ')
   }
-  const selected = selectedTreeItems.value[0]
+  const [selected] = selectedTreeItems.value
   if (!selected) {
     return placeholder.value
   }
@@ -145,11 +149,17 @@ const ownedControlUi = computed(() => ({
 }))
 
 watch(treeSelectOpen, (open) => {
-  if (!open) {
-    treeSearch.value = ''
+  if (open) {
+    options.activate()
+    return
   }
+  treeSearch.value = ''
 })
 watch(treeSearch, (query) => {
+  if (options.remote.value) {
+    options.setSearch(query)
+    return
+  }
   if (!query.trim()) {
     return
   }
@@ -157,6 +167,32 @@ watch(treeSearch, (query) => {
     .filter((item) => item.children?.length)
     .map((item) => treeKey(item))
 })
+
+function isExpandable(item: TreeHierarchyItem) {
+  return Boolean(item.children?.length) || item.lazy === true
+}
+
+function isLoadingItem(item: TreeHierarchyItem) {
+  return loadingKeys.value.includes(treeKey(item))
+}
+
+async function toggleNode(item: TreeHierarchyItem) {
+  const key = treeKey(item)
+  if (expandedKeys.value.includes(key)) {
+    expandedKeys.value = expandedKeys.value.filter((entry) => entry !== key)
+    return
+  }
+  expandedKeys.value = [...expandedKeys.value, key]
+  if (!item.lazy || item.children?.length || isLoadingItem(item)) {
+    return
+  }
+  loadingKeys.value = [...loadingKeys.value, key]
+  try {
+    await options.loadChildren({ label: String(item.label), value: item.value })
+  } finally {
+    loadingKeys.value = loadingKeys.value.filter((entry) => entry !== key)
+  }
+}
 
 function flattenOptions(
   items: readonly ResolvedFormOption[],
@@ -196,6 +232,7 @@ function toTreeItems(
       ...item,
       children: item.children ? toTreeItems(item.children, [...labels, item.label]) : undefined,
       label: treeItemLabel(item),
+      lazy: item.lazy,
       pathLabel: [...labels, item.label].join(separator.value),
     }
     if (treeSelectionControl.value !== 'none') {
@@ -374,7 +411,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       >
         <template
           v-if="treeSelectionControl !== 'none'"
-          #item-wrapper="{ item, selected, expanded, indeterminate, handleToggle, ui }"
+          #item-wrapper="{ item, selected, expanded, indeterminate, ui }"
         >
           <div
             :class="ui.link({ selected, disabled: disabled || item.disabled })"
@@ -402,16 +439,22 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             />
             <span :class="ui.linkLabel()">{{ item.label }}</span>
             <button
-              v-if="item.children?.length"
+              v-if="isExpandable(item)"
               type="button"
               :aria-label="String(item.label)"
+              :aria-expanded="expanded ? 'true' : 'false'"
+              data-form-tree-toggle
               class="ms-auto inline-flex rounded-sm p-0.5 focus-visible:outline-2 focus-visible:outline-primary"
-              @click.stop="handleToggle"
+              @click.stop="toggleNode(item)"
             >
               <UIcon
-                name="i-lucide-chevron-down"
+                :name="isLoadingItem(item) ? 'i-lucide-loader-circle' : 'i-lucide-chevron-down'"
                 aria-hidden="true"
-                :class="[ui.linkTrailingIcon(), expanded ? 'rotate-180' : '']"
+                :class="[
+                  ui.linkTrailingIcon(),
+                  isLoadingItem(item) ? 'animate-spin' : '',
+                  expanded && !isLoadingItem(item) ? 'rotate-180' : '',
+                ]"
               />
             </button>
           </div>
@@ -456,7 +499,10 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         </UButton>
 
         <template #content>
-          <div :class="mergeFormUiClass('grid min-w-0', formUi.ui.value.treeSelect?.ui?.root)">
+          <div
+            :class="mergeFormUiClass('grid min-w-0', formUi.ui.value.treeSelect?.ui?.root)"
+            data-form-tree-scope
+          >
             <div v-if="field.searchable !== false" class="border-b border-default p-2">
               <UInput
                 v-model="treeSearch"
@@ -499,7 +545,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             >
               <template
                 v-if="treeSelectionControl !== 'none'"
-                #item-wrapper="{ item, selected, expanded, indeterminate, handleToggle, ui }"
+                #item-wrapper="{ item, selected, expanded, indeterminate, ui }"
               >
                 <div
                   :class="ui.link({ selected, disabled: disabled || item.disabled })"
@@ -527,16 +573,24 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
                   />
                   <span :class="ui.linkLabel()">{{ item.label }}</span>
                   <button
-                    v-if="item.children?.length"
+                    v-if="isExpandable(item)"
                     type="button"
                     :aria-label="String(item.label)"
+                    :aria-expanded="expanded ? 'true' : 'false'"
+                    data-form-tree-toggle
                     class="ms-auto inline-flex rounded-sm p-0.5 focus-visible:outline-2 focus-visible:outline-primary"
-                    @click.stop="handleToggle"
+                    @click.stop="toggleNode(item)"
                   >
                     <UIcon
-                      name="i-lucide-chevron-down"
+                      :name="
+                        isLoadingItem(item) ? 'i-lucide-loader-circle' : 'i-lucide-chevron-down'
+                      "
                       aria-hidden="true"
-                      :class="[ui.linkTrailingIcon(), expanded ? 'rotate-180' : '']"
+                      :class="[
+                        ui.linkTrailingIcon(),
+                        isLoadingItem(item) ? 'animate-spin' : '',
+                        expanded && !isLoadingItem(item) ? 'rotate-180' : '',
+                      ]"
                     />
                   </button>
                 </div>
@@ -551,8 +605,13 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
                 )
               "
             >
-              {{ t('form.fields.hierarchy.empty') }}
+              {{
+                options.pending.value
+                  ? t('form.fields.options.loadingMore')
+                  : t('form.fields.hierarchy.empty')
+              }}
             </p>
+            <FormOptionMenuFooter :options="options" :disabled="disabled" />
             <div
               v-if="field.clearable && selectedTreeItems.length"
               class="flex justify-end border-t border-default p-2"

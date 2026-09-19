@@ -357,7 +357,11 @@ export function createInputStub(
             ...shared,
             checked: props.modelValue === true,
             'data-indeterminate': props.modelValue === 'indeterminate' ? 'true' : undefined,
-            onClick: () => emit('update:modelValue', props.modelValue !== true),
+            onClick: (event: Event) => {
+              // SAFETY: forwarded listeners are authored click handlers; asHandler validates the shape.
+              asHandler(attrs.onClick as StubValue)?.(event)
+              emit('update:modelValue', props.modelValue !== true)
+            },
             type: 'checkbox',
           })
         }

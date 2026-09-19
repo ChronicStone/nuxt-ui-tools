@@ -152,6 +152,8 @@ const displayedParentPath = computed(() =>
   displayedStep.value?.root ? [displayedStep.value.root] : [],
 )
 const title = computed(() => resolveFormText(getSchemaTitle(schemaRef.value)))
+const eyebrow = computed(() => resolveFormText(getSchemaText(schemaRef.value, 'eyebrow')))
+const description = computed(() => resolveFormText(getSchemaText(schemaRef.value, 'description')))
 const showStepper = computed(() => getSchemaShowStepper(schemaRef.value))
 const grid = useFormGridLayout({ layout: runtime.currentLayout })
 const shell = computed(() => props.shell ?? 'inline')
@@ -266,6 +268,14 @@ function stepLabel(index: number) {
   return runtime.steps.value[index]?.label ?? `Step ${index + 1}`
 }
 
+function getSchemaText(schema: FormValue, key: string) {
+  if (!isRecord(schema)) {
+    return
+  }
+  const value = Object.getOwnPropertyDescriptor(schema, key)?.value
+  return isString(value) || isNumber(value) || isFunction(value) ? value : undefined
+}
+
 function getSchemaTitle(schema: FormValue) {
   if (!isRecord(schema)) {
     return
@@ -367,7 +377,10 @@ async function focusFirstRenderedField() {
 
 <template>
   <form novalidate :class="rootClass" @submit.prevent="submit">
-    <header v-if="title || runtime.isStepped.value || isOverlayShell" :class="headerClass">
+    <header
+      v-if="title || eyebrow || description || runtime.isStepped.value || isOverlayShell"
+      :class="headerClass"
+    >
       <div
         v-if="title || isOverlayShell"
         :class="
@@ -378,19 +391,42 @@ async function focusFirstRenderedField() {
         "
       >
         <div
-          v-if="title"
-          :class="mergeFormUiClass('grid gap-1', formUi.ui.value.root?.ui?.heading)"
+          v-if="title || eyebrow || description"
+          :class="mergeFormUiClass('grid min-w-0 gap-1', formUi.ui.value.root?.ui?.heading)"
         >
-          <h2
+          <p
+            v-if="eyebrow"
             :class="
               mergeFormUiClass(
-                'text-lg font-semibold text-highlighted',
+                'text-[11px] font-semibold uppercase tracking-[0.08em] text-(--nut-form-eyebrow,var(--ui-primary))',
+                formUi.ui.value.root?.ui?.eyebrow,
+              )
+            "
+          >
+            {{ eyebrow }}
+          </p>
+          <h2
+            v-if="title"
+            :class="
+              mergeFormUiClass(
+                'text-lg font-semibold tracking-tight text-highlighted',
                 formUi.ui.value.root?.ui?.title,
               )
             "
           >
             {{ title }}
           </h2>
+          <p
+            v-if="description"
+            :class="
+              mergeFormUiClass(
+                'max-w-[56ch] text-[13px] leading-relaxed text-muted',
+                formUi.ui.value.root?.ui?.description,
+              )
+            "
+          >
+            {{ description }}
+          </p>
         </div>
 
         <UButton

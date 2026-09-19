@@ -46,7 +46,7 @@ export interface FormValidationError {
   path: string
   /** Resolved message safe to display in the UI. */
   message: string
-  /** External errors block submit unless set with `blocking: false`. */
+  /** External errors only block submit when set with `blocking: true`. */
   blocking?: boolean
 }
 

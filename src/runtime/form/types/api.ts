@@ -33,7 +33,7 @@ export type FormContextPatchValue<TContext, TKey extends keyof TContext> = Parti
 >
 
 export interface FormErrorOptions {
-  /** Blocks submit and step navigation while the error is present. Defaults to `true`. */
+  /** Blocks submit and step navigation while the error is present. Defaults to `false`. */
   blocking?: boolean
 }
 
@@ -148,7 +148,7 @@ export interface FormFieldValidationApi {
   validate: () => Promise<boolean>
   /** True while an asynchronous Regle rule for this field is running. */
   pending: () => boolean
-  /** Sets an external field error. Blocking by default. */
+  /** Sets an external field error. Non-blocking unless `blocking: true`. */
   setError: (message: string, options?: FormErrorOptions) => void
   /** Clears external field errors. */
   clearError: () => void
@@ -225,7 +225,7 @@ export interface FormApi<TOutput = FormObject> {
   initial: (path: string) => FormValue
   /** Runs form validation. */
   validate: (options?: FormValidationOptions) => Promise<boolean>
-  /** Sets an external error on a submitted output field. Blocking by default. */
+  /** Sets an external error on a submitted output field. Non-blocking unless `blocking: true`. */
   setError: (path: FormFieldPath<TOutput>, message: string, options?: FormErrorOptions) => void
   /** Clears one external field error, or every form error when no path is provided. */
   clearError: (path?: FormFieldPath<TOutput>) => void
