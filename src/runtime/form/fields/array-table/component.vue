@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-import { computed, defineAsyncComponent } from 'vue'
+import { useScrollShadow } from '@nuxt/ui/composables/useScrollShadow'
+import { computed, defineAsyncComponent, ref } from 'vue'
 
 import FormFieldError from '../../components/renderer/form-field-error.vue'
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
@@ -26,6 +27,8 @@ const VueDraggable = defineAsyncComponent(() =>
 
 const form = useFormRuntimeContext()
 const formUi = useFormUi()
+const viewportRef = ref<HTMLElement | null>(null)
+const viewportShadow = useScrollShadow(viewportRef, { orientation: 'horizontal', size: 20 })
 const itemKeys = new WeakMap<FormObject, string>()
 let nextItemKey = 0
 const items = computed<readonly FormObject[]>(() => {
@@ -190,12 +193,14 @@ function fieldLabel(field: FormField) {
 <template>
   <section :class="mergeFormUiClass('grid gap-3', formUi.ui.value.arrayTable?.ui?.root)">
     <div
+      ref="viewportRef"
       :class="
         mergeFormUiClass(
           'w-full overflow-x-auto rounded-lg border border-default bg-default',
           formUi.ui.value.arrayTable?.ui?.viewport,
         )
       "
+      :style="viewportShadow.style.value"
     >
       <table
         :class="

@@ -44,7 +44,7 @@ function handleAnimationEnd(open: boolean) {
     :content="contentProps"
     :handle="false"
     :ui="{
-      overlay: ui?.overlay,
+      overlay: mergeFormUiClass('bg-(--nut-form-veil) backdrop-blur-[2px]', ui?.overlay),
       content: mergeFormUiClass('h-dvh max-w-full overflow-hidden border-default p-0', ui?.content),
     }"
     @update:open="$emit('update:open', $event)"

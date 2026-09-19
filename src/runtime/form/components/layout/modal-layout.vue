@@ -30,7 +30,7 @@ function cssSize(value: number | string | undefined) {
     :dismissible="dismissible && config?.allowOutsideClick !== false"
     :content="contentProps"
     :ui="{
-      overlay: ui?.overlay,
+      overlay: mergeFormUiClass('bg-(--nut-form-veil) backdrop-blur-[2px]', ui?.overlay),
       content: mergeFormUiClass(
         'flex max-h-[85dvh] min-h-0 overflow-hidden border border-default p-0 sm:max-w-4xl',
         ui?.content,

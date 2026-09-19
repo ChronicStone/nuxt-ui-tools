@@ -16,7 +16,7 @@ defineEmits<FormOverlayLayoutEmits>()
     fullscreen
     :dismissible="dismissible && config?.allowOutsideClick !== false"
     :ui="{
-      overlay: ui?.overlay,
+      overlay: mergeFormUiClass('bg-(--nut-form-veil) backdrop-blur-[2px]', ui?.overlay),
       content: mergeFormUiClass(
         'h-dvh overflow-hidden p-0 sm:max-w-none sm:rounded-none',
         ui?.content,

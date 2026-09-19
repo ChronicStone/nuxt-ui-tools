@@ -6,6 +6,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 import UTree from '@nuxt/ui/components/Tree.vue'
 import type { TreeItem } from '@nuxt/ui/components/Tree.vue'
+import { useScrollShadow } from '@nuxt/ui/composables/useScrollShadow'
 import { computed, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
@@ -102,6 +103,8 @@ const visibleTreeItems = computed<TreeHierarchyItem[]>(() =>
   options.remote.value ? treeItems.value : filterTreeItems(treeItems.value, treeSearch.value),
 )
 const loadingKeys = ref<string[]>([])
+const treeListRef = ref<HTMLElement | null>(null)
+const treeListShadow = useScrollShadow(treeListRef, { size: 16 })
 const model = computed<FormOptionValue | FormOptionValue[] | null>({
   get: () => {
     const value = form.getValue(props.path)
@@ -515,6 +518,8 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             </div>
             <UTree
               v-if="visibleTreeItems.length"
+              ref="treeListRef"
+              :style="treeListShadow.style.value"
               :model-value="treeModel"
               v-model:expanded="expandedKeys"
               :items="visibleTreeItems"

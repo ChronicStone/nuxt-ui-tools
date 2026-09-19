@@ -3,6 +3,7 @@ import UAlert from '@nuxt/ui/components/Alert.vue'
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
+import { useScrollShadow } from '@nuxt/ui/composables/useScrollShadow'
 import { useAppConfig } from 'nuxt/app'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -123,6 +124,8 @@ const removeRouteGuard = router.beforeEach(() => {
 })
 onBeforeUnmount(removeRouteGuard)
 
+const viewportRef = ref<HTMLElement | null>(null)
+const viewportShadow = useScrollShadow(viewportRef, { size: 20 })
 const displayedStepIndex = ref<number>(runtime.currentStepIndex.value)
 const stepTransitionDirection = ref<'forward' | 'backward'>('forward')
 const stepTransitioning = ref<boolean>(false)
@@ -459,7 +462,11 @@ async function focusFirstRenderedField() {
       </div>
     </header>
 
-    <div :class="viewportClass">
+    <div
+      ref="viewportRef"
+      :class="viewportClass"
+      :style="isOverlayShell ? viewportShadow.style.value : undefined"
+    >
       <UAlert
         v-if="contextError"
         color="error"

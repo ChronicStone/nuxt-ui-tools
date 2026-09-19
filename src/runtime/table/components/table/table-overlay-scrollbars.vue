@@ -162,7 +162,7 @@ defineExpose({ measure: schedule })
 <template>
   <div
     v-if="hasVertical"
-    class="nut-dl-sb pointer-events-none absolute top-0.5 right-0.5 bottom-2 z-[6] w-[5px] opacity-0 transition-opacity duration-150 motion-reduce:transition-none"
+    class="nut-dl-sb pointer-events-none absolute top-1 right-[3px] bottom-2 z-[6] w-[5px] opacity-0 transition-opacity duration-200 ease-out motion-reduce:transition-none"
     :class="{ 'pointer-events-auto opacity-100': visible }"
   >
     <span
@@ -177,7 +177,7 @@ defineExpose({ measure: schedule })
   </div>
   <div
     v-if="hasHorizontal"
-    class="nut-dl-sb pointer-events-none absolute right-2 bottom-0.5 left-0.5 z-[6] h-[5px] opacity-0 transition-opacity duration-150 motion-reduce:transition-none"
+    class="nut-dl-sb pointer-events-none absolute right-2 bottom-[3px] left-1 z-[6] h-[5px] opacity-0 transition-opacity duration-200 ease-out motion-reduce:transition-none"
     :class="{ 'pointer-events-auto opacity-100': visible }"
   >
     <span

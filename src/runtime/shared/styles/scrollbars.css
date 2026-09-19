@@ -1,5 +1,6 @@
 :root {
-  --nut-scrollbar-size: 5px;
+  --nut-scrollbar-size: 11px;
+  --nut-scrollbar-gap: 3px;
   --nut-scrollbar-thumb: color-mix(in srgb, var(--ui-text, #1f1d1a) 18%, transparent);
   --nut-scrollbar-thumb-hover: color-mix(in srgb, var(--ui-text, #1f1d1a) 32%, transparent);
   --nut-scrollbar-thumb-active: color-mix(in srgb, var(--ui-text, #1f1d1a) 44%, transparent);
@@ -8,6 +9,11 @@
 @supports not selector(::-webkit-scrollbar) {
   * {
     scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.2s ease;
+  }
+
+  *:hover {
     scrollbar-color: var(--nut-scrollbar-thumb) transparent;
   }
 }
@@ -25,16 +31,21 @@
   }
 
   *::-webkit-scrollbar-thumb {
+    border: var(--nut-scrollbar-gap) solid transparent;
     border-radius: 999px;
-    background: var(--nut-scrollbar-thumb);
-    transition: background-color 0.15s;
+    background-clip: padding-box;
+    background-color: transparent;
   }
 
   *:hover::-webkit-scrollbar-thumb {
-    background: var(--nut-scrollbar-thumb-hover);
+    background-color: var(--nut-scrollbar-thumb);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--nut-scrollbar-thumb-hover);
   }
 
   *::-webkit-scrollbar-thumb:active {
-    background: var(--nut-scrollbar-thumb-active);
+    background-color: var(--nut-scrollbar-thumb-active);
   }
 }

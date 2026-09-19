@@ -125,6 +125,7 @@ export default defineNuxtModule<ModuleOptions>({
     await installModule('nuxt-viewport', viewportOptions)
 
     setupTailwindCss(nuxt, resolve('./runtime'))
+    nuxt.options.css.push(resolve('./runtime/shared/styles/tokens.css'))
     if (options.scrollbars !== false) {
       nuxt.options.css.push(resolve('./runtime/shared/styles/scrollbars.css'))
     }
