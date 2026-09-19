@@ -50,6 +50,27 @@ const files = computed<readonly File[]>(() => {
   return selectedFiles.value ? [selectedFiles.value] : []
 })
 
+const openDialog = ref<(() => void) | null>(null)
+const hasSingleFile = computed(() => {
+  const { value } = selectedFiles
+  return !props.field.multiple && value !== null && !Array.isArray(value)
+})
+const dropzoneUi = computed(() => ({
+  ...controlProps.value.ui,
+  base: hasSingleFile.value ? 'hidden' : controlProps.value.ui?.base,
+  file: hasSingleFile.value ? 'relative inset-auto p-0' : controlProps.value.ui?.file,
+  files: hasSingleFile.value ? 'w-full' : 'mb-2 gap-2',
+}))
+
+function captureOpen(open: () => void) {
+  openDialog.value = open
+  return ''
+}
+
+function replaceFile() {
+  openDialog.value?.()
+}
+
 async function uploadFiles() {
   const run = uploadRun.value + 1
   uploadRun.value = run
@@ -148,14 +169,19 @@ function isFormObject(value: FormValue): value is FormObject {
         :layout="field.fileLayout"
         :preview="field.preview"
         position="outside"
+        :ui="dropzoneUi"
         @change="handleFileChange"
       >
+        <template #files-top="{ open }">
+          <span hidden>{{ captureOpen(open) }}</span>
+        </template>
         <template #file="{ file, index, removeFile }">
           <FormFilePreview
             :file="file"
             :index="index"
             :disabled="disabled"
             :remove-file="removeFile"
+            :replace="field.multiple ? undefined : replaceFile"
           />
         </template>
       </UFileUpload>

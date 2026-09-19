@@ -10,6 +10,7 @@ const props = defineProps<{
   index: number
   disabled?: boolean
   removeFile: (index?: number) => void
+  replace?: () => void
 }>()
 
 const { code, t } = useUiToolsLocale()
@@ -108,6 +109,18 @@ function formatSize(bytes: number) {
       </span>
       <span class="block text-xs text-muted" data-form-file-meta="">{{ meta }}</span>
     </span>
+    <UButton
+      v-if="replace"
+      size="xs"
+      color="neutral"
+      variant="ghost"
+      icon="i-lucide-refresh-cw"
+      :disabled="disabled"
+      :aria-label="t('form.fields.file.replace')"
+      :title="t('form.fields.file.replace')"
+      data-form-file-replace=""
+      @click.stop="replace()"
+    />
     <UButton
       size="xs"
       color="neutral"
