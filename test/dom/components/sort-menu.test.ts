@@ -28,30 +28,19 @@ describe('DataListSortMenu desktop', () => {
     harness = await mountMenu({ menuProps: { label: 'Tri' } })
     const w = harness.wrapper
     const trigger = w.find('.nut-dl-sortbtn')
+    await trigger.trigger('click')
+    await harness.flush()
     expect([
       trigger.attributes('data-icon'),
       trigger.attributes('data-variant'),
       trigger.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/gu, ''),
       trigger.find('.nut-dl-sortbtn__label [data-ui="UIcon"]').attributes('data-name'),
     ]).toEqual(['i-lucide-arrow-down-up', 'outline', 'TriNom', 'i-lucide-arrow-up'])
-    const items = w.findAll('[data-ui-item]')
+    const items = w.findAll('.nut-dl-sort__row')
     expect([
       items.map((item) => item.text()),
-      must(items[0]).classes().includes('nut-dl-colmenu__item--active'),
-    ]).toEqual([
-      [
-        'Nom',
-        'Statut',
-        'Pays',
-        'Entité légale',
-        'EDOF',
-        'Contrats',
-        'Conso.',
-        'Trier A → Z',
-        'Trier Z → A',
-      ],
-      true,
-    ])
+      must(items[0]).classes().includes('nut-dl-sort__row--active'),
+    ]).toEqual([['Nom', 'Statut', 'Pays', 'Entité légale', 'EDOF', 'Contrats', 'Conso.'], true])
 
     await must(items[1]).trigger('click')
     await harness.flush()
@@ -59,7 +48,7 @@ describe('DataListSortMenu desktop', () => {
       dir: 'asc',
       key: 'status',
     })
-    await must(w.findAll('[data-ui-item]').at(-1)).trigger('click')
+    await must(w.findAll('.nut-dl-sort__row').at(-1)).trigger('click')
     await harness.flush()
     expect([
       harness.internals.tableColumns.sortingState.value.dir,
@@ -73,13 +62,12 @@ describe('DataListSortMenu desktop', () => {
     expect(harness.wrapper.find('.nut-dl-sortbtn').exists()).toBeFalsy()
     harness.internals.controls.setTableLayout('grid')
     await harness.flush()
+    await harness.wrapper.find('.nut-dl-sortbtn').trigger('click')
+    await harness.flush()
     expect(harness.wrapper.find('.nut-dl-sortbtn').exists()).toBeTruthy()
-    expect(texts(harness.wrapper, '[data-ui-item]')).toStrictEqual([
-      'Nom',
-      'Statut',
-      'Trier A → Z',
-      'Trier Z → A',
-    ])
+    expect(
+      harness.wrapper.findAll('.nut-dl-sort__row').map((row) => row.find('.flex-1').text()),
+    ).toStrictEqual(['Nom', 'Statut'])
   })
 
   it('merges trigger props and ui slots', async () => {
@@ -114,8 +102,8 @@ describe('DataListSortMenu mobile sheet', () => {
     ]).toEqual(['true', 'i-lucide-arrow-down-up', 'Trier', 'false'])
     await trigger.trigger('click')
     await harness.flush()
-    expect(texts(w, '.nut-dl-sheet__title')).toStrictEqual(['Trier par', 'Ordre'])
-    const rows = w.findAll('.nut-dl-sheet__row')
+    expect(texts(w, '.nut-dl-sort__caption')).toStrictEqual(['Trier par', 'Ordre'])
+    const rows = w.findAll('.nut-dl-sort__row')
     expect(rows.map((row) => row.find('.flex-1').text())).toStrictEqual([
       'Nom',
       'Statut',
