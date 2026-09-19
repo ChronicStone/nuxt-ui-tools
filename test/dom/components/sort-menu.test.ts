@@ -35,7 +35,10 @@ describe('DataListSortMenu desktop', () => {
       trigger.find('.nut-dl-sortbtn__label [data-ui="UIcon"]').attributes('data-name'),
     ]).toEqual(['i-lucide-arrow-down-up', 'outline', 'TriNom', 'i-lucide-arrow-up'])
     const items = w.findAll('[data-ui-item]')
-    expect([items.map((item) => item.text()), must(items[0]).attributes('data-icon')]).toEqual([
+    expect([
+      items.map((item) => item.text()),
+      must(items[0]).classes().includes('nut-dl-colmenu__item--active'),
+    ]).toEqual([
       [
         'Nom',
         'Statut',
@@ -47,7 +50,7 @@ describe('DataListSortMenu desktop', () => {
         'Trier A → Z',
         'Trier Z → A',
       ],
-      'i-lucide-check',
+      true,
     ])
 
     await must(items[1]).trigger('click')

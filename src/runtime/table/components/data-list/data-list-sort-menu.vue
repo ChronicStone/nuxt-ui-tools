@@ -99,20 +99,31 @@ const activeLabel = computed(() =>
 )
 const items = computed(() => [
   sortKeys.value.map((key) => ({
-    icon: activeKey.value === key ? 'i-lucide-check' : undefined,
+    class: activeKey.value === key ? 'nut-dl-colmenu__item--active' : undefined,
     label: sortLabels.value.get(key) ?? humanize(key),
-    onSelect: () => internals.tableColumns.setSortKey(key),
+    onSelect: (event: Event) => {
+      event.preventDefault()
+      internals.tableColumns.setSortKey(key)
+    },
   })),
   [
     {
+      class: activeDirection.value === 'asc' ? 'nut-dl-colmenu__item--active' : undefined,
       icon: 'i-lucide-arrow-up-narrow-wide',
       label: t('table.columnsMenu.sortAsc'),
-      onSelect: () => internals.tableColumns.setSortDirection('asc'),
+      onSelect: (event: Event) => {
+        event.preventDefault()
+        internals.tableColumns.setSortDirection('asc')
+      },
     },
     {
+      class: activeDirection.value === 'desc' ? 'nut-dl-colmenu__item--active' : undefined,
       icon: 'i-lucide-arrow-down-wide-narrow',
       label: t('table.columnsMenu.sortDesc'),
-      onSelect: () => internals.tableColumns.setSortDirection('desc'),
+      onSelect: (event: Event) => {
+        event.preventDefault()
+        internals.tableColumns.setSortDirection('desc')
+      },
     },
   ],
 ])
@@ -217,7 +228,7 @@ function humanize(value: string) {
     :items="items"
     :content="{ align: 'end', sideOffset: 8 }"
     :ui="{
-      content: resolvedUi.content,
+      content: mergeDataListUiClass('nut-dl-colmenu min-w-52 p-1.5', undefined, resolvedUi.content),
       group: resolvedUi.group,
       item: resolvedUi.item,
       itemLeadingIcon: resolvedUi.itemLeadingIcon,
