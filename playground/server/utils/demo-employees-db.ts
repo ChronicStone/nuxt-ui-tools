@@ -302,7 +302,7 @@ function seedDemoEmployees(client: Database.Database) {
     insertSkill.run(`skill-${String(index + 1).padStart(2, '0')}`, label)
   }
 
-  for (let index = 0; index < 128; index++) {
+  for (let index = 0; index < 128; index += 1) {
     const firstName = firstNames[index % firstNames.length] ?? 'Alex'
     const lastName = lastNames[(index * 5) % lastNames.length] ?? 'Taylor'
     const employeeId = `employee-${String(index + 1).padStart(3, '0')}`

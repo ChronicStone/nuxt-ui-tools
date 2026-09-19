@@ -49,7 +49,7 @@ export function parseResponsiveValue(
     while (fallbackIndex >= 0 && resolvedValue === null) {
       resolvedValue =
         tokens.find((token) => token.breakpoint === breakpointKeys[fallbackIndex])?.value ?? null
-      fallbackIndex--
+      fallbackIndex -= 1
     }
 
     acc[breakpoint] = resolvedValue

@@ -17,7 +17,7 @@ export function omit<T extends GenericObject, K extends NestedPaths<T>>(
 
     let current: GenericObject = result
 
-    for (let index = 0; index < parts.length - 1; index++) {
+    for (let index = 0; index < parts.length - 1; index += 1) {
       const part = parts[index] ?? ''
       const child = current[part]
 
@@ -71,7 +71,7 @@ export function pick<T extends GenericObject, K extends NestedPaths<T>>(
     let current: GenericObject = obj
     let target = result
 
-    for (let index = 0; index < parts.length; index++) {
+    for (let index = 0; index < parts.length; index += 1) {
       const part = parts[index]
       if (part === undefined) {
         continue

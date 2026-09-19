@@ -33,7 +33,7 @@ describe('table query prefetch', () => {
               facet: true,
               query: () => ({
                 queryFn: async () => {
-                  optionQueryCalls++
+                  optionQueryCalls += 1
                   return [{ label: 'Active', value: 'active' }]
                 },
                 queryKey: ['status-options'],
@@ -60,7 +60,7 @@ describe('table query prefetch', () => {
       source: {
         facets: (request) => ({
           queryFn: async () => {
-            facetQueryCalls++
+            facetQueryCalls += 1
             return { facets: [] }
           },
           queryKey: ['user-facets', request],

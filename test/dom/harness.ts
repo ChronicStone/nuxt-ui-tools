@@ -83,7 +83,7 @@ export async function mountDataList(options: MountOptions): Promise<Harness> {
   }
 
   async function flush(rounds = 3) {
-    for (let index = 0; index < rounds; index++) {
+    for (let index = 0; index < rounds; index += 1) {
       await nextTick()
       await new Promise((resolve) => setTimeout(resolve, 0))
     }

@@ -91,7 +91,7 @@ export function useQueryState(params: UseQueryStateParams) {
 
   function resetPagination() {
     if (paginationMode === 'cursor') {
-      paginationRevision.value++
+      paginationRevision.value += 1
       return
     }
     if (!offsetPagination) {

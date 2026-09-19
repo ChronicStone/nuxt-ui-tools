@@ -27,7 +27,7 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
   async function focusField(path: string | readonly string[]) {
     await nextTick()
     const key = normalizeFormFocusPath(path)
-    request.value = { path: key, sequence: ++sequence }
+    request.value = { path: key, sequence: (sequence += 1) }
     await nextTick()
     const focused =
       (await focusFormFieldElement(fieldElements.get(key) ?? null)) || (await focusFormField(path))

@@ -261,7 +261,7 @@ function* lazySortRows<TRow extends GenericObject>(
   let cursor = 0
 
   while (cursor < buffer.length) {
-    yield buffer[cursor++]!
+    yield buffer[(cursor += 1)]!
 
     while (buffer.length < cursor + 1000) {
       const next = iterator.next()
@@ -348,17 +348,17 @@ function paginateRows<TRow extends GenericObject>(
 
   for (const row of rows) {
     if (index < start) {
-      index++
+      index += 1
       continue
     }
 
     if (collected.length < pageSize) {
       collected.push(row)
-      index++
+      index += 1
       continue
     }
 
-    remaining++
+    remaining += 1
   }
 
   return {

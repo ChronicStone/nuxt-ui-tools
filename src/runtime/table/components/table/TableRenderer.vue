@@ -413,7 +413,7 @@ watch(
     if (!rowsMounted.value || cursorMode.value) {
       return
     }
-    dataEpoch.value++
+    dataEpoch.value += 1
     animateEpoch.value = true
     scrollRef.value?.scrollTo({ top: 0 })
   },

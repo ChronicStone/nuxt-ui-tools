@@ -551,7 +551,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         return
       }
 
-      for (let index = pages.length - 1; index >= 0; index--) {
+      for (let index = pages.length - 1; index >= 0; index -= 1) {
         const embeddedFacets = extractEmbeddedFacets(pages[index])
         if (!embeddedFacets) {
           continue
@@ -741,7 +741,7 @@ function sameRows(left: unknown[], right: unknown[]) {
     return false
   }
 
-  for (let index = 0; index < left.length; index++) {
+  for (let index = 0; index < left.length; index += 1) {
     if (left[index] !== right[index]) {
       return false
     }
