@@ -4,6 +4,7 @@ import type { FormController, FormObject, FormSchema, FormValue } from '#ui-tool
 
 import { arraysFormInput, arraysFormSchema } from '../../forms/arrays'
 import { contactFormSchema } from '../../forms/contact'
+import { parityFormInput, parityFormSchema } from '../../forms/parity'
 
 interface FormEntry {
   key: string
@@ -49,6 +50,13 @@ const entries: FormEntry[] = [
     'Listes primitives, blocs repliables et onglets.',
     arraysFormSchema(),
     arraysFormInput,
+  ),
+  register(
+    'parity',
+    'Propriétés de parité',
+    'Masques, préfixes, formats, labels à gauche, descriptions.',
+    parityFormSchema(),
+    parityFormInput,
   ),
 ]
 
