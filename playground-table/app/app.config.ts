@@ -22,10 +22,11 @@ export default defineAppConfig({
         },
         {
           class:
-            'bg-[var(--ex-surface)] ring-[var(--ui-border)] text-default hover:bg-[var(--ui-bg-elevated)]',
+            'bg-[var(--ex-surface)] ring-[var(--ui-border)] text-default hover:bg-[var(--ui-bg-elevated)] focus-visible:ring-2 focus-visible:ring-primary',
           color: 'neutral',
           variant: 'outline',
         },
+        { class: 'focus-visible:ring-primary', color: 'neutral' },
       ],
       slots: {
         base: 'font-medium',
@@ -114,6 +115,9 @@ export default defineAppConfig({
       },
     },
     select: {
+      compoundVariants: [
+        { class: 'focus-visible:ring-primary', color: 'neutral', variant: 'outline' },
+      ],
       variants: {
         size: {
           md: { base: 'h-[34px] px-2.5 text-[13px] gap-2' },
