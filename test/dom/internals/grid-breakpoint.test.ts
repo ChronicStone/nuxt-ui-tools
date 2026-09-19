@@ -17,24 +17,24 @@ describe('grid geometry', () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const { grid } = harness.internals
     expect([
-      grid.mode.value,
-      grid.columnCount.value,
-      grid.itemColumnSpan.value,
-      grid.cardsPerRow.value,
-    ]).toEqual(['contained', 3, 1, 3])
-    expect(grid.rowChunks.value).toHaveLength(7)
-    expect(grid.rowChunks.value[0]).toMatchObject({ end: 3, index: 0, start: 0 })
-    expect(grid.rowChunks.value.at(-1)?.rows).toHaveLength(2)
+      [grid.mode.value, grid.columnCount.value, grid.itemColumnSpan.value, grid.cardsPerRow.value],
+      grid.rowChunks.value.length,
+      grid.rowChunks.value[0],
+      grid.rowChunks.value.at(-1)?.rows.length,
+    ]).toEqual([
+      ['contained', 3, 1, 3],
+      7,
+      expect.objectContaining({ end: 3, index: 0, start: 0 }),
+      2,
+    ])
 
     setBreakpoint('md')
     await harness.flush()
-    expect(grid.columnCount.value).toBe(2)
-    expect(grid.rowChunks.value).toHaveLength(10)
+    expect([grid.columnCount.value, grid.rowChunks.value.length]).toEqual([2, 10])
 
     setBreakpoint('sm')
     await harness.flush()
-    expect(grid.columnCount.value).toBe(1)
-    expect(grid.rowChunks.value).toHaveLength(20)
+    expect([grid.columnCount.value, grid.rowChunks.value.length]).toEqual([1, 20])
   })
 })
 

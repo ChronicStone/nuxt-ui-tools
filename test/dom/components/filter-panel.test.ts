@@ -109,12 +109,14 @@ describe('filter slideover content', () => {
     await harness.flush()
     expect(w.find('.nut-dl-chip[data-value="FR"]').classes()).toContain('nut-dl-chip--active')
     expect([
-      w.find('.nut-dl-chip[data-value="FR"]').attributes('aria-pressed'),
-      w.find('.nut-dl-fpanel__meta').text(),
-      w.find('.nut-dl-fpanel__field').attributes('data-active'),
-    ]).toEqual(['true', '1 sélectionnés', 'true'])
-    expect(harness.internals.filters.getFilterState({ key: 'country' })).toBeUndefined()
-    expect(w.find('.nut-dl-fpanel__reset').attributes('disabled')).toBeUndefined()
+      [
+        w.find('.nut-dl-chip[data-value="FR"]').attributes('aria-pressed'),
+        w.find('.nut-dl-fpanel__meta').text(),
+        w.find('.nut-dl-fpanel__field').attributes('data-active'),
+      ],
+      harness.internals.filters.getFilterState({ key: 'country' }),
+      w.find('.nut-dl-fpanel__reset').attributes('disabled'),
+    ]).toEqual([['true', '1 sélectionnés', 'true'], undefined, undefined])
 
     await w.find('.nut-dl-chip[data-value="DE"]').trigger('click')
     await harness.flush()

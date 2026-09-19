@@ -29,14 +29,19 @@ describe('table columns', () => {
       'legalEntity',
     )
     const name = must(columns.runtimeColumns.value[0])
-    expect(name).toMatchObject({
-      canHide: false,
-      pinned: 'left',
-      skeleton: 'avatar',
-      sortableKey: 'name',
-      width: 228,
-    })
-    expect(columns.runtimeColumns.value.find((column) => column.id === 'country')?.lines).toBe(2)
+    expect([
+      name,
+      columns.runtimeColumns.value.find((column) => column.id === 'country')?.lines,
+    ]).toEqual([
+      expect.objectContaining({
+        canHide: false,
+        pinned: 'left',
+        skeleton: 'avatar',
+        sortableKey: 'name',
+        width: 228,
+      }),
+      2,
+    ])
     expect(
       columns.runtimeColumns.value.find((column) => column.id === 'legalEntity')?.ellipsis,
     ).toBeTruthy()
@@ -50,27 +55,37 @@ describe('table columns', () => {
   it('creates TanStack column defs with internal columns and header floors', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const defs = harness.internals.tableColumns.columnDefs.value
-    expect(defs[0]).toMatchObject({
-      enableResizing: false,
-      id: SELECT_COLUMN_ID,
-      minSize: 44,
-      size: 44,
-    })
-    expect(defs[0]?.meta.internal).toBe('selection')
-    expect(defs.at(-1)).toMatchObject({
-      enableResizing: false,
-      id: ROW_ACTIONS_COLUMN_ID,
-      size: 56,
-    })
-    expect(defs.at(-1)?.meta).toMatchObject({ align: 'right', internal: 'actions' })
+    expect([defs[0], defs[0]?.meta.internal, defs.at(-1), defs.at(-1)?.meta]).toEqual([
+      expect.objectContaining({
+        enableResizing: false,
+        id: SELECT_COLUMN_ID,
+        minSize: 44,
+        size: 44,
+      }),
+      'selection',
+      expect.objectContaining({
+        enableResizing: false,
+        id: ROW_ACTIONS_COLUMN_ID,
+        size: 56,
+      }),
+      expect.objectContaining({ align: 'right', internal: 'actions' }),
+    ])
     function byId(id: string) {
       return must(defs.find((def) => def.id === id))
     }
-    expect(byId('name')).toMatchObject({ enableResizing: true, minSize: 200, size: 228 })
-    expect(byId('name').meta).toMatchObject({ canHide: false, skeleton: 'avatar', sortable: true })
-    expect(byId('contracts').meta.skeleton).toBe('number')
-    expect(byId('country').meta).toMatchObject({ lines: 2, skeleton: 'text', sortable: true })
-    expect(byId('edofSync').meta).toMatchObject({ skeleton: 'check', sortable: true })
+    expect([
+      byId('name'),
+      byId('name').meta,
+      byId('contracts').meta.skeleton,
+      byId('country').meta,
+      byId('edofSync').meta,
+    ]).toEqual([
+      expect.objectContaining({ enableResizing: true, minSize: 200, size: 228 }),
+      expect.objectContaining({ canHide: false, skeleton: 'avatar', sortable: true }),
+      'number',
+      expect.objectContaining({ lines: 2, skeleton: 'text', sortable: true }),
+      expect.objectContaining({ skeleton: 'check', sortable: true }),
+    ])
     expect(byId(ROW_ACTIONS_COLUMN_ID).meta.sortable).toBeFalsy()
     expect(byId('status').size).toBeGreaterThanOrEqual(110)
     expect(byId('status').meta.render).toBeTypeOf('function')
@@ -122,11 +137,10 @@ describe('table columns', () => {
       ['Trier A → Z', 'Trier Z → A', 'Ne plus trier'],
     ])
     expect(menu[1]?.[2]?.disabled).toBeTruthy()
-    expect(menu[2]?.map((item) => item.label)).toStrictEqual([
-      'Épingler à gauche',
-      'Épingler à droite',
+    expect([menu[2]?.map((item) => item.label), menu[3]?.[0]]).toEqual([
+      ['Épingler à gauche', 'Épingler à droite'],
+      expect.objectContaining({ disabled: false, label: 'Masquer la colonne' }),
     ])
-    expect(menu[3]?.[0]).toMatchObject({ disabled: false, label: 'Masquer la colonne' })
 
     menu[1]?.[1]?.onSelect?.(new Event('select'))
     await harness.flush()
@@ -136,8 +150,10 @@ describe('table columns', () => {
     ]).toEqual(['desc', 'nut-dl-colmenu__item--active'])
 
     const nameMenu = columns.getMenuItems({ columnId: 'name' })
-    expect(nameMenu.at(-1)?.[0]).toMatchObject({ disabled: true, label: 'Masquer la colonne' })
-    expect(nameMenu[2]?.[0]?.label).toBe('Désépingler')
+    expect([nameMenu.at(-1)?.[0], nameMenu[2]?.[0]?.label]).toEqual([
+      expect.objectContaining({ disabled: true, label: 'Masquer la colonne' }),
+      'Désépingler',
+    ])
     const actions = columns.getMenuItems({ columnId: ROW_ACTIONS_COLUMN_ID })
     expect([actions.map((group) => group.length), actions[1]?.[0]?.label]).toEqual([
       [1, 1, 1],
@@ -148,23 +164,32 @@ describe('table columns', () => {
   it('sorts through the query state and resets pagination', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const columns = harness.internals.tableColumns
-    expect([columns.sortingState.value, columns.sortKeys.value]).toEqual([
-      { active: true, dir: 'asc', key: 'name' },
-      ['name', 'status', 'country', 'legalEntity', 'edofSync', 'contracts', 'consumption'],
+    expect([
+      [columns.sortingState.value, columns.sortKeys.value],
+      harness.query()['s.key'],
+    ]).toEqual([
+      [
+        { active: true, dir: 'asc', key: 'name' },
+        ['name', 'status', 'country', 'legalEntity', 'edofSync', 'contracts', 'consumption'],
+      ],
+      undefined,
     ])
-    expect(harness.query()['s.key']).toBeUndefined()
 
     harness.internals.pagination.setPage(2)
     await harness.flush()
     columns.toggleSorting('status')
     await harness.flush()
-    expect(columns.sortingState.value).toMatchObject({ dir: 'asc', key: 'status' })
-    expect([harness.internals.pagination.currentPage.value, harness.query()['s.key']]).toEqual([
-      1,
-      'status',
+    expect([
+      columns.sortingState.value,
+      [harness.internals.pagination.currentPage.value, harness.query()['s.key']],
+      harness.query()['s.dir'],
+      rows<AccountRow>(harness)[0]?.status,
+    ]).toEqual([
+      expect.objectContaining({ dir: 'asc', key: 'status' }),
+      [1, 'status'],
+      undefined,
+      'active',
     ])
-    expect(harness.query()['s.dir']).toBeUndefined()
-    expect(rows<AccountRow>(harness)[0]?.status).toBe('active')
 
     columns.toggleSorting('status')
     await harness.flush()

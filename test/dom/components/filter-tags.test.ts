@@ -71,11 +71,10 @@ describe('filter tags bar', () => {
     await harness.flush()
     const w = harness.wrapper
     const active = w.find('.nut-dl-tag--active')
-    expect([active.find('.nut-dl-tag__label').text(), texts(active, '.nut-dl-tag__text')]).toEqual([
-      'Pays',
-      ['FR', 'DE'],
-    ])
-    expect(active.findAll('.nut-dl-tag__sep')).toHaveLength(1)
+    expect([
+      [active.find('.nut-dl-tag__label').text(), texts(active, '.nut-dl-tag__text')],
+      active.findAll('.nut-dl-tag__sep').length,
+    ]).toEqual([['Pays', ['FR', 'DE']], 1])
     expect(active.find('[data-label="parmi"]').exists()).toBeTruthy()
     expect(active.find('[data-label="parmi"]').attributes('data-trailing-icon')).toBe(
       'i-lucide-chevron-down',

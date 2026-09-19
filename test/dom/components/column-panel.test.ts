@@ -56,8 +56,10 @@ describe('ColumnPanel', () => {
     expect(must(rows[0]).find('input[type="checkbox"]').attributes('disabled')).toBeDefined()
     expect(must(rows[0]).find('[data-ui="UIcon"][data-name="i-lucide-pin"]').exists()).toBeTruthy()
     expect(must(rows[1]).find('.column-drag-handle').exists()).toBeTruthy()
-    expect(must(rows[3]).find('input[type="checkbox"]').attributes('checked')).toBeUndefined()
-    expect(must(rows[1]).find('input[type="checkbox"]').attributes('data-color')).toBe('primary')
+    expect([
+      must(rows[3]).find('input[type="checkbox"]').attributes('checked'),
+      must(rows[1]).find('input[type="checkbox"]').attributes('data-color'),
+    ]).toEqual([undefined, 'primary'])
 
     await must(rows[1]).find('input[type="checkbox"]').trigger('click')
     await harness.flush()

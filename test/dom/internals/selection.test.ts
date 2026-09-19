@@ -56,8 +56,7 @@ describe('table selection', () => {
     selection.selectRows({ rowIds: ['acc-1', 'acc-1', 'acc-2'] })
     expect(selection.selectedKeys.value).toStrictEqual(['acc-1', 'acc-2'])
     selection.clearSelection()
-    expect(selection.selectedKeys.value).toStrictEqual([])
-    expect(selection.lastTouchedRowId.value).toBeNull()
+    expect([selection.selectedKeys.value, selection.lastTouchedRowId.value]).toEqual([[], null])
   })
 
   it('limits select-all to the page when the scope is page', async () => {

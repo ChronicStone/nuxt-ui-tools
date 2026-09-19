@@ -54,8 +54,7 @@ describe('offset pagination', () => {
 
     pagination.setPage(0)
     await harness.flush()
-    expect(pagination.currentPage.value).toBe(1)
-    expect(harness.query()['p.page']).toBeUndefined()
+    expect([pagination.currentPage.value, harness.query()['p.page']]).toEqual([1, undefined])
   })
 
   it('changes the page size and resets to the first page', async () => {

@@ -71,13 +71,19 @@ describe('filter presentation', () => {
     presentation.openPanel()
     expect(presentation.panelOpen.value).toBeTruthy()
     presentation.setPanelScalarFilterValue({ key: 'legalEntity', value: 'Entité 1' })
-    expect(presentation.getPanelDraftFilterState({ key: 'legalEntity' })).toMatchObject({
-      key: 'legalEntity',
-      operator: 'contains',
-      value: 'Entité 1',
-    })
-    expect(harness.internals.filters.getFilterState({ key: 'legalEntity' })).toBeUndefined()
-    expect(presentation.activePanelCount.value).toBe(0)
+    expect([
+      presentation.getPanelDraftFilterState({ key: 'legalEntity' }),
+      harness.internals.filters.getFilterState({ key: 'legalEntity' }),
+      presentation.activePanelCount.value,
+    ]).toEqual([
+      expect.objectContaining({
+        key: 'legalEntity',
+        operator: 'contains',
+        value: 'Entité 1',
+      }),
+      undefined,
+      0,
+    ])
 
     presentation.applyPanelDraft()
     await harness.flush()

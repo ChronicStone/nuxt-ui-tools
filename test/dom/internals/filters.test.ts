@@ -52,8 +52,10 @@ describe('table filters', () => {
       ],
     ])
     expect(filters.hasActiveUiFilters.value).toBeFalsy()
-    expect(harness.query()['f.ui.status']).toBeUndefined()
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(40)
+    expect([
+      harness.query()['f.ui.status'],
+      harness.internals.queryContent.data.value.rowCount,
+    ]).toEqual([undefined, 40])
 
     filters.toggleOptionFilterValue({ key: 'status', value: 'pending' })
     await harness.flush()
@@ -73,35 +75,49 @@ describe('table filters', () => {
     const { filters } = harness.internals
     filters.setOptionFilterValues({ key: 'country', values: ['FR', 'DE'] })
     await harness.flush()
-    expect(filters.getFilterState({ key: 'country' })).toMatchObject({
-      key: 'country',
-      operator: 'isAnyOf',
-      value: ['FR', 'DE'],
-    })
-    expect(filters.activeUiFilters.value).toHaveLength(1)
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(40)
-    expect(filters.getFilterPreview({ key: 'country' })).toMatchObject({
-      active: true,
-      count: 2,
-      tags: ['FR', 'DE'],
-    })
+    expect([
+      filters.getFilterState({ key: 'country' }),
+      filters.activeUiFilters.value.length,
+      harness.internals.queryContent.data.value.rowCount,
+      filters.getFilterPreview({ key: 'country' }),
+    ]).toEqual([
+      expect.objectContaining({
+        key: 'country',
+        operator: 'isAnyOf',
+        value: ['FR', 'DE'],
+      }),
+      1,
+      40,
+      expect.objectContaining({
+        active: true,
+        count: 2,
+        tags: ['FR', 'DE'],
+      }),
+    ])
 
     filters.toggleOptionFilterValue({ key: 'country', value: 'FR' })
     await harness.flush()
     expect([
-      filters.getFilterState({ key: 'country' })?.value,
-      harness.internals.queryContent.data.value.rowCount,
-    ]).toEqual([['DE'], 20])
-    expect(filters.getFilterPreview({ key: 'country' })).toMatchObject({
-      count: 1,
-      summary: '',
-      tags: ['DE'],
-    })
+      [
+        filters.getFilterState({ key: 'country' })?.value,
+        harness.internals.queryContent.data.value.rowCount,
+      ],
+      filters.getFilterPreview({ key: 'country' }),
+    ]).toEqual([
+      [['DE'], 20],
+      expect.objectContaining({
+        count: 1,
+        summary: '',
+        tags: ['DE'],
+      }),
+    ])
 
     filters.setOptionFilterValues({ key: 'country', values: [] })
     await harness.flush()
-    expect(filters.getFilterState({ key: 'country' })).toBeUndefined()
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(60)
+    expect([
+      filters.getFilterState({ key: 'country' }),
+      harness.internals.queryContent.data.value.rowCount,
+    ]).toEqual([undefined, 60])
   })
 
   it('handles operators and scalar values', async () => {
@@ -121,11 +137,16 @@ describe('table filters', () => {
 
     filters.setScalarFilterValue({ key: 'edofSync', value: true })
     await harness.flush()
-    expect(filters.getFilterPreview({ key: 'edofSync' })).toMatchObject({
-      active: true,
-      summary: 'Oui',
-    })
-    expect(harness.internals.queryContent.data.value.rowCount).toBe(20)
+    expect([
+      filters.getFilterPreview({ key: 'edofSync' }),
+      harness.internals.queryContent.data.value.rowCount,
+    ]).toEqual([
+      expect.objectContaining({
+        active: true,
+        summary: 'Oui',
+      }),
+      20,
+    ])
 
     filters.setScalarFilterValue({ key: 'edofSync', value: null })
     await harness.flush()

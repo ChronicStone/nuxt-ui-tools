@@ -55,33 +55,35 @@ const schema = defineTableSchema({
 describe('runtime columns', () => {
   it('humanizes labels, resolves visibility and forwards cell metadata', () => {
     const columns = createRuntimeColumns({ context: {}, schema })
-    expect(columns.map((column) => column.id)).toStrictEqual([
-      'firstName',
-      'score',
-      'created_at_label',
-      'actions-col',
-      'hidden',
+    expect([
+      columns.map((column) => column.id),
+      columns[0],
+      columns[1],
+      columns[2],
+      columns[3],
+    ]).toEqual([
+      ['firstName', 'score', 'created_at_label', 'actions-col', 'hidden'],
+      expect.objectContaining({
+        canHide: true,
+        defaultVisible: true,
+        ellipsis: false,
+        label: 'First Name',
+        sortableKey: 'firstName',
+      }),
+      expect.objectContaining({
+        align: 'right',
+        canHide: false,
+        ellipsis: true,
+        label: 'Score total',
+        lines: 1,
+        pinned: 'left',
+        skeleton: 'number',
+        sortableKey: undefined,
+        summary: 'sum',
+      }),
+      expect.objectContaining({ label: 'Créé', sortableKey: 'createdAt' }),
+      expect.objectContaining({ label: '42', sortableKey: undefined }),
     ])
-    expect(columns[0]).toMatchObject({
-      canHide: true,
-      defaultVisible: true,
-      ellipsis: false,
-      label: 'First Name',
-      sortableKey: 'firstName',
-    })
-    expect(columns[1]).toMatchObject({
-      align: 'right',
-      canHide: false,
-      ellipsis: true,
-      label: 'Score total',
-      lines: 1,
-      pinned: 'left',
-      skeleton: 'number',
-      sortableKey: undefined,
-      summary: 'sum',
-    })
-    expect(columns[2]).toMatchObject({ label: 'Créé', sortableKey: 'createdAt' })
-    expect(columns[3]).toMatchObject({ label: '42', sortableKey: undefined })
     expect(columns[4]?.defaultVisible).toBeFalsy()
     expect(
       createRuntimeColumns({ context: { showHidden: true }, schema })[4]?.defaultVisible,

@@ -128,17 +128,22 @@ describe('TableRenderer structure', () => {
     expect(actions.attributes('style')).toContain('right: 0px')
 
     const rows = w.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')
-    expect(rows).toHaveLength(20)
     expect([
-      must(rows[0]).attributes('data-row-id'),
-      must(rows[0]).attributes('data-index'),
-      texts(w, 'td[data-col="name"] b.name').slice(0, 3),
-      texts(w, 'td[data-col="status"]').slice(0, 3),
+      rows.length,
+      [
+        must(rows[0]).attributes('data-row-id'),
+        must(rows[0]).attributes('data-index'),
+        texts(w, 'td[data-col="name"] b.name').slice(0, 3),
+        texts(w, 'td[data-col="status"]').slice(0, 3),
+      ],
     ]).toEqual([
-      'acc-1',
-      '0',
-      ['Compte 001', 'Compte 002', 'Compte 003'],
-      ['Actif', 'En attente', 'Inactif'],
+      20,
+      [
+        'acc-1',
+        '0',
+        ['Compte 001', 'Compte 002', 'Compte 003'],
+        ['Actif', 'En attente', 'Inactif'],
+      ],
     ])
     expect(w.find('td[data-col="contracts"]').classes()).toContain('text-right')
     expect(w.find('td[data-col="contracts"] .nut-dl-td__inner').classes()).toContain('justify-end')
@@ -233,8 +238,10 @@ describe('TableRenderer structure', () => {
 
     await w.find('th[data-col="__select"] input').trigger('click')
     await harness.flush()
-    expect(harness.internals.selection.selectedCount.value).toBe(60)
-    expect(w.findAll('tr.nut-dl-row--selected')).toHaveLength(20)
+    expect([
+      harness.internals.selection.selectedCount.value,
+      w.findAll('tr.nut-dl-row--selected').length,
+    ]).toEqual([60, 20])
     await w.find('th[data-col="__select"] input').trigger('click')
     await harness.flush()
     expect(harness.internals.selection.selectedCount.value).toBe(0)
