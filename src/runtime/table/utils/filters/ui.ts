@@ -150,7 +150,7 @@ export function resolveOptionFilterUi(
       base: definition.preview,
       empty: t('table.filters.preview.empty'),
       mode: 'auto',
-      maxTags: 1,
+      maxTags: 3,
     }),
   }
 }
@@ -210,7 +210,7 @@ export function resolveBooleanFilterUi(
         fallback: t('table.filters.booleans.empty'),
       }),
       mode: 'summary',
-      maxTags: 1,
+      maxTags: 3,
     }),
   }
 }

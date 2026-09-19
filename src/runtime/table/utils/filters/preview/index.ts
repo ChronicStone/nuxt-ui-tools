@@ -11,6 +11,7 @@ const EMPTY_PREVIEW: FilterPreviewResult = {
   active: false,
   count: 0,
   tags: [],
+  entries: [],
   summary: '',
 }
 

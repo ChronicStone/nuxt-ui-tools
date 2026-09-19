@@ -30,6 +30,7 @@ export function buildNumberFilterPreview(options: {
       active: true,
       count: [start, end].filter((v) => v != null).length,
       tags: [],
+      entries: [],
       summary: prefixPreviewLabel(preview.label, summary),
     }
   }
@@ -42,6 +43,7 @@ export function buildNumberFilterPreview(options: {
     active: Boolean(summary),
     count: summary ? 1 : 0,
     tags: [],
+    entries: [],
     summary: prefixPreviewLabel(preview.label, summary),
   }
 }

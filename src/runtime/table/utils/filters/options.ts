@@ -1,3 +1,5 @@
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { isNumber } from '../../../shared/utils/predicate'
 import type {
   TableBooleanFilterDefinition,
@@ -5,7 +7,12 @@ import type {
   TableResolvedFilterOptionEntry,
   TableUiFilterDefinition,
 } from '../../types'
-import { getFilterLabelText, getFilterPathValues, isFilterValueSelected } from './common'
+import {
+  getFilterLabelText,
+  getFilterPathValues,
+  getFilterTextValue,
+  isFilterValueSelected,
+} from './common'
 
 export function resolveFilterOptionEntries(options: {
   definition: TableUiFilterDefinition
@@ -65,7 +72,7 @@ function createBooleanEntries(options: {
   return [
     {
       id: '0:true',
-      label: 'Yes',
+      label: booleanLabel(options.definition, true),
       value: true,
       count:
         trueCount ??
@@ -84,7 +91,7 @@ function createBooleanEntries(options: {
     },
     {
       id: '1:false',
-      label: 'No',
+      label: booleanLabel(options.definition, false),
       value: false,
       count:
         falseCount ??
@@ -135,6 +142,7 @@ function resolveOptionEntryTree(options: {
       }),
       value: entry.value,
       icon: entry.icon,
+      color: entry.color,
       count: entry.count ?? sumChildCounts(children) ?? derivedCount,
       selected,
       children,
@@ -172,4 +180,13 @@ function countOptionMatches(options: {
         : 0)
     )
   }, 0)
+}
+
+function booleanLabel(definition: TableBooleanFilterDefinition, value: boolean) {
+  const { t } = useUiToolsLocale()
+  const custom = value ? definition.editor?.labels?.true : definition.editor?.labels?.false
+  return getFilterTextValue({
+    value: custom,
+    fallback: t(value ? 'table.filters.booleans.true' : 'table.filters.booleans.false'),
+  })
 }

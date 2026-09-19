@@ -119,6 +119,7 @@ function flattenVisibleEntries(options: {
       label: entry.label,
       value: entry.value,
       icon: entry.icon,
+      color: entry.color,
       count: entry.count,
       selected: entry.selected,
       depth: options.depth,

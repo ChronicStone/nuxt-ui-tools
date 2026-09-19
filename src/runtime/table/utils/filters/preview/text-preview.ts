@@ -24,6 +24,7 @@ export function buildTextFilterPreview(options: {
     active: Boolean(resolvedSummary),
     count: resolvedSummary ? 1 : 0,
     tags: [],
+    entries: [],
     summary: resolvedSummary,
   }
 }

@@ -153,6 +153,28 @@ const dataListDensitySizes = {
   comfortable: 'lg',
 } satisfies Record<DataListDensity, DataListControlSize>
 
+type PropsRecord = Record<string, unknown>
+
+function isPlainRecord(value: unknown): value is PropsRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** Merges control prop layers: later layers win, nested control objects merge one level deep. */
+export function mergeDataListProps<TProps extends object>(
+  ...layers: Array<TProps | undefined>
+): TProps {
+  const out: PropsRecord = {}
+  for (const layer of layers) {
+    if (!layer) continue
+    for (const [key, value] of Object.entries(layer)) {
+      if (value === undefined) continue
+      const current = out[key]
+      out[key] = isPlainRecord(current) && isPlainRecord(value) ? { ...current, ...value } : value
+    }
+  }
+  return out as TProps
+}
+
 /** Merges DataList slot classes with the same conflict resolution used by Nuxt UI. */
 export function mergeDataListUiClass(
   defaults?: DataListUiClass,
@@ -252,38 +274,32 @@ export function mergeDataListUiConfig(
     grid: mergeUiConfig(appUi?.grid, componentUi?.grid),
     pagination: mergePartConfig(appUi?.pagination, componentUi?.pagination),
     infiniteLoader: mergePartConfig(appUi?.infiniteLoader, componentUi?.infiniteLoader),
+    selectionActions: mergePartConfig(appUi?.selectionActions, componentUi?.selectionActions),
   }
 }
 
-function mergeUiConfig<TUi extends object>(
-  appDefaults: { ui?: TUi } | undefined,
-  componentConfig: { ui?: TUi } | undefined,
+function mergeUiConfig<TUi extends object, TProps extends object>(
+  appDefaults: { ui?: TUi; props?: TProps } | undefined,
+  componentConfig: { ui?: TUi; props?: TProps } | undefined,
 ) {
   return {
     ...appDefaults,
     ...componentConfig,
     ui: { ...appDefaults?.ui, ...componentConfig?.ui },
+    props: mergeDataListProps(appDefaults?.props, componentConfig?.props),
   }
 }
 
-function mergePartConfig<TUi extends object>(
-  appDefaults: DataListPartConfig<TUi> | undefined,
-  componentConfig: DataListPartConfig<TUi> | undefined,
+function mergePartConfig<TUi extends object, TProps extends object>(
+  appDefaults: DataListPartConfig<TUi, TProps> | undefined,
+  componentConfig: DataListPartConfig<TUi, TProps> | undefined,
 ) {
-  return {
-    ...appDefaults,
-    ...componentConfig,
-    ui: { ...appDefaults?.ui, ...componentConfig?.ui },
-  }
+  return mergeUiConfig(appDefaults, componentConfig)
 }
 
 function mergeSearchConfig(
   appDefaults: DataListSearchConfig | undefined,
   componentConfig: DataListSearchConfig | undefined,
 ) {
-  return {
-    ...appDefaults,
-    ...componentConfig,
-    ui: { ...appDefaults?.ui, ...componentConfig?.ui },
-  }
+  return mergeUiConfig(appDefaults, componentConfig)
 }

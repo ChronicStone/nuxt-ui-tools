@@ -6,7 +6,7 @@ import type {
   TableQueryStateFilterRule,
 } from '../../../types'
 import { resolveBooleanFilterUi, resolveOptionFilterUi } from '../ui'
-import type { FilterPreviewOptionEntry, FilterPreviewResult } from './types'
+import type { FilterPreviewEntry, FilterPreviewOptionEntry, FilterPreviewResult } from './types'
 
 export function buildOptionFilterPreview(options: {
   definition:
@@ -22,26 +22,43 @@ export function buildOptionFilterPreview(options: {
   optionEntries: FilterPreviewOptionEntry[]
 }): FilterPreviewResult {
   const values = Array.isArray(options.rule.value) ? options.rule.value : [options.rule.value]
-  const labels = values.map((value) =>
-    resolveOptionPreviewLabel({
+  const entries = values.map((value) =>
+    resolveOptionPreviewEntry({
       definition: options.definition,
       optionEntries: options.optionEntries,
       value,
     }),
   )
+  const labels = entries.map((entry) => entry.label)
   const preview = resolveOptionPreview(options)
-  const mode = resolvePreviewMode(preview.mode, labels.length)
+  const mode = resolvePreviewMode(preview.mode)
 
   return {
     active: true,
     count: labels.length,
     tags: mode === 'tags' ? labels.slice(0, preview.maxTags) : [],
+    entries: mode === 'tags' ? entries.slice(0, preview.maxTags) : [],
     summary: resolvePreviewSummary({
       labels,
       mode,
       maxTags: preview.maxTags,
       label: preview.label,
     }),
+  }
+}
+
+function resolveOptionPreviewEntry(options: {
+  definition: Parameters<typeof resolveOptionPreviewLabel>[0]['definition']
+  optionEntries: FilterPreviewOptionEntry[]
+  value: unknown
+}): FilterPreviewEntry {
+  const matched = options.optionEntries.find(
+    (entry) => String(entry.value) === String(options.value),
+  )
+  return {
+    label: resolveOptionPreviewLabel(options),
+    icon: matched?.icon,
+    color: matched?.color,
   }
 }
 
@@ -102,9 +119,9 @@ function resolveOptionPreview(options: {
   return resolveOptionFilterUi(options.definition, operator).preview
 }
 
-function resolvePreviewMode(mode: string, count: number) {
+function resolvePreviewMode(mode: string) {
   if (mode === 'summary' || mode === 'tags') return mode
-  return count > 1 ? 'tags' : 'summary'
+  return 'tags'
 }
 
 function resolvePreviewSummary(options: {

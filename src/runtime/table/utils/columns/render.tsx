@@ -11,7 +11,7 @@ import TableColumnHeader from '../../components/table/TableColumnHeader.vue'
 import TableRowActionsControl from '../../components/table/TableRowActionsControl.vue'
 import TableSelectionControl from '../../components/table/TableSelectionControl.vue'
 import type { GenericObject, TableRuntimeRecord } from '../../types'
-import { getColumnHeaderIcon } from './menu'
+import { } from './menu'
 import { findSchemaColumn } from './schema'
 import {
   ROW_ACTIONS_COLUMN_ID,
@@ -140,12 +140,8 @@ export function createDataColumns(options: {
           <TableColumnHeader
             label={runtimeColumn.label}
             icon={runtimeColumn.icon}
-            headerIcon={getColumnHeaderIcon({
-              columnId: runtimeColumn.id,
-              canHide: tableColumn.getCanHide?.(),
-              getSortState: options.getSortState,
-              getPinnedState: options.getPinnedState,
-            })}
+            sortable={Boolean(runtimeColumn.sortableKey)}
+            sortState={options.getSortState({ columnId: runtimeColumn.id })}
             pinned={Boolean(options.getPinnedState({ columnId: runtimeColumn.id }))}
             items={options.getMenuItems({ columnId: runtimeColumn.id })}
             resizable={column.resizable !== false}
@@ -329,7 +325,7 @@ function createCellRenderContext(options: {
   }
 }
 
-function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
+export function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
   return {
     id: ROW_ACTIONS_COLUMN_ID,
     header: () => null,

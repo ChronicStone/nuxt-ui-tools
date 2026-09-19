@@ -33,6 +33,10 @@ export function createRuntimeColumns(options: {
       }),
       configurable: true,
       pinned: column.pinned,
+      summary: column.summary,
+      ellipsis: column.ellipsis === true,
+      skeleton: column.skeleton,
+      lines: column.lines,
     }))
 }
 
