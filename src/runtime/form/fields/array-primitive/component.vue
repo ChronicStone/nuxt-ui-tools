@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-import { computed, nextTick, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
@@ -45,6 +45,16 @@ const itemFields = computed(() =>
   }),
 )
 const hasPendingItem = computed(() => values.value.some(isEmptyValue))
+const editingIndex = ref<number | null>(null)
+
+watch(
+  () => values.value[editingIndex.value ?? -1],
+  (value, previous) => {
+    if (editingIndex.value !== null && previous !== undefined && value !== previous) {
+      editingIndex.value = null
+    }
+  },
+)
 
 watch(
   values,
@@ -94,7 +104,13 @@ function isPending(index: number) {
 }
 
 function showsPreview(index: number) {
-  return isFunction(props.field.preview) && !isPending(index)
+  return isFunction(props.field.preview) && !isPending(index) && editingIndex.value !== index
+}
+
+async function editItem(index: number) {
+  editingIndex.value = index
+  await nextTick()
+  await form.focusField(itemPath(index))
 }
 
 function itemPath(index: number) {
@@ -181,18 +197,22 @@ function removeItem(index: number) {
         :class="mergeFormUiClass('flex items-start gap-2', ui?.item)"
         :data-form-array-item="index"
       >
-        <div
+        <button
           v-if="showsPreview(index)"
+          type="button"
           :class="
             mergeFormUiClass(
-              'flex min-h-9 min-w-0 flex-1 items-center rounded-lg border border-default bg-elevated/40 px-3 py-1.5 text-sm break-words',
+              'flex min-h-9 min-w-0 flex-1 items-center rounded-lg border border-default bg-elevated/40 px-3 py-1.5 text-left text-sm break-words transition-colors hover:border-inverted/30 hover:bg-elevated focus-visible:outline-2 focus-visible:outline-primary',
               ui?.preview,
             )
           "
+          :disabled="disabled"
+          :title="t('form.fields.array.editItem')"
           data-form-array-preview=""
+          @click="editItem(index)"
         >
           <component :is="previewRenderer(index, itemField)" />
-        </div>
+        </button>
         <div v-else :class="mergeFormUiClass('min-w-0 flex-1', ui?.control)">
           <FormFieldRenderer :field="itemField" :parent-path="path" />
         </div>

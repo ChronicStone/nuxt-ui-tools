@@ -41,6 +41,7 @@ import TableEmptyState from './table-empty-state.vue'
 import TableOverlayScrollbars from './table-overlay-scrollbars.vue'
 
 const LOAD_MORE_THRESHOLD = 6
+const PREFETCH_VIEWPORTS = 3
 const VIRTUALIZE_ROW_THRESHOLD = 40
 const VIRTUALIZE_CELL_THRESHOLD = 240
 const VIRTUALIZE_COLUMN_THRESHOLD = 32
@@ -561,7 +562,8 @@ watch(
     if (!more || loading || !count) {
       return
     }
-    if (lastIndex >= count - 1 - LOAD_MORE_THRESHOLD) {
+    const threshold = Math.max(LOAD_MORE_THRESHOLD, virtualRows.value.length * PREFETCH_VIEWPORTS)
+    if (lastIndex >= count - 1 - threshold) {
       void internals.pagination.loadMore()
     }
   },
@@ -574,10 +576,19 @@ function onScrollLoadMore() {
   if (!element) {
     return
   }
-  if (element.scrollHeight - element.scrollTop - element.clientHeight < 320) {
+  const threshold = Math.max(320, element.clientHeight * PREFETCH_VIEWPORTS)
+  if (element.scrollHeight - element.scrollTop - element.clientHeight < threshold) {
     void internals.pagination.loadMore()
   }
 }
+
+watch(
+  () => [renderRows.value.length, loadingMore.value] as const,
+  async () => {
+    await nextTick()
+    onScrollLoadMore()
+  },
+)
 
 defineExpose({ resetColumnSizing })
 </script>
@@ -808,6 +819,14 @@ defineExpose({ resetColumnSizing })
           </tr>
 
           <tr
+            v-if="virtualPaddingBottom"
+            key="pad-bottom"
+            :style="{ height: `${virtualPaddingBottom}px` }"
+            aria-hidden="true"
+          >
+            <td :colspan="leafColumns.length" class="p-0" />
+          </tr>
+          <tr
             v-if="loadingMore"
             key="loading-more"
             class="nut-dl-row nut-dl-row--loading-more"
@@ -826,14 +845,6 @@ defineExpose({ resetColumnSizing })
                 <span>{{ t('table.controls.loadingMore') }}</span>
               </div>
             </td>
-          </tr>
-          <tr
-            v-if="virtualPaddingBottom"
-            key="pad-bottom"
-            :style="{ height: `${virtualPaddingBottom}px` }"
-            aria-hidden="true"
-          >
-            <td :colspan="leafColumns.length" class="p-0" />
           </tr>
 
           <tr

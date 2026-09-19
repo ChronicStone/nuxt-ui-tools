@@ -117,4 +117,29 @@ describe('array primitive', () => {
     expect(harness.output()).toStrictEqual({ cities: ['PARIS'] })
     harness.unmount()
   })
+
+  it('switches a previewed item back to its control on click and returns to the preview once edited', async () => {
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [
+        {
+          field: { type: 'text' },
+          key: 'tags',
+          preview: ({ value }) => `#${String(value)}`,
+          type: 'array-primitive',
+        },
+      ],
+    })
+    const harness = await mountForm({ input: { tags: ['alpha'] }, schema })
+
+    expect(harness.wrapper.find('[data-form-array-preview]').text()).toBe('#alpha')
+    await harness.wrapper.find('[data-form-array-preview]').trigger('click')
+    await harness.flush()
+    expect(harness.wrapper.find('[data-form-array-preview]').exists()).toBeFalsy()
+
+    await harness.setInput('tags.0', 'beta')
+    await harness.flush()
+    expect(harness.wrapper.find('[data-form-array-preview]').text()).toBe('#beta')
+    harness.unmount()
+  })
 })

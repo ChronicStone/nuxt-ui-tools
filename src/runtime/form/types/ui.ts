@@ -166,6 +166,10 @@ export interface FormArrayPrimitiveUi {
 
 export interface FormArrayTableUi {
   root?: FormUiClass
+  header?: FormUiClass
+  title?: FormUiClass
+  description?: FormUiClass
+  frame?: FormUiClass
   viewport?: FormUiClass
   table?: FormUiClass
   head?: FormUiClass
@@ -179,6 +183,7 @@ export interface FormArrayTableUi {
   actionsCell?: FormUiClass
   error?: FormUiClass
   empty?: FormUiClass
+  addCell?: FormUiClass
   add?: FormUiClass
   action?: FormUiClass
 }

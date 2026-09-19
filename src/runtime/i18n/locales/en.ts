@@ -18,6 +18,7 @@ export default defineUiToolsLocale<Messages>({
           collapse: 'Collapse',
           confirmDelete: 'Remove this item?',
           dragItem: 'Drag item',
+          editItem: 'Edit item',
           empty: 'No items yet',
           expand: 'Expand',
           item: 'Item',

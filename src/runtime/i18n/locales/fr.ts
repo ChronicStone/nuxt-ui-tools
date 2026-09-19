@@ -18,6 +18,7 @@ export default defineUiToolsLocale<Messages>({
           collapse: 'Replier',
           confirmDelete: 'Supprimer cet élément ?',
           dragItem: 'Déplacer l’élément',
+          editItem: 'Modifier l’élément',
           empty: 'Aucun élément',
           expand: 'Déplier',
           item: 'Élément',

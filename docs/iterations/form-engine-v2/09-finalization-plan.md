@@ -27,10 +27,10 @@ Goal: bring `src/runtime/form` to production parity with the tars-monorepo V1 en
 | `array-primitive` | full (single item field, preview, unique) | done (2026-09-19) | items validated through a Regle mirror; pending item is `undefined` |
 | `array-tabs` | component | shared array-list component | `tabAction` added; panels render the active item only |
 | `array-variant` | component | shared array-list component | present |
-| `cascader` | component | types + config only | add (UPopover + column browser) |
+| `cascader` | component | shared tree popover | dropped (2026-09-19): not needed in V2, the tree popover stays as the fallback renderer |
 | `tree-select`, `tree` | component, lazy remote children, `resolveSelected` paths, `selectionControl`, `showChildrenCount`, `expandParentOnClick` | shared `hierarchy/component.vue` eager only | port remote lazy loading + paginated roots + selection controls |
-| `datetime`, `daterange`, `datetimerange`, `month`, `monthrange`, `year` | one `DateField.vue` with Naive picker + maskito manual input | `date-family/component.vue` shared, no config for the 6 sibling kinds beyond types | finish siblings, verify manual input, shortcuts, ranges |
-| `rich-text` | absent in V1 | absent | new kind on `UEditor` (TipTap) with toolbar config and custom nodes (resource card, @mention); maquette uses it in 6 forms |
+| `datetime`, `daterange`, `datetimerange`, `month`, `monthrange`, `year` | one `DateField.vue` with Naive picker + maskito manual input | `date-family/component.vue` shared: manual input with mask, ranges with draft confirm, time inputs, calendar options | siblings present (2026-09-19); `shortcuts`, `isDateDisabled`, `defaultTime` move to the parity-props phase |
+| `rich-text` | absent in V1 | absent | deferred (2026-09-19) to a later iteration; maquette forms use a textarea meanwhile |
 | all others (text, password, textarea, number, select, checkbox, switch, radio, radio-card, checkbox-group, checkbox-card, switch-group, matrix, slider, tag, rating, color-picker, one-time-code, phone-number, auto-complete, file, upload, object, group, input-group, info, divider, card, column, button, hidden, custom-component, array-list, array-table) | present | present | polish pass + parity props |
 
 ### Options runtime (biggest gap)
@@ -103,7 +103,7 @@ Field patterns to add for parity with the maquette: `eyebrow`, `tabs`, `section`
 
 1. **Foundation**: DOM form harness + stubs, port V1 behaviour suites as failing specs, `playground-table` forms section (nav, `/forms` index, one page per maquette form, modal launcher).
 2. **Options runtime**: remote pagination (page + cursor), search, `resolveSelected`, `refreshOn`, `externalDependencies`, infinite scroll in select and tree-select, remote lazy tree. Green on ported V1 remote suites.
-3. **Missing kinds**: array-collapse, array-primitive, array-tabs polish, array-variant, cascader component, date siblings, rich-text. `alpha-select` dropped.
+3. **Missing kinds**: array-collapse, array-primitive, array-tabs polish, array-variant, date siblings. `alpha-select` and `cascader` dropped, `rich-text` deferred.
 4. **Parity props**: labelPosition, description variants, text mask/prefix/suffix, number formatting, select max/tags, upload progress, form sizes, eyebrow, tabs, sections, notes.
 5. **Design polish**: every field at md/sm/lg against Atelier tokens (7px radius, hairlines, orange focus ring 3px, 34px controls, 12.5px labels, 11.5px hints), light and dark, desktop and 390px.
 6. **Maquette forms**: build all schemas, shoot each vs `identity4.html` with `goFull(page)` / `openModal(kind)`, pxdiff, iterate.
@@ -136,6 +136,8 @@ Field patterns to add for parity with the maquette: `eyebrow`, `tabs`, `section`
 - Array kinds: shared `useFormArrayItems` composable behind array-list, array-table, array-tabs, array-variant and the new `array-collapse` (accordion, `defaultExpanded`, `summaryTemplate`, `arrowPlacement`, drag keeps expanded state, invalid items reveal themselves through `FormFieldStatus`). `array-tabs` gained `tabAction`. New `array-primitive` kind: one item field per entry, `preview`, `unique`, pending item (`undefined`) blocks a second add and is dropped from output, item transforms.
 - Regle does not create per-item statuses for primitive arrays in rules mode and crashes on a `null` item, so `use-form-validation` runs a second Regle instance on a mirror where each primitive array item is a `{ value }` holder synced in place; the form state, `deps`, `api`, output and sync input keep plain primitives. Item paths (`contacts.1`) resolve to the mirror.
 - Engine fix: field value and dependency watches now compare a deep snapshot before acting, because Vue runs a deep watch callback whenever a dependency triggers. A parent re-render passing a fresh path array used to clear the field's error and re-run `watch`/`onDependencyChange`.
-- Decision: `alpha-select` dropped.
+- Decision: `alpha-select` and `cascader` dropped (the cascader type keeps rendering through the tree popover); `rich-text` deferred to a later iteration.
+- Infinite loading: the "loading more" row is now the last option inside the scrolling list (select, auto-complete) instead of a footer pinned under it; the prefetch window defaults to three viewport heights and the footer rechecks after every page so the buffer fills without scrolling. The table renderer got the same window and its loading row moved to the real end of the virtualized content.
+- Array-table: title block, footer add row inside the table, `layout.width` per column doubling as minimum width so narrow screens scroll horizontally, sticky actions column, border moved to an outer frame so the scroll-shadow mask no longer fades it, cell padding matches the input. Array-primitive previews are click-to-edit.
 
 Backlog noted along the way: primitive `preview` resolves remote options only while the item control is registered, native `window.confirm` for array removals pending an engine confirm overlay, typed `deps` in callbacks (currently `{}`), label/description/hint callbacks with dependency params, modal chrome polish (eyebrow ink, borderless close, 14px radius, submit icon), a11y verification in the real browser, `prefetchDistance` naming on the table infinite loader.
