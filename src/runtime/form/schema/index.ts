@@ -2,6 +2,7 @@ import type { GenericObject } from '../../shared/types/utils'
 import type {
   FormValue,
   FormAction,
+  FormObject,
   FormApi,
   FormContextData,
   FormContextDefinition,
@@ -33,10 +34,10 @@ interface FormSchemaBase<TContext extends FormContextDefinition | undefined> {
   actions?: readonly FormAction[]
   onBeforeSubmit?: FormSubmitHandler<FormValue, never>
   submit?: FormSchemaSubmit<TContext>
-  onBeforeNext?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<boolean | void>
-  onBeforePrevious?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<void>
-  skipStep?: (params: FormStepLifecycleParams<FormValue>) => boolean
-  onStepSkipped?: (params: Omit<FormStepLifecycleParams<FormValue>, 'stepData'>) => void
+  onBeforeNext?: (params: FormStepLifecycleParams<FormObject>) => FormMaybePromise<boolean | void>
+  onBeforePrevious?: (params: FormStepLifecycleParams<FormObject>) => FormMaybePromise<void>
+  skipStep?: (params: FormStepLifecycleParams<FormObject>) => boolean
+  onStepSkipped?: (params: Omit<FormStepLifecycleParams<FormObject>, 'stepData'>) => void
 }
 
 interface FormSchemaWithContextFields<

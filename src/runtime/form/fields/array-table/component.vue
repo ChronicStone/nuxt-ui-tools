@@ -2,6 +2,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import { computed, defineAsyncComponent } from 'vue'
 
+import FormFieldError from '../../components/renderer/form-field-error.vue'
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
@@ -277,6 +278,12 @@ function fieldLabel(field: FormField) {
               >
                 <FormFieldRenderer :field="column" :parent-path="rowPath(index)" bare />
               </div>
+              <FormFieldError
+                :path="[...rowPath(index), column.key]"
+                :class="
+                  mergeFormUiClass('mt-1 text-xs text-error', formUi.ui.value.arrayTable?.ui?.error)
+                "
+              />
             </td>
             <td
               v-if="showActionsColumn"

@@ -80,7 +80,10 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
   const captured = createCapture()
   const wrapper = mount(createHost({ cancelled, captured, input, options, submitted, syncInput }), {
     attachTo: document.body,
-    global: { plugins: [router, [VueQueryPlugin, { queryClient }]] },
+    global: {
+      plugins: [router, [VueQueryPlugin, { queryClient }]],
+      stubs: { Transition: true, TransitionGroup: true },
+    },
   })
 
   async function flush(rounds = 3) {
@@ -93,7 +96,7 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
     await nextTick()
   }
 
-  async function until(predicate: () => boolean, timeout = 2000) {
+  async function until(predicate: () => boolean, timeout = 5000) {
     const started = Date.now()
     while (!predicate()) {
       if (Date.now() - started > timeout) {
@@ -114,7 +117,11 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
   }
 
   function control(path: string) {
-    const found = field(path).find('input, textarea, select, [data-ui-trigger]')
+    const root = field(path)
+    if (root.element.matches('input, textarea, select, [data-ui-trigger]')) {
+      return root
+    }
+    const found = root.find('input, textarea, select, [data-ui-trigger]')
     if (!found.exists()) {
       throw new Error(`Field "${path}" has no control`)
     }

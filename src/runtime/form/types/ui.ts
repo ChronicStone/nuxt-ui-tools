@@ -139,6 +139,7 @@ export interface FormArrayTableUi {
   cell?: FormUiClass
   control?: FormUiClass
   actionsCell?: FormUiClass
+  error?: FormUiClass
   empty?: FormUiClass
   add?: FormUiClass
   action?: FormUiClass

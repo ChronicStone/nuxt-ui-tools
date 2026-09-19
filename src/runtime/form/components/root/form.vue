@@ -30,6 +30,7 @@ import {
   isUndefined,
   stringArray,
 } from '../../utils/predicate'
+import { getSchemaFields, getSchemaSteps, isSteppedSchema } from '../../utils/state'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUi, mergeFormUiClass, resolveAppFormUi } from '../../utils/ui'
 import FormActions from '../actions/form-actions.vue'
@@ -136,6 +137,19 @@ watch(
 )
 const parentPath = computed(() =>
   runtime.currentStepRoot.value ? [runtime.currentStepRoot.value] : [],
+)
+const displayedStep = computed(() =>
+  isSteppedSchema(schemaRef.value)
+    ? getSchemaSteps(schemaRef.value)[displayedStepIndex.value]
+    : undefined,
+)
+const displayedFields = computed(() =>
+  isSteppedSchema(schemaRef.value)
+    ? (displayedStep.value?.fields ?? [])
+    : getSchemaFields(schemaRef.value),
+)
+const displayedParentPath = computed(() =>
+  displayedStep.value?.root ? [displayedStep.value.root] : [],
 )
 const title = computed(() => resolveFormText(getSchemaTitle(schemaRef.value)))
 const showStepper = computed(() => getSchemaShowStepper(schemaRef.value))
@@ -469,10 +483,10 @@ async function focusFirstRenderedField() {
               :style="grid.style.value"
             >
               <FormFieldRenderer
-                v-for="field in runtime.currentFields.value"
-                :key="`${parentPath.join('.')}:${field.key}`"
+                v-for="field in displayedFields"
+                :key="`${displayedParentPath.join('.')}:${field.key}`"
                 :field="field"
-                :parent-path="parentPath"
+                :parent-path="displayedParentPath"
               />
             </div>
           </div>

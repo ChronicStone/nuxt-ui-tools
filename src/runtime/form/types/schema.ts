@@ -134,13 +134,13 @@ export interface FormSchema<
     ctx: FormContextData<TContext>
   }) => Promise<void> | void
   /** Runs after current-step validation and before advancing to the next step. Return `false` to stop navigation. */
-  onBeforeNext?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<boolean | void>
+  onBeforeNext?: (params: FormStepLifecycleParams<FormObject>) => FormMaybePromise<boolean | void>
   /** Runs before moving to the previous step. */
-  onBeforePrevious?: (params: FormStepLifecycleParams<FormValue>) => FormMaybePromise<void>
+  onBeforePrevious?: (params: FormStepLifecycleParams<FormObject>) => FormMaybePromise<void>
   /** Returns true when a step should be skipped during previous/next navigation. */
-  skipStep?: (params: FormStepLifecycleParams<FormValue>) => boolean
+  skipStep?: (params: FormStepLifecycleParams<FormObject>) => boolean
   /** Runs when `skipStep` skips a step. */
-  onStepSkipped?: (params: Omit<FormStepLifecycleParams<FormValue>, 'stepData'>) => void
+  onStepSkipped?: (params: Omit<FormStepLifecycleParams<FormObject>, 'stepData'>) => void
 }
 
 /**

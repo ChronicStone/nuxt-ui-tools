@@ -8,6 +8,7 @@ import type {
   ExtractFormFieldInternalValue,
   ExtractFormFieldOutputValue,
   ExtractFormFields,
+  FormObject,
   ExtractFormInternalValue,
   ExtractFormOutput,
   FormApiController,
@@ -242,7 +243,7 @@ const schema = defineFormSchema({
 const steppedLifecycleSchema = defineFormSchema({
   onBeforeNext: ({ api, formData, stepIndex }) => {
     expectTypeOf(api.validate({ focus: true })).toEqualTypeOf<Promise<boolean>>()
-    expectTypeOf(formData).toEqualTypeOf<unknown>()
+    expectTypeOf(formData).toEqualTypeOf<FormObject>()
     expectTypeOf(stepIndex).toEqualTypeOf<number>()
     return true
   },
