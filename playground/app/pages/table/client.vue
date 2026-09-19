@@ -204,11 +204,11 @@ const clientSchema = defineTableSchema({
           location: 'tag-dynamic',
         },
         editor: {
-          max: 250000,
-          min: 50000,
+          max: 250_000,
+          min: 50_000,
           range: {
             display: 'inputs-slider',
-            minGap: 10000,
+            minGap: 10_000,
           },
           scalar: {
             display: 'input-slider',
@@ -437,10 +437,10 @@ const clientSchema = defineTableSchema({
       action: () => {
         tableApi.updateRow({
           ...row,
-          salary: Math.min(row.salary + 5000, 200000),
+          salary: Math.min(row.salary + 5000, 200_000),
         })
       },
-      disabled: ({ row: currentRow }) => currentRow.salary >= 200000,
+      disabled: ({ row: currentRow }) => currentRow.salary >= 200_000,
       icon: 'i-lucide-badge-dollar-sign',
       key: 'promote-salary',
       label: () => t('playground.tableClient.actions.giveRaise'),
@@ -684,16 +684,16 @@ function createClientRows(count: number) {
     'UX Research',
   ]
   const salaryBaseByDepartment = {
-    Data: 136000,
-    Design: 110000,
-    Engineering: 128000,
-    Finance: 104000,
-    Growth: 98000,
-    Operations: 96000,
-    Platform: 142000,
-    Product: 118000,
-    Security: 145000,
-    Support: 82000,
+    Data: 136_000,
+    Design: 110_000,
+    Engineering: 128_000,
+    Finance: 104_000,
+    Growth: 98_000,
+    Operations: 96_000,
+    Platform: 142_000,
+    Product: 118_000,
+    Security: 145_000,
+    Support: 82_000,
   } satisfies Record<DemoDepartmentName, number>
   const employmentTypes: EmploymentType[] = ['Full-time', 'Contract', 'Part-time']
   const workModes: WorkMode[] = ['Remote', 'Hybrid', 'On-site']
@@ -716,7 +716,7 @@ function createClientRows(count: number) {
     const skills = faker.helpers.arrayElements(skillCatalog, skillCount)
     const primarySkill = skills[0] ?? 'Generalist'
     const yearsAtCompany = faker.number.int({ max: 9, min: 0 })
-    const salaryNoise = faker.number.int({ max: 52000, min: -14000 })
+    const salaryNoise = faker.number.int({ max: 52_000, min: -14_000 })
     const salary = (salaryBaseByDepartment[department] ?? 100_000) + salaryNoise
     const hiredAt = faker.date
       .between({

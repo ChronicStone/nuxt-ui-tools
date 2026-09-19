@@ -129,7 +129,7 @@ export function useTableApi<TSchema = TableSchemaView>(
       selection.clear()
     },
     query() {
-      const defaultLayout = params.runtimeSchema.value.defaultLayout
+      const { defaultLayout } = params.runtimeSchema.value
       const nextLayout = defaultLayout ?? 'table'
       const defaultSort = getDefaultSort({ layout: nextLayout, schema: params.runtimeSchema.value })
 

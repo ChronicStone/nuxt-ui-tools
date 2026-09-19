@@ -105,7 +105,7 @@ export function makeAccounts(count: number, contacts: Contact[], seed = 42): Acc
       createdAt: created.toISOString(),
       debit: i % 5 === 0,
       edofSync: country === 'FR' && i % 2 === 0,
-      erpId: pending ? null : `EVZ-${10000 + i * 7}`,
+      erpId: pending ? null : `EVZ-${10_000 + i * 7}`,
       evoliz: !pending && i % 4 !== 1,
       generalContacts: Array.from({ length: i % 4 }, (_, k) => pick(contacts, i * 7 + k).id),
       group: i % 3 === 0 ? null : pick(GROUPS, i),

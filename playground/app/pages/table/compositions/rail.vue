@@ -215,7 +215,7 @@ const schema = defineTableSchema({
           request: { ...request, pagination: { mode: 'none' } },
           rows: documents,
         })
-        const pagination = request.pagination
+        const { pagination } = request
         const cursor = pagination.mode === 'cursor' ? Number(pagination.cursor ?? 0) : 0
         const pageSize = pagination.mode === 'cursor' ? pagination.pageSize : prepared.rows.length
         const rows = prepared.rows.slice(cursor, cursor + pageSize)

@@ -17,8 +17,8 @@ function withStress(rows: typeof baseAccounts, people: typeof contacts) {
   const long =
     'Groupement Interprofessionnel des Établissements de Formation Continue et de Certification Linguistique du Grand Ouest'
   Object.assign(out[0]!, {
-    consumption: 9876543,
-    contracts: 12345,
+    consumption: 9_876_543,
+    contracts: 12_345,
     erpId: 'ERP-2026-0000000000123456',
     generalContacts: people.slice(0, 6).map((c) => c.id),
     group: 'Réseau Européen des Centres Partenaires Accrédités · Zone Nord-Ouest',

@@ -326,7 +326,7 @@ export function createInputStub(
           h('input', {
             ...shared,
             onInput: (event: Event) => {
-              const value = (event.target as HTMLInputElement).value
+              const { value } = event.target as HTMLInputElement
               emit(
                 'update:modelValue',
                 kind === 'number' ? (value === '' ? undefined : Number(value)) : value,

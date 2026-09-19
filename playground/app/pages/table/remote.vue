@@ -170,11 +170,11 @@ const remoteSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         editor: {
-          max: 250000,
-          min: 50000,
+          max: 250_000,
+          min: 50_000,
           range: {
             display: 'inputs-slider',
-            minGap: 10000,
+            minGap: 10_000,
           },
           scalar: {
             display: 'input-slider',
