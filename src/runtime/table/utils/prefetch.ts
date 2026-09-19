@@ -153,10 +153,10 @@ function resolveTableQueries(options: {
       'facets',
       withQueryDefaults(
         remoteFacets({
-          filters: options.request.filters,
-          search: options.request.search,
           context: options.request.context,
           facets: globalFacets,
+          filters: options.request.filters,
+          search: options.request.search,
         }),
         QUERY_DEFAULTS.staleTime.filterOptions,
       ),
@@ -168,7 +168,7 @@ function resolveTableQueries(options: {
       entries.push([
         `filter-options:${definition.key}`,
         withQueryDefaults(
-          definition.source.query({ search: undefined, limit: undefined, cursor: undefined }),
+          definition.source.query({ cursor: undefined, limit: undefined, search: undefined }),
           QUERY_DEFAULTS.staleTime.filterOptions,
         ),
       ])
@@ -188,10 +188,10 @@ function resolveTableQueries(options: {
         facet.query({
           facets: [
             {
-              key: definition.key,
-              mode: resolveTableFacetMode(facet),
-              limit: resolveFacetLimit(facet),
               cursor: undefined,
+              key: definition.key,
+              limit: resolveFacetLimit(facet),
+              mode: resolveTableFacetMode(facet),
             },
           ],
           table: {
@@ -226,10 +226,10 @@ function resolvePrefetchRequest(options: {
         ? globalFacets
         : undefined,
     filters: createResolvedFilterState({
+      context: options.context,
       definitions: options.schema.filters?.ui ?? [],
       filters,
       staticFilters: options.schema.filters?.static,
-      context: options.context,
     }),
     pagination: resolvePagination(options.route, options.schema, layout),
     search: {
@@ -262,13 +262,13 @@ function resolvePagination(
   const pageSize = positiveInteger(queryValue(route, 'p.size')) ?? defaultPageSize
   if (mode === 'cursor') {
     return {
-      mode: 'cursor',
-      cursor: null,
-      pageSize,
       count:
         schema.pagination && isObject(schema.pagination) && schema.pagination.mode === 'cursor'
           ? (schema.pagination.count ?? 'none')
           : 'none',
+      cursor: null,
+      mode: 'cursor',
+      pageSize,
     }
   }
 

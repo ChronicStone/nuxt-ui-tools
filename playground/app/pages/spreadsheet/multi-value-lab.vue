@@ -27,14 +27,14 @@ const center = {
 function createMultiValueSchema() {
   return defineSpreadsheetSchema({
     buildRow: ({ row }) => ({
-      testCenterId: row.testCenterId,
       candidateName: row.candidateName,
-      tags: row.tags,
-      scores: row.scores,
-      productIds: row.productIds,
-      statuses: row.statuses,
       flags: row.flags,
       notes: row.notes,
+      productIds: row.productIds,
+      scores: row.scores,
+      statuses: row.statuses,
+      tags: row.tags,
+      testCenterId: row.testCenterId,
     }),
     columns: {
       static: (column) => [
@@ -45,9 +45,9 @@ function createMultiValueSchema() {
           rules: (v) => [
             v.required(),
             v.validate({
+              message: `Row test center must be ${center.id}`,
               name: 'testCenterMatch',
               validator: (value: string) => value === center.id,
-              message: `Row test center must be ${center.id}`,
             }),
           ],
         }),
@@ -64,9 +64,9 @@ function createMultiValueSchema() {
           multiple: true,
           rules: (v) => [
             v.validate({
+              message: 'At least 2 tags are required',
               name: 'tagCount',
               validator: (value: string[]) => value.length >= 2,
-              message: 'At least 2 tags are required',
             }),
           ],
         }),
@@ -79,9 +79,9 @@ function createMultiValueSchema() {
           },
           rules: (v) => [
             v.validate({
+              message: 'Every score must be at least 50',
               name: 'allPassing',
               validator: (value: number[]) => value.every((score) => score >= 50),
-              message: 'Every score must be at least 50',
             }),
           ],
         }),
@@ -89,15 +89,15 @@ function createMultiValueSchema() {
           match: {
             headers: ['Products'],
           },
+          multiple: {
+            matchBy: 'label',
+            separator: ',',
+          },
           options: ({ context }) =>
             context.products.map((product) => ({
               label: product.name,
               value: product.id,
             })),
-          multiple: {
-            separator: ',',
-            matchBy: 'label',
-          },
           rules: (v) => [
             v.validate({
               name: 'selectedProducts',
@@ -110,11 +110,11 @@ function createMultiValueSchema() {
           match: {
             headers: ['Statuses'],
           },
-          options: ['pending', 'validated', 'archived'],
           multiple: {
-            separator: '|',
             itemModifiers: ['trim', 'case-insensitive'],
+            separator: '|',
           },
+          options: ['pending', 'validated', 'archived'],
         }),
         column.boolean('flags', {
           match: {
@@ -133,8 +133,8 @@ function createMultiValueSchema() {
       {
         key: 'products',
         query: () => ({
-          queryKey: ['playground', 'spreadsheet', 'multi-value-lab', 'products'],
           queryFn: async () => center.products,
+          queryKey: ['playground', 'spreadsheet', 'multi-value-lab', 'products'],
         }),
       },
     ],
@@ -210,8 +210,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-multi-value-lab.xlsx',
   }

@@ -87,9 +87,9 @@ export function useFieldOptions(params: {
       const source = querySource.value
       if (!source) {
         return {
-          queryKey: ['form-options', params.path().join('.'), 'disabled'],
-          queryFn: async () => [],
           enabled: false,
+          queryFn: async () => [],
+          queryKey: ['form-options', params.path().join('.'), 'disabled'],
         }
       }
 

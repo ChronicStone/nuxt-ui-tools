@@ -174,7 +174,7 @@ export const employeesResource = engine.defineResource('employees', {
       defaults: ['fullName', 'email'],
     },
     sort: {
-      defaults: [{ key: 'hiredAt', dir: 'desc' }],
+      defaults: [{ dir: 'desc', key: 'hiredAt' }],
     },
   },
   relations: {

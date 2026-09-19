@@ -58,39 +58,39 @@ function getBaseFormAction(
   const slot = params.shell.value === 'inline' ? 'left' : 'right'
   if (key === 'submit') {
     return {
+      condition: (context) => (context.isMultiStep ? context.isLastStep : true),
       key,
       label: () => t('form.actions.submitButton'),
-      condition: (context) => (context.isMultiStep ? context.isLastStep : true),
+      slot,
       type: 'primary',
       width: 'fill md:fit',
-      slot,
     }
   }
   if (key === 'next') {
     return {
+      condition: (context) => !context.isLastStep,
       key,
       label: () => t('form.actions.nextButton'),
-      condition: (context) => !context.isLastStep,
+      slot,
       type: 'primary',
       width: 'fill md:fit',
-      slot,
     }
   }
   if (key === 'previous') {
     return {
+      disabled: (context) => context.isFirstStep,
       key,
       label: () => t('form.actions.prevButton'),
-      disabled: (context) => context.isFirstStep,
-      width: 'fill md:fit',
       slot,
+      width: 'fill md:fit',
     }
   }
   if (key === 'reset') {
     return {
       key,
       label: () => t('form.actions.resetButton'),
-      width: 'fill md:fit',
       slot,
+      width: 'fill md:fit',
     }
   }
 

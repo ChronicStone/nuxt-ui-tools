@@ -39,7 +39,7 @@ export function flattenTableCursorPages(options: {
     }
 
     for (const [index, row] of page.rows.entries()) {
-      rows.set(resolveTableRowId({ rowKey: options.rowKey, row, index }), row)
+      rows.set(resolveTableRowId({ index, row, rowKey: options.rowKey }), row)
     }
 
     rowCount = page.pageInfo.rowCount

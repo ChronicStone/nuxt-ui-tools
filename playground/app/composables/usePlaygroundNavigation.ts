@@ -38,11 +38,6 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
     label: 'Forms',
     navigation: [
       {
-        id: 'form-fields',
-        path: '/form/fields',
-        label: 'Fields',
-        description: 'Focused visual and interaction acceptance for every public field kind.',
-        mode: 'document',
         children: formFieldPlaygrounds.map((field) => ({
           id: `form-field-${field.id}`,
           path: `/form/fields/${field.id}`,
@@ -50,10 +45,13 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
           description: field.description,
           mode: 'document' as const,
         })),
+        description: 'Focused visual and interaction acceptance for every public field kind.',
+        id: 'form-fields',
+        label: 'Fields',
+        mode: 'document',
+        path: '/form/fields',
       },
       {
-        id: 'form-workflows',
-        label: 'Workflows',
         children: [
           {
             id: 'form-showcase',
@@ -79,6 +77,8 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'document',
           },
         ],
+        id: 'form-workflows',
+        label: 'Workflows',
       },
     ],
     path: '/form',
@@ -90,8 +90,6 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
     label: 'Tables',
     navigation: [
       {
-        id: 'table-data-sources',
-        label: 'Data sources',
         children: [
           {
             id: 'table-client',
@@ -118,13 +116,10 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'fixed',
           },
         ],
+        id: 'table-data-sources',
+        label: 'Data sources',
       },
       {
-        id: 'table-compositions',
-        path: '/table/compositions',
-        label: 'Compositions',
-        description: 'Independent table layouts with purpose-built schemas and behavior.',
-        mode: 'document',
         children: [
           {
             id: 'table-composition-rail',
@@ -155,6 +150,11 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'fixed',
           },
         ],
+        description: 'Independent table layouts with purpose-built schemas and behavior.',
+        id: 'table-compositions',
+        label: 'Compositions',
+        mode: 'document',
+        path: '/table/compositions',
       },
     ],
     path: '/table',
@@ -166,8 +166,6 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
     label: 'Spreadsheet',
     navigation: [
       {
-        id: 'spreadsheet-core',
-        label: 'Core flow',
         children: [
           {
             id: 'spreadsheet-happy-path',
@@ -184,10 +182,10 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'canvas',
           },
         ],
+        id: 'spreadsheet-core',
+        label: 'Core flow',
       },
       {
-        id: 'spreadsheet-references',
-        label: 'References',
         children: [
           {
             id: 'spreadsheet-column-resolve',
@@ -225,10 +223,10 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'canvas',
           },
         ],
+        id: 'spreadsheet-references',
+        label: 'References',
       },
       {
-        id: 'spreadsheet-stress',
-        label: 'Stress & validation',
         children: [
           {
             id: 'spreadsheet-structure-stress',
@@ -259,6 +257,8 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'canvas',
           },
         ],
+        id: 'spreadsheet-stress',
+        label: 'Stress & validation',
       },
     ],
     path: '/spreadsheet',
@@ -348,11 +348,11 @@ function flattenNavigation(nodes: readonly PlaygroundNavigationNode[]) {
   for (const node of nodes) {
     if (node.path && node.mode) {
       entries.push({
-        id: node.id,
-        path: node.path,
-        label: node.label,
         description: node.description ?? node.label,
+        id: node.id,
+        label: node.label,
         mode: node.mode,
+        path: node.path,
       })
     }
 

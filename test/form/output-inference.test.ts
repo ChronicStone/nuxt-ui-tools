@@ -19,13 +19,13 @@ const schema = defineFormSchema({
   context: {
     countries: () =>
       queryOptions({
-        queryKey: ['countries'],
         queryFn: async () => ({
           items: [
             { label: 'France', value: 'FR' },
             { label: 'Belgium', value: 'BE' },
           ],
         }),
+        queryKey: ['countries'],
         select: (data) => data.items,
       }),
     session: () => Promise.resolve({ id: 'session_1' }),
@@ -33,29 +33,28 @@ const schema = defineFormSchema({
   },
   fields: [
     {
-      key: 'profile.name',
-      type: 'text',
       disabled: ({ api }) => {
         expectTypeOf(api.value.get()).toEqualTypeOf<string | null>()
 
         return false
       },
+      key: 'profile.name',
       transform: {
         output: (value) => value?.trim() ?? '',
       },
+      type: 'text',
     },
     {
       key: 'age',
       type: 'number',
     },
     {
+      default: true,
       key: 'active',
       type: 'checkbox',
-      default: true,
     },
     {
       key: 'country',
-      type: 'select',
       options: ({ ctx, api }) => {
         expectTypeOf(ctx.countries.value).toEqualTypeOf<
           { label: string; value: string }[] | undefined
@@ -84,24 +83,24 @@ const schema = defineFormSchema({
 
         return ctx.countries.value ?? []
       },
+      type: 'select',
     },
     {
       key: 'currency',
-      type: 'select',
       options: [
         { label: 'Euro', value: 'EUR' },
         { label: 'Dollar', value: 'USD' },
       ],
+      type: 'select',
     },
     {
       key: 'roles',
-      type: 'select',
       multiple: true,
       options: ['admin', 'reviewer'],
+      type: 'select',
     },
     {
       key: 'status',
-      type: 'select',
       options: queryOptions({
         queryKey: ['statuses'],
         queryFn: async () => [
@@ -109,10 +108,10 @@ const schema = defineFormSchema({
           { label: 'Published', value: 'published' },
         ],
       }),
+      type: 'select',
     },
     {
       key: 'city',
-      type: 'select',
       options: ({ ctx }) =>
         queryOptions({
           queryKey: [
@@ -124,25 +123,26 @@ const schema = defineFormSchema({
             { label: 'Brussels', value: 'brussels' },
           ],
         }),
+      type: 'select',
     },
     {
       key: 'startedAt',
       type: 'date',
     },
     {
-      key: 'phone',
-      type: 'phone-number',
       defaultCountryCode: 'FR',
       disabled: ({ api }) => {
         expectTypeOf(api.value.get()).toEqualTypeOf<string | null>()
 
         return false
       },
+      key: 'phone',
+      type: 'phone-number',
     },
     {
       key: 'document',
-      type: 'upload',
       output: 'object',
+      type: 'upload',
       upload: {
         handler: async ({ files }) => {
           expectTypeOf(files).toEqualTypeOf<readonly File[]>()
@@ -152,13 +152,11 @@ const schema = defineFormSchema({
       },
     },
     {
+      default: () => 'internal_1',
       key: 'internalId',
       type: 'hidden',
-      default: () => 'internal_1',
     },
     {
-      key: 'meta',
-      type: 'object',
       fields: [
         {
           key: 'externalId',
@@ -172,10 +170,10 @@ const schema = defineFormSchema({
           },
         },
       ],
+      key: 'meta',
+      type: 'object',
     },
     {
-      key: 'coordinates',
-      type: 'input-group',
       fields: [
         {
           key: 'lat',
@@ -186,11 +184,10 @@ const schema = defineFormSchema({
           type: 'number',
         },
       ],
+      key: 'coordinates',
+      type: 'input-group',
     },
     {
-      key: 'presentation',
-      type: 'card',
-      label: 'Presentation',
       fields: [
         {
           key: 'headline',
@@ -201,20 +198,21 @@ const schema = defineFormSchema({
           type: 'text',
         },
       ],
+      key: 'presentation',
+      label: 'Presentation',
+      type: 'card',
     },
     {
-      key: 'stacked',
-      type: 'column',
       fields: [
         {
           key: 'columnNote',
           type: 'text',
         },
       ],
+      key: 'stacked',
+      type: 'column',
     },
     {
-      key: 'addresses',
-      type: 'array-list',
       fields: [
         {
           key: 'line1',
@@ -229,11 +227,13 @@ const schema = defineFormSchema({
           ],
         },
       ],
+      key: 'addresses',
+      type: 'array-list',
     },
     {
+      content: 'This field does not write to output',
       key: 'profileHint',
       type: 'info',
-      content: 'This field does not write to output',
     },
   ],
   formKey: 'exassess.profile',
@@ -255,22 +255,22 @@ const steppedLifecycleSchema = defineFormSchema({
   skipStep: ({ stepIndex }) => stepIndex > 10,
   steps: [
     {
-      key: 'first',
       fields: [
         {
           key: 'firstName',
           type: 'text',
         },
       ],
+      key: 'first',
     },
     {
-      key: 'second',
       fields: [
         {
           key: 'lastName',
           type: 'text',
         },
       ],
+      key: 'second',
     },
   ],
 })
@@ -344,7 +344,7 @@ const matrixSchema = defineFormSchema({
     {
       fields: [
         { key: 'read', type: 'switch' },
-        { key: 'scope', type: 'select', options: ['own', 'all'] },
+        { key: 'scope', options: ['own', 'all'], type: 'select' },
       ],
       key: 'permissions',
       rows: [

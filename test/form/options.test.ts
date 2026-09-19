@@ -24,10 +24,10 @@ describe('form option normalization', () => {
       {
         children: [
           {
-            value: 2,
-            label: '42',
             description: undefined,
             disabled: false,
+            label: '42',
+            value: 2,
           },
         ],
         description: undefined,
@@ -40,7 +40,7 @@ describe('form option normalization', () => {
 
   it('keeps valid nested values, removes duplicates, and preserves primitive types', () => {
     const options = normalizeOptionItems([
-      { children: [{ value: 1, label: 'Number' }], label: 'String', value: '1' },
+      { children: [{ label: 'Number', value: 1 }], label: 'String', value: '1' },
     ])
 
     expect(normalizeOptionSelection(['1', 1, 1, 'missing'], options)).toStrictEqual(['1', 1])

@@ -32,15 +32,15 @@ describe('spreadsheet row utils', () => {
       {
         columns: [
           {
-            kind: 'text',
-            key: 'firstName',
             from: 'First name',
+            key: 'firstName',
+            kind: 'text',
             required: true,
           },
           {
-            kind: 'text',
-            key: 'lastName',
             from: /^Last name$/i,
+            key: 'lastName',
+            kind: 'text',
             required: true,
           },
         ],
@@ -82,8 +82,8 @@ describe('spreadsheet row utils', () => {
       name: 'scoreBand',
       validator: (value, min, max) => ({
         $valid: value >= min && value <= max,
-        min,
         max,
+        min,
       }),
     })
 
@@ -118,9 +118,9 @@ describe('spreadsheet row utils', () => {
           rules: (v: SpreadsheetRuleBuilder) => [
             v.oneOf(['spring-2026', '_internal']),
             v.validate({
+              message: ({ value }) => `"${value}" cannot start with underscore`,
               name: 'noUnderscore',
               validator: (value: string) => !value.startsWith('_'),
-              message: ({ value }) => `"${value}" cannot start with underscore`,
             }),
           ],
         },
@@ -346,9 +346,9 @@ describe('spreadsheet row utils', () => {
           },
           rules: (v: SpreadsheetRuleBuilder) => [
             v.validate({
+              message: 'All scores must be at least 50',
               name: 'allPassing',
               validator: (value: number[]) => value.every((score) => score >= 50),
-              message: 'All scores must be at least 50',
             }),
           ],
         },
@@ -453,8 +453,8 @@ describe('spreadsheet row utils', () => {
         isValid: false,
         issues: [
           {
-            level: 'error',
             code: 'cell.required',
+            level: 'error',
             message: 'Missing value',
             rowIndex: 1,
           },
@@ -512,18 +512,18 @@ describe('spreadsheet row utils', () => {
           source: [
             {
               id: 'school-level',
-              slug: 'schoolLevel',
-              name: 'School level',
               items: [
                 { id: 'primary', name: 'Primary' },
                 { id: 'secondary', name: 'Secondary' },
               ],
+              name: 'School level',
+              slug: 'schoolLevel',
             },
             {
               id: 'program',
-              slug: 'program',
-              name: 'Program',
               items: [{ id: 'business-english', name: 'Business English' }],
+              name: 'Program',
+              slug: 'program',
             },
           ] satisfies readonly DemoDynamicAffiliationGroup[],
           targetKey: (item) => item.slug,

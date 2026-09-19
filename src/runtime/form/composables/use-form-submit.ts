@@ -123,7 +123,7 @@ function normalizeSubmitResult<TSubmitData>(
     return { success: false }
   }
   if (isSuccessfulSubmitResult<TSubmitData>(result)) {
-    return { success: true, data: result.data }
+    return { data: result.data, success: true }
   }
   return { success: true }
 }

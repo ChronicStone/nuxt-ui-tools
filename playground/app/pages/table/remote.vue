@@ -40,7 +40,6 @@ const remoteSchema = defineTableSchema({
     },
     ui: (filter) => [
       filter.text('fullName', {
-        label: () => t('playground.tableCommon.filters.name'),
         behavior: {
           operators: ['contains', 'is'],
         },
@@ -48,122 +47,122 @@ const remoteSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         editor: {
-          placeholder: () => t('playground.tableCommon.filters.searchEmployees'),
-          leadingIcon: 'i-lucide-search',
           inputType: 'search',
+          leadingIcon: 'i-lucide-search',
+          placeholder: () => t('playground.tableCommon.filters.searchEmployees'),
         },
+        label: () => t('playground.tableCommon.filters.name'),
       }),
       filter.option('department.company.country', {
-        label: () => t('playground.tableCommon.filters.country'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'panel md:tag',
         },
+        editor: {
+          closeOnSelect: false,
+          labels: {
+            searchPlaceholder: () => t('playground.tableCommon.filters.selectCountries'),
+          },
+          presentation: 'tree',
+          searchable: true,
+          selection: {
+            mode: 'multiple',
+          },
+          tree: {
+            searchMode: 'remote',
+            selectable: 'leaf-only',
+          },
+        },
+        label: () => t('playground.tableCommon.filters.country'),
         source: {
           facet: 'exclude-self',
           options: countryTreeOptions,
         },
-        editor: {
-          searchable: true,
-          closeOnSelect: false,
-          presentation: 'tree',
-          tree: {
-            selectable: 'leaf-only',
-            searchMode: 'remote',
-          },
-          selection: {
-            mode: 'multiple',
-          },
-          labels: {
-            searchPlaceholder: () => t('playground.tableCommon.filters.selectCountries'),
-          },
-        },
       }),
       filter.option('department.company.name', {
-        label: () => t('playground.tableCommon.cards.company'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'panel md:tag',
         },
-        source: {
-          facet: 'exclude-self',
-        },
         editor: {
-          searchable: true,
           closeOnSelect: false,
-          selection: {
-            mode: 'multiple',
-          },
           labels: {
             searchPlaceholder: () => t('playground.tableRemote.filters.selectCompanies'),
           },
+          searchable: true,
+          selection: {
+            mode: 'multiple',
+          },
+        },
+        label: () => t('playground.tableCommon.cards.company'),
+        source: {
+          facet: 'exclude-self',
         },
       }),
       filter.option('employeeSkills.skill.label', {
-        label: () => t('playground.tableCommon.filters.skill'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'panel md:tag',
         },
-        source: {
-          facet: 'exclude-self',
-        },
         editor: {
-          searchable: true,
           closeOnSelect: false,
           row: {
             showCounts: true,
           },
+          searchable: true,
           selection: {
             mode: 'multiple',
           },
         },
+        label: () => t('playground.tableCommon.filters.skill'),
+        source: {
+          facet: 'exclude-self',
+        },
       }),
       filter.option('department.name', {
-        label: () => t('playground.tableCommon.filters.department'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'panel md:tag',
         },
-        source: {
-          facet: 'exclude-self',
-          sort: 'count',
-        },
         editor: {
+          row: {
+            showCounts: true,
+          },
           searchable: false,
           selection: {
             mode: 'multiple',
           },
-          row: {
-            showCounts: true,
-          },
+        },
+        label: () => t('playground.tableCommon.filters.department'),
+        source: {
+          facet: 'exclude-self',
+          sort: 'count',
         },
       }),
       filter.boolean('isActive', {
-        label: () => t('playground.tableCommon.filters.active'),
         display: {
           location: 'panel md:tag',
         },
+        editor: {
+          labels: {
+            false: () => t('playground.tableCommon.status.paused'),
+            true: () => t('playground.tableCommon.status.online'),
+          },
+        },
+        label: () => t('playground.tableCommon.filters.active'),
         source: {
           facet: 'exclude-self',
         },
-        editor: {
-          labels: {
-            true: () => t('playground.tableCommon.status.online'),
-            false: () => t('playground.tableCommon.status.paused'),
-          },
-        },
       }),
       filter.number('salary', {
-        label: () => t('playground.tableCommon.filters.salary'),
         behavior: {
           operators: ['is', 'gte', 'lte', 'between'],
         },
@@ -171,20 +170,20 @@ const remoteSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         editor: {
-          min: 50000,
           max: 250000,
-          step: 5000,
-          scalar: {
-            display: 'input-slider',
-          },
+          min: 50000,
           range: {
             display: 'inputs-slider',
             minGap: 10000,
           },
+          scalar: {
+            display: 'input-slider',
+          },
+          step: 5000,
         },
+        label: () => t('playground.tableCommon.filters.salary'),
       }),
       filter.date('hiredAt', {
-        label: () => t('playground.tableCommon.filters.hiredAt'),
         behavior: {
           operators: ['is', 'before', 'after', 'between'],
         },
@@ -192,26 +191,13 @@ const remoteSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         editor: {
-          scalar: {
-            display: 'calendar',
-            presets: [
-              {
-                label: () => t('playground.tableCommon.datePresets.today'),
-                value: ({ now }) => atStartOfDay(now),
-              },
-              {
-                label: () => t('playground.tableCommon.datePresets.yesterday'),
-                value: ({ now }) => atStartOfDay(shiftDays(now, -1)),
-              },
-              {
-                label: () => t('playground.tableCommon.datePresets.startOfMonth'),
-                value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
-              },
-            ],
-          },
           range: {
+            calendar: {
+              fixedWeeks: true,
+              months: 1,
+              pagedNavigation: true,
+            },
             display: 'inputs-calendar',
-            presetsPlacement: 'side',
             presets: [
               {
                 label: () => t('playground.tableCommon.datePresets.last7Days'),
@@ -235,13 +221,27 @@ const remoteSchema = defineTableSchema({
                 }),
               },
             ],
-            calendar: {
-              months: 1,
-              pagedNavigation: true,
-              fixedWeeks: true,
-            },
+            presetsPlacement: 'side',
+          },
+          scalar: {
+            display: 'calendar',
+            presets: [
+              {
+                label: () => t('playground.tableCommon.datePresets.today'),
+                value: ({ now }) => atStartOfDay(now),
+              },
+              {
+                label: () => t('playground.tableCommon.datePresets.yesterday'),
+                value: ({ now }) => atStartOfDay(shiftDays(now, -1)),
+              },
+              {
+                label: () => t('playground.tableCommon.datePresets.startOfMonth'),
+                value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
+              },
+            ],
           },
         },
+        label: () => t('playground.tableCommon.filters.hiredAt'),
       }),
     ],
   },
@@ -268,39 +268,12 @@ const remoteSchema = defineTableSchema({
         <UCard
           class="rounded-md h-full"
           ui={{
-            root: 'flex h-full flex-col',
-            header: 'p-4',
             body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
             footer: 'mt-auto p-4 pt-3',
+            header: 'p-4',
+            root: 'flex h-full flex-col',
           }}
           v-slots={{
-            header: () => (
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-3">
-                  <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
-                    {getInitials(row.fullName)}
-                  </div>
-                  <div class="min-w-0">
-                    <div class="truncate font-medium text-highlighted">{row.fullName}</div>
-                    <div class="mt-1 flex items-center gap-2 text-sm text-muted">
-                      <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
-                      <span class="truncate">{departmentName}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <UBadge
-                  color={row.isActive ? 'success' : 'neutral'}
-                  variant={row.isActive ? 'soft' : 'subtle'}
-                  size="sm"
-                  label={
-                    row.isActive
-                      ? t('playground.tableCommon.status.online')
-                      : t('playground.tableCommon.status.paused')
-                  }
-                />
-              </div>
-            ),
             default: () => (
               <>
                 <div class="grid gap-3 sm:grid-cols-2">
@@ -335,6 +308,33 @@ const remoteSchema = defineTableSchema({
                 <div class="shrink-0">{formatDate(hiredAt)}</div>
               </div>
             ),
+            header: () => (
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
+                    {getInitials(row.fullName)}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="truncate font-medium text-highlighted">{row.fullName}</div>
+                    <div class="mt-1 flex items-center gap-2 text-sm text-muted">
+                      <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
+                      <span class="truncate">{departmentName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <UBadge
+                  color={row.isActive ? 'success' : 'neutral'}
+                  variant={row.isActive ? 'soft' : 'subtle'}
+                  size="sm"
+                  label={
+                    row.isActive
+                      ? t('playground.tableCommon.status.online')
+                      : t('playground.tableCommon.status.paused')
+                  }
+                />
+              </div>
+            ),
           }}
         />
       )
@@ -358,20 +358,20 @@ const remoteSchema = defineTableSchema({
     facets: true,
     mode: 'remote',
     query: (params) => ({
-      queryKey: ['demo-employees', params],
       queryFn: async () => {
         if (params.pagination.mode !== 'offset')
           throw new Error('The remote employee demo uses offset pagination.')
 
         return demoEmployeesClient.queryTable(params)
       },
+      queryKey: ['demo-employees', params],
     }),
   },
   table: {
     columns: (column) => [
       column.field('fullName', {
-        label: () => t('playground.tableCommon.columns.employee'),
         icon: 'i-lucide-user-round',
+        label: () => t('playground.tableCommon.columns.employee'),
         minWidth: 260,
         pinned: 'left',
         render: ({ row }) => (
@@ -394,8 +394,8 @@ const remoteSchema = defineTableSchema({
         ),
       }),
       column.field('email', {
-        label: () => t('playground.tableCommon.columns.email'),
         icon: 'i-lucide-at-sign',
+        label: () => t('playground.tableCommon.columns.email'),
         minWidth: 280,
         render: ({ row }) => (
           <div class="min-w-0">
@@ -410,9 +410,8 @@ const remoteSchema = defineTableSchema({
         ),
       }),
       column.composite('skills', {
-        label: () => t('playground.tableCommon.columns.skills'),
         icon: 'i-lucide-tags',
-        sortableKey: 'fullName',
+        label: () => t('playground.tableCommon.columns.skills'),
         minWidth: 240,
         render: ({ row }) => (
           <div class="flex flex-wrap gap-1.5">
@@ -430,10 +429,11 @@ const remoteSchema = defineTableSchema({
               ))}
           </div>
         ),
+        sortableKey: 'fullName',
       }),
       column.field('department.company.country', {
-        label: () => t('playground.tableCommon.columns.country'),
         icon: 'i-lucide-globe',
+        label: () => t('playground.tableCommon.columns.country'),
         minWidth: 170,
         render: ({ value }) => (
           <div class="flex items-center gap-2">
@@ -445,16 +445,16 @@ const remoteSchema = defineTableSchema({
         ),
       }),
       column.field('department.name', {
-        label: () => t('playground.tableCommon.columns.department'),
         icon: 'i-lucide-building-2',
+        label: () => t('playground.tableCommon.columns.department'),
         minWidth: 180,
         render: ({ value }) => (
           <span class="truncate text-highlighted">{translateDepartment(String(value ?? ''))}</span>
         ),
       }),
       column.field('isActive', {
-        label: () => t('playground.tableCommon.columns.active'),
         icon: 'i-lucide-badge-check',
+        label: () => t('playground.tableCommon.columns.active'),
         minWidth: 120,
         render: ({ value }) => (
           <UBadge
@@ -470,9 +470,9 @@ const remoteSchema = defineTableSchema({
         ),
       }),
       column.field('salary', {
-        label: () => t('playground.tableCommon.columns.salary'),
-        icon: 'i-lucide-wallet',
         align: 'right',
+        icon: 'i-lucide-wallet',
+        label: () => t('playground.tableCommon.columns.salary'),
         labelAlign: 'right',
         minWidth: 160,
         render: ({ value }) => (
@@ -480,8 +480,8 @@ const remoteSchema = defineTableSchema({
         ),
       }),
       column.field('hiredAt', {
-        label: () => t('playground.tableCommon.columns.hiredAt'),
         icon: 'i-lucide-calendar-days',
+        label: () => t('playground.tableCommon.columns.hiredAt'),
         minWidth: 170,
         render: ({ value }) => (
           <span class="text-highlighted">{formatDate(String(value ?? ''))}</span>

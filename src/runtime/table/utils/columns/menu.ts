@@ -30,13 +30,13 @@ export function createColumnMenuItems(options: {
           class: sortState === 'asc' ? activeClass : undefined,
           icon: 'i-lucide-arrow-up',
           label: t('table.columnsMenu.sortAsc'),
-          onSelect: () => options.setSorting({ key: sortableKey, dir: 'asc' }),
+          onSelect: () => options.setSorting({ dir: 'asc', key: sortableKey }),
         },
         {
           class: sortState === 'desc' ? activeClass : undefined,
           icon: 'i-lucide-arrow-down',
           label: t('table.columnsMenu.sortDesc'),
-          onSelect: () => options.setSorting({ key: sortableKey, dir: 'desc' }),
+          onSelect: () => options.setSorting({ dir: 'desc', key: sortableKey }),
         },
         {
           disabled: !sortState,

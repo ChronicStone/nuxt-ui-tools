@@ -49,10 +49,10 @@ export function syncColumnState(options: {
     ...options.currentState,
     columnOrder: nextColumnOrder,
     columnPinning: sanitizeColumnPinning({
-      schema: options.schema,
-      runtimeColumns: options.runtimeColumns,
-      visibleColumnIds,
       currentPinning: options.currentState.columnPinning,
+      runtimeColumns: options.runtimeColumns,
+      schema: options.schema,
+      visibleColumnIds,
     }),
     columnVisibility: nextVisibility,
   }
@@ -158,9 +158,9 @@ export function createResetColumnState(options: {
             .filter(
               (column) =>
                 resolvePinnedSide({
-                  schema: options.schema,
                   columnId: column.id,
                   pinned: column.pinned,
+                  schema: options.schema,
                 }) === 'left',
             )
             .map((column) => column.id),
@@ -171,9 +171,9 @@ export function createResetColumnState(options: {
           .filter(
             (column) =>
               resolvePinnedSide({
-                schema: options.schema,
                 columnId: column.id,
                 pinned: column.pinned,
+                schema: options.schema,
               }) === 'right',
           )
           .map((column) => column.id),
@@ -216,9 +216,9 @@ function sanitizeColumnPinning(options: {
         .filter(
           (column) =>
             resolvePinnedSide({
-              schema: options.schema,
               columnId: column.id,
               pinned: column.pinned,
+              schema: options.schema,
             }) === 'left',
         )
         .map((column) => column.id),
@@ -235,9 +235,9 @@ function sanitizeColumnPinning(options: {
           .filter(
             (column) =>
               resolvePinnedSide({
-                schema: options.schema,
                 columnId: column.id,
                 pinned: column.pinned,
+                schema: options.schema,
               }) === 'right',
           )
           .map((column) => column.id),

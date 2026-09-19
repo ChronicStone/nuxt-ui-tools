@@ -16,21 +16,21 @@ const center = {
   affiliationGroups: [
     {
       id: 'district',
-      name: 'District',
-      slug: 'district',
       items: [
         { id: 'manhattan', name: 'Manhattan' },
         { id: 'queens', name: 'Queens' },
       ],
+      name: 'District',
+      slug: 'district',
     },
     {
       id: 'delivery-format',
-      name: 'Delivery format',
-      slug: 'deliveryFormat',
       items: [
         { id: 'onsite', name: 'Onsite' },
         { id: 'remote', name: 'Remote' },
       ],
+      name: 'Delivery format',
+      slug: 'deliveryFormat',
     },
   ],
   country: 'United States',
@@ -46,28 +46,28 @@ function createReferenceReconciliationSchema() {
     columns: {
       dynamic: ({ dynamic }) => [
         dynamic.optionGroups({
-          key: 'affiliations',
-          source: center.affiliationGroups,
-          itemKey: (group) => group.id,
-          itemLabel: (group) => group.name,
-          targetKey: (group) => group.slug,
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
           },
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          key: 'affiliations',
           options: (group) =>
             group.items.map((item) => ({
               label: item.name,
               value: item.id,
             })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
           output: {
             into: 'affiliations',
+          },
+          source: center.affiliationGroups,
+          targetKey: (group) => group.slug,
+          values: {
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+            mode: 'csv',
+            resolve: 'label',
+            separator: ',',
           },
         }),
       ],
@@ -123,11 +123,11 @@ function createReferenceReconciliationSchema() {
     matching: { strategy: 'smart' },
     references: (reference) => [
       reference.select('productId', {
-        source: 'examNameRaw',
         options: center.products.map((product) => ({
           label: product.name,
           value: product.id,
         })),
+        source: 'examNameRaw',
       }),
     ],
     sheet: { strategy: 'selection' },
@@ -189,8 +189,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-reference-reconciliation.xlsx',
   }

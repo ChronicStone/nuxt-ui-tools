@@ -114,13 +114,13 @@ function mapRowActionToDropdownItem(options: {
     ...options.action,
     children: children?.length ? children : undefined,
     disabled: resolveFlag({
-      value: options.action.disabled,
       scope: options.scope,
+      value: options.action.disabled,
     }),
     label: resolveActionLabel(options.action),
     loading: resolveFlag({
-      value: options.action.loading,
       scope: options.scope,
+      value: options.action.loading,
     }),
     onSelect: () => {
       void options.action.action?.(options.scope)

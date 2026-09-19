@@ -66,11 +66,11 @@ function createFormApi(): FormApiController {
       const instance: FormApiRuntimeInstance = {
         cancel: (formData) => {
           removeInstance(id)
-          resolve({ isCompleted: false, formData })
+          resolve({ formData, isCompleted: false })
         },
         complete: (formData, submitData) => {
           removeInstance(id)
-          resolve({ isCompleted: true, formData, submitData })
+          resolve({ formData, isCompleted: true, submitData })
         },
         id,
         input: options.input,

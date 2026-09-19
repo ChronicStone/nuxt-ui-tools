@@ -82,14 +82,14 @@ describe('result count part', () => {
       render: () => h(DataListResultCount),
       schema: createAccountsSchema({
         rows: Array.from({ length: 1250 }, (_, i) => ({
-          id: `a-${i}`,
-          name: `N${i}`,
-          legalEntity: '',
-          status: 'active',
-          country: 'FR',
-          contracts: 1,
           consumption: 1,
+          contracts: 1,
+          country: 'FR',
           edofSync: true,
+          id: `a-${i}`,
+          legalEntity: '',
+          name: `N${i}`,
+          status: 'active',
           updatedAt: '',
         })) as never,
       }),
@@ -99,7 +99,7 @@ describe('result count part', () => {
     harness.unmount()
 
     harness = await mountLoaded({
-      render: () => h(DataListResultCount, { ui: { root: 'cnt-x' }, size: 'xs' }),
+      render: () => h(DataListResultCount, { size: 'xs', ui: { root: 'cnt-x' } }),
       schema: createAuditSchema({ total: 45 }),
     })
     const span = harness.wrapper.find('span')

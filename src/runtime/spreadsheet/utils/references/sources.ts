@@ -38,8 +38,8 @@ export function collectSpreadsheetReferenceSources(
     return [
       {
         entries: Array.from(entries.entries()).map(([value, rowIndexes]) => ({
-          value,
           rowIndexes,
+          value,
         })),
         reference: entry,
       },

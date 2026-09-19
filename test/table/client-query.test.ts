@@ -45,10 +45,10 @@ const rows: TestRow[] = [
     tags: ['math', 'history'],
     teams: [
       {
-        name: 'Analytics',
         lead: {
           name: 'Charles Babbage',
         },
+        name: 'Analytics',
       },
     ],
     verified: true,
@@ -68,10 +68,10 @@ const rows: TestRow[] = [
     tags: ['compiler'],
     teams: [
       {
-        name: 'Compiler',
         lead: {
           name: 'Howard Aiken',
         },
+        name: 'Compiler',
       },
     ],
     verified: false,
@@ -91,10 +91,10 @@ const rows: TestRow[] = [
     tags: ['space'],
     teams: [
       {
-        name: 'Flight',
         lead: {
           name: 'Dorothy Vaughan',
         },
+        name: 'Flight',
       },
     ],
     verified: false,
@@ -114,10 +114,10 @@ const rows: TestRow[] = [
     tags: ['compiler', 'distributed'],
     teams: [
       {
-        name: 'Systems',
         lead: {
           name: 'John Guttag',
         },
+        name: 'Systems',
       },
     ],
     verified: true,
@@ -157,8 +157,8 @@ function queryIds(
     request: createRequest({
       ...request,
       search: {
-        value: request.search?.value ?? '',
         fields,
+        value: request.search?.value ?? '',
       },
     }),
     rows,
@@ -171,8 +171,6 @@ describe(executeClientQuery, () => {
       const result = executeClientQuery({
         request: createRequest({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'group',
@@ -214,6 +212,8 @@ describe(executeClientQuery, () => {
                 },
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
         rows,
@@ -230,9 +230,9 @@ describe(executeClientQuery, () => {
             filters: {
               children: [
                 {
-                  type: 'condition',
                   key: 'tags',
                   operator: 'contains',
+                  type: 'condition',
                   value: 'COMP',
                 },
               ],
@@ -251,9 +251,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'verified',
                 operator: 'is',
+                type: 'condition',
                 value: true,
               },
             ],
@@ -268,9 +268,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'createdAt',
                 operator: 'is',
+                type: 'condition',
                 value: '2026-03-08T08:00:00.000Z',
               },
             ],
@@ -285,9 +285,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'status',
                 operator: 'isNot',
+                type: 'condition',
                 value: 'active',
               },
             ],
@@ -304,9 +304,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'status',
                 operator: 'isAnyOf',
+                type: 'condition',
                 value: ['inactive', 'pending'],
               },
             ],
@@ -322,9 +322,9 @@ describe(executeClientQuery, () => {
             filters: {
               children: [
                 {
-                  type: 'condition',
                   key: 'tags',
                   operator: 'isAnyOf',
+                  type: 'condition',
                   value: ['distributed', 'space'],
                 },
               ],
@@ -343,9 +343,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'gt',
+                type: 'condition',
                 value: 21,
               },
             ],
@@ -360,9 +360,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'gte',
+                type: 'condition',
                 value: 21,
               },
             ],
@@ -377,9 +377,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'lt',
+                type: 'condition',
                 value: 21,
               },
             ],
@@ -394,9 +394,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'lte',
+                type: 'condition',
                 value: 21,
               },
             ],
@@ -413,9 +413,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'between',
+                type: 'condition',
                 value: {
                   from: 12,
                   to: 28,
@@ -433,9 +433,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'between',
+                type: 'condition',
                 value: {
                   from: 28,
                 },
@@ -452,9 +452,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'createdAt',
                 operator: 'between',
+                type: 'condition',
                 value: {
                   from: new Date('2026-03-05T00:00:00.000Z'),
                   to: new Date('2026-03-10T08:00:00.000Z'),
@@ -474,9 +474,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'createdAt',
                 operator: 'after',
+                type: 'condition',
                 value: new Date('2026-03-05T00:00:00.000Z'),
               },
             ],
@@ -491,9 +491,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'createdAt',
                 operator: 'before',
+                type: 'condition',
                 value: new Date('2026-03-06T08:00:00.000Z'),
               },
             ],
@@ -510,9 +510,9 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'between',
+                type: 'condition',
                 value: 12,
               },
             ],
@@ -599,8 +599,8 @@ describe(executeClientQuery, () => {
       const result = executeClientQuery({
         request: createRequest({
           search: {
-            value: 'definitely-not-present',
             fields: [],
+            value: 'definitely-not-present',
           },
         }),
         rows,
@@ -615,9 +615,15 @@ describe(executeClientQuery, () => {
     it('applies search, sorting and pagination on client rows', () => {
       const result = executeClientQuery({
         request: createRequest({
+          pagination: {
+            count: 'exact',
+            mode: 'offset',
+            pageIndex: 2,
+            pageSize: 2,
+          },
           search: {
-            value: 'a',
             fields: ['name', 'tags'],
+            value: 'a',
           },
           sorting: [
             {
@@ -625,12 +631,6 @@ describe(executeClientQuery, () => {
               dir: 'desc',
             },
           ],
-          pagination: {
-            mode: 'offset',
-            pageIndex: 2,
-            pageSize: 2,
-            count: 'exact',
-          },
         }),
         rows,
       })
@@ -644,16 +644,16 @@ describe(executeClientQuery, () => {
         request: createRequest({
           sorting: [
             {
+              dir: 'asc',
               key: 'priority',
-              dir: 'asc',
             },
             {
-              key: 'score',
               dir: 'desc',
+              key: 'score',
             },
             {
-              key: 'lastLogin',
               dir: 'asc',
+              key: 'lastLogin',
             },
           ],
         }),
@@ -667,10 +667,10 @@ describe(executeClientQuery, () => {
       const result = executeClientQuery({
         request: createRequest({
           pagination: {
+            count: 'exact',
             mode: 'offset',
             pageIndex: 0,
             pageSize: 0,
-            count: 'exact',
           },
         }),
         rows,
@@ -684,10 +684,10 @@ describe(executeClientQuery, () => {
       const result = executeClientQuery({
         request: createRequest({
           pagination: {
+            count: 'exact',
             mode: 'offset',
             pageIndex: 3,
             pageSize: 2,
-            count: 'exact',
           },
         }),
         rows,

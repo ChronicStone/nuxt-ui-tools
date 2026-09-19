@@ -5,8 +5,8 @@ const drawer = ref(false)
 const nav = [
   {
     items: [
-      { to: '/accounts', label: 'Comptes', icon: 'i-lucide-building-2' },
-      { to: '/audit', label: 'Journal d’audit', icon: 'i-lucide-scroll-text' },
+      { icon: 'i-lucide-building-2', label: 'Comptes', to: '/accounts' },
+      { icon: 'i-lucide-scroll-text', label: 'Journal d’audit', to: '/audit' },
     ],
     label: 'Relations',
   },

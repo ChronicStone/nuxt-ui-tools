@@ -119,9 +119,9 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
     }) =>
       selectResolution({
         resolutionField: selection.referenceField,
-        sourceValue: selection.sourceValue,
-        selectedValue: selection.selectedValue,
         selectedLabel: selection.selectedLabel,
+        selectedValue: selection.selectedValue,
+        sourceValue: selection.sourceValue,
       }),
     selectResolution,
     status,

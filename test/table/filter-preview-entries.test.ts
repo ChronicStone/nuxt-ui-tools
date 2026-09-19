@@ -30,7 +30,7 @@ describe('option previews', () => {
     expect(preview).toStrictEqual({
       active: true,
       count: 1,
-      entries: [{ label: 'Active', icon: undefined, color: '#f90' }],
+      entries: [{ color: '#f90', icon: undefined, label: 'Active' }],
       summary: '',
       tags: ['Active'],
     })

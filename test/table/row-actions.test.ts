@@ -189,10 +189,10 @@ describe('row actions', () => {
         {
           children: [
             {
+              action: () => undefined,
+              condition: () => false,
               key: 'group-hidden',
               label: 'Group hidden',
-              condition: () => false,
-              action: () => undefined,
             },
           ],
           key: 'group',
@@ -226,10 +226,10 @@ describe('row actions', () => {
         {
           children: [
             {
+              action: () => undefined,
+              condition: () => false,
               key: 'hidden-child',
               label: 'Hidden child',
-              condition: () => false,
-              action: () => undefined,
             },
           ],
           href: '/users/1',
@@ -265,7 +265,7 @@ describe('row actions', () => {
         context: {},
         layout: 'table',
         pageContext: {},
-        rows: [{ id: '1', active: false }],
+        rows: [{ active: false, id: '1' }],
         schema,
         tableApi: createTableApiStub(),
       }),

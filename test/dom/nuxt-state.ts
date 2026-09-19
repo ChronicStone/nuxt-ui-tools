@@ -28,7 +28,7 @@ export const viewport = {
     value: Object.fromEntries(
       order.map((key, index) => [
         key,
-        { size: BREAKPOINTS[key], mediaQuery: mediaQueryFor(index) },
+        { mediaQuery: mediaQueryFor(index), size: BREAKPOINTS[key] },
       ]),
     ),
   },

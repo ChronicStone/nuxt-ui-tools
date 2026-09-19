@@ -86,9 +86,10 @@ const schema = defineTableSchema({
     search: { fields: ['number', 'customer'], placeholder: 'Search invoices' },
     ui: (filter) => [
       filter.option('status', {
-        label: 'Status',
         behavior: { defaultOperator: 'isAnyOf' },
         display: { location: 'tag' },
+        editor: { closeOnSelect: false, selection: { mode: 'multiple' } },
+        label: 'Status',
         source: {
           options: [
             { label: 'Open', value: 'Open' },
@@ -96,25 +97,24 @@ const schema = defineTableSchema({
             { label: 'Overdue', value: 'Overdue' },
           ],
         },
-        editor: { selection: { mode: 'multiple' }, closeOnSelect: false },
       }),
       filter.text('customer', {
-        label: 'Customer',
         behavior: { operators: ['contains', 'is'] },
         display: { location: 'panel' },
-        editor: { placeholder: 'Customer name', leadingIcon: 'i-lucide-building-2' },
+        editor: { leadingIcon: 'i-lucide-building-2', placeholder: 'Customer name' },
+        label: 'Customer',
       }),
       filter.number('amount', {
-        label: 'Amount',
         behavior: { operators: ['gte', 'lte', 'between'] },
         display: { location: 'panel' },
-        editor: { min: 0, max: 5000, step: 100 },
+        editor: { max: 5000, min: 0, step: 100 },
+        label: 'Amount',
       }),
       filter.text('due', {
-        label: 'Due date',
         behavior: { operators: ['contains', 'is'] },
         display: { location: 'tag-dynamic' },
-        editor: { placeholder: 'YYYY-MM-DD', leadingIcon: 'i-lucide-calendar-days' },
+        editor: { leadingIcon: 'i-lucide-calendar-days', placeholder: 'YYYY-MM-DD' },
+        label: 'Due date',
       }),
     ],
   },
@@ -123,8 +123,8 @@ const schema = defineTableSchema({
   source: {
     mode: 'client',
     query: () => ({
-      queryKey: ['table-composition-staged-invoices'],
       queryFn: async () => invoices,
+      queryKey: ['table-composition-staged-invoices'],
     }),
   },
   table: {

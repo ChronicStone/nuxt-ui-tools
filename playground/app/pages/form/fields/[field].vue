@@ -41,7 +41,7 @@ const form = useForm({
   input,
   onSubmit: async ({ formData }) => {
     submitted.value = formData
-    return { success: true, data: formData }
+    return { data: formData, success: true }
   },
   schema,
 })

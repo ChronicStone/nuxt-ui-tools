@@ -215,7 +215,7 @@ function getMetaTone(resolution: SpreadsheetReferenceResolution) {
 
   const bestScore = getBestScore(resolution.candidates)
   if (bestScore === null) {
-    return { label: 'No options available', class: 'text-error' }
+    return { class: 'text-error', label: 'No options available' }
   }
   if (bestScore === 0) {
     return null
@@ -226,12 +226,12 @@ function getMetaTone(resolution: SpreadsheetReferenceResolution) {
 
 function getResolutionBadge(resolution: SpreadsheetReferenceResolution) {
   if (resolution.status === 'matched') {
-    return { label: 'Resolved', color: 'success' as const }
+    return { color: 'success' as const, label: 'Resolved' }
   }
 
   const bestScore = getBestScore(resolution.candidates)
   if (bestScore === null) {
-    return { label: 'No options', color: 'error' as const }
+    return { color: 'error' as const, label: 'No options' }
   }
 
   return { color: 'warning' as const, label: 'Needs review' }

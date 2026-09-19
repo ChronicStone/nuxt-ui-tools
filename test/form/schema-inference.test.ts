@@ -15,27 +15,26 @@ const schema = defineFormSchema({
   context: {
     countries: () =>
       queryOptions({
-        queryKey: ['countries'],
         queryFn: async () => [
           { label: 'France', value: 'FR' },
           { label: 'Belgium', value: 'BE' },
         ],
+        queryKey: ['countries'],
       }),
     preferredCurrency: 'EUR',
   },
   fields: [
     {
       key: 'name',
-      type: 'text',
       label: 'Name',
       labelExtra: () => h('a', { href: '/help' }, 'Help'),
+      type: 'text',
       validation: {
         required: true,
       },
     },
     {
       key: 'country',
-      type: 'select',
       label: 'Country',
       options: ({ ctx }) => {
         expectTypeOf(ctx.countries.value).toEqualTypeOf<
@@ -45,25 +44,20 @@ const schema = defineFormSchema({
 
         return ctx.countries.value ?? []
       },
+      type: 'select',
     },
     {
-      key: 'accepted',
-      type: 'checkbox',
-      label: 'Accepted',
       default: false,
+      key: 'accepted',
+      label: 'Accepted',
+      type: 'checkbox',
     },
     {
+      default: 'account_123',
       key: 'internalId',
       type: 'hidden',
-      default: 'account_123',
     },
     {
-      key: 'metadata',
-      type: 'object',
-      layout: {
-        columns: 2,
-        span: 'full',
-      },
       fields: [
         {
           key: 'erpId',
@@ -71,6 +65,12 @@ const schema = defineFormSchema({
           label: 'ERP ID',
         },
       ],
+      key: 'metadata',
+      layout: {
+        columns: 2,
+        span: 'full',
+      },
+      type: 'object',
     },
   ],
   formKey: 'exassess.account',

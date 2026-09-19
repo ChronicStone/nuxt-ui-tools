@@ -90,9 +90,9 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
       const nextSource = querySource.value
       if (!nextSource) {
         return {
-          queryKey: ['form-context', 'disabled'],
-          queryFn: async () => undefined,
           enabled: false,
+          queryFn: async () => undefined,
+          queryKey: ['form-context', 'disabled'],
         }
       }
 

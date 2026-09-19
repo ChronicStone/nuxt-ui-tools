@@ -89,8 +89,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-column-resolve-lab.xlsx',
   }

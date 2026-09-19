@@ -47,8 +47,8 @@ export function useTableApi<TSchema = TableSchemaView>(
     layout: params.layout.activeLayout,
     query: computed<PublicTableQueryState>(() =>
       mapPublicQueryState({
-        queryState: params.state.queryState,
         activeLayout: params.layout.activeLayout.value,
+        queryState: params.state.queryState,
       }),
     ),
   }
@@ -114,10 +114,10 @@ export function useTableApi<TSchema = TableSchemaView>(
     selectAll: params.selection.selectAllRows,
     selectRows: (rowIds) => params.selection.selectRows({ rowIds }),
     state: computed(() => ({
-      selectedKeys: params.selection.selectedKeys.value,
-      selectedCount: params.selection.selectedCount.value,
       allSelected: params.selection.allSelected.value,
       partiallySelected: params.selection.partiallySelected.value,
+      selectedCount: params.selection.selectedCount.value,
+      selectedKeys: params.selection.selectedKeys.value,
     })),
     toggle: params.selection.toggleRowSelection,
     unselectRows: (rowIds) => params.selection.unselectRows({ rowIds }),
@@ -131,7 +131,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     query() {
       const defaultLayout = params.runtimeSchema.value.defaultLayout
       const nextLayout = defaultLayout ?? 'table'
-      const defaultSort = getDefaultSort({ schema: params.runtimeSchema.value, layout: nextLayout })
+      const defaultSort = getDefaultSort({ layout: nextLayout, schema: params.runtimeSchema.value })
 
       params.layout.activeLayout.value = nextLayout
       params.pagination.reset()
@@ -168,18 +168,18 @@ function createPublicPaginationApi(
 ): TableNoPaginationApi | TableCursorPaginationApi | TableOffsetPaginationApi {
   if (pagination.mode.value === 'cursor') {
     return {
-      mode: 'cursor',
-      state: pagination.cursorState,
       loadMore: pagination.loadMore,
+      mode: 'cursor',
       reset: pagination.reset,
+      state: pagination.cursorState,
     }
   }
 
   if (pagination.mode.value === 'none') {
     return {
       mode: 'none',
-      state: pagination.noneState,
       reset: pagination.reset,
+      state: pagination.noneState,
     }
   }
 

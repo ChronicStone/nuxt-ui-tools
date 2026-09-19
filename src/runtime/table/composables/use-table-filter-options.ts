@@ -161,13 +161,13 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
       return {
         ...queryOptions,
-        queryKey: queryOptions.queryKey,
-        queryFn: queryOptions.queryFn,
         placeholderData: (
           previousData: TableFilterOptionEntry[] | TableFilterOptionQueryResult | undefined,
         ) => previousData,
-        staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
+        queryFn: queryOptions.queryFn,
+        queryKey: queryOptions.queryKey,
         refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+        staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
       }
     }),
   )
@@ -188,11 +188,11 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
         facetConfig.value.query({
           facets: [
             {
+              cursor: undefined,
               key: options.definition.key,
+              limit: facetConfig.value.limit,
               mode: resolveTableFacetMode(facetConfig.value),
               search: facetSearch.value,
-              limit: facetConfig.value.limit,
-              cursor: undefined,
             },
           ],
           table: options.queryContent.facetsBaseContext.value,
@@ -201,12 +201,12 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
       return {
         ...queryOptions,
-        queryKey: queryOptions.queryKey,
-        queryFn: queryOptions.queryFn,
-        placeholderData: (previousData: TableFacetExecutionResult | undefined) => previousData,
         enabled: shouldResolveCounts.value,
-        staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
+        placeholderData: (previousData: TableFacetExecutionResult | undefined) => previousData,
+        queryFn: queryOptions.queryFn,
+        queryKey: queryOptions.queryKey,
         refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+        staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
       }
     }),
   )

@@ -24,9 +24,9 @@ const schema = defineFormSchema({
             required: true,
             rules: [
               {
+                message: 'Invalid scope',
                 name: 'scope',
                 validate: ({ api }) => api.value.get() !== 'forbidden',
-                message: 'Invalid scope',
               },
             ],
           },

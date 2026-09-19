@@ -48,13 +48,13 @@ function createDerivedReferencesSchema() {
     },
     references: (reference) => [
       reference.select('productId', {
-        source: 'productLabelRaw',
         options: products,
         rules: (v) => [
           v.required({
             message: 'A product match is required before import',
           }),
         ],
+        source: 'productLabelRaw',
       }),
     ],
     sheet: {
@@ -80,8 +80,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-derived-references-lab.xlsx',
   }

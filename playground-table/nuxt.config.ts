@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       meta: [
-        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+        { content: 'width=device-width, initial-scale=1, viewport-fit=cover', name: 'viewport' },
       ],
     },
   },
@@ -19,8 +19,8 @@ export default defineNuxtConfig({
   i18n: {
     defaultLocale: 'fr',
     locales: [
-      { code: 'fr', name: 'Français', language: 'fr-FR' },
-      { code: 'en', name: 'English', language: 'en-US' },
+      { code: 'fr', language: 'fr-FR', name: 'Français' },
+      { code: 'en', language: 'en-US', name: 'English' },
     ],
     strategy: 'no_prefix',
     vueI18n: './i18n.config.ts',

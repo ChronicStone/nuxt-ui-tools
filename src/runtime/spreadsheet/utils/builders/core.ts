@@ -227,12 +227,12 @@ function createSpreadsheetDynamicValueBuilder(): SpreadsheetDynamicValueBuilder 
   }): SpreadsheetDynamicOptionsValueDefinition<TOption, 'single' | 'multiple'> {
     if (config.mode === 'multiple') {
       return {
-        kind: 'options',
         from: config.from,
+        itemModifiers: config.itemModifiers,
+        kind: 'options',
+        matchBy: config.matchBy,
         mode: 'multiple',
         separator: config.separator,
-        matchBy: config.matchBy,
-        itemModifiers: config.itemModifiers,
       }
     }
 
@@ -320,45 +320,45 @@ export function createSpreadsheetDynamicBuilder<TContext>(
     arrayFromCollection(rootKey, config) {
       const items = buildSpreadsheetCollectionItems({
         context,
-        from: config.from,
         each: config.each,
+        from: config.from,
         resolveValue: (item) => resolveDynamicCollectionValue(item.value),
       })
 
       return {
-        kind: 'collection',
-        rootKey,
         as: 'array',
         items,
+        kind: 'collection',
+        rootKey,
       }
     },
     optionGroups(config) {
       return {
-        kind: 'option-groups',
-        key: config.key,
-        source: config.source,
+        header: config.header,
         itemKey: config.itemKey,
         itemLabel: config.itemLabel,
-        targetKey: config.targetKey,
-        header: config.header,
+        key: config.key,
+        kind: 'option-groups',
         options: config.options,
-        values: config.values,
         output: config.output,
+        source: config.source,
+        targetKey: config.targetKey,
+        values: config.values,
       }
     },
     recordFromCollection(rootKey, config) {
       const items = buildSpreadsheetCollectionItems({
         context,
-        from: config.from,
         each: config.each,
+        from: config.from,
         resolveValue: (item) => resolveDynamicCollectionValue(item.value),
       })
 
       return {
-        kind: 'collection',
-        rootKey,
         as: 'record',
         items,
+        kind: 'collection',
+        rootKey,
       }
     },
   }

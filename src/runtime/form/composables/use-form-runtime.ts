@@ -295,11 +295,11 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     getFieldApi: apiFactory,
     getFieldCallbackParams: (path, field) =>
       fieldCallbackParams({
-        field,
-        state: state.state,
-        ctx: context,
         api: apiFactory(path, field),
+        ctx: context,
+        field,
         parentPath: path.slice(0, -1),
+        state: state.state,
       }),
     getFieldError: validation.getFieldError,
     getValue: state.getValue,
@@ -378,11 +378,11 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       shouldRenderField(
         field,
         fieldCallbackParams({
-          field,
-          state: state.state,
-          ctx: context,
           api: apiFactory(path, field),
+          ctx: context,
+          field,
           parentPath: path.slice(0, -1),
+          state: state.state,
         }),
       ),
     state: state.state,

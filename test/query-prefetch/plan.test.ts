@@ -9,7 +9,7 @@ import {
 describe('query prefetch plans', () => {
   it('preserves selected data across ordered stages', () => {
     const productQuery = queryOptions({
-      queryFn: async () => ({ id: '42', categoryId: 'tools' }),
+      queryFn: async () => ({ categoryId: 'tools', id: '42' }),
       queryKey: ['product', '42'] as const,
       select: (product) => ({ id: product.id }),
     })

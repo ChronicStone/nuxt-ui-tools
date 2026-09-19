@@ -11,7 +11,7 @@ describe('filter option utils', () => {
         label: 'Status',
       },
       deriveCounts: false,
-      facetCounts: [{ value: 'todo', count: 3 }],
+      facetCounts: [{ count: 3, value: 'todo' }],
       missingCountFallback: 0,
       options: [
         { label: 'Todo', value: 'todo' },
@@ -31,7 +31,7 @@ describe('filter option utils', () => {
         label: 'Active',
       },
       deriveCounts: false,
-      facetCounts: [{ value: true, count: 5 }],
+      facetCounts: [{ count: 5, value: true }],
       missingCountFallback: 0,
       rows: [],
     })

@@ -158,7 +158,7 @@ describe('cursor pagination', () => {
     const before = onPage.mock.calls.length
     await pagination.loadMore()
     await harness.flush()
-    expect(onPage.mock.calls).toHaveLength(before)
+    expect(onPage).toHaveBeenCalledTimes(before)
   })
 
   it('ignores offset-only operations', async () => {

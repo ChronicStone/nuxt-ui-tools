@@ -141,10 +141,10 @@ export function createControlStub(name: string, tag = 'div') {
           tag,
           {
             ...attrs,
-            type: tag === 'button' ? 'button' : undefined,
-            disabled: tag === 'button' ? Boolean(props.disabled) : undefined,
             class: [attrs.class, ui?.base, ui?.root],
             'data-ui': name,
+            disabled: tag === 'button' ? Boolean(props.disabled) : undefined,
+            type: tag === 'button' ? 'button' : undefined,
             ...dataAttributes(props as Any, controlKeys),
             ...uiAttributes(props.ui),
           },
@@ -201,8 +201,8 @@ export function createOverlayStub(name: string) {
           {
             ...attrs,
             class: [attrs.class, ui?.root],
-            'data-ui': name,
             'data-open': String(open),
+            'data-ui': name,
             ...dataAttributes(props as Any, controlKeys),
             ...uiAttributes(props.ui),
           },
@@ -210,10 +210,10 @@ export function createOverlayStub(name: string) {
             h(
               'div',
               { 'data-ui-trigger': '', onClick: () => emit('update:open', !open) },
-              slots.default?.({ open, close: () => {} }),
+              slots.default?.({ close: () => {}, open }),
             ),
             open
-              ? h('div', { 'data-ui-content': '', class: [ui?.content, ui?.body] }, content)
+              ? h('div', { class: [ui?.content, ui?.body], 'data-ui-content': '' }, content)
               : null,
             items,
           ],
@@ -265,16 +265,16 @@ export function createInputStub(
             'select',
             {
               ...shared,
-              value: String(props.modelValue ?? ''),
               onChange: (event: Event) =>
                 emit('update:modelValue', (event.target as HTMLSelectElement).value),
+              value: String(props.modelValue ?? ''),
             },
             items.map((item) =>
               h(
                 'option',
                 {
-                  value: String(item.value),
                   selected: String(item.value) === String(props.modelValue),
+                  value: String(item.value),
                 },
                 item.label,
               ),
@@ -289,10 +289,10 @@ export function createInputStub(
             items.map((item) =>
               h('label', { 'data-ui-radio': String(item.value) }, [
                 h('input', {
-                  type: 'radio',
-                  value: String(item.value),
                   checked: String(item.value) === String(props.modelValue),
                   onChange: () => emit('update:modelValue', item.value),
+                  type: 'radio',
+                  value: String(item.value),
                 }),
                 item.label,
               ]),
@@ -302,18 +302,15 @@ export function createInputStub(
         if (kind === 'checkbox') {
           return h('input', {
             ...shared,
-            type: 'checkbox',
             checked: props.modelValue === true,
             'data-indeterminate': props.modelValue === 'indeterminate' ? 'true' : undefined,
             onClick: () => emit('update:modelValue', props.modelValue !== true),
+            type: 'checkbox',
           })
         }
-        return h('span', { 'data-ui-wrap': name, class: ui?.root }, [
+        return h('span', { class: ui?.root, 'data-ui-wrap': name }, [
           h('input', {
             ...shared,
-            type: kind === 'number' ? 'number' : ((props.type as string | undefined) ?? 'text'),
-            value: props.modelValue == null ? '' : String(props.modelValue),
-            placeholder: props.placeholder,
             onInput: (event: Event) => {
               const value = (event.target as HTMLInputElement).value
               emit(
@@ -321,6 +318,9 @@ export function createInputStub(
                 kind === 'number' ? (value === '' ? undefined : Number(value)) : value,
               )
             },
+            placeholder: props.placeholder,
+            type: kind === 'number' ? 'number' : ((props.type as string | undefined) ?? 'text'),
+            value: props.modelValue == null ? '' : String(props.modelValue),
           }),
           slots.trailing?.(),
         ])
@@ -359,12 +359,12 @@ export const UPaginationStub = defineComponent({
         'nav',
         {
           ...attrs,
-          'data-ui': 'UPagination',
+          class: [attrs.class, ui?.root],
+          'data-items-per-page': String(props.itemsPerPage ?? ''),
           'data-page': String(page),
           'data-pages': String(pages),
           'data-total': String(props.total ?? ''),
-          'data-items-per-page': String(props.itemsPerPage ?? ''),
-          class: [attrs.class, ui?.root],
+          'data-ui': 'UPagination',
           ...dataAttributes(props as Any, controlKeys),
           ...uiAttributes(props.ui),
         },
@@ -372,21 +372,21 @@ export const UPaginationStub = defineComponent({
           h(
             'button',
             {
-              type: 'button',
-              'data-ui-page-first': '',
               class: ui?.first,
+              'data-ui-page-first': '',
               onClick: () => emit('update:page', 1),
+              type: 'button',
             },
             '«',
           ),
           h(
             'button',
             {
-              type: 'button',
-              'data-ui-page-prev': '',
               class: ui?.prev,
+              'data-ui-page-prev': '',
               disabled: page <= 1,
               onClick: () => emit('update:page', page - 1),
+              type: 'button',
             },
             '‹',
           ),
@@ -394,11 +394,11 @@ export const UPaginationStub = defineComponent({
             h(
               'button',
               {
-                type: 'button',
-                'data-ui-page': String(index + 1),
-                'data-active': String(index + 1 === page),
                 class: ui?.item,
+                'data-active': String(index + 1 === page),
+                'data-ui-page': String(index + 1),
                 onClick: () => emit('update:page', index + 1),
+                type: 'button',
               },
               String(index + 1),
             ),
@@ -406,21 +406,21 @@ export const UPaginationStub = defineComponent({
           h(
             'button',
             {
-              type: 'button',
-              'data-ui-page-next': '',
               class: ui?.next,
+              'data-ui-page-next': '',
               disabled: page >= pages,
               onClick: () => emit('update:page', page + 1),
+              type: 'button',
             },
             '›',
           ),
           h(
             'button',
             {
-              type: 'button',
-              'data-ui-page-last': '',
               class: ui?.last,
+              'data-ui-page-last': '',
               onClick: () => emit('update:page', pages),
+              type: 'button',
             },
             '»',
           ),

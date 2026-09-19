@@ -38,10 +38,10 @@ export function buildOptionFilterPreview(options: {
     count: labels.length,
     entries: mode === 'tags' ? entries.slice(0, preview.maxTags) : [],
     summary: resolvePreviewSummary({
-      labels,
-      mode,
-      maxTags: preview.maxTags,
       label: preview.label,
+      labels,
+      maxTags: preview.maxTags,
+      mode,
     }),
     tags: mode === 'tags' ? labels.slice(0, preview.maxTags) : [],
   }

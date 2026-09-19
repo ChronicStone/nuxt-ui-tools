@@ -390,8 +390,8 @@ function mapSelectedTreeEntries(options: {
     ...entry,
     children: mapSelectedTreeEntries({
       entries: entry.children,
-      selectedValues: options.selectedValues,
       filterUi: options.filterUi,
+      selectedValues: options.selectedValues,
     }),
     icon: resolveRowIcon({
       entry,

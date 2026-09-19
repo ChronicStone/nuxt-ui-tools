@@ -28,16 +28,16 @@ describe(useSpreadsheetImport, () => {
       columns: {
         static: (column) => [
           column.text('examNameRaw', {
-            rules: (v) => [v.required()],
             match: {
               headers: ['Exam name'],
             },
+            rules: (v) => [v.required()],
           }),
           column.text('firstName', {
-            rules: (v) => [v.required()],
             match: {
               headers: ['First name'],
             },
+            rules: (v) => [v.required()],
           }),
         ],
       },

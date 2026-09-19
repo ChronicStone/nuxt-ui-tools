@@ -31,15 +31,15 @@ describe('table search orchestration', () => {
         },
       } as never,
       schema: computed(() => ({
-        tableKey: 'users',
-        rowKey: 'id',
-        source: { query: () => ({ queryKey: ['users'] }) },
         filters: {
           search: {
             fields: ['name'],
             placeholder: 'Search team',
           },
         },
+        rowKey: 'id',
+        source: { query: () => ({ queryKey: ['users'] }) },
+        tableKey: 'users',
       })),
     })
 

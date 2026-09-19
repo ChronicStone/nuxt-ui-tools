@@ -68,9 +68,6 @@ export function useQueryState(params: UseQueryStateParams) {
     }
     if (paginationMode === 'cursor') {
       return {
-        mode: 'cursor',
-        cursor: null,
-        pageSize: defaultPageSize,
         count:
           params.schema.value.pagination &&
           isObject(params.schema.value.pagination) &&
@@ -78,6 +75,9 @@ export function useQueryState(params: UseQueryStateParams) {
           params.schema.value.pagination.mode === 'cursor'
             ? (params.schema.value.pagination.count ?? 'none')
             : 'none',
+        cursor: null,
+        mode: 'cursor',
+        pageSize: defaultPageSize,
       } as const
     }
 
@@ -147,10 +147,11 @@ export function useQueryState(params: UseQueryStateParams) {
     schema: {
       search: { codec: stringCodec, defaultValue: '' },
       ui: dynamicQueryState<TableUiFilterDefinition, TableQueryStateFilterRule[]>({
-        urlPrefix: 'ui',
-        definitions: () => params.schema.value.filters?.ui ?? [],
         defaultValue: resolveTableFilterDefaultRules(params.schema.value.filters?.ui ?? []),
-
+        definitions: () => params.schema.value.filters?.ui ?? [],
+        parse(entries, definitions) {
+          return parseTableFilterQueryState({ entries, definitions })
+        },
         resolve(filter) {
           const definition = normalizeFilterDefinition(filter)
           const operators = resolveFilterSupportedOperators(definition)
@@ -162,14 +163,10 @@ export function useQueryState(params: UseQueryStateParams) {
             codec,
           }))
         },
-
-        parse(entries, definitions) {
-          return parseTableFilterQueryState({ entries, definitions })
-        },
-
         serialize(rules, definitions) {
           return serializeTableFilterQueryState({ rules, definitions })
         },
+        urlPrefix: 'ui',
       }),
     },
   })

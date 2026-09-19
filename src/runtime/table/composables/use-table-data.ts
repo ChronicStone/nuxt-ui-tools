@@ -116,8 +116,8 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     queries: () =>
       contextItems.value.map((item) =>
         withEnabled(item.query(), params.startup.isActive.value, {
-          staleTime: QUERY_DEFAULTS.staleTime.context,
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+          staleTime: QUERY_DEFAULTS.staleTime.context,
         }),
       ),
   })
@@ -329,8 +329,8 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const data = computed<TableExternalState>(() => {
     if (!params.startup.isActive.value) {
       return {
-        rows: [],
         rowCount: 0,
+        rows: [],
       }
     }
 
@@ -363,9 +363,9 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     }
     if (params.schema.value.source.mode === 'client') {
       return executeClientFacets({
-        rows: rawData.value.rows,
-        request: requestContext.value,
         facets: clientFacetDescriptors.value,
+        request: requestContext.value,
+        rows: rawData.value.rows,
       })
     }
 
@@ -421,13 +421,13 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       return pageContextItems.value.map((item) =>
         withEnabled(
           item.query({
-            rows: data.value.rows,
             context: contextData.value,
+            rows: data.value.rows,
           }),
           true,
           {
-            staleTime: QUERY_DEFAULTS.staleTime.context,
             refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+            staleTime: QUERY_DEFAULTS.staleTime.context,
           },
         ),
       )
@@ -599,7 +599,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       const nextOverrides = new Map(cursorRowOverrides.value)
       for (const [index, row] of rows.entries()) {
         nextOverrides.set(
-          resolveTableRowId({ rowKey: params.schema.value.rowKey, row, index }),
+          resolveTableRowId({ index, row, rowKey: params.schema.value.rowKey }),
           row,
         )
       }
@@ -830,10 +830,10 @@ function createCursorQueryDefinition(options: {
         request: {
           ...options.request,
           pagination: {
-            mode: 'cursor',
-            cursor: queryContext.pageParam,
-            pageSize: pagination.pageSize,
             count: pagination.count,
+            cursor: queryContext.pageParam,
+            mode: 'cursor',
+            pageSize: pagination.pageSize,
           },
         },
       })

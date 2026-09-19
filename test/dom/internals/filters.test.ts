@@ -37,8 +37,8 @@ describe('table filters', () => {
     const { filters } = harness.internals
     const preview = filters.getFilterPreview({
       entries: [
-        { label: 'Actif', value: 'active', color: STATUS_COLOR.active },
-        { label: 'En attente', value: 'pending', color: STATUS_COLOR.pending },
+        { color: STATUS_COLOR.active, label: 'Actif', value: 'active' },
+        { color: STATUS_COLOR.pending, label: 'En attente', value: 'pending' },
       ],
       key: 'status',
     })

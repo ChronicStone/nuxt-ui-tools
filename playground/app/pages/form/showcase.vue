@@ -18,34 +18,34 @@ const addressOptionForm = defineFormSchema({
   fields: [
     {
       key: 'label',
-      type: 'text',
       label: 'Address label',
-      placeholder: 'Paris office',
       layout: {
         span: 'full',
       },
+      placeholder: 'Paris office',
+      type: 'text',
       validation: {
         required: true,
       },
     },
     {
       key: 'city',
-      type: 'text',
       label: 'City',
       placeholder: 'Paris',
+      type: 'text',
       validation: {
         required: true,
       },
     },
     {
       key: 'country',
-      type: 'select',
       label: 'Country',
       options: [
         { label: 'France', value: 'FR' },
         { label: 'Belgium', value: 'BE' },
         { label: 'Switzerland', value: 'CH' },
       ],
+      type: 'select',
     },
   ],
   formKey: 'playground.form.address-option',
@@ -60,7 +60,6 @@ const showcaseForm = defineFormSchema({
   context: {
     countries: () =>
       queryOptions({
-        queryKey: ['form-showcase-countries'],
         queryFn: async () => {
           await sleep(700)
 
@@ -70,11 +69,12 @@ const showcaseForm = defineFormSchema({
             { label: 'Switzerland', value: 'CH', description: 'Alpine region' },
           ]
         },
+        queryKey: ['form-showcase-countries'],
       }),
     roles: [
-      { label: 'Owner', value: 'owner', description: 'Full access' },
-      { label: 'Manager', value: 'manager', description: 'Operational access' },
-      { label: 'Reviewer', value: 'reviewer', description: 'Read and comment' },
+      { description: 'Full access', label: 'Owner', value: 'owner' },
+      { description: 'Operational access', label: 'Manager', value: 'manager' },
+      { description: 'Read and comment', label: 'Reviewer', value: 'reviewer' },
     ],
   },
   controls: {
@@ -90,44 +90,43 @@ const showcaseForm = defineFormSchema({
   },
   fields: [
     {
-      key: 'intro',
-      type: 'info',
       content:
         'This playground is now a field and runtime showcase: context-backed options, dotted paths, transforms, validation, arrays, uploads, and live output.',
+      key: 'intro',
       layout: {
         span: 'full',
       },
+      type: 'info',
     },
     {
       key: 'section.core',
-      type: 'divider',
       label: 'Core inputs',
       layout: {
         span: 'full',
       },
+      type: 'divider',
     },
     {
       key: 'profile.firstName',
-      type: 'text',
       label: 'First name',
       placeholder: 'Ada',
+      type: 'text',
       validation: {
         required: true,
       },
     },
     {
       key: 'profile.lastName',
-      type: 'text',
       label: 'Last name',
       placeholder: 'Lovelace',
+      type: 'text',
       validation: {
         required: true,
       },
     },
     {
-      key: 'profile.email',
-      type: 'text',
       inputType: 'email',
+      key: 'profile.email',
       label: 'Email',
       labelExtra: () =>
         h(ULink, { href: 'mailto:support@example.com', class: 'text-xs' }, () => 'Need help?'),
@@ -135,6 +134,7 @@ const showcaseForm = defineFormSchema({
       transform: {
         output: (value) => value?.trim().toLowerCase() ?? '',
       },
+      type: 'text',
       validation: {
         required: true,
         rules: [
@@ -151,11 +151,11 @@ const showcaseForm = defineFormSchema({
       },
     },
     {
-      key: 'profile.phone',
-      type: 'phone-number',
-      label: 'Phone number',
-      defaultCountryCode: 'FR',
       clearable: true,
+      defaultCountryCode: 'FR',
+      key: 'profile.phone',
+      label: 'Phone number',
+      type: 'phone-number',
       validation: {
         rules: [
           {
@@ -173,50 +173,48 @@ const showcaseForm = defineFormSchema({
       },
     },
     {
-      key: 'profile.birthDate',
-      type: 'date',
-      label: 'Localized date',
-      clearable: true,
-      previewFormat: {
-        dateStyle: 'medium',
+      calendar: {
+        yearRange: [1920, 2035],
       },
+      clearable: true,
+      key: 'profile.birthDate',
+      label: 'Localized date',
       manualInput: {
         format: 'dd/MM/yyyy',
         placeholder: 'dd/mm/yyyy',
       },
-      calendar: {
-        yearRange: [1920, 2035],
+      previewFormat: {
+        dateStyle: 'medium',
       },
+      type: 'date',
     },
     {
       key: 'section.options',
-      type: 'divider',
       label: 'Options, context, and creation',
       layout: {
         span: 'full',
       },
+      type: 'divider',
     },
     {
       key: 'profile.country',
-      type: 'select',
       label: 'Context select',
-      searchable: true,
       options: {
-        source: ({ ctx }) => ctx.countries.value ?? [],
         allowOptionsRefresh: true,
+        source: ({ ctx }) => ctx.countries.value ?? [],
       },
+      searchable: true,
+      type: 'select',
     },
     {
       key: 'profile.role',
-      type: 'select',
       label: 'Rich options',
       options: ({ ctx }) => ctx.roles.value,
+      type: 'select',
     },
     {
       key: 'profile.city',
-      type: 'select',
       label: 'Query options depending on context',
-      searchable: true,
       options: {
         allowOptionsRefresh: true,
         source: ({ ctx }) =>
@@ -237,17 +235,30 @@ const showcaseForm = defineFormSchema({
             },
           }),
       },
+      searchable: true,
+      type: 'select',
     },
     {
-      key: 'profile.skill',
-      type: 'select',
-      label: 'Creatable option query',
-      searchable: true,
       createItem: {
         position: 'bottom',
         when: 'empty',
       },
+      key: 'profile.skill',
+      label: 'Creatable option query',
       options: {
+        create: {
+          handler: async ({ label }) => {
+            await sleep(450)
+
+            return {
+              label,
+              value: label.trim().toLowerCase().replace(/\s+/g, '-'),
+              description: 'Created locally from the select menu',
+            }
+          },
+          label: 'Create skill',
+          revalidateFieldOptions: ['profile.city'],
+        },
         source: () =>
           queryOptions({
             queryKey: ['form-showcase-skills'],
@@ -261,39 +272,17 @@ const showcaseForm = defineFormSchema({
               ]
             },
           }),
-        create: {
-          label: 'Create skill',
-          revalidateFieldOptions: ['profile.city'],
-          handler: async ({ label }) => {
-            await sleep(450)
-
-            return {
-              label,
-              value: label.trim().toLowerCase().replace(/\s+/g, '-'),
-              description: 'Created locally from the select menu',
-            }
-          },
-        },
       },
+      searchable: true,
+      type: 'select',
     },
     {
-      key: 'profile.address',
-      type: 'select',
-      label: 'Explicit create action',
       description: 'Footer create opens a nested form and appends the returned option.',
-      searchable: true,
+      key: 'profile.address',
+      label: 'Explicit create action',
       options: {
         allowOptionsRefresh: true,
-        source: async () => {
-          await sleep(650)
-
-          return [
-            { label: 'Paris office', value: 'addr-paris', description: 'FR' },
-            { label: 'Brussels warehouse', value: 'addr-brussels', description: 'BE' },
-          ]
-        },
         create: {
-          label: 'Add address',
           handler: async () => {
             const result = await formApi.createForm(addressOptionForm, {
               id: 'playground-address-create',
@@ -321,27 +310,37 @@ const showcaseForm = defineFormSchema({
               description: `${city} · ${country}`,
             }
           },
+          label: 'Add address',
+        },
+        source: async () => {
+          await sleep(650)
+
+          return [
+            { label: 'Paris office', value: 'addr-paris', description: 'FR' },
+            { label: 'Brussels warehouse', value: 'addr-brussels', description: 'BE' },
+          ]
         },
       },
+      searchable: true,
+      type: 'select',
     },
     {
-      key: 'profile.channels',
-      type: 'checkbox-group',
-      label: 'Checkbox group',
       description: 'Option-based multi-selection using the same option runtime.',
-      variant: 'card',
+      key: 'profile.channels',
+      label: 'Checkbox group',
       options: [
         { label: 'Email', value: 'email', description: 'Transactional and digest messages' },
         { label: 'SMS', value: 'sms', description: 'Urgent notifications only' },
         { label: 'In-app', value: 'in-app', description: 'Product surface notifications' },
       ],
+      type: 'checkbox-group',
+      variant: 'card',
     },
     {
+      clearable: true,
       key: 'profile.assignees',
-      type: 'auto-complete',
       label: 'Autocomplete',
       multiple: true,
-      clearable: true,
       options: {
         allowOptionsRefresh: true,
         source: async () => {
@@ -354,66 +353,59 @@ const showcaseForm = defineFormSchema({
           ]
         },
       },
+      type: 'auto-complete',
     },
     {
       key: 'profile.plan',
-      type: 'radio-card',
       label: 'Radio cards',
       options: [
         { label: 'Starter', value: 'starter', description: 'Light usage' },
         { label: 'Scale', value: 'scale', description: 'Team workflows' },
       ],
+      type: 'radio-card',
     },
     {
       key: 'profile.flags',
-      type: 'checkbox-card',
       label: 'Checkbox cards',
-      orientation: 'horizontal',
       options: ['priority', 'audited'],
+      orientation: 'horizontal',
+      type: 'checkbox-card',
     },
     {
-      key: 'profile.alerts',
-      type: 'switch-group',
-      label: 'Switch group',
       checkedIcon: 'i-lucide-check',
-      uncheckedIcon: 'i-lucide-x',
+      key: 'profile.alerts',
+      label: 'Switch group',
       options: [
         { label: 'Email alerts', value: 'email' },
         { label: 'SMS alerts', value: 'sms' },
       ],
+      type: 'switch-group',
+      uncheckedIcon: 'i-lucide-x',
     },
     {
-      key: 'refreshCountries',
-      type: 'button',
-      label: 'Refresh context countries',
-      icon: 'i-lucide-refresh-cw',
       color: 'neutral',
-      variant: 'soft',
+      icon: 'i-lucide-refresh-cw',
+      key: 'refreshCountries',
+      label: 'Refresh context countries',
       layout: {
         span: 'full',
       },
       onClick: async ({ api }) => {
         await api.context.refresh('countries')
       },
+      type: 'button',
+      variant: 'soft',
     },
     {
       key: 'section.layout',
-      type: 'divider',
       label: 'Layout and composed fields',
       layout: {
         span: 'full',
       },
+      type: 'divider',
     },
     {
-      key: 'settings',
-      type: 'object',
-      label: 'Object layout',
       description: 'Grouped fields with a nested grid and dotted state.',
-      layout: {
-        span: 'full',
-        columns: 8,
-        variant: 'card',
-      },
       fields: [
         {
           key: 'seats',
@@ -492,14 +484,16 @@ const showcaseForm = defineFormSchema({
           },
         },
       ],
+      key: 'settings',
+      label: 'Object layout',
+      layout: {
+        columns: 8,
+        span: 'full',
+        variant: 'card',
+      },
+      type: 'object',
     },
     {
-      key: 'contact',
-      type: 'input-group',
-      label: 'Input group',
-      layout: {
-        span: 'full',
-      },
       fields: [
         {
           key: 'contactPrefix',
@@ -514,17 +508,15 @@ const showcaseForm = defineFormSchema({
           placeholder: '6 12 34 56 78',
         },
       ],
-    },
-    {
-      key: 'presentationCard',
-      type: 'card',
-      label: 'Card passthrough',
-      description: 'Fields inside this card write at the current form level.',
-      headerExtra: 'Passthrough',
+      key: 'contact',
+      label: 'Input group',
       layout: {
         span: 'full',
-        columns: 8,
       },
+      type: 'input-group',
+    },
+    {
+      description: 'Fields inside this card write at the current form level.',
       fields: [
         {
           key: 'cardHeadline',
@@ -538,13 +530,16 @@ const showcaseForm = defineFormSchema({
           options: ['draft', 'ready', 'archived'],
         },
       ],
-    },
-    {
-      key: 'twoColumnComposition',
-      type: 'column',
+      headerExtra: 'Passthrough',
+      key: 'presentationCard',
+      label: 'Card passthrough',
       layout: {
+        columns: 8,
         span: 'full',
       },
+      type: 'card',
+    },
+    {
       fields: [
         {
           key: 'columnComment',
@@ -553,27 +548,24 @@ const showcaseForm = defineFormSchema({
           placeholder: 'Column field output is not nested under the column key.',
         },
       ],
+      key: 'twoColumnComposition',
+      layout: {
+        span: 'full',
+      },
+      type: 'column',
     },
     {
       key: 'section.collections',
-      type: 'divider',
       label: 'Collections and files',
       layout: {
         span: 'full',
       },
+      type: 'divider',
     },
     {
-      key: 'contacts',
-      type: 'array-list',
-      label: 'Array list',
-      description: 'Add, remove, and reorder repeated object items.',
       addItemLabel: 'Add contact',
+      description: 'Add, remove, and reorder repeated object items.',
       emptyLabel: 'No contacts yet. Add one to exercise nested dotted state.',
-      itemLabel: 'Contact',
-      layout: {
-        span: 'full',
-        columns: 2,
-      },
       fields: [
         {
           key: 'name',
@@ -587,19 +579,19 @@ const showcaseForm = defineFormSchema({
           label: 'Email',
         },
       ],
+      itemLabel: 'Contact',
+      key: 'contacts',
+      label: 'Array list',
+      layout: {
+        columns: 2,
+        span: 'full',
+      },
+      type: 'array-list',
     },
     {
-      key: 'milestones',
-      type: 'array-tabs',
-      label: 'Array tabs',
-      description: 'The same repeated object model rendered as tabs.',
       addItemLabel: 'Add milestone',
+      description: 'The same repeated object model rendered as tabs.',
       emptyLabel: 'No milestones yet.',
-      itemLabel: 'Milestone',
-      layout: {
-        span: 'full',
-        columns: 2,
-      },
       fields: [
         {
           key: 'title',
@@ -616,44 +608,48 @@ const showcaseForm = defineFormSchema({
           },
         },
       ],
+      itemLabel: 'Milestone',
+      key: 'milestones',
+      label: 'Array tabs',
+      layout: {
+        columns: 2,
+        span: 'full',
+      },
+      type: 'array-tabs',
     },
     {
       key: 'section.v1',
-      type: 'divider',
       label: 'V1 advanced fields',
       layout: { span: 'full' },
+      type: 'divider',
     },
     {
+      clearable: true,
       key: 'schedule.startsAt',
-      type: 'datetime',
       label: 'Date and time',
-      clearable: true,
+      type: 'datetime',
     },
     {
-      key: 'schedule.period',
-      type: 'daterange',
-      label: 'Date range',
       clearable: true,
+      key: 'schedule.period',
+      label: 'Date range',
+      type: 'daterange',
     },
     {
       key: 'schedule.months',
-      type: 'monthrange',
       label: 'Month range',
+      type: 'monthrange',
     },
     {
       key: 'schedule.window',
-      type: 'datetimerange',
       label: 'Date-time range',
+      type: 'datetimerange',
     },
-    { key: 'schedule.month', type: 'month', label: 'Month' },
-    { key: 'schedule.year', type: 'year', label: 'Year', min: 2020, max: 2040 },
+    { key: 'schedule.month', label: 'Month', type: 'month' },
+    { key: 'schedule.year', label: 'Year', max: 2040, min: 2020, type: 'year' },
     {
       key: 'taxonomy.category',
-      type: 'tree-select',
       label: 'Tree select',
-      selectionControl: 'radio',
-      searchable: true,
-      showPath: true,
       options: [
         {
           key: 'engineering',
@@ -665,10 +661,13 @@ const showcaseForm = defineFormSchema({
         },
         { key: 'operations', label: 'Operations' },
       ],
+      searchable: true,
+      selectionControl: 'radio',
+      showPath: true,
+      type: 'tree-select',
     },
     {
       key: 'taxonomy.path',
-      type: 'cascader',
       label: 'Cascader',
       leafOnly: true,
       options: [
@@ -681,14 +680,14 @@ const showcaseForm = defineFormSchema({
           ],
         },
       ],
+      type: 'cascader',
     },
     {
-      key: 'taxonomy.categories',
-      type: 'tree-select',
-      label: 'Checkbox tree select',
-      multiple: true,
       cascade: true,
       clearable: true,
+      key: 'taxonomy.categories',
+      label: 'Checkbox tree select',
+      multiple: true,
       options: [
         {
           key: 'products',
@@ -699,14 +698,13 @@ const showcaseForm = defineFormSchema({
           ],
         },
       ],
+      type: 'tree-select',
     },
     {
+      cascade: true,
       key: 'taxonomy.scopes',
-      type: 'tree',
       label: 'Checkbox tree',
       multiple: true,
-      cascade: true,
-      props: { defaultExpanded: ['catalog'] },
       options: [
         {
           key: 'catalog',
@@ -717,13 +715,12 @@ const showcaseForm = defineFormSchema({
           ],
         },
       ],
+      props: { defaultExpanded: ['catalog'] },
+      type: 'tree',
     },
     {
       key: 'taxonomy.owner',
-      type: 'tree',
       label: 'Radio tree',
-      selectionControl: 'radio',
-      props: { defaultExpanded: ['teams'] },
       options: [
         {
           key: 'teams',
@@ -734,49 +731,54 @@ const showcaseForm = defineFormSchema({
           ],
         },
       ],
+      props: { defaultExpanded: ['teams'] },
+      selectionControl: 'radio',
+      type: 'tree',
     },
     {
-      key: 'compactIdentity',
-      type: 'group',
-      label: 'Grouped controls',
       fields: [
         { key: 'code', type: 'text', placeholder: 'Code' },
         { key: 'region', type: 'select', options: ['EU', 'US'] },
       ],
+      key: 'compactIdentity',
+      label: 'Grouped controls',
       layout: { span: 'full' },
+      type: 'group',
     },
     {
+      fields: [
+        { key: 'enabled', type: 'switch', label: 'Enabled' },
+        { key: 'scope', type: 'select', label: 'Scope', options: ['own', 'all'] },
+      ],
       key: 'permissions',
-      type: 'matrix',
       label: 'Permission matrix',
+      layout: { span: 'full' },
       rows: [
         { key: 'catalog', label: 'Catalog' },
         { key: 'orders', label: 'Orders' },
         { key: 'users', label: 'Users' },
       ],
-      fields: [
-        { key: 'enabled', type: 'switch', label: 'Enabled' },
-        { key: 'scope', type: 'select', label: 'Scope', options: ['own', 'all'] },
-      ],
-      layout: { span: 'full' },
+      type: 'matrix',
     },
     {
-      key: 'lineItems',
-      type: 'array-table',
-      label: 'Array table',
+      confirmDelete: true,
+      draggable: true,
       fields: [
         { key: 'label', type: 'text', label: 'Label', validation: { required: true } },
         { key: 'quantity', type: 'number', label: 'Quantity', default: 1 },
       ],
-      draggable: true,
-      confirmDelete: true,
-      virtualFields: { position: (index) => index + 1 },
+      key: 'lineItems',
+      label: 'Array table',
       layout: { span: 'full' },
+      type: 'array-table',
+      virtualFields: { position: (index) => index + 1 },
     },
     {
+      displayMode: 'tabs',
       key: 'contactMethods',
-      type: 'array-variant',
       label: 'Discriminated contacts',
+      layout: { span: 'full' },
+      type: 'array-variant',
       variantKey: 'kind',
       variants: [
         {
@@ -790,21 +792,19 @@ const showcaseForm = defineFormSchema({
           fields: [{ key: 'number', type: 'phone-number', label: 'Phone number' }],
         },
       ],
-      displayMode: 'tabs',
-      layout: { span: 'full' },
     },
     {
-      key: 'avatar',
-      type: 'file',
-      label: 'File',
       accept: 'image/*',
+      key: 'avatar',
+      label: 'File',
+      type: 'file',
     },
     {
+      accept: 'application/pdf,image/*',
       key: 'identityDocument',
-      type: 'upload',
       label: 'Upload',
       output: 'object',
-      accept: 'application/pdf,image/*',
+      type: 'upload',
       upload: {
         handler: async ({ files }) => {
           await sleep(600)
@@ -821,19 +821,19 @@ const showcaseForm = defineFormSchema({
     },
     {
       key: 'section.validation',
-      type: 'divider',
       label: 'Validation and transforms',
       layout: {
         span: 'full',
       },
+      type: 'divider',
     },
     {
+      inputType: 'number',
       key: 'security.otp',
-      type: 'one-time-code',
       label: 'One-time code',
       length: 6,
-      inputType: 'number',
       placeholder: '0',
+      type: 'one-time-code',
       validation: {
         rules: [
           {
@@ -849,8 +849,8 @@ const showcaseForm = defineFormSchema({
     },
     {
       key: 'security.password',
-      type: 'password',
       label: 'Password',
+      type: 'password',
       validation: {
         rules: [
           {
@@ -866,10 +866,13 @@ const showcaseForm = defineFormSchema({
       },
     },
     {
-      key: 'security.confirmPassword',
-      type: 'password',
-      label: 'Confirm password',
       dependencies: [['security.password', 'password']],
+      key: 'security.confirmPassword',
+      label: 'Confirm password',
+      submit: {
+        omit: true,
+      },
+      type: 'password',
       validation: {
         rules: [
           {
@@ -883,17 +886,14 @@ const showcaseForm = defineFormSchema({
           },
         ],
       },
-      submit: {
-        omit: true,
-      },
     },
     {
-      key: 'internalDraftId',
-      type: 'hidden',
       default: 'draft_showcase_001',
+      key: 'internalDraftId',
       submit: {
         omit: true,
       },
+      type: 'hidden',
     },
   ],
   formKey: 'playground.form.showcase',
@@ -921,7 +921,7 @@ const form = useForm({
       return { success: false }
     }
     submitted.value = formData
-    return { success: true, data: { savedAt: new Date().toISOString() } }
+    return { data: { savedAt: new Date().toISOString() }, success: true }
   },
   schema: showcaseForm,
 })
@@ -970,7 +970,7 @@ async function openResponsiveForm() {
     onSubmit: async ({ formData }) => {
       await sleep(800)
       submitted.value = formData
-      return { success: true, data: { mode: 'responsive', savedAt: new Date().toISOString() } }
+      return { data: { mode: 'responsive', savedAt: new Date().toISOString() }, success: true }
     },
   })
 }

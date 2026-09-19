@@ -17,21 +17,21 @@ const center = {
   affiliationGroups: [
     {
       id: 'school-level',
-      name: 'School level',
-      slug: 'schoolLevel',
       items: [
         { id: 'primary', name: 'Primary' },
         { id: 'higher-education', name: 'Higher education' },
       ],
+      name: 'School level',
+      slug: 'schoolLevel',
     },
     {
       id: 'programme',
-      name: 'Programme',
-      slug: 'programme',
       items: [
         { id: 'general-english', name: 'General English' },
         { id: 'business-english', name: 'Business English' },
       ],
+      name: 'Programme',
+      slug: 'programme',
     },
   ],
   country: 'France',
@@ -46,46 +46,46 @@ const center = {
 function createHappyPathSchema() {
   return defineSpreadsheetSchema({
     buildRow: ({ row }) => ({
-      testCenterId: row.testCenterId,
-      secureCode: row.secureCode,
+      batchName: row.batchName,
       candidate: {
+        email: row.email,
         firstName: row.firstName,
         lastName: row.lastName,
-        email: row.email,
       },
+      completionDate: row.completionDate,
+      country: row.country,
       examName: row.examNameRaw,
       productId: row.productId,
-      completionDate: row.completionDate,
-      status: row.status,
-      country: row.country,
-      batchName: row.batchName,
       scores: row.scores,
+      secureCode: row.secureCode,
+      status: row.status,
+      testCenterId: row.testCenterId,
     }),
     columns: {
       dynamic: ({ dynamic, context }) => [
         dynamic.optionGroups({
-          key: 'affiliations',
-          source: context.affiliationGroups,
-          itemKey: (group) => group.id,
-          itemLabel: (group) => group.name,
-          targetKey: (group) => group.slug,
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
           },
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          key: 'affiliations',
           options: (group) =>
             group.items.map((item) => ({
               label: item.name,
               value: item.id,
             })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
           output: {
             into: 'affiliations',
+          },
+          source: context.affiliationGroups,
+          targetKey: (group) => group.slug,
+          values: {
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+            mode: 'csv',
+            resolve: 'label',
+            separator: ',',
           },
         }),
       ],
@@ -97,9 +97,9 @@ function createHappyPathSchema() {
           rules: (v) => [
             v.required(),
             v.validate({
+              message: 'Row test center does not match this playground.',
               name: 'testCenterMismatch',
               validator: (value: string) => value === center.id,
-              message: 'Row test center does not match this playground.',
             }),
           ],
         }),
@@ -186,15 +186,15 @@ function createHappyPathSchema() {
       {
         key: 'products',
         query: () => ({
-          queryKey: ['playground', 'spreadsheet', 'happy-path', 'products'],
           queryFn: async () => center.products,
+          queryKey: ['playground', 'spreadsheet', 'happy-path', 'products'],
         }),
       },
       {
         key: 'affiliationGroups',
         query: () => ({
-          queryKey: ['playground', 'spreadsheet', 'happy-path', 'affiliation-groups'],
           queryFn: async () => center.affiliationGroups,
+          queryKey: ['playground', 'spreadsheet', 'happy-path', 'affiliation-groups'],
         }),
       },
     ],
@@ -279,8 +279,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-happy-path.xlsx',
   }

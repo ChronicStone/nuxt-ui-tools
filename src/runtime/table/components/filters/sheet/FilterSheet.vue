@@ -62,10 +62,10 @@ function preview(definition: TableUiFilterDefinition) {
     entries: options
       .filter((option) => option.value !== undefined)
       .map((option) => ({
+        color: option.color,
+        icon: option.icon,
         label: getFilterLabelText({ label: option.label }),
         value: option.value as string | number | boolean,
-        icon: option.icon,
-        color: option.color,
       })),
     key: definition.key,
   })

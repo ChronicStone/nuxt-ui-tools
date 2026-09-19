@@ -336,8 +336,8 @@ describe('Regle-owned form validation', () => {
               validation: {
                 rules: [
                   {
-                    name: 'available-email',
                     message: 'This email is already registered.',
+                    name: 'available-email',
                     validate: async () => {
                       await availability
                       return false

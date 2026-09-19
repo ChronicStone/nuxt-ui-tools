@@ -485,37 +485,37 @@ function matchesFilterCondition<TRow extends GenericObject>(
 
   switch (condition.operator) {
     case 'contains': {
-      return matchContains({ value, filter: condition.value })
+      return matchContains({ filter: condition.value, value })
     }
     case 'is': {
-      return matchIs({ value, filter: condition.value })
+      return matchIs({ filter: condition.value, value })
     }
     case 'isAnyOf': {
-      return matchIsAnyOf({ value, filter: condition.value })
+      return matchIsAnyOf({ filter: condition.value, value })
     }
     case 'isNot': {
-      return !matchIsAnyOf({ value, filter: condition.value })
+      return !matchIsAnyOf({ filter: condition.value, value })
     }
     case 'gt': {
-      return matchComparison({ value, filter: condition.value, operator: 'gt' })
+      return matchComparison({ filter: condition.value, operator: 'gt', value })
     }
     case 'gte': {
-      return matchComparison({ value, filter: condition.value, operator: 'gte' })
+      return matchComparison({ filter: condition.value, operator: 'gte', value })
     }
     case 'lt': {
-      return matchComparison({ value, filter: condition.value, operator: 'lt' })
+      return matchComparison({ filter: condition.value, operator: 'lt', value })
     }
     case 'lte': {
-      return matchComparison({ value, filter: condition.value, operator: 'lte' })
+      return matchComparison({ filter: condition.value, operator: 'lte', value })
     }
     case 'between': {
-      return matchBetween({ value, filter: condition.value })
+      return matchBetween({ filter: condition.value, value })
     }
     case 'before': {
-      return matchComparison({ value, filter: condition.value, operator: 'lt' })
+      return matchComparison({ filter: condition.value, operator: 'lt', value })
     }
     case 'after': {
-      return matchComparison({ value, filter: condition.value, operator: 'gt' })
+      return matchComparison({ filter: condition.value, operator: 'gt', value })
     }
     default: {
       return false

@@ -16,7 +16,6 @@ describe('table pagination strategies', () => {
       source: {
         mode: 'remote',
         query: () => ({
-          queryKey: ['cursor-rows'],
           queryFn: async () => ({
             rows: [{ id: 'row-1' }],
             pageInfo: {
@@ -27,6 +26,7 @@ describe('table pagination strategies', () => {
               rowCount: null,
             },
           }),
+          queryKey: ['cursor-rows'],
         }),
       },
       tableKey: 'cursor',
@@ -47,30 +47,30 @@ describe('table pagination strategies', () => {
     const result = flattenTableCursorPages({
       pages: [
         {
+          pageInfo: {
+            count: 'exact',
+            mode: 'cursor',
+            nextCursor: 'page-2',
+            pageSize: 2,
+            rowCount: 3,
+          },
           rows: [
             { id: 'row-1', label: 'First' },
             { id: 'row-2', label: 'Old' },
           ],
-          pageInfo: {
-            mode: 'cursor',
-            pageSize: 2,
-            nextCursor: 'page-2',
-            count: 'exact',
-            rowCount: 3,
-          },
         },
         {
+          pageInfo: {
+            count: 'exact',
+            mode: 'cursor',
+            nextCursor: null,
+            pageSize: 2,
+            rowCount: 3,
+          },
           rows: [
             { id: 'row-2', label: 'Updated' },
             { id: 'row-3', label: 'Third' },
           ],
-          pageInfo: {
-            mode: 'cursor',
-            pageSize: 2,
-            nextCursor: null,
-            count: 'exact',
-            rowCount: 3,
-          },
         },
       ],
       rowKey: 'id',
@@ -88,14 +88,14 @@ describe('table pagination strategies', () => {
     const result = flattenTableCursorPages({
       pages: [
         {
-          rows: [{ id: 'row-1' }],
           pageInfo: {
-            mode: 'cursor',
-            pageSize: 1,
-            nextCursor: null,
             count: 'none',
+            mode: 'cursor',
+            nextCursor: null,
+            pageSize: 1,
             rowCount: null,
           },
+          rows: [{ id: 'row-1' }],
         },
       ],
       rowKey: 'id',

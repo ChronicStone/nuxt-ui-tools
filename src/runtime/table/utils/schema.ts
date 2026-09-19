@@ -20,8 +20,8 @@ export function mapPublicQueryState(options: {
     pagination: options.queryState.pagination.value,
     sorting: options.queryState.sorting.value
       ? {
-          sortKey: options.queryState.sorting.value.key,
           sortDirection: options.queryState.sorting.value.dir,
+          sortKey: options.queryState.sorting.value.key,
         }
       : null,
   }

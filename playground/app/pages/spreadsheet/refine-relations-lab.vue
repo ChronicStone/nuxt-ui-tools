@@ -42,13 +42,13 @@ function createRefineRelationsSchema() {
           },
           rules: (v) => [
             v.validate({
+              message: 'General score must be numeric when provided',
               name: 'numericScore',
               validator: (value: string) => {
                 if (!value.trim()) return true
                 const numericValue = Number(value)
                 return !Number.isNaN(numericValue) && Number.isFinite(numericValue)
               },
-              message: 'General score must be numeric when provided',
             }),
           ],
         }),
@@ -156,8 +156,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-refine-relations-lab.xlsx',
   }

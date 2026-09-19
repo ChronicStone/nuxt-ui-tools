@@ -217,7 +217,7 @@ const columnSlots = computed<ColumnSlot[]>(() => {
   const first = virtualColumns.value[0]
   const last = virtualColumns.value.at(-1)
   if (first?.index) {
-    slots.push({ kind: 'spacer', colSpan: first.index, key: 'pad-start' })
+    slots.push({ colSpan: first.index, key: 'pad-start', kind: 'spacer' })
   }
   slots.push(
     ...virtualColumns.value.flatMap((item) => {
@@ -227,7 +227,7 @@ const columnSlots = computed<ColumnSlot[]>(() => {
   )
   const trailing = last ? centerColumns.value.length - last.index - 1 : centerColumns.value.length
   if (trailing) {
-    slots.push({ kind: 'spacer', colSpan: trailing, key: 'pad-end' })
+    slots.push({ colSpan: trailing, key: 'pad-end', kind: 'spacer' })
   }
   slots.push(...table.getEndVisibleLeafColumns().map(asSlot))
   return slots
@@ -248,7 +248,7 @@ function rowColumnSlots(row: TableRow): CellSlot[] {
     }
     const cell = cells.get(slot.columnId)
     if (cell) {
-      slots.push({ kind: 'cell', cell, key: cell.id })
+      slots.push({ cell, key: cell.id, kind: 'cell' })
     }
   }
   return slots
@@ -392,7 +392,7 @@ function renderSummary(columnId: string) {
   const summary = column?.summary
   const render = isSummaryConfig(summary) ? summary.render : undefined
   if (render) {
-    return () => render({ value: cell.value, loading: cell.loading, scope: summaries.scope.value })
+    return () => render({ loading: cell.loading, scope: summaries.scope.value, value: cell.value })
   }
   const value = summaries.format(columnId)
   return () => h('span', formatNumber(value))

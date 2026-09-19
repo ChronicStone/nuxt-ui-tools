@@ -67,13 +67,14 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       search: { fields: ['name', 'legalEntity'], placeholder: 'Rechercher un compte…' },
       ui: (filter) => [
         filter.option('status', {
-          label: 'Statut',
           behavior: {
             defaultOperator: 'isAnyOf',
             ...(options.statusDefault ? { defaultValue: options.statusDefault } : {}),
             commitMode: 'auto',
           },
           display: { location: 'tag', order: 1 },
+          editor: { searchable: false, selection: { mode: 'multiple' } },
+          label: 'Statut',
           source: {
             options: STATUSES.map((value) => ({
               value,
@@ -81,40 +82,39 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
               color: STATUS_COLOR[value],
             })),
           },
-          editor: { searchable: false, selection: { mode: 'multiple' } },
         }),
         filter.option('country', {
-          label: 'Pays',
           behavior: {
+            commitMode: 'auto',
             defaultOperator: 'isAnyOf',
             operators: ['isAnyOf', 'is', 'isNot'],
-            commitMode: 'auto',
           },
           display: options.panelFilters
             ? { location: 'panel', order: 2, group: 'Identité' }
             : { location: 'tag-dynamic', order: 2 },
-          source: {
-            options: COUNTRIES.map((value) => ({ value, label: value })),
-            facet: 'exclude-self',
-          },
           editor: { selection: { mode: 'multiple' } },
+          label: 'Pays',
+          source: {
+            facet: 'exclude-self',
+            options: COUNTRIES.map((value) => ({ value, label: value })),
+          },
         }),
         filter.boolean('edofSync', {
-          label: 'Synchronisation EDOF',
           display: { location: 'tag-dynamic', order: 3 },
+          label: 'Synchronisation EDOF',
         }),
         ...(options.panelFilters
           ? [
               filter.text('legalEntity', {
-                label: 'Entité légale',
                 behavior: { operators: ['contains', 'is', 'isNot'] },
-                display: { location: 'panel', order: 4, group: 'Identité' },
+                display: { group: 'Identité', location: 'panel', order: 4 },
                 editor: { placeholder: 'Entité…' },
+                label: 'Entité légale',
               }),
               filter.number('contracts', {
-                label: 'Contrats',
                 behavior: { operators: ['is', 'gte', 'lte', 'between'] },
-                display: { location: 'panel', order: 5, group: 'Volumes' },
+                display: { group: 'Volumes', location: 'panel', order: 5 },
+                label: 'Contrats',
               }),
             ]
           : []),
@@ -124,26 +124,26 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       options.grid === false
         ? undefined
         : {
-            mode: 'contained',
+            defaultSorting: { dir: 'asc', key: 'name' },
             gridSize: '1 md:2 xl:3',
-            defaultSorting: { key: 'name', dir: 'asc' },
-            sortOptions: [
-              { key: 'name', label: 'Nom' },
-              { key: 'status', label: 'Statut' },
-            ],
+            mode: 'contained',
             renderItem: ({ row }) =>
               h(
                 'article',
                 { class: 'card', 'data-row': (row as AccountRow).id },
                 (row as AccountRow).name,
               ),
+            sortOptions: [
+              { key: 'name', label: 'Nom' },
+              { key: 'status', label: 'Statut' },
+            ],
           },
     pagination:
       options.pagination === false
         ? false
         : {
-            defaultSize: { table: 20, grid: 12 },
-            sizeOptions: { table: [10, 20, 50], grid: [12, 24] },
+            defaultSize: { grid: 12, table: 20 },
+            sizeOptions: { grid: [12, 24], table: [10, 20, 50] },
             ...(options.pagination ?? {}),
           },
     rowKey: 'id',
@@ -154,18 +154,18 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
     source: {
       mode: 'client',
       query: (context): TableQueryDefinition<AccountRow[]> => ({
-        queryKey: ['accounts', rows.length, options.fail ? 'fail' : 'ok'],
         queryFn: async () => {
           options.onQuery?.(context)
           if (options.delay) await new Promise((resolve) => setTimeout(resolve, options.delay))
           if (options.fail) throw new Error('boom')
           return rows
         },
+        queryKey: ['accounts', rows.length, options.fail ? 'fail' : 'ok'],
       }),
     },
     table: {
       enabled: options.tableEnabled ?? true,
-      defaultSorting: { key: 'name', dir: 'asc' },
+      defaultSorting: { dir: 'asc', key: 'name' },
       ...(options.summaries === false
         ? {}
         : {
@@ -177,47 +177,47 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       columns: (column) => [
         column.field('name', {
           label: 'Nom',
+          minWidth: 200,
+          pinned: 'left',
+          render: ({ row }) => h('b', { class: 'name' }, (row as AccountRow).name),
+          required: true,
+          skeleton: 'avatar',
           sortable: true,
           width: 228,
-          minWidth: 200,
-          required: true,
-          pinned: 'left',
-          skeleton: 'avatar',
-          render: ({ row }) => h('b', { class: 'name' }, (row as AccountRow).name),
         }),
         column.field('status', {
           label: 'Statut',
+          render: ({ row }) => STATUS_LABEL[(row as AccountRow).status],
+          skeleton: 'dot',
           sortable: true,
           width: 110,
-          skeleton: 'dot',
-          render: ({ row }) => STATUS_LABEL[(row as AccountRow).status],
         }),
-        column.field('country', { label: 'Pays', sortable: true, lines: 2 }),
-        column.field('legalEntity', { label: 'Entité légale', ellipsis: true, visible: false }),
+        column.field('country', { label: 'Pays', lines: 2, sortable: true }),
+        column.field('legalEntity', { ellipsis: true, label: 'Entité légale', visible: false }),
         column.field('edofSync', {
           label: 'EDOF',
-          skeleton: 'check',
           render: ({ row }) => ((row as AccountRow).edofSync ? '✓' : '—'),
+          skeleton: 'check',
         }),
         column.field('contracts', {
-          label: 'Contrats',
-          sortable: true,
           align: 'right',
-          summary: 'sum',
+          label: 'Contrats',
           render: ({ row }) => String((row as AccountRow).contracts),
+          sortable: true,
+          summary: 'sum',
         }),
         column.field('consumption', {
-          label: 'Conso.',
-          sortable: true,
           align: 'right',
+          label: 'Conso.',
+          render: ({ row }) => String((row as AccountRow).consumption),
+          sortable: true,
           summary: {
+            format: (value) => `${String(value)} t`,
             resolve: async ({ rows: scoped }) => {
               await new Promise((resolve) => setTimeout(resolve, 5))
               return (scoped as AccountRow[]).reduce((total, row) => total + row.consumption, 0)
             },
-            format: (value) => `${String(value)} t`,
           },
-          render: ({ row }) => String((row as AccountRow).consumption),
         }),
       ],
     },
@@ -307,11 +307,6 @@ export function createAuditSchema(
     source: {
       mode: 'remote',
       query: (context): TableQueryDefinition<TableCursorPageResult<AuditRow>> => ({
-        queryKey: [
-          'audit',
-          context.pagination.mode === 'cursor' ? context.pagination.cursor : null,
-          context.search.value,
-        ],
         queryFn: async () => {
           const cursor = context.pagination.mode === 'cursor' ? context.pagination.cursor : null
           options.onPage?.(cursor)
@@ -330,6 +325,11 @@ export function createAuditSchema(
             },
           }
         },
+        queryKey: [
+          'audit',
+          context.pagination.mode === 'cursor' ? context.pagination.cursor : null,
+          context.search.value,
+        ],
       }),
     },
     table: {

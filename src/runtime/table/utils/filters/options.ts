@@ -50,9 +50,9 @@ export function resolveFilterOptionEntries(options: {
       (options.deriveCounts === false || value == null
         ? options.missingCountFallback
         : countOptionMatches({
-            rows: options.rows,
-            key: options.definition.key,
             candidate: value,
+            key: options.definition.key,
+            rows: options.rows,
           })),
     selectedValues: options.selectedValues ?? [],
   })
@@ -76,16 +76,16 @@ function createBooleanEntries(options: {
         trueCount ??
         (options.deriveCounts
           ? countOptionMatches({
-              rows: options.rows,
-              key: options.definition.key,
               candidate: true,
+              key: options.definition.key,
+              rows: options.rows,
             })
           : options.missingCountFallback),
       id: '0:true',
       label: booleanLabel(options.definition, true),
       selected: isFilterValueSelected({
-        values: options.selectedValues,
         candidate: true,
+        values: options.selectedValues,
       }),
       value: true,
     },
@@ -95,16 +95,16 @@ function createBooleanEntries(options: {
         falseCount ??
         (options.deriveCounts
           ? countOptionMatches({
-              rows: options.rows,
-              key: options.definition.key,
               candidate: false,
+              key: options.definition.key,
+              rows: options.rows,
             })
           : options.missingCountFallback),
       id: '1:false',
       label: booleanLabel(options.definition, false),
       selected: isFilterValueSelected({
-        values: options.selectedValues,
         candidate: false,
+        values: options.selectedValues,
       }),
       value: false,
     },

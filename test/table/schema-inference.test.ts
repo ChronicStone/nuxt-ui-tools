@@ -30,8 +30,8 @@ const schema = defineTableSchema({
     {
       key: 'organisationId',
       query: () => ({
-        queryKey: ['organisation'],
         queryFn: async () => 'org_123',
+        queryKey: ['organisation'],
       }),
     },
   ],
@@ -41,27 +41,27 @@ const schema = defineTableSchema({
     },
     ui: (filter) => [
       filter.text('name', {
-        label: 'Name',
         editor: {
-          placeholder: 'Search users',
           inputType: 'search',
+          placeholder: 'Search users',
         },
+        label: 'Name',
       }),
       filter.option('organisation.status', {
-        label: 'Status',
         behavior: {
           defaultOperator: 'isAnyOf',
-        },
-        source: {
-          options: [
-            { label: 'Active', value: 'active' as const },
-            { label: 'Inactive', value: 'inactive' as const },
-          ],
         },
         editor: {
           selection: {
             mode: 'multiple',
           },
+        },
+        label: 'Status',
+        source: {
+          options: [
+            { label: 'Active', value: 'active' as const },
+            { label: 'Inactive', value: 'inactive' as const },
+          ],
         },
       }),
     ],
@@ -70,8 +70,8 @@ const schema = defineTableSchema({
     {
       key: 'rowCountLabel',
       query: ({ rows, context }) => ({
-        queryKey: ['summary', rows.length, context.organisationId],
         queryFn: async () => `${rows.length}:${context.organisationId}`,
+        queryKey: ['summary', rows.length, context.organisationId],
       }),
     },
   ],
@@ -80,7 +80,6 @@ const schema = defineTableSchema({
     facets: true,
     mode: 'remote',
     query: (ctx: TableSourceRequestContext) => ({
-      queryKey: ['users', ctx.search.value, ctx.facets],
       queryFn: async () => ({
         rows: [
           {
@@ -95,6 +94,7 @@ const schema = defineTableSchema({
         ],
         rowCount: 1,
       }),
+      queryKey: ['users', ctx.search.value, ctx.facets],
     }),
   },
   table: {
@@ -111,12 +111,12 @@ const schema = defineTableSchema({
       }),
       column.composite('statusSummary', {
         label: 'Status',
-        sortableKey: 'organisation.status',
         render: (params) => {
           expectTypeOf(params.row.organisation.status).toEqualTypeOf<'active'>()
 
           return params.row.organisation.status
         },
+        sortableKey: 'organisation.status',
       }),
     ],
     defaultSorting: {
@@ -177,7 +177,6 @@ describe('defineTableSchema inference', () => {
       source: {
         query: () =>
           ({
-            queryKey: ['demo-users'],
             queryFn: async () =>
               ({
                 rows: [
@@ -192,6 +191,7 @@ describe('defineTableSchema inference', () => {
                 ],
                 rowCount: 1,
               }) satisfies DemoEmployeeListResult,
+            queryKey: ['demo-users'],
           }) satisfies DemoEmployeeQuery,
       },
       table: {

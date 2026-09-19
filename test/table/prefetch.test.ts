@@ -19,8 +19,8 @@ describe('table query prefetch', () => {
         {
           key: 'account',
           query: () => ({
-            queryKey: ['account'],
             queryFn: async () => ({ id: 'account-1' }),
+            queryKey: ['account'],
           }),
         },
       ],
@@ -32,11 +32,11 @@ describe('table query prefetch', () => {
             source: {
               facet: true,
               query: () => ({
-                queryKey: ['status-options'],
                 queryFn: async () => {
                   optionQueryCalls++
                   return [{ label: 'Active', value: 'active' }]
                 },
+                queryKey: ['status-options'],
               }),
             },
           }),
@@ -46,12 +46,12 @@ describe('table query prefetch', () => {
         {
           key: 'summary',
           query: ({ rows, context }) => ({
-            queryKey: ['summary', rows.length, context.account],
             queryFn: async () => {
               pageContextRows = rows.length
               pageContextAccount = context.account
               return { visible: rows.length }
             },
+            queryKey: ['summary', rows.length, context.account],
           }),
         },
       ],
@@ -59,19 +59,19 @@ describe('table query prefetch', () => {
       rowKey: 'id',
       source: {
         facets: (request) => ({
-          queryKey: ['user-facets', request],
           queryFn: async () => {
             facetQueryCalls++
             return { facets: [] }
           },
+          queryKey: ['user-facets', request],
         }),
         mode: 'remote',
         query: (request) => ({
-          queryKey: ['users', request],
           queryFn: async () => {
             sourceRequest = request
             return { rows: [{ id: 'user-1', name: 'Ada', status: 'active' }], rowCount: 1 }
           },
+          queryKey: ['users', request],
         }),
       },
       table: {
@@ -107,7 +107,7 @@ describe('table query prefetch', () => {
     expect(sourceRequest?.sorting).toStrictEqual([{ dir: 'desc', key: 'name' }])
     expect(sourceRequest?.search).toStrictEqual({ fields: ['name'], value: 'ada' })
     expect(sourceRequest?.filters).toStrictEqual({
-      children: [{ type: 'condition', key: 'status', operator: 'isAnyOf', value: ['active'] }],
+      children: [{ key: 'status', operator: 'isAnyOf', type: 'condition', value: ['active'] }],
       combinator: 'and',
       type: 'group',
     })

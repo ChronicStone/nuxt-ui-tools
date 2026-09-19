@@ -16,8 +16,6 @@ describe('resolved filters', () => {
           label: 'Status',
           resolve({ rule }: TableFilterResolveContext) {
             return {
-              type: 'group' as const,
-              combinator: 'or' as const,
               children: (Array.isArray(rule.value) ? rule.value : []).map(
                 (value): TableResolvedFilterNode<string> => ({
                   type: 'condition' as const,
@@ -26,6 +24,8 @@ describe('resolved filters', () => {
                   value,
                 }),
               ),
+              combinator: 'or' as const,
+              type: 'group' as const,
             }
           },
           source: {
@@ -50,9 +50,9 @@ describe('resolved filters', () => {
         {
           children: [
             {
-              type: 'condition',
               key: 'archived',
               operator: 'is',
+              type: 'condition',
               value: false,
             },
           ],
@@ -65,8 +65,6 @@ describe('resolved filters', () => {
     expect(state).toStrictEqual({
       children: [
         {
-          type: 'group',
-          combinator: 'and',
           children: [
             {
               type: 'condition',
@@ -75,10 +73,10 @@ describe('resolved filters', () => {
               value: false,
             },
           ],
+          combinator: 'and',
+          type: 'group',
         },
         {
-          type: 'group',
-          combinator: 'or',
           children: [
             {
               type: 'condition',
@@ -93,6 +91,8 @@ describe('resolved filters', () => {
               value: 'paused',
             },
           ],
+          combinator: 'or',
+          type: 'group',
         },
       ],
       combinator: 'and',

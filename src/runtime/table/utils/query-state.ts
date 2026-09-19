@@ -110,7 +110,7 @@ export function getDefaultSort(params: {
   if (!defaultSorting) {
     return null
   } else if (isString(defaultSorting)) {
-    return { key: defaultSorting, dir: 'asc' as const }
+    return { dir: 'asc' as const, key: defaultSorting }
   } else {
     return defaultSorting
   }

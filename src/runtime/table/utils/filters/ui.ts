@@ -72,8 +72,8 @@ export function resolveTextFilterUi(
     inputType: definition.editor?.inputType ?? 'text',
     leadingIcon: definition.editor?.leadingIcon ?? 'i-lucide-search',
     placeholder: getFilterTextValue({
-      value: override?.placeholder ?? definition.editor?.placeholder,
       fallback: getFilterLabelText({ label: definition.label }),
+      value: override?.placeholder ?? definition.editor?.placeholder,
     }),
     preview: resolvePreview({
       base: definition.preview,
@@ -118,20 +118,20 @@ export function resolveOptionFilterUi(
     commitMode: definition.behavior?.commitMode ?? 'manual',
     labels: {
       empty: getFilterTextValue({
-        value: labels.empty,
         fallback: t('table.filters.options.empty'),
+        value: labels.empty,
       }),
       searchPlaceholder: getFilterTextValue({
-        value: labels.searchPlaceholder,
         fallback: getFilterLabelText({ label: definition.label }),
+        value: labels.searchPlaceholder,
       }),
     },
     presentation: definition.editor?.presentation ?? 'list',
     preview: resolveTagPreview({
       base: definition.preview,
       empty: t('table.filters.preview.empty'),
-      mode: 'auto',
       maxTags: 3,
+      mode: 'auto',
     }),
     reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
     row: {
@@ -187,16 +187,16 @@ export function resolveBooleanFilterUi(
     },
     labels: {
       empty: getFilterTextValue({
-        value: labels.empty,
         fallback: t('table.filters.booleans.empty'),
+        value: labels.empty,
       }),
       false: getFilterTextValue({
-        value: labels.false,
         fallback: t('table.filters.booleans.false'),
+        value: labels.false,
       }),
       true: getFilterTextValue({
-        value: labels.true,
         fallback: t('table.filters.booleans.true'),
+        value: labels.true,
       }),
     },
     preview: resolveTagPreview({
@@ -205,8 +205,8 @@ export function resolveBooleanFilterUi(
         value: labels.empty,
         fallback: t('table.filters.booleans.empty'),
       }),
-      mode: 'summary',
       maxTags: 3,
+      mode: 'summary',
     }),
     reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
     selection: {
@@ -242,13 +242,13 @@ export function resolveNumberFilterUi(
       inputs: {
         disableWheelChange: range.inputs?.disableWheelChange ?? true,
         fromPlaceholder: getFilterTextValue({
-          value: range.inputs?.fromPlaceholder,
           fallback: 'Min',
+          value: range.inputs?.fromPlaceholder,
         }),
         hideStepper: range.inputs?.hideStepper ?? false,
         toPlaceholder: getFilterTextValue({
-          value: range.inputs?.toPlaceholder,
           fallback: 'Max',
+          value: range.inputs?.toPlaceholder,
         }),
       },
       minGap: range.minGap,
@@ -271,8 +271,8 @@ export function resolveNumberFilterUi(
         disableWheelChange: scalar.input?.disableWheelChange ?? true,
         hideStepper: scalar.input?.hideStepper ?? false,
         placeholder: getFilterTextValue({
-          value: scalar.input?.placeholder,
           fallback: getFilterLabelText({ label: definition.label }),
+          value: scalar.input?.placeholder,
         }),
       },
       preview: resolveNumberPreview({
@@ -323,16 +323,16 @@ export function resolveDateFilterUi(
       input: {
         fixed: range.input?.fixed ?? true,
         fromPlaceholder: getFilterTextValue({
-          value: range.input?.fromPlaceholder,
           fallback: 'Start date',
+          value: range.input?.fromPlaceholder,
         }),
         granularity: range.input?.granularity ?? 'day',
         hideTimeZone: range.input?.hideTimeZone ?? true,
         highlight: range.input?.highlight ?? false,
         hourCycle: range.input?.hourCycle,
         toPlaceholder: getFilterTextValue({
-          value: range.input?.toPlaceholder,
           fallback: 'End date',
+          value: range.input?.toPlaceholder,
         }),
       },
       presets: range.presets,
@@ -361,8 +361,8 @@ export function resolveDateFilterUi(
         highlight: scalar.input?.highlight ?? false,
         hourCycle: scalar.input?.hourCycle,
         placeholder: getFilterTextValue({
-          value: scalar.input?.placeholder,
           fallback: getFilterLabelText({ label: definition.label }),
+          value: scalar.input?.placeholder,
         }),
       },
       presets: scalar.presets,
@@ -383,12 +383,12 @@ function resolveActions(options: {
 
   return {
     apply: getFilterTextValue({
-      value: options.local?.apply ?? options.common?.apply,
       fallback: t('table.filters.panel.apply'),
+      value: options.local?.apply ?? options.common?.apply,
     }),
     clear: getFilterTextValue({
-      value: options.local?.clear ?? options.common?.clear,
       fallback: t('table.filters.panel.clearAll'),
+      value: options.local?.clear ?? options.common?.clear,
     }),
   }
 }
@@ -400,8 +400,8 @@ function resolvePreview(options: {
 }): TableFilterPreviewConfigResolved {
   return {
     empty: getFilterTextValue({
-      value: options.base?.empty,
       fallback: options.empty,
+      value: options.base?.empty,
     }),
     label: getFilterTextValue({
       value: options.base?.label,
@@ -418,8 +418,8 @@ function resolveTagPreview(options: {
 }): TableTagFilterPreviewConfigResolved {
   return {
     empty: getFilterTextValue({
-      value: options.base?.empty,
       fallback: options.empty,
+      value: options.base?.empty,
     }),
     label: getFilterTextValue({
       value: options.base?.label,

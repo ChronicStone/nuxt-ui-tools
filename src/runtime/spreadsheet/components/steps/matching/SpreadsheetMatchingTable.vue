@@ -53,8 +53,8 @@ function getMatchBadgeProps(status: 'matched' | 'unmatched') {
   if (status === 'matched') {
     return {
       color: 'success' as const,
-      label: t('spreadsheet.steps.matching.matched'),
       dotClass: 'bg-success',
+      label: t('spreadsheet.steps.matching.matched'),
     }
   }
 

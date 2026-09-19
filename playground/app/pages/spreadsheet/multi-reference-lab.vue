@@ -57,11 +57,11 @@ function createMultiReferenceSchema() {
     },
     references: (reference) => [
       reference.select('productIds', {
-        source: 'productLabels',
         options: products.map((product) => ({
           label: product.name,
           value: product.id,
         })),
+        source: 'productLabels',
       }),
     ],
     sheet: {
@@ -99,8 +99,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-multi-reference-lab.xlsx',
   }

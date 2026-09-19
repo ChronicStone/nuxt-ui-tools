@@ -38,7 +38,6 @@ describe('form step navigation', () => {
         },
         steps: [
           {
-            key: 'identity',
             fields: [
               {
                 key: 'name',
@@ -56,8 +55,9 @@ describe('form step navigation', () => {
                 },
               },
             ],
+            key: 'identity',
           },
-          { key: 'details', fields: [{ key: 'notes', type: 'textarea' }] },
+          { fields: [{ key: 'notes', type: 'textarea' }], key: 'details' },
         ],
       }),
     )
@@ -104,8 +104,8 @@ describe('form step navigation', () => {
       defineFormSchema({
         onBeforeNext: async () => nextGate.promise,
         steps: [
-          { key: 'identity', fields: [{ key: 'name', type: 'text' }] },
-          { key: 'details', fields: [{ key: 'notes', type: 'textarea' }] },
+          { fields: [{ key: 'name', type: 'text' }], key: 'identity' },
+          { fields: [{ key: 'notes', type: 'textarea' }], key: 'details' },
         ],
       }),
     )
@@ -138,15 +138,15 @@ describe('form step navigation', () => {
               { key: 'fullName', type: 'text', validation: { required: true } },
               { key: 'email', type: 'text', validation: { required: true } },
               {
-                key: 'details',
-                type: 'object',
-                layout: { span: 1 },
                 fields: [{ key: 'name', type: 'text', validation: { required: true } }],
+                key: 'details',
+                layout: { span: 1 },
+                type: 'object',
               },
               {
                 key: 'handle',
-                type: 'text',
                 layout: { span: 1 },
+                type: 'text',
                 validation: {
                   rules: [
                     {
@@ -200,8 +200,8 @@ describe('form step navigation', () => {
       defineFormSchema({
         onBeforeNext: async () => nextGate.promise,
         steps: [
-          { key: 'identity', fields: [{ key: 'name', type: 'text' }] },
-          { key: 'details', fields: [{ key: 'notes', type: 'textarea' }] },
+          { fields: [{ key: 'name', type: 'text' }], key: 'identity' },
+          { fields: [{ key: 'notes', type: 'textarea' }], key: 'details' },
         ],
       }),
     )

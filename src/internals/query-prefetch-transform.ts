@@ -140,8 +140,8 @@ export function transformQueryPrefetchMacro(typescript: typeof ts, code: string,
   if (!pageMeta) {
     return applyTextEdits(code, [
       {
-        start: scriptStart + prefetchStatement.getStart(source),
         end: scriptStart + prefetchStatement.end,
+        start: scriptStart + prefetchStatement.getStart(source),
         text: `definePageMeta({\n  queryPrefetch: ${prefetchCode},\n})`,
       },
     ])

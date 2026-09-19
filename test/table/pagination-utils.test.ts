@@ -56,9 +56,9 @@ describe('pagination helpers', () => {
       },
       table: {
         columns: [
-          { kind: 'field', key: 'name', field: 'name' },
-          { kind: 'field', key: 'age', field: 'age', sortable: false },
-          { kind: 'composite', key: 'c', sortableKey: 'created' },
+          { field: 'name', key: 'name', kind: 'field' },
+          { field: 'age', key: 'age', kind: 'field', sortable: false },
+          { key: 'c', kind: 'composite', sortableKey: 'created' },
         ],
         defaultSorting: 'name',
       },

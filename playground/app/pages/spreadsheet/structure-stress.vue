@@ -16,22 +16,22 @@ const center = {
   affiliationGroups: [
     {
       id: 'school-level',
-      name: 'School level',
-      slug: 'schoolLevel',
       items: [
         { id: 'primary', name: 'Primary' },
         { id: 'secondary', name: 'Secondary' },
         { id: 'higher-education', name: 'Higher education' },
       ],
+      name: 'School level',
+      slug: 'schoolLevel',
     },
     {
       id: 'programme',
-      name: 'Programme',
-      slug: 'programme',
       items: [
         { id: 'general-english', name: 'General English' },
         { id: 'business-english', name: 'Business English' },
       ],
+      name: 'Programme',
+      slug: 'programme',
     },
   ],
   country: 'France',
@@ -47,28 +47,28 @@ function createStructureStressSchema() {
     columns: {
       dynamic: ({ dynamic }) => [
         dynamic.optionGroups({
-          key: 'affiliations',
-          source: center.affiliationGroups,
-          itemKey: (group) => group.id,
-          itemLabel: (group) => group.name,
-          targetKey: (group) => group.slug,
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
           },
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          key: 'affiliations',
           options: (group) =>
             group.items.map((item) => ({
               label: item.name,
               value: item.id,
             })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
           output: {
             into: 'affiliations',
+          },
+          source: center.affiliationGroups,
+          targetKey: (group) => group.slug,
+          values: {
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+            mode: 'csv',
+            resolve: 'label',
+            separator: ',',
           },
         }),
       ],
@@ -126,11 +126,11 @@ function createStructureStressSchema() {
     matching: { strategy: 'smart' },
     references: (reference) => [
       reference.select('productId', {
-        source: 'examNameRaw',
         options: center.products.map((product) => ({
           label: product.name,
           value: product.id,
         })),
+        source: 'examNameRaw',
       }),
     ],
     sheet: { strategy: 'selection' },
@@ -192,8 +192,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-structure-stress.xlsx',
   }

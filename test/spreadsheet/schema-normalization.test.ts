@@ -30,12 +30,12 @@ const context = [
           [
             {
               id: 'school-level',
-              name: 'School level',
-              slug: 'schoolLevel',
               items: [
                 { id: 'primary', name: 'Primary' },
                 { id: 'secondary', name: 'Secondary' },
               ],
+              name: 'School level',
+              slug: 'schoolLevel',
             },
           ] satisfies readonly DemoAffiliationGroup[],
         queryKey: ['affiliation-groups', 'tc_123'],
@@ -48,7 +48,21 @@ type ContextData = ExtractSpreadsheetContextData<{ context: typeof context }>
 const columns = {
   dynamic: ({ dynamic }) => [
     dynamic.optionGroups({
+      header: {
+        strategy: 'template',
+        template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
+      },
+      itemKey: (group) => group.id,
+      itemLabel: (group) => group.name,
       key: 'affiliations',
+      options: (group) =>
+        group.items.map((item) => ({
+          label: item.name,
+          value: item.id,
+        })),
+      output: {
+        into: 'affiliations',
+      },
       source: [
         {
           id: 'school-level',
@@ -60,34 +74,20 @@ const columns = {
           ],
         },
       ] satisfies readonly DemoAffiliationGroup[],
-      itemKey: (group) => group.id,
-      itemLabel: (group) => group.name,
       targetKey: (group) => group.slug,
-      header: {
-        strategy: 'template',
-        template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-      },
-      options: (group) =>
-        group.items.map((item) => ({
-          label: item.name,
-          value: item.id,
-        })),
       values: {
         mode: 'csv',
-        separator: ',',
         resolve: 'label',
-      },
-      output: {
-        into: 'affiliations',
+        separator: ',',
       },
     }),
   ],
   static: (column) => [
     column.text('examNameRaw', {
-      required: true,
       match: {
         headers: ['Exam name'],
       },
+      required: true,
     }),
     column.number('scores.general'),
   ],

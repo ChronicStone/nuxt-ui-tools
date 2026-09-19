@@ -134,7 +134,7 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     (value) => {
       const effect = Object.getOwnPropertyDescriptor(field(), 'watch')?.value
       if (isFunction(effect)) {
-        effect({ value, api: api.value })
+        effect({ api: api.value, value })
       }
     },
     {

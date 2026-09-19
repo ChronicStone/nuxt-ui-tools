@@ -68,7 +68,6 @@ const clientSchema = defineTableSchema({
     },
     ui: (filter) => [
       filter.text('fullName', {
-        label: () => t('playground.tableCommon.filters.name'),
         behavior: {
           operators: ['contains', 'is'],
         },
@@ -76,46 +75,52 @@ const clientSchema = defineTableSchema({
           location: 'tag-dynamic',
         },
         editor: {
-          placeholder: () => t('playground.tableCommon.filters.searchEmployees'),
-          leadingIcon: 'i-lucide-search',
           inputType: 'search',
+          leadingIcon: 'i-lucide-search',
+          placeholder: () => t('playground.tableCommon.filters.searchEmployees'),
         },
+        label: () => t('playground.tableCommon.filters.name'),
       }),
       filter.option('department.company.country', {
-        label: () => t('playground.tableCommon.filters.country'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'tag-dynamic',
         },
+        editor: {
+          closeOnSelect: false,
+          labels: {
+            searchPlaceholder: () => t('playground.tableCommon.filters.selectCountries'),
+          },
+          presentation: 'tree',
+          searchable: true,
+          selection: {
+            mode: 'multiple',
+          },
+          tree: {
+            selectable: 'leaf-only',
+          },
+        },
+        label: () => t('playground.tableCommon.filters.country'),
         source: {
           facet: 'exclude-self',
           options: countryTreeOptions,
         },
-        editor: {
-          searchable: true,
-          closeOnSelect: false,
-          presentation: 'tree',
-          tree: {
-            selectable: 'leaf-only',
-          },
-          selection: {
-            mode: 'multiple',
-          },
-          labels: {
-            searchPlaceholder: () => t('playground.tableCommon.filters.selectCountries'),
-          },
-        },
       }),
       filter.option('skills', {
-        label: () => t('playground.tableCommon.filters.skill'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'tag-dynamic',
         },
+        editor: {
+          row: {
+            showCounts: true,
+          },
+        },
+        label: () => t('playground.tableCommon.filters.skill'),
         source: {
           facet: 'exclude-self',
           options: skillOptions.map((value) => ({
@@ -123,56 +128,43 @@ const clientSchema = defineTableSchema({
             value,
           })),
         },
-        editor: {
-          row: {
-            showCounts: true,
-          },
-        },
       }),
       filter.option('skillTaxonomy', {
-        label: () => t('playground.tableClient.filters.skillTree'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'tag-dynamic',
         },
+        editor: {
+          closeOnSelect: false,
+          labels: {
+            searchPlaceholder: () => t('playground.tableClient.filters.selectSkillTaxonomy'),
+          },
+          presentation: 'tree',
+          row: {
+            showCounts: true,
+          },
+          searchable: true,
+          selection: {
+            mode: 'multiple',
+          },
+          tree: {
+            selectable: 'all',
+          },
+        },
+        label: () => t('playground.tableClient.filters.skillTree'),
         source: {
           facet: 'exclude-self',
           options: skillTreeOptions,
         },
-        editor: {
-          searchable: true,
-          closeOnSelect: false,
-          presentation: 'tree',
-          tree: {
-            selectable: 'all',
-          },
-          selection: {
-            mode: 'multiple',
-          },
-          row: {
-            showCounts: true,
-          },
-          labels: {
-            searchPlaceholder: () => t('playground.tableClient.filters.selectSkillTaxonomy'),
-          },
-        },
       }),
       filter.option('department.name', {
-        label: () => t('playground.tableCommon.filters.department'),
         behavior: {
           defaultOperator: 'isAnyOf',
         },
         display: {
           location: 'tag-dynamic',
-        },
-        source: {
-          facet: 'exclude-self',
-          options: departmentOptions.map((value) => ({
-            label: () => translateDepartment(value),
-            value,
-          })),
         },
         editor: {
           searchable: false,
@@ -180,24 +172,31 @@ const clientSchema = defineTableSchema({
             mode: 'multiple',
           },
         },
+        label: () => t('playground.tableCommon.filters.department'),
+        source: {
+          facet: 'exclude-self',
+          options: departmentOptions.map((value) => ({
+            label: () => translateDepartment(value),
+            value,
+          })),
+        },
       }),
       filter.boolean('isActive', {
-        label: () => t('playground.tableCommon.filters.active'),
         display: {
           location: 'tag-dynamic',
         },
+        editor: {
+          labels: {
+            false: () => t('playground.tableCommon.status.paused'),
+            true: () => t('playground.tableCommon.status.online'),
+          },
+        },
+        label: () => t('playground.tableCommon.filters.active'),
         source: {
           facet: 'exclude-self',
         },
-        editor: {
-          labels: {
-            true: () => t('playground.tableCommon.status.online'),
-            false: () => t('playground.tableCommon.status.paused'),
-          },
-        },
       }),
       filter.number('salary', {
-        label: () => t('playground.tableCommon.filters.salary'),
         behavior: {
           operators: ['is', 'gte', 'lte', 'between'],
         },
@@ -205,17 +204,18 @@ const clientSchema = defineTableSchema({
           location: 'tag-dynamic',
         },
         editor: {
-          min: 50000,
           max: 250000,
-          step: 5000,
-          scalar: {
-            display: 'input-slider',
-          },
+          min: 50000,
           range: {
             display: 'inputs-slider',
             minGap: 10000,
           },
+          scalar: {
+            display: 'input-slider',
+          },
+          step: 5000,
         },
+        label: () => t('playground.tableCommon.filters.salary'),
         preview: {
           formatter: (value) => formatCurrency(value),
           rangeFormatter: ({ from, to }) =>
@@ -223,7 +223,6 @@ const clientSchema = defineTableSchema({
         },
       }),
       filter.date('hiredAt', {
-        label: () => t('playground.tableCommon.filters.hiredAt'),
         behavior: {
           operators: ['is', 'before', 'after', 'between'],
         },
@@ -231,26 +230,13 @@ const clientSchema = defineTableSchema({
           location: 'panel md:tag',
         },
         editor: {
-          scalar: {
-            display: 'calendar',
-            presets: [
-              {
-                label: () => t('playground.tableCommon.datePresets.today'),
-                value: ({ now }) => atStartOfDay(now),
-              },
-              {
-                label: () => t('playground.tableCommon.datePresets.yesterday'),
-                value: ({ now }) => atStartOfDay(shiftDays(now, -1)),
-              },
-              {
-                label: () => t('playground.tableCommon.datePresets.startOfMonth'),
-                value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
-              },
-            ],
-          },
           range: {
+            calendar: {
+              fixedWeeks: true,
+              months: 1,
+              pagedNavigation: true,
+            },
             display: 'inputs-calendar',
-            presetsPlacement: 'side',
             presets: [
               {
                 label: () => t('playground.tableCommon.datePresets.last7Days'),
@@ -274,16 +260,30 @@ const clientSchema = defineTableSchema({
                 }),
               },
             ],
-            calendar: {
-              months: 1,
-              pagedNavigation: true,
-              fixedWeeks: true,
-            },
+            presetsPlacement: 'side',
+          },
+          scalar: {
+            display: 'calendar',
+            presets: [
+              {
+                label: () => t('playground.tableCommon.datePresets.today'),
+                value: ({ now }) => atStartOfDay(now),
+              },
+              {
+                label: () => t('playground.tableCommon.datePresets.yesterday'),
+                value: ({ now }) => atStartOfDay(shiftDays(now, -1)),
+              },
+              {
+                label: () => t('playground.tableCommon.datePresets.startOfMonth'),
+                value: ({ now }) => new Date(now.getFullYear(), now.getMonth(), 1),
+              },
+            ],
           },
         },
+        label: () => t('playground.tableCommon.filters.hiredAt'),
         preview: {
-          label: () => t('playground.tableClient.preview.hired'),
           formatter: (value) => formatDate(value.toISOString()),
+          label: () => t('playground.tableClient.preview.hired'),
           rangeFormatter: ({ from, to }) =>
             [from, to]
               .filter((value): value is Date => value instanceof Date)
@@ -305,52 +305,12 @@ const clientSchema = defineTableSchema({
       <UCard
         class="rounded-md h-full"
         ui={{
-          root: 'flex h-full flex-col',
-          header: 'p-4',
           body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
           footer: 'mt-auto p-4 pt-3',
+          header: 'p-4',
+          root: 'flex h-full flex-col',
         }}
         v-slots={{
-          header: () => (
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex min-w-0 items-center gap-3">
-                <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
-                  {getInitials(row.fullName)}
-                </div>
-                <div class="min-w-0">
-                  <div class="truncate font-medium text-highlighted">{row.fullName}</div>
-                  <div class="mt-1 flex items-center gap-2 text-sm text-muted">
-                    <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
-                    <span class="truncate">{row.email}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex shrink-0 items-start gap-2">
-                <UBadge
-                  color={row.isActive ? 'success' : 'neutral'}
-                  variant={row.isActive ? 'soft' : 'subtle'}
-                  size="sm"
-                  label={
-                    row.isActive
-                      ? t('playground.tableCommon.status.online')
-                      : t('playground.tableCommon.status.paused')
-                  }
-                />
-                <UiRowActions
-                  content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
-                  modal={false}
-                >
-                  <UButton
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-lucide-ellipsis-vertical"
-                    size="sm"
-                    square
-                  />
-                </UiRowActions>
-              </div>
-            </div>
-          ),
           default: () => (
             <>
               <div class="grid gap-3 sm:grid-cols-2">
@@ -393,6 +353,46 @@ const clientSchema = defineTableSchema({
               <div class="shrink-0">{formatDate(row.hiredAt)}</div>
             </div>
           ),
+          header: () => (
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-3">
+                <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
+                  {getInitials(row.fullName)}
+                </div>
+                <div class="min-w-0">
+                  <div class="truncate font-medium text-highlighted">{row.fullName}</div>
+                  <div class="mt-1 flex items-center gap-2 text-sm text-muted">
+                    <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
+                    <span class="truncate">{row.email}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex shrink-0 items-start gap-2">
+                <UBadge
+                  color={row.isActive ? 'success' : 'neutral'}
+                  variant={row.isActive ? 'soft' : 'subtle'}
+                  size="sm"
+                  label={
+                    row.isActive
+                      ? t('playground.tableCommon.status.online')
+                      : t('playground.tableCommon.status.paused')
+                  }
+                />
+                <UiRowActions
+                  content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
+                  modal={false}
+                >
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-ellipsis-vertical"
+                    size="sm"
+                    square
+                  />
+                </UiRowActions>
+              </div>
+            </div>
+          ),
         }}
       />
     ),
@@ -412,43 +412,40 @@ const clientSchema = defineTableSchema({
   },
   rowActions: ({ row, tableApi, layout }) => [
     {
-      key: 'copy-email',
-      label: () => t('playground.tableClient.actions.copyEmail'),
-      icon: 'i-lucide-copy',
       action: async () => {
         await navigator.clipboard.writeText(row.email)
       },
+      icon: 'i-lucide-copy',
+      key: 'copy-email',
+      label: () => t('playground.tableClient.actions.copyEmail'),
     },
     {
-      key: row.isActive ? 'pause-employee' : 'resume-employee',
-      label: () =>
-        row.isActive
-          ? t('playground.tableClient.actions.pauseEmployee')
-          : t('playground.tableClient.actions.resumeEmployee'),
-      icon: row.isActive ? 'i-lucide-pause' : 'i-lucide-play',
       action: () => {
         tableApi.updateRow({
           ...row,
           isActive: !row.isActive,
         })
       },
+      icon: row.isActive ? 'i-lucide-pause' : 'i-lucide-play',
+      key: row.isActive ? 'pause-employee' : 'resume-employee',
+      label: () =>
+        row.isActive
+          ? t('playground.tableClient.actions.pauseEmployee')
+          : t('playground.tableClient.actions.resumeEmployee'),
     },
     {
-      key: 'promote-salary',
-      label: () => t('playground.tableClient.actions.giveRaise'),
-      icon: 'i-lucide-badge-dollar-sign',
-      disabled: ({ row: currentRow }) => currentRow.salary >= 200000,
       action: () => {
         tableApi.updateRow({
           ...row,
           salary: Math.min(row.salary + 5000, 200000),
         })
       },
+      disabled: ({ row: currentRow }) => currentRow.salary >= 200000,
+      icon: 'i-lucide-badge-dollar-sign',
+      key: 'promote-salary',
+      label: () => t('playground.tableClient.actions.giveRaise'),
     },
     {
-      key: 'more',
-      label: () => t('playground.tableClient.actions.moreActions'),
-      icon: 'i-lucide-ellipsis',
       children: [
         {
           key: 'refresh',
@@ -463,12 +460,15 @@ const clientSchema = defineTableSchema({
           condition: ({ layout: currentLayout }) => currentLayout === 'grid',
         },
       ],
+      icon: 'i-lucide-ellipsis',
+      key: 'more',
+      label: () => t('playground.tableClient.actions.moreActions'),
     },
     {
+      condition: () => layout === 'table',
+      icon: 'i-lucide-table-properties',
       key: 'table-only',
       label: () => t('playground.tableClient.actions.tableContextOnly'),
-      icon: 'i-lucide-table-properties',
-      condition: () => layout === 'table',
     },
   ],
   rowKey: 'id',
@@ -479,18 +479,18 @@ const clientSchema = defineTableSchema({
   source: {
     mode: 'client',
     query: () => ({
-      queryKey: ['demo-employees-client'],
       queryFn: async () => {
         await new Promise((resolve) => setTimeout(resolve, 3000))
         return clientRows
       },
+      queryKey: ['demo-employees-client'],
     }),
   },
   table: {
     columns: (column) => [
       column.field('fullName', {
-        label: () => t('playground.tableCommon.columns.employee'),
         icon: 'i-lucide-user-round',
+        label: () => t('playground.tableCommon.columns.employee'),
         minWidth: 260,
         pinned: 'left',
         render: ({ row }) => (
@@ -513,8 +513,8 @@ const clientSchema = defineTableSchema({
         ),
       }),
       column.field('email', {
-        label: () => t('playground.tableCommon.columns.email'),
         icon: 'i-lucide-at-sign',
+        label: () => t('playground.tableCommon.columns.email'),
         minWidth: 280,
         render: ({ row }) => (
           <div class="min-w-0">
@@ -527,9 +527,8 @@ const clientSchema = defineTableSchema({
         ),
       }),
       column.composite('skillsSummary', {
-        label: () => t('playground.tableCommon.columns.skills'),
         icon: 'i-lucide-tags',
-        sortableKey: 'fullName',
+        label: () => t('playground.tableCommon.columns.skills'),
         minWidth: 230,
         render: ({ row }) => (
           <div class="flex flex-wrap gap-1.5">
@@ -544,10 +543,11 @@ const clientSchema = defineTableSchema({
             ))}
           </div>
         ),
+        sortableKey: 'fullName',
       }),
       column.field('department.company.country', {
-        label: () => t('playground.tableCommon.columns.country'),
         icon: 'i-lucide-globe',
+        label: () => t('playground.tableCommon.columns.country'),
         minWidth: 170,
         render: ({ value }) => (
           <div class="flex items-center gap-2">
@@ -559,18 +559,18 @@ const clientSchema = defineTableSchema({
         ),
       }),
       column.field('department.name', {
-        label: () => t('playground.tableCommon.columns.department'),
         icon: 'i-lucide-building-2',
+        label: () => t('playground.tableCommon.columns.department'),
         minWidth: 180,
         render: ({ value }) => (
           <span class="truncate text-highlighted">{translateDepartment(String(value ?? ''))}</span>
         ),
       }),
       column.field('isActive', {
-        label: () => t('playground.tableCommon.columns.active'),
         icon: 'i-lucide-badge-check',
-        minWidth: 120,
+        label: () => t('playground.tableCommon.columns.active'),
         maxWidth: 150,
+        minWidth: 120,
         render: ({ value }) => (
           <UBadge
             color={value ? 'success' : 'neutral'}
@@ -585,9 +585,9 @@ const clientSchema = defineTableSchema({
         ),
       }),
       column.field('salary', {
-        label: () => t('playground.tableCommon.columns.salary'),
-        icon: 'i-lucide-wallet',
         align: 'right',
+        icon: 'i-lucide-wallet',
+        label: () => t('playground.tableCommon.columns.salary'),
         labelAlign: 'right',
         minWidth: 160,
         render: ({ value }) => (
@@ -595,8 +595,8 @@ const clientSchema = defineTableSchema({
         ),
       }),
       column.field('hiredAt', {
-        label: () => t('playground.tableCommon.columns.hiredAt'),
         icon: 'i-lucide-calendar-days',
+        label: () => t('playground.tableCommon.columns.hiredAt'),
         minWidth: 170,
         render: ({ value }) => (
           <span class="text-highlighted">{formatDate(String(value ?? ''))}</span>
@@ -747,7 +747,7 @@ function createClientRows(count: number) {
       fullName,
       highlights: faker.helpers.arrayElements(
         highlightCatalog,
-        faker.number.int({ min: 1, max: 3 }),
+        faker.number.int({ max: 3, min: 1 }),
       ),
       hiredAt,
       id: `client-${index + 1}`,
@@ -836,16 +836,14 @@ function buildSkillTreeOptions() {
     {
       children: [
         {
-          label: () => translateCategory('Application'),
-          value: 'cat:application',
           children: [
             { label: () => translateSkill('GraphQL'), value: 'skill:graphql' },
             { label: () => translateSkill('TypeScript'), value: 'skill:typescript' },
           ],
+          label: () => translateCategory('Application'),
+          value: 'cat:application',
         },
         {
-          label: () => translateCategory('Infrastructure'),
-          value: 'cat:infrastructure',
           children: [
             { label: () => translateSkill('Kubernetes'), value: 'skill:kubernetes' },
             { label: () => translateSkill('Terraform'), value: 'skill:terraform' },
@@ -854,27 +852,29 @@ function buildSkillTreeOptions() {
               value: 'skill:distributed-systems',
             },
           ],
+          label: () => translateCategory('Infrastructure'),
+          value: 'cat:infrastructure',
         },
         {
-          label: () => translateCategory('Reliability'),
-          value: 'cat:reliability',
           children: [
             { label: () => translateSkill('Incident Response'), value: 'skill:incident-response' },
             { label: () => translateSkill('Observability'), value: 'skill:observability' },
           ],
+          label: () => translateCategory('Reliability'),
+          value: 'cat:reliability',
         },
         {
+          children: [{ label: () => translateSkill('Security'), value: 'skill:security' }],
           label: () => translateCategory('Security'),
           value: 'cat:security',
-          children: [{ label: () => translateSkill('Security'), value: 'skill:security' }],
         },
         {
-          label: () => translateCategory('Services'),
-          value: 'cat:services',
           children: [
             { label: () => translateSkill('Go'), value: 'skill:go' },
             { label: () => translateSkill('Rust'), value: 'skill:rust' },
           ],
+          label: () => translateCategory('Services'),
+          value: 'cat:services',
         },
       ],
       label: () => translateCategory('Engineering'),
@@ -883,21 +883,21 @@ function buildSkillTreeOptions() {
     {
       children: [
         {
+          children: [{ label: () => translateSkill('Python'), value: 'skill:python' }],
           label: () => translateCategory('Analysis'),
           value: 'cat:analysis',
-          children: [{ label: () => translateSkill('Python'), value: 'skill:python' }],
         },
         {
-          label: () => translateCategory('Intelligence'),
-          value: 'cat:intelligence',
           children: [
             { label: () => translateSkill('Machine Learning'), value: 'skill:machine-learning' },
           ],
+          label: () => translateCategory('Intelligence'),
+          value: 'cat:intelligence',
         },
         {
+          children: [{ label: () => translateSkill('PostgreSQL'), value: 'skill:postgresql' }],
           label: () => translateCategory('Platform'),
           value: 'cat:platform',
-          children: [{ label: () => translateSkill('PostgreSQL'), value: 'skill:postgresql' }],
         },
       ],
       label: () => translateCategory('Data'),
@@ -906,16 +906,16 @@ function buildSkillTreeOptions() {
     {
       children: [
         {
+          children: [{ label: () => translateSkill('UX Research'), value: 'skill:ux-research' }],
           label: () => translateCategory('Research'),
           value: 'cat:research',
-          children: [{ label: () => translateSkill('UX Research'), value: 'skill:ux-research' }],
         },
         {
-          label: () => translateCategory('Systems'),
-          value: 'cat:systems',
           children: [
             { label: () => translateSkill('Design Systems'), value: 'skill:design-systems' },
           ],
+          label: () => translateCategory('Systems'),
+          value: 'cat:systems',
         },
       ],
       label: () => translateCategory('Design'),
@@ -924,11 +924,11 @@ function buildSkillTreeOptions() {
     {
       children: [
         {
-          label: () => translateCategory('Planning'),
-          value: 'cat:planning',
           children: [
             { label: () => translateSkill('Product Strategy'), value: 'skill:product-strategy' },
           ],
+          label: () => translateCategory('Planning'),
+          value: 'cat:planning',
         },
       ],
       label: () => translateCategory('Product'),

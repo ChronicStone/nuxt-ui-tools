@@ -24,7 +24,6 @@ const validationSchema = defineFormSchema({
   context: {
     teams: () =>
       queryOptions({
-        queryKey: ['form-validation-teams'],
         queryFn: async () => {
           await sleep(650)
           return [
@@ -33,6 +32,7 @@ const validationSchema = defineFormSchema({
             { label: 'Operations', value: 'operations', description: 'Customer workflows' },
           ]
         },
+        queryKey: ['form-validation-teams'],
       }),
   },
   controls: {
@@ -48,8 +48,6 @@ const validationSchema = defineFormSchema({
   showStepper: true,
   steps: [
     {
-      key: 'identity',
-      title: 'Identity',
       description: 'Required fields and an async uniqueness rule.',
       fields: [
         {
@@ -112,10 +110,10 @@ const validationSchema = defineFormSchema({
           },
         },
       ],
+      key: 'identity',
+      title: 'Identity',
     },
     {
-      key: 'security',
-      title: 'Security',
       description: 'Cross-field confirmation and a query-backed select.',
       fields: [
         {
@@ -170,6 +168,8 @@ const validationSchema = defineFormSchema({
           },
         },
       ],
+      key: 'security',
+      title: 'Security',
     },
   ],
   title: 'Validation assessment',
@@ -191,7 +191,7 @@ const form = useForm({
     lastSubmitted.value = formData
     submitState.value = 'success'
     submitMessage.value = 'Saved successfully through the form submit lifecycle.'
-    return { success: true, data: { savedAt: new Date().toISOString() } }
+    return { data: { savedAt: new Date().toISOString() }, success: true }
   },
   schema: validationSchema,
 })

@@ -286,25 +286,25 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   function getRowStatus(index: number, issues: readonly SpreadsheetRowIssue[]) {
     if (isDiscarded(index)) {
       return {
-        label: t('spreadsheet.steps.review.discardedStatus'),
         color: 'neutral' as const,
         icon: 'i-lucide-ban',
+        label: t('spreadsheet.steps.review.discardedStatus'),
       }
     }
 
     if (hasBlockingIssue(issues)) {
       return {
-        label: t('spreadsheet.steps.review.blockingStatus'),
         color: 'error' as const,
         icon: 'i-lucide-circle-x',
+        label: t('spreadsheet.steps.review.blockingStatus'),
       }
     }
 
     if (hasWarningIssue(issues)) {
       return {
-        label: t('spreadsheet.steps.review.warningStatus'),
         color: 'warning' as const,
         icon: 'i-lucide-triangle-alert',
+        label: t('spreadsheet.steps.review.warningStatus'),
       }
     }
 
@@ -317,7 +317,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
 
   function getIssueBadge(issue: SpreadsheetRowIssue) {
     if (issue.level === 'error') {
-      return { label: t('spreadsheet.steps.review.issueBadgeBlocking'), color: 'error' as const }
+      return { color: 'error' as const, label: t('spreadsheet.steps.review.issueBadgeBlocking') }
     }
 
     return { color: 'warning' as const, label: t('spreadsheet.steps.review.issueBadgeWarning') }
@@ -373,8 +373,8 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
       cell: ({ row }: { row: { original: { index: number } } }) =>
         h('div', { class: 'flex justify-center' }, [
           h(UCheckbox, {
-            modelValue: rowSelection.value[String(row.original.index)] ?? false,
             disabled: isOverflowRow(row.original.index) && activeTab.value !== 'discarded',
+            modelValue: rowSelection.value[String(row.original.index)] ?? false,
             'onUpdate:modelValue': (value: SpreadsheetValue) => {
               rowSelection.value = {
                 ...rowSelection.value,
@@ -414,11 +414,11 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
           h(
             UBadge,
             {
-              color: status.color,
-              variant: 'soft',
-              size: 'sm',
-              icon: status.icon,
               class: 'font-medium',
+              color: status.color,
+              icon: status.icon,
+              size: 'sm',
+              variant: 'soft',
             },
             () => statusLabel,
           ),
@@ -438,8 +438,8 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
         formatSpreadsheetCell(getSpreadsheetValueAtPath(row.data, column)),
       cell: ({ row }: { row: { original: { data: SpreadsheetRecord } } }) =>
         h(SpreadsheetValuePreview, {
-          value: getSpreadsheetValueAtPath(row.original.data, column),
           compact: true,
+          value: getSpreadsheetValueAtPath(row.original.data, column),
         }),
       header: humanizeSpreadsheetKey(column),
       id: column,

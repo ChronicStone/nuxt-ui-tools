@@ -16,10 +16,10 @@ useHead({
     lang,
   },
   meta: [
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { content: 'width=device-width, initial-scale=1', name: 'viewport' },
     {
-      name: 'description',
       content: 'Interactive playground for validating nuxt-ui-tools runtime behavior and UI.',
+      name: 'description',
     },
   ],
   title: 'nuxt-ui-tools - Playground',

@@ -69,16 +69,16 @@ const STATUS_COLOR = { active: '#ff9600', inactive: '#c0392b', pending: '#b8b1a7
 
 const schema = defineTableSchema({
   actions: [
-    { key: 'export', label: 'Exporter', icon: 'i-lucide-download', action: () => {} },
-    { key: 'sync', label: 'Synchroniser', icon: 'i-lucide-refresh-cw', action: () => {} },
+    { action: () => {}, icon: 'i-lucide-download', key: 'export', label: 'Exporter' },
+    { action: () => {}, icon: 'i-lucide-refresh-cw', key: 'sync', label: 'Synchroniser' },
     {
+      action: () => {},
+      icon: 'i-lucide-award',
       key: 'candidates',
       label: 'Exporter les candidats',
-      icon: 'i-lucide-award',
-      action: () => {},
     },
-    { key: 'inactive', label: 'Passer inactif', icon: 'i-lucide-clock', action: () => {} },
-    { key: 'delete', label: 'Supprimer', icon: 'i-lucide-trash-2', action: () => {} },
+    { action: () => {}, icon: 'i-lucide-clock', key: 'inactive', label: 'Passer inactif' },
+    { action: () => {}, icon: 'i-lucide-trash-2', key: 'delete', label: 'Supprimer' },
   ],
   defaultLayout: 'table',
   filters: {
@@ -88,72 +88,72 @@ const schema = defineTableSchema({
     },
     ui: (filter) => [
       filter.option('status', {
-        label: 'Statut',
         behavior: {
+          commitMode: 'auto',
           defaultOperator: 'isAnyOf',
           defaultValue: ['active', 'pending'],
-          commitMode: 'auto',
         },
         display: { location: 'tag' },
+        editor: { row: { showCounts: true }, searchable: false, selection: { mode: 'multiple' } },
+        label: 'Statut',
         source: {
+          facet: 'exclude-self',
           options: opts(ACCOUNT_STATUS).map((o) => ({
             ...o,
             color: STATUS_COLOR[o.value as keyof typeof STATUS_COLOR],
           })),
-          facet: 'exclude-self',
         },
-        editor: { searchable: false, selection: { mode: 'multiple' }, row: { showCounts: true } },
       }),
       filter.option('accountType', {
-        label: 'Type de compte',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
         display: { location: 'tag-dynamic' },
-        source: { options: opts(ACCOUNT_TYPE), facet: 'exclude-self' },
-        editor: { selection: { mode: 'multiple' }, row: { showCounts: true } },
+        editor: { row: { showCounts: true }, selection: { mode: 'multiple' } },
+        label: 'Type de compte',
+        source: { facet: 'exclude-self', options: opts(ACCOUNT_TYPE) },
       }),
       filter.option('group', {
-        label: 'Groupe',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
         display: { location: 'tag-dynamic' },
-        source: { options: GROUPS.map((g) => ({ value: g, label: g })) },
         editor: { selection: { mode: 'multiple' } },
+        label: 'Groupe',
+        source: { options: GROUPS.map((g) => ({ value: g, label: g })) },
       }),
       filter.option('country', {
-        label: 'Pays',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
         display: { location: 'tag-dynamic' },
-        source: { options: opts(COUNTRY), facet: 'exclude-self' },
-        editor: { searchable: true, selection: { mode: 'multiple' }, row: { showCounts: true } },
+        editor: { row: { showCounts: true }, searchable: true, selection: { mode: 'multiple' } },
+        label: 'Pays',
+        source: { facet: 'exclude-self', options: opts(COUNTRY) },
       }),
       filter.option('businessManagerId', {
-        label: 'Business Manager',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
-        display: { location: 'panel', group: 'Contacts', order: 1 },
-        source: { options: contactOpts('businessManager') },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
+        display: { group: 'Contacts', location: 'panel', order: 1 },
         editor: { searchable: true, selection: { mode: 'multiple' } },
+        label: 'Business Manager',
+        source: { options: contactOpts('businessManager') },
       }),
       filter.option('legalRepresentativeId', {
-        label: 'Représentant légal',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
-        display: { location: 'panel', group: 'Contacts', order: 2 },
-        source: { options: contactOpts('legalRepresentative') },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
+        display: { group: 'Contacts', location: 'panel', order: 2 },
         editor: { searchable: true, selection: { mode: 'multiple' } },
+        label: 'Représentant légal',
+        source: { options: contactOpts('legalRepresentative') },
       }),
       filter.option('billingContactId', {
-        label: 'Contact de facturation',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
-        display: { location: 'panel', group: 'Contacts', order: 3 },
-        source: { options: contactOpts('billing') },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
+        display: { group: 'Contacts', location: 'panel', order: 3 },
         editor: { searchable: true, selection: { mode: 'multiple' } },
+        label: 'Contact de facturation',
+        source: { options: contactOpts('billing') },
       }),
       filter.boolean('canPerformOnSite', {
+        display: { group: 'Synchronisation', location: 'panel', order: 4 },
         label: 'Centre de test sur site',
-        display: { location: 'panel', group: 'Synchronisation', order: 4 },
         source: { facet: 'exclude-self' },
       }),
       filter.boolean('edofSync', {
+        display: { group: 'Synchronisation', location: 'panel', order: 5 },
         label: 'Synchronisation EDOF',
-        display: { location: 'panel', group: 'Synchronisation', order: 5 },
         source: { facet: 'exclude-self' },
       }),
     ],
@@ -241,42 +241,38 @@ const schema = defineTableSchema({
     sizeOptions: { grid: [12, 24, 48, 96], table: [25, 50, 100, 200] },
   },
   rowActions: ({ row }) => [
-    { key: 'view', label: 'Voir la fiche', icon: 'i-lucide-arrow-right', action: () => {} },
-    { key: 'edit', label: 'Modifier', icon: 'i-lucide-pencil', action: () => {} },
+    { action: () => {}, icon: 'i-lucide-arrow-right', key: 'view', label: 'Voir la fiche' },
+    { action: () => {}, icon: 'i-lucide-pencil', key: 'edit', label: 'Modifier' },
     ...(row.status === 'pending'
       ? [
           {
+            action: () => {},
+            icon: 'i-lucide-check',
             key: 'activate',
             label: 'Finaliser l’activation',
-            icon: 'i-lucide-check',
-            action: () => {},
           },
         ]
       : []),
-    { key: 'sync', label: 'Synchroniser', icon: 'i-lucide-refresh-cw', action: () => {} },
+    { action: () => {}, icon: 'i-lucide-refresh-cw', key: 'sync', label: 'Synchroniser' },
   ],
   rowKey: 'id',
   selection: { mode: 'auto', scope: 'all' },
   source: {
     mode: 'client',
     query: () => ({
-      queryKey: ['accounts', accounts.length],
       queryFn: async () => {
         await new Promise((r) => setTimeout(r, 600))
         return accounts
       },
+      queryKey: ['accounts', accounts.length],
     }),
   },
   table: {
     columns: (column) => [
       column.field('name', {
         label: 'Nom',
-        sortable: true,
-        width: 228,
         minWidth: 200,
-        required: true,
         pinned: 'left',
-        skeleton: 'avatar',
         render: ({ row }) => (
           <a href={`/accounts/${row.id}`} class="ex-nm" onClick={(e: Event) => e.preventDefault()}>
             <span class="ex-nm__av">
@@ -293,47 +289,51 @@ const schema = defineTableSchema({
             </span>
           </a>
         ),
+        required: true,
+        skeleton: 'avatar',
+        sortable: true,
+        width: 228,
       }),
       column.field('status', {
         label: 'Status',
-        sortable: true,
-        width: 110,
-        skeleton: 'dot',
         render: ({ row }) => (
           <span class={['ex-st', `ex-st--${row.status}`]}>{ACCOUNT_STATUS[row.status]}</span>
         ),
+        skeleton: 'dot',
+        sortable: true,
+        width: 110,
       }),
       column.field('accountType', {
         label: 'Type de compte',
+        render: ({ row }) => <span class="text-muted">{ACCOUNT_TYPE[row.accountType]}</span>,
         sortable: true,
         width: 190,
-        render: ({ row }) => <span class="text-muted">{ACCOUNT_TYPE[row.accountType]}</span>,
       }),
       column.field('country', {
         label: 'Pays',
-        sortable: true,
         render: ({ row }) => (
           <span>
             <b class="mr-1.5 font-semibold text-highlighted">{row.country}</b>
             {COUNTRY[row.country]}
           </span>
         ),
+        sortable: true,
       }),
       column.field('group', { label: 'Groupe', render: ({ row }) => row.group ?? <Dash /> }),
       column.field('evoliz', {
-        skeleton: 'check',
         label: 'Evoliz Sync',
         render: ({ row }) => <Bool v={row.evoliz} />,
+        skeleton: 'check',
       }),
       column.field('vtest', {
-        skeleton: 'check',
         label: 'VTest Sync',
         render: ({ row }) => <Bool v={row.vtest} />,
+        skeleton: 'check',
       }),
       column.field('edofSync', {
-        skeleton: 'check',
         label: 'EDOF Sync',
         render: ({ row }) => <Bool v={row.edofSync} />,
+        skeleton: 'check',
       }),
       column.display('businessManager', {
         label: 'Business Manager',
@@ -341,18 +341,18 @@ const schema = defineTableSchema({
       }),
       column.field('updatedAt', {
         label: 'Mise à jour',
-        sortable: true,
         render: ({ row }) => <span class="text-muted">{fmtDate(row.updatedAt)}</span>,
+        sortable: true,
       }),
       column.field('invitationSent', {
-        skeleton: 'check',
         label: 'Invitation envoyée',
         render: ({ row }) => <Bool v={row.invitationSent} />,
+        skeleton: 'check',
       }),
       column.field('debit', {
-        skeleton: 'check',
         label: 'Prélèvement',
         render: ({ row }) => <Bool v={row.debit} />,
+        skeleton: 'check',
       }),
       column.field('metadata', {
         label: 'Documentation initiale',
@@ -363,9 +363,9 @@ const schema = defineTableSchema({
         render: ({ row }) => row.testCenter ?? <Dash />,
       }),
       column.field('canPerformOnSite', {
-        skeleton: 'check',
         label: 'Centre de test sur site',
         render: ({ row }) => <Bool v={row.canPerformOnSite} />,
+        skeleton: 'check',
       }),
       column.field('erpId', {
         label: 'ERP ID',
@@ -412,25 +412,25 @@ const schema = defineTableSchema({
         render: ({ row }) => <span class="font-mono text-[12px]">{row.preferredCurrency}</span>,
       }),
       column.field('contracts', {
-        summary: 'sum',
+        align: 'right',
         ellipsis: true,
         label: 'Contrats',
-        sortable: true,
-        align: 'right',
         render: ({ row }) => fmtNum(row.contracts),
+        sortable: true,
+        summary: 'sum',
       }),
       column.field('consumption', {
+        align: 'right',
+        ellipsis: true,
+        label: 'Conso. 30 j',
+        render: ({ row }) => fmtNum(row.consumption),
+        sortable: true,
         summary: {
           resolve: async ({ rows }) => {
             await new Promise((r) => setTimeout(r, 900))
             return rows.reduce((total, row) => total + row.consumption, 0)
           },
         },
-        label: 'Conso. 30 j',
-        sortable: true,
-        align: 'right',
-        ellipsis: true,
-        render: ({ row }) => fmtNum(row.consumption),
       }),
     ],
     defaultSorting: { dir: 'asc', key: 'name' },

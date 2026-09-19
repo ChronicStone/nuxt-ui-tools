@@ -64,39 +64,39 @@ const schema = defineTableSchema({
     },
     ui: (filter) => [
       filter.option('action', {
-        label: 'Action',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
         display: { location: 'tag' },
-        source: { options: opts(AUDIT_ACTIONS) },
         editor: { selection: { mode: 'multiple' } },
+        label: 'Action',
+        source: { options: opts(AUDIT_ACTIONS) },
       }),
       filter.option('outcome', {
-        label: 'Résultat',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
         display: { location: 'tag' },
+        editor: { searchable: false, selection: { mode: 'multiple' } },
+        label: 'Résultat',
         source: {
           options: opts(OUTCOME).map((o) => ({
             ...o,
             color: OUTCOME_COLOR[o.value as keyof typeof OUTCOME_COLOR],
           })),
         },
-        editor: { searchable: false, selection: { mode: 'multiple' } },
       }),
       filter.option('actorType', {
-        label: 'Type d’acteur',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
         display: { location: 'tag-dynamic' },
-        source: { options: opts(ACTOR_TYPE) },
         editor: { searchable: false, selection: { mode: 'multiple' } },
+        label: 'Type d’acteur',
+        source: { options: opts(ACTOR_TYPE) },
       }),
       filter.option('targetType', {
-        label: 'Type de cible',
-        behavior: { defaultOperator: 'isAnyOf', commitMode: 'auto' },
+        behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },
         display: { location: 'tag-dynamic' },
-        source: { options: opts(TARGET_TYPE) },
         editor: { searchable: false, selection: { mode: 'multiple' } },
+        label: 'Type de cible',
+        source: { options: opts(TARGET_TYPE) },
       }),
-      filter.date('at', { label: 'Date', display: { location: 'tag-dynamic' } }),
+      filter.date('at', { display: { location: 'tag-dynamic' }, label: 'Date' }),
     ],
   },
   grid: {
@@ -153,47 +153,44 @@ const schema = defineTableSchema({
   },
   pagination: { count: 'exact', mode: 'cursor', pageSize: PAGE },
   rowActions: () => [
-    { key: 'open', label: 'Voir la cible', icon: 'i-lucide-arrow-up-right' },
-    { key: 'copy', label: 'Copier l’identifiant', icon: 'i-lucide-copy' },
+    { icon: 'i-lucide-arrow-up-right', key: 'open', label: 'Voir la cible' },
+    { icon: 'i-lucide-copy', key: 'copy', label: 'Copier l’identifiant' },
   ],
   rowKey: 'id',
   source: {
     mode: 'remote',
-    query: (request) => ({
+    query: (request: TableSourceRequestContext<AuditEvent>) => ({
+      queryFn: () => queryAudit(request),
       queryKey: ['audit', request],
-      queryFn: () => queryAudit(request as TableSourceRequestContext<AuditEvent>),
     }),
   },
   table: {
     columns: (column) => [
       column.field('at', {
         label: 'Date',
-        sortable: true,
-        width: 150,
-        required: true,
         render: ({ row }) => (
           <span class="ex-when">
             <b>{dateFmt.format(new Date(row.at))}</b>
             <small>{timeFmt.format(new Date(row.at))}</small>
           </span>
         ),
+        required: true,
+        sortable: true,
+        width: 150,
       }),
       column.field('action', {
         label: 'Action',
-        sortable: true,
-        width: 240,
         render: ({ row }) => (
           <span class="ex-action">
             <span class={['ex-action__ic', `ex-action__ic--${row.action.split('.')[0]}`]} />
             <span class="truncate">{AUDIT_ACTIONS[row.action]}</span>
           </span>
         ),
+        sortable: true,
+        width: 240,
       }),
       column.field('actor', {
         label: 'Acteur',
-        sortable: true,
-        width: 220,
-        skeleton: 'avatar',
         render: ({ row }) => (
           <span class="ex-nm">
             <span class="ex-nm__av ex-nm__av--sm">
@@ -211,10 +208,12 @@ const schema = defineTableSchema({
             </span>
           </span>
         ),
+        skeleton: 'avatar',
+        sortable: true,
+        width: 220,
       }),
       column.field('target', {
         label: 'Cible',
-        width: 220,
         render: ({ row }) => (
           <span class="min-w-0">
             <a href="#" class="ex-link" onClick={(e: Event) => e.preventDefault()}>
@@ -223,39 +222,40 @@ const schema = defineTableSchema({
             <small class="block text-[11.5px] text-dimmed">{TARGET_TYPE[row.targetType]}</small>
           </span>
         ),
+        width: 220,
       }),
       column.field('outcome', {
         label: 'Résultat',
-        sortable: true,
-        width: 120,
-        skeleton: 'dot',
         render: ({ row }) => (
           <span class="ex-st" style={{ '--dot': OUTCOME_COLOR[row.outcome] }}>
             {OUTCOME[row.outcome]}
           </span>
         ),
+        skeleton: 'dot',
+        sortable: true,
+        width: 120,
       }),
       column.field('duration', {
-        label: 'Durée',
         align: 'right',
-        width: 100,
+        label: 'Durée',
         render: ({ row }) =>
           row.duration == null ? (
             <Dash />
           ) : (
             <span class="tabular-nums text-muted">{row.duration} ms</span>
           ),
+        width: 100,
       }),
       column.field('ip', {
         label: 'IP',
-        width: 140,
         render: ({ row }) =>
           row.ip ? <span class="font-mono text-[12px] text-muted">{row.ip}</span> : <Dash />,
+        width: 140,
       }),
       column.field('details', {
         label: 'Détails',
-        width: 360,
         render: ({ row }) => <span class="text-muted">{row.details}</span>,
+        width: 360,
       }),
     ],
     defaultSorting: { dir: 'desc', key: 'at' },

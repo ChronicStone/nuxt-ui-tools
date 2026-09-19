@@ -78,7 +78,7 @@ const controlAttrs = computed<FormObject>(() => {
     'data-form-field': fieldPath(props.parentPath, props.field).join('.'),
   }
   if (props.controlLabelledby) {
-    return { ...attrs, id: controlId, 'aria-labelledby': props.controlLabelledby }
+    return { ...attrs, 'aria-labelledby': props.controlLabelledby, id: controlId }
   }
   return { ...attrs, 'aria-label': resolveControlLabel(props.field), id: controlId }
 })

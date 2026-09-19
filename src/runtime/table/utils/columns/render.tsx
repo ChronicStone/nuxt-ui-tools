@@ -93,14 +93,14 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
       },
       style: {
         td: () => ({
-          width: `${SELECT_COLUMN_WIDTH}px`,
-          minWidth: `${SELECT_COLUMN_WIDTH}px`,
           maxWidth: `${SELECT_COLUMN_WIDTH}px`,
+          minWidth: `${SELECT_COLUMN_WIDTH}px`,
+          width: `${SELECT_COLUMN_WIDTH}px`,
         }),
         th: () => ({
-          width: `${SELECT_COLUMN_WIDTH}px`,
-          minWidth: `${SELECT_COLUMN_WIDTH}px`,
           maxWidth: `${SELECT_COLUMN_WIDTH}px`,
+          minWidth: `${SELECT_COLUMN_WIDTH}px`,
+          width: `${SELECT_COLUMN_WIDTH}px`,
         }),
       },
     },
@@ -136,14 +136,14 @@ export function createDataColumns(options: {
       return {
         accessorFn:
           column.kind === 'field'
-            ? (row: GenericObject) => getPathValue({ row, path: column.field })
+            ? (row: GenericObject) => getPathValue({ path: column.field, row })
             : undefined,
         cell: ({ row }: { row: { original: GenericObject; index: number } }) =>
           renderColumnCell({
             column,
+            params: options.params,
             row: row.original,
             rowIndex: row.index,
-            params: options.params,
           }),
         enableHiding: runtimeColumn.canHide,
         enablePinning: true,
@@ -178,14 +178,14 @@ export function createDataColumns(options: {
           },
           style: {
             td: ({ column: cellColumn }: { column: { getSize: () => number } }) => ({
-              width: `${cellColumn.getSize()}px`,
-              minWidth: `${cellColumn.getSize()}px`,
               maxWidth: `${cellColumn.getSize()}px`,
+              minWidth: `${cellColumn.getSize()}px`,
+              width: `${cellColumn.getSize()}px`,
             }),
             th: ({ column: headerColumn }: { column: { getSize: () => number } }) => ({
-              width: `${headerColumn.getSize()}px`,
-              minWidth: `${headerColumn.getSize()}px`,
               maxWidth: `${headerColumn.getSize()}px`,
+              minWidth: `${headerColumn.getSize()}px`,
+              width: `${headerColumn.getSize()}px`,
             }),
           },
         },
@@ -221,11 +221,11 @@ export function renderColumnCell(options: TableColumnRenderParams) {
           } as never),
           title: resolveEllipsisTitle({
             column: options.column,
+            fallbackValue: value,
             params: {
               ...cellContext,
               value,
             },
-            fallbackValue: value,
           }),
         }),
         scope: cellContext,
@@ -238,11 +238,11 @@ export function renderColumnCell(options: TableColumnRenderParams) {
         content: formatCellValue({ value }),
         title: resolveEllipsisTitle({
           column: options.column,
+          fallbackValue: value,
           params: {
             ...cellContext,
             value,
           },
-          fallbackValue: value,
         }),
       }),
       scope: cellContext,
@@ -256,8 +256,8 @@ export function renderColumnCell(options: TableColumnRenderParams) {
       content: options.column.render(cellContext as never),
       title: resolveEllipsisTitle({
         column: options.column,
-        params: cellContext,
         fallbackValue: null,
+        params: cellContext,
       }),
     }),
     scope: cellContext,
@@ -340,9 +340,9 @@ export function createRowActionsColumn(options: { params: UseTableColumnsParams 
   return {
     cell: ({ row }: { row: { original: GenericObject; index: number } }) => {
       const scope = createCellRenderContext({
+        params: options.params,
         row: row.original,
         rowIndex: row.index,
-        params: options.params,
       })
 
       return (
@@ -364,14 +364,14 @@ export function createRowActionsColumn(options: { params: UseTableColumnsParams 
       },
       style: {
         td: () => ({
-          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
-          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
           maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
         }),
         th: () => ({
-          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
-          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
           maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
         }),
       },
     },

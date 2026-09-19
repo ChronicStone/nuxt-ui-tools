@@ -70,27 +70,27 @@ export const demoEmployeesClient = {
   filterOptions: {
     companies(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/companies', {
-        method: 'POST',
         body: options.request,
+        method: 'POST',
       })
     },
     departments(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/departments', {
-        method: 'POST',
         body: options.request,
+        method: 'POST',
       })
     },
     skills(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/skills', {
-        method: 'POST',
         body: options.request,
+        method: 'POST',
       })
     },
   },
   queryTable(request: DemoEmployeesTableRequest) {
     return $fetch<DemoEmployeesTableResponse>('/api/table/demo-employees/query', {
-      method: 'POST',
       body: request,
+      method: 'POST',
     })
   },
 }

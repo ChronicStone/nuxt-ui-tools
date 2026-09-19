@@ -211,69 +211,69 @@ function startOfYear(value: Date): Date {
 const DEFAULT_SCALAR_PRESETS = {
   after: [
     {
-      label: 'Today',
       description: 'Everything after today.',
+      label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
-      label: '7 days ago',
       description: 'Everything after the last 7 days.',
+      label: '7 days ago',
       value: ({ now }) => startOfDay(addDays(now, -7)),
     },
     {
-      label: 'Start of year',
       description: 'Everything after the first day of this year.',
+      label: 'Start of year',
       value: ({ now }) => startOfYear(now),
     },
   ],
   before: [
     {
-      label: 'Today',
       description: 'Everything earlier than today.',
+      label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
-      label: '7 days ago',
       description: 'Everything earlier than the last 7 days.',
+      label: '7 days ago',
       value: ({ now }) => startOfDay(addDays(now, -7)),
     },
     {
-      label: 'Start of month',
       description: 'Everything before this month.',
+      label: 'Start of month',
       value: ({ now }) => startOfMonth(now),
     },
   ],
   is: [
     {
-      label: 'Today',
       description: 'Use the current day.',
+      label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
-      label: 'Yesterday',
       description: 'Use the previous day.',
+      label: 'Yesterday',
       value: ({ now }) => startOfDay(addDays(now, -1)),
     },
     {
-      label: 'Start of month',
       description: 'Jump to the first day of this month.',
+      label: 'Start of month',
       value: ({ now }) => startOfMonth(now),
     },
   ],
   isNot: [
     {
-      label: 'Today',
       description: 'Exclude the current day.',
+      label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
-      label: 'Yesterday',
       description: 'Exclude the previous day.',
+      label: 'Yesterday',
       value: ({ now }) => startOfDay(addDays(now, -1)),
     },
     {
-      label: 'Start of month',
       description: 'Exclude the first day of this month.',
+      label: 'Start of month',
       value: ({ now }) => startOfMonth(now),
     },
   ],

@@ -6,8 +6,8 @@ import { normalizeOptionItems } from '../../src/runtime/form/utils/options'
 const items = normalizeOptionItems([
   {
     children: [
-      { value: 'auctions', label: 'Auctions' },
-      { value: 'direct-sales', label: 'Direct sales' },
+      { label: 'Auctions', value: 'auctions' },
+      { label: 'Direct sales', value: 'direct-sales' },
     ],
     label: 'Products',
     value: 'products',

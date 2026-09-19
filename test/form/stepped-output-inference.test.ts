@@ -22,14 +22,14 @@ const resetPasswordSchema = defineFormSchema({
           },
         },
         {
-          key: 'confirmPassword',
-          type: 'password',
           dependencies: ['password'],
-          validation: {
-            required: true,
-          },
+          key: 'confirmPassword',
           submit: {
             omit: true,
+          },
+          type: 'password',
+          validation: {
+            required: true,
           },
         },
       ],
@@ -48,9 +48,9 @@ const rootedSchema = defineFormSchema({
           type: 'text',
         },
         {
+          default: true,
           key: 'enabled',
           type: 'checkbox',
-          default: true,
         },
       ],
       key: 'account',
@@ -59,9 +59,9 @@ const rootedSchema = defineFormSchema({
     {
       fields: [
         {
+          condition: () => true,
           key: 'erpId',
           type: 'text',
-          condition: () => true,
         },
       ],
       key: 'metadata',

@@ -416,8 +416,8 @@ function buildFieldRules(params: {
       ctx: params.context,
       deps: resolveFieldDependencies({
         field,
-        state: params.state,
         parentPath: params.parentPath,
+        state: params.state,
       }),
     }
     if (!shouldRenderField(field, callbackParams)) {

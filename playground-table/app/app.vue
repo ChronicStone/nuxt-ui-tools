@@ -7,7 +7,7 @@ const { locale } = useI18n()
 
 useHead({
   htmlAttrs: { lang: 'fr' },
-  meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }],
+  meta: [{ content: 'width=device-width, initial-scale=1, viewport-fit=cover', name: 'viewport' }],
   title: 'ExAssess · DataList playground',
 })
 </script>

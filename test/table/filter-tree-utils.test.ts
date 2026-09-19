@@ -15,18 +15,18 @@ const entries: TableResolvedFilterOptionEntry[] = [
   {
     children: [
       {
+        children: [],
         id: '0:engineering/0:frontend',
         label: 'Frontend',
-        value: 'frontend',
         selected: false,
-        children: [],
+        value: 'frontend',
       },
       {
+        children: [],
         id: '0:engineering/1:backend',
         label: 'Backend',
-        value: 'backend',
         selected: false,
-        children: [],
+        value: 'backend',
       },
     ],
     id: '0:engineering',

@@ -16,39 +16,39 @@ const schema = defineTableSchema({
     },
     ui: (filter) => [
       filter.option('department.company.country', {
-        label: 'Country',
         behavior: { defaultOperator: 'isAnyOf' },
         display: { location: 'panel md:tag' },
-        source: { facet: 'exclude-self' },
         editor: {
-          searchable: false,
           closeOnSelect: false,
-          selection: { mode: 'multiple' },
           row: { showCounts: true },
+          searchable: false,
+          selection: { mode: 'multiple' },
         },
+        label: 'Country',
+        source: { facet: 'exclude-self' },
       }),
       filter.option('department.name', {
-        label: 'Department',
         behavior: { defaultOperator: 'isAnyOf' },
         display: { location: 'panel md:tag' },
-        source: { facet: 'exclude-self', sort: 'count' },
         editor: {
-          searchable: false,
           closeOnSelect: false,
-          selection: { mode: 'multiple' },
           row: { showCounts: true },
+          searchable: false,
+          selection: { mode: 'multiple' },
         },
+        label: 'Department',
+        source: { facet: 'exclude-self', sort: 'count' },
       }),
       filter.boolean('isActive', {
-        label: 'Active',
         display: { location: 'panel lg:tag' },
+        label: 'Active',
         source: { facet: 'exclude-self' },
       }),
       filter.text('fullName', {
-        label: 'Name',
         behavior: { operators: ['contains', 'is'] },
         display: { location: 'panel' },
-        editor: { placeholder: 'Employee name', leadingIcon: 'i-lucide-search' },
+        editor: { leadingIcon: 'i-lucide-search', placeholder: 'Employee name' },
+        label: 'Name',
       }),
     ],
   },
@@ -62,15 +62,15 @@ const schema = defineTableSchema({
     facets: true,
     mode: 'remote',
     query: (request) => ({
-      queryKey: ['demo-employees-infinite', request],
       queryFn: async () => demoEmployeesClient.queryTable(request),
+      queryKey: ['demo-employees-infinite', request],
     }),
   },
   table: {
     columns: (column) => [
       column.field('fullName', {
-        label: 'Employee',
         icon: 'i-lucide-user-round',
+        label: 'Employee',
         minWidth: 240,
         pinned: 'left',
         render: ({ row }) => (
@@ -111,8 +111,8 @@ const schema = defineTableSchema({
           <span class="text-muted">
             {value
               ? new Intl.DateTimeFormat('en', {
-                  month: 'short',
                   day: 'numeric',
+                  month: 'short',
                   year: 'numeric',
                 }).format(new Date(String(value)))
               : '—'}

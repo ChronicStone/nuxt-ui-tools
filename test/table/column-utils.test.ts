@@ -16,30 +16,30 @@ const schema = defineTableSchema({
   rowKey: 'id',
   source: {
     query: () => ({
-      queryKey: ['demo'],
       queryFn: async () => [
         { id: '1', firstName: 'Ada', score: 3, createdAt: 'x', hidden: 1, dropped: 2 },
       ],
+      queryKey: ['demo'],
     }),
   },
   table: {
     columns: (column) => [
       column.field('firstName'),
       column.field('score', {
-        label: () => 'Score total',
         align: 'right',
+        ellipsis: true,
+        label: () => 'Score total',
+        lines: 1,
+        pinned: 'left',
+        required: true,
+        skeleton: 'number',
         sortable: false,
         summary: 'sum',
-        skeleton: 'number',
-        ellipsis: true,
-        lines: 1,
-        required: true,
-        pinned: 'left',
       }),
       column.composite('created_at_label', {
         label: 'Créé',
-        sortableKey: 'createdAt',
         render: () => 'x',
+        sortableKey: 'createdAt',
       }),
       column.display('actions-col', { label: 42, render: () => 'x' }),
       column.field('hidden', { visible: (context) => Boolean(context.showHidden) }),

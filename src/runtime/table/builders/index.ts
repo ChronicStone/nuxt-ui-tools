@@ -30,8 +30,8 @@ export function createTableColumnBuilder<
       options: TableCompositeColumnOptions<TRow, TContext, TPageContext, TKey, TSortKey>,
     ) {
       return {
-        kind: 'composite',
         key,
+        kind: 'composite',
         ...options,
       }
     },
@@ -40,8 +40,8 @@ export function createTableColumnBuilder<
       options: TableDisplayColumnOptions<TRow, TContext, TPageContext, TKey>,
     ) {
       return {
-        kind: 'display',
         key,
+        kind: 'display',
         ...options,
       }
     },
@@ -50,9 +50,9 @@ export function createTableColumnBuilder<
       options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField> = {},
     ) {
       return {
-        kind: 'field',
-        key: field,
         field,
+        key: field,
+        kind: 'field',
         ...options,
       }
     },
@@ -69,8 +69,8 @@ export function createTableFilterBuilder<
       options: TableBooleanFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'boolean',
         key,
+        kind: 'boolean',
         ...options,
       }
     },
@@ -79,8 +79,8 @@ export function createTableFilterBuilder<
       options: TableDateFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'date',
         key,
+        kind: 'date',
         ...options,
       }
     },
@@ -89,8 +89,8 @@ export function createTableFilterBuilder<
       options: TableNumberFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'number',
         key,
+        kind: 'number',
         ...options,
       }
     },
@@ -100,8 +100,8 @@ export function createTableFilterBuilder<
       TPresentation extends import('../types').TableOptionFilterPresentation = 'list',
     >(key: TKey, options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>) {
       return {
-        kind: 'option',
         key,
+        kind: 'option',
         ...options,
       }
     },
@@ -110,8 +110,8 @@ export function createTableFilterBuilder<
       options: TableTextFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'text',
         key,
+        kind: 'text',
         ...options,
       }
     },

@@ -11,20 +11,20 @@ export default defineAppConfig({
     },
     button: {
       compoundVariants: [
-        { size: 'xs', square: true, class: 'w-6 p-0 justify-center' },
-        { size: 'sm', square: true, class: 'w-7 p-0 justify-center' },
-        { size: 'md', square: true, class: 'w-[34px] p-0 justify-center' },
-        { size: 'lg', square: true, class: 'w-[38px] p-0 justify-center' },
+        { class: 'w-6 p-0 justify-center', size: 'xs', square: true },
+        { class: 'w-7 p-0 justify-center', size: 'sm', square: true },
+        { class: 'w-[34px] p-0 justify-center', size: 'md', square: true },
+        { class: 'w-[38px] p-0 justify-center', size: 'lg', square: true },
         {
+          class: 'text-[#1f1d1a] font-semibold hover:bg-[#ff9f1a]',
           color: 'primary',
           variant: 'solid',
-          class: 'text-[#1f1d1a] font-semibold hover:bg-[#ff9f1a]',
         },
         {
-          color: 'neutral',
-          variant: 'outline',
           class:
             'bg-[var(--ex-surface)] ring-[var(--ui-border)] text-default hover:bg-[var(--ui-bg-elevated)]',
+          color: 'neutral',
+          variant: 'outline',
         },
       ],
       slots: {
@@ -82,10 +82,10 @@ export default defineAppConfig({
     input: {
       compoundVariants: [
         {
-          color: 'neutral',
-          variant: 'outline',
           class:
             'bg-[var(--ex-surface)] ring-[var(--ui-border)] focus-visible:ring-2 focus-visible:ring-primary',
+          color: 'neutral',
+          variant: 'outline',
         },
       ],
       variants: {

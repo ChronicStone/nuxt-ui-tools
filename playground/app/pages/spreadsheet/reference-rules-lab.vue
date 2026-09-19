@@ -52,17 +52,17 @@ function createReferenceRulesSchema() {
     },
     references: (reference) => [
       reference.select('optionalProductId', {
-        source: 'optionalProductLabel',
         options: products,
+        source: 'optionalProductLabel',
       }),
       reference.select('requiredProductId', {
-        source: 'requiredProductLabel',
         options: products,
         rules: (v) => [
           v.required({
             message: 'Required product must be matched before import',
           }),
         ],
+        source: 'requiredProductLabel',
       }),
     ],
     sheet: {
@@ -88,8 +88,8 @@ function createWorkbook() {
 
   return {
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
     fileName: 'spreadsheet-reference-rules-lab.xlsx',
   }

@@ -81,18 +81,18 @@ const operations: OperationRow[] = [
 const schema = defineTableSchema({
   actions: [
     {
+      action: async () => Promise.resolve(),
+      icon: 'i-lucide-check-check',
       key: 'mark-ready',
       label: 'Mark ready',
-      icon: 'i-lucide-check-check',
       requiresSelection: true,
-      action: async () => Promise.resolve(),
     },
     {
+      action: async () => Promise.resolve(),
+      icon: 'i-lucide-refresh-cw',
       key: 'retry-selected',
       label: 'Retry selected',
-      icon: 'i-lucide-refresh-cw',
       requiresSelection: true,
-      action: async () => Promise.resolve(),
     },
   ],
   defaultLayout: 'table',
@@ -100,8 +100,8 @@ const schema = defineTableSchema({
     search: { fields: ['job', 'owner'], placeholder: 'Search operations' },
     ui: (filter) => [
       filter.option('state', {
-        label: 'State',
         display: { location: 'tag-dynamic' },
+        label: 'State',
         source: {
           options: [
             { label: 'Queued', value: 'Queued' },
@@ -118,8 +118,8 @@ const schema = defineTableSchema({
   source: {
     mode: 'client',
     query: () => ({
-      queryKey: ['table-composition-operations'],
       queryFn: async () => operations,
+      queryKey: ['table-composition-operations'],
     }),
   },
   table: {

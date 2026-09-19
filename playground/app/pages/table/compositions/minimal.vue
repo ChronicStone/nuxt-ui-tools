@@ -107,26 +107,26 @@ const schema = defineTableSchema({
     search: { fields: ['name', 'role', 'team', 'presence'], placeholder: 'Find a teammate' },
     ui: (filter) => [
       filter.option('team', {
-        label: 'Team',
         behavior: { defaultOperator: 'isAnyOf' },
         display: { location: 'tag-dynamic' },
-        source: { options: teamOptions, facet: 'exclude-self' },
         editor: {
+          row: { showCounts: true },
           searchable: false,
           selection: { mode: 'multiple' },
-          row: { showCounts: true },
         },
+        label: 'Team',
+        source: { facet: 'exclude-self', options: teamOptions },
       }),
       filter.option('presence', {
-        label: 'Presence',
         behavior: { defaultOperator: 'isAnyOf' },
         display: { location: 'panel md:tag' },
-        source: { options: presenceOptions, facet: 'exclude-self' },
         editor: { searchable: false, selection: { mode: 'multiple' } },
+        label: 'Presence',
+        source: { facet: 'exclude-self', options: presenceOptions },
       }),
       filter.boolean('active', {
-        label: 'Available now',
         display: { location: 'panel lg:tag' },
+        label: 'Available now',
       }),
     ],
   },
@@ -138,8 +138,8 @@ const schema = defineTableSchema({
       <UCard
         class="h-full rounded-md shadow-none"
         ui={{
-          root: 'h-full ring-default',
           body: 'grid h-full gap-5 p-5',
+          root: 'h-full ring-default',
         }}
       >
         <div class="flex items-start justify-between gap-4">
@@ -195,8 +195,8 @@ const schema = defineTableSchema({
   source: {
     mode: 'client',
     query: () => ({
-      queryKey: ['table-composition-directory'],
       queryFn: async () => contacts,
+      queryKey: ['table-composition-directory'],
     }),
   },
   table: {

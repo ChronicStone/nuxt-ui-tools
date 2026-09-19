@@ -162,46 +162,46 @@ const schema = defineTableSchema({
     search: { fields: ['title', 'owner'], placeholder: 'Search knowledge base' },
     ui: (filter) => [
       filter.option('status', {
-        label: 'Status',
         display: { location: 'panel' },
-        source: { options: statusOptions },
         editor: {
-          searchable: false,
           closeOnSelect: false,
-          selection: { mode: 'multiple' },
           row: { showCounts: true },
+          searchable: false,
+          selection: { mode: 'multiple' },
         },
+        label: 'Status',
+        source: { options: statusOptions },
       }),
       filter.option('type', {
-        label: 'Document type',
         display: { location: 'panel' },
-        source: { options: typeOptions },
         editor: {
-          searchable: false,
           closeOnSelect: false,
-          selection: { mode: 'multiple' },
           row: { showCounts: true },
+          searchable: false,
+          selection: { mode: 'multiple' },
         },
+        label: 'Document type',
+        source: { options: typeOptions },
       }),
       filter.option('owner', {
-        label: 'Owner',
         display: { location: 'panel' },
-        source: { options: ownerOptions },
         editor: {
-          searchable: false,
           closeOnSelect: false,
-          selection: { mode: 'multiple' },
           row: { showCounts: true },
+          searchable: false,
+          selection: { mode: 'multiple' },
         },
+        label: 'Owner',
+        source: { options: ownerOptions },
       }),
       filter.boolean('featured', {
-        label: 'Featured only',
         display: { location: 'panel' },
+        label: 'Featured only',
       }),
       filter.number('readTime', {
-        label: 'Reading time',
         behavior: { operators: ['lte', 'between'] },
         display: { location: 'panel' },
+        label: 'Reading time',
       }),
     ],
   },
@@ -210,7 +210,6 @@ const schema = defineTableSchema({
   source: {
     mode: 'remote',
     query: (request) => ({
-      queryKey: ['table-composition-knowledge-base', request],
       queryFn: async () => {
         const prepared = executeClientQuery({
           rows: documents,
@@ -235,6 +234,7 @@ const schema = defineTableSchema({
           },
         }
       },
+      queryKey: ['table-composition-knowledge-base', request],
     }),
   },
   table: {

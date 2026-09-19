@@ -11,7 +11,7 @@ const rows = [
 const search = { fields: ['name'] as never[], value: '' }
 const group = (key: string, operator: string, value: unknown): TableResolvedFilterGroup<string> =>
   ({
-    children: [{ type: 'condition', key, operator, value }],
+    children: [{ key, operator, type: 'condition', value }],
     combinator: 'and',
     type: 'group',
   }) as TableResolvedFilterGroup<string>

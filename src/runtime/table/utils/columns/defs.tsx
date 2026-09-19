@@ -43,7 +43,7 @@ export function createColumnDefs(options: {
         internal: 'selection',
         label: '',
         render: ({ row, index }) =>
-          selection.cell({ row: { id: options.params.selection.getRowId({ row, index }) } }),
+          selection.cell({ row: { id: options.params.selection.getRowId({ index, row }) } }),
         renderHeader: () => selection.header(),
         sortable: false,
       },
@@ -64,7 +64,7 @@ export function createColumnDefs(options: {
           canHide: false,
           internal: 'actions',
           label: runtimeColumn.label,
-          render: ({ row, index }) => actions.cell({ row: { original: row, index } }),
+          render: ({ row, index }) => actions.cell({ row: { index, original: row } }),
           sortable: false,
         },
         minSize: ROW_ACTIONS_COLUMN_WIDTH,
@@ -97,7 +97,7 @@ export function createColumnDefs(options: {
         label: runtimeColumn.label,
         lines: runtimeColumn.lines,
         render: ({ row, index }) =>
-          renderColumnCell({ column, row, rowIndex: index, params: options.params }),
+          renderColumnCell({ column, params: options.params, row, rowIndex: index }),
         skeleton: runtimeColumn.skeleton ?? (runtimeColumn.align === 'right' ? 'number' : 'text'),
         sortable,
         sortableKey: runtimeColumn.sortableKey,

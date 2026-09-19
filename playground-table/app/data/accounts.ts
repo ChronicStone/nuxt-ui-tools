@@ -105,7 +105,7 @@ export function makeAccounts(count: number, contacts: Contact[], seed = 42): Acc
       evoliz: !pending && i % 4 !== 1,
       generalContacts: Array.from({ length: i % 4 }, (_, k) => pick(contacts, i * 7 + k).id),
       group: i % 3 === 0 ? null : pick(GROUPS, i),
-      id: faker.string.alphanumeric({ length: 8, casing: 'lower' }),
+      id: faker.string.alphanumeric({ casing: 'lower', length: 8 }),
       invitationSent: !pending,
       legalEntity: `${company} ${pick(['SAS', 'SARL', 'Ltd', 'SL', 'GmbH', 'AB'] as const, i)}`,
       legalRepresentativeId: pick(legals, i + 2).id,
