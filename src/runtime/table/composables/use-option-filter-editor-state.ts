@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 
 import { isNullish } from '../../shared/utils/predicate'
@@ -50,8 +50,25 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
   const filterUi = computed(() => resolveOptionFilterUi(options.definition, options.operator.value))
 
-  const displayEntries = computed(() =>
-    optionSource.filteredEntries.value.map((entry) => ({
+  const frozenOrder = ref<Map<string, number> | null>(null)
+  watch(
+    [() => options.active?.value ?? true, () => optionSource.filteredEntries.value.length],
+    ([active, count]) => {
+      if (!active) {
+        frozenOrder.value = null
+        return
+      }
+      if (!frozenOrder.value && count > 0) {
+        frozenOrder.value = new Map(
+          optionSource.filteredEntries.value.map((entry, index) => [entryKey(entry), index]),
+        )
+      }
+    },
+    { immediate: true },
+  )
+
+  const displayEntries = computed(() => {
+    const mapped = optionSource.filteredEntries.value.map((entry) => ({
       ...entry,
       icon: resolveRowIcon({
         entry,
@@ -60,8 +77,16 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       selected:
         !isNullish(entry.value) &&
         options.selectedValues.value.some((value) => String(value) === String(entry.value)),
-    })),
-  )
+    }))
+    const order = frozenOrder.value
+    if (!order) {
+      return mapped
+    }
+    return mapped
+      .map((entry, index) => ({ entry, rank: order.get(entryKey(entry)) ?? order.size + index }))
+      .sort((left, right) => left.rank - right.rank)
+      .map((item) => item.entry)
+  })
 
   const displayTreeEntries = computed(() =>
     mapSelectedTreeEntries({
@@ -407,4 +432,8 @@ function mapSelectedTreeEntries(options: {
       !isNullish(entry.value) &&
       options.selectedValues.some((value) => String(value) === String(entry.value)),
   }))
+}
+
+function entryKey(entry: { id: string; value?: string | number | boolean }) {
+  return entry.value === undefined ? entry.id : String(entry.value)
 }

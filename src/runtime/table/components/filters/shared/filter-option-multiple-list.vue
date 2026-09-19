@@ -73,7 +73,7 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
         :key="entry.value == null ? entry.label : String(entry.value)"
         :class="
           mergeDataListUiClass(
-            `nut-dl-option flex items-center rounded-md text-left outline-none transition-colors hover:bg-elevated focus-within:ring-2 focus-within:ring-primary/30 ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
+            `nut-dl-option flex items-center rounded-md text-left outline-none transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
             undefined,
             ui?.option,
           )
