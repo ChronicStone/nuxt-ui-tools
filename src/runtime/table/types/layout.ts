@@ -7,7 +7,9 @@ import type {
   TableRowRenderParams,
   RenderableType,
   TableSortKey,
+  TableTextValue,
 } from './utils'
+import type { TableSummaryRequest, TableSummaryScope, TableSummaryValue } from './columns'
 
 export interface TablePersistenceOptions {
   state?: boolean
@@ -87,4 +89,20 @@ export interface TableTableSchema<
   childrenKey?: TableSortKey<TRow>
   defaultSorting?: TableDefaultSort<TSortKey>
   selection?: boolean | 'auto'
+  summaries?: TableSummariesSchema<TRow>
+}
+
+export interface TableSummariesSchema<TRow extends GenericObject = GenericObject> {
+  /** Rows the aggregates describe; defaults to `filtered`. */
+  scope?: TableSummaryScope
+  /** Scopes the footer toggle offers; defaults to all three when selection is enabled. */
+  scopes?: TableSummaryScope[]
+  /** Footer label; defaults to a localized "Total". */
+  label?: TableTextValue
+  /** Resolves every column summary at once, typically from the server; merged over derived values. */
+  resolve?: (context: {
+    scope: TableSummaryScope
+    rows: TRow[]
+    request: TableSummaryRequest
+  }) => Record<string, TableSummaryValue> | Promise<Record<string, TableSummaryValue>>
 }

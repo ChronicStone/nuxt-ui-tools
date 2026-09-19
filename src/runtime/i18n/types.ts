@@ -9,6 +9,10 @@ export interface UiToolsTableMessages {
   footer: {
     rowsSelected: string
     rowsPerPage: string
+    perPage: string
+    range: string
+    rangeEmpty: string
+    pageOf: string
     page: string
     pageSizeOption: string
     previousPage: string
@@ -18,6 +22,10 @@ export interface UiToolsTableMessages {
   }
   controls: {
     addFilter: string
+    resetFilters: string
+    columnsCount: string
+    close: string
+    loadingMore: string
     searchFilters: string
     noMatchingFilters: string
     view: string
@@ -27,6 +35,18 @@ export interface UiToolsTableMessages {
     sort: string
     loadMore: string
     clearSelection: string
+  }
+  selectionBar: {
+    selection: string
+    allResults: string
+    more: string
+    clear: string
+  }
+  summaries: {
+    total: string
+    page: string
+    filtered: string
+    selection: string
   }
   columnsMenu: {
     sortAsc: string
@@ -38,10 +58,23 @@ export interface UiToolsTableMessages {
     hideColumn: string
   }
   filters: {
+    editor: {
+      clear: string
+    }
+    sheet: {
+      done: string
+      back: string
+      sortBy: string
+      order: string
+    }
     panel: {
       trigger: string
       clearAll: string
       apply: string
+      done: string
+      reset: string
+      results: string
+      matching: string
       matchMode: string
     }
     options: {
@@ -76,6 +109,9 @@ export interface UiToolsTableMessages {
     empty: {
       title: string
       description: string
+      filteredTitle: string
+      filteredDescription: string
+      reset: string
     }
     gridError: {
       title: string

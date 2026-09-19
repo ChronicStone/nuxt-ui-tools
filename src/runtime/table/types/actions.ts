@@ -16,6 +16,10 @@ export interface TableActionContext<
   TPageContext extends GenericObject = GenericObject,
 > {
   selectedRows: TRow[]
+  /** `selection` targets the checked rows; `all` targets every row matching the current query. */
+  scope: 'selection' | 'all'
+  /** Total rows matching the current query when known. */
+  matchingCount: number | null
   context: TContext
   pageContext: TPageContext
   request: TableSourceRequestContext<TRow, TContext>

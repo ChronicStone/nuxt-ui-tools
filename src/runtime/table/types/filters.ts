@@ -566,6 +566,8 @@ export interface TableFilterOptionValueEntry<TValue = TableFilterPrimitiveValue>
   label: TableTextValue
   value: TValue
   icon?: string
+  /** CSS color rendered as a dot before the label in tags and editors. */
+  color?: string
   count?: number
   children?: ReadonlyArray<TableFilterOptionEntry<TValue>>
 }
@@ -574,6 +576,7 @@ export interface TableFilterOptionGroupEntry<TValue = TableFilterPrimitiveValue>
   label: TableTextValue
   value?: undefined
   icon?: string
+  color?: string
   count?: number
   children: ReadonlyArray<TableFilterOptionEntry<TValue>>
 }
@@ -603,6 +606,7 @@ export interface TableResolvedFilterOptionEntry<TValue = TableFilterPrimitiveVal
   label: string
   value?: TValue
   icon?: string
+  color?: string
   count?: number
   selected: boolean
   children: Array<TableResolvedFilterOptionEntry<TValue>>
@@ -613,6 +617,7 @@ export interface TableVisibleFilterOptionEntry<TValue = TableFilterPrimitiveValu
   label: string
   value?: TValue
   icon?: string
+  color?: string
   count?: number
   selected: boolean
   depth: number

@@ -11,6 +11,37 @@ import type {
   TableRuntimeRecord,
 } from './utils'
 
+export type TableColumnSkeleton = 'text' | 'avatar' | 'dot' | 'check' | 'badge' | 'number' | 'none'
+
+export type TableSummaryKind = 'sum' | 'avg' | 'count' | 'min' | 'max'
+export type TableSummaryScope = 'page' | 'filtered' | 'selection'
+export type TableSummaryValue = string | number | boolean | Date | null | undefined
+
+export type TableSummaryRequest = object | null | undefined
+
+export interface TableSummaryContext<TRow extends GenericObject = GenericObject> {
+  rows: TRow[]
+  scope: TableSummaryScope
+  columnKey: string
+  request: TableSummaryRequest
+}
+
+export interface TableColumnSummaryConfig<TRow extends GenericObject = GenericObject> {
+  /** Derived aggregate computed from the rows in scope. */
+  kind?: TableSummaryKind
+  /** Custom (possibly async) resolver; wins over `kind`. */
+  resolve?: (context: TableSummaryContext<TRow>) => TableSummaryValue | Promise<TableSummaryValue>
+  /** Formats the resolved value for display. */
+  format?: (value: TableSummaryValue, context: TableSummaryContext<TRow>) => string | number
+  /** Renders the cell content; receives the loading state. */
+  render?: (params: { value: TableSummaryValue; loading: boolean; scope: TableSummaryScope }) => RenderableType
+}
+
+export type TableColumnSummary<TRow extends GenericObject = GenericObject> =
+  | TableSummaryKind
+  | TableColumnSummaryConfig<TRow>
+  | ((context: TableSummaryContext<TRow>) => TableSummaryValue | Promise<TableSummaryValue>)
+
 export interface TableColumnCellDataAttributes {
   [key: `data-${string}`]: string | number | boolean | undefined
 }
@@ -43,6 +74,12 @@ interface TableColumnBase<
   condition?: () => boolean
   enabled?: boolean
   required?: boolean
+  /** Footer aggregate for this column. */
+  summary?: TableColumnSummary<TRow>
+  /** Placeholder shape rendered while the first page loads. */
+  skeleton?: TableColumnSkeleton
+  /** Maximum wrapped lines before clamping; defaults to 3, `ellipsis: true` forces one line. */
+  lines?: number
   visible?: boolean | ((context: TContext) => boolean)
   cellProps?: (params: TParams) => TableColumnCellProps
   colSpan?: (params: TParams) => number
