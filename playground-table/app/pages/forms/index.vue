@@ -5,6 +5,14 @@ import type { FormController, FormObject, FormSchema, FormValue } from '#ui-tool
 import { arraysFormInput, arraysFormSchema } from '../../forms/arrays'
 import { contactFormSchema } from '../../forms/contact'
 import { parityFormInput, parityFormSchema } from '../../forms/parity'
+import {
+  groupFormSchema,
+  inviteFormSchema,
+  locationFormSchema,
+  memoFormSchema,
+  rateFormSchema,
+  testCenterFormSchema,
+} from '../../forms/relations'
 
 interface FormEntry {
   key: string
@@ -15,7 +23,7 @@ interface FormEntry {
 }
 
 const formApi = useFormApi()
-const { accounts } = useAccountsData()
+const { accounts, contacts } = useAccountsData()
 const submitted = ref<{ key: string; data: FormObject } | null>(null)
 
 function register(
@@ -57,6 +65,36 @@ const entries: FormEntry[] = [
     'Masques, préfixes, formats, labels à gauche, descriptions.',
     parityFormSchema(),
     parityFormInput,
+  ),
+  register(
+    'invite',
+    'Inviter un utilisateur',
+    'Espace client.',
+    inviteFormSchema(accounts, contacts),
+    {
+      accounts: [accounts[0]?.id ?? ''],
+    },
+  ),
+  register('group', 'Groupe de comptes', 'Filtres et reporting.', groupFormSchema(accounts), {}),
+  register('rate', 'Taux de change', 'Taux mensuel USD → EUR.', rateFormSchema(), {
+    month: '2026-10',
+  }),
+  register(
+    'testcenter',
+    'Centre de test',
+    'Lieu physique de passage.',
+    testCenterFormSchema(accounts),
+    {},
+  ),
+  register('location', 'Manager location', 'Entité VTest.', locationFormSchema(), {}),
+  register(
+    'memo',
+    'Mémo de compte',
+    'Fil de discussion rattaché à un compte.',
+    memoFormSchema(accounts, contacts),
+    {
+      participants: [contacts[1]?.id ?? ''],
+    },
   ),
 ]
 
