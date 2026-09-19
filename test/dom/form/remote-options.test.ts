@@ -62,6 +62,7 @@ function itemValues(harness: FormHarness, path: string) {
     .field(path)
     .findAll('[data-ui-item]')
     .map((item) => item.attributes('data-ui-item'))
+    .filter((value) => value !== '__nut:load-more__')
 }
 
 function triggerText(harness: FormHarness, path: string) {

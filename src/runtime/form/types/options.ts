@@ -167,7 +167,7 @@ export interface FormRemotePagination {
   type: 'page' | 'cursor'
   /** Page size forwarded to the source. */
   size: number
-  /** Distance from the list end that triggers the next page, in pixels or one viewport height. */
+  /** Distance from the list end that triggers the next page: pixels, or `'viewport'` for three viewport heights. Defaults to `'viewport'`. */
   prefetchDistance?: number | 'viewport'
 }
 

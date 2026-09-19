@@ -63,6 +63,23 @@ export function normalizeOptionItems(
   return (options ?? []).map((option) => normalizeOptionItem(option, keys))
 }
 
+export const LOAD_MORE_OPTION_VALUE = '__nut:load-more__'
+
+export function isLoadMoreOption(item: FormValue) {
+  return isRecord(item) && item.value === LOAD_MORE_OPTION_VALUE
+}
+
+export function appendLoadMoreOption(
+  items: readonly ResolvedFormOption[],
+  show: boolean,
+  label: string,
+): readonly ResolvedFormOption[] {
+  if (!show) {
+    return items
+  }
+  return [...items, { disabled: true, label, value: LOAD_MORE_OPTION_VALUE }]
+}
+
 export function formOptionKey(value: FormOptionValue) {
   const type = isString(value)
     ? 'string'

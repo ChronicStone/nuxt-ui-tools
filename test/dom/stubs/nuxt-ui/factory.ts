@@ -550,6 +550,15 @@ export function createMenuStub(name: string) {
           })
           .join(', ')
       }
+      function renderItemContent(option: StubValue) {
+        if (slots.item) {
+          return slots.item({ item: option })
+        }
+        if (slots['item-label']) {
+          return slots['item-label']({ index: 0, item: option })
+        }
+        return optionLabel(option)
+      }
       function renderContent(items: StubValue[], selected: StubScalar[], search: string) {
         const showCreate =
           Boolean(props.createItem) &&
@@ -580,7 +589,7 @@ export function createMenuStub(name: string) {
                   role: 'option',
                   type: 'button',
                 },
-                slots.item ? slots.item({ item: option }) : optionLabel(option),
+                renderItemContent(option),
               ),
             ),
           ),

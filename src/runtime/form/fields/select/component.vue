@@ -4,9 +4,11 @@ import { computed, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormOptionItemLabel from '../../components/utils/form-option-item-label.vue'
 import FormOptionMenuFooter from '../../components/utils/form-option-menu-footer.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
+import { appendLoadMoreOption } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -44,7 +46,13 @@ const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
   },
   set: (value) => form.setValue(props.path, value),
 })
-const items = computed(() => [...options.items.value])
+const items = computed(() => [
+  ...appendLoadMoreOption(
+    options.items.value,
+    options.remote.value && (options.hasMore.value || options.loadingMore.value),
+    t('form.fields.options.loadingMore'),
+  ),
+])
 const controlUi = computed(() => ({
   ...controlProps.value.ui,
   content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
@@ -123,6 +131,10 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
     @create="handleNativeCreate"
     @blur="handleBlur"
   >
+    <template #item-label="{ item }">
+      <FormOptionItemLabel :item="item" />
+    </template>
+
     <template #content-bottom>
       <FormOptionMenuFooter
         :options="options"
@@ -169,6 +181,10 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       @create="handleNativeCreate"
       @blur="handleBlur"
     >
+      <template #item-label="{ item }">
+        <FormOptionItemLabel :item="item" />
+      </template>
+
       <template #content-bottom>
         <FormOptionMenuFooter
           :options="options"

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import { useEventListener } from '@vueuse/core'
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import type { FormOptionRuntimeState } from '../../types'
@@ -18,6 +17,7 @@ const emit = defineEmits<{
   create: []
 }>()
 const { t } = useUiToolsLocale()
+const PREFETCH_VIEWPORTS = 3
 
 const sentinel = ref<HTMLElement | null>(null)
 const showMore = computed(
@@ -41,15 +41,34 @@ useEventListener(viewport, 'scroll', handleViewportScroll, { passive: true })
 
 function handleViewportScroll() {
   const element = viewport.value
-  if (!element || !props.options.hasMore.value || props.options.loadingMore.value) {
+  if (
+    !element ||
+    !props.options.hasMore.value ||
+    props.options.loadingMore.value ||
+    props.options.retryable.value
+  ) {
     return
   }
   const distance = props.options.prefetchDistance.value
-  const threshold = distance === 'viewport' ? element.clientHeight : Math.max(0, distance)
+  const threshold =
+    distance === 'viewport' ? element.clientHeight * PREFETCH_VIEWPORTS : Math.max(0, distance)
   if (element.scrollHeight - element.scrollTop - element.clientHeight <= threshold) {
     void props.options.loadMore()
   }
 }
+
+watch(
+  () =>
+    [props.options.items.value.length, props.options.loadingMore.value, viewport.value] as const,
+  async () => {
+    await nextTick()
+    const element = viewport.value
+    if (!element || element.clientHeight === 0) {
+      return
+    }
+    handleViewportScroll()
+  },
+)
 
 function findScrollViewport(element: HTMLElement | null) {
   const scope = element?.closest(
@@ -71,15 +90,7 @@ async function refresh() {
 <template>
   <div v-if="showActions" data-form-option-footer>
     <div
-      v-if="options.remote.value && options.loadingMore.value"
-      class="flex items-center justify-center gap-2 px-2 py-1.5 text-xs text-muted"
-      data-form-option-loading
-    >
-      <UIcon name="i-lucide-loader-circle" class="size-3.5 animate-spin" aria-hidden="true" />
-      {{ t('form.fields.options.loadingMore') }}
-    </div>
-    <div
-      v-else-if="options.retryable.value"
+      v-if="options.retryable.value"
       class="flex items-center justify-between gap-2 border-t border-default px-2 py-1.5 text-xs text-error"
       data-form-option-error
     >
