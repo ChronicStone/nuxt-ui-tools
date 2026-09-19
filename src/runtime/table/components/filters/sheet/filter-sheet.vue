@@ -132,7 +132,7 @@ function clearAll() {
 
     <template #body>
       <FilterStageTransition :stage-key="selectedKey ?? '__list'" :direction="direction">
-        <div v-if="!selectedDefinition" class="nut-dl-sheet__list flex min-h-0 flex-col">
+        <div v-if="!selectedDefinition" class="nut-dl-sheet__list flex min-h-[50vh] flex-col">
           <div class="nut-dl-sheet__title px-5 pt-3 pb-1.5 text-[13px] font-semibold text-muted">
             {{ t('table.filters.panel.trigger') }}
           </div>
@@ -194,7 +194,7 @@ function clearAll() {
           </div>
         </div>
 
-        <div v-else class="nut-dl-sheet__detail flex min-h-0 flex-col">
+        <div v-else class="nut-dl-sheet__detail flex min-h-[50vh] flex-col">
           <div class="flex items-center gap-2 px-[10px] pt-2 pb-2">
             <UButton
               color="neutral"
@@ -236,6 +236,13 @@ function clearAll() {
               @session-closed="back"
               @dismiss="back"
             />
+          </div>
+          <div
+            class="nut-dl-sheet__footer flex items-center justify-end border-t border-default px-5 pt-3 pb-1 text-[13px]"
+          >
+            <button type="button" class="font-medium text-highlighted" @click="close">
+              {{ t('table.filters.sheet.done') }}
+            </button>
           </div>
         </div>
       </FilterStageTransition>
