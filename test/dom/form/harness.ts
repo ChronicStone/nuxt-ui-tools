@@ -121,7 +121,11 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
     if (root.element.matches('input, textarea, select, [data-ui-trigger]')) {
       return root
     }
-    const found = root.find('input, textarea, select, [data-ui-trigger]')
+    const nativeControl = root.find('input, textarea, select')
+    if (nativeControl.exists()) {
+      return nativeControl
+    }
+    const found = root.find('[data-ui-trigger]')
     if (!found.exists()) {
       throw new Error(`Field "${path}" has no control`)
     }

@@ -96,6 +96,8 @@ export default defineUiToolsLocale<Messages>({
         },
       },
       validation: {
+        dateMax: 'The date must be on or before {max}',
+        dateMin: 'The date must be on or after {min}',
         required: 'This field is required',
       },
     },

@@ -4,6 +4,8 @@ import { withAsync, withMessage } from '@regle/rules'
 import { computed, nextTick, reactive, ref, unref, watch } from 'vue'
 import type { Ref } from 'vue'
 
+import { calendarSeedFromValue, isDateFamilyRange } from '../fields/date-family/utils'
+import type { FormDateFamilyType, FormDateSeedValue } from '../fields/date-family/utils'
 import type {
   FormValue,
   FormErrorOptions,
@@ -69,6 +71,8 @@ export function useFormValidation(params: {
   getValidationMode: () => FormValidationMode
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
+  getDateMinMessage?: (bound: string) => string
+  getDateMaxMessage?: (bound: string) => string
 }) {
   const customErrors = ref<readonly FormValidationError[]>([])
   const touchedPaths = ref<readonly string[]>([])
@@ -84,6 +88,8 @@ export function useFormValidation(params: {
         apiFactory: params.apiFactory,
         context: params.context,
         dynamicMessages,
+        getDateMaxMessage: params.getDateMaxMessage,
+        getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: true,
@@ -100,6 +106,8 @@ export function useFormValidation(params: {
         apiFactory: params.apiFactory,
         context: params.context,
         dynamicMessages,
+        getDateMaxMessage: params.getDateMaxMessage,
+        getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: false,
@@ -118,6 +126,8 @@ export function useFormValidation(params: {
         apiFactory: params.apiFactory,
         context: params.context,
         dynamicMessages,
+        getDateMaxMessage: params.getDateMaxMessage,
+        getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: true,
@@ -134,6 +144,8 @@ export function useFormValidation(params: {
         apiFactory: params.apiFactory,
         context: params.context,
         dynamicMessages,
+        getDateMaxMessage: params.getDateMaxMessage,
+        getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: false,
@@ -462,6 +474,8 @@ function buildRegleRules(params: {
   dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
+  getDateMinMessage?: (bound: string) => string
+  getDateMaxMessage?: (bound: string) => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
   if (isSteppedSchemaForRules(params.schema)) {
@@ -499,6 +513,8 @@ function buildFieldRules(params: {
   dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
+  getDateMinMessage?: (bound: string) => string
+  getDateMaxMessage?: (bound: string) => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
 
@@ -633,6 +649,8 @@ function buildLeafRules(params: {
   dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
+  getDateMinMessage?: (bound: string) => string
+  getDateMaxMessage?: (bound: string) => string
 }): RegleRuleTree {
   const output: RegleRuleTree = {}
   const validation = Object.getOwnPropertyDescriptor(params.field, 'validation')?.value
@@ -648,6 +666,8 @@ function buildLeafRules(params: {
   if (params.mode === 'required') {
     return output
   }
+
+  applyDateBoundsRules(output, params)
 
   const authoredValidators: FormValidatorsConfig | undefined =
     'validators' in params.field ? params.field.validators : undefined
@@ -1001,6 +1021,8 @@ function buildPrimitiveItemRules(params: {
   dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
+  getDateMinMessage?: (bound: string) => string
+  getDateMaxMessage?: (bound: string) => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
   for (const target of collectPrimitiveArraysForSchema(params.schema, params.state)) {
@@ -1039,6 +1061,140 @@ function buildPrimitiveItemRules(params: {
     rules[target.key] = collection
   }
   return rules
+}
+
+const DATE_VALIDATION_TYPES = new Set([
+  'date',
+  'datetime',
+  'daterange',
+  'monthrange',
+  'datetimerange',
+  'month',
+  'year',
+])
+
+function isDateFamilyField(field: FormField): field is FormField & { type: FormDateFamilyType } {
+  const type = Object.getOwnPropertyDescriptor(field, 'type')?.value
+  return isString(type) && DATE_VALIDATION_TYPES.has(type)
+}
+
+function applyDateBoundsRules(
+  output: RegleRuleTree,
+  params: {
+    field: FormField
+    callbackParams: {
+      ctx: FormRuntimeContext
+      deps: FormObject
+      api: ReturnType<FormFieldApiFactory>
+    }
+    getDateMinMessage?: (bound: string) => string
+    getDateMaxMessage?: (bound: string) => string
+  },
+) {
+  if (!isDateFamilyField(params.field)) {
+    return
+  }
+  const dateField = params.field
+  const bounds = resolveDateFieldBounds(dateField, params.callbackParams)
+  if (bounds.min !== undefined) {
+    output.dateMin = withMessage(
+      (value: FormValue) => isWithinDateMin(value, bounds.min, dateField.type),
+      params.getDateMinMessage?.(bounds.minLabel ?? '') ?? `Must be on or after ${bounds.minLabel}`,
+    )
+  }
+  if (bounds.max !== undefined) {
+    output.dateMax = withMessage(
+      (value: FormValue) => isWithinDateMax(value, bounds.max, dateField.type),
+      params.getDateMaxMessage?.(bounds.maxLabel ?? '') ??
+        `Must be on or before ${bounds.maxLabel}`,
+    )
+  }
+}
+
+interface ResolvedDateBounds {
+  min?: string | number
+  max?: string | number
+  minLabel?: string
+  maxLabel?: string
+}
+
+function resolveDateFieldBounds(
+  field: FormField & { type: FormDateFamilyType },
+  callbackParams: {
+    ctx: FormRuntimeContext
+    deps: FormObject
+    api: ReturnType<FormFieldApiFactory>
+  },
+): ResolvedDateBounds {
+  const rawProps = Object.getOwnPropertyDescriptor(field, 'props')?.value
+  const resolved = isFunction(rawProps) ? rawProps(callbackParams) : rawProps
+  const propsRecord = isRecord(resolved) ? resolved : {}
+  if (field.type === 'year') {
+    const min = isNumber(propsRecord.min) ? propsRecord.min : undefined
+    const max = isNumber(propsRecord.max) ? propsRecord.max : undefined
+    return {
+      max,
+      maxLabel: max === undefined ? undefined : String(max),
+      min,
+      minLabel: min === undefined ? undefined : String(min),
+    }
+  }
+  const minSeed = isDateSeedValue(propsRecord.min) ? propsRecord.min : null
+  const maxSeed = isDateSeedValue(propsRecord.max) ? propsRecord.max : null
+  const min = calendarSeedFromValue(minSeed, field.type) || undefined
+  const max = calendarSeedFromValue(maxSeed, field.type) || undefined
+  return { max, maxLabel: max, min, minLabel: min }
+}
+
+function isDateSeedValue(value: FormValue): value is FormDateSeedValue {
+  return value instanceof Date || isString(value) || isNumber(value) || value === null || value === undefined
+}
+
+function dateFieldBoundValue(value: FormValue, type: FormDateFamilyType, edge: 'start' | 'end') {
+  if (!isDateFamilyRange(type)) {
+    return value
+  }
+  return Array.isArray(value) ? value[edge === 'start' ? 0 : 1] : undefined
+}
+
+function isWithinDateMin(
+  value: FormValue,
+  min: string | number | undefined,
+  type: FormDateFamilyType,
+) {
+  if (min === undefined) {
+    return true
+  }
+  const bound = dateFieldBoundValue(value, type, 'start')
+  if (isEmptyValue(bound)) {
+    return true
+  }
+  if (isNumber(min)) {
+    const numeric = isString(bound) ? Number(bound) : Number.NaN
+    return Number.isNaN(numeric) || numeric >= min
+  }
+  const canonical = calendarSeedFromValue(isDateSeedValue(bound) ? bound : null, type)
+  return !canonical || canonical >= min
+}
+
+function isWithinDateMax(
+  value: FormValue,
+  max: string | number | undefined,
+  type: FormDateFamilyType,
+) {
+  if (max === undefined) {
+    return true
+  }
+  const bound = dateFieldBoundValue(value, type, 'end')
+  if (isEmptyValue(bound)) {
+    return true
+  }
+  if (isNumber(max)) {
+    const numeric = isString(bound) ? Number(bound) : Number.NaN
+    return Number.isNaN(numeric) || numeric <= max
+  }
+  const canonical = calendarSeedFromValue(isDateSeedValue(bound) ? bound : null, type)
+  return !canonical || canonical <= max
 }
 
 function isUniqueArrayField(field: FormField) {

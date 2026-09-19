@@ -254,7 +254,9 @@ export function createOverlayStub(name: string) {
             h(
               'div',
               { 'data-ui-trigger': '', onClick: () => emit('update:open', !open) },
-              slots.default?.({ close: noop, open }),
+              slots.anchor
+                ? slots.anchor({ close: noop, open })
+                : slots.default?.({ close: noop, open }),
             ),
             open
               ? h(

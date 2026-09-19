@@ -39,6 +39,7 @@ import { useFormState } from './use-form-state'
 import { useFormSubmitController } from './use-form-submit'
 import { useFormUploadRegistry } from './use-form-upload-registry'
 import { useFormValidation } from './use-form-validation'
+
 export { childParentPath, fieldPath } from '../utils/state'
 
 const formRuntimeKey: InjectionKey<FormRuntime> = Symbol('nuxt-ui-tools-form-runtime')
@@ -149,6 +150,8 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const validation = useFormValidation({
     apiFactory,
     context,
+    getDateMaxMessage: (max: string) => t('form.validation.dateMax', { max }),
+    getDateMinMessage: (min: string) => t('form.validation.dateMin', { min }),
     getRequiredMessage: () => t('form.validation.required'),
     getUniqueMessage: () => t('form.fields.array.unique'),
     getValidationMode: () => params.validationMode?.value ?? true,
@@ -492,8 +495,8 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     },
     schema: params.schema,
     setError: (path, message, options) => validation.setError(pathSegments(path), message, options),
-    settleEffects: settleEffectRounds,
     setValue: state.setValue,
+    settleEffects: settleEffectRounds,
     shouldRender: (field, path) =>
       shouldRenderField(
         field,
@@ -649,9 +652,9 @@ function createFieldApi(params: {
     focus: params.focusField,
     form: params.form,
     options: {
+      activate: () => params.optionRegistry.get(params.path).activate(),
       add: (option) => params.optionRegistry.get(params.path).add(option),
       create: (label) => params.optionRegistry.get(params.path).create(label),
-      activate: () => params.optionRegistry.get(params.path).activate(),
       creating: () => params.optionRegistry.get(params.path).creating.value,
       error: () => params.optionRegistry.get(params.path).error.value,
       fetching: () => params.optionRegistry.get(params.path).fetching.value,

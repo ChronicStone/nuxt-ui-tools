@@ -96,6 +96,8 @@ export default defineUiToolsLocale<Messages>({
         },
       },
       validation: {
+        dateMax: 'La date doit être au plus tard le {max}',
+        dateMin: 'La date doit être au plus tôt le {min}',
         required: 'Ce champ est requis',
       },
     },

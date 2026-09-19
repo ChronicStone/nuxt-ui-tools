@@ -284,6 +284,8 @@ export interface UiToolsFormMessages {
   }
   validation: {
     required: string
+    dateMin: string
+    dateMax: string
   }
   fields: {
     text: {
