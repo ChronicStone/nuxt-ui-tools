@@ -108,7 +108,7 @@ watch(
     data-data-list-viewport
     :class="
       mergeDataListUiClass(
-        `relative min-h-0 ${shellClass} ${fit === 'content' ? '' : 'overflow-auto'}`,
+        `relative min-h-0 ${shellClass} ${fit === 'content' ? '' : 'flex flex-col overflow-hidden'}`,
         rootUi?.root,
         ui?.root,
       )
@@ -226,7 +226,7 @@ watch(
         mode="out-in"
       >
         <slot v-if="internals.controls.tableLayout.value === 'table'" name="table" :rows="rows">
-          <DataListTable :size="resolvedSize" :external-scroll="fit !== 'content'">
+          <DataListTable :size="resolvedSize" :fill="fit !== 'content'" class="min-h-0 flex-1">
             <template #empty>
               <slot name="empty-table">
                 <slot
@@ -241,7 +241,7 @@ watch(
           </DataListTable>
         </slot>
         <slot v-else name="grid" :rows="rows">
-          <DataListGrid :size="resolvedSize">
+          <DataListGrid :size="resolvedSize" :fill="fit !== 'content'" class="min-h-0 flex-1">
             <template #empty>
               <slot name="empty-grid">
                 <slot

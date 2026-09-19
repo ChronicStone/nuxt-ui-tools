@@ -7,6 +7,7 @@ import { provideUiToolsLocale, useUiToolsLocaleRef } from '#ui-tools/i18n'
 import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 
 import { isObject } from '../../../shared/utils/predicate'
+import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 import { provideDataListUi } from '../../composables/use-data-list-ui'
 import { provideTableInternals, type TableInternals } from '../../composables/use-table-internals'
 import type { DataListControlSize, DataListDensity, DataListUiConfig } from '../../types'
@@ -33,10 +34,18 @@ const appConfig = useAppConfig()
 
 provideTableInternals(props.table['__internals'])
 provideUiToolsLocale(useUiToolsLocaleRef(computed(() => props.locale)))
+const { isMobile } = useDataListBreakpoint()
 provideDataListUi(
-  computed<DataListUiConfig>(() =>
-    mergeDataListUiConfig(resolveAppDataListUi(appConfig), props.ui, props.density, props.size),
-  ),
+  computed<DataListUiConfig>(() => {
+    const merged = mergeDataListUiConfig(
+      resolveAppDataListUi(appConfig),
+      props.ui,
+      props.density,
+      props.size,
+    )
+    if (!isMobile.value || !merged.mobile) return merged
+    return mergeDataListUiConfig(merged, merged.mobile, merged.mobile.density, merged.mobile.control?.size)
+  }),
 )
 
 onMounted(() => props.table['__internals'].startup.scheduleStart())

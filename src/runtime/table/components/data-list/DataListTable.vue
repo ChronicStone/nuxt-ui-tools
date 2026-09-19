@@ -8,7 +8,7 @@ import TableRenderer from '../table/TableRenderer.vue'
 const props = defineProps<{
   height?: string
   size?: DataListControlSize
-  externalScroll?: boolean
+  fill?: boolean
   ui?: DataListTableUi
 }>()
 const dataListUi = useDataListUi()
@@ -25,7 +25,7 @@ const resolvedUi = computed<DataListTableUi>(() => ({
   <TableRenderer
     :height="height"
     :size="resolvedSize"
-    :external-scroll="externalScroll"
+    :fill="fill"
     :ui="resolvedUi"
   >
     <template v-for="(_, name) in $slots" #[name]="scope">

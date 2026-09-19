@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import UInput from '@nuxt/ui/components/Input.vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
-import type { DataListControlSize, DataListSearchUi } from '../../types'
+import type { DataListControlSize, DataListInputProps, DataListSearchUi } from '../../types'
 
 const props = defineProps<{
   placeholder: string
   loading?: boolean
   size: DataListControlSize
   ui?: DataListSearchUi
+  inputProps?: DataListInputProps
 }>()
 const model = defineModel<string>({ required: true })
 const localValue = ref<string>(model.value)
@@ -22,6 +23,13 @@ watch(
   { flush: 'sync' },
 )
 
+const inputAttrs = computed<Record<string, unknown>>(() => ({
+  color: 'neutral',
+  variant: 'outline',
+  icon: 'i-lucide-search',
+  ...props.inputProps,
+}))
+
 function commitValue() {
   if (localValue.value === model.value) return
   model.value = localValue.value
@@ -30,15 +38,13 @@ function commitValue() {
 
 <template>
   <UInput
+    v-bind="inputAttrs"
     :model-value="localValue"
     :size="props.size"
-    color="primary"
-    variant="outline"
-    icon="i-lucide-search"
     :loading="loading"
     :placeholder="placeholder"
     :ui="ui"
-    class="max-w-full shrink-0"
+    class="nut-dl-search max-w-full shrink-0"
     @update:model-value="localValue = String($event ?? '')"
     @blur="commitValue"
     @keydown.enter.prevent="commitValue"

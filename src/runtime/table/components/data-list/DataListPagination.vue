@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { DataListControlSize, DataListPaginationUi } from '../../types'
+import type { DataListControlSize, DataListPaginationProps, DataListPaginationUi } from '../../types'
 import TableFooter from '../layout/TableFooter.vue'
 
-defineProps<{ size?: DataListControlSize; ui?: DataListPaginationUi }>()
+defineProps<{
+  size?: DataListControlSize
+  ui?: DataListPaginationUi
+  props?: DataListPaginationProps
+}>()
 const internals = useTableInternals()
 </script>
 
@@ -16,7 +20,7 @@ const internals = useTableInternals()
     :next="internals.pagination.next"
     :previous="internals.pagination.previous"
   >
-    <TableFooter :size="size" :ui="ui">
+    <TableFooter :size="size" :ui="ui" :props="props">
       <template v-for="(_, name) in $slots" #[name]="scope">
         <slot v-if="name !== 'default'" :name="name" v-bind="scope ?? {}" />
       </template>
