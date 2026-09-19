@@ -441,6 +441,15 @@ body {
   align-items: start;
   padding: 22px 28px 40px;
 }
+.ex-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.ex-form-card-open {
+  margin-left: auto;
+}
 .ex-form-card {
   background: var(--ex-surface);
   border: 1px solid var(--ui-border);
