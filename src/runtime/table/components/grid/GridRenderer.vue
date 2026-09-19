@@ -2,8 +2,15 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { AnimatePresence, motion } from 'motion-v'
-import { computed, nextTick, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  ref,
+  useTemplateRef,
+  watch,
+  type ComponentPublicInstance,
+} from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
@@ -13,11 +20,13 @@ import { GRID_DEFAULTS } from '../../constants/grid'
 import type { DataListControlSize, DataListGridUi } from '../../types'
 import { mergeDataListUiClass, resolveTableRowId } from '../../utils'
 import GridCard from './GridCard.vue'
+import TableEmptyState from '../table/TableEmptyState.vue'
 import GridSkeleton from './GridSkeleton.vue'
 
 const props = defineProps<{
   height?: string
   size?: DataListControlSize
+  fill?: boolean
   ui?: DataListGridUi
 }>()
 
@@ -27,33 +36,27 @@ const { t } = useUiToolsLocale()
 const resolvedSize = computed(
   () => props.size ?? dataListUi.ui.value.grid?.size ?? dataListUi.controlSize.value,
 )
-const viewportRef = ref<HTMLElement | null>(null)
-const hostRef = ref<HTMLElement | null>(null)
+const gap = computed(() => dataListUi.ui.value.grid?.gap ?? 16)
+const viewportRef = useTemplateRef<HTMLElement>('viewportRef')
 const animationsReady = ref<boolean>(false)
 
 const isContained = computed(() => internals.grid.mode.value === 'contained')
 const rowChunks = computed(() => internals.grid.rowChunks.value)
-const rowChunkCount = computed(() => rowChunks.value.length)
 const tableRows = computed(() => internals.grid.rows.value)
+const status = computed(() => internals.queryContent.status.value)
 const gridTemplateColumns = computed(
   () => `repeat(${internals.grid.columnCount.value}, minmax(0, 1fr))`,
 )
 const gridColumn = computed(
   () => `span ${internals.grid.itemColumnSpan.value} / span ${internals.grid.itemColumnSpan.value}`,
 )
-const minHeight = computed(() =>
-  isContained.value && props.height ? `calc(${props.height} - 6rem)` : '24rem',
-)
 const showInitialLoading = computed(
-  () =>
-    internals.queryContent.status.value.isBooting ||
-    (internals.queryContent.status.value.isPending && tableRows.value.length === 0),
+  () => status.value.isBooting || (status.value.isPending && tableRows.value.length === 0),
 )
 const showRefreshing = computed(
   () =>
     tableRows.value.length > 0 &&
-    (internals.queryContent.status.value.isRefreshing ||
-      internals.queryContent.status.value.isRevalidating),
+    (status.value.isFetching || status.value.isRefreshing || status.value.isRevalidating),
 )
 const showError = computed(
   () => Boolean(internals.queryContent.error.value) && tableRows.value.length === 0,
@@ -65,23 +68,19 @@ const skeletonRows = computed(() =>
   Array.from({ length: GRID_DEFAULTS.skeletonRows }, (_, index) => index),
 )
 
-const containedVirtualizer = useVirtualizer(
+const rowVirtualizer = useVirtualizer(
   computed(() => ({
-    count: rowChunkCount.value,
-    enabled: isContained.value,
-    getScrollElement: () => viewportRef.value,
+    count: isContained.value ? rowChunks.value.length : 0,
+    getScrollElement: () => viewportRef.value ?? null,
     estimateSize: () => GRID_DEFAULTS.estimatedRowHeight,
+    measureElement: (element: Element) => element.getBoundingClientRect().height,
     overscan: GRID_DEFAULTS.overscan,
-    gap: 16,
+    gap: gap.value,
     getItemKey: (index: number) => getVirtualRowKey(index),
   })),
 )
-
-const virtualRows = computed(() => containedVirtualizer.value.getVirtualItems())
-const totalSize = computed(() => containedVirtualizer.value.getTotalSize())
-const canAnimateRows = computed(
-  () => animationsReady.value && (!isContained.value || !containedVirtualizer.value.isScrolling),
-)
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize())
 
 onMounted(() => {
   nextTick(() => {
@@ -93,7 +92,6 @@ watch(
   () => internals.pagination.currentPage.value,
   () => scrollToTop(),
 )
-
 watch(
   () => internals.controls.tableLayout.value,
   (layout) => {
@@ -104,150 +102,110 @@ watch(
 function getVirtualRowKey(index: number) {
   const chunk = rowChunks.value[index]
   const firstRow = chunk?.rows[0]
-
   return firstRow
     ? `grid-row:${resolveTableRowId({ rowKey: internals.schema.value.rowKey, row: firstRow, index: chunk.start })}`
     : `grid-row:${index}`
 }
 
+function rowId(row: object, index: number) {
+  return resolveTableRowId({ rowKey: internals.schema.value.rowKey, row, index })
+}
+
 function scrollToTop() {
-  if (isContained.value) {
-    viewportRef.value?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-    return
-  }
+  viewportRef.value?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
 }
 
 function measureVirtualRow(element: Element | ComponentPublicInstance | null) {
-  const resolvedElement = unwrapElement(element)
-  if (!(resolvedElement instanceof HTMLElement)) return
-  containedVirtualizer.value.measureElement(resolvedElement)
+  const resolved = element instanceof Element ? element : (element?.$el as Element | undefined)
+  if (!(resolved instanceof HTMLElement)) return
+  if (resolved.isConnected) rowVirtualizer.value.measureElement(resolved)
+  else
+    nextTick(() => {
+      if (resolved.isConnected) rowVirtualizer.value.measureElement(resolved)
+    })
+}
+
+const cursorMode = computed(() => internals.pagination.mode.value === 'cursor')
+const loadingMore = computed(() => cursorMode.value && internals.pagination.state.value.isLoadingMore)
+const hasNextPage = computed(() => cursorMode.value && internals.pagination.state.value.hasNextPage)
+watch(
+  () => [virtualRows.value.at(-1)?.index ?? -1, rowChunks.value.length, hasNextPage.value, loadingMore.value] as const,
+  ([lastIndex, count, more, loading]) => {
+    if (!isContained.value || !more || loading || !count) return
+    if (lastIndex >= count - 2) void internals.pagination.loadMore()
+  },
+)
+function onScrollLoadMore() {
+  if (!hasNextPage.value || loadingMore.value || isContained.value) return
+  const element = viewportRef.value
+  if (!element) return
+  if (element.scrollHeight - element.scrollTop - element.clientHeight < 400) void internals.pagination.loadMore()
 }
 
 function refreshData() {
   void internals.queryContent.refreshData()
 }
-
-function unwrapElement(value: Element | ComponentPublicInstance | null): Element | null {
-  if (value instanceof Element) return value
-  if (value && '$el' in value && value.$el instanceof Element) return value.$el
-  return null
-}
 </script>
 
 <template>
-  <div ref="hostRef" :class="mergeDataListUiClass('relative overflow-hidden', undefined, ui?.root)">
+  <div
+    :class="
+      mergeDataListUiClass(
+        `nut-dl-grid relative ${fill ? 'flex h-full min-h-0 flex-col' : ''}`,
+        undefined,
+        ui?.root,
+      )
+    "
+    :style="{ '--nut-dl-grid-gap': `${gap}px`, height: !fill && height ? height : undefined }"
+    :data-loading="showInitialLoading"
+    :data-animated="animationsReady"
+  >
     <div
-      v-if="isContained"
       ref="viewportRef"
-      :class="mergeDataListUiClass('overflow-auto', undefined, ui?.viewport)"
-      :style="height ? { height } : undefined"
+      :class="
+        mergeDataListUiClass(
+          `nut-dl-grid__viewport relative ${fill || height ? 'min-h-0 flex-1 overflow-auto' : ''}`,
+          undefined,
+          ui?.viewport,
+        )
+      "
+      @scroll.passive="onScrollLoadMore"
     >
       <div
-        v-if="!internals.queryContent.status.value.isBooting"
-        :class="mergeDataListUiClass('relative', undefined, ui?.canvas)"
-        :style="{ height: `${totalSize}px`, minHeight }"
-      >
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            v-for="virtualRow in virtualRows"
-            :key="String(virtualRow.key)"
-            :ref="measureVirtualRow"
-            :class="mergeDataListUiClass('absolute left-0 top-0 w-full', undefined, ui?.row)"
-            :style="{ transform: `translateY(${virtualRow.start}px)` }"
-            :initial="canAnimateRows ? { opacity: 0, y: 6, scale: 0.995 } : false"
-            :animate="{ opacity: 1, y: 0, scale: 1 }"
-            :exit="canAnimateRows ? { opacity: 0, y: 4, scale: 0.995 } : undefined"
-            :transition="{ duration: canAnimateRows ? 0.22 : 0, ease: [0.25, 1, 0.5, 1] }"
-          >
-            <div
-              :class="mergeDataListUiClass('grid gap-4', undefined, ui?.flow)"
-              :style="{ gridTemplateColumns }"
-            >
-              <div
-                v-for="(row, offset) in rowChunks[virtualRow.index]?.rows ?? []"
-                :key="
-                  resolveTableRowId({
-                    rowKey: internals.schema.value.rowKey,
-                    row,
-                    index: (rowChunks[virtualRow.index]?.start ?? 0) + offset,
-                  })
-                "
-                :class="mergeDataListUiClass('h-full min-w-0 self-stretch', undefined, ui?.item)"
-                :style="{ gridColumn }"
-              >
-                <GridCard :row-index="rowChunks[virtualRow.index]!.start + offset" />
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </div>
-
-    <div v-else :class="mergeDataListUiClass(undefined, undefined, ui?.flowRoot)">
-      <div
         v-if="showInitialLoading"
-        :class="mergeDataListUiClass('grid gap-4', undefined, ui?.loading)"
-        :style="{ gridTemplateColumns, minHeight }"
+        :class="mergeDataListUiClass('nut-dl-grid__flow grid', undefined, ui?.loading)"
+        :style="{ gridTemplateColumns, gap: `${gap}px` }"
       >
-        <div v-for="row in skeletonRows" :key="row" :style="{ gridColumn }">
+        <div v-for="row in skeletonRows" :key="row" :style="{ gridColumn, '--nut-dl-i': row }" class="nut-dl-grid__skeleton">
           <GridSkeleton />
         </div>
       </div>
 
       <div
         v-else-if="showError"
-        :class="
-          mergeDataListUiClass('flex items-center justify-center px-4 py-10', undefined, ui?.error)
-        "
-        :style="{ minHeight }"
+        :class="mergeDataListUiClass('nut-dl-grid__state flex items-center justify-center px-4 py-10', undefined, ui?.error)"
       >
         <div
           :class="
             mergeDataListUiClass(
-              'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-danger/20 bg-default/95 px-6 py-8 text-center shadow-lg backdrop-blur',
+              'grid max-w-md justify-items-center gap-3 rounded-lg border border-default bg-default px-6 py-8 text-center',
               undefined,
               ui?.errorCard,
             )
           "
         >
-          <div
-            :class="
-              mergeDataListUiClass(
-                'flex size-12 items-center justify-center rounded-2xl border border-danger/20 bg-danger/5',
-                undefined,
-                ui?.errorIcon,
-              )
-            "
-          >
-            <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
-          </div>
+          <UIcon name="i-lucide-cloud-alert" :class="mergeDataListUiClass('size-5 text-error', undefined, ui?.errorIcon)" />
           <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.errorCopy)">
-            <div
-              :class="
-                mergeDataListUiClass(
-                  'text-base font-medium text-highlighted',
-                  undefined,
-                  ui?.errorTitle,
-                )
-              "
-            >
+            <div :class="mergeDataListUiClass('font-medium text-highlighted', undefined, ui?.errorTitle)">
               {{ t('table.states.gridError.title') }}
             </div>
-            <p
-              :class="
-                mergeDataListUiClass(
-                  'text-sm leading-6 text-muted',
-                  undefined,
-                  ui?.errorDescription,
-                )
-              "
-            >
+            <p :class="mergeDataListUiClass('text-sm text-muted', undefined, ui?.errorDescription)">
               {{ t('table.states.gridError.description') }}
             </p>
           </div>
           <UButton
             color="neutral"
-            variant="soft"
+            variant="outline"
             :size="resolvedSize"
             icon="i-lucide-refresh-cw"
             :ui="{ base: ui?.retry }"
@@ -260,307 +218,151 @@ function unwrapElement(value: Element | ComponentPublicInstance | null): Element
 
       <div
         v-else-if="showEmpty"
-        :class="
-          mergeDataListUiClass('flex items-center justify-center px-4 py-10', undefined, ui?.empty)
-        "
-        :style="{ minHeight }"
+        :class="mergeDataListUiClass('nut-dl-grid__state flex h-full items-center justify-center', undefined, ui?.empty)"
       >
         <slot name="empty">
-          <div
-            :class="
-              mergeDataListUiClass(
-                'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-default/70 bg-gradient-to-br from-default via-default to-elevated/60 px-6 py-9 text-center shadow-sm',
-                undefined,
-                ui?.emptyCard,
-              )
-            "
-          >
-            <div
-              :class="
-                mergeDataListUiClass(
-                  'flex size-12 items-center justify-center rounded-2xl border border-default/80 bg-elevated/80',
-                  undefined,
-                  ui?.emptyIcon,
-                )
-              "
-            >
-              <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
-            </div>
-            <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.emptyCopy)">
-              <div
-                :class="
-                  mergeDataListUiClass(
-                    'text-base font-medium text-highlighted',
-                    undefined,
-                    ui?.emptyTitle,
-                  )
-                "
-              >
-                {{ t('table.states.gridEmpty.title') }}
-              </div>
-              <p
-                :class="
-                  mergeDataListUiClass(
-                    'text-sm leading-6 text-muted',
-                    undefined,
-                    ui?.emptyDescription,
-                  )
-                "
-              >
-                {{ t('table.states.gridEmpty.description') }}
-              </p>
-            </div>
-          </div>
+          <TableEmptyState min-height="24rem" :size="resolvedSize" />
         </slot>
       </div>
 
-      <motion.div
-        v-else
-        :class="mergeDataListUiClass('grid auto-rows-fr gap-4', undefined, ui?.flow)"
-        :style="{ gridTemplateColumns }"
-        :initial="{ opacity: 0 }"
-        :animate="{ opacity: 1 }"
-        :transition="{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }"
+      <div
+        v-else-if="isContained"
+        :class="mergeDataListUiClass('nut-dl-grid__canvas relative w-full', undefined, ui?.canvas)"
+        :style="{ height: `${totalSize}px` }"
+        :data-loading-more="loadingMore"
       >
-        <motion.div
+        <div
+          v-for="virtualRow in virtualRows"
+          :key="String(virtualRow.key)"
+          :ref="measureVirtualRow"
+          :class="mergeDataListUiClass('nut-dl-grid__row absolute inset-x-0 top-0 grid', undefined, ui?.row)"
+          :style="{ transform: `translateY(${virtualRow.start}px)`, gridTemplateColumns, gap: `${gap}px` }"
+          :data-index="virtualRow.index"
+        >
+          <div
+            v-for="(row, offset) in rowChunks[virtualRow.index]?.rows ?? []"
+            :key="rowId(row, (rowChunks[virtualRow.index]?.start ?? 0) + offset)"
+            :class="mergeDataListUiClass('nut-dl-grid__item min-w-0', undefined, ui?.item)"
+            :style="{ gridColumn }"
+          >
+            <GridCard :row-index="(rowChunks[virtualRow.index]?.start ?? 0) + offset" />
+          </div>
+        </div>
+      </div>
+
+      <TransitionGroup
+        v-else
+        tag="div"
+        :class="mergeDataListUiClass('nut-dl-grid__flow grid', undefined, ui?.flow)"
+        :style="{ gridTemplateColumns, gap: `${gap}px` }"
+        move-class="nut-dl-grid__item--moving"
+        enter-active-class="nut-dl-grid__item--entering"
+        enter-from-class="nut-dl-grid__item--from"
+        leave-active-class="nut-dl-grid__item--leaving"
+        leave-to-class="nut-dl-grid__item--from"
+      >
+        <div
           v-for="(row, index) in tableRows"
-          :key="
-            resolveTableRowId({
-              rowKey: internals.schema.value.rowKey,
-              row,
-              index,
-            })
-          "
-          :class="mergeDataListUiClass('h-full min-w-0 self-stretch', undefined, ui?.item)"
+          :key="rowId(row, index)"
+          :class="mergeDataListUiClass('nut-dl-grid__item min-w-0', undefined, ui?.item)"
           :style="{ gridColumn }"
-          :initial="canAnimateRows ? { opacity: 0, y: 6 } : false"
-          :animate="{ opacity: 1, y: 0 }"
-          :transition="{
-            duration: canAnimateRows ? 0.22 : 0,
-            delay: canAnimateRows
-              ? Math.min(
-                  Math.floor(index / Math.max(internals.grid.cardsPerRow.value, 1)) * 0.02,
-                  0.14,
-                )
-              : 0,
-            ease: [0.25, 1, 0.5, 1],
-          }"
         >
           <GridCard :row-index="index" />
-        </motion.div>
-      </motion.div>
+        </div>
+      </TransitionGroup>
     </div>
 
-    <AnimatePresence v-if="isContained" mode="wait">
-      <motion.div
-        v-if="showInitialLoading"
-        key="grid-loading"
-        :class="mergeDataListUiClass('absolute inset-0 z-20', undefined, ui?.loading)"
-        :initial="{ opacity: 0 }"
-        :animate="{ opacity: 1 }"
-        :exit="{ opacity: 0 }"
-        :transition="{ duration: 0.18, ease: [0.25, 1, 0.5, 1] }"
-      >
-        <div
-          :class="mergeDataListUiClass('grid gap-4', undefined, ui?.flow)"
-          :style="{ gridTemplateColumns, minHeight }"
-        >
-          <div v-for="row in skeletonRows" :key="row" :style="{ gridColumn }">
-            <GridSkeleton />
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        v-else-if="showError"
-        key="grid-error"
-        :class="
-          mergeDataListUiClass(
-            'absolute inset-0 z-20 flex items-center justify-center px-4 py-10',
-            undefined,
-            ui?.error,
-          )
-        "
-        :initial="{ opacity: 0, y: 8 }"
-        :animate="{ opacity: 1, y: 0 }"
-        :exit="{ opacity: 0, y: 4 }"
-        :transition="{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }"
-      >
-        <div
-          :class="
-            mergeDataListUiClass(
-              'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-danger/20 bg-default/95 px-6 py-8 text-center shadow-lg backdrop-blur',
-              undefined,
-              ui?.errorCard,
-            )
-          "
-        >
-          <div
-            :class="
-              mergeDataListUiClass(
-                'flex size-12 items-center justify-center rounded-2xl border border-danger/20 bg-danger/5',
-                undefined,
-                ui?.errorIcon,
-              )
-            "
-          >
-            <UIcon name="i-lucide-cloud-alert" class="size-5 text-danger" />
-          </div>
-          <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.errorCopy)">
-            <div
-              :class="
-                mergeDataListUiClass(
-                  'text-base font-medium text-highlighted',
-                  undefined,
-                  ui?.errorTitle,
-                )
-              "
-            >
-              {{ t('table.states.gridError.title') }}
-            </div>
-            <p
-              :class="
-                mergeDataListUiClass(
-                  'text-sm leading-6 text-muted',
-                  undefined,
-                  ui?.errorDescription,
-                )
-              "
-            >
-              {{ t('table.states.gridError.description') }}
-            </p>
-          </div>
-          <UButton
-            color="neutral"
-            variant="soft"
-            :size="resolvedSize"
-            icon="i-lucide-refresh-cw"
-            :ui="{ base: ui?.retry }"
-            @click="refreshData"
-          >
-            {{ t('table.states.gridError.action') }}
-          </UButton>
-        </div>
-      </motion.div>
-
-      <motion.div
-        v-else-if="showEmpty"
-        key="grid-empty"
-        :class="
-          mergeDataListUiClass(
-            'absolute inset-0 z-20 flex items-center justify-center px-4 py-10',
-            undefined,
-            ui?.empty,
-          )
-        "
-        :initial="{ opacity: 0, y: 8 }"
-        :animate="{ opacity: 1, y: 0 }"
-        :exit="{ opacity: 0, y: 4 }"
-        :transition="{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }"
-      >
-        <slot name="empty">
-          <div
-            :class="
-              mergeDataListUiClass(
-                'grid max-w-md justify-items-center gap-4 rounded-[28px] border border-default/70 bg-gradient-to-br from-default via-default to-elevated/60 px-6 py-9 text-center shadow-sm',
-                undefined,
-                ui?.emptyCard,
-              )
-            "
-          >
-            <div
-              :class="
-                mergeDataListUiClass(
-                  'flex size-12 items-center justify-center rounded-2xl border border-default/80 bg-elevated/80',
-                  undefined,
-                  ui?.emptyIcon,
-                )
-              "
-            >
-              <UIcon name="i-lucide-layout-grid" class="size-5 text-primary" />
-            </div>
-            <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.emptyCopy)">
-              <div
-                :class="
-                  mergeDataListUiClass(
-                    'text-base font-medium text-highlighted',
-                    undefined,
-                    ui?.emptyTitle,
-                  )
-                "
-              >
-                {{ t('table.states.gridEmpty.title') }}
-              </div>
-              <p
-                :class="
-                  mergeDataListUiClass(
-                    'text-sm leading-6 text-muted',
-                    undefined,
-                    ui?.emptyDescription,
-                  )
-                "
-              >
-                {{ t('table.states.gridEmpty.description') }}
-              </p>
-            </div>
-          </div>
-        </slot>
-      </motion.div>
-    </AnimatePresence>
-
-    <motion.div
-      v-if="showRefreshing"
-      :class="
-        mergeDataListUiClass(
-          'pointer-events-none absolute inset-x-0 top-0 z-10',
-          undefined,
-          ui?.refreshing,
-        )
-      "
-      :initial="{ opacity: 0 }"
-      :animate="{ opacity: 1 }"
-      :exit="{ opacity: 0 }"
-      :transition="{ duration: 0.18, ease: [0.25, 1, 0.5, 1] }"
+    <div
+      v-if="loadingMore"
+      class="nut-dl-grid__more flex items-center justify-center gap-2.5 py-3 text-[12.5px] text-muted"
+      aria-hidden="true"
     >
+      <span class="nut-dl-spinner size-3.5 rounded-full border-2 border-accented border-t-primary" />
+      <span>{{ t('table.controls.loadingMore') }}</span>
+    </div>
+
+    <Transition name="nut-dl-grid-progress">
       <div
-        :class="
-          mergeDataListUiClass(
-            'h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent',
-            undefined,
-            ui?.refreshingLine,
-          )
-        "
-      />
-      <div
-        :class="
-          mergeDataListUiClass(
-            'h-12 bg-gradient-to-b from-default/80 via-default/15 to-transparent backdrop-blur-[1.5px]',
-            undefined,
-            ui?.refreshingVeil,
-          )
-        "
-      />
-    </motion.div>
+        v-if="showRefreshing"
+        :class="mergeDataListUiClass('nut-dl-grid__progress pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden', undefined, ui?.refreshing)"
+        aria-hidden="true"
+      >
+        <span :class="mergeDataListUiClass('nut-dl-grid__progress-bar block h-full w-full', undefined, ui?.refreshingLine)" />
+      </div>
+    </Transition>
   </div>
 </template>
 
-<style scoped>
-.grid-overlay-enter-active,
-.grid-overlay-leave-active {
-  transition: opacity 180ms cubic-bezier(0.25, 1, 0.5, 1);
+<style>
+.nut-dl-grid__skeleton {
+  animation: nut-dl-grid-in 0.2s ease both;
+  animation-delay: calc(var(--nut-dl-i, 0) * 30ms);
 }
-
-.grid-overlay-enter-from,
-.grid-overlay-leave-to {
+.nut-dl-grid__viewport {
+  scrollbar-width: thin;
+  overflow-anchor: none;
+}
+.nut-dl-grid[data-animated='true'] .nut-dl-grid__item {
+  animation: nut-dl-grid-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.nut-dl-grid__item--moving {
+  transition: transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.nut-dl-grid__item--entering {
+  transition:
+    opacity 0.18s ease,
+    transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.nut-dl-grid__item--leaving {
+  position: absolute;
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease;
+}
+.nut-dl-grid__item--from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+@keyframes nut-dl-grid-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.nut-dl-grid__progress-bar {
+  background: linear-gradient(90deg, transparent, var(--ui-primary), transparent);
+  background-size: 40% 100%;
+  animation: nut-dl-grid-progress 1s ease-in-out infinite;
+}
+@keyframes nut-dl-grid-progress {
+  from {
+    background-position: -40% 0;
+  }
+  to {
+    background-position: 140% 0;
+  }
+}
+.nut-dl-grid-progress-enter-active,
+.nut-dl-grid-progress-leave-active {
+  transition: opacity 0.16s ease;
+}
+.nut-dl-grid-progress-enter-from,
+.nut-dl-grid-progress-leave-to {
   opacity: 0;
 }
-
 @media (prefers-reduced-motion: reduce) {
-  :deep(*) {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  .nut-dl-grid[data-animated='true'] .nut-dl-grid__item,
+  .nut-dl-grid__progress-bar {
+    animation: none;
+  }
+  .nut-dl-grid__item--moving,
+  .nut-dl-grid__item--entering,
+  .nut-dl-grid__item--leaving {
+    transition: none;
   }
 }
 </style>
