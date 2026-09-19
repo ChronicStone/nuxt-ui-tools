@@ -11,10 +11,10 @@ describe('form field defaults', () => {
         { key: 'checkboxes', options: [], type: 'checkbox-group' },
         { key: 'cards', options: [], type: 'checkbox-card' },
         { key: 'switches', options: [], type: 'switch-group' },
-        { key: 'select', multiple: true, options: [], type: 'select' },
-        { key: 'autocomplete', multiple: true, options: [], type: 'auto-complete' },
-        { key: 'tree', multiple: true, options: [], type: 'tree' },
-        { key: 'file', multiple: true, type: 'file' },
+        { key: 'select', options: [], props: { multiple: true }, type: 'select' },
+        { key: 'autocomplete', options: [], props: { multiple: true }, type: 'auto-complete' },
+        { key: 'tree', options: [], props: { multiple: true }, type: 'tree' },
+        { key: 'file', props: { multiple: true }, type: 'file' },
       ],
     })
 

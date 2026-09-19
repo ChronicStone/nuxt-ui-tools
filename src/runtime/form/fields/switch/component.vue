@@ -13,19 +13,20 @@ const props = defineProps<{
 }>()
 const bare = useFormFieldBare()
 
-const { form, controlProps, disabled, handleBlur, validationPending } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, validationPending } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['trueValue', 'falseValue'] },
 )
 const model = computed<boolean>({
   get: () => {
     const value = form.getValue(props.path)
-    return value === (props.field.trueValue ?? true)
+    return value === (fieldProps.value.trueValue ?? true)
   },
   set: (value) =>
     form.setValue(
       props.path,
-      value ? (props.field.trueValue ?? true) : (props.field.falseValue ?? false),
+      value ? (fieldProps.value.trueValue ?? true) : (fieldProps.value.falseValue ?? false),
     ),
 })
 </script>
@@ -44,9 +45,9 @@ const model = computed<boolean>({
       :description="bare ? undefined : description"
       :required="required"
       :disabled="disabled"
-      :checked-icon="field.checkedIcon"
-      :unchecked-icon="field.uncheckedIcon"
-      :loading="validationPending || field.loading"
+      :checked-icon="fieldProps.checkedIcon"
+      :unchecked-icon="fieldProps.uncheckedIcon"
+      :loading="validationPending || fieldProps.loading"
       @change="handleBlur"
     />
   </FormFieldShell>

@@ -96,8 +96,8 @@ const schema = defineFormSchema({
     },
     {
       key: 'roles',
-      multiple: true,
       options: ['admin', 'reviewer'],
+      props: { multiple: true },
       type: 'select',
     },
     {
@@ -131,13 +131,13 @@ const schema = defineFormSchema({
       type: 'date',
     },
     {
-      defaultCountryCode: 'FR',
       disabled: ({ api }) => {
         expectTypeOf(api.value.get()).toEqualTypeOf<string | null>()
 
         return false
       },
       key: 'phone',
+      props: { defaultCountryCode: 'FR' },
       type: 'phone-number',
     },
     {
@@ -292,17 +292,17 @@ interface TagField {
 interface RangeSliderField {
   key: 'scoreRange'
   type: 'slider'
-  multiple: true
+  props: { multiple: true }
 }
 interface MultipleFileField {
   key: 'avatar'
   type: 'file'
-  multiple: true
+  props: { multiple: true }
 }
 interface AutoCompleteField {
   key: 'assignees'
   type: 'auto-complete'
-  multiple: true
+  props: { multiple: true }
   options: readonly [{ label: 'Ada'; value: 'ada' }, { label: 'Grace'; value: 'grace' }]
 }
 interface RadioCardField {

@@ -3,6 +3,7 @@ import type { FormRenderable, FormText, FormObject } from '../../types/utils'
 import type {
   FormArrayActionParams,
   FormArrayFieldActions,
+  FormArrayListProps,
   FormArrayVirtualFields,
 } from '../array-list/types'
 
@@ -16,13 +17,10 @@ export interface FormArrayTabActionParams<
 export interface FormArrayTabsField<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
-> extends FormContainerFieldBase<'array-tabs', TContext, TDeps> {
+> extends FormContainerFieldBase<'array-tabs', TContext, TDeps, FormArrayListProps> {
   addItemLabel?: FormText
   emptyLabel?: FormText
   itemLabel?: FormText
-  compact?: boolean
-  /** Enables drag-to-reorder tabs. Defaults to `true`. */
-  draggable?: boolean
   confirmDelete?: boolean | FormText
   headerTemplate?: (item: FormObject, index: number, deps: TDeps) => FormText
   tabAction?: (

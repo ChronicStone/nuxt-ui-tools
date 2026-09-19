@@ -6,6 +6,7 @@ import { computed, defineAsyncComponent, ref } from 'vue'
 
 import FormFieldError from '../../components/renderer/form-field-error.vue'
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
+import { useResolvedFieldProps } from '../../composables/use-field-control'
 import type { FormField, FormObject } from '../../types'
 import { isRecord } from '../../utils/path'
 import { isNumber, isString } from '../../utils/predicate'
@@ -20,6 +21,11 @@ const props = defineProps<{
   field: FormArrayTableField
   path: readonly string[]
 }>()
+
+const fieldProps = useResolvedFieldProps(
+  () => props.field,
+  () => props.path,
+)
 
 const VueDraggable = defineAsyncComponent(async () => {
   const { VueDraggable: draggableComponent } = await import('vue-draggable-plus')
@@ -56,7 +62,9 @@ const columns = computed(() =>
   props.field.fields.filter((field) => field.type !== 'hidden' && field.ignore !== true),
 )
 const minWidth = computed(() =>
-  isNumber(props.field.minWidth) ? `${props.field.minWidth}px` : props.field.minWidth,
+  isNumber(fieldProps.value.minWidth)
+    ? `${fieldProps.value.minWidth}px`
+    : fieldProps.value.minWidth,
 )
 const dragItems = computed<FormObject[]>({
   get: () => [...items.value],
@@ -71,7 +79,12 @@ const showActionsColumn = computed<boolean>(() =>
 function columnStyle(field: FormField) {
   const layout = Object.getOwnPropertyDescriptor(field, 'layout')?.value
   const width = isRecord(layout) ? layout.width : undefined
-  const resolved = isNumber(width) ? `${width}px` : isString(width) ? width : undefined
+  let resolved: string | undefined
+  if (isNumber(width)) {
+    resolved = `${width}px`
+  } else if (isString(width)) {
+    resolved = width
+  }
   return { minWidth: resolved ?? DEFAULT_COLUMN_MIN_WIDTH, width: resolved }
 }
 

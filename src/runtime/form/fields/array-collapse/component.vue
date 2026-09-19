@@ -5,6 +5,7 @@ import { computed, defineAsyncComponent, ref, useId } from 'vue'
 
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import FormFieldStatus from '../../components/renderer/form-field-status.vue'
+import { useResolvedFieldProps } from '../../composables/use-field-control'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import type { FormObject } from '../../types'
 import { resolveFormText } from '../../utils/text'
@@ -16,6 +17,11 @@ const props = defineProps<{
   field: FormArrayCollapseField
   path: readonly string[]
 }>()
+
+const fieldProps = useResolvedFieldProps(
+  () => props.field,
+  () => props.path,
+)
 
 const VueDraggable = defineAsyncComponent(async () => {
   const { VueDraggable: draggableComponent } = await import('vue-draggable-plus')
@@ -58,13 +64,13 @@ const dragItems = computed<FormObject[]>({
   get: () => [...items.value],
   set: updateDraggedItems,
 })
-const arrowLeft = computed(() => props.field.arrowPlacement !== 'right')
+const arrowLeft = computed(() => fieldProps.value.arrowPlacement !== 'right')
 
 function initialExpanded() {
-  if (props.field.defaultExpanded === 'all') {
+  if (fieldProps.value.defaultExpanded === 'all') {
     return items.value.map((_item, index) => index)
   }
-  if (props.field.defaultExpanded === 'first' && items.value.length > 0) {
+  if (fieldProps.value.defaultExpanded === 'first' && items.value.length > 0) {
     return [0]
   }
   return []
@@ -78,7 +84,7 @@ function expand(index: number) {
   if (isExpanded(index)) {
     return
   }
-  expanded.value = props.field.accordion ? [index] : [...expanded.value, index]
+  expanded.value = fieldProps.value.accordion ? [index] : [...expanded.value, index]
 }
 
 function toggle(index: number) {
@@ -273,7 +279,7 @@ function bodyId(index: number) {
               <div
                 :class="[
                   mergeFormUiClass('grid border-t border-default', ui?.body),
-                  field.compact ? 'gap-3 p-3' : 'gap-4 p-4',
+                  fieldProps.compact ? 'gap-3 p-3' : 'gap-4 p-4',
                 ]"
               >
                 <div

@@ -24,6 +24,7 @@ const props = defineProps<{
 const { t } = useUiToolsLocale()
 
 const {
+  fieldProps,
   form,
   controlProps,
   disabled,
@@ -35,6 +36,7 @@ const {
 } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['createItem', 'clearable'] },
 )
 const searchTerm = ref<string>('')
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
@@ -62,10 +64,10 @@ const controlUi = computed(() => ({
   content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
 }))
 const createItem = computed<FormSelectCreateItem>(() =>
-  options.creatable.value && props.field.createItem ? props.field.createItem : false,
+  options.creatable.value && fieldProps.value.createItem ? fieldProps.value.createItem : false,
 )
 const showExplicitCreate = computed<boolean>(
-  () => options.creatable.value && !props.field.createItem,
+  () => options.creatable.value && !fieldProps.value.createItem,
 )
 const createActionLabel = computed(
   () => options.createLabel.value ?? t('form.fields.options.create'),
@@ -114,7 +116,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       value-key="value"
       label-key="label"
       :items="items"
-      :multiple="field.multiple"
+      :multiple="fieldProps.multiple"
       :placeholder="placeholder"
       :disabled="disabled"
       :loading="
@@ -123,7 +125,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         options.fetching.value ||
         options.creating.value
       "
-      :clear="field.clearable === true"
+      :clear="fieldProps.clearable === true"
       :ignore-filter="options.remote.value"
       :create-item="createItem"
       :ui="controlUi"

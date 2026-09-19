@@ -95,8 +95,8 @@ describe('defineFormSchema inference', () => {
 
   it('keeps helper inference for extracted fields', () => {
     const field = defineFormField({
-      inputType: 'email',
       key: 'email',
+      props: { inputType: 'email' },
       type: 'text',
     })
 
@@ -120,20 +120,21 @@ describe('defineFormSchema inference', () => {
     const treeSchema = defineFormSchema({
       fields: [
         {
-          bubbleSelect: true,
           key: 'permissions',
-          multiple: true,
           options: [{ key: 'catalog', label: 'Catalog' }],
-          propagateSelect: true,
-          selectionBehavior: 'toggle',
-          selectionControl: 'checkbox',
+          props: {
+            bubbleSelect: true,
+            multiple: true,
+            propagateSelect: true,
+            selectionBehavior: 'toggle',
+            selectionControl: 'checkbox',
+          },
           type: 'tree',
         },
         {
           key: 'owner',
           options: [{ key: 'engineering', label: 'Engineering' }],
-          selectionBehavior: 'replace',
-          selectionControl: 'radio',
+          props: { selectionBehavior: 'replace', selectionControl: 'radio' },
           type: 'tree-select',
         },
       ],

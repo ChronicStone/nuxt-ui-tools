@@ -21,7 +21,42 @@ import { useFormFieldControlAttrs } from './use-form-field-chrome'
 import { useFormRuntimeContext } from './use-form-runtime'
 import { useFormUi } from './use-form-ui'
 
-export function useFieldControl(field: () => FormField, path: () => readonly string[]) {
+type ResolveDynamicProps<TProps> = TProps extends (...args: never[]) => infer TResult
+  ? TResult
+  : TProps
+
+export type ResolvedFieldProps<TField> = TField extends { props?: infer TProps }
+  ? Partial<ResolveDynamicProps<NonNullable<TProps>>>
+  : FormObject
+
+export interface UseFieldControlOptions {
+  /** Engine-only props that must not reach the Nuxt UI control as attributes. */
+  omit?: readonly string[]
+}
+
+export function useResolvedFieldProps<TField extends FormField>(
+  field: () => TField,
+  path: () => readonly string[],
+) {
+  const form = useFormRuntimeContext()
+  const params = computed(() => form.getFieldCallbackParams(path(), field()))
+  return computed(() => {
+    const current = field()
+    const value =
+      'props' in current ? Object.getOwnPropertyDescriptor(current, 'props')?.value : undefined
+    const result = isFunction(value) ? value(params.value) : value
+    const resolved: FormObject =
+      isObject(result) && result !== null && !Array.isArray(result) ? result : {}
+    // SAFETY: resolved is the authored `props` of TField after dynamic resolution; the schema type is the only contract the runtime has for it.
+    return resolved as ResolvedFieldProps<TField>
+  })
+}
+
+export function useFieldControl<TField extends FormField>(
+  field: () => TField,
+  path: () => readonly string[],
+  controlOptions: UseFieldControlOptions = {},
+) {
   const form = useFormRuntimeContext()
   const formUi = useFormUi()
   const { t } = useUiToolsLocale()
@@ -49,6 +84,12 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     loading?: boolean
     trailing?: boolean
   }
+  const fieldProps = useResolvedFieldProps(field, path)
+  const resolvedProps = computed<FormObject>(() => {
+    // SAFETY: the resolved props are a plain record; the typed view only narrows known keys.
+    const record = fieldProps.value as FormObject
+    return record
+  })
   const controlProps = computed<FormControlProps>(() => {
     const current = field()
     const fieldUi = formUi.ui.value.fields?.[current.type]
@@ -61,23 +102,12 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
       size: fieldUi?.size ?? formUi.controlSize.value,
       ui: mergeControlUi(fieldControlAttrs.value.ui, formUi.ui.value.control?.ui, fieldUi?.ui),
     }
-    if (!('props' in current)) {
-      return defaults
-    }
-    const value = Object.getOwnPropertyDescriptor(current, 'props')?.value
-    if (isFunction(value)) {
-      const result = value(params.value)
-      const resolved: FormControlProps =
-        isObject(result) && result !== null && !Array.isArray(result) ? result : {}
-      return {
-        ...defaults,
-        ...resolved,
-        class: mergeControlClass(fieldUi?.class, resolved.class),
-        ui: mergeControlUi(formUi.ui.value.control?.ui, fieldUi?.ui, resolved.ui),
+    const resolved: FormControlProps = {}
+    for (const [key, value] of Object.entries(resolvedProps.value)) {
+      if (!controlOptions.omit?.includes(key)) {
+        resolved[key] = value
       }
     }
-    const resolved: FormControlProps =
-      isObject(value) && value !== null && !Array.isArray(value) ? value : {}
     return {
       ...defaults,
       ...resolved,
@@ -270,6 +300,7 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     controlProps,
     controlSize,
     disabled,
+    fieldProps,
     form,
     handleBlur,
     interactionOwner,

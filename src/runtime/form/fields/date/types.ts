@@ -4,10 +4,7 @@ import type { FormDateFamilyCalendarOptions, FormDateManualInput } from '../date
 
 export type { FormDateFamilyCalendarOptions as FormDateCalendarOptions } from '../date-family/types'
 
-export interface FormDateField<
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
-> extends FormStatefulFieldBase<'date', Date | string | null, TContext, TDeps> {
+export interface FormDateProps {
   min?: Date | string
   max?: Date | string
   clearable?: boolean
@@ -17,5 +14,10 @@ export interface FormDateField<
   manualInputFormat?: string
   calendar?: FormDateFamilyCalendarOptions
 }
+
+export type FormDateField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'date', Date | string | null, TContext, TDeps, FormDateProps>
 
 export type DateFieldOutput = Date | string | NullableValue

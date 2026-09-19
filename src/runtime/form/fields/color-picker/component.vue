@@ -18,6 +18,7 @@ const props = defineProps<{
 const { t } = useUiToolsLocale()
 
 const {
+  fieldProps,
   form,
   controlProps,
   controlSize,
@@ -27,9 +28,10 @@ const {
 } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['display', 'clearable'] },
 )
 const open = ref<boolean>(false)
-const display = computed(() => props.field.display ?? 'popover')
+const display = computed(() => fieldProps.value.display ?? 'popover')
 const placeholder = computed(() =>
   props.field.placeholder === undefined ? '#000000' : controlPlaceholder.value,
 )
@@ -57,8 +59,8 @@ function preventPopoverAutoFocus(event: Event) {
       v-model="model"
       v-bind="controlProps"
       :disabled="disabled"
-      :format="field.format ?? 'hex'"
-      :throttle="field.throttle"
+      :format="fieldProps.format ?? 'hex'"
+      :throttle="fieldProps.throttle"
     />
     <UPopover
       v-else
@@ -109,7 +111,7 @@ function preventPopoverAutoFocus(event: Event) {
           <template #trailing>
             <div class="flex items-center gap-0.5">
               <UButton
-                v-if="field.clearable === true && model"
+                v-if="fieldProps.clearable === true && model"
                 icon="i-lucide-x"
                 color="neutral"
                 variant="ghost"
@@ -130,8 +132,8 @@ function preventPopoverAutoFocus(event: Event) {
             v-model="model"
             :size="controlSize"
             :disabled="disabled"
-            :format="field.format ?? 'hex'"
-            :throttle="field.throttle"
+            :format="fieldProps.format ?? 'hex'"
+            :throttle="fieldProps.throttle"
           />
         </div>
       </template>

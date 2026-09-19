@@ -57,16 +57,19 @@ export interface FormArrayFieldActions<
   custom?: readonly FormArrayCustomAction<TContext, TDeps>[]
 }
 
-export interface FormArrayListField<
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
-> extends FormContainerFieldBase<'array-list', TContext, TDeps> {
-  addItemLabel?: FormText
-  emptyLabel?: FormText
-  itemLabel?: FormText
+export interface FormArrayListProps {
   compact?: boolean
   /** Enables drag-to-reorder. Defaults to `true`. */
   draggable?: boolean
+}
+
+export interface FormArrayListField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormContainerFieldBase<'array-list', TContext, TDeps, FormArrayListProps> {
+  addItemLabel?: FormText
+  emptyLabel?: FormText
+  itemLabel?: FormText
   confirmDelete?: boolean | FormText
   headerTemplate?: (item: FormObject, index: number, deps: TDeps) => FormText
   transformOnCreate?: (item: FormObject, index: number, deps: TDeps) => FormObject

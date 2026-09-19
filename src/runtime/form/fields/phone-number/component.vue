@@ -23,7 +23,7 @@ const props = defineProps<{
 }>()
 
 const { locale, t } = useUiToolsLocale()
-const { form, controlProps, disabled, handleBlur, interactionOwnerClass, placeholder } =
+const { fieldProps, form, controlProps, disabled, handleBlur, interactionOwnerClass, placeholder } =
   useFieldControl(
     () => props.field,
     () => props.path,
@@ -54,7 +54,10 @@ const processedValue = computed(() => {
   if (!parsed?.isValid() || !parsed.country || parsed.country !== countryCode.value) {
     return { valid: false, value: null }
   }
-  if (props.field.numberType?.length && !props.field.numberType.includes(parsed.getType())) {
+  if (
+    fieldProps.value.numberType?.length &&
+    !fieldProps.value.numberType.includes(parsed.getType())
+  ) {
     return { valid: false, value: null }
   }
 
@@ -90,7 +93,7 @@ watch(countryCode, (current, previous) => {
   if (!mounted.value || !previous || !current || current === previous) {
     return
   }
-  if (props.field.resetOnCountryChange ?? true) {
+  if (fieldProps.value.resetOnCountryChange ?? true) {
     phoneValue.value = ''
   }
 })
@@ -108,7 +111,7 @@ function createCountryOption(code: CountryCode): FormPhoneCountryOption {
 }
 
 function isCountryAllowed(option: FormPhoneCountryOption) {
-  const allowed = props.field.countryCodes
+  const allowed = fieldProps.value.countryCodes
   if (!allowed) {
     return true
   }
@@ -116,12 +119,12 @@ function isCountryAllowed(option: FormPhoneCountryOption) {
 }
 
 function resolveDefaultCountryCode() {
-  const stored = props.field.storedCountryCode
+  const stored = fieldProps.value.storedCountryCode
   if (stored && isCountryCodeAvailable(stored)) {
     return stored
   }
 
-  const configured = props.field.defaultCountryCode
+  const configured = fieldProps.value.defaultCountryCode
   if (configured && configured !== 'detect' && isCountryCodeAvailable(configured)) {
     return configured
   }
@@ -175,7 +178,7 @@ function syncToFormValue() {
   syncingToForm.value = true
   form.setValue(props.path, phoneValue.value ? (processedValue.value.value ?? '') : null)
 
-  if (processedValue.value.valid && props.field.displayFormat !== 'raw' && countryCode.value) {
+  if (processedValue.value.valid && fieldProps.value.displayFormat !== 'raw' && countryCode.value) {
     const parsed = parsePhoneNumberFromString(phoneValue.value, countryCode.value)
     if (parsed?.isValid()) {
       phoneValue.value = parsed.formatNational()
@@ -193,13 +196,13 @@ function clearPhone() {
 }
 
 function formatPhoneNumber(parsed: NonNullable<ReturnType<typeof parsePhoneNumberFromString>>) {
-  if (props.field.format === 'national') {
+  if (fieldProps.value.format === 'national') {
     return parsed.formatNational()
   }
-  if (props.field.format === 'uri') {
+  if (fieldProps.value.format === 'uri') {
     return parsed.getURI()
   }
-  if (props.field.format === 'e164') {
+  if (fieldProps.value.format === 'e164') {
     return parsed.number
   }
   return parsed.formatInternational()
@@ -250,13 +253,13 @@ function toFlagEmoji(code: CountryCode) {
         <template v-if="phoneValue && countryCode" #trailing>
           <div class="flex items-center gap-1">
             <UIcon
-              v-if="field.validityIndicator !== false"
+              v-if="fieldProps.validityIndicator !== false"
               :name="processedValue.valid ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
               class="size-4"
               :class="processedValue.valid ? 'text-success' : 'text-error'"
             />
             <UButton
-              v-if="field.clearable === true"
+              v-if="fieldProps.clearable === true"
               type="button"
               color="neutral"
               variant="link"

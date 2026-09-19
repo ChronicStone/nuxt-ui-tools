@@ -731,6 +731,14 @@ async function validatePrimitiveArrayItems(
   return errors
 }
 
+export function readStaticFieldProp(field: FormField, name: string): FormValue {
+  const props = Object.getOwnPropertyDescriptor(field, 'props')?.value
+  if (!isRecord(props)) {
+    return undefined
+  }
+  return props[name]
+}
+
 export function isPrimitiveArrayField(field: FormField) {
   return createFormFieldInstance(field).type.is('array-primitive')
 }
@@ -789,7 +797,7 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData, api?: FormF
       'tree-select',
       'cascader',
     ]) &&
-    Object.getOwnPropertyDescriptor(field, 'multiple')?.value === true
+    readStaticFieldProp(field, 'multiple') === true
   ) {
     return []
   }
@@ -806,7 +814,7 @@ function resolveFieldDefault(field: FormField, ctx: FormContextData, api?: FormF
 }
 
 function resolveSwitchDefault(field: FormField) {
-  const trueValue = Object.getOwnPropertyDescriptor(field, 'trueValue')?.value
+  const trueValue = readStaticFieldProp(field, 'trueValue')
   return isString(trueValue) || isNumber(trueValue) || isBoolean(trueValue) ? trueValue : false
 }
 

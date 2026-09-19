@@ -20,6 +20,7 @@ const props = defineProps<{
 const { t } = useUiToolsLocale()
 
 const {
+  fieldProps,
   form,
   controlProps,
   disabled,
@@ -31,6 +32,7 @@ const {
 } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['createItem', 'max', 'searchable', 'clearable'] },
 )
 const searchTerm = ref<string>('')
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
@@ -45,10 +47,13 @@ const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
     return null
   },
   set: (value) => {
-    if (props.field.multiple && isNumber(props.field.max) && Array.isArray(value)) {
-      if (value.length > props.field.max) {
-        return
-      }
+    const exceedsMax =
+      fieldProps.value.multiple &&
+      isNumber(fieldProps.value.max) &&
+      Array.isArray(value) &&
+      value.length > fieldProps.value.max
+    if (exceedsMax) {
+      return
     }
     form.setValue(props.path, value)
   },
@@ -65,15 +70,15 @@ const controlUi = computed(() => ({
   content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
 }))
 const createItem = computed<FormSelectCreateItem>(() =>
-  options.creatable.value && props.field.createItem ? props.field.createItem : false,
+  options.creatable.value && fieldProps.value.createItem ? fieldProps.value.createItem : false,
 )
 const showExplicitCreate = computed<boolean>(
-  () => options.creatable.value && !props.field.createItem,
+  () => options.creatable.value && !fieldProps.value.createItem,
 )
 const createActionLabel = computed(
   () => options.createLabel.value ?? t('form.fields.options.create'),
 )
-const searchable = computed<boolean>(() => props.field.searchable ?? options.remote.value)
+const searchable = computed<boolean>(() => fieldProps.value.searchable ?? options.remote.value)
 
 watch(searchTerm, (term) => {
   if (options.remote.value) {
@@ -122,7 +127,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
     value-key="value"
     label-key="label"
     :items="items"
-    :multiple="field.multiple"
+    :multiple="fieldProps.multiple"
     :placeholder="placeholder"
     :disabled="disabled"
     :loading="
@@ -131,7 +136,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
     :trailing="true"
     :search-input="searchable"
     :ignore-filter="options.remote.value"
-    :clear="field.clearable === true"
+    :clear="fieldProps.clearable === true"
     :create-item="createItem"
     :ui="controlUi"
     @update:open="handleOpen"
@@ -169,7 +174,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       value-key="value"
       label-key="label"
       :items="items"
-      :multiple="field.multiple"
+      :multiple="fieldProps.multiple"
       :placeholder="placeholder"
       :disabled="disabled"
       :loading="
@@ -181,7 +186,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       :trailing="true"
       :search-input="searchable"
       :ignore-filter="options.remote.value"
-      :clear="field.clearable === true"
+      :clear="fieldProps.clearable === true"
       :create-item="createItem"
       :ui="controlUi"
       @update:open="handleOpen"

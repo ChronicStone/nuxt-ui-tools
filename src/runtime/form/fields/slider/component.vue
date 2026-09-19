@@ -12,7 +12,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -25,9 +25,9 @@ const model = computed<number | number[] | undefined>({
     if (Array.isArray(value) && value.every((item) => isNumber(item))) {
       return value
     }
-    return props.field.multiple ? [] : undefined
+    return fieldProps.value.multiple ? [] : undefined
   },
-  set: (value) => form.setValue(props.path, value ?? (props.field.multiple ? [] : null)),
+  set: (value) => form.setValue(props.path, value ?? (fieldProps.value.multiple ? [] : null)),
 })
 </script>
 
@@ -37,10 +37,10 @@ const model = computed<number | number[] | undefined>({
       v-model="model"
       v-bind="controlProps"
       :disabled="disabled"
-      :min="field.min"
-      :max="field.max"
-      :step="field.step"
-      :tooltip="field.tooltip ?? true"
+      :min="fieldProps.min"
+      :max="fieldProps.max"
+      :step="fieldProps.step"
+      :tooltip="fieldProps.tooltip ?? true"
       @change="handleBlur"
     />
   </FormFieldShell>

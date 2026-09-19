@@ -39,12 +39,11 @@ function accordionSchema() {
     actions: [],
     fields: [
       {
-        accordion: true,
         addItemLabel: 'Add block',
         confirmDelete: false,
-        defaultExpanded: 'first',
         fields: [{ key: 'name', label: 'Block name', type: 'text' }],
         key: 'blocks',
+        props: { accordion: true, defaultExpanded: 'first' },
         type: 'array-collapse',
       },
     ],

@@ -3,10 +3,7 @@ import type { NullableValue } from '../../types/field-output-utils'
 import type { FormText } from '../../types/utils'
 import type { FormTextMask } from '../../utils/mask'
 
-export interface FormTextField<
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
-> extends FormStatefulFieldBase<'text', string | null, TContext, TDeps> {
+export interface FormTextProps {
   inputType?: 'text' | 'email' | 'url' | 'tel' | 'search'
   prefix?: FormText
   suffix?: FormText
@@ -18,5 +15,10 @@ export interface FormTextField<
   mask?: FormTextMask
   maskOutput?: 'masked' | 'raw'
 }
+
+export type FormTextField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'text', string | null, TContext, TDeps, FormTextProps>
 
 export type TextFieldOutput = string | NullableValue

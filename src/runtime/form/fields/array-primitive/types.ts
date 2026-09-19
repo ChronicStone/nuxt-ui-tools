@@ -75,10 +75,21 @@ export interface FormArrayPrimitiveActions<
   deleteItem?: boolean | ((params: FormArrayPrimitiveItemActionParams<TContext, TDeps>) => boolean)
 }
 
+export interface FormArrayPrimitiveProps {
+  variant?: 'list' | 'chips'
+  draggable?: boolean
+}
+
 export interface FormArrayPrimitiveField<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
-> extends FormStatefulFieldBase<'array-primitive', readonly FormValue[] | null, TContext, TDeps> {
+> extends FormStatefulFieldBase<
+  'array-primitive',
+  readonly FormValue[] | null,
+  TContext,
+  TDeps,
+  FormArrayPrimitiveProps
+> {
   field: FormArrayPrimitiveItemField<TContext, TDeps>
   preview?: (params: FormArrayPrimitivePreviewParams<TContext, TDeps>) => FormRenderable
   addItemLabel?: FormText

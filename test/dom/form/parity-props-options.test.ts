@@ -12,13 +12,12 @@ describe('option and file parity props', () => {
         {
           key: 'levels',
           label: 'Niveaux',
-          max: 2,
-          multiple: true,
           options: [
             { label: 'A1', value: 'A1' },
             { label: 'A2', value: 'A2' },
             { label: 'B1', value: 'B1' },
           ],
+          props: { max: 2, multiple: true },
           type: 'select',
         },
       ],

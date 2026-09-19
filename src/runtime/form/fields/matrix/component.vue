@@ -3,6 +3,7 @@ import { computed, useId } from 'vue'
 
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import { useResolvedFieldProps } from '../../composables/use-field-control'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormField } from '../../types'
 import { isNumber } from '../../utils/predicate'
@@ -14,6 +15,11 @@ const props = defineProps<{
   field: FormMatrixField
   path: readonly string[]
 }>()
+
+const fieldProps = useResolvedFieldProps(
+  () => props.field,
+  () => props.path,
+)
 const formUi = useFormUi()
 const matrixInstanceId = useId()
 
@@ -22,17 +28,19 @@ const visibleFields = computed(() =>
 )
 const matrixId = computed<string>(() => `${matrixInstanceId}-${props.path.join('-')}`)
 const minWidth = computed(() =>
-  isNumber(props.field.minWidth) ? `${props.field.minWidth}px` : (props.field.minWidth ?? '40rem'),
+  isNumber(fieldProps.value.minWidth)
+    ? `${fieldProps.value.minWidth}px`
+    : (fieldProps.value.minWidth ?? '40rem'),
 )
 const rowHeaderWidth = computed(() =>
-  isNumber(props.field.rowHeaderWidth)
-    ? `${props.field.rowHeaderWidth}px`
-    : (props.field.rowHeaderWidth ?? '13rem'),
+  isNumber(fieldProps.value.rowHeaderWidth)
+    ? `${fieldProps.value.rowHeaderWidth}px`
+    : (fieldProps.value.rowHeaderWidth ?? '13rem'),
 )
-const bordered = computed(() => props.field.bordered !== false)
-const hoverable = computed(() => props.field.hoverable !== false)
-const rowPadding = computed(() => (props.field.compact ? 'px-3 py-2' : 'px-4 py-3'))
-const cellPadding = computed(() => (props.field.compact ? 'px-2 py-1.5' : 'px-3 py-2.5'))
+const bordered = computed(() => fieldProps.value.bordered !== false)
+const hoverable = computed(() => fieldProps.value.hoverable !== false)
+const rowPadding = computed(() => (fieldProps.value.compact ? 'px-3 py-2' : 'px-4 py-3'))
+const cellPadding = computed(() => (fieldProps.value.compact ? 'px-2 py-1.5' : 'px-3 py-2.5'))
 
 function rowPath(row: FormMatrixRow) {
   return [...props.path, row.key]
@@ -129,7 +137,7 @@ function controlClass(field: FormField) {
                 [
                   'align-middle transition-colors',
                   hoverable ? 'hover:bg-elevated/35' : '',
-                  field.striped ? 'even:bg-elevated/20' : '',
+                  fieldProps.striped ? 'even:bg-elevated/20' : '',
                   '[&>*]:border-b [&>*]:border-default [&:last-child>*]:border-b-0',
                 ].join(' '),
                 formUi.ui.value.matrix?.ui?.row,

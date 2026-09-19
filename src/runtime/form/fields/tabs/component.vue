@@ -3,6 +3,7 @@ import UTabs from '@nuxt/ui/components/Tabs.vue'
 import { computed, ref, watch } from 'vue'
 
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
+import { useResolvedFieldProps } from '../../composables/use-field-control'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import { fieldPath, useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
@@ -15,6 +16,11 @@ const props = defineProps<{
   path: readonly string[]
   parentPath: readonly string[]
 }>()
+
+const fieldProps = useResolvedFieldProps(
+  () => props.field,
+  () => props.path,
+)
 
 const form = useFormRuntimeContext()
 const formUi = useFormUi()
@@ -87,7 +93,7 @@ function tabDescription(tab: FormTab | undefined) {
     <UTabs
       v-model="active"
       :items="items"
-      :variant="field.variant ?? 'link'"
+      :variant="fieldProps.variant ?? 'link'"
       color="primary"
       :content="false"
       :ui="{ list: ui?.list, trigger: ui?.trigger }"

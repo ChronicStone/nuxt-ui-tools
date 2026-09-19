@@ -13,7 +13,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -47,7 +47,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
     <div
       role="group"
       class="grid gap-3"
-      :class="field.orientation === 'horizontal' ? 'sm:flex sm:flex-wrap' : ''"
+      :class="fieldProps.orientation === 'horizontal' ? 'sm:flex sm:flex-wrap' : ''"
     >
       <USwitch
         v-for="item in items"
@@ -59,8 +59,8 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         :aria-label="item.label"
         :description="item.description"
         :disabled="disabled || item.disabled"
-        :checked-icon="field.checkedIcon"
-        :unchecked-icon="field.uncheckedIcon"
+        :checked-icon="fieldProps.checkedIcon"
+        :unchecked-icon="fieldProps.uncheckedIcon"
         @update:model-value="toggleOption(item.value, $event === true)"
         @blur="handleBlur"
       />

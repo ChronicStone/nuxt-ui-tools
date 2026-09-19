@@ -12,7 +12,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { params } = useFieldControl(
+const { fieldProps, params } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -26,10 +26,10 @@ const description = computed(() => {
 
 <template>
   <UAlert
-    :color="field.color ?? 'neutral'"
-    :variant="field.variant ?? 'soft'"
-    :icon="field.icon === false ? undefined : (field.icon ?? 'i-lucide-info')"
-    :title="resolveFormText(field.title)"
+    :color="fieldProps.color ?? 'neutral'"
+    :variant="fieldProps.variant ?? 'soft'"
+    :icon="fieldProps.icon === false ? undefined : (fieldProps.icon ?? 'i-lucide-info')"
+    :title="resolveFormText(fieldProps.title)"
     :description="description"
   />
 </template>

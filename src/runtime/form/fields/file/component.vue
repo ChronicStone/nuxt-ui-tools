@@ -16,26 +16,27 @@ const props = defineProps<{
 }>()
 
 const { t } = useUiToolsLocale()
-const { form, controlProps, disabled, handleBlur } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['dropzoneLabel', 'dropzoneDescription'] },
 )
 const model = computed<File | File[] | null>({
   get: () => {
     const value = form.getValue(props.path)
-    if (props.field.multiple) {
+    if (fieldProps.value.multiple) {
       return Array.isArray(value) ? value.filter(isFile) : []
     }
     return isFile(value) ? value : null
   },
   set: (value) =>
-    form.setValue(props.path, props.field.multiple ? normalizeFiles(value) : (value ?? null)),
+    form.setValue(props.path, fieldProps.value.multiple ? normalizeFiles(value) : (value ?? null)),
 })
 
 const openDialog = ref<(() => void) | null>(null)
 const hasSingleFile = computed(() => {
   const { value } = model
-  return !props.field.multiple && value !== null && !Array.isArray(value)
+  return !fieldProps.value.multiple && value !== null && !Array.isArray(value)
 })
 const dropzoneUi = computed(() => ({
   ...controlProps.value.ui,
@@ -71,17 +72,17 @@ function isFile(value: FormValue): value is File {
       v-model="model"
       v-bind="controlProps"
       class="w-full"
-      :accept="field.accept"
-      :multiple="field.multiple"
+      :accept="fieldProps.accept"
+      :multiple="fieldProps.multiple"
       :disabled="disabled"
-      :label="resolveFormText(field.dropzoneLabel) ?? t('form.fields.file.drop')"
-      :description="resolveFormText(field.dropzoneDescription)"
-      :icon="field.icon"
-      :variant="field.variant"
-      :layout="field.fileLayout"
-      :dropzone="field.dropzone"
-      :preview="field.preview"
-      :interactive="field.interactive"
+      :label="resolveFormText(fieldProps.dropzoneLabel) ?? t('form.fields.file.drop')"
+      :description="resolveFormText(fieldProps.dropzoneDescription)"
+      :icon="fieldProps.icon"
+      :variant="fieldProps.variant"
+      :layout="fieldProps.layout"
+      :dropzone="fieldProps.dropzone"
+      :preview="fieldProps.preview"
+      :interactive="fieldProps.interactive"
       position="outside"
       :ui="dropzoneUi"
       @change="handleBlur"
@@ -95,7 +96,7 @@ function isFile(value: FormValue): value is File {
           :index="index"
           :disabled="disabled"
           :remove-file="removeFile"
-          :replace="field.multiple ? undefined : replaceFile"
+          :replace="fieldProps.multiple ? undefined : replaceFile"
         />
       </template>
     </UFileUpload>

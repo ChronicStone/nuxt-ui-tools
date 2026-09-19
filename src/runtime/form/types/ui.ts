@@ -165,6 +165,7 @@ export interface FormArrayCollapseUi {
 export interface FormArrayPrimitiveUi {
   root?: FormUiClass
   empty?: FormUiClass
+  list?: FormUiClass
   item?: FormUiClass
   preview?: FormUiClass
   control?: FormUiClass

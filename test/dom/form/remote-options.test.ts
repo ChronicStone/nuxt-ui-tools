@@ -408,13 +408,13 @@ describe('remote field options', () => {
       fields: [
         {
           key: 'organisations',
-          multiple: true,
           options: {
             mode: 'remote',
             pagination: { size: 25, type: 'page' },
             resolveSelected,
             source: () => Promise.resolve({ hasMore: false, options: [] }),
           },
+          props: { multiple: true },
           type: 'select',
         },
       ],

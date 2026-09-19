@@ -13,12 +13,15 @@ export interface FormTab<TContext = NonNullable<unknown>, TDeps = NonNullable<un
   condition?: FormFieldCallback<boolean, TContext, TDeps>
 }
 
+export interface FormTabsProps {
+  variant?: 'pill' | 'link'
+}
+
 export interface FormTabsField<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
-> extends Omit<FormStatelessFieldBase<'tabs', TContext, TDeps>, 'layout'> {
+> extends Omit<FormStatelessFieldBase<'tabs', TContext, TDeps, FormTabsProps>, 'layout'> {
   tabs: readonly FormTab<TContext, TDeps>[]
   defaultTab?: string
-  variant?: 'pill' | 'link'
   layout?: FormContainerLayout
 }

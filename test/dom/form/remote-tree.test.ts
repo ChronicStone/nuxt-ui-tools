@@ -170,12 +170,12 @@ describe('remote tree options', () => {
       fields: [
         {
           key: 'categories',
-          multiple: true,
           options: {
             mode: 'remote',
             pagination: { size: 10, type: 'page' },
             source: (request) => requests.get(requestKey(request)).promise,
           },
+          props: { multiple: true },
           type: 'tree-select',
         },
       ],

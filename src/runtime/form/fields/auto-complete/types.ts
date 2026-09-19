@@ -1,7 +1,18 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
-import type { FieldOptionValue, FallbackNever, NullableValue } from '../../types/field-output-utils'
+import type {
+  FieldOptionValue,
+  FieldProps,
+  FallbackNever,
+  NullableValue,
+} from '../../types/field-output-utils'
 import type { FormAnyOptionConfig, FormOptionItem, FormOptionValue } from '../../types/options'
 import type { FormSelectCreateItem } from '../select/types'
+
+export interface FormAutoCompleteProps {
+  multiple?: boolean
+  clearable?: boolean
+  createItem?: FormSelectCreateItem
+}
 
 export interface FormAutoCompleteField<
   TContext = NonNullable<unknown>,
@@ -12,21 +23,20 @@ export interface FormAutoCompleteField<
   'auto-complete',
   TValue | readonly TValue[] | null,
   TContext,
-  TDeps
+  TDeps,
+  FormAutoCompleteProps
 > {
   options: FormAnyOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
-  multiple?: boolean
-  clearable?: boolean
-  createItem?: FormSelectCreateItem
 }
 
-type AutoCompleteFieldValue<TField> = TField extends { multiple: true }
-  ? readonly FieldOptionValue<TField>[] | NullableValue
-  : FieldOptionValue<TField> | NullableValue
+type AutoCompleteFieldValue<TField> =
+  FieldProps<TField> extends { multiple: true }
+    ? readonly FieldOptionValue<TField>[] | NullableValue
+    : FieldOptionValue<TField> | NullableValue
 
 export type AutoCompleteFieldOutput<TField> = FallbackNever<
   AutoCompleteFieldValue<TField>,
-  TField extends { multiple: true }
+  FieldProps<TField> extends { multiple: true }
     ? readonly FormOptionValue[] | NullableValue
     : FormOptionValue | NullableValue
 >

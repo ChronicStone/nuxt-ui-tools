@@ -1,10 +1,8 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
+import type { FieldProps } from '../../types/field-output-utils'
 import type { FormObject } from '../../types/utils'
 
-export interface FormSliderField<
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
-> extends FormStatefulFieldBase<'slider', number | readonly number[], TContext, TDeps> {
+export interface FormSliderProps {
   min?: number
   max?: number
   step?: number
@@ -12,6 +10,10 @@ export interface FormSliderField<
   tooltip?: boolean | FormObject
 }
 
-export type SliderFieldOutput<TField> = TField extends { multiple: true }
-  ? readonly number[]
-  : number | readonly number[]
+export type FormSliderField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'slider', number | readonly number[], TContext, TDeps, FormSliderProps>
+
+export type SliderFieldOutput<TField> =
+  FieldProps<TField> extends { multiple: true } ? readonly number[] : number | readonly number[]

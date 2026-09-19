@@ -53,6 +53,7 @@ const props = defineProps<{
 
 const { locale, t } = useUiToolsLocale()
 const {
+  fieldProps,
   form,
   controlProps,
   controlSize,
@@ -63,6 +64,19 @@ const {
 } = useFieldControl(
   () => props.field,
   () => props.path,
+  {
+    omit: [
+      'min',
+      'max',
+      'clearable',
+      'outputFormat',
+      'previewFormat',
+      'manualInput',
+      'manualInputFormat',
+      'calendar',
+      'minuteStep',
+    ],
+  },
 )
 
 const root = ref<HTMLElement | null>(null)
@@ -85,7 +99,7 @@ const selectedValues = computed<readonly [string, string]>(() => {
   return [canonicalDateFromFormValue(value.value[0]), canonicalDateFromFormValue(value.value[1])]
 })
 const manualInput = computed<ResolvedManualInput>(() => {
-  const configured = props.field.manualInput
+  const configured = fieldProps.value.manualInput
   if (configured === false) {
     return { enabled: false, mask: true }
   }
@@ -101,7 +115,7 @@ const manualInput = computed<ResolvedManualInput>(() => {
 const manualFormat = computed(
   () =>
     manualInput.value.format ??
-    props.field.manualInputFormat ??
+    fieldProps.value.manualInputFormat ??
     defaultDateManualFormat(type.value, locale.value.code),
 )
 const placeholder = computed(() => {
@@ -150,10 +164,10 @@ const rangeTimeValue = computed<FormTimeRangeValue>(() =>
   timeRangeFromCanonical(selectedValues.value),
 )
 const minuteStep = computed<number>(() => {
-  if (!('minuteStep' in props.field) || !isNumber(props.field.minuteStep)) {
+  if (!('minuteStep' in fieldProps.value) || !isNumber(fieldProps.value.minuteStep)) {
     return 1
   }
-  return Math.min(60, Math.max(1, Math.round(props.field.minuteStep)))
+  return Math.min(60, Math.max(1, Math.round(fieldProps.value.minuteStep)))
 })
 const timeStep = computed<{ minute: number }>(() => ({ minute: minuteStep.value }))
 const calendarUi = computed(() => ({ heading: 'min-w-0', root: 'p-2' }))
@@ -323,7 +337,7 @@ function setStoredPart(part: 0 | 1, canonical: string) {
     return
   }
 
-  if (props.field.type === 'date' && props.field.outputFormat === 'date') {
+  if (props.field.type === 'date' && fieldProps.value.outputFormat === 'date') {
     const date = canonicalDateToJsDate(canonical)
     if (date) {
       form.setValue(props.path, date)
@@ -344,21 +358,26 @@ function clearValue() {
   inputValue.value = ''
 }
 
-function canonicalDateFromFormValue(value: FormValue) {
-  if (value instanceof Date || isString(value) || isNumber(value) || isNullish(value)) {
-    return canonicalDateFromValue(value)
+function canonicalDateFromFormValue(fieldValue: FormValue) {
+  if (
+    fieldValue instanceof Date ||
+    isString(fieldValue) ||
+    isNumber(fieldValue) ||
+    isNullish(fieldValue)
+  ) {
+    return canonicalDateFromValue(fieldValue)
   }
   return ''
 }
 
 function resolveCalendarBound(edge: 'min' | 'max') {
-  const configured = edge === 'min' ? props.field.min : props.field.max
+  const configured = edge === 'min' ? fieldProps.value.min : fieldProps.value.max
   const direct = calendarSeedFromValue(configured, type.value)
   if (direct) {
     return normalizeCalendarBound(direct, edge)
   }
 
-  const yearRange = props.field.calendar?.yearRange
+  const yearRange = fieldProps.value.calendar?.yearRange
   if (!yearRange) {
     return ''
   }
@@ -372,11 +391,11 @@ function resolveCalendarBound(edge: 'min' | 'max') {
   return normalizeCalendarBound(`${year}-${edge === 'min' ? '01-01' : '12-31'}`, edge)
 }
 
-function normalizeCalendarBound(value: string, edge: 'min' | 'max') {
-  if (!hasTime.value || value.includes('T')) {
-    return value
+function normalizeCalendarBound(bound: string, edge: 'min' | 'max') {
+  if (!hasTime.value || bound.includes('T')) {
+    return bound
   }
-  return `${value}T${edge === 'min' ? '00:00' : '23:59'}`
+  return `${bound}T${edge === 'min' ? '00:00' : '23:59'}`
 }
 
 function isWithinBounds(canonical: string) {
@@ -414,8 +433,8 @@ function formatPreviewPart(canonical: string) {
 }
 
 function resolvePreviewFormat(): Intl.DateTimeFormatOptions {
-  if (props.field.type === 'date' && props.field.previewFormat) {
-    return props.field.previewFormat
+  if (props.field.type === 'date' && fieldProps.value.previewFormat) {
+    return fieldProps.value.previewFormat
   }
   if (hasTime.value) {
     return { dateStyle: 'medium', timeStyle: 'short' }
@@ -469,7 +488,7 @@ function isCalendarRangeValue(
             @blur="handleInputBlur"
             @keydown.enter.prevent="handleManualConfirm"
           >
-            <template v-if="field.clearable === true && value" #trailing>
+            <template v-if="fieldProps.clearable === true && value" #trailing>
               <UButton
                 type="button"
                 icon="i-lucide-x"
@@ -495,10 +514,10 @@ function isCalendarRangeValue(
               :size="controlSize"
               :min-value="minCalendarValue"
               :max-value="maxCalendarValue"
-              :month-controls="field.calendar?.monthControls ?? true"
-              :year-controls="field.calendar?.yearControls ?? true"
-              :week-numbers="field.calendar?.weekNumbers ?? false"
-              :number-of-months="field.calendar?.numberOfMonths"
+              :month-controls="fieldProps.calendar?.monthControls ?? true"
+              :year-controls="fieldProps.calendar?.yearControls ?? true"
+              :week-numbers="fieldProps.calendar?.weekNumbers ?? false"
+              :number-of-months="fieldProps.calendar?.numberOfMonths"
               :view-control="{ trailingIcon: 'i-lucide-chevron-down', class: 'font-medium' }"
               :ui="calendarUi"
               @update:model-value="updateRangeCalendar"
@@ -510,10 +529,10 @@ function isCalendarRangeValue(
               :size="controlSize"
               :min-value="minCalendarValue"
               :max-value="maxCalendarValue"
-              :month-controls="field.calendar?.monthControls ?? true"
-              :year-controls="field.calendar?.yearControls ?? true"
-              :week-numbers="field.calendar?.weekNumbers ?? false"
-              :number-of-months="field.calendar?.numberOfMonths"
+              :month-controls="fieldProps.calendar?.monthControls ?? true"
+              :year-controls="fieldProps.calendar?.yearControls ?? true"
+              :week-numbers="fieldProps.calendar?.weekNumbers ?? false"
+              :number-of-months="fieldProps.calendar?.numberOfMonths"
               :view-control="{ trailingIcon: 'i-lucide-chevron-down', class: 'font-medium' }"
               :ui="calendarUi"
               @update:model-value="updateSingleCalendar"
@@ -548,7 +567,7 @@ function isCalendarRangeValue(
 
               <div class="flex items-center justify-end gap-2">
                 <UButton
-                  v-if="field.clearable === true && value"
+                  v-if="fieldProps.clearable === true && value"
                   type="button"
                   color="neutral"
                   variant="ghost"

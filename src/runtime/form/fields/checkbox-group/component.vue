@@ -14,7 +14,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -42,7 +42,7 @@ const groupUi = computed(() => ({
   ...controlProps.value.ui,
   fieldset: mergeFormUiClass(
     controlProps.value.ui?.fieldset,
-    props.field.orientation === 'horizontal' ? 'flex-wrap' : undefined,
+    fieldProps.value.orientation === 'horizontal' ? 'flex-wrap' : undefined,
   ),
 }))
 
@@ -60,10 +60,10 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       value-key="value"
       label-key="label"
       description-key="description"
-      :orientation="field.orientation"
+      :orientation="fieldProps.orientation"
       :ui="groupUi"
-      :variant="field.variant === 'table' ? 'list' : (field.variant ?? 'list')"
-      :indicator="field.indicator"
+      :variant="fieldProps.variant === 'table' ? 'list' : (fieldProps.variant ?? 'list')"
+      :indicator="fieldProps.indicator"
       :disabled="disabled"
       @blur="handleBlur"
     />

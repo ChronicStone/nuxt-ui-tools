@@ -74,11 +74,18 @@ export interface FormFieldDescription {
 /**
  * Common stateful field properties.
  */
+export type FormFieldProps<
+  TProps = FormObject,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormDynamic<TProps & FormObject, { ctx: TContext; deps: TDeps }>
+
 export interface FormStatefulFieldBase<
   TType extends FormFieldType,
   TValue,
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
+  TProps = FormObject,
 > {
   /** Raw path used to read/write the field value in form state. */
   key: string
@@ -102,8 +109,8 @@ export interface FormStatefulFieldBase<
   dependencies?: readonly (string | readonly [string, string])[]
   /** Item layout options for this field. */
   layout?: FormItemLayout
-  /** UI-library-specific props. This intentionally stays open because Nuxt UI props can evolve. */
-  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
+  /** Control props: the typed props of this kind plus any Nuxt UI prop as passthrough. */
+  props?: FormFieldProps<TProps, TContext, TDeps>
   /** Disables the field without removing it from form state. */
   disabled?: FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Controls whether the field is rendered. Hidden fields can still be part of form state. */
@@ -150,6 +157,7 @@ export interface FormStatelessFieldBase<
   TType extends FormFieldType,
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
+  TProps = FormObject,
 > {
   /** Stable key for renderer identity. Stateless fields do not write form state. */
   key: string
@@ -157,8 +165,8 @@ export interface FormStatelessFieldBase<
   type: TType
   /** Item layout options for this field. */
   layout?: FormItemLayout
-  /** UI-library-specific props. */
-  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
+  /** Control props: the typed props of this kind plus any Nuxt UI prop as passthrough. */
+  props?: FormFieldProps<TProps, TContext, TDeps>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
   /** Excludes this renderer from the runtime. */
@@ -172,6 +180,7 @@ export interface FormContainerFieldBase<
   TType extends FormFieldType,
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
+  TProps = FormObject,
 > {
   /** Stable renderer key. */
   key: string
@@ -187,8 +196,8 @@ export interface FormContainerFieldBase<
   dependencies?: readonly (string | readonly [string, string])[]
   /** Container layout options. */
   layout?: FormContainerLayout
-  /** UI-library-specific props. */
-  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
+  /** Control props: the typed props of this kind plus any Nuxt UI prop as passthrough. */
+  props?: FormFieldProps<TProps, TContext, TDeps>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
   /** Excludes this container and its children from the runtime. */

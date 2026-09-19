@@ -14,9 +14,10 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, disabled, handleBlur } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['clearable'] },
 )
 const model = computed<number | null>({
   get: () => {
@@ -25,8 +26,8 @@ const model = computed<number | null>({
   },
   set: (value) => form.setValue(props.path, value),
 })
-const max = computed(() => Math.max(1, props.field.max ?? 5))
-const icon = computed(() => props.field.icon ?? 'i-lucide-star')
+const max = computed(() => Math.max(1, fieldProps.value.max ?? 5))
+const icon = computed(() => fieldProps.value.icon ?? 'i-lucide-star')
 const hoverValue = ref<number | null>(null)
 const visualValue = computed(() => hoverValue.value ?? model.value ?? 0)
 
@@ -34,7 +35,7 @@ function setRating(value: number) {
   if (disabled.value) {
     return
   }
-  if (props.field.clearable === true && model.value === value) {
+  if (fieldProps.value.clearable === true && model.value === value) {
     model.value = null
     return
   }

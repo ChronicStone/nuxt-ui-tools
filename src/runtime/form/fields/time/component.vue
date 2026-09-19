@@ -19,9 +19,10 @@ const props = defineProps<{
 }>()
 
 const { locale, t } = useUiToolsLocale()
-const { form, controlProps, controlSize, disabled, handleBlur } = useFieldControl(
+const { fieldProps, form, controlProps, controlSize, disabled, handleBlur } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['minuteStep', 'clearable'] },
 )
 
 const model = computed<Time | undefined>({
@@ -32,11 +33,11 @@ const model = computed<Time | undefined>({
   set: (value) => form.setValue(props.path, value ? serializeTime(value) : null),
 })
 const minuteStep = computed<number>(() =>
-  resolveMinuteStep(props.field.minuteStep, props.field.step),
+  resolveMinuteStep(fieldProps.value.minuteStep, fieldProps.value.step),
 )
 const timeStep = computed<{ minute: number }>(() => ({ minute: minuteStep.value }))
-const minValue = computed<Time | undefined>(() => parseTime(props.field.min))
-const maxValue = computed<Time | undefined>(() => parseTime(props.field.max))
+const minValue = computed<Time | undefined>(() => parseTime(fieldProps.value.min))
+const maxValue = computed<Time | undefined>(() => parseTime(fieldProps.value.max))
 
 function updateTime(value: TimeInputModel) {
   if (!value) {
@@ -110,7 +111,7 @@ function pad(value: number) {
       @update:model-value="updateTime"
       @blur="handleBlur"
     >
-      <template v-if="field.clearable === true && model" #trailing>
+      <template v-if="fieldProps.clearable === true && model" #trailing>
         <UButton
           type="button"
           icon="i-lucide-x"

@@ -21,10 +21,12 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, disabled, handleBlur, params, validationPending } = useFieldControl(
-  () => props.field,
-  () => props.path,
-)
+const { fieldProps, form, controlProps, disabled, handleBlur, params, validationPending } =
+  useFieldControl(
+    () => props.field,
+    () => props.path,
+    { omit: ['dropzoneLabel', 'dropzoneDescription', 'autoUpload'] },
+  )
 const selectedFiles = ref<File | File[] | null>(null)
 const uploadPending = ref<boolean>(false)
 const uploadError = ref<string | null>(null)
@@ -53,7 +55,7 @@ const files = computed<readonly File[]>(() => {
 const openDialog = ref<(() => void) | null>(null)
 const hasSingleFile = computed(() => {
   const { value } = selectedFiles
-  return !props.field.multiple && value !== null && !Array.isArray(value)
+  return !fieldProps.value.multiple && value !== null && !Array.isArray(value)
 })
 const dropzoneUi = computed(() => ({
   ...controlProps.value.ui,
@@ -142,7 +144,7 @@ onScopeDispose(unregisterUpload)
 
 function handleFileChange() {
   void handleBlur()
-  if (props.field.autoUpload ?? false) {
+  if (fieldProps.value.autoUpload ?? false) {
     void uploadFiles()
   }
 }
@@ -159,15 +161,15 @@ function isFormObject(value: FormValue): value is FormObject {
         v-model="selectedFiles"
         v-bind="controlProps"
         class="w-full"
-        :accept="field.accept"
-        :multiple="field.multiple"
+        :accept="fieldProps.accept"
+        :multiple="fieldProps.multiple"
         :disabled="disabled || uploadPending || validationPending"
-        :label="resolveFormText(field.dropzoneLabel) ?? t('form.fields.file.drop')"
-        :description="resolveFormText(field.dropzoneDescription)"
-        :icon="field.icon"
-        :variant="field.variant"
-        :layout="field.fileLayout"
-        :preview="field.preview"
+        :label="resolveFormText(fieldProps.dropzoneLabel) ?? t('form.fields.file.drop')"
+        :description="resolveFormText(fieldProps.dropzoneDescription)"
+        :icon="fieldProps.icon"
+        :variant="fieldProps.variant"
+        :layout="fieldProps.layout"
+        :preview="fieldProps.preview"
         position="outside"
         :ui="dropzoneUi"
         @change="handleFileChange"
@@ -181,7 +183,7 @@ function isFormObject(value: FormValue): value is FormObject {
             :index="index"
             :disabled="disabled"
             :remove-file="removeFile"
-            :replace="field.multiple ? undefined : replaceFile"
+            :replace="fieldProps.multiple ? undefined : replaceFile"
           />
         </template>
       </UFileUpload>

@@ -20,27 +20,28 @@ const props = defineProps<{
 }>()
 
 const { t } = useUiToolsLocale()
-const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['inputType', 'prefix', 'suffix', 'mono', 'clearable', 'mask', 'maskOutput'] },
 )
 const model = computed<string | undefined>({
   get: () => displayValue(form.getValue(props.path)),
   set: (value) => form.setValue(props.path, normalize(value)),
 })
-const maskOptions = computed(() => maskDirectiveOptions(props.field.mask))
-const prefix = computed(() => resolveFormText(props.field.prefix))
-const suffix = computed(() => resolveFormText(props.field.suffix))
+const maskOptions = computed(() => maskDirectiveOptions(fieldProps.value.mask))
+const prefix = computed(() => resolveFormText(fieldProps.value.prefix))
+const suffix = computed(() => resolveFormText(fieldProps.value.suffix))
 const showClear = computed(
-  () => props.field.clearable === true && !disabled.value && Boolean(model.value),
+  () => fieldProps.value.clearable === true && !disabled.value && Boolean(model.value),
 )
-const hasLeading = computed(() => Boolean(prefix.value) || Boolean(props.field.icon))
+const hasLeading = computed(() => Boolean(prefix.value) || Boolean(fieldProps.value.icon))
 const hasTrailing = computed(
-  () => Boolean(suffix.value) || Boolean(props.field.trailingIcon) || showClear.value,
+  () => Boolean(suffix.value) || Boolean(fieldProps.value.trailingIcon) || showClear.value,
 )
 const controlClass = computed(() =>
   mergeFormUiClass(
-    mergeFormUiClass('w-full', props.field.mono ? 'font-mono tabular-nums' : undefined),
+    mergeFormUiClass('w-full', fieldProps.value.mono ? 'font-mono tabular-nums' : undefined),
     controlProps.value.class,
   ),
 )
@@ -49,18 +50,20 @@ function displayValue(value: FormValue) {
   if (!isString(value)) {
     return
   }
-  return props.field.mask ? applyTextMask(value, props.field.mask) : value
+  return fieldProps.value.mask ? applyTextMask(value, fieldProps.value.mask) : value
 }
 
 function normalize(value: string | undefined) {
   if (value === undefined || value === '') {
     return null
   }
-  if (!props.field.mask) {
+  if (!fieldProps.value.mask) {
     return value
   }
-  const masked = applyTextMask(value, props.field.mask)
-  return props.field.maskOutput === 'raw' ? stripTextMask(masked, props.field.mask) : masked
+  const masked = applyTextMask(value, fieldProps.value.mask)
+  return fieldProps.value.maskOutput === 'raw'
+    ? stripTextMask(masked, fieldProps.value.mask)
+    : masked
 }
 
 function clear() {
@@ -75,12 +78,12 @@ function clear() {
     v-maska="maskOptions"
     v-bind="controlProps"
     :class="controlClass"
-    :type="field.inputType ?? 'text'"
+    :type="fieldProps.inputType ?? 'text'"
     :placeholder="placeholder"
     :disabled="disabled"
-    :maxlength="field.maxlength"
-    :icon="field.icon"
-    :trailing-icon="field.trailingIcon"
+    :maxlength="fieldProps.maxlength"
+    :icon="fieldProps.icon"
+    :trailing-icon="fieldProps.trailingIcon"
     :leading="hasLeading"
     :trailing="hasTrailing"
     @blur="handleBlur"
@@ -109,12 +112,12 @@ function clear() {
       v-maska="maskOptions"
       v-bind="controlProps"
       :class="controlClass"
-      :type="field.inputType ?? 'text'"
+      :type="fieldProps.inputType ?? 'text'"
       :placeholder="placeholder"
       :disabled="disabled"
-      :maxlength="field.maxlength"
-      :icon="field.icon"
-      :trailing-icon="field.trailingIcon"
+      :maxlength="fieldProps.maxlength"
+      :icon="fieldProps.icon"
+      :trailing-icon="fieldProps.trailingIcon"
       :leading="hasLeading"
       :trailing="hasTrailing"
       @blur="handleBlur"

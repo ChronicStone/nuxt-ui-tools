@@ -23,7 +23,12 @@ import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 import SelectionCheckbox from './selection-checkbox.vue'
 import SelectionRadio from './selection-radio.vue'
-import type { FormHierarchyField } from './types'
+import type {
+  FormCascaderProps,
+  FormHierarchyField,
+  FormTreeProps,
+  FormTreeSelectProps,
+} from './types'
 import { resolveHierarchySelection } from './utils'
 
 interface FlatHierarchyOption extends ResolvedFormOption {
@@ -46,6 +51,7 @@ const props = defineProps<{
 const { t } = useUiToolsLocale()
 
 const {
+  fieldProps: hierarchyProps,
   form,
   controlProps,
   controlSize,
@@ -58,28 +64,52 @@ const {
 } = useFieldControl(
   () => props.field,
   () => props.path,
+  {
+    omit: [
+      'multiple',
+      'searchable',
+      'clearable',
+      'childrenKey',
+      'valueKey',
+      'labelKey',
+      'selectionControl',
+      'selectionBehavior',
+      'propagateSelect',
+      'bubbleSelect',
+      'cascade',
+      'showPath',
+      'showChildrenCount',
+      'separator',
+      'leafOnly',
+      'virtualize',
+    ],
+  },
 )
 const formUi = useFormUi()
+// SAFETY: the three hierarchy kinds share one component; unknown keys read as undefined and every kind-specific read is guarded by a type check.
+const fieldProps = computed(
+  () => hierarchyProps.value as Partial<FormTreeSelectProps & FormCascaderProps & FormTreeProps>,
+)
 const isTree = computed<boolean>(() => props.field.type === 'tree')
 const isTreeSelect = computed<boolean>(() => props.field.type === 'tree-select')
 const usesTree = computed<boolean>(() => isTree.value || isTreeSelect.value)
 const treeMultiple = computed<boolean>(() => {
   const { field } = props
   if (field.type !== 'tree' && field.type !== 'tree-select') {
-    return field.multiple === true
+    return fieldProps.value.multiple === true
   }
-  if (field.selectionControl === 'radio') {
+  if (fieldProps.value.selectionControl === 'radio') {
     return false
   }
-  return field.multiple === true
+  return fieldProps.value.multiple === true
 })
 const treeSelectionControl = computed<'none' | 'radio' | 'checkbox'>(() => {
   const { field } = props
   if (field.type !== 'tree' && field.type !== 'tree-select') {
     return 'none'
   }
-  if (field.selectionControl) {
-    return field.selectionControl
+  if (fieldProps.value.selectionControl) {
+    return fieldProps.value.selectionControl
   }
   return treeMultiple.value ? 'checkbox' : 'radio'
 })
@@ -87,13 +117,13 @@ const treeSelectOpen = ref<boolean>(false)
 const treeSearch = ref<string>('')
 const expandedKeys = ref<string[]>([])
 const separator = computed<string>(() =>
-  props.field.type === 'cascader' ? (props.field.separator ?? ' / ') : ' / ',
+  props.field.type === 'cascader' ? (fieldProps.value.separator ?? ' / ') : ' / ',
 )
 const flatItems = computed<readonly FlatHierarchyOption[]>(() =>
   flattenOptions(options.items.value),
 )
 const selectableItems = computed<readonly FlatHierarchyOption[]>(() =>
-  props.field.type === 'cascader' && props.field.leafOnly
+  props.field.type === 'cascader' && fieldProps.value.leafOnly
     ? flatItems.value.filter((item) => item.leaf)
     : flatItems.value,
 )
@@ -118,7 +148,7 @@ const model = computed<FormOptionValue | FormOptionValue[] | null>({
 const treeModel = computed<TreeHierarchyItem | TreeHierarchyItem[] | undefined>(() => {
   const values = Array.isArray(model.value) ? model.value : [model.value]
   const selected = flattenTreeItems(treeItems.value).filter((item) => values.includes(item.value))
-  if (usesTree.value ? treeMultiple.value : props.field.multiple) {
+  if (usesTree.value ? treeMultiple.value : fieldProps.value.multiple) {
     return selected
   }
   return selected[0]
@@ -141,7 +171,7 @@ const treeSelectLabel = computed<string>(() => {
   if (!selected) {
     return placeholder.value
   }
-  return props.field.type === 'tree-select' && props.field.showPath
+  return props.field.type === 'tree-select' && fieldProps.value.showPath
     ? selected.pathLabel
     : String(selected.label)
 })
@@ -217,7 +247,7 @@ function flattenOptions(
 
 function displayLabel(item: ResolvedFormOption, depth: number) {
   const count =
-    props.field.type === 'tree-select' && props.field.showChildrenCount
+    props.field.type === 'tree-select' && fieldProps.value.showChildrenCount
       ? ` (${item.children?.length ?? 0})`
       : ''
   if (props.field.type === 'cascader' || hasShowPath(props.field)) {
@@ -250,7 +280,7 @@ function preventTreeSelection(event: { preventDefault: () => void }) {
 }
 
 function treeItemLabel(item: ResolvedFormOption) {
-  if (props.field.type !== 'tree-select' || !props.field.showChildrenCount) {
+  if (props.field.type !== 'tree-select' || !fieldProps.value.showChildrenCount) {
     return item.label
   }
   const count = item.children?.length ?? 0
@@ -349,18 +379,18 @@ function selectTreeRow(item: TreeHierarchyItem) {
 }
 
 function hasShowPath(field: FormHierarchyField) {
-  return field.type === 'tree-select' && field.showPath === true
+  return field.type === 'tree-select' && fieldProps.value.showPath === true
 }
 
 function treePropagateSelect(field: FormHierarchyField) {
   return field.type === 'tree' || field.type === 'tree-select'
-    ? (field.propagateSelect ?? field.cascade)
+    ? (fieldProps.value.propagateSelect ?? fieldProps.value.cascade)
     : undefined
 }
 
 function treeBubbleSelect(field: FormHierarchyField) {
   return field.type === 'tree' || field.type === 'tree-select'
-    ? (field.bubbleSelect ?? field.cascade)
+    ? (fieldProps.value.bubbleSelect ?? fieldProps.value.cascade)
     : undefined
 }
 
@@ -368,11 +398,11 @@ function treeSelectionBehavior(field: FormHierarchyField) {
   if (field.type !== 'tree' && field.type !== 'tree-select') {
     return
   }
-  return field.selectionBehavior ?? (treeMultiple.value ? 'toggle' : 'replace')
+  return fieldProps.value.selectionBehavior ?? (treeMultiple.value ? 'toggle' : 'replace')
 }
 
 function treeVirtualize(field: FormHierarchyField) {
-  return field.type === 'tree' ? field.virtualize : undefined
+  return field.type === 'tree' ? fieldProps.value.virtualize : undefined
 }
 
 function isOptionValue(value: FormValue): value is FormOptionValue {
@@ -506,7 +536,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             :class="mergeFormUiClass('grid min-w-0', formUi.ui.value.treeSelect?.ui?.root)"
             data-form-tree-scope
           >
-            <div v-if="field.searchable !== false" class="border-b border-default p-2">
+            <div v-if="fieldProps.searchable !== false" class="border-b border-default p-2">
               <UInput
                 v-model="treeSearch"
                 icon="i-lucide-search"
@@ -618,7 +648,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             </p>
             <FormOptionMenuFooter :options="options" :disabled="disabled" />
             <div
-              v-if="field.clearable && selectedTreeItems.length"
+              v-if="fieldProps.clearable && selectedTreeItems.length"
               class="flex justify-end border-t border-default p-2"
             >
               <UButton
@@ -642,9 +672,9 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         :items="selectItems"
         value-key="value"
         :label-key="field.type === 'cascader' || hasShowPath(field) ? 'pathLabel' : 'label'"
-        :multiple="field.multiple"
-        :search-input="field.searchable ?? true"
-        :clear="field.clearable === true"
+        :multiple="fieldProps.multiple"
+        :search-input="fieldProps.searchable ?? true"
+        :clear="fieldProps.clearable === true"
         :placeholder="placeholder"
         :disabled="disabled"
         :loading="validationPending || options.loading.value"

@@ -9,8 +9,13 @@ describe('text parity props', () => {
     const schema = defineFormSchema({
       actions: [],
       fields: [
-        { key: 'vat', label: 'TVA', mask: 'AA## ### ### ###', type: 'text' },
-        { key: 'siren', label: 'SIREN', mask: '### ### ###', maskOutput: 'raw', type: 'text' },
+        { key: 'vat', label: 'TVA', props: { mask: 'AA## ### ### ###' }, type: 'text' },
+        {
+          key: 'siren',
+          label: 'SIREN',
+          props: { mask: '### ### ###', maskOutput: 'raw' },
+          type: 'text',
+        },
       ],
     })
     const harness = await mountForm({ schema })
@@ -30,11 +35,9 @@ describe('text parity props', () => {
       actions: [],
       fields: [
         {
-          clearable: true,
           key: 'rate',
           label: 'Taux',
-          prefix: '1 USD =',
-          suffix: 'EUR',
+          props: { clearable: true, prefix: '1 USD =', suffix: 'EUR' },
           type: 'text',
         },
       ],

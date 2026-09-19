@@ -1,5 +1,10 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
-import type { FieldOptionValue, FallbackNever, NullableValue } from '../../types/field-output-utils'
+import type {
+  FieldOptionValue,
+  FieldProps,
+  FallbackNever,
+  NullableValue,
+} from '../../types/field-output-utils'
 import type { FormAnyOptionConfig, FormOptionValue } from '../../types/options'
 import type { FormText } from '../../types/utils'
 
@@ -12,13 +17,7 @@ export type FormHierarchyOption<TValue extends FormOptionValue = FormOptionValue
   isLeaf?: boolean
 } & ({ value: TValue; key?: TValue } | { key: TValue; value?: TValue })
 
-interface FormHierarchyFieldOptions<
-  TContext,
-  TDeps,
-  TValue extends FormOptionValue,
-  TOption extends FormHierarchyOption<TValue>,
-> {
-  options: FormAnyOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
+export interface FormHierarchyProps {
   multiple?: boolean
   searchable?: boolean
   clearable?: boolean
@@ -27,7 +26,7 @@ interface FormHierarchyFieldOptions<
   labelKey?: string
 }
 
-interface FormTreeSelectionOptions {
+export interface FormTreeSelectionProps {
   /** Visual selection affordance. Defaults to checkbox for multiple trees and radio otherwise. */
   selectionControl?: 'none' | 'radio' | 'checkbox'
   /** Replaces the current selection or toggles individual nodes. */
@@ -40,6 +39,29 @@ interface FormTreeSelectionOptions {
   cascade?: boolean
 }
 
+export interface FormTreeSelectProps extends FormHierarchyProps, FormTreeSelectionProps {
+  showPath?: boolean
+  showChildrenCount?: boolean
+}
+
+export interface FormCascaderProps extends FormHierarchyProps {
+  separator?: string
+  leafOnly?: boolean
+}
+
+export interface FormTreeProps extends FormHierarchyProps, FormTreeSelectionProps {
+  virtualize?: boolean
+}
+
+interface FormHierarchyFieldOptions<
+  TContext,
+  TDeps,
+  TValue extends FormOptionValue,
+  TOption extends FormHierarchyOption<TValue>,
+> {
+  options: FormAnyOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
+}
+
 export interface FormTreeSelectField<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
@@ -47,12 +69,14 @@ export interface FormTreeSelectField<
   TOption extends FormHierarchyOption<TValue> = FormHierarchyOption<TValue>,
 >
   extends
-    FormStatefulFieldBase<'tree-select', TValue | readonly TValue[] | null, TContext, TDeps>,
-    FormHierarchyFieldOptions<TContext, TDeps, TValue, TOption>,
-    FormTreeSelectionOptions {
-  showPath?: boolean
-  showChildrenCount?: boolean
-}
+    FormStatefulFieldBase<
+      'tree-select',
+      TValue | readonly TValue[] | null,
+      TContext,
+      TDeps,
+      FormTreeSelectProps
+    >,
+    FormHierarchyFieldOptions<TContext, TDeps, TValue, TOption> {}
 
 export interface FormCascaderField<
   TContext = NonNullable<unknown>,
@@ -61,11 +85,14 @@ export interface FormCascaderField<
   TOption extends FormHierarchyOption<TValue> = FormHierarchyOption<TValue>,
 >
   extends
-    FormStatefulFieldBase<'cascader', TValue | readonly TValue[] | null, TContext, TDeps>,
-    FormHierarchyFieldOptions<TContext, TDeps, TValue, TOption> {
-  separator?: string
-  leafOnly?: boolean
-}
+    FormStatefulFieldBase<
+      'cascader',
+      TValue | readonly TValue[] | null,
+      TContext,
+      TDeps,
+      FormCascaderProps
+    >,
+    FormHierarchyFieldOptions<TContext, TDeps, TValue, TOption> {}
 
 export interface FormTreeField<
   TContext = NonNullable<unknown>,
@@ -74,19 +101,23 @@ export interface FormTreeField<
   TOption extends FormHierarchyOption<TValue> = FormHierarchyOption<TValue>,
 >
   extends
-    FormStatefulFieldBase<'tree', TValue | readonly TValue[] | null, TContext, TDeps>,
-    FormHierarchyFieldOptions<TContext, TDeps, TValue, TOption>,
-    FormTreeSelectionOptions {
-  virtualize?: boolean
-}
+    FormStatefulFieldBase<
+      'tree',
+      TValue | readonly TValue[] | null,
+      TContext,
+      TDeps,
+      FormTreeProps
+    >,
+    FormHierarchyFieldOptions<TContext, TDeps, TValue, TOption> {}
 
-type HierarchyFieldValue<TField> = TField extends { multiple: true }
-  ? readonly FieldOptionValue<TField>[] | NullableValue
-  : FieldOptionValue<TField> | NullableValue
+type HierarchyFieldValue<TField> =
+  FieldProps<TField> extends { multiple: true }
+    ? readonly FieldOptionValue<TField>[] | NullableValue
+    : FieldOptionValue<TField> | NullableValue
 
 export type HierarchyFieldOutput<TField> = FallbackNever<
   HierarchyFieldValue<TField>,
-  TField extends { multiple: true }
+  FieldProps<TField> extends { multiple: true }
     ? readonly FormOptionValue[] | NullableValue
     : FormOptionValue | NullableValue
 >

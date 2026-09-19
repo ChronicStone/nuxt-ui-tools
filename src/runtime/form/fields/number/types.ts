@@ -1,11 +1,8 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
-import type { FormText } from '../../types/utils'
 import type { NullableValue } from '../../types/field-output-utils'
+import type { FormText } from '../../types/utils'
 
-export interface FormNumberField<
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
-> extends FormStatefulFieldBase<'number', number | null, TContext, TDeps> {
+export interface FormNumberProps {
   min?: number
   max?: number
   step?: number
@@ -15,5 +12,10 @@ export interface FormNumberField<
   controls?: boolean
   mono?: boolean
 }
+
+export type FormNumberField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'number', number | null, TContext, TDeps, FormNumberProps>
 
 export type NumberFieldOutput = number | NullableValue

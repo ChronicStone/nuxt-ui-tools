@@ -11,7 +11,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { controlProps, disabled, params } = useFieldControl(
+const { fieldProps, controlProps, disabled, params } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -26,9 +26,9 @@ async function handleClick() {
   <UButton
     v-bind="controlProps"
     :label="label"
-    :icon="field.icon"
-    :color="field.color ?? 'primary'"
-    :variant="field.variant ?? 'solid'"
+    :icon="fieldProps.icon"
+    :color="fieldProps.color ?? 'primary'"
+    :variant="fieldProps.variant ?? 'solid'"
     :disabled="disabled"
     @click="handleClick"
   />

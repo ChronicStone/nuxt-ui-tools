@@ -12,7 +12,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -33,10 +33,10 @@ const model = computed<string | undefined>({
       class="w-full"
       :placeholder="placeholder"
       :disabled="disabled"
-      :autoresize="field.autoresize"
-      :rows="field.rows"
-      :maxrows="field.maxrows"
-      :maxlength="field.maxlength"
+      :autoresize="fieldProps.autoresize"
+      :rows="fieldProps.rows"
+      :maxrows="fieldProps.maxrows"
+      :maxlength="fieldProps.maxlength"
       @blur="handleBlur"
     />
   </FormFieldShell>

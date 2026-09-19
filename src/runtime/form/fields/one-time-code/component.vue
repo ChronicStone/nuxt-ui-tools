@@ -13,6 +13,7 @@ const props = defineProps<{
 }>()
 
 const {
+  fieldProps,
   form,
   controlProps,
   disabled,
@@ -21,6 +22,7 @@ const {
 } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['inputType'] },
 )
 const placeholder = computed(() =>
   props.field.placeholder === undefined ? '·' : controlPlaceholder.value,
@@ -40,10 +42,10 @@ const model = computed<string[]>({
       v-model="model"
       v-bind="controlProps"
       :disabled="disabled"
-      :length="field.length ?? 6"
-      :mask="field.mask"
-      :otp="field.otp ?? true"
-      :type="field.inputType ?? 'text'"
+      :length="fieldProps.length ?? 6"
+      :mask="fieldProps.mask"
+      :otp="fieldProps.otp ?? true"
+      :type="fieldProps.inputType ?? 'text'"
       :placeholder="placeholder"
       @blur="handleBlur"
     />

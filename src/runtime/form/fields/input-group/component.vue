@@ -3,6 +3,7 @@ import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import { useResolvedFieldProps } from '../../composables/use-field-control'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormInputGroupField } from '../../types'
 import { isNumber } from '../../utils/predicate'
@@ -13,6 +14,11 @@ const props = defineProps<{
   path: readonly string[]
   parentPath: readonly string[]
 }>()
+
+const fieldProps = useResolvedFieldProps(
+  () => props.field,
+  () => props.path,
+)
 const formUi = useFormUi()
 
 function controlAttrs(field: FormInputGroupField['fields'][number]) {
@@ -56,7 +62,7 @@ function resolveFlexClass(weight: number) {
   <FormFieldShell :field="field" :path="path">
     <UFieldGroup
       :size="formUi.controlSize.value"
-      :orientation="field.orientation ?? 'horizontal'"
+      :orientation="fieldProps.orientation ?? 'horizontal'"
       :class="
         mergeFormUiClass(
           'w-full [&>button:has(+input[data-hidden]:last-child)]:rounded-e-md',

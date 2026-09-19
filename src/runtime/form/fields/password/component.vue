@@ -6,6 +6,7 @@ import { computed, ref } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import type { ResolvedFieldProps } from '../../composables/use-field-control'
 import type { FormPasswordField } from '../../types'
 import { isObject, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
@@ -17,17 +18,22 @@ const props = defineProps<{
 }>()
 
 const { t } = useUiToolsLocale()
-const { form, controlProps, controlSize, disabled, handleBlur, placeholder } = useFieldControl(
-  () => props.field,
-  () => props.path,
-)
-type PasswordVisibilityConfig = Exclude<NonNullable<FormPasswordField['visibilityToggle']>, boolean>
+const { fieldProps, form, controlProps, controlSize, disabled, handleBlur, placeholder } =
+  useFieldControl(
+    () => props.field,
+    () => props.path,
+    { omit: ['visibilityToggle'] },
+  )
+type PasswordVisibilityConfig = Exclude<
+  NonNullable<ResolvedFieldProps<FormPasswordField>['visibilityToggle']>,
+  boolean
+>
 
 const visible = ref(false)
-const visibilityToggleEnabled = computed(() => props.field.visibilityToggle !== false)
+const visibilityToggleEnabled = computed(() => fieldProps.value.visibilityToggle !== false)
 const visibilityToggleConfig = computed(() =>
-  isPasswordVisibilityConfig(props.field.visibilityToggle)
-    ? props.field.visibilityToggle
+  isPasswordVisibilityConfig(fieldProps.value.visibilityToggle)
+    ? fieldProps.value.visibilityToggle
     : undefined,
 )
 const inputType = computed(() => (visible.value ? 'text' : 'password'))
@@ -46,7 +52,7 @@ const visibilityIcon = computed(() =>
     : (visibilityToggleConfig.value?.showIcon ?? 'i-lucide-eye'),
 )
 function isPasswordVisibilityConfig(
-  value: FormPasswordField['visibilityToggle'],
+  value: ResolvedFieldProps<FormPasswordField>['visibilityToggle'],
 ): value is PasswordVisibilityConfig {
   return isObject(value)
 }

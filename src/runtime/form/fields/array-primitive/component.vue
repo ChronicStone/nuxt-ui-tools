@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-import { computed, nextTick, ref, watch } from 'vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
@@ -27,10 +28,16 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { api, disabled, form, params } = useFieldControl(
+const { fieldProps, api, disabled, form, params } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['variant', 'draggable'] },
 )
+const VueDraggable = defineAsyncComponent(async () => {
+  const { VueDraggable: draggableComponent } = await import('vue-draggable-plus')
+  return draggableComponent
+})
+
 const formUi = useFormUi()
 const { t } = useUiToolsLocale()
 const ui = computed(() => formUi.ui.value.arrayPrimitive?.ui)
@@ -45,6 +52,12 @@ const itemFields = computed(() =>
   }),
 )
 const hasPendingItem = computed(() => values.value.some(isEmptyValue))
+const isChips = computed(() => fieldProps.value.variant === 'chips')
+const isDraggable = computed(() => fieldProps.value.draggable === true)
+const dragValues = computed<FormValue[]>({
+  get: () => [...values.value],
+  set: (value) => form.setValue(props.path, value),
+})
 const editingIndex = ref<number | null>(null)
 
 watch(
@@ -191,45 +204,88 @@ function removeItem(index: number) {
       >
         {{ emptyLabel }}
       </p>
-      <div
-        v-for="(itemField, index) in itemFields"
-        :key="index"
-        :class="mergeFormUiClass('flex items-start gap-2', ui?.item)"
-        :data-form-array-item="index"
+      <component
+        :is="isDraggable ? VueDraggable : 'div'"
+        v-model="dragValues"
+        :class="
+          mergeFormUiClass(isChips ? 'flex flex-wrap items-center gap-2' : 'grid gap-2', ui?.list)
+        "
+        handle=".array-primitive-drag-handle"
+        :animation="150"
+        :disabled="!isDraggable"
       >
-        <button
-          v-if="showsPreview(index)"
-          type="button"
+        <div
+          v-for="(itemField, index) in itemFields"
+          :key="index"
           :class="
             mergeFormUiClass(
-              'flex min-h-9 min-w-0 flex-1 items-center rounded-lg border border-default bg-elevated/40 px-3 py-1.5 text-left text-sm break-words transition-colors hover:border-inverted/30 hover:bg-elevated focus-visible:outline-2 focus-visible:outline-primary',
-              ui?.preview,
+              isChips && showsPreview(index)
+                ? 'inline-flex h-8 items-center gap-0.5 rounded-full border border-default bg-default pl-1 pr-0.5 text-sm'
+                : isChips
+                  ? 'inline-flex items-center gap-1'
+                  : 'flex items-start gap-2',
+              ui?.item,
             )
           "
-          :disabled="disabled"
-          :title="t('form.fields.array.editItem')"
-          data-form-array-preview=""
-          @click="editItem(index)"
+          :data-form-array-item="index"
         >
-          <component :is="previewRenderer(index, itemField)" />
-        </button>
-        <div v-else :class="mergeFormUiClass('min-w-0 flex-1', ui?.control)">
-          <FormFieldRenderer :field="itemField" :parent-path="path" />
+          <UIcon
+            v-if="isChips && isDraggable && showsPreview(index)"
+            name="i-lucide-grip-vertical"
+            class="array-primitive-drag-handle size-3.5 shrink-0 cursor-grab text-dimmed active:cursor-grabbing"
+            aria-hidden="true"
+          />
+          <button
+            v-if="showsPreview(index)"
+            type="button"
+            :class="
+              mergeFormUiClass(
+                isChips
+                  ? 'inline-flex min-w-0 items-center px-1.5 text-sm font-medium text-highlighted focus-visible:outline-2 focus-visible:outline-primary'
+                  : 'flex min-h-9 min-w-0 flex-1 items-center rounded-lg border border-default bg-elevated/40 px-3 py-1.5 text-left text-sm break-words transition-colors hover:border-inverted/30 hover:bg-elevated focus-visible:outline-2 focus-visible:outline-primary',
+                ui?.preview,
+              )
+            "
+            :disabled="disabled"
+            :title="t('form.fields.array.editItem')"
+            data-form-array-preview=""
+            @click="editItem(index)"
+          >
+            <component :is="previewRenderer(index, itemField)" />
+          </button>
+          <div
+            v-else
+            :class="mergeFormUiClass(isChips ? 'w-44 min-w-0' : 'min-w-0 flex-1', ui?.control)"
+          >
+            <FormFieldRenderer :field="itemField" :parent-path="path" />
+          </div>
+          <UButton
+            v-if="canDelete(index)"
+            :icon="isPending(index) ? 'i-lucide-x' : isChips ? 'i-lucide-x' : 'i-lucide-trash-2'"
+            color="neutral"
+            variant="ghost"
+            :size="isChips ? 'xs' : formUi.controlSize.value"
+            :disabled="disabled"
+            :class="mergeFormUiClass(isChips ? 'shrink-0 rounded-full' : 'shrink-0', ui?.action)"
+            :aria-label="t('form.fields.array.removeItem')"
+            @click="removeItem(index)"
+          />
         </div>
         <UButton
-          v-if="canDelete(index)"
-          :icon="isPending(index) ? 'i-lucide-x' : 'i-lucide-trash-2'"
+          v-if="canAdd && isChips"
+          icon="i-lucide-plus"
           color="neutral"
-          variant="ghost"
-          :size="formUi.controlSize.value"
-          :disabled="disabled"
-          :class="mergeFormUiClass('shrink-0', ui?.action)"
-          :aria-label="t('form.fields.array.removeItem')"
-          @click="removeItem(index)"
-        />
-      </div>
+          variant="outline"
+          size="sm"
+          :disabled="disabled || hasPendingItem"
+          :class="mergeFormUiClass('h-8 rounded-full', ui?.add)"
+          @click="addItem"
+        >
+          {{ addItemLabel }}
+        </UButton>
+      </component>
       <UButton
-        v-if="canAdd"
+        v-if="canAdd && !isChips"
         icon="i-lucide-plus"
         color="neutral"
         variant="outline"

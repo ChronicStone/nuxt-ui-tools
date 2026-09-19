@@ -17,9 +17,10 @@ const props = defineProps<{
 }>()
 
 const { code } = useUiToolsLocale()
-const { form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['prefix', 'suffix', 'format', 'controls', 'mono'] },
 )
 const model = computed<number | undefined>({
   get: () => {
@@ -28,9 +29,9 @@ const model = computed<number | undefined>({
   },
   set: (value) => form.setValue(props.path, value ?? null),
 })
-const prefix = computed(() => resolveFormText(props.field.prefix))
-const suffix = computed(() => resolveFormText(props.field.suffix))
-const controls = computed(() => props.field.controls !== false)
+const prefix = computed(() => resolveFormText(fieldProps.value.prefix))
+const suffix = computed(() => resolveFormText(fieldProps.value.suffix))
+const controls = computed(() => fieldProps.value.controls !== false)
 const hasAffix = computed(() => Boolean(prefix.value) || Boolean(suffix.value))
 const inlineAffix = computed(() => hasAffix.value && !controls.value)
 const controlUi = computed(() => ({
@@ -38,7 +39,7 @@ const controlUi = computed(() => ({
   base: mergeFormUiClass(
     mergeFormUiClass(
       controlProps.value.ui?.base,
-      props.field.mono ? 'font-mono tabular-nums' : undefined,
+      fieldProps.value.mono ? 'font-mono tabular-nums' : undefined,
     ),
     mergeFormUiClass(
       inlineAffix.value && prefix.value ? 'ps-(--nut-form-prefix-width)' : undefined,
@@ -81,11 +82,11 @@ const affixStyle = computed(() => ({
       :ui="controlUi"
       :placeholder="placeholder"
       :disabled="disabled"
-      :min="field.min"
-      :max="field.max"
-      :step="field.step"
+      :min="fieldProps.min"
+      :max="fieldProps.max"
+      :step="fieldProps.step"
       :locale="code"
-      :format-options="field.format"
+      :format-options="fieldProps.format"
       :increment="controls"
       :decrement="controls"
       @blur="handleBlur"
@@ -130,11 +131,11 @@ const affixStyle = computed(() => ({
         :ui="controlUi"
         :placeholder="placeholder"
         :disabled="disabled"
-        :min="field.min"
-        :max="field.max"
-        :step="field.step"
+        :min="fieldProps.min"
+        :max="fieldProps.max"
+        :step="fieldProps.step"
         :locale="code"
-        :format-options="field.format"
+        :format-options="fieldProps.format"
         :increment="controls"
         :decrement="controls"
         @blur="handleBlur"

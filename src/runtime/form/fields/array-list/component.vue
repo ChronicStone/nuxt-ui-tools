@@ -6,6 +6,7 @@ import { computed, defineAsyncComponent, ref, watch } from 'vue'
 
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import FormFieldStatus from '../../components/renderer/form-field-status.vue'
+import { useResolvedFieldProps } from '../../composables/use-field-control'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import type { FormArrayListField, FormArrayTabsField, FormArrayVariantField } from '../../types'
 import type { FormObject } from '../../types/utils'
@@ -18,6 +19,11 @@ const props = defineProps<{
   field: FormArrayListField | FormArrayTabsField | FormArrayVariantField
   path: readonly string[]
 }>()
+
+const fieldProps = useResolvedFieldProps(
+  () => props.field,
+  () => props.path,
+)
 
 const VueDraggable = defineAsyncComponent(async () => {
   const { VueDraggable: draggableComponent } = await import('vue-draggable-plus')
@@ -65,7 +71,7 @@ const containerLayout = useFormContainerLayout({
 const isTabsMode = computed(
   () =>
     props.field.type === 'array-tabs' ||
-    (props.field.type === 'array-variant' && props.field.displayMode === 'tabs'),
+    (props.field.type === 'array-variant' && fieldProps.value.displayMode === 'tabs'),
 )
 const ui = computed(() => formUi.ui.value.arrayList?.ui)
 
@@ -268,7 +274,7 @@ function updateDraggedItems(value: readonly FormObject[]) {
         </div>
       </div>
 
-      <div :class="field.compact ? 'grid gap-3 p-3' : 'grid gap-4 p-4'">
+      <div :class="fieldProps.compact ? 'grid gap-3 p-3' : 'grid gap-4 p-4'">
         <USelect
           v-if="field.type === 'array-variant'"
           :model-value="variantValue(items[activeIndex])"
@@ -307,7 +313,7 @@ function updateDraggedItems(value: readonly FormObject[]) {
         :key="itemRenderKey(item, index)"
         :class="[
           mergeFormUiClass('grid rounded-lg border border-default bg-default', ui?.item),
-          field.compact ? 'gap-3 p-3' : 'gap-4 p-4',
+          fieldProps.compact ? 'gap-3 p-3' : 'gap-4 p-4',
         ]"
       >
         <div :class="mergeFormUiClass('flex items-center justify-between gap-3', ui?.itemHeader)">

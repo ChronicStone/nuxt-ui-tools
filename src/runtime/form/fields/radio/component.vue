@@ -12,7 +12,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -37,9 +37,9 @@ const items = computed(() => [...options.items.value])
       label-key="label"
       description-key="description"
       :items="items"
-      :variant="field.variant === 'table' ? 'list' : (field.variant ?? 'list')"
-      :orientation="field.orientation"
-      :indicator="field.indicator"
+      :variant="fieldProps.variant === 'table' ? 'list' : (fieldProps.variant ?? 'list')"
+      :orientation="fieldProps.orientation"
+      :indicator="fieldProps.indicator"
       :disabled="disabled"
       @blur="handleBlur"
     />

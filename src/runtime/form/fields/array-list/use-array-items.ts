@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
+import { useResolvedFieldProps } from '../../composables/use-field-control'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
 import type {
@@ -39,6 +40,7 @@ export function isArrayActionConfig(
 export function useFormArrayItems(field: () => FormArrayItemsField, path: () => readonly string[]) {
   const form = useFormRuntimeContext()
   const formUi = useFormUi()
+  const fieldProps = useResolvedFieldProps(field, path)
   const { t } = useUiToolsLocale()
   const itemKeys = new WeakMap<FormObject, string>()
   let nextItemKey = 0
@@ -65,7 +67,7 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     () => resolveFormText(field().itemLabel) ?? t('form.fields.array.item'),
   )
   const canAdd = computed<boolean>(() => resolveAction(field().actions?.addItem, -1))
-  const isDraggable = computed<boolean>(() => field().draggable !== false)
+  const isDraggable = computed<boolean>(() => fieldProps.value.draggable !== false)
   const variantItems = computed(() => {
     const current = field()
     return current.type === 'array-variant'
@@ -287,6 +289,7 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     customActionVisible,
     description,
     emptyLabel,
+    fieldProps,
     fieldsForItem,
     form,
     formUi,

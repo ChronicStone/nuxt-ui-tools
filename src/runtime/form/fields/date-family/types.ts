@@ -18,7 +18,7 @@ export interface FormDateManualInputOptions {
 
 export type FormDateManualInput = boolean | FormDateManualInputOptions
 
-export interface FormDateFamilyOptions {
+export interface FormDateFamilyProps {
   min?: string
   max?: string
   clearable?: boolean
@@ -27,41 +27,65 @@ export interface FormDateFamilyOptions {
   calendar?: FormDateFamilyCalendarOptions
 }
 
-export interface FormDateTimeField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
-  extends FormStatefulFieldBase<'datetime', string | null, TContext, TDeps>, FormDateFamilyOptions {
+export interface FormDateTimeProps extends FormDateFamilyProps {
   minuteStep?: number
 }
 
-export interface FormDateRangeField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
-  extends
-    FormStatefulFieldBase<'daterange', readonly [string, string] | null, TContext, TDeps>,
-    FormDateFamilyOptions {}
-
-export interface FormMonthRangeField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
-  extends
-    FormStatefulFieldBase<'monthrange', readonly [string, string] | null, TContext, TDeps>,
-    FormDateFamilyOptions {}
-
-export interface FormDateTimeRangeField<
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
->
-  extends
-    FormStatefulFieldBase<'datetimerange', readonly [string, string] | null, TContext, TDeps>,
-    FormDateFamilyOptions {
-  minuteStep?: number
-}
-
-export interface FormMonthField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
-  extends FormStatefulFieldBase<'month', string | null, TContext, TDeps>, FormDateFamilyOptions {}
-
-export interface FormYearField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
-  extends
-    FormStatefulFieldBase<'year', string | null, TContext, TDeps>,
-    Pick<FormDateFamilyOptions, 'clearable' | 'manualInput' | 'manualInputFormat' | 'calendar'> {
+export interface FormYearProps extends Pick<
+  FormDateFamilyProps,
+  'clearable' | 'manualInput' | 'manualInputFormat' | 'calendar'
+> {
   min?: number
   max?: number
 }
+
+export type FormDateTimeField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'datetime', string | null, TContext, TDeps, FormDateTimeProps>
+
+export type FormDateRangeField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<
+  'daterange',
+  readonly [string, string] | null,
+  TContext,
+  TDeps,
+  FormDateFamilyProps
+>
+
+export type FormMonthRangeField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<
+  'monthrange',
+  readonly [string, string] | null,
+  TContext,
+  TDeps,
+  FormDateFamilyProps
+>
+
+export type FormDateTimeRangeField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<
+  'datetimerange',
+  readonly [string, string] | null,
+  TContext,
+  TDeps,
+  FormDateTimeProps
+>
+
+export type FormMonthField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'month', string | null, TContext, TDeps, FormDateFamilyProps>
+
+export type FormYearField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'year', string | null, TContext, TDeps, FormYearProps>
 
 export type DateTimeFieldOutput = string | NullableValue
 export type DateRangeFieldOutput = readonly [string, string] | NullableValue

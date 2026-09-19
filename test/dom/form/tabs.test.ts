@@ -35,7 +35,11 @@ function schema() {
 describe('tabs container', () => {
   it('renders the first tab, switches on click, and keeps every tab field in the output', async () => {
     const onSubmit = vi.fn<() => boolean>(() => true)
-    const harness = await mountForm({ input: { name: 'TOEIC', price: 129 }, onSubmit, schema: schema() })
+    const harness = await mountForm({
+      input: { name: 'TOEIC', price: 129 },
+      onSubmit,
+      schema: schema(),
+    })
 
     expect(activeTab(harness)).toBe('general')
     expect(harness.field('name').exists()).toBeTruthy()

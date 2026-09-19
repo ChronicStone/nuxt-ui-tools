@@ -14,7 +14,7 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -32,7 +32,7 @@ const groupUi = computed(() => ({
   ...controlProps.value.ui,
   fieldset: mergeFormUiClass(
     controlProps.value.ui?.fieldset,
-    props.field.orientation === 'horizontal' ? 'flex-wrap' : undefined,
+    fieldProps.value.orientation === 'horizontal' ? 'flex-wrap' : undefined,
   ),
 }))
 </script>
@@ -46,7 +46,7 @@ const groupUi = computed(() => ({
       label-key="label"
       variant="card"
       :items="items"
-      :orientation="field.orientation"
+      :orientation="fieldProps.orientation"
       :ui="groupUi"
       :disabled="disabled"
       @blur="handleBlur"
