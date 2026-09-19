@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-import { useIntersectionObserver } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { useEventListener } from '@vueuse/core'
+import { computed, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import type { FormOptionRuntimeState } from '../../types'
@@ -26,20 +26,37 @@ const showMore = computed(
 const showActions = computed(
   () => props.options.refreshable.value || props.showCreate === true || showMore.value,
 )
-const rootMargin = computed(() => {
-  const distance = props.options.prefetchDistance.value
-  return distance === 'viewport' ? '100%' : `${distance}px`
-})
+const viewport = ref<HTMLElement | null>(null)
 
-useIntersectionObserver(
+watch(
   sentinel,
-  (entries) => {
-    if (entries.some((entry) => entry.isIntersecting) && props.options.hasMore.value) {
-      void props.options.loadMore()
-    }
+  (element) => {
+    viewport.value = findScrollViewport(element)
   },
-  { rootMargin: rootMargin.value },
+  { immediate: true },
 )
+
+useEventListener(viewport, 'scroll', handleViewportScroll, { passive: true })
+
+function handleViewportScroll() {
+  const element = viewport.value
+  if (!element || !props.options.hasMore.value || props.options.loadingMore.value) {
+    return
+  }
+  const distance = props.options.prefetchDistance.value
+  const threshold = distance === 'viewport' ? element.clientHeight : Math.max(0, distance)
+  if (element.scrollHeight - element.scrollTop - element.clientHeight <= threshold) {
+    void props.options.loadMore()
+  }
+}
+
+function findScrollViewport(element: HTMLElement | null) {
+  const scope = element?.closest(
+    '[data-slot="focusScope"], [data-slot="content"], [data-ui-content]',
+  )
+  const candidate = scope?.querySelector('[data-slot="viewport"], [role="listbox"]')
+  return candidate instanceof HTMLElement ? candidate : null
+}
 
 async function loadMore() {
   await props.options.loadMore()
