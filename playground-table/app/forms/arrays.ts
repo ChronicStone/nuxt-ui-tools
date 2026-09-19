@@ -36,7 +36,11 @@ export function arraysFormSchema() {
       },
       {
         addItemLabel: 'Ajouter une adresse',
-        field: { inputType: 'email', placeholder: 'prenom.nom@exassess.com', type: 'text' },
+        field: {
+          placeholder: 'prenom.nom@exassess.com',
+          props: { inputType: 'email' },
+          type: 'text',
+        },
         key: 'recipients',
         label: 'Destinataires des rapports',
         required: true,
@@ -45,13 +49,17 @@ export function arraysFormSchema() {
       },
       { key: 'targetsSection', label: 'Objectifs annuels', type: 'section' },
       {
-        accordion: true,
         addItemLabel: 'Ajouter un objectif',
         confirmDelete: false,
-        defaultExpanded: 'first',
         fields: [
           { key: 'label', label: 'Libellé', required: true, type: 'text' },
-          { key: 'volume', label: 'Volume', layout: { span: 6 }, min: 0, type: 'number' },
+          {
+            key: 'volume',
+            label: 'Volume',
+            layout: { span: 6 },
+            props: { min: 0 },
+            type: 'number',
+          },
           {
             key: 'currency',
             label: 'Devise',
@@ -66,6 +74,7 @@ export function arraysFormSchema() {
         key: 'targets',
         label: 'Objectifs',
         layout: { columns: 12 },
+        props: { accordion: true, defaultExpanded: 'first' },
         summaryTemplate: (item) =>
           isNumber(item.volume) ? `${item.volume} ${String(item.currency ?? '')}` : '',
         type: 'array-collapse',
@@ -89,7 +98,13 @@ export function arraysFormSchema() {
             placeholder: 'ABC-123',
             type: 'text',
           },
-          { key: 'price', label: 'Prix HT', layout: { width: 150 }, min: 0, type: 'number' },
+          {
+            key: 'price',
+            label: 'Prix HT',
+            layout: { width: 150 },
+            props: { min: 0 },
+            type: 'number',
+          },
           {
             key: 'currency',
             label: 'Devise',

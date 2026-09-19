@@ -53,7 +53,10 @@ const hierarchyOptions = [
 const required = { required: true } as const
 
 function sleep(duration: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, duration))
+  // oxlint-disable-next-line promise/avoid-new -- setTimeout has no promise-returning API
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, duration)
+  })
 }
 
 async function loadRoleOptions() {
@@ -73,10 +76,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         validation: required,
       },
       {
-        inputType: 'email',
         key: 'email',
         label: 'Email',
         placeholder: 'ada@example.com',
+        props: { inputType: 'email' },
         type: 'text',
       },
       {
@@ -104,20 +107,22 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         key: 'fixed',
         label: 'Reveal disabled',
         placeholder: 'Always masked',
+        props: { visibilityToggle: false },
         type: 'password',
-        visibilityToggle: false,
       },
       {
         default: 'secret-value',
         key: 'customReveal',
         label: 'Custom reveal affordance',
-        type: 'password',
-        visibilityToggle: {
-          hideIcon: 'i-lucide-eye-closed',
-          hideLabel: 'Mask secret',
-          showIcon: 'i-lucide-scan-eye',
-          showLabel: 'Preview secret',
+        props: {
+          visibilityToggle: {
+            hideIcon: 'i-lucide-eye-closed',
+            hideLabel: 'Mask secret',
+            showIcon: 'i-lucide-scan-eye',
+            showLabel: 'Preview secret',
+          },
         },
+        type: 'password',
       },
       {
         default: 'secret-value',
@@ -166,8 +171,20 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
   {
     description: 'Numeric stepping, min/max constraints, defaults, and disabled state.',
     fields: [
-      { default: 12, key: 'seats', label: 'Seats', max: 100, min: 1, step: 1, type: 'number' },
-      { key: 'budget', label: 'Budget', min: 0, placeholder: '5000', step: 250, type: 'number' },
+      {
+        default: 12,
+        key: 'seats',
+        label: 'Seats',
+        props: { max: 100, min: 1, step: 1 },
+        type: 'number',
+      },
+      {
+        key: 'budget',
+        label: 'Budget',
+        placeholder: '5000',
+        props: { min: 0, step: 250 },
+        type: 'number',
+      },
       { default: 42, disabled: () => true, key: 'disabled', label: 'Disabled', type: 'number' },
     ],
     id: 'number',
@@ -177,30 +194,27 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Searchable option input, multiple selection, creation, and clear behavior.',
     fields: [
       {
-        clearable: true,
         key: 'role',
         label: 'Search + clear',
         options: roleOptions,
+        props: { clearable: true },
         type: 'auto-complete',
       },
       {
-        clearable: true,
         key: 'roles',
         label: 'Multiple values',
-        multiple: true,
         options: roleOptions,
+        props: { clearable: true, multiple: true },
         type: 'auto-complete',
       },
       {
-        clearable: true,
         key: 'asyncRole',
         label: 'Async + refresh',
         options: { allowOptionsRefresh: true, source: loadRoleOptions },
+        props: { clearable: true },
         type: 'auto-complete',
       },
       {
-        clearable: true,
-        createItem: 'always',
         key: 'createdRole',
         label: 'Search + create',
         options: {
@@ -213,11 +227,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           },
           source: roleOptions,
         },
+        props: { clearable: true, createItem: 'always' },
         type: 'auto-complete',
       },
       {
-        clearable: true,
-        createItem: false,
         key: 'createdRoleButton',
         label: 'Dedicated create action',
         options: {
@@ -230,6 +243,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           },
           source: roleOptions,
         },
+        props: { clearable: true, createItem: false },
         type: 'auto-complete',
       },
     ],
@@ -279,12 +293,11 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Boolean and custom-value switches with icons, loading, and disabled states.',
     fields: [
       {
-        checkedIcon: 'i-lucide-check',
         default: true,
         key: 'autosave',
         label: 'Autosave',
+        props: { checkedIcon: 'i-lucide-check', uncheckedIcon: 'i-lucide-x' },
         type: 'switch',
-        uncheckedIcon: 'i-lucide-x',
       },
       { default: false, key: 'notifications', label: 'Notifications', type: 'switch' },
       { default: true, disabled: () => true, key: 'disabled', label: 'Disabled', type: 'switch' },
@@ -300,14 +313,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         key: 'alerts',
         label: 'Alerts',
         options: roleOptions,
-        orientation: 'vertical',
+        props: { orientation: 'vertical' },
         type: 'switch-group',
       },
       {
         key: 'compact',
         label: 'Horizontal',
         options: planOptions,
-        orientation: 'horizontal',
+        props: { orientation: 'horizontal' },
         type: 'switch-group',
       },
     ],
@@ -337,7 +350,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         key: 'plan',
         label: 'Plan',
         options: planOptions,
-        orientation: 'horizontal',
+        props: { orientation: 'horizontal' },
         type: 'radio-card',
         validation: required,
       },
@@ -346,7 +359,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         key: 'fallback',
         label: 'Vertical',
         options: planOptions,
-        orientation: 'vertical',
+        props: { orientation: 'vertical' },
         type: 'radio-card',
       },
     ],
@@ -361,16 +374,15 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         key: 'roles',
         label: 'Roles',
         options: roleOptions,
+        props: { variant: 'list' },
         type: 'checkbox-group',
-        variant: 'list',
       },
       {
         key: 'plans',
         label: 'Card variant',
         options: planOptions,
-        orientation: 'horizontal',
+        props: { orientation: 'horizontal', variant: 'card' },
         type: 'checkbox-group',
-        variant: 'card',
       },
     ],
     id: 'checkbox-group',
@@ -384,7 +396,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         key: 'plans',
         label: 'Enabled plans',
         options: planOptions,
-        orientation: 'horizontal',
+        props: { orientation: 'horizontal' },
         type: 'checkbox-card',
       },
     ],
@@ -395,34 +407,28 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Searchable, clearable, and multi-select menu behavior.',
     fields: [
       {
-        clearable: true,
         key: 'role',
         label: 'Searchable + clear',
         options: roleOptions,
-        searchable: true,
+        props: { clearable: true, searchable: true },
         type: 'select',
         validation: required,
       },
       {
-        clearable: true,
         key: 'roles',
         label: 'Multiple selection',
-        multiple: true,
         options: roleOptions,
-        searchable: true,
+        props: { clearable: true, multiple: true, searchable: true },
         type: 'select',
       },
       {
-        clearable: true,
         key: 'asyncRole',
         label: 'Async source + refresh',
         options: { allowOptionsRefresh: true, source: loadRoleOptions },
-        searchable: true,
+        props: { clearable: true, searchable: true },
         type: 'select',
       },
       {
-        clearable: true,
-        createItem: { position: 'bottom', when: 'always' },
         key: 'createdRole',
         label: 'Search + create',
         options: {
@@ -435,12 +441,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           },
           source: roleOptions,
         },
-        searchable: true,
+        props: {
+          clearable: true,
+          createItem: { position: 'bottom', when: 'always' },
+          searchable: true,
+        },
         type: 'select',
       },
       {
-        clearable: true,
-        createItem: false,
         key: 'createdRoleButton',
         label: 'Dedicated create action',
         options: {
@@ -453,7 +461,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           },
           source: roleOptions,
         },
-        searchable: true,
+        props: { clearable: true, createItem: false, searchable: true },
         type: 'select',
       },
       {
@@ -490,37 +498,40 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Manual input, calendar popup placement, clearing, limits, and localization.',
     fields: [
       {
-        calendar: { yearRange: [2020, 2035] },
-        clearable: true,
         key: 'launchDate',
         label: 'Manual + calendar',
-        manualInput: { format: 'dd/MM/yyyy', placeholder: 'dd/mm/yyyy' },
+        props: {
+          calendar: { yearRange: [2020, 2035] },
+          clearable: true,
+          manualInput: { format: 'dd/MM/yyyy', placeholder: 'dd/mm/yyyy' },
+        },
         type: 'date',
         validation: required,
       },
       {
-        clearable: true,
         default: '2026-08-20',
         key: 'usDate',
         label: 'MM/DD manual format',
-        manualInput: { format: 'MM/dd/yyyy', placeholder: 'mm/dd/yyyy' },
+        props: {
+          clearable: true,
+          manualInput: { format: 'MM/dd/yyyy', placeholder: 'mm/dd/yyyy' },
+        },
         type: 'date',
       },
       {
-        calendar: { monthControls: false, yearControls: false },
-        clearable: true,
         key: 'minimalCalendar',
         label: 'Minimal calendar chrome',
-        previewFormat: { dateStyle: 'medium' },
+        props: {
+          calendar: { monthControls: false, yearControls: false },
+          clearable: true,
+          previewFormat: { dateStyle: 'medium' },
+        },
         type: 'date',
       },
       {
-        clearable: true,
         key: 'boundedDate',
         label: 'Bounded + Date output',
-        max: '2026-12-31',
-        min: '2026-01-01',
-        outputFormat: 'date',
+        props: { clearable: true, max: '2026-12-31', min: '2026-01-01', outputFormat: 'date' },
         type: 'date',
       },
     ],
@@ -553,9 +564,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Date-time manual controls, popup behavior, and clearing.',
     fields: [
       {
-        clearable: true,
         key: 'startsAt',
         label: 'Starts at',
+        props: { clearable: true },
         type: 'datetime',
         validation: required,
       },
@@ -572,34 +583,48 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
   },
   {
     description: 'Two-ended date range editing, clearing, and responsive layout.',
-    fields: [{ clearable: true, key: 'window', label: 'Date window', type: 'daterange' }],
+    fields: [
+      { key: 'window', label: 'Date window', props: { clearable: true }, type: 'daterange' },
+    ],
     id: 'daterange',
     label: 'Date range',
   },
   {
     description: 'Month-range editing with compact grouped controls.',
-    fields: [{ clearable: true, key: 'period', label: 'Reporting period', type: 'monthrange' }],
+    fields: [
+      { key: 'period', label: 'Reporting period', props: { clearable: true }, type: 'monthrange' },
+    ],
     id: 'monthrange',
     label: 'Month range',
   },
   {
     description: 'Start/end date-time editing and grouped sizing behavior.',
     fields: [
-      { clearable: true, key: 'window', label: 'Availability window', type: 'datetimerange' },
+      {
+        key: 'window',
+        label: 'Availability window',
+        props: { clearable: true },
+        type: 'datetimerange',
+      },
     ],
     id: 'datetimerange',
     label: 'Date-time range',
   },
   {
     description: 'Month selection and clear behavior.',
-    fields: [{ clearable: true, key: 'month', label: 'Billing month', type: 'month' }],
+    fields: [{ key: 'month', label: 'Billing month', props: { clearable: true }, type: 'month' }],
     id: 'month',
     label: 'Month',
   },
   {
     description: 'Bounded year input and clearing.',
     fields: [
-      { clearable: true, key: 'year', label: 'Fiscal year', max: 2035, min: 2020, type: 'year' },
+      {
+        key: 'year',
+        label: 'Fiscal year',
+        props: { clearable: true, max: 2035, min: 2020 },
+        type: 'year',
+      },
     ],
     id: 'year',
     label: 'Year',
@@ -608,19 +633,16 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Time popup placement, minute stepping, bounds, and clear behavior.',
     fields: [
       {
-        clearable: true,
         default: '09:30',
         key: 'reviewTime',
         label: 'Review time',
-        minuteStep: 15,
+        props: { clearable: true, minuteStep: 15 },
         type: 'time',
       },
       {
         key: 'bounded',
         label: 'Business hours',
-        max: '18:00',
-        min: '08:00',
-        minuteStep: 30,
+        props: { max: '18:00', min: '08:00', minuteStep: 30 },
         type: 'time',
       },
     ],
@@ -631,35 +653,32 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Country selector, dial code, number formatting, and clear behavior.',
     fields: [
       {
-        clearable: true,
-        defaultCountryCode: 'FR',
         key: 'phone',
         label: 'National display · international value',
+        props: { clearable: true, defaultCountryCode: 'FR' },
         type: 'phone-number',
       },
       {
-        countryCodes: ['FR', 'BE', 'CH'],
-        defaultCountryCode: 'FR',
-        format: 'e164',
         key: 'restricted',
         label: 'FR / BE / CH only',
+        props: { countryCodes: ['FR', 'BE', 'CH'], defaultCountryCode: 'FR', format: 'e164' },
         type: 'phone-number',
       },
       {
-        clearable: true,
-        defaultCountryCode: 'US',
-        displayFormat: 'raw',
         key: 'raw',
         label: 'Raw typing · no validity icon',
+        props: {
+          clearable: true,
+          defaultCountryCode: 'US',
+          displayFormat: 'raw',
+          validityIndicator: false,
+        },
         type: 'phone-number',
-        validityIndicator: false,
       },
       {
-        defaultCountryCode: 'FR',
-        format: 'e164',
         key: 'mobile',
         label: 'Mobile numbers only',
-        numberType: ['MOBILE'],
+        props: { defaultCountryCode: 'FR', format: 'e164', numberType: ['MOBILE'] },
         type: 'phone-number',
       },
     ],
@@ -768,9 +787,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
             key: 'amount',
             label: 'Amount',
             layout: { span: 5 },
-            min: 0,
             placeholder: '2500',
-            step: 10,
+            props: { min: 0, step: 10 },
             type: 'number',
           },
         ],
@@ -785,7 +803,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
         key: 'verticalCredentials',
         label: 'Vertical group',
-        orientation: 'vertical',
+        props: { orientation: 'vertical' },
         type: 'input-group',
       },
     ],
@@ -850,8 +868,13 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
   {
     description: 'Single and multiple file selection with accept filters.',
     fields: [
-      { accept: 'image/*', key: 'avatar', label: 'Avatar', type: 'file' },
-      { accept: '.pdf,.txt', key: 'documents', label: 'Documents', multiple: true, type: 'file' },
+      { key: 'avatar', label: 'Avatar', props: { accept: 'image/*' }, type: 'file' },
+      {
+        key: 'documents',
+        label: 'Documents',
+        props: { accept: '.pdf,.txt', multiple: true },
+        type: 'file',
+      },
     ],
     id: 'file',
     label: 'File',
@@ -860,15 +883,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Manual and automatic upload states, progress actions, retry, and deletion.',
     fields: [
       {
-        accept: '.pdf,.txt',
-        autoUpload: false,
         key: 'document',
         label: 'Manual upload',
         output: 'url',
+        props: { accept: '.pdf,.txt', autoUpload: false },
         type: 'upload',
         upload: {
           handler: async ({ files }) => {
-            await new Promise<void>((resolve) => setTimeout(resolve, 450))
+            await sleep(450)
             return files[0]
               ? `https://example.test/uploads/${encodeURIComponent(files[0].name)}`
               : null
@@ -876,16 +898,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         },
       },
       {
-        accept: 'image/*',
-        autoUpload: true,
         key: 'images',
         label: 'Automatic multiple upload',
-        multiple: true,
         output: 'object',
+        props: { accept: 'image/*', autoUpload: true, multiple: true },
         type: 'upload',
         upload: {
           handler: async ({ files }) => {
-            await new Promise<void>((resolve) => setTimeout(resolve, 450))
+            await sleep(450)
             return files.map((file) => ({
               name: file.name,
               url: `https://example.test/uploads/${encodeURIComponent(file.name)}`,
@@ -902,15 +922,15 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     fields: [
       {
         addItemLabel: 'Add contact',
-        draggable: true,
         fields: [
           { key: 'name', label: 'Name', type: 'text', validation: required },
-          { inputType: 'email', key: 'email', label: 'Email', type: 'text' },
+          { key: 'email', label: 'Email', props: { inputType: 'email' }, type: 'text' },
           { key: 'role', label: 'Role', options: roleOptions, type: 'select' },
         ],
         itemLabel: 'Contact',
         key: 'contacts',
         label: 'Contacts',
+        props: { draggable: true },
         type: 'array-list',
       },
     ],
@@ -926,7 +946,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         addItemLabel: 'Add row',
         fields: [
           { key: 'label', label: 'Label', type: 'text', validation: required },
-          { default: 1, key: 'quantity', label: 'Quantity', min: 1, type: 'number' },
+          { default: 1, key: 'quantity', label: 'Quantity', props: { min: 1 }, type: 'number' },
           { default: true, key: 'active', label: 'Active', type: 'switch' },
         ],
         key: 'items',
@@ -945,7 +965,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         addItemLabel: 'Add milestone',
         fields: [
           { key: 'title', label: 'Title', type: 'text', validation: required },
-          { clearable: true, key: 'date', label: 'Target date', type: 'date' },
+          { key: 'date', label: 'Target date', props: { clearable: true }, type: 'date' },
         ],
         itemLabel: 'Milestone',
         key: 'milestones',
@@ -975,9 +995,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           {
             fields: [
               {
-                inputType: 'email',
                 key: 'address',
                 label: 'Email address',
+                props: { inputType: 'email' },
                 type: 'text',
                 validation: required,
               },
@@ -988,9 +1008,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           {
             fields: [
               {
-                defaultCountryCode: 'FR',
                 key: 'number',
                 label: 'Phone number',
+                props: { defaultCountryCode: 'FR' },
                 type: 'phone-number',
                 validation: required,
               },
@@ -1010,22 +1030,17 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       'Popover tree selection, path display, searching, multiple selection, and cascade behavior.',
     fields: [
       {
-        clearable: true,
         key: 'team',
         label: 'Team',
         options: hierarchyOptions,
-        searchable: true,
-        showPath: true,
+        props: { clearable: true, searchable: true, showPath: true },
         type: 'tree-select',
       },
       {
-        cascade: true,
         key: 'teams',
         label: 'Multiple teams',
-        multiple: true,
         options: hierarchyOptions,
-        searchable: true,
-        selectionControl: 'checkbox',
+        props: { cascade: true, multiple: true, searchable: true, selectionControl: 'checkbox' },
         type: 'tree-select',
       },
     ],
@@ -1036,13 +1051,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Hierarchical cascader popup with path presentation and leaf-only selection.',
     fields: [
       {
-        clearable: true,
         key: 'category',
         label: 'Category',
-        leafOnly: true,
         options: hierarchyOptions,
-        searchable: true,
-        separator: ' / ',
+        props: { clearable: true, leafOnly: true, searchable: true, separator: ' / ' },
         type: 'cascader',
       },
     ],
@@ -1054,19 +1066,17 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       'Inline tree selection, checkbox/radio controls, propagation, and responsive layout.',
     fields: [
       {
-        cascade: true,
         key: 'teams',
         label: 'Teams',
-        multiple: true,
         options: hierarchyOptions,
-        selectionControl: 'checkbox',
+        props: { cascade: true, multiple: true, selectionControl: 'checkbox' },
         type: 'tree',
       },
       {
         key: 'owner',
         label: 'Single owner group',
         options: hierarchyOptions,
-        selectionControl: 'radio',
+        props: { selectionControl: 'radio' },
         type: 'tree',
       },
     ],
@@ -1093,14 +1103,13 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Semantic matrix table with row labels and nested controls.',
     fields: [
       {
-        bordered: true,
         fields: [
           { default: false, key: 'enabled', label: 'Enabled', type: 'switch' },
           { key: 'scope', label: 'Scope', options: ['read', 'write', 'admin'], type: 'select' },
         ],
         key: 'permissions',
         label: 'Bordered permissions',
-        rowHeaderWidth: 180,
+        props: { bordered: true, rowHeaderWidth: 180 },
         rows: [
           { key: 'catalog', label: 'Catalog' },
           { key: 'orders', label: 'Orders' },
@@ -1109,22 +1118,30 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         type: 'matrix',
       },
       {
-        bordered: false,
-        compact: true,
         fields: [
           { default: false, key: 'required', label: 'Required', type: 'checkbox' },
-          { default: 2, key: 'sla', label: 'SLA · days', max: 30, min: 0, type: 'number' },
+          {
+            default: 2,
+            key: 'sla',
+            label: 'SLA · days',
+            props: { max: 30, min: 0 },
+            type: 'number',
+          },
         ],
-        hoverable: false,
         key: 'approvalMatrix',
         label: 'Compact striped matrix',
-        rowHeaderWidth: '10rem',
+        props: {
+          bordered: false,
+          compact: true,
+          hoverable: false,
+          rowHeaderWidth: '10rem',
+          striped: true,
+        },
         rows: [
           { key: 'finance', label: 'Finance' },
           { key: 'legal', label: 'Legal' },
           { key: 'security', label: 'Security' },
         ],
-        striped: true,
         type: 'matrix',
       },
     ],
@@ -1151,21 +1168,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         default: 65,
         key: 'confidence',
         label: 'Confidence',
-        max: 100,
-        min: 0,
-        step: 5,
-        tooltip: true,
+        props: { max: 100, min: 0, step: 5, tooltip: true },
         type: 'slider',
       },
       {
         default: [25, 75],
         key: 'range',
         label: 'Range',
-        max: 100,
-        min: 0,
-        multiple: true,
-        step: 5,
-        tooltip: true,
+        props: { max: 100, min: 0, multiple: true, step: 5, tooltip: true },
         type: 'slider',
       },
     ],
@@ -1176,29 +1186,24 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Popover, inline, and swatch color editing modes.',
     fields: [
       {
-        clearable: true,
         default: '#111827',
-        display: 'popover',
-        format: 'hex',
         key: 'accent',
         label: 'Input + popover · HEX',
+        props: { clearable: true, display: 'popover', format: 'hex' },
         type: 'color-picker',
       },
       {
         default: 'rgb(124, 58, 237)',
-        display: 'inline',
-        format: 'rgb',
         key: 'brand',
         label: 'Inline · RGB',
+        props: { display: 'inline', format: 'rgb' },
         type: 'color-picker',
       },
       {
-        clearable: true,
         default: 'hsl(199, 89%, 48%)',
-        display: 'swatch',
-        format: 'hsl',
         key: 'swatch',
         label: 'Swatch · HSL',
+        props: { clearable: true, display: 'swatch', format: 'hsl' },
         type: 'color-picker',
       },
     ],
@@ -1229,22 +1234,25 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       {
         key: 'otp',
         label: 'Verification code',
-        length: 6,
-        otp: true,
         placeholder: '•',
+        props: { length: 6, otp: true },
         type: 'one-time-code',
         validation: required,
       },
       {
-        inputType: 'number',
         key: 'masked',
         label: 'Masked PIN',
-        length: 4,
-        mask: true,
         placeholder: '•',
+        props: { inputType: 'number', length: 4, mask: true },
         type: 'one-time-code',
       },
-      { key: 'compact', label: 'Short code', length: 4, placeholder: '0', type: 'one-time-code' },
+      {
+        key: 'compact',
+        label: 'Short code',
+        placeholder: '0',
+        props: { length: 4 },
+        type: 'one-time-code',
+      },
     ],
     groups: [
       {
@@ -1284,13 +1292,18 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
   {
     description: 'Keyboard-accessible rating control, clear behavior, and custom scale.',
     fields: [
-      { clearable: true, default: 3, key: 'quality', label: 'Quality', max: 5, type: 'rating' },
+      {
+        default: 3,
+        key: 'quality',
+        label: 'Quality',
+        props: { clearable: true, max: 5 },
+        type: 'rating',
+      },
       {
         default: 7,
-        icon: 'i-lucide-circle',
         key: 'confidence',
         label: 'Confidence',
-        max: 10,
+        props: { icon: 'i-lucide-circle', max: 10 },
         type: 'rating',
       },
     ],
@@ -1301,24 +1314,26 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     description: 'Stateless form actions with root size propagation and disabled state.',
     fields: [
       {
-        icon: 'i-lucide-sparkles',
         key: 'primary',
         label: 'Primary action',
+        // oxlint-disable-next-line no-empty-function -- demo action has nothing to run
         onClick: () => {},
+        props: { icon: 'i-lucide-sparkles' },
         type: 'button',
       },
       {
-        color: 'neutral',
         key: 'secondary',
         label: 'Secondary action',
+        // oxlint-disable-next-line no-empty-function -- demo action has nothing to run
         onClick: () => {},
+        props: { color: 'neutral', variant: 'outline' },
         type: 'button',
-        variant: 'outline',
       },
       {
         disabled: () => true,
         key: 'disabled',
         label: 'Disabled action',
+        // oxlint-disable-next-line no-empty-function -- demo action is unreachable while disabled
         onClick: () => {},
         type: 'button',
       },
