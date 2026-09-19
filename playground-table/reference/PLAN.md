@@ -42,6 +42,7 @@ Known gaps: selection bar is centered on the content area (prototype centers on 
 - Grid renderer: cursor auto-load near the last virtual row (contained mode) and on scroll (flow mode), with a loading row; icon-only buttons centered via square compound variants; option/picker rows carry focus-visible rings; mobile sheets use the prototype's 10 px gutter, 46 px / 15 px rows, 14 px icons and ink-colored values.
 
 ## Test and lint phase (2026-09-19)
+
 - Vitest `unit` + `dom` projects; DOM harness mounts the real DataListRoot with Nuxt UI stubs. 74 files / 367 tests.
 - Filter slideover redesigned: title + result count, captioned sections, chips with counts and colour dots, sticky footer (matching count, Réinitialiser, Appliquer/Terminé), props layer under `filterPanel.props`.
 - Ultracite oxlint preset adopted; codemods brought findings from 10,793 to about 1,170. Remaining work is per-site: test splitting for max-expects, SAFETY comments, explicit any in generic constraints, nested ternaries, runtime import cycles, promise-returning functions without await.
