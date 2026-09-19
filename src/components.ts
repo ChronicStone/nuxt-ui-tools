@@ -50,7 +50,7 @@ function getPublicComponents(
       'Pagination',
       'InfiniteLoader',
     ].map((part) => ({
-      filePath: `${runtimeDir}/table/components/data-list/DataList${part}.vue`,
+      filePath: `${runtimeDir}/table/components/data-list/data-list-${toKebabCase(part)}.vue`,
       global: options.global,
       name: `${prefix}DataList${part}`,
     })),
@@ -67,6 +67,10 @@ function getPublicComponents(
       name: `${prefix}FormProvider`,
     },
   ]
+}
+
+function toKebabCase(value: string) {
+  return value.replace(/([a-z0-9])([A-Z])/gu, '$1-$2').toLowerCase()
 }
 
 export function setupComponents(
