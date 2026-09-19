@@ -33,7 +33,7 @@ describe('ColumnPanel', () => {
     expect(trigger.attributes('data-label')).toBe('Colonnes')
     expect(trigger.attributes('data-icon')).toBe('i-lucide-layers')
     expect(trigger.attributes('data-variant')).toBe('outline')
-    expect(trigger.find('.nut-dl-colbtn__count').attributes('data-label')).toBe('6')
+    expect(trigger.find('.nut-dl-colbtn__count').exists()).toBe(false)
   })
 
   it('lists configurable columns with pinned rows and toggles visibility', async () => {
@@ -66,7 +66,7 @@ describe('ColumnPanel', () => {
     expect(
       harness.internals.tableColumns.visibleOrderedColumns.value.map((c) => c.id),
     ).not.toContain('status')
-    expect(w.find('.nut-dl-colbtn__count').attributes('data-label')).toBe('5')
+    expect(w.find('.nut-dl-colbtn__count').exists()).toBe(false)
     await must(w.findAll('.nut-dl-colpanel__row')[3]).find('button.flex-1').trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.visibleOrderedColumns.value.map((c) => c.id)).toContain(

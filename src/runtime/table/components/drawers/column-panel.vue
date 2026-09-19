@@ -63,10 +63,12 @@ const triggerProps = computed(() =>
 const countProps = computed(() =>
   controlProps.value.count === false
     ? null
-    : mergeDataListProps<DataListBadgeProps>(
-        { color: 'neutral', size: resolvedSize.value, variant: 'subtle' },
-        controlProps.value.count,
-      ),
+    : controlProps.value.count
+      ? mergeDataListProps<DataListBadgeProps>(
+          { color: 'neutral', size: resolvedSize.value, variant: 'subtle' },
+          controlProps.value.count,
+        )
+      : null,
 )
 const searchable = computed(() => {
   const search = controlProps.value.search ?? 30
@@ -80,7 +82,7 @@ const checkboxProps = computed(() =>
 )
 const resetProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', size: resolvedSize.value, variant: 'link' },
+    { color: 'neutral', size: 'xs', variant: 'link' },
     controlProps.value.reset,
   ),
 )
@@ -434,7 +436,7 @@ function toggle() {
         <div
           :class="
             mergeDataListUiClass(
-              'nut-dl-colpanel__footer flex items-center justify-between border-t border-default px-4 py-2.5 text-[12.5px]',
+              'nut-dl-colpanel__footer flex items-center justify-between border-t border-default px-3 py-1.5 text-[12.5px]',
               undefined,
               ui.footer,
             )
