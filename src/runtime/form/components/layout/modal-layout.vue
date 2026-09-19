@@ -8,9 +8,11 @@ import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<FormModalLayoutProps>()
 defineEmits<FormOverlayLayoutEmits>()
+const MODAL_SIZES = { lg: 760, md: 600, xl: 920 } as const
+
 const contentStyle = computed(() => ({
-  maxHeight: cssSize(props.config?.maxHeight),
-  maxWidth: cssSize(props.config?.maxWidth),
+  maxHeight: cssSize(props.config?.maxHeight) ?? 'calc(100dvh - 48px)',
+  maxWidth: cssSize(props.config?.maxWidth) ?? `${MODAL_SIZES[props.config?.size ?? 'md']}px`,
 }))
 const contentProps = computed(() => ({
   disableOutsidePointerEvents: undefined,
@@ -32,7 +34,7 @@ function cssSize(value: number | string | undefined) {
     :ui="{
       overlay: mergeFormUiClass('bg-(--nut-form-veil) backdrop-blur-[2px]', ui?.overlay),
       content: mergeFormUiClass(
-        'flex max-h-[85dvh] min-h-0 overflow-hidden border border-default p-0 sm:max-w-4xl',
+        'flex min-h-0 w-[calc(100%-40px)] overflow-hidden rounded-[14px] border border-default p-0 shadow-[0_30px_80px_-30px_rgba(31,29,26,0.45),0_2px_6px_rgba(31,29,26,0.06)] sm:max-w-none',
         ui?.content,
       ),
     }"

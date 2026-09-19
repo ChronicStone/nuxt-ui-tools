@@ -42,7 +42,11 @@ export interface FormHeaderConfig {
   display?: FormHeaderDisplay
 }
 
+export type FormModalSize = 'md' | 'lg' | 'xl'
+
 export interface FormModalConfig {
+  /** Preset width: 600, 760 or 920px. `maxWidth` wins when both are set. */
+  size?: FormModalSize
   maxWidth?: number | string
   maxHeight?: number | string
   allowOutsideClick?: boolean

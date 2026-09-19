@@ -183,14 +183,14 @@ const rootClass = computed(() =>
 )
 const headerClass = computed(() =>
   mergeFormUiClass(
-    isOverlayShell.value ? 'shrink-0 border-b border-default bg-default px-5 py-4' : 'grid gap-3',
+    isOverlayShell.value ? 'shrink-0 bg-default px-[22px] pt-5' : 'grid gap-3',
     formUi.ui.value.root?.ui?.header,
   ),
 )
 const viewportClass = computed(() =>
   mergeFormUiClass(
     isOverlayShell.value
-      ? `min-h-0 flex-1 overflow-y-auto px-5 py-5${stepTransitioning.value ? ' overflow-hidden' : ''}`
+      ? `min-h-0 flex-1 overflow-y-auto px-[22px] pt-[18px] pb-2${stepTransitioning.value ? ' overflow-hidden' : ''}`
       : stepTransitioning.value
         ? 'overflow-hidden'
         : '',
@@ -200,7 +200,7 @@ const viewportClass = computed(() =>
 const footerClass = computed(() =>
   mergeFormUiClass(
     isOverlayShell.value
-      ? 'flex shrink-0 items-center justify-between gap-3 border-t border-default bg-default px-5 py-4'
+      ? 'flex shrink-0 items-center justify-between gap-3 border-t border-default bg-default px-[22px] pt-3.5 pb-[18px]'
       : 'flex items-center justify-between gap-3 border-t border-default pt-4',
     formUi.ui.value.root?.ui?.footer,
   ),
@@ -427,7 +427,7 @@ async function focusFirstRenderedField() {
             v-if="eyebrow"
             :class="
               mergeFormUiClass(
-                'text-[11px] font-semibold uppercase tracking-[0.08em] text-(--nut-form-eyebrow,var(--ui-primary))',
+                'text-[11px] font-semibold uppercase tracking-[0.08em] text-(--nut-form-eyebrow,var(--ui-color-primary-700,var(--ui-primary))) dark:text-(--nut-form-eyebrow,var(--ui-color-primary-400,var(--ui-primary)))',
                 formUi.ui.value.root?.ui?.eyebrow,
               )
             "
@@ -438,7 +438,7 @@ async function focusFirstRenderedField() {
             v-if="title"
             :class="
               mergeFormUiClass(
-                'text-lg font-semibold tracking-tight text-highlighted',
+                'text-lg font-semibold leading-[1.3] tracking-tight text-highlighted',
                 formUi.ui.value.root?.ui?.title,
               )
             "
