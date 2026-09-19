@@ -98,7 +98,9 @@ function clearAll() {
     v-model:open="open"
     direction="bottom"
     :handle="true"
+    :title="t('table.filters.panel.trigger')"
     :ui="{
+      header: 'sr-only',
       content: mergeDataListUiClass(
         'nut-dl-sheet max-h-[85vh] rounded-t-[16px]',
         undefined,

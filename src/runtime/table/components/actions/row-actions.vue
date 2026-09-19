@@ -79,7 +79,13 @@ const items = computed(() => {
     v-if="scope && visibleActions.length && items.length && isMobile"
     v-model:open="sheetOpen"
     direction="bottom"
-    :ui="{ content: 'nut-dl-sheet rounded-t-[16px]', container: 'gap-0 p-0', body: 'p-0 pb-4' }"
+    title="Actions"
+    :ui="{
+      header: 'sr-only',
+      content: 'nut-dl-sheet rounded-t-[16px]',
+      container: 'gap-0 p-0',
+      body: 'p-0 pb-4',
+    }"
   >
     <slot :items="items" :open="sheetOpen" />
     <template #body>

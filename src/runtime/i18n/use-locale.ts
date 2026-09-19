@@ -1,5 +1,5 @@
 import { useLocale as useNuxtUiLocale } from '@nuxt/ui/composables/useLocale'
-import { computed, inject, provide } from 'vue'
+import { computed, getCurrentInstance, inject, provide } from 'vue'
 import type { InjectionKey, Ref } from 'vue'
 
 import { fr } from './locales'
@@ -10,17 +10,20 @@ import { buildUiToolsLocaleContext } from './utils'
 export const uiToolsLocaleContextInjectionKey: InjectionKey<Ref<Locale<Messages> | undefined>> =
   Symbol.for('nuxt-ui-tools.locale-context')
 
+let fallbackLocale: Ref<Locale<Messages> | undefined> | null = null
+
 export function useUiToolsLocaleRef(localeOverrides?: Ref<Locale<Messages> | undefined>) {
-  const nuxtUiLocale = useNuxtUiLocale()
-  const injectedLocale = inject(uiToolsLocaleContextInjectionKey)
+  const instance = getCurrentInstance()
+  const nuxtUiLocale = instance ? useNuxtUiLocale() : null
+  const injectedLocale = instance ? inject(uiToolsLocaleContextInjectionKey, null) : fallbackLocale
 
   return computed(
     () =>
       localeOverrides?.value ??
       injectedLocale?.value ??
       resolveUiToolsLocale({
-        code: nuxtUiLocale.code.value,
-        dir: nuxtUiLocale.dir.value,
+        code: nuxtUiLocale?.code.value,
+        dir: nuxtUiLocale?.dir.value,
       }),
   )
 }
@@ -32,6 +35,7 @@ export function useUiToolsLocale(localeOverrides?: Ref<Locale<Messages> | undefi
 }
 
 export function provideUiToolsLocale(locale: Ref<Locale<Messages> | undefined>) {
+  fallbackLocale = locale
   provide(uiToolsLocaleContextInjectionKey, locale)
 }
 

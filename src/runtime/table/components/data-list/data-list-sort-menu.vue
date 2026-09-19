@@ -133,7 +133,9 @@ function humanize(value: string) {
     v-if="visible && isMobile"
     v-model:open="sheetOpen"
     direction="bottom"
+    :title="label ?? t('table.controls.sort')"
     :ui="{
+      header: 'sr-only',
       content: 'nut-dl-sheet max-h-[85vh] rounded-t-[16px]',
       container: 'gap-0 p-0',
       body: 'min-h-0 overflow-y-auto p-0 pb-2',
