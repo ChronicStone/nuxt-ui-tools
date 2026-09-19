@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListSortMenu from '#ui-tools/table/components/data-list/DataListSortMenu.vue'
+import DataListSortMenu from '#ui-tools/table/components/data-list/data-list-sort-menu.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'

@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { isNullish } from '#ui-tools/shared/utils/predicate'
 import { defineTableSchema, useTable } from '#ui-tools/table'
-import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
+import UiRowActions from '#ui-tools/table/components/actions/row-actions.vue'
 import type { TableCursorPageResult, TableSourceRequestContext } from '#ui-tools/table/types'
 import { filterClientRows, sortClientRows } from '#ui-tools/table/utils'
 

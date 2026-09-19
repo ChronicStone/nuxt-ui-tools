@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListFilterTags from '#ui-tools/table/components/data-list/DataListFilterTags.vue'
+import DataListFilterTags from '#ui-tools/table/components/data-list/data-list-filter-tags.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema, STATUS_COLOR } from '../fixtures/accounts'

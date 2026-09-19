@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListResultCount from '#ui-tools/table/components/data-list/DataListResultCount.vue'
-import DataListSearch from '#ui-tools/table/components/data-list/DataListSearch.vue'
+import DataListResultCount from '#ui-tools/table/components/data-list/data-list-result-count.vue'
+import DataListSearch from '#ui-tools/table/components/data-list/data-list-search.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'

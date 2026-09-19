@@ -2,7 +2,7 @@
 import UInputTags from '@nuxt/ui/components/InputTags.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormTagField } from '../../types'
 import { isString } from '../../utils/predicate'

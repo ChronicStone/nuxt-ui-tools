@@ -2,7 +2,7 @@
 import UCheckboxGroup from '@nuxt/ui/components/CheckboxGroup.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormCheckboxGroupField, FormOptionValue } from '../../types'
 import { formOptionKey } from '../../utils/options'

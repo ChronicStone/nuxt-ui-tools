@@ -2,7 +2,7 @@
 import UCard from '@nuxt/ui/components/Card.vue'
 import { computed } from 'vue'
 
-import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
+import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import type { FormObjectField } from '../../types'

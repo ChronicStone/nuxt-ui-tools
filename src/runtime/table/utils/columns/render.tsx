@@ -12,11 +12,11 @@ import {
   isString,
   isNullish,
 } from '../../../shared/utils/predicate'
-import TableRowScopeProvider from '../../components/actions/TableRowScopeProvider.vue'
-import TableCellEllipsis from '../../components/table/TableCellEllipsis'
-import TableColumnHeader from '../../components/table/TableColumnHeader.vue'
-import TableRowActionsControl from '../../components/table/TableRowActionsControl.vue'
-import TableSelectionControl from '../../components/table/TableSelectionControl.vue'
+import TableRowScopeProvider from '../../components/actions/table-row-scope-provider.vue'
+import TableCellEllipsis from '../../components/table/table-cell-ellipsis'
+import TableColumnHeader from '../../components/table/table-column-header.vue'
+import TableRowActionsControl from '../../components/table/table-row-actions-control.vue'
+import TableSelectionControl from '../../components/table/table-selection-control.vue'
 import type { GenericObject, TableRuntimeRecord } from '../../types'
 import type {} from './menu'
 import { findSchemaColumn } from './schema'

@@ -2,7 +2,7 @@
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormFieldBare } from '../../composables/use-form-field-chrome'
 import type { FormCheckboxField } from '../../types'

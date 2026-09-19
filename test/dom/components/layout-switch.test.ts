@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListLayoutSwitch from '#ui-tools/table/components/data-list/DataListLayoutSwitch.vue'
+import DataListLayoutSwitch from '#ui-tools/table/components/data-list/data-list-layout-switch.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'

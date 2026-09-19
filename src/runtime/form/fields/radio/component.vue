@@ -2,7 +2,7 @@
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRadioField } from '../../types'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'

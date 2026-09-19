@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
+import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import type { FormColumnField } from '../../types'
 
 defineProps<{

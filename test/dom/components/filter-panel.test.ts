@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListFilterPanel from '#ui-tools/table/components/data-list/DataListFilterPanel.vue'
+import DataListFilterPanel from '#ui-tools/table/components/data-list/data-list-filter-panel.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema } from '../fixtures/accounts'

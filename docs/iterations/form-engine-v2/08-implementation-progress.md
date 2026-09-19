@@ -269,7 +269,7 @@ Added:
 
 - `types/actions.ts` for built-in and custom form action contracts
 - `composables/use-form-actions.ts` for default/overridden action resolution
-- `components/actions/FormActions.vue` for rendering and action dispatch
+- `components/actions/form-actions.vue` for rendering and action dispatch
 
 Default behavior now matches shared-ui:
 
@@ -365,11 +365,11 @@ The filtered form typecheck is clean. The full `vue-tsc` command still fails on 
 
 Refined the provider-owned overlay slice to match the `shared-ui` layout responsibility split more closely:
 
-- `components/provider/FormProvider.vue` owns provider registration and active instances
-- `components/provider/FormOverlayHost.vue` selects the current overlay layout
+- `components/provider/form-provider.vue` owns provider registration and active instances
+- `components/provider/form-overlay-host.vue` selects the current overlay layout
 - `composables/use-form-overlay-controller.ts` owns mounted form controller binding, submit/cancel resolution, and runtime controls
 - `composables/use-form-overlay-layout.ts` owns responsive display-mode resolution through shared `useResponsiveValue`
-- `components/layout/ModalLayout.vue`, `DrawerLayout.vue`, and `FullscreenLayout.vue` own Nuxt UI layout shell and close-complete events
+- `components/layout/modal-layout.vue`, `DrawerLayout.vue`, and `FullscreenLayout.vue` own Nuxt UI layout shell and close-complete events
 - the previous broad `FormOverlayRenderer.vue` path was removed
 
 The playground now exposes the form runtime from the visible home surface and shell navigation:
@@ -526,9 +526,9 @@ Concrete cleanup landed:
 - moved generic path/object helpers into `src/runtime/shared/utils/path.ts`
 - kept form-named path aliases in `src/runtime/form/utils/path.ts` as compatibility/clarity exports
 - moved root/renderer components into concern folders:
-  - `components/root/Form.vue`
-  - `components/renderer/FormFieldRenderer.vue`
-  - `components/renderer/FormFieldShell.vue`
+  - `components/root/form.vue`
+  - `components/renderer/form-field-renderer.vue`
+  - `components/renderer/form-field-shell.vue`
 - split field-specific output inference into field folders:
   - `fields/text/types.ts`
   - `fields/select/types.ts`

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListPagination from '#ui-tools/table/components/data-list/DataListPagination.vue'
+import DataListPagination from '#ui-tools/table/components/data-list/data-list-pagination.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import TableRenderer from '#ui-tools/table/components/table/TableRenderer.vue'
+import TableRenderer from '#ui-tools/table/components/table/table-renderer.vue'
 
 import { must } from '../../helpers/must'
 import { createAccounts, createAccountsSchema, createAuditSchema } from '../fixtures/accounts'

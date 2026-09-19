@@ -6,7 +6,7 @@ import type { ComputedRef } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { isNullish } from '../../shared/utils/predicate'
-import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePreview.vue'
+import SpreadsheetValuePreview from '../components/shared/spreadsheet-value-preview.vue'
 import type {
   SpreadsheetRecord,
   SpreadsheetRowIssue,

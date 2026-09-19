@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { defineTableSchema, useTable } from '#ui-tools/table'
-import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
+import UiRowActions from '#ui-tools/table/components/actions/row-actions.vue'
 
 import { ACCOUNT_STATUS, ACCOUNT_TYPE, COUNTRY, GROUPS, MANAGER_LOCATIONS } from '../data/enums'
 

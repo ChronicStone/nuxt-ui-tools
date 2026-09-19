@@ -4,7 +4,7 @@ import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'

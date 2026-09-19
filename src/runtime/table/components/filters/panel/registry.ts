@@ -1,11 +1,11 @@
 import type { Component } from 'vue'
 
 import type { TableUiFilterDefinition } from '../../../types'
-import BooleanFilterPanelField from './BooleanFilterPanelField.vue'
-import DateFilterPanelField from './DateFilterPanelField.vue'
-import NumberFilterPanelField from './NumberFilterPanelField.vue'
-import OptionFilterPanelField from './OptionFilterPanelField.vue'
-import TextFilterPanelField from './TextFilterPanelField.vue'
+import BooleanFilterPanelField from './boolean-filter-panel-field.vue'
+import DateFilterPanelField from './date-filter-panel-field.vue'
+import NumberFilterPanelField from './number-filter-panel-field.vue'
+import OptionFilterPanelField from './option-filter-panel-field.vue'
+import TextFilterPanelField from './text-filter-panel-field.vue'
 
 const FILTER_PANEL_COMPONENTS = {
   boolean: BooleanFilterPanelField,

@@ -25,7 +25,7 @@ function getPublicComponents(
 
     // Table
     {
-      filePath: `${runtimeDir}/table/components/DataList.vue`,
+      filePath: `${runtimeDir}/table/components/data-list.vue`,
       global: options.global,
       name: `${prefix}DataList`,
     },
@@ -57,12 +57,12 @@ function getPublicComponents(
 
     // Form
     {
-      filePath: `${runtimeDir}/form/components/root/Form.vue`,
+      filePath: `${runtimeDir}/form/components/root/form.vue`,
       global: options.global,
       name: `${prefix}Form`,
     },
     {
-      filePath: `${runtimeDir}/form/components/provider/FormProvider.vue`,
+      filePath: `${runtimeDir}/form/components/provider/form-provider.vue`,
       global: options.global,
       name: `${prefix}FormProvider`,
     },

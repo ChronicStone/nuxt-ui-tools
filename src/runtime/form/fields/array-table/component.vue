@@ -2,7 +2,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import { computed, defineAsyncComponent } from 'vue'
 
-import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
+import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormValue, FormObject, FormField } from '../../types'

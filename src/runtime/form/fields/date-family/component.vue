@@ -11,7 +11,7 @@ import { computed, ref, shallowRef, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { isNullish } from '../../../shared/utils/predicate'
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue } from '../../types'
 import { isNumber, isString } from '../../utils/predicate'

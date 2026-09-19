@@ -6,7 +6,7 @@ import type { Component, VNodeChild } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { Router } from 'vue-router'
 
-import DataListRoot from '#ui-tools/table/components/data-list/DataListRoot.vue'
+import DataListRoot from '#ui-tools/table/components/data-list/data-list-root.vue'
 import { useTable } from '#ui-tools/table/composables/use-table'
 import type { TableInternals } from '#ui-tools/table/composables/use-table-internals'
 import type { DataListControlSize, DataListDensity, DataListUiConfig } from '#ui-tools/table/types'

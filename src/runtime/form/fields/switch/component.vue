@@ -2,7 +2,7 @@
 import USwitch from '@nuxt/ui/components/Switch.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormFieldBare } from '../../composables/use-form-field-chrome'
 import type { FormSwitchField } from '../../types'

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListGrid from '#ui-tools/table/components/data-list/DataListGrid.vue'
-import GridRenderer from '#ui-tools/table/components/grid/GridRenderer.vue'
+import DataListGrid from '#ui-tools/table/components/data-list/data-list-grid.vue'
+import GridRenderer from '#ui-tools/table/components/grid/grid-renderer.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'

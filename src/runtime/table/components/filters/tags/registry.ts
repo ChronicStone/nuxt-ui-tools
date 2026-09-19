@@ -1,11 +1,11 @@
 import type { Component } from 'vue'
 
 import type { TableUiFilterDefinition } from '../../../types'
-import BooleanFilterTag from './BooleanFilterTag.vue'
-import DateFilterTag from './DateFilterTag.vue'
-import NumberFilterTag from './NumberFilterTag.vue'
-import OptionFilterTag from './OptionFilterTag.vue'
-import TextFilterTag from './TextFilterTag.vue'
+import BooleanFilterTag from './boolean-filter-tag.vue'
+import DateFilterTag from './date-filter-tag.vue'
+import NumberFilterTag from './number-filter-tag.vue'
+import OptionFilterTag from './option-filter-tag.vue'
+import TextFilterTag from './text-filter-tag.vue'
 
 const FILTER_TAG_COMPONENTS = {
   boolean: BooleanFilterTag,

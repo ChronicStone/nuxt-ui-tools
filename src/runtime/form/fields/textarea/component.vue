@@ -2,7 +2,7 @@
 import UTextarea from '@nuxt/ui/components/Textarea.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormTextareaField } from '../../types'
 import { isString } from '../../utils/predicate'

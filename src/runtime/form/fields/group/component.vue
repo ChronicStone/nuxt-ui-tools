@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 
-import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFormUi } from '../../composables/use-form-ui'
 import { mergeFormUiClass } from '../../utils/ui'
 import type { FormGroupField } from './types'

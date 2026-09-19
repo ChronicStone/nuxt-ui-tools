@@ -2,7 +2,7 @@
 import USlider from '@nuxt/ui/components/Slider.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormSliderField } from '../../types'
 import { isNumber } from '../../utils/predicate'

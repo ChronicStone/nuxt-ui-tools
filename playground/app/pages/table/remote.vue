@@ -6,7 +6,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import { hasProperty, isString } from '#ui-tools/shared/utils/predicate'
 import { defineTableSchema, useTable } from '#ui-tools/table'
 import type { TableFilterOptionEntry } from '#ui-tools/table'
-import DataList from '#ui-tools/table/components/DataList.vue'
+import DataList from '#ui-tools/table/components/data-list.vue'
 
 import { demoEmployeesClient } from '../../lib/demo-employees-api'
 

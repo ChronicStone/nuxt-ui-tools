@@ -9,7 +9,7 @@ import type { CountryCode } from 'libphonenumber-js'
 import { computed, onMounted, ref, useId, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormValue } from '../../types'

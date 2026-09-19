@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
-import DataListSelectionActions from '#ui-tools/table/components/data-list/DataListSelectionActions.vue'
+import DataListSelectionActions from '#ui-tools/table/components/data-list/data-list-selection-actions.vue'
 
 import { must } from '../../helpers/must'
 import { bulkActionCalls, createAccountsSchema } from '../fixtures/accounts'
