@@ -19,6 +19,7 @@ export default defineConfig({
   ],
   rules: {
     'func-style': ['error', 'declaration'],
+    'import/no-cycle': ['error', { ignoreTypes: true }],
     'no-use-before-define': ['error', { classes: true, functions: false, variables: true }],
   },
 })
