@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 
+import { computed } from 'vue'
+
+import type { DataListButtonProps } from '../../types'
 import { useDataListUi } from '../../composables/use-data-list-ui'
+import { mergeDataListProps } from '../../utils'
 import RowActions from '../actions/RowActions.vue'
 
 const dataListUi = useDataListUi()
+const buttonProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>(
+    { color: 'neutral', variant: 'ghost', size: dataListUi.controlSize.value, icon: 'i-lucide-ellipsis' },
+    dataListUi.ui.value.table?.props?.rowActions,
+  ),
+)
 </script>
 
 <template>
@@ -17,13 +27,10 @@ const dataListUi = useDataListUi()
       :ui="{ content: 'z-[80] min-w-48' }"
     >
       <UButton
-        color="neutral"
-        variant="ghost"
-        icon="i-lucide-ellipsis-vertical"
-        :size="dataListUi.controlSize.value"
+        v-bind="buttonProps"
         square
         aria-label="Row actions"
-        class="bg-transparent text-muted shadow-none ring-0 hover:bg-accented/60 hover:text-default focus-visible:bg-accented/60 focus-visible:text-default"
+        class="nut-dl-rowbtn text-muted hover:text-default focus-visible:text-default"
       />
     </RowActions>
   </div>
