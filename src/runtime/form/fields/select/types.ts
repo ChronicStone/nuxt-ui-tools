@@ -1,11 +1,6 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FieldOptionValue, FallbackNever, NullableValue } from '../../types/field-output-utils'
-import type {
-  FormOptionConfig,
-  FormOptionItem,
-  FormOptionValue,
-  FormOptionsSource,
-} from '../../types/options'
+import type { FormAnyOptionConfig, FormOptionItem, FormOptionValue } from '../../types/options'
 
 export type FormSelectCreateItem =
   | boolean
@@ -21,9 +16,7 @@ export interface FormSelectField<
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
 > extends FormStatefulFieldBase<'select', TValue | readonly TValue[] | null, TContext, TDeps> {
-  options:
-    | FormOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
-    | FormOptionsSource<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
+  options: FormAnyOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
   multiple?: boolean
   searchable?: boolean
   clearable?: boolean

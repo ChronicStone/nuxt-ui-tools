@@ -298,6 +298,10 @@ export interface UiToolsFormMessages {
       create: string
       creating: string
       createNamed: string
+      loadMore: string
+      loadingMore: string
+      retry: string
+      loadError: string
     }
     hierarchy: {
       search: string

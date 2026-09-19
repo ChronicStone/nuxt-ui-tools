@@ -1,4 +1,4 @@
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import type { VNodeChild } from 'vue'
 
 import { isFunction, isString } from '#ui-tools/shared/utils/predicate'
@@ -486,6 +486,14 @@ export function createMenuStub(name: string) {
       variant: optional,
     },
     setup(props, { slots, attrs, emit }) {
+      const internalOpen = ref<boolean>(props.open === true)
+      function isOpen() {
+        return props.open === undefined ? internalOpen.value : props.open === true
+      }
+      function setOpen(next: boolean) {
+        internalOpen.value = next
+        emit('update:open', next)
+      }
       function optionValue(option: StubValue): StubScalar {
         const record = asRecord(option)
         return record ? asScalar(record[scalarText(props.valueKey, 'value')]) : asScalar(option)
@@ -525,7 +533,7 @@ export function createMenuStub(name: string) {
           return
         }
         emit('update:modelValue', value)
-        emit('update:open', false)
+        setOpen(false)
       }
       function renderTriggerText(items: StubValue[], selected: StubScalar[]) {
         if (!selected.length) {
@@ -587,7 +595,7 @@ export function createMenuStub(name: string) {
         const items = flatItems()
         const selected = selectedValues()
         const search = scalarText(props.searchTerm)
-        const open = props.open !== false
+        const open = isOpen()
         return h(
           'div',
           {
@@ -607,7 +615,7 @@ export function createMenuStub(name: string) {
                 'data-ui-trigger': '',
                 disabled: Boolean(props.disabled),
                 onBlur: (event: Event) => emit('blur', event),
-                onClick: () => emit('update:open', !open),
+                onClick: () => setOpen(!open),
                 type: 'button',
               },
               renderTriggerText(items, selected),

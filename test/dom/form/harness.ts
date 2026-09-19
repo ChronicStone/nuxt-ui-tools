@@ -241,12 +241,18 @@ function macrotask() {
 
 export function deferred<T>() {
   let release: (value: T) => void = noopResolve
+  let fail: (reason: Error) => void = noopResolve
   // oxlint-disable-next-line avoid-new -- tests release these promises by hand
-  const promise = new Promise<T>((resolve) => {
+  const promise = new Promise<T>((resolve, reject) => {
     release = resolve
+    fail = reject
   })
+  void swallow(promise)
   return {
     promise,
+    reject: (reason: Error) => {
+      fail(reason)
+    },
     resolve: (value: T) => {
       release(value)
     },
@@ -254,6 +260,15 @@ export function deferred<T>() {
 }
 
 function noopResolve() {
+  return null
+}
+
+async function swallow(promise: Promise<unknown>) {
+  try {
+    await promise
+  } catch {
+    return null
+  }
   return null
 }
 

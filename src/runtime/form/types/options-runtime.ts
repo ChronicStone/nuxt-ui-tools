@@ -4,46 +4,52 @@ import type { ComputedRef, Ref } from 'vue'
 import type { ResolvedFormOption } from '../utils/options'
 import type { FormValue } from './'
 
-/** Complete TanStack Query options retained by form-owned observers. */
+/**
+ * Query options accepted by option sources once they cross the runtime boundary.
+ */
 export type FormRuntimeQueryOptions = Exclude<
   UseQueryOptions<FormValue, Error, FormValue, FormValue, QueryKey>,
   Ref<FormValue> | ComputedRef<FormValue>
 >
 
 /**
- * Runtime state registered by option-capable fields.
- *
- * The form runtime keeps this state field-local and lazy: an option source only exists once
- * the field is mounted, which lets query-backed fields depend on mounted field context while
- * still exposing loader state through field APIs.
+ * Option state registered by a mounted option field and read through the field API.
  */
 export interface FormOptionRuntimeState {
-  /** Current normalized options, including locally-created options. */
+  /** Options available to the control: loaded pages merged with hydrated selections. */
   items: ComputedRef<readonly ResolvedFormOption[]>
-  /** True while the first usable option payload is loading. */
+  /** Hydrated options for the current selection, including values outside the loaded pages. */
+  selectedItems: ComputedRef<readonly ResolvedFormOption[]>
   pending: ComputedRef<boolean>
-  /** True while options are refreshing after a usable payload already exists. */
   fetching: ComputedRef<boolean>
-  /** True when controls should show a blocking loader. */
   loading: ComputedRef<boolean>
-  /** True while an option creation handler is pending. */
   creating: ComputedRef<boolean>
-  /** True when the field has an option creation handler. */
   creatable: ComputedRef<boolean>
-  /** Optional label for the explicit create affordance. */
   createLabel: ComputedRef<string | undefined>
-  /** Last option-source error, if any. */
   error: ComputedRef<FormValue | null>
-  /** True when the field should disable interactions while `loading` is true. */
   disableOnLoading: ComputedRef<boolean>
-  /** True when the field should render a refresh affordance. */
   refreshable: ComputedRef<boolean>
-  /** True when created options should be selected immediately. */
   selectCreatedOption: ComputedRef<boolean>
-  /** Re-runs the field option source. */
+  /** True when options load remotely with search and pagination. */
+  remote: ComputedRef<boolean>
+  /** Current remote search term. */
+  search: ComputedRef<string>
+  /** True when another remote page can be loaded. */
+  hasMore: ComputedRef<boolean>
+  /** True while a next page is loading. */
+  loadingMore: ComputedRef<boolean>
+  /** True when the last remote request failed and can be retried. */
+  retryable: ComputedRef<boolean>
+  /** Distance from the list end that triggers the next page. */
+  prefetchDistance: ComputedRef<number | 'viewport'>
   refresh: () => Promise<void>
-  /** Appends a local option to the field option list without calling the async create handler. */
+  retry: () => Promise<void>
+  /** Starts remote loading, typically when the menu opens. */
+  activate: () => void
+  setSearch: (term: string) => void
+  loadMore: () => Promise<void>
+  /** Loads the direct children of a remote tree option. */
+  loadChildren: (option: ResolvedFormOption) => Promise<void>
   add: (option: FormValue) => void
-  /** Creates and appends a local option when configured by the field. */
   create: (label: string) => Promise<ResolvedFormOption | null>
 }

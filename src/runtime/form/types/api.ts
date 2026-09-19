@@ -108,6 +108,22 @@ export interface FormFieldOptionsApi<TOption = FormValue> {
   refresh: () => Promise<void>
   /** Creates a new option when the field configured an option creation handler. */
   create: (label: string) => Promise<TOption | null>
+  /** Returns hydrated options for the current selection, including values outside loaded pages. */
+  selected: () => readonly TOption[]
+  /** True when the field loads options remotely. */
+  remote: () => boolean
+  /** Current remote search term. */
+  search: () => string
+  /** Sets the remote search term. Ignored for local option sources. */
+  setSearch: (term: string) => void
+  /** Starts remote loading, for example when the menu opens. */
+  activate: () => void
+  /** True when another remote page can be loaded. */
+  hasMore: () => boolean
+  /** Loads the next remote page. */
+  loadMore: () => Promise<void>
+  /** Retries the last failed remote request. */
+  retry: () => Promise<void>
 }
 
 /**

@@ -54,9 +54,21 @@ function createEmptyOptionState(): FormOptionRuntimeState {
     items: computed<readonly ResolvedFormOption[]>(() => []),
     loading: computed<boolean>(() => false),
     pending: computed<boolean>(() => false),
+    activate: () => {},
+    hasMore: computed<boolean>(() => false),
+    loadChildren: () => Promise.resolve(),
+    loadMore: () => Promise.resolve(),
+    loadingMore: computed<boolean>(() => false),
+    prefetchDistance: computed<number | 'viewport'>(() => 'viewport'),
     refresh: async () => {},
     refreshable: computed<boolean>(() => false),
+    remote: computed<boolean>(() => false),
+    retry: () => Promise.resolve(),
+    retryable: computed<boolean>(() => false),
+    search: computed<string>(() => ''),
     selectCreatedOption: computed<boolean>(() => true),
+    selectedItems: computed<readonly ResolvedFormOption[]>(() => []),
+    setSearch: () => {},
   }
 }
 

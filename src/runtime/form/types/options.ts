@@ -114,3 +114,106 @@ export interface FormOptionConfig<
   /** Disable the field while its option source has no usable data yet. */
   disableOnLoading?: boolean
 }
+
+/**
+ * Page envelope returned by an index-paginated remote option source.
+ */
+export interface FormRemoteOptionsPage<TOption> {
+  options: readonly TOption[]
+  hasMore: boolean
+}
+
+/**
+ * Page envelope returned by a cursor-paginated remote option source.
+ */
+export interface FormRemoteCursorOptionsPage<TOption> {
+  options: readonly TOption[]
+  nextCursor: string | null
+}
+
+export type FormRemoteOptionsResult<TOption> =
+  | FormRemoteOptionsPage<TOption>
+  | FormRemoteCursorOptionsPage<TOption>
+
+export interface FormRemoteOptionsRequest<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+  TOption = FormValue,
+> extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
+  /** Current debounced search term. Empty when the menu lists unfiltered options. */
+  search: string
+  /** Requested page. `cursor` is set for cursor pagination and `index` for page pagination. */
+  page: { index: number; cursor: string | null; size: number }
+  /** Parent option whose direct children are requested. Undefined for root pages. */
+  parent?: TOption
+}
+
+export interface FormRemoteSelectedRequest<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+  TOption = FormValue,
+> extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
+  /** Selected values that are not present in the loaded pages. */
+  values: readonly FormOptionValue[]
+}
+
+export type FormRemoteSource<TResult> = FormQueryOptions<TResult> | Promise<TResult>
+
+export interface FormRemotePagination {
+  type: 'page' | 'cursor'
+  /** Page size forwarded to the source. */
+  size: number
+  /** Distance from the list end that triggers the next page, in pixels or one viewport height. */
+  prefetchDistance?: number | 'viewport'
+}
+
+export interface FormRemoteSearch {
+  /** Debounce applied to typed search terms, in milliseconds. Defaults to 250. */
+  debounce?: number
+  /** Minimum term length before a search request runs. Defaults to 0. */
+  minLength?: number
+}
+
+/**
+ * Remote option configuration: server-side search, pagination, and selected-value hydration.
+ */
+export interface FormRemoteOptionConfig<
+  TOption,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+> {
+  mode: 'remote'
+  /** Loads one page of options for the current search, page, and optional parent. */
+  source: (
+    request: FormRemoteOptionsRequest<TContext, TDeps, TValue, TOption>,
+  ) => FormRemoteSource<FormRemoteOptionsResult<TOption>>
+  /** Hydrates selected values that the loaded pages do not contain. */
+  resolveSelected?: (
+    request: FormRemoteSelectedRequest<TContext, TDeps, TValue, TOption>,
+  ) => FormRemoteSource<readonly TOption[]>
+  pagination: FormRemotePagination
+  search?: FormRemoteSearch
+  /** Dependency aliases whose changes reset the loaded pages and re-run selected hydration. */
+  refreshOn?: readonly string[]
+  /** Clears selected values the latest successful selected hydration did not return. Defaults to `false`. */
+  clearOnInvalid?: boolean
+  /** Optional creation behavior for missing options. */
+  create?: FormCreateOption<TOption, TContext, TDeps, TValue>
+  /** Enables the field-level refresh affordance. */
+  allowOptionsRefresh?: boolean
+  /** Disable the field while its option source has no usable data yet. */
+  disableOnLoading?: boolean
+}
+
+export type FormAnyOptionConfig<
+  TOption,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+> =
+  | FormOptionConfig<TOption, TContext, TDeps, TValue>
+  | FormRemoteOptionConfig<TOption, TContext, TDeps, TValue>
+  | FormOptionsSource<TOption, TContext, TDeps, TValue>

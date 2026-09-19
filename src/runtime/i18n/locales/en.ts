@@ -32,7 +32,11 @@ export default defineUiToolsLocale<Messages>({
           create: 'Create option',
           createNamed: 'Create "{label}"',
           creating: 'Creating…',
+          loadError: 'Options could not be loaded',
+          loadMore: 'Load more',
+          loadingMore: 'Loading…',
           refresh: 'Refresh',
+          retry: 'Retry',
         },
         password: {
           hide: 'Hide password',
