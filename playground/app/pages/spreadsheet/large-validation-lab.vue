@@ -51,7 +51,7 @@ interface SpreadsheetAffiliationOption {
   name: string
 }
 
-const batchCodeRule = createSheetRule<string, [], {}>({
+const batchCodeRule = createSheetRule<string, [], NonNullable<unknown>>({
   message: ({ value }) => `"${value}" cannot start with underscore`,
   name: 'batchCode',
   validator: (value) => !value.startsWith('_'),

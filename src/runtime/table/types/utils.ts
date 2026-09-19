@@ -140,7 +140,7 @@ type MergeContextItem<TItem> = TItem extends {
   query: (...args: any[]) => import('@tanstack/vue-query').UseQueryOptions<infer TValue>
 }
   ? { [K in TKey]: Awaited<TValue> }
-  : {}
+  : NonNullable<unknown>
 
 type MergeContextItemUnion<TItem> = UnionToIntersection<MergeContextItem<TItem>>
 
@@ -160,11 +160,11 @@ export type ExtractTableRow<TSchema> = NormalizeExtractedRow<
 export type ExtractTableContextData<TSchema> = Prettify<
   TableResolvedSchema<TSchema> extends { context?: infer TItems extends unknown[] }
     ? MergeContextItemUnion<TItems[number]>
-    : {}
+    : NonNullable<unknown>
 >
 
 export type ExtractTablePageContextData<TSchema> = Prettify<
   TableResolvedSchema<TSchema> extends { pageContext?: infer TItems extends unknown[] }
     ? MergeContextItemUnion<TItems[number]>
-    : {}
+    : NonNullable<unknown>
 >

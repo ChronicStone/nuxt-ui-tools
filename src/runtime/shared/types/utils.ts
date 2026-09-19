@@ -85,12 +85,12 @@ export type InferParams<T> = T extends (params: infer P) => any ? P : never
 
 export type Prettify<T> = {
   [K in keyof T]: T[K]
-} & {}
+} & NonNullable<unknown>
 
 export type DeepPrettify<T> = T extends (infer U)[]
   ? DeepPrettify<U>[]
   : T extends object
-    ? { [K in keyof T]: DeepPrettify<T[K]> } & {}
+    ? { [K in keyof T]: DeepPrettify<T[K]> } & NonNullable<unknown>
     : T
 
 export type PathToObject<Path extends string, Output> = Path extends `${infer First}.${infer Rest}`

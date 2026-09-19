@@ -49,7 +49,7 @@ function createQueryPrefetchPlan<Context extends object>(
  * `prefetchTable(...)`.
  */
 export function defineQueryPrefetchPlan() {
-  return createQueryPrefetchPlan<{}>([])
+  return createQueryPrefetchPlan<NonNullable<unknown>>([])
 }
 
 /**

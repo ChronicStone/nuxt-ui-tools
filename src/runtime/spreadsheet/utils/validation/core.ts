@@ -144,8 +144,8 @@ function createSpreadsheetRuleInstance<
 function createRule<
   TValue,
   TParams extends unknown[],
-  TMeta extends SpreadsheetRecord = {},
-  TFlags extends SpreadsheetRuleFlags = {},
+  TMeta extends SpreadsheetRecord = NonNullable<unknown>,
+  TFlags extends SpreadsheetRuleFlags = NonNullable<unknown>,
 >(options: {
   flags?: TFlags
   name?: string
@@ -174,7 +174,7 @@ function createRule(options: {
   }
 }
 
-function validate<TValue, TMeta extends SpreadsheetRecord = {}>(options: {
+function validate<TValue, TMeta extends SpreadsheetRecord = NonNullable<unknown>>(options: {
   name?: string
   validator: (value: TValue) => SpreadsheetValidatorResult<TMeta>
   message: SpreadsheetLazyMessage<TValue, [], TMeta>
@@ -245,7 +245,7 @@ function createSpreadsheetRuleBuilder() {
         min,
       }),
     }),
-    number: createRule<number, [], {}>({
+    number: createRule<number, [], NonNullable<unknown>>({
       message: () => t('spreadsheet.validation.number'),
       name: 'number',
       validator: (value: number) => createNumericValueGuard(value),
@@ -276,7 +276,7 @@ function createSpreadsheetRuleBuilder() {
 
       return ruleFactory(values, overrides)
     },
-    required: createRule<unknown, [], {}, { required: true }>({
+    required: createRule<unknown, [], NonNullable<unknown>, { required: true }>({
       flags: { required: true },
       message: () => t('spreadsheet.validation.required'),
       name: 'required',

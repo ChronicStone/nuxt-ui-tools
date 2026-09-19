@@ -145,9 +145,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
 })
 
-function mergeViewportOptions(
-  viewportOptions?: Partial<ViewportOptions>,
-): ViewportOptions {
+function mergeViewportOptions(viewportOptions?: Partial<ViewportOptions>): ViewportOptions {
   return {
     breakpoints: {
       ...viewportDefaults.breakpoints,
