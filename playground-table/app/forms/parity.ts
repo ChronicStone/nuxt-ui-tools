@@ -77,6 +77,58 @@ export function parityFormSchema() {
         rows: 2,
         type: 'textarea',
       },
+      { key: 'productSection', label: 'Produit', type: 'section' },
+      {
+        key: 'product',
+        tabs: [
+          {
+            fields: [
+              { key: 'productName', label: 'Nom du produit', required: true, type: 'text' },
+              {
+                key: 'productLine',
+                label: 'Gamme',
+                options: [
+                  { label: 'TOEIC', value: 'toeic' },
+                  { label: 'Bright', value: 'bright' },
+                ],
+                type: 'select',
+              },
+              {
+                key: 'productDescription',
+                label: 'Description',
+                layout: { span: 'full' },
+                rows: 2,
+                type: 'textarea',
+              },
+            ],
+            key: 'general',
+            label: 'Général',
+          },
+          {
+            fields: [
+              {
+                key: 'listPrice',
+                label: 'Prix catalogue',
+                required: true,
+                suffix: '€',
+                type: 'number',
+              },
+              { key: 'validity', label: 'Validité (mois)', type: 'number' },
+            ],
+            key: 'pricing',
+            label: 'Versions & tarifs',
+          },
+          {
+            fields: [
+              { key: 'scoreMax', label: 'Score maximal', type: 'number' },
+              { key: 'certificate', label: 'Certificat délivré', type: 'checkbox' },
+            ],
+            key: 'results',
+            label: 'Résultats',
+          },
+        ],
+        type: 'tabs',
+      },
       { key: 'preferences', label: 'Préférences', type: 'section' },
       {
         key: 'language',
@@ -110,7 +162,9 @@ export function parityFormSchema() {
 
 export const parityFormInput = {
   erpId: 'EVZ-48213',
+  listPrice: 129,
   language: 'fr',
+  productName: 'TOEIC Listening & Reading',
   rate: 0.9214,
   siren: '812345678',
   unitPrice: 129,
