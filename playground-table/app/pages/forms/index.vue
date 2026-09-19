@@ -20,6 +20,7 @@ import {
 } from '../../forms/catalogue'
 import { contactFormSchema } from '../../forms/contact'
 import { contractFormSchema } from '../../forms/contract'
+import { sendDemandFormSchema } from '../../forms/demand'
 import { parityFormInput, parityFormSchema } from '../../forms/parity'
 import {
   groupFormSchema,
@@ -81,6 +82,13 @@ const entries: FormEntry[] = [
     'Général, produits, objectifs et documents.',
     contractFormSchema(accounts),
     { currency: 'EUR', paymentTerm: '30', products: [{ active: true }] },
+  ),
+  register(
+    'sendDemand',
+    'Envoyer une demande',
+    'Modèle, destinataires, délai et relances.',
+    sendDemandFormSchema(accounts),
+    { accounts: [accounts[4]?.id ?? ''] },
   ),
   register(
     'contact',
