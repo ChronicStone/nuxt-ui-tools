@@ -375,7 +375,7 @@ function handleContentMounted() {
             >
               <UIcon name="i-lucide-arrow-left" class="size-4" />
             </button>
-            <span class="min-w-0 flex-1 truncate text-[13px] font-semibold text-highlighted">
+            <span class="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-highlighted">
               {{ internals.filters.getFilterLabelText({ label: definition.label }) }}
             </span>
             <button

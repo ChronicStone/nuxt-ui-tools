@@ -225,7 +225,7 @@ function clearSelection() {
                     :loading="action.state.loading || action.running"
                     :ui="{
                       base: mergeDataListUiClass(
-                        'nut-dl-selbar__action h-8 px-2.5 text-[12.5px] font-medium text-inverted/90 hover:bg-white/12 hover:text-inverted',
+                        'nut-dl-selbar__action h-8 px-2.5 text-[12.5px] font-medium text-inverted/90 hover:bg-white/12 hover:text-inverted active:bg-white/16 active:text-inverted',
                         undefined,
                         ui.action,
                       ),
@@ -239,14 +239,18 @@ function clearSelection() {
                 v-if="overflowActions.length"
                 :items="overflowItems"
                 :content="{ side: 'top', align: 'end', sideOffset: 8 }"
-                :ui="{ content: 'min-w-52' }"
+                :ui="{
+                  content: 'min-w-52',
+                  item: 'gap-2 text-[13px]',
+                  itemLeadingIcon: 'size-3.5 text-muted',
+                }"
               >
                 <UButton
                   v-bind="overflowProps"
                   :aria-label="t('table.selectionBar.more')"
                   :ui="{
                     base: mergeDataListUiClass(
-                      'nut-dl-selbar__more h-8 w-8 text-inverted/90 hover:bg-white/12 hover:text-inverted',
+                      'nut-dl-selbar__more h-8 w-8 text-inverted/90 hover:bg-white/12 hover:text-inverted active:bg-white/16 active:text-inverted',
                       undefined,
                       ui.overflow,
                     ),
@@ -261,7 +265,7 @@ function clearSelection() {
               :title="t('table.selectionBar.clear')"
               :ui="{
                 base: mergeDataListUiClass(
-                  'nut-dl-selbar__dismiss h-8 w-8 text-inverted hover:bg-white/12',
+                  'nut-dl-selbar__dismiss h-8 w-8 text-inverted hover:bg-white/12 active:bg-white/16 active:text-inverted',
                   undefined,
                   ui.dismiss,
                 ),

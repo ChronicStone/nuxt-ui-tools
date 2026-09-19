@@ -58,14 +58,18 @@ describe('data-list UI', () => {
 
   it('scales the complete filter editor surface with its control size', () => {
     expect(resolveFilterEditorSizeClasses('sm')).toMatchObject({
-      editor: 'w-[min(15rem,calc(100vw-1rem))] min-w-48 max-w-60',
+      editor: 'w-[min(14rem,calc(100vw-1rem))] min-w-44 max-w-56',
       footer: 'p-1.5',
       option: expect.stringContaining('text-xs'),
       searchHeader: 'p-1.5',
     })
+    expect(resolveFilterEditorSizeClasses('md')).toMatchObject({
+      editor: 'w-[min(15rem,calc(100vw-1rem))] min-w-48 max-w-60',
+      option: expect.stringContaining('text-[13px]'),
+    })
     expect(resolveFilterEditorSizeClasses('lg')).toMatchObject({
-      editor: 'w-[min(19rem,calc(100vw-1rem))] min-w-56 max-w-76',
-      option: expect.stringContaining('py-2.5'),
+      editor: 'w-[min(17rem,calc(100vw-1rem))] min-w-52 max-w-68',
+      option: expect.stringContaining('py-2'),
     })
     expect(resolveFilterEditorSizeClasses('xl')).toMatchObject({
       editor: 'w-[min(21rem,calc(100vw-1rem))] min-w-60 max-w-84',

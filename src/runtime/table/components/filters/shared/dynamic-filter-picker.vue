@@ -263,7 +263,7 @@ function toggle() {
             v-if="pickerProps?.title !== false"
             :class="
               mergeDataListUiClass(
-                'nut-dl-picker__title px-3 pt-2.5 pb-1 text-[12.5px] font-semibold text-muted',
+                'nut-dl-picker__title px-2.5 pt-2 pb-0.5 text-[11.5px] font-semibold text-muted',
                 undefined,
                 ui?.title,
               )

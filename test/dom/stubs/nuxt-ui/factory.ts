@@ -35,7 +35,7 @@ function uiAttributes(ui: unknown) {
   }
   for (const [slot, value] of Object.entries(ui as Any)) {
     if (typeof value === 'string' && value) {
-      out[`data-ui-${slot.toLowerCase()}`] = value
+      out[`data-slot-${slot.toLowerCase()}`] = value
     }
   }
   return out

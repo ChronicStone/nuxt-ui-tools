@@ -28,7 +28,11 @@ const buttonProps = computed(() =>
       :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
       :modal="false"
       portal
-      :ui="{ content: 'z-[80] min-w-48' }"
+      :ui="{
+        content: 'z-[80] min-w-48',
+        item: 'nut-dl-menu__item gap-2 text-[13px]',
+        itemLeadingIcon: 'size-3.5 text-muted',
+      }"
     >
       <UButton
         v-bind="buttonProps"

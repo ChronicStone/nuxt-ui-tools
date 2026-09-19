@@ -67,7 +67,7 @@ describe('filter slideover content', () => {
       'true',
       'right',
     ])
-    expect(panel.attributes('data-ui-content')).toContain('max-w-[480px]')
+    expect(panel.attributes('data-slot-content')).toContain('max-w-[480px]')
     expect([
       w.find('.nut-dl-fpanel__title').text(),
       w.find('.nut-dl-fpanel__results').text(),
@@ -234,7 +234,7 @@ describe('filter slideover content', () => {
       trigger.attributes('data-size'),
       trigger.text(),
     ]).toEqual(['soft', 'sm', 'Affiner'])
-    expect(w.find('[data-ui="USlideover"]').attributes('data-ui-content')).toContain('content-x')
+    expect(w.find('[data-ui="USlideover"]').attributes('data-slot-content')).toContain('content-x')
     expect(w.find('.nut-dl-fpanel__title').classes()).toContain('title-x')
     expect(w.find('.nut-dl-fpanel__description').text()).toBe('Affinez la liste.')
     expect(w.find('.nut-dl-fpanel__caption').classes()).toContain('cap-x')

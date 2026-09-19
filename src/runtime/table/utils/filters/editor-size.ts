@@ -2,20 +2,6 @@ import type { DataListControlSize } from '../../types'
 
 const filterEditorSizeClasses = {
   lg: {
-    editor: 'w-[min(19rem,calc(100vw-1rem))] min-w-56 max-w-76',
-    empty: 'px-3.5 py-9 text-sm',
-    footer: 'p-2.5',
-    option: 'gap-3 px-3.5 py-2.5 text-sm',
-    optionIcon: 'size-4.5',
-    optionLabel: 'text-sm',
-    scrollArea: 'p-2.5',
-    searchHeader: 'p-2.5',
-    skeletonCount: 'h-3.5 w-6',
-    skeletonLine: 'h-3.5',
-    wideEditor:
-      'w-[min(42rem,calc(100vw-1rem))] min-w-[min(21rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
-  },
-  md: {
     editor: 'w-[min(17rem,calc(100vw-1rem))] min-w-52 max-w-68',
     empty: 'px-3 py-8 text-sm',
     footer: 'p-2',
@@ -27,13 +13,27 @@ const filterEditorSizeClasses = {
     skeletonCount: 'h-3.5 w-6',
     skeletonLine: 'h-3.5',
     wideEditor:
+      'w-[min(42rem,calc(100vw-1rem))] min-w-[min(21rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
+  },
+  md: {
+    editor: 'w-[min(15rem,calc(100vw-1rem))] min-w-48 max-w-60',
+    empty: 'px-2.5 py-6 text-[13px]',
+    footer: 'p-1.5',
+    option: 'gap-2.5 px-2.5 py-1.5 text-[13px]',
+    optionIcon: 'size-3.5',
+    optionLabel: 'text-[13px]',
+    scrollArea: 'p-1.5',
+    searchHeader: 'p-1.5',
+    skeletonCount: 'h-3 w-5',
+    skeletonLine: 'h-3',
+    wideEditor:
       'w-[min(38rem,calc(100vw-1rem))] min-w-[min(20rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]',
   },
   sm: {
-    editor: 'w-[min(15rem,calc(100vw-1rem))] min-w-48 max-w-60',
+    editor: 'w-[min(14rem,calc(100vw-1rem))] min-w-44 max-w-56',
     empty: 'px-2.5 py-5 text-xs',
     footer: 'p-1.5',
-    option: 'gap-2 px-2 py-1.5 text-xs',
+    option: 'gap-2 px-2 py-1 text-xs',
     optionIcon: 'size-3.5',
     optionLabel: 'text-xs',
     scrollArea: 'p-1',
