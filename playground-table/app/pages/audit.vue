@@ -268,77 +268,17 @@ const schema = defineTableSchema({
   tableKey: 'audit',
 })
 
-const listUi = {
-  addFilter: { props: { trigger: { label: 'Filtre' } } },
-  columnPanel: {
-    props: {
-      count: { color: 'neutral', size: 'sm', variant: 'soft' },
-      trigger: { color: 'neutral', icon: 'i-lucide-layers', variant: 'outline' },
-    },
-  },
-  filterTags: {
-    props: { icon: false },
-    ui: {
-      activeRoot: 'bg-[#f7f3ee] ring-[var(--ui-border)] dark:bg-[#302d2a]',
-      activeTrigger: 'text-[12.5px] pl-[11px]',
-      addTrigger: 'text-[12.5px] px-3 font-normal',
-      trigger: 'text-[12.5px]',
-      value: 'text-[12.5px]',
-    },
-  },
-  grid: { gap: 12, ui: { viewport: 'p-5 max-md:px-4 max-md:pt-0.5 max-md:pb-4' } },
-  layoutSwitch: {
-    props: { activeTrigger: { variant: 'ghost' }, trigger: { color: 'neutral', variant: 'ghost' } },
-    size: 'sm',
-    ui: {
-      root: 'h-[34px] items-center gap-0.5 rounded-md bg-[#f7f3ee] p-0.5 dark:bg-[#242220]',
-      trigger:
-        'h-7 w-7 rounded-[4px] text-muted hover:text-default hover:bg-transparent data-[active=true]:bg-[var(--ex-surface)] data-[active=true]:text-highlighted data-[active=true]:shadow-[0_0_0_1px_var(--ui-border)]',
-    },
-  },
-  mobile: {
-    control: { size: 'lg' },
-    grid: { gap: 10 },
-    search: { ui: { root: 'flex-1 min-w-0' }, width: '100%' },
-  },
-  search: { props: { input: { color: 'neutral', variant: 'outline' } }, width: '340px' },
-  table: {
-    gutter: 20,
-    props: { rowActions: { color: 'neutral', size: 'sm', variant: 'ghost' } },
-    ui: { td: 'font-light' },
-  },
-} as const
-
 const table = useTable(schema)
 </script>
 
 <template>
-  <NutDataListRoot :table="table" :ui="listUi">
-    <div class="ex-list">
-      <header class="ex-ph">
-        <div>
-          <h1>Journal d’audit</h1>
-          <p>Toutes les actions effectuées sur la plateforme, en temps réel.</p>
-        </div>
-        <div class="ex-ph-acts">
-          <UButton color="neutral" variant="outline" icon="i-lucide-download" label="Exporter" />
-        </div>
-      </header>
-      <div class="ex-tb">
-        <div class="ex-tb-l">
-          <NutDataListSearch />
-          <NutDataListFilterTags show-add show-clear />
-        </div>
-        <div class="ex-tb-r">
-          <NutDataListSortMenu label="Tri" />
-          <span class="max-md:hidden"><NutDataListResultCount /></span>
-          <NutDataListColumnPanel />
-          <NutDataListLayoutSwitch />
-        </div>
-      </div>
-      <div class="relative flex min-h-0 flex-1 flex-col">
-        <NutDataListContent fit="fill" surface="plain" class="min-h-0 flex-1" />
-      </div>
-    </div>
-  </NutDataListRoot>
+  <AppDataList
+    :table="table"
+    title="Journal d’audit"
+    description="Toutes les actions effectuées sur la plateforme, en temps réel."
+  >
+    <template #actions>
+      <UButton color="neutral" variant="outline" icon="i-lucide-download" label="Exporter" />
+    </template>
+  </AppDataList>
 </template>

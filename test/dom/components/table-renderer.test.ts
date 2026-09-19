@@ -403,3 +403,50 @@ describe('TableRenderer cursor mode', () => {
     expect(harness.internals.pagination.canNextPage.value).toBeFalsy()
   })
 })
+
+describe('TableRenderer internal columns', () => {
+  it('hides the selection column when no bulk action is configured', async () => {
+    harness = await mountTable({ schema: createAccountsSchema({ actions: false }) })
+    expect(harness.wrapper.find('th[data-col="__select"]').exists()).toBe(false)
+    expect(harness.wrapper.find('td[data-col="__select"]').exists()).toBe(false)
+    expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBe(true)
+  })
+
+  it('keeps the selection column when selection is forced without actions', async () => {
+    harness = await mountTable({
+      schema: createAccountsSchema({ actions: false, selection: { mode: true } }),
+    })
+    expect(harness.wrapper.find('th[data-col="__select"]').exists()).toBe(true)
+  })
+
+  it('hides the row-actions column when no loaded row exposes an action', async () => {
+    const schema = createAccountsSchema()
+    Object.assign(schema, { rowActions: () => [] })
+    harness = await mountTable({ schema })
+    expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBe(false)
+    expect(harness.wrapper.find('.nut-dl-rowbtn').exists()).toBe(false)
+    harness.unmount()
+
+    const hidden = createAccountsSchema()
+    Object.assign(hidden, {
+      rowActions: [{ action: () => undefined, condition: () => false, key: 'x', label: 'X' }],
+    })
+    harness = await mountTable({ schema: hidden })
+    expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBe(false)
+    harness.unmount()
+
+    harness = await mountTable({ schema: createAccountsSchema({ rowActions: false }) })
+    expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBe(false)
+  })
+
+  it('shows the row-actions column as soon as one row has a visible action', async () => {
+    const schema = createAccountsSchema()
+    Object.assign(schema, {
+      rowActions: ({ row }: { row: { id: string } }) =>
+        row.id === 'acc-7' ? [{ action: () => undefined, key: 'only', label: 'Only' }] : [],
+    })
+    harness = await mountTable({ schema })
+    expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBe(true)
+    expect(harness.wrapper.findAll('td[data-col="__row-actions"] .nut-dl-rowbtn')).toHaveLength(1)
+  })
+})
