@@ -80,6 +80,15 @@ export default defineAppConfig({
     fieldGroup: {
       base: 'relative',
     },
+    formField: {
+      slots: {
+        description: 'text-[11.5px]',
+        error: 'text-[11.5px]',
+        help: 'text-[11.5px]',
+        hint: 'text-[11.5px]',
+        label: 'text-[12.5px]',
+      },
+    },
     input: {
       compoundVariants: [
         {
@@ -109,6 +118,74 @@ export default defineAppConfig({
         },
       },
     },
+    inputMenu: {
+      compoundVariants: [
+        {
+          class:
+            'bg-[var(--ex-surface)] ring-[var(--ui-border)] outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]',
+          color: 'neutral',
+          variant: 'outline',
+        },
+      ],
+      variants: {
+        size: {
+          lg: { base: 'h-[38px] px-2.5 text-[13px] gap-2' },
+          md: { base: 'h-[34px] px-2.5 text-[13px] gap-2' },
+          sm: { base: 'h-7 px-2.5 text-[12.5px]' },
+        },
+      },
+    },
+    inputNumber: {
+      compoundVariants: [
+        {
+          class:
+            'bg-[var(--ex-surface)] ring-[var(--ui-border)] outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]',
+          color: 'neutral',
+          variant: 'outline',
+        },
+      ],
+      variants: {
+        size: {
+          lg: { base: 'h-[38px] px-2.5 text-[13px] gap-2' },
+          md: { base: 'h-[34px] px-2.5 text-[13px] gap-2' },
+          sm: { base: 'h-7 px-2.5 text-[12.5px]' },
+        },
+      },
+    },
+    inputTags: {
+      compoundVariants: [
+        {
+          class:
+            'bg-[var(--ex-surface)] ring-[var(--ui-border)] outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]',
+          color: 'neutral',
+          variant: 'outline',
+        },
+      ],
+      variants: {
+        size: {
+          lg: { base: 'min-h-[38px] px-2 text-[13px] gap-1.5' },
+          md: { base: 'min-h-[34px] px-2 text-[13px] gap-1.5' },
+          sm: { base: 'min-h-7 px-1.5 text-[12.5px] gap-1' },
+        },
+      },
+    },
+    inputTime: {
+      compoundVariants: [
+        {
+          class:
+            'bg-[var(--ex-surface)] ring-[var(--ui-border)] outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]',
+          color: 'neutral',
+          variant: 'outline',
+        },
+      ],
+      variants: {
+        size: {
+          lg: { base: 'h-[38px] px-2.5 text-[13px] gap-2' },
+          md: { base: 'h-[34px] px-2.5 text-[13px] gap-2' },
+          sm: { base: 'h-7 px-2.5 text-[12.5px]' },
+        },
+      },
+    },
     popover: {
       slots: {
         content: 'rounded-lg shadow-[0_16px_40px_-12px_rgba(31,29,26,.25)] ring-[var(--ui-border)]',
@@ -123,6 +200,36 @@ export default defineAppConfig({
           md: { base: 'h-[34px] px-2.5 text-[13px] gap-2' },
           sm: { base: 'h-7 px-2.5 text-[12.5px] gap-1.5' },
           xs: { base: 'h-6 px-2 text-[11.5px] gap-1' },
+        },
+      },
+    },
+    selectMenu: {
+      compoundVariants: [
+        { class: 'focus-visible:ring-primary', color: 'neutral', variant: 'outline' },
+      ],
+      variants: {
+        size: {
+          lg: { base: 'h-[38px] px-2.5 text-[13px] gap-2' },
+          md: { base: 'h-[34px] px-2.5 text-[13px] gap-2' },
+          sm: { base: 'h-7 px-2.5 text-[12.5px] gap-1.5' },
+          xs: { base: 'h-6 px-2 text-[11.5px] gap-1' },
+        },
+      },
+    },
+    textarea: {
+      compoundVariants: [
+        {
+          class:
+            'bg-[var(--ex-surface)] ring-[var(--ui-border)] outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]',
+          color: 'neutral',
+          variant: 'outline',
+        },
+      ],
+      variants: {
+        size: {
+          lg: { base: 'px-2.5 py-2 text-[13px]' },
+          md: { base: 'px-2.5 py-2 text-[13px]' },
+          sm: { base: 'px-2.5 py-1.5 text-[12.5px]' },
         },
       },
     },
