@@ -102,7 +102,6 @@ const resolvedUi = computed(() => mergeDataListUiConfig(sharedUi, props.ui))
         <div class="ex-tb-r">
           <NutDataListFilterPanel />
           <NutDataListSortMenu label="Tri" />
-          <span class="max-md:hidden"><NutDataListResultCount /></span>
           <NutDataListColumnPanel />
           <NutDataListRefresh />
           <NutDataListLayoutSwitch />
