@@ -294,6 +294,12 @@ export interface UiToolsFormMessages {
       more: string
       close: string
     }
+    file: {
+      drop: string
+      replace: string
+      remove: string
+      add: string
+    }
     array: {
       addItem: string
       removeItem: string

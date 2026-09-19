@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import { computed } from 'vue'
 
@@ -49,6 +50,13 @@ const groupUi = computed(() => ({
       :ui="groupUi"
       :disabled="disabled"
       @blur="handleBlur"
-    />
+    >
+      <template #label="{ item }">
+        <span class="inline-flex items-center gap-2">
+          <UIcon v-if="item.icon" :name="item.icon" class="size-4 shrink-0" aria-hidden="true" />
+          <span>{{ item.label }}</span>
+        </span>
+      </template>
+    </URadioGroup>
   </FormFieldShell>
 </template>

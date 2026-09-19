@@ -35,7 +35,11 @@ const items = computed(() => [...options.items.value])
       v-bind="controlProps"
       value-key="value"
       label-key="label"
+      description-key="description"
       :items="items"
+      :variant="field.variant === 'table' ? 'list' : (field.variant ?? 'list')"
+      :orientation="field.orientation"
+      :indicator="field.indicator"
       :disabled="disabled"
       @blur="handleBlur"
     />

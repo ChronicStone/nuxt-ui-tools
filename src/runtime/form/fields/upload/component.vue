@@ -2,13 +2,16 @@
 import UAlert from '@nuxt/ui/components/Alert.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UFileUpload from '@nuxt/ui/components/FileUpload.vue'
+import UProgress from '@nuxt/ui/components/Progress.vue'
 import { computed, onScopeDispose, ref } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormFilePreview from '../../components/utils/form-file-preview.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormObject, FormUploadField } from '../../types'
 import { isObject, isString, isUndefined } from '../../utils/predicate'
+import { resolveFormText } from '../../utils/text'
 
 type UploadedValue = string | FormObject | readonly string[] | readonly FormObject[] | null
 
@@ -25,6 +28,7 @@ const { form, controlProps, disabled, handleBlur, params, validationPending } = 
 const selectedFiles = ref<File | File[] | null>(null)
 const uploadPending = ref<boolean>(false)
 const uploadError = ref<string | null>(null)
+const uploadProgress = ref<number | null>(null)
 const uploadRun = ref<number>(0)
 const uploadedValue = computed<UploadedValue>(() => {
   const value = form.getValue(props.path)
@@ -56,9 +60,15 @@ async function uploadFiles() {
 
   uploadPending.value = true
   try {
+    uploadProgress.value = null
     const value = await props.field.upload.handler({
       ...params.value,
       files: files.value,
+      onProgress: (percent: number) => {
+        if (uploadRun.value === run) {
+          uploadProgress.value = Math.min(100, Math.max(0, percent))
+        }
+      },
     })
     if (uploadRun.value !== run) {
       return
@@ -73,6 +83,7 @@ async function uploadFiles() {
   } finally {
     if (uploadRun.value === run) {
       uploadPending.value = false
+      uploadProgress.value = null
     }
   }
 }
@@ -130,7 +141,29 @@ function isFormObject(value: FormValue): value is FormObject {
         :accept="field.accept"
         :multiple="field.multiple"
         :disabled="disabled || uploadPending || validationPending"
+        :label="resolveFormText(field.dropzoneLabel) ?? t('form.fields.file.drop')"
+        :description="resolveFormText(field.dropzoneDescription)"
+        :icon="field.icon"
+        :variant="field.variant"
+        :layout="field.fileLayout"
+        :preview="field.preview"
+        position="outside"
         @change="handleFileChange"
+      >
+        <template #file="{ file, index, removeFile }">
+          <FormFilePreview
+            :file="file"
+            :index="index"
+            :disabled="disabled"
+            :remove-file="removeFile"
+          />
+        </template>
+      </UFileUpload>
+      <UProgress
+        v-if="uploadPending && uploadProgress !== null"
+        :model-value="uploadProgress"
+        size="sm"
+        data-form-upload-progress=""
       />
 
       <div class="flex flex-wrap items-center gap-2">

@@ -21,6 +21,7 @@ export interface FormSelectField<
   searchable?: boolean
   clearable?: boolean
   createItem?: FormSelectCreateItem
+  max?: number
 }
 
 type SelectFieldValue<TField> = TField extends { multiple: true }

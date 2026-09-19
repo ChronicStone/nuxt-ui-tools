@@ -14,6 +14,7 @@ export interface ResolvedFormOption {
   label: string
   description?: string
   disabled?: boolean
+  icon?: string
   children?: readonly ResolvedFormOption[]
   /** True when the option has children that load on demand. */
   lazy?: boolean
@@ -33,9 +34,11 @@ export function normalizeOptionItem(
       : undefined
     const lazy = option.isLeaf === false || option.hasChildren === true
     const value = normalizeOptionValue(fallbackValue)
+    const rawIcon = readOptionProperty(option, 'icon')
     const normalized: ResolvedFormOption = {
       description: isFormText(rawDescription) ? resolveFormText(rawDescription) : undefined,
       disabled: option.disabled === true,
+      icon: isString(rawIcon) ? rawIcon : undefined,
       label: resolveFormText(readOptionProperty(option, keys.label ?? 'label')) ?? String(value),
       value,
     }

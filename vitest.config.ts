@@ -115,6 +115,10 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/popover.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/Progress\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/progress.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/RadioGroup\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/radio-group.ts`,
       },

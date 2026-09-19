@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormInfoField } from '../../types'
 import { invokeFormFunction, isNumber, isString } from '../../utils/predicate'
+import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
   field: FormInfoField
@@ -24,5 +25,11 @@ const description = computed(() => {
 </script>
 
 <template>
-  <UAlert color="neutral" variant="soft" icon="i-lucide-info" :description="description" />
+  <UAlert
+    :color="field.color ?? 'neutral'"
+    :variant="field.variant ?? 'soft'"
+    :icon="field.icon === false ? undefined : (field.icon ?? 'i-lucide-info')"
+    :title="resolveFormText(field.title)"
+    :description="description"
+  />
 </template>

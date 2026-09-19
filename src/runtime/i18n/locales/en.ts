@@ -39,6 +39,12 @@ export default defineUiToolsLocale<Messages>({
           close: 'Close',
           more: 'Learn more',
         },
+        file: {
+          add: 'Add a file',
+          drop: 'Drop a file or browse',
+          remove: 'Remove file',
+          replace: 'Replace file',
+        },
         hierarchy: {
           clear: 'Clear selection',
           empty: 'No matching options',

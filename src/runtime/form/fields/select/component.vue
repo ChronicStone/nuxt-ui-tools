@@ -44,7 +44,14 @@ const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
     }
     return null
   },
-  set: (value) => form.setValue(props.path, value),
+  set: (value) => {
+    if (props.field.multiple && isNumber(props.field.max) && Array.isArray(value)) {
+      if (value.length > props.field.max) {
+        return
+      }
+    }
+    form.setValue(props.path, value)
+  },
 })
 const items = computed(() => [
   ...appendLoadMoreOption(

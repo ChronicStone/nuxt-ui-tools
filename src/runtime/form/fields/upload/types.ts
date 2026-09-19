@@ -2,13 +2,14 @@ import type { FormValue } from '../../types'
 import type { FormFieldCallbackParams } from '../../types/callbacks'
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { NullableValue } from '../../types/field-output-utils'
-import type { FormObject } from '../../types/utils'
+import type { FormObject, FormText } from '../../types/utils'
 
 export interface FormUploadCallbackParams<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
 > extends FormFieldCallbackParams<TContext, TDeps> {
   files: readonly File[]
+  onProgress: (percent: number) => void
 }
 
 export type FormUploadHandler<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> = (
@@ -35,6 +36,12 @@ export interface FormUploadField<
   multiple?: boolean
   accept?: string
   autoUpload?: boolean
+  dropzoneLabel?: FormText
+  dropzoneDescription?: FormText
+  icon?: string | false
+  variant?: 'area' | 'button'
+  fileLayout?: 'list' | 'grid'
+  preview?: boolean
   upload: {
     handler: FormUploadHandler<TContext, TDeps>
     onDelete?: (params: FormUploadDeleteParams<TContext, TDeps>) => Promise<void> | void
