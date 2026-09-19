@@ -40,6 +40,7 @@ import { selectFieldKind } from './select/config'
 import { sliderFieldKind } from './slider/config'
 import { switchGroupFieldKind } from './switch-group/config'
 import { switchFieldKind } from './switch/config'
+import { tabsFieldKind } from './tabs/config'
 import { tagFieldKind } from './tag/config'
 import { textFieldKind } from './text/config'
 import { textareaFieldKind } from './textarea/config'
@@ -66,6 +67,7 @@ export const formFieldKinds = [
   sectionFieldKind,
   inputGroupFieldKind,
   objectFieldKind,
+  tabsFieldKind,
   customComponentFieldKind,
   dateTimeFieldKind,
   dateRangeFieldKind,

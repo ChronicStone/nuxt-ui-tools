@@ -38,6 +38,7 @@ export type FormFieldType =
   | 'divider'
   | 'section'
   | 'input-group'
+  | 'tabs'
   | 'object'
   | 'custom-component'
   | 'file'

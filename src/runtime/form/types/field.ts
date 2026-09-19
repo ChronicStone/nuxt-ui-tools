@@ -47,6 +47,7 @@ import type { FormSelectField } from '../fields/select/types'
 import type { FormSliderField } from '../fields/slider/types'
 import type { FormSwitchGroupField } from '../fields/switch-group/types'
 import type { FormSwitchField } from '../fields/switch/types'
+import type { FormTabsField } from '../fields/tabs/types'
 import type { FormTagField } from '../fields/tag/types'
 import type { FormTextField } from '../fields/text/types'
 import type { FormTextareaField } from '../fields/textarea/types'
@@ -114,6 +115,7 @@ export type { FormSelectCreateItem, FormSelectField } from '../fields/select/typ
 export type { FormSliderField } from '../fields/slider/types'
 export type { FormSwitchGroupField } from '../fields/switch-group/types'
 export type { FormSwitchField } from '../fields/switch/types'
+export type { FormTab, FormTabsField } from '../fields/tabs/types'
 export type { FormTagField } from '../fields/tag/types'
 export type { FormTextField } from '../fields/text/types'
 export type { FormTextareaField } from '../fields/textarea/types'
@@ -157,6 +159,7 @@ export type FormField<TContext = NonNullable<unknown>, TDeps = NonNullable<unkno
   | FormDividerField<TContext, TDeps>
   | FormSectionField<TContext, TDeps>
   | FormInputGroupField<TContext, TDeps>
+  | FormTabsField<TContext, TDeps>
   | FormGroupField<TContext, TDeps>
   | FormObjectField<TContext, TDeps>
   | FormMatrixField<TContext, TDeps>

@@ -64,6 +64,14 @@ export interface FormSectionUi {
   description?: FormUiClass
 }
 
+export interface FormTabsUi {
+  root?: FormUiClass
+  list?: FormUiClass
+  trigger?: FormUiClass
+  content?: FormUiClass
+  fields?: FormUiClass
+}
+
 export interface FormActionsUi {
   root?: FormUiClass
   left?: FormUiClass
@@ -215,6 +223,7 @@ export interface FormUiConfig {
   field?: FormUiPartConfig<FormFieldUi>
   actions?: FormUiPartConfig<FormActionsUi>
   section?: FormUiPartConfig<FormSectionUi>
+  tabs?: FormUiPartConfig<FormTabsUi>
   group?: FormUiPartConfig<FormGroupUi>
   tree?: FormUiPartConfig<FormTreeUi>
   treeSelect?: FormUiPartConfig<FormTreeSelectUi>

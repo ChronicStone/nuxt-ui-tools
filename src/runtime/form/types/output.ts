@@ -65,6 +65,16 @@ type ChildFields<TField> = TField extends { readonly fields: infer TFields }
     : never
   : never
 
+type TabObject<TTab, TMode extends FormStateMode> = TTab extends { readonly fields: infer TFields }
+  ? FieldsValue<TFields, TMode>
+  : never
+
+type TabsFieldsValue<TField, TMode extends FormStateMode> = TField extends {
+  readonly tabs: readonly (infer TTab)[]
+}
+  ? DeepTransformNestedPaths<UnionToIntersection<TabObject<TTab, TMode>>>
+  : NonNullable<unknown>
+
 type FieldsValue<TFields, TMode extends FormStateMode> = TFields extends readonly FormValue[]
   ? DeepTransformNestedPaths<UnionToIntersection<FieldObject<TFields[number], TMode>>>
   : NonNullable<unknown>
@@ -148,22 +158,29 @@ type FieldObject<TField, TMode extends FormStateMode> = TField extends {
   type: 'info' | 'divider' | 'button'
 }
   ? NonNullable<unknown>
-  : TField extends { type: 'input-group' | 'card' | 'column' }
-    ? FieldsValue<ChildFields<TField>, TMode>
-    : TField extends { type: 'object' | 'group' }
-      ? FieldValueObject<TField, ObjectFieldValue<TField, TMode>>
-      : TField extends { type: 'matrix' }
-        ? FieldValueObject<TField, MatrixFieldValue<TField, TMode>>
-        : TField extends {
-              type: 'array-list' | 'array-table' | 'array-tabs' | 'array-variant' | 'array-collapse'
-            }
-          ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
-          : TField extends { type: 'array-primitive' }
-            ? FieldValueObject<
-                TField,
-                ApplyOutputMode<TField, TMode, ArrayPrimitiveFieldOutput<TField>>
-              >
-            : StatefulFieldObject<TField, TMode>
+  : TField extends { type: 'tabs' }
+    ? TabsFieldsValue<TField, TMode>
+    : TField extends { type: 'input-group' | 'card' | 'column' }
+      ? FieldsValue<ChildFields<TField>, TMode>
+      : TField extends { type: 'object' | 'group' }
+        ? FieldValueObject<TField, ObjectFieldValue<TField, TMode>>
+        : TField extends { type: 'matrix' }
+          ? FieldValueObject<TField, MatrixFieldValue<TField, TMode>>
+          : TField extends {
+                type:
+                  | 'array-list'
+                  | 'array-table'
+                  | 'array-tabs'
+                  | 'array-variant'
+                  | 'array-collapse'
+              }
+            ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
+            : TField extends { type: 'array-primitive' }
+              ? FieldValueObject<
+                  TField,
+                  ApplyOutputMode<TField, TMode, ArrayPrimitiveFieldOutput<TField>>
+                >
+              : StatefulFieldObject<TField, TMode>
 
 type StepFields<TStep> = TStep extends { readonly fields: infer TFields } ? TFields : never
 

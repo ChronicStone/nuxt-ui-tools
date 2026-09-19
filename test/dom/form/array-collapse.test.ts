@@ -12,6 +12,10 @@ function expandedItems(harness: FormHarness, path: string) {
     .map((item) => item.attributes('data-form-array-item'))
 }
 
+async function waitForItems(harness: FormHarness, count: number) {
+  await harness.until(() => harness.wrapper.findAll('[data-form-array-item]').length === count)
+}
+
 function trigger(harness: FormHarness, path: string, index: number) {
   return harness.field(path).find(`[data-form-array-item="${index}"] button[aria-expanded]`)
 }
@@ -53,6 +57,7 @@ describe('array collapse', () => {
       input: { blocks: [{ name: 'Ready' }, { name: '' }] },
       schema: collapsedSchema(),
     })
+    await waitForItems(harness, 2)
 
     expect(expandedItems(harness, 'blocks')).toStrictEqual([])
     expect(harness.field('blocks').find('[data-form-array-summary="0"]').text()).toBe('5')
@@ -72,6 +77,7 @@ describe('array collapse', () => {
       onSubmit,
       schema: collapsedSchema(),
     })
+    await waitForItems(harness, 2)
 
     await harness.submit()
     expect(onSubmit).not.toHaveBeenCalled()
@@ -87,6 +93,7 @@ describe('array collapse', () => {
       input: { blocks: [{ name: 'One' }, { name: 'Two' }] },
       schema: accordionSchema(),
     })
+    await waitForItems(harness, 2)
 
     expect(expandedItems(harness, 'blocks')).toStrictEqual(['0'])
     await trigger(harness, 'blocks', 1).trigger('click')
@@ -108,6 +115,7 @@ describe('array collapse', () => {
       input: { blocks: [{ name: 'One' }, { name: 'Two' }, { name: 'Three' }] },
       schema: accordionSchema(),
     })
+    await waitForItems(harness, 3)
     await trigger(harness, 'blocks', 2).trigger('click')
     expect(expandedItems(harness, 'blocks')).toStrictEqual(['2'])
 

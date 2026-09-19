@@ -614,7 +614,7 @@ function collectFieldPaths(
 }
 
 export function isFlatPassthroughField(field: FormField) {
-  return createFormFieldInstance(field).type.isAny(['input-group', 'card', 'column'])
+  return createFormFieldInstance(field).type.isAny(['input-group', 'tabs', 'card', 'column'])
 }
 
 export function isObjectContainerField(field: FormField) {
@@ -991,6 +991,13 @@ function isFormField(value: FormValue): value is FormField {
 }
 
 function getChildFields(field: FormField) {
+  const tabs = Object.getOwnPropertyDescriptor(field, 'tabs')?.value
+  if (Array.isArray(tabs)) {
+    return tabs.flatMap((tab) => {
+      const fields = isRecord(tab) ? tab.fields : undefined
+      return Array.isArray(fields) ? fields.filter(isFormField) : []
+    })
+  }
   const fields = Object.getOwnPropertyDescriptor(field, 'fields')?.value
   return Array.isArray(fields) ? fields.filter(isFormField) : []
 }

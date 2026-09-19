@@ -151,6 +151,10 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/switch.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/Tabs\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/tabs.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Textarea\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/textarea.ts`,
       },

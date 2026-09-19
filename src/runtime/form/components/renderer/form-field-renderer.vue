@@ -50,6 +50,7 @@ import SelectField from '../../fields/select/component.vue'
 import SliderField from '../../fields/slider/component.vue'
 import SwitchGroupField from '../../fields/switch-group/component.vue'
 import SwitchField from '../../fields/switch/component.vue'
+import TabsField from '../../fields/tabs/component.vue'
 import TagField from '../../fields/tag/component.vue'
 import TextField from '../../fields/text/component.vue'
 import TextareaField from '../../fields/textarea/component.vue'
@@ -104,7 +105,7 @@ const rendererProps = computed(() => {
     field: props.field,
     path: path.value,
   }
-  if (!field.value.type.isAny(['input-group', 'group', 'object', 'card', 'column'])) {
+  if (!field.value.type.isAny(['input-group', 'tabs', 'group', 'object', 'card', 'column'])) {
     return baseProps
   }
 
@@ -165,6 +166,7 @@ const fieldRenderers = new Map<FormFieldType, Component>([
   ['divider', DividerField],
   ['section', SectionField],
   ['input-group', InputGroupField],
+  ['tabs', TabsField],
   ['group', GroupField],
   ['object', ObjectField],
   ['matrix', MatrixField],
@@ -192,7 +194,8 @@ function resolveFieldLayout(): FormItemLayout | undefined {
     return undefined
   }
   const layout = Object.getOwnPropertyDescriptor(props.field, 'layout')?.value
-  const fullByDefault = field.value.state.is('stateless') || isArrayField(props.field)
+  const fullByDefault =
+    field.value.state.is('stateless') || field.value.type.is('tabs') || isArrayField(props.field)
   if (isLayout(layout)) {
     return fullByDefault ? { span: 'full', ...layout } : layout
   }

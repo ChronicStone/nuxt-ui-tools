@@ -893,6 +893,13 @@ function isSteppedSchemaForRules(schema: FormValue) {
 }
 
 function getChildFieldsForRules(field: FormField) {
+  const tabs = Object.getOwnPropertyDescriptor(field, 'tabs')?.value
+  if (Array.isArray(tabs)) {
+    return tabs.flatMap((tab) => {
+      const fields = isRecord(tab) ? tab.fields : undefined
+      return Array.isArray(fields) ? fields.filter(isFormFieldForRules) : []
+    })
+  }
   const fields = Object.getOwnPropertyDescriptor(field, 'fields')?.value
   return Array.isArray(fields) ? fields.filter(isFormFieldForRules) : []
 }
