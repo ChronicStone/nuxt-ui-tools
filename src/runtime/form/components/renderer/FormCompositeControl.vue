@@ -6,7 +6,7 @@ import type { FormObject } from '../../types'
 
 const { id, ariaAttrs } = useFormField()
 const attrs = computed<FormObject>(() => ({
-  ...(ariaAttrs.value ?? {}),
+  ...ariaAttrs.value,
   id: id.value,
 }))
 </script>

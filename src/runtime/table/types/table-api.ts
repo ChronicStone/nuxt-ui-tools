@@ -14,14 +14,14 @@ import type {
   TableSortingRule,
 } from './utils'
 
-export type PublicTableQueryState = {
+export interface PublicTableQueryState {
   layout: TableLayout
   pagination: TablePaginationState
   sorting: { sortKey: string; sortDirection: 'asc' | 'desc' } | null
   filters: TableFilterState
 }
 
-export type TableRefreshResult = {
+export interface TableRefreshResult {
   data?: unknown
   error?: unknown
 }

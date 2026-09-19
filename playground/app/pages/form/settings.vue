@@ -6,18 +6,12 @@ import { defineFormSchema, useForm } from '#ui-tools/form'
 const saved = ref(false)
 
 const settingsSchema = defineFormSchema({
-  formKey: 'playground.form.settings',
-  title: 'Workspace settings',
-  description: 'A small settings surface with grouped preferences and explicit submit state.',
-  layout: {
-    columns: 8,
-    gap: 16,
-  },
   controls: {
     dirtyCheck: true,
     syncInput: true,
     validate: true,
   },
+  description: 'A small settings surface with grouped preferences and explicit submit state.',
   fields: [
     {
       key: 'workspace.name',
@@ -75,19 +69,29 @@ const settingsSchema = defineFormSchema({
       layout: { span: 'full' },
     },
   ],
+  formKey: 'playground.form.settings',
+  layout: {
+    columns: 8,
+    gap: 16,
+  },
+  title: 'Workspace settings',
 })
 
 const form = useForm({
-  schema: settingsSchema,
   onSubmit: async () => {
     saved.value = true
     return { success: true }
   },
+  schema: settingsSchema,
 })
 
 const statusLabel = computed(() => {
-  if (form.isSubmitting.value) return 'Saving…'
-  if (saved.value) return 'Saved'
+  if (form.isSubmitting.value) {
+    return 'Saving…'
+  }
+  if (saved.value) {
+    return 'Saved'
+  }
   return form.isDirty.value ? 'Unsaved changes' : 'Ready'
 })
 

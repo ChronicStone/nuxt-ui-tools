@@ -1,5 +1,6 @@
 import { useLocale as useNuxtUiLocale } from '@nuxt/ui/composables/useLocale'
-import { computed, inject, provide, type InjectionKey, type Ref } from 'vue'
+import { computed, inject, provide } from 'vue'
+import type { InjectionKey, Ref } from 'vue'
 
 import { fr } from './locales'
 import en from './locales/en'
@@ -11,7 +12,7 @@ export const uiToolsLocaleContextInjectionKey: InjectionKey<Ref<Locale<Messages>
 
 export function useUiToolsLocaleRef(localeOverrides?: Ref<Locale<Messages> | undefined>) {
   const nuxtUiLocale = useNuxtUiLocale()
-  const injectedLocale = inject(uiToolsLocaleContextInjectionKey, undefined)
+  const injectedLocale = inject(uiToolsLocaleContextInjectionKey)
 
   return computed(
     () =>
@@ -53,6 +54,6 @@ function resolveUiToolsLocale(params: { code?: string; dir?: Locale['dir'] }) {
 
 function normalizeLocaleCode(value: string | undefined) {
   return String(value ?? en.code)
-    .replace(/-/g, '_')
+    .replaceAll('-', '_')
     .toLowerCase()
 }

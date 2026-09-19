@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createAccountsSchema, type AccountRow, createAuditSchema } from '../fixtures/accounts'
-import { mountLoaded, type Harness, rows } from '../harness'
+import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
+import type { AccountRow } from '../fixtures/accounts'
+import { mountLoaded, rows } from '../harness'
+import type { Harness } from '../harness'
 
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
@@ -9,22 +11,27 @@ afterEach(() => harness?.unmount())
 describe('offset pagination', () => {
   it('derives page geometry from the schema defaults', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
-    const pagination = harness.internals.pagination
+    const { pagination } = harness.internals
     expect(pagination.mode.value).toBe('offset')
     expect(pagination.pageSize.value).toBe(20)
     expect(pagination.currentPage.value).toBe(1)
     expect(pagination.totalPages.value).toBe(3)
     expect(pagination.rowCount.value).toBe(60)
     expect(pagination.loadedCount.value).toBe(20)
-    expect(pagination.canPreviousPage.value).toBe(false)
-    expect(pagination.canNextPage.value).toBe(true)
-    expect(pagination.pageSizeOptions.value).toEqual([10, 20, 50])
-    expect(pagination.state.value).toMatchObject({ mode: 'offset', pageIndex: 1, pageCount: 3, totalCount: 60 })
+    expect(pagination.canPreviousPage.value).toBeFalsy()
+    expect(pagination.canNextPage.value).toBeTruthy()
+    expect(pagination.pageSizeOptions.value).toStrictEqual([10, 20, 50])
+    expect(pagination.state.value).toMatchObject({
+      mode: 'offset',
+      pageCount: 3,
+      pageIndex: 1,
+      totalCount: 60,
+    })
   })
 
   it('navigates pages, clamps out-of-range targets and syncs the URL', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
-    const pagination = harness.internals.pagination
+    const { pagination } = harness.internals
     pagination.next()
     await harness.flush()
     expect(pagination.currentPage.value).toBe(2)
@@ -34,7 +41,7 @@ describe('offset pagination', () => {
     pagination.setPage(99)
     await harness.flush()
     expect(pagination.currentPage.value).toBe(3)
-    expect(pagination.canNextPage.value).toBe(false)
+    expect(pagination.canNextPage.value).toBeFalsy()
     expect(pagination.loadedCount.value).toBe(20)
 
     pagination.previous()
@@ -49,7 +56,7 @@ describe('offset pagination', () => {
 
   it('changes the page size and resets to the first page', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
-    const pagination = harness.internals.pagination
+    const { pagination } = harness.internals
     pagination.setPage(3)
     await harness.flush()
     pagination.setPageSize(50)
@@ -62,7 +69,10 @@ describe('offset pagination', () => {
   })
 
   it('restores state from the URL', async () => {
-    harness = await mountLoaded({ schema: createAccountsSchema(), query: { 'p.page': '3', 'p.size': '10' } })
+    harness = await mountLoaded({
+      query: { 'p.page': '3', 'p.size': '10' },
+      schema: createAccountsSchema(),
+    })
     expect(harness.internals.pagination.currentPage.value).toBe(3)
     expect(harness.internals.pagination.pageSize.value).toBe(10)
     expect(rows<AccountRow>(harness)[0]?.id).toBe('acc-21')
@@ -72,7 +82,7 @@ describe('offset pagination', () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     harness.internals.controls.setTableLayout('grid')
     await harness.flush()
-    expect(harness.internals.pagination.pageSizeOptions.value).toEqual([12, 24])
+    expect(harness.internals.pagination.pageSizeOptions.value).toStrictEqual([12, 24])
     expect(harness.internals.pagination.pageSize.value).toBe(12)
     harness.internals.controls.setTableLayout('table')
     await harness.flush()
@@ -100,29 +110,33 @@ describe('offset pagination', () => {
 describe('no pagination', () => {
   it('loads every row and disables navigation', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema({ pagination: false }) })
-    const pagination = harness.internals.pagination
+    const { pagination } = harness.internals
     expect(pagination.mode.value).toBe('none')
     expect(pagination.loadedCount.value).toBe(60)
     expect(pagination.pageSize.value).toBe(60)
-    expect(pagination.canNextPage.value).toBe(false)
-    expect(pagination.canPreviousPage.value).toBe(false)
+    expect(pagination.canNextPage.value).toBeFalsy()
+    expect(pagination.canPreviousPage.value).toBeFalsy()
     pagination.next()
     await harness.flush()
     expect(pagination.currentPage.value).toBe(1)
-    expect(pagination.noneState.value).toEqual({ mode: 'none', loadedCount: 60, totalCount: 60 })
+    expect(pagination.noneState.value).toStrictEqual({
+      loadedCount: 60,
+      mode: 'none',
+      totalCount: 60,
+    })
   })
 })
 
 describe('cursor pagination', () => {
   it('loads pages incrementally until the cursor is exhausted', async () => {
     const onPage = vi.fn()
-    harness = await mountLoaded({ schema: createAuditSchema({ total: 45, pageSize: 20, onPage }) })
-    const pagination = harness.internals.pagination
+    harness = await mountLoaded({ schema: createAuditSchema({ onPage, pageSize: 20, total: 45 }) })
+    const { pagination } = harness.internals
     expect(pagination.mode.value).toBe('cursor')
     expect(pagination.loadedCount.value).toBe(20)
     expect(pagination.rowCount.value).toBe(45)
-    expect(pagination.canNextPage.value).toBe(true)
-    expect(pagination.canPreviousPage.value).toBe(false)
+    expect(pagination.canNextPage.value).toBeTruthy()
+    expect(pagination.canPreviousPage.value).toBeFalsy()
     expect(onPage).toHaveBeenLastCalledWith(null)
 
     const loading = pagination.loadMore()
@@ -133,13 +147,18 @@ describe('cursor pagination', () => {
 
     await pagination.loadMore()
     await harness.until(() => pagination.loadedCount.value === 45)
-    expect(pagination.canNextPage.value).toBe(false)
-    expect(pagination.cursorState.value).toMatchObject({ mode: 'cursor', loadedCount: 45, totalCount: 45, hasNextPage: false })
+    expect(pagination.canNextPage.value).toBeFalsy()
+    expect(pagination.cursorState.value).toMatchObject({
+      hasNextPage: false,
+      loadedCount: 45,
+      mode: 'cursor',
+      totalCount: 45,
+    })
 
     const before = onPage.mock.calls.length
     await pagination.loadMore()
     await harness.flush()
-    expect(onPage.mock.calls.length).toBe(before)
+    expect(onPage.mock.calls).toHaveLength(before)
   })
 
   it('ignores offset-only operations', async () => {

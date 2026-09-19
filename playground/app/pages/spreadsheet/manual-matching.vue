@@ -13,12 +13,6 @@ definePageMeta({
 const { t } = useI18n()
 
 const center = {
-  id: 'tc_paris',
-  country: 'France',
-  products: [
-    { id: 'prod_be_4skills', name: 'Positionnement VTest Business English - 4 Skills' },
-    { id: 'prod_general_4skills', name: 'Positionnement VTest English - 4 Skills' },
-  ],
   affiliationGroups: [
     {
       id: 'school-level',
@@ -39,19 +33,44 @@ const center = {
       ],
     },
   ],
+  country: 'France',
+  id: 'tc_paris',
+  products: [
+    { id: 'prod_be_4skills', name: 'Positionnement VTest Business English - 4 Skills' },
+    { id: 'prod_general_4skills', name: 'Positionnement VTest English - 4 Skills' },
+  ],
 }
 
 function createManualMatchingSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.manual-matching',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 100,
-    },
-    sheet: { strategy: 'selection' },
-    header: { strategy: 'selection' },
-    matching: { strategy: 'smart' },
     columns: {
+      dynamic: ({ dynamic }) => [
+        dynamic.optionGroups({
+          key: 'affiliations',
+          source: center.affiliationGroups,
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          targetKey: (group) => group.slug,
+          header: {
+            strategy: 'template',
+            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
+          },
+          options: (group) =>
+            group.items.map((item) => ({
+              label: item.name,
+              value: item.id,
+            })),
+          values: {
+            mode: 'csv',
+            separator: ',',
+            resolve: 'label',
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+          },
+          output: {
+            into: 'affiliations',
+          },
+        }),
+      ],
       static: (column) => [
         column.text('testCenterId', {
           match: { headers: ['Test center ID'] },
@@ -96,34 +115,14 @@ function createManualMatchingSchema() {
         column.text('scores.general', { match: { headers: ['General level'] } }),
         column.text('scores.listening', { match: { headers: ['Listening level'] } }),
       ],
-      dynamic: ({ dynamic }) => [
-        dynamic.optionGroups({
-          key: 'affiliations',
-          source: center.affiliationGroups,
-          itemKey: (group) => group.id,
-          itemLabel: (group) => group.name,
-          targetKey: (group) => group.slug,
-          header: {
-            strategy: 'template',
-            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-          },
-          options: (group) =>
-            group.items.map((item) => ({
-              label: item.name,
-              value: item.id,
-            })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
-          output: {
-            into: 'affiliations',
-          },
-        }),
-      ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 100,
+    },
+    header: { strategy: 'selection' },
+    importKey: 'playground.spreadsheet.manual-matching',
+    matching: { strategy: 'smart' },
     references: (reference) => [
       reference.select('productId', {
         source: 'examNameRaw',
@@ -133,6 +132,7 @@ function createManualMatchingSchema() {
         })),
       }),
     ],
+    sheet: { strategy: 'selection' },
   })
 }
 
@@ -197,19 +197,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Candidate import')
 
   return {
-    fileName: 'spreadsheet-manual-matching.xlsx',
     binary: write(workbook, {
       type: 'buffer',
       bookType: 'xlsx',
     }),
+    fileName: 'spreadsheet-manual-matching.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

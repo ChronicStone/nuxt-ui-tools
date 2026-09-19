@@ -9,8 +9,8 @@ import { mergeFormUiClass } from '../../utils/ui'
 const props = defineProps<FormModalLayoutProps>()
 defineEmits<FormOverlayLayoutEmits>()
 const contentStyle = computed(() => ({
-  maxWidth: cssSize(props.config?.maxWidth),
   maxHeight: cssSize(props.config?.maxHeight),
+  maxWidth: cssSize(props.config?.maxWidth),
 }))
 const contentProps = computed(() => ({
   disableOutsidePointerEvents: undefined,

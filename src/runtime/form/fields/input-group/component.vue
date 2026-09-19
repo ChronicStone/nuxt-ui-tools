@@ -24,14 +24,30 @@ function controlAttrs(field: FormInputGroupField['fields'][number]) {
 }
 
 function resolveFlexClass(weight: number) {
-  if (weight >= 12) return 'flex-[12_1_0%]'
-  if (weight >= 10) return 'flex-[10_1_0%]'
-  if (weight >= 8) return 'flex-[8_1_0%]'
-  if (weight >= 6) return 'flex-[6_1_0%]'
-  if (weight >= 5) return 'flex-[5_1_0%]'
-  if (weight >= 4) return 'flex-[4_1_0%]'
-  if (weight >= 3) return 'flex-[3_1_0%]'
-  if (weight >= 2) return 'flex-[2_1_0%]'
+  if (weight >= 12) {
+    return 'flex-[12_1_0%]'
+  }
+  if (weight >= 10) {
+    return 'flex-[10_1_0%]'
+  }
+  if (weight >= 8) {
+    return 'flex-[8_1_0%]'
+  }
+  if (weight >= 6) {
+    return 'flex-[6_1_0%]'
+  }
+  if (weight >= 5) {
+    return 'flex-[5_1_0%]'
+  }
+  if (weight >= 4) {
+    return 'flex-[4_1_0%]'
+  }
+  if (weight >= 3) {
+    return 'flex-[3_1_0%]'
+  }
+  if (weight >= 2) {
+    return 'flex-[2_1_0%]'
+  }
   return 'flex-[1_1_0%]'
 }
 </script>

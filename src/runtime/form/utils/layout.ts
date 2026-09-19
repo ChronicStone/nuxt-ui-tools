@@ -20,7 +20,9 @@ export function resolveFormLayoutConfig(
 
 export function normalizeFormLayoutGap(value: number | string | undefined) {
   const gap = value ?? FORM_LAYOUT_DEFAULTS.gap
-  if (isNumber(gap)) return `${gap}px`
+  if (isNumber(gap)) {
+    return `${gap}px`
+  }
   return gap
 }
 
@@ -30,7 +32,9 @@ export function normalizeFormGridColumnsStyle(value: string) {
 }
 
 export function normalizeFormGridColumnSpanStyle(value: string) {
-  if (value === 'full') return 'grid-column: 1 / -1'
+  if (value === 'full') {
+    return 'grid-column: 1 / -1'
+  }
 
   const span = normalizePositiveInteger(value, 1)
   return `grid-column: span ${span} / span ${span}`
@@ -38,6 +42,8 @@ export function normalizeFormGridColumnSpanStyle(value: string) {
 
 function normalizePositiveInteger(value: string, fallback: number) {
   const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return fallback
+  if (!Number.isFinite(parsed)) {
+    return fallback
+  }
   return Math.max(1, Math.trunc(parsed))
 }

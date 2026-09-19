@@ -48,12 +48,12 @@ export type QueryPrefetchRoute<TRouteName extends QueryPrefetchRouteName> = Omit
  */
 export type QueryPrefetchOptions = QueryPrefetchEntry | readonly QueryPrefetchEntry[]
 
-export type QueryPrefetchRuntimeContext = {
+export interface QueryPrefetchRuntimeContext {
   queryClient: QueryClient
   route: QueryPrefetchRuntimeRoute
 }
 
-export type QueryPrefetchResolveContext<TRouteName extends QueryPrefetchRouteName> = {
+export interface QueryPrefetchResolveContext<TRouteName extends QueryPrefetchRouteName> {
   queryClient: QueryClient
   route: QueryPrefetchRoute<TRouteName>
 }

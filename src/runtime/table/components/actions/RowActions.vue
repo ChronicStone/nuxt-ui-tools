@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import UDrawer from '@nuxt/ui/components/Drawer.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import type { DropdownMenuProps } from '@nuxt/ui/components/DropdownMenu.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref, useAttrs } from 'vue'
 
 import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
-
 import { useTableInternals } from '../../composables/use-table-internals'
 import { useTableRowActionScope } from '../../composables/use-table-row-actions'
 import type { DataListControlSize } from '../../types'
@@ -30,7 +29,7 @@ const attrs = useAttrs()
 const internals = useTableInternals()
 const { isMobile } = useDataListBreakpoint()
 const sheetOpen = ref<boolean>(false)
-type SheetItem = {
+interface SheetItem {
   label?: string
   icon?: string
   color?: string
@@ -40,8 +39,8 @@ type SheetItem = {
 }
 const sheetItems = computed<SheetItem[]>(() => {
   const groups = (Array.isArray(items.value[0]) ? items.value : [items.value]) as Array<
-    Array<Omit<SheetItem, 'dividerBefore'>>
-  >
+    Omit<SheetItem, 'dividerBefore'>
+  >[]
   return groups.flatMap((group, index) =>
     group.map((item, itemIndex) => ({ ...item, dividerBefore: index > 0 && itemIndex === 0 })),
   )
@@ -53,7 +52,9 @@ function runSheetItem(item: SheetItem) {
 const scope = useTableRowActionScope()
 const portal = computed(() => props.portal ?? true)
 const visibleActions = computed(() => {
-  if (!scope?.value) return []
+  if (!scope?.value) {
+    return []
+  }
 
   return resolveVisibleTableRowActions({
     schema: internals.schema.value,
@@ -62,7 +63,9 @@ const visibleActions = computed(() => {
 })
 
 const items = computed(() => {
-  if (!scope?.value) return []
+  if (!scope?.value) {
+    return []
+  }
 
   return createRowActionDropdownItems({
     actions: visibleActions.value,
@@ -90,7 +93,12 @@ const items = computed(() => {
             :disabled="Boolean(item.disabled)"
             @click="runSheetItem(item)"
           >
-            <UIcon v-if="item.icon" :name="item.icon" class="size-4 shrink-0 text-muted" :class="item.color === 'error' ? 'text-error' : ''" />
+            <UIcon
+              v-if="item.icon"
+              :name="item.icon"
+              class="size-4 shrink-0 text-muted"
+              :class="item.color === 'error' ? 'text-error' : ''"
+            />
             <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
           </button>
         </template>

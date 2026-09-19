@@ -11,15 +11,15 @@ const contextItems = [
   {
     key: 'affiliationGroups',
     query: () => ({
-      queryKey: ['affiliation-groups', 'tc_123'],
       queryFn: async () => [{ id: 'group_1', name: 'School level' }],
+      queryKey: ['affiliation-groups', 'tc_123'],
     }),
   },
   {
     key: 'products',
     query: () => ({
-      queryKey: ['products', 'tc_123'],
       queryFn: async () => [{ id: 'prod_1', name: 'Business English 4 Skills' }],
+      queryKey: ['products', 'tc_123'],
     }),
   },
 ] satisfies readonly [
@@ -32,8 +32,8 @@ describe('spreadsheet context utils', () => {
     const queries = createSpreadsheetContextQueries(contextItems)
 
     expect(queries).toHaveLength(2)
-    expect(queries[0]?.queryKey).toEqual(['affiliation-groups', 'tc_123'])
-    expect(queries[1]?.queryKey).toEqual(['products', 'tc_123'])
+    expect(queries[0]?.queryKey).toStrictEqual(['affiliation-groups', 'tc_123'])
+    expect(queries[1]?.queryKey).toStrictEqual(['products', 'tc_123'])
   })
 
   it('creates typed partial context data from query results', () => {
@@ -46,7 +46,7 @@ describe('spreadsheet context utils', () => {
       },
     ])
 
-    expect(data).toEqual({
+    expect(data).toStrictEqual({
       affiliationGroups: [{ id: 'group_1', name: 'School level' }],
       products: [{ id: 'prod_1', name: 'Business English 4 Skills' }],
     })
@@ -58,23 +58,23 @@ describe('spreadsheet context utils', () => {
   it('derives aggregate query status flags', () => {
     const status = createSpreadsheetContextStatus([
       {
-        isPending: false,
         isFetching: false,
-        isSuccess: true,
+        isPending: false,
         isRefetching: false,
+        isSuccess: true,
       },
       {
-        isPending: false,
         isFetching: true,
-        isSuccess: true,
+        isPending: false,
         isRefetching: true,
+        isSuccess: true,
       },
     ])
 
-    expect(status).toEqual({
+    expect(status).toStrictEqual({
       initialized: true,
-      isPending: false,
       isFetching: true,
+      isPending: false,
       isReady: true,
       isRefreshing: true,
     })
@@ -85,8 +85,8 @@ describe('spreadsheet context utils', () => {
 
     const results = [
       {
-        key: 'products',
         data: [{ id: 'prod_1', name: 'Business English 4 Skills' }],
+        key: 'products',
         refetch,
       },
     ]

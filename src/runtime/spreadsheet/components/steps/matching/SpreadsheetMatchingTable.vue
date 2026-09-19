@@ -13,7 +13,7 @@ type MatchingOption = SpreadsheetColumnAssignmentOption & {
   selected?: boolean
 }
 
-type ExpectedFieldRow = {
+interface ExpectedFieldRow {
   key: string
   systemFieldKey: string
   systemFieldLabel: string
@@ -23,13 +23,13 @@ type ExpectedFieldRow = {
   status: 'matched' | 'unmatched'
 }
 
-type AutoMappedRow = {
+interface AutoMappedRow {
   key: string
   systemFieldLabel: string
   selectedFileColumn: string
 }
 
-type IgnoredColumnRow = {
+interface IgnoredColumnRow {
   key: string
   fileColumn: string
 }
@@ -50,17 +50,18 @@ const emit = defineEmits<{
 const { t } = useUiToolsLocale()
 
 function getMatchBadgeProps(status: 'matched' | 'unmatched') {
-  if (status === 'matched')
+  if (status === 'matched') {
     return {
       color: 'success' as const,
       label: t('spreadsheet.steps.matching.matched'),
       dotClass: 'bg-success',
     }
+  }
 
   return {
     color: 'warning' as const,
-    label: t('spreadsheet.steps.matching.needsMatch'),
     dotClass: 'bg-warning',
+    label: t('spreadsheet.steps.matching.needsMatch'),
   }
 }
 
@@ -74,21 +75,25 @@ function getRequiredBadgeColor(required: boolean) {
 
 function handleAssign(row: ExpectedFieldRow, value: string) {
   if (value === '__ignore__') {
-    if (row.selectedHeaderIndex == null) return
+    if (row.selectedHeaderIndex == null) {
+      return
+    }
     emit('assign', {
-      headerIndex: row.selectedHeaderIndex,
       columnKey: '',
+      headerIndex: row.selectedHeaderIndex,
     })
     return
   }
 
   const selectedOption = props.getOptionsForRow(row).find((option) => option.key === value)
   const headerIndex = selectedOption?.headerIndex
-  if (!isNumber(headerIndex)) return
+  if (!isNumber(headerIndex)) {
+    return
+  }
 
   emit('assign', {
-    headerIndex,
     columnKey: value,
+    headerIndex,
   })
 }
 </script>

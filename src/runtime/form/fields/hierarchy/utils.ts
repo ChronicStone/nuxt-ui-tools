@@ -1,5 +1,6 @@
 import type { FormOptionValue } from '../../types'
-import { formOptionKey, type ResolvedFormOption } from '../../utils/options'
+import { formOptionKey } from '../../utils/options'
+import type { ResolvedFormOption } from '../../utils/options'
 
 export function resolveHierarchySelection(params: {
   next: readonly FormOptionValue[]
@@ -9,19 +10,24 @@ export function resolveHierarchySelection(params: {
   bubble: boolean
 }) {
   const values = new Map<string, FormOptionValue>()
-  for (const value of params.next) values.set(formOptionKey(value), value)
+  for (const value of params.next) {
+    values.set(formOptionKey(value), value)
+  }
 
   const intent = params.intent ? findOption(params.items, params.intent) : undefined
   if (params.propagate && intent) {
     const selecting = values.has(formOptionKey(intent.value))
     for (const descendant of flattenOptions(intent.children ?? [])) {
       const key = formOptionKey(descendant.value)
-      if (selecting) values.set(key, descendant.value)
-      else values.delete(key)
+      if (selecting) {
+        values.set(key, descendant.value)
+      } else {
+        values.delete(key)
+      }
     }
   }
 
-  if (params.bubble)
+  if (params.bubble) {
     for (const item of [...flattenOptions(params.items)].reverse()) {
       if (!item.children?.length) continue
       const key = formOptionKey(item.value)
@@ -31,6 +37,7 @@ export function resolveHierarchySelection(params: {
       if (allChildrenSelected) values.set(key, item.value)
       else values.delete(key)
     }
+  }
 
   return [...values.values()]
 }

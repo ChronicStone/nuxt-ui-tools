@@ -12,10 +12,10 @@ const props = withDefaults(
 )
 
 const modeClasses = {
+  canvas: 'h-full min-h-0 overflow-hidden',
   document: 'h-full overflow-y-auto overscroll-contain',
   fixed: 'h-full min-h-0 overflow-hidden',
   scroll: 'h-full min-h-0 overflow-y-auto overscroll-contain',
-  canvas: 'h-full min-h-0 overflow-hidden',
 } satisfies Record<PlaygroundContentMode, string>
 </script>
 

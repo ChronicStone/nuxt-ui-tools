@@ -13,9 +13,6 @@ import {
 
 const entries: TableResolvedFilterOptionEntry[] = [
   {
-    id: '0:engineering',
-    label: 'Engineering',
-    selected: false,
     children: [
       {
         id: '0:engineering/0:frontend',
@@ -32,13 +29,16 @@ const entries: TableResolvedFilterOptionEntry[] = [
         children: [],
       },
     ],
+    id: '0:engineering',
+    label: 'Engineering',
+    selected: false,
   },
   {
+    children: [],
     id: '1:operations',
     label: 'Operations',
-    value: 'operations',
     selected: false,
-    children: [],
+    value: 'operations',
   },
 ]
 
@@ -51,8 +51,8 @@ describe('filter tree utils', () => {
 
     expect(result.entries).toHaveLength(1)
     expect(result.entries[0]?.label).toBe('Engineering')
-    expect(result.entries[0]?.children.map((child) => child.label)).toEqual(['Frontend'])
-    expect(result.expandedIds).toEqual(['0:engineering'])
+    expect(result.entries[0]?.children.map((child) => child.label)).toStrictEqual(['Frontend'])
+    expect(result.expandedIds).toStrictEqual(['0:engineering'])
   })
 
   it('collects branch ids and flattens visible entries with leaf-only selection', () => {
@@ -64,10 +64,10 @@ describe('filter tree utils', () => {
     })
 
     expect(flattenFilterOptionEntries(entries)).toHaveLength(4)
-    expect(visible[0]?.selectable).toBe(false)
-    expect(visible[0]?.branchSelectable).toBe(true)
+    expect(visible[0]?.selectable).toBeFalsy()
+    expect(visible[0]?.branchSelectable).toBeTruthy()
     expect(visible[1]?.depth).toBe(1)
-    expect(visible[1]?.selectable).toBe(true)
+    expect(visible[1]?.selectable).toBeTruthy()
   })
 
   it('collects selectable descendant values for branch selection', () => {
@@ -76,14 +76,14 @@ describe('filter tree utils', () => {
         entry: entries[0]!,
         selectable: 'leaf-only',
       }),
-    ).toEqual(['frontend', 'backend'])
+    ).toStrictEqual(['frontend', 'backend'])
 
     expect(
       collectSelectableDescendantValues({
         entry: entries[0]!,
         selectable: 'all',
       }),
-    ).toEqual(['frontend', 'backend'])
+    ).toStrictEqual(['frontend', 'backend'])
   })
 
   it('collects selected ancestor branch ids for reopening selected paths', () => {
@@ -100,6 +100,6 @@ describe('filter tree utils', () => {
           ],
         },
       ]),
-    ).toEqual(['0:engineering'])
+    ).toStrictEqual(['0:engineering'])
   })
 })

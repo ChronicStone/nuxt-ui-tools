@@ -11,7 +11,9 @@ export function useTableStartup() {
   const isActive = computed(() => phase.value === 'active')
 
   function dispose() {
-    if (!('window' in globalThis)) return
+    if (!('window' in globalThis)) {
+      return
+    }
 
     if (firstFrameId.value != null) {
       globalThis.window.cancelAnimationFrame(firstFrameId.value)
@@ -30,7 +32,9 @@ export function useTableStartup() {
   }
 
   function scheduleStart() {
-    if (phase.value === 'active') return
+    if (phase.value === 'active') {
+      return
+    }
     if (!('window' in globalThis)) {
       start()
       return
@@ -48,12 +52,12 @@ export function useTableStartup() {
   }
 
   return {
-    phase,
-    isBooting,
-    isActive,
-    start,
-    scheduleStart,
     dispose,
+    isActive,
+    isBooting,
+    phase,
+    scheduleStart,
+    start,
   }
 }
 

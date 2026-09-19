@@ -4,7 +4,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import { defineTableSchema, useTable } from '#ui-tools/table'
 
 type InvoiceStatus = 'Open' | 'Paid' | 'Overdue'
-type InvoiceRow = {
+interface InvoiceRow {
   id: string
   number: string
   customer: string
@@ -15,83 +15,73 @@ type InvoiceRow = {
 
 const invoices: InvoiceRow[] = [
   {
+    amount: 1840,
+    customer: 'Atlas Studio',
+    due: '2026-08-22',
     id: 'inv-1001',
     number: 'INV-1001',
-    customer: 'Atlas Studio',
     status: 'Open',
-    amount: 1840,
-    due: '2026-08-22',
   },
   {
+    amount: 920,
+    customer: 'Northstar Labs',
+    due: '2026-08-18',
     id: 'inv-1002',
     number: 'INV-1002',
-    customer: 'Northstar Labs',
     status: 'Paid',
-    amount: 920,
-    due: '2026-08-18',
   },
   {
+    amount: 4210,
+    customer: 'Rivet Systems',
+    due: '2026-08-12',
     id: 'inv-1003',
     number: 'INV-1003',
-    customer: 'Rivet Systems',
     status: 'Overdue',
-    amount: 4210,
-    due: '2026-08-12',
   },
   {
+    amount: 2680,
+    customer: 'Monarch Health',
+    due: '2026-08-28',
     id: 'inv-1004',
     number: 'INV-1004',
-    customer: 'Monarch Health',
     status: 'Open',
-    amount: 2680,
-    due: '2026-08-28',
   },
   {
+    amount: 740,
+    customer: 'Helio Works',
+    due: '2026-08-16',
     id: 'inv-1005',
     number: 'INV-1005',
-    customer: 'Helio Works',
     status: 'Paid',
-    amount: 740,
-    due: '2026-08-16',
   },
   {
+    amount: 3190,
+    customer: 'Vela Commerce',
+    due: '2026-08-09',
     id: 'inv-1006',
     number: 'INV-1006',
-    customer: 'Vela Commerce',
     status: 'Overdue',
-    amount: 3190,
-    due: '2026-08-09',
   },
   {
+    amount: 1560,
+    customer: 'Kumo Design',
+    due: '2026-09-02',
     id: 'inv-1007',
     number: 'INV-1007',
-    customer: 'Kumo Design',
     status: 'Open',
-    amount: 1560,
-    due: '2026-09-02',
   },
   {
+    amount: 2120,
+    customer: 'Cinder Group',
+    due: '2026-08-20',
     id: 'inv-1008',
     number: 'INV-1008',
-    customer: 'Cinder Group',
     status: 'Paid',
-    amount: 2120,
-    due: '2026-08-20',
   },
 ]
 
 const schema = defineTableSchema({
-  tableKey: 'invoices-staged-filters',
-  rowKey: 'id',
   defaultLayout: 'table',
-  pagination: { defaultSize: 8, showPagesCount: false, showPageSizePicker: false },
-  source: {
-    mode: 'client',
-    query: () => ({
-      queryKey: ['table-composition-staged-invoices'],
-      queryFn: async () => invoices,
-    }),
-  },
   filters: {
     search: { fields: ['number', 'customer'], placeholder: 'Search invoices' },
     ui: (filter) => [
@@ -128,6 +118,15 @@ const schema = defineTableSchema({
       }),
     ],
   },
+  pagination: { defaultSize: 8, showPageSizePicker: false, showPagesCount: false },
+  rowKey: 'id',
+  source: {
+    mode: 'client',
+    query: () => ({
+      queryKey: ['table-composition-staged-invoices'],
+      queryFn: async () => invoices,
+    }),
+  },
   table: {
     columns: (column) => [
       column.field('number', { label: 'Invoice' }),
@@ -136,8 +135,9 @@ const schema = defineTableSchema({
       column.field('amount', { label: 'Amount' }),
       column.field('due', { label: 'Due' }),
     ],
-    defaultSorting: { key: 'due', dir: 'asc' },
+    defaultSorting: { dir: 'asc', key: 'due' },
   },
+  tableKey: 'invoices-staged-filters',
 })
 
 const table = useTable(schema)

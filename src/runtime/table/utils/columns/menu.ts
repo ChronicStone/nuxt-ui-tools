@@ -9,7 +9,7 @@ export function createColumnMenuItems(options: {
   columnId: string
   label?: string
   schema: TableSchemaView
-  orderedColumns: Array<{ id: string; sortableKey?: string }>
+  orderedColumns: { id: string; sortableKey?: string }[]
   getSortState: (options: { columnId: string }) => 'asc' | 'desc' | null
   getPinnedState: (options: { columnId: string }) => 'left' | 'right' | null
   setPinning: (options: { columnId: string; pinned?: 'left' | 'right' }) => void
@@ -19,7 +19,7 @@ export function createColumnMenuItems(options: {
   const { t } = useUiToolsLocale()
   const column = options.orderedColumns.find((entry) => entry.id === options.columnId)
   const sortableKey = column?.sortableKey
-  const schemaColumn = findSchemaColumn({ schema: options.schema, columnId: options.columnId })
+  const schemaColumn = findSchemaColumn({ columnId: options.columnId, schema: options.schema })
   const sortState = options.getSortState({ columnId: options.columnId })
   const pinnedState = options.getPinnedState({ columnId: options.columnId })
   const activeClass = 'nut-dl-colmenu__item--active'
@@ -27,21 +27,21 @@ export function createColumnMenuItems(options: {
   const sortGroup: DropdownMenuItem[] = sortableKey
     ? [
         {
-          label: t('table.columnsMenu.sortAsc'),
-          icon: 'i-lucide-arrow-up',
           class: sortState === 'asc' ? activeClass : undefined,
+          icon: 'i-lucide-arrow-up',
+          label: t('table.columnsMenu.sortAsc'),
           onSelect: () => options.setSorting({ key: sortableKey, dir: 'asc' }),
         },
         {
-          label: t('table.columnsMenu.sortDesc'),
-          icon: 'i-lucide-arrow-down',
           class: sortState === 'desc' ? activeClass : undefined,
+          icon: 'i-lucide-arrow-down',
+          label: t('table.columnsMenu.sortDesc'),
           onSelect: () => options.setSorting({ key: sortableKey, dir: 'desc' }),
         },
         {
-          label: t('table.columnsMenu.clearSort'),
-          icon: 'i-lucide-arrow-up-down',
           disabled: !sortState,
+          icon: 'i-lucide-arrow-up-down',
+          label: t('table.columnsMenu.clearSort'),
           onSelect: () => options.setSorting(null),
         },
       ]
@@ -50,35 +50,35 @@ export function createColumnMenuItems(options: {
   const pinGroup: DropdownMenuItem[] = pinnedState
     ? [
         {
-          label: t('table.columnsMenu.unpinColumn'),
           icon: 'i-lucide-pin-off',
+          label: t('table.columnsMenu.unpinColumn'),
           onSelect: () => options.setPinning({ columnId: options.columnId }),
         },
       ]
     : [
         {
-          label: t('table.columnsMenu.pinToLeft'),
           icon: 'i-lucide-pin',
+          label: t('table.columnsMenu.pinToLeft'),
           onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'left' }),
         },
         {
-          label: t('table.columnsMenu.pinToRight'),
           icon: 'i-lucide-pin',
+          label: t('table.columnsMenu.pinToRight'),
           onSelect: () => options.setPinning({ columnId: options.columnId, pinned: 'right' }),
         },
       ]
 
   const hideGroup: DropdownMenuItem[] = [
     {
-      label: t('table.columnsMenu.hideColumn'),
-      icon: 'i-lucide-eye-off',
       disabled: Boolean(schemaColumn?.required),
+      icon: 'i-lucide-eye-off',
+      label: t('table.columnsMenu.hideColumn'),
       onSelect: () => options.setVisibility({ columnId: options.columnId, visible: false }),
     },
   ]
 
   const titleGroup: DropdownMenuItem[] = options.label
-    ? [{ label: options.label, type: 'label', class: 'nut-dl-colmenu__title' }]
+    ? [{ class: 'nut-dl-colmenu__title', label: options.label, type: 'label' }]
     : []
 
   return [titleGroup, sortGroup, pinGroup, hideGroup].filter((group) => group.length > 0)
@@ -91,7 +91,11 @@ export function getColumnHeaderIcon(options: {
   canHide?: boolean
 }) {
   const sortState = options.getSortState({ columnId: options.columnId })
-  if (sortState === 'asc') return 'i-lucide-arrow-up'
-  if (sortState === 'desc') return 'i-lucide-arrow-down'
+  if (sortState === 'asc') {
+    return 'i-lucide-arrow-up'
+  }
+  if (sortState === 'desc') {
+    return 'i-lucide-arrow-down'
+  }
   return options.canHide ? 'i-lucide-chevrons-up-down' : 'i-lucide-grip-vertical'
 }

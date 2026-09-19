@@ -9,44 +9,44 @@ import { getPathValue } from '../../src/runtime/shared/utils/path'
 
 function createApiFactory(state: FormObject) {
   return (path: readonly string[]): FormFieldApi => ({
-    value: {
-      get: () => getPathValue(state, path),
-      set: () => {},
-      reset: () => {},
-    },
     context: {
       get: () => ({ value: undefined }),
-      set: () => {},
-      update: () => {},
       patch: () => {},
       refresh: async () => {},
       refreshAll: async () => {},
-    },
-    options: {
-      get: () => [],
-      add: () => {},
-      pending: () => false,
-      fetching: () => false,
-      loading: () => false,
-      creating: () => false,
-      refreshable: () => false,
-      error: () => null,
-      refresh: async () => {},
-      create: async () => null,
-    },
-    upload: {
-      start: async () => {},
-      cancel: async () => {},
-      retry: async () => {},
-      remove: async () => {},
-    },
-    validation: {
-      validate: async () => true,
-      pending: () => false,
-      setError: () => {},
-      clearError: () => {},
+      set: () => {},
+      update: () => {},
     },
     focus: async () => true,
+    options: {
+      add: () => {},
+      create: async () => null,
+      creating: () => false,
+      error: () => null,
+      fetching: () => false,
+      get: () => [],
+      loading: () => false,
+      pending: () => false,
+      refresh: async () => {},
+      refreshable: () => false,
+    },
+    upload: {
+      cancel: async () => {},
+      remove: async () => {},
+      retry: async () => {},
+      start: async () => {},
+    },
+    validation: {
+      clearError: () => {},
+      pending: () => false,
+      setError: () => {},
+      validate: async () => true,
+    },
+    value: {
+      get: () => getPathValue(state, path),
+      reset: () => {},
+      set: () => {},
+    },
   })
 }
 
@@ -57,8 +57,8 @@ describe('Regle-owned form validation', () => {
       fields: [
         {
           key: 'email',
-          type: 'text',
           required: true,
+          type: 'text',
           validators: {
             email,
           },
@@ -67,18 +67,18 @@ describe('Regle-owned form validation', () => {
     })
     const state = reactive<FormObject>({ email: 'invalid' })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
-    expect(await validation.validate()).toBe(false)
+    await expect(validation.validate()).resolves.toBeFalsy()
     expect(validation.getFieldError(['email'])).toBe('The value must be a valid email address')
 
     state.email = 'ada@example.com'
-    expect(await validation.validate()).toBe(true)
+    await expect(validation.validate()).resolves.toBeTruthy()
   })
 
   it('keeps custom errors visible without blocking validation', async () => {
@@ -87,21 +87,21 @@ describe('Regle-owned form validation', () => {
     })
     const state = reactive<FormObject>({ email: 'ada@example.com' })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
     validation.setError(['email'], 'This email is already registered.')
 
     expect(validation.getFieldError(['email'])).toBe('This email is already registered.')
-    expect(validation.errors.value).toEqual([
-      { path: 'email', message: 'This email is already registered.' },
+    expect(validation.errors.value).toStrictEqual([
+      { message: 'This email is already registered.', path: 'email' },
     ])
-    expect(await validation.validate()).toBe(true)
-    expect(await validation.validateFields(schema.fields, [])).toBe(true)
+    await expect(validation.validate()).resolves.toBeTruthy()
+    await expect(validation.validateFields(schema.fields, [])).resolves.toBeTruthy()
   })
 
   it('runs required and callback rules through the Regle tree', async () => {
@@ -125,24 +125,24 @@ describe('Regle-owned form validation', () => {
     })
     const state = reactive<FormObject>({ email: '' })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
     validation.markTouched(['email'])
-    expect(await validation.validate()).toBe(false)
-    expect(validation.isPending(['email'])).toBe(false)
+    await expect(validation.validate()).resolves.toBeFalsy()
+    expect(validation.isPending(['email'])).toBeFalsy()
     expect(validation.getFieldError(['email'])).toBe('This field is required.')
 
     state.email = 'invalid@example.com'
-    expect(await validation.validate()).toBe(false)
+    await expect(validation.validate()).resolves.toBeFalsy()
     expect(validation.getFieldError(['email'])).toBe('Use the Ada example address.')
 
     state.email = 'ada@example.com'
-    expect(await validation.validate()).toBe(true)
+    await expect(validation.validate()).resolves.toBeTruthy()
     expect(validation.getFieldError(['email'])).toBeUndefined()
   })
 
@@ -163,14 +163,14 @@ describe('Regle-owned form validation', () => {
     })
     const state = reactive<FormObject>({ profile: { firstName: '', lastName: '' } })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
-    expect(await validation.validate()).toBe(false)
+    await expect(validation.validate()).resolves.toBeFalsy()
     expect(validation.getFieldError(['profile.firstName'])).toBe('This field is required.')
     expect(validation.getFieldError(['profile.lastName'])).toBe('This field is required.')
   })
@@ -179,22 +179,24 @@ describe('Regle-owned form validation', () => {
     const schema = defineFormSchema({
       steps: [
         {
+          fields: [{ key: 'firstName', type: 'text', validation: { required: true } }],
           key: 'profile',
           root: 'profile',
-          fields: [{ key: 'firstName', type: 'text', validation: { required: true } }],
         },
       ],
     })
     const state = reactive<FormObject>({ profile: { firstName: '' } })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
-    expect(await validation.validateFields(schema.steps[0].fields, ['profile'])).toBe(false)
+    await expect(
+      validation.validateFields(schema.steps[0].fields, ['profile']),
+    ).resolves.toBeFalsy()
     expect(validation.getFieldError(['profile', 'firstName'])).toBe('This field is required.')
   })
 
@@ -202,8 +204,6 @@ describe('Regle-owned form validation', () => {
     const schema = defineFormSchema({
       fields: [
         {
-          key: 'contacts',
-          type: 'array-list',
           fields: [
             {
               key: 'email',
@@ -211,47 +211,49 @@ describe('Regle-owned form validation', () => {
               validation: { required: true },
             },
           ],
+          key: 'contacts',
+          type: 'array-list',
         },
       ],
     })
     const state = reactive<FormObject>({ contacts: [{}] })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
     validation.markTouched(['contacts', '0', 'email'])
-    expect(await validation.validate()).toBe(false)
+    await expect(validation.validate()).resolves.toBeFalsy()
     expect(validation.getFieldError(['contacts', '0', 'email'])).toBe('This field is required.')
 
     state.contacts = [{ email: 'ada@example.com' }]
-    expect(await validation.validate()).toBe(true)
+    await expect(validation.validate()).resolves.toBeTruthy()
     expect(validation.getFieldError(['contacts', '0', 'email'])).toBeUndefined()
   })
 
   it('keeps step validation scoped when a later step is invalid', async () => {
     const schema = defineFormSchema({
       steps: [
-        { key: 'account', fields: [{ key: 'name', type: 'text', validation: { required: true } }] },
+        { fields: [{ key: 'name', type: 'text', validation: { required: true } }], key: 'account' },
         {
-          key: 'details',
           fields: [{ key: 'description', type: 'text', validation: { required: true } }],
+          key: 'details',
         },
       ],
     })
-    const state = reactive<FormObject>({ name: 'Ada', description: '' })
+    const state = reactive<FormObject>({ description: '', name: 'Ada' })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
-    expect(await validation.validateFields(schema.steps[0].fields, [])).toBe(true)
+    await expect(validation.validateFields(schema.steps[0].fields, [])).resolves.toBeTruthy()
     expect(validation.getFieldError(['description'])).toBeUndefined()
   })
 
@@ -265,9 +267,9 @@ describe('Regle-owned form validation', () => {
           validation: { required: true },
         },
         {
+          dependencies: [['email', 'email']],
           key: 'emailConfirmation',
           type: 'text',
-          dependencies: [['email', 'email']],
           validation: {
             rules: [
               {
@@ -285,8 +287,8 @@ describe('Regle-owned form validation', () => {
           validation: {
             rules: [
               {
-                name: 'available-handle',
                 message: 'This handle is already registered.',
+                name: 'available-handle',
                 validate: async () => {
                   await new Promise<void>((resolve) => setTimeout(resolve, 10))
                   availabilityCheckResolved = true
@@ -304,17 +306,17 @@ describe('Regle-owned form validation', () => {
       handle: 'ada',
     })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
     const pendingValidation = validation.validate()
-    expect(availabilityCheckResolved).toBe(false)
-    expect(await pendingValidation).toBe(false)
-    expect(availabilityCheckResolved).toBe(true)
+    expect(availabilityCheckResolved).toBeFalsy()
+    await expect(pendingValidation).resolves.toBeFalsy()
+    expect(availabilityCheckResolved).toBeTruthy()
     expect(validation.getFieldError(['emailConfirmation'])).toBe('Email addresses do not match.')
     expect(validation.getFieldError(['handle'])).toBe('This handle is already registered.')
   })
@@ -327,8 +329,6 @@ describe('Regle-owned form validation', () => {
     const schema = defineFormSchema({
       fields: [
         {
-          key: 'contacts',
-          type: 'array-list',
           fields: [
             {
               key: 'email',
@@ -347,26 +347,28 @@ describe('Regle-owned form validation', () => {
               },
             },
           ],
+          key: 'contacts',
+          type: 'array-list',
         },
       ],
     })
     const state = reactive<FormObject>({ contacts: [{ email: 'ada@example.com' }] })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
     const pendingValidation = validation.validateFields(schema.fields, [])
     await nextTick()
-    expect(validation.isPending(['contacts', '0', 'email'])).toBe(true)
+    expect(validation.isPending(['contacts', '0', 'email'])).toBeTruthy()
     expect(validation.getFieldError(['contacts', '0', 'email'])).toBeUndefined()
 
     resolveAvailability()
-    expect(await pendingValidation).toBe(false)
-    expect(validation.isPending(['contacts', '0', 'email'])).toBe(false)
+    await expect(pendingValidation).resolves.toBeFalsy()
+    expect(validation.isPending(['contacts', '0', 'email'])).toBeFalsy()
     expect(validation.getFieldError(['contacts', '0', 'email'])).toBe(
       'This email is already registered.',
     )
@@ -397,25 +399,25 @@ describe('Regle-owned form validation', () => {
     })
     const state = reactive<FormObject>({ handle: 'ada' })
     const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
       schema: () => schema,
       state,
-      context: {},
-      apiFactory: createApiFactory(state),
-      getValidationMode: () => true,
     })
 
     const firstRun = validation.validateFields(schema.fields, [])
     await nextTick()
-    expect(validation.isPending(['handle'])).toBe(true)
+    expect(validation.isPending(['handle'])).toBeTruthy()
 
     const secondRun = validation.validateFields(schema.fields, [])
     await nextTick()
-    expect(validation.isPending(['handle'])).toBe(true)
+    expect(validation.isPending(['handle'])).toBeTruthy()
 
     gates[0].resolve()
     gates[1].resolve()
     await Promise.all([firstRun, secondRun])
-    expect(validation.isPending(['handle'])).toBe(false)
+    expect(validation.isPending(['handle'])).toBeFalsy()
   })
 })
 

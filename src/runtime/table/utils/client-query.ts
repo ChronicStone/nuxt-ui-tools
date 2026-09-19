@@ -32,8 +32,8 @@ export function executeClientQuery<
   TContext extends GenericObject = GenericObject,
 >(params: TableClientQueryParams<TRow, TContext>): TableSourceExecutionResult<TRow> {
   const filteredRows = filterClientRows({
-    rows: params.rows,
     filters: params.request.filters,
+    rows: params.rows,
     search: params.request.search,
   })
   const sortedRows = sortClientRows({
@@ -42,8 +42,8 @@ export function executeClientQuery<
   })
 
   return paginateClientRows({
-    rows: sortedRows,
     pagination: params.request.pagination,
+    rows: sortedRows,
   })
 }
 
@@ -63,9 +63,9 @@ export function executeClientFacets<
   return {
     facets: params.facets.map((facet) =>
       resolveClientFacet({
-        rows: params.rows,
-        request: params.request,
         facet,
+        request: params.request,
+        rows: params.rows,
       }),
     ),
   }
@@ -131,8 +131,8 @@ function resolveClientFacet<
     search: options.request.search,
   })
   const counts = countFacetOptions({
-    rows: matchingRows,
     key: options.facet.key,
+    rows: matchingRows,
     search: options.facet.search,
   })
   const start = resolveFacetOffset(options.facet.cursor)
@@ -142,11 +142,11 @@ function resolveClientFacet<
 
   return {
     key: options.facet.key,
-    options: limited,
     nextCursor:
       options.facet.limit && start + options.facet.limit < counts.length
         ? String(start + options.facet.limit)
         : null,
+    options: limited,
     total: counts.length,
   }
 }
@@ -161,9 +161,9 @@ function matchesSearch<TRow extends GenericObject>(
 
   return search.fields.some((field) =>
     pathMatchesSearchValue({
-      value: row,
       path: String(field),
       search: search.value,
+      value: row,
     }),
   )
 }
@@ -175,9 +175,9 @@ function pathMatchesSearchValue(options: {
 }): boolean {
   const segments = options.path.split('.')
   return matchSearchPathSegments({
-    value: options.value,
-    segments,
     search: options.search,
+    segments,
+    value: options.value,
   })
 }
 
@@ -188,17 +188,17 @@ function matchSearchPathSegments(options: {
 }): boolean {
   if (options.segments.length === 0) {
     return valueMatchesSearch({
-      value: options.value,
       search: options.search,
+      value: options.value,
     })
   }
 
   if (isArray(options.value)) {
     return options.value.some((item) =>
       matchSearchPathSegments({
-        value: item,
-        segments: options.segments,
         search: options.search,
+        segments: options.segments,
+        value: item,
       }),
     )
   }
@@ -213,9 +213,9 @@ function matchSearchPathSegments(options: {
   }
 
   return matchSearchPathSegments({
-    value: options.value[head],
-    segments: tail,
     search: options.search,
+    segments: tail,
+    value: options.value[head],
   })
 }
 
@@ -225,8 +225,8 @@ function valueMatchesSearch(options: { value: unknown; search: string }): boolea
   if (isArray(options.value)) {
     return options.value.some((item) =>
       valueMatchesSearch({
-        value: item,
         search: normalizedSearch,
+        value: item,
       }),
     )
   }
@@ -249,7 +249,9 @@ function* lazySortRows<TRow extends GenericObject>(
 
   while (buffer.length < 1000) {
     const next = iterator.next()
-    if (next.done) break
+    if (next.done) {
+      break
+    }
     buffer.push(next.value)
   }
 
@@ -262,13 +264,15 @@ function* lazySortRows<TRow extends GenericObject>(
 
     while (buffer.length < cursor + 1000) {
       const next = iterator.next()
-      if (next.done) break
+      if (next.done) {
+        break
+      }
 
       const insertIndex = findInsertIndex({
-        rows: buffer,
-        value: next.value,
         compare,
         offset: cursor,
+        rows: buffer,
+        value: next.value,
       })
       buffer.splice(insertIndex, 0, next.value)
     }
@@ -282,11 +286,13 @@ function createRowComparator<TRow extends GenericObject>(
     for (const rule of sorting) {
       const direction = rule.dir === 'desc' ? -1 : 1
       const comparison = compareUnknownValues({
-        left: getFilterTargetValue({ source: left, key: rule.key }),
-        right: getFilterTargetValue({ source: right, key: rule.key }),
+        left: getFilterTargetValue({ key: rule.key, source: left }),
+        right: getFilterTargetValue({ key: rule.key, source: right }),
       })
 
-      if (comparison !== 0) return comparison * direction
+      if (comparison !== 0) {
+        return comparison * direction
+      }
     }
 
     return 0
@@ -307,7 +313,9 @@ function findInsertIndex<TRow>(options: {
     const mid = Math.floor((low + high) / 2)
 
     const row = options.rows[mid]
-    if (row === undefined) throw new RangeError(`Missing row at sorted insert index ${mid}.`)
+    if (row === undefined) {
+      throw new RangeError(`Missing row at sorted insert index ${mid}.`)
+    }
 
     if (options.compare(options.value, row) < 0) {
       high = mid
@@ -326,7 +334,7 @@ function paginateRows<TRow extends GenericObject>(
 ): TableSourceExecutionResult<TRow> {
   if (pagination.mode !== 'offset') {
     const collected = [...rows]
-    return { rows: collected, rowCount: collected.length }
+    return { rowCount: collected.length, rows: collected }
   }
 
   const pageIndex = Math.max(1, pagination.pageIndex || 1)
@@ -353,8 +361,8 @@ function paginateRows<TRow extends GenericObject>(
   }
 
   return {
-    rows: collected,
     rowCount: index + remaining,
+    rows: collected,
   }
 }
 
@@ -366,7 +374,9 @@ function removeFilterKeyFromGroup(options: {
 
   for (const child of options.group.children) {
     if (child.type === 'condition') {
-      if (child.key !== options.key) children.push(child)
+      if (child.key !== options.key) {
+        children.push(child)
+      }
       continue
     }
 
@@ -374,7 +384,9 @@ function removeFilterKeyFromGroup(options: {
       group: child,
       key: options.key,
     })
-    if (nextGroup.children.length) children.push(nextGroup)
+    if (nextGroup.children.length) {
+      children.push(nextGroup)
+    }
   }
 
   return {
@@ -394,14 +406,20 @@ function countFacetOptions<TRow extends GenericObject>(options: {
   for (const row of options.rows) {
     const seenInRow = new Set<string>()
 
-    for (const value of toValueList(getFilterTargetValue({ source: row, key: options.key }))) {
-      if (!isString(value) && !isNumber(value) && !isBoolean(value)) continue
+    for (const value of toValueList(getFilterTargetValue({ key: options.key, source: row }))) {
+      if (!isString(value) && !isNumber(value) && !isBoolean(value)) {
+        continue
+      }
 
       const searchValue = String(value).toLocaleLowerCase()
-      if (normalizedSearch.length && !searchValue.includes(normalizedSearch)) continue
+      if (normalizedSearch.length && !searchValue.includes(normalizedSearch)) {
+        continue
+      }
 
       const mapKey = `${resolvePrimitiveValueKind(value)}:${String(value)}`
-      if (seenInRow.has(mapKey)) continue
+      if (seenInRow.has(mapKey)) {
+        continue
+      }
 
       seenInRow.add(mapKey)
       const current = countByValue.get(mapKey)
@@ -411,8 +429,8 @@ function countFacetOptions<TRow extends GenericObject>(options: {
       }
 
       countByValue.set(mapKey, {
-        value,
         count: 1,
+        value,
       })
     }
   }
@@ -424,12 +442,16 @@ function compareFacetOptions(
   left: TableFacetOptionResult<string | number | boolean>,
   right: TableFacetOptionResult<string | number | boolean>,
 ) {
-  if (left.count !== right.count) return right.count - left.count
+  if (left.count !== right.count) {
+    return right.count - left.count
+  }
   return compareUnknownValues({ left: left.value, right: right.value })
 }
 
 function resolveFacetOffset(cursor?: string | null) {
-  if (!cursor) return 0
+  if (!cursor) {
+    return 0
+  }
 
   const value = Number(cursor)
   return Number.isFinite(value) && value > 0 ? value : 0
@@ -457,35 +479,47 @@ function matchesFilterCondition<TRow extends GenericObject>(
   condition: TableResolvedFilterCondition<string>,
 ): boolean {
   const value = getFilterTargetValue({
-    source: row,
     key: condition.key,
+    source: row,
   })
 
   switch (condition.operator) {
-    case 'contains':
+    case 'contains': {
       return matchContains({ value, filter: condition.value })
-    case 'is':
+    }
+    case 'is': {
       return matchIs({ value, filter: condition.value })
-    case 'isAnyOf':
+    }
+    case 'isAnyOf': {
       return matchIsAnyOf({ value, filter: condition.value })
-    case 'isNot':
+    }
+    case 'isNot': {
       return !matchIsAnyOf({ value, filter: condition.value })
-    case 'gt':
+    }
+    case 'gt': {
       return matchComparison({ value, filter: condition.value, operator: 'gt' })
-    case 'gte':
+    }
+    case 'gte': {
       return matchComparison({ value, filter: condition.value, operator: 'gte' })
-    case 'lt':
+    }
+    case 'lt': {
       return matchComparison({ value, filter: condition.value, operator: 'lt' })
-    case 'lte':
+    }
+    case 'lte': {
       return matchComparison({ value, filter: condition.value, operator: 'lte' })
-    case 'between':
+    }
+    case 'between': {
       return matchBetween({ value, filter: condition.value })
-    case 'before':
+    }
+    case 'before': {
       return matchComparison({ value, filter: condition.value, operator: 'lt' })
-    case 'after':
+    }
+    case 'after': {
       return matchComparison({ value, filter: condition.value, operator: 'gt' })
-    default:
+    }
+    default: {
       return false
+    }
   }
 }
 
@@ -496,7 +530,7 @@ function getFilterTargetValue<TSource>(options: { source: TSource; key: string }
     }
 
     if (!isObject(current)) {
-      return undefined
+      return
     }
 
     return current[segment]
@@ -529,8 +563,8 @@ function matchIsAnyOf(options: { value: unknown; filter: unknown }): boolean {
 
   return options.filter.some((candidate) =>
     matchIs({
-      value: options.value,
       filter: candidate,
+      value: options.value,
     }),
   )
 }
@@ -580,14 +614,18 @@ function matchComparison(options: {
     }
 
     switch (options.operator) {
-      case 'gt':
+      case 'gt': {
         return comparable > expected
-      case 'gte':
+      }
+      case 'gte': {
         return comparable >= expected
-      case 'lt':
+      }
+      case 'lt': {
         return comparable < expected
-      case 'lte':
+      }
+      case 'lte': {
         return comparable <= expected
+      }
     }
   })
 }
@@ -703,7 +741,11 @@ function normalizeString<TValue>(value: TValue): string {
 }
 
 function resolvePrimitiveValueKind<TValue>(value: TValue): 'string' | 'number' | 'boolean' {
-  if (isString(value)) return 'string'
-  if (isNumber(value)) return 'number'
+  if (isString(value)) {
+    return 'string'
+  }
+  if (isNumber(value)) {
+    return 'number'
+  }
   return 'boolean'
 }

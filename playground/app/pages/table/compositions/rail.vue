@@ -7,7 +7,7 @@ import { executeClientQuery } from '#ui-tools/table/utils'
 
 type KnowledgeStatus = 'Published' | 'Draft' | 'Archived'
 type KnowledgeType = 'Guide' | 'Reference' | 'Runbook'
-type KnowledgeRow = {
+interface KnowledgeRow {
   id: string
   title: string
   status: KnowledgeStatus
@@ -20,124 +20,124 @@ type KnowledgeRow = {
 
 const documents: KnowledgeRow[] = [
   {
+    featured: true,
     id: 'doc-001',
-    title: 'Escalation playbook',
-    status: 'Published',
-    type: 'Runbook',
     owner: 'Operations',
     readTime: 12,
+    status: 'Published',
+    title: 'Escalation playbook',
+    type: 'Runbook',
     updatedAt: '2026-08-18',
-    featured: true,
   },
   {
+    featured: true,
     id: 'doc-002',
-    title: 'Release checklist',
-    status: 'Published',
-    type: 'Guide',
     owner: 'Platform',
     readTime: 8,
+    status: 'Published',
+    title: 'Release checklist',
+    type: 'Guide',
     updatedAt: '2026-08-17',
-    featured: true,
   },
   {
+    featured: false,
     id: 'doc-003',
-    title: 'Design token reference',
-    status: 'Published',
-    type: 'Reference',
     owner: 'Design',
     readTime: 6,
+    status: 'Published',
+    title: 'Design token reference',
+    type: 'Reference',
     updatedAt: '2026-08-16',
-    featured: false,
   },
   {
+    featured: false,
     id: 'doc-004',
-    title: 'Incident handoff',
-    status: 'Draft',
-    type: 'Runbook',
     owner: 'Operations',
     readTime: 10,
+    status: 'Draft',
+    title: 'Incident handoff',
+    type: 'Runbook',
     updatedAt: '2026-08-15',
-    featured: false,
   },
   {
+    featured: true,
     id: 'doc-005',
-    title: 'Query state guide',
-    status: 'Published',
-    type: 'Guide',
     owner: 'Platform',
     readTime: 14,
+    status: 'Published',
+    title: 'Query state guide',
+    type: 'Guide',
     updatedAt: '2026-08-14',
-    featured: true,
   },
   {
+    featured: false,
     id: 'doc-006',
-    title: 'Form field reference',
-    status: 'Published',
-    type: 'Reference',
     owner: 'Design',
     readTime: 9,
+    status: 'Published',
+    title: 'Form field reference',
+    type: 'Reference',
     updatedAt: '2026-08-13',
-    featured: false,
   },
   {
+    featured: false,
     id: 'doc-007',
-    title: 'On-call opening steps',
-    status: 'Archived',
-    type: 'Runbook',
     owner: 'Operations',
     readTime: 5,
+    status: 'Archived',
+    title: 'On-call opening steps',
+    type: 'Runbook',
     updatedAt: '2026-08-12',
-    featured: false,
   },
   {
+    featured: true,
     id: 'doc-008',
-    title: 'Table composition guide',
-    status: 'Draft',
-    type: 'Guide',
     owner: 'Platform',
     readTime: 11,
+    status: 'Draft',
+    title: 'Table composition guide',
+    type: 'Guide',
     updatedAt: '2026-08-11',
-    featured: true,
   },
   {
+    featured: false,
     id: 'doc-009',
-    title: 'Color usage reference',
-    status: 'Published',
-    type: 'Reference',
     owner: 'Design',
     readTime: 7,
+    status: 'Published',
+    title: 'Color usage reference',
+    type: 'Reference',
     updatedAt: '2026-08-10',
-    featured: false,
   },
   {
+    featured: false,
     id: 'doc-010',
-    title: 'Remote query runbook',
-    status: 'Published',
-    type: 'Runbook',
     owner: 'Platform',
     readTime: 13,
+    status: 'Published',
+    title: 'Remote query runbook',
+    type: 'Runbook',
     updatedAt: '2026-08-09',
-    featured: false,
   },
   {
+    featured: false,
     id: 'doc-011',
-    title: 'Support response guide',
-    status: 'Draft',
-    type: 'Guide',
     owner: 'Operations',
     readTime: 9,
+    status: 'Draft',
+    title: 'Support response guide',
+    type: 'Guide',
     updatedAt: '2026-08-08',
-    featured: false,
   },
   {
+    featured: false,
     id: 'doc-012',
-    title: 'Layout density reference',
-    status: 'Archived',
-    type: 'Reference',
     owner: 'Design',
     readTime: 4,
+    status: 'Archived',
+    title: 'Layout density reference',
+    type: 'Reference',
     updatedAt: '2026-08-07',
-    featured: false,
   },
 ]
 
@@ -146,9 +146,9 @@ function optionCounts<TValue extends string>(
   valueForRow: (row: KnowledgeRow) => TValue,
 ) {
   return values.map((value) => ({
+    count: documents.filter((row) => valueForRow(row) === value).length,
     label: value,
     value,
-    count: documents.filter((row) => valueForRow(row) === value).length,
   }))
 }
 
@@ -157,40 +157,7 @@ const typeOptions = optionCounts(['Guide', 'Reference', 'Runbook'] as const, (ro
 const ownerOptions = optionCounts(['Design', 'Operations', 'Platform'] as const, (row) => row.owner)
 
 const schema = defineTableSchema({
-  tableKey: 'knowledge-base-filter-rail',
-  rowKey: 'id',
   defaultLayout: 'table',
-  pagination: { mode: 'cursor', pageSize: 10, count: 'exact' },
-  source: {
-    mode: 'remote',
-    query: (request) => ({
-      queryKey: ['table-composition-knowledge-base', request],
-      queryFn: async () => {
-        const prepared = executeClientQuery({
-          rows: documents,
-          request: { ...request, pagination: { mode: 'none' } },
-        })
-        const pagination = request.pagination
-        const cursor = pagination.mode === 'cursor' ? Number(pagination.cursor ?? 0) : 0
-        const pageSize = pagination.mode === 'cursor' ? pagination.pageSize : prepared.rows.length
-        const rows = prepared.rows.slice(cursor, cursor + pageSize)
-        const nextOffset = cursor + rows.length
-
-        await new Promise((resolve) => setTimeout(resolve, 160))
-
-        return {
-          rows,
-          pageInfo: {
-            mode: 'cursor' as const,
-            pageSize,
-            nextCursor: nextOffset < prepared.rowCount ? String(nextOffset) : null,
-            count: 'exact' as const,
-            rowCount: prepared.rowCount,
-          },
-        }
-      },
-    }),
-  },
   filters: {
     search: { fields: ['title', 'owner'], placeholder: 'Search knowledge base' },
     ui: (filter) => [
@@ -238,6 +205,38 @@ const schema = defineTableSchema({
       }),
     ],
   },
+  pagination: { count: 'exact', mode: 'cursor', pageSize: 10 },
+  rowKey: 'id',
+  source: {
+    mode: 'remote',
+    query: (request) => ({
+      queryKey: ['table-composition-knowledge-base', request],
+      queryFn: async () => {
+        const prepared = executeClientQuery({
+          rows: documents,
+          request: { ...request, pagination: { mode: 'none' } },
+        })
+        const pagination = request.pagination
+        const cursor = pagination.mode === 'cursor' ? Number(pagination.cursor ?? 0) : 0
+        const pageSize = pagination.mode === 'cursor' ? pagination.pageSize : prepared.rows.length
+        const rows = prepared.rows.slice(cursor, cursor + pageSize)
+        const nextOffset = cursor + rows.length
+
+        await new Promise((resolve) => setTimeout(resolve, 160))
+
+        return {
+          rows,
+          pageInfo: {
+            mode: 'cursor' as const,
+            pageSize,
+            nextCursor: nextOffset < prepared.rowCount ? String(nextOffset) : null,
+            count: 'exact' as const,
+            rowCount: prepared.rowCount,
+          },
+        }
+      },
+    }),
+  },
   table: {
     columns: (column) => [
       column.field('title', { label: 'Document' }),
@@ -247,8 +246,9 @@ const schema = defineTableSchema({
       column.field('readTime', { label: 'Read · min' }),
       column.field('updatedAt', { label: 'Updated' }),
     ],
-    defaultSorting: { key: 'updatedAt', dir: 'desc' },
+    defaultSorting: { dir: 'desc', key: 'updatedAt' },
   },
+  tableKey: 'knowledge-base-filter-rail',
 })
 
 const table = useTable(schema)

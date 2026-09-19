@@ -53,6 +53,12 @@ export function defineTableSchema<
   // SAFETY: schema transformation preserves every input field while resolving only column/filter collections.
   return {
     ...schema,
+    filters: schema.filters
+      ? {
+          ...schema.filters,
+          ui: resolveUiFilters(schema.filters.ui),
+        }
+      : undefined,
     table: schema.table
       ? {
           ...schema.table,
@@ -66,12 +72,6 @@ export function defineTableSchema<
               string
             >,
           ),
-        }
-      : undefined,
-    filters: schema.filters
-      ? {
-          ...schema.filters,
-          ui: resolveUiFilters(schema.filters.ui),
         }
       : undefined,
   } as ResolvedTableSchema<InferredTableSchema<TSource, TContextItems, TPageContextItems>> & {

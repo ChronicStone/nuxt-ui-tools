@@ -5,31 +5,31 @@ export const ACCOUNT_STATUS = {
 } as const
 
 export const ACCOUNT_TYPE = {
-  customer: 'Client',
-  partner: 'Partenaire',
-  strategicPartner: 'Partenaire stratégique',
   authorizedTestCenter: 'Centre de test autorisé',
   authorizedTestCenterFrEducation: 'Centre autorisé éducation FR',
-  testCenter: 'Centre de test',
+  customer: 'Client',
   education: 'Éducation',
+  partner: 'Partenaire',
   pendingCenter: 'Pending center',
+  strategicPartner: 'Partenaire stratégique',
+  testCenter: 'Centre de test',
 } as const
 
 export const COUNTRY = {
-  FR: 'France',
-  ES: 'Espagne',
-  DE: 'Allemagne',
-  GB: 'Royaume-Uni',
-  CH: 'Suisse',
   BE: 'Belgique',
-  IT: 'Italie',
-  SE: 'Suède',
+  CH: 'Suisse',
+  DE: 'Allemagne',
   DK: 'Danemark',
+  ES: 'Espagne',
+  FR: 'France',
+  GB: 'Royaume-Uni',
+  IT: 'Italie',
+  MA: 'Maroc',
   NL: 'Pays-Bas',
   PT: 'Portugal',
-  MA: 'Maroc',
-  TN: 'Tunisie',
   SA: 'Arabie saoudite',
+  SE: 'Suède',
+  TN: 'Tunisie',
 } as const
 
 export const CURRENCY = ['EUR', 'USD', 'CHF', 'GBP'] as const

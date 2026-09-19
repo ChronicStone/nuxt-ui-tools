@@ -117,7 +117,7 @@ export type TableDefaultSort<TKey extends string = string> =
       dir: TableSortingDirection
     }
 
-export type TableSchemaRefLike<TValue> = {
+export interface TableSchemaRefLike<TValue> {
   value: TValue
 }
 

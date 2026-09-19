@@ -3,12 +3,14 @@
 Goal: nuxt-ui-tools table runtime at parity with tars shared-ui data-list, proven by `playground-table` (Accounts list + Audit trail) as a pixel-perfect replica of the ExAssess prototype (`reference/*.png`, `prototype-list.css`, `prototype-atelier.css`).
 
 ## Decisions
+
 - Keep: schema/type layer, builders (moved to `utils/builders`), `client-query`, query-state URL scheme, prefetch, facets contract, FilterPopoverShell/FilterStageTransition, Root + parts composition, i18n.
 - Replace: table renderer (own `<table>` on TanStack Table v9 + vue-virtual X/Y, pinned columns as padding, overlay scrollbars, sticky header/footer, skeleton first load, background bar), loading overlays, selection bar (dark floating bar, scope toggle selection/all, overflow ⋯ above 70 % width), customization API (generic part config: `size`, `ui` classes, `props` per Nuxt UI primitive), mobile (cards only, filter tags + columns + sort as bottom sheets, filter panel mobile-only).
 - Add: summaries (column `summary` derivable kinds or async resolver, source-level `summaries`, scopes page/filtered/selection, footer toggle, skeleton cells), animations (control cluster, bands, rows when not virtualized, chips, layout switch), cursor infinite table with virtualization.
 - Defer: presets, quick-filter rail, column drag reorder, DB adapters.
 
 ## Phases
+
 1. Playground shell + Accounts on current runtime (baseline, dev server running).
 2. New TableRenderer (v9, virtualization, pinning, column menu, resize, sticky header/footer, skeleton).
 3. Toolbar/tags restyle, mobile sheets, cards view, mobile layout.
@@ -18,6 +20,7 @@ Goal: nuxt-ui-tools table runtime at parity with tars shared-ui data-list, prove
 7. Customization `props`, tests, consumer skill docs, cleanup.
 
 ## Perf budget
+
 10 000 client rows, all 24 columns: filter/sort/page change < 50 ms main thread; horizontal scroll without layout thrash; memory flat across page switches.
 
 ## Status (2026-09-19)
@@ -29,6 +32,7 @@ Measured at 10 000 client rows (1440×900, headless Chrome): next page 71 ms, se
 Known gaps: selection bar is centered on the content area (prototype centers on the whole window); empty state keeps a one-line message where the prototype is blank; column drag reorder in the panel is kept from the previous implementation; no vitest coverage yet for summaries and the props merge.
 
 ### Polish pass (2026-09-19, later)
+
 - Rows grow with content: cells wrap, clamped to 3 lines by default (`lines` per column, `ellipsis: true` for one line), 6 px vertical padding keeps single-line rows at 44 px.
 - Designed empty state (icon tile, contextual copy, reset-filters action) shared by table and grid; per-column skeleton shapes (`skeleton: 'avatar' | 'dot' | 'check' | 'number' | 'badge'`), staggered shimmer, card skeletons, footer boot state.
 - Mobile: breakpoint synced from matchMedia before the first layout evaluation (no table flash), forced layouts are derived and never written to the URL, filter sheet ordered by schema, sheet header owns back + Effacer, boolean labels localized.

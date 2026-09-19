@@ -75,14 +75,22 @@ const hasTime = computed<boolean>(() => hasDateFamilyTime(type.value))
 const calendarType = computed(() => dateFamilyCalendarType(type.value))
 const value = computed(() => form.getValue(props.path))
 const selectedValues = computed<readonly [string, string]>(() => {
-  if (!isRange.value) return [canonicalDateFromFormValue(value.value), '']
-  if (!Array.isArray(value.value)) return ['', '']
+  if (!isRange.value) {
+    return [canonicalDateFromFormValue(value.value), '']
+  }
+  if (!Array.isArray(value.value)) {
+    return ['', '']
+  }
   return [canonicalDateFromFormValue(value.value[0]), canonicalDateFromFormValue(value.value[1])]
 })
 const manualInput = computed<ResolvedManualInput>(() => {
   const configured = props.field.manualInput
-  if (configured === false) return { enabled: false, mask: true }
-  if (configured === true || configured === undefined) return { enabled: true, mask: true }
+  if (configured === false) {
+    return { enabled: false, mask: true }
+  }
+  if (configured === true || configured === undefined) {
+    return { enabled: true, mask: true }
+  }
   return {
     ...configured,
     enabled: configured.enabled !== false,
@@ -97,15 +105,21 @@ const manualFormat = computed(
 )
 const placeholder = computed(() => {
   const explicitlyConfigured = Object.getOwnPropertyDescriptor(props.field, 'placeholder')?.value
-  if (explicitlyConfigured !== undefined) return fieldPlaceholder.value
+  if (explicitlyConfigured !== undefined) {
+    return fieldPlaceholder.value
+  }
   return manualInput.value.placeholder ?? dateManualPlaceholder(manualFormat.value, isRange.value)
 })
 const previewValue = computed(() => {
-  if (!isRange.value) return formatPreviewPart(selectedValues.value[0])
+  if (!isRange.value) {
+    return formatPreviewPart(selectedValues.value[0])
+  }
 
   const start = formatPreviewPart(selectedValues.value[0])
   const end = formatPreviewPart(selectedValues.value[1])
-  if (!start && !end) return ''
+  if (!start && !end) {
+    return ''
+  }
   return `${start || t('form.fields.date.start')} – ${end || t('form.fields.date.end')}`
 })
 const manualValue = computed(() =>
@@ -135,16 +149,20 @@ const rangeTimeValue = computed<FormTimeRangeValue>(() =>
   timeRangeFromCanonical(selectedValues.value),
 )
 const minuteStep = computed<number>(() => {
-  if (!('minuteStep' in props.field) || !isNumber(props.field.minuteStep)) return 1
+  if (!('minuteStep' in props.field) || !isNumber(props.field.minuteStep)) {
+    return 1
+  }
   return Math.min(60, Math.max(1, Math.round(props.field.minuteStep)))
 })
 const timeStep = computed<{ minute: number }>(() => ({ minute: minuteStep.value }))
-const calendarUi = computed(() => ({ root: 'p-2', heading: 'min-w-0' }))
+const calendarUi = computed(() => ({ heading: 'min-w-0', root: 'p-2' }))
 
 watch(
   selectedValues,
   () => {
-    if (!manualEditing.value) inputValue.value = previewValue.value
+    if (!manualEditing.value) {
+      inputValue.value = previewValue.value
+    }
   },
   { immediate: true },
 )
@@ -162,7 +180,9 @@ function handleClick() {
 }
 
 function handleInput(next: string | number) {
-  if (!manualInput.value.enabled) return
+  if (!manualInput.value.enabled) {
+    return
+  }
 
   const raw = String(next)
   inputValue.value = manualInput.value.mask
@@ -178,14 +198,18 @@ function handleInput(next: string | number) {
 }
 
 function handleInputBlur(event: FocusEvent) {
-  if (manualInput.value.enabled) commitManualInput(inputValue.value)
+  if (manualInput.value.enabled) {
+    commitManualInput(inputValue.value)
+  }
   manualEditing.value = false
   inputValue.value = previewValue.value
   handleBlur(event)
 }
 
 function handleManualConfirm() {
-  if (manualInput.value.enabled) commitManualInput(inputValue.value)
+  if (manualInput.value.enabled) {
+    commitManualInput(inputValue.value)
+  }
   manualEditing.value = false
   inputValue.value = previewValue.value
   open.value = false
@@ -193,17 +217,23 @@ function handleManualConfirm() {
 
 function handleOpenUpdate(next: boolean) {
   open.value = next
-  if (next) return
+  if (next) {
+    return
+  }
 
   draftRange.value = null
-  if (root.value?.contains(document.activeElement)) return
+  if (root.value?.contains(document.activeElement)) {
+    return
+  }
   manualEditing.value = false
   inputValue.value = previewValue.value
 }
 
 function handlePopoverEscape() {
   const input = root.value?.querySelector('input')
-  if (input && document.activeElement === input) input.blur()
+  if (input && document.activeElement === input) {
+    input.blur()
+  }
   manualEditing.value = false
   inputValue.value = previewValue.value
 }
@@ -211,34 +241,50 @@ function handlePopoverEscape() {
 function updateSingleCalendar(
   next: DateValue | FormCalendarRangeValue | DateValue[] | null | undefined,
 ) {
-  if (!next || Array.isArray(next) || isCalendarRangeValue(next)) return
+  if (!next || Array.isArray(next) || isCalendarRangeValue(next)) {
+    return
+  }
 
   const canonical = serializeCalendarValue(type.value, next, selectedValues.value[0])
-  if (!isWithinBounds(canonical)) return
+  if (!isWithinBounds(canonical)) {
+    return
+  }
   setStoredPart(0, canonical)
-  if (!hasTime.value) open.value = false
+  if (!hasTime.value) {
+    open.value = false
+  }
 }
 
 function updateRangeCalendar(next: FormCalendarRangeValue | null) {
   draftRange.value = next
-  if (!next?.start || !next.end) return
+  if (!next?.start || !next.end) {
+    return
+  }
 
   const start = serializeCalendarValue(type.value, next.start, selectedValues.value[0])
   const end = serializeCalendarValue(type.value, next.end, selectedValues.value[1])
-  if (start > end || !isWithinBounds(start) || !isWithinBounds(end)) return
+  if (start > end || !isWithinBounds(start) || !isWithinBounds(end)) {
+    return
+  }
 
   setStoredRange(start, end)
   draftRange.value = null
-  if (!hasTime.value) open.value = false
+  if (!hasTime.value) {
+    open.value = false
+  }
 }
 
 function updateSingleTime(next: TimeInputModel) {
-  if (!next || 'start' in next || !selectedValues.value[0]) return
+  if (!next || 'start' in next || !selectedValues.value[0]) {
+    return
+  }
   setStoredPart(0, serializeTimeValue(selectedValues.value[0], next))
 }
 
 function updateRangeTime(next: TimeRangeInputModel) {
-  if (!next?.start || !next.end || !selectedValues.value[0] || !selectedValues.value[1]) return
+  if (!next?.start || !next.end || !selectedValues.value[0] || !selectedValues.value[1]) {
+    return
+  }
   setStoredRange(
     serializeTimeValue(selectedValues.value[0], next.start),
     serializeTimeValue(selectedValues.value[1], next.end),
@@ -247,15 +293,21 @@ function updateRangeTime(next: TimeRangeInputModel) {
 
 function commitManualInput(raw: string) {
   const parsed = parseDateManualValue(raw, manualFormat.value, type.value)
-  if (!parsed) return false
+  if (!parsed) {
+    return false
+  }
 
   if (!isString(parsed)) {
-    if (!isWithinBounds(parsed[0]) || !isWithinBounds(parsed[1])) return false
+    if (!isWithinBounds(parsed[0]) || !isWithinBounds(parsed[1])) {
+      return false
+    }
     setStoredRange(parsed[0], parsed[1])
     return true
   }
 
-  if (!isWithinBounds(parsed)) return false
+  if (!isWithinBounds(parsed)) {
+    return false
+  }
   setStoredPart(0, parsed)
   return true
 }
@@ -264,13 +316,17 @@ function setStoredPart(part: 0 | 1, canonical: string) {
   if (isRange.value) {
     const next: [string, string] = [selectedValues.value[0], selectedValues.value[1]]
     next[part] = canonical
-    if (next[0] && next[1]) setStoredRange(next[0], next[1])
+    if (next[0] && next[1]) {
+      setStoredRange(next[0], next[1])
+    }
     return
   }
 
   if (props.field.type === 'date' && props.field.outputFormat === 'date') {
     const date = canonicalDateToJsDate(canonical)
-    if (date) form.setValue(props.path, date)
+    if (date) {
+      form.setValue(props.path, date)
+    }
     return
   }
 
@@ -288,56 +344,81 @@ function clearValue() {
 }
 
 function canonicalDateFromFormValue(value: FormValue) {
-  if (value instanceof Date || isString(value) || isNumber(value) || value == null)
+  if (value instanceof Date || isString(value) || isNumber(value) || value == null) {
     return canonicalDateFromValue(value)
+  }
   return ''
 }
 
 function resolveCalendarBound(edge: 'min' | 'max') {
   const configured = edge === 'min' ? props.field.min : props.field.max
   const direct = calendarSeedFromValue(configured, type.value)
-  if (direct) return normalizeCalendarBound(direct, edge)
+  if (direct) {
+    return normalizeCalendarBound(direct, edge)
+  }
 
   const yearRange = props.field.calendar?.yearRange
-  if (!yearRange) return ''
+  if (!yearRange) {
+    return ''
+  }
   const year = edge === 'min' ? yearRange[0] : yearRange[1]
-  if (type.value === 'year') return String(year)
-  if (type.value === 'month' || type.value === 'monthrange')
+  if (type.value === 'year') {
+    return String(year)
+  }
+  if (type.value === 'month' || type.value === 'monthrange') {
     return `${year}-${edge === 'min' ? '01' : '12'}`
+  }
   return normalizeCalendarBound(`${year}-${edge === 'min' ? '01-01' : '12-31'}`, edge)
 }
 
 function normalizeCalendarBound(value: string, edge: 'min' | 'max') {
-  if (!hasTime.value || value.includes('T')) return value
+  if (!hasTime.value || value.includes('T')) {
+    return value
+  }
   return `${value}T${edge === 'min' ? '00:00' : '23:59'}`
 }
 
 function isWithinBounds(canonical: string) {
-  if (minCanonical.value && canonical < minCanonical.value) return false
-  if (maxCanonical.value && canonical > maxCanonical.value) return false
+  if (minCanonical.value && canonical < minCanonical.value) {
+    return false
+  }
+  if (maxCanonical.value && canonical > maxCanonical.value) {
+    return false
+  }
   return true
 }
 
 function formatPreviewPart(canonical: string) {
-  if (!canonical) return ''
-  if (type.value === 'year') return canonical.slice(0, 4)
+  if (!canonical) {
+    return ''
+  }
+  if (type.value === 'year') {
+    return canonical.slice(0, 4)
+  }
 
   const date = canonicalDateToJsDate(canonical)
-  if (!date) return canonical
+  if (!date) {
+    return canonical
+  }
 
-  if (type.value === 'month' || type.value === 'monthrange')
+  if (type.value === 'month' || type.value === 'monthrange') {
     return new Intl.DateTimeFormat(locale.value.code, {
       month: 'long',
       year: 'numeric',
     }).format(date)
+  }
 
   const options = resolvePreviewFormat()
   return new Intl.DateTimeFormat(locale.value.code, options).format(date)
 }
 
 function resolvePreviewFormat(): Intl.DateTimeFormatOptions {
-  if (props.field.type === 'date' && props.field.previewFormat) return props.field.previewFormat
-  if (hasTime.value) return { dateStyle: 'medium', timeStyle: 'short' }
+  if (props.field.type === 'date' && props.field.previewFormat) {
+    return props.field.previewFormat
+  }
+  if (hasTime.value) {
+    return { dateStyle: 'medium', timeStyle: 'short' }
+  }
   return { dateStyle: 'medium' }
 }
 

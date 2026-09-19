@@ -12,7 +12,7 @@ import type {
 import type { SpreadsheetRecord } from './shared'
 import type { SpreadsheetFieldRulesInput } from './validation'
 
-type SpreadsheetReferenceSelectBaseConfig<TOption extends SpreadsheetOptionItem> = {
+interface SpreadsheetReferenceSelectBaseConfig<TOption extends SpreadsheetOptionItem> {
   source: string
   options?: SpreadsheetOptionsSource<
     {

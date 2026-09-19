@@ -1,6 +1,6 @@
 import { addComponent } from '@nuxt/kit'
 
-type PublicComponent = {
+interface PublicComponent {
   name: string
   filePath: string
   global: boolean | undefined
@@ -18,16 +18,16 @@ function getPublicComponents(
   return [
     // I18n
     {
-      name: `${prefix}ToolsProvider`,
       filePath: `${runtimeDir}/i18n/provider.vue`,
       global: options.global,
+      name: `${prefix}ToolsProvider`,
     },
 
     // Table
     {
-      name: `${prefix}DataList`,
       filePath: `${runtimeDir}/table/components/DataList.vue`,
       global: options.global,
+      name: `${prefix}DataList`,
     },
     ...[
       'Root',
@@ -50,21 +50,21 @@ function getPublicComponents(
       'Pagination',
       'InfiniteLoader',
     ].map((part) => ({
-      name: `${prefix}DataList${part}`,
       filePath: `${runtimeDir}/table/components/data-list/DataList${part}.vue`,
       global: options.global,
+      name: `${prefix}DataList${part}`,
     })),
 
     // Form
     {
-      name: `${prefix}Form`,
       filePath: `${runtimeDir}/form/components/root/Form.vue`,
       global: options.global,
+      name: `${prefix}Form`,
     },
     {
-      name: `${prefix}FormProvider`,
       filePath: `${runtimeDir}/form/components/provider/FormProvider.vue`,
       global: options.global,
+      name: `${prefix}FormProvider`,
     },
   ]
 }
@@ -76,5 +76,7 @@ export function setupComponents(
     global?: boolean
   },
 ) {
-  for (const component of getPublicComponents(runtimeDir, options)) addComponent(component)
+  for (const component of getPublicComponents(runtimeDir, options)) {
+    addComponent(component)
+  }
 }

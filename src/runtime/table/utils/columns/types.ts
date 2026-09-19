@@ -56,9 +56,9 @@ export interface TableColumnState {
     deltaOffset: number | null
     deltaPercentage: number | null
     isResizingColumn: false | string
-    columnSizingStart: Array<[string, number]>
+    columnSizingStart: [string, number][]
   }
-  sorting: Array<{ id: string; desc: boolean }>
+  sorting: { id: string; desc: boolean }[]
 }
 
 export interface TableColumnsSelectionState {

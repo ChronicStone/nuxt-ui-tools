@@ -39,19 +39,21 @@ const selectedValues = computed(() => {
   const value = internals.filterPresentation.getPanelDraftFilterState({
     key: props.definition.key,
   })?.value
-  if (Array.isArray(value)) return value.filter(isPrimitiveValue)
+  if (Array.isArray(value)) {
+    return value.filter(isPrimitiveValue)
+  }
   return isPrimitiveValue(value) ? [value] : []
 })
 
 const state = useOptionFilterEditorState({
-  definition: props.definition,
-  operator: pendingOperator,
-  selectedValues,
-  searchQuery,
   active: internals.filterPresentation.panelOpen,
+  definition: props.definition,
   filters: internals.filters,
+  operator: pendingOperator,
   queryContent: internals.queryContent,
   schema: internals.schema,
+  searchQuery,
+  selectedValues,
   setSelectedValues,
 })
 
@@ -66,7 +68,9 @@ const operatorItems = computed(() =>
 )
 const chipLimit = computed(() => dataListUi.ui.value.filterPanel?.props?.chips ?? 8)
 const staticCount = computed(() =>
-  Array.isArray(props.definition.source?.options) ? props.definition.source.options.length : Number.POSITIVE_INFINITY,
+  Array.isArray(props.definition.source?.options)
+    ? props.definition.source.options.length
+    : Number.POSITIVE_INFINITY,
 )
 const chips = computed(
   () =>
@@ -78,12 +82,12 @@ const chipEntries = computed(() =>
   state.displayEntries.value
     .filter((entry) => entry.value != null)
     .map((entry) => ({
-      value: entry.value as string | number | boolean,
-      label: entry.label,
-      count: entry.count,
-      selected: Boolean(entry.selected),
       color: entry.color,
+      count: entry.count,
       icon: entry.icon,
+      label: entry.label,
+      selected: Boolean(entry.selected),
+      value: entry.value as string | number | boolean,
     })),
 )
 const meta = computed(() =>
@@ -107,20 +111,22 @@ function handleOperatorChange(operator: TableFilterOperator) {
     return
   }
 
-  if (!selectedValues.value.length) return
+  if (!selectedValues.value.length) {
+    return
+  }
 
   internals.filterPresentation.setPanelOptionFilterValues({
     key: props.definition.key,
-    values: selectedValues.value,
     operator: pendingOperator.value,
+    values: selectedValues.value,
   })
 }
 
-function setSelectedValues(values: Array<string | number | boolean>) {
+function setSelectedValues(values: (string | number | boolean)[]) {
   internals.filterPresentation.setPanelOptionFilterValues({
     key: props.definition.key,
-    values,
     operator: pendingOperator.value,
+    values,
   })
 }
 
@@ -130,7 +136,9 @@ function handleSelectEntry(options: { value: string | number | boolean }) {
 
 function handleToggleTreeEntry(entryId: string) {
   const entry = state.visibleTreeEntries.value.find((item) => item.id === entryId)
-  if (!entry) return
+  if (!entry) {
+    return
+  }
   state.toggleTreeEntry(entry)
 }
 

@@ -10,9 +10,9 @@ export type { FilterPreviewResult, FilterPreviewOptionEntry }
 const EMPTY_PREVIEW: FilterPreviewResult = {
   active: false,
   count: 0,
-  tags: [],
   entries: [],
   summary: '',
+  tags: [],
 }
 
 export function buildFilterPreview(options: {
@@ -27,8 +27,8 @@ export function buildFilterPreview(options: {
   if (options.definition.kind === 'option' || options.definition.kind === 'boolean') {
     return buildOptionFilterPreview({
       definition: options.definition,
-      rule: options.rule,
       optionEntries: options.optionEntries ?? [],
+      rule: options.rule,
     })
   }
 

@@ -1,19 +1,25 @@
 import { useNuxtApp } from 'nuxt/app'
 import { computed } from 'vue'
 
-type ViewportLike = {
+interface ViewportLike {
   breakpoint: { value: string }
-  queries: { value?: Record<string, { mediaQuery: string }> } | Record<string, { mediaQuery: string }>
+  queries:
+    | { value?: Record<string, { mediaQuery: string }> }
+    | Record<string, { mediaQuery: string }>
   isLessThan: (breakpoint: string) => boolean
 }
 
 let synced = false
 
 export function syncViewportBreakpoint(viewport?: ViewportLike) {
-  if (synced || !('window' in globalThis)) return
+  if (synced || !('window' in globalThis)) {
+    return
+  }
   // SAFETY: nuxt-viewport registers $viewport with this breakpoint/queries contract when the module is installed.
   viewport ??= useNuxtApp().$viewport as ViewportLike | undefined
-  if (!viewport) return
+  if (!viewport) {
+    return
+  }
   synced = true
   const queries =
     'value' in viewport.queries && viewport.queries.value
@@ -22,7 +28,9 @@ export function syncViewportBreakpoint(viewport?: ViewportLike) {
         (viewport.queries as Record<string, { mediaQuery: string }>)
   for (const [key, query] of Object.entries(queries ?? {})) {
     if (window.matchMedia(query.mediaQuery).matches) {
-      if (viewport.breakpoint.value !== key) viewport.breakpoint.value = key
+      if (viewport.breakpoint.value !== key) {
+        viewport.breakpoint.value = key
+      }
       return
     }
   }

@@ -19,7 +19,10 @@ defineSlots<{
 }>()
 
 const dataListUi = useDataListUi()
-const ui = computed<DataListFilterPanelUi>(() => ({ ...dataListUi.ui.value.filterPanel?.ui, ...props.ui }))
+const ui = computed<DataListFilterPanelUi>(() => ({
+  ...dataListUi.ui.value.filterPanel?.ui,
+  ...props.ui,
+}))
 </script>
 
 <template>
@@ -28,13 +31,27 @@ const ui = computed<DataListFilterPanelUi>(() => ({ ...dataListUi.ui.value.filte
     :data-active="active"
   >
     <div class="flex min-w-0 items-center justify-between gap-2">
-      <h3 :class="mergeDataListUiClass('nut-dl-fpanel__label min-w-0 flex-1 truncate text-[12px] font-semibold text-default', undefined, ui.fieldLabel)">
+      <h3
+        :class="
+          mergeDataListUiClass(
+            'nut-dl-fpanel__label min-w-0 flex-1 truncate text-[12px] font-semibold text-default',
+            undefined,
+            ui.fieldLabel,
+          )
+        "
+      >
         {{ label }}
       </h3>
       <div class="flex shrink-0 items-center gap-2">
         <small
           v-if="meta"
-          :class="mergeDataListUiClass('nut-dl-fpanel__meta text-[11px] font-medium text-dimmed tabular-nums', undefined, ui.fieldMeta)"
+          :class="
+            mergeDataListUiClass(
+              'nut-dl-fpanel__meta text-[11px] font-medium text-dimmed tabular-nums',
+              undefined,
+              ui.fieldMeta,
+            )
+          "
         >
           {{ meta }}
         </small>

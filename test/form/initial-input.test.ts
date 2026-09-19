@@ -22,12 +22,14 @@ describe('form initial input', () => {
     const runtime = app.runWithContext(() =>
       scope.run(() =>
         useFormRuntime({
-          schema,
           input,
+          schema,
         }),
       ),
     )
-    if (!runtime) throw new Error('Failed to create form runtime')
+    if (!runtime) {
+      throw new Error('Failed to create form runtime')
+    }
 
     inputSource.value = { name: 'Ada' }
     await nextTick()

@@ -14,7 +14,7 @@ import {
 
 const props = defineProps<{
   title?: string
-  items: Array<{ label: string; value: TableFilterOperator }>
+  items: { label: string; value: TableFilterOperator }[]
   selected?: TableFilterOperator
   size?: DataListControlSize
   ui?: DataListFilterEditorUi
@@ -28,17 +28,17 @@ const sizeClasses = computed(() => resolveFilterEditorSizeClasses(props.size))
 const geometry = computed(() => resolveDataListControlGeometry(props.size ?? 'md'))
 
 const operatorHints = {
+  after: '>',
+  before: '<',
+  between: '…',
   contains: 'ilike',
+  gt: '>',
+  gte: '≥',
   is: '=',
   isAnyOf: 'in',
   isNot: '≠',
-  gt: '>',
-  gte: '≥',
   lt: '<',
   lte: '≤',
-  between: '…',
-  before: '<',
-  after: '>',
 } satisfies Record<TableFilterOperator, string>
 </script>
 

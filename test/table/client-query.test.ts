@@ -20,29 +20,29 @@ type TestRow = GenericObject & {
     city: string
     aliases: string[]
   }
-  teams: Array<{
+  teams: {
     name: string
     lead: {
       name: string
     }
-  }>
+  }[]
   lastLogin?: Date | null
 }
 
 const rows: TestRow[] = [
   {
-    id: 'usr_1',
-    name: 'Ada Lovelace',
-    status: 'active',
-    verified: true,
-    score: 12,
-    priority: 2,
     createdAt: new Date('2026-03-10T08:00:00.000Z'),
-    tags: ['math', 'history'],
+    id: 'usr_1',
+    lastLogin: new Date('2026-03-12T09:30:00.000Z'),
+    name: 'Ada Lovelace',
+    priority: 2,
     profile: {
-      city: 'London',
       aliases: ['Enchantress of Numbers'],
+      city: 'London',
     },
+    score: 12,
+    status: 'active',
+    tags: ['math', 'history'],
     teams: [
       {
         name: 'Analytics',
@@ -51,21 +51,21 @@ const rows: TestRow[] = [
         },
       },
     ],
-    lastLogin: new Date('2026-03-12T09:30:00.000Z'),
+    verified: true,
   },
   {
-    id: 'usr_2',
-    name: 'Grace Hopper',
-    status: 'inactive',
-    verified: false,
-    score: 21,
-    priority: 3,
     createdAt: new Date('2026-03-08T08:00:00.000Z'),
-    tags: ['compiler'],
+    id: 'usr_2',
+    lastLogin: null,
+    name: 'Grace Hopper',
+    priority: 3,
     profile: {
-      city: 'New York',
       aliases: ['Amazing Grace'],
+      city: 'New York',
     },
+    score: 21,
+    status: 'inactive',
+    tags: ['compiler'],
     teams: [
       {
         name: 'Compiler',
@@ -74,21 +74,21 @@ const rows: TestRow[] = [
         },
       },
     ],
-    lastLogin: null,
+    verified: false,
   },
   {
-    id: 'usr_3',
-    name: 'Katherine Johnson',
-    status: 'active',
-    verified: false,
-    score: 28,
-    priority: 2,
     createdAt: new Date('2026-03-06T08:00:00.000Z'),
-    tags: ['space'],
+    id: 'usr_3',
+    lastLogin: new Date('2026-03-07T07:00:00.000Z'),
+    name: 'Katherine Johnson',
+    priority: 2,
     profile: {
-      city: 'White Sulphur Springs',
       aliases: ['Kat'],
+      city: 'White Sulphur Springs',
     },
+    score: 28,
+    status: 'active',
+    tags: ['space'],
     teams: [
       {
         name: 'Flight',
@@ -97,21 +97,21 @@ const rows: TestRow[] = [
         },
       },
     ],
-    lastLogin: new Date('2026-03-07T07:00:00.000Z'),
+    verified: false,
   },
   {
-    id: 'usr_4',
-    name: 'Barbara Liskov',
-    status: 'active',
-    verified: true,
-    score: 42,
-    priority: 1,
     createdAt: new Date('2026-03-04T08:00:00.000Z'),
-    tags: ['compiler', 'distributed'],
+    id: 'usr_4',
+    lastLogin: undefined,
+    name: 'Barbara Liskov',
+    priority: 1,
     profile: {
-      city: 'Los Angeles',
       aliases: ['Liskov'],
+      city: 'Los Angeles',
     },
+    score: 42,
+    status: 'active',
+    tags: ['compiler', 'distributed'],
     teams: [
       {
         name: 'Systems',
@@ -120,7 +120,7 @@ const rows: TestRow[] = [
         },
       },
     ],
-    lastLogin: undefined,
+    verified: true,
   },
 ]
 
@@ -129,22 +129,22 @@ function createRequest(
 ): TableSourceRequestContext<TestRow> {
   return {
     context: {},
-    search: {
-      value: '',
-      fields: [],
+    filters: {
+      children: [],
+      combinator: 'and',
+      type: 'group',
     },
-    sorting: [],
     pagination: {
+      count: 'exact',
       mode: 'offset',
       pageIndex: 1,
       pageSize: 50,
-      count: 'exact',
     },
-    filters: {
-      type: 'group',
-      combinator: 'and',
-      children: [],
+    search: {
+      fields: [],
+      value: '',
     },
+    sorting: [],
     ...overrides,
   }
 }
@@ -154,7 +154,6 @@ function queryIds(
   fields: TableKnownFieldPath<TestRow>[] = ['name'],
 ): string[] {
   return executeClientQuery({
-    rows,
     request: createRequest({
       ...request,
       search: {
@@ -162,14 +161,14 @@ function queryIds(
         fields,
       },
     }),
+    rows,
   }).rows.map((row) => row.id)
 }
 
-describe('executeClientQuery', () => {
+describe(executeClientQuery, () => {
   describe('filters', () => {
     it('evaluates nested and/or resolved filter groups', () => {
       const result = executeClientQuery({
-        rows,
         request: createRequest({
           filters: {
             type: 'group',
@@ -217,10 +216,11 @@ describe('executeClientQuery', () => {
             ],
           },
         }),
+        rows,
       })
 
       expect(result.rowCount).toBe(2)
-      expect(result.rows.map((row) => row.id)).toEqual(['usr_1', 'usr_2'])
+      expect(result.rows.map((row) => row.id)).toStrictEqual(['usr_1', 'usr_2'])
     })
 
     it('supports contains across strings and array values with case-insensitive matching', () => {
@@ -228,8 +228,6 @@ describe('executeClientQuery', () => {
         queryIds(
           {
             filters: {
-              type: 'group',
-              combinator: 'and',
               children: [
                 {
                   type: 'condition',
@@ -238,19 +236,19 @@ describe('executeClientQuery', () => {
                   value: 'COMP',
                 },
               ],
+              combinator: 'and',
+              type: 'group',
             },
           },
           ['name', 'tags'],
         ),
-      ).toEqual(['usr_2', 'usr_4'])
+      ).toStrictEqual(['usr_2', 'usr_4'])
     })
 
     it('supports is and isNot for scalar and date values', () => {
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -259,15 +257,15 @@ describe('executeClientQuery', () => {
                 value: true,
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_1', 'usr_4'])
+      ).toStrictEqual(['usr_1', 'usr_4'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -276,15 +274,15 @@ describe('executeClientQuery', () => {
                 value: '2026-03-08T08:00:00.000Z',
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_2'])
+      ).toStrictEqual(['usr_2'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -293,17 +291,17 @@ describe('executeClientQuery', () => {
                 value: 'active',
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_2'])
+      ).toStrictEqual(['usr_2'])
     })
 
     it('supports isAnyOf for scalar fields and array fields', () => {
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -312,16 +310,16 @@ describe('executeClientQuery', () => {
                 value: ['inactive', 'pending'],
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_2'])
+      ).toStrictEqual(['usr_2'])
 
       expect(
         queryIds(
           {
             filters: {
-              type: 'group',
-              combinator: 'and',
               children: [
                 {
                   type: 'condition',
@@ -330,19 +328,19 @@ describe('executeClientQuery', () => {
                   value: ['distributed', 'space'],
                 },
               ],
+              combinator: 'and',
+              type: 'group',
             },
           },
           ['name', 'tags'],
         ),
-      ).toEqual(['usr_3', 'usr_4'])
+      ).toStrictEqual(['usr_3', 'usr_4'])
     })
 
     it('supports gt, gte, lt and lte comparisons', () => {
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -351,15 +349,15 @@ describe('executeClientQuery', () => {
                 value: 21,
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_3', 'usr_4'])
+      ).toStrictEqual(['usr_3', 'usr_4'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -368,15 +366,15 @@ describe('executeClientQuery', () => {
                 value: 21,
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_2', 'usr_3', 'usr_4'])
+      ).toStrictEqual(['usr_2', 'usr_3', 'usr_4'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -385,15 +383,15 @@ describe('executeClientQuery', () => {
                 value: 21,
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_1'])
+      ).toStrictEqual(['usr_1'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -402,17 +400,17 @@ describe('executeClientQuery', () => {
                 value: 21,
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_1', 'usr_2'])
+      ).toStrictEqual(['usr_1', 'usr_2'])
     })
 
     it('supports between with inclusive and open-ended ranges for numbers and dates', () => {
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -424,15 +422,15 @@ describe('executeClientQuery', () => {
                 },
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_1', 'usr_2', 'usr_3'])
+      ).toStrictEqual(['usr_1', 'usr_2', 'usr_3'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -443,15 +441,15 @@ describe('executeClientQuery', () => {
                 },
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_3', 'usr_4'])
+      ).toStrictEqual(['usr_3', 'usr_4'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -463,17 +461,17 @@ describe('executeClientQuery', () => {
                 },
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_1', 'usr_2', 'usr_3'])
+      ).toStrictEqual(['usr_1', 'usr_2', 'usr_3'])
     })
 
     it('supports before and after date comparisons', () => {
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -482,15 +480,15 @@ describe('executeClientQuery', () => {
                 value: new Date('2026-03-05T00:00:00.000Z'),
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_1', 'usr_2', 'usr_3'])
+      ).toStrictEqual(['usr_1', 'usr_2', 'usr_3'])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -499,17 +497,17 @@ describe('executeClientQuery', () => {
                 value: new Date('2026-03-06T08:00:00.000Z'),
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual(['usr_4'])
+      ).toStrictEqual(['usr_4'])
     })
 
     it('returns no matches for invalid between payloads and unsupported operators', () => {
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -518,15 +516,15 @@ describe('executeClientQuery', () => {
                 value: 12,
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual([])
+      ).toStrictEqual([])
 
       expect(
         queryIds({
           filters: {
-            type: 'group',
-            combinator: 'and',
             children: [
               {
                 type: 'condition',
@@ -536,9 +534,11 @@ describe('executeClientQuery', () => {
                 value: 12,
               },
             ],
+            combinator: 'and',
+            type: 'group',
           },
         }),
-      ).toEqual([])
+      ).toStrictEqual([])
     })
   })
 
@@ -548,25 +548,25 @@ describe('executeClientQuery', () => {
         queryIds(
           {
             search: {
-              value: 'los',
               fields: [],
+              value: 'los',
             },
           },
           ['profile.city'],
         ),
-      ).toEqual(['usr_4'])
+      ).toStrictEqual(['usr_4'])
 
       expect(
         queryIds(
           {
             search: {
-              value: 'los',
               fields: [],
+              value: 'los',
             },
           },
           ['name'],
         ),
-      ).toEqual([])
+      ).toStrictEqual([])
     })
 
     it('matches nested array paths and array leaf values', () => {
@@ -574,47 +574,46 @@ describe('executeClientQuery', () => {
         queryIds(
           {
             search: {
-              value: 'dorothy',
               fields: [],
+              value: 'dorothy',
             },
           },
           ['teams.lead.name'],
         ),
-      ).toEqual(['usr_3'])
+      ).toStrictEqual(['usr_3'])
 
       expect(
         queryIds(
           {
             search: {
-              value: 'numbers',
               fields: [],
+              value: 'numbers',
             },
           },
           ['profile.aliases'],
         ),
-      ).toEqual(['usr_1'])
+      ).toStrictEqual(['usr_1'])
     })
 
     it('ignores search when no search fields are provided', () => {
       const result = executeClientQuery({
-        rows,
         request: createRequest({
           search: {
             value: 'definitely-not-present',
             fields: [],
           },
         }),
+        rows,
       })
 
       expect(result.rowCount).toBe(4)
-      expect(result.rows.map((row) => row.id)).toEqual(['usr_1', 'usr_2', 'usr_3', 'usr_4'])
+      expect(result.rows.map((row) => row.id)).toStrictEqual(['usr_1', 'usr_2', 'usr_3', 'usr_4'])
     })
   })
 
   describe('sorting and pagination', () => {
     it('applies search, sorting and pagination on client rows', () => {
       const result = executeClientQuery({
-        rows,
         request: createRequest({
           search: {
             value: 'a',
@@ -633,15 +632,15 @@ describe('executeClientQuery', () => {
             count: 'exact',
           },
         }),
+        rows,
       })
 
       expect(result.rowCount).toBe(4)
-      expect(result.rows.map((row) => row.id)).toEqual(['usr_2', 'usr_1'])
+      expect(result.rows.map((row) => row.id)).toStrictEqual(['usr_2', 'usr_1'])
     })
 
     it('supports multi-column sorting and places nullish values last', () => {
       const result = executeClientQuery({
-        rows,
         request: createRequest({
           sorting: [
             {
@@ -658,14 +657,14 @@ describe('executeClientQuery', () => {
             },
           ],
         }),
+        rows,
       })
 
-      expect(result.rows.map((row) => row.id)).toEqual(['usr_4', 'usr_3', 'usr_1', 'usr_2'])
+      expect(result.rows.map((row) => row.id)).toStrictEqual(['usr_4', 'usr_3', 'usr_1', 'usr_2'])
     })
 
     it('clamps invalid pagination values to the minimum page and size', () => {
       const result = executeClientQuery({
-        rows,
         request: createRequest({
           pagination: {
             mode: 'offset',
@@ -674,15 +673,15 @@ describe('executeClientQuery', () => {
             count: 'exact',
           },
         }),
+        rows,
       })
 
       expect(result.rowCount).toBe(4)
-      expect(result.rows.map((row) => row.id)).toEqual(['usr_1'])
+      expect(result.rows.map((row) => row.id)).toStrictEqual(['usr_1'])
     })
 
     it('returns an empty page when the page index exceeds available rows', () => {
       const result = executeClientQuery({
-        rows,
         request: createRequest({
           pagination: {
             mode: 'offset',
@@ -691,16 +690,17 @@ describe('executeClientQuery', () => {
             count: 'exact',
           },
         }),
+        rows,
       })
 
       expect(result.rowCount).toBe(4)
-      expect(result.rows).toEqual([])
+      expect(result.rows).toStrictEqual([])
     })
 
     it('does not slice client rows when pagination is disabled', () => {
       const result = executeClientQuery({
-        rows,
         request: createRequest({ pagination: { mode: 'none' } }),
+        rows,
       })
 
       expect(result.rowCount).toBe(4)

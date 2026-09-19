@@ -2,7 +2,8 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
-import { computed, type VNodeChild } from 'vue'
+import { computed } from 'vue'
+import type { VNodeChild } from 'vue'
 
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
@@ -16,8 +17,8 @@ const props = withDefaults(
     icon?: string
   }>(),
   {
-    label: 'Actions',
     icon: 'i-lucide-zap',
+    label: 'Actions',
   },
 )
 
@@ -29,8 +30,8 @@ const items = computed<DropdownMenuItem[][]>(() => [
   actions.value.map((action) => {
     const item: DropdownMenuItem = {
       ...action.definition,
-      label: resolveTableActionLabel(action.definition.label),
       disabled: action.state.disabled,
+      label: resolveTableActionLabel(action.definition.label),
       loading: action.state.loading || action.running,
       onSelect: () => void action.execute(),
     }

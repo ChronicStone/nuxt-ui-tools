@@ -18,7 +18,9 @@ const internals = props.spreadsheet.__internals
 
 function getStaticColumnLabel(columnKey: string) {
   const column = internals.rows.staticColumns.value.find((entry) => entry.key === columnKey)
-  if (!column) return columnKey
+  if (!column) {
+    return columnKey
+  }
   return resolveTextValue(column.label, column.key)
 }
 
@@ -38,9 +40,9 @@ const ignoredHeaderRows = computed(() =>
   props.spreadsheet.headerCells.value
     .filter((header) => !usedColumnIndexes.value.has(header.index))
     .map((header) => ({
-      key: `ignored:${header.index}`,
       fileColumn:
         header.text || t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
+      key: `ignored:${header.index}`,
     })),
 )
 
@@ -50,12 +52,12 @@ const expectedFieldRows = computed(() =>
 
     return {
       key: column.key,
+      required: Boolean(column.required),
+      selectedFileColumn: match?.header.text ?? '',
+      selectedHeaderIndex: match?.columnIndex ?? null,
+      status: match ? ('matched' as const) : ('unmatched' as const),
       systemFieldKey: column.key,
       systemFieldLabel: getStaticColumnLabel(column.key),
-      required: Boolean(column.required),
-      selectedHeaderIndex: match?.columnIndex ?? null,
-      selectedFileColumn: match?.header.text ?? '',
-      status: match ? ('matched' as const) : ('unmatched' as const),
     }
   }),
 )
@@ -63,8 +65,8 @@ const expectedFieldRows = computed(() =>
 const autoMappedRows = computed(() =>
   internals.rows.dynamicColumnMatches.value.map((match) => ({
     key: `dynamic:${match.columnIndex}:${match.targetKey}`,
-    systemFieldLabel: match.targetKey,
     selectedFileColumn: match.header.text,
+    systemFieldLabel: match.targetKey,
   })),
 )
 
@@ -72,26 +74,26 @@ const summaryItems = computed(() => [
   {
     key: 'matched',
     label: t('spreadsheet.steps.matching.matched'),
-    value: expectedFieldRows.value.filter((row) => row.status === 'matched').length,
     tone: 'success' as const,
+    value: expectedFieldRows.value.filter((row) => row.status === 'matched').length,
   },
   {
     key: 'unmatched',
     label: t('spreadsheet.steps.matching.missing'),
-    value: internals.rows.unmatchedColumns.value.length,
     tone: 'error' as const,
+    value: internals.rows.unmatchedColumns.value.length,
   },
   {
     key: 'dynamic',
     label: t('spreadsheet.steps.matching.autoMapped'),
-    value: autoMappedRows.value.length,
     tone: 'warning' as const,
+    value: autoMappedRows.value.length,
   },
   {
     key: 'ignored',
     label: t('spreadsheet.steps.matching.ignored'),
-    value: ignoredHeaderRows.value.length,
     tone: 'neutral' as const,
+    value: ignoredHeaderRows.value.length,
   },
 ])
 
@@ -111,26 +113,29 @@ function getOptionsForRow(row: { systemFieldKey: string; selectedHeaderIndex: nu
       )
 
       return {
+        assigned: assignedToOtherField,
+        headerIndex: header.index,
         key: row.systemFieldKey,
         label:
           header.text ||
           t('spreadsheet.steps.matching.columnFallback', { index: header.index + 1 }),
-        assigned: assignedToOtherField,
-        headerIndex: header.index,
         selected: selectedMatch?.columnIndex === header.index,
       }
     }),
     {
-      key: '__ignore__',
-      label: t('spreadsheet.steps.matching.ignoreField'),
       assigned: false,
       headerIndex: -1,
+      key: '__ignore__',
+      label: t('spreadsheet.steps.matching.ignoreField'),
       selected: row.selectedHeaderIndex === null,
     },
   ].sort((left, right) => {
-    if ('selected' in left && 'selected' in right && left.selected !== right.selected)
+    if ('selected' in left && 'selected' in right && left.selected !== right.selected) {
       return Number(right.selected) - Number(left.selected)
-    if (left.assigned !== right.assigned) return Number(left.assigned) - Number(right.assigned)
+    }
+    if (left.assigned !== right.assigned) {
+      return Number(left.assigned) - Number(right.assigned)
+    }
     return left.label.localeCompare(right.label)
   })
 }

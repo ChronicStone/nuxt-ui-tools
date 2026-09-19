@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-
 import { computed } from 'vue'
 
-import type { DataListButtonProps } from '../../types'
 import { useDataListUi } from '../../composables/use-data-list-ui'
+import type { DataListButtonProps } from '../../types'
 import { mergeDataListProps } from '../../utils'
 import RowActions from '../actions/RowActions.vue'
 
 const dataListUi = useDataListUi()
 const buttonProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: dataListUi.controlSize.value, icon: 'i-lucide-ellipsis' },
+    {
+      color: 'neutral',
+      icon: 'i-lucide-ellipsis',
+      size: dataListUi.controlSize.value,
+      variant: 'ghost',
+    },
     dataListUi.ui.value.table?.props?.rowActions,
   ),
 )

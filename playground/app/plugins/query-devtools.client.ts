@@ -16,7 +16,7 @@ export default defineNuxtPlugin(() => {
   const channel = new BroadcastChannel(CHANNEL_NAME)
 
   function broadcastState() {
-    channel.postMessage({ type: 'state', payload: client.__devtools__() })
+    channel.postMessage({ payload: client.__devtools__(), type: 'state' })
   }
 
   // Push state on every mutation

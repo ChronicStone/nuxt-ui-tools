@@ -7,8 +7,7 @@ import { computed, onScopeDispose, ref } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
-import type { FormValue } from '../../types'
-import type { FormObject, FormUploadField } from '../../types'
+import type { FormValue, FormObject, FormUploadField } from '../../types'
 import { isObject, isString, isUndefined } from '../../utils/predicate'
 
 type UploadedValue = string | FormObject | readonly string[] | readonly FormObject[] | null
@@ -29,13 +28,21 @@ const uploadError = ref<string | null>(null)
 const uploadRun = ref<number>(0)
 const uploadedValue = computed<UploadedValue>(() => {
   const value = form.getValue(props.path)
-  if (isString(value) || value === null) return value
-  if (Array.isArray(value) && value.every((item) => isString(item))) return value
-  if (Array.isArray(value) && value.every(isFormObject)) return value
+  if (isString(value) || value === null) {
+    return value
+  }
+  if (Array.isArray(value) && value.every((item) => isString(item))) {
+    return value
+  }
+  if (Array.isArray(value) && value.every(isFormObject)) {
+    return value
+  }
   return isFormObject(value) ? value : null
 })
 const files = computed<readonly File[]>(() => {
-  if (Array.isArray(selectedFiles.value)) return selectedFiles.value
+  if (Array.isArray(selectedFiles.value)) {
+    return selectedFiles.value
+  }
   return selectedFiles.value ? [selectedFiles.value] : []
 })
 
@@ -43,7 +50,9 @@ async function uploadFiles() {
   const run = uploadRun.value + 1
   uploadRun.value = run
   uploadError.value = null
-  if (!files.value.length) return
+  if (!files.value.length) {
+    return
+  }
 
   uploadPending.value = true
   try {
@@ -51,14 +60,20 @@ async function uploadFiles() {
       ...params.value,
       files: files.value,
     })
-    if (uploadRun.value !== run) return
+    if (uploadRun.value !== run) {
+      return
+    }
     form.setValue(props.path, value)
     selectedFiles.value = null
   } catch (error) {
-    if (uploadRun.value !== run) return
+    if (uploadRun.value !== run) {
+      return
+    }
     uploadError.value = error instanceof Error ? error.message : t('form.fields.upload.failed')
   } finally {
-    if (uploadRun.value === run) uploadPending.value = false
+    if (uploadRun.value === run) {
+      uploadPending.value = false
+    }
   }
 }
 
@@ -86,16 +101,18 @@ async function retryUpload() {
 }
 
 const unregisterUpload = form.registerFieldUpload(props.path, {
-  start: uploadFiles,
   cancel: cancelUpload,
-  retry: retryUpload,
   remove: removeUpload,
+  retry: retryUpload,
+  start: uploadFiles,
 })
 onScopeDispose(unregisterUpload)
 
 function handleFileChange() {
   void handleBlur()
-  if (props.field.autoUpload ?? false) void uploadFiles()
+  if (props.field.autoUpload ?? false) {
+    void uploadFiles()
+  }
 }
 
 function isFormObject(value: FormValue): value is FormObject {

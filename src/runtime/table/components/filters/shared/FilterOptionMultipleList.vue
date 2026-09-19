@@ -20,7 +20,7 @@ import {
 
 interface FilterOptionMultipleListSection {
   key: string
-  entries: Array<TableResolvedFilterOptionEntry & { selected?: boolean; icon?: string }>
+  entries: (TableResolvedFilterOptionEntry & { selected?: boolean; icon?: string })[]
   dividerBefore?: boolean
 }
 

@@ -38,7 +38,10 @@ const props = defineProps<{
   embedded?: boolean
   initialOperator?: TableFilterOperator
 }>()
-type PendingDateRange = { from?: Date; to?: Date }
+interface PendingDateRange {
+  from?: Date
+  to?: Date
+}
 const emit = defineEmits<{
   dismiss: []
   sessionClosed: []
@@ -53,9 +56,9 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
 const { t } = useUiToolsLocale()
 const isMobile = useMediaQuery('(max-width: 639px)')
 const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
-const localDate = shallowRef<CalendarDate | undefined>(undefined)
-const localRangeStart = shallowRef<CalendarDate | undefined>(undefined)
-const localRangeEnd = shallowRef<CalendarDate | undefined>(undefined)
+const localDate = shallowRef<CalendarDate | undefined>()
+const localRangeStart = shallowRef<CalendarDate | undefined>()
+const localRangeEnd = shallowRef<CalendarDate | undefined>()
 const stage = ref<'editor' | 'match-mode'>('editor')
 const stageDirection = ref<'forward' | 'backward'>('forward')
 const stageTransitioning = ref<boolean>(false)
@@ -125,10 +128,18 @@ const editorWidthClass = computed(() =>
     : sizeClasses.value.editor,
 )
 const rangePresetColumnClass = computed(() => {
-  if (size.value === 'xs') return 'lg:grid-cols-[10rem_minmax(0,1fr)]'
-  if (size.value === 'sm') return 'lg:grid-cols-[11rem_minmax(0,1fr)]'
-  if (size.value === 'md') return 'lg:grid-cols-[12rem_minmax(0,1fr)]'
-  if (size.value === 'lg') return 'lg:grid-cols-[13rem_minmax(0,1fr)]'
+  if (size.value === 'xs') {
+    return 'lg:grid-cols-[10rem_minmax(0,1fr)]'
+  }
+  if (size.value === 'sm') {
+    return 'lg:grid-cols-[11rem_minmax(0,1fr)]'
+  }
+  if (size.value === 'md') {
+    return 'lg:grid-cols-[12rem_minmax(0,1fr)]'
+  }
+  if (size.value === 'lg') {
+    return 'lg:grid-cols-[13rem_minmax(0,1fr)]'
+  }
   return 'lg:grid-cols-[14rem_minmax(0,1fr)]'
 })
 
@@ -139,11 +150,13 @@ const calendarRange = computed<
     }
   | undefined
 >(() => {
-  if (!localRangeStart.value || !localRangeEnd.value) return undefined
+  if (!localRangeStart.value || !localRangeEnd.value) {
+    return undefined
+  }
 
   return {
-    start: localRangeStart.value,
     end: localRangeEnd.value,
+    start: localRangeStart.value,
   }
 })
 
@@ -151,30 +164,38 @@ const rangeSummary = computed(() => {
   const from = localRangeStart.value ? toJsDate(localRangeStart.value) : undefined
   const to = localRangeEnd.value ? toJsDate(localRangeEnd.value) : undefined
 
-  if (from && to) return `${formatFilterDate({ value: from })} - ${formatFilterDate({ value: to })}`
-  if (from) return `${t('table.filters.operators.after')} ${formatFilterDate({ value: from })}`
-  if (to) return `${t('table.filters.operators.before')} ${formatFilterDate({ value: to })}`
+  if (from && to) {
+    return `${formatFilterDate({ value: from })} - ${formatFilterDate({ value: to })}`
+  }
+  if (from) {
+    return `${t('table.filters.operators.after')} ${formatFilterDate({ value: from })}`
+  }
+  if (to) {
+    return `${t('table.filters.operators.before')} ${formatFilterDate({ value: to })}`
+  }
   return t('table.filters.preview.empty')
 })
 
 const session = useFilterTagSession({
-  session: props.session,
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
     internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
-  onOpen: initLocalState,
   onClose: () => {
     pendingOperator.value = undefined
   },
-  onSessionClosed: () => emit('sessionClosed'),
   onDismiss: () => emit('dismiss'),
+  onOpen: initLocalState,
+  onSessionClosed: () => emit('sessionClosed'),
+  session: props.session,
 })
 
 watch(
   () => operator.value,
   () => {
-    if (session.isOpen.value) initLocalState()
+    if (session.isOpen.value) {
+      initLocalState()
+    }
   },
 )
 
@@ -227,13 +248,17 @@ function applyFilter() {
     const from = localRangeStart.value ? toJsDate(localRangeStart.value) : undefined
     const to = localRangeEnd.value ? toJsDate(localRangeEnd.value) : undefined
     const value: PendingDateRange = {}
-    if (from) value.from = from
-    if (to) value.to = to
+    if (from) {
+      value.from = from
+    }
+    if (to) {
+      value.to = to
+    }
 
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
-      value: from || to ? value : undefined,
       operator: nextOperator,
+      value: from || to ? value : undefined,
     })
     session.close()
     return
@@ -241,8 +266,8 @@ function applyFilter() {
 
   internals.filters.setScalarFilterValue({
     key: props.definition.key,
-    value: localDate.value ? toJsDate(localDate.value) : undefined,
     operator: nextOperator,
+    value: localDate.value ? toJsDate(localDate.value) : undefined,
   })
   session.close()
 }
@@ -268,13 +293,17 @@ function handleOperatorChange(op: TableFilterOperator) {
 
 function applyScalarPreset(value: Date) {
   localDate.value = toCalendarDate(value)
-  if (filterUi.value.commitMode === 'auto') applyFilter()
+  if (filterUi.value.commitMode === 'auto') {
+    applyFilter()
+  }
 }
 
 function applyRangePreset(value: { from?: Date; to?: Date }) {
   localRangeStart.value = value.from ? toCalendarDate(value.from) : undefined
   localRangeEnd.value = value.to ? toCalendarDate(value.to) : undefined
-  if (filterUi.value.commitMode === 'auto') applyFilter()
+  if (filterUi.value.commitMode === 'auto') {
+    applyFilter()
+  }
 }
 
 function isRangePresetActive(value: { from?: Date; to?: Date }) {
@@ -285,7 +314,9 @@ function isRangePresetActive(value: { from?: Date; to?: Date }) {
 
 function setSingleDate<TValue>(value: TValue) {
   localDate.value = coerceCalendarDate(value)
-  if (filterUi.value.commitMode === 'auto') applyFilter()
+  if (filterUi.value.commitMode === 'auto') {
+    applyFilter()
+  }
 }
 
 function setRangeStart<TValue>(value: TValue) {
@@ -331,16 +362,18 @@ function coerceCalendarDate<TValue>(value: TValue) {
     return new CalendarDate(value.year, value.month, value.day)
   }
 
-  return undefined
+  return
 }
 
 function toCalendarDate<TValue>(value: TValue) {
   if (!isDate(value) && !isString(value) && !isNumber(value)) {
-    return undefined
+    return
   }
 
   const resolvedDate = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(resolvedDate.getTime())) return undefined
+  if (Number.isNaN(resolvedDate.getTime())) {
+    return undefined
+  }
 
   return new CalendarDate(
     resolvedDate.getFullYear(),
@@ -354,8 +387,12 @@ function toJsDate(value: CalendarDate) {
 }
 
 function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate | undefined) {
-  if (!left && !right) return true
-  if (!left || !right) return false
+  if (!left && !right) {
+    return true
+  }
+  if (!left || !right) {
+    return false
+  }
 
   return left.year === right.year && left.month === right.month && left.day === right.day
 }

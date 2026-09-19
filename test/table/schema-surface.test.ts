@@ -23,7 +23,7 @@ describe('table package surface', () => {
       peerDependencies?: Record<string, string>
     }
     const packageJson: PackageMetadata = JSON.parse(
-      readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../package.json', import.meta.url), 'utf-8'),
     )
 
     expect(packageJson.peerDependencies?.['@tanstack/vue-query']).toBeDefined()
@@ -31,7 +31,17 @@ describe('table package surface', () => {
 
   it('accepts root-level pagination config on the schema', () => {
     const schema = defineTableSchema({
-      tableKey: 'users',
+      pagination: {
+        defaultSize: {
+          grid: 20,
+          table: 50,
+        },
+        showPageSizePicker: true,
+        sizeOptions: {
+          grid: [10, 20],
+          table: [10, 20, 50],
+        },
+      },
       rowKey: 'id',
       source: {
         query: () => ({
@@ -39,17 +49,7 @@ describe('table package surface', () => {
           queryFn: async () => [{ id: 1 }],
         }),
       },
-      pagination: {
-        defaultSize: {
-          table: 50,
-          grid: 20,
-        },
-        sizeOptions: {
-          table: [10, 20, 50],
-          grid: [10, 20],
-        },
-        showPageSizePicker: true,
-      },
+      tableKey: 'users',
     })
 
     expectTypeOf(
@@ -63,7 +63,9 @@ describe('table package surface', () => {
 
   it('keeps the public table api generic compatible with inferred schemas', () => {
     const schema = defineTableSchema({
-      tableKey: 'users',
+      grid: {
+        renderItem: ({ row }) => row.email,
+      },
       rowKey: 'id',
       source: {
         query: () => ({
@@ -71,9 +73,7 @@ describe('table package surface', () => {
           queryFn: async () => [{ id: 'user_1', email: 'ada@example.com' }],
         }),
       },
-      grid: {
-        renderItem: ({ row }) => row.email,
-      },
+      tableKey: 'users',
     })
 
     type PublicTable = TableApi<typeof schema> & {
@@ -85,9 +85,8 @@ describe('table package surface', () => {
 
   it('narrows the public pagination API from the schema strategy', () => {
     const cursorSchema = defineTableSchema({
-      tableKey: 'cursor-users',
-      rowKey: 'id',
       pagination: { mode: 'cursor', pageSize: 20 },
+      rowKey: 'id',
       source: {
         mode: 'remote',
         query: () => ({
@@ -104,14 +103,15 @@ describe('table package surface', () => {
           }),
         }),
       },
+      tableKey: 'cursor-users',
     })
     const unpaginatedSchema = defineTableSchema({
-      tableKey: 'all-users',
-      rowKey: 'id',
       pagination: false,
+      rowKey: 'id',
       source: {
         query: () => ({ queryKey: ['all-users'], queryFn: async () => [{ id: 1 }] }),
       },
+      tableKey: 'all-users',
     })
 
     expectTypeOf<
@@ -137,8 +137,8 @@ describe('table package surface', () => {
 
   it('accepts source-level embedded facets enablement for remote sources', () => {
     const remoteSource: TableRemoteSource<{ id: number }> = {
-      mode: 'remote',
       facets: true,
+      mode: 'remote',
       query: (ctx) => ({
         queryKey: ['remote-users', ctx.facets],
         queryFn: async () => ({

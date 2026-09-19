@@ -23,8 +23,9 @@ function getSchemaAccept(schema: { importKey: string }): readonly string[] | und
     isObject(schema.file) &&
     'accept' in schema.file &&
     Array.isArray(schema.file.accept)
-  )
+  ) {
     return schema.file.accept
+  }
 
   if (
     'source' in schema &&
@@ -32,8 +33,9 @@ function getSchemaAccept(schema: { importKey: string }): readonly string[] | und
     isObject(schema.source) &&
     'accept' in schema.source &&
     Array.isArray(schema.source.accept)
-  )
+  ) {
     return schema.source.accept
+  }
 
   return undefined
 }
@@ -43,11 +45,13 @@ const accept = computed(
 )
 
 watch(file, (nextFile) => {
-  if (!nextFile) return
+  if (!nextFile) {
+    return
+  }
 
   props.spreadsheet.loadSource({
-    source: nextFile,
     fileName: nextFile.name,
+    source: nextFile,
   })
 })
 </script>

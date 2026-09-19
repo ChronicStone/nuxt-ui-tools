@@ -1,4 +1,5 @@
-import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { computed, ref } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 import type {
   TableFilterOptionEntry,
@@ -37,13 +38,13 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const expandedIds = ref<Set<string>>(new Set())
 
   const optionSource = useTableFilterOptions({
-    definition: options.definition,
-    searchQuery: options.searchQuery,
     active: options.active,
-    ready: options.ready,
+    definition: options.definition,
     filters: options.filters,
     queryContent: options.queryContent,
+    ready: options.ready,
     schema: options.schema,
+    searchQuery: options.searchQuery,
   })
 
   const filterUi = computed(() => resolveOptionFilterUi(options.definition, options.operator.value))
@@ -64,8 +65,8 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const displayTreeEntries = computed(() =>
     mapSelectedTreeEntries({
       entries: optionSource.filteredTreeEntries.value,
-      selectedValues: options.selectedValues.value,
       filterUi: filterUi.value,
+      selectedValues: options.selectedValues.value,
     }),
   )
   const selectedExpandedIds = computed(
@@ -94,10 +95,10 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
   const visibleTreeEntries = computed(() =>
     flattenVisibleFilterOptionTree({
+      branchSelection: filterUi.value.tree.branchSelection,
       entries: displayTreeEntries.value,
       expandedIds: effectiveExpandedIds.value,
       selectable: filterUi.value.tree.selectable,
-      branchSelection: filterUi.value.tree.branchSelection,
     }).map((entry) => {
       if (!entry.branchSelectable) {
         return {
@@ -120,32 +121,36 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
       return {
         ...entry,
-        selected: descendantValues.length > 0 && selectedCount === descendantValues.length,
-        indeterminate: selectedCount > 0 && selectedCount < descendantValues.length,
         expanded: effectiveExpandedIds.value.has(entry.id),
+        indeterminate: selectedCount > 0 && selectedCount < descendantValues.length,
+        selected: descendantValues.length > 0 && selectedCount === descendantValues.length,
       }
     }),
   )
 
   const flatRadioItems = computed(() =>
     displayEntries.value.map((entry) => ({
-      label: entry.label,
-      value: String(entry.value),
+      color: entry.color,
       count: filterUi.value.row.showCounts ? entry.count : undefined,
       icon: entry.icon,
-      color: entry.color,
+      label: entry.label,
       truncate: filterUi.value.row.truncate,
+      value: String(entry.value),
     })),
   )
 
   const flatRadioValue = computed({
     get: () =>
-      options.selectedValues.value[0] != null ? String(options.selectedValues.value[0]) : undefined,
+      options.selectedValues.value[0] == null ? undefined : String(options.selectedValues.value[0]),
     set: (value: string | undefined) => {
-      if (value == null) return
+      if (value == null) {
+        return
+      }
 
       const match = displayEntries.value.find((entry) => String(entry.value) === value)
-      if (!match) return
+      if (!match) {
+        return
+      }
 
       options.setSelectedValues([match.value])
     },
@@ -153,42 +158,50 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
   const treeRadioItems = computed(() =>
     visibleTreeEntries.value.map((entry) => ({
-      id: entry.id,
-      label: entry.label,
-      value: entry.id,
-      count: filterUi.value.row.showCounts ? entry.count : undefined,
-      icon: entry.icon,
       color: entry.color,
-      truncate: filterUi.value.row.truncate,
+      count: filterUi.value.row.showCounts ? entry.count : undefined,
       depth: entry.depth,
+      disabled: !entry.selectable,
       expandable: entry.expandable,
       expanded: entry.expanded,
+      icon: entry.icon,
+      id: entry.id,
+      label: entry.label,
       selectable: entry.selectable,
-      disabled: !entry.selectable,
+      truncate: filterUi.value.row.truncate,
+      value: entry.id,
     })),
   )
 
   const treeRadioValue = computed({
     get: () => {
       const selected = options.selectedValues.value[0]
-      if (selected == null) return undefined
+      if (selected == null) {
+        return undefined
+      }
 
       return visibleTreeEntries.value.find(
         (entry) => entry.value != null && String(entry.value) === String(selected),
       )?.id
     },
     set: (value: string | undefined) => {
-      if (value == null) return
+      if (value == null) {
+        return
+      }
 
       const match = visibleTreeEntries.value.find((entry) => entry.id === value)
-      if (!match || !match.selectable || match.value == null) return
+      if (!match || !match.selectable || match.value == null) {
+        return
+      }
 
       options.setSelectedValues([match.value])
     },
   })
 
   const triggerSummary = computed(() => {
-    if (!options.selectedValues.value.length) return ''
+    if (!options.selectedValues.value.length) {
+      return ''
+    }
 
     const labels = optionSource.sourceEntries.value
       .filter(
@@ -198,9 +211,15 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       )
       .map((entry) => entry.label)
 
-    if (!labels.length) return `${options.selectedValues.value.length} selected`
-    if (labels.length === 1) return labels[0]
-    if (labels.length === 2) return labels.join(', ')
+    if (!labels.length) {
+      return `${options.selectedValues.value.length} selected`
+    }
+    if (labels.length === 1) {
+      return labels[0]
+    }
+    if (labels.length === 2) {
+      return labels.join(', ')
+    }
     return `${labels[0]}, ${labels[1]} +${labels.length - 2}`
   })
 
@@ -209,7 +228,9 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
     if (filterUi.value.selection.mode === 'single') {
       if (exists) {
-        if (!filterUi.value.selection.allowEmpty) return
+        if (!filterUi.value.selection.allowEmpty) {
+          return
+        }
         options.setSelectedValues([])
         return
       }
@@ -219,7 +240,9 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     }
 
     if (exists) {
-      if (!filterUi.value.selection.allowEmpty && options.selectedValues.value.length === 1) return
+      if (!filterUi.value.selection.allowEmpty && options.selectedValues.value.length === 1) {
+        return
+      }
 
       options.setSelectedValues(
         options.selectedValues.value.filter((entry) => String(entry) !== String(value)),
@@ -230,8 +253,9 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     if (
       filterUi.value.selection.max != null &&
       options.selectedValues.value.length >= filterUi.value.selection.max
-    )
+    ) {
       return
+    }
 
     options.setSelectedValues([...options.selectedValues.value, value])
   }
@@ -249,33 +273,46 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     }
 
     if (!entry.selectable) {
-      if (entry.expandable) toggleExpanded(entry.id)
+      if (entry.expandable) {
+        toggleExpanded(entry.id)
+      }
       return
     }
 
-    if (entry.value == null) return
+    if (entry.value == null) {
+      return
+    }
     toggleValue(entry.value)
   }
 
   function toggleExpanded(id: string) {
     const next = new Set(expandedIds.value)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+    }
     expandedIds.value = next
   }
 
   function toggleBranchSelection(id: string) {
-    if (filterUi.value.selection.mode !== 'multiple') return
+    if (filterUi.value.selection.mode !== 'multiple') {
+      return
+    }
 
     const entry = flatTreeEntryMap.value.get(id)
-    if (!entry) return
+    if (!entry) {
+      return
+    }
 
     const descendantValues = collectSelectableDescendantValues({
       entry,
       selectable: filterUi.value.tree.selectable,
     })
     if (!descendantValues.length) {
-      if (entry.children.length) toggleExpanded(id)
+      if (entry.children.length) {
+        toggleExpanded(id)
+      }
       return
     }
 
@@ -287,7 +324,9 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
         (value) => !descendantValues.some((descendant) => String(descendant) === String(value)),
       )
 
-      if (!filterUi.value.selection.allowEmpty && !nextValues.length) return
+      if (!filterUi.value.selection.allowEmpty && !nextValues.length) {
+        return
+      }
       options.setSelectedValues(nextValues)
       return
     }
@@ -295,8 +334,9 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     const missingValues = descendantValues.filter((value) => !currentKeys.has(String(value)))
     const nextValues = [...options.selectedValues.value, ...missingValues]
 
-    if (filterUi.value.selection.max != null && nextValues.length > filterUi.value.selection.max)
+    if (filterUi.value.selection.max != null && nextValues.length > filterUi.value.selection.max) {
       return
+    }
 
     options.setSelectedValues(nextValues)
   }
@@ -306,19 +346,19 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   }
 
   return {
-    optionSource,
-    filterUi,
     displayEntries,
-    visibleTreeEntries,
+    filterUi,
     flatRadioItems,
     flatRadioValue,
+    optionSource,
+    resetExpandedIds,
+    toggleExpanded,
+    toggleTreeEntry,
+    toggleValue,
     treeRadioItems,
     treeRadioValue,
     triggerSummary,
-    toggleValue,
-    toggleTreeEntry,
-    toggleExpanded,
-    resetExpandedIds,
+    visibleTreeEntries,
   }
 }
 
@@ -326,14 +366,18 @@ function resolveRowIcon(options: {
   entry: { label: string; value?: PrimitiveFilterValue; count?: number; icon?: string }
   filterUi: ReturnType<typeof resolveOptionFilterUi>
 }) {
-  if (options.entry.value == null) return options.entry.icon
+  if (options.entry.value == null) {
+    return options.entry.icon
+  }
 
   const iconOptions: TableFilterOptionEntry = {
+    count: options.entry.count,
     label: options.entry.label,
     value: options.entry.value,
-    count: options.entry.count,
   }
-  if (options.entry.icon) iconOptions.icon = options.entry.icon
+  if (options.entry.icon) {
+    iconOptions.icon = options.entry.icon
+  }
   return options.filterUi.row.getIcon?.(iconOptions) ?? options.entry.icon
 }
 
@@ -344,6 +388,11 @@ function mapSelectedTreeEntries(options: {
 }): TableResolvedFilterOptionEntry[] {
   return options.entries.map((entry) => ({
     ...entry,
+    children: mapSelectedTreeEntries({
+      entries: entry.children,
+      selectedValues: options.selectedValues,
+      filterUi: options.filterUi,
+    }),
     icon: resolveRowIcon({
       entry,
       filterUi: options.filterUi,
@@ -351,10 +400,5 @@ function mapSelectedTreeEntries(options: {
     selected:
       entry.value != null &&
       options.selectedValues.some((value) => String(value) === String(entry.value)),
-    children: mapSelectedTreeEntries({
-      entries: entry.children,
-      selectedValues: options.selectedValues,
-      filterUi: options.filterUi,
-    }),
   }))
 }

@@ -16,9 +16,9 @@ const { t } = useUiToolsLocale()
 const activeSheet = computed(() => props.spreadsheet.activeSheet.value)
 const sheetItems = computed(() =>
   (props.spreadsheet.workbook.value?.sheets ?? []).map((sheet) => ({
+    columnCount: Math.max(...sheet.rows.map((row) => row.length), 0),
     label: sheet.name,
     rowCount: Math.max(sheet.rows.length - 1, 0),
-    columnCount: Math.max(...sheet.rows.map((row) => row.length), 0),
   })),
 )
 const previewRows = computed(() =>

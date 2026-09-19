@@ -1,10 +1,10 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const numberFieldKind = defineFormFieldKind({
-  type: 'number',
-  state: 'stateful',
-  ui: { label: true, description: true, hint: true },
   layout: { item: true },
-  validation: true,
+  state: 'stateful',
   transform: true,
+  type: 'number',
+  ui: { description: true, hint: true, label: true },
+  validation: true,
 })

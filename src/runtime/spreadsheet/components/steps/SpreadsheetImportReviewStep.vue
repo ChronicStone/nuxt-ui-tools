@@ -26,8 +26,9 @@ function getSchemaMaxRecords(schema: { importKey: string }): number | undefined 
     isObject(schema.file) &&
     'maxRecords' in schema.file &&
     isNumber(schema.file.maxRecords)
-  )
+  ) {
     return schema.file.maxRecords
+  }
 
   if (
     'source' in schema &&
@@ -35,21 +36,24 @@ function getSchemaMaxRecords(schema: { importKey: string }): number | undefined 
     isObject(schema.source) &&
     'maxRecords' in schema.source &&
     isNumber(schema.source.maxRecords)
-  )
+  ) {
     return schema.source.maxRecords
+  }
 
   return undefined
 }
 
 const maxRecords = computed(() => getSchemaMaxRecords(props.spreadsheet.schema.value) ?? Infinity)
 const review = useSpreadsheetReview({
-  resolvedRows: computed(() => props.spreadsheet.resolvedRows.value),
   maxRecords,
+  resolvedRows: computed(() => props.spreadsheet.resolvedRows.value),
 })
 const tableHasRows = computed(() => review.visibleRows.value.length > 0)
 
 const summaryLimitText = computed(() => {
-  if (!Number.isFinite(maxRecords.value)) return undefined
+  if (!Number.isFinite(maxRecords.value)) {
+    return undefined
+  }
   return t('spreadsheet.steps.review.importLimit', {
     importable: Math.min(props.spreadsheet.resolvedRows.value.length, maxRecords.value),
     total: props.spreadsheet.resolvedRows.value.length,

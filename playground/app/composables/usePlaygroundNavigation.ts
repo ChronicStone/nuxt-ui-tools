@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { formFieldPlaygrounds } from '../lib/form-field-playgrounds'
 import type { PlaygroundContentMode } from '../types/playground'
 
-export type PlaygroundNavigationNode = {
+export interface PlaygroundNavigationNode {
   id: string
   label: string
   description?: string
@@ -13,7 +13,7 @@ export type PlaygroundNavigationNode = {
   children?: readonly PlaygroundNavigationNode[]
 }
 
-export type PlaygroundNavigationEntry = {
+export interface PlaygroundNavigationEntry {
   id: string
   path: string
   label: string
@@ -21,7 +21,7 @@ export type PlaygroundNavigationEntry = {
   mode: PlaygroundContentMode
 }
 
-export type PlaygroundAbstraction = {
+export interface PlaygroundAbstraction {
   id: string
   path: string
   label: string
@@ -32,11 +32,10 @@ export type PlaygroundAbstraction = {
 
 const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
   {
-    id: 'form',
-    path: '/form',
-    label: 'Forms',
     description: 'Schema-driven fields, validation, overlays, and typed output.',
     icon: 'i-lucide-list-checks',
+    id: 'form',
+    label: 'Forms',
     navigation: [
       {
         id: 'form-fields',
@@ -82,13 +81,13 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
         ],
       },
     ],
+    path: '/form',
   },
   {
-    id: 'table',
-    path: '/table',
-    label: 'Tables',
     description: 'Client, remote, and composable data-list runtime examples.',
     icon: 'i-lucide-table-2',
+    id: 'table',
+    label: 'Tables',
     navigation: [
       {
         id: 'table-data-sources',
@@ -158,13 +157,13 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
         ],
       },
     ],
+    path: '/table',
   },
   {
-    id: 'spreadsheet',
-    path: '/spreadsheet',
-    label: 'Spreadsheet',
     description: 'Focused import-engine scenarios for matching, references, and validation.',
     icon: 'i-lucide-sheet',
+    id: 'spreadsheet',
+    label: 'Spreadsheet',
     navigation: [
       {
         id: 'spreadsheet-core',
@@ -262,6 +261,7 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
         ],
       },
     ],
+    path: '/spreadsheet',
   },
 ]
 
@@ -269,7 +269,9 @@ export function usePlaygroundNavigation() {
   const route = useRoute()
   const abstractions = computed(() => playgroundAbstractions)
   const currentAbstraction = computed<PlaygroundAbstraction | undefined>(() => {
-    if (route.path === '/') return undefined
+    if (route.path === '/') {
+      return undefined
+    }
 
     return abstractions.value.find(
       (abstraction) =>
@@ -281,29 +283,33 @@ export function usePlaygroundNavigation() {
   )
   const currentPage = computed<PlaygroundNavigationEntry>(() => {
     const matchedPage = examples.value.find((page) => page.path === route.path)
-    if (matchedPage) return matchedPage
+    if (matchedPage) {
+      return matchedPage
+    }
 
     if (currentAbstraction.value && route.path === currentAbstraction.value.path) {
       return {
-        id: currentAbstraction.value.id,
-        path: currentAbstraction.value.path,
-        label: 'Overview',
         description: currentAbstraction.value.description,
+        id: currentAbstraction.value.id,
+        label: 'Overview',
         mode: 'document',
+        path: currentAbstraction.value.path,
       }
     }
 
     return {
-      id: route.path === '/' ? 'home' : route.path,
-      path: route.path,
-      label: route.path === '/' ? 'Overview' : 'Playground',
       description: 'Choose an abstraction and then an isolated example.',
+      id: route.path === '/' ? 'home' : route.path,
+      label: route.path === '/' ? 'Overview' : 'Playground',
       mode: 'document',
+      path: route.path,
     }
   })
   const currentTrail = computed<PlaygroundNavigationNode[]>(() => {
     const abstraction = currentAbstraction.value
-    if (!abstraction || route.path === abstraction.path) return []
+    if (!abstraction || route.path === abstraction.path) {
+      return []
+    }
     return findNavigationTrail(abstraction.navigation, route.path) ?? []
   })
   const pageIndex = computed(() => examples.value.findIndex((page) => page.path === route.path))
@@ -330,7 +336,9 @@ export function usePlaygroundNavigation() {
 }
 
 export function navigationNodeContainsPath(node: PlaygroundNavigationNode, path: string): boolean {
-  if (node.path === path) return true
+  if (node.path === path) {
+    return true
+  }
   return node.children?.some((child) => navigationNodeContainsPath(child, path)) ?? false
 }
 
@@ -338,7 +346,7 @@ function flattenNavigation(nodes: readonly PlaygroundNavigationNode[]) {
   const entries: PlaygroundNavigationEntry[] = []
 
   for (const node of nodes) {
-    if (node.path && node.mode)
+    if (node.path && node.mode) {
       entries.push({
         id: node.id,
         path: node.path,
@@ -346,8 +354,11 @@ function flattenNavigation(nodes: readonly PlaygroundNavigationNode[]) {
         description: node.description ?? node.label,
         mode: node.mode,
       })
+    }
 
-    if (node.children?.length) entries.push(...flattenNavigation(node.children))
+    if (node.children?.length) {
+      entries.push(...flattenNavigation(node.children))
+    }
   }
 
   return entries
@@ -360,11 +371,15 @@ function findNavigationTrail(
 ): PlaygroundNavigationNode[] | undefined {
   for (const node of nodes) {
     const nextTrail = [...trail, node]
-    if (node.path === path) return nextTrail
+    if (node.path === path) {
+      return nextTrail
+    }
 
     if (node.children?.length) {
       const childTrail = findNavigationTrail(node.children, path, nextTrail)
-      if (childTrail) return childTrail
+      if (childTrail) {
+        return childTrail
+      }
     }
   }
 

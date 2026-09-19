@@ -8,22 +8,7 @@ import { demoEmployeesClient } from '../../lib/demo-employees-api'
 const { tableSize } = usePlaygroundShell()
 
 const schema = defineTableSchema({
-  tableKey: 'demo-employees-remote-infinite',
-  rowKey: 'id',
   defaultLayout: 'table',
-  pagination: {
-    mode: 'cursor',
-    pageSize: 18,
-    count: 'exact',
-  },
-  source: {
-    mode: 'remote',
-    facets: true,
-    query: (request) => ({
-      queryKey: ['demo-employees-infinite', request],
-      queryFn: async () => demoEmployeesClient.queryTable(request),
-    }),
-  },
   filters: {
     search: {
       fields: ['fullName', 'email', 'department.company.name', 'employeeSkills.skill.label'],
@@ -67,8 +52,21 @@ const schema = defineTableSchema({
       }),
     ],
   },
+  pagination: {
+    count: 'exact',
+    mode: 'cursor',
+    pageSize: 18,
+  },
+  rowKey: 'id',
+  source: {
+    facets: true,
+    mode: 'remote',
+    query: (request) => ({
+      queryKey: ['demo-employees-infinite', request],
+      queryFn: async () => demoEmployeesClient.queryTable(request),
+    }),
+  },
   table: {
-    defaultSorting: { key: 'hiredAt', dir: 'desc' },
     columns: (column) => [
       column.field('fullName', {
         label: 'Employee',
@@ -122,7 +120,9 @@ const schema = defineTableSchema({
         ),
       }),
     ],
+    defaultSorting: { dir: 'desc', key: 'hiredAt' },
   },
+  tableKey: 'demo-employees-remote-infinite',
 })
 
 const table = useTable(schema)

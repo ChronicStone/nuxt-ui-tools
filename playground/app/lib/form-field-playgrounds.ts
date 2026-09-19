@@ -19,34 +19,34 @@ export interface FormFieldPlaygroundDefinition {
 export const formControlSizes: readonly FormControlSize[] = ['xs', 'sm', 'md', 'lg', 'xl']
 
 const planOptions = [
-  { label: 'Starter', value: 'starter', description: 'Simple workflows' },
-  { label: 'Scale', value: 'scale', description: 'Team workflows' },
-  { label: 'Enterprise', value: 'enterprise', description: 'Advanced governance' },
+  { description: 'Simple workflows', label: 'Starter', value: 'starter' },
+  { description: 'Team workflows', label: 'Scale', value: 'scale' },
+  { description: 'Advanced governance', label: 'Enterprise', value: 'enterprise' },
 ] as const
 
 const roleOptions = [
-  { label: 'Owner', value: 'owner', description: 'Full workspace access' },
-  { label: 'Manager', value: 'manager', description: 'Operational access' },
-  { label: 'Reviewer', value: 'reviewer', description: 'Read and comment' },
+  { description: 'Full workspace access', label: 'Owner', value: 'owner' },
+  { description: 'Operational access', label: 'Manager', value: 'manager' },
+  { description: 'Read and comment', label: 'Reviewer', value: 'reviewer' },
 ] as const
 
 const hierarchyOptions = [
   {
-    label: 'Engineering',
-    value: 'engineering',
     children: [
       { label: 'Frontend', value: 'frontend' },
       { label: 'Backend', value: 'backend' },
       { label: 'Platform', value: 'platform' },
     ],
+    label: 'Engineering',
+    value: 'engineering',
   },
   {
-    label: 'Product',
-    value: 'product',
     children: [
       { label: 'Product management', value: 'pm' },
       { label: 'Product design', value: 'design' },
     ],
+    label: 'Product',
+    value: 'product',
   },
 ] as const
 
@@ -63,8 +63,6 @@ async function loadRoleOptions() {
 
 export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
   {
-    id: 'text',
-    label: 'Text',
     description: 'Text inputs, native input types, hints, validation, and disabled state.',
     fields: [
       {
@@ -89,10 +87,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         disabled: () => true,
       },
     ],
+    id: 'text',
+    label: 'Text',
   },
   {
-    id: 'password',
-    label: 'Password',
     description: 'Password visibility controls, validation, and sizing.',
     fields: [
       {
@@ -141,10 +139,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'disabled',
       },
     ],
+    id: 'password',
+    label: 'Password',
   },
   {
-    id: 'textarea',
-    label: 'Textarea',
     description: 'Long-form input, placeholder behavior, validation, and disabled state.',
     fields: [
       {
@@ -162,20 +160,20 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         disabled: () => true,
       },
     ],
+    id: 'textarea',
+    label: 'Textarea',
   },
   {
-    id: 'number',
-    label: 'Number',
     description: 'Numeric stepping, min/max constraints, defaults, and disabled state.',
     fields: [
       { key: 'seats', type: 'number', label: 'Seats', min: 1, max: 100, step: 1, default: 12 },
       { key: 'budget', type: 'number', label: 'Budget', min: 0, step: 250, placeholder: '5000' },
       { key: 'disabled', type: 'number', label: 'Disabled', default: 42, disabled: () => true },
     ],
+    id: 'number',
+    label: 'Number',
   },
   {
-    id: 'auto-complete',
-    label: 'Autocomplete',
     description: 'Searchable option input, multiple selection, creation, and clear behavior.',
     fields: [
       {
@@ -252,10 +250,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'createdRole',
       },
     ],
+    id: 'auto-complete',
+    label: 'Autocomplete',
   },
   {
-    id: 'checkbox',
-    label: 'Checkbox',
     description: 'Boolean checkbox alignment with labels, descriptions, and disabled state.',
     fields: [
       {
@@ -274,10 +272,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         disabled: () => true,
       },
     ],
+    id: 'checkbox',
+    label: 'Checkbox',
   },
   {
-    id: 'switch',
-    label: 'Switch',
     description: 'Boolean and custom-value switches with icons, loading, and disabled states.',
     fields: [
       {
@@ -291,10 +289,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       { key: 'notifications', type: 'switch', label: 'Notifications', default: false },
       { key: 'disabled', type: 'switch', label: 'Disabled', default: true, disabled: () => true },
     ],
+    id: 'switch',
+    label: 'Switch',
   },
   {
-    id: 'switch-group',
-    label: 'Switch group',
     description: 'Option-driven switch groups in vertical and horizontal layouts.',
     fields: [
       {
@@ -313,10 +311,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         orientation: 'horizontal',
       },
     ],
+    id: 'switch-group',
+    label: 'Switch group',
   },
   {
-    id: 'radio',
-    label: 'Radio',
     description: 'Single-choice radio options with labels, descriptions, and validation.',
     fields: [
       { key: 'plan', type: 'radio', label: 'Plan', options: planOptions, validation: required },
@@ -329,10 +327,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         disabled: () => true,
       },
     ],
+    id: 'radio',
+    label: 'Radio',
   },
   {
-    id: 'radio-card',
-    label: 'Radio cards',
     description: 'Card-style single selection with horizontal and vertical presentations.',
     fields: [
       {
@@ -352,10 +350,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         default: 'scale',
       },
     ],
+    id: 'radio-card',
+    label: 'Radio cards',
   },
   {
-    id: 'checkbox-group',
-    label: 'Checkbox group',
     description: 'Multi-choice option groups across list, card, and horizontal layouts.',
     fields: [
       {
@@ -375,10 +373,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         orientation: 'horizontal',
       },
     ],
+    id: 'checkbox-group',
+    label: 'Checkbox group',
   },
   {
-    id: 'checkbox-card',
-    label: 'Checkbox cards',
     description: 'Card-style multi-selection with richer option copy.',
     fields: [
       {
@@ -390,10 +388,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         default: ['starter'],
       },
     ],
+    id: 'checkbox-card',
+    label: 'Checkbox cards',
   },
   {
-    id: 'select',
-    label: 'Select',
     description: 'Searchable, clearable, and multi-select menu behavior.',
     fields: [
       {
@@ -485,10 +483,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
       { label: 'States', before: 'disabled' },
     ],
+    id: 'select',
+    label: 'Select',
   },
   {
-    id: 'date',
-    label: 'Date',
     description: 'Manual input, calendar popup placement, clearing, limits, and localization.',
     fields: [
       {
@@ -548,10 +546,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'boundedDate',
       },
     ],
+    id: 'date',
+    label: 'Date',
   },
   {
-    id: 'datetime',
-    label: 'Date-time',
     description: 'Date-time manual controls, popup behavior, and clearing.',
     fields: [
       {
@@ -569,44 +567,44 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         disabled: () => true,
       },
     ],
+    id: 'datetime',
+    label: 'Date-time',
   },
   {
-    id: 'daterange',
-    label: 'Date range',
     description: 'Two-ended date range editing, clearing, and responsive layout.',
     fields: [{ key: 'window', type: 'daterange', label: 'Date window', clearable: true }],
+    id: 'daterange',
+    label: 'Date range',
   },
   {
-    id: 'monthrange',
-    label: 'Month range',
     description: 'Month-range editing with compact grouped controls.',
     fields: [{ key: 'period', type: 'monthrange', label: 'Reporting period', clearable: true }],
+    id: 'monthrange',
+    label: 'Month range',
   },
   {
-    id: 'datetimerange',
-    label: 'Date-time range',
     description: 'Start/end date-time editing and grouped sizing behavior.',
     fields: [
       { key: 'window', type: 'datetimerange', label: 'Availability window', clearable: true },
     ],
+    id: 'datetimerange',
+    label: 'Date-time range',
   },
   {
-    id: 'month',
-    label: 'Month',
     description: 'Month selection and clear behavior.',
     fields: [{ key: 'month', type: 'month', label: 'Billing month', clearable: true }],
+    id: 'month',
+    label: 'Month',
   },
   {
-    id: 'year',
-    label: 'Year',
     description: 'Bounded year input and clearing.',
     fields: [
       { key: 'year', type: 'year', label: 'Fiscal year', min: 2020, max: 2035, clearable: true },
     ],
+    id: 'year',
+    label: 'Year',
   },
   {
-    id: 'time',
-    label: 'Time',
     description: 'Time popup placement, minute stepping, bounds, and clear behavior.',
     fields: [
       {
@@ -626,10 +624,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         minuteStep: 30,
       },
     ],
+    id: 'time',
+    label: 'Time',
   },
   {
-    id: 'phone-number',
-    label: 'Phone number',
     description: 'Country selector, dial code, number formatting, and clear behavior.',
     fields: [
       {
@@ -688,10 +686,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'mobile',
       },
     ],
+    id: 'phone-number',
+    label: 'Phone number',
   },
   {
-    id: 'hidden',
-    label: 'Hidden',
     description: 'Stateful non-rendered data and submit omission behavior.',
     fields: [
       { key: 'internalId', type: 'hidden', default: 'draft_001' },
@@ -703,13 +701,13 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         default: 'Inspect live state below',
       },
     ],
+    id: 'hidden',
+    label: 'Hidden',
     notes: [
       'Hidden fields intentionally render no control; inspect the state/output panels to verify behavior.',
     ],
   },
   {
-    id: 'info',
-    label: 'Info',
     description: 'Informational content inside the form grid.',
     fields: [
       {
@@ -724,10 +722,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         placeholder: 'Check vertical rhythm',
       },
     ],
+    id: 'info',
+    label: 'Info',
   },
   {
-    id: 'divider',
-    label: 'Divider',
     description: 'Section separators with and without labels.',
     fields: [
       { key: 'before', type: 'text', label: 'Before divider' },
@@ -735,10 +733,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       { key: 'after', type: 'text', label: 'After divider' },
       { key: 'plainDivider', type: 'divider' },
     ],
+    id: 'divider',
+    label: 'Divider',
   },
   {
-    id: 'input-group',
-    label: 'Input group',
     description: 'Bare child controls joined into one Nuxt UI field group.',
     fields: [
       {
@@ -810,10 +808,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'verticalCredentials',
       },
     ],
+    id: 'input-group',
+    label: 'Input group',
   },
   {
-    id: 'object',
-    label: 'Object',
     description: 'Nested state, card presentation, child grid, and validation.',
     fields: [
       {
@@ -828,10 +826,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'object',
+    label: 'Object',
   },
   {
-    id: 'custom-component',
-    label: 'Custom component',
     description: 'Custom rendered content inside field layout and runtime state.',
     fields: [
       {
@@ -846,19 +844,19 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           ]),
       },
     ],
+    id: 'custom-component',
+    label: 'Custom component',
   },
   {
-    id: 'file',
-    label: 'File',
     description: 'Single and multiple file selection with accept filters.',
     fields: [
       { key: 'avatar', type: 'file', label: 'Avatar', accept: 'image/*' },
       { key: 'documents', type: 'file', label: 'Documents', accept: '.pdf,.txt', multiple: true },
     ],
+    id: 'file',
+    label: 'File',
   },
   {
-    id: 'upload',
-    label: 'Upload',
     description: 'Manual and automatic upload states, progress actions, retry, and deletion.',
     fields: [
       {
@@ -896,10 +894,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         },
       },
     ],
+    id: 'upload',
+    label: 'Upload',
   },
   {
-    id: 'array-list',
-    label: 'Array list',
     description: 'Repeated object cards, add/remove/move controls, labels, and nested validation.',
     fields: [
       {
@@ -916,11 +914,11 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'array-list',
     input: { contacts: [{ name: 'Ada Lovelace', email: 'ada@example.com', role: 'owner' }] },
+    label: 'Array list',
   },
   {
-    id: 'array-table',
-    label: 'Array table',
     description:
       'Compact repeated rows, semantic table layout, nested validation, and row actions.',
     fields: [
@@ -936,11 +934,11 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'array-table',
     input: { items: [{ label: 'Implementation', quantity: 2, active: true }] },
+    label: 'Array table',
   },
   {
-    id: 'array-tabs',
-    label: 'Array tabs',
     description: 'Repeated objects navigated as tabs with add/remove behavior.',
     fields: [
       {
@@ -955,16 +953,16 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'array-tabs',
     input: {
       milestones: [
         { title: 'Beta', date: '2026-09-15' },
         { title: 'Launch', date: '2026-11-01' },
       ],
     },
+    label: 'Array tabs',
   },
   {
-    id: 'array-variant',
-    label: 'Array variants',
     description: 'Repeated discriminated items with variant-specific child schemas.',
     fields: [
       {
@@ -1003,11 +1001,11 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'array-variant',
     input: { methods: [{ kind: 'email', address: 'ada@example.com' }] },
+    label: 'Array variants',
   },
   {
-    id: 'tree-select',
-    label: 'Tree select',
     description:
       'Popover tree selection, path display, searching, multiple selection, and cascade behavior.',
     fields: [
@@ -1031,10 +1029,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         cascade: true,
       },
     ],
+    id: 'tree-select',
+    label: 'Tree select',
   },
   {
-    id: 'cascader',
-    label: 'Cascader',
     description: 'Hierarchical cascader popup with path presentation and leaf-only selection.',
     fields: [
       {
@@ -1048,10 +1046,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         separator: ' / ',
       },
     ],
+    id: 'cascader',
+    label: 'Cascader',
   },
   {
-    id: 'tree',
-    label: 'Tree',
     description:
       'Inline tree selection, checkbox/radio controls, propagation, and responsive layout.',
     fields: [
@@ -1072,10 +1070,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         selectionControl: 'radio',
       },
     ],
+    id: 'tree',
+    label: 'Tree',
   },
   {
-    id: 'group',
-    label: 'Group',
     description: 'Bare grouped child controls with shared field-group sizing.',
     fields: [
       {
@@ -1088,10 +1086,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'group',
+    label: 'Group',
   },
   {
-    id: 'matrix',
-    label: 'Matrix',
     description: 'Semantic matrix table with row labels and nested controls.',
     fields: [
       {
@@ -1143,10 +1141,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'approvalMatrix',
       },
     ],
+    id: 'matrix',
+    label: 'Matrix',
   },
   {
-    id: 'slider',
-    label: 'Slider',
     description: 'Single and range sliders with tooltips, defaults, and disabled state.',
     fields: [
       {
@@ -1171,10 +1169,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         tooltip: true,
       },
     ],
+    id: 'slider',
+    label: 'Slider',
   },
   {
-    id: 'color-picker',
-    label: 'Color picker',
     description: 'Popover, inline, and swatch color editing modes.',
     fields: [
       {
@@ -1222,10 +1220,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'swatch',
       },
     ],
+    id: 'color-picker',
+    label: 'Color picker',
   },
   {
-    id: 'one-time-code',
-    label: 'One-time code',
     description: 'OTP pin sizing, mask behavior, and validation.',
     fields: [
       {
@@ -1266,10 +1264,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'compact',
       },
     ],
+    id: 'one-time-code',
+    label: 'One-time code',
   },
   {
-    id: 'tag',
-    label: 'Tags',
     description: 'Token input wrapping, deletion, keyboard behavior, and long-value overflow.',
     fields: [
       {
@@ -1280,10 +1278,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
       { key: 'empty', type: 'tag', label: 'Empty tags', placeholder: 'Add a tag' },
     ],
+    id: 'tag',
+    label: 'Tags',
   },
   {
-    id: 'rating',
-    label: 'Rating',
     description: 'Keyboard-accessible rating control, clear behavior, and custom scale.',
     fields: [
       { key: 'quality', type: 'rating', label: 'Quality', max: 5, default: 3, clearable: true },
@@ -1296,10 +1294,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         icon: 'i-lucide-circle',
       },
     ],
+    id: 'rating',
+    label: 'Rating',
   },
   {
-    id: 'button',
-    label: 'Button',
     description: 'Stateless form actions with root size propagation and disabled state.',
     fields: [
       {
@@ -1325,10 +1323,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         onClick: async () => {},
       },
     ],
+    id: 'button',
+    label: 'Button',
   },
   {
-    id: 'card',
-    label: 'Card',
     description: 'Passthrough card container, child spacing, and form-grid integration.',
     fields: [
       {
@@ -1347,10 +1345,10 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'card',
+    label: 'Card',
   },
   {
-    id: 'column',
-    label: 'Column',
     description: 'Passthrough vertical layout for grouped content without extra state nesting.',
     fields: [
       {
@@ -1364,6 +1362,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
       },
     ],
+    id: 'column',
+    label: 'Column',
   },
 ]
 
@@ -1372,25 +1372,29 @@ export function getFormFieldPlayground(id: string) {
 }
 
 export function getFormFieldPlaygroundFields(definition: FormFieldPlaygroundDefinition) {
-  if (!definition.groups?.length) return definition.fields
+  if (!definition.groups?.length) {
+    return definition.fields
+  }
 
   const groupsByField = new Map(definition.groups.map((group) => [group.before, group]))
   return definition.fields.flatMap((field, index): readonly FormField[] => {
     const group = groupsByField.get(field.key)
-    if (!group) return [field]
+    if (!group) {
+      return [field]
+    }
 
     const section: FormField[] = [
       {
         key: `__playground-section-${index}`,
-        type: 'divider',
         label: group.label,
+        type: 'divider',
       },
     ]
     if (group.description) {
       section.push({
+        content: group.description,
         key: `__playground-section-info-${index}`,
         type: 'info',
-        content: group.description,
       })
     }
     section.push(field)

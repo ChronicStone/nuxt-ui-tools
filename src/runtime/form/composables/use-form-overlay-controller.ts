@@ -1,7 +1,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 
-import type { FormValue } from '../types'
 import type {
+  FormValue,
   FormApiRuntimeInstance,
   FormObject,
   FormOverlayResolution,
@@ -15,9 +15,9 @@ import { useFormApi } from './use-form-api'
 export function useFormOverlayController(instance: FormApiRuntimeInstance) {
   const formApi = useFormApi()
   const form = useForm({
-    schema: computed(() => instance.schema),
     input: computed(() => instance.input),
     onSubmit: instance.onSubmit,
+    schema: computed(() => instance.schema),
   })
   const open = ref<boolean>(true)
   const pendingResolution = ref<FormOverlayResolution | null>(null)
@@ -52,7 +52,9 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
 
   async function submitOverlay() {
     const result = await form.submitHandler()
-    if (!result.success) return false
+    if (!result.success) {
+      return false
+    }
 
     requestComplete(resolveCurrentOutput(), result.data)
     return true
@@ -68,15 +70,17 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
   }
 
   function requestComplete(formData: FormObject, submitData?: FormValue) {
-    closeWithResolution({ type: 'complete', formData, submitData })
+    closeWithResolution({ formData, submitData, type: 'complete' })
   }
 
   function requestCancel() {
-    closeWithResolution({ type: 'cancel', formData: resolveCurrentOutput() })
+    closeWithResolution({ formData: resolveCurrentOutput(), type: 'cancel' })
   }
 
   function closeWithResolution(resolution: FormOverlayResolution) {
-    if (pendingResolution.value) return
+    if (pendingResolution.value) {
+      return
+    }
 
     pendingResolution.value = resolution
     open.value = false
@@ -84,7 +88,9 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
 
   function resolveAfterClose() {
     const resolution = pendingResolution.value
-    if (!resolution) return
+    if (!resolution) {
+      return
+    }
 
     pendingResolution.value = null
 
@@ -101,14 +107,14 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
   }
 
   return {
-    form,
-    open,
-    title,
     description,
     dismissible,
+    form,
+    handleCancelled,
     handleOpenUpdate,
     handleSubmitted,
-    handleCancelled,
+    open,
     resolveAfterClose,
+    title,
   }
 }

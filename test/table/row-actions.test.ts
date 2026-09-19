@@ -9,7 +9,7 @@ import {
   resolveVisibleTableRowActions,
 } from '../../src/runtime/table/utils/actions'
 
-type DemoRow = {
+interface DemoRow {
   id: string
   active: boolean
 }
@@ -19,144 +19,144 @@ function createTableApiStub() {
   const rowCount = computed<number>(() => rows.value.length)
   const layout = computed<'table' | 'grid'>(() => 'table')
   const query = computed(() => ({
+    filters: { search: '', ui: [] },
     layout: 'table' as const,
     pagination: {
+      count: 'exact' as const,
       mode: 'offset' as const,
       pageIndex: 1,
       pageSize: 20,
-      count: 'exact' as const,
     },
     sorting: null,
-    filters: { search: '', ui: [] },
   }))
   const falseValue = computed<boolean>(() => false)
   const trueValue = computed<boolean>(() => true)
   const context = computed<Record<string, never>>(() => ({}))
   const requestContext = computed(() => ({
     context: {},
+    filters: { children: [], combinator: 'and' as const, type: 'group' as const },
     pagination: {
+      count: 'exact' as const,
       mode: 'offset' as const,
       pageIndex: 1,
       pageSize: 20,
-      count: 'exact' as const,
     },
+    search: { fields: [], value: '' },
     sorting: [],
-    filters: { type: 'group' as const, combinator: 'and' as const, children: [] },
-    search: { value: '', fields: [] },
   }))
   const error = computed<unknown>(() => null)
   const status = computed(() => ({
     initialized: true,
-    phase: 'active' as const,
     isBooting: false,
-    isPending: false,
+    isContextFetching: false,
+    isContextPending: false,
+    isDataFetching: false,
+    isDataPending: false,
     isFetching: false,
+    isPageContextFetching: false,
+    isPageContextPending: false,
+    isPending: false,
     isRefreshing: false,
     isRevalidating: false,
-    isContextPending: false,
-    isContextFetching: false,
-    isDataPending: false,
-    isDataFetching: false,
-    isPageContextPending: false,
-    isPageContextFetching: false,
+    phase: 'active' as const,
   }))
   const selectionState = computed(() => ({
-    selectedKeys: [],
-    selectedCount: 0,
     allSelected: false,
     partiallySelected: false,
+    selectedCount: 0,
+    selectedKeys: [],
   }))
   const paginationState = computed(() => ({
-    mode: 'offset' as const,
-    pageIndex: 1,
-    pageSize: 20,
-    pageCount: 1,
-    loadedCount: 0,
-    totalCount: 0,
     hasNextPage: false,
     hasPreviousPage: false,
     isLoadingMore: false,
     loadMoreError: null,
+    loadedCount: 0,
+    mode: 'offset' as const,
+    pageCount: 1,
+    pageIndex: 1,
+    pageSize: 20,
+    totalCount: 0,
   }))
   const sortingState = computed(() => ({
-    key: undefined,
-    dir: undefined,
     active: false,
+    dir: undefined,
+    key: undefined,
   }))
 
   const tableApi: TableApi = {
-    state: {
-      layout,
-      query,
-      initialized: trueValue,
-      isEmpty: trueValue,
-      isLoading: falseValue,
-      isRefreshing: falseValue,
-    },
     data: {
-      rows,
-      rowCount,
-      loadedRowCount: rowCount,
-      totalRowCount: rowCount,
-      rawRows: rows,
-      rawRowCount: rowCount,
       context,
-      pageContext: context,
-      requestContext,
       error,
-      status,
+      loadedRowCount: rowCount,
+      pageContext: context,
+      rawRowCount: rowCount,
+      rawRows: rows,
       refresh: async () => {
         throw new Error('not implemented')
       },
+      requestContext,
+      rowCount,
+      rows,
+      status,
+      totalRowCount: rowCount,
       updateRow: () => undefined,
       updateRows: () => undefined,
     },
-    layout: {
-      state: computed(() => ({ active: 'table' as const, available: ['table', 'grid'] })),
-      set: () => undefined,
-    },
     filters: {
-      state: computed(() => ({ search: '', ui: [] })),
-      search: computed({ get: () => '', set: () => undefined }),
       activeCount: computed(() => 0),
       clear: () => undefined,
       remove: () => undefined,
       replace: () => undefined,
+      search: computed({ get: () => '', set: () => undefined }),
+      state: computed(() => ({ search: '', ui: [] })),
+    },
+    layout: {
+      set: () => undefined,
+      state: computed(() => ({ active: 'table' as const, available: ['table', 'grid'] })),
     },
     pagination: {
       mode: 'offset',
-      state: paginationState,
-      pageSizeOptions: computed(() => [20]),
-      setPage: () => undefined,
-      setPageSize: () => undefined,
       next: () => undefined,
+      pageSizeOptions: computed(() => [20]),
       previous: () => undefined,
       reset: () => undefined,
-    },
-    sorting: {
-      state: sortingState,
-      sortKeys: computed(() => []),
-      set: () => undefined,
-      setKey: () => undefined,
-      setDirection: () => undefined,
-      clear: () => undefined,
-      toggle: () => undefined,
-    },
-    selection: {
-      state: selectionState,
-      clear: () => undefined,
-      selectAll: () => undefined,
-      selectRows: () => undefined,
-      unselectRows: () => undefined,
-      toggle: () => undefined,
-      isSelected: () => false,
-    },
-    reset: {
-      query: () => undefined,
-      all: () => undefined,
+      setPage: () => undefined,
+      setPageSize: () => undefined,
+      state: paginationState,
     },
     refresh: async () => {
       throw new Error('not implemented')
+    },
+    reset: {
+      all: () => undefined,
+      query: () => undefined,
+    },
+    selection: {
+      clear: () => undefined,
+      isSelected: () => false,
+      selectAll: () => undefined,
+      selectRows: () => undefined,
+      state: selectionState,
+      toggle: () => undefined,
+      unselectRows: () => undefined,
+    },
+    sorting: {
+      clear: () => undefined,
+      set: () => undefined,
+      setDirection: () => undefined,
+      setKey: () => undefined,
+      sortKeys: computed(() => []),
+      state: sortingState,
+      toggle: () => undefined,
+    },
+    state: {
+      initialized: trueValue,
+      isEmpty: trueValue,
+      isLoading: falseValue,
+      isRefreshing: falseValue,
+      layout,
+      query,
     },
     updateRow: () => undefined,
     updateRows: () => undefined,
@@ -167,12 +167,12 @@ function createTableApiStub() {
 
 function createScope(row: DemoRow, index = 0) {
   return {
-    row,
-    index,
     context: {},
-    pageContext: {},
-    tableApi: createTableApiStub(),
+    index,
     layout: 'table' as const,
+    pageContext: {},
+    row,
+    tableApi: createTableApiStub(),
   }
 }
 
@@ -181,14 +181,12 @@ describe('row actions', () => {
     const schema = {
       rowActions: [
         {
+          action: () => undefined,
+          condition: () => false,
           key: 'hidden',
           label: 'Hidden',
-          condition: () => false,
-          action: () => undefined,
         },
         {
-          key: 'group',
-          label: 'Group',
           children: [
             {
               key: 'group-hidden',
@@ -197,11 +195,13 @@ describe('row actions', () => {
               action: () => undefined,
             },
           ],
+          key: 'group',
+          label: 'Group',
         },
         {
+          action: () => undefined,
           key: 'toggle',
           label: () => 'Pause',
-          action: () => undefined,
         },
       ],
     }
@@ -209,13 +209,13 @@ describe('row actions', () => {
     expect(
       resolveVisibleTableRowActions({
         schema,
-        scope: createScope({ id: '1', active: true }),
+        scope: createScope({ active: true, id: '1' }),
       }),
-    ).toEqual([
+    ).toMatchObject([
       {
+        action: expect.any(Function),
         key: 'toggle',
         label: expect.any(Function),
-        action: expect.any(Function),
       },
     ])
   })
@@ -224,9 +224,6 @@ describe('row actions', () => {
     const schema = {
       rowActions: [
         {
-          key: 'parent',
-          label: 'Parent',
-          href: '/users/1',
           children: [
             {
               key: 'hidden-child',
@@ -235,13 +232,16 @@ describe('row actions', () => {
               action: () => undefined,
             },
           ],
+          href: '/users/1',
+          key: 'parent',
+          label: 'Parent',
         },
       ],
     }
 
     const [action] = resolveVisibleTableRowActions({
       schema,
-      scope: createScope({ id: '1', active: true }),
+      scope: createScope({ active: true, id: '1' }),
     })
 
     expect(action?.key).toBe('parent')
@@ -252,44 +252,44 @@ describe('row actions', () => {
     const schema = {
       rowActions: [
         {
+          action: () => undefined,
+          condition: () => false,
           key: 'never',
           label: 'Never',
-          condition: () => false,
-          action: () => undefined,
         },
       ],
     }
 
     expect(
       hasVisibleTableRowActions({
-        schema,
-        rows: [{ id: '1', active: false }],
         context: {},
-        pageContext: {},
-        tableApi: createTableApiStub(),
         layout: 'table',
+        pageContext: {},
+        rows: [{ id: '1', active: false }],
+        schema,
+        tableApi: createTableApiStub(),
       }),
-    ).toBe(false)
+    ).toBeFalsy()
   })
 
   it('creates dropdown items only for visible actions', () => {
     const schema = {
       rowActions: [
         {
+          action: () => undefined,
           key: 'copy',
           label: () => '1 copy',
-          action: () => undefined,
         },
         {
+          action: () => undefined,
+          condition: () => false,
           key: 'hidden',
           label: 'Hidden',
-          condition: () => false,
-          action: () => undefined,
         },
       ],
     }
 
-    const scope = createScope({ id: '1', active: true })
+    const scope = createScope({ active: true, id: '1' })
     const items = createRowActionDropdownItems({
       actions: resolveVisibleTableRowActions({ schema, scope }),
       scope,

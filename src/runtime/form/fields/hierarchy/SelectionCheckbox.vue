@@ -14,6 +14,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean | 'indeterminate']
 }>()
 
+// oxlint-disable-next-line unicorn/no-useless-undefined -- shadows the parent form field so nested controls stay detached
 provide(formFieldInjectionKey, undefined)
 provide(inputIdInjectionKey, ref<string | undefined>(undefined))
 </script>

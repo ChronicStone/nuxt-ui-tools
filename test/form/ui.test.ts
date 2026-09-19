@@ -13,48 +13,48 @@ describe('form UI', () => {
     const ui = mergeFormUi(
       {
         density: 'compact',
+        field: { ui: { container: 'mt-1', label: 'font-medium' } },
         fields: { select: { size: 'sm', ui: { base: 'rounded-sm', value: 'truncate' } } },
-        field: { ui: { label: 'font-medium', container: 'mt-1' } },
         matrix: { ui: { cell: 'px-2', control: 'max-w-48' } },
       },
       {
         control: { size: 'lg' },
-        fields: { select: { class: 'max-w-80', ui: { base: 'rounded-lg' } } },
         field: { ui: { label: 'font-semibold' } },
+        fields: { select: { class: 'max-w-80', ui: { base: 'rounded-lg' } } },
         matrix: { ui: { cell: 'px-4' } },
       },
     )
 
     expect(ui.control?.size).toBe('lg')
-    expect(ui.fields?.select).toEqual({
-      size: 'sm',
+    expect(ui.fields?.select).toStrictEqual({
       class: 'max-w-80',
+      size: 'sm',
       ui: { base: 'rounded-lg', value: 'truncate' },
     })
-    expect(ui.field?.ui).toEqual({ label: 'font-semibold', container: 'mt-1' })
-    expect(ui.matrix?.ui).toEqual({ cell: 'px-4', control: 'max-w-48' })
+    expect(ui.field?.ui).toStrictEqual({ container: 'mt-1', label: 'font-semibold' })
+    expect(ui.matrix?.ui).toStrictEqual({ cell: 'px-4', control: 'max-w-48' })
   })
 
   it('types every release presentation concern from one root config', () => {
     const ui: FormUiConfig = {
-      density: 'comfortable',
+      actions: { ui: { button: 'rounded-md', right: 'gap-2' } },
+      arrayList: { ui: { add: 'justify-self-end', item: 'shadow-none' } },
+      arrayTable: { ui: { control: 'justify-center', headerCell: 'h-10' } },
       control: { size: 'md', ui: { base: 'rounded-sm' } },
+      density: 'comfortable',
+      drawer: { ui: { content: 'md:max-w-2xl' } },
+      field: { ui: { body: 'gap-1', label: 'text-xs' } },
       fields: {
-        select: { size: 'sm', class: 'max-w-96', ui: { base: 'rounded-md' } },
+        select: { class: 'max-w-96', size: 'sm', ui: { base: 'rounded-md' } },
         upload: { class: 'min-h-36' },
       },
-      root: { ui: { viewport: 'px-6', footer: 'sticky bottom-0' } },
-      field: { ui: { label: 'text-xs', body: 'gap-1' } },
-      actions: { ui: { right: 'gap-2', button: 'rounded-md' } },
-      group: { ui: { base: 'w-fit' } },
-      tree: { ui: { link: 'rounded-sm', selectionControl: 'text-secondary' } },
-      treeSelect: { ui: { trigger: 'max-w-80', tree: 'max-h-96' } },
-      matrix: { ui: { columnHeader: 'text-center', cell: 'p-2' } },
-      arrayList: { ui: { item: 'shadow-none', add: 'justify-self-end' } },
-      arrayTable: { ui: { headerCell: 'h-10', control: 'justify-center' } },
-      modal: { ui: { content: 'sm:max-w-5xl' } },
-      drawer: { ui: { content: 'md:max-w-2xl' } },
       fullscreen: { ui: { content: 'bg-elevated' } },
+      group: { ui: { base: 'w-fit' } },
+      matrix: { ui: { cell: 'p-2', columnHeader: 'text-center' } },
+      modal: { ui: { content: 'sm:max-w-5xl' } },
+      root: { ui: { footer: 'sticky bottom-0', viewport: 'px-6' } },
+      tree: { ui: { link: 'rounded-sm', selectionControl: 'text-secondary' } },
+      treeSelect: { ui: { tree: 'max-h-96', trigger: 'max-w-80' } },
     }
 
     expectTypeOf(ui).toEqualTypeOf<FormUiConfig>()

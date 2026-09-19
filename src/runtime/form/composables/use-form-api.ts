@@ -1,8 +1,8 @@
 import { computed, inject, provide, ref } from 'vue'
 import type { InjectionKey } from 'vue'
 
-import type { FormValue } from '../types'
 import type {
+  FormValue,
   ExtractFormOutput,
   FormApiController,
   FormApiCreateBaseOptions,
@@ -29,7 +29,9 @@ export function provideFormApi() {
 
 export function useFormApi() {
   const api = inject(formApiKey)
-  if (!api) throw new Error('Form API is not provided. Wrap your app with <NutFormProvider>.')
+  if (!api) {
+    throw new Error('Form API is not provided. Wrap your app with <NutFormProvider>.')
+  }
   return api
 }
 
@@ -62,19 +64,19 @@ function createFormApi(): FormApiController {
 
     return new Promise<FormApiCreateResult<FormObject, FormValue>>((resolve) => {
       const instance: FormApiRuntimeInstance = {
-        id,
-        schema,
-        input: options.input,
-        mode: options.mode,
-        onSubmit: options.onSubmit,
-        complete: (formData, submitData) => {
-          removeInstance(id)
-          resolve({ isCompleted: true, formData, submitData })
-        },
         cancel: (formData) => {
           removeInstance(id)
           resolve({ isCompleted: false, formData })
         },
+        complete: (formData, submitData) => {
+          removeInstance(id)
+          resolve({ isCompleted: true, formData, submitData })
+        },
+        id,
+        input: options.input,
+        mode: options.mode,
+        onSubmit: options.onSubmit,
+        schema,
       }
 
       formInstances.value = [...formInstances.value, instance]
@@ -96,7 +98,9 @@ function createFormApi(): FormApiController {
 
   function closeForm(idOrFormKey: string) {
     const instance = getForm(idOrFormKey)
-    if (!instance) return false
+    if (!instance) {
+      return false
+    }
 
     const controls = runtimeControls.get(instance.id)
     if (controls) {
@@ -111,10 +115,14 @@ function createFormApi(): FormApiController {
 
   async function submitForm(idOrFormKey: string) {
     const instance = getForm(idOrFormKey)
-    if (!instance) return false
+    if (!instance) {
+      return false
+    }
 
     const controls = runtimeControls.get(instance.id)
-    if (controls) return await controls.submit()
+    if (controls) {
+      return await controls.submit()
+    }
 
     const controller = controllers.get(instance.id)
     return (await controller?.submit()) ?? false
@@ -142,7 +150,9 @@ function createFormApi(): FormApiController {
   }
 
   function removeController(id: string, controller: FormController<FormValue, FormValue>) {
-    if (controllers.get(id) === controller) controllers.delete(id)
+    if (controllers.get(id) === controller) {
+      controllers.delete(id)
+    }
   }
 
   function setRuntimeControls(id: string, controls: FormApiRuntimeControls) {
@@ -150,7 +160,9 @@ function createFormApi(): FormApiController {
   }
 
   function removeRuntimeControls(id: string, controls: FormApiRuntimeControls) {
-    if (runtimeControls.get(id) === controls) runtimeControls.delete(id)
+    if (runtimeControls.get(id) === controls) {
+      runtimeControls.delete(id)
+    }
   }
 
   function removeInstance(id: string) {
@@ -165,18 +177,18 @@ function createFormApi(): FormApiController {
   }
 
   return {
-    formInstances: computed(() => formInstances.value),
+    closeForm,
     createForm,
+    destroyAll,
+    formInstances: computed(() => formInstances.value),
+    getController,
     getForm,
     isOpen,
-    closeForm,
-    submitForm,
-    destroyAll,
-    getController,
-    setController,
     removeController,
-    setRuntimeControls,
     removeRuntimeControls,
+    setController,
+    setRuntimeControls,
+    submitForm,
   }
 }
 
@@ -212,7 +224,9 @@ function isCreateOptions(value: FormValue): value is {
 }
 
 function resolveDisplayMode(value: FormValue): FormApiDisplayModeInput {
-  if (isDisplayModeInput(value)) return value
+  if (isDisplayModeInput(value)) {
+    return value
+  }
   return 'modal'
 }
 
@@ -225,7 +239,9 @@ function isSubmitHandler(value: FormValue): value is FormSubmitHandler<FormObjec
 }
 
 function getSchemaFormKey(schema: FormValue) {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const formKey = Object.getOwnPropertyDescriptor(schema, 'formKey')?.value
   return isString(formKey) ? formKey : undefined
 }

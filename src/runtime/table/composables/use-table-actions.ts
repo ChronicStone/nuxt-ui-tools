@@ -1,4 +1,5 @@
-import { computed, ref, type ComputedRef } from 'vue'
+import { computed, ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { isFunction } from '../../shared/utils/predicate'
 import type {
@@ -37,7 +38,9 @@ export interface UseTableActionsParams {
 export function useTableActions(options: UseTableActionsParams) {
   const runningKeys = ref<string[]>([])
   const tableApi = options.tableApi.value
-  if (!tableApi) throw new Error('Table API is not ready')
+  if (!tableApi) {
+    throw new Error('Table API is not ready')
+  }
   const selectionApi = tableApi.selection
 
   const resolvedDefinitions = computed(() => resolveTableActionDefinitions(options.schema.value))
@@ -55,15 +58,15 @@ export function useTableActions(options: UseTableActionsParams) {
   const context = computed<
     TableActionContext<GenericObject, TableRuntimeRecord, TableRuntimeRecord>
   >(() => ({
-    selectedRows: options.selection.selectedRows.value,
-    scope: options.selection.bulkScope.value,
-    matchingCount: options.queryContent.data.value.rowCount ?? null,
     context: toPlainRecord(options.queryContent.contextData.value),
+    matchingCount: options.queryContent.data.value.rowCount ?? null,
     pageContext: toPlainRecord(options.queryContent.pageContextData.value),
     request: {
       ...options.queryContent.requestContext.value,
       context: toPlainRecord(options.queryContent.requestContext.value.context),
     },
+    scope: options.selection.bulkScope.value,
+    selectedRows: options.selection.selectedRows.value,
   }))
 
   function isRunning(key: string) {
@@ -78,17 +81,21 @@ export function useTableActions(options: UseTableActionsParams) {
     const requiresSelection = 'requiresSelection' in definition && definition.requiresSelection
 
     return {
-      visible: condition,
       disabled: disabled || Boolean(requiresSelection && !actionContext.selectedRows.length),
       loading,
       running: isRunning(definition.key),
+      visible: condition,
     }
   }
 
   async function execute(definition: TableActionDefinition) {
     const state = resolveState(definition)
-    if (!state.visible || state.disabled || state.loading || state.running) return
-    if (!definition.action) return
+    if (!state.visible || state.disabled || state.loading || state.running) {
+      return
+    }
+    if (!definition.action) {
+      return
+    }
 
     runningKeys.value = [...runningKeys.value, definition.key]
     try {
@@ -101,15 +108,17 @@ export function useTableActions(options: UseTableActionsParams) {
   function resolveControllers(actionDefinitions: TableActionDefinition[]) {
     return actionDefinitions.flatMap((definition) => {
       const state = resolveState(definition)
-      if (!state.visible) return []
+      if (!state.visible) {
+        return []
+      }
 
       return [
         {
           definition,
-          state,
+          execute: () => execute(definition),
           running: state.running,
           selection: selectionApi,
-          execute: () => execute(definition),
+          state,
         },
       ]
     })
@@ -127,12 +136,12 @@ export function useTableActions(options: UseTableActionsParams) {
   ])
 
   return {
-    definitions,
     actions,
     bulkActions,
-    toolbarActions,
-    runningKeys,
+    definitions,
     execute,
+    runningKeys,
+    toolbarActions,
   }
 }
 

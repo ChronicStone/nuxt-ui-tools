@@ -12,7 +12,7 @@ import type {
   TableTextValue,
 } from '../types'
 
-type RowActionSchemaSource = {
+interface RowActionSchemaSource {
   rowActions?: TableSchemaView['rowActions']
 }
 
@@ -46,8 +46,12 @@ export function resolveTableRowActions(options: {
 }): ResolvedRowAction[] {
   const source = options.schema.rowActions
 
-  if (!source) return []
-  if (isRowActionResolver(source)) return source(options.scope)
+  if (!source) {
+    return []
+  }
+  if (isRowActionResolver(source)) {
+    return source(options.scope)
+  }
 
   return source
 }
@@ -75,12 +79,12 @@ export function hasVisibleTableRowActions(options: {
       resolveVisibleTableRowActions({
         schema: options.schema,
         scope: {
-          row,
-          index,
           context: toPlainRecord(options.context),
-          pageContext: toPlainRecord(options.pageContext),
-          tableApi: options.tableApi,
+          index,
           layout: options.layout,
+          pageContext: toPlainRecord(options.pageContext),
+          row,
+          tableApi: options.tableApi,
         },
       }).length > 0,
   )
@@ -108,16 +112,16 @@ function mapRowActionToDropdownItem(options: {
 
   const item: DropdownMenuItem = {
     ...options.action,
-    label: resolveActionLabel(options.action),
+    children: children?.length ? children : undefined,
     disabled: resolveFlag({
       value: options.action.disabled,
       scope: options.scope,
     }),
+    label: resolveActionLabel(options.action),
     loading: resolveFlag({
       value: options.action.loading,
       scope: options.scope,
     }),
-    children: children?.length ? children : undefined,
     onSelect: () => {
       void options.action.action?.(options.scope)
     },
@@ -134,8 +138,12 @@ function resolveActionLabel(action: ResolvedRowAction) {
 }
 
 export function resolveTableActionLabel(label: TableTextValue | undefined) {
-  if (isFunction(label)) return String(label())
-  if (isNumber(label)) return String(label)
+  if (isFunction(label)) {
+    return String(label())
+  }
+  if (isNumber(label)) {
+    return String(label)
+  }
   return label
 }
 
@@ -143,7 +151,9 @@ function resolveConditionalBoolean(options: {
   value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined
   scope: TableInjectedRowActionScope
 }) {
-  if (isRowActionBooleanResolver(options.value)) return options.value(options.scope)
+  if (isRowActionBooleanResolver(options.value)) {
+    return options.value(options.scope)
+  }
   return options.value ?? true
 }
 
@@ -158,7 +168,9 @@ function resolveFlag(options: {
   value: boolean | ((scope: TableInjectedRowActionScope) => boolean) | undefined
   scope: TableInjectedRowActionScope
 }) {
-  if (isRowActionBooleanResolver(options.value)) return options.value(options.scope)
+  if (isRowActionBooleanResolver(options.value)) {
+    return options.value(options.scope)
+  }
   return options.value ?? false
 }
 
@@ -177,7 +189,9 @@ function pruneTableRowActions(options: {
   scope: TableInjectedRowActionScope
 }): ResolvedRowAction[] {
   return options.actions.flatMap((action) => {
-    if (!resolveCondition({ value: action.condition, scope: options.scope })) return []
+    if (!resolveCondition({ scope: options.scope, value: action.condition })) {
+      return []
+    }
 
     const children: ResolvedRowAction[] | undefined = action.children
       ? pruneTableRowActions({
@@ -187,7 +201,9 @@ function pruneTableRowActions(options: {
       : undefined
 
     const nextAction: ResolvedRowAction = children ? { ...action, children } : action
-    if (!children?.length && !isActionItemSelectable(nextAction)) return []
+    if (!children?.length && !isActionItemSelectable(nextAction)) {
+      return []
+    }
 
     return [
       {
@@ -199,11 +215,21 @@ function pruneTableRowActions(options: {
 }
 
 function isActionItemSelectable(action: ResolvedRowAction) {
-  if (action.action) return true
-  if (action.href) return true
-  if (action.to) return true
-  if (action.type === 'checkbox') return true
-  if (action.onUpdateChecked) return true
+  if (action.action) {
+    return true
+  }
+  if (action.href) {
+    return true
+  }
+  if (action.to) {
+    return true
+  }
+  if (action.type === 'checkbox') {
+    return true
+  }
+  if (action.onUpdateChecked) {
+    return true
+  }
   return false
 }
 

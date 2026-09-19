@@ -13,9 +13,14 @@ import { useFormActions } from '../../composables/use-form-actions'
 import { useFormGridLayout } from '../../composables/use-form-layout'
 import { provideFormRuntime, useFormRuntime } from '../../composables/use-form-runtime'
 import { provideFormUi } from '../../composables/use-form-ui'
-import type { FormValue } from '../../types'
-import type { FormObject, FormRendererController, FormRenderShell, FormUiConfig } from '../../types'
-import type { FormValidationMode } from '../../types'
+import type {
+  FormValue,
+  FormObject,
+  FormRendererController,
+  FormRenderShell,
+  FormUiConfig,
+  FormValidationMode,
+} from '../../types'
 import { isRecord } from '../../utils/path'
 import {
   isBoolean,
@@ -66,8 +71,8 @@ const validationModeRef = computed<FormValidationMode>(
     props.form?.validationMode.value ?? props.validate ?? getSchemaValidationMode(schemaRef.value),
 )
 const runtime = useFormRuntime({
-  schema: schemaRef,
   input: inputRef,
+  schema: schemaRef,
   syncInput: syncInputRef,
   validationMode: validationModeRef,
 })
@@ -92,12 +97,16 @@ onMounted(async () => {
     await runtime.focusField(target)
     return
   }
-  if (target === true) await focusFirstRenderedField()
+  if (target === true) {
+    await focusFirstRenderedField()
+  }
 })
 
 if (import.meta.client) {
   const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-    if (!shouldConfirmDirtyNavigation()) return
+    if (!shouldConfirmDirtyNavigation()) {
+      return
+    }
     event.preventDefault()
     event.returnValue = ''
   }
@@ -106,7 +115,9 @@ if (import.meta.client) {
 }
 
 const removeRouteGuard = router.beforeEach(() => {
-  if (!shouldConfirmDirtyNavigation()) return true
+  if (!shouldConfirmDirtyNavigation()) {
+    return true
+  }
   return window.confirm(getDirtyNavigationMessage())
 })
 onBeforeUnmount(removeRouteGuard)
@@ -118,7 +129,7 @@ watch(
   () => runtime.currentStepIndex.value,
   (nextIndex) => {
     stepTransitionDirection.value = nextIndex > displayedStepIndex.value ? 'forward' : 'backward'
-    nextTick(() => {
+    nextTick().then(() => {
       displayedStepIndex.value = nextIndex
     })
   },
@@ -177,23 +188,33 @@ const contextLoading = computed<boolean>(() =>
 )
 const contextError = computed<string | undefined>(() => {
   for (const resource of Object.values(runtime.context)) {
-    if (!('error' in resource) || !resource.error) continue
-    if (resource.error instanceof Error) return resource.error.message
-    if (isString(resource.error)) return resource.error
+    if (!('error' in resource) || !resource.error) {
+      continue
+    }
+    if (resource.error instanceof Error) {
+      return resource.error.message
+    }
+    if (isString(resource.error)) {
+      return resource.error
+    }
     return t('form.states.contextError.description')
   }
-  return undefined
+  return
 })
 
 async function submit() {
   if (props.form) {
     const result = await props.form.submitHandler()
-    if (result.success) emit('submit', runtime.output.value, result)
+    if (result.success) {
+      emit('submit', runtime.output.value, result)
+    }
     return
   }
 
   const result = await runtime.submitHandler()
-  if (result.success) emit('submit', runtime.output.value, result)
+  if (result.success) {
+    emit('submit', runtime.output.value, result)
+  }
 }
 
 async function refreshContext() {
@@ -205,25 +226,27 @@ async function refreshContext() {
 }
 
 function cancel() {
-  if (shouldConfirmDirtyNavigation() && !window.confirm(getDirtyNavigationMessage())) return
+  if (shouldConfirmDirtyNavigation() && !window.confirm(getDirtyNavigationMessage())) {
+    return
+  }
   emit('cancel', runtime.output.value)
 }
 
 defineExpose({
-  state: computed(() => runtime.state),
-  output: runtime.output,
-  dirtyPaths: runtime.dirtyPaths,
-  isDirty: runtime.isDirty,
-  errors: runtime.errors,
   actionPending: runtime.actionPending,
-  validate: runtime.validate,
+  dirtyPaths: runtime.dirtyPaths,
+  errors: runtime.errors,
   focus: runtime.focusField,
   focusFirstInvalid: runtime.focusFirstInvalid,
+  isDirty: runtime.isDirty,
+  nextStep: runtime.nextStep,
+  output: runtime.output,
+  previousStep: runtime.previousStep,
+  reset: runtime.reset,
+  state: computed(() => runtime.state),
   submit: runtime.submit,
   submitHandler: runtime.submitHandler,
-  reset: runtime.reset,
-  nextStep: runtime.nextStep,
-  previousStep: runtime.previousStep,
+  validate: runtime.validate,
 })
 
 function stepLabel(index: number) {
@@ -231,19 +254,25 @@ function stepLabel(index: number) {
 }
 
 function getSchemaTitle(schema: FormValue) {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const value = Object.getOwnPropertyDescriptor(schema, 'title')?.value
   return isString(value) || isNumber(value) || isFunction(value) ? value : undefined
 }
 
 function getSchemaUi(schema: FormValue): FormUiConfig | undefined {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const value = Object.getOwnPropertyDescriptor(schema, 'ui')?.value
   return isRecord(value) ? value : undefined
 }
 
 function getSchemaShowStepper(schema: FormValue) {
-  if (!isRecord(schema)) return true
+  if (!isRecord(schema)) {
+    return true
+  }
   const value = Object.getOwnPropertyDescriptor(schema, 'showStepper')?.value
   return value !== false
 }
@@ -251,7 +280,9 @@ function getSchemaShowStepper(schema: FormValue) {
 function getSchemaSyncInput(schema: FormValue): boolean | readonly string[] {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'syncInput')?.value : undefined
-  if (isBoolean(value)) return value
+  if (isBoolean(value)) {
+    return value
+  }
   return stringArray(value)
 }
 
@@ -262,7 +293,9 @@ function getSchemaValidationMode(schema: FormValue): FormValidationMode {
 }
 
 function getSchemaControls(schema: FormValue) {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
   return isRecord(controls) ? controls : undefined
 }
@@ -281,10 +314,16 @@ function dirtyNavigationConfig() {
 }
 
 function shouldConfirmDirtyNavigation() {
-  if (!runtime.isDirty.value) return false
+  if (!runtime.isDirty.value) {
+    return false
+  }
   const config = dirtyNavigationConfig()
-  if (!config) return false
-  if (!isRecord(config)) return config === true
+  if (!config) {
+    return false
+  }
+  if (!isRecord(config)) {
+    return config === true
+  }
   const ignored = stringArray(config.ignorePaths)
   return runtime.dirtyPaths.value.some(
     (path) =>
@@ -294,7 +333,9 @@ function shouldConfirmDirtyNavigation() {
 
 function getDirtyNavigationMessage() {
   const config = dirtyNavigationConfig()
-  if (!isRecord(config)) return 'You have unsaved changes. Close this form?'
+  if (!isRecord(config)) {
+    return 'You have unsaved changes. Close this form?'
+  }
   const message = Object.getOwnPropertyDescriptor(config, 'message')?.value
   return resolveFormText(message) ?? 'You have unsaved changes. Close this form?'
 }
@@ -303,7 +344,9 @@ async function focusFirstRenderedField() {
   const paths = runtime.currentFields.value.map(
     (field) => `${parentPath.value.join('.')}${parentPath.value.length ? '.' : ''}${field.key}`,
   )
-  for (const path of paths) if (await runtime.focusField(path)) return
+  for (const path of paths) {
+    if (await runtime.focusField(path)) return
+  }
 }
 </script>
 

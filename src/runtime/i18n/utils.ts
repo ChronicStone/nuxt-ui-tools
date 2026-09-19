@@ -1,4 +1,5 @@
-import { computed, unref, type MaybeRef, type Ref } from 'vue'
+import { computed, unref } from 'vue'
+import type { MaybeRef, Ref } from 'vue'
 
 import type { UiToolsDirection, UiToolsLocale } from '#ui-tools/i18n/types'
 import { getObjectProperty } from '#ui-tools/shared/utils/object'
@@ -22,9 +23,11 @@ export function translateUiToolsMessage<TMessages>(
 ) {
   const message = getObjectProperty(locale.messages, path)
 
-  if (!isString(message)) return path
+  if (!isString(message)) {
+    return path
+  }
 
-  return message.replace(/\{(\w+)\}/g, (_, key: string) => `${option?.[key] ?? `{${key}}`}`)
+  return message.replaceAll(/\{(\w+)\}/g, (_, key: string) => `${option?.[key] ?? `{${key}}`}`)
 }
 
 export function buildUiToolsTranslator<TMessages>(
@@ -39,10 +42,10 @@ export function buildUiToolsLocaleContext<TMessages>(
   const localeRef = computed(() => unref(locale))
 
   return {
-    locale: localeRef,
-    lang: computed(() => unref(locale).name),
-    dir: computed(() => unref(locale).dir),
     code: computed(() => unref(locale).code),
+    dir: computed(() => unref(locale).dir),
+    lang: computed(() => unref(locale).name),
+    locale: localeRef,
     t: buildUiToolsTranslator(locale),
   }
 }

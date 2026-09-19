@@ -13,13 +13,13 @@ import {
 } from '../../../utils'
 
 const props = defineProps<{
-  items: Array<{
+  items: {
     label: string
     value: string
     count?: number
     icon?: string
     truncate?: boolean
-  }>
+  }[]
   countLoading: boolean
   size?: DataListControlSize
   ui?: DataListFilterEditorUi

@@ -32,12 +32,16 @@ export function isFunction<T>(value: T): value is T & CallableValue<T> {
 
 /** Invokes a parsed form callback and keeps its untrusted result at the form boundary. */
 export function invokeFormFunction(value: FormValue, args: FormValue[] = []): FormValue {
-  if (!isFunction(value)) return undefined
+  if (!isFunction(value)) {
+    return undefined
+  }
   return value(...args)
 }
 
 /** Parses a runtime value into the form's supported string-path list contract. */
 export function stringArray(value: FormValue): readonly string[] {
-  if (!isSharedArray<FormValue, FormValue>(value)) return []
+  if (!isSharedArray<FormValue, FormValue>(value)) {
+    return []
+  }
   return value.filter(isSharedString)
 }

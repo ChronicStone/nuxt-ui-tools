@@ -11,7 +11,9 @@ export function getSpreadsheetValueAtPath(
   path: string,
 ): SpreadsheetValue | undefined {
   return path.split('.').reduce<SpreadsheetValue | undefined>((current, part) => {
-    if (!isSpreadsheetRecord(current)) return undefined
+    if (!isSpreadsheetRecord(current)) {
+      return undefined
+    }
     return current[part]
   }, data)
 }
@@ -48,7 +50,9 @@ export function deleteSpreadsheetValueAtPath(target: SpreadsheetRecord, path: st
   let current: SpreadsheetRecord | undefined = target
 
   for (const [index, part] of parts.entries()) {
-    if (!current) return
+    if (!current) {
+      return
+    }
 
     const isLast = index === parts.length - 1
     if (isLast) {
@@ -57,13 +61,17 @@ export function deleteSpreadsheetValueAtPath(target: SpreadsheetRecord, path: st
     }
 
     const nextValue: SpreadsheetValue = current[part]
-    if (!isSpreadsheetRecord(nextValue)) return
+    if (!isSpreadsheetRecord(nextValue)) {
+      return
+    }
     current = nextValue
   }
 }
 
-export function getSpreadsheetObjectEntries<T>(value: T): Array<[string, SpreadsheetValue]> {
-  if (!isSpreadsheetRecord(value)) return []
+export function getSpreadsheetObjectEntries<T>(value: T): [string, SpreadsheetValue][] {
+  if (!isSpreadsheetRecord(value)) {
+    return []
+  }
   return Object.entries(value)
 }
 
@@ -72,14 +80,20 @@ export function getSpreadsheetObjectKeys<T>(value: T): string[] {
 }
 
 export function getSpreadsheetLeafPaths<T>(value: T, prefix = ''): string[] {
-  if (!isSpreadsheetRecord(value)) return prefix ? [prefix] : []
+  if (!isSpreadsheetRecord(value)) {
+    return prefix ? [prefix] : []
+  }
 
   const entries = getSpreadsheetObjectEntries(value)
-  if (!entries.length) return prefix ? [prefix] : []
+  if (!entries.length) {
+    return prefix ? [prefix] : []
+  }
 
   return entries.flatMap(([key, entryValue]) => {
     const nextPath = prefix ? `${prefix}.${key}` : key
-    if (isSpreadsheetRecord(entryValue)) return getSpreadsheetLeafPaths(entryValue, nextPath)
+    if (isSpreadsheetRecord(entryValue)) {
+      return getSpreadsheetLeafPaths(entryValue, nextPath)
+    }
 
     return [nextPath]
   })

@@ -1,28 +1,29 @@
 import type { TableSchemaView } from '../../types'
 import { findSchemaColumn, uniqueColumnIds } from './schema'
-import { ROW_ACTIONS_COLUMN_ID, SELECT_COLUMN_ID, type TableColumnState } from './types'
+import { ROW_ACTIONS_COLUMN_ID, SELECT_COLUMN_ID } from './types'
+import type { TableColumnState } from './types'
 
 export function createDefaultColumnState() {
   return {
     columnOrder: [],
-    columnVisibility: {},
     columnPinning: { left: [SELECT_COLUMN_ID], right: [] },
     columnSizing: {},
     columnSizingInfo: {
-      startOffset: null,
-      startSize: null,
+      columnSizingStart: [],
       deltaOffset: null,
       deltaPercentage: null,
       isResizingColumn: false as const,
-      columnSizingStart: [],
+      startOffset: null,
+      startSize: null,
     },
+    columnVisibility: {},
     sorting: [],
   }
 }
 
 export function syncColumnState(options: {
   schema: TableSchemaView
-  runtimeColumns: Array<{ id: string; defaultVisible: boolean; pinned?: 'left' | 'right' }>
+  runtimeColumns: { id: string; defaultVisible: boolean; pinned?: 'left' | 'right' }[]
   currentState: TableColumnState
 }) {
   const columnIds = options.runtimeColumns.map((column) => column.id)
@@ -47,13 +48,13 @@ export function syncColumnState(options: {
   return {
     ...options.currentState,
     columnOrder: nextColumnOrder,
-    columnVisibility: nextVisibility,
     columnPinning: sanitizeColumnPinning({
       schema: options.schema,
       runtimeColumns: options.runtimeColumns,
       visibleColumnIds,
       currentPinning: options.currentState.columnPinning,
     }),
+    columnVisibility: nextVisibility,
   }
 }
 
@@ -64,7 +65,7 @@ export function syncSortingState(options: {
   return {
     ...options.currentState,
     sorting: options.sorting?.sortKey
-      ? [{ id: options.sorting.sortKey, desc: options.sorting.sortDirection === 'desc' }]
+      ? [{ desc: options.sorting.sortDirection === 'desc', id: options.sorting.sortKey }]
       : [],
   }
 }
@@ -83,10 +84,6 @@ export function updateColumnVisibilityState(options: {
 
   return {
     ...options.currentState,
-    columnVisibility: {
-      ...options.currentState.columnVisibility,
-      [options.columnId]: options.visible,
-    },
     columnPinning: {
       left: uniqueColumnIds({
         columnIds: [SELECT_COLUMN_ID, ...left.filter((id) => id !== SELECT_COLUMN_ID)],
@@ -94,6 +91,10 @@ export function updateColumnVisibilityState(options: {
       right: normalizeRightPinnedIds({
         columnIds: right.filter((id) => id !== SELECT_COLUMN_ID),
       }),
+    },
+    columnVisibility: {
+      ...options.currentState.columnVisibility,
+      [options.columnId]: options.visible,
     },
   }
 }
@@ -143,15 +144,12 @@ export function updateColumnOrderState(options: {
 
 export function createResetColumnState(options: {
   schema: TableSchemaView
-  runtimeColumns: Array<{ id: string; defaultVisible: boolean; pinned?: 'left' | 'right' }>
+  runtimeColumns: { id: string; defaultVisible: boolean; pinned?: 'left' | 'right' }[]
   currentState: TableColumnState
 }) {
   return {
     ...options.currentState,
     columnOrder: options.runtimeColumns.map((column) => column.id),
-    columnVisibility: Object.fromEntries(
-      options.runtimeColumns.map((column) => [column.id, column.defaultVisible]),
-    ),
     columnPinning: {
       left: uniqueColumnIds({
         columnIds: [
@@ -183,6 +181,9 @@ export function createResetColumnState(options: {
     },
     columnSizing: {},
     columnSizingInfo: createDefaultColumnState().columnSizingInfo,
+    columnVisibility: Object.fromEntries(
+      options.runtimeColumns.map((column) => [column.id, column.defaultVisible]),
+    ),
   }
 }
 
@@ -200,14 +201,14 @@ export function getPinnedState(options: { currentState: TableColumnState; column
 
 function sanitizeColumnPinning(options: {
   schema: TableSchemaView
-  runtimeColumns: Array<{ id: string; pinned?: 'left' | 'right' }>
+  runtimeColumns: { id: string; pinned?: 'left' | 'right' }[]
   visibleColumnIds: string[]
   currentPinning?: {
     left?: string[]
     right?: string[]
   }
 }) {
-  const columnIds = options.runtimeColumns.map((column) => column.id)
+  const columnIds = new Set(options.runtimeColumns.map((column) => column.id))
   const pinnedLeft = uniqueColumnIds({
     columnIds: [
       SELECT_COLUMN_ID,
@@ -221,7 +222,7 @@ function sanitizeColumnPinning(options: {
             }) === 'left',
         )
         .map((column) => column.id),
-      ...(options.currentPinning?.left ?? []).filter((columnId) => columnIds.includes(columnId)),
+      ...(options.currentPinning?.left ?? []).filter((columnId) => columnIds.has(columnId)),
     ],
   }).filter(
     (columnId) => columnId === SELECT_COLUMN_ID || options.visibleColumnIds.includes(columnId),
@@ -240,7 +241,7 @@ function sanitizeColumnPinning(options: {
               }) === 'right',
           )
           .map((column) => column.id),
-        ...(options.currentPinning?.right ?? []).filter((columnId) => columnIds.includes(columnId)),
+        ...(options.currentPinning?.right ?? []).filter((columnId) => columnIds.has(columnId)),
       ],
     }).filter(
       (columnId) => options.visibleColumnIds.includes(columnId) && !pinnedLeft.includes(columnId),
@@ -260,7 +261,7 @@ function resolvePinnedSide(options: {
 }) {
   return (
     options.pinned ??
-    findSchemaColumn({ schema: options.schema, columnId: options.columnId })?.pinned
+    findSchemaColumn({ columnId: options.columnId, schema: options.schema })?.pinned
   )
 }
 
@@ -269,7 +270,9 @@ function normalizeRightPinnedIds(options: { columnIds: string[] }) {
     columnIds: options.columnIds.filter((id) => id !== SELECT_COLUMN_ID),
   })
 
-  if (!ids.includes(ROW_ACTIONS_COLUMN_ID)) return ids
+  if (!ids.includes(ROW_ACTIONS_COLUMN_ID)) {
+    return ids
+  }
 
   return [...ids.filter((id) => id !== ROW_ACTIONS_COLUMN_ID), ROW_ACTIONS_COLUMN_ID]
 }

@@ -14,7 +14,7 @@ describe('table filter panel presentation', () => {
       getDefault: (key) => (key === 'status' ? { key, value: ['active'] } : undefined),
     })
 
-    expect(defaults).toEqual([{ key: 'status', value: ['active'] }])
+    expect(defaults).toStrictEqual([{ key: 'status', value: ['active'] }])
   })
 
   it('replaces panel rules while preserving filters owned by other presentations', () => {
@@ -29,7 +29,7 @@ describe('table filter panel presentation', () => {
       panelRules: [{ key: 'status', value: ['draft'] }],
     })
 
-    expect(committed).toEqual([
+    expect(committed).toStrictEqual([
       { key: 'search', value: 'invoice' },
       { key: 'status', value: ['draft'] },
     ])

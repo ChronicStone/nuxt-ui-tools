@@ -12,7 +12,9 @@ export function pathSegments(path: string | readonly string[]) {
 export function getPathValue<T>(source: T, path: string | readonly string[]) {
   return pathSegments(path).reduce<PathValue | undefined>(
     (current, segment: string) => {
-      if (!isPathContainer(current)) return undefined
+      if (!isPathContainer(current)) {
+        return undefined
+      }
       return getContainerValue(current, segment)
     },
     isPathContainer(source) ? source : undefined,
@@ -36,8 +38,12 @@ export function getScopedPathValue(
   key: string,
   parentPath: readonly string[],
 ) {
-  if (key === '$root') return source
-  if (key.includes('$parent')) return getPathValue(source, relativePathSegments(parentPath, key))
+  if (key === '$root') {
+    return source
+  }
+  if (key.includes('$parent')) {
+    return getPathValue(source, relativePathSegments(parentPath, key))
+  }
   return getPathValue(source, key)
 }
 
@@ -68,11 +74,17 @@ export function setPathValue<T extends GenericObject>(
 }
 
 export function cloneValue<T>(value: T): PathValue {
-  if (Array.isArray(value)) return value.map((item) => cloneValue(item))
-  if (!isRecord(value)) return value
+  if (Array.isArray(value)) {
+    return value.map((item) => cloneValue(item))
+  }
+  if (!isRecord(value)) {
+    return value
+  }
 
   const output: GenericObject = {}
-  for (const [key, child] of Object.entries(value)) output[key] = cloneValue(child)
+  for (const [key, child] of Object.entries(value)) {
+    output[key] = cloneValue(child)
+  }
 
   return output
 }
@@ -97,7 +109,9 @@ function isPathContainer<T>(value: T): value is T & PathContainer {
 }
 
 function getContainerValue(container: PathContainer, segment: string) {
-  if (Array.isArray(container)) return container[Number(segment)]
+  if (Array.isArray(container)) {
+    return container[Number(segment)]
+  }
   return container[segment]
 }
 

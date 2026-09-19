@@ -1,4 +1,5 @@
-import { createTextVNode, type VNodeChild } from 'vue'
+import { createTextVNode } from 'vue'
+import type { VNodeChild } from 'vue'
 
 import type { LazyTextValue, RenderableType } from '../types/utils'
 import { isFunction, isNumber, isString } from './predicate'
@@ -29,7 +30,11 @@ function isRenderableFunction<TArgs extends unknown[]>(
 }
 
 export function resolveTextValue(value: ResolvableTextValue | null | undefined, fallback = '') {
-  if (isFunction(value)) return String(value())
-  if (isString(value) || isNumber(value)) return String(value)
+  if (isFunction(value)) {
+    return String(value())
+  }
+  if (isString(value) || isNumber(value)) {
+    return String(value)
+  }
   return fallback
 }

@@ -4,28 +4,38 @@ import { h } from 'vue'
 import DataListSelectionActions from '#ui-tools/table/components/data-list/DataListSelectionActions.vue'
 
 import { bulkActionCalls, createAccountsSchema } from '../fixtures/accounts'
-import { mountLoaded, texts, type Harness } from '../harness'
+import { mountLoaded, texts } from '../harness'
+import type { Harness } from '../harness'
 
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 beforeEach(() => bulkActionCalls.splice(0))
 
-const mountBar = (options: Partial<Parameters<typeof mountLoaded>[0]> & { barProps?: Record<string, unknown> } = {}) =>
-  mountLoaded({ schema: createAccountsSchema(), ...options, render: () => h(DataListSelectionActions, options.barProps) })
+const mountBar = (
+  options: Partial<Parameters<typeof mountLoaded>[0]> & { barProps?: Record<string, unknown> } = {},
+) =>
+  mountLoaded({
+    schema: createAccountsSchema(),
+    ...options,
+    render: () => h(DataListSelectionActions, options.barProps),
+  })
 
-describe('DataListSelectionActions', () => {
+describe('selection actions part', () => {
   it('appears with the selection and offers the scope switch', async () => {
     harness = await mountBar()
     const w = harness.wrapper
-    expect(w.find('.nut-dl-selbar').exists()).toBe(false)
+    expect(w.find('.nut-dl-selbar').exists()).toBeFalsy()
     harness.internals.selection.selectRows({ rowIds: ['acc-1', 'acc-2'] })
     await harness.flush()
     const bar = w.find('.nut-dl-selbar')
-    expect(bar.exists()).toBe(true)
+    expect(bar.exists()).toBeTruthy()
     expect(bar.classes()).toContain('absolute')
     expect(w.find('.nut-dl-selbar__bar').attributes('aria-label')).toBe('Sélection')
     const scope = w.findAll('.nut-dl-selbar__scope-btn')
-    expect(scope.map((b) => b.text().replace(/\s+/g, ''))).toEqual(['Sélection2', 'Touslesrésultats60'])
+    expect(scope.map((b) => b.text().replaceAll(/\s+/g, ''))).toStrictEqual([
+      'Sélection2',
+      'Touslesrésultats60',
+    ])
     expect(scope[0]!.classes()).toContain('bg-white/16')
     await scope[1]!.trigger('click')
     await harness.flush()
@@ -39,10 +49,17 @@ describe('DataListSelectionActions', () => {
     await harness.flush()
     const w = harness.wrapper
     const actions = w.findAll('.nut-dl-selbar__action')
-    expect(actions.map((a) => a.attributes('data-label'))).toEqual(['Exporter', 'Synchroniser', 'Archiver'])
+    expect(actions.map((a) => a.attributes('data-label'))).toStrictEqual([
+      'Exporter',
+      'Synchroniser',
+      'Archiver',
+    ])
     expect(actions[0]!.attributes('data-icon')).toBe('i-lucide-download')
     expect(actions[0]!.attributes('data-variant')).toBe('ghost')
-    expect(texts(w, '.nut-dl-selbar__actions [data-ui-item]')).toEqual(['Passer inactif', 'Supprimer'])
+    expect(texts(w, '.nut-dl-selbar__actions [data-ui-item]')).toStrictEqual([
+      'Passer inactif',
+      'Supprimer',
+    ])
     expect(w.find('.nut-dl-selbar__more').attributes('aria-label')).toBe('Plus d’actions')
 
     await actions[0]!.trigger('click')
@@ -72,7 +89,7 @@ describe('DataListSelectionActions', () => {
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
     await harness.flush()
     expect(harness.wrapper.findAll('.nut-dl-selbar__action')).toHaveLength(5)
-    expect(harness.wrapper.find('.nut-dl-selbar__more').exists()).toBe(false)
+    expect(harness.wrapper.find('.nut-dl-selbar__more').exists()).toBeFalsy()
     expect(harness.wrapper.find('.nut-dl-selbar').classes()).toContain('fixed')
   })
 
@@ -80,20 +97,28 @@ describe('DataListSelectionActions', () => {
     harness = await mountBar({ schema: createAccountsSchema({ selection: { scope: 'page' } }) })
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
     await harness.flush()
-    expect(harness.wrapper.find('.nut-dl-selbar__scope').exists()).toBe(false)
-    expect(harness.wrapper.find('.nut-dl-selbar__count').text().replace(/\s+/g, '')).toBe('Sélection1')
+    expect(harness.wrapper.find('.nut-dl-selbar__scope').exists()).toBeFalsy()
+    expect(harness.wrapper.find('.nut-dl-selbar__count').text().replaceAll(/\s+/g, '')).toBe(
+      'Sélection1',
+    )
     harness.unmount()
 
     harness = await mountBar({ barProps: { scope: false } })
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
     await harness.flush()
-    expect(harness.wrapper.find('.nut-dl-selbar__scope').exists()).toBe(false)
+    expect(harness.wrapper.find('.nut-dl-selbar__scope').exists()).toBeFalsy()
   })
 
   it('merges control props and ui classes from config and props', async () => {
     harness = await mountBar({
-      ui: { selectionActions: { size: 'md', props: { action: { variant: 'soft' } }, ui: { bar: 'bar-x', action: 'act-x' } } },
       barProps: { props: { dismiss: { color: 'error' } }, ui: { dismiss: 'dis-x' } },
+      ui: {
+        selectionActions: {
+          props: { action: { variant: 'soft' } },
+          size: 'md',
+          ui: { action: 'act-x', bar: 'bar-x' },
+        },
+      },
     })
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
     await harness.flush()
@@ -109,9 +134,11 @@ describe('DataListSelectionActions', () => {
   })
 
   it('is hidden without bulk actions', async () => {
-    harness = await mountBar({ schema: createAccountsSchema({ actions: false, selection: { mode: true } }) })
+    harness = await mountBar({
+      schema: createAccountsSchema({ actions: false, selection: { mode: true } }),
+    })
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
     await harness.flush()
-    expect(harness.wrapper.find('.nut-dl-selbar').exists()).toBe(false)
+    expect(harness.wrapper.find('.nut-dl-selbar').exists()).toBeFalsy()
   })
 })

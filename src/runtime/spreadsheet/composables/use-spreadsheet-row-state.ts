@@ -1,4 +1,5 @@
-import { shallowRef, watch, type ComputedRef } from 'vue'
+import { shallowRef, watch } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type {
   SpreadsheetColumnMatch,
@@ -20,10 +21,10 @@ export interface UseSpreadsheetRowStateParams {
 export function useSpreadsheetRowState(params: UseSpreadsheetRowStateParams) {
   const parsedRows = shallowRef<SpreadsheetParsedRow[]>([])
   const summary = shallowRef<SpreadsheetRowSummary>({
-    totalRows: 0,
-    validRows: 0,
     invalidRows: 0,
     issueCount: 0,
+    totalRows: 0,
+    validRows: 0,
   })
   const status = shallowRef({
     initialized: false,
@@ -45,13 +46,15 @@ export function useSpreadsheetRowState(params: UseSpreadsheetRowStateParams) {
 
     try {
       const nextRows = await parseSpreadsheetRows({
-        rows: params.rows.value,
-        matches: params.columnMatches.value,
-        dynamicMatches: params.dynamicColumnMatches.value,
         context: params.contextData.value,
+        dynamicMatches: params.dynamicColumnMatches.value,
+        matches: params.columnMatches.value,
+        rows: params.rows.value,
       })
 
-      if (runId !== nextRunId) return
+      if (runId !== nextRunId) {
+        return
+      }
 
       parsedRows.value = nextRows
       summary.value = createSpreadsheetRowSummary(nextRows)
@@ -61,7 +64,9 @@ export function useSpreadsheetRowState(params: UseSpreadsheetRowStateParams) {
         isReady: true,
       }
     } catch (nextError) {
-      if (runId !== nextRunId) return
+      if (runId !== nextRunId) {
+        return
+      }
 
       parsedRows.value = []
       summary.value = createSpreadsheetRowSummary([])
@@ -85,10 +90,10 @@ export function useSpreadsheetRowState(params: UseSpreadsheetRowStateParams) {
   )
 
   return {
-    parsedRows,
-    summary,
-    status,
     error,
+    parsedRows,
     refreshRows,
+    status,
+    summary,
   }
 }

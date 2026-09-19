@@ -1,10 +1,10 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { useQueryState, createEnumCodec } from '#ui-tools/query-state'
 import { useResponsiveValue } from '#ui-tools/shared'
 
 import { isFunction } from '../../shared/utils/predicate'
-
 import type { TableLayout, TableSchemaView } from '../types'
 import { syncViewportBreakpoint } from './use-data-list-breakpoint'
 
@@ -35,9 +35,9 @@ export function useTableLayout({ schema }: UseTableLayoutParams) {
   const tableEnabled = computed(() => tableEnabledRaw.value ?? Boolean(schema.value.table))
 
   const activeLayout = useQueryState({
-    key: 'l',
     codec: createEnumCodec(['grid', 'table'] as const),
     defaultValue: defaultLayout.value,
+    key: 'l',
     omitDefault: true,
   })
 
@@ -46,8 +46,12 @@ export function useTableLayout({ schema }: UseTableLayoutParams) {
       const grid = gridEnabled.value
       const table = tableEnabled.value
       const chosen = activeLayout.value
-      if (chosen === 'grid' && !grid && table) return 'table'
-      if (chosen === 'table' && !table && grid) return 'grid'
+      if (chosen === 'grid' && !grid && table) {
+        return 'table'
+      }
+      if (chosen === 'table' && !table && grid) {
+        return 'grid'
+      }
       return chosen
     },
     set: (layout) => {

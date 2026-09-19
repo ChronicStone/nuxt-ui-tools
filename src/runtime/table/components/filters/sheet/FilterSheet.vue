@@ -9,10 +9,7 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type {
-  DataListButtonProps,
-  TableUiFilterDefinition,
-} from '../../../types'
+import type { DataListButtonProps, TableUiFilterDefinition } from '../../../types'
 import {
   getFilterLabelText,
   mergeDataListProps,
@@ -34,7 +31,7 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
 const controlProps = computed(() => dataListUi.ui.value.filterTags?.props)
 const triggerProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'outline', size: size.value, icon: 'i-lucide-funnel' },
+    { color: 'neutral', icon: 'i-lucide-funnel', size: size.value, variant: 'outline' },
     controlProps.value?.sheetTrigger,
   ),
 )
@@ -62,7 +59,6 @@ function preview(definition: TableUiFilterDefinition) {
       ? definition.source.options
       : []
   return internals.filters.getFilterPreview({
-    key: definition.key,
     entries: options
       .filter((option) => option.value !== undefined)
       .map((option) => ({
@@ -71,6 +67,7 @@ function preview(definition: TableUiFilterDefinition) {
         icon: option.icon,
         color: option.color,
       })),
+    key: definition.key,
   })
 }
 
@@ -101,7 +98,11 @@ function clearAll() {
     direction="bottom"
     :handle="true"
     :ui="{
-      content: mergeDataListUiClass('nut-dl-sheet max-h-[85vh] rounded-t-[16px]', undefined, ui?.sheetContent),
+      content: mergeDataListUiClass(
+        'nut-dl-sheet max-h-[85vh] rounded-t-[16px]',
+        undefined,
+        ui?.sheetContent,
+      ),
       container: 'gap-0 p-0',
       body: 'flex min-h-0 flex-col p-0 pb-2',
     }"
@@ -109,7 +110,9 @@ function clearAll() {
   >
     <UButton
       v-bind="triggerProps"
-      :ui="{ base: mergeDataListUiClass('nut-dl-sheet-trigger shrink-0', undefined, ui?.sheetTrigger) }"
+      :ui="{
+        base: mergeDataListUiClass('nut-dl-sheet-trigger shrink-0', undefined, ui?.sheetTrigger),
+      }"
     >
       <span class="flex items-center gap-2">
         <span>{{ t('table.filters.panel.trigger') }}</span>
@@ -138,29 +141,45 @@ function clearAll() {
               class="nut-dl-sheet__row flex h-[46px] w-full items-center gap-[10px] rounded-lg px-[10px] text-left text-[15px] text-highlighted active:bg-elevated"
               @click="select(definition)"
             >
-              <UIcon :name="resolveFilterTriggerIcon(definition)" class="size-3.5 shrink-0 text-muted" />
+              <UIcon
+                :name="resolveFilterTriggerIcon(definition)"
+                class="size-3.5 shrink-0 text-muted"
+              />
               <span class="min-w-0 flex-1 truncate">{{ label(definition) }}</span>
-              <span class="nut-dl-sheet__value flex min-w-0 items-center gap-2 text-[12px] font-semibold">
+              <span
+                class="nut-dl-sheet__value flex min-w-0 items-center gap-2 text-[12px] font-semibold"
+              >
                 <template v-for="(entry, index) in preview(definition).entries" :key="entry.label">
                   <span v-if="index && !entry.color" class="text-dimmed">·</span>
                   <span class="flex items-center gap-1.5">
-                    <span v-if="entry.color" class="size-[7px] rounded-full" :style="{ background: entry.color }" />
+                    <span
+                      v-if="entry.color"
+                      class="size-[7px] rounded-full"
+                      :style="{ background: entry.color }"
+                    />
                     <span class="max-w-28 truncate">{{ entry.label }}</span>
                   </span>
                 </template>
-                <span v-if="!preview(definition).entries.length && preview(definition).summary" class="max-w-40 truncate">
+                <span
+                  v-if="!preview(definition).entries.length && preview(definition).summary"
+                  class="max-w-40 truncate"
+                >
                   {{ preview(definition).summary }}
                 </span>
               </span>
               <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-dimmed" />
             </button>
           </div>
-          <div class="nut-dl-sheet__footer flex items-center justify-between border-t border-default px-5 pt-3 pb-1 text-[13px]">
+          <div
+            class="nut-dl-sheet__footer flex items-center justify-between border-t border-default px-5 pt-3 pb-1 text-[13px]"
+          >
             <button
               v-if="showClear"
               type="button"
               class="text-muted disabled:opacity-40"
-              :disabled="!internals.filters.hasActiveUiFilters.value && !internals.filters.searchQuery.value"
+              :disabled="
+                !internals.filters.hasActiveUiFilters.value && !internals.filters.searchQuery.value
+              "
               @click="clearAll"
             >
               {{ t('table.filters.panel.clearAll') }}
@@ -183,7 +202,9 @@ function clearAll() {
               :aria-label="t('table.filters.sheet.back')"
               @click="back"
             />
-            <span class="min-w-0 flex-1 truncate text-[14.5px] font-semibold text-highlighted">{{ label(selectedDefinition) }}</span>
+            <span class="min-w-0 flex-1 truncate text-[14.5px] font-semibold text-highlighted">{{
+              label(selectedDefinition)
+            }}</span>
             <button
               type="button"
               class="px-2 text-[13px] font-semibold text-primary disabled:opacity-40"
@@ -199,8 +220,12 @@ function clearAll() {
               :key="selectedDefinition.key"
               :definition="selectedDefinition"
               :dynamic="
-                internals.filterPresentation.activeDynamicDefinitions.value.some((item) => item.key === selectedDefinition!.key) ||
-                internals.filterPresentation.dormantDynamicDefinitions.value.some((item) => item.key === selectedDefinition!.key)
+                internals.filterPresentation.activeDynamicDefinitions.value.some(
+                  (item) => item.key === selectedDefinition!.key,
+                ) ||
+                internals.filterPresentation.dormantDynamicDefinitions.value.some(
+                  (item) => item.key === selectedDefinition!.key,
+                )
               "
               embedded
               session

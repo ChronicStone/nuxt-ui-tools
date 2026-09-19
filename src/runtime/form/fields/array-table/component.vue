@@ -5,9 +5,7 @@ import { computed, defineAsyncComponent } from 'vue'
 import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
-import type { FormValue } from '../../types'
-import type { FormObject } from '../../types'
-import type { FormField } from '../../types'
+import type { FormValue, FormObject, FormField } from '../../types'
 import { syncFormArrayItems } from '../../utils/array'
 import { isBoolean, isFunction, isNumber, isObject, isString } from '../../utils/predicate'
 import { buildInitialFormFieldsState } from '../../utils/state'
@@ -50,14 +48,17 @@ function addItem() {
   const index = items.value.length
   let item = buildInitialFormFieldsState(props.field.fields, form.context)
   item = applyVirtualFields(item, index)
-  if (props.field.transformOnCreate)
+  if (props.field.transformOnCreate) {
     item = props.field.transformOnCreate(item, index, actionParams(index).deps)
+  }
   updateItems([...items.value, item])
 }
 
 function removeItem(index: number) {
   const message = resolveFormBoundaryText(props.field.confirmDelete) ?? 'Remove this row?'
-  if (props.field.confirmDelete && !window.confirm(message)) return
+  if (props.field.confirmDelete && !window.confirm(message)) {
+    return
+  }
   updateItems(items.value.filter((_, itemIndex) => itemIndex !== index))
 }
 
@@ -71,16 +72,20 @@ function updateItems(value: readonly FormObject[]) {
     return
   }
 
-  if (Array.isArray(current))
+  if (Array.isArray(current)) {
     current.forEach((item, index) => {
       if (isFormObject(item)) applyVirtualFields(item, index)
     })
+  }
 }
 
 function applyVirtualFields(item: FormObject, index: number) {
-  if (!props.field.virtualFields) return item
-  for (const [key, resolver] of Object.entries(props.field.virtualFields))
+  if (!props.field.virtualFields) {
+    return item
+  }
+  for (const [key, resolver] of Object.entries(props.field.virtualFields)) {
     item[key] = resolver(index)
+  }
   return item
 }
 
@@ -90,8 +95,12 @@ function isArrayActionConfig(action: FormArrayAction | undefined): action is For
 
 function resolveAction(action: FormArrayAction | undefined, index: number) {
   const condition = isArrayActionConfig(action) ? action.condition : action
-  if (isBoolean(condition)) return condition
-  if (!isFunction(condition)) return true
+  if (isBoolean(condition)) {
+    return condition
+  }
+  if (!isFunction(condition)) {
+    return true
+  }
   const item = items.value[index] ?? {}
   return condition(actionParams(index))
 }
@@ -99,14 +108,18 @@ function resolveAction(action: FormArrayAction | undefined, index: number) {
 async function runCustomAction(index: number, actionIndex: number) {
   const action = props.field.actions?.custom?.[actionIndex]
   const item = items.value[index]
-  if (!action || !item) return
+  if (!action || !item) {
+    return
+  }
   await action.action(actionParams(index))
 }
 
 function customActionVisible(index: number, actionIndex: number) {
   const action = props.field.actions?.custom?.[actionIndex]
   const item = items.value[index]
-  if (!action || !item) return false
+  if (!action || !item) {
+    return false
+  }
   return action.condition?.(actionParams(index)) ?? true
 }
 
@@ -132,7 +145,9 @@ function rowPath(index: number) {
 
 function itemKey(item: FormObject) {
   const existing = itemKeys.get(item)
-  if (existing) return existing
+  if (existing) {
+    return existing
+  }
   nextItemKey += 1
   const key = `array-table-item-${nextItemKey}`
   itemKeys.set(item, key)
@@ -147,16 +162,16 @@ function actionParams(index: number) {
   const item = items.value[index] ?? {}
   const callback = form.getFieldCallbackParams(props.path, props.field)
   return {
+    ctx: callback.ctx,
+    deps: callback.deps,
+    getOptions: (key: string) =>
+      form.getFieldApi([...rowPath(index), ...key.split('.')]).options.get(),
+    getValue: (key: string) => form.getValue([...rowPath(index), ...key.split('.')]),
     index,
     item,
     items: items.value,
-    ctx: callback.ctx,
-    deps: callback.deps,
-    getValue: (key: string) => form.getValue([...rowPath(index), ...key.split('.')]),
     setValue: (key: string, value: FormValue) =>
       form.setValue([...rowPath(index), ...key.split('.')], value),
-    getOptions: (key: string) =>
-      form.getFieldApi([...rowPath(index), ...key.split('.')]).options.get(),
   }
 }
 

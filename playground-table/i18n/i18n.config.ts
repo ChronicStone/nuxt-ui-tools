@@ -1,9 +1,9 @@
 export default defineI18nConfig(() => ({
+  fallbackLocale: 'fr',
   legacy: false,
   locale: 'fr',
-  fallbackLocale: 'fr',
   messages: {
-    fr: { app: { title: 'ExAssess' } },
     en: { app: { title: 'ExAssess' } },
+    fr: { app: { title: 'ExAssess' } },
   },
 }))

@@ -7,16 +7,16 @@ import {
 
 describe('table selection action contract', () => {
   it('does not enable selection for tables without applicable actions', () => {
-    expect(hasConfiguredTableActions({})).toBe(false)
-    expect(hasConfiguredTableActions({ actions: [] })).toBe(false)
-    expect(hasConfiguredTableActions({ toolbarActions: [] })).toBe(false)
-    expect(hasConfiguredTableActions({ rowActions: [] })).toBe(false)
+    expect(hasConfiguredTableActions({})).toBeFalsy()
+    expect(hasConfiguredTableActions({ actions: [] })).toBeFalsy()
+    expect(hasConfiguredTableActions({ toolbarActions: [] })).toBeFalsy()
+    expect(hasConfiguredTableActions({ rowActions: [] })).toBeFalsy()
   })
 
   it('enables selection only when a bulk action can consume selected rows', () => {
-    expect(hasConfiguredTableActions({ actions: [{ key: 'archive' }] })).toBe(true)
-    expect(hasConfiguredTableActions({ toolbarActions: [{ key: 'refresh' }] })).toBe(false)
-    expect(hasConfiguredTableActions({ rowActions: [{ key: 'open' }] })).toBe(false)
+    expect(hasConfiguredTableActions({ actions: [{ key: 'archive' }] })).toBeTruthy()
+    expect(hasConfiguredTableActions({ toolbarActions: [{ key: 'refresh' }] })).toBeFalsy()
+    expect(hasConfiguredTableActions({ rowActions: [{ key: 'open' }] })).toBeFalsy()
   })
 
   it('keeps bulk and toolbar definitions in separate rendering groups', () => {
@@ -25,7 +25,7 @@ describe('table selection action contract', () => {
         actions: [{ key: 'archive' }],
         toolbarActions: [{ key: 'refresh' }],
       }),
-    ).toEqual({
+    ).toStrictEqual({
       bulkActions: [{ key: 'archive' }],
       toolbarActions: [{ key: 'refresh' }],
     })

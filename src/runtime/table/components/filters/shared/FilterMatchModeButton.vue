@@ -19,7 +19,7 @@ import FilterMatchModePanel from './FilterMatchModePanel.vue'
 const props = withDefaults(
   defineProps<{
     label: string
-    items?: Array<{ label: string; value: TableFilterOperator }>
+    items?: { label: string; value: TableFilterOperator }[]
     selected?: TableFilterOperator
     variant?: 'default' | 'compact'
     size?: DataListControlSize

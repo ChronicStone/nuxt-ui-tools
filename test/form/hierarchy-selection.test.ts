@@ -5,12 +5,12 @@ import { normalizeOptionItems } from '../../src/runtime/form/utils/options'
 
 const items = normalizeOptionItems([
   {
-    value: 'products',
-    label: 'Products',
     children: [
       { value: 'auctions', label: 'Auctions' },
       { value: 'direct-sales', label: 'Direct sales' },
     ],
+    label: 'Products',
+    value: 'products',
   },
 ])
 
@@ -18,24 +18,24 @@ describe('hierarchy selection', () => {
   it('does not bubble a filtered child into a parent with hidden unselected children', () => {
     expect(
       resolveHierarchySelection({
-        next: ['direct-sales', 'products'],
+        bubble: true,
         intent: 'direct-sales',
         items,
+        next: ['direct-sales', 'products'],
         propagate: true,
-        bubble: true,
       }),
-    ).toEqual(['direct-sales'])
+    ).toStrictEqual(['direct-sales'])
   })
 
   it('propagates a parent selection across hidden descendants and deduplicates output', () => {
     expect(
       resolveHierarchySelection({
-        next: ['products', 'direct-sales', 'direct-sales'],
+        bubble: true,
         intent: 'products',
         items,
+        next: ['products', 'direct-sales', 'direct-sales'],
         propagate: true,
-        bubble: true,
       }),
-    ).toEqual(['products', 'direct-sales', 'auctions'])
+    ).toStrictEqual(['products', 'direct-sales', 'auctions'])
   })
 })

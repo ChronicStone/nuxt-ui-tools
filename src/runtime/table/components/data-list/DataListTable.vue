@@ -22,12 +22,7 @@ const resolvedUi = computed<DataListTableUi>(() => ({
 </script>
 
 <template>
-  <TableRenderer
-    :height="height"
-    :size="resolvedSize"
-    :fill="fill"
-    :ui="resolvedUi"
-  >
+  <TableRenderer :height="height" :size="resolvedSize" :fill="fill" :ui="resolvedUi">
     <template v-for="(_, name) in $slots" #[name]="scope">
       <slot :name="name" v-bind="scope ?? {}" />
     </template>

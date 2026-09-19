@@ -37,7 +37,9 @@ function mergeLocaleMessages<TMessages>(
   base: TMessages,
   extension: DeepPartial<TMessages> | undefined,
 ): TMessages {
-  if (!extension) return base
+  if (!extension) {
+    return base
+  }
   if (!isObject(base) || !isObject(extension)) {
     // SAFETY: both candidates originate from the same locale tree, so a primitive leaf keeps TMessages.
     return (extension ?? base) as TMessages
@@ -48,7 +50,9 @@ function mergeLocaleMessages<TMessages>(
   for (const [key, extensionValue] of Object.entries(extension)) {
     const baseValue = merged[key]
 
-    if (extensionValue === undefined) continue
+    if (extensionValue === undefined) {
+      continue
+    }
 
     Object.assign(merged, {
       [key]:

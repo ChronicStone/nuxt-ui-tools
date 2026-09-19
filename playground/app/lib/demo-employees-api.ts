@@ -56,10 +56,10 @@ export interface FilterOptionsRequest {
 }
 
 export interface FilterOptionsResponse {
-  options: Array<{
+  options: {
     value: string
     label: string
-  }>
+  }[]
   nextCursor?: string | null
   total?: number
 }
@@ -67,12 +67,6 @@ export interface FilterOptionsResponse {
 export type DemoEmployeeFilterOptionsResource = 'companies' | 'departments' | 'skills'
 
 export const demoEmployeesClient = {
-  queryTable(request: DemoEmployeesTableRequest) {
-    return $fetch<DemoEmployeesTableResponse>('/api/table/demo-employees/query', {
-      method: 'POST',
-      body: request,
-    })
-  },
   filterOptions: {
     companies(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/companies', {
@@ -92,5 +86,11 @@ export const demoEmployeesClient = {
         body: options.request,
       })
     },
+  },
+  queryTable(request: DemoEmployeesTableRequest) {
+    return $fetch<DemoEmployeesTableResponse>('/api/table/demo-employees/query', {
+      method: 'POST',
+      body: request,
+    })
   },
 }

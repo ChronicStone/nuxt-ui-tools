@@ -12,7 +12,6 @@ import type {
 } from '#ui-tools/form'
 
 const schema = defineFormSchema({
-  formKey: 'exassess.account',
   context: {
     countries: () =>
       queryOptions({
@@ -74,6 +73,7 @@ const schema = defineFormSchema({
       ],
     },
   ],
+  formKey: 'exassess.account',
 })
 
 type SchemaContext = ExtractFormContext<typeof schema>
@@ -95,20 +95,20 @@ describe('defineFormSchema inference', () => {
 
   it('keeps helper inference for extracted fields', () => {
     const field = defineFormField({
+      inputType: 'email',
       key: 'email',
       type: 'text',
-      inputType: 'email',
     })
 
     const fields = defineFormFields([
       field,
       {
         key: 'status',
-        type: 'radio',
         options: [
           { label: 'Active', value: 'active' },
           { label: 'Inactive', value: 'inactive' },
         ],
+        type: 'radio',
       },
     ])
 
@@ -120,21 +120,21 @@ describe('defineFormSchema inference', () => {
     const treeSchema = defineFormSchema({
       fields: [
         {
-          key: 'permissions',
-          type: 'tree',
-          multiple: true,
-          selectionControl: 'checkbox',
-          selectionBehavior: 'toggle',
-          propagateSelect: true,
           bubbleSelect: true,
+          key: 'permissions',
+          multiple: true,
           options: [{ key: 'catalog', label: 'Catalog' }],
+          propagateSelect: true,
+          selectionBehavior: 'toggle',
+          selectionControl: 'checkbox',
+          type: 'tree',
         },
         {
           key: 'owner',
-          type: 'tree-select',
-          selectionControl: 'radio',
-          selectionBehavior: 'replace',
           options: [{ key: 'engineering', label: 'Engineering' }],
+          selectionBehavior: 'replace',
+          selectionControl: 'radio',
+          type: 'tree-select',
         },
       ],
     })
@@ -147,7 +147,7 @@ describe('defineFormSchema inference', () => {
   it('exposes the planned field-kind registry', () => {
     expect(formFieldKinds.map((kind) => kind.type)).toContain('text')
     expect(formFieldKinds.map((kind) => kind.type)).toContain('upload')
-    expect(formFieldKinds.map((kind) => kind.type)).toEqual(
+    expect(formFieldKinds.map((kind) => kind.type)).toStrictEqual(
       expect.arrayContaining([
         'datetime',
         'daterange',
@@ -173,8 +173,8 @@ describe('form field property ownership', () => {
       fields: [
         {
           key: 'status',
-          type: 'select',
           options: [{ label: 'Draft', value: 'draft' }] satisfies FormOption[],
+          type: 'select',
         },
       ],
     })

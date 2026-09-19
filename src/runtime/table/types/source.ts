@@ -23,7 +23,7 @@ export interface TableInfiniteQueryDefinition<TData = unknown> {
     lastPage: TData,
     allPages: TData[],
     lastPageParam: string | null,
-    allPageParams: Array<string | null>,
+    allPageParams: (string | null)[],
   ) => string | null | undefined
   enabled?: boolean
   staleTime?: number

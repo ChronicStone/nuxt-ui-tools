@@ -1,9 +1,10 @@
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import type { QueryClient } from '@tanstack/vue-query'
 import { computed, reactive } from 'vue'
 
 import type { GenericObject } from '../../shared/types/utils'
-import type { FormValue } from '../types'
 import type {
+  FormValue,
   FormAsyncResource,
   FormRuntimeContext,
   FormRuntimeQueryOptions,
@@ -18,9 +19,13 @@ export function useFormContextResources() {
   const queryClient = useQueryClient()
 
   function setContext(definition: GenericObject | undefined) {
-    for (const key of Object.keys(context)) delete context[key]
+    for (const key of Object.keys(context)) {
+      delete context[key]
+    }
 
-    if (!definition) return
+    if (!definition) {
+      return
+    }
 
     for (const key of Object.keys(definition)) {
       const source = Object.getOwnPropertyDescriptor(definition, key)?.value
@@ -35,7 +40,9 @@ export function useFormContextResources() {
 }
 
 export function getSchemaContext(schema: FormValue) {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const context = Object.getOwnPropertyDescriptor(schema, 'context')?.value
   return isRecord(context) ? context : undefined
 }
@@ -45,12 +52,12 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
 
   if (isPromise(raw)) {
     const resource: FormAsyncResource<FormValue> = {
-      value: undefined,
       error: null,
-      pending: true,
       fetching: false,
       loading: true,
+      pending: true,
       refresh: async () => {},
+      value: undefined,
     }
 
     resource.refresh = async () => {
@@ -81,29 +88,20 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
     })
     const query = useQuery<FormValue, Error, FormValue>(() => {
       const nextSource = querySource.value
-      if (!nextSource)
+      if (!nextSource) {
         return {
           queryKey: ['form-context', 'disabled'],
           queryFn: async () => undefined,
           enabled: false,
         }
+      }
 
       return nextSource
     })
 
     const resource: FormAsyncResource<FormValue> = {
-      get value() {
-        return query.data.value
-      },
-      set value(value) {
-        const nextSource = querySource.value
-        if (nextSource) queryClient.setQueryData<FormValue, FormValue>(nextSource.queryKey, value)
-      },
       get error() {
         return query.error.value ?? null
-      },
-      get pending() {
-        return query.isPending.value
       },
       get fetching() {
         return query.isFetching.value && !query.isPending.value
@@ -111,8 +109,18 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
       get loading() {
         return query.isPending.value
       },
+      get pending() {
+        return query.isPending.value
+      },
       refresh: async () => {
         await query.refetch()
+      },
+      get value() {
+        return query.data.value
+      },
+      set value(value) {
+        const nextSource = querySource.value
+        if (nextSource) queryClient.setQueryData<FormValue, FormValue>(nextSource.queryKey, value)
       },
     }
 
@@ -127,7 +135,9 @@ function resolveResourceSource(source: FormValue) {
 }
 
 function isQueryLike(value: FormValue): value is FormRuntimeQueryOptions {
-  if (!isRecord(value)) return false
+  if (!isRecord(value)) {
+    return false
+  }
   const queryKey = Object.getOwnPropertyDescriptor(value, 'queryKey')?.value
   return Array.isArray(queryKey)
 }

@@ -7,8 +7,12 @@ import type {
 } from '../../types'
 
 async function resolveSpreadsheetBinarySource(source: SpreadsheetBinarySource) {
-  if (source instanceof Uint8Array) return source
-  if (source instanceof ArrayBuffer) return new Uint8Array(source)
+  if (source instanceof Uint8Array) {
+    return source
+  }
+  if (source instanceof ArrayBuffer) {
+    return new Uint8Array(source)
+  }
   return new Uint8Array(await source.arrayBuffer())
 }
 
@@ -22,26 +26,27 @@ export async function parseSpreadsheetWorkbook(params: {
 }): Promise<SpreadsheetWorkbookData> {
   const data = await resolveSpreadsheetBinarySource(params.source)
   const workbook = read(data, {
-    type: 'array',
     cellDates: true,
+    type: 'array',
   })
 
   const sheets = workbook.SheetNames.map<SpreadsheetWorkbookSheet>((sheetName) => {
     const sheet = workbook.Sheets[sheetName]
-    if (!sheet)
+    if (!sheet) {
       return {
         name: sheetName,
         rows: [],
       }
+    }
 
     return {
       name: sheetName,
       rows: normalizeSheetRows(
         utils.sheet_to_json<unknown[]>(sheet, {
+          blankrows: false,
+          defval: '',
           header: 1,
           raw: false,
-          defval: '',
-          blankrows: false,
         }),
       ),
     }
@@ -61,8 +66,12 @@ export function getSpreadsheetSheet(
   workbook: SpreadsheetWorkbookData | null,
   sheetName: string | undefined,
 ) {
-  if (!workbook) return null
-  if (!sheetName) return workbook.sheets[0] ?? null
+  if (!workbook) {
+    return null
+  }
+  if (!sheetName) {
+    return workbook.sheets[0] ?? null
+  }
   return workbook.sheets.find((sheet) => sheet.name === sheetName) ?? workbook.sheets[0] ?? null
 }
 
@@ -77,6 +86,8 @@ export function getSpreadsheetDataRows(
   sheet: SpreadsheetWorkbookSheet | null,
   headerRowIndex: number,
 ) {
-  if (!sheet) return []
+  if (!sheet) {
+    return []
+  }
   return sheet.rows.slice(headerRowIndex + 1)
 }

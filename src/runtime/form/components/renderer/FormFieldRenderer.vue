@@ -51,8 +51,7 @@ import TextField from '../../fields/text/component.vue'
 import TextareaField from '../../fields/textarea/component.vue'
 import TimeField from '../../fields/time/component.vue'
 import UploadField from '../../fields/upload/component.vue'
-import type { FormValue } from '../../types'
-import type { FormField, FormFieldType, FormItemLayout, FormObject } from '../../types'
+import type { FormValue, FormField, FormFieldType, FormItemLayout, FormObject } from '../../types'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { focusFormFieldElement } from '../../utils/focus'
 import { isObject } from '../../utils/predicate'
@@ -71,14 +70,17 @@ const element = ref<HTMLElement | null>(null)
 const bare = computed<boolean>(() => props.bare === true)
 const controlId = useId()
 const controlAttrs = computed<FormObject>(() => {
-  if (!bare.value) return {}
+  if (!bare.value) {
+    return {}
+  }
   const attrs = {
     ...props.controlAttrs,
     'data-form-field': fieldPath(props.parentPath, props.field).join('.'),
   }
-  if (props.controlLabelledby)
+  if (props.controlLabelledby) {
     return { ...attrs, id: controlId, 'aria-labelledby': props.controlLabelledby }
-  return { ...attrs, id: controlId, 'aria-label': resolveControlLabel(props.field) }
+  }
+  return { ...attrs, 'aria-label': resolveControlLabel(props.field), id: controlId }
 })
 
 provideFormFieldBare(bare)
@@ -93,8 +95,9 @@ const rendererProps = computed(() => {
     field: props.field,
     path: path.value,
   }
-  if (!field.value.type.isAny(['input-group', 'group', 'object', 'card', 'column']))
+  if (!field.value.type.isAny(['input-group', 'group', 'object', 'card', 'column'])) {
     return baseProps
+  }
 
   return {
     ...baseProps,
@@ -102,18 +105,22 @@ const rendererProps = computed(() => {
   }
 })
 const itemLayout = useFormItemLayout({
-  layout: resolveFieldLayout,
   formLayout: form.currentLayout,
+  layout: resolveFieldLayout,
 })
 
 watchEffect((onCleanup) => {
-  if (!element.value) return
+  if (!element.value) {
+    return
+  }
   onCleanup(form.registerFieldElement(path.value, element.value))
 })
 
 watchEffect(async () => {
   const request = form.focusRequest.value
-  if (!request || request.path !== path.value.join('.') || !element.value) return
+  if (!request || request.path !== path.value.join('.') || !element.value) {
+    return
+  }
 
   await focusFormFieldElement(element.value)
 })
@@ -169,7 +176,9 @@ const fieldRenderers = new Map<FormFieldType, Component>([
 ])
 
 function resolveFieldLayout(): FormItemLayout | undefined {
-  if (!field.value.capability.has('itemLayout')) return undefined
+  if (!field.value.capability.has('itemLayout')) {
+    return undefined
+  }
   const layout = Object.getOwnPropertyDescriptor(props.field, 'layout')?.value
   return isLayout(layout) ? layout : undefined
 }
@@ -179,7 +188,9 @@ function isLayout(value: FormValue): value is FormItemLayout {
 }
 
 function resolveControlLabel(controlField: FormField) {
-  if ('label' in controlField) return resolveFormText(controlField.label) ?? controlField.key
+  if ('label' in controlField) {
+    return resolveFormText(controlField.label) ?? controlField.key
+  }
   return controlField.key
 }
 </script>

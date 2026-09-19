@@ -42,7 +42,9 @@ const hint = computed(() =>
     : undefined,
 )
 const labelExtra = computed(() => {
-  if (!field.value.capability.has('hint') || !('labelExtra' in props.field)) return undefined
+  if (!field.value.capability.has('hint') || !('labelExtra' in props.field)) {
+    return undefined
+  }
   const value = props.field.labelExtra
   return isFunction(value) ? value() : value
 })
@@ -53,11 +55,17 @@ const shellLabelExtra = computed(() => (props.inlineLabel ? undefined : labelExt
 const error = computed(() => form.getFieldError(props.path))
 const pending = computed(() => form.getFieldApi(props.path, props.field).validation.pending())
 const required = computed(() => {
-  if (!field.value.capability.has('validation')) return false
+  if (!field.value.capability.has('validation')) {
+    return false
+  }
   const validation = Object.getOwnPropertyDescriptor(props.field, 'validation')?.value
-  if (!isObject(validation) || validation === null || Array.isArray(validation)) return false
+  if (!isObject(validation) || validation === null || Array.isArray(validation)) {
+    return false
+  }
   const value = Object.getOwnPropertyDescriptor(validation, 'required')?.value
-  if (isFunction(value)) return value(form.getFieldCallbackParams(props.path, props.field)) === true
+  if (isFunction(value)) {
+    return value(form.getFieldCallbackParams(props.path, props.field)) === true
+  }
   return isBoolean(value) ? value : false
 })
 const dirty = computed(
@@ -69,22 +77,24 @@ const dirty = computed(
 
 function schemaDirtyCheck() {
   const schema = form.schema.value
-  if (!isRecord(schema) || !isRecord(schema.controls)) return false
+  if (!isRecord(schema) || !isRecord(schema.controls)) {
+    return false
+  }
   return schema.controls.dirtyCheck === true
 }
 const open = ref<boolean>(!('collapsed' in props.field && props.field.collapsed === true))
 const collapsible = computed(() => 'collapsible' in props.field && props.field.collapsible === true)
 const fieldUi = computed(() => formUi.ui.value.field?.ui)
 const nuxtFieldUi = computed(() => ({
-  root: fieldUi.value?.root,
-  wrapper: fieldUi.value?.wrapper,
-  labelWrapper: fieldUi.value?.labelWrapper,
-  label: fieldUi.value?.label,
   container: fieldUi.value?.container,
   description: fieldUi.value?.description,
   error: fieldUi.value?.error,
-  hint: fieldUi.value?.hint,
   help: fieldUi.value?.help,
+  hint: fieldUi.value?.hint,
+  label: fieldUi.value?.label,
+  labelWrapper: fieldUi.value?.labelWrapper,
+  root: fieldUi.value?.root,
+  wrapper: fieldUi.value?.wrapper,
 }))
 
 function resetField() {

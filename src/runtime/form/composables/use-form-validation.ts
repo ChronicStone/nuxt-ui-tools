@@ -4,8 +4,8 @@ import { withAsync, withMessage } from '@regle/rules'
 import { computed, nextTick, ref, unref } from 'vue'
 import type { Ref } from 'vue'
 
-import type { FormValue } from '../types'
 import type {
+  FormValue,
   FormField,
   FormObject,
   FormRuntimeContext,
@@ -74,13 +74,13 @@ export function useFormValidation(params: {
     params.state,
     () =>
       buildRegleRules({
-        schema: params.schema(),
-        state: params.state,
-        context: params.context,
         apiFactory: params.apiFactory,
+        context: params.context,
+        dynamicMessages,
         includeAsync: true,
         mode: params.getValidationMode(),
-        dynamicMessages,
+        schema: params.schema(),
+        state: params.state,
       }),
     { autoDirty: false, debounce: 0, lazy: true },
   )
@@ -88,21 +88,23 @@ export function useFormValidation(params: {
     params.state,
     () =>
       buildRegleRules({
-        schema: params.schema(),
-        state: params.state,
-        context: params.context,
         apiFactory: params.apiFactory,
+        context: params.context,
+        dynamicMessages,
         includeAsync: false,
         mode: params.getValidationMode(),
-        dynamicMessages,
+        schema: params.schema(),
+        state: params.state,
       }),
     { autoDirty: false, debounce: 0, lazy: true },
   )
 
   const validationErrors = computed<readonly FormValidationError[]>(() =>
     collectFormFieldsPathsForSchema(params.schema(), params.state).flatMap((path: string) => {
-      if (!touchedPaths.value.includes(path)) return []
-      return resolveFieldErrors(path).map((message) => ({ path, message }))
+      if (!touchedPaths.value.includes(path)) {
+        return []
+      }
+      return resolveFieldErrors(path).map((message) => ({ message, path }))
     }),
   )
   const errors = computed(() => [...validationErrors.value, ...customErrors.value])
@@ -148,7 +150,9 @@ export function useFormValidation(params: {
       )
       asyncValid = await validateRegleStatuses(nextAsyncStatuses.map(({ status }) => status))
       storeValidatedMessages(nextAsyncStatuses)
-      if (validationRuns.get('$form') !== run) return asyncValid
+      if (validationRuns.get('$form') !== run) {
+        return asyncValid
+      }
       return syncResult.valid && asyncValid
     } finally {
       removePendingPaths(pendingPaths, potentialAsyncPaths, pendingToken)
@@ -163,7 +167,9 @@ export function useFormValidation(params: {
     )
     const scope = paths.join('|') || parentPath.join('.') || '$fields'
     const run = nextValidationRun(validationRuns, scope)
-    if (params.getValidationMode() === false) return true
+    if (params.getValidationMode() === false) {
+      return true
+    }
 
     clearDynamicMessages(paths)
     clearValidatedMessages(paths)
@@ -196,10 +202,11 @@ export function useFormValidation(params: {
       )
       asyncValid = await validateRegleStatuses(nextAsyncStatuses.map(({ status }) => status))
       storeValidatedMessages(nextAsyncStatuses)
-      if (validationRuns.get(scope) !== run)
+      if (validationRuns.get(scope) !== run) {
         return !validationErrors.value.some((error) =>
           paths.some((path) => isScopedPath(error.path, path)),
         )
+      }
 
       return syncResult.valid && asyncValid
     } finally {
@@ -210,8 +217,12 @@ export function useFormValidation(params: {
   function getFieldError(path: readonly string[]) {
     const key = path.join('.')
     const customError = customErrors.value.find((error) => error.path === key)
-    if (customError) return customError.message
-    if (!touchedPaths.value.includes(key)) return undefined
+    if (customError) {
+      return customError.message
+    }
+    if (!touchedPaths.value.includes(key)) {
+      return undefined
+    }
 
     return resolveFieldErrors(key)[0]
   }
@@ -220,7 +231,7 @@ export function useFormValidation(params: {
     const key = path.join('.')
     customErrors.value = [
       ...customErrors.value.filter((error) => error.path !== key),
-      { path: key, message },
+      { message, path: key },
     ]
   }
 
@@ -272,7 +283,9 @@ export function useFormValidation(params: {
   }
 
   function clearValidatedMessages(paths: readonly string[]) {
-    if (!paths.length) return
+    if (!paths.length) {
+      return
+    }
     validatedMessages.value = new Map(
       [...validatedMessages.value.entries()].filter(([path]) => !paths.includes(path)),
     )
@@ -280,8 +293,9 @@ export function useFormValidation(params: {
 
   function storeValidatedMessages(statuses: readonly ReglePathStatus[]) {
     const next = new Map(validatedMessages.value)
-    for (const { fieldPath: path, status } of statuses)
+    for (const { fieldPath: path, status } of statuses) {
       next.set(path, resolveRegleStatusErrors(status))
+    }
     validatedMessages.value = next
   }
 
@@ -299,9 +313,13 @@ export function useFormValidation(params: {
 
   function isPending(path: readonly string[]) {
     const key = path.join('.')
-    if (pendingPaths.value.get(key)?.size) return true
+    if (pendingPaths.value.get(key)?.size) {
+      return true
+    }
     const status = resolveRegleStatus(regle.r$, toReglePath(path.join('.'), params.state))
-    if (!isPendingRegleStatus(status)) return false
+    if (!isPendingRegleStatus(status)) {
+      return false
+    }
     return (
       readBooleanProperty(status, '$pending') ||
       hasPendingRegleRule(readReactiveProperty(status, '$rules'))
@@ -313,17 +331,17 @@ export function useFormValidation(params: {
   }
 
   return {
-    errors,
-    validationErrors,
-    validate,
-    validateFields,
-    getFieldError,
-    setError,
     clearError,
     clearValidationState,
-    markTouched,
-    isTouched,
+    errors,
+    getFieldError,
     isPending,
+    isTouched,
+    markTouched,
+    setError,
+    validate,
+    validateFields,
+    validationErrors,
   }
 }
 
@@ -345,7 +363,9 @@ function buildRegleRules(params: {
         parentPath: step.root ? [step.root] : [],
       })
       for (const [key, value] of Object.entries(stepRules)) {
-        if (value === undefined) continue
+        if (value === undefined) {
+          continue
+        }
         setRegleRuleNode(rules, step.root ? `${step.root}.${key}` : key, value)
       }
     }
@@ -372,13 +392,19 @@ function buildFieldRules(params: {
   const rules: RegleRuleTree = {}
 
   for (const field of params.fields) {
-    if (field.ignore === true) continue
+    if (field.ignore === true) {
+      continue
+    }
     const fieldInstance = createFormFieldInstance(field)
-    if (fieldInstance.state.is('stateless')) continue
+    if (fieldInstance.state.is('stateless')) {
+      continue
+    }
     if (isFlatPassthroughField(field)) {
       const childRules = buildFieldRules({ ...params, fields: getChildFieldsForRules(field) })
       for (const [key, value] of Object.entries(childRules)) {
-        if (value !== undefined) setRegleRuleNode(rules, key, value)
+        if (value !== undefined) {
+          setRegleRuleNode(rules, key, value)
+        }
       }
       continue
     }
@@ -386,15 +412,17 @@ function buildFieldRules(params: {
     const path = fieldPath(params.parentPath, field)
     const api = params.apiFactory(path, field)
     const callbackParams = {
+      api,
       ctx: params.context,
       deps: resolveFieldDependencies({
         field,
         state: params.state,
         parentPath: params.parentPath,
       }),
-      api,
     }
-    if (!shouldRenderField(field, callbackParams)) continue
+    if (!shouldRenderField(field, callbackParams)) {
+      continue
+    }
 
     if (isObjectContainerField(field)) {
       setRegleRuleNode(
@@ -411,12 +439,13 @@ function buildFieldRules(params: {
 
     if (fieldInstance.type.is('matrix')) {
       const matrixRules: RegleRuleTree = {}
-      for (const row of getMatrixRows(field))
+      for (const row of getMatrixRows(field)) {
         matrixRules[row] = buildFieldRules({
           ...params,
           fields: getChildFieldsForRules(field),
           parentPath: [...path, row],
         })
+      }
       setRegleRuleNode(rules, field.key, matrixRules)
       continue
     }
@@ -435,8 +464,10 @@ function buildFieldRules(params: {
       continue
     }
 
-    const fieldRules = buildLeafRules({ ...params, field, path, callbackParams })
-    if (Object.keys(fieldRules).length) setRegleRuleNode(rules, field.key, fieldRules)
+    const fieldRules = buildLeafRules({ ...params, callbackParams, field, path })
+    if (Object.keys(fieldRules).length) {
+      setRegleRuleNode(rules, field.key, fieldRules)
+    }
   }
 
   return rules
@@ -449,7 +480,9 @@ function setRegleRuleNode(
 ) {
   const segments = pathSegments(key)
   const leaf = segments.pop()
-  if (!leaf) return
+  if (!leaf) {
+    return
+  }
 
   let current = target
   for (const segment of segments) {
@@ -487,36 +520,52 @@ function buildLeafRules(params: {
   const validation = Object.getOwnPropertyDescriptor(params.field, 'validation')?.value
   const key = params.path.join('.')
 
-  if (params.mode !== 'rules' && resolveRequired(params.field, params.callbackParams))
+  if (params.mode !== 'rules' && resolveRequired(params.field, params.callbackParams)) {
     output.required = withMessage(
       (value: FormValue) => !isEmptyValue(value),
       resolveRequiredMessage(params.field),
     )
+  }
 
-  if (params.mode === 'required') return output
+  if (params.mode === 'required') {
+    return output
+  }
 
   const authoredValidators: FormValidatorsConfig | undefined =
     'validators' in params.field ? params.field.validators : undefined
   let validators: FormValidators | undefined
-  if (isValidatorMap(authoredValidators)) validators = authoredValidators
-  else if (isFunction(authoredValidators)) validators = authoredValidators(params.callbackParams)
+  if (isValidatorMap(authoredValidators)) {
+    validators = authoredValidators
+  } else if (isFunction(authoredValidators)) {
+    validators = authoredValidators(params.callbackParams)
+  }
   if (validators) {
     for (const name in validators) {
       const rule = validators[name]
-      if (rule) output[name] = rule
+      if (rule) {
+        output[name] = rule
+      }
     }
   }
 
   const authoredRules = isRecord(validation)
     ? Object.getOwnPropertyDescriptor(validation, 'rules')?.value
     : undefined
-  if (!Array.isArray(authoredRules)) return output
+  if (!Array.isArray(authoredRules)) {
+    return output
+  }
 
   authoredRules.forEach((rule, index) => {
-    if (!isRecord(rule)) return
+    if (!isRecord(rule)) {
+      return
+    }
     const validate = Object.getOwnPropertyDescriptor(rule, 'validate')?.value
-    if (!isFunction(validate)) return
-    if (!params.includeAsync && isAsyncFunction(validate)) return
+    if (!isFunction(validate)) {
+      return
+    }
+    if (!params.includeAsync && isAsyncFunction(validate)) {
+      return
+    }
     const ruleName = resolveRuleName(rule, index)
     const messageKey = `${key}:${ruleName}`
     const message = () =>
@@ -576,7 +625,9 @@ function setDynamicMessage(messages: Ref<Map<string, string>>, key: string, valu
 }
 
 function clearDynamicMessage(messages: Ref<Map<string, string>>, key: string) {
-  if (!messages.value.has(key)) return
+  if (!messages.value.has(key)) {
+    return
+  }
   const next = new Map(messages.value)
   next.delete(key)
   messages.value = next
@@ -589,8 +640,12 @@ function resolveRuleName(rule: FormObject, index: number) {
 
 function resolveRuleMessage(rule: FormObject, field: FormField) {
   const message = Object.getOwnPropertyDescriptor(rule, 'message')?.value
-  if (isFunction(message)) return String(message())
-  if (isString(message) || isNumber(message)) return String(message)
+  if (isFunction(message)) {
+    return String(message())
+  }
+  if (isString(message) || isNumber(message)) {
+    return String(message)
+  }
   const name = Object.getOwnPropertyDescriptor(rule, 'name')?.value
   return isString(name) ? `Invalid value for ${name}.` : `Invalid value for ${field.key}.`
 }
@@ -604,7 +659,9 @@ function toReglePath(path: string, state: FormObject) {
   const reglePath: string[] = []
   let current: FormValue = state
   for (const segment of pathSegments(path)) {
-    if (Array.isArray(current) && /^\d+$/.test(segment)) reglePath.push('$each')
+    if (Array.isArray(current) && /^\d+$/.test(segment)) {
+      reglePath.push('$each')
+    }
     reglePath.push(segment)
     current = Array.isArray(current)
       ? current[Number(segment)]
@@ -616,10 +673,11 @@ function toReglePath(path: string, state: FormObject) {
 }
 
 function collectFormFieldsPathsForSchema(schema: FormValue, state: FormObject) {
-  if (isSteppedSchemaForRules(schema))
+  if (isSteppedSchemaForRules(schema)) {
     return getSchemaStepsForRules(schema).flatMap((step) =>
       collectFormFieldsPathsForFields(step.fields, state, step.root ? [step.root] : []),
     )
+  }
   return collectFormFieldsPathsForFields(getSchemaFieldsForRules(schema), state, [])
 }
 
@@ -629,22 +687,31 @@ function collectFormFieldsPathsForFields(
   parentPath: readonly string[],
 ): readonly string[] {
   return fields.flatMap((field) => {
-    if (field.ignore === true) return []
+    if (field.ignore === true) {
+      return []
+    }
     const fieldInstance = createFormFieldInstance(field)
-    if (fieldInstance.state.is('stateless')) return []
-    if (isFlatPassthroughField(field))
+    if (fieldInstance.state.is('stateless')) {
+      return []
+    }
+    if (isFlatPassthroughField(field)) {
       return collectFormFieldsPathsForFields(getChildFieldsForRules(field), state, parentPath)
+    }
 
     const path = fieldPath(parentPath, field)
-    if (isObjectContainerField(field))
+    if (isObjectContainerField(field)) {
       return collectFormFieldsPathsForFields(getChildFieldsForRules(field), state, path)
-    if (fieldInstance.type.is('matrix'))
+    }
+    if (fieldInstance.type.is('matrix')) {
       return getMatrixRows(field).flatMap((row) =>
         collectFormFieldsPathsForFields(getChildFieldsForRules(field), state, [...path, row]),
       )
+    }
     if (isArrayField(field)) {
       const value = getPathValue(state, path)
-      if (!Array.isArray(value)) return []
+      if (!Array.isArray(value)) {
+        return []
+      }
       return value.flatMap((item, index) =>
         collectFormFieldsPathsForFields(
           getArrayItemFields(field, isRecord(item) ? item : {}),
@@ -662,19 +729,29 @@ function isScopedPath(path: string, scope: string) {
 }
 
 function getSchemaFieldsForRules(schema: FormValue) {
-  if (!isRecord(schema)) return []
+  if (!isRecord(schema)) {
+    return []
+  }
   const fields = Object.getOwnPropertyDescriptor(schema, 'fields')?.value
   return Array.isArray(fields) ? fields.filter(isFormFieldForRules) : []
 }
 
 function getSchemaStepsForRules(schema: FormValue) {
-  if (!isRecord(schema)) return []
+  if (!isRecord(schema)) {
+    return []
+  }
   const steps = Object.getOwnPropertyDescriptor(schema, 'steps')?.value
-  if (!Array.isArray(steps)) return []
+  if (!Array.isArray(steps)) {
+    return []
+  }
   return steps.flatMap((step) => {
-    if (!isRecord(step)) return []
+    if (!isRecord(step)) {
+      return []
+    }
     const fields = Object.getOwnPropertyDescriptor(step, 'fields')?.value
-    if (!Array.isArray(fields)) return []
+    if (!Array.isArray(fields)) {
+      return []
+    }
     const root = Object.getOwnPropertyDescriptor(step, 'root')?.value
     return [
       {
@@ -695,7 +772,9 @@ function getChildFieldsForRules(field: FormField) {
 }
 
 function isFormFieldForRules(value: FormValue): value is FormField {
-  if (!isRecord(value)) return false
+  if (!isRecord(value)) {
+    return false
+  }
   return isString(value.key) && isString(value.type)
 }
 
@@ -714,7 +793,9 @@ function addPendingPaths(
   paths: readonly string[],
   token: string,
 ) {
-  if (!paths.length) return
+  if (!paths.length) {
+    return
+  }
   const next = new Map(pendingPaths.value)
   for (const path of paths) {
     const tokens = new Set(next.get(path) ?? [])
@@ -729,18 +810,23 @@ function removePendingPaths(
   paths: readonly string[],
   token: string,
 ) {
-  if (!paths.length) return
+  if (!paths.length) {
+    return
+  }
   const next = new Map(pendingPaths.value)
   for (const path of paths) {
     const tokens = new Set(next.get(path) ?? [])
     tokens.delete(token)
-    if (tokens.size) next.set(path, tokens)
-    else next.delete(path)
+    if (tokens.size) {
+      next.set(path, tokens)
+    } else {
+      next.delete(path)
+    }
   }
   pendingPaths.value = next
 }
 
-type RegleValidatableStatus = {
+interface RegleValidatableStatus {
   readonly $errors: FormValue
   $invalid: boolean
   $touch: (runCommit?: boolean) => void
@@ -751,11 +837,13 @@ type RegleValidatableStatus = {
 
 function hasAsyncRegleRule(status: RegleValidatableStatus) {
   const rules = readReactiveProperty(status, '$rules')
-  if (!isRecord(rules)) return false
+  if (!isRecord(rules)) {
+    return false
+  }
   return Object.values(rules).some((rule) => readBooleanProperty(rule, '$haveAsync'))
 }
 
-type ReglePathStatus = {
+interface ReglePathStatus {
   path: string
   fieldPath: string
   status: RegleValidatableStatus
@@ -775,8 +863,8 @@ function prepareReglePaths(
 
   return {
     regleStatuses,
-    syncStatuses,
     syncResults: new Map<string, boolean>(),
+    syncStatuses,
   }
 }
 
@@ -786,7 +874,7 @@ async function validateSyncRegleStatuses(statuses: readonly ReglePathStatus[]) {
   const results = statuses.map(
     ({ path, status }) => [path, !readBooleanProperty(status, '$invalid')] as const,
   )
-  return { valid: results.every(([, valid]) => valid), results: new Map(results) }
+  return { results: new Map(results), valid: results.every(([, valid]) => valid) }
 }
 
 function collectRegleStatuses(
@@ -797,12 +885,14 @@ function collectRegleStatuses(
   return unique(paths).flatMap((candidatePath) => {
     const path = toReglePath(candidatePath, state)
     const status = resolveRegleStatus(regle, path)
-    return isValidatableRegleStatus(status) ? [{ path, fieldPath: candidatePath, status }] : []
+    return isValidatableRegleStatus(status) ? [{ fieldPath: candidatePath, path, status }] : []
   })
 }
 
 async function validateRegleStatuses(statuses: readonly RegleValidatableStatus[]) {
-  if (!statuses.length) return true
+  if (!statuses.length) {
+    return true
+  }
   statuses.forEach((status) => status.$touch(false))
   await nextTick()
   const validations = statuses.map((status) => status.$validateWithoutRaceconditions())
@@ -812,8 +902,12 @@ async function validateRegleStatuses(statuses: readonly RegleValidatableStatus[]
 
 function resolveRegleStatus(regle: FormValue, path: string): FormValue {
   return pathSegments(path).reduce<FormValue>((current, segment) => {
-    if (Array.isArray(current)) return current[Number(segment)]
-    if (!isObject(current)) return undefined
+    if (Array.isArray(current)) {
+      return current[Number(segment)]
+    }
+    if (!isObject(current)) {
+      return undefined
+    }
     return current[segment]
   }, regle)
 }
@@ -842,7 +936,9 @@ function isPendingRegleStatus(value: FormValue): value is {
 }
 
 function hasPendingRegleRule(value: FormValue) {
-  if (!isObject(value) || value === null) return false
+  if (!isObject(value) || value === null) {
+    return false
+  }
   return Object.values(value).some(
     (rule) =>
       readBooleanProperty(rule, '$pending') ||
@@ -856,6 +952,8 @@ function readBooleanProperty(value: FormValue, key: string) {
 }
 
 function readReactiveProperty(value: FormValue, key: string) {
-  if (!isRecord(value)) return undefined
+  if (!isRecord(value)) {
+    return undefined
+  }
   return unref(Object.getOwnPropertyDescriptor(value, key)?.value)
 }

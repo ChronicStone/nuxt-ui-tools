@@ -40,7 +40,7 @@ import {
 import { createResolvedFilterState } from './resolved-filters'
 
 type TablePrefetchContext = import('../../shared/types/utils').GenericObject
-type QueryWithDefaults = {
+interface QueryWithDefaults {
   staleTime?: number
   refetchOnWindowFocus?: boolean
 }
@@ -70,10 +70,11 @@ export function prefetchTable<const TSchema extends { source: object }>(params: 
   route: Pick<QueryPrefetchRuntimeRoute, 'query'>
   schema: TSchema
 }) {
-  if (!isTableSchemaView(params.schema))
+  if (!isTableSchemaView(params.schema)) {
     throw new Error('Invalid table schema: expected a source query definition')
+  }
 
-  const schema = params.schema
+  const { schema } = params
   const contextQueries = resolveContextQueries(schema)
 
   return defineQueryPrefetchPlan()
@@ -81,12 +82,12 @@ export function prefetchTable<const TSchema extends { source: object }>(params: 
     .stage((stageContext) => {
       const context = resolveContextData(schema, stageContext)
       const request = resolvePrefetchRequest({
+        context,
         route: params.route,
         schema,
-        context,
       })
 
-      return resolveTableQueries({ schema, request })
+      return resolveTableQueries({ request, schema })
     })
     .stage((stageContext) => {
       const rows = resolvePrefetchedRows(stageContext.source)
@@ -97,14 +98,16 @@ export function prefetchTable<const TSchema extends { source: object }>(params: 
           .filter((item) => item.condition?.() ?? true)
           .map((item) => [
             item.key,
-            withQueryDefaults(item.query({ rows, context }), QUERY_DEFAULTS.staleTime.context),
+            withQueryDefaults(item.query({ context, rows }), QUERY_DEFAULTS.staleTime.context),
           ]),
       )
     })
 }
 
 function isTableSchemaView<TValue>(value: TValue): value is TValue & TableSchemaView {
-  if (!isObject(value) || !('source' in value)) return false
+  if (!isObject(value) || !('source' in value)) {
+    return false
+  }
 
   return isObject(value.source) && isFunction(value.source.query)
 }
@@ -132,7 +135,7 @@ function resolveTableQueries(options: {
   schema: TableSchemaView
   request: TableSourceRequestContext<GenericObject, TablePrefetchContext, string>
 }): QueryPrefetchQueries {
-  const entries: Array<readonly [string, QueryPrefetchOption]> = [
+  const entries: (readonly [string, QueryPrefetchOption])[] = [
     [
       'source',
       withQueryDefaults(
@@ -145,7 +148,7 @@ function resolveTableQueries(options: {
   const globalFacets = resolveTableGlobalFacetDescriptors(definitions)
   const remoteFacets = options.schema.source.mode === 'remote' ? options.schema.source.facets : null
 
-  if (isRemoteFacetResolver(remoteFacets) && globalFacets.length)
+  if (isRemoteFacetResolver(remoteFacets) && globalFacets.length) {
     entries.push([
       'facets',
       withQueryDefaults(
@@ -158,9 +161,10 @@ function resolveTableQueries(options: {
         QUERY_DEFAULTS.staleTime.filterOptions,
       ),
     ])
+  }
 
   for (const definition of definitions) {
-    if (definition.kind === 'option' && isOptionQueryResolver(definition.source?.query))
+    if (definition.kind === 'option' && isOptionQueryResolver(definition.source?.query)) {
       entries.push([
         `filter-options:${definition.key}`,
         withQueryDefaults(
@@ -168,22 +172,20 @@ function resolveTableQueries(options: {
           QUERY_DEFAULTS.staleTime.filterOptions,
         ),
       ])
+    }
 
     const facet =
       definition.kind === 'option' || definition.kind === 'boolean'
         ? definition.source?.facet
         : undefined
-    if (!hasPerFilterFacetQuery(facet)) continue
+    if (!hasPerFilterFacetQuery(facet)) {
+      continue
+    }
 
     entries.push([
       `filter-facets:${definition.key}`,
       withQueryDefaults(
         facet.query({
-          table: {
-            filters: options.request.filters,
-            search: options.request.search,
-            context: options.request.context,
-          },
           facets: [
             {
               key: definition.key,
@@ -192,6 +194,11 @@ function resolveTableQueries(options: {
               cursor: undefined,
             },
           ],
+          table: {
+            context: options.request.context,
+            filters: options.request.filters,
+            search: options.request.search,
+          },
         }),
         QUERY_DEFAULTS.staleTime.filterOptions,
       ),
@@ -211,18 +218,6 @@ function resolvePrefetchRequest(options: {
   const globalFacets = resolveTableGlobalFacetDescriptors(options.schema.filters?.ui ?? [])
 
   return {
-    pagination: resolvePagination(options.route, options.schema, layout),
-    sorting: resolveSorting(options.route, options.schema, layout),
-    filters: createResolvedFilterState({
-      definitions: options.schema.filters?.ui ?? [],
-      filters,
-      staticFilters: options.schema.filters?.static,
-      context: options.context,
-    }),
-    search: {
-      value: filters.search,
-      fields: options.schema.filters?.search?.fields ?? [],
-    },
     context: options.context,
     facets:
       options.schema.source.mode === 'remote' &&
@@ -230,6 +225,18 @@ function resolvePrefetchRequest(options: {
       globalFacets.length
         ? globalFacets
         : undefined,
+    filters: createResolvedFilterState({
+      definitions: options.schema.filters?.ui ?? [],
+      filters,
+      staticFilters: options.schema.filters?.static,
+      context: options.context,
+    }),
+    pagination: resolvePagination(options.route, options.schema, layout),
+    search: {
+      fields: options.schema.filters?.search?.fields ?? [],
+      value: filters.search,
+    },
+    sorting: resolveSorting(options.route, options.schema, layout),
   }
 }
 
@@ -247,11 +254,13 @@ function resolvePagination(
   layout: TableLayout,
 ): TablePaginationState {
   const mode = getPaginationMode(schema)
-  if (mode === 'none') return { mode: 'none' }
+  if (mode === 'none') {
+    return { mode: 'none' }
+  }
 
-  const defaultPageSize = getDefaultPageSize({ schema, layout })
+  const defaultPageSize = getDefaultPageSize({ layout, schema })
   const pageSize = positiveInteger(queryValue(route, 'p.size')) ?? defaultPageSize
-  if (mode === 'cursor')
+  if (mode === 'cursor') {
     return {
       mode: 'cursor',
       cursor: null,
@@ -261,12 +270,13 @@ function resolvePagination(
           ? (schema.pagination.count ?? 'none')
           : 'none',
     }
+  }
 
   return {
+    count: 'exact',
     mode: 'offset',
     pageIndex: positiveInteger(queryValue(route, 'p.page')) ?? 1,
     pageSize,
-    count: 'exact',
   }
 }
 
@@ -275,12 +285,14 @@ function resolveSorting(
   schema: TableSchemaView,
   layout: TableLayout,
 ): TableSortingRule<string>[] {
-  const defaultSort = getDefaultSort({ schema, layout })
+  const defaultSort = getDefaultSort({ layout, schema })
   const key = queryValue(route, 's.key') ?? defaultSort?.key
-  if (!key) return []
+  if (!key) {
+    return []
+  }
 
   const direction = queryValue(route, 's.dir')
-  return [{ key, dir: direction === 'desc' ? 'desc' : (defaultSort?.dir ?? 'asc') }]
+  return [{ dir: direction === 'desc' ? 'desc' : (defaultSort?.dir ?? 'asc'), key }]
 }
 
 function resolveFilterState(
@@ -296,14 +308,16 @@ function resolveFilterState(
     for (const operator of resolveFilterSupportedOperators(definition)) {
       const urlKey = operator === defaultOperator ? definition.key : `${definition.key}~${operator}`
       const raw = queryValue(route, `f.ui.${urlKey}`)
-      if (raw == null || raw === '') continue
+      if (raw == null || raw === '') {
+        continue
+      }
       entries.set(urlKey, createTableFilterValueCodec(definition).parse(raw))
     }
   }
 
   return {
     search: queryValue(route, 'f.search') ?? '',
-    ui: parseTableFilterQueryState({ entries, definitions }),
+    ui: parseTableFilterQueryState({ definitions, entries }),
   }
 }
 
@@ -314,7 +328,9 @@ function queryValue(route: Pick<QueryPrefetchRuntimeRoute, 'query'>, key: string
 }
 
 function positiveInteger(value: string | undefined) {
-  if (!value) return undefined
+  if (!value) {
+    return undefined
+  }
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 }
@@ -325,12 +341,12 @@ function withQueryDefaults<TQuery extends QueryPrefetchOption>(
 ): TQuery & Required<QueryWithDefaults> {
   return {
     ...query,
-    staleTime:
-      isQueryWithDefaults(query) && isNumber(query.staleTime) ? query.staleTime : staleTime,
     refetchOnWindowFocus:
       isQueryWithDefaults(query) && isBoolean(query.refetchOnWindowFocus)
         ? query.refetchOnWindowFocus
         : QUERY_DEFAULTS.refetchOnWindowFocus,
+    staleTime:
+      isQueryWithDefaults(query) && isNumber(query.staleTime) ? query.staleTime : staleTime,
   }
 }
 
@@ -357,8 +373,12 @@ function resolveFacetLimit(facet: TableFilterFacetConfig) {
 }
 
 function resolvePrefetchedRows<TValue>(value: TValue): GenericObject[] {
-  if (isArray(value)) return value.filter(isGenericObject)
-  if (!isObject(value)) return []
+  if (isArray(value)) {
+    return value.filter(isGenericObject)
+  }
+  if (!isObject(value)) {
+    return []
+  }
 
   const rows = 'rows' in value ? value.rows : undefined
   return isArray(rows) ? rows.filter(isGenericObject) : []

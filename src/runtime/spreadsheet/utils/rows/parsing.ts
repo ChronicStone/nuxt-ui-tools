@@ -5,8 +5,6 @@ import type {
   SpreadsheetOptionItem,
   SpreadsheetDynamicOptionsValueDefinition,
   SpreadsheetDynamicValueDefinition,
-} from '../../types'
-import type {
   SpreadsheetCellValue,
   SpreadsheetColumnMatch,
   SpreadsheetDynamicColumnMatch,
@@ -40,7 +38,9 @@ function resolveOptionValue<TOption extends SpreadsheetOptionItem>(params: {
 }) {
   const issueText = getSpreadsheetIssueText()
   const text = String(params.raw ?? '').trim()
-  if (!text) return params.definition.mode === 'multiple' ? [] : undefined
+  if (!text) {
+    return params.definition.mode === 'multiple' ? [] : undefined
+  }
 
   const tokens =
     params.definition.mode === 'multiple'
@@ -68,24 +68,28 @@ function resolveOptionValue<TOption extends SpreadsheetOptionItem>(params: {
 
     if (!match) {
       params.issues.push({
-        level: 'error',
         code: 'option.not_found',
+        columnIndex: params.columnIndex,
+        columnKey: params.columnKey,
+        header: params.header,
+        level: 'error',
         message: issueText.unrecognizedValue(token),
         rowIndex: params.rowIndex,
-        columnKey: params.columnKey,
-        columnIndex: params.columnIndex,
-        header: params.header,
       })
       continue
     }
 
     const value = getSpreadsheetOptionValue(match)
 
-    if (value === undefined) continue
+    if (value === undefined) {
+      continue
+    }
     resolvedValues.push(value)
   }
 
-  if (params.definition.mode === 'multiple') return resolvedValues
+  if (params.definition.mode === 'multiple') {
+    return resolvedValues
+  }
   return resolvedValues[0]
 }
 
@@ -96,28 +100,39 @@ function resolveCollectionCellValue(params: {
   issues: SpreadsheetRowIssue[]
   rowIndex: number
 }) {
-  const item = params.match.item
-  if (!item) return undefined
+  const { item } = params.match
+  if (!item) {
+    return undefined
+  }
 
   // SAFETY: collection items are normalized before parsing, so each item.value is a value definition here.
   const valueDefinition = item.value as SpreadsheetDynamicValueDefinition
   const text = String(params.raw ?? '').trim()
-  if (!text) return undefined
+  if (!text) {
+    return undefined
+  }
 
-  if (valueDefinition.kind === 'text')
+  if (valueDefinition.kind === 'text') {
     return applySpreadsheetModifiers(text, valueDefinition.modifiers)
-  if (valueDefinition.kind === 'number') return Number(text)
-  if (valueDefinition.kind === 'date') return text
-  if (valueDefinition.kind === 'boolean') return ['true', '1', 'yes'].includes(text.toLowerCase())
+  }
+  if (valueDefinition.kind === 'number') {
+    return Number(text)
+  }
+  if (valueDefinition.kind === 'date') {
+    return text
+  }
+  if (valueDefinition.kind === 'boolean') {
+    return ['true', '1', 'yes'].includes(text.toLowerCase())
+  }
 
   return resolveOptionValue({
-    definition: valueDefinition,
-    raw: params.raw,
-    issues: params.issues,
-    rowIndex: params.rowIndex,
     columnIndex: params.match.columnIndex,
     columnKey: item.id,
+    definition: valueDefinition,
     header: params.match.header.text,
+    issues: params.issues,
+    raw: params.raw,
+    rowIndex: params.rowIndex,
   })
 }
 
@@ -127,9 +142,13 @@ function applyCollectionValue(params: {
   match: SpreadsheetDynamicColumnMatch
   resolvedValue: SpreadsheetValue
 }) {
-  const item = params.match.item
-  if (!item) return
-  if (params.resolvedValue === undefined) return
+  const { item } = params.match
+  if (!item) {
+    return
+  }
+  if (params.resolvedValue === undefined) {
+    return
+  }
 
   const builtValue = item.build
     ? item.build(
@@ -174,11 +193,15 @@ function resolveSpreadsheetDynamicCellValues(
 ) {
   const issueText = getSpreadsheetIssueText()
   const text = String(raw ?? '').trim()
-  if (!text) return []
+  if (!text) {
+    return []
+  }
 
   const valuesConfig = column.values
   const optionsConfig = column.options
-  if (!valuesConfig || !optionsConfig) return []
+  if (!valuesConfig || !optionsConfig) {
+    return []
+  }
 
   const tokens =
     valuesConfig.mode === 'csv'
@@ -206,13 +229,13 @@ function resolveSpreadsheetDynamicCellValues(
 
     if (!match) {
       issues.push({
-        level: 'error',
         code: 'option.not_found',
+        columnIndex,
+        columnKey: column.key,
+        header,
+        level: 'error',
         message: issueText.unrecognizedValue(token),
         rowIndex,
-        columnKey: column.key,
-        columnIndex,
-        header,
       })
       continue
     }
@@ -240,16 +263,18 @@ export async function parseSpreadsheetRows<TContext>(params: {
     for (const match of params.matches) {
       const raw = source[match.columnIndex]
       const cell: SpreadsheetCellValue = {
-        text: String(raw ?? '').trim(),
-        raw,
-        header: match.header.text,
         columnIndex: match.columnIndex,
+        header: match.header.text,
+        raw,
         rowIndex,
+        text: String(raw ?? '').trim(),
       }
 
       const value = await parseSpreadsheetCellValue(match.column, cell, params.context, issues)
 
-      if (value !== undefined) setSpreadsheetValueAtPath(data, match.key, value)
+      if (value !== undefined) {
+        setSpreadsheetValueAtPath(data, match.key, value)
+      }
     }
 
     for (const entry of params.dynamicMatches ?? []) {
@@ -266,36 +291,39 @@ export async function parseSpreadsheetRows<TContext>(params: {
           entry.header.text,
         )
 
-        if (values.length)
+        if (values.length) {
           setSpreadsheetValueAtPath(data, `${entry.key}.${entry.targetKey}`, values)
+        }
 
         continue
       }
 
-      if (!isSpreadsheetDynamicCollectionColumn(entry.column)) continue
+      if (!isSpreadsheetDynamicCollectionColumn(entry.column)) {
+        continue
+      }
 
       const resolvedValue = resolveCollectionCellValue({
         column: entry.column,
+        issues,
         match: entry,
         raw,
-        issues,
         rowIndex,
       })
 
       applyCollectionValue({
-        data,
         column: entry.column,
+        data,
         match: entry,
         resolvedValue,
       })
     }
 
     parsedRows.push({
-      index: rowIndex,
-      source,
       data,
-      issues,
+      index: rowIndex,
       isValid: issues.every((issue) => issue.level !== 'error'),
+      issues,
+      source,
     })
   }
 

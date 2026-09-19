@@ -2,7 +2,8 @@
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import USlideover from '@nuxt/ui/components/Slideover.vue'
-import { computed, onMounted, watch, type VNodeChild } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import type { VNodeChild } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
@@ -29,18 +30,22 @@ const props = withDefaults(
     mode?: DataListFilterPanelMode
     commitMode?: DataListFilterPanelCommitMode
   }>(),
-  { mode: 'drawer', commitMode: 'submit' },
+  { commitMode: 'submit', mode: 'drawer' },
 )
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const { locale, t } = useUiToolsLocale()
 const config = computed(() => dataListUi.ui.value.filterPanel)
 const resolvedUi = computed<DataListFilterPanelUi>(() => ({ ...config.value?.ui, ...props.ui }))
-const resolvedSize = computed(() => props.size ?? config.value?.size ?? dataListUi.controlSize.value)
-const controlProps = computed<DataListFilterPanelProps>(() => mergeDataListProps(config.value?.props, props.props))
+const resolvedSize = computed(
+  () => props.size ?? config.value?.size ?? dataListUi.controlSize.value,
+)
+const controlProps = computed<DataListFilterPanelProps>(() =>
+  mergeDataListProps(config.value?.props, props.props),
+)
 const triggerProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'outline', size: resolvedSize.value, icon: 'i-lucide-funnel' },
+    { color: 'neutral', icon: 'i-lucide-funnel', size: resolvedSize.value, variant: 'outline' },
     controlProps.value.trigger,
   ),
 )
@@ -52,26 +57,41 @@ const triggerLabel = computed(() => triggerProps.value.label ?? t('table.filters
 const countProps = computed(() =>
   controlProps.value.count === false
     ? null
-    : mergeDataListProps<DataListBadgeProps>({ color: 'neutral', variant: 'solid', size: 'xs' }, controlProps.value.count),
+    : mergeDataListProps<DataListBadgeProps>(
+        { color: 'neutral', size: 'xs', variant: 'solid' },
+        controlProps.value.count,
+      ),
 )
 const closeProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: 'sm', icon: 'i-lucide-x', square: true },
+    { color: 'neutral', icon: 'i-lucide-x', size: 'sm', square: true, variant: 'ghost' },
     controlProps.value.close,
   ),
 )
 const clearProps = computed(() =>
-  mergeDataListProps<DataListButtonProps>({ color: 'neutral', variant: 'ghost', size: resolvedSize.value }, controlProps.value.clear),
+  mergeDataListProps<DataListButtonProps>(
+    { color: 'neutral', size: resolvedSize.value, variant: 'ghost' },
+    controlProps.value.clear,
+  ),
 )
 const applyProps = computed(() =>
-  mergeDataListProps<DataListButtonProps>({ color: 'primary', variant: 'solid', size: resolvedSize.value }, controlProps.value.apply),
+  mergeDataListProps<DataListButtonProps>(
+    { color: 'primary', size: resolvedSize.value, variant: 'solid' },
+    controlProps.value.apply,
+  ),
 )
 const presentation = internals.filterPresentation
 const open = computed(() => presentation.panelOpen.value)
 const activeCount = computed(() => presentation.activePanelCount.value)
-const matchingCount = computed(() => internals.pagination.rowCount.value ?? internals.pagination.loadedCount.value)
+const matchingCount = computed(
+  () => internals.pagination.rowCount.value ?? internals.pagination.loadedCount.value,
+)
 const live = computed(() => props.commitMode === 'live')
-const hasDraft = computed(() => presentation.panelDefinitions.value.some((definition) => presentation.getPanelDraftFilterState({ key: definition.key }) != null))
+const hasDraft = computed(() =>
+  presentation.panelDefinitions.value.some(
+    (definition) => presentation.getPanelDraftFilterState({ key: definition.key }) != null,
+  ),
+)
 
 defineSlots<{
   trigger?: (props: {
@@ -85,37 +105,69 @@ defineSlots<{
 }>()
 
 function formatCount(value: number) {
-  return new Intl.NumberFormat(locale.value.code).format(value).replace(/ /g, ' ')
+  return new Intl.NumberFormat(locale.value.code).format(value).replaceAll(' ', ' ')
 }
 
 function toggle() {
-  if (open.value) presentation.closePanel()
-  else presentation.openPanel()
+  if (open.value) {
+    presentation.closePanel()
+  } else {
+    presentation.openPanel()
+  }
 }
 
 function primary() {
-  if (live.value) presentation.closePanel()
-  else presentation.applyPanelDraft()
+  if (live.value) {
+    presentation.closePanel()
+  } else {
+    presentation.applyPanelDraft()
+  }
 }
 
-watch(() => props.commitMode, (mode) => presentation.setPanelCommitMode(mode), { immediate: true })
+watch(
+  () => props.commitMode,
+  (mode) => presentation.setPanelCommitMode(mode),
+  { immediate: true },
+)
 
 onMounted(() => {
-  if (props.mode === 'panel') presentation.openPanel()
+  if (props.mode === 'panel') {
+    presentation.openPanel()
+  }
 })
 </script>
 
 <template>
   <section
     v-if="props.mode === 'panel'"
-    :class="mergeDataListUiClass('nut-dl-fpanel nut-dl-fpanel--inline grid gap-6', undefined, resolvedUi.wrapper)"
+    :class="
+      mergeDataListUiClass(
+        'nut-dl-fpanel nut-dl-fpanel--inline grid gap-6',
+        undefined,
+        resolvedUi.wrapper,
+      )
+    "
   >
     <FilterPanelFields :size="resolvedSize" :ui="resolvedUi" />
 
     <div
-      :class="mergeDataListUiClass('nut-dl-fpanel__foot flex items-center gap-2.5 border-t border-default pt-4 text-[12.5px] text-muted', undefined, resolvedUi.footerActions)"
+      :class="
+        mergeDataListUiClass(
+          'nut-dl-fpanel__foot flex items-center gap-2.5 border-t border-default pt-4 text-[12.5px] text-muted',
+          undefined,
+          resolvedUi.footerActions,
+        )
+      "
     >
-      <span :class="mergeDataListUiClass('nut-dl-fpanel__matching min-w-0 truncate tabular-nums', undefined, resolvedUi.matching)">
+      <span
+        :class="
+          mergeDataListUiClass(
+            'nut-dl-fpanel__matching min-w-0 truncate tabular-nums',
+            undefined,
+            resolvedUi.matching,
+          )
+        "
+      >
         {{ t('table.filters.panel.matching', { count: formatCount(matchingCount) }) }}
       </span>
       <span class="flex-1" />
@@ -151,12 +203,32 @@ onMounted(() => {
         undefined,
         resolvedUi.content,
       ),
-      header: mergeDataListUiClass('nut-dl-fpanel__head flex items-start gap-3 px-6 pt-6 pb-4', undefined, resolvedUi.header),
+      header: mergeDataListUiClass(
+        'nut-dl-fpanel__head flex items-start gap-3 px-6 pt-6 pb-4',
+        undefined,
+        resolvedUi.header,
+      ),
       wrapper: mergeDataListUiClass('min-w-0 flex-1', undefined, resolvedUi.wrapper),
-      body: mergeDataListUiClass('nut-dl-fpanel__body flex-1 overflow-y-auto px-6 py-5', undefined, resolvedUi.body),
-      footer: mergeDataListUiClass('nut-dl-fpanel__foot flex items-center gap-2.5 border-t border-default px-6 py-4 text-[12.5px] text-muted', undefined, resolvedUi.footer),
-      title: mergeDataListUiClass('nut-dl-fpanel__title text-[20px] font-medium tracking-[-0.01em] text-highlighted', undefined, resolvedUi.title),
-      description: mergeDataListUiClass('nut-dl-fpanel__description mt-1 text-[12.5px] text-muted', undefined, resolvedUi.description),
+      body: mergeDataListUiClass(
+        'nut-dl-fpanel__body flex-1 overflow-y-auto px-6 py-5',
+        undefined,
+        resolvedUi.body,
+      ),
+      footer: mergeDataListUiClass(
+        'nut-dl-fpanel__foot flex items-center gap-2.5 border-t border-default px-6 py-4 text-[12.5px] text-muted',
+        undefined,
+        resolvedUi.footer,
+      ),
+      title: mergeDataListUiClass(
+        'nut-dl-fpanel__title text-[20px] font-medium tracking-[-0.01em] text-highlighted',
+        undefined,
+        resolvedUi.title,
+      ),
+      description: mergeDataListUiClass(
+        'nut-dl-fpanel__description mt-1 text-[12.5px] text-muted',
+        undefined,
+        resolvedUi.description,
+      ),
     }"
     @update:open="$event ? presentation.openPanel() : presentation.closePanel()"
   >
@@ -172,15 +244,31 @@ onMounted(() => {
       <UButton
         v-bind="triggerBind"
         :aria-expanded="open"
-        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel-trigger shrink-0', undefined, resolvedUi.trigger) }"
+        :ui="{
+          base: mergeDataListUiClass(
+            'nut-dl-fpanel-trigger shrink-0',
+            undefined,
+            resolvedUi.trigger,
+          ),
+        }"
       >
-        <span :class="mergeDataListUiClass('flex items-center gap-2', undefined, resolvedUi.triggerContent)">
+        <span
+          :class="
+            mergeDataListUiClass('flex items-center gap-2', undefined, resolvedUi.triggerContent)
+          "
+        >
           <span>{{ triggerLabel }}</span>
           <UBadge
             v-if="countProps && activeCount > 0"
             v-bind="countProps"
             :label="formatCount(activeCount)"
-            :class="mergeDataListUiClass('nut-dl-fpanel-trigger__count tabular-nums', undefined, resolvedUi.count)"
+            :class="
+              mergeDataListUiClass(
+                'nut-dl-fpanel-trigger__count tabular-nums',
+                undefined,
+                resolvedUi.count,
+              )
+            "
           />
         </span>
       </UButton>
@@ -189,18 +277,38 @@ onMounted(() => {
     <template #header>
       <div class="min-w-0 flex-1">
         <div class="flex items-baseline gap-2.5">
-          <h2 :class="mergeDataListUiClass('nut-dl-fpanel__title text-[20px] font-medium tracking-[-0.01em] text-highlighted', undefined, resolvedUi.title)">
+          <h2
+            :class="
+              mergeDataListUiClass(
+                'nut-dl-fpanel__title text-[20px] font-medium tracking-[-0.01em] text-highlighted',
+                undefined,
+                resolvedUi.title,
+              )
+            "
+          >
             {{ t('table.filters.panel.trigger') }}
           </h2>
           <span
-            :class="mergeDataListUiClass('nut-dl-fpanel__results text-[10.5px] font-semibold tracking-[0.08em] text-dimmed uppercase tabular-nums', undefined, resolvedUi.results)"
+            :class="
+              mergeDataListUiClass(
+                'nut-dl-fpanel__results text-[10.5px] font-semibold tracking-[0.08em] text-dimmed uppercase tabular-nums',
+                undefined,
+                resolvedUi.results,
+              )
+            "
           >
             {{ t('table.filters.panel.results', { count: formatCount(matchingCount) }) }}
           </span>
         </div>
         <p
           v-if="description"
-          :class="mergeDataListUiClass('nut-dl-fpanel__description mt-1 text-[12.5px] text-muted', undefined, resolvedUi.description)"
+          :class="
+            mergeDataListUiClass(
+              'nut-dl-fpanel__description mt-1 text-[12.5px] text-muted',
+              undefined,
+              resolvedUi.description,
+            )
+          "
         >
           {{ description }}
         </p>
@@ -208,7 +316,13 @@ onMounted(() => {
       <UButton
         v-bind="closeProps"
         :aria-label="t('table.controls.close')"
-        :ui="{ base: mergeDataListUiClass('nut-dl-fpanel__close -mt-1 -mr-2 text-muted hover:text-default', undefined, resolvedUi.close) }"
+        :ui="{
+          base: mergeDataListUiClass(
+            'nut-dl-fpanel__close -mt-1 -mr-2 text-muted hover:text-default',
+            undefined,
+            resolvedUi.close,
+          ),
+        }"
         @click="presentation.closePanel()"
       />
     </template>
@@ -218,7 +332,15 @@ onMounted(() => {
     </template>
 
     <template #footer>
-      <span :class="mergeDataListUiClass('nut-dl-fpanel__matching min-w-0 truncate tabular-nums', undefined, resolvedUi.matching)">
+      <span
+        :class="
+          mergeDataListUiClass(
+            'nut-dl-fpanel__matching min-w-0 truncate tabular-nums',
+            undefined,
+            resolvedUi.matching,
+          )
+        "
+      >
         {{ t('table.filters.panel.matching', { count: formatCount(matchingCount) }) }}
       </span>
       <span class="flex-1" />

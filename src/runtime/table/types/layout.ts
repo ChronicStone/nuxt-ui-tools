@@ -1,4 +1,9 @@
-import type { TableColumnCollection } from './columns'
+import type {
+  TableColumnCollection,
+  TableSummaryRequest,
+  TableSummaryScope,
+  TableSummaryValue,
+} from './columns'
 import type {
   GenericObject,
   TableDefaultSort,
@@ -9,7 +14,6 @@ import type {
   TableSortKey,
   TableTextValue,
 } from './utils'
-import type { TableSummaryRequest, TableSummaryScope, TableSummaryValue } from './columns'
 
 export interface TablePersistenceOptions {
   state?: boolean
@@ -36,7 +40,7 @@ export interface TableSelectionSchema {
   scope?: 'page' | 'all'
 }
 
-export type PaginationConfig = {
+export interface PaginationConfig {
   sizeOptions?: Array<number> | { [key in TableLayout]: Array<number> }
   defaultSize?: number | { [key in TableLayout]: number }
   showPageSizePicker?: boolean

@@ -17,15 +17,14 @@ function createWorkbookBinary() {
   utils.book_append_sheet(workbook, sheet, 'Assessments')
 
   return write(workbook, {
-    type: 'buffer',
     bookType: 'xlsx',
+    type: 'buffer',
   })
 }
 
-describe('useSpreadsheetImport', () => {
+describe(useSpreadsheetImport, () => {
   it('infers row and submit payload types from the schema without user-land generics', async () => {
     const schema = defineSpreadsheetSchema({
-      importKey: 'assessment.results',
       columns: {
         static: (column) => [
           column.text('examNameRaw', {
@@ -42,6 +41,7 @@ describe('useSpreadsheetImport', () => {
           }),
         ],
       },
+      importKey: 'assessment.results',
     })
 
     const app = createApp({})
@@ -51,11 +51,13 @@ describe('useSpreadsheetImport', () => {
 
     const scope = effectScope()
     const api = app.runWithContext(() => scope.run(() => useSpreadsheetImport(schema)))
-    if (!api) throw new Error('Failed to create spreadsheet import api')
+    if (!api) {
+      throw new Error('Failed to create spreadsheet import api')
+    }
 
     api.loadSource({
-      source: createWorkbookBinary(),
       fileName: 'assessments.xlsx',
+      source: createWorkbookBinary(),
     })
 
     await api.refresh()
@@ -64,7 +66,7 @@ describe('useSpreadsheetImport', () => {
 
     expectTypeOf(api).toMatchTypeOf<SpreadsheetImportApi<typeof schema>>()
     expectTypeOf<Row['examNameRaw']>().toEqualTypeOf<string>()
-    expect(api.headers.value).toEqual(['Exam name', 'First name'])
+    expect(api.headers.value).toStrictEqual(['Exam name', 'First name'])
     expect(api.rowData.value[0]).toMatchObject({
       examNameRaw: 'Business English 4 Skills',
       firstName: 'John',
@@ -87,7 +89,9 @@ describe('useSpreadsheetImport', () => {
 
     const scope = effectScope()
     const api = app.runWithContext(() => scope.run(() => useSpreadsheetImport(schema)))
-    if (!api) throw new Error('Failed to create spreadsheet import api')
+    if (!api) {
+      throw new Error('Failed to create spreadsheet import api')
+    }
 
     expect(api.schema.value.importKey).toBe('demo.import')
     scope.stop()

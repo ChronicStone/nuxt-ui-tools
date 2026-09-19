@@ -34,7 +34,11 @@ export interface TableColumnSummaryConfig<TRow extends GenericObject = GenericOb
   /** Formats the resolved value for display. */
   format?: (value: TableSummaryValue, context: TableSummaryContext<TRow>) => string | number
   /** Renders the cell content; receives the loading state. */
-  render?: (params: { value: TableSummaryValue; loading: boolean; scope: TableSummaryScope }) => RenderableType
+  render?: (params: {
+    value: TableSummaryValue
+    loading: boolean
+    scope: TableSummaryScope
+  }) => RenderableType
 }
 
 export type TableColumnSummary<TRow extends GenericObject = GenericObject> =

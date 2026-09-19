@@ -6,6 +6,7 @@ import type {
   ExtractTablePageContextData,
   ExtractTableRow,
   TableQueryDefinition,
+  TableSourceRequestContext,
 } from '#ui-tools/table/types'
 
 interface DemoEmployeeRow {
@@ -25,44 +26,12 @@ interface DemoEmployeeListResult {
 type DemoEmployeeQuery = TableQueryDefinition<DemoEmployeeListResult>
 
 const schema = defineTableSchema({
-  tableKey: 'users',
-  rowKey: 'id',
-  source: {
-    mode: 'remote',
-    facets: true,
-    query: (ctx) => ({
-      queryKey: ['users', ctx.search.value, ctx.facets],
-      queryFn: async () => ({
-        rows: [
-          {
-            id: 1,
-            name: 'Ada',
-            status: 'active' as const,
-            organisation: {
-              id: 'org_1',
-              status: 'active' as const,
-            },
-          },
-        ],
-        rowCount: 1,
-      }),
-    }),
-  },
   context: [
     {
       key: 'organisationId',
       query: () => ({
         queryKey: ['organisation'],
         queryFn: async () => 'org_123',
-      }),
-    },
-  ],
-  pageContext: [
-    {
-      key: 'rowCountLabel',
-      query: ({ rows, context }) => ({
-        queryKey: ['summary', rows.length, context.organisationId],
-        queryFn: async () => `${rows.length}:${context.organisationId}`,
       }),
     },
   ],
@@ -97,6 +66,37 @@ const schema = defineTableSchema({
       }),
     ],
   },
+  pageContext: [
+    {
+      key: 'rowCountLabel',
+      query: ({ rows, context }) => ({
+        queryKey: ['summary', rows.length, context.organisationId],
+        queryFn: async () => `${rows.length}:${context.organisationId}`,
+      }),
+    },
+  ],
+  rowKey: 'id',
+  source: {
+    facets: true,
+    mode: 'remote',
+    query: (ctx: TableSourceRequestContext) => ({
+      queryKey: ['users', ctx.search.value, ctx.facets],
+      queryFn: async () => ({
+        rows: [
+          {
+            id: 1,
+            name: 'Ada',
+            status: 'active' as const,
+            organisation: {
+              id: 'org_1',
+              status: 'active' as const,
+            },
+          },
+        ],
+        rowCount: 1,
+      }),
+    }),
+  },
   table: {
     columns: (column) => [
       column.field('name', {
@@ -120,10 +120,11 @@ const schema = defineTableSchema({
       }),
     ],
     defaultSorting: {
-      key: 'organisation.status',
       dir: 'desc',
+      key: 'organisation.status',
     },
   },
+  tableKey: 'users',
 })
 
 type ContextData = ExtractTableContextData<typeof schema>
@@ -149,11 +150,11 @@ describe('defineTableSchema inference', () => {
 
   it('exposes optional global facet descriptors on the source query context', () => {
     expectTypeOf<SourceContext['facets']>().toMatchTypeOf<
-      | Array<{
+      | {
           key: string
           mode?: 'exclude-self' | 'include-self'
           limit?: number
-        }>
+        }[]
       | undefined
     >()
   })
@@ -172,7 +173,6 @@ describe('defineTableSchema inference', () => {
 
   it('keeps interface-backed query rows inferred without requiring an index signature', () => {
     const interfaceSchema = defineTableSchema({
-      tableKey: 'demo-users',
       rowKey: 'id',
       source: {
         query: () =>
@@ -207,6 +207,7 @@ describe('defineTableSchema inference', () => {
           }),
         ],
       },
+      tableKey: 'demo-users',
     })
 
     type InterfaceRow = ExtractTableRow<typeof interfaceSchema>

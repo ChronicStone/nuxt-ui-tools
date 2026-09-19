@@ -4,8 +4,7 @@ import { computed } from 'vue'
 
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
-import type { FormValue } from '../../types'
-import type { FormFileField } from '../../types'
+import type { FormValue, FormFileField } from '../../types'
 import { isDefined } from '../../utils/predicate'
 
 const props = defineProps<{
@@ -20,7 +19,9 @@ const { form, controlProps, disabled, handleBlur } = useFieldControl(
 const model = computed<File | File[] | null>({
   get: () => {
     const value = form.getValue(props.path)
-    if (props.field.multiple) return Array.isArray(value) ? value.filter(isFile) : []
+    if (props.field.multiple) {
+      return Array.isArray(value) ? value.filter(isFile) : []
+    }
     return isFile(value) ? value : null
   },
   set: (value) =>
@@ -28,7 +29,9 @@ const model = computed<File | File[] | null>({
 })
 
 function normalizeFiles(value: File | File[] | null) {
-  if (Array.isArray(value)) return value
+  if (Array.isArray(value)) {
+    return value
+  }
   return value ? [value] : []
 }
 

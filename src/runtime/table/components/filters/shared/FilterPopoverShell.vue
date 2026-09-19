@@ -19,7 +19,9 @@ const emit = defineEmits<{
 }>()
 
 function handleFocusOutside(event: Event) {
-  if (props.transitioning) event.preventDefault()
+  if (props.transitioning) {
+    event.preventDefault()
+  }
 }
 </script>
 

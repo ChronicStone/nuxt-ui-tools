@@ -8,17 +8,19 @@ import { isSpreadsheetRecord } from '../../utils/object'
 function flattenRecord(value: SpreadsheetRecord, prefix = ''): Record<string, string> {
   return Object.entries(value).reduce<Record<string, string>>((acc, [key, nextValue]) => {
     const nextKey = prefix ? `${prefix}.${key}` : key
-    if (Array.isArray(nextValue))
+    if (Array.isArray(nextValue)) {
       return {
         ...acc,
         [nextKey]: nextValue.join(', '),
       }
+    }
 
-    if (isSpreadsheetRecord(nextValue))
+    if (isSpreadsheetRecord(nextValue)) {
       return {
         ...acc,
         ...flattenRecord(nextValue, nextKey),
       }
+    }
 
     return {
       ...acc,
@@ -42,12 +44,14 @@ const columnKeys = computed(() => {
   const keys = new Set<string>()
   for (const row of flattenedRows.value) {
     for (const key of Object.keys(row)) {
-      if (key === '__rowLabel') continue
+      if (key === '__rowLabel') {
+        continue
+      }
       keys.add(key)
     }
   }
 
-  return Array.from(keys)
+  return [...keys]
 })
 
 const columns = computed(() => [

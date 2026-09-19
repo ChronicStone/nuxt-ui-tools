@@ -1,3 +1,4 @@
+/* oxlint-disable sort-keys -- defineSpreadsheetSchema infers row types from the declaration order of these literals */
 import { readFileSync } from 'node:fs'
 
 import { describe, expect, expectTypeOf, it } from 'vitest'
@@ -20,7 +21,7 @@ describe('spreadsheet package surface', () => {
   it('declares TanStack Query on the package boundary', () => {
     // SAFETY: package.json is the repository-owned file read immediately above and has this peer dependency shape.
     const packageJson = JSON.parse(
-      readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../package.json', import.meta.url), 'utf-8'),
     ) as { peerDependencies?: Record<string, string> }
 
     expect(packageJson.peerDependencies?.['@tanstack/vue-query']).toBeDefined()

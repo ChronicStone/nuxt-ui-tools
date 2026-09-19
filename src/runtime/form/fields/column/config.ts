@@ -1,7 +1,7 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const columnFieldKind = defineFormFieldKind({
-  type: 'column',
+  layout: { container: true, item: true },
   state: 'passthrough',
-  layout: { item: true, container: true },
+  type: 'column',
 })

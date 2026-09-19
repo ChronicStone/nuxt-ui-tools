@@ -9,7 +9,9 @@ export function useFormUploadRegistry() {
     const key = path.join('.')
     states[key] = state
     return () => {
-      if (states[key] === state) delete states[key]
+      if (states[key] === state) {
+        delete states[key]
+      }
     }
   }
 
@@ -17,5 +19,5 @@ export function useFormUploadRegistry() {
     return states[path.join('.')]
   }
 
-  return { register, get }
+  return { get, register }
 }

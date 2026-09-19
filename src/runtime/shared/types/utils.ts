@@ -19,7 +19,7 @@ export type MaybePromise<T> = T | Promise<T>
 
 export type NestedPaths<T, MaxDepth extends number = 10> = [MaxDepth] extends [0]
   ? never
-  : T extends Array<infer U>
+  : T extends (infer U)[]
     ? `${NestedPaths<U, DecrementDepth<MaxDepth>>}`
     : T extends object
       ? {
@@ -32,11 +32,11 @@ export type NestedPaths<T, MaxDepth extends number = 10> = [MaxDepth] extends [0
 export type NestedPathsForType<T, P, MaxDepth extends number = 8> = [MaxDepth] extends [0]
   ? never
   : T extends object
-    ? T extends Array<any>
+    ? T extends any[]
       ? never
       : {
           [K in keyof T & (string | number)]: T[K] extends infer V
-            ? V extends Array<any>
+            ? V extends any[]
               ? V extends P
                 ? `${K}`
                 : never
@@ -87,25 +87,23 @@ export type Prettify<T> = {
   [K in keyof T]: T[K]
 } & {}
 
-export type DeepPrettify<T> =
-  T extends Array<infer U>
-    ? Array<DeepPrettify<U>>
-    : T extends object
-      ? { [K in keyof T]: DeepPrettify<T[K]> } & {}
-      : T
+export type DeepPrettify<T> = T extends (infer U)[]
+  ? DeepPrettify<U>[]
+  : T extends object
+    ? { [K in keyof T]: DeepPrettify<T[K]> } & {}
+    : T
 
 export type PathToObject<Path extends string, Output> = Path extends `${infer First}.${infer Rest}`
   ? { [K in First]: PathToObject<Rest, Output> }
   : { [K in Path]: Output }
 
-export type RemoveDotKeys<T> =
-  T extends Array<infer U>
-    ? Array<RemoveDotKeys<U>>
-    : {
-        [K in keyof T as K extends `${string}.${string}` ? never : K]: T[K] extends object
-          ? RemoveDotKeys<T[K]>
-          : T[K]
-      }
+export type RemoveDotKeys<T> = T extends (infer U)[]
+  ? RemoveDotKeys<U>[]
+  : {
+      [K in keyof T as K extends `${string}.${string}` ? never : K]: T[K] extends object
+        ? RemoveDotKeys<T[K]>
+        : T[K]
+    }
 
 export type DeepTransformNestedPaths<T> = T extends unknown
   ? DeepTransformNestedPathsMember<T>
@@ -114,8 +112,8 @@ export type DeepTransformNestedPaths<T> = T extends unknown
 type DeepTransformNestedPathsMember<T> = DeepPrettify<
   RemoveDotKeys<
     {
-      [K in keyof T]: T[K] extends Array<infer U>
-        ? Array<DeepTransformNestedPaths<U>>
+      [K in keyof T]: T[K] extends (infer U)[]
+        ? DeepTransformNestedPaths<U>[]
         : T[K] extends object
           ? DeepTransformNestedPaths<T[K]>
           : T[K]
@@ -123,9 +121,9 @@ type DeepTransformNestedPathsMember<T> = DeepPrettify<
       {
         [K in Extract<keyof T, string>]: PathToObject<
           K,
-          T[K] extends Array<infer U>
+          T[K] extends (infer U)[]
             ? U extends object
-              ? Array<DeepTransformNestedPaths<U>>
+              ? DeepTransformNestedPaths<U>[]
               : T[K]
             : T[K] extends object
               ? DeepTransformNestedPaths<T[K]>
@@ -178,8 +176,8 @@ export type TypeFromPath<T extends GenericObject, Path extends string> = {
 
 export type DeepTransform<T, FromType, ToType> = T extends FromType
   ? ToType
-  : T extends Array<infer U>
-    ? Array<DeepTransform<U, FromType, ToType>>
+  : T extends (infer U)[]
+    ? DeepTransform<U, FromType, ToType>[]
     : T extends (...args: any[]) => any
       ? T
       : T extends object
@@ -189,8 +187,8 @@ export type DeepTransform<T, FromType, ToType> = T extends FromType
         : T
 
 export type DeepRemoveIndexSignature<T> = T extends object
-  ? T extends Array<infer U>
-    ? Array<DeepRemoveIndexSignature<U>>
+  ? T extends (infer U)[]
+    ? DeepRemoveIndexSignature<U>[]
     : {
         [
           K in keyof T as string extends K ? never : number extends K ? never : K

@@ -5,14 +5,15 @@ import DataListResultCount from '#ui-tools/table/components/data-list/DataListRe
 import DataListSearch from '#ui-tools/table/components/data-list/DataListSearch.vue'
 
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
-import { mountLoaded, type Harness } from '../harness'
+import { mountLoaded } from '../harness'
+import type { Harness } from '../harness'
 
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
-describe('DataListSearch', () => {
+describe('search part', () => {
   it('renders the placeholder, icon and width, committing on enter and blur only', async () => {
-    harness = await mountLoaded({ schema: createAccountsSchema(), render: () => h(DataListSearch) })
+    harness = await mountLoaded({ render: () => h(DataListSearch), schema: createAccountsSchema() })
     const w = harness.wrapper
     const input = w.find('input[data-ui="UInput"]')
     expect(input.attributes('placeholder')).toBe('Rechercher un compte…')
@@ -41,9 +42,16 @@ describe('DataListSearch', () => {
 
   it('takes width, size and input props from the config layer', async () => {
     harness = await mountLoaded({
-      schema: createAccountsSchema(),
-      ui: { search: { width: '340px', size: 'lg', props: { input: { variant: 'soft', color: 'primary' } }, ui: { root: 'root-x' } } },
       render: () => h(DataListSearch, { placeholder: 'Custom' }),
+      schema: createAccountsSchema(),
+      ui: {
+        search: {
+          props: { input: { color: 'primary', variant: 'soft' } },
+          size: 'lg',
+          ui: { root: 'root-x' },
+          width: '340px',
+        },
+      },
     })
     const input = harness.wrapper.find('input[data-ui="UInput"]')
     expect(input.attributes('style')).toContain('width: 340px')
@@ -55,7 +63,10 @@ describe('DataListSearch', () => {
   })
 
   it('reflects the loading state while refetching', async () => {
-    harness = await mountLoaded({ schema: createAccountsSchema({ delay: 40 }), render: () => h(DataListSearch) })
+    harness = await mountLoaded({
+      render: () => h(DataListSearch),
+      schema: createAccountsSchema({ delay: 40 }),
+    })
     const input = () => harness!.wrapper.find('input[data-ui="UInput"]')
     expect(input().attributes('data-loading')).toBeUndefined()
     const refresh = harness.internals.queryContent.refreshData()()
@@ -65,23 +76,45 @@ describe('DataListSearch', () => {
   })
 })
 
-describe('DataListResultCount', () => {
+describe('result count part', () => {
   it('formats the known total and falls back to loaded counts', async () => {
-    harness = await mountLoaded({ schema: createAccountsSchema({ rows: Array.from({ length: 1250 }, (_, i) => ({ id: `a-${i}`, name: `N${i}`, legalEntity: '', status: 'active', country: 'FR', contracts: 1, consumption: 1, edofSync: true, updatedAt: '' })) as never }), render: () => h(DataListResultCount) })
+    harness = await mountLoaded({
+      render: () => h(DataListResultCount),
+      schema: createAccountsSchema({
+        rows: Array.from({ length: 1250 }, (_, i) => ({
+          id: `a-${i}`,
+          name: `N${i}`,
+          legalEntity: '',
+          status: 'active',
+          country: 'FR',
+          contracts: 1,
+          consumption: 1,
+          edofSync: true,
+          updatedAt: '',
+        })) as never,
+      }),
+    })
     expect(harness.wrapper.find('span').text()).toBe('1 250')
     expect(harness.wrapper.find('span').classes()).toContain('text-sm')
     harness.unmount()
 
-    harness = await mountLoaded({ schema: createAuditSchema({ total: 45 }), render: () => h(DataListResultCount, { ui: { root: 'cnt-x' }, size: 'xs' }) })
+    harness = await mountLoaded({
+      render: () => h(DataListResultCount, { ui: { root: 'cnt-x' }, size: 'xs' }),
+      schema: createAuditSchema({ total: 45 }),
+    })
     const span = harness.wrapper.find('span')
     expect(span.text()).toBe('45')
-    expect(span.classes()).toEqual(expect.arrayContaining(['cnt-x', 'text-xs']))
+    expect(span.classes()).toStrictEqual(expect.arrayContaining(['cnt-x', 'text-xs']))
   })
 
   it('exposes counts through its slot', async () => {
     harness = await mountLoaded({
+      render: () =>
+        h(DataListResultCount, null, {
+          default: (scope: { loadedCount: number; totalCount: number; known: boolean }) =>
+            h('b', `${scope.loadedCount}/${scope.totalCount}/${String(scope.known)}`),
+        }),
       schema: createAccountsSchema(),
-      render: () => h(DataListResultCount, null, { default: (scope: { loadedCount: number; totalCount: number; known: boolean }) => h('b', `${scope.loadedCount}/${scope.totalCount}/${String(scope.known)}`) }),
     })
     expect(harness.wrapper.find('b').text()).toBe('20/60/true')
   })

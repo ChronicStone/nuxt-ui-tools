@@ -1,4 +1,5 @@
-import { computed, ref, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 import { isDate, isFunction, isObject } from '../../shared/utils/predicate'
 import type {
@@ -41,8 +42,12 @@ export function useTableSummaries(params: UseTableSummariesParams) {
   )
   const scope: Ref<TableSummaryScope> = ref(config.value?.scope ?? 'filtered')
   const rows = computed<GenericObject[]>(() => {
-    if (scope.value === 'selection') return params.selection.selectedRows.value
-    if (scope.value === 'page') return params.queryContent.data.value.rows
+    if (scope.value === 'selection') {
+      return params.selection.selectedRows.value
+    }
+    if (scope.value === 'page') {
+      return params.queryContent.data.value.rows
+    }
     return params.queryContent.selectableRows.value
   })
   const count = computed(() =>
@@ -59,7 +64,7 @@ export function useTableSummaries(params: UseTableSummariesParams) {
   }
 
   function cell(columnId: string): TableSummaryCell {
-    return cells.value[columnId] ?? { value: undefined, loading: false, error: null }
+    return cells.value[columnId] ?? { error: null, loading: false, value: undefined }
   }
 
   function format(columnId: string) {
@@ -68,16 +73,18 @@ export function useTableSummaries(params: UseTableSummariesParams) {
     const current = cell(columnId)
     const context = createContext(columnId)
     const formatter = isConfig(summary) ? summary.format : undefined
-    if (formatter && !current.loading) return formatter(current.value, context)
+    if (formatter && !current.loading) {
+      return formatter(current.value, context)
+    }
     return current.value
   }
 
   function createContext(columnId: string): TableSummaryContext {
     return {
-      rows: rows.value,
-      scope: scope.value,
       columnKey: columnId,
       request: params.queryContent.requestContext.value,
+      rows: rows.value,
+      scope: scope.value,
     }
   }
 
@@ -88,31 +95,39 @@ export function useTableSummaries(params: UseTableSummariesParams) {
       return
     }
     const next: Record<string, TableSummaryCell> = {}
-    const pending: Array<Promise<void>> = []
+    const pending: Promise<void>[] = []
     const remoteFiltered =
       scope.value === 'filtered' && params.schema.value.source.mode !== 'client'
 
     for (const column of columns.value) {
-      const summary = column.summary
-      if (!summary) continue
+      const { summary } = column
+      if (!summary) {
+        continue
+      }
       const context = createContext(column.id)
-      const resolver = isResolver(summary) ? summary : isConfig(summary) ? summary.resolve : undefined
+      const resolver = isResolver(summary)
+        ? summary
+        : isConfig(summary)
+          ? summary.resolve
+          : undefined
       const kind = isResolver(summary) ? undefined : isConfig(summary) ? summary.kind : summary
 
       if (resolver) {
-        next[column.id] = { value: cells.value[column.id]?.value, loading: true, error: null }
+        next[column.id] = { error: null, loading: true, value: cells.value[column.id]?.value }
         pending.push(
           Promise.resolve()
             .then(() => resolver(context))
             .then((value) => {
-              if (run !== token) return
-              cells.value = { ...cells.value, [column.id]: { value, loading: false, error: null } }
+              if (run !== token) {
+                return
+              }
+              cells.value = { ...cells.value, [column.id]: { error: null, loading: false, value } }
             })
-            .catch((cause: unknown) => {
+            .catch((error: unknown) => {
               if (run !== token) return
               cells.value = {
                 ...cells.value,
-                [column.id]: { value: undefined, loading: false, error: toError(cause) },
+                [column.id]: { value: undefined, loading: false, error: toError(error) },
               }
             }),
         )
@@ -120,11 +135,15 @@ export function useTableSummaries(params: UseTableSummariesParams) {
       }
 
       if (kind && !remoteFiltered) {
-        next[column.id] = { value: derive(kind, rows.value, column.id), loading: false, error: null }
+        next[column.id] = {
+          error: null,
+          loading: false,
+          value: derive(kind, rows.value, column.id),
+        }
         continue
       }
 
-      next[column.id] = { value: cells.value[column.id]?.value, loading: true, error: null }
+      next[column.id] = { error: null, loading: true, value: cells.value[column.id]?.value }
     }
 
     cells.value = next
@@ -135,33 +154,44 @@ export function useTableSummaries(params: UseTableSummariesParams) {
         Promise.resolve()
           .then(() =>
             resolveAll({
-              scope: scope.value,
-              rows: rows.value,
               request: params.queryContent.requestContext.value,
+              rows: rows.value,
+              scope: scope.value,
             }),
           )
           .then((values) => {
-            if (run !== token) return
+            if (run !== token) {
+              return
+            }
             const merged = { ...cells.value }
-            for (const [key, value] of Object.entries(values ?? {}))
+            for (const [key, value] of Object.entries(values ?? {})) {
               merged[key] = { value, loading: false, error: null }
-            for (const column of columns.value)
-              if (merged[column.id]?.loading) merged[column.id] = { ...merged[column.id]!, loading: false }
+            }
+            for (const column of columns.value) {
+              if (merged[column.id]?.loading)
+                merged[column.id] = { ...merged[column.id]!, loading: false }
+            }
             cells.value = merged
           })
-          .catch((cause: unknown) => {
+          .catch((error: unknown) => {
             if (run !== token) return
             const merged = { ...cells.value }
             for (const column of columns.value)
-              if (merged[column.id]?.loading) merged[column.id] = { value: undefined, loading: false, error: toError(cause) }
+              if (merged[column.id]?.loading)
+                merged[column.id] = { value: undefined, loading: false, error: toError(error) }
             cells.value = merged
           }),
       )
     } else if (remoteFiltered) {
       const merged = { ...cells.value }
-      for (const column of columns.value)
-        if (merged[column.id]?.loading && !isResolver(column.summary) && !(isConfig(column.summary) && column.summary.resolve))
+      for (const column of columns.value) {
+        if (
+          merged[column.id]?.loading &&
+          !isResolver(column.summary) &&
+          !(isConfig(column.summary) && column.summary.resolve)
+        )
           merged[column.id] = { value: undefined, loading: false, error: null }
+      }
       cells.value = merged
     }
 
@@ -171,29 +201,33 @@ export function useTableSummaries(params: UseTableSummariesParams) {
   watch(
     [rows, scope, columns, () => params.queryContent.status.value.isFetching],
     ([, , , fetching]) => {
-      if (fetching) return
+      if (fetching) {
+        return
+      }
       void compute()
     },
-    { immediate: true, flush: 'post' },
+    { flush: 'post', immediate: true },
   )
 
   return {
+    cell,
+    cells,
+    columns,
+    count,
     enabled,
+    format,
+    label: computed(() => config.value?.label),
+    loading,
+    rows,
     scope,
     scopes,
     setScope,
-    rows,
-    count,
-    cells,
-    cell,
-    format,
-    loading,
-    label: computed(() => config.value?.label),
-    columns,
   }
 }
 
-type TableSummaryResolver = (context: TableSummaryContext) => TableSummaryValue | Promise<TableSummaryValue>
+type TableSummaryResolver = (
+  context: TableSummaryContext,
+) => TableSummaryValue | Promise<TableSummaryValue>
 
 function isConfig(value: TableColumnSummary | undefined): value is TableColumnSummaryConfig {
   return isObject(value)
@@ -210,12 +244,19 @@ function toError(cause: unknown): Error {
 function readPath(row: GenericObject, path: string): TableSummaryValue {
   let current: GenericObject | TableSummaryValue = row
   for (const key of path.split('.')) {
-    if (!isObject(current) || isDate(current)) return undefined
+    if (!isObject(current) || isDate(current)) {
+      return undefined
+    }
     const next: unknown = current[key]
-    if (isObject(next) || isDate(next) || isPrimitiveSummary(next)) current = next
-    else return undefined
+    if (isObject(next) || isDate(next) || isPrimitiveSummary(next)) {
+      current = next
+    } else {
+      return undefined
+    }
   }
-  if (isDate(current) || isPrimitiveSummary(current)) return current
+  if (isDate(current) || isPrimitiveSummary(current)) {
+    return current
+  }
   return undefined
 }
 
@@ -230,14 +271,26 @@ function isPrimitiveSummary(value: unknown): value is TableSummaryValue {
 }
 
 function derive(kind: TableSummaryKind, rows: GenericObject[], key: string): number | null {
-  if (kind === 'count') return rows.length
+  if (kind === 'count') {
+    return rows.length
+  }
   const numbers = rows
     .map((row) => readPath(row, key))
     .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
-  if (!numbers.length) return kind === 'sum' ? 0 : null
-  if (kind === 'sum') return numbers.reduce((total, value) => total + value, 0)
-  if (kind === 'avg') return numbers.reduce((total, value) => total + value, 0) / numbers.length
-  if (kind === 'min') return Math.min(...numbers)
-  if (kind === 'max') return Math.max(...numbers)
+  if (!numbers.length) {
+    return kind === 'sum' ? 0 : null
+  }
+  if (kind === 'sum') {
+    return numbers.reduce((total, value) => total + value, 0)
+  }
+  if (kind === 'avg') {
+    return numbers.reduce((total, value) => total + value, 0) / numbers.length
+  }
+  if (kind === 'min') {
+    return Math.min(...numbers)
+  }
+  if (kind === 'max') {
+    return Math.max(...numbers)
+  }
   return null
 }

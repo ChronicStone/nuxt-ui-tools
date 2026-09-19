@@ -29,22 +29,22 @@ export function buildNumberFilterPreview(options: {
     return {
       active: true,
       count: [start, end].filter((v) => v != null).length,
-      tags: [],
       entries: [],
       summary: prefixPreviewLabel(preview.label, summary),
+      tags: [],
     }
   }
 
   const num = toMaybeNumber({ value: options.rule.value })
   const summary =
-    num != null ? (preview.formatter?.(num) ?? formatFilterNumber({ value: num })) : ''
+    num == null ? '' : (preview.formatter?.(num) ?? formatFilterNumber({ value: num }))
 
   return {
     active: Boolean(summary),
     count: summary ? 1 : 0,
-    tags: [],
     entries: [],
     summary: prefixPreviewLabel(preview.label, summary),
+    tags: [],
   }
 }
 
@@ -58,8 +58,9 @@ function resolveNumberOperator(
     value === 'lt' ||
     value === 'lte' ||
     value === 'between'
-  )
+  ) {
     return value
+  }
 
   return 'is'
 }

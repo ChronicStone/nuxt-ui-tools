@@ -1,4 +1,5 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type {
   ExtractTableContextData,
@@ -39,6 +40,10 @@ export function useTableApi<TSchema = TableSchemaView>(
   params: UseTableApiParams<TSchema>,
 ): TableApi<TSchema> {
   const state: TableApi<TSchema>['state'] = {
+    initialized: computed(() => params.queryContent.status.value.initialized),
+    isEmpty: computed(() => params.queryContent.data.value.rowCount === 0),
+    isLoading: computed(() => params.queryContent.status.value.isPending),
+    isRefreshing: computed(() => params.queryContent.status.value.isRefreshing),
     layout: params.layout.activeLayout,
     query: computed<PublicTableQueryState>(() =>
       mapPublicQueryState({
@@ -46,10 +51,6 @@ export function useTableApi<TSchema = TableSchemaView>(
         activeLayout: params.layout.activeLayout.value,
       }),
     ),
-    initialized: computed(() => params.queryContent.status.value.initialized),
-    isEmpty: computed(() => params.queryContent.data.value.rowCount === 0),
-    isLoading: computed(() => params.queryContent.status.value.isPending),
-    isRefreshing: computed(() => params.queryContent.status.value.isRefreshing),
   }
 
   const data: TableApi<TSchema>['data'] = {
@@ -82,47 +83,51 @@ export function useTableApi<TSchema = TableSchemaView>(
   }
 
   const layoutApi: TableApi<TSchema>['layout'] = {
-    state: params.controls.layoutState,
     set: params.controls.setTableLayout,
+    state: params.controls.layoutState,
   }
 
   const filters: TableApi<TSchema>['filters'] = {
-    state: computed(() => params.state.queryState.filters.value),
-    search: params.filters.searchQuery,
     activeCount: computed(() => params.filters.activeUiFilters.value.length),
     clear: params.filters.clearAllFilters,
     remove: (key) => params.filters.clearFilter({ key }),
     replace: (rules) => params.filters.replaceFilters({ rules }),
+    search: params.filters.searchQuery,
+    state: computed(() => params.state.queryState.filters.value),
   }
 
   const pagination = createPublicPaginationApi(params.pagination, params.publicSchema)
 
   const sorting: TableApi<TSchema>['sorting'] = {
-    state: params.columns.sortingState,
-    sortKeys: params.columns.sortKeys,
-    set: params.columns.setSorting,
-    setKey: params.columns.setSortKey,
-    setDirection: params.columns.setSortDirection,
     clear: params.columns.clearSorting,
+    set: params.columns.setSorting,
+    setDirection: params.columns.setSortDirection,
+    setKey: params.columns.setSortKey,
+    sortKeys: params.columns.sortKeys,
+    state: params.columns.sortingState,
     toggle: params.columns.toggleSorting,
   }
 
   const selection: TableApi<TSchema>['selection'] = {
+    clear: params.selection.clearSelection,
+    isSelected: (rowId) => params.selection.isRowSelected({ rowId }),
+    selectAll: params.selection.selectAllRows,
+    selectRows: (rowIds) => params.selection.selectRows({ rowIds }),
     state: computed(() => ({
       selectedKeys: params.selection.selectedKeys.value,
       selectedCount: params.selection.selectedCount.value,
       allSelected: params.selection.allSelected.value,
       partiallySelected: params.selection.partiallySelected.value,
     })),
-    clear: params.selection.clearSelection,
-    selectAll: params.selection.selectAllRows,
-    selectRows: (rowIds) => params.selection.selectRows({ rowIds }),
-    unselectRows: (rowIds) => params.selection.unselectRows({ rowIds }),
     toggle: params.selection.toggleRowSelection,
-    isSelected: (rowId) => params.selection.isRowSelected({ rowId }),
+    unselectRows: (rowIds) => params.selection.unselectRows({ rowIds }),
   }
 
   const reset: TableApi<TSchema>['reset'] = {
+    all() {
+      reset.query()
+      selection.clear()
+    },
     query() {
       const defaultLayout = params.runtimeSchema.value.defaultLayout
       const nextLayout = defaultLayout ?? 'table'
@@ -136,22 +141,18 @@ export function useTableApi<TSchema = TableSchemaView>(
         ui: resolveTableFilterDefaultRules(params.runtimeSchema.value.filters?.ui ?? []),
       }
     },
-    all() {
-      reset.query()
-      selection.clear()
-    },
   }
 
   return {
-    state,
     data,
-    layout: layoutApi,
     filters,
+    layout: layoutApi,
     pagination,
-    sorting,
-    selection,
-    reset,
     refresh: params.queryContent.refreshData(),
+    reset,
+    selection,
+    sorting,
+    state,
     updateRow: data.updateRow,
     updateRows: data.updateRows,
   }
@@ -165,29 +166,31 @@ function createPublicPaginationApi(
   pagination: ReturnType<typeof useTablePagination>,
   _schema: ComputedRef<unknown>,
 ): TableNoPaginationApi | TableCursorPaginationApi | TableOffsetPaginationApi {
-  if (pagination.mode.value === 'cursor')
+  if (pagination.mode.value === 'cursor') {
     return {
       mode: 'cursor',
       state: pagination.cursorState,
       loadMore: pagination.loadMore,
       reset: pagination.reset,
     }
+  }
 
-  if (pagination.mode.value === 'none')
+  if (pagination.mode.value === 'none') {
     return {
       mode: 'none',
       state: pagination.noneState,
       reset: pagination.reset,
     }
+  }
 
   return {
     mode: 'offset',
-    state: pagination.offsetState,
-    pageSizeOptions: pagination.pageSizeOptions,
-    setPage: pagination.setPage,
-    setPageSize: pagination.setPageSize,
     next: pagination.next,
+    pageSizeOptions: pagination.pageSizeOptions,
     previous: pagination.previous,
     reset: pagination.reset,
+    setPage: pagination.setPage,
+    setPageSize: pagination.setPageSize,
+    state: pagination.offsetState,
   }
 }

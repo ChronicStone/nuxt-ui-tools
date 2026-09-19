@@ -4,8 +4,7 @@ import { computed } from 'vue'
 
 import { useFormOverlayController } from '../../composables/use-form-overlay-controller'
 import { useFormOverlayLayout } from '../../composables/use-form-overlay-layout'
-import type { FormValue } from '../../types'
-import type { FormApiRuntimeInstance } from '../../types'
+import type { FormValue, FormApiRuntimeInstance } from '../../types'
 import {
   getFormDrawerConfig,
   getFormFullscreenConfig,
@@ -33,7 +32,9 @@ const fullscreenConfig = getFormFullscreenConfig(props.instance.schema)
 const modalConfig = getFormModalConfig(props.instance.schema)
 
 function resolveSchemaUi(schema: FormValue) {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const value = Object.getOwnPropertyDescriptor(schema, 'ui')?.value
   return isRecord(value) ? value : undefined
 }

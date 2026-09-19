@@ -1,10 +1,10 @@
 <script setup lang="ts">
 const props = defineProps<{
-  items: Array<{
+  items: {
     label: string
     value: string | number
     color?: 'primary' | 'neutral' | 'success' | 'warning' | 'error' | 'secondary' | 'info'
-  }>
+  }[]
 }>()
 </script>
 

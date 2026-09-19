@@ -12,8 +12,7 @@ import type {
   TableTextFilterDefinition,
   TableUiFilterDefinition,
 } from './filters'
-import type { TableLayout, TableSortingDirection } from './utils'
-import type { TableResolvedSchema } from './utils'
+import type { TableLayout, TableSortingDirection, TableResolvedSchema } from './utils'
 
 export type TableFilterOperator =
   | 'contains'
@@ -44,7 +43,7 @@ export type TableQueryStateFilterValue =
   | string
   | number
   | boolean
-  | Array<TableFilterPrimitiveValue>
+  | TableFilterPrimitiveValue[]
   | Date
   | TableQueryStateFilterRange<number>
   | TableQueryStateFilterRange<Date>
@@ -148,7 +147,7 @@ export type ExtractTableFilterValue<
   TKey extends ExtractTableFilterKey<TSchema>,
 > = ExtractFilterValueFromDefinition<DefinitionForKeyOrFallback<TSchema, TKey>>
 
-export type ExtractTableFilterRule<TSchema, TKey extends ExtractTableFilterKey<TSchema>> = {
+export interface ExtractTableFilterRule<TSchema, TKey extends ExtractTableFilterKey<TSchema>> {
   key: TKey
   operator?: ExtractTableFilterOperator<TSchema, TKey>
   value: ExtractTableFilterValue<TSchema, TKey>

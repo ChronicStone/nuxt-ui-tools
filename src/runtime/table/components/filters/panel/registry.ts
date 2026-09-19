@@ -8,10 +8,10 @@ import OptionFilterPanelField from './OptionFilterPanelField.vue'
 import TextFilterPanelField from './TextFilterPanelField.vue'
 
 const FILTER_PANEL_COMPONENTS = {
-  option: OptionFilterPanelField,
   boolean: BooleanFilterPanelField,
   date: DateFilterPanelField,
   number: NumberFilterPanelField,
+  option: OptionFilterPanelField,
   text: TextFilterPanelField,
 } satisfies Record<TableUiFilterDefinition['kind'], Component>
 

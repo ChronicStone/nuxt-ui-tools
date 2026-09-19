@@ -29,6 +29,13 @@ describe('form step navigation', () => {
     const previousGate = deferred()
     const schema = computed(() =>
       defineFormSchema({
+        onBeforeNext: async () => {
+          await nextGate.promise
+          return true
+        },
+        onBeforePrevious: async () => {
+          await previousGate.promise
+        },
         steps: [
           {
             key: 'identity',
@@ -52,45 +59,40 @@ describe('form step navigation', () => {
           },
           { key: 'details', fields: [{ key: 'notes', type: 'textarea' }] },
         ],
-        onBeforeNext: async () => {
-          await nextGate.promise
-          return true
-        },
-        onBeforePrevious: async () => {
-          await previousGate.promise
-        },
       }),
     )
     const app = createApp({})
     app.use(VueQueryPlugin, { queryClient: new QueryClient() })
     const scope = effectScope()
     const runtime = app.runWithContext(() => scope.run(() => useFormRuntime({ schema })))
-    if (!runtime) throw new Error('Failed to create form runtime')
+    if (!runtime) {
+      throw new Error('Failed to create form runtime')
+    }
 
     const nextRequest = runtime.nextStep()
     await nextTick()
     expect(runtime.actionPending.value).toBe('next')
-    expect(runtime.getFieldApi(['name']).validation.pending()).toBe(true)
+    expect(runtime.getFieldApi(['name']).validation.pending()).toBeTruthy()
     expect(runtime.errors.value).toHaveLength(0)
-    expect(await runtime.nextStep()).toBe(false)
+    await expect(runtime.nextStep()).resolves.toBeFalsy()
 
     validationGate.resolve()
     await nextTick()
     expect(runtime.actionPending.value).toBe('next')
 
     nextGate.resolve()
-    expect(await nextRequest).toBe(true)
+    await expect(nextRequest).resolves.toBeTruthy()
     expect(runtime.currentStepIndex.value).toBe(1)
     expect(runtime.actionPending.value).toBeNull()
-    expect(runtime.getFieldApi(['name']).validation.pending()).toBe(false)
+    expect(runtime.getFieldApi(['name']).validation.pending()).toBeFalsy()
 
     const previousRequest = runtime.previousStep()
     await nextTick()
     expect(runtime.actionPending.value).toBe('previous')
-    expect(await runtime.previousStep()).toBe(false)
+    await expect(runtime.previousStep()).resolves.toBeFalsy()
 
     previousGate.resolve()
-    expect(await previousRequest).toBe(true)
+    await expect(previousRequest).resolves.toBeTruthy()
     expect(runtime.currentStepIndex.value).toBe(0)
     expect(runtime.actionPending.value).toBeNull()
     scope.stop()
@@ -100,25 +102,27 @@ describe('form step navigation', () => {
     const nextGate = deferredResult<boolean>()
     const schema = computed(() =>
       defineFormSchema({
+        onBeforeNext: async () => nextGate.promise,
         steps: [
           { key: 'identity', fields: [{ key: 'name', type: 'text' }] },
           { key: 'details', fields: [{ key: 'notes', type: 'textarea' }] },
         ],
-        onBeforeNext: async () => nextGate.promise,
       }),
     )
     const app = createApp({})
     app.use(VueQueryPlugin, { queryClient: new QueryClient() })
     const scope = effectScope()
     const runtime = app.runWithContext(() => scope.run(() => useFormRuntime({ schema })))
-    if (!runtime) throw new Error('Failed to create form runtime')
+    if (!runtime) {
+      throw new Error('Failed to create form runtime')
+    }
 
     const nextRequest = runtime.nextStep()
     await nextTick()
     expect(runtime.actionPending.value).toBe('next')
 
     nextGate.resolve(false)
-    expect(await nextRequest).toBe(false)
+    await expect(nextRequest).resolves.toBeFalsy()
     expect(runtime.currentStepIndex.value).toBe(0)
     expect(runtime.actionPending.value).toBeNull()
     scope.stop()
@@ -130,8 +134,6 @@ describe('form step navigation', () => {
       defineFormSchema({
         steps: [
           {
-            key: 'workspace',
-            layout: { columns: 2 },
             fields: [
               { key: 'fullName', type: 'text', validation: { required: true } },
               { key: 'email', type: 'text', validation: { required: true } },
@@ -156,8 +158,10 @@ describe('form step navigation', () => {
                 },
               },
             ],
+            key: 'workspace',
+            layout: { columns: 2 },
           },
-          { key: 'details', fields: [{ key: 'notes', type: 'textarea' }] },
+          { fields: [{ key: 'notes', type: 'textarea' }], key: 'details' },
         ],
       }),
     )
@@ -165,12 +169,14 @@ describe('form step navigation', () => {
     app.use(VueQueryPlugin, { queryClient: new QueryClient() })
     const scope = effectScope()
     const runtime = app.runWithContext(() => scope.run(() => useFormRuntime({ schema })))
-    if (!runtime) throw new Error('Failed to create form runtime')
+    if (!runtime) {
+      throw new Error('Failed to create form runtime')
+    }
 
     const nextRequest = runtime.nextStep()
     await vi.waitFor(() => expect(runtime.actionPending.value).toBe('next'))
     await vi.waitFor(() =>
-      expect(runtime.errors.value.map((error) => error.path)).toEqual([
+      expect(runtime.errors.value.map((error) => error.path)).toStrictEqual([
         'fullName',
         'email',
         'details.name',
@@ -178,8 +184,8 @@ describe('form step navigation', () => {
     )
 
     handleGate.resolve(false)
-    expect(await nextRequest).toBe(false)
-    expect(runtime.errors.value.map((error) => error.path)).toEqual([
+    await expect(nextRequest).resolves.toBeFalsy()
+    expect(runtime.errors.value.map((error) => error.path)).toStrictEqual([
       'fullName',
       'email',
       'details.name',
@@ -192,24 +198,26 @@ describe('form step navigation', () => {
     const nextGate = deferredResult<boolean>()
     const schema = computed(() =>
       defineFormSchema({
+        onBeforeNext: async () => nextGate.promise,
         steps: [
           { key: 'identity', fields: [{ key: 'name', type: 'text' }] },
           { key: 'details', fields: [{ key: 'notes', type: 'textarea' }] },
         ],
-        onBeforeNext: async () => nextGate.promise,
       }),
     )
     const app = createApp({})
     app.use(VueQueryPlugin, { queryClient: new QueryClient() })
     const scope = effectScope()
     const runtime = app.runWithContext(() => scope.run(() => useFormRuntime({ schema })))
-    if (!runtime) throw new Error('Failed to create form runtime')
+    if (!runtime) {
+      throw new Error('Failed to create form runtime')
+    }
 
     const submitRequest = runtime.submit()
     await vi.waitFor(() => expect(runtime.actionPending.value).toBe('next'))
 
     nextGate.resolve(true)
-    expect(await submitRequest).toBe(true)
+    await expect(submitRequest).resolves.toBeTruthy()
     expect(runtime.actionPending.value).toBeNull()
     scope.stop()
   })

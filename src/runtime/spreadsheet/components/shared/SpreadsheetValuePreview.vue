@@ -31,9 +31,15 @@ function getCompactObjectEntries(value: SpreadsheetRecord) {
 }
 
 function getValueKind(value: SpreadsheetValue) {
-  if (value == null) return 'empty'
-  if (Array.isArray(value)) return 'array'
-  if (isSpreadsheetRecord(value)) return 'object'
+  if (value == null) {
+    return 'empty'
+  }
+  if (Array.isArray(value)) {
+    return 'array'
+  }
+  if (isSpreadsheetRecord(value)) {
+    return 'object'
+  }
   return 'primitive'
 }
 

@@ -1,4 +1,5 @@
-import { computed, ref, type ComputedRef } from 'vue'
+import { computed, ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { TableLayout, TableSchemaView } from '../types'
 import type { useTableLayout } from './use-table-layout'
@@ -13,12 +14,16 @@ export function useTableControls(options: UseTableControlsParams) {
   const columnsPanelSearch = ref<string>('')
 
   const tableLayout = options.layout.activeLayout
-  const gridEnabled = options.layout.gridEnabled
-  const tableEnabled = options.layout.tableEnabled
+  const { gridEnabled } = options.layout
+  const { tableEnabled } = options.layout
   const layoutState = computed(() => {
     const available: TableLayout[] = []
-    if (options.layout.tableEnabled.value) available.push('table')
-    if (options.layout.gridEnabled.value) available.push('grid')
+    if (options.layout.tableEnabled.value) {
+      available.push('table')
+    }
+    if (options.layout.gridEnabled.value) {
+      available.push('grid')
+    }
     return { active: tableLayout.value, available }
   })
 
@@ -29,10 +34,10 @@ export function useTableControls(options: UseTableControlsParams) {
   return {
     columnsPanelOpen,
     columnsPanelSearch,
-    tableLayout,
     gridEnabled,
-    tableEnabled,
     layoutState,
     setTableLayout,
+    tableEnabled,
+    tableLayout,
   }
 }

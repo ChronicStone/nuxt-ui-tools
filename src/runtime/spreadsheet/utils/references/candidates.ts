@@ -12,25 +12,31 @@ export function createSpreadsheetReferenceCandidates(params: {
   reference: SpreadsheetResolutionDefinition | SpreadsheetReferenceDefinition
   options: readonly unknown[]
 }) {
-  if (!normalizeSpreadsheetRuntimeResolutions([params.reference])[0]) return []
+  if (!normalizeSpreadsheetRuntimeResolutions([params.reference])[0]) {
+    return []
+  }
 
   return params.options
     .flatMap<SpreadsheetReferenceCandidate>((option) => {
       const label = getSpreadsheetOptionLabel(option)
       const value = getSpreadsheetOptionValue(option)
-      if (!label || value === undefined) return []
+      if (!label || value === undefined) {
+        return []
+      }
 
       return [
         {
-          value,
           label,
           option,
           score: scoreSpreadsheetReferenceCandidate(params.sourceValue, label),
+          value,
         },
       ]
     })
     .sort((left, right) => {
-      if (left.score !== right.score) return right.score - left.score
+      if (left.score !== right.score) {
+        return right.score - left.score
+      }
       return left.label.localeCompare(right.label)
     })
 }

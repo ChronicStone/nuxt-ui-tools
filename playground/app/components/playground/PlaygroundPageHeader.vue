@@ -11,8 +11,12 @@ const { locale, setLocale } = useI18n()
 const alternateLocale = computed(() => (locale.value === 'fr' ? 'en' : 'fr'))
 const alternateLocaleLabel = computed(() => alternateLocale.value.toUpperCase())
 const parentLabel = computed(() => {
-  if (!currentAbstraction.value) return 'Playground'
-  if (!currentTrail.value.length) return currentAbstraction.value.label
+  if (!currentAbstraction.value) {
+    return 'Playground'
+  }
+  if (!currentTrail.value.length) {
+    return currentAbstraction.value.label
+  }
 
   const parent = currentTrail.value.at(-2)
   return parent?.label ?? currentAbstraction.value.label

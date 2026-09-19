@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { DataListColumnPanelProps, DataListColumnPanelUi, DataListControlSize } from '../../types'
+import type {
+  DataListColumnPanelProps,
+  DataListColumnPanelUi,
+  DataListControlSize,
+} from '../../types'
 import ColumnPanel from '../drawers/ColumnPanel.vue'
 
 withDefaults(

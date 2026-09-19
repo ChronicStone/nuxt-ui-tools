@@ -86,7 +86,9 @@ function collectSpreadsheetResolutionColumns(
       continue
     }
 
-    if (isSpreadsheetResolvableColumnDefinition(entry)) resolvedColumns.push(entry)
+    if (isSpreadsheetResolvableColumnDefinition(entry)) {
+      resolvedColumns.push(entry)
+    }
   }
 
   return resolvedColumns
@@ -99,17 +101,19 @@ function normalizeSpreadsheetResolutionDefinitions(params: {
   const columnResolutions = collectSpreadsheetResolutionColumns(
     params.columns,
   ).flatMap<SpreadsheetResolutionDefinition>((column) => {
-    if (!column.resolve) return []
+    if (!column.resolve) {
+      return []
+    }
 
     return [
       {
-        kind: 'select',
-        scope: 'column',
-        targetField: column.key,
-        sourceField: column.key,
-        options: column.resolve.options,
         getOptions: column.resolve.getOptions,
+        kind: 'select',
+        options: column.resolve.options,
         rules: column.rules,
+        scope: 'column',
+        sourceField: column.key,
+        targetField: column.key,
       },
     ]
   })
@@ -117,16 +121,18 @@ function normalizeSpreadsheetResolutionDefinitions(params: {
   const referenceResolutions: SpreadsheetResolutionDefinition[] = []
 
   for (const entry of params.references) {
-    if (!isSpreadsheetReferenceDefinition(entry)) continue
+    if (!isSpreadsheetReferenceDefinition(entry)) {
+      continue
+    }
 
     referenceResolutions.push({
-      kind: 'select',
-      scope: 'reference',
-      targetField: entry.field,
-      sourceField: entry.source,
-      options: entry.options,
       getOptions: entry.getOptions,
+      kind: 'select',
+      options: entry.options,
       rules: entry.rules,
+      scope: 'reference',
+      sourceField: entry.source,
+      targetField: entry.field,
     })
   }
 
@@ -161,7 +167,9 @@ export function resolveSpreadsheetDynamicColumns<TContext>(
   },
   context: TContext,
 ) {
-  if (!columns?.dynamic) return []
+  if (!columns?.dynamic) {
+    return []
+  }
 
   return columns.dynamic({
     context,
@@ -199,23 +207,23 @@ export function normalizeSpreadsheetSchema<
 
   return {
     ...schema,
-    sheet: steps.structure?.sheet,
+    buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
+    columns: {
+      dynamic: resolvedColumns?.dynamic ?? (() => []),
+      static: staticColumns,
+    },
+    context: schema.context ?? [],
     header: steps.structure?.header,
     matching: steps.matching,
-    review: steps.review,
-    steps,
-    context: schema.context ?? [],
-    columns: {
-      static: staticColumns,
-      dynamic: resolvedColumns?.dynamic ?? (() => []),
-    },
     references,
+    relations: schema.relations ?? [],
     resolutions: normalizeSpreadsheetResolutionDefinitions({
       columns: staticColumns,
       references,
     }),
-    relations: schema.relations ?? [],
-    buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
+    review: steps.review,
+    sheet: steps.structure?.sheet,
+    steps,
   }
 }
 export type { NormalizeSpreadsheetSchema }
@@ -231,18 +239,6 @@ function normalizeSpreadsheetSteps(schema: {
   const structure = toRecord(steps.structure)
 
   return {
-    upload: toRecord(steps.upload),
-    structure: {
-      ...structure,
-      sheet: {
-        ...toRecord(schema.sheet),
-        ...toRecord(structure.sheet),
-      },
-      header: {
-        ...toRecord(schema.header),
-        ...toRecord(structure.header),
-      },
-    },
     matching: {
       ...toRecord(schema.matching),
       ...toRecord(steps.matching),
@@ -252,6 +248,18 @@ function normalizeSpreadsheetSteps(schema: {
       ...toRecord(schema.review),
       ...toRecord(steps.review),
     },
+    structure: {
+      ...structure,
+      header: {
+        ...toRecord(schema.header),
+        ...toRecord(structure.header),
+      },
+      sheet: {
+        ...toRecord(schema.sheet),
+        ...toRecord(structure.sheet),
+      },
+    },
+    upload: toRecord(steps.upload),
   }
 }
 

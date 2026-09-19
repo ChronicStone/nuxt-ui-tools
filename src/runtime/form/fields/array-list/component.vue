@@ -9,8 +9,8 @@ import FormDirectionalTransition from '../../components/utils/FormDirectionalTra
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
-import type { FormValue } from '../../types'
 import type {
+  FormValue,
   FormArrayListField,
   FormArrayTabsField,
   FormArrayVariantField,
@@ -50,8 +50,8 @@ const dragItems = computed<FormObject[]>({
   set: updateDraggedItems,
 })
 const containerLayout = useFormContainerLayout({
-  layout: () => props.field.layout,
   formLayout: form.currentLayout,
+  layout: () => props.field.layout,
 })
 const title = computed(() => resolveFormText(props.field.label))
 const description = computed(() => resolveFormText(props.field.description))
@@ -83,7 +83,9 @@ const variantItems = computed(() =>
 )
 
 watch(items, (value) => {
-  if (activeIndex.value >= value.length) activeIndex.value = Math.max(0, value.length - 1)
+  if (activeIndex.value >= value.length) {
+    activeIndex.value = Math.max(0, value.length - 1)
+  }
 })
 
 function addItem() {
@@ -91,10 +93,13 @@ function addItem() {
   const variant = props.field.type === 'array-variant' ? props.field.variants[0] : undefined
   const fields = variant?.fields ?? fieldsForItem({})
   let item = buildInitialFormFieldsState(fields, form.context)
-  if (variant && props.field.type === 'array-variant') item[props.field.variantKey] = variant.key
+  if (variant && props.field.type === 'array-variant') {
+    item[props.field.variantKey] = variant.key
+  }
   item = applyVirtualFields(item, index)
-  if (props.field.transformOnCreate)
+  if (props.field.transformOnCreate) {
     item = props.field.transformOnCreate(item, index, actionParams(index).deps)
+  }
 
   tabTransitionDirection.value = 'forward'
   updateItems([...items.value, item])
@@ -103,15 +108,21 @@ function addItem() {
 
 function removeItem(index: number) {
   const message = resolveFormBoundaryText(props.field.confirmDelete) ?? 'Remove this item?'
-  if (props.field.confirmDelete && !window.confirm(message)) return
+  if (props.field.confirmDelete && !window.confirm(message)) {
+    return
+  }
 
   const currentActiveIndex = activeIndex.value
   const removingActiveItem = currentActiveIndex === index
   const hasNextItem = index + 1 < items.value.length
-  if (removingActiveItem) tabTransitionDirection.value = hasNextItem ? 'forward' : 'backward'
+  if (removingActiveItem) {
+    tabTransitionDirection.value = hasNextItem ? 'forward' : 'backward'
+  }
 
   updateItems(items.value.filter((_, itemIndex) => itemIndex !== index))
-  if (currentActiveIndex < index) return
+  if (currentActiveIndex < index) {
+    return
+  }
   if (currentActiveIndex > index) {
     activeIndex.value = currentActiveIndex - 1
     return
@@ -120,20 +131,26 @@ function removeItem(index: number) {
 }
 
 function fieldsForItem(item: FormObject): readonly FormField[] {
-  const field = props.field
-  if (field.type !== 'array-variant') return field.fields
+  const { field } = props
+  if (field.type !== 'array-variant') {
+    return field.fields
+  }
   const variant = field.variants.find((candidate) => candidate.key === item[field.variantKey])
   return variant?.fields ?? []
 }
 
 function applyVirtualFields(item: FormObject, index: number) {
-  const field = props.field
+  const { field } = props
   const fields =
     field.type === 'array-variant'
       ? field.variants.find((variant) => variant.key === item[field.variantKey])?.virtualFields
       : field.virtualFields
-  if (!fields) return item
-  for (const [key, resolver] of Object.entries(fields)) item[key] = resolver(index)
+  if (!fields) {
+    return item
+  }
+  for (const [key, resolver] of Object.entries(fields)) {
+    item[key] = resolver(index)
+  }
   return item
 }
 
@@ -145,7 +162,9 @@ function itemHeading(item: FormObject, index: number) {
 }
 
 function selectTab(index: number) {
-  if (index === activeIndex.value) return
+  if (index === activeIndex.value) {
+    return
+  }
   tabTransitionDirection.value = index > activeIndex.value ? 'forward' : 'backward'
   activeIndex.value = index
 }
@@ -156,39 +175,54 @@ function isArrayActionConfig(action: FormArrayAction | undefined): action is For
 
 function resolveAction(action: FormArrayAction | undefined, index: number) {
   const condition = isArrayActionConfig(action) ? action.condition : action
-  if (isBoolean(condition)) return condition
-  if (!isFunction(condition)) return true
+  if (isBoolean(condition)) {
+    return condition
+  }
+  if (!isFunction(condition)) {
+    return true
+  }
   const item = items.value[index] ?? {}
   return condition(actionParams(index))
 }
 
 function resolveArrayActionLabel(action: FormArrayAction | undefined, fallback: string) {
-  if (!isArrayActionConfig(action)) return fallback
+  if (!isArrayActionConfig(action)) {
+    return fallback
+  }
   return resolveFormText(action.label) ?? fallback
 }
 
 function resolveArrayActionIcon(action: FormArrayAction | undefined, fallback: string) {
-  if (!isArrayActionConfig(action) || !isString(action.icon)) return fallback
+  if (!isArrayActionConfig(action) || !isString(action.icon)) {
+    return fallback
+  }
   return action.icon
 }
 
 function updateVariant(item: FormObject, index: number, value: string | number) {
-  if (props.field.type !== 'array-variant') return
+  if (props.field.type !== 'array-variant') {
+    return
+  }
   const variant = props.field.variants.find((candidate) => candidate.key === value)
-  if (!variant) return
+  if (!variant) {
+    return
+  }
   let next = buildInitialFormFieldsState(variant.fields, form.context)
   next[props.field.variantKey] = variant.key
   next = applyVirtualFields(next, index)
-  if (props.field.transformOnCreate)
+  if (props.field.transformOnCreate) {
     next = props.field.transformOnCreate(next, index, actionParams(index).deps)
+  }
   const nextItems = [...items.value]
   nextItems[index] = next
   updateItems(nextItems)
 }
 
 function variantValue(item: FormObject | undefined) {
-  const field = props.field
-  if (field.type !== 'array-variant' || !item) return undefined
+  const { field } = props
+  if (field.type !== 'array-variant' || !item) {
+    return undefined
+  }
   const value = item[field.variantKey]
   return isString(value) || isNumber(value) ? value : undefined
 }
@@ -196,23 +230,31 @@ function variantValue(item: FormObject | undefined) {
 async function runCustomAction(index: number, actionIndex: number) {
   const action = props.field.actions?.custom?.[actionIndex]
   const item = items.value[index]
-  if (!action || !item) return
+  if (!action || !item) {
+    return
+  }
   await action.action(actionParams(index))
 }
 
 function customActionVisible(index: number, actionIndex: number) {
   const action = props.field.actions?.custom?.[actionIndex]
   const item = items.value[index]
-  if (!action || !item) return false
+  if (!action || !item) {
+    return false
+  }
   return action.condition?.(actionParams(index)) ?? true
 }
 
 function updateDraggedItems(value: readonly FormObject[]) {
   const activeItem = items.value[activeIndex.value]
   updateItems(value)
-  if (!activeItem) return
+  if (!activeItem) {
+    return
+  }
   const nextActiveIndex = value.indexOf(activeItem)
-  if (nextActiveIndex >= 0) activeIndex.value = nextActiveIndex
+  if (nextActiveIndex !== -1) {
+    activeIndex.value = nextActiveIndex
+  }
 }
 
 function updateItems(value: readonly FormObject[]) {
@@ -225,10 +267,11 @@ function updateItems(value: readonly FormObject[]) {
     return
   }
 
-  if (Array.isArray(current))
+  if (Array.isArray(current)) {
     current.forEach((item, index) => {
       if (isFormObject(item)) applyVirtualFields(item, index)
     })
+  }
 }
 
 function itemPath(index: number) {
@@ -237,7 +280,9 @@ function itemPath(index: number) {
 
 function itemKey(item: FormObject) {
   const existing = itemKeys.get(item)
-  if (existing) return existing
+  if (existing) {
+    return existing
+  }
   nextItemKey += 1
   const key = `array-item-${nextItemKey}`
   itemKeys.set(item, key)
@@ -252,16 +297,16 @@ function actionParams(index: number) {
   const item = items.value[index] ?? {}
   const callback = form.getFieldCallbackParams(props.path, props.field)
   return {
+    ctx: callback.ctx,
+    deps: callback.deps,
+    getOptions: (key: string) =>
+      form.getFieldApi([...itemPath(index), ...key.split('.')]).options.get(),
+    getValue: (key: string) => form.getValue([...itemPath(index), ...key.split('.')]),
     index,
     item,
     items: items.value,
-    ctx: callback.ctx,
-    deps: callback.deps,
-    getValue: (key: string) => form.getValue([...itemPath(index), ...key.split('.')]),
     setValue: (key: string, value: FormValue) =>
       form.setValue([...itemPath(index), ...key.split('.')], value),
-    getOptions: (key: string) =>
-      form.getFieldApi([...itemPath(index), ...key.split('.')]).options.get(),
   }
 }
 

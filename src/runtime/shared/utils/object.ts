@@ -24,27 +24,36 @@ export function omit<T extends GenericObject, K extends NestedPaths<T>>(
       if (Array.isArray(child)) {
         const remainingParts = parts.slice(index + 1)
         for (const item of child) {
-          if (!isObject(item)) continue
+          if (!isObject(item)) {
+            continue
+          }
           let itemCurrent: GenericObject = item
           for (const remainingPart of remainingParts.slice(0, -1)) {
             const nested = itemCurrent[remainingPart]
-            if (!isObject(nested)) break
+            if (!isObject(nested)) {
+              break
+            }
             itemCurrent = nested
           }
           const lastPart = remainingParts.at(-1)
-          if (lastPart !== undefined) delete itemCurrent[lastPart]
+          if (lastPart !== undefined) {
+            delete itemCurrent[lastPart]
+          }
         }
         break
       }
 
-      if (!isObject(child)) break
+      if (!isObject(child)) {
+        break
+      }
       current = child
     }
 
     const firstPart = parts[0]
     const lastPart = parts.at(-1)
-    if (firstPart !== undefined && lastPart !== undefined && !Array.isArray(result[firstPart]))
+    if (firstPart !== undefined && lastPart !== undefined && !Array.isArray(result[firstPart])) {
       delete current[lastPart]
+    }
   }
 
   // SAFETY: `result` is a structured clone of `obj`; omit only removes paths permitted by `K`.
@@ -64,7 +73,9 @@ export function pick<T extends GenericObject, K extends NestedPaths<T>>(
 
     for (let index = 0; index < parts.length; index++) {
       const part = parts[index]
-      if (part === undefined) continue
+      if (part === undefined) {
+        continue
+      }
       const isLast = index === parts.length - 1
 
       if (isLast) {
@@ -77,7 +88,9 @@ export function pick<T extends GenericObject, K extends NestedPaths<T>>(
       target = nextTarget
 
       const nextCurrent = current[part]
-      if (!isObject(nextCurrent)) break
+      if (!isObject(nextCurrent)) {
+        break
+      }
       current = nextCurrent
     }
   }
@@ -91,7 +104,9 @@ type ObjectPropertyValue = GenericObject[string]
 export function getObjectProperty<T>(source: T, path: string): ObjectPropertyValue | undefined {
   return path.split('.').reduce<ObjectPropertyValue | undefined>(
     (current, segment) => {
-      if (!isObject(current)) return undefined
+      if (!isObject(current)) {
+        return undefined
+      }
       return current[segment]
     },
     isObject(source) ? source : undefined,

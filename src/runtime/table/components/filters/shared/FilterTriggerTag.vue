@@ -6,11 +6,7 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
-import type {
-  DataListBadgeProps,
-  DataListButtonProps,
-  TableFilterOperator,
-} from '../../../types'
+import type { DataListBadgeProps, DataListButtonProps, TableFilterOperator } from '../../../types'
 import {
   mergeDataListProps,
   mergeDataListUiClass,
@@ -23,9 +19,9 @@ const props = defineProps<{
   leadingIcon: string
   operator: TableFilterOperator
   operatorLabel: string
-  operatorItems: Array<{ label: string; value: TableFilterOperator }>
+  operatorItems: { label: string; value: TableFilterOperator }[]
   previewTags?: string[]
-  previewEntries?: Array<{ label: string; icon?: string; color?: string }>
+  previewEntries?: { label: string; icon?: string; color?: string }[]
   previewSummary?: string
   active?: boolean
   dynamic?: boolean
@@ -47,13 +43,13 @@ const ui = computed(() => dataListUi.ui.value.filterTags?.ui)
 const controlProps = computed(() => dataListUi.ui.value.filterTags?.props)
 const triggerProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: size.value },
+    { color: 'neutral', size: size.value, variant: 'ghost' },
     controlProps.value?.trigger,
   ),
 )
 const activeProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: size.value },
+    { color: 'neutral', size: size.value, variant: 'ghost' },
     controlProps.value?.activeTrigger,
   ),
 )
@@ -69,14 +65,14 @@ const dismissProps = computed(() =>
 const badgeProps = computed(() =>
   controlProps.value?.previewBadge
     ? mergeDataListProps<DataListBadgeProps>(
-        { color: 'neutral', variant: 'subtle', size: nestedSize.value },
+        { color: 'neutral', size: nestedSize.value, variant: 'subtle' },
         controlProps.value.previewBadge,
       )
     : null,
 )
 const DORMANT_CLASS =
   'nut-dl-tag nut-dl-tag--dormant min-w-0 shrink-0 border border-dashed border-[var(--ui-border-accented)] text-muted hover:text-default hover:border-[var(--ui-text-dimmed)]'
-const previewItems = computed<Array<{ label: string; icon?: string; color?: string }>>(() =>
+const previewItems = computed<{ label: string; icon?: string; color?: string }[]>(() =>
   props.previewEntries?.length
     ? props.previewEntries
     : (props.previewTags ?? []).map((label) => ({ label })),
@@ -95,7 +91,11 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
         @click.stop="emit('requestMatchMode')"
       >
         <span :class="mergeDataListUiClass(labelClass, undefined, ui?.label)">
-          <UIcon v-if="controlProps?.icon !== false" :name="props.leadingIcon" :class="[geometry.icon, 'shrink-0 text-muted']" />
+          <UIcon
+            v-if="controlProps?.icon !== false"
+            :name="props.leadingIcon"
+            :class="[geometry.icon, 'shrink-0 text-muted']"
+          />
           <span class="truncate">{{ props.label }}</span>
         </span>
       </UButton>
@@ -108,7 +108,11 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
       @click.stop="emit('activate', props.operator)"
     >
       <span :class="mergeDataListUiClass(labelClass, undefined, ui?.label)">
-        <UIcon v-if="controlProps?.icon !== false" :name="props.leadingIcon" :class="[geometry.icon, 'shrink-0 text-muted']" />
+        <UIcon
+          v-if="controlProps?.icon !== false"
+          :name="props.leadingIcon"
+          :class="[geometry.icon, 'shrink-0 text-muted']"
+        />
         <span class="truncate">{{ props.label }}</span>
       </span>
     </UButton>
@@ -126,11 +130,21 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
     >
       <UButton
         v-bind="activeProps"
-        :ui="{ base: mergeDataListUiClass('nut-dl-tag__label min-w-0 shrink-0 pr-1 text-muted hover:bg-transparent', undefined, ui?.activeTrigger) }"
+        :ui="{
+          base: mergeDataListUiClass(
+            'nut-dl-tag__label min-w-0 shrink-0 pr-1 text-muted hover:bg-transparent',
+            undefined,
+            ui?.activeTrigger,
+          ),
+        }"
         @click.stop="emit('activate', props.operator)"
       >
         <span :class="mergeDataListUiClass(labelClass, undefined, ui?.label)">
-          <UIcon v-if="controlProps?.icon !== false" :name="props.leadingIcon" :class="[geometry.icon, 'shrink-0 text-muted']" />
+          <UIcon
+            v-if="controlProps?.icon !== false"
+            :name="props.leadingIcon"
+            :class="[geometry.icon, 'shrink-0 text-muted']"
+          />
           <span class="truncate">{{ props.label }}</span>
         </span>
       </UButton>
@@ -168,15 +182,26 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
           </template>
           <template v-else>
             <template v-for="(item, index) in previewItems" :key="item.label">
-              <span v-if="index && !item.color" class="nut-dl-tag__sep text-dimmed" aria-hidden="true">·</span>
-              <span class="nut-dl-tag__text flex min-w-0 items-center gap-[5px] font-medium text-highlighted">
+              <span
+                v-if="index && !item.color"
+                class="nut-dl-tag__sep text-dimmed"
+                aria-hidden="true"
+                >·</span
+              >
+              <span
+                class="nut-dl-tag__text flex min-w-0 items-center gap-[5px] font-medium text-highlighted"
+              >
                 <span
                   v-if="item.color"
                   class="nut-dl-tag__dot size-[7px] shrink-0 rounded-full"
                   :style="{ background: item.color }"
                   aria-hidden="true"
                 />
-                <UIcon v-else-if="item.icon" :name="item.icon" class="size-3.5 shrink-0 text-muted" />
+                <UIcon
+                  v-else-if="item.icon"
+                  :name="item.icon"
+                  class="size-3.5 shrink-0 text-muted"
+                />
                 <span class="max-w-40 truncate">{{ item.label }}</span>
               </span>
             </template>
@@ -200,7 +225,14 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
         :icon="props.dynamic ? 'i-lucide-x' : 'i-lucide-chevron-down'"
         square
         :aria-label="props.dynamic ? 'Clear filter' : props.label"
-        :ui="{ base: mergeDataListUiClass('nut-dl-tag__dismiss shrink-0 pl-0.5 text-dimmed hover:bg-transparent hover:text-default', undefined, ui?.dismiss), leadingIcon: 'size-3' }"
+        :ui="{
+          base: mergeDataListUiClass(
+            'nut-dl-tag__dismiss shrink-0 pl-0.5 text-dimmed hover:bg-transparent hover:text-default',
+            undefined,
+            ui?.dismiss,
+          ),
+          leadingIcon: 'size-3',
+        }"
         @pointerdown.stop
         @click.stop="props.dynamic ? emit('clear') : emit('activate', props.operator)"
       />

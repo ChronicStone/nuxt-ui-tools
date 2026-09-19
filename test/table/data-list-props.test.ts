@@ -2,72 +2,130 @@ import { describe, expect, it } from 'vitest'
 
 import { mergeDataListProps, mergeDataListUiConfig } from '#ui-tools/table/utils/data-list-ui'
 
-describe('mergeDataListProps', () => {
+describe(mergeDataListProps, () => {
   it('lets later layers win while skipping undefined values', () => {
-    expect(mergeDataListProps<Record<string, unknown>>({ color: 'neutral', size: 'md' }, { color: 'primary', size: undefined })).toEqual({ color: 'primary', size: 'md' })
-    expect(mergeDataListProps<Record<string, unknown>>(undefined, { icon: false }, undefined)).toEqual({ icon: false })
-    expect(mergeDataListProps<Record<string, unknown>>({ label: 'A' }, { label: null })).toEqual({ label: null })
+    expect(
+      mergeDataListProps<Record<string, unknown>>(
+        { color: 'neutral', size: 'md' },
+        { color: 'primary', size: undefined },
+      ),
+    ).toStrictEqual({ color: 'primary', size: 'md' })
+    expect(mergeDataListProps<Record<string, unknown>>(undefined, { icon: false })).toStrictEqual({
+      icon: false,
+    })
+    expect(
+      mergeDataListProps<Record<string, unknown>>({ label: 'A' }, { label: null }),
+    ).toStrictEqual({ label: null })
   })
 
   it('merges nested control objects one level deep and replaces arrays', () => {
     expect(
       mergeDataListProps<Record<string, unknown>>(
-        { trigger: { color: 'neutral', variant: 'outline', ui: { base: 'a' } }, order: ['table', 'grid'] },
-        { trigger: { variant: 'soft', ui: { base: 'b' } }, order: ['grid'] },
+        {
+          order: ['table', 'grid'],
+          trigger: { color: 'neutral', ui: { base: 'a' }, variant: 'outline' },
+        },
+        { order: ['grid'], trigger: { ui: { base: 'b' }, variant: 'soft' } },
       ),
-    ).toEqual({ trigger: { color: 'neutral', variant: 'soft', ui: { base: 'b' } }, order: ['grid'] })
-    expect(mergeDataListProps<Record<string, unknown>>({ count: { size: 'xs' } }, { count: false })).toEqual({ count: false })
-    expect(mergeDataListProps<Record<string, unknown>>({ count: false }, { count: { size: 'xs' } })).toEqual({ count: { size: 'xs' } })
+    ).toStrictEqual({
+      order: ['grid'],
+      trigger: { color: 'neutral', ui: { base: 'b' }, variant: 'soft' },
+    })
+    expect(
+      mergeDataListProps<Record<string, unknown>>({ count: { size: 'xs' } }, { count: false }),
+    ).toStrictEqual({ count: false })
+    expect(
+      mergeDataListProps<Record<string, unknown>>({ count: false }, { count: { size: 'xs' } }),
+    ).toStrictEqual({ count: { size: 'xs' } })
   })
 
   it('returns an empty object without layers', () => {
-    expect(mergeDataListProps()).toEqual({})
+    expect(mergeDataListProps()).toStrictEqual({})
   })
 })
 
-describe('mergeDataListUiConfig', () => {
+describe(mergeDataListUiConfig, () => {
   it('resolves density and size precedence', () => {
-    expect(mergeDataListUiConfig({ density: 'compact' }, { density: 'comfortable' }, undefined).density).toBe('comfortable')
-    expect(mergeDataListUiConfig({ density: 'compact' }, undefined, 'default').density).toBe('default')
-    expect(mergeDataListUiConfig({ control: { size: 'sm' } }, undefined, undefined, 'xl').control).toEqual({ size: 'xl' })
-    expect(mergeDataListUiConfig({ control: { size: 'sm' } }, { control: { size: 'lg' } }, undefined).control).toEqual({ size: 'lg' })
+    expect(mergeDataListUiConfig({ density: 'compact' }, { density: 'comfortable' }).density).toBe(
+      'comfortable',
+    )
+    expect(mergeDataListUiConfig({ density: 'compact' }, undefined, 'default').density).toBe(
+      'default',
+    )
+    expect(
+      mergeDataListUiConfig({ control: { size: 'sm' } }, undefined, undefined, 'xl').control,
+    ).toStrictEqual({ size: 'xl' })
+    expect(
+      mergeDataListUiConfig({ control: { size: 'sm' } }, { control: { size: 'lg' } }).control,
+    ).toStrictEqual({ size: 'lg' })
   })
 
   it('merges every part with nested ui slots and control props', () => {
     const merged = mergeDataListUiConfig(
       {
-        search: { width: '300px', ui: { root: 'app-root' }, props: { input: { color: 'neutral', variant: 'soft' } } },
-        filterTags: { size: 'sm', ui: { trigger: 'app-trigger' }, props: { icon: true, trigger: { size: 'xs' } } },
         filterPanel: { mode: 'panel', props: { chips: 4 } },
-        table: { gutter: 12, ui: { td: 'app-td' } },
+        filterTags: {
+          props: { icon: true, trigger: { size: 'xs' } },
+          size: 'sm',
+          ui: { trigger: 'app-trigger' },
+        },
         grid: { gap: 20 },
         pagination: { props: { firstLast: true } },
+        search: {
+          props: { input: { color: 'neutral', variant: 'soft' } },
+          ui: { root: 'app-root' },
+          width: '300px',
+        },
         selectionActions: { ui: { bar: 'app-bar' } },
+        table: { gutter: 12, ui: { td: 'app-td' } },
       },
       {
-        search: { ui: { base: 'cmp-base' }, props: { input: { variant: 'outline' } } },
-        filterTags: { ui: { value: 'cmp-value' }, props: { icon: false } },
         filterPanel: { commitMode: 'live', ui: { chip: 'cmp-chip' } },
-        table: { gutter: 20, props: { checkbox: { color: 'primary' } } },
+        filterTags: { props: { icon: false }, ui: { value: 'cmp-value' } },
         grid: { gap: 12 },
-        pagination: { size: 'sm', props: { firstLast: false } },
+        pagination: { props: { firstLast: false }, size: 'sm' },
+        search: { props: { input: { variant: 'outline' } }, ui: { base: 'cmp-base' } },
+        table: { gutter: 20, props: { checkbox: { color: 'primary' } } },
       },
-      undefined,
     )
-    expect(merged.search).toEqual({ width: '300px', ui: { root: 'app-root', base: 'cmp-base' }, props: { input: { color: 'neutral', variant: 'outline' } } })
-    expect(merged.filterTags).toEqual({ size: 'sm', ui: { trigger: 'app-trigger', value: 'cmp-value' }, props: { icon: false, trigger: { size: 'xs' } } })
-    expect(merged.filterPanel).toMatchObject({ mode: 'panel', commitMode: 'live', ui: { chip: 'cmp-chip' }, props: { chips: 4 } })
-    expect(merged.table).toEqual({ gutter: 20, ui: { td: 'app-td' }, props: { checkbox: { color: 'primary' } } })
-    expect(merged.grid).toEqual({ gap: 12, ui: {}, props: {} })
-    expect(merged.pagination).toEqual({ size: 'sm', ui: {}, props: { firstLast: false } })
-    expect(merged.selectionActions).toEqual({ ui: { bar: 'app-bar' }, props: {} })
+    expect(merged.search).toStrictEqual({
+      props: { input: { color: 'neutral', variant: 'outline' } },
+      ui: { base: 'cmp-base', root: 'app-root' },
+      width: '300px',
+    })
+    expect(merged.filterTags).toStrictEqual({
+      props: { icon: false, trigger: { size: 'xs' } },
+      size: 'sm',
+      ui: { trigger: 'app-trigger', value: 'cmp-value' },
+    })
+    expect(merged.filterPanel).toMatchObject({
+      commitMode: 'live',
+      mode: 'panel',
+      props: { chips: 4 },
+      ui: { chip: 'cmp-chip' },
+    })
+    expect(merged.table).toStrictEqual({
+      gutter: 20,
+      props: { checkbox: { color: 'primary' } },
+      ui: { td: 'app-td' },
+    })
+    expect(merged.grid).toStrictEqual({ gap: 12, props: {}, ui: {} })
+    expect(merged.pagination).toStrictEqual({ props: { firstLast: false }, size: 'sm', ui: {} })
+    expect(merged.selectionActions).toStrictEqual({ props: {}, ui: { bar: 'app-bar' } })
   })
 
   it('keeps mobile overrides for the root to apply later', () => {
-    const merged = mergeDataListUiConfig(undefined, { mobile: { control: { size: 'lg' }, search: { width: '100%' } } }, undefined)
-    expect(merged.mobile).toEqual({ control: { size: 'lg' }, search: { width: '100%' } })
-    const mobile = mergeDataListUiConfig(merged, merged.mobile, merged.mobile?.density, merged.mobile?.control?.size)
-    expect(mobile.control).toEqual({ size: 'lg' })
+    const merged = mergeDataListUiConfig(undefined, {
+      mobile: { control: { size: 'lg' }, search: { width: '100%' } },
+    })
+    expect(merged.mobile).toStrictEqual({ control: { size: 'lg' }, search: { width: '100%' } })
+    const mobile = mergeDataListUiConfig(
+      merged,
+      merged.mobile,
+      merged.mobile?.density,
+      merged.mobile?.control?.size,
+    )
+    expect(mobile.control).toStrictEqual({ size: 'lg' })
     expect(mobile.search?.width).toBe('100%')
   })
 })

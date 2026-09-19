@@ -13,10 +13,14 @@ const FILTER_DISPLAY_LOCATIONS = [
 ] as const satisfies TableFilterDisplayLocation[]
 
 export function resolveFilterDisplayLocation(
-  value: TableFilterDisplayLocationValue | undefined,
+  value?: TableFilterDisplayLocationValue,
 ): TableFilterDisplayLocation {
-  if (!value) return 'tag'
-  if (isFilterDisplayLocation(value)) return value
+  if (!value) {
+    return 'tag'
+  }
+  if (isFilterDisplayLocation(value)) {
+    return value
+  }
 
   const resolved = getResponsiveValue(value)
   return isFilterDisplayLocation(resolved) ? resolved : 'tag'

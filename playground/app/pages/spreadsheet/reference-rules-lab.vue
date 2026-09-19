@@ -19,20 +19,6 @@ const products = [
 
 function createReferenceRulesSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.reference-rules-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 20,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
     columns: {
       static: (column) => [
         column.text('candidateName', {
@@ -53,6 +39,17 @@ function createReferenceRulesSchema() {
         }),
       ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 20,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.reference-rules-lab',
+    matching: {
+      strategy: 'smart',
+    },
     references: (reference) => [
       reference.select('optionalProductId', {
         source: 'optionalProductLabel',
@@ -68,6 +65,9 @@ function createReferenceRulesSchema() {
         ],
       }),
     ],
+    sheet: {
+      strategy: 'auto',
+    },
   })
 }
 
@@ -87,19 +87,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Reference rules')
 
   return {
-    fileName: 'spreadsheet-reference-rules-lab.xlsx',
     binary: write(workbook, {
       type: 'buffer',
       bookType: 'xlsx',
     }),
+    fileName: 'spreadsheet-reference-rules-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

@@ -3,7 +3,10 @@ import { isBoolean, isFunction, isNumber, isString } from '#ui-tools/shared/util
 import type { SpreadsheetValue } from '../types'
 import { isSpreadsheetRecord } from './object'
 
-export type SpreadsheetOptionEntry = { label: string; value: SpreadsheetValue }
+export interface SpreadsheetOptionEntry {
+  label: string
+  value: SpreadsheetValue
+}
 
 type SpreadsheetOptionResolver<TParams> = (params: TParams) => readonly SpreadsheetValue[]
 
@@ -27,22 +30,34 @@ export function resolveSpreadsheetOptionEntries<TParams>(
   source: SpreadsheetValue,
   params: TParams,
 ): readonly SpreadsheetValue[] {
-  if (Array.isArray(source)) return source
-  if (isSpreadsheetOptionResolver<TParams>(source)) return source(params)
+  if (Array.isArray(source)) {
+    return source
+  }
+  if (isSpreadsheetOptionResolver<TParams>(source)) {
+    return source(params)
+  }
 
   return []
 }
 
 export function getSpreadsheetOptionLabel<T>(option: T) {
-  if (isSpreadsheetPrimitiveOption(option)) return String(option)
-  if (isSpreadsheetOptionEntry(option)) return option.label
+  if (isSpreadsheetPrimitiveOption(option)) {
+    return String(option)
+  }
+  if (isSpreadsheetOptionEntry(option)) {
+    return option.label
+  }
 
   return ''
 }
 
 export function getSpreadsheetOptionValue<T>(option: T): SpreadsheetValue | undefined {
-  if (isSpreadsheetPrimitiveOption(option)) return option
-  if (isSpreadsheetOptionEntry(option)) return option.value
+  if (isSpreadsheetPrimitiveOption(option)) {
+    return option
+  }
+  if (isSpreadsheetOptionEntry(option)) {
+    return option.value
+  }
 
   return undefined
 }

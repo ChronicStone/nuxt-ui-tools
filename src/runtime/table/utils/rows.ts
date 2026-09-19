@@ -11,18 +11,18 @@ export function resolveTableRowId(options: {
   if (Array.isArray(options.rowKey)) {
     return (
       options.rowKey
-        .map((key) => String(getTableRowValue({ row: options.row, path: key }) ?? ''))
+        .map((key) => String(getTableRowValue({ path: key, row: options.row }) ?? ''))
         .join('::') || String(options.index ?? 0)
     )
   }
 
-  return String(getTableRowValue({ row: options.row, path: options.rowKey }) ?? options.index ?? 0)
+  return String(getTableRowValue({ path: options.rowKey, row: options.row }) ?? options.index ?? 0)
 }
 
 export function getTableRowValue<TValue>(options: { row: TValue; path: string }) {
   return options.path.split('.').reduce<unknown>((value, key) => {
     if (!isPathReadableRecord(value)) {
-      return undefined
+      return
     }
 
     return value[key]

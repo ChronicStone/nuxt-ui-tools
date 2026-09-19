@@ -1,4 +1,5 @@
-import { useQueryClient, type QueryClient } from '@tanstack/vue-query'
+import { useQueryClient } from '@tanstack/vue-query'
+import type { QueryClient } from '@tanstack/vue-query'
 import { preloadRouteComponents, useNuxtApp, useRouter } from 'nuxt/app'
 import type { RouteLocationRaw } from 'vue-router'
 
@@ -27,7 +28,9 @@ export function prefetchPage(to: RouteLocationRaw): Promise<void> {
   const nuxtApp = useNuxtApp()
   const router = useRouter()
   const route = resolvePrefetchRoute(to, router)
-  if (!route?.matched.length) return Promise.resolve()
+  if (!route?.matched.length) {
+    return Promise.resolve()
+  }
 
   let pendingPages = pendingPagePrefetches.get(nuxtApp)
   if (!pendingPages) {
@@ -36,13 +39,17 @@ export function prefetchPage(to: RouteLocationRaw): Promise<void> {
   }
 
   const pending = pendingPages.get(route.fullPath)
-  if (pending) return pending
+  if (pending) {
+    return pending
+  }
 
   const definition = route.meta.queryPrefetch
   const prefetch = Promise.allSettled([
     Promise.resolve().then(() => {
-      if (import.meta.client) return preloadRouteComponents(route.fullPath, router)
-      return undefined
+      if (import.meta.client) {
+        return preloadRouteComponents(route.fullPath, router)
+      }
+      return
     }),
     definition
       ? Promise.resolve().then(() =>
@@ -54,7 +61,7 @@ export function prefetchPage(to: RouteLocationRaw): Promise<void> {
           ),
         )
       : Promise.resolve(),
-  ]).then(() => undefined)
+  ]).then(() => {})
 
   pendingPages.set(route.fullPath, prefetch)
   return prefetch.finally(() => {
@@ -63,10 +70,14 @@ export function prefetchPage(to: RouteLocationRaw): Promise<void> {
 }
 
 function resolvePrefetchRoute(to: RouteLocationRaw, router: ReturnType<typeof useRouter>) {
-  if (import.meta.server || !isString(to)) return router.resolve(to)
+  if (import.meta.server || !isString(to)) {
+    return router.resolve(to)
+  }
 
   const target = new URL(to, window.location.href)
-  if (target.origin !== window.location.origin) return null
+  if (target.origin !== window.location.origin) {
+    return null
+  }
 
   return router.resolve(`${target.pathname}${target.search}${target.hash}`)
 }

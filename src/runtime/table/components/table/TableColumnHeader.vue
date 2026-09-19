@@ -48,7 +48,11 @@ function startResize(event: MouseEvent | TouchEvent) {
         type="button"
         class="nut-dl-th__btn flex h-full w-full min-w-0 items-center gap-1 bg-transparent text-left transition-colors duration-100 outline-none hover:text-highlighted focus-visible:text-highlighted"
         :class="[
-          align === 'right' ? 'flex-row-reverse text-right' : align === 'center' ? 'justify-center text-center' : '',
+          align === 'right'
+            ? 'flex-row-reverse text-right'
+            : align === 'center'
+              ? 'justify-center text-center'
+              : '',
           open ? 'nut-dl-th__btn--open text-highlighted' : '',
           sortState ? 'nut-dl-th__btn--sorted text-highlighted' : '',
         ]"
@@ -58,8 +62,18 @@ function startResize(event: MouseEvent | TouchEvent) {
         <UIcon
           v-if="sortable"
           class="nut-dl-th__sort size-3 shrink-0 transition-opacity duration-100 [&_svg]:stroke-[2.2]"
-          :class="sortState ? 'text-primary opacity-100' : 'text-dimmed opacity-55 group-hover/th:opacity-90'"
-          :name="sortState === 'asc' ? 'i-lucide-arrow-up' : sortState === 'desc' ? 'i-lucide-arrow-down' : 'i-lucide-chevrons-up-down'"
+          :class="
+            sortState
+              ? 'text-primary opacity-100'
+              : 'text-dimmed opacity-55 group-hover/th:opacity-90'
+          "
+          :name="
+            sortState === 'asc'
+              ? 'i-lucide-arrow-up'
+              : sortState === 'desc'
+                ? 'i-lucide-arrow-down'
+                : 'i-lucide-chevrons-up-down'
+          "
         />
       </button>
     </UDropdownMenu>

@@ -11,10 +11,10 @@ import {
 
 const definitions: TableUiFilterDefinition[] = [
   {
-    kind: 'option',
-    key: 'status',
-    label: 'Status',
     behavior: { defaultOperator: 'isAnyOf', defaultValue: ['published'] },
+    key: 'status',
+    kind: 'option',
+    label: 'Status',
     source: {
       options: [
         { label: 'Published', value: 'published' },
@@ -23,10 +23,10 @@ const definitions: TableUiFilterDefinition[] = [
     },
   },
   {
-    kind: 'option',
-    key: 'format',
-    label: 'Format',
     behavior: { defaultOperator: 'isAnyOf', defaultValue: ['a4', 'letter'] },
+    key: 'format',
+    kind: 'option',
+    label: 'Format',
     source: {
       options: [
         { label: 'A4', value: 'a4' },
@@ -38,7 +38,7 @@ const definitions: TableUiFilterDefinition[] = [
 
 describe('table filter query defaults', () => {
   it('materializes schema defaults when the URL has no filter values', () => {
-    expect(parseTableFilterQueryState({ entries: new Map(), definitions })).toEqual([
+    expect(parseTableFilterQueryState({ definitions, entries: new Map() })).toStrictEqual([
       { key: 'status', operator: 'isAnyOf', value: ['published'] },
       { key: 'format', operator: 'isAnyOf', value: ['a4', 'letter'] },
     ])
@@ -47,10 +47,10 @@ describe('table filter query defaults', () => {
   it('overrides one default from the URL while preserving the others', () => {
     expect(
       parseTableFilterQueryState({
-        entries: new Map([['status', ['archived']]]),
         definitions,
+        entries: new Map([['status', ['archived']]]),
       }),
-    ).toEqual([
+    ).toStrictEqual([
       { key: 'status', operator: 'isAnyOf', value: ['archived'] },
       { key: 'format', operator: 'isAnyOf', value: ['a4', 'letter'] },
     ])
@@ -59,10 +59,10 @@ describe('table filter query defaults', () => {
   it('keeps untouched defaults when the public API replaces only one filter', () => {
     expect(
       mergeTableFilterDefaultRules({
-        rules: [{ key: 'status', operator: 'isAnyOf', value: ['archived'] }],
         definitions,
+        rules: [{ key: 'status', operator: 'isAnyOf', value: ['archived'] }],
       }),
-    ).toEqual([
+    ).toStrictEqual([
       { key: 'status', operator: 'isAnyOf', value: ['archived'] },
       { key: 'format', operator: 'isAnyOf', value: ['a4', 'letter'] },
     ])
@@ -71,58 +71,58 @@ describe('table filter query defaults', () => {
   it('omits effective defaults from the URL regardless of option order', () => {
     expect(
       serializeTableFilterQueryState({
+        definitions,
         rules: [
           { key: 'status', operator: 'isAnyOf', value: ['published'] },
           { key: 'format', operator: 'isAnyOf', value: ['letter', 'a4'] },
         ],
-        definitions,
       }),
-    ).toEqual(new Map())
+    ).toStrictEqual(new Map())
   })
 
   it('serializes an archived override without serializing unchanged defaults', () => {
     expect(
       serializeTableFilterQueryState({
+        definitions,
         rules: [
           { key: 'status', operator: 'isAnyOf', value: ['archived'] },
           { key: 'format', operator: 'isAnyOf', value: ['a4', 'letter'] },
         ],
-        definitions,
       }),
-    ).toEqual(new Map([['status', ['archived']]]))
+    ).toStrictEqual(new Map([['status', ['archived']]]))
   })
 
   it('treats effective defaults as inactive and keeps only deviations active', () => {
     expect(
       resolveTableActiveFilterRules({
+        definitions,
         rules: [
           { key: 'status', operator: 'isAnyOf', value: ['published'] },
           { key: 'format', operator: 'isAnyOf', value: ['letter', 'a4'] },
         ],
-        definitions,
       }),
-    ).toEqual([])
+    ).toStrictEqual([])
 
     expect(
       resolveTableActiveFilterRules({
+        definitions,
         rules: [
           { key: 'status', operator: 'isAnyOf', value: ['published', 'archived'] },
           { key: 'format', operator: 'isAnyOf', value: ['a4', 'letter'] },
         ],
-        definitions,
       }),
-    ).toEqual([{ key: 'status', operator: 'isAnyOf', value: ['published', 'archived'] }])
+    ).toStrictEqual([{ key: 'status', operator: 'isAnyOf', value: ['published', 'archived'] }])
   })
 
   it('keeps false and zero defaults while ignoring empty defaults', () => {
     const scalarDefinitions: TableUiFilterDefinition[] = [
-      { kind: 'boolean', key: 'active', label: 'Active', behavior: { defaultValue: false } },
-      { kind: 'number', key: 'uses', label: 'Uses', behavior: { defaultValue: 0 } },
-      { kind: 'text', key: 'name', label: 'Name', behavior: { defaultValue: '' } },
-      { kind: 'option', key: 'kind', label: 'Kind', behavior: { defaultValue: [] } },
+      { behavior: { defaultValue: false }, key: 'active', kind: 'boolean', label: 'Active' },
+      { behavior: { defaultValue: 0 }, key: 'uses', kind: 'number', label: 'Uses' },
+      { behavior: { defaultValue: '' }, key: 'name', kind: 'text', label: 'Name' },
+      { behavior: { defaultValue: [] }, key: 'kind', kind: 'option', label: 'Kind' },
     ]
 
-    expect(resolveTableFilterDefaultRules(scalarDefinitions)).toEqual([
+    expect(resolveTableFilterDefaultRules(scalarDefinitions)).toStrictEqual([
       { key: 'active', operator: 'is', value: false },
       { key: 'uses', operator: 'is', value: 0 },
     ])

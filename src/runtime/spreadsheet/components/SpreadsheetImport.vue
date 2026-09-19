@@ -51,17 +51,19 @@ const currentStep = computed(
   () => steps.value.find((step) => step.value === activeStep.value) ?? steps.value[0],
 )
 const stageTitle = computed(() => {
-  if (activeStep.value === 'upload')
+  if (activeStep.value === 'upload') {
     return resolveTextValue(
       props.spreadsheet.schema.value.steps?.upload?.title,
       t('spreadsheet.steps.upload.stageTitle'),
     )
+  }
 
-  if (activeStep.value === 'structure')
+  if (activeStep.value === 'structure') {
     return resolveTextValue(
       props.spreadsheet.schema.value.steps?.structure?.title,
       t('spreadsheet.steps.structure.stageTitle'),
     )
+  }
 
   return currentStep.value?.title ?? humanizeKey(props.spreadsheet.schema.value.importKey)
 })
@@ -73,25 +75,35 @@ const isPreparingNextStep = ref<boolean>(false)
 const hasWorkbook = computed(() => Boolean(props.spreadsheet.workbook.value))
 const hasHeaders = computed(() => props.spreadsheet.headers.value.length > 0)
 function getSchemaMaxRecords(schema: { importKey: string }): number | undefined {
-  if ('file' in schema && schema.file && isObject(schema.file) && 'maxRecords' in schema.file)
+  if ('file' in schema && schema.file && isObject(schema.file) && 'maxRecords' in schema.file) {
     return isNumber(schema.file.maxRecords) ? schema.file.maxRecords : undefined
+  }
 
   if (
     'source' in schema &&
     schema.source &&
     isObject(schema.source) &&
     'maxRecords' in schema.source
-  )
+  ) {
     return isNumber(schema.source.maxRecords) ? schema.source.maxRecords : undefined
+  }
 
   return undefined
 }
 
 const canGoNext = computed(() => {
-  if (activeStep.value === 'upload') return hasWorkbook.value
-  if (activeStep.value === 'structure') return hasWorkbook.value && hasHeaders.value
-  if (activeStep.value === 'matching') return hasWorkbook.value && hasHeaders.value
-  if (activeStep.value === 'references') return hasWorkbook.value && hasHeaders.value
+  if (activeStep.value === 'upload') {
+    return hasWorkbook.value
+  }
+  if (activeStep.value === 'structure') {
+    return hasWorkbook.value && hasHeaders.value
+  }
+  if (activeStep.value === 'matching') {
+    return hasWorkbook.value && hasHeaders.value
+  }
+  if (activeStep.value === 'references') {
+    return hasWorkbook.value && hasHeaders.value
+  }
   return false
 })
 const fileName = computed(() => props.spreadsheet.workbook.value?.fileName)
@@ -120,23 +132,28 @@ function humanizeKey(value: string) {
     value
       .split('.')
       .at(-1)
-      ?.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-      .replace(/[_-]+/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase()) ?? value
+      ?.replaceAll(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replaceAll(/[_-]+/g, ' ')
+      .replaceAll(/\b\w/g, (char) => char.toUpperCase()) ?? value
   )
 }
 
 const actionHint = computed(() => {
-  if (activeStep.value === 'structure') return t('spreadsheet.common.clickToChangeHeaderRow')
+  if (activeStep.value === 'structure') {
+    return t('spreadsheet.common.clickToChangeHeaderRow')
+  }
 
-  if (activeStep.value === 'references') return t('spreadsheet.common.referencesStepHint')
+  if (activeStep.value === 'references') {
+    return t('spreadsheet.common.referencesStepHint')
+  }
 
-  return undefined
+  return
 })
 
 const primaryActionLabel = computed(() => {
-  if (activeStep.value === 'review')
+  if (activeStep.value === 'review') {
     return t('spreadsheet.common.importRows', { count: importableRowCount.value })
+  }
 
   return t('spreadsheet.common.continue')
 })
@@ -162,7 +179,9 @@ async function handlePrimaryAction() {
     return
   }
 
-  if (!canGoNext.value) return
+  if (!canGoNext.value) {
+    return
+  }
   const nextStep = getNextStepValue()
 
   if (nextStep === 'review') {
@@ -184,8 +203,12 @@ function handleClose() {
 }
 
 watch(hasWorkbook, (nextHasWorkbook) => {
-  if (!nextHasWorkbook) return
-  if (activeStep.value !== 'upload') return
+  if (!nextHasWorkbook) {
+    return
+  }
+  if (activeStep.value !== 'upload') {
+    return
+  }
   goToNextStep()
 })
 </script>

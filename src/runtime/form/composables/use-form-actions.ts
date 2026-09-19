@@ -2,8 +2,7 @@ import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
-import type { FormValue } from '../types'
-import type { FormAction, FormActionKey, FormRenderShell, FormRuntime } from '../types'
+import type { FormValue, FormAction, FormActionKey, FormRenderShell, FormRuntime } from '../types'
 import { isRecord } from '../utils/path'
 
 export function useFormActions(params: {
@@ -15,10 +14,13 @@ export function useFormActions(params: {
   return computed<readonly FormAction[]>(() => {
     const configuredActions =
       getCurrentStepActions(params.runtime) ?? getSchemaActions(params.runtime.schema.value)
-    if (configuredActions)
+    if (configuredActions) {
       return configuredActions.map((action) => normalizeFormAction(action, params, t))
+    }
 
-    if (!params.runtime.isStepped.value) return [getBaseFormAction('submit', params, t)]
+    if (!params.runtime.isStepped.value) {
+      return [getBaseFormAction('submit', params, t)]
+    }
 
     return [
       getBaseFormAction('previous', params, t),
@@ -36,7 +38,9 @@ function normalizeFormAction(
   },
   t: (key: string) => string,
 ): FormAction {
-  if (!isBaseFormAction(action)) return action
+  if (!isBaseFormAction(action)) {
+    return action
+  }
   return {
     ...getBaseFormAction(action.key, params, t),
     ...action,
@@ -51,8 +55,8 @@ function getBaseFormAction(
   },
   t: (key: string) => string,
 ): FormAction {
-  const slot = params.shell.value !== 'inline' ? 'right' : 'left'
-  if (key === 'submit')
+  const slot = params.shell.value === 'inline' ? 'left' : 'right'
+  if (key === 'submit') {
     return {
       key,
       label: () => t('form.actions.submitButton'),
@@ -61,7 +65,8 @@ function getBaseFormAction(
       width: 'fill md:fit',
       slot,
     }
-  if (key === 'next')
+  }
+  if (key === 'next') {
     return {
       key,
       label: () => t('form.actions.nextButton'),
@@ -70,7 +75,8 @@ function getBaseFormAction(
       width: 'fill md:fit',
       slot,
     }
-  if (key === 'previous')
+  }
+  if (key === 'previous') {
     return {
       key,
       label: () => t('form.actions.prevButton'),
@@ -78,38 +84,50 @@ function getBaseFormAction(
       width: 'fill md:fit',
       slot,
     }
-  if (key === 'reset')
+  }
+  if (key === 'reset') {
     return {
       key,
       label: () => t('form.actions.resetButton'),
       width: 'fill md:fit',
       slot,
     }
+  }
 
   return {
     key,
     label: () => t('form.actions.cancelButton'),
-    width: 'fill md:fit',
     slot,
+    width: 'fill md:fit',
   }
 }
 
 function getSchemaActions(schema: FormValue) {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const actions = Object.getOwnPropertyDescriptor(schema, 'actions')?.value
   return isFormActionList(actions) ? actions : undefined
 }
 
 function getCurrentStepActions(runtime: FormRuntime) {
-  if (!runtime.isStepped.value) return undefined
+  if (!runtime.isStepped.value) {
+    return undefined
+  }
   const schema = runtime.schema.value
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
 
   const steps = Object.getOwnPropertyDescriptor(schema, 'steps')?.value
-  if (!Array.isArray(steps)) return undefined
+  if (!Array.isArray(steps)) {
+    return undefined
+  }
 
   const step = steps[runtime.currentStepIndex.value]
-  if (!isRecord(step)) return undefined
+  if (!isRecord(step)) {
+    return undefined
+  }
 
   const actions = Object.getOwnPropertyDescriptor(step, 'actions')?.value
   return isFormActionList(actions) ? actions : undefined

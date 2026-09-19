@@ -29,7 +29,7 @@ const props = defineProps<{
   issueRowsLength: number
   inspectedIssueRowPosition: number
   formatCell: (value: SpreadsheetValue) => string
-  getObjectEntries: (value: SpreadsheetValue) => Array<[string, SpreadsheetValue]>
+  getObjectEntries: (value: SpreadsheetValue) => [string, SpreadsheetValue][]
   humanizeKey: (value: string) => string
   getIssueBadge: (issue: SpreadsheetRowIssue) => {
     label: string
@@ -77,16 +77,16 @@ const issueGroups = computed(() => {
       }
 
       groups.set(key, {
+        issues: [issue],
         key,
-        title: props.humanizeKey(issue.ruleKey ?? issue.code),
         subtitle: issue.ruleKey
           ? t('spreadsheet.steps.review.ruleKey', { key: issue.ruleKey })
           : t('spreadsheet.steps.review.groupedByIssueType'),
-        issues: [issue],
+        title: props.humanizeKey(issue.ruleKey ?? issue.code),
       })
     }
 
-    return Array.from(groups.values())
+    return [...groups.values()]
   }
 
   const groups = new Map<
@@ -108,18 +108,18 @@ const issueGroups = computed(() => {
     }
 
     groups.set(key, {
+      issues: [issue],
       key,
-      title:
-        key === '__row__' ? t('spreadsheet.steps.review.rowLevelIssue') : props.humanizeKey(key),
       subtitle:
         key === '__row__'
           ? t('spreadsheet.steps.review.affectsFullRow')
           : t('spreadsheet.steps.review.property', { key }),
-      issues: [issue],
+      title:
+        key === '__row__' ? t('spreadsheet.steps.review.rowLevelIssue') : props.humanizeKey(key),
     })
   }
 
-  return Array.from(groups.values())
+  return [...groups.values()]
 })
 
 function getFieldIssues(key: string) {
@@ -128,8 +128,12 @@ function getFieldIssues(key: string) {
 
 function getFieldIssueTone(key: string) {
   const issues = getFieldIssues(key)
-  if (issues.some((issue) => issue.level === 'error')) return 'error'
-  if (issues.some((issue) => issue.level === 'warning')) return 'warning'
+  if (issues.some((issue) => issue.level === 'error')) {
+    return 'error'
+  }
+  if (issues.some((issue) => issue.level === 'warning')) {
+    return 'warning'
+  }
   return 'neutral'
 }
 </script>

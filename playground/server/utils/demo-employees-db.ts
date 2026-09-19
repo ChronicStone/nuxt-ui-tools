@@ -5,31 +5,31 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { createQueryEngine } from 'drizzle-resource'
 
 export const companies = sqliteTable('companies', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
   country: text('country').notNull(),
   createdAt: text('created_at').notNull(),
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
 })
 
 export const departments = sqliteTable('departments', {
-  id: text('id').primaryKey(),
+  budget: integer('budget'),
   companyId: text('company_id')
     .notNull()
     .references(() => companies.id),
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
-  budget: integer('budget'),
 })
 
 export const employees = sqliteTable('employees', {
-  id: text('id').primaryKey(),
   departmentId: text('department_id')
     .notNull()
     .references(() => departments.id),
-  fullName: text('full_name').notNull(),
   email: text('email').notNull(),
-  salary: integer('salary'),
-  isActive: integer('is_active', { mode: 'boolean' }).notNull(),
+  fullName: text('full_name').notNull(),
   hiredAt: text('hired_at'),
+  id: text('id').primaryKey(),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull(),
+  salary: integer('salary'),
 })
 
 export const skills = sqliteTable('skills', {
@@ -49,8 +49,8 @@ export const employeeSkills = sqliteTable('employee_skills', {
 export const schema = {
   companies,
   departments,
-  employees,
   employeeSkills,
+  employees,
   skills,
 }
 
@@ -82,17 +82,6 @@ export const relations = defineRelationsPart(
         to: employeesTable.departmentId,
       }),
     },
-    employees: {
-      department: one.departments({
-        from: employeesTable.departmentId,
-        optional: false,
-        to: departmentsTable.id,
-      }),
-      employeeSkills: many.employeeSkills({
-        from: employeesTable.id,
-        to: employeeSkillsTable.employeeId,
-      }),
-    },
     employeeSkills: {
       employee: one.employees({
         from: employeeSkillsTable.employeeId,
@@ -103,6 +92,17 @@ export const relations = defineRelationsPart(
         from: employeeSkillsTable.skillId,
         optional: false,
         to: skillsTable.id,
+      }),
+    },
+    employees: {
+      department: one.departments({
+        from: employeesTable.departmentId,
+        optional: false,
+        to: departmentsTable.id,
+      }),
+      employeeSkills: many.employeeSkills({
+        from: employeesTable.id,
+        to: employeeSkillsTable.employeeId,
       }),
     },
     skills: {
@@ -152,9 +152,31 @@ sqlite.exec(`
 seedDemoEmployees(sqlite)
 
 export const db = drizzle({ client: sqlite, relations })
-const engine = createQueryEngine({ db, schema, relations })
+const engine = createQueryEngine({ db, relations, schema })
 
 export const employeesResource = engine.defineResource('employees', {
+  query: {
+    defaults: {
+      pagination: { mode: 'offset', pageIndex: 0, pageSize: 20 },
+    },
+    facets: {
+      allowed: [
+        'department.company.country',
+        'department.company.name',
+        'department.name',
+        'employeeSkills.skill.label',
+        'isActive',
+      ],
+    },
+    pagination: { modes: ['offset', 'cursor'] },
+    search: {
+      allowed: ['fullName', 'email', 'department.company.name', 'employeeSkills.skill.label'],
+      defaults: ['fullName', 'email'],
+    },
+    sort: {
+      defaults: [{ key: 'hiredAt', dir: 'desc' }],
+    },
+  },
   relations: {
     department: {
       with: {
@@ -165,28 +187,6 @@ export const employeesResource = engine.defineResource('employees', {
       with: {
         skill: true,
       },
-    },
-  },
-  query: {
-    pagination: { modes: ['offset', 'cursor'] },
-    defaults: {
-      pagination: { mode: 'offset', pageIndex: 0, pageSize: 20 },
-    },
-    search: {
-      allowed: ['fullName', 'email', 'department.company.name', 'employeeSkills.skill.label'],
-      defaults: ['fullName', 'email'],
-    },
-    sort: {
-      defaults: [{ key: 'hiredAt', dir: 'desc' }],
-    },
-    facets: {
-      allowed: [
-        'department.company.country',
-        'department.company.name',
-        'department.name',
-        'employeeSkills.skill.label',
-        'isActive',
-      ],
     },
   },
 })
@@ -285,19 +285,22 @@ function seedDemoEmployees(client: Database.Database) {
     const id = company[0]
     const name = company[1]
     const country = company[2]
-    if (!id || !name || !country) continue
+    if (!id || !name || !country) {
+      continue
+    }
 
     insertCompany.run(id, name, country, `2024-${String((index % 9) + 1).padStart(2, '0')}-01`)
     insertDepartment.run(
       `department-${String(index + 1).padStart(2, '0')}`,
       id,
       departmentNames[index] ?? 'Engineering',
-      700000 + index * 125000,
+      700_000 + index * 125_000,
     )
   }
 
-  for (const [index, label] of skillLabels.entries())
+  for (const [index, label] of skillLabels.entries()) {
     insertSkill.run(`skill-${String(index + 1).padStart(2, '0')}`, label)
+  }
 
   for (let index = 0; index < 128; index++) {
     const firstName = firstNames[index % firstNames.length] ?? 'Alex'
@@ -310,8 +313,8 @@ function seedDemoEmployees(client: Database.Database) {
     const fullName = `${firstName} ${lastName}`
     const emailName = `${firstName}.${lastName}`
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z.]/g, '')
+      .replaceAll(/[\u0300-\u036F]/g, '')
+      .replaceAll(/[^a-zA-Z.]/g, '')
       .toLowerCase()
 
     insertEmployee.run(
@@ -319,15 +322,18 @@ function seedDemoEmployees(client: Database.Database) {
       `department-${String(departmentIndex + 1).padStart(2, '0')}`,
       fullName,
       `${emailName}.${index + 1}@example.com`,
-      62000 + ((index * 7300) % 148000),
+      62_000 + ((index * 7300) % 148_000),
       index % 5 === 0 ? 0 : 1,
       `${hiredYear}-${String(hiredMonth).padStart(2, '0')}-${String(hiredDay).padStart(2, '0')}`,
     )
 
     const skillIndexes = [index % skillLabels.length, (index * 3 + 5) % skillLabels.length]
-    if (index % 3 === 0) skillIndexes.push((index * 7 + 2) % skillLabels.length)
+    if (index % 3 === 0) {
+      skillIndexes.push((index * 7 + 2) % skillLabels.length)
+    }
 
-    for (const skillIndex of new Set(skillIndexes))
+    for (const skillIndex of new Set(skillIndexes)) {
       insertEmployeeSkill.run(employeeId, `skill-${String(skillIndex + 1).padStart(2, '0')}`)
+    }
   }
 }

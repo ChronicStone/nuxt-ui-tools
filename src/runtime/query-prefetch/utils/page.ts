@@ -9,8 +9,7 @@ import type {
   QueryPrefetchRouteName,
   QueryPrefetchRuntimeContext,
 } from '../types/page'
-import type { QueryPrefetchEntry, QueryPrefetchOption } from '../types/plan'
-import type { QueryPrefetchContext } from '../types/plan'
+import type { QueryPrefetchEntry, QueryPrefetchOption, QueryPrefetchContext } from '../types/plan'
 import { executeQueryPrefetchPlan, isQueryPrefetchPlan } from './plan'
 
 /**
@@ -36,12 +35,12 @@ export function defineQueryPrefetch<
   resolve: (context: QueryPrefetchResolveContext<TRouteName>) => TOptions,
 ): QueryPrefetchDefinition {
   return {
-    routeName,
     resolve: (context) =>
       resolve({
         queryClient: context.queryClient,
         route: narrowQueryPrefetchRoute(context.route, routeName),
       }),
+    routeName,
   }
 }
 
@@ -61,7 +60,9 @@ export function executeQueryPrefetch(
       const entries = isQueryPrefetchEntry(resolved) ? [resolved] : resolved
       return Promise.all(
         entries.map((entry) => {
-          if (!isQueryPrefetchPlan(entry)) return executeQueryOptions([entry], context.queryClient)
+          if (!isQueryPrefetchPlan(entry)) {
+            return executeQueryOptions([entry], context.queryClient)
+          }
           return executeQueryPrefetchPlan(entry, {
             queryClient: context.queryClient,
           }).then((stageContext) => Object.values(stageContext)[0])
@@ -77,7 +78,9 @@ export function executeQueryPrefetch(
 function executeQueryOptions(queries: readonly QueryPrefetchOption[], queryClient: QueryClient) {
   return Promise.all(
     queries.map(async (query) => {
-      if (hasProperty(query, 'enabled') && query.enabled === false) return undefined
+      if (hasProperty(query, 'enabled') && query.enabled === false) {
+        return undefined
+      }
 
       try {
         await queryClient.ensureQueryData({ ...query, revalidateIfStale: true })
@@ -85,14 +88,16 @@ function executeQueryOptions(queries: readonly QueryPrefetchOption[], queryClien
         const select = hasProperty(query, 'select') ? query.select : undefined
         return data !== undefined && isQueryPrefetchSelector(select) ? select(data) : data
       } catch {
-        return undefined
+        return
       }
     }),
   )
 }
 
 function isQueryPrefetchEntry(value: QueryPrefetchOptions): value is QueryPrefetchEntry {
-  if (Array.isArray(value)) return false
+  if (Array.isArray(value)) {
+    return false
+  }
   return isQueryPrefetchPlan(value) || 'queryKey' in value
 }
 
@@ -108,7 +113,9 @@ function narrowQueryPrefetchRoute<TRouteName extends QueryPrefetchRouteName>(
   route: QueryPrefetchRuntimeContext['route'],
   routeName: TRouteName,
 ): QueryPrefetchResolveContext<TRouteName>['route'] {
-  if (isQueryPrefetchRoute(route, routeName)) return route
+  if (isQueryPrefetchRoute(route, routeName)) {
+    return route
+  }
   throw new Error(`Unable to resolve typed query-prefetch route ${String(routeName)}`)
 }
 

@@ -6,10 +6,7 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
-import type {
-  DataListButtonProps,
-  TableUiFilterDefinition,
-} from '../../../types'
+import type { DataListButtonProps, TableUiFilterDefinition } from '../../../types'
 import { getFilterLabelText, mergeDataListProps, mergeDataListUiClass } from '../../../utils'
 import DynamicFilterPicker from '../shared/DynamicFilterPicker.vue'
 import { resolveFilterTagComponent } from './registry'
@@ -48,7 +45,13 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       internals.filters.hasActiveUiFilters.value
     "
     tag="div"
-    :class="mergeDataListUiClass('nut-dl-tags contents', undefined, dataListUi.ui.value.filterTags?.ui?.root)"
+    :class="
+      mergeDataListUiClass(
+        'nut-dl-tags contents',
+        undefined,
+        dataListUi.ui.value.filterTags?.ui?.root,
+      )
+    "
     move-class="nut-dl-tag--moving"
     enter-active-class="nut-dl-tag--entering"
     enter-from-class="nut-dl-tag--hidden"
@@ -104,7 +107,10 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
     </DynamicFilterPicker>
 
     <UButton
-      v-if="props.showClear && (internals.filters.hasActiveUiFilters.value || internals.filters.searchQuery.value)"
+      v-if="
+        props.showClear &&
+        (internals.filters.hasActiveUiFilters.value || internals.filters.searchQuery.value)
+      "
       key="__clear"
       v-bind="
         mergeDataListProps<DataListButtonProps>(

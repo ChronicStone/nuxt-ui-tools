@@ -17,7 +17,7 @@ const { params } = useFieldControl(
 )
 
 const description = computed(() => {
-  const content = props.field.content
+  const { content } = props.field
   const resolved = invokeFormFunction(content, [params.value]) ?? content
   return isString(resolved) || isNumber(resolved) ? String(resolved) : undefined
 })

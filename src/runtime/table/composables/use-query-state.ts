@@ -1,4 +1,5 @@
-import { computed, ref, type ComputedRef } from 'vue'
+import { computed, ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import {
   useQueryStates,
@@ -35,13 +36,13 @@ export interface UseQueryStateParams {
 
 export function useQueryState(params: UseQueryStateParams) {
   const defaultPageSize = getDefaultPageSize({
-    schema: params.schema.value,
     layout: params.activeLayout.value,
+    schema: params.schema.value,
   })
 
   const defaultSort = getDefaultSort({
-    schema: params.schema.value,
     layout: params.activeLayout.value,
+    schema: params.schema.value,
   })
 
   // ---------------------------------------------------------------------------
@@ -53,17 +54,19 @@ export function useQueryState(params: UseQueryStateParams) {
   const offsetPagination =
     paginationMode === 'offset'
       ? useQueryStates({
+          historyMode: 'push',
           prefix: 'p',
           schema: {
-            pageIndex: { urlKey: 'page', codec: numberCodec, defaultValue: 1 },
-            pageSize: { urlKey: 'size', codec: numberCodec, defaultValue: defaultPageSize },
+            pageIndex: { codec: numberCodec, defaultValue: 1, urlKey: 'page' },
+            pageSize: { codec: numberCodec, defaultValue: defaultPageSize, urlKey: 'size' },
           },
-          historyMode: 'push',
         })
       : null
   const pagination = computed(() => {
-    if (paginationMode === 'none') return { mode: 'none' } as const
-    if (paginationMode === 'cursor')
+    if (paginationMode === 'none') {
+      return { mode: 'none' } as const
+    }
+    if (paginationMode === 'cursor') {
       return {
         mode: 'cursor',
         cursor: null,
@@ -76,12 +79,13 @@ export function useQueryState(params: UseQueryStateParams) {
             ? (params.schema.value.pagination.count ?? 'none')
             : 'none',
       } as const
+    }
 
     return {
+      count: 'exact',
       mode: 'offset',
       pageIndex: offsetPagination?.value.pageIndex ?? 1,
       pageSize: offsetPagination?.value.pageSize ?? defaultPageSize,
-      count: 'exact',
     } as const
   })
 
@@ -90,7 +94,9 @@ export function useQueryState(params: UseQueryStateParams) {
       paginationRevision.value++
       return
     }
-    if (!offsetPagination) return
+    if (!offsetPagination) {
+      return
+    }
     offsetPagination.value = {
       pageIndex: 1,
       pageSize: offsetPagination.value.pageSize,
@@ -98,7 +104,9 @@ export function useQueryState(params: UseQueryStateParams) {
   }
 
   function setOffsetPagination(value: { pageIndex: number; pageSize: number }) {
-    if (!offsetPagination) return
+    if (!offsetPagination) {
+      return
+    }
     offsetPagination.value = value
   }
 
@@ -107,23 +115,25 @@ export function useQueryState(params: UseQueryStateParams) {
   // ---------------------------------------------------------------------------
 
   const sortingState = useQueryStates({
+    historyMode: 'push',
     prefix: 's',
     schema: {
-      key: { codec: stringCodec, defaultValue: defaultSort?.key ?? '' },
       dir: { codec: createEnumCodec(['asc', 'desc']), defaultValue: defaultSort?.dir },
+      key: { codec: stringCodec, defaultValue: defaultSort?.key ?? '' },
     },
-    historyMode: 'push',
   })
 
   // Domain mapping: empty key → null (consumers expect nullable sorting)
   const sorting = computed({
     get() {
       const { key, dir } = sortingState.value
-      if (!key) return null
-      return { key, dir: dir ?? 'asc' }
+      if (!key) {
+        return null
+      }
+      return { dir: dir ?? 'asc', key }
     },
     set(value: { key: string; dir: 'asc' | 'desc' } | null) {
-      sortingState.value = value ? { key: value.key, dir: value.dir } : { key: '', dir: undefined }
+      sortingState.value = value ? { dir: value.dir, key: value.key } : { dir: undefined, key: '' }
     },
   })
 
@@ -132,6 +142,7 @@ export function useQueryState(params: UseQueryStateParams) {
   // ---------------------------------------------------------------------------
 
   const filters = useQueryStates({
+    historyMode: 'push',
     prefix: 'f',
     schema: {
       search: { codec: stringCodec, defaultValue: '' },
@@ -161,16 +172,15 @@ export function useQueryState(params: UseQueryStateParams) {
         },
       }),
     },
-    historyMode: 'push',
   })
 
   return {
+    filters,
     pagination,
     paginationMode,
     paginationRevision,
     resetPagination,
     setOffsetPagination,
     sorting,
-    filters,
   }
 }

@@ -19,8 +19,12 @@ const { form, controlProps, disabled, handleBlur } = useFieldControl(
 const model = computed<number | number[] | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    if (isNumber(value)) return value
-    if (Array.isArray(value) && value.every((item) => isNumber(item))) return value
+    if (isNumber(value)) {
+      return value
+    }
+    if (Array.isArray(value) && value.every((item) => isNumber(item))) {
+      return value
+    }
     return props.field.multiple ? [] : undefined
   },
   set: (value) => form.setValue(props.path, value ?? (props.field.multiple ? [] : null)),

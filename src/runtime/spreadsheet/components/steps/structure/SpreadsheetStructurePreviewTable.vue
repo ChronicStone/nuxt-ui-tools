@@ -7,10 +7,10 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { SpreadsheetValue } from '../../../types'
 
 const props = defineProps<{
-  rows: Array<{
+  rows: {
     absoluteIndex: number
     cells: readonly unknown[]
-  }>
+  }[]
   columnCount: number
   selectedHeaderRowIndex: number
 }>()
@@ -24,10 +24,10 @@ const viewportRef = ref<HTMLElement | null>(null)
 const rowVirtualizer = useVirtualizer(
   computed(() => ({
     count: props.rows.length,
-    getScrollElement: () => viewportRef.value,
     estimateSize: () => 38,
-    overscan: 12,
     getItemKey: (index: number) => props.rows[index]?.absoluteIndex ?? index,
+    getScrollElement: () => viewportRef.value,
+    overscan: 12,
   })),
 )
 const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())

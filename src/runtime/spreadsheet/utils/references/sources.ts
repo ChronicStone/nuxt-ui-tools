@@ -8,8 +8,12 @@ export function collectSpreadsheetReferenceTokens(value: SpreadsheetValue) {
 
   for (const item of items) {
     const token = String(item ?? '').trim()
-    if (!token) continue
-    if (tokens.includes(token)) continue
+    if (!token) {
+      continue
+    }
+    if (tokens.includes(token)) {
+      continue
+    }
     tokens.push(token)
   }
 
@@ -33,11 +37,11 @@ export function collectSpreadsheetReferenceSources(
 
     return [
       {
-        reference: entry,
         entries: Array.from(entries.entries()).map(([value, rowIndexes]) => ({
           value,
           rowIndexes,
         })),
+        reference: entry,
       },
     ]
   })

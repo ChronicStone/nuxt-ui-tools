@@ -14,8 +14,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: []
 }>()
-const items = computed(() => [{ value: props.value, label: props.label }])
+const items = computed(() => [{ label: props.label, value: props.value }])
 
+// oxlint-disable-next-line unicorn/no-useless-undefined -- shadows the parent form field so nested controls stay detached
 provide(formFieldInjectionKey, undefined)
 provide(inputIdInjectionKey, ref<string | undefined>(undefined))
 </script>

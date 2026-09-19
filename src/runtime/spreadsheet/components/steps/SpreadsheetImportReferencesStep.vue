@@ -26,11 +26,12 @@ function getSourceLabel(sourceField: string) {
   const staticColumn = internals.rows.staticColumns.value.find(
     (column) => column.key === sourceField,
   )
-  if (staticColumn)
+  if (staticColumn) {
     return resolveSpreadsheetDisplayLabel(
       staticColumn.label,
       humanizeSpreadsheetKey(staticColumn.key),
     )
+  }
 
   return humanizeSpreadsheetKey(sourceField)
 }
@@ -40,7 +41,9 @@ function getOutputLabel(outputField: string) {
 }
 
 function getBestScore(candidates: readonly SpreadsheetReferenceCandidate[]) {
-  if (!candidates.length) return null
+  if (!candidates.length) {
+    return null
+  }
   return Math.round(Math.max(...candidates.map((candidate) => candidate.score)) * 100)
 }
 
@@ -52,17 +55,17 @@ function getSelectItems(resolution: SpreadsheetReferenceResolution) {
   const recommendedOptions = resolution.candidates
     .filter((candidate) => candidate.score > 0)
     .map((candidate) => ({
-      kind: 'option' as const,
-      value: candidate.value,
-      label: candidate.label,
       description: `${Math.round(candidate.score * 100)}% match`,
+      kind: 'option' as const,
+      label: candidate.label,
+      value: candidate.value,
     }))
   const remainingOptions = resolution.candidates
     .filter((candidate) => candidate.score <= 0)
     .map((candidate) => ({
       kind: 'option' as const,
-      value: candidate.value,
       label: candidate.label,
+      value: candidate.value,
     }))
 
   return [
@@ -70,20 +73,20 @@ function getSelectItems(resolution: SpreadsheetReferenceResolution) {
     ...(recommendedOptions.length && remainingOptions.length
       ? [
           {
+            disabled: true,
             kind: 'divider' as const,
             label: 'Other options',
-            disabled: true,
           },
         ]
       : []),
     ...(recommendedOptions.length
       ? remainingOptions
       : resolution.candidates.map((candidate) => ({
-          kind: 'option' as const,
-          value: candidate.value,
-          label: candidate.label,
           description:
             candidate.score > 0 ? `${Math.round(candidate.score * 100)}% match` : undefined,
+          kind: 'option' as const,
+          label: candidate.label,
+          value: candidate.value,
         }))),
   ]
 }
@@ -96,52 +99,52 @@ const groupedColumns = computed(() => {
     groups.set(resolution.referenceField, [...group, resolution])
   }
 
-  return Array.from(groups.entries()).map(([referenceField, items]) => {
+  return [...groups.entries()].map(([referenceField, items]) => {
     const sourceField = items[0]?.sourceField ?? referenceField
     const outputField = items[0]?.outputField ?? referenceField
     const resolvedCount = items.filter((item) => item.status === 'matched').length
     const unresolvedCount = items.length - resolvedCount
 
     return {
-      resolutionKey: referenceField,
-      sourceField,
-      outputField,
-      sourceLabel: getSourceLabel(sourceField),
-      outputLabel: getOutputLabel(outputField),
-      resolvedCount,
-      unresolvedCount,
-      progressWidth: `${Math.max(0, Math.min(100, items.length ? (resolvedCount / items.length) * 100 : 0))}%`,
       items,
+      outputField,
+      outputLabel: getOutputLabel(outputField),
+      progressWidth: `${Math.max(0, Math.min(100, items.length ? (resolvedCount / items.length) * 100 : 0))}%`,
+      resolutionKey: referenceField,
+      resolvedCount,
+      sourceField,
+      sourceLabel: getSourceLabel(sourceField),
+      unresolvedCount,
     }
   })
 })
 
 const summaryItems = computed(() => [
   {
+    barClass: 'bg-muted',
     key: 'groups',
     label: 'Columns to reconcile',
     value: groupedColumns.value.length,
-    barClass: 'bg-muted',
   },
   {
+    barClass: 'bg-success',
     key: 'resolved',
     label: 'Values resolved',
     value: props.spreadsheet.referenceResolutions.value.filter(
       (resolution) => resolution.status === 'matched',
     ).length,
-    barClass: 'bg-success',
   },
   {
+    barClass: 'bg-warning',
     key: 'unresolved',
     label: 'Values to resolve',
     value: props.spreadsheet.unresolvedReferenceResolutions.value.length,
-    barClass: 'bg-warning',
   },
   {
+    barClass: 'bg-muted',
     key: 'rows',
     label: 'Total rows',
     value: props.spreadsheet.rowSummary.value.totalRows,
-    barClass: 'bg-muted',
   },
 ])
 
@@ -153,12 +156,15 @@ const unresolvedGroupKeys = computed(() =>
 
 function getNextExpandableKey(currentKey: string) {
   const currentIndex = groupedColumns.value.findIndex((group) => group.resolutionKey === currentKey)
-  if (currentIndex < 0)
+  if (currentIndex === -1) {
     return unresolvedGroupKeys.value[0] ?? groupedColumns.value[0]?.resolutionKey
+  }
 
   for (let index = currentIndex + 1; index < groupedColumns.value.length; index += 1) {
     const nextGroup = groupedColumns.value[index]
-    if (nextGroup?.unresolvedCount) return nextGroup.resolutionKey
+    if (nextGroup?.unresolvedCount) {
+      return nextGroup.resolutionKey
+    }
   }
 
   return unresolvedGroupKeys.value[0] ?? currentKey
@@ -188,8 +194,12 @@ watch(
     const previousGroup = previousGroups?.find(
       (group) => group.resolutionKey === expandedResolutionKey.value,
     )
-    if (!previousGroup) return
-    if (!previousGroup.unresolvedCount || currentGroup.unresolvedCount) return
+    if (!previousGroup) {
+      return
+    }
+    if (!previousGroup.unresolvedCount || currentGroup.unresolvedCount) {
+      return
+    }
 
     expandedResolutionKey.value = getNextExpandableKey(currentGroup.resolutionKey)
   },
@@ -199,33 +209,45 @@ watch(
 )
 
 function getMetaTone(resolution: SpreadsheetReferenceResolution) {
-  if (resolution.status === 'matched') return null
+  if (resolution.status === 'matched') {
+    return null
+  }
 
   const bestScore = getBestScore(resolution.candidates)
-  if (bestScore === null) return { label: 'No options available', class: 'text-error' }
-  if (bestScore === 0) return null
+  if (bestScore === null) {
+    return { label: 'No options available', class: 'text-error' }
+  }
+  if (bestScore === 0) {
+    return null
+  }
 
-  return { label: `Best match: ${bestScore}%`, class: 'text-warning' }
+  return { class: 'text-warning', label: `Best match: ${bestScore}%` }
 }
 
 function getResolutionBadge(resolution: SpreadsheetReferenceResolution) {
-  if (resolution.status === 'matched') return { label: 'Resolved', color: 'success' as const }
+  if (resolution.status === 'matched') {
+    return { label: 'Resolved', color: 'success' as const }
+  }
 
   const bestScore = getBestScore(resolution.candidates)
-  if (bestScore === null) return { label: 'No options', color: 'error' as const }
+  if (bestScore === null) {
+    return { label: 'No options', color: 'error' as const }
+  }
 
-  return { label: 'Needs review', color: 'warning' as const }
+  return { color: 'warning' as const, label: 'Needs review' }
 }
 
 function handleSelect(resolution: SpreadsheetReferenceResolution, value: SpreadsheetValue) {
   const candidate = resolution.candidates.find((entry) => entry.value === value)
-  if (!candidate) return
+  if (!candidate) {
+    return
+  }
 
   props.spreadsheet.selectReference({
     referenceField: resolution.referenceField,
-    sourceValue: resolution.sourceValue,
-    selectedValue: candidate.value,
     selectedLabel: candidate.label,
+    selectedValue: candidate.value,
+    sourceValue: resolution.sourceValue,
   })
 }
 </script>

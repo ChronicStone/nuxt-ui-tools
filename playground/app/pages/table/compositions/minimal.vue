@@ -7,7 +7,7 @@ import { defineTableSchema, useTable } from '#ui-tools/table'
 
 type DirectoryTeam = 'Design' | 'Engineering' | 'Finance' | 'Operations' | 'Platform'
 type DirectoryPresence = 'Paris' | 'Montreal' | 'Tokyo' | 'Remote'
-type DirectoryRow = {
+interface DirectoryRow {
   id: string
   name: string
   role: string
@@ -19,76 +19,76 @@ type DirectoryRow = {
 
 const contacts: DirectoryRow[] = [
   {
+    active: true,
     id: 'contact-01',
     name: 'Amélie Martin',
+    presence: 'Paris',
     role: 'Product designer',
     team: 'Design',
-    presence: 'Paris',
     timezone: 'Europe/Paris',
-    active: true,
   },
   {
+    active: true,
     id: 'contact-02',
     name: 'Jon Bell',
+    presence: 'Montreal',
     role: 'Staff engineer',
     team: 'Engineering',
-    presence: 'Montreal',
     timezone: 'America/Toronto',
-    active: true,
   },
   {
+    active: false,
     id: 'contact-03',
     name: 'Mina Okafor',
+    presence: 'Remote',
     role: 'Operations lead',
     team: 'Operations',
-    presence: 'Remote',
     timezone: 'Africa/Lagos',
-    active: false,
   },
   {
+    active: true,
     id: 'contact-04',
     name: 'Taro Sato',
+    presence: 'Tokyo',
     role: 'Platform engineer',
     team: 'Platform',
-    presence: 'Tokyo',
     timezone: 'Asia/Tokyo',
-    active: true,
   },
   {
+    active: true,
     id: 'contact-05',
     name: 'Léa Bernard',
+    presence: 'Paris',
     role: 'Finance manager',
     team: 'Finance',
-    presence: 'Paris',
     timezone: 'Europe/Paris',
-    active: true,
   },
   {
+    active: true,
     id: 'contact-06',
     name: 'Samira Khan',
+    presence: 'Remote',
     role: 'Design systems engineer',
     team: 'Engineering',
-    presence: 'Remote',
     timezone: 'Europe/London',
-    active: true,
   },
   {
+    active: true,
     id: 'contact-07',
     name: 'Noah Tremblay',
+    presence: 'Montreal',
     role: 'Customer operations',
     team: 'Operations',
-    presence: 'Montreal',
     timezone: 'America/Toronto',
-    active: true,
   },
   {
+    active: false,
     id: 'contact-08',
     name: 'Aya Mori',
+    presence: 'Tokyo',
     role: 'Product designer',
     team: 'Design',
-    presence: 'Tokyo',
     timezone: 'Asia/Tokyo',
-    active: false,
   },
 ]
 
@@ -102,17 +102,7 @@ const presenceOptions = ['Paris', 'Montreal', 'Tokyo', 'Remote'].map((value) => 
 }))
 
 const schema = defineTableSchema({
-  tableKey: 'people-directory-grid',
-  rowKey: 'id',
   defaultLayout: 'grid',
-  pagination: false,
-  source: {
-    mode: 'client',
-    query: () => ({
-      queryKey: ['table-composition-directory'],
-      queryFn: async () => contacts,
-    }),
-  },
   filters: {
     search: { fields: ['name', 'role', 'team', 'presence'], placeholder: 'Find a teammate' },
     ui: (filter) => [
@@ -140,19 +130,10 @@ const schema = defineTableSchema({
       }),
     ],
   },
-  table: {
-    columns: (column) => [
-      column.field('name', { label: 'Name' }),
-      column.field('role', { label: 'Role' }),
-      column.field('team', { label: 'Team' }),
-      column.field('presence', { label: 'Presence' }),
-      column.field('timezone', { label: 'Timezone' }),
-    ],
-  },
   grid: {
     enabled: true,
-    mode: 'flow',
     gridSize: '1 md:2 xl:3',
+    mode: 'flow',
     renderItem: ({ row }) => (
       <UCard
         class="h-full rounded-md shadow-none"
@@ -209,6 +190,25 @@ const schema = defineTableSchema({
       </UCard>
     ),
   },
+  pagination: false,
+  rowKey: 'id',
+  source: {
+    mode: 'client',
+    query: () => ({
+      queryKey: ['table-composition-directory'],
+      queryFn: async () => contacts,
+    }),
+  },
+  table: {
+    columns: (column) => [
+      column.field('name', { label: 'Name' }),
+      column.field('role', { label: 'Role' }),
+      column.field('team', { label: 'Team' }),
+      column.field('presence', { label: 'Presence' }),
+      column.field('timezone', { label: 'Timezone' }),
+    ],
+  },
+  tableKey: 'people-directory-grid',
 })
 
 const table = useTable(schema)

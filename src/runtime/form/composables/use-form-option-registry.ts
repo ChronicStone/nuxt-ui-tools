@@ -1,7 +1,6 @@
 import { computed, shallowReactive } from 'vue'
 
-import type { FormValue } from '../types'
-import type { FormOptionRuntimeState } from '../types'
+import type { FormValue, FormOptionRuntimeState } from '../types'
 import type { ResolvedFormOption } from '../utils/options'
 import { isString } from '../utils/predicate'
 
@@ -14,7 +13,9 @@ export function useFormOptionRegistry() {
     states[key] = state
 
     return () => {
-      if (states[key] === state) delete states[key]
+      if (states[key] === state) {
+        delete states[key]
+      }
     }
   }
 
@@ -31,29 +32,29 @@ export function useFormOptionRegistry() {
   }
 
   return {
-    register,
     get,
     refresh,
     refreshMany,
+    register,
   }
 }
 
 function createEmptyOptionState(): FormOptionRuntimeState {
   return {
-    items: computed<readonly ResolvedFormOption[]>(() => []),
-    pending: computed<boolean>(() => false),
-    fetching: computed<boolean>(() => false),
-    loading: computed<boolean>(() => false),
-    creating: computed<boolean>(() => false),
+    add: () => {},
     creatable: computed<boolean>(() => false),
+    create: async () => null,
     createLabel: computed<string | undefined>(() => undefined),
-    error: computed<FormValue | null>(() => null),
+    creating: computed<boolean>(() => false),
     disableOnLoading: computed<boolean>(() => false),
+    error: computed<FormValue | null>(() => null),
+    fetching: computed<boolean>(() => false),
+    items: computed<readonly ResolvedFormOption[]>(() => []),
+    loading: computed<boolean>(() => false),
+    pending: computed<boolean>(() => false),
+    refresh: async () => {},
     refreshable: computed<boolean>(() => false),
     selectCreatedOption: computed<boolean>(() => true),
-    refresh: async () => {},
-    add: () => {},
-    create: async () => null,
   }
 }
 

@@ -19,8 +19,8 @@ const title = computed(() => resolveFormText(props.field.label))
 const description = computed(() => resolveFormText(props.field.description))
 const variant = computed(() => props.field.layout?.variant ?? 'plain')
 const grid = useFormContainerLayout({
-  layout: () => props.field.layout,
   formLayout: form.currentLayout,
+  layout: () => props.field.layout,
 })
 </script>
 

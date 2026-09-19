@@ -10,13 +10,13 @@ const props = defineProps<FormDrawerLayoutProps>()
 const emit = defineEmits<FormOverlayLayoutEmits>()
 const direction = computed(() => props.config?.placement ?? 'right')
 const contentStyle = computed(() => ({
-  width: cssSize(props.config?.width),
   height: cssSize(props.config?.height),
   resize: props.config?.resizable
     ? ['top', 'bottom'].includes(direction.value)
       ? 'vertical'
       : 'horizontal'
     : undefined,
+  width: cssSize(props.config?.width),
 }))
 const contentProps = computed(() => ({
   disableOutsidePointerEvents: undefined,
@@ -28,7 +28,9 @@ function cssSize(value: number | string | undefined) {
 }
 
 function handleAnimationEnd(open: boolean) {
-  if (!open) emit('after-close')
+  if (!open) {
+    emit('after-close')
+  }
 }
 </script>
 

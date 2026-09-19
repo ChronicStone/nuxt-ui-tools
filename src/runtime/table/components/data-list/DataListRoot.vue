@@ -9,15 +9,16 @@ import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 import { isObject } from '../../../shared/utils/predicate'
 import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 import { provideDataListUi } from '../../composables/use-data-list-ui'
-import { provideTableInternals, type TableInternals } from '../../composables/use-table-internals'
+import { provideTableInternals } from '../../composables/use-table-internals'
+import type { TableInternals } from '../../composables/use-table-internals'
 import type { DataListControlSize, DataListDensity, DataListUiConfig } from '../../types'
 import { mergeDataListUiConfig } from '../../utils'
 
-type DataListTable = {
+interface DataListTable {
   schema: ComputedRef<{ tableKey: string }>
   __internals: TableInternals
 }
-type AppConfigRoot = {
+interface AppConfigRoot {
   nuxtUiTools?: {
     dataList?: unknown
   }
@@ -43,8 +44,15 @@ provideDataListUi(
       props.density,
       props.size,
     )
-    if (!isMobile.value || !merged.mobile) return merged
-    return mergeDataListUiConfig(merged, merged.mobile, merged.mobile.density, merged.mobile.control?.size)
+    if (!isMobile.value || !merged.mobile) {
+      return merged
+    }
+    return mergeDataListUiConfig(
+      merged,
+      merged.mobile,
+      merged.mobile.density,
+      merged.mobile.control?.size,
+    )
   }),
 )
 
@@ -52,8 +60,12 @@ onMounted(() => props.table['__internals'].startup.scheduleStart())
 onBeforeUnmount(() => props.table['__internals'].startup.dispose())
 
 function resolveAppDataListUi(config: AppConfigRoot): DataListUiConfig | undefined {
-  if (!config.nuxtUiTools || !isObject(config.nuxtUiTools)) return undefined
-  if (!('dataList' in config.nuxtUiTools)) return undefined
+  if (!config.nuxtUiTools || !isObject(config.nuxtUiTools)) {
+    return undefined
+  }
+  if (!('dataList' in config.nuxtUiTools)) {
+    return undefined
+  }
   return isDataListUiConfig(config.nuxtUiTools.dataList) ? config.nuxtUiTools.dataList : undefined
 }
 

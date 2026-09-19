@@ -38,8 +38,12 @@ export function setupTailwindCss(nuxt: Nuxt, runtimeDir: string) {
     uiCssTemplate.getContents = async (ctx) => {
       const uiCss = await getUiCss(ctx)
 
-      if (!isString(uiCss)) return sourceDirective
-      if (uiCss.includes(sourceDirective)) return uiCss
+      if (!isString(uiCss)) {
+        return sourceDirective
+      }
+      if (uiCss.includes(sourceDirective)) {
+        return uiCss
+      }
       return `${sourceDirective}\n${uiCss}`
     }
   })

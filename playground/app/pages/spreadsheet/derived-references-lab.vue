@@ -19,20 +19,6 @@ const products = [
 
 function createDerivedReferencesSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.derived-references-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 20,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
     columns: {
       static: (column) => [
         column.text('candidateName', {
@@ -49,6 +35,17 @@ function createDerivedReferencesSchema() {
         }),
       ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 20,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.derived-references-lab',
+    matching: {
+      strategy: 'smart',
+    },
     references: (reference) => [
       reference.select('productId', {
         source: 'productLabelRaw',
@@ -60,6 +57,9 @@ function createDerivedReferencesSchema() {
         ],
       }),
     ],
+    sheet: {
+      strategy: 'auto',
+    },
   })
 }
 
@@ -79,19 +79,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Derived references')
 
   return {
-    fileName: 'spreadsheet-derived-references-lab.xlsx',
     binary: write(workbook, {
       type: 'buffer',
       bookType: 'xlsx',
     }),
+    fileName: 'spreadsheet-derived-references-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

@@ -16,7 +16,6 @@ import type {
 } from '#ui-tools/form'
 
 const schema = defineFormSchema({
-  formKey: 'exassess.profile',
   context: {
     countries: () =>
       queryOptions({
@@ -30,7 +29,7 @@ const schema = defineFormSchema({
         select: (data) => data.items,
       }),
     session: () => Promise.resolve({ id: 'session_1' }),
-    tenant: { id: 'tenant_1', currency: 'EUR' },
+    tenant: { currency: 'EUR', id: 'tenant_1' },
   },
   fields: [
     {
@@ -237,9 +236,23 @@ const schema = defineFormSchema({
       content: 'This field does not write to output',
     },
   ],
+  formKey: 'exassess.profile',
 })
 
 const steppedLifecycleSchema = defineFormSchema({
+  onBeforeNext: ({ api, formData, stepIndex }) => {
+    expectTypeOf(api.validate({ focus: true })).toEqualTypeOf<Promise<boolean>>()
+    expectTypeOf(formData).toEqualTypeOf<unknown>()
+    expectTypeOf(stepIndex).toEqualTypeOf<number>()
+    return true
+  },
+  onBeforePrevious: ({ api }) => {
+    expectTypeOf(api.focus('firstName')).toEqualTypeOf<Promise<boolean>>()
+  },
+  onStepSkipped: ({ api }) => {
+    api.reset()
+  },
+  skipStep: ({ stepIndex }) => stepIndex > 10,
   steps: [
     {
       key: 'first',
@@ -260,19 +273,6 @@ const steppedLifecycleSchema = defineFormSchema({
       ],
     },
   ],
-  onBeforeNext: ({ api, formData, stepIndex }) => {
-    expectTypeOf(api.validate({ focus: true })).toEqualTypeOf<Promise<boolean>>()
-    expectTypeOf(formData).toEqualTypeOf<unknown>()
-    expectTypeOf(stepIndex).toEqualTypeOf<number>()
-    return true
-  },
-  onBeforePrevious: ({ api }) => {
-    expectTypeOf(api.focus('firstName')).toEqualTypeOf<Promise<boolean>>()
-  },
-  skipStep: ({ stepIndex }) => stepIndex > 10,
-  onStepSkipped: ({ api }) => {
-    api.reset()
-  },
 })
 
 void steppedLifecycleSchema
@@ -284,40 +284,57 @@ type SchemaOutput = ExtractFormOutput<typeof schema>
 type NameField = Extract<SchemaFields[number], { key: 'profile.name' }>
 type CurrencyField = Extract<SchemaFields[number], { key: 'currency' }>
 type RolesField = Extract<SchemaFields[number], { key: 'roles' }>
-type TagField = { key: 'tags'; type: 'tag' }
-type RangeSliderField = { key: 'scoreRange'; type: 'slider'; multiple: true }
-type MultipleFileField = { key: 'avatar'; type: 'file'; multiple: true }
-type AutoCompleteField = {
+interface TagField {
+  key: 'tags'
+  type: 'tag'
+}
+interface RangeSliderField {
+  key: 'scoreRange'
+  type: 'slider'
+  multiple: true
+}
+interface MultipleFileField {
+  key: 'avatar'
+  type: 'file'
+  multiple: true
+}
+interface AutoCompleteField {
   key: 'assignees'
   type: 'auto-complete'
   multiple: true
   options: readonly [{ label: 'Ada'; value: 'ada' }, { label: 'Grace'; value: 'grace' }]
 }
-type RadioCardField = {
+interface RadioCardField {
   key: 'plan'
   type: 'radio-card'
   options: readonly [{ label: 'Basic'; value: 'basic' }, { label: 'Pro'; value: 'pro' }]
 }
-type CheckboxCardField = {
+interface CheckboxCardField {
   key: 'features'
   type: 'checkbox-card'
   options: readonly ['reports', 'exports']
 }
-type SwitchGroupField = {
+interface SwitchGroupField {
   key: 'notifications'
   type: 'switch-group'
   options: readonly ['email', 'sms']
 }
-type RatingField = { key: 'rating'; type: 'rating' }
-type TimeField = { key: 'startsAt'; type: 'time' }
+interface RatingField {
+  key: 'rating'
+  type: 'rating'
+}
+interface TimeField {
+  key: 'startsAt'
+  type: 'time'
+}
 const selectedStatusOptions = queryOptions({
-  queryKey: ['selected-statuses'],
   queryFn: async () => ({
     items: [{ label: 'Draft', value: 'draft' }] as const,
   }),
+  queryKey: ['selected-statuses'],
   select: (data) => data.items,
 })
-type SelectedQueryField = {
+interface SelectedQueryField {
   key: 'selectedStatus'
   type: 'select'
   options: typeof selectedStatusOptions
@@ -325,16 +342,16 @@ type SelectedQueryField = {
 const matrixSchema = defineFormSchema({
   fields: [
     {
-      key: 'permissions',
-      type: 'matrix',
-      rows: [
-        { key: 'users', label: 'Users' },
-        { key: 'orders', label: 'Orders' },
-      ],
       fields: [
         { key: 'read', type: 'switch' },
         { key: 'scope', type: 'select', options: ['own', 'all'] },
       ],
+      key: 'permissions',
+      rows: [
+        { key: 'users', label: 'Users' },
+        { key: 'orders', label: 'Orders' },
+      ],
+      type: 'matrix',
     },
     {
       key: 'contacts',
@@ -342,15 +359,15 @@ const matrixSchema = defineFormSchema({
       variantKey: 'kind',
       variants: [
         {
+          fields: [{ key: 'address', type: 'text' }],
           key: 'email',
           label: 'Email',
-          fields: [{ key: 'address', type: 'text' }],
           virtualFields: { rank: (index) => index + 1 },
         },
         {
+          fields: [{ key: 'number', type: 'phone-number' }],
           key: 'phone',
           label: 'Phone',
-          fields: [{ key: 'number', type: 'phone-number' }],
         },
       ],
     },
@@ -359,8 +376,8 @@ const matrixSchema = defineFormSchema({
 
 const requiredSchema = defineFormSchema({
   fields: [
-    { key: 'email', type: 'text', required: true },
-    { key: 'password', type: 'password', required: true },
+    { key: 'email', required: true, type: 'text' },
+    { key: 'password', required: true, type: 'password' },
   ],
 })
 
@@ -379,7 +396,7 @@ function assertFormApiTypes(formApi: FormApiController) {
     mode: 'drawer',
     onSubmit: ({ formData }) => {
       expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
-      return { success: true, data: { id: 'created-account' } }
+      return { data: { id: 'created-account' }, success: true }
     },
   })
   expectTypeOf<Awaited<typeof submitResult>>().toMatchTypeOf<
@@ -516,7 +533,6 @@ describe('form output inference', () => {
 
     useFormSubmit({
       formRef,
-      schema,
       onSubmit: ({ formData, api }) => {
         expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
         expectTypeOf(formData.meta.score).toEqualTypeOf<string>()
@@ -529,12 +545,12 @@ describe('form output inference', () => {
 
         return { success: true }
       },
+      schema,
     })
   })
 
   it('types useForm controller state, output, and submit handlers from the schema', () => {
     const form = useForm({
-      schema,
       onSubmit: ({ formData }) => {
         expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
         expectTypeOf(formData.meta.score).toEqualTypeOf<string>()
@@ -542,6 +558,7 @@ describe('form output inference', () => {
 
         return { success: true }
       },
+      schema,
     })
 
     type FormController = typeof form

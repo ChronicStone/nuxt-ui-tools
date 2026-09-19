@@ -28,8 +28,12 @@ import type {
 export function getPaginationMode(schema: {
   pagination?: TablePaginationSchema
 }): TablePaginationState['mode'] {
-  if (schema.pagination === false) return 'none'
-  if (schema.pagination?.mode === 'cursor') return 'cursor'
+  if (schema.pagination === false) {
+    return 'none'
+  }
+  if (schema.pagination?.mode === 'cursor') {
+    return 'cursor'
+  }
   return 'offset'
 }
 
@@ -38,21 +42,29 @@ export function getDefaultPageSize(params: {
   layout: TableLayout
 }): number {
   const paginationConf = params.schema.pagination
-  if (!isObject(paginationConf)) return PAGINATION_DEFAULTS.defaultSize[params.layout]
+  if (!isObject(paginationConf)) {
+    return PAGINATION_DEFAULTS.defaultSize[params.layout]
+  }
   if ('mode' in paginationConf && paginationConf.mode === 'cursor') {
-    if (isNumber(paginationConf.pageSize)) return paginationConf.pageSize
-    if (isLayoutNumberMap(paginationConf.pageSize))
+    if (isNumber(paginationConf.pageSize)) {
+      return paginationConf.pageSize
+    }
+    if (isLayoutNumberMap(paginationConf.pageSize)) {
       return (
         paginationConf.pageSize[params.layout] ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
       )
+    }
 
     return PAGINATION_DEFAULTS.defaultSize[params.layout]
   }
-  if (isNumber(paginationConf.defaultSize)) return paginationConf.defaultSize
-  if (isLayoutNumberMap(paginationConf.defaultSize))
+  if (isNumber(paginationConf.defaultSize)) {
+    return paginationConf.defaultSize
+  }
+  if (isLayoutNumberMap(paginationConf.defaultSize)) {
     return (
       paginationConf.defaultSize[params.layout] ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
     )
+  }
 
   return PAGINATION_DEFAULTS.defaultSize[params.layout]
 }
@@ -95,9 +107,13 @@ export function getDefaultSort(params: {
   layout: TableLayout
 }): { key: string; dir: TableSortingDirection } | null {
   const defaultSorting = params.schema[params.layout]?.defaultSorting
-  if (!defaultSorting) return null
-  else if (isString(defaultSorting)) return { key: defaultSorting, dir: 'asc' as const }
-  else return defaultSorting
+  if (!defaultSorting) {
+    return null
+  } else if (isString(defaultSorting)) {
+    return { key: defaultSorting, dir: 'asc' as const }
+  } else {
+    return defaultSorting
+  }
 }
 
 export function getSortKeys(params: { schema: TableSchemaView; layout: TableLayout }): string[] {
@@ -146,8 +162,12 @@ export function createTableFilterValueCodec(
         const [from, to] = rawValue.split('..')
         const range: TableQueryStateFilterValue = {}
 
-        if (from) range.from = numberCodec.parse(from)
-        if (to) range.to = numberCodec.parse(to)
+        if (from) {
+          range.from = numberCodec.parse(from)
+        }
+        if (to) {
+          range.to = numberCodec.parse(to)
+        }
         return range
       }
 
@@ -155,8 +175,12 @@ export function createTableFilterValueCodec(
         const [from, to] = rawValue.split('..')
         const range: TableQueryStateFilterValue = {}
 
-        if (from) range.from = dateISOCodec.parse(from)
-        if (to) range.to = dateISOCodec.parse(to)
+        if (from) {
+          range.from = dateISOCodec.parse(from)
+        }
+        if (to) {
+          range.to = dateISOCodec.parse(to)
+        }
         return range
       }
 
@@ -197,7 +221,9 @@ export function createTableFilterValueCodec(
 export function resolveFilterDefaultOperator(
   definition: TableQueryStateFilterDefinition,
 ): TableFilterOperator {
-  if (definition.defaultOperator) return definition.defaultOperator
+  if (definition.defaultOperator) {
+    return definition.defaultOperator
+  }
   return DEFAULT_FILTER_OPERATOR[definition.kind]
 }
 
@@ -206,7 +232,9 @@ export function resolveFilterSupportedOperators(
 ): TableFilterOperator[] {
   const defaultOperator = resolveFilterDefaultOperator(definition)
 
-  if (!definition.operators?.length) return [defaultOperator]
+  if (!definition.operators?.length) {
+    return [defaultOperator]
+  }
   return [...new Set([defaultOperator, ...definition.operators])]
 }
 
@@ -234,28 +262,32 @@ export function normalizeFilterDefinition(
     return {
       ...definition,
       defaultOperator,
-      operators,
       defaultValue,
+      operators,
     }
   }
 
   if (isMinMaxNumberRange(defaultValue)) {
     const range: TableQueryStateFilterValue = {}
-    if ('min' in defaultValue) range.from = defaultValue.min
-    if ('max' in defaultValue) range.to = defaultValue.max
+    if ('min' in defaultValue) {
+      range.from = defaultValue.min
+    }
+    if ('max' in defaultValue) {
+      range.to = defaultValue.max
+    }
     return {
       ...definition,
       defaultOperator,
-      operators,
       defaultValue: range,
+      operators,
     }
   }
 
   return {
     ...definition,
     defaultOperator,
-    operators,
     defaultValue,
+    operators,
   }
 }
 
@@ -302,7 +334,7 @@ export function isTableFilterRuleDefault(options: {
   definition: TableUiFilterDefinition
 }): boolean {
   const normalizedDefinition = normalizeFilterDefinition(options.definition)
-  const defaultValue = normalizedDefinition.defaultValue
+  const { defaultValue } = normalizedDefinition
 
   return (
     defaultValue !== undefined &&
@@ -326,7 +358,7 @@ export function resolveTableActiveFilterRules(options: {
 }): TableQueryStateFilterRule[] {
   return options.rules.filter((rule) => {
     const definition = options.definitions.find((candidate) => candidate.key === rule.key)
-    return !definition || !isTableFilterRuleDefault({ rule, definition })
+    return !definition || !isTableFilterRuleDefault({ definition, rule })
   })
 }
 
@@ -352,7 +384,7 @@ export function parseTableFilterQueryState(options: {
     }
   }
 
-  return mergeTableFilterDefaultRules({ rules, definitions: options.definitions })
+  return mergeTableFilterDefaultRules({ definitions: options.definitions, rules })
 }
 
 export function serializeTableFilterQueryState(options: {
@@ -363,7 +395,9 @@ export function serializeTableFilterQueryState(options: {
 
   for (const rule of options.rules) {
     const filter = options.definitions.find((definition) => definition.key === rule.key)
-    if (!filter || isTableFilterRuleDefault({ rule, definition: filter })) continue
+    if (!filter || isTableFilterRuleDefault({ definition: filter, rule })) {
+      continue
+    }
 
     const definition = normalizeFilterDefinition(filter)
     const operator = rule.operator ?? resolveFilterDefaultOperator(definition)
@@ -383,9 +417,15 @@ function isRange<T>(value: T): value is T & FilterRangeValue {
 }
 
 function hasFilterValue(value: TableQueryStateFilterValue): boolean {
-  if (Array.isArray(value)) return value.length > 0
-  if (isString(value)) return value.length > 0
-  if (isRange(value)) return value.from != null || value.to != null
+  if (Array.isArray(value)) {
+    return value.length > 0
+  }
+  if (isString(value)) {
+    return value.length > 0
+  }
+  if (isRange(value)) {
+    return value.from != null || value.to != null
+  }
   return true
 }
 
@@ -398,7 +438,9 @@ function isTableFilterValue<T>(value: T): value is T & TableQueryStateFilterValu
     return value.every((item) => isString(item) || isNumber(item) || isBoolean(item))
   }
 
-  if (!isRange(value)) return false
+  if (!isRange(value)) {
+    return false
+  }
 
   return [value.from, value.to].every(
     (item) => item == null || isNumber(item) || item instanceof Date,
@@ -410,12 +452,16 @@ function areFilterValuesEqual(
   right: TableQueryStateFilterValue,
 ): boolean {
   if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false
+    }
 
     const unmatched = [...right]
     for (const value of left) {
       const index = unmatched.findIndex((candidate) => Object.is(candidate, value))
-      if (index === -1) return false
+      if (index === -1) {
+        return false
+      }
       unmatched.splice(index, 1)
     }
 
@@ -427,7 +473,9 @@ function areFilterValuesEqual(
   }
 
   if (isRange(left) || isRange(right)) {
-    if (!isRange(left) || !isRange(right)) return false
+    if (!isRange(left) || !isRange(right)) {
+      return false
+    }
 
     return (
       areOptionalFilterValuesEqual(left.from, right.from) &&
@@ -447,7 +495,9 @@ function areOptionalFilterValuesEqual<TLeft, TRight>(left: TLeft, right: TRight)
 }
 
 function isMinMaxNumberRange<T>(value: T): value is T & { min?: number; max?: number } {
-  if (!isObject(value) || Array.isArray(value)) return false
+  if (!isObject(value) || Array.isArray(value)) {
+    return false
+  }
 
   if ('from' in value || 'to' in value) {
     return false
@@ -472,9 +522,12 @@ function serializeScalar(value: string | number | boolean | Date): string {
 }
 
 function serializeOptionalScalar<T>(value: T): string {
-  if (value == null) return ''
-  if (isString(value) || isNumber(value) || isBoolean(value) || value instanceof Date)
+  if (value == null) {
+    return ''
+  }
+  if (isString(value) || isNumber(value) || isBoolean(value) || value instanceof Date) {
     return serializeScalar(value)
+  }
   return ''
 }
 

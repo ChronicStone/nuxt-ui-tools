@@ -18,25 +18,25 @@ export function createRuntimeColumns(options: {
   return (options.schema.table?.columns ?? [])
     .filter((column) => (column.condition?.() ?? true) && (column.enabled ?? true))
     .map((column): TableRuntimeColumn => ({
-      id: column.key,
-      label: resolveColumnLabel({ column }),
-      icon: column.icon,
-      width: column.width,
-      minWidth: column.minWidth,
-      maxWidth: column.maxWidth,
       align: column.align,
-      sortableKey: getSortableKey({ column }),
       canHide: !column.required,
+      configurable: true,
       defaultVisible: resolveColumnVisibility({
         column,
         context: options.context,
       }),
-      configurable: true,
-      pinned: column.pinned,
-      summary: column.summary,
       ellipsis: column.ellipsis === true,
-      skeleton: column.skeleton,
+      icon: column.icon,
+      id: column.key,
+      label: resolveColumnLabel({ column }),
       lines: column.lines,
+      maxWidth: column.maxWidth,
+      minWidth: column.minWidth,
+      pinned: column.pinned,
+      skeleton: column.skeleton,
+      sortableKey: getSortableKey({ column }),
+      summary: column.summary,
+      width: column.width,
     }))
 }
 
@@ -96,18 +96,18 @@ export function getSortableKey(options: { column: SchemaTableColumn }) {
     return options.column.sortableKey
   }
 
-  return undefined
+  return
 }
 
 export function uniqueColumnIds(options: { columnIds: string[] }) {
-  return Array.from(new Set(options.columnIds))
+  return [...new Set(options.columnIds)]
 }
 
 function humanizeKey(options: { value: string }) {
   return options.value
-    .replace(/[_-]+/g, ' ')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/\s+/g, ' ')
+    .replaceAll(/[_-]+/g, ' ')
+    .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
+    .replaceAll(/\s+/g, ' ')
     .trim()
     .replace(/^./, (char) => char.toUpperCase())
 }

@@ -13,7 +13,7 @@ import {
   resolveFilterEditorSizeClasses,
 } from '../../../utils'
 
-type TreeEntry = {
+interface TreeEntry {
   id: string
   label: string
   value?: string | number | boolean
@@ -31,7 +31,7 @@ type TreeEntry = {
 
 const props = defineProps<{
   entries: TreeEntry[]
-  items: Array<{
+  items: {
     id: string
     label: string
     value: string
@@ -43,7 +43,7 @@ const props = defineProps<{
     expanded: boolean
     selectable: boolean
     disabled?: boolean
-  }>
+  }[]
   multiple: boolean
   countLoading: boolean
   selectedIcon?: string
@@ -64,9 +64,15 @@ const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 const geometry = computed(() => resolveDataListControlGeometry(size.value))
 const indentStep = computed(() => {
-  if (size.value === 'xs' || size.value === 'sm') return 8
-  if (size.value === 'md') return 10
-  if (size.value === 'lg') return 12
+  if (size.value === 'xs' || size.value === 'sm') {
+    return 8
+  }
+  if (size.value === 'md') {
+    return 10
+  }
+  if (size.value === 'lg') {
+    return 12
+  }
   return 14
 })
 
@@ -81,7 +87,9 @@ function activateTreeEntry(entry: TreeEntry) {
     emit('toggleEntry', entry.id)
     return
   }
-  if (entry.expandable) emit('toggleExpanded', entry.id)
+  if (entry.expandable) {
+    emit('toggleExpanded', entry.id)
+  }
 }
 </script>
 

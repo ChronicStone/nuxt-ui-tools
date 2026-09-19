@@ -4,61 +4,35 @@ import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import { hasProperty, isString } from '#ui-tools/shared/utils/predicate'
-import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
+import { defineTableSchema, useTable } from '#ui-tools/table'
+import type { TableFilterOptionEntry } from '#ui-tools/table'
 import DataList from '#ui-tools/table/components/DataList.vue'
 
 import { demoEmployeesClient } from '../../lib/demo-employees-api'
+
 const { locale, t } = useI18n()
 const { tableSize } = usePlaygroundShell()
 const countryTreeOptions = [
   {
-    label: () => translateRegion('Europe'),
     children: [
       { label: () => translateCountry('France'), value: 'France' },
       { label: () => translateCountry('Germany'), value: 'Germany' },
       { label: () => translateCountry('United Kingdom'), value: 'United Kingdom' },
     ],
+    label: () => translateRegion('Europe'),
   },
   {
-    label: () => translateRegion('North America'),
     children: [{ label: () => translateCountry('United States'), value: 'United States' }],
+    label: () => translateRegion('North America'),
   },
   {
-    label: () => translateRegion('Asia'),
     children: [{ label: () => translateCountry('Japan'), value: 'Japan' }],
+    label: () => translateRegion('Asia'),
   },
-] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
+] satisfies readonly TableFilterOptionEntry<string>[]
 
 const remoteSchema = defineTableSchema({
-  tableKey: 'demo-employees-remote',
-  rowKey: 'id',
   defaultLayout: 'table',
-  pagination: {
-    defaultSize: {
-      table: 20,
-      grid: 12,
-    },
-    sizeOptions: {
-      table: [10, 20, 50, 100, 500, 1000],
-      grid: [12, 24, 48],
-    },
-    showPageSizePicker: true,
-    showPagesList: true,
-    showPagesCount: true,
-  },
-  source: {
-    mode: 'remote',
-    facets: true,
-    query: (params) => ({
-      queryKey: ['demo-employees', params],
-      queryFn: async () => {
-        if (params.pagination.mode !== 'offset')
-          throw new Error('The remote employee demo uses offset pagination.')
-
-        return demoEmployeesClient.queryTable(params)
-      },
-    }),
-  },
   filters: {
     search: {
       fields: ['fullName', 'email', 'department.company.name', 'employeeSkills.skill.label'],
@@ -271,11 +245,129 @@ const remoteSchema = defineTableSchema({
       }),
     ],
   },
-  table: {
+  grid: {
     defaultSorting: {
-      key: 'hiredAt',
-      dir: 'desc',
+      dir: 'asc',
+      key: 'fullName',
     },
+    enabled: true,
+    gridSize: '1 md:2 xl:3',
+    renderItem: ({ row }) => {
+      const employeeSkills = row.employeeSkills.map((entry) => translateSkill(entry.skill.label))
+      const departmentName = row.department?.name
+        ? translateDepartment(row.department.name)
+        : t('playground.tableRemote.noDepartment')
+      const companyName = row.department?.company?.name ?? t('playground.tableRemote.noCompany')
+      const countryName = row.department?.company?.country
+        ? translateCountry(row.department.company.country)
+        : t('playground.tableCommon.countries.unknown')
+      const salary = row.salary ?? 0
+      const hiredAt = row.hiredAt ?? new Date().toISOString()
+
+      return (
+        <UCard
+          class="rounded-md h-full"
+          ui={{
+            root: 'flex h-full flex-col',
+            header: 'p-4',
+            body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
+            footer: 'mt-auto p-4 pt-3',
+          }}
+          v-slots={{
+            header: () => (
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
+                    {getInitials(row.fullName)}
+                  </div>
+                  <div class="min-w-0">
+                    <div class="truncate font-medium text-highlighted">{row.fullName}</div>
+                    <div class="mt-1 flex items-center gap-2 text-sm text-muted">
+                      <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
+                      <span class="truncate">{departmentName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <UBadge
+                  color={row.isActive ? 'success' : 'neutral'}
+                  variant={row.isActive ? 'soft' : 'subtle'}
+                  size="sm"
+                  label={
+                    row.isActive
+                      ? t('playground.tableCommon.status.online')
+                      : t('playground.tableCommon.status.paused')
+                  }
+                />
+              </div>
+            ),
+            default: () => (
+              <>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                    <div class="text-xs text-muted">
+                      {t('playground.tableCommon.cards.country')}
+                    </div>
+                    <div class="flex items-center gap-2 text-sm font-medium text-highlighted">
+                      <span class="inline-flex h-4 w-4 items-center justify-center text-sm leading-none">
+                        {getCountryFlag(countryName)}
+                      </span>
+                      <span class="truncate">{countryName}</span>
+                    </div>
+                  </div>
+
+                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                    <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
+                    <div class="text-sm font-medium text-highlighted">{formatCurrency(salary)}</div>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  {employeeSkills.slice(0, 4).map((skill) => (
+                    <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={skill} />
+                  ))}
+                </div>
+              </>
+            ),
+            footer: () => (
+              <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
+                <div class="min-w-0 flex-1 truncate">{companyName}</div>
+                <div class="shrink-0">{formatDate(hiredAt)}</div>
+              </div>
+            ),
+          }}
+        />
+      )
+    },
+  },
+  pagination: {
+    defaultSize: {
+      grid: 12,
+      table: 20,
+    },
+    showPageSizePicker: true,
+    showPagesCount: true,
+    showPagesList: true,
+    sizeOptions: {
+      grid: [12, 24, 48],
+      table: [10, 20, 50, 100, 500, 1000],
+    },
+  },
+  rowKey: 'id',
+  source: {
+    facets: true,
+    mode: 'remote',
+    query: (params) => ({
+      queryKey: ['demo-employees', params],
+      queryFn: async () => {
+        if (params.pagination.mode !== 'offset')
+          throw new Error('The remote employee demo uses offset pagination.')
+
+        return demoEmployeesClient.queryTable(params)
+      },
+    }),
+  },
+  table: {
     columns: (column) => [
       column.field('fullName', {
         label: () => t('playground.tableCommon.columns.employee'),
@@ -396,102 +488,12 @@ const remoteSchema = defineTableSchema({
         ),
       }),
     ],
-  },
-  grid: {
-    enabled: true,
-    gridSize: '1 md:2 xl:3',
-    renderItem: ({ row }) => {
-      const employeeSkills = row.employeeSkills.map((entry) => translateSkill(entry.skill.label))
-      const departmentName = row.department?.name
-        ? translateDepartment(row.department.name)
-        : t('playground.tableRemote.noDepartment')
-      const companyName = row.department?.company?.name ?? t('playground.tableRemote.noCompany')
-      const countryName = row.department?.company?.country
-        ? translateCountry(row.department.company.country)
-        : t('playground.tableCommon.countries.unknown')
-      const salary = row.salary ?? 0
-      const hiredAt = row.hiredAt ?? new Date().toISOString()
-
-      return (
-        <UCard
-          class="rounded-md h-full"
-          ui={{
-            root: 'flex h-full flex-col',
-            header: 'p-4',
-            body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
-            footer: 'mt-auto p-4 pt-3',
-          }}
-          v-slots={{
-            header: () => (
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-3">
-                  <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
-                    {getInitials(row.fullName)}
-                  </div>
-                  <div class="min-w-0">
-                    <div class="truncate font-medium text-highlighted">{row.fullName}</div>
-                    <div class="mt-1 flex items-center gap-2 text-sm text-muted">
-                      <UIcon name="i-lucide-building-2" class="size-3.5 shrink-0" />
-                      <span class="truncate">{departmentName}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <UBadge
-                  color={row.isActive ? 'success' : 'neutral'}
-                  variant={row.isActive ? 'soft' : 'subtle'}
-                  size="sm"
-                  label={
-                    row.isActive
-                      ? t('playground.tableCommon.status.online')
-                      : t('playground.tableCommon.status.paused')
-                  }
-                />
-              </div>
-            ),
-            default: () => (
-              <>
-                <div class="grid gap-3 sm:grid-cols-2">
-                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                    <div class="text-xs text-muted">
-                      {t('playground.tableCommon.cards.country')}
-                    </div>
-                    <div class="flex items-center gap-2 text-sm font-medium text-highlighted">
-                      <span class="inline-flex h-4 w-4 items-center justify-center text-sm leading-none">
-                        {getCountryFlag(countryName)}
-                      </span>
-                      <span class="truncate">{countryName}</span>
-                    </div>
-                  </div>
-
-                  <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                    <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
-                    <div class="text-sm font-medium text-highlighted">{formatCurrency(salary)}</div>
-                  </div>
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-                  {employeeSkills.slice(0, 4).map((skill) => (
-                    <UBadge key={skill} color="neutral" variant="subtle" size="xs" label={skill} />
-                  ))}
-                </div>
-              </>
-            ),
-            footer: () => (
-              <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
-                <div class="min-w-0 flex-1 truncate">{companyName}</div>
-                <div class="shrink-0">{formatDate(hiredAt)}</div>
-              </div>
-            ),
-          }}
-        />
-      )
-    },
     defaultSorting: {
-      key: 'fullName',
-      dir: 'asc',
+      dir: 'desc',
+      key: 'hiredAt',
     },
   },
+  tableKey: 'demo-employees-remote',
 })
 
 const table = useTable(remoteSchema)
@@ -524,16 +526,16 @@ function getInitials(value: string) {
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
-    style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
+    style: 'currency',
   }).format(value)
 }
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
-    month: 'short',
     day: 'numeric',
+    month: 'short',
     year: 'numeric',
   }).format(new Date(value))
 }
@@ -566,9 +568,9 @@ function translateCountry(value: string) {
 
 function translateRegion(value: string) {
   const keyByRegion = {
+    Asia: 'asia',
     Europe: 'europe',
     'North America': 'northAmerica',
-    Asia: 'asia',
   } satisfies Record<string, string>
 
   const key = hasProperty(keyByRegion, value) ? keyByRegion[value] : undefined
@@ -577,16 +579,16 @@ function translateRegion(value: string) {
 
 function translateDepartment(value: string) {
   const keyByDepartment = {
-    Engineering: 'engineering',
-    Platform: 'platform',
-    Operations: 'operations',
-    Finance: 'finance',
-    Product: 'product',
-    Design: 'design',
-    Security: 'security',
     Data: 'data',
-    Support: 'support',
+    Design: 'design',
+    Engineering: 'engineering',
+    Finance: 'finance',
     Growth: 'growth',
+    Operations: 'operations',
+    Platform: 'platform',
+    Product: 'product',
+    Security: 'security',
+    Support: 'support',
   } satisfies Record<string, string>
 
   const key = hasProperty(keyByDepartment, value) ? keyByDepartment[value] : undefined
@@ -595,21 +597,21 @@ function translateDepartment(value: string) {
 
 function translateSkill(value: string) {
   const keyBySkill = {
-    TypeScript: 'typescript',
-    Go: 'go',
-    Kubernetes: 'kubernetes',
-    Security: 'security',
-    'Distributed Systems': 'distributedSystems',
-    Rust: 'rust',
-    Python: 'python',
-    GraphQL: 'graphql',
-    PostgreSQL: 'postgresql',
-    'Machine Learning': 'machineLearning',
     'Design Systems': 'designSystems',
-    Observability: 'observability',
-    Terraform: 'terraform',
+    'Distributed Systems': 'distributedSystems',
+    Go: 'go',
+    GraphQL: 'graphql',
     'Incident Response': 'incidentResponse',
+    Kubernetes: 'kubernetes',
+    'Machine Learning': 'machineLearning',
+    Observability: 'observability',
+    PostgreSQL: 'postgresql',
     'Product Strategy': 'productStrategy',
+    Python: 'python',
+    Rust: 'rust',
+    Security: 'security',
+    Terraform: 'terraform',
+    TypeScript: 'typescript',
     'UX Research': 'uxResearch',
   } satisfies Record<string, string>
 

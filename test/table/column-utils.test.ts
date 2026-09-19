@@ -13,54 +13,138 @@ import {
 } from '#ui-tools/table/utils/columns/schema'
 
 const schema = defineTableSchema({
-  tableKey: 'demo',
   rowKey: 'id',
-  source: { query: () => ({ queryKey: ['demo'], queryFn: async () => [{ id: '1', firstName: 'Ada', score: 3, createdAt: 'x', hidden: 1, dropped: 2 }] }) },
+  source: {
+    query: () => ({
+      queryKey: ['demo'],
+      queryFn: async () => [
+        { id: '1', firstName: 'Ada', score: 3, createdAt: 'x', hidden: 1, dropped: 2 },
+      ],
+    }),
+  },
   table: {
     columns: (column) => [
       column.field('firstName'),
-      column.field('score', { label: () => 'Score total', align: 'right', sortable: false, summary: 'sum', skeleton: 'number', ellipsis: true, lines: 1, required: true, pinned: 'left' }),
-      column.composite('created_at_label', { label: 'Créé', sortableKey: 'createdAt', render: () => 'x' }),
+      column.field('score', {
+        label: () => 'Score total',
+        align: 'right',
+        sortable: false,
+        summary: 'sum',
+        skeleton: 'number',
+        ellipsis: true,
+        lines: 1,
+        required: true,
+        pinned: 'left',
+      }),
+      column.composite('created_at_label', {
+        label: 'Créé',
+        sortableKey: 'createdAt',
+        render: () => 'x',
+      }),
       column.display('actions-col', { label: 42, render: () => 'x' }),
       column.field('hidden', { visible: (context) => Boolean(context.showHidden) }),
       column.field('dropped', { condition: () => false }),
       column.field('id', { enabled: false }),
     ],
   },
+  tableKey: 'demo',
 }) as unknown as TableSchemaView
 
 describe('runtime columns', () => {
   it('humanizes labels, resolves visibility and forwards cell metadata', () => {
-    const columns = createRuntimeColumns({ schema, context: {} })
-    expect(columns.map((column) => column.id)).toEqual(['firstName', 'score', 'created_at_label', 'actions-col', 'hidden'])
-    expect(columns[0]).toMatchObject({ label: 'First Name', canHide: true, defaultVisible: true, sortableKey: 'firstName', ellipsis: false })
-    expect(columns[1]).toMatchObject({ label: 'Score total', align: 'right', sortableKey: undefined, summary: 'sum', skeleton: 'number', ellipsis: true, lines: 1, canHide: false, pinned: 'left' })
+    const columns = createRuntimeColumns({ context: {}, schema })
+    expect(columns.map((column) => column.id)).toStrictEqual([
+      'firstName',
+      'score',
+      'created_at_label',
+      'actions-col',
+      'hidden',
+    ])
+    expect(columns[0]).toMatchObject({
+      canHide: true,
+      defaultVisible: true,
+      ellipsis: false,
+      label: 'First Name',
+      sortableKey: 'firstName',
+    })
+    expect(columns[1]).toMatchObject({
+      align: 'right',
+      canHide: false,
+      ellipsis: true,
+      label: 'Score total',
+      lines: 1,
+      pinned: 'left',
+      skeleton: 'number',
+      sortableKey: undefined,
+      summary: 'sum',
+    })
     expect(columns[2]).toMatchObject({ label: 'Créé', sortableKey: 'createdAt' })
     expect(columns[3]).toMatchObject({ label: '42', sortableKey: undefined })
-    expect(columns[4]?.defaultVisible).toBe(false)
-    expect(createRuntimeColumns({ schema, context: { showHidden: true } })[4]?.defaultVisible).toBe(true)
+    expect(columns[4]?.defaultVisible).toBeFalsy()
+    expect(
+      createRuntimeColumns({ context: { showHidden: true }, schema })[4]?.defaultVisible,
+    ).toBeTruthy()
   })
 
   it('orders and filters columns from persisted state', () => {
-    const runtimeColumns = createRuntimeColumns({ schema, context: {} })
-    const ordered = createOrderedColumns({ runtimeColumns, columnOrder: ['score', 'unknown', 'firstName', 'score'] })
-    expect(ordered.map((column) => column.id)).toEqual(['score', 'firstName', 'created_at_label', 'actions-col', 'hidden'])
-    const visible = createVisibleOrderedColumns({ orderedColumns: ordered, columnVisibility: { firstName: false, hidden: true } })
-    expect(visible.map((column) => column.id)).toEqual(['score', 'created_at_label', 'actions-col', 'hidden'])
+    const runtimeColumns = createRuntimeColumns({ context: {}, schema })
+    const ordered = createOrderedColumns({
+      columnOrder: ['score', 'unknown', 'firstName', 'score'],
+      runtimeColumns,
+    })
+    expect(ordered.map((column) => column.id)).toStrictEqual([
+      'score',
+      'firstName',
+      'created_at_label',
+      'actions-col',
+      'hidden',
+    ])
+    const visible = createVisibleOrderedColumns({
+      columnVisibility: { firstName: false, hidden: true },
+      orderedColumns: ordered,
+    })
+    expect(visible.map((column) => column.id)).toStrictEqual([
+      'score',
+      'created_at_label',
+      'actions-col',
+      'hidden',
+    ])
   })
 
   it('resolves labels, sortable keys and header icons', () => {
-    const score = findSchemaColumn({ schema, columnId: 'score' })!
+    const score = findSchemaColumn({ columnId: 'score', schema })!
     expect(resolveColumnLabel({ column: score })).toBe('Score total')
     expect(resolveColumnLabel({ column: { ...score, label: () => ({}) as never } })).toBe('Score')
-    expect(getSortableKey({ column: findSchemaColumn({ schema, columnId: 'firstName' })! })).toBe('firstName')
+    expect(getSortableKey({ column: findSchemaColumn({ columnId: 'firstName', schema })! })).toBe(
+      'firstName',
+    )
     expect(getSortableKey({ column: score })).toBeUndefined()
-    expect(getSortableKey({ column: findSchemaColumn({ schema, columnId: 'created_at_label' })! })).toBe('createdAt')
-    expect(findSchemaColumn({ schema, columnId: 'nope' })).toBeUndefined()
+    expect(
+      getSortableKey({ column: findSchemaColumn({ columnId: 'created_at_label', schema })! }),
+    ).toBe('createdAt')
+    expect(findSchemaColumn({ columnId: 'nope', schema })).toBeUndefined()
     const none = () => null
-    expect(getColumnHeaderIcon({ columnId: 'a', getSortState: () => 'asc', getPinnedState: none })).toBe('i-lucide-arrow-up')
-    expect(getColumnHeaderIcon({ columnId: 'a', getSortState: () => 'desc', getPinnedState: none })).toBe('i-lucide-arrow-down')
-    expect(getColumnHeaderIcon({ columnId: 'a', getSortState: none, getPinnedState: none, canHide: true })).toBe('i-lucide-chevrons-up-down')
-    expect(getColumnHeaderIcon({ columnId: 'a', getSortState: none, getPinnedState: none, canHide: false })).toBe('i-lucide-grip-vertical')
+    expect(
+      getColumnHeaderIcon({ columnId: 'a', getPinnedState: none, getSortState: () => 'asc' }),
+    ).toBe('i-lucide-arrow-up')
+    expect(
+      getColumnHeaderIcon({ columnId: 'a', getPinnedState: none, getSortState: () => 'desc' }),
+    ).toBe('i-lucide-arrow-down')
+    expect(
+      getColumnHeaderIcon({
+        canHide: true,
+        columnId: 'a',
+        getPinnedState: none,
+        getSortState: none,
+      }),
+    ).toBe('i-lucide-chevrons-up-down')
+    expect(
+      getColumnHeaderIcon({
+        canHide: false,
+        columnId: 'a',
+        getPinnedState: none,
+        getSortState: none,
+      }),
+    ).toBe('i-lucide-grip-vertical')
   })
 })

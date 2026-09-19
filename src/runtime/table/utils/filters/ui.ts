@@ -39,11 +39,11 @@ import type {
 import { getFilterLabelText, getFilterTextValue } from './common'
 
 const DEFAULT_FILTER_TRIGGER_ICONS = {
-  text: 'i-lucide-search',
-  option: 'i-lucide-filter',
   boolean: 'i-lucide-check',
-  number: 'i-lucide-hash',
   date: 'i-lucide-calendar-days',
+  number: 'i-lucide-hash',
+  option: 'i-lucide-filter',
+  text: 'i-lucide-search',
 } as const
 
 export function resolveFilterTriggerIcon(
@@ -60,27 +60,27 @@ export function resolveTextFilterUi(
   const override = operator ? definition.editor?.operators?.[operator] : undefined
 
   return {
-    commitMode: definition.behavior?.commitMode ?? 'manual',
-    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
     actions: resolveActions({ common: definition.actions }),
+    autocomplete: definition.editor?.autocomplete ?? 'off',
+    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
+    commitMode: definition.behavior?.commitMode ?? 'manual',
+    input: {
+      autofocus: definition.editor?.input?.autofocus ?? false,
+      fixed: definition.editor?.input?.fixed ?? false,
+      highlight: definition.editor?.input?.highlight ?? false,
+    },
+    inputType: definition.editor?.inputType ?? 'text',
+    leadingIcon: definition.editor?.leadingIcon ?? 'i-lucide-search',
     placeholder: getFilterTextValue({
       value: override?.placeholder ?? definition.editor?.placeholder,
       fallback: getFilterLabelText({ label: definition.label }),
     }),
-    inputType: definition.editor?.inputType ?? 'text',
-    leadingIcon: definition.editor?.leadingIcon ?? 'i-lucide-search',
-    autocomplete: definition.editor?.autocomplete ?? 'off',
-    input: {
-      autofocus: definition.editor?.input?.autofocus ?? false,
-      highlight: definition.editor?.input?.highlight ?? false,
-      fixed: definition.editor?.input?.fixed ?? false,
-    },
     preview: resolvePreview({
       base: definition.preview,
       empty: t('table.filters.preview.empty'),
       mode: 'summary',
     }),
+    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
   }
 }
 
@@ -109,49 +109,49 @@ export function resolveOptionFilterUi(
   })
 
   return {
-    commitMode: definition.behavior?.commitMode ?? 'manual',
-    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
     actions: resolveActions({
       common: definition.actions,
       local: labels,
     }),
-    searchable: definition.editor?.searchable ?? true,
+    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
     closeOnSelect: definition.editor?.closeOnSelect ?? false,
-    presentation: definition.editor?.presentation ?? 'list',
-    tree: {
-      selectable: tree?.selectable ?? 'all',
-      expandedByDefault: tree?.expandedByDefault ?? false,
-      searchMode: tree?.searchMode ?? 'auto',
-      branchSelection: tree?.branchSelection ?? 'children',
-    },
-    selection: {
-      mode,
-      allowEmpty: selection.allowEmpty ?? true,
-      max: selection.max,
-    },
-    row: {
-      showCounts: row.showCounts ?? true,
-      selectedIcon: row.selectedIcon ?? 'i-lucide-check',
-      truncate: row.truncate ?? true,
-      getIcon: row.getIcon,
-    },
+    commitMode: definition.behavior?.commitMode ?? 'manual',
     labels: {
-      searchPlaceholder: getFilterTextValue({
-        value: labels.searchPlaceholder,
-        fallback: getFilterLabelText({ label: definition.label }),
-      }),
       empty: getFilterTextValue({
         value: labels.empty,
         fallback: t('table.filters.options.empty'),
       }),
+      searchPlaceholder: getFilterTextValue({
+        value: labels.searchPlaceholder,
+        fallback: getFilterLabelText({ label: definition.label }),
+      }),
     },
+    presentation: definition.editor?.presentation ?? 'list',
     preview: resolveTagPreview({
       base: definition.preview,
       empty: t('table.filters.preview.empty'),
       mode: 'auto',
       maxTags: 3,
     }),
+    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
+    row: {
+      getIcon: row.getIcon,
+      selectedIcon: row.selectedIcon ?? 'i-lucide-check',
+      showCounts: row.showCounts ?? true,
+      truncate: row.truncate ?? true,
+    },
+    searchable: definition.editor?.searchable ?? true,
+    selection: {
+      allowEmpty: selection.allowEmpty ?? true,
+      max: selection.max,
+      mode,
+    },
+    tree: {
+      branchSelection: tree?.branchSelection ?? 'children',
+      expandedByDefault: tree?.expandedByDefault ?? false,
+      searchMode: tree?.searchMode ?? 'auto',
+      selectable: tree?.selectable ?? 'all',
+    },
   }
 }
 
@@ -175,33 +175,29 @@ export function resolveBooleanFilterUi(
   }
 
   return {
-    commitMode: definition.behavior?.commitMode ?? 'manual',
-    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
     actions: resolveActions({
       common: definition.actions,
       local: labels,
     }),
+    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
+    commitMode: definition.behavior?.commitMode ?? 'manual',
+    icons: {
+      false: icons.false,
+      true: icons.true,
+    },
     labels: {
-      true: getFilterTextValue({
-        value: labels.true,
-        fallback: t('table.filters.booleans.true'),
+      empty: getFilterTextValue({
+        value: labels.empty,
+        fallback: t('table.filters.booleans.empty'),
       }),
       false: getFilterTextValue({
         value: labels.false,
         fallback: t('table.filters.booleans.false'),
       }),
-      empty: getFilterTextValue({
-        value: labels.empty,
-        fallback: t('table.filters.booleans.empty'),
+      true: getFilterTextValue({
+        value: labels.true,
+        fallback: t('table.filters.booleans.true'),
       }),
-    },
-    icons: {
-      true: icons.true,
-      false: icons.false,
-    },
-    selection: {
-      allowEmpty: selection.allowEmpty ?? true,
     },
     preview: resolveTagPreview({
       base: definition.preview,
@@ -212,6 +208,10 @@ export function resolveBooleanFilterUi(
       mode: 'summary',
       maxTags: 3,
     }),
+    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
+    selection: {
+      allowEmpty: selection.allowEmpty ?? true,
+    },
   }
 }
 
@@ -226,68 +226,68 @@ export function resolveNumberFilterUi(
   const range = mergeNumberRangeConfig(definition.editor?.range, rangeOverride)
 
   return {
-    commitMode: definition.behavior?.commitMode ?? 'manual',
-    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
     actions: resolveActions({ common: definition.actions }),
-    min: definition.editor?.min,
-    max: definition.editor?.max,
-    step: definition.editor?.step ?? 1,
+    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
+    commitMode: definition.behavior?.commitMode ?? 'manual',
     formatOptions: definition.editor?.formatOptions,
+    max: definition.editor?.max,
+    min: definition.editor?.min,
     preview: resolveNumberPreview({
       base: definition.preview,
       empty: t('table.filters.preview.empty'),
       mode: 'summary',
     }),
-    scalar: {
-      display: scalar.display ?? 'input',
-      input: {
-        placeholder: getFilterTextValue({
-          value: scalar.input?.placeholder,
-          fallback: getFilterLabelText({ label: definition.label }),
-        }),
-        hideStepper: scalar.input?.hideStepper ?? false,
-        disableWheelChange: scalar.input?.disableWheelChange ?? true,
-      },
-      slider: {
-        min: scalar.slider?.min ?? definition.editor?.min,
-        max: scalar.slider?.max ?? definition.editor?.max,
-        step: scalar.slider?.step ?? definition.editor?.step,
-        showTooltip: scalar.slider?.showTooltip ?? true,
-      },
-      preview: resolveNumberPreview({
-        base: definition.preview,
-        empty: t('table.filters.preview.empty'),
-        mode: 'summary',
-      }),
-    },
     range: {
       display: range.display ?? 'inputs',
-      minGap: range.minGap,
       inputs: {
+        disableWheelChange: range.inputs?.disableWheelChange ?? true,
         fromPlaceholder: getFilterTextValue({
           value: range.inputs?.fromPlaceholder,
           fallback: 'Min',
         }),
+        hideStepper: range.inputs?.hideStepper ?? false,
         toPlaceholder: getFilterTextValue({
           value: range.inputs?.toPlaceholder,
           fallback: 'Max',
         }),
-        hideStepper: range.inputs?.hideStepper ?? false,
-        disableWheelChange: range.inputs?.disableWheelChange ?? true,
       },
+      minGap: range.minGap,
+      preview: resolveNumberPreview({
+        base: definition.preview,
+        empty: t('table.filters.preview.empty'),
+        mode: 'summary',
+      }),
       slider: {
-        min: range.slider?.min ?? definition.editor?.min,
         max: range.slider?.max ?? definition.editor?.max,
-        step: range.slider?.step ?? definition.editor?.step,
+        min: range.slider?.min ?? definition.editor?.min,
         showTooltip: range.slider?.showTooltip ?? true,
+        step: range.slider?.step ?? definition.editor?.step,
+      },
+    },
+    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
+    scalar: {
+      display: scalar.display ?? 'input',
+      input: {
+        disableWheelChange: scalar.input?.disableWheelChange ?? true,
+        hideStepper: scalar.input?.hideStepper ?? false,
+        placeholder: getFilterTextValue({
+          value: scalar.input?.placeholder,
+          fallback: getFilterLabelText({ label: definition.label }),
+        }),
       },
       preview: resolveNumberPreview({
         base: definition.preview,
         empty: t('table.filters.preview.empty'),
         mode: 'summary',
       }),
+      slider: {
+        max: scalar.slider?.max ?? definition.editor?.max,
+        min: scalar.slider?.min ?? definition.editor?.min,
+        showTooltip: scalar.slider?.showTooltip ?? true,
+        step: scalar.slider?.step ?? definition.editor?.step,
+      },
     },
+    step: definition.editor?.step ?? 1,
   }
 }
 
@@ -302,70 +302,70 @@ export function resolveDateFilterUi(
   const range = mergeDateRangeConfig(definition.editor?.range, rangeOverride)
 
   return {
-    commitMode: definition.behavior?.commitMode ?? 'manual',
-    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
     actions: resolveActions({ common: definition.actions }),
+    clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
+    commitMode: definition.behavior?.commitMode ?? 'manual',
     preview: resolveDatePreview({
       base: definition.preview,
       empty: t('table.filters.preview.empty'),
       mode: 'summary',
     }),
-    scalar: {
-      display: scalar.display ?? 'calendar',
-      presets: scalar.presets,
-      input: {
-        placeholder: getFilterTextValue({
-          value: scalar.input?.placeholder,
-          fallback: getFilterLabelText({ label: definition.label }),
-        }),
-        granularity: scalar.input?.granularity ?? 'day',
-        hideTimeZone: scalar.input?.hideTimeZone ?? true,
-        hourCycle: scalar.input?.hourCycle,
-        fixed: scalar.input?.fixed ?? true,
-        highlight: scalar.input?.highlight ?? false,
-      },
+    range: {
       calendar: {
-        months: scalar.calendar?.months,
-        pagedNavigation: scalar.calendar?.pagedNavigation,
-        fixedWeeks: scalar.calendar?.fixedWeeks ?? true,
-        min: scalar.calendar?.min,
-        max: scalar.calendar?.max,
-        maxRangeDays: scalar.calendar?.maxRangeDays,
+        fixedWeeks: range.calendar?.fixedWeeks ?? true,
+        max: range.calendar?.max,
+        maxRangeDays: range.calendar?.maxRangeDays,
+        min: range.calendar?.min,
+        months: range.calendar?.months,
+        pagedNavigation: range.calendar?.pagedNavigation,
       },
+      display: range.display ?? 'inputs-calendar',
+      input: {
+        fixed: range.input?.fixed ?? true,
+        fromPlaceholder: getFilterTextValue({
+          value: range.input?.fromPlaceholder,
+          fallback: 'Start date',
+        }),
+        granularity: range.input?.granularity ?? 'day',
+        hideTimeZone: range.input?.hideTimeZone ?? true,
+        highlight: range.input?.highlight ?? false,
+        hourCycle: range.input?.hourCycle,
+        toPlaceholder: getFilterTextValue({
+          value: range.input?.toPlaceholder,
+          fallback: 'End date',
+        }),
+      },
+      presets: range.presets,
+      presetsPlacement: range.presetsPlacement ?? 'side',
       preview: resolveDatePreview({
         base: definition.preview,
         empty: t('table.filters.preview.empty'),
         mode: 'summary',
       }),
     },
-    range: {
-      display: range.display ?? 'inputs-calendar',
-      presets: range.presets,
-      presetsPlacement: range.presetsPlacement ?? 'side',
-      input: {
-        fromPlaceholder: getFilterTextValue({
-          value: range.input?.fromPlaceholder,
-          fallback: 'Start date',
-        }),
-        toPlaceholder: getFilterTextValue({
-          value: range.input?.toPlaceholder,
-          fallback: 'End date',
-        }),
-        granularity: range.input?.granularity ?? 'day',
-        hideTimeZone: range.input?.hideTimeZone ?? true,
-        hourCycle: range.input?.hourCycle,
-        fixed: range.input?.fixed ?? true,
-        highlight: range.input?.highlight ?? false,
-      },
+    reopenOnOperatorChange: definition.behavior?.reopenOnOperatorChange ?? true,
+    scalar: {
       calendar: {
-        months: range.calendar?.months,
-        pagedNavigation: range.calendar?.pagedNavigation,
-        fixedWeeks: range.calendar?.fixedWeeks ?? true,
-        min: range.calendar?.min,
-        max: range.calendar?.max,
-        maxRangeDays: range.calendar?.maxRangeDays,
+        fixedWeeks: scalar.calendar?.fixedWeeks ?? true,
+        max: scalar.calendar?.max,
+        maxRangeDays: scalar.calendar?.maxRangeDays,
+        min: scalar.calendar?.min,
+        months: scalar.calendar?.months,
+        pagedNavigation: scalar.calendar?.pagedNavigation,
       },
+      display: scalar.display ?? 'calendar',
+      input: {
+        fixed: scalar.input?.fixed ?? true,
+        granularity: scalar.input?.granularity ?? 'day',
+        hideTimeZone: scalar.input?.hideTimeZone ?? true,
+        highlight: scalar.input?.highlight ?? false,
+        hourCycle: scalar.input?.hourCycle,
+        placeholder: getFilterTextValue({
+          value: scalar.input?.placeholder,
+          fallback: getFilterLabelText({ label: definition.label }),
+        }),
+      },
+      presets: scalar.presets,
       preview: resolveDatePreview({
         base: definition.preview,
         empty: t('table.filters.preview.empty'),
@@ -382,13 +382,13 @@ function resolveActions(options: {
   const { t } = useUiToolsLocale()
 
   return {
-    clear: getFilterTextValue({
-      value: options.local?.clear ?? options.common?.clear,
-      fallback: t('table.filters.panel.clearAll'),
-    }),
     apply: getFilterTextValue({
       value: options.local?.apply ?? options.common?.apply,
       fallback: t('table.filters.panel.apply'),
+    }),
+    clear: getFilterTextValue({
+      value: options.local?.clear ?? options.common?.clear,
+      fallback: t('table.filters.panel.clearAll'),
     }),
   }
 }
@@ -399,14 +399,14 @@ function resolvePreview(options: {
   mode: 'summary' | 'tags'
 }): TableFilterPreviewConfigResolved {
   return {
-    mode: options.base?.mode ?? options.mode,
-    label: getFilterTextValue({
-      value: options.base?.label,
-    }),
     empty: getFilterTextValue({
       value: options.base?.empty,
       fallback: options.empty,
     }),
+    label: getFilterTextValue({
+      value: options.base?.label,
+    }),
+    mode: options.base?.mode ?? options.mode,
   }
 }
 
@@ -417,15 +417,15 @@ function resolveTagPreview(options: {
   maxTags: number
 }): TableTagFilterPreviewConfigResolved {
   return {
-    mode: options.base?.mode ?? options.mode,
-    label: getFilterTextValue({
-      value: options.base?.label,
-    }),
     empty: getFilterTextValue({
       value: options.base?.empty,
       fallback: options.empty,
     }),
+    label: getFilterTextValue({
+      value: options.base?.label,
+    }),
     maxTags: options.base?.maxTags ?? options.maxTags,
+    mode: options.base?.mode ?? options.mode,
   }
 }
 
@@ -461,9 +461,12 @@ function resolveOptionSelectionMode(options: {
   configured: 'auto' | 'single' | 'multiple' | undefined
   operator: TableOptionFilterOperator | undefined
 }) {
-  if (options.configured === 'single' || options.configured === 'multiple')
+  if (options.configured === 'single' || options.configured === 'multiple') {
     return options.configured
-  if (options.operator === 'isAnyOf') return 'multiple'
+  }
+  if (options.operator === 'isAnyOf') {
+    return 'multiple'
+  }
   return 'single'
 }
 
@@ -510,13 +513,13 @@ function mergeDateScalarConfig(
   return {
     ...base,
     ...override,
-    input: {
-      ...base?.input,
-      ...override?.input,
-    },
     calendar: {
       ...base?.calendar,
       ...override?.calendar,
+    },
+    input: {
+      ...base?.input,
+      ...override?.input,
     },
   }
 }
@@ -528,13 +531,13 @@ function mergeDateRangeConfig(
   return {
     ...base,
     ...override,
-    input: {
-      ...base?.input,
-      ...override?.input,
-    },
     calendar: {
       ...base?.calendar,
       ...override?.calendar,
+    },
+    input: {
+      ...base?.input,
+      ...override?.input,
     },
   }
 }
@@ -550,34 +553,40 @@ function getNumberScalarOperatorOverride(
     operator === 'gte' ||
     operator === 'lt' ||
     operator === 'lte'
-  )
+  ) {
     return editor?.operators?.[operator]?.scalar
+  }
 
-  return undefined
+  return
 }
 
 function getNumberRangeOperatorOverride(
   editor: TableNumberFilterEditorConfig | undefined,
   operator: TableNumberFilterOperator | undefined,
 ) {
-  if (operator === 'between') return editor?.operators?.between?.range
-  return undefined
+  if (operator === 'between') {
+    return editor?.operators?.between?.range
+  }
+  return
 }
 
 function getDateScalarOperatorOverride(
   editor: TableDateFilterEditorConfig | undefined,
   operator: TableDateFilterOperator | undefined,
 ) {
-  if (operator === 'is' || operator === 'isNot' || operator === 'before' || operator === 'after')
+  if (operator === 'is' || operator === 'isNot' || operator === 'before' || operator === 'after') {
     return editor?.operators?.[operator]?.scalar
+  }
 
-  return undefined
+  return
 }
 
 function getDateRangeOperatorOverride(
   editor: TableDateFilterEditorConfig | undefined,
   operator: TableDateFilterOperator | undefined,
 ) {
-  if (operator === 'between') return editor?.operators?.between?.range
-  return undefined
+  if (operator === 'between') {
+    return editor?.operators?.between?.range
+  }
+  return
 }

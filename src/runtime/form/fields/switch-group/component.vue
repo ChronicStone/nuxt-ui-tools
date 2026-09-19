@@ -4,8 +4,7 @@ import { computed, useId } from 'vue'
 
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
-import type { FormValue } from '../../types'
-import type { FormOptionValue, FormSwitchGroupField } from '../../types'
+import type { FormValue, FormOptionValue, FormSwitchGroupField } from '../../types'
 import { formOptionKey } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 

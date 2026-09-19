@@ -1,17 +1,23 @@
 <script setup lang="ts">
 const props = defineProps<{
-  items: Array<{
+  items: {
     key: string
     label: string
     value: number
     tone: 'success' | 'warning' | 'error' | 'neutral'
-  }>
+  }[]
 }>()
 
 function getSummaryBarClass(tone: 'success' | 'warning' | 'error' | 'neutral') {
-  if (tone === 'success') return 'bg-success'
-  if (tone === 'warning') return 'bg-warning'
-  if (tone === 'error') return 'bg-error'
+  if (tone === 'success') {
+    return 'bg-success'
+  }
+  if (tone === 'warning') {
+    return 'bg-warning'
+  }
+  if (tone === 'error') {
+    return 'bg-error'
+  }
   return 'bg-muted'
 }
 </script>

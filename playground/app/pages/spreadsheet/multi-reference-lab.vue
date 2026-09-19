@@ -20,20 +20,6 @@ const products = [
 
 function createMultiReferenceSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.multi-reference-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 50,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
     columns: {
       static: (column) => [
         column.text('candidateName', {
@@ -58,6 +44,17 @@ function createMultiReferenceSchema() {
         }),
       ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 50,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.multi-reference-lab',
+    matching: {
+      strategy: 'smart',
+    },
     references: (reference) => [
       reference.select('productIds', {
         source: 'productLabels',
@@ -67,6 +64,9 @@ function createMultiReferenceSchema() {
         })),
       }),
     ],
+    sheet: {
+      strategy: 'auto',
+    },
   })
 }
 
@@ -98,19 +98,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Multi references')
 
   return {
-    fileName: 'spreadsheet-multi-reference-lab.xlsx',
     binary: write(workbook, {
       type: 'buffer',
       bookType: 'xlsx',
     }),
+    fileName: 'spreadsheet-multi-reference-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

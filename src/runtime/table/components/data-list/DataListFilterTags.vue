@@ -19,9 +19,9 @@ const props = withDefaults(
     ui?: DataListFilterTagsUi
   }>(),
   {
+    mobile: 'sheet',
     showAdd: false,
     showClear: false,
-    mobile: 'sheet',
   },
 )
 const dataListUi = useDataListUi()

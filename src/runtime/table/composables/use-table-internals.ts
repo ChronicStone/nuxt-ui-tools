@@ -1,4 +1,5 @@
-import { computed, inject, provide, shallowRef, type InjectionKey } from 'vue'
+import { computed, inject, provide, shallowRef } from 'vue'
+import type { InjectionKey } from 'vue'
 
 import type { MaybeComputedRef, TableApi, TableSchemaView } from '../types'
 import { resolveSchemaSource } from '../utils'
@@ -14,8 +15,8 @@ import { useTableLayout } from './use-table-layout'
 import { useTablePagination } from './use-table-pagination'
 import { useTableSelection } from './use-table-selection'
 import { useTableStartup } from './use-table-startup'
-import { useTableSummaries } from './use-table-summaries'
 import { useTableState } from './use-table-state'
+import { useTableSummaries } from './use-table-summaries'
 
 function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TSchema> }) {
   const publicSchema = computed<TSchema>(() => resolveSchemaSource({ schema: options.rawSchema }))
@@ -25,94 +26,96 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
   const startup = useTableStartup()
   const layout = useTableLayout({ schema })
   const state = useTableState({
-    schema,
     layout,
+    schema,
   })
   const queryContent = useTableData({
     schema,
-    state,
     startup,
+    state,
   })
   const selection = useTableSelection({
-    schema,
     queryContent,
+    schema,
   })
   const controls = useTableControls({
-    schema,
     layout,
+    schema,
   })
   const filters = useTableFilters({
+    queryContent,
     schema,
     state,
-    queryContent,
   })
   const filterPresentation = useTableFilterPresentation({
     filters,
   })
   const grid = useTableGrid({
-    schema,
     data: queryContent.data,
+    schema,
   })
   const tableColumns = useTableColumns({
-    schema,
-    state,
     data: queryContent,
+    schema,
     selection,
-    tableLayout: controls.tableLayout,
+    state,
     tableApi,
+    tableLayout: controls.tableLayout,
   })
   const summaries = useTableSummaries({
-    schema,
     queryContent,
-    selection,
     runtimeColumns: tableColumns.runtimeColumns,
+    schema,
+    selection,
   })
   const pagination = useTablePagination({
-    schema,
     layout,
-    state,
     queryContent,
+    schema,
+    state,
   })
 
   tableApi.value = useTableApi<TSchema>({
-    runtimeSchema: schema,
-    publicSchema,
-    layout,
-    state,
-    selection,
-    controls,
     columns: tableColumns,
+    controls,
     filters,
+    layout,
     pagination,
+    publicSchema,
     queryContent,
+    runtimeSchema: schema,
+    selection,
+    state,
   })
 
-  if (!tableApi.value) throw new Error('Failed to initialize table API')
+  if (!tableApi.value) {
+    throw new Error('Failed to initialize table API')
+  }
 
   const actions = useTableActions({
-    schema,
     queryContent,
+    schema,
     selection,
     tableApi,
   })
 
   return {
-    schema,
+    actions,
+    controls,
+    filterPresentation,
+    filters,
+    grid,
     layout,
-    startup,
+    pagination,
+    queryContent,
     queryState: state.queryState,
     resolvedFilterState: state.resolvedFilterState,
-    queryContent,
-    tableApi: tableApi.value,
-    actions,
+    schema,
     selection,
-    filters,
-    filterPresentation,
-    grid,
-    controls,
-    tableColumns,
-    pagination,
+    startup,
     summaries,
+    tableApi: tableApi.value,
+    tableColumns,
   }
 }
 
@@ -131,7 +134,9 @@ function useProvideTableInternals<TSchema>(options: { rawSchema: MaybeComputedRe
 
 function useTableInternals() {
   const internals = inject(TABLE_INTERNALS_KEY, null)
-  if (!internals) throw new Error('useTableInternals must be called inside a <DataList> component')
+  if (!internals) {
+    throw new Error('useTableInternals must be called inside a <DataList> component')
+  }
   return internals
 }
 

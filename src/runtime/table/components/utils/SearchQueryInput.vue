@@ -17,7 +17,9 @@ const localValue = ref<string>(model.value)
 watch(
   model,
   (value) => {
-    if (value === localValue.value) return
+    if (value === localValue.value) {
+      return
+    }
     localValue.value = value
   },
   { flush: 'sync' },
@@ -25,13 +27,15 @@ watch(
 
 const inputAttrs = computed<Record<string, unknown>>(() => ({
   color: 'neutral',
-  variant: 'outline',
   icon: 'i-lucide-search',
+  variant: 'outline',
   ...props.inputProps,
 }))
 
 function commitValue() {
-  if (localValue.value === model.value) return
+  if (localValue.value === model.value) {
+    return
+  }
   model.value = localValue.value
 }
 </script>

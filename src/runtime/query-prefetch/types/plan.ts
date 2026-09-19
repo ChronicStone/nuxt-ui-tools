@@ -10,7 +10,7 @@ import type { GenericObject, MaybePromise } from '#ui-tools/shared/types/utils'
  * `enabled: false` are skipped, and a `select` transform is applied to the
  * fetched data before it is exposed to later stages.
  */
-export type QueryPrefetchOption = {
+export interface QueryPrefetchOption {
   queryKey: QueryKey
 }
 
@@ -57,7 +57,7 @@ type QueryPrefetchStageResults<Queries extends QueryPrefetchQueries> = {
   [Key in keyof Queries]: QueryPrefetchResult<Queries[Key]>
 }
 
-export type QueryPrefetchStage = {
+export interface QueryPrefetchStage {
   resolve(context: Readonly<QueryPrefetchContext>): MaybePromise<QueryPrefetchQueries>
 }
 
@@ -75,7 +75,7 @@ export type QueryPrefetchStage = {
  *   .stage(({ item }) => ({ details: detailsQuery(item.id) }))
  * ```
  */
-export type QueryPrefetchPlan<Context extends object = object> = {
+export interface QueryPrefetchPlan<Context extends object = object> {
   kind: 'query-prefetch-plan'
   stage: <const Queries extends QueryPrefetchQueries>(
     queries: Queries | ((context: Readonly<Context>) => MaybePromise<Queries>),

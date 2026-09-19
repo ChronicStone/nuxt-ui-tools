@@ -1,4 +1,5 @@
-import { computed, shallowRef, toValue, watch, type ComputedRef, type MaybeRefOrGetter } from 'vue'
+import { computed, shallowRef, toValue, watch } from 'vue'
+import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
 import type {
   ExtractSpreadsheetRow,
@@ -9,7 +10,8 @@ import type {
   SpreadsheetRecord,
   SpreadsheetResolvedReferenceRow,
 } from '../types'
-import { createSpreadsheetInternals, type SpreadsheetInternals } from './use-spreadsheet-internals'
+import { createSpreadsheetInternals } from './use-spreadsheet-internals'
+import type { SpreadsheetInternals } from './use-spreadsheet-internals'
 
 function mapSpreadsheetParsedRows<TSchema>(
   rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[],
@@ -51,7 +53,9 @@ async function createSpreadsheetSubmitPayloads(params: {
   context: SpreadsheetRecord
   rows: readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[]
 }) {
-  if (!params.schema.buildRow) return params.rows.map((row) => row.data)
+  if (!params.schema.buildRow) {
+    return params.rows.map((row) => row.data)
+  }
 
   return Promise.all(
     params.rows.map((row) =>
@@ -68,11 +72,11 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
 ): SpreadsheetImportApi<TSchema> & { __internals: SpreadsheetInternals<TSchema> } {
   const resolvedSchema = computed<TSchema>(() => toValue(schema))
   const sourceRef = shallowRef<SpreadsheetBinarySource | null>(null)
-  const fileNameRef = shallowRef<string | undefined>(undefined)
+  const fileNameRef = shallowRef<string | undefined>()
   const internals = createSpreadsheetInternals({
+    fileName: fileNameRef,
     rawSchema: resolvedSchema,
     source: sourceRef,
-    fileName: fileNameRef,
   })
   const parsedRows = computed(() =>
     mapSpreadsheetParsedRows<TSchema>(internals.rows.parsedRows.value),
@@ -84,19 +88,19 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
     mapSpreadsheetRowData<TSchema>(internals.resolutions.resolvedRows.value),
   )
   const submitPayloads = computedAsyncPayloads({
-    schema: resolvedSchema,
     context: internals.context.contextData,
     rows: computed(() => internals.resolutions.resolvedRows.value),
+    schema: resolvedSchema,
   })
   const status = computed(() => ({
     initialized:
       internals.source.status.value.initialized ||
       internals.context.status.value.initialized ||
       internals.rows.status.value.initialized,
-    isParsingSource: internals.source.status.value.isParsing,
     isLoadingContext:
       internals.context.status.value.isPending || internals.context.status.value.isFetching,
     isParsingRows: internals.rows.status.value.isParsing,
+    isParsingSource: internals.source.status.value.isParsing,
     isReady:
       internals.source.status.value.isReady &&
       internals.context.status.value.isReady &&
@@ -120,37 +124,37 @@ export function useSpreadsheetImport<TSchema extends { importKey: string }>(
   }
 
   return {
-    schema: resolvedSchema,
-    workbook: internals.source.workbook,
-    selection: internals.source.selection,
+    __internals: internals,
     activeSheet: internals.source.sheet,
-    headers: internals.source.headers,
-    headerCells: internals.rows.headerCells,
-    rows: internals.source.rows,
-    parsedRows,
-    resolvedRows,
-    rowData,
-    submitPayloads,
-    rowSummary: internals.rows.summary,
-    referenceResolutions: computed(() => internals.resolutions.resolutions.value),
-    unresolvedReferenceResolutions: computed(
-      () => internals.resolutions.unresolvedResolutions.value,
-    ),
-    status,
-    sourceError: internals.source.error,
-    contextError: internals.context.error,
-    rowError: internals.rows.error,
-    loadSource,
-    clearSource,
-    setSheetName: internals.source.setSheetName,
-    setHeaderRowIndex: internals.source.setHeaderRowIndex,
     assignColumn: ({ headerIndex, columnKey }) =>
       internals.rows.assignColumn(headerIndex, columnKey),
     clearColumnAssignment: (headerIndex) => internals.rows.clearColumnAssignment(headerIndex),
-    selectReference: internals.resolutions.selectReference,
     clearReference: internals.resolutions.clearReference,
+    clearSource,
+    contextError: internals.context.error,
+    headerCells: internals.rows.headerCells,
+    headers: internals.source.headers,
+    loadSource,
+    parsedRows,
+    referenceResolutions: computed(() => internals.resolutions.resolutions.value),
     refresh,
-    __internals: internals,
+    resolvedRows,
+    rowData,
+    rowError: internals.rows.error,
+    rowSummary: internals.rows.summary,
+    rows: internals.source.rows,
+    schema: resolvedSchema,
+    selectReference: internals.resolutions.selectReference,
+    selection: internals.source.selection,
+    setHeaderRowIndex: internals.source.setHeaderRowIndex,
+    setSheetName: internals.source.setSheetName,
+    sourceError: internals.source.error,
+    status,
+    submitPayloads,
+    unresolvedReferenceResolutions: computed(
+      () => internals.resolutions.unresolvedResolutions.value,
+    ),
+    workbook: internals.source.workbook,
   }
 }
 
@@ -163,9 +167,9 @@ function computedAsyncPayloads<TSchema>(params: {
 
   async function refreshPayloads() {
     payloads.value = await createSpreadsheetSubmitPayloads<TSchema>({
-      schema: params.schema.value,
       context: params.context.value,
       rows: params.rows.value,
+      schema: params.schema.value,
     })
   }
 

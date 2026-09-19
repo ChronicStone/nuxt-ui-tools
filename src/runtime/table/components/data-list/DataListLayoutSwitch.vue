@@ -27,7 +27,7 @@ const props = withDefaults(
     ui?: DataListLayoutSwitchUi
     props?: DataListLayoutSwitchProps
   }>(),
-  { order: () => ['table', 'grid'], mobile: false },
+  { mobile: false, order: () => ['table', 'grid'] },
 )
 const resolvedUi = computed<DataListLayoutSwitchUi>(() => ({
   ...dataListUi.ui.value.layoutSwitch?.ui,
@@ -46,7 +46,7 @@ const controlProps = computed<DataListLayoutSwitchProps>(() =>
 )
 function buttonProps(active: boolean) {
   const base = mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: resolvedSize.value },
+    { color: 'neutral', size: resolvedSize.value, variant: 'ghost' },
     controlProps.value.trigger,
   )
   return active
@@ -70,7 +70,11 @@ function setLayout(layout: TableLayout) {
     :available="internals.controls.layoutState.value.available"
   >
     <UFieldGroup
-      v-if="internals.controls.gridEnabled.value && internals.controls.tableEnabled.value && (mobile || !isMobile)"
+      v-if="
+        internals.controls.gridEnabled.value &&
+        internals.controls.tableEnabled.value &&
+        (mobile || !isMobile)
+      "
       :size="resolvedSize"
       :class="mergeDataListUiClass('nut-dl-layout', undefined, resolvedUi.root)"
     >
@@ -82,7 +86,9 @@ function setLayout(layout: TableLayout) {
         <UButton
           v-bind="buttonProps(internals.controls.tableLayout.value === layout)"
           :data-active="internals.controls.tableLayout.value === layout"
-          :icon="controlProps.icons?.[layout] ?? (layout === 'table' ? 'i-lucide-menu' : 'i-lucide-box')"
+          :icon="
+            controlProps.icons?.[layout] ?? (layout === 'table' ? 'i-lucide-menu' : 'i-lucide-box')
+          "
           :label="labels ? (layout === 'table' ? 'Table' : 'Grid') : undefined"
           :aria-label="
             layout === 'table' ? t('table.header.tableView') : t('table.header.gridView')

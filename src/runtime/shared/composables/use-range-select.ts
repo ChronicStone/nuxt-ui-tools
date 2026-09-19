@@ -1,4 +1,5 @@
-import { type MaybeRefOrGetter, ref, toValue } from 'vue'
+import { ref, toValue } from 'vue'
+import type { MaybeRefOrGetter } from 'vue'
 
 interface RangeSelectEntry {
   value: unknown
@@ -24,7 +25,9 @@ export function useRangeSelect<TEntry extends RangeSelectEntry>(
       const shouldSelect = anchorAction.value === 'select'
       for (let i = start; i <= end; i++) {
         const e = entries[i]
-        if (e && e.selected !== shouldSelect) options.onToggle(e.value)
+        if (e && e.selected !== shouldSelect) {
+          options.onToggle(e.value)
+        }
       }
       anchorIndex.value = index
     } else {

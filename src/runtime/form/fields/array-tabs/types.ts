@@ -1,6 +1,5 @@
 import type { FormContainerFieldBase } from '../../types/field-base'
-import type { FormText } from '../../types/utils'
-import type { FormObject } from '../../types/utils'
+import type { FormText, FormObject } from '../../types/utils'
 import type { FormArrayFieldActions, FormArrayVirtualFields } from '../array-list/types'
 
 export interface FormArrayTabsField<TContext = {}, TDeps = {}> extends FormContainerFieldBase<

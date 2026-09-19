@@ -1,12 +1,13 @@
 import { createInjectionState } from '@vueuse/core'
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { FormControlSize, FormDensity, FormUiConfig } from '../types'
 
 const densitySizes = {
+  comfortable: 'lg',
   compact: 'sm',
   default: 'md',
-  comfortable: 'lg',
 } satisfies Record<FormDensity, FormControlSize>
 
 const [provideFormUiState, useInjectedFormUiState] = createInjectionState(
@@ -16,7 +17,7 @@ const [provideFormUiState, useInjectedFormUiState] = createInjectionState(
       () => ui.value.control?.size ?? densitySizes[density.value],
     )
 
-    return { ui, density, controlSize }
+    return { controlSize, density, ui }
   },
 )
 
@@ -26,6 +27,8 @@ export function provideFormUi(ui: ComputedRef<FormUiConfig>) {
 
 export function useFormUi() {
   const state = useInjectedFormUiState()
-  if (!state) throw new Error('useFormUi must be called inside a <NutForm> component')
+  if (!state) {
+    throw new Error('useFormUi must be called inside a <NutForm> component')
+  }
   return state
 }

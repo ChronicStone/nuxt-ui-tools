@@ -3,8 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UDrawer from '@nuxt/ui/components/Drawer.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
-import { ref } from 'vue'
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
@@ -37,8 +36,8 @@ const { isMobile } = useDataListBreakpoint()
 const { t } = useUiToolsLocale()
 const sheetOpen = ref<boolean>(false)
 const triggerProps = {
-  type: 'button',
   'aria-haspopup': 'menu',
+  type: 'button',
 } as const
 const resolvedSize = computed(
   () => props.size ?? dataListUi.ui.value.sortMenu?.size ?? dataListUi.controlSize.value,
@@ -50,24 +49,32 @@ const resolvedUi = computed<DataListSortMenuUi>(() => ({
 const visible = computed(() => props.layouts.includes(internals.controls.tableLayout.value))
 const triggerControlProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'outline', size: resolvedSize.value },
+    { color: 'neutral', size: resolvedSize.value, variant: 'outline' },
     dataListUi.ui.value.sortMenu?.props?.trigger,
     props.props?.trigger,
   ),
 )
 const sheetTriggerProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'outline', size: resolvedSize.value, icon: 'i-lucide-arrow-down-up', square: true },
+    {
+      color: 'neutral',
+      icon: 'i-lucide-arrow-down-up',
+      size: resolvedSize.value,
+      square: true,
+      variant: 'outline',
+    },
     dataListUi.ui.value.sortMenu?.props?.sheetTrigger,
     props.props?.sheetTrigger,
   ),
 )
 const sortLabels = computed(() => {
   const labels = new Map<string, string>()
-  for (const option of internals.schema.value.grid?.sortOptions ?? [])
+  for (const option of internals.schema.value.grid?.sortOptions ?? []) {
     labels.set(option.key, isString(option.label) ? option.label : String(option.label()))
-  for (const column of internals.tableColumns.runtimeColumns.value)
+  }
+  for (const column of internals.tableColumns.runtimeColumns.value) {
     if (column.sortableKey) labels.set(column.sortableKey, column.label)
+  }
   return labels
 })
 const activeKey = computed(() => internals.tableColumns.sortingState.value.key)
@@ -90,19 +97,19 @@ const activeLabel = computed(() =>
 )
 const items = computed(() => [
   sortKeys.value.map((key) => ({
-    label: sortLabels.value.get(key) ?? humanize(key),
     icon: activeKey.value === key ? 'i-lucide-check' : undefined,
+    label: sortLabels.value.get(key) ?? humanize(key),
     onSelect: () => internals.tableColumns.setSortKey(key),
   })),
   [
     {
-      label: t('table.columnsMenu.sortAsc'),
       icon: 'i-lucide-arrow-up-narrow-wide',
+      label: t('table.columnsMenu.sortAsc'),
       onSelect: () => internals.tableColumns.setSortDirection('asc'),
     },
     {
-      label: t('table.columnsMenu.sortDesc'),
       icon: 'i-lucide-arrow-down-wide-narrow',
+      label: t('table.columnsMenu.sortDesc'),
       onSelect: () => internals.tableColumns.setSortDirection('desc'),
     },
   ],
@@ -113,8 +120,8 @@ function humanize(value: string) {
     value
       .split('.')
       .at(-1)
-      ?.replace(/[_-]+/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase()) ?? value
+      ?.replaceAll(/[_-]+/g, ' ')
+      .replaceAll(/\b\w/g, (char) => char.toUpperCase()) ?? value
   )
 }
 </script>
@@ -124,15 +131,27 @@ function humanize(value: string) {
     v-if="visible && isMobile"
     v-model:open="sheetOpen"
     direction="bottom"
-    :ui="{ content: 'nut-dl-sheet max-h-[85vh] rounded-t-[16px]', container: 'gap-0 p-0', body: 'min-h-0 overflow-y-auto p-0 pb-2' }"
+    :ui="{
+      content: 'nut-dl-sheet max-h-[85vh] rounded-t-[16px]',
+      container: 'gap-0 p-0',
+      body: 'min-h-0 overflow-y-auto p-0 pb-2',
+    }"
   >
     <UButton
       v-bind="sheetTriggerProps"
       :aria-label="label ?? t('table.controls.sort')"
-      :ui="{ base: mergeDataListUiClass('nut-dl-sortbtn nut-dl-sortbtn--sheet', undefined, resolvedUi.trigger) }"
+      :ui="{
+        base: mergeDataListUiClass(
+          'nut-dl-sortbtn nut-dl-sortbtn--sheet',
+          undefined,
+          resolvedUi.trigger,
+        ),
+      }"
     />
     <template #body>
-      <div class="nut-dl-sheet__title px-5 pt-3 pb-2 text-[11px] font-semibold tracking-[0.06em] text-dimmed uppercase">
+      <div
+        class="nut-dl-sheet__title px-5 pt-3 pb-2 text-[11px] font-semibold tracking-[0.06em] text-dimmed uppercase"
+      >
         {{ t('table.filters.sheet.sortBy') }}
       </div>
       <div class="px-[10px]">
@@ -146,7 +165,11 @@ function humanize(value: string) {
         >
           <span
             class="size-[7px] shrink-0 rounded-full transition-colors"
-            :class="activeKey === key ? 'bg-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]' : 'bg-accented'"
+            :class="
+              activeKey === key
+                ? 'bg-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--ui-primary)_18%,transparent)]'
+                : 'bg-accented'
+            "
           />
           <span class="min-w-0 flex-1 truncate">{{ sortLabels.get(key) ?? humanize(key) }}</span>
           <UIcon
@@ -156,7 +179,9 @@ function humanize(value: string) {
           />
         </button>
       </div>
-      <div class="nut-dl-sheet__title mt-2 border-t border-default px-5 pt-4 pb-2 text-[11px] font-semibold tracking-[0.06em] text-dimmed uppercase">
+      <div
+        class="nut-dl-sheet__title mt-2 border-t border-default px-5 pt-4 pb-2 text-[11px] font-semibold tracking-[0.06em] text-dimmed uppercase"
+      >
         {{ t('table.filters.sheet.order') }}
       </div>
       <div class="mx-4 mb-5 grid grid-cols-2 gap-0.5 rounded-md bg-elevated p-0.5">
@@ -165,10 +190,17 @@ function humanize(value: string) {
           :key="dir"
           type="button"
           class="flex h-8 items-center justify-center gap-1.5 rounded-[5px] text-[12.5px] font-medium"
-          :class="activeDirection === dir ? 'bg-default text-highlighted shadow-[0_0_0_1px_var(--ui-border)]' : 'text-muted'"
+          :class="
+            activeDirection === dir
+              ? 'bg-default text-highlighted shadow-[0_0_0_1px_var(--ui-border)]'
+              : 'text-muted'
+          "
           @click="internals.tableColumns.setSortDirection(dir)"
         >
-          <UIcon :name="dir === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'" class="size-3.5" />
+          <UIcon
+            :name="dir === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'"
+            class="size-3.5"
+          />
           {{ dir === 'asc' ? 'A → Z' : 'Z → A' }}
         </button>
       </div>

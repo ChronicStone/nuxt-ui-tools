@@ -25,17 +25,6 @@ export function createTableColumnBuilder<
   TSortKey extends string = TableSortKey<TRow>,
 >(): TableColumnBuilder<TRow, TContext, TPageContext, TSortKey> {
   return {
-    field<TField extends TableKnownFieldPath<TRow> & string>(
-      field: TField,
-      options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField> = {},
-    ) {
-      return {
-        kind: 'field',
-        key: field,
-        field,
-        ...options,
-      }
-    },
     composite<TKey extends string>(
       key: TKey,
       options: TableCompositeColumnOptions<TRow, TContext, TPageContext, TKey, TSortKey>,
@@ -56,6 +45,17 @@ export function createTableColumnBuilder<
         ...options,
       }
     },
+    field<TField extends TableKnownFieldPath<TRow> & string>(
+      field: TField,
+      options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField> = {},
+    ) {
+      return {
+        kind: 'field',
+        key: field,
+        field,
+        ...options,
+      }
+    },
   }
 }
 
@@ -64,12 +64,32 @@ export function createTableFilterBuilder<
   TContext extends GenericObject = GenericObject,
 >(): TableFilterBuilder<TRow, TContext> {
   return {
-    text<TKey extends TableKnownFieldPath<TRow>>(
+    boolean<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableTextFilterOptions<TRow, TContext, TKey>,
+      options: TableBooleanFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'text',
+        kind: 'boolean',
+        key,
+        ...options,
+      }
+    },
+    date<TKey extends TableKnownFieldPath<TRow>>(
+      key: TKey,
+      options: TableDateFilterOptions<TRow, TContext, TKey>,
+    ) {
+      return {
+        kind: 'date',
+        key,
+        ...options,
+      }
+    },
+    number<TKey extends TableKnownFieldPath<TRow>>(
+      key: TKey,
+      options: TableNumberFilterOptions<TRow, TContext, TKey>,
+    ) {
+      return {
+        kind: 'number',
         key,
         ...options,
       }
@@ -85,32 +105,12 @@ export function createTableFilterBuilder<
         ...options,
       }
     },
-    boolean<TKey extends TableKnownFieldPath<TRow>>(
+    text<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableBooleanFilterOptions<TRow, TContext, TKey>,
+      options: TableTextFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'boolean',
-        key,
-        ...options,
-      }
-    },
-    number<TKey extends TableKnownFieldPath<TRow>>(
-      key: TKey,
-      options: TableNumberFilterOptions<TRow, TContext, TKey>,
-    ) {
-      return {
-        kind: 'number',
-        key,
-        ...options,
-      }
-    },
-    date<TKey extends TableKnownFieldPath<TRow>>(
-      key: TKey,
-      options: TableDateFilterOptions<TRow, TContext, TKey>,
-    ) {
-      return {
-        kind: 'date',
+        kind: 'text',
         key,
         ...options,
       }

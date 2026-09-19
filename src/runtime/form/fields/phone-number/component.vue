@@ -46,39 +46,53 @@ const selectedCountry = computed(() =>
   countryOptions.value.find((option) => option.value === countryCode.value),
 )
 const processedValue = computed(() => {
-  if (!phoneValue.value || !countryCode.value) return { valid: false, value: null }
+  if (!phoneValue.value || !countryCode.value) {
+    return { valid: false, value: null }
+  }
 
   const parsed = parsePhoneNumberFromString(phoneValue.value, countryCode.value)
-  if (!parsed?.isValid() || !parsed.country || parsed.country !== countryCode.value)
+  if (!parsed?.isValid() || !parsed.country || parsed.country !== countryCode.value) {
     return { valid: false, value: null }
-  if (props.field.numberType?.length && !props.field.numberType.includes(parsed.getType()))
+  }
+  if (props.field.numberType?.length && !props.field.numberType.includes(parsed.getType())) {
     return { valid: false, value: null }
+  }
 
   return { valid: true, value: formatPhoneNumber(parsed) }
 })
 
 onMounted(() => {
   syncFromExternalValue(form.getValue(props.path))
-  if (!countryCode.value) countryCode.value = resolveDefaultCountryCode()
+  if (!countryCode.value) {
+    countryCode.value = resolveDefaultCountryCode()
+  }
   mounted.value = true
 })
 
 watch(
   () => form.getValue(props.path),
   (value) => {
-    if (syncingToForm.value) return
+    if (syncingToForm.value) {
+      return
+    }
     syncFromExternalValue(value)
   },
 )
 
 watch([phoneValue, countryCode], () => {
-  if (!mounted.value || syncingFromExternal.value) return
+  if (!mounted.value || syncingFromExternal.value) {
+    return
+  }
   syncToFormValue()
 })
 
 watch(countryCode, (current, previous) => {
-  if (!mounted.value || !previous || !current || current === previous) return
-  if (props.field.resetOnCountryChange ?? true) phoneValue.value = ''
+  if (!mounted.value || !previous || !current || current === previous) {
+    return
+  }
+  if (props.field.resetOnCountryChange ?? true) {
+    phoneValue.value = ''
+  }
 })
 
 function createCountryOption(code: CountryCode): FormPhoneCountryOption {
@@ -86,36 +100,46 @@ function createCountryOption(code: CountryCode): FormPhoneCountryOption {
 
   return {
     code,
-    value: code,
-    label: `${toFlagEmoji(code)} ${dialCode}`,
     dialCode,
     flag: toFlagEmoji(code),
+    label: `${toFlagEmoji(code)} ${dialCode}`,
+    value: code,
   }
 }
 
 function isCountryAllowed(option: FormPhoneCountryOption) {
   const allowed = props.field.countryCodes
-  if (!allowed) return true
+  if (!allowed) {
+    return true
+  }
   return isFunction(allowed) ? allowed(option) : allowed.includes(option.code)
 }
 
 function resolveDefaultCountryCode() {
   const stored = props.field.storedCountryCode
-  if (stored && isCountryCodeAvailable(stored)) return stored
+  if (stored && isCountryCodeAvailable(stored)) {
+    return stored
+  }
 
   const configured = props.field.defaultCountryCode
-  if (configured && configured !== 'detect' && isCountryCodeAvailable(configured)) return configured
+  if (configured && configured !== 'detect' && isCountryCodeAvailable(configured)) {
+    return configured
+  }
 
   const localeRegion = resolveLocaleRegionCode()
-  if (localeRegion && isCountryCodeAvailable(localeRegion)) return localeRegion
+  if (localeRegion && isCountryCodeAvailable(localeRegion)) {
+    return localeRegion
+  }
 
   return countryOptions.value[0]?.value
 }
 
 function resolveLocaleRegionCode() {
   const segments = locale.value.code.split('-')
-  const region = segments.length > 1 ? segments[segments.length - 1]?.toUpperCase() : undefined
-  if (!region) return undefined
+  const region = segments.length > 1 ? segments.at(-1)?.toUpperCase() : undefined
+  if (!region) {
+    return undefined
+  }
 
   return getCountries().find((code) => code === region)
 }
@@ -153,7 +177,9 @@ function syncToFormValue() {
 
   if (processedValue.value.valid && props.field.displayFormat !== 'raw' && countryCode.value) {
     const parsed = parsePhoneNumberFromString(phoneValue.value, countryCode.value)
-    if (parsed?.isValid()) phoneValue.value = parsed.formatNational()
+    if (parsed?.isValid()) {
+      phoneValue.value = parsed.formatNational()
+    }
   }
 
   queueMicrotask(() => {
@@ -167,15 +193,21 @@ function clearPhone() {
 }
 
 function formatPhoneNumber(parsed: NonNullable<ReturnType<typeof parsePhoneNumberFromString>>) {
-  if (props.field.format === 'national') return parsed.formatNational()
-  if (props.field.format === 'uri') return parsed.getURI()
-  if (props.field.format === 'e164') return parsed.number
+  if (props.field.format === 'national') {
+    return parsed.formatNational()
+  }
+  if (props.field.format === 'uri') {
+    return parsed.getURI()
+  }
+  if (props.field.format === 'e164') {
+    return parsed.number
+  }
   return parsed.formatInternational()
 }
 
 function toFlagEmoji(code: CountryCode) {
   return [...code]
-    .map((character) => String.fromCodePoint(127397 + character.charCodeAt(0)))
+    .map((character) => String.fromCodePoint(127_397 + character.charCodeAt(0)))
     .join('')
 }
 </script>

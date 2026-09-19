@@ -1,4 +1,5 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { getResponsiveValue } from '#ui-tools/shared'
 
@@ -39,18 +40,18 @@ export function useTableGrid<TRow extends GenericObject>(options: UseTableGridPa
   const rows = computed(() => options.data.value.rows)
   const rowChunks = computed(() =>
     chunkRows({
-      rows: rows.value,
       cardsPerRow: cardsPerRow.value,
+      rows: rows.value,
     }),
   )
 
   return {
-    mode,
-    rows,
-    rowChunks,
+    cardsPerRow,
     columnCount,
     itemColumnSpan,
-    cardsPerRow,
+    mode,
+    rowChunks,
+    rows,
   }
 }
 
@@ -60,7 +61,9 @@ function clampGridUnit(value: number) {
 
 function resolveResponsiveGridNumber(value: number | string | (() => number | string)) {
   const resolvedValue = isResponsiveGridValueResolver(value) ? value() : value
-  if (isNumber(resolvedValue)) return resolvedValue
+  if (isNumber(resolvedValue)) {
+    return resolvedValue
+  }
 
   return getResponsiveValue(resolvedValue, 'integer')
 }
@@ -79,10 +82,10 @@ function chunkRows<TRow>(options: { rows: TRow[]; cardsPerRow: number }): GridRo
       const end = start + options.cardsPerRow
 
       return {
-        index,
-        start,
         end,
+        index,
         rows: options.rows.slice(start, end),
+        start,
       }
     },
   )

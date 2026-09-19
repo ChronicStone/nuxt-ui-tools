@@ -14,9 +14,9 @@ export function createResolvedFilterState<
   TContext extends GenericObject = GenericObject,
   TKey extends string = string,
 >(params: {
-  definitions: Array<TableUiFilterDefinition<TRow, TContext, TKey>>
+  definitions: TableUiFilterDefinition<TRow, TContext, TKey>[]
   filters: TableFilterState<TKey>
-  staticFilters?: Array<TableStaticFilterNode<TRow, TContext, TKey>>
+  staticFilters?: TableStaticFilterNode<TRow, TContext, TKey>[]
   context?: TContext
 }): TableResolvedFilterGroup<string> {
   const children: TableResolvedFilterNode<string>[] = []
@@ -34,25 +34,25 @@ export function createResolvedFilterState<
 
     if (!definition) {
       children.push({
-        type: 'condition',
         key: rule.key,
         operator,
+        type: 'condition',
         value: rule.value,
       })
       continue
     }
 
     const resolvedNode: TableResolvedFilterNode<string> | null = definition.resolve?.({
+      context: params.context,
+      definition,
       rule: {
         ...rule,
         operator,
       },
-      definition,
-      context: params.context,
     }) ?? {
-      type: 'condition',
       key: rule.key,
       operator,
+      type: 'condition',
       value: rule.value,
     }
 
@@ -62,9 +62,9 @@ export function createResolvedFilterState<
   }
 
   return {
-    type: 'group',
-    combinator: 'and',
     children,
+    combinator: 'and',
+    type: 'group',
   }
 }
 
@@ -81,9 +81,9 @@ function normalizeStaticFilterNode<
   }
 
   return {
-    type: 'condition',
     key: filter.key,
     operator: filter.operator,
+    type: 'condition',
     value: filter.value,
   }
 }

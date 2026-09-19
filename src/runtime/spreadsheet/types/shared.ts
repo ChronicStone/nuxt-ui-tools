@@ -6,7 +6,10 @@ import type { GenericObject } from '#ui-tools/shared/types/utils'
 export type SpreadsheetValue = GenericObject[string]
 
 /** Named row/context contract for spreadsheet data that is decoded at runtime. */
-export type SpreadsheetRecord = { [key: string]: SpreadsheetValue }
+// oxlint-disable-next-line typescript/consistent-type-definitions -- a type alias keeps the implicit index signature spreadsheet rows rely on
+export type SpreadsheetRecord = {
+  [key: string]: SpreadsheetValue
+}
 
 export type SpreadsheetQueryDefinition<TData = unknown> = Omit<
   UseQueryOptions<TData>,

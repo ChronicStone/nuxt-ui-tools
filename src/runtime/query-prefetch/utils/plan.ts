@@ -87,17 +87,23 @@ export async function executeQueryPrefetchPlan(
 }
 
 export function isQueryPrefetchPlan(value: QueryPrefetchCandidate): value is QueryPrefetchPlan {
-  if (Array.isArray(value)) return false
+  if (Array.isArray(value)) {
+    return false
+  }
   return hasProperty(value, 'kind') && value.kind === 'query-prefetch-plan'
 }
 
 export function isQueryPrefetchOption(value: QueryPrefetchCandidate): value is QueryPrefetchOption {
-  if (Array.isArray(value)) return false
+  if (Array.isArray(value)) {
+    return false
+  }
   return hasProperty(value, 'queryKey') && Array.isArray(value.queryKey)
 }
 
 function executeQuery(query: QueryPrefetchOption, queryClient: QueryClient) {
-  if (hasProperty(query, 'enabled') && query.enabled === false) return Promise.resolve(undefined)
+  if (hasProperty(query, 'enabled') && query.enabled === false) {
+    return Promise.resolve(undefined)
+  }
 
   return queryClient
     .ensureQueryData({ ...query, revalidateIfStale: true })
@@ -105,7 +111,7 @@ function executeQuery(query: QueryPrefetchOption, queryClient: QueryClient) {
       const select = hasProperty(query, 'select') ? query.select : undefined
       return isQueryPrefetchSelector(select) ? select(data) : data
     })
-    .catch(() => undefined)
+    .catch(() => {})
 }
 
 type QueryPrefetchSelector = (data: QueryPrefetchContext[string]) => QueryPrefetchContext[string]

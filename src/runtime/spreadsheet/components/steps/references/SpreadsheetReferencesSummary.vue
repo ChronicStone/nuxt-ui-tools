@@ -1,11 +1,11 @@
 <script setup lang="ts">
 const props = defineProps<{
-  items: Array<{
+  items: {
     key: string
     label: string
     value: number
     barClass: string
-  }>
+  }[]
 }>()
 </script>
 

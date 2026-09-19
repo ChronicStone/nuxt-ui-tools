@@ -41,8 +41,8 @@ const localValue = computed({
   set: (value: string) => {
     internals.filterPresentation.setPanelScalarFilterValue({
       key: props.definition.key,
-      value: value.trim() || undefined,
       operator: pendingOperator.value,
+      value: value.trim() || undefined,
     })
   },
 })
@@ -67,12 +67,14 @@ function handleOperatorChange(operator: TableFilterOperator) {
     return
   }
 
-  if (!localValue.value.trim()) return
+  if (!localValue.value.trim()) {
+    return
+  }
 
   internals.filterPresentation.setPanelScalarFilterValue({
     key: props.definition.key,
-    value: localValue.value.trim(),
     operator: pendingOperator.value,
+    value: localValue.value.trim(),
   })
 }
 </script>

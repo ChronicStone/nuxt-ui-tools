@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
-
 import { computed } from 'vue'
 
-import type { DataListCheckboxProps } from '../../types'
 import { useDataListUi } from '../../composables/use-data-list-ui'
+import type { DataListCheckboxProps } from '../../types'
 import { mergeDataListProps } from '../../utils'
 
 const props = defineProps<{

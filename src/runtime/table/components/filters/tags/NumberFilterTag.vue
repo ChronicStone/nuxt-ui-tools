@@ -100,8 +100,8 @@ const scalarValue = computed<number | undefined>({
 })
 
 const sliderBounds = computed(() => ({
-  min: filterUi.value.min ?? 0,
   max: filterUi.value.max ?? 100,
+  min: filterUi.value.min ?? 0,
 }))
 
 const sliderRangeValue = computed<number[]>(() => [
@@ -110,23 +110,25 @@ const sliderRangeValue = computed<number[]>(() => [
 ])
 
 const session = useFilterTagSession({
-  session: props.session,
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
     internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
-  onOpen: initLocalState,
   onClose: () => {
     pendingOperator.value = undefined
   },
-  onSessionClosed: () => emit('sessionClosed'),
   onDismiss: () => emit('dismiss'),
+  onOpen: initLocalState,
+  onSessionClosed: () => emit('sessionClosed'),
+  session: props.session,
 })
 
 watch(
   () => operator.value,
   () => {
-    if (session.isOpen.value) initLocalState()
+    if (session.isOpen.value) {
+      initLocalState()
+    }
   },
 )
 
@@ -178,7 +180,9 @@ function handleOperatorChange(op: TableFilterOperator) {
 }
 
 function commitIfAuto() {
-  if (filterUi.value.commitMode === 'auto') applyFilter()
+  if (filterUi.value.commitMode === 'auto') {
+    applyFilter()
+  }
 }
 
 function applyFilter() {
@@ -188,6 +192,7 @@ function applyFilter() {
   if (operator.value === 'between') {
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
+      operator: nextOperator,
       value:
         rangeValue.value.from === '' && rangeValue.value.to === ''
           ? undefined
@@ -197,7 +202,6 @@ function applyFilter() {
                 rangeValue.value.to === '' ? undefined : ['to', Number(rangeValue.value.to)],
               ].filter((entry): entry is [string, number] => entry !== undefined),
             ),
-      operator: nextOperator,
     })
     session.close()
     return
@@ -205,8 +209,8 @@ function applyFilter() {
 
   internals.filters.setScalarFilterValue({
     key: props.definition.key,
-    value: scalarValue.value,
     operator: nextOperator,
+    value: scalarValue.value,
   })
   session.close()
 }
@@ -238,16 +242,22 @@ function updateRangeTo(value: number | undefined) {
 }
 
 function updateSliderScalarValue<TValue>(value: TValue) {
-  if (!isNumber(value)) return
+  if (!isNumber(value)) {
+    return
+  }
   scalarValue.value = value
   commitIfAuto()
 }
 
 function updateSliderRangeValue<TValue>(value: TValue) {
-  if (!isArray(value) || value.length < 2) return
+  if (!isArray(value) || value.length < 2) {
+    return
+  }
 
   const [from, to] = value
-  if (!isNumber(from) || !isNumber(to)) return
+  if (!isNumber(from) || !isNumber(to)) {
+    return
+  }
 
   rangeValue.value = {
     from: String(from),

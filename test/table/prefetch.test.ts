@@ -15,8 +15,6 @@ describe('table query prefetch', () => {
     let facetQueryCalls = 0
 
     const schema = defineTableSchema({
-      tableKey: 'users',
-      rowKey: 'id',
       context: [
         {
           key: 'account',
@@ -26,37 +24,6 @@ describe('table query prefetch', () => {
           }),
         },
       ],
-      pageContext: [
-        {
-          key: 'summary',
-          query: ({ rows, context }) => ({
-            queryKey: ['summary', rows.length, context.account],
-            queryFn: async () => {
-              pageContextRows = rows.length
-              pageContextAccount = context.account
-              return { visible: rows.length }
-            },
-          }),
-        },
-      ],
-      pagination: { defaultSize: 10 },
-      source: {
-        mode: 'remote',
-        facets: (request) => ({
-          queryKey: ['user-facets', request],
-          queryFn: async () => {
-            facetQueryCalls++
-            return { facets: [] }
-          },
-        }),
-        query: (request) => ({
-          queryKey: ['users', request],
-          queryFn: async () => {
-            sourceRequest = request
-            return { rows: [{ id: 'user-1', name: 'Ada', status: 'active' }], rowCount: 1 }
-          },
-        }),
-      },
       filters: {
         search: { fields: ['name'] },
         ui: (filter) => [
@@ -75,21 +42,54 @@ describe('table query prefetch', () => {
           }),
         ],
       },
-      table: {
-        defaultSorting: { key: 'name', dir: 'asc' },
-        columns: (column) => [column.field('name', { label: 'Name' })],
+      pageContext: [
+        {
+          key: 'summary',
+          query: ({ rows, context }) => ({
+            queryKey: ['summary', rows.length, context.account],
+            queryFn: async () => {
+              pageContextRows = rows.length
+              pageContextAccount = context.account
+              return { visible: rows.length }
+            },
+          }),
+        },
+      ],
+      pagination: { defaultSize: 10 },
+      rowKey: 'id',
+      source: {
+        facets: (request) => ({
+          queryKey: ['user-facets', request],
+          queryFn: async () => {
+            facetQueryCalls++
+            return { facets: [] }
+          },
+        }),
+        mode: 'remote',
+        query: (request) => ({
+          queryKey: ['users', request],
+          queryFn: async () => {
+            sourceRequest = request
+            return { rows: [{ id: 'user-1', name: 'Ada', status: 'active' }], rowCount: 1 }
+          },
+        }),
       },
+      table: {
+        columns: (column) => [column.field('name', { label: 'Name' })],
+        defaultSorting: { dir: 'asc', key: 'name' },
+      },
+      tableKey: 'users',
     })
     const queryClient = new QueryClient()
     const plan = prefetchTable({
       route: {
         query: {
-          'p.page': '2',
-          'p.size': '25',
-          's.key': 'name',
-          's.dir': 'desc',
           'f.search': 'ada',
           'f.ui.status': 'active',
+          'p.page': '2',
+          'p.size': '25',
+          's.dir': 'desc',
+          's.key': 'name',
         },
       },
       schema,
@@ -97,23 +97,23 @@ describe('table query prefetch', () => {
 
     await executeQueryPrefetchPlan(plan, { queryClient })
 
-    expect(sourceRequest?.context).toEqual({ account: { id: 'account-1' } })
-    expect(sourceRequest?.pagination).toEqual({
+    expect(sourceRequest?.context).toStrictEqual({ account: { id: 'account-1' } })
+    expect(sourceRequest?.pagination).toStrictEqual({
+      count: 'exact',
       mode: 'offset',
       pageIndex: 2,
       pageSize: 25,
-      count: 'exact',
     })
-    expect(sourceRequest?.sorting).toEqual([{ key: 'name', dir: 'desc' }])
-    expect(sourceRequest?.search).toEqual({ value: 'ada', fields: ['name'] })
-    expect(sourceRequest?.filters).toEqual({
-      type: 'group',
-      combinator: 'and',
+    expect(sourceRequest?.sorting).toStrictEqual([{ dir: 'desc', key: 'name' }])
+    expect(sourceRequest?.search).toStrictEqual({ fields: ['name'], value: 'ada' })
+    expect(sourceRequest?.filters).toStrictEqual({
       children: [{ type: 'condition', key: 'status', operator: 'isAnyOf', value: ['active'] }],
+      combinator: 'and',
+      type: 'group',
     })
     expect(optionQueryCalls).toBe(1)
     expect(facetQueryCalls).toBe(1)
     expect(pageContextRows).toBe(1)
-    expect(pageContextAccount).toEqual({ id: 'account-1' })
+    expect(pageContextAccount).toStrictEqual({ id: 'account-1' })
   })
 })

@@ -1,9 +1,7 @@
 import { computed, reactive, ref } from 'vue'
 import type { ComputedRef } from 'vue'
 
-import type { FormValue } from '../types'
-import type { FormField, FormFieldApi, FormObject } from '../types'
-import type { FormRuntimeContext } from '../types'
+import type { FormValue, FormField, FormFieldApi, FormObject, FormRuntimeContext } from '../types'
 import { cloneFormValue, getPathValue, isRecord, setPathValue } from '../utils/path'
 import { buildFormOutput, buildInitialFormState } from '../utils/state'
 
@@ -24,11 +22,15 @@ export function useFormState(params: {
   const isDirty = computed(() => dirtyPaths.value.length > 0)
 
   function initialize(input = params.input?.value) {
-    for (const key of Object.keys(state)) delete state[key]
+    for (const key of Object.keys(state)) {
+      delete state[key]
+    }
 
     const initial = buildInitialFormState(params.schema.value, params.context, input)
     initialState.value = cloneFormObject(initial)
-    for (const [key, value] of Object.entries(initial)) state[key] = value
+    for (const [key, value] of Object.entries(initial)) {
+      state[key] = value
+    }
   }
 
   function reset() {
@@ -40,7 +42,9 @@ export function useFormState(params: {
   }
 
   function syncInput(input: FormObject | undefined, paths: boolean | readonly string[]) {
-    if (!paths || (Array.isArray(paths) && paths.length === 0)) return
+    if (!paths || (Array.isArray(paths) && paths.length === 0)) {
+      return
+    }
     if (paths === true) {
       initialize(input)
       return
@@ -55,17 +59,17 @@ export function useFormState(params: {
   }
 
   return {
-    state,
-    output,
     dirtyPaths,
-    isDirty,
+    getValue: (path: string | readonly string[]) => getPathValue(state, path),
     initialize,
-    syncInput,
+    isDirty,
+    output,
     reset,
     resetValue,
-    getValue: (path: string | readonly string[]) => getPathValue(state, path),
     setValue: (path: string | readonly string[], value: FormValue) =>
       setPathValue(state, path, value),
+    state,
+    syncInput,
   }
 }
 
@@ -79,12 +83,13 @@ function collectDirtyPaths(
   current: FormValue,
   path: readonly string[] = [],
 ): readonly string[] {
-  if (Array.isArray(initial) || Array.isArray(current))
+  if (Array.isArray(initial) || Array.isArray(current)) {
     return collectArrayDirtyPaths(
       Array.isArray(initial) ? initial : [],
       Array.isArray(current) ? current : [],
       path,
     )
+  }
 
   if (isRecord(initial) || isRecord(current)) {
     const initialObject = isRecord(initial) ? initial : {}
@@ -103,7 +108,9 @@ function collectArrayDirtyPaths(
   current: readonly FormValue[],
   path: readonly string[],
 ) {
-  if (initial.length !== current.length) return [path.join('.')]
+  if (initial.length !== current.length) {
+    return [path.join('.')]
+  }
 
   return current.flatMap((value, index) =>
     collectDirtyPaths(initial[index], value, [...path, String(index)]),

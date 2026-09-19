@@ -116,8 +116,12 @@ export function isRegExp<T>(value: T): value is T & RegExp {
 
 /** Type predicate to check if a value is a Promise. */
 export function isPromise<T>(value: T): value is T & Promise<unknown> {
-  if (value instanceof Promise) return true
-  if (!isObject(value) || !('then' in value)) return false
+  if (value instanceof Promise) {
+    return true
+  }
+  if (!isObject(value) || !('then' in value)) {
+    return false
+  }
   return isFunction(value.then)
 }
 
@@ -128,7 +132,9 @@ export function isError<T>(value: T): value is T & Error {
 
 /** Type predicate to check if a value is a plain object. */
 export function isPlainObject<T>(value: T): value is T & GenericObject {
-  if (!isObject(value)) return false
+  if (!isObject(value)) {
+    return false
+  }
   const proto = Object.getPrototypeOf(value)
   return proto === null || proto === Object.prototype
 }
@@ -193,7 +199,9 @@ export function hasTypedProperty<T, K extends string, TValue>(
   key: K,
   predicate: (property: GenericObject[string]) => property is GenericObject[string] & TValue,
 ): boolean {
-  if (!isObject(value) || !(key in value)) return false
+  if (!isObject(value) || !(key in value)) {
+    return false
+  }
   return predicate(value[key])
 }
 
@@ -214,14 +222,14 @@ export function not<T, S extends T>(
 
 /** Creates a type predicate that checks if a value matches all predicates. */
 export function all<T, S extends T>(
-  ...predicates: Array<(value: T) => value is S>
+  ...predicates: ((value: T) => value is S)[]
 ): (value: T) => value is S {
   return (value: T): value is S => predicates.every((predicate) => predicate(value))
 }
 
 /** Creates a type predicate that checks if a value matches any predicate. */
 export function some<T, S extends T>(
-  ...predicates: Array<(value: T) => value is S>
+  ...predicates: ((value: T) => value is S)[]
 ): (value: T) => value is S {
   return (value: T): value is S => predicates.some((predicate) => predicate(value))
 }
@@ -243,9 +251,13 @@ export function matchesPattern(pattern: RegExp): <T>(value: T) => value is T & s
 
 /** Type predicate to check if a value is a valid email string. */
 export function isEmail<T>(value: T): value is T & string {
-  if (!isString(value)) return false
+  if (!isString(value)) {
+    return false
+  }
   const atIndex = value.indexOf('@')
-  if (atIndex < 1) return false
+  if (atIndex < 1) {
+    return false
+  }
   const domain = value.slice(atIndex + 1)
   const dotIndex = domain.lastIndexOf('.')
   return dotIndex > 0 && dotIndex < domain.length - 1 && !value.includes(' ')
@@ -253,7 +265,9 @@ export function isEmail<T>(value: T): value is T & string {
 
 /** Type predicate to check if a value is a valid URL string. */
 export function isURL<T>(value: T): value is T & string {
-  if (!isString(value)) return false
+  if (!isString(value)) {
+    return false
+  }
   try {
     const url = new URL(value)
     return url.protocol.length > 0
@@ -300,7 +314,9 @@ export function isWeakSet<T, TValue extends WeakKey = WeakKey>(
 
 /** Type predicate to check if a value is iterable. */
 export function isIterable<T>(value: T): value is T & Iterable<unknown> {
-  if (!(isObject(value) || Array.isArray(value))) return false
+  if (!(isObject(value) || Array.isArray(value))) {
+    return false
+  }
   const descriptor = Object.getOwnPropertyDescriptor(value, Symbol.iterator)
   return descriptor !== undefined && isFunction(descriptor.value)
 }
@@ -321,7 +337,9 @@ export function assertType<TValue, T>(
   predicate: (value: TValue) => value is TValue & T,
   message = 'Type assertion failed',
 ): asserts value is TValue & T {
-  if (!predicate(value)) throw new Error(message)
+  if (!predicate(value)) {
+    throw new Error(message)
+  }
 }
 
 /** Asserts that a value is defined (not null or undefined). */
@@ -329,5 +347,7 @@ export function assertDefined<T>(
   value: T,
   message = 'Expected value to be defined',
 ): asserts value is NonNullable<T> {
-  if (value === null || value === undefined) throw new Error(message)
+  if (value === null || value === undefined) {
+    throw new Error(message)
+  }
 }

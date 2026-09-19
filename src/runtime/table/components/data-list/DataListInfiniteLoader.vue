@@ -26,7 +26,7 @@ const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const viewport = useDataListViewport()
 const sentinel = ref<HTMLElement | null>(null)
-const state = internals.pagination.state
+const { state } = internals.pagination
 const { t } = useUiToolsLocale()
 const rootUi = computed(() => dataListUi.ui.value.infiniteLoader)
 const resolvedUi = computed<DataListInfiniteLoaderUi>(() => ({
@@ -44,7 +44,9 @@ function loadMore() {
 useIntersectionObserver(
   sentinel,
   ([entry]) => {
-    if (!props.auto || !entry?.isIntersecting || !state.value.hasNextPage) return
+    if (!props.auto || !entry?.isIntersecting || !state.value.hasNextPage) {
+      return
+    }
     loadMore()
   },
   { root: viewport.element, rootMargin: props.rootMargin },

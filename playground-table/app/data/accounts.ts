@@ -1,26 +1,22 @@
 import { faker } from '@faker-js/faker/locale/fr'
 
-import {
-  ACCOUNT_STATUS,
-  ACCOUNT_TYPE,
-  COUNTRY,
-  CURRENCY,
-  GROUPS,
-  MANAGER_LOCATIONS,
-  type AccountStatus,
-  type AccountType,
-  type CountryCode,
-  type Currency,
-} from './enums'
+import { ACCOUNT_STATUS, ACCOUNT_TYPE, COUNTRY, CURRENCY, GROUPS, MANAGER_LOCATIONS } from './enums'
+import type { AccountStatus, AccountType, CountryCode, Currency } from './enums'
 
-export type Contact = {
+export interface Contact {
   id: string
   label: string
   email: string
-  roles: readonly ('businessManager' | 'legalRepresentative' | 'billing' | 'agent' | 'projectManager')[]
+  roles: readonly (
+    | 'businessManager'
+    | 'legalRepresentative'
+    | 'billing'
+    | 'agent'
+    | 'projectManager'
+  )[]
 }
 
-export type Account = {
+export interface Account {
   id: string
   name: string
   legalEntity: string
@@ -68,9 +64,9 @@ export function makeContacts(count: number, seed = 7): Contact[] {
     const first = faker.person.firstName()
     const last = faker.person.lastName()
     return {
+      email: faker.internet.email({ firstName: first, lastName: last }).toLowerCase(),
       id: `c${i + 1}`,
       label: `${first} ${last}`,
-      email: faker.internet.email({ firstName: first, lastName: last }).toLowerCase(),
       roles: pick(roleSets, i),
     }
   })
@@ -94,34 +90,34 @@ export function makeAccounts(count: number, contacts: Contact[], seed = 42): Acc
     const updated = faker.date.between({ from: created, to: '2026-09-18' })
     const pending = status === 'pending'
     return {
-      id: faker.string.alphanumeric({ length: 8, casing: 'lower' }),
-      name: company,
-      legalEntity: `${company} ${pick(['SAS', 'SARL', 'Ltd', 'SL', 'GmbH', 'AB'] as const, i)}`,
-      status: status as AccountStatus,
       accountType: type,
-      country,
-      city: faker.location.city(),
-      group: i % 3 === 0 ? null : pick(GROUPS, i),
-      evoliz: !pending && i % 4 !== 1,
-      vtest: !pending && i % 3 !== 2,
-      edofSync: country === 'FR' && i % 2 === 0,
-      businessManagerId: pending && i % 2 ? null : pick(bms, i).id,
-      updatedAt: updated.toISOString(),
-      invitationSent: !pending,
-      debit: i % 5 === 0,
-      metadata: i % 6 === 0 ? 'formulaire-inscription' : null,
-      testCenter: isTc ? `${faker.location.city()} Center` : null,
-      canPerformOnSite: isTc || i % 4 === 0,
-      erpId: pending ? null : `EVZ-${10000 + i * 7}`,
-      vtestId: pending || i % 3 === 2 ? null : `VT-${country}-${String(i * 13).padStart(4, '0')}`,
-      managerLocation: pending ? null : pick(MANAGER_LOCATIONS, i),
-      legalRepresentativeId: pick(legals, i + 2).id,
       billingContactId: pending && i % 3 ? null : pick(billings, i + 1).id,
-      generalContacts: Array.from({ length: i % 4 }, (_, k) => pick(contacts, i * 7 + k).id),
-      preferredCurrency: pick(CURRENCY, country === 'FR' || country === 'ES' ? 0 : i),
-      contracts: pending ? 0 : (i * 7) % 5,
+      businessManagerId: pending && i % 2 ? null : pick(bms, i).id,
+      canPerformOnSite: isTc || i % 4 === 0,
+      city: faker.location.city(),
       consumption: pending ? 0 : (i * 137) % 900,
+      contracts: pending ? 0 : (i * 7) % 5,
+      country,
       createdAt: created.toISOString(),
+      debit: i % 5 === 0,
+      edofSync: country === 'FR' && i % 2 === 0,
+      erpId: pending ? null : `EVZ-${10000 + i * 7}`,
+      evoliz: !pending && i % 4 !== 1,
+      generalContacts: Array.from({ length: i % 4 }, (_, k) => pick(contacts, i * 7 + k).id),
+      group: i % 3 === 0 ? null : pick(GROUPS, i),
+      id: faker.string.alphanumeric({ length: 8, casing: 'lower' }),
+      invitationSent: !pending,
+      legalEntity: `${company} ${pick(['SAS', 'SARL', 'Ltd', 'SL', 'GmbH', 'AB'] as const, i)}`,
+      legalRepresentativeId: pick(legals, i + 2).id,
+      managerLocation: pending ? null : pick(MANAGER_LOCATIONS, i),
+      metadata: i % 6 === 0 ? 'formulaire-inscription' : null,
+      name: company,
+      preferredCurrency: pick(CURRENCY, country === 'FR' || country === 'ES' ? 0 : i),
+      status: status as AccountStatus,
+      testCenter: isTc ? `${faker.location.city()} Center` : null,
+      updatedAt: updated.toISOString(),
+      vtest: !pending && i % 3 !== 2,
+      vtestId: pending || i % 3 === 2 ? null : `VT-${country}-${String(i * 13).padStart(4, '0')}`,
     }
   })
 }

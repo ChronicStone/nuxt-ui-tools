@@ -16,13 +16,20 @@ describe('table search orchestration', () => {
       ui: [],
     })
     const pagination = ref({
+      count: 'exact' as const,
       mode: 'offset' as const,
       pageIndex: 2,
       pageSize: 20,
-      count: 'exact' as const,
     })
     // SAFETY: this focused test supplies only the query-state members useTableSearch reads.
     const searchState = useTableSearch({
+      queryState: {
+        filters,
+        pagination,
+        resetPagination: () => {
+          pagination.value = { ...pagination.value, pageIndex: 1 }
+        },
+      } as never,
       schema: computed(() => ({
         tableKey: 'users',
         rowKey: 'id',
@@ -34,18 +41,11 @@ describe('table search orchestration', () => {
           },
         },
       })),
-      queryState: {
-        filters,
-        pagination,
-        resetPagination: () => {
-          pagination.value = { ...pagination.value, pageIndex: 1 }
-        },
-      } as never,
     })
 
     expect(searchState.searchQuery.value).toBe('Ada')
     expect(searchState.searchPlaceholder.value).toBe('Search team')
-    expect(searchState.hasActiveSearch.value).toBe(true)
+    expect(searchState.hasActiveSearch.value).toBeTruthy()
 
     searchState.searchQuery.value = 'Grace'
 
@@ -59,29 +59,29 @@ describe('filter value registry', () => {
   it('derives stable defaults by filter kind', () => {
     expect(
       createDefaultFilterValue({
-        kind: 'text',
         key: 'name',
+        kind: 'text',
         label: 'Name',
       }),
     ).toBe('')
 
     expect(
       createDefaultFilterValue({
-        kind: 'option',
         key: 'status',
+        kind: 'option',
         label: 'Status',
       }),
-    ).toEqual([])
+    ).toStrictEqual([])
 
     expect(
       createFilterValueForOperator({
         definition: {
-          kind: 'number',
           key: 'salary',
+          kind: 'number',
           label: 'Salary',
         },
         operator: 'between',
       }),
-    ).toEqual({ from: undefined, to: undefined })
+    ).toStrictEqual({ from: undefined, to: undefined })
   })
 })

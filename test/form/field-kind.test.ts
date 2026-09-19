@@ -19,7 +19,7 @@ describe('form field kinds', () => {
   it('starts from core Exassess fields before specialized fields', () => {
     const fieldTypes = formFieldKinds.map((kind) => kind.type)
 
-    expect(fieldTypes.slice(0, 15)).toEqual([
+    expect(fieldTypes.slice(0, 15)).toStrictEqual([
       'text',
       'password',
       'textarea',
@@ -41,31 +41,31 @@ describe('form field kinds', () => {
   it('creates a typed field instance for declarative checks', () => {
     const rawField = defineFormField({
       key: 'country',
-      type: 'select',
       options: [
         { label: 'France', value: 'FR' },
         { label: 'Belgium', value: 'BE' },
       ],
+      type: 'select',
     })
     const field = createFormFieldInstance(rawField)
 
     expectTypeOf(field.type.value).toEqualTypeOf<'select'>()
-    expect(field.type.is('select')).toBe(true)
-    expect(field.type.is('text')).toBe(false)
-    expect(field.is('stateful')).toBe(true)
-    expect(field.has('options')).toBe(true)
-    expect(field.hasAll(['label', 'validation', 'transform'])).toBe(true)
-    expect(field.state.is('stateful')).toBe(true)
-    expect(field.capability.has('options')).toBe(true)
-    expect(field.capability.hasAll(['label', 'validation', 'transform'])).toBe(true)
-    expect(field.capability.has('upload')).toBe(false)
+    expect(field.type.is('select')).toBeTruthy()
+    expect(field.type.is('text')).toBeFalsy()
+    expect(field.is('stateful')).toBeTruthy()
+    expect(field.has('options')).toBeTruthy()
+    expect(field.hasAll(['label', 'validation', 'transform'])).toBeTruthy()
+    expect(field.state.is('stateful')).toBeTruthy()
+    expect(field.capability.has('options')).toBeTruthy()
+    expect(field.capability.hasAll(['label', 'validation', 'transform'])).toBeTruthy()
+    expect(field.capability.has('upload')).toBeFalsy()
     expect(field.config?.type).toBe('select')
     expect(field.raw).toBe(rawField)
   })
 
   it('uses the registry as the source of truth for field type support', () => {
     expect(getFormFieldKind('hidden')?.state).toBe('stateful')
-    expect(isRegisteredFormFieldType('text')).toBe(true)
-    expect(isRegisteredFormFieldType('unknown-field')).toBe(false)
+    expect(isRegisteredFormFieldType('text')).toBeTruthy()
+    expect(isRegisteredFormFieldType('unknown-field')).toBeFalsy()
   })
 })

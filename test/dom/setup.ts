@@ -18,8 +18,8 @@ if (!('ResizeObserver' in globalThis)) {
 
 window.matchMedia = (query: string) =>
   ({
+    addEventListener() {},
     matches: query === currentMediaQuery(),
     media: query,
-    addEventListener() {},
     removeEventListener() {},
   }) as unknown as MediaQueryList

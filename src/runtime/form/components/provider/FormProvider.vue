@@ -3,7 +3,7 @@ import { provideFormApi } from '../../composables/use-form-api'
 import FormOverlayHost from './FormOverlayHost.vue'
 
 const formApi = provideFormApi()
-const formInstances = formApi.formInstances
+const { formInstances } = formApi
 </script>
 
 <template>

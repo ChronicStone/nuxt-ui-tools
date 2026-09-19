@@ -1,4 +1,5 @@
-import { inject, provide, type ComputedRef, type InjectionKey } from 'vue'
+import { inject, provide } from 'vue'
+import type { ComputedRef, InjectionKey } from 'vue'
 
 import type { GenericObject, TableRowActionContext, TableRuntimeRecord } from '../types'
 

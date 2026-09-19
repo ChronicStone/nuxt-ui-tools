@@ -36,7 +36,6 @@ export function buildOptionFilterPreview(options: {
   return {
     active: true,
     count: labels.length,
-    tags: mode === 'tags' ? labels.slice(0, preview.maxTags) : [],
     entries: mode === 'tags' ? entries.slice(0, preview.maxTags) : [],
     summary: resolvePreviewSummary({
       labels,
@@ -44,6 +43,7 @@ export function buildOptionFilterPreview(options: {
       maxTags: preview.maxTags,
       label: preview.label,
     }),
+    tags: mode === 'tags' ? labels.slice(0, preview.maxTags) : [],
   }
 }
 
@@ -56,9 +56,9 @@ function resolveOptionPreviewEntry(options: {
     (entry) => String(entry.value) === String(options.value),
   )
   return {
-    label: resolveOptionPreviewLabel(options),
-    icon: matched?.icon,
     color: matched?.color,
+    icon: matched?.icon,
+    label: resolveOptionPreviewLabel(options),
   }
 }
 
@@ -120,7 +120,9 @@ function resolveOptionPreview(options: {
 }
 
 function resolvePreviewMode(mode: string) {
-  if (mode === 'summary' || mode === 'tags') return mode
+  if (mode === 'summary' || mode === 'tags') {
+    return mode
+  }
   return 'tags'
 }
 
@@ -136,6 +138,8 @@ function resolvePreviewSummary(options: {
   }
 
   const overflow = options.labels.length - options.maxTags
-  if (overflow <= 0) return ''
+  if (overflow <= 0) {
+    return ''
+  }
   return `+${overflow}`
 }

@@ -2,7 +2,6 @@
 
 import { computed, ref, watch } from 'vue'
 
-import { createColumnDefs } from '../utils/columns/defs'
 import {
   ROW_ACTIONS_COLUMN_ID,
   hasVisibleTableRowActions,
@@ -20,41 +19,45 @@ import {
   updateColumnOrderState,
   updateColumnPinningState,
   updateColumnVisibilityState,
-  type TableColumnState,
-  type UseTableColumnsParams,
 } from '../utils'
+import type { TableColumnState, UseTableColumnsParams } from '../utils'
+import { createColumnDefs } from '../utils/columns/defs'
 
 export function useTableColumns(params: UseTableColumnsParams) {
   const tableState = ref<TableColumnState>(createDefaultColumnState())
   const hasRowActions = computed(() => {
-    if (!params.schema.value.rowActions) return false
+    if (!params.schema.value.rowActions) {
+      return false
+    }
 
     const tableApi = params.tableApi.value
-    if (!tableApi) return false
+    if (!tableApi) {
+      return false
+    }
 
     return hasVisibleTableRowActions({
-      schema: params.schema.value,
-      rows: params.data.data.value.rows,
       context: params.data.contextData.value,
-      pageContext: params.data.pageContextData.value,
-      tableApi,
       layout: params.tableLayout.value,
+      pageContext: params.data.pageContextData.value,
+      rows: params.data.data.value.rows,
+      schema: params.schema.value,
+      tableApi,
     })
   })
   const runtimeColumns = computed(() => [
     ...createRuntimeColumns({
-      schema: params.schema.value,
       context: params.data.contextData.value,
+      schema: params.schema.value,
     }),
     ...(hasRowActions.value
       ? [
           {
+            canHide: false,
+            configurable: false,
+            defaultVisible: true,
+            icon: 'i-lucide-ellipsis',
             id: ROW_ACTIONS_COLUMN_ID,
             label: 'Actions',
-            icon: 'i-lucide-ellipsis',
-            canHide: false,
-            defaultVisible: true,
-            configurable: false,
             pinned: 'right' as const,
           },
         ]
@@ -63,15 +66,15 @@ export function useTableColumns(params: UseTableColumnsParams) {
 
   const orderedColumns = computed(() =>
     createOrderedColumns({
-      runtimeColumns: runtimeColumns.value,
       columnOrder: tableState.value.columnOrder ?? [],
+      runtimeColumns: runtimeColumns.value,
     }),
   )
 
   const visibleOrderedColumns = computed(() =>
     createVisibleOrderedColumns({
-      orderedColumns: orderedColumns.value,
       columnVisibility: tableState.value.columnVisibility ?? {},
+      orderedColumns: orderedColumns.value,
     }),
   )
 
@@ -79,9 +82,9 @@ export function useTableColumns(params: UseTableColumnsParams) {
     runtimeColumns,
     (columns) => {
       tableState.value = syncColumnState({
-        schema: params.schema.value,
-        runtimeColumns: columns,
         currentState: tableState.value,
+        runtimeColumns: columns,
+        schema: params.schema.value,
       })
     },
     { immediate: true },
@@ -94,8 +97,8 @@ export function useTableColumns(params: UseTableColumnsParams) {
         currentState: tableState.value,
         sorting: sorting
           ? {
-              sortKey: sorting.key,
               sortDirection: sorting.dir,
+              sortKey: sorting.key,
             }
           : null,
       })
@@ -116,39 +119,39 @@ export function useTableColumns(params: UseTableColumnsParams) {
 
   function getPinnedState(options: { columnId: string }) {
     return resolvePinnedState({
-      currentState: tableState.value,
       columnId: options.columnId,
+      currentState: tableState.value,
     })
   }
 
   function setVisibility(options: { columnId: string; visible: boolean }) {
     tableState.value = updateColumnVisibilityState({
-      currentState: tableState.value,
       columnId: options.columnId,
+      currentState: tableState.value,
       visible: options.visible,
     })
   }
 
   function setPinning(options: { columnId: string; pinned?: 'left' | 'right' }) {
     tableState.value = updateColumnPinningState({
-      currentState: tableState.value,
       columnId: options.columnId,
+      currentState: tableState.value,
       pinned: options.pinned,
     })
   }
 
   function setOrder(options: { columnIds: string[] }) {
     tableState.value = updateColumnOrderState({
-      currentState: tableState.value,
       columnIds: options.columnIds,
+      currentState: tableState.value,
     })
   }
 
   function reset() {
     tableState.value = createResetColumnState({
-      schema: params.schema.value,
-      runtimeColumns: runtimeColumns.value,
       currentState: tableState.value,
+      runtimeColumns: runtimeColumns.value,
+      schema: params.schema.value,
     })
   }
 
@@ -165,8 +168,8 @@ export function useTableColumns(params: UseTableColumnsParams) {
     }
 
     params.state.queryState.sorting.value = {
-      key,
       dir: params.state.queryState.sorting.value?.dir ?? 'asc',
+      key,
     }
   }
 
@@ -179,8 +182,8 @@ export function useTableColumns(params: UseTableColumnsParams) {
     }
 
     params.state.queryState.sorting.value = {
-      key: currentSorting.key,
       dir: direction,
+      key: currentSorting.key,
     }
   }
 
@@ -192,20 +195,20 @@ export function useTableColumns(params: UseTableColumnsParams) {
     const currentSorting = params.state.queryState.sorting.value
 
     if (!currentSorting || currentSorting.key !== key) {
-      setSorting({ key, dir: 'asc' })
+      setSorting({ dir: 'asc', key })
       return
     }
 
     setSorting({
-      key,
       dir: currentSorting.dir === 'asc' ? 'desc' : 'asc',
+      key,
     })
   }
 
   const sortingState = computed(() => ({
-    key: params.state.queryState.sorting.value?.key,
-    dir: params.state.queryState.sorting.value?.dir,
     active: Boolean(params.state.queryState.sorting.value?.key),
+    dir: params.state.queryState.sorting.value?.dir,
+    key: params.state.queryState.sorting.value?.key,
   }))
 
   const sortKeys = computed(() =>
@@ -215,25 +218,25 @@ export function useTableColumns(params: UseTableColumnsParams) {
   function getMenuItems(options: { columnId: string }) {
     return createColumnMenuItems({
       columnId: options.columnId,
-      label: orderedColumns.value.find((column) => column.id === options.columnId)?.label,
-      schema: params.schema.value,
-      orderedColumns: orderedColumns.value,
-      getSortState,
       getPinnedState,
+      getSortState,
+      label: orderedColumns.value.find((column) => column.id === options.columnId)?.label,
+      orderedColumns: orderedColumns.value,
+      schema: params.schema.value,
       setPinning,
-      setVisibility,
       setSorting,
+      setVisibility,
     })
   }
 
   const tableColumns = computed(() => {
     const selectionColumn = createSelectionColumn({ params })
     const dataColumns = createDataColumns({
-      params,
-      visibleOrderedColumns: visibleOrderedColumns.value,
       getMenuItems,
       getPinnedState,
       getSortState,
+      params,
+      visibleOrderedColumns: visibleOrderedColumns.value,
     })
 
     return params.selection.selectionEnabled.value ? [selectionColumn, ...dataColumns] : dataColumns
@@ -244,25 +247,25 @@ export function useTableColumns(params: UseTableColumnsParams) {
   )
 
   return {
-    tableState,
-    tableColumns,
-    columnDefs,
-    runtimeColumns,
-    orderedColumns,
-    visibleOrderedColumns,
-    reset,
-    setVisibility,
-    setPinning,
-    setOrder,
-    getSortState,
-    getPinnedState,
-    getMenuItems,
-    sortingState,
-    sortKeys,
-    setSorting,
-    setSortKey,
-    setSortDirection,
     clearSorting,
+    columnDefs,
+    getMenuItems,
+    getPinnedState,
+    getSortState,
+    orderedColumns,
+    reset,
+    runtimeColumns,
+    setOrder,
+    setPinning,
+    setSortDirection,
+    setSortKey,
+    setSorting,
+    setVisibility,
+    sortKeys,
+    sortingState,
+    tableColumns,
+    tableState,
     toggleSorting,
+    visibleOrderedColumns,
   }
 }

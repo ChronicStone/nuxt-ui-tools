@@ -6,7 +6,7 @@ import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 
 import type { SpreadsheetReferenceResolution } from '../../../types'
 
-type ReferenceSelectItem = {
+interface ReferenceSelectItem {
   kind?: 'option' | 'divider'
   value?: unknown
   label: string
@@ -14,7 +14,7 @@ type ReferenceSelectItem = {
   disabled?: boolean
 }
 
-type ReferenceGroup = {
+interface ReferenceGroup {
   resolutionKey: string
   sourceField: string
   outputField: string

@@ -26,17 +26,17 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'unit',
-          include: ['test/**/*.test.ts'],
           exclude: ['test/fixtures/**', 'test/dom/**'],
+          include: ['test/**/*.test.ts'],
+          name: 'unit',
         },
       },
       {
         extends: true,
         test: {
-          name: 'dom',
           environment: 'happy-dom',
           include: ['test/dom/**/*.test.ts'],
+          name: 'dom',
           setupFiles: ['test/dom/setup.ts'],
         },
       },

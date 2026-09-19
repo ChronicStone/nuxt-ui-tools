@@ -2,11 +2,11 @@
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 const props = defineProps<{
-  items: Array<{
+  items: {
     label: string
     rowCount: number
     columnCount: number
-  }>
+  }[]
   selectedSheetName?: string
 }>()
 const { locale, t } = useUiToolsLocale()

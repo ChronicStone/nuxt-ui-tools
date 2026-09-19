@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useVirtualizer, type Virtualizer } from '@tanstack/vue-virtual'
+import { useVirtualizer } from '@tanstack/vue-virtual'
+import type { Virtualizer } from '@tanstack/vue-virtual'
 import {
   computed,
   h,
@@ -10,12 +11,12 @@ import {
   TransitionGroup,
   useTemplateRef,
   watch,
-  type ComponentPublicInstance,
 } from 'vue'
+import type { ComponentPublicInstance } from 'vue'
 
-import { isDefined, isFunction, isNumber, isObject } from '../../../shared/utils/predicate'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isDefined, isFunction, isNumber, isObject } from '../../../shared/utils/predicate'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import { useTanstackTable } from '../../composables/use-tanstack-table'
@@ -44,11 +45,11 @@ const VIRTUALIZE_CELL_THRESHOLD = 240
 const SKELETON_MIN_ROWS = 6
 
 const SIZE_TOKENS = {
-  xs: { row: 32, head: 34, x: 8, font: 12 },
-  sm: { row: 36, head: 38, x: 10, font: 12.5 },
-  md: { row: 44, head: 42, x: 14, font: 13 },
-  lg: { row: 52, head: 46, x: 16, font: 13.5 },
-  xl: { row: 60, head: 48, x: 16, font: 14 },
+  lg: { font: 13.5, head: 46, row: 52, x: 16 },
+  md: { font: 13, head: 42, row: 44, x: 14 },
+  sm: { font: 12.5, head: 38, row: 36, x: 10 },
+  xl: { font: 14, head: 48, row: 60, x: 16 },
+  xs: { font: 12, head: 34, row: 32, x: 8 },
 } satisfies Record<DataListControlSize, { row: number; head: number; x: number; font: number }>
 
 const props = defineProps<{
@@ -66,7 +67,7 @@ const { locale, t } = useUiToolsLocale()
 const rows = computed<GenericObject[]>(() =>
   internals.queryContent.error.value ? [] : internals.queryContent.data.value.rows,
 )
-const status = internals.queryContent.status
+const { status } = internals.queryContent
 const rowsMounted = ref(false)
 let rowMountFrame = 0
 const isFirstLoad = computed(
@@ -88,24 +89,27 @@ const rowHeight = computed(() => tokens.value.row)
 const gutter = computed(() => props.gutter ?? dataListUi.ui.value.table?.gutter ?? tokens.value.x)
 const gutterExtra = computed(() => Math.max(0, gutter.value - tokens.value.x))
 const tokenStyle = computed(() => ({
-  '--nut-dl-row-h': `${tokens.value.row}px`,
-  '--nut-dl-head-h': `${tokens.value.head}px`,
-  '--nut-dl-foot-h': `${tokens.value.head - 2}px`,
   '--nut-dl-cell-x': `${tokens.value.x}px`,
-  '--nut-dl-gutter': `${gutter.value}px`,
   '--nut-dl-font': `${tokens.value.font}px`,
+  '--nut-dl-foot-h': `${tokens.value.head - 2}px`,
+  '--nut-dl-gutter': `${gutter.value}px`,
+  '--nut-dl-head-h': `${tokens.value.head}px`,
+  '--nut-dl-row-h': `${tokens.value.row}px`,
 }))
 
-const columnDefs = internals.tableColumns.columnDefs
+const { columnDefs } = internals.tableColumns
 const columnState = internals.tableColumns.tableState
 const columnSizing = computed({
   get: () => {
     const sizing = columnState.value.columnSizing ?? {}
-    if (!gutterExtra.value) return sizing
+    if (!gutterExtra.value) {
+      return sizing
+    }
     const ids = new Set(columnDefs.value.map((def) => def.id))
     const next = { ...sizing }
-    if (ids.has(SELECT_COLUMN_ID) && !(SELECT_COLUMN_ID in sizing))
+    if (ids.has(SELECT_COLUMN_ID) && !(SELECT_COLUMN_ID in sizing)) {
       next[SELECT_COLUMN_ID] = SELECT_COLUMN_WIDTH + gutterExtra.value
+    }
     return next
   },
   set: (columnSizing: Record<string, number>) => {
@@ -121,13 +125,13 @@ const pinned = computed(() => {
     (id) => ids.has(id) && id !== ROW_ACTIONS_COLUMN_ID,
   )
   return {
-    start: ids.has(SELECT_COLUMN_ID) ? [SELECT_COLUMN_ID, ...left] : left,
     end: ids.has(ROW_ACTIONS_COLUMN_ID) ? [...right, ROW_ACTIONS_COLUMN_ID] : right,
+    start: ids.has(SELECT_COLUMN_ID) ? [SELECT_COLUMN_ID, ...left] : left,
   }
 })
 
 function getRowId(row: GenericObject, index: number) {
-  return internals.selection.getRowId({ row, index })
+  return internals.selection.getRowId({ index, row })
 }
 
 const renderRows = computed(() => (rowsMounted.value ? rows.value : []))
@@ -149,7 +153,9 @@ const rowVirtualizer = useVirtualizer(
     overscan: 8,
   })),
 )
-const virtualRows = computed(() => (virtualized.value ? rowVirtualizer.value.getVirtualItems() : []))
+const virtualRows = computed(() =>
+  virtualized.value ? rowVirtualizer.value.getVirtualItems() : [],
+)
 const materializedRows = computed(() =>
   virtualized.value
     ? virtualRows.value.map((item) => renderRows.value[item.index]).filter(isDefined)
@@ -157,11 +163,11 @@ const materializedRows = computed(() =>
 )
 
 const { table, resetColumnSizing } = useTanstackTable({
+  columnSizing,
   columns: columnDefs,
   data: materializedRows,
   getRowId,
   pinned,
-  columnSizing,
 })
 
 const tableRows = computed(() => table.getRowModel().rows)
@@ -182,7 +188,9 @@ const columnVirtualizer = useVirtualizer(
     initialRect: { height: 0, width: bodyWidth.value },
     onChange: (instance: Virtualizer<HTMLElement, Element>) => {
       const width = instance.scrollRect?.width
-      if (width && width !== bodyWidth.value) bodyWidth.value = width
+      if (width && width !== bodyWidth.value) {
+        bodyWidth.value = width
+      }
     },
     overscan: 2,
     paddingEnd: table.getEndTotalSize(),
@@ -197,9 +205,9 @@ type ColumnSlot =
 
 const columnSlots = computed<ColumnSlot[]>(() => {
   const asSlot = (column: { id: string }): ColumnSlot => ({
-    kind: 'column',
     columnId: column.id,
     key: column.id,
+    kind: 'column',
   })
   const slots: ColumnSlot[] = table.getStartVisibleLeafColumns().map(asSlot)
   if (!columnsOverflow.value) {
@@ -208,7 +216,9 @@ const columnSlots = computed<ColumnSlot[]>(() => {
   }
   const first = virtualColumns.value[0]
   const last = virtualColumns.value.at(-1)
-  if (first?.index) slots.push({ kind: 'spacer', colSpan: first.index, key: 'pad-start' })
+  if (first?.index) {
+    slots.push({ kind: 'spacer', colSpan: first.index, key: 'pad-start' })
+  }
   slots.push(
     ...virtualColumns.value.flatMap((item) => {
       const column = centerColumns.value[item.index]
@@ -216,7 +226,9 @@ const columnSlots = computed<ColumnSlot[]>(() => {
     }),
   )
   const trailing = last ? centerColumns.value.length - last.index - 1 : centerColumns.value.length
-  if (trailing) slots.push({ kind: 'spacer', colSpan: trailing, key: 'pad-end' })
+  if (trailing) {
+    slots.push({ kind: 'spacer', colSpan: trailing, key: 'pad-end' })
+  }
   slots.push(...table.getEndVisibleLeafColumns().map(asSlot))
   return slots
 })
@@ -235,7 +247,9 @@ function rowColumnSlots(row: TableRow): CellSlot[] {
       continue
     }
     const cell = cells.get(slot.columnId)
-    if (cell) slots.push({ kind: 'cell', cell, key: cell.id })
+    if (cell) {
+      slots.push({ kind: 'cell', cell, key: cell.id })
+    }
   }
   return slots
 }
@@ -245,20 +259,25 @@ const headerByColumnId = computed(() => new Map(headers.value.map((h) => [h.colu
 
 const virtualPaddingTop = computed(() => virtualRows.value[0]?.start ?? 0)
 const virtualPaddingBottom = computed(() => {
-  if (!virtualized.value || !virtualRows.value.length) return 0
+  if (!virtualized.value || !virtualRows.value.length) {
+    return 0
+  }
   return rowVirtualizer.value.getTotalSize() - (virtualRows.value.at(-1)?.end ?? 0)
 })
 const virtualRowByKey = computed(() => {
   const byKey = new Map<string, { index: number; key: string }>()
   for (const item of virtualRows.value) {
     const row = renderRows.value[item.index]
-    if (row) byKey.set(getRowId(row, item.index), { index: item.index, key: String(item.key) })
+    if (row) {
+      byKey.set(getRowId(row, item.index), { index: item.index, key: String(item.key) })
+    }
   }
   return byKey
 })
 const renderedRows = computed(() => {
-  if (!virtualized.value)
+  if (!virtualized.value) {
     return tableRows.value.map((row, index) => ({ row, virtual: { index, key: String(row.id) } }))
+  }
   return tableRows.value
     .map((row) => {
       const virtual = virtualRowByKey.value.get(String(row.id))
@@ -268,16 +287,23 @@ const renderedRows = computed(() => {
 })
 
 function measureRow(element: Element | ComponentPublicInstance | null) {
-  if (!(element instanceof HTMLElement)) return
-  if (element.isConnected) rowVirtualizer.value.measureElement(element)
-  else nextTick(() => element.isConnected && rowVirtualizer.value.measureElement(element))
+  if (!(element instanceof HTMLElement)) {
+    return
+  }
+  if (element.isConnected) {
+    rowVirtualizer.value.measureElement(element)
+  } else {
+    nextTick(() => element.isConnected && rowVirtualizer.value.measureElement(element))
+  }
 }
 
 const scrollbarsRef = useTemplateRef<{ measure: () => void }>('scrollbarsRef')
 const totalWidth = computed(() => table.getTotalSize())
 const skeletonRows = computed(() => {
   const usable = bodyHeight.value - tokens.value.head
-  if (usable <= 0) return SKELETON_MIN_ROWS
+  if (usable <= 0) {
+    return SKELETON_MIN_ROWS
+  }
   return Math.max(SKELETON_MIN_ROWS, Math.ceil(usable / rowHeight.value))
 })
 
@@ -301,7 +327,7 @@ onBeforeUnmount(() => {
 })
 
 watch([totalWidth, () => rows.value.length], () =>
-  nextTick(() => {
+  nextTick().then(() => {
     columnVirtualizer.value.measure()
     scrollbarsRef.value?.measure()
   }),
@@ -313,11 +339,19 @@ watch(
 
 const openMenuId = ref<string | null>(null)
 
-function pinnedOffset(column: { getIsPinned: () => string | false; getStart: (p: 'start') => number; getAfter: (p: 'end') => number }) {
+function pinnedOffset(column: {
+  getIsPinned: () => string | false
+  getStart: (p: 'start') => number
+  getAfter: (p: 'end') => number
+}) {
   const side = column.getIsPinned()
-  if (side === 'start') return { left: `${column.getStart('start')}px` }
-  if (side === 'end') return { right: `${column.getAfter('end')}px` }
-  return undefined
+  if (side === 'start') {
+    return { left: `${column.getStart('start')}px` }
+  }
+  if (side === 'end') {
+    return { right: `${column.getAfter('end')}px` }
+  }
+  return
 }
 
 function isLastStart(column: { id: string }) {
@@ -327,7 +361,7 @@ function isFirstEnd(column: { id: string }) {
   return table.getEndVisibleLeafColumns()[0]?.id === column.id
 }
 
-const summaries = internals.summaries
+const { summaries } = internals
 const summaryColumnIds = computed(() => new Set(summaries.columns.value.map((column) => column.id)))
 const summaryLabelColumnId = computed(
   () =>
@@ -337,15 +371,19 @@ const summaryLabelColumnId = computed(
 )
 const summaryLabel = computed(() => {
   const label = summaries.label.value
-  if (label) return isFunction(label) ? String(label()) : String(label)
+  if (label) {
+    return isFunction(label) ? String(label()) : String(label)
+  }
   return t('table.summaries.total')
 })
 function formatNumber(value: TableSummaryValue) {
   return isNumber(value)
-    ? new Intl.NumberFormat(locale.value.code).format(value).replace(/\u202f/g, '\u00a0')
+    ? new Intl.NumberFormat(locale.value.code).format(value).replaceAll(' ', '\u00A0')
     : String(value ?? '')
 }
-function isSummaryConfig(summary: TableColumnSummary | undefined): summary is TableColumnSummaryConfig {
+function isSummaryConfig(
+  summary: TableColumnSummary | undefined,
+): summary is TableColumnSummaryConfig {
   return isObject(summary)
 }
 function renderSummary(columnId: string) {
@@ -353,7 +391,9 @@ function renderSummary(columnId: string) {
   const cell = summaries.cell(columnId)
   const summary = column?.summary
   const render = isSummaryConfig(summary) ? summary.render : undefined
-  if (render) return () => render({ value: cell.value, loading: cell.loading, scope: summaries.scope.value })
+  if (render) {
+    return () => render({ value: cell.value, loading: cell.loading, scope: summaries.scope.value })
+  }
   const value = summaries.format(columnId)
   return () => h('span', formatNumber(value))
 }
@@ -369,7 +409,9 @@ watch(
     internals.filters.searchQuery.value,
   ],
   () => {
-    if (!rowsMounted.value || cursorMode.value) return
+    if (!rowsMounted.value || cursorMode.value) {
+      return
+    }
     dataEpoch.value++
     animateEpoch.value = true
     scrollRef.value?.scrollTo({ top: 0 })
@@ -381,47 +423,87 @@ function skeletonWidth(seed: number) {
 }
 function renderSkeletonCell(columnId: string, rowIndex: number) {
   const meta = headerByColumnId.value.get(columnId)?.column.columnDef.meta
-  const kind = meta?.internal === 'selection' ? 'check' : meta?.internal ? 'none' : (meta?.skeleton ?? 'text')
+  const kind =
+    meta?.internal === 'selection' ? 'check' : meta?.internal ? 'none' : (meta?.skeleton ?? 'text')
   const seed = rowIndex * 7 + columnId.length
   const line = (width: number, extra = '') =>
-    h('span', { class: `nut-dl-skeleton block h-3 rounded ${extra}`, style: { width: `${width}%` } })
+    h('span', {
+      class: `nut-dl-skeleton block h-3 rounded ${extra}`,
+      style: { width: `${width}%` },
+    })
   return () => {
-    if (kind === 'none') return null
-    if (kind === 'check') return h('span', { class: 'nut-dl-skeleton block size-4 rounded-[4px]' })
-    if (kind === 'dot')
+    if (kind === 'none') {
+      return null
+    }
+    if (kind === 'check') {
+      return h('span', { class: 'nut-dl-skeleton block size-4 rounded-[4px]' })
+    }
+    if (kind === 'dot') {
       return h('span', { class: 'flex items-center gap-2' }, [
         h('span', { class: 'nut-dl-skeleton size-[7px] rounded-full' }),
         line(skeletonWidth(seed) - 10),
       ])
-    if (kind === 'avatar')
+    }
+    if (kind === 'avatar') {
       return h('span', { class: 'flex items-center gap-2.5' }, [
         h('span', { class: 'nut-dl-skeleton size-7 shrink-0 rounded-md' }),
-        h('span', { class: 'grid flex-1 gap-1.5' }, [line(skeletonWidth(seed)), line(skeletonWidth(seed + 3) - 20, 'h-2.5')]),
+        h('span', { class: 'grid flex-1 gap-1.5' }, [
+          line(skeletonWidth(seed)),
+          line(skeletonWidth(seed + 3) - 20, 'h-2.5'),
+        ]),
       ])
-    if (kind === 'badge') return h('span', { class: 'nut-dl-skeleton inline-block h-5 w-16 rounded-full' })
-    if (kind === 'number') return h('span', { class: 'nut-dl-skeleton ml-auto block h-3 rounded', style: { width: '36%' } })
+    }
+    if (kind === 'badge') {
+      return h('span', { class: 'nut-dl-skeleton inline-block h-5 w-16 rounded-full' })
+    }
+    if (kind === 'number') {
+      return h('span', {
+        class: 'nut-dl-skeleton ml-auto block h-3 rounded',
+        style: { width: '36%' },
+      })
+    }
     return line(skeletonWidth(seed))
   }
 }
 watch(isFirstLoad, (loading, was) => {
-  if (was && !loading) animateEpoch.value = true
+  if (was && !loading) {
+    animateEpoch.value = true
+  }
 })
 
 const cursorMode = computed(() => internals.pagination.mode.value === 'cursor')
-const loadingMore = computed(() => cursorMode.value && internals.pagination.state.value.isLoadingMore)
+const loadingMore = computed(
+  () => cursorMode.value && internals.pagination.state.value.isLoadingMore,
+)
 const hasNextPage = computed(() => cursorMode.value && internals.pagination.state.value.hasNextPage)
 watch(
-  () => [virtualRows.value.at(-1)?.index ?? renderRows.value.length - 1, renderRows.value.length, hasNextPage.value, loadingMore.value] as const,
+  () =>
+    [
+      virtualRows.value.at(-1)?.index ?? renderRows.value.length - 1,
+      renderRows.value.length,
+      hasNextPage.value,
+      loadingMore.value,
+    ] as const,
   ([lastIndex, count, more, loading]) => {
-    if (!more || loading || !count) return
-    if (lastIndex >= count - 1 - LOAD_MORE_THRESHOLD) void internals.pagination.loadMore()
+    if (!more || loading || !count) {
+      return
+    }
+    if (lastIndex >= count - 1 - LOAD_MORE_THRESHOLD) {
+      void internals.pagination.loadMore()
+    }
   },
 )
 function onScrollLoadMore() {
-  if (!hasNextPage.value || loadingMore.value || virtualized.value) return
+  if (!hasNextPage.value || loadingMore.value || virtualized.value) {
+    return
+  }
   const element = scrollRef.value
-  if (!element) return
-  if (element.scrollHeight - element.scrollTop - element.clientHeight < 320) void internals.pagination.loadMore()
+  if (!element) {
+    return
+  }
+  if (element.scrollHeight - element.scrollTop - element.clientHeight < 320) {
+    void internals.pagination.loadMore()
+  }
 }
 
 defineExpose({ resetColumnSizing })
@@ -430,7 +512,10 @@ defineExpose({ resetColumnSizing })
 <template>
   <div
     class="nut-dl-table relative min-h-0"
-    :class="[fill ? 'flex h-full flex-col' : '', mergeDataListUiClass(undefined, undefined, ui?.wrapper)]"
+    :class="[
+      fill ? 'flex h-full flex-col' : '',
+      mergeDataListUiClass(undefined, undefined, ui?.wrapper),
+    ]"
     :style="{ ...tokenStyle, height: !fill && height ? height : undefined }"
     :data-size="resolvedSize"
     :data-virtualized="virtualized"
@@ -439,7 +524,10 @@ defineExpose({ resetColumnSizing })
     <div
       ref="scrollRef"
       class="nut-dl-table__scroll relative min-h-0 overflow-auto overscroll-x-contain bg-[var(--nut-dl-surface)]"
-      :class="[fill || height ? 'flex-1' : '', mergeDataListUiClass(undefined, undefined, ui?.root)]"
+      :class="[
+        fill || height ? 'flex-1' : '',
+        mergeDataListUiClass(undefined, undefined, ui?.root),
+      ]"
       @scroll.passive="onScrollLoadMore"
     >
       <table
@@ -448,31 +536,65 @@ defineExpose({ resetColumnSizing })
         :style="{ minWidth: `${totalWidth}px` }"
       >
         <colgroup>
-          <col v-for="leaf in leafColumns" :key="leaf.id" :style="{ width: `${leaf.getSize()}px` }" />
+          <col
+            v-for="leaf in leafColumns"
+            :key="leaf.id"
+            :style="{ width: `${leaf.getSize()}px` }"
+          />
         </colgroup>
         <thead :class="mergeDataListUiClass('nut-dl-table__head', undefined, ui?.thead)">
           <tr class="nut-dl-table__head-row">
             <template v-for="slot in columnSlots" :key="slot.key">
-              <th v-if="slot.kind === 'spacer'" :colspan="slot.colSpan" class="nut-dl-table__spacer sticky top-0 z-[3] p-0" aria-hidden="true" />
+              <th
+                v-if="slot.kind === 'spacer'"
+                :colspan="slot.colSpan"
+                class="nut-dl-table__spacer sticky top-0 z-[3] p-0"
+                aria-hidden="true"
+              />
               <th
                 v-else-if="headerByColumnId.get(slot.columnId)"
                 class="nut-dl-th sticky top-0 z-[3] h-[var(--nut-dl-head-h)] p-0 text-left align-middle"
                 :class="[
-                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'start' ? 'nut-dl-pin nut-dl-pin--start z-[4]' : '',
-                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'end' ? 'nut-dl-pin nut-dl-pin--end z-[4]' : '',
-                  isLastStart(headerByColumnId.get(slot.columnId)!.column) ? 'nut-dl-pin--last-start' : '',
-                  isFirstEnd(headerByColumnId.get(slot.columnId)!.column) ? 'nut-dl-pin--first-end' : '',
-                  headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal ? `nut-dl-th--internal nut-dl-th--${headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal}` : '',
+                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'start'
+                    ? 'nut-dl-pin nut-dl-pin--start z-[4]'
+                    : '',
+                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'end'
+                    ? 'nut-dl-pin nut-dl-pin--end z-[4]'
+                    : '',
+                  isLastStart(headerByColumnId.get(slot.columnId)!.column)
+                    ? 'nut-dl-pin--last-start'
+                    : '',
+                  isFirstEnd(headerByColumnId.get(slot.columnId)!.column)
+                    ? 'nut-dl-pin--first-end'
+                    : '',
+                  headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal
+                    ? `nut-dl-th--internal nut-dl-th--${headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal}`
+                    : '',
                   mergeDataListUiClass(undefined, undefined, ui?.th),
                 ]"
                 :data-col="slot.columnId"
                 :style="pinnedOffset(headerByColumnId.get(slot.columnId)!.column)"
               >
-                <template v-if="headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal">
-                  <div class="nut-dl-th__static flex h-full items-center" :class="headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.align === 'right' ? 'justify-end' : ''">
+                <template
+                  v-if="headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal"
+                >
+                  <div
+                    class="nut-dl-th__static flex h-full items-center"
+                    :class="
+                      headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.align === 'right'
+                        ? 'justify-end'
+                        : ''
+                    "
+                  >
                     <TableCell
-                      v-if="headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.renderHeader"
-                      :render="() => headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.renderHeader!()"
+                      v-if="
+                        headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.renderHeader
+                      "
+                      :render="
+                        () =>
+                          headerByColumnId.get(slot.columnId)!.column.columnDef.meta!
+                            .renderHeader!()
+                      "
                       :row="{}"
                       :index="-1"
                     />
@@ -486,7 +608,9 @@ defineExpose({ resetColumnSizing })
                   :align="headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.align"
                   :sortable="headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.sortable"
                   :sort-state="internals.tableColumns.getSortState({ columnId: slot.columnId })"
-                  :pinned="Boolean(internals.tableColumns.getPinnedState({ columnId: slot.columnId }))"
+                  :pinned="
+                    Boolean(internals.tableColumns.getPinnedState({ columnId: slot.columnId }))
+                  "
                   :items="internals.tableColumns.getMenuItems({ columnId: slot.columnId })"
                   :resizable="headerByColumnId.get(slot.columnId)!.column.getCanResize()"
                   :resizing="headerByColumnId.get(slot.columnId)!.column.getIsResizing()"
@@ -498,7 +622,12 @@ defineExpose({ resetColumnSizing })
             </template>
           </tr>
           <tr v-if="refreshing" class="nut-dl-progress" aria-hidden="true">
-            <th :colspan="leafColumns.length" class="sticky top-[var(--nut-dl-head-h)] z-[3] h-0 p-0"><span /></th>
+            <th
+              :colspan="leafColumns.length"
+              class="sticky top-[var(--nut-dl-head-h)] z-[3] h-0 p-0"
+            >
+              <span />
+            </th>
           </tr>
         </thead>
 
@@ -512,7 +641,12 @@ defineExpose({ resetColumnSizing })
           :enter-from-class="virtualized ? undefined : 'nut-dl-row--from'"
           :leave-active-class="virtualized ? undefined : 'hidden'"
         >
-          <tr v-if="virtualPaddingTop" key="pad-top" :style="{ height: `${virtualPaddingTop}px` }" aria-hidden="true">
+          <tr
+            v-if="virtualPaddingTop"
+            key="pad-top"
+            :style="{ height: `${virtualPaddingTop}px` }"
+            aria-hidden="true"
+          >
             <td :colspan="leafColumns.length" class="p-0" />
           </tr>
 
@@ -522,50 +656,103 @@ defineExpose({ resetColumnSizing })
             :ref="measureRow"
             class="nut-dl-row group/row"
             :class="[
-              internals.selection.isRowSelected({ rowId: String(row.id) }) ? 'nut-dl-row--selected' : '',
+              internals.selection.isRowSelected({ rowId: String(row.id) })
+                ? 'nut-dl-row--selected'
+                : '',
               mergeDataListUiClass(undefined, undefined, ui?.tr),
             ]"
             :data-index="virtual.index"
             :data-row-id="row.id"
-            :style="virtualized && animateEpoch ? { '--nut-dl-i': Math.min(virtual.index - (virtualRows[0]?.index ?? 0), 24) } : undefined"
+            :style="
+              virtualized && animateEpoch
+                ? { '--nut-dl-i': Math.min(virtual.index - (virtualRows[0]?.index ?? 0), 24) }
+                : undefined
+            "
           >
             <template v-for="slot in rowColumnSlots(row)" :key="slot.key">
-              <td v-if="slot.kind === 'spacer'" :colspan="slot.colSpan" class="nut-dl-table__spacer p-0" aria-hidden="true" />
+              <td
+                v-if="slot.kind === 'spacer'"
+                :colspan="slot.colSpan"
+                class="nut-dl-table__spacer p-0"
+                aria-hidden="true"
+              />
               <td
                 v-else
                 class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle"
                 :class="[
-                  slot.cell.column.getIsPinned() === 'start' ? 'nut-dl-pin nut-dl-pin--start z-[2]' : '',
-                  slot.cell.column.getIsPinned() === 'end' ? 'nut-dl-pin nut-dl-pin--end z-[2]' : '',
+                  slot.cell.column.getIsPinned() === 'start'
+                    ? 'nut-dl-pin nut-dl-pin--start z-[2]'
+                    : '',
+                  slot.cell.column.getIsPinned() === 'end'
+                    ? 'nut-dl-pin nut-dl-pin--end z-[2]'
+                    : '',
                   isLastStart(slot.cell.column) ? 'nut-dl-pin--last-start' : '',
                   isFirstEnd(slot.cell.column) ? 'nut-dl-pin--first-end' : '',
-                  slot.cell.column.columnDef.meta?.align === 'right' ? 'text-right' : slot.cell.column.columnDef.meta?.align === 'center' ? 'text-center' : '',
-                  slot.cell.column.columnDef.meta?.internal ? `nut-dl-td--${slot.cell.column.columnDef.meta.internal}` : '',
+                  slot.cell.column.columnDef.meta?.align === 'right'
+                    ? 'text-right'
+                    : slot.cell.column.columnDef.meta?.align === 'center'
+                      ? 'text-center'
+                      : '',
+                  slot.cell.column.columnDef.meta?.internal
+                    ? `nut-dl-td--${slot.cell.column.columnDef.meta.internal}`
+                    : '',
                   slot.cell.column.columnDef.meta?.ellipsis ? 'nut-dl-td--ellipsis' : '',
                   mergeDataListUiClass(undefined, undefined, ui?.td),
                 ]"
                 :data-col="slot.cell.column.id"
-                :style="[pinnedOffset(slot.cell.column), slot.cell.column.columnDef.meta?.lines ? { '--nut-dl-lines': slot.cell.column.columnDef.meta.lines } : undefined]"
+                :style="[
+                  pinnedOffset(slot.cell.column),
+                  slot.cell.column.columnDef.meta?.lines
+                    ? { '--nut-dl-lines': slot.cell.column.columnDef.meta.lines }
+                    : undefined,
+                ]"
               >
                 <div
                   class="nut-dl-td__inner min-w-0"
-                  :class="slot.cell.column.columnDef.meta?.align === 'right' ? 'justify-end' : slot.cell.column.columnDef.meta?.align === 'center' ? 'justify-center' : ''"
+                  :class="
+                    slot.cell.column.columnDef.meta?.align === 'right'
+                      ? 'justify-end'
+                      : slot.cell.column.columnDef.meta?.align === 'center'
+                        ? 'justify-center'
+                        : ''
+                  "
                 >
-                  <TableCell :index="virtual.index" :render="slot.cell.column.columnDef.meta!.render" :row="row.original" />
+                  <TableCell
+                    :index="virtual.index"
+                    :render="slot.cell.column.columnDef.meta!.render"
+                    :row="row.original"
+                  />
                 </div>
               </td>
             </template>
           </tr>
 
-          <tr v-if="loadingMore" key="loading-more" class="nut-dl-row nut-dl-row--loading-more" aria-hidden="true">
-            <td :colspan="leafColumns.length" class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle">
-              <div class="nut-dl-loading-more flex items-center gap-2.5 px-[var(--nut-dl-gutter)] text-[12.5px] text-muted">
-                <span class="nut-dl-spinner size-3.5 rounded-full border-2 border-accented border-t-primary" />
+          <tr
+            v-if="loadingMore"
+            key="loading-more"
+            class="nut-dl-row nut-dl-row--loading-more"
+            aria-hidden="true"
+          >
+            <td
+              :colspan="leafColumns.length"
+              class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle"
+            >
+              <div
+                class="nut-dl-loading-more flex items-center gap-2.5 px-[var(--nut-dl-gutter)] text-[12.5px] text-muted"
+              >
+                <span
+                  class="nut-dl-spinner size-3.5 rounded-full border-2 border-accented border-t-primary"
+                />
                 <span>{{ t('table.controls.loadingMore') }}</span>
               </div>
             </td>
           </tr>
-          <tr v-if="virtualPaddingBottom" key="pad-bottom" :style="{ height: `${virtualPaddingBottom}px` }" aria-hidden="true">
+          <tr
+            v-if="virtualPaddingBottom"
+            key="pad-bottom"
+            :style="{ height: `${virtualPaddingBottom}px` }"
+            aria-hidden="true"
+          >
             <td :colspan="leafColumns.length" class="p-0" />
           </tr>
 
@@ -582,11 +769,21 @@ defineExpose({ resetColumnSizing })
                 v-else
                 class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle"
                 :class="[
-                  headerByColumnId.get(slot.columnId)?.column.getIsPinned() === 'start' ? 'nut-dl-pin nut-dl-pin--start z-[2]' : '',
-                  headerByColumnId.get(slot.columnId)?.column.getIsPinned() === 'end' ? 'nut-dl-pin nut-dl-pin--end z-[2]' : '',
-                  headerByColumnId.get(slot.columnId)?.column.columnDef.meta?.align === 'right' ? 'text-right' : '',
+                  headerByColumnId.get(slot.columnId)?.column.getIsPinned() === 'start'
+                    ? 'nut-dl-pin nut-dl-pin--start z-[2]'
+                    : '',
+                  headerByColumnId.get(slot.columnId)?.column.getIsPinned() === 'end'
+                    ? 'nut-dl-pin nut-dl-pin--end z-[2]'
+                    : '',
+                  headerByColumnId.get(slot.columnId)?.column.columnDef.meta?.align === 'right'
+                    ? 'text-right'
+                    : '',
                 ]"
-                :style="headerByColumnId.get(slot.columnId) ? pinnedOffset(headerByColumnId.get(slot.columnId)!.column) : undefined"
+                :style="
+                  headerByColumnId.get(slot.columnId)
+                    ? pinnedOffset(headerByColumnId.get(slot.columnId)!.column)
+                    : undefined
+                "
               >
                 <component :is="renderSkeletonCell(slot.columnId, placeholder)" />
               </td>
@@ -600,17 +797,36 @@ defineExpose({ resetColumnSizing })
         >
           <tr class="nut-dl-table__foot-row">
             <template v-for="slot in columnSlots" :key="`foot-${slot.key}`">
-              <td v-if="slot.kind === 'spacer'" :colspan="slot.colSpan" class="nut-dl-table__spacer nut-dl-tf sticky bottom-0 z-[3] p-0" aria-hidden="true" />
+              <td
+                v-if="slot.kind === 'spacer'"
+                :colspan="slot.colSpan"
+                class="nut-dl-table__spacer nut-dl-tf sticky bottom-0 z-[3] p-0"
+                aria-hidden="true"
+              />
               <td
                 v-else-if="headerByColumnId.get(slot.columnId)"
                 class="nut-dl-tf sticky bottom-0 z-[3] h-[var(--nut-dl-foot-h)] py-0 align-middle"
                 :class="[
-                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'start' ? 'nut-dl-pin nut-dl-pin--start z-[4]' : '',
-                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'end' ? 'nut-dl-pin nut-dl-pin--end z-[4]' : '',
-                  isLastStart(headerByColumnId.get(slot.columnId)!.column) ? 'nut-dl-pin--last-start' : '',
-                  isFirstEnd(headerByColumnId.get(slot.columnId)!.column) ? 'nut-dl-pin--first-end' : '',
-                  headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.align === 'right' ? 'text-right' : headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.align === 'center' ? 'text-center' : '',
-                  headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal ? `nut-dl-tf--${headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal}` : '',
+                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'start'
+                    ? 'nut-dl-pin nut-dl-pin--start z-[4]'
+                    : '',
+                  headerByColumnId.get(slot.columnId)!.column.getIsPinned() === 'end'
+                    ? 'nut-dl-pin nut-dl-pin--end z-[4]'
+                    : '',
+                  isLastStart(headerByColumnId.get(slot.columnId)!.column)
+                    ? 'nut-dl-pin--last-start'
+                    : '',
+                  isFirstEnd(headerByColumnId.get(slot.columnId)!.column)
+                    ? 'nut-dl-pin--first-end'
+                    : '',
+                  headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.align === 'right'
+                    ? 'text-right'
+                    : headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.align === 'center'
+                      ? 'text-center'
+                      : '',
+                  headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal
+                    ? `nut-dl-tf--${headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal}`
+                    : '',
                 ]"
                 :data-col="slot.columnId"
                 :style="pinnedOffset(headerByColumnId.get(slot.columnId)!.column)"
@@ -619,10 +835,14 @@ defineExpose({ resetColumnSizing })
                   v-if="slot.columnId === summaryLabelColumnId"
                   class="nut-dl-tf__label flex items-center gap-2 whitespace-nowrap"
                 >
-                  <span class="nut-dl-tf__caption text-[10.5px] tracking-[0.08em] text-muted uppercase">
+                  <span
+                    class="nut-dl-tf__caption text-[10.5px] tracking-[0.08em] text-muted uppercase"
+                  >
                     {{ summaryLabel }}
                   </span>
-                  <span class="nut-dl-tf__count tabular-nums">{{ formatNumber(summaries.count.value) }}</span>
+                  <span class="nut-dl-tf__count tabular-nums">{{
+                    formatNumber(summaries.count.value)
+                  }}</span>
                 </div>
                 <template v-else-if="summaryColumnIds.has(slot.columnId)">
                   <span
@@ -638,14 +858,20 @@ defineExpose({ resetColumnSizing })
             </template>
           </tr>
         </tfoot>
-        <tfoot v-else-if="$slots.footer" :class="mergeDataListUiClass('nut-dl-table__foot', undefined, ui?.tfoot)">
+        <tfoot
+          v-else-if="$slots.footer"
+          :class="mergeDataListUiClass('nut-dl-table__foot', undefined, ui?.tfoot)"
+        >
           <slot name="footer" :column-slots="columnSlots" :leaf-columns="leafColumns" />
         </tfoot>
       </table>
 
       <div v-if="empty" class="nut-dl-table__empty sticky left-0 w-full">
         <slot name="empty">
-          <TableEmptyState :min-height="fill ? 'calc(100% - var(--nut-dl-head-h))' : '16rem'" :size="resolvedSize" />
+          <TableEmptyState
+            :min-height="fill ? 'calc(100% - var(--nut-dl-head-h))' : '16rem'"
+            :size="resolvedSize"
+          />
         </slot>
       </div>
     </div>
@@ -665,7 +891,10 @@ defineExpose({ resetColumnSizing })
   --nut-dl-head-tracking: var(--nut-dl-table-head-tracking, 0.04em);
   --nut-dl-head-transform: var(--nut-dl-table-head-transform, none);
   --nut-dl-row-hover: var(--nut-dl-table-row-hover, var(--ui-bg-muted));
-  --nut-dl-row-selected: var(--nut-dl-table-row-selected, color-mix(in srgb, var(--ui-primary) 10%, var(--nut-dl-surface)));
+  --nut-dl-row-selected: var(
+    --nut-dl-table-row-selected,
+    color-mix(in srgb, var(--ui-primary) 10%, var(--nut-dl-surface))
+  );
   --nut-dl-accent: var(--ui-primary);
   --nut-dl-cell-fg: var(--nut-dl-table-cell-fg, var(--ui-text-toned));
   --nut-dl-pin-line: var(--nut-dl-table-pin-line, var(--nut-dl-line));
@@ -866,7 +1095,12 @@ tbody .nut-dl-table__spacer {
   }
 }
 .nut-dl-skeleton {
-  background: linear-gradient(90deg, var(--ui-bg-accented) 0%, var(--ui-bg-muted) 45%, var(--ui-bg-accented) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--ui-bg-accented) 0%,
+    var(--ui-bg-muted) 45%,
+    var(--ui-bg-accented) 100%
+  );
   background-size: 200% 100%;
   animation: nut-dl-shimmer 1.6s ease-in-out infinite;
   animation-delay: calc(var(--nut-dl-i, 0) * -90ms);

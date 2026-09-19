@@ -3,10 +3,10 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref } from 'vue'
 
-import { useRangeSelect } from '../../../../shared'
-import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { useRangeSelect } from '../../../../shared'
+import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
@@ -29,13 +29,13 @@ import TableFilterTrigger from '../shared/FilterTriggerTag.vue'
 
 const props = withDefaults(
   defineProps<{
-  definition: TableOptionFilterDefinition
-  dynamic?: boolean
-  session?: boolean
-  embedded?: boolean
-  header?: boolean
-  initialOperator?: TableFilterOperator
-}>(),
+    definition: TableOptionFilterDefinition
+    dynamic?: boolean
+    session?: boolean
+    embedded?: boolean
+    header?: boolean
+    initialOperator?: TableFilterOperator
+  }>(),
   { header: true },
 )
 const emit = defineEmits<{
@@ -71,29 +71,24 @@ const operator = computed<TableOptionFilterOperator>(() => {
 })
 
 const state = useOptionFilterEditorState({
-  definition: props.definition,
-  operator,
-  selectedValues: localSelectedValues,
-  searchQuery,
   active: computed(() => isSessionOpen.value),
-  ready: isContentReady,
+  definition: props.definition,
   filters: internals.filters,
+  operator,
   queryContent: internals.queryContent,
+  ready: isContentReady,
   schema: internals.schema,
+  searchQuery,
+  selectedValues: localSelectedValues,
   setSelectedValues,
 })
 
 const session = useFilterTagSession({
-  isOpen: isSessionOpen,
-  session: props.session,
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
     internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
-  onOpen: () => {
-    isContentReady.value = false
-    initLocalState()
-  },
+  isOpen: isSessionOpen,
   onClose: () => {
     isContentReady.value = false
     pendingOperator.value = undefined
@@ -102,14 +97,19 @@ const session = useFilterTagSession({
     pinnedRangeSelect.reset()
     restRangeSelect.reset()
   },
-  onSessionClosed: () => emit('sessionClosed'),
   onDismiss: () => emit('dismiss'),
+  onOpen: () => {
+    isContentReady.value = false
+    initLocalState()
+  },
+  onSessionClosed: () => emit('sessionClosed'),
+  session: props.session,
 })
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
-    key: props.definition.key,
     entries: state.optionSource.sourceEntries.value,
+    key: props.definition.key,
   }),
 )
 
@@ -141,15 +141,15 @@ const listSections = computed(() => {
 
   if (pinnedEntries.value.length) {
     sections.push({
-      key: 'pinned',
       entries: pinnedEntries.value,
+      key: 'pinned',
     })
   }
 
   sections.push({
-    key: 'rest',
-    entries: restEntries.value,
     dividerBefore: pinnedEntries.value.length > 0,
+    entries: restEntries.value,
+    key: 'rest',
   })
 
   return sections
@@ -214,29 +214,35 @@ function handleOperatorChange(op: TableFilterOperator) {
   stage.value = 'editor'
 }
 
-function setSelectedValues(values: Array<string | number | boolean>) {
+function setSelectedValues(values: (string | number | boolean)[]) {
   localSelectedValues.value = values
   pinnedValues.value = new Set(values.map(String))
-  if (state.filterUi.value.commitMode === 'auto') commitSelection()
+  if (state.filterUi.value.commitMode === 'auto') {
+    commitSelection()
+  }
 }
 
 function commitSelection() {
-  if (state.filterUi.value.commitMode !== 'auto') return
+  if (state.filterUi.value.commitMode !== 'auto') {
+    return
+  }
 
   internals.filters.setOptionFilterValues({
     key: props.definition.key,
-    values: localSelectedValues.value,
     operator: pendingOperator.value,
+    values: localSelectedValues.value,
   })
 
-  if (state.filterUi.value.closeOnSelect) session.close()
+  if (state.filterUi.value.closeOnSelect) {
+    session.close()
+  }
 }
 
 function applyFilter() {
   internals.filters.setOptionFilterValues({
     key: props.definition.key,
-    values: localSelectedValues.value,
     operator: pendingOperator.value,
+    values: localSelectedValues.value,
   })
   pendingOperator.value = undefined
   session.close()
@@ -256,19 +262,25 @@ function handleSelectEntry(options: {
 }) {
   if (options.sectionKey === 'pinned') {
     const entry = pinnedEntries.value.find((item) => String(item.value) === String(options.value))
-    if (!entry) return
+    if (!entry) {
+      return
+    }
     pinnedRangeSelect.handleClick(options.event, entry, options.index)
     return
   }
 
   const entry = restEntries.value.find((item) => String(item.value) === String(options.value))
-  if (!entry) return
+  if (!entry) {
+    return
+  }
   restRangeSelect.handleClick(options.event, entry, options.index)
 }
 
 function handleToggleTreeEntry(entryId: string) {
   const entry = state.visibleTreeEntries.value.find((item) => item.id === entryId)
-  if (!entry) return
+  if (!entry) {
+    return
+  }
   state.toggleTreeEntry(entry)
 }
 
@@ -346,7 +358,13 @@ function handleContentMounted() {
         >
           <div
             v-if="header !== false && dataListUi.ui.value.filterTags?.props?.editorHeader !== false"
-            :class="mergeDataListUiClass('nut-dl-editor__head flex items-center gap-2 border-b border-default py-2 pr-3', embedded ? 'pl-1.5' : 'pl-3', dataListFilterUi?.editorHeader)"
+            :class="
+              mergeDataListUiClass(
+                'nut-dl-editor__head flex items-center gap-2 border-b border-default py-2 pr-3',
+                embedded ? 'pl-1.5' : 'pl-3',
+                dataListFilterUi?.editorHeader,
+              )
+            "
           >
             <button
               v-if="embedded"

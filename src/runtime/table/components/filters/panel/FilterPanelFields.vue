@@ -23,7 +23,13 @@ const captioned = computed(
     >
       <div
         v-if="captioned"
-        :class="mergeDataListUiClass('nut-dl-fpanel__caption text-[10.5px] font-semibold tracking-[0.08em] text-dimmed uppercase', undefined, ui.sectionTitle)"
+        :class="
+          mergeDataListUiClass(
+            'nut-dl-fpanel__caption text-[10.5px] font-semibold tracking-[0.08em] text-dimmed uppercase',
+            undefined,
+            ui.sectionTitle,
+          )
+        "
       >
         {{ section.label }}
       </div>

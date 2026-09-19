@@ -1,5 +1,6 @@
 import { useNuxtApp } from 'nuxt/app'
-import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
+import { computed, toValue } from 'vue'
+import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
 import type {
   InferResponsiveValue,
@@ -9,12 +10,8 @@ import type {
   ResponsiveTransformer,
 } from '../types/responsive'
 import { isFunction, isObject, isString } from '../utils/predicate'
-import {
-  getOrderedBreakpointKeys,
-  resolveResponsiveValueAtBreakpoint,
-  type ResponsiveRuntimeValue,
-  type ViewportLike,
-} from '../utils/responsive'
+import { getOrderedBreakpointKeys, resolveResponsiveValueAtBreakpoint } from '../utils/responsive'
+import type { ResponsiveRuntimeValue, ViewportLike } from '../utils/responsive'
 
 export function getResponsiveValue<TValue extends ResponsiveValueInput>(
   value: TValue,
@@ -33,8 +30,12 @@ export function getResponsiveValue(
     breakpointKeys: getOrderedBreakpointKeys(viewport),
   }
 
-  if (!isString(resolvedValue)) return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
-  if (transform === undefined) return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
+  if (!isString(resolvedValue)) {
+    return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
+  }
+  if (transform === undefined) {
+    return resolveResponsiveValueAtBreakpoint(resolvedValue, context)
+  }
 
   return resolveResponsiveValueAtBreakpoint(resolvedValue, context, transform)
 }
@@ -54,8 +55,12 @@ export function useResponsiveValue(
 ): ComputedRef<ResponsiveValueInput | ResponsiveRuntimeValue> {
   return computed(() => {
     const resolvedValue = unwrapResponsiveValue(toValue(value))
-    if (!isString(resolvedValue)) return getResponsiveValue(resolvedValue)
-    if (transform === undefined) return getResponsiveValue(resolvedValue)
+    if (!isString(resolvedValue)) {
+      return getResponsiveValue(resolvedValue)
+    }
+    if (transform === undefined) {
+      return getResponsiveValue(resolvedValue)
+    }
 
     return getResponsiveValue(resolvedValue, transform)
   })
@@ -77,8 +82,9 @@ function isResponsiveValueGetter<T>(value: T): value is T & (() => ResponsiveVal
 
 function useCurrentViewport(): ViewportLike {
   const nuxtApp = useNuxtApp()
-  if (!hasViewport(nuxtApp))
+  if (!hasViewport(nuxtApp)) {
     throw new Error('nuxt-viewport is required to resolve responsive values')
+  }
 
   return nuxtApp.$viewport
 }

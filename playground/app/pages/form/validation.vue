@@ -21,18 +21,6 @@ const lastSubmitted = ref<unknown | null>(null)
 const lastValidation = ref<'idle' | 'valid' | 'invalid'>('idle')
 
 const validationSchema = defineFormSchema({
-  formKey: 'playground.form.validation-assessment',
-  title: 'Validation assessment',
-  showStepper: true,
-  layout: {
-    columns: 1,
-    gap: 16,
-  },
-  controls: {
-    autoFocus: true,
-    syncInput: true,
-    validate: true,
-  },
   context: {
     teams: () =>
       queryOptions({
@@ -47,6 +35,17 @@ const validationSchema = defineFormSchema({
         },
       }),
   },
+  controls: {
+    autoFocus: true,
+    syncInput: true,
+    validate: true,
+  },
+  formKey: 'playground.form.validation-assessment',
+  layout: {
+    columns: 1,
+    gap: 16,
+  },
+  showStepper: true,
   steps: [
     {
       key: 'identity',
@@ -173,10 +172,10 @@ const validationSchema = defineFormSchema({
       ],
     },
   ],
+  title: 'Validation assessment',
 })
 
 const form = useForm({
-  schema: validationSchema,
   onSubmit: async ({ formData, api }) => {
     submitState.value = 'pending'
     submitMessage.value = 'Checking the server…'
@@ -194,6 +193,7 @@ const form = useForm({
     submitMessage.value = 'Saved successfully through the form submit lifecycle.'
     return { success: true, data: { savedAt: new Date().toISOString() } }
   },
+  schema: validationSchema,
 })
 
 const teamContext = computed(() => form.context.value.teams)

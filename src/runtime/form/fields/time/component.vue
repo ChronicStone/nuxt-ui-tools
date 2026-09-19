@@ -43,7 +43,9 @@ function updateTime(value: TimeInputModel) {
     clearTime()
     return
   }
-  if ('start' in value) return
+  if ('start' in value) {
+    return
+  }
   form.setValue(props.path, serializeTime(value))
 }
 
@@ -55,21 +57,29 @@ function resolveMinuteStep(
   configuredMinuteStep: number | undefined,
   secondStep: number | undefined,
 ) {
-  if (isNumber(configuredMinuteStep) && configuredMinuteStep > 0)
+  if (isNumber(configuredMinuteStep) && configuredMinuteStep > 0) {
     return Math.min(60, Math.max(1, Math.round(configuredMinuteStep)))
-  if (isNumber(secondStep) && secondStep >= 60)
+  }
+  if (isNumber(secondStep) && secondStep >= 60) {
     return Math.min(60, Math.max(1, Math.round(secondStep / 60)))
+  }
   return 1
 }
 
 function parseTime(value: string | undefined) {
-  if (!value) return undefined
+  if (!value) {
+    return undefined
+  }
   const match = /^(\d{1,2})(?::(\d{1,2}))?$/.exec(value)
-  if (!match) return undefined
+  if (!match) {
+    return undefined
+  }
 
   const hour = Number(match[1])
   const minute = Number(match[2] ?? 0)
-  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return undefined
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return undefined
+  }
   return new Time(hour, minute)
 }
 

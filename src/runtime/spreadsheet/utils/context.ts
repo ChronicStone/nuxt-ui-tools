@@ -46,8 +46,8 @@ export function createSpreadsheetContextStatus(
 
   return {
     initialized: true,
-    isPending,
     isFetching,
+    isPending,
     isReady,
     isRefreshing,
   }

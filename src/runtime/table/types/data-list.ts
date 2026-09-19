@@ -144,8 +144,10 @@ export interface DataListFilterPanelProps {
   chips?: number | false
 }
 
-export interface DataListFilterPanelConfig
-  extends DataListPartConfig<DataListFilterPanelUi, DataListFilterPanelProps> {
+export interface DataListFilterPanelConfig extends DataListPartConfig<
+  DataListFilterPanelUi,
+  DataListFilterPanelProps
+> {
   /** Renders the filter fields inline instead of inside a slideover. */
   mode?: DataListFilterPanelMode
   /** Applies each field change immediately or waits for the Apply command. */
@@ -428,8 +430,10 @@ export interface DataListPartConfig<TUi, TProps = Record<string, never>> {
   props?: TProps
 }
 
-export interface DataListSearchConfig
-  extends DataListPartConfig<DataListSearchUi, DataListSearchProps> {
+export interface DataListSearchConfig extends DataListPartConfig<
+  DataListSearchUi,
+  DataListSearchProps
+> {
   /** CSS width for the search input; it remains capped to its container. */
   width?: string
 }
@@ -471,7 +475,10 @@ export interface DataListGridConfig extends DataListPartConfig<DataListGridUi> {
   gap?: number
 }
 
-export interface DataListTableConfig extends DataListPartConfig<DataListTableUi, DataListTableProps> {
+export interface DataListTableConfig extends DataListPartConfig<
+  DataListTableUi,
+  DataListTableProps
+> {
   /** Horizontal padding of the first and last cells, in px; defaults to the cell padding. */
   gutter?: number
 }

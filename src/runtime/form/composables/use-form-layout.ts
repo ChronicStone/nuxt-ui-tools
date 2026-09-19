@@ -1,4 +1,5 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { useResponsiveValue } from '../../shared/composables/use-responsive-value'
 import type { FormContainerLayout, FormItemLayout, FormLayoutConfig } from '../types'

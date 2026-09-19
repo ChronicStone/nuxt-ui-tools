@@ -20,15 +20,15 @@ describe('page query prefetch', () => {
   it('prefetches a simple query and applies select output', async () => {
     const definition = defineQueryPrefetch('products-id', () =>
       queryOptions({
-        queryKey: ['product', '42'] as const,
         queryFn: async () => ({ id: '42', title: 'Drill' }),
+        queryKey: ['product', '42'] as const,
         select: (product) => product.title,
       }),
     )
 
     await expect(
       executeQueryPrefetch(definition, { queryClient: new QueryClient(), route }),
-    ).resolves.toEqual(['Drill'])
+    ).resolves.toStrictEqual(['Drill'])
   })
 
   it('contains resolver and query failures', async () => {
@@ -38,6 +38,6 @@ describe('page query prefetch', () => {
 
     await expect(
       executeQueryPrefetch(broken, { queryClient: new QueryClient(), route }),
-    ).resolves.toEqual([])
+    ).resolves.toStrictEqual([])
   })
 })

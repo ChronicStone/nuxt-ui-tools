@@ -85,17 +85,17 @@ function initLocalState() {
 }
 
 const session = useFilterTagSession({
-  session: props.session,
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
     internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
-  onOpen: initLocalState,
   onClose: () => {
     pendingOperator.value = undefined
   },
-  onSessionClosed: () => emit('sessionClosed'),
   onDismiss: () => emit('dismiss'),
+  onOpen: initLocalState,
+  onSessionClosed: () => emit('sessionClosed'),
+  session: props.session,
 })
 
 function handleActivate(op: TableFilterOperator) {
@@ -118,8 +118,8 @@ function applyFilter() {
 
   internals.filters.setScalarFilterValue({
     key: props.definition.key,
-    value: localValue.value.trim() || undefined,
     operator: op,
+    value: localValue.value.trim() || undefined,
   })
   session.close()
 }
@@ -143,8 +143,8 @@ function handleValueUpdate(value: string | number | undefined) {
   if (filterUi.value.commitMode === 'auto') {
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
-      value: localValue.value.trim() || undefined,
       operator: pendingOperator.value,
+      value: localValue.value.trim() || undefined,
     })
   }
 }

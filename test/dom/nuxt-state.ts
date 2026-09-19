@@ -1,15 +1,17 @@
 import { computed, ref } from 'vue'
 
-export const BREAKPOINTS = { xs: 0, sm: 640, md: 768, lg: 1024, xl: 1280 } as const
+export const BREAKPOINTS = { lg: 1024, md: 768, sm: 640, xl: 1280, xs: 0 } as const
 export type BreakpointKey = keyof typeof BREAKPOINTS
 
-const order = Object.keys(BREAKPOINTS) as BreakpointKey[]
+const order: BreakpointKey[] = ['xs', 'sm', 'md', 'lg', 'xl']
 const breakpoint = ref<BreakpointKey>('xl')
 
 function mediaQueryFor(index: number) {
   const min = BREAKPOINTS[order[index]!]
   const next = order[index + 1]
-  return next ? `(min-width: ${min}px) and (max-width: ${BREAKPOINTS[next] - 1}px)` : `(min-width: ${min}px)`
+  return next
+    ? `(min-width: ${min}px) and (max-width: ${BREAKPOINTS[next] - 1}px)`
+    : `(min-width: ${min}px)`
 }
 
 export function currentMediaQuery() {
@@ -18,6 +20,10 @@ export function currentMediaQuery() {
 
 export const viewport = {
   breakpoint,
+  isGreaterOrEquals: (key: string) =>
+    order.indexOf(breakpoint.value) >= order.indexOf(key as BreakpointKey),
+  isLessThan: (key: string) =>
+    order.indexOf(breakpoint.value) < order.indexOf(key as BreakpointKey),
   queries: {
     value: Object.fromEntries(
       order.map((key, index) => [
@@ -26,9 +32,6 @@ export const viewport = {
       ]),
     ),
   },
-  isLessThan: (key: string) => order.indexOf(breakpoint.value) < order.indexOf(key as BreakpointKey),
-  isGreaterOrEquals: (key: string) =>
-    order.indexOf(breakpoint.value) >= order.indexOf(key as BreakpointKey),
 }
 
 export const appConfig = ref<Record<string, unknown>>({})

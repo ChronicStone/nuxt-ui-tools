@@ -18,7 +18,9 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
     fieldElements.set(key, element)
 
     return () => {
-      if (fieldElements.get(key) === element) fieldElements.delete(key)
+      if (fieldElements.get(key) === element) {
+        fieldElements.delete(key)
+      }
     }
   }
 
@@ -29,8 +31,12 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
     await nextTick()
     const focused =
       (await focusFormFieldElement(fieldElements.get(key) ?? null)) || (await focusFormField(path))
-    if (focused) return true
-    if (!import.meta.client) return false
+    if (focused) {
+      return true
+    }
+    if (!import.meta.client) {
+      return false
+    }
 
     await waitForFocusRequest()
     const element = fieldElements.get(key)
@@ -42,17 +48,19 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
     const resolvedErrors = errors ?? params.getErrors()
     for (const error of resolvedErrors) {
       const focused = await focusField(error.path)
-      if (focused) return true
+      if (focused) {
+        return true
+      }
     }
 
     return focusFirstInvalidFormField(resolvedErrors)
   }
 
   return {
-    request,
-    registerField,
     focusField,
     focusFirstInvalid,
+    registerField,
+    request,
   }
 }
 

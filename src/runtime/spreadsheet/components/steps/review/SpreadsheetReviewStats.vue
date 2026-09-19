@@ -2,7 +2,7 @@
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 defineProps<{
-  items: Array<{
+  items: {
     key: string
     value: number
     label: string
@@ -10,7 +10,7 @@ defineProps<{
     valueClass: string
     accentClass: string
     cardClass: string
-  }>
+  }[]
   limitText?: string
 }>()
 </script>

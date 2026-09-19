@@ -14,8 +14,8 @@ import type {
   SpreadsheetCellValue,
   SpreadsheetMatchDefinition,
   SpreadsheetModifier,
+  SpreadsheetValue,
 } from './shared'
-import type { SpreadsheetValue } from './shared'
 import type { SpreadsheetFieldRulesInput } from './validation'
 
 export interface SpreadsheetColumnDefinition<
@@ -118,46 +118,44 @@ export type SpreadsheetOptionColumnOptions<
   options: SpreadsheetOptionsSource<{ context: TContext }, TOption>
 }
 
-export interface SpreadsheetScalarColumnBuilder<
+export type SpreadsheetScalarColumnBuilder<
   TContext = unknown,
   TDefault = unknown,
   TMultipleConfig = SpreadsheetColumnMultipleOptions,
-> {
-  <
-    TKey extends string,
-    TRequired extends boolean = false,
-    TMultiple extends boolean | TMultipleConfig | undefined = undefined,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<
-          TContext,
-          ResolveSpreadsheetColumnValue<TDefault, undefined, TMultiple>,
-          TRequired,
-          Exclude<TMultiple, undefined>
-        >['parse']
-      | undefined = undefined,
-    TRulesInput extends
-      | SpreadsheetFieldRulesInput<ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>>
-      | undefined =
-      | SpreadsheetFieldRulesInput<ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>>
-      | undefined,
-  >(
-    key: TKey,
-    options?: SpreadsheetColumnBaseOptions<
-      TContext,
-      ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
-      TRequired,
-      Exclude<TMultiple, undefined>
-    > & {
-      rules?: TRulesInput
-    },
-  ): SpreadsheetColumnDefinition<
-    TKey,
+> = <
+  TKey extends string,
+  TRequired extends boolean = false,
+  TMultiple extends boolean | TMultipleConfig | undefined = undefined,
+  TParse extends
+    | SpreadsheetColumnBaseOptions<
+        TContext,
+        ResolveSpreadsheetColumnValue<TDefault, undefined, TMultiple>,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      >['parse']
+    | undefined = undefined,
+  TRulesInput extends
+    | SpreadsheetFieldRulesInput<ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>>
+    | undefined =
+    | SpreadsheetFieldRulesInput<ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>>
+    | undefined,
+>(
+  key: TKey,
+  options?: SpreadsheetColumnBaseOptions<
+    TContext,
     ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
     TRequired,
-    TContext,
-    TRulesInput
-  >
-}
+    Exclude<TMultiple, undefined>
+  > & {
+    rules?: TRulesInput
+  },
+) => SpreadsheetColumnDefinition<
+  TKey,
+  ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
+  TRequired,
+  TContext,
+  TRulesInput
+>
 
 export interface SpreadsheetResolvableScalarColumnBuilder<
   TContext = unknown,
@@ -249,48 +247,46 @@ export interface SpreadsheetResolvableScalarColumnBuilder<
   >
 }
 
-export interface SpreadsheetOptionColumnBuilder<TContext = unknown> {
-  <
-    TKey extends string,
-    const TOption extends SpreadsheetOptionItem,
-    TRequired extends boolean = false,
-    TMultiple extends boolean | SpreadsheetOptionColumnMultipleOptions | undefined = undefined,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<
-          TContext,
-          ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, undefined, TMultiple>,
-          TRequired,
-          Exclude<TMultiple, undefined>
-        >['parse']
-      | undefined = undefined,
-    TRulesInput extends
-      | SpreadsheetFieldRulesInput<
-          ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>
-        >
-      | undefined =
-      | SpreadsheetFieldRulesInput<
-          ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>
-        >
-      | undefined,
-  >(
-    key: TKey,
-    options: SpreadsheetColumnBaseOptions<
-      TContext,
-      ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>,
-      TRequired,
-      Exclude<TMultiple, undefined>
-    > & {
-      rules?: TRulesInput
-      options: SpreadsheetOptionsSource<{ context: TContext }, TOption>
-    },
-  ): SpreadsheetColumnDefinition<
-    TKey,
+export type SpreadsheetOptionColumnBuilder<TContext = unknown> = <
+  TKey extends string,
+  const TOption extends SpreadsheetOptionItem,
+  TRequired extends boolean = false,
+  TMultiple extends boolean | SpreadsheetOptionColumnMultipleOptions | undefined = undefined,
+  TParse extends
+    | SpreadsheetColumnBaseOptions<
+        TContext,
+        ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, undefined, TMultiple>,
+        TRequired,
+        Exclude<TMultiple, undefined>
+      >['parse']
+    | undefined = undefined,
+  TRulesInput extends
+    | SpreadsheetFieldRulesInput<
+        ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>
+      >
+    | undefined =
+    | SpreadsheetFieldRulesInput<
+        ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>
+      >
+    | undefined,
+>(
+  key: TKey,
+  options: SpreadsheetColumnBaseOptions<
+    TContext,
     ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>,
     TRequired,
-    TContext,
-    TRulesInput
-  >
-}
+    Exclude<TMultiple, undefined>
+  > & {
+    rules?: TRulesInput
+    options: SpreadsheetOptionsSource<{ context: TContext }, TOption>
+  },
+) => SpreadsheetColumnDefinition<
+  TKey,
+  ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>,
+  TRequired,
+  TContext,
+  TRulesInput
+>
 
 export interface SpreadsheetColumnBuilder<TContext = unknown> {
   text: SpreadsheetResolvableScalarColumnBuilder<TContext, string>
@@ -342,12 +338,13 @@ export interface SpreadsheetColumnBuilder<TContext = unknown> {
   option: SpreadsheetOptionColumnBuilder<TContext>
 }
 
-export interface SpreadsheetGroupBuilder {
-  <TKey extends string, TColumns extends readonly SpreadsheetStaticColumnEntry[]>(
-    key: TKey,
-    columns: TColumns,
-  ): SpreadsheetColumnGroupDefinition<TKey, TColumns>
-}
+export type SpreadsheetGroupBuilder = <
+  TKey extends string,
+  TColumns extends readonly SpreadsheetStaticColumnEntry[],
+>(
+  key: TKey,
+  columns: TColumns,
+) => SpreadsheetColumnGroupDefinition<TKey, TColumns>
 
 type ArrayElement<TValue> = TValue extends readonly (infer TItem)[] ? TItem : never
 type SpreadsheetDynamicCollectionCallback<TParams, TResult> = (params: TParams) => TResult
@@ -422,11 +419,11 @@ type SpreadsheetDynamicDefaultRecordValue<
   TValueDefinition extends SpreadsheetDynamicValueDefinition,
 > = SpreadsheetDynamicResolvedValue<TValueDefinition>
 
-type SpreadsheetDynamicBuildParams<
+interface SpreadsheetDynamicBuildParams<
   TSource,
   TId extends string,
   TValueDefinition extends SpreadsheetDynamicValueDefinition,
-> = {
+> {
   id: TId
   source: TSource
   value?: SpreadsheetDynamicResolvedValue<TValueDefinition>
@@ -466,7 +463,7 @@ type ResolveSpreadsheetDynamicValueInput<TValueInput> = TValueInput extends (
     ? TValueInput
     : never
 
-type SpreadsheetDynamicCollectionItemContract<TSource = unknown> = {
+interface SpreadsheetDynamicCollectionItemContract<TSource = unknown> {
   id: string
   match: SpreadsheetMatchDefinition
   value: SpreadsheetDynamicValueInput

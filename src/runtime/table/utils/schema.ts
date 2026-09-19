@@ -1,4 +1,5 @@
-import { computed, toValue, type ComputedRef } from 'vue'
+import { computed, toValue } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { useTableState } from '../composables/use-table-state'
 import type { MaybeComputedRef, PublicTableQueryState, TableLayout } from '../types'
@@ -14,6 +15,7 @@ export function mapPublicQueryState(options: {
   activeLayout: TableLayout
 }): PublicTableQueryState {
   return {
+    filters: options.queryState.filters.value,
     layout: options.activeLayout,
     pagination: options.queryState.pagination.value,
     sorting: options.queryState.sorting.value
@@ -22,7 +24,6 @@ export function mapPublicQueryState(options: {
           sortDirection: options.queryState.sorting.value.dir,
         }
       : null,
-    filters: options.queryState.filters.value,
   }
 }
 
@@ -32,8 +33,8 @@ export function createPublicQueryState(options: {
 }) {
   return computed<PublicTableQueryState>(() =>
     mapPublicQueryState({
-      queryState: options.queryState,
       activeLayout: options.activeLayout.value,
+      queryState: options.queryState,
     }),
   )
 }

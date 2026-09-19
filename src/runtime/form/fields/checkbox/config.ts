@@ -1,10 +1,10 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const checkboxFieldKind = defineFormFieldKind({
-  type: 'checkbox',
-  state: 'stateful',
-  ui: { label: true, description: true, hint: true },
   layout: { item: true },
-  validation: true,
+  state: 'stateful',
   transform: true,
+  type: 'checkbox',
+  ui: { description: true, hint: true, label: true },
+  validation: true,
 })

@@ -7,11 +7,11 @@ import { getPaginationMode } from '#ui-tools/table/utils/query-state'
 describe('table pagination strategies', () => {
   it('resolves offset, cursor, and none from schema configuration', () => {
     const source = {
-      query: () => ({ queryKey: ['rows'], queryFn: async () => [{ id: 'row-1' }] }),
+      query: () => ({ queryFn: async () => [{ id: 'row-1' }], queryKey: ['rows'] }),
     }
-    const offset = defineTableSchema({ tableKey: 'offset', rowKey: 'id', source })
+    const offset = defineTableSchema({ rowKey: 'id', source, tableKey: 'offset' })
     const cursor = defineTableSchema({
-      tableKey: 'cursor',
+      pagination: { mode: 'cursor', pageSize: 24 },
       rowKey: 'id',
       source: {
         mode: 'remote',
@@ -29,13 +29,13 @@ describe('table pagination strategies', () => {
           }),
         }),
       },
-      pagination: { mode: 'cursor', pageSize: 24 },
+      tableKey: 'cursor',
     })
     const none = defineTableSchema({
-      tableKey: 'none',
+      pagination: false,
       rowKey: 'id',
       source,
-      pagination: false,
+      tableKey: 'none',
     })
 
     expect(getPaginationMode(offset)).toBe('offset')
@@ -45,7 +45,6 @@ describe('table pagination strategies', () => {
 
   it('flattens cursor pages, de-duplicates row keys, and preserves an exact total', () => {
     const result = flattenTableCursorPages({
-      rowKey: 'id',
       pages: [
         {
           rows: [
@@ -74,9 +73,10 @@ describe('table pagination strategies', () => {
           },
         },
       ],
+      rowKey: 'id',
     })
 
-    expect(result.rows).toEqual([
+    expect(result.rows).toStrictEqual([
       { id: 'row-1', label: 'First' },
       { id: 'row-2', label: 'Updated' },
       { id: 'row-3', label: 'Third' },
@@ -86,7 +86,6 @@ describe('table pagination strategies', () => {
 
   it('keeps total count unknown when cursor counting is disabled', () => {
     const result = flattenTableCursorPages({
-      rowKey: 'id',
       pages: [
         {
           rows: [{ id: 'row-1' }],
@@ -99,6 +98,7 @@ describe('table pagination strategies', () => {
           },
         },
       ],
+      rowKey: 'id',
     })
 
     expect(result.rows).toHaveLength(1)

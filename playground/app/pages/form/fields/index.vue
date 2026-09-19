@@ -3,11 +3,10 @@ import { formFieldPlaygrounds } from '../../../lib/form-field-playgrounds'
 
 const groups = [
   {
-    label: 'Inputs',
     ids: ['text', 'password', 'textarea', 'number', 'phone-number', 'one-time-code', 'tag'],
+    label: 'Inputs',
   },
   {
-    label: 'Choice controls',
     ids: [
       'select',
       'auto-complete',
@@ -22,26 +21,27 @@ const groups = [
       'slider',
       'color-picker',
     ],
+    label: 'Choice controls',
   },
   {
-    label: 'Date & time',
     ids: ['date', 'datetime', 'daterange', 'monthrange', 'datetimerange', 'month', 'year', 'time'],
+    label: 'Date & time',
   },
   {
-    label: 'Hierarchy',
     ids: ['tree-select', 'cascader', 'tree'],
+    label: 'Hierarchy',
   },
   {
-    label: 'Composition',
     ids: ['input-group', 'group', 'object', 'card', 'column', 'matrix', 'custom-component'],
+    label: 'Composition',
   },
   {
-    label: 'Collections & files',
     ids: ['array-list', 'array-table', 'array-tabs', 'array-variant', 'file', 'upload'],
+    label: 'Collections & files',
   },
   {
-    label: 'Display & runtime',
     ids: ['info', 'divider', 'button', 'hidden'],
+    label: 'Display & runtime',
   },
 ].map((group) => ({
   ...group,

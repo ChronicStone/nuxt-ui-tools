@@ -31,24 +31,40 @@ function thumb(params: { offset: number; overflow: number; track: number }) {
 function read() {
   frame = 0
   const el = props.target
-  if (!el) return
+  if (!el) {
+    return
+  }
   const overflowY = el.scrollHeight - el.clientHeight
   const overflowX = el.scrollWidth - el.clientWidth
   hasVertical.value = overflowY > 1
   hasHorizontal.value = overflowX > 1
-  if (hasVertical.value)
-    verticalThumb.value = thumb({ offset: el.scrollTop, overflow: overflowY, track: el.clientHeight })
-  if (hasHorizontal.value)
-    horizontalThumb.value = thumb({ offset: el.scrollLeft, overflow: overflowX, track: el.clientWidth })
+  if (hasVertical.value) {
+    verticalThumb.value = thumb({
+      offset: el.scrollTop,
+      overflow: overflowY,
+      track: el.clientHeight,
+    })
+  }
+  if (hasHorizontal.value) {
+    horizontalThumb.value = thumb({
+      offset: el.scrollLeft,
+      overflow: overflowX,
+      track: el.clientWidth,
+    })
+  }
   const host = el.parentElement
-  if (!host) return
+  if (!host) {
+    return
+  }
   host.classList.toggle('nut-dl-table--scrolled', el.scrollLeft > 2)
   host.classList.toggle('nut-dl-table--can-right', overflowX - el.scrollLeft > 2)
   host.classList.toggle('nut-dl-table--scrolled-y', el.scrollTop > 2)
 }
 
 function schedule() {
-  if (frame) return
+  if (frame) {
+    return
+  }
   frame = requestAnimationFrame(read)
 }
 
@@ -61,7 +77,9 @@ function onScroll() {
 
 function startDrag(axis: 'vertical' | 'horizontal', event: PointerEvent) {
   const el = props.target
-  if (!el) return
+  if (!el) {
+    return
+  }
   event.preventDefault()
   dragging.value = axis
   const vertical = axis === 'vertical'
@@ -75,8 +93,11 @@ function startDrag(axis: 'vertical' | 'horizontal', event: PointerEvent) {
   function onMove(move: PointerEvent) {
     const delta = (vertical ? move.clientY : move.clientX) - start
     const next = startScroll + (delta / travel) * overflow
-    if (vertical) el!.scrollTop = next
-    else el!.scrollLeft = next
+    if (vertical) {
+      el!.scrollTop = next
+    } else {
+      el!.scrollLeft = next
+    }
   }
   function onUp() {
     dragging.value = null
@@ -94,13 +115,17 @@ const onLeave = () => (hovered.value = false)
 
 function attach(el: HTMLElement | null) {
   observer?.disconnect()
-  if (!el) return
+  if (!el) {
+    return
+  }
   el.addEventListener('scroll', onScroll, { passive: true })
   el.addEventListener('pointerenter', onEnter)
   el.addEventListener('pointerleave', onLeave)
   observer = new ResizeObserver(schedule)
   observer.observe(el)
-  for (const child of el.children) observer.observe(child)
+  for (const child of el.children) {
+    observer.observe(child)
+  }
   schedule()
 }
 
@@ -122,7 +147,9 @@ onMounted(() => attach(props.target))
 onBeforeUnmount(() => {
   detach(props.target)
   clearTimeout(idleTimer)
-  if (frame) cancelAnimationFrame(frame)
+  if (frame) {
+    cancelAnimationFrame(frame)
+  }
 })
 
 defineExpose({ measure: schedule })
@@ -137,7 +164,10 @@ defineExpose({ measure: schedule })
     <span
       class="absolute top-0 left-0 w-full rounded-full bg-black/25 transition-colors duration-150 will-change-transform hover:bg-black/40 dark:bg-white/25 dark:hover:bg-white/40"
       :class="{ 'bg-black/45 dark:bg-white/45': dragging === 'vertical' }"
-      :style="{ height: `${verticalThumb.size}px`, transform: `translateY(${verticalThumb.offset}px)` }"
+      :style="{
+        height: `${verticalThumb.size}px`,
+        transform: `translateY(${verticalThumb.offset}px)`,
+      }"
       @pointerdown="startDrag('vertical', $event)"
     />
   </div>
@@ -149,7 +179,10 @@ defineExpose({ measure: schedule })
     <span
       class="absolute top-0 left-0 h-full rounded-full bg-black/25 transition-colors duration-150 will-change-transform hover:bg-black/40 dark:bg-white/25 dark:hover:bg-white/40"
       :class="{ 'bg-black/45 dark:bg-white/45': dragging === 'horizontal' }"
-      :style="{ width: `${horizontalThumb.size}px`, transform: `translateX(${horizontalThumb.offset}px)` }"
+      :style="{
+        width: `${horizontalThumb.size}px`,
+        transform: `translateX(${horizontalThumb.offset}px)`,
+      }"
       @pointerdown="startDrag('horizontal', $event)"
     />
   </div>

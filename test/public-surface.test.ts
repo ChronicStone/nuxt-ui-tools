@@ -3,14 +3,15 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const readRepositoryFile = (path: string) =>
-  readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
+  readFileSync(new URL(`../${path}`, import.meta.url), 'utf-8')
 
 describe('public package surface', () => {
   it('exports every release-ready runtime domain except spreadsheet', () => {
     const packageManifest = readRepositoryFile('package.json')
 
-    for (const domain of ['form', 'i18n', 'query-state', 'shared', 'table'])
+    for (const domain of ['form', 'i18n', 'query-state', 'shared', 'table']) {
       expect(packageManifest).toContain(`"./${domain}"`)
+    }
 
     expect(packageManifest).not.toContain('"./spreadsheet"')
   })

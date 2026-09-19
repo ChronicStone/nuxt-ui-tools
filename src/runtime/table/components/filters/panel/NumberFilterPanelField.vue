@@ -47,8 +47,8 @@ const scalarValue = computed<number | undefined>({
   set(value) {
     internals.filterPresentation.setPanelScalarFilterValue({
       key: props.definition.key,
-      value,
       operator: pendingOperator.value,
+      value,
     })
   },
 })
@@ -58,7 +58,9 @@ const rangeValue = computed({
     const value = internals.filterPresentation.getPanelDraftFilterState({
       key: props.definition.key,
     })?.value
-    if (!isObject(value) || isDate(value)) return { from: undefined, to: undefined }
+    if (!isObject(value) || isDate(value)) {
+      return { from: undefined, to: undefined }
+    }
 
     return {
       from: 'from' in value && isNumber(value.from) ? value.from : undefined,
@@ -68,6 +70,7 @@ const rangeValue = computed({
   set(value: { from?: number; to?: number }) {
     internals.filterPresentation.setPanelScalarFilterValue({
       key: props.definition.key,
+      operator: pendingOperator.value,
       value:
         value.from == null && value.to == null
           ? undefined
@@ -77,7 +80,6 @@ const rangeValue = computed({
                 value.to == null ? undefined : ['to', value.to],
               ].filter((entry): entry is [string, number] => entry !== undefined),
             ),
-      operator: pendingOperator.value,
     })
   },
 })
@@ -107,8 +109,9 @@ function handleOperatorChange(operator: TableFilterOperator) {
       ? operator
       : 'is'
 
-  if (filterUi.value.clearOnOperatorChange)
+  if (filterUi.value.clearOnOperatorChange) {
     internals.filterPresentation.clearPanelFilter({ key: props.definition.key })
+  }
 }
 
 function updateRangeFrom(value: number | undefined) {

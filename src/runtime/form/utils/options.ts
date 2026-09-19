@@ -1,5 +1,4 @@
-import type { FormValue } from '../types'
-import type { FormFieldCallbackParams, FormOptionItem, FormOptionValue } from '../types'
+import type { FormValue, FormFieldCallbackParams, FormOptionItem, FormOptionValue } from '../types'
 import { isRecord } from './path'
 import { isBoolean, isFunction, isNumber, isString, isUndefined } from './predicate'
 import { resolveFormText } from './text'
@@ -32,18 +31,20 @@ export function normalizeOptionItem(
       : undefined
     const value = normalizeOptionValue(fallbackValue)
     const normalized: ResolvedFormOption = {
-      value,
-      label: resolveFormText(readOptionProperty(option, keys.label ?? 'label')) ?? String(value),
       description: isFormText(rawDescription) ? resolveFormText(rawDescription) : undefined,
       disabled: option.disabled === true,
+      label: resolveFormText(readOptionProperty(option, keys.label ?? 'label')) ?? String(value),
+      value,
     }
-    if (children) normalized.children = children
+    if (children) {
+      normalized.children = children
+    }
     return normalized
   }
 
   return {
-    value: normalizeOptionValue(option),
     label: String(option),
+    value: normalizeOptionValue(option),
   }
 }
 
@@ -78,7 +79,9 @@ export function mergeResolvedOptions(
   return collections.flatMap((collection) =>
     collection.filter((option) => {
       const key = formOptionKey(option.value)
-      if (seen.has(key)) return false
+      if (seen.has(key)) {
+        return false
+      }
       seen.add(key)
       return true
     }),
@@ -92,14 +95,20 @@ export function normalizeOptionSelection(value: FormValue, options: readonly Res
   if (Array.isArray(value)) {
     const selected = new Set<string>()
     return value.filter((item) => {
-      if (!isOptionValue(item)) return false
+      if (!isOptionValue(item)) {
+        return false
+      }
       const key = formOptionKey(item)
-      if (!validKeys.has(key) || selected.has(key)) return false
+      if (!validKeys.has(key) || selected.has(key)) {
+        return false
+      }
       selected.add(key)
       return true
     })
   }
-  if (value === null || isUndefined(value)) return value
+  if (value === null || isUndefined(value)) {
+    return value
+  }
   return isOptionValue(value) && validKeys.has(formOptionKey(value)) ? value : null
 }
 
@@ -107,18 +116,26 @@ export function resolveOptionSource(
   source: FormValue,
   params: FormFieldCallbackParams,
 ): readonly FormOptionItem[] {
-  if (!source) return []
-  if (Array.isArray(source)) return source
+  if (!source) {
+    return []
+  }
+  if (Array.isArray(source)) {
+    return source
+  }
   if (isFunction(source)) {
     const value = source(params)
-    if (Array.isArray(value)) return value
+    if (Array.isArray(value)) {
+      return value
+    }
     return []
   }
   return []
 }
 
 function normalizeOptionValue(value: FormValue): FormOptionValue {
-  if (isString(value) || isNumber(value) || isBoolean(value)) return value
+  if (isString(value) || isNumber(value) || isBoolean(value)) {
+    return value
+  }
   return String(value)
 }
 

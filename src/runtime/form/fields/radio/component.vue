@@ -19,8 +19,10 @@ const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
 const model = computed<string | number | boolean | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    if (isString(value) || isNumber(value) || isBoolean(value)) return value
-    return undefined
+    if (isString(value) || isNumber(value) || isBoolean(value)) {
+      return value
+    }
+    return
   },
   set: (value) => form.setValue(props.path, value),
 })

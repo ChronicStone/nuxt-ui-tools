@@ -37,11 +37,8 @@ const skeletonColumns = computed(() => {
     const isRowActions = column.id === ROW_ACTIONS_COLUMN_ID
 
     return {
-      id: column.id,
-      width: isRowActions
-        ? '3.25rem'
-        : resolveSkeletonColumnWidth({ columnId: column.id, columnIndex: index }),
       align: isRowActions || column.align === 'right' ? ('end' as const) : ('start' as const),
+      id: column.id,
       kind: isRowActions ? ('action' as const) : ('text' as const),
       skeletonWidth: isRowActions
         ? '1rem'
@@ -54,18 +51,23 @@ const skeletonColumns = computed(() => {
               : index === 3
                 ? 'min(9rem, 72%)'
                 : 'min(7rem, 64%)',
+      width: isRowActions
+        ? '3.25rem'
+        : resolveSkeletonColumnWidth({ columnId: column.id, columnIndex: index }),
     }
   })
 
-  if (!internals.selection.selectionEnabled.value) return dataColumns
+  if (!internals.selection.selectionEnabled.value) {
+    return dataColumns
+  }
 
   return [
     {
-      id: '__select',
-      width: '3.5rem',
       align: 'start' as const,
+      id: '__select',
       kind: 'checkbox' as const,
       skeletonWidth: '1rem',
+      width: '3.5rem',
     },
     ...dataColumns,
   ]
@@ -78,9 +80,15 @@ const skeletonGridTemplate = computed(() =>
 function resolveSkeletonColumnWidth(options: { columnId: string; columnIndex: number }) {
   const column = internals.tableColumns.visibleOrderedColumns.value[options.columnIndex]
   const configuredSize = internals.tableColumns.tableState.value.columnSizing[options.columnId]
-  if (configuredSize) return `${configuredSize}px`
-  if (column?.width !== undefined) return resolveCssColumnSize(column.width)
-  if (column?.minWidth !== undefined) return `minmax(${resolveCssColumnSize(column.minWidth)}, 1fr)`
+  if (configuredSize) {
+    return `${configuredSize}px`
+  }
+  if (column?.width !== undefined) {
+    return resolveCssColumnSize(column.width)
+  }
+  if (column?.minWidth !== undefined) {
+    return `minmax(${resolveCssColumnSize(column.minWidth)}, 1fr)`
+  }
   return 'minmax(120px, 1fr)'
 }
 

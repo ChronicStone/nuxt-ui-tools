@@ -21,12 +21,12 @@ useProvideGridRow(localRowIndex.value)
 
 const rowParams = computed(() =>
   createGridRenderParams({
-    row: rowData.value ?? {},
-    index: localRowIndex.value,
     context: toPlainRecord(internals.queryContent.contextData.value),
-    pageContext: toPlainRecord(internals.queryContent.pageContextData.value),
-    tableApi: internals.tableApi,
+    index: localRowIndex.value,
     layout: 'grid',
+    pageContext: toPlainRecord(internals.queryContent.pageContextData.value),
+    row: rowData.value ?? {},
+    tableApi: internals.tableApi,
   }),
 )
 

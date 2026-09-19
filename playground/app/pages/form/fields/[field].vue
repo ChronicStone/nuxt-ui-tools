@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useForm, type FormControlSize, type FormObject, type FormUiConfig } from '#ui-tools/form'
+import { useForm } from '#ui-tools/form'
+import type { FormControlSize, FormObject, FormUiConfig } from '#ui-tools/form'
 
 import {
   formControlSizes,
@@ -13,35 +14,36 @@ import {
 const route = useRoute()
 const definition = computed(() => getFormFieldPlayground(String(route.params.field ?? '')))
 
-if (!definition.value)
+if (!definition.value) {
   throw createError({ statusCode: 404, statusMessage: 'Unknown form field playground' })
+}
 
 const controlSize = ref<FormControlSize>('md')
 const submitted = ref<FormObject | null>(null)
 const schema = computed(() => ({
-  formKey: `playground.form.field.${definition.value?.id ?? 'unknown'}`,
-  title: definition.value?.label,
   controls: {
-    validate: true,
     dirtyCheck: true,
+    validate: true,
   },
+  fields: definition.value ? getFormFieldPlaygroundFields(definition.value) : [],
+  formKey: `playground.form.field.${definition.value?.id ?? 'unknown'}`,
   layout: {
     columns: 2,
     gap: 20,
   },
-  fields: definition.value ? getFormFieldPlaygroundFields(definition.value) : [],
+  title: definition.value?.label,
 }))
 const input = computed(() => definition.value?.input)
 const formUi = computed<FormUiConfig>(() => ({
   control: { size: controlSize.value },
 }))
 const form = useForm({
-  schema,
   input,
   onSubmit: async ({ formData }) => {
     submitted.value = formData
     return { success: true, data: formData }
   },
+  schema,
 })
 const currentIndex = computed(() =>
   formFieldPlaygrounds.findIndex((entry) => entry.id === definition.value?.id),

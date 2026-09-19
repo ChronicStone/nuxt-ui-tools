@@ -8,7 +8,7 @@ import type { DataListControlSize, DataListDensity, DataListUiConfig } from '../
 import DataListDefault from './data-list/DataListDefault.vue'
 import DataListRoot from './data-list/DataListRoot.vue'
 
-type DataListTable = {
+interface DataListTable {
   schema: ComputedRef<{ tableKey: string }>
   __internals: TableInternals
 }

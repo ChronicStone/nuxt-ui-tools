@@ -21,7 +21,7 @@ const placeholder = computed(() => resolveFormText(props.field.placeholder) ?? '
 const model = computed<string[]>({
   get: () => {
     const value = form.getValue(props.path)
-    return isString(value) ? value.split('') : []
+    return isString(value) ? [...value] : []
   },
   set: (value) => form.setValue(props.path, value.join('')),
 })

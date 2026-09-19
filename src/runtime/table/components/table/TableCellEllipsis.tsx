@@ -7,17 +7,17 @@ import { computed, defineComponent, onBeforeUnmount, ref } from 'vue'
 export default defineComponent({
   name: 'TableCellEllipsis',
   props: {
-    title: {
-      type: String,
-      default: null,
-    },
     disabled: {
-      type: Boolean,
       default: false,
+      type: Boolean,
+    },
+    title: {
+      default: null,
+      type: String,
     },
     wrapperClass: {
-      type: String,
       default: '',
+      type: String,
     },
   },
   setup(props, { slots }) {
@@ -77,7 +77,7 @@ export default defineComponent({
         text={props.title ?? undefined}
         disabled={!tooltipEnabled.value}
         delay-duration={120}
-        content={{ side: 'top', align: 'start' }}
+        content={{ align: 'start', side: 'top' }}
       >
         <div
           ref={contentRef}

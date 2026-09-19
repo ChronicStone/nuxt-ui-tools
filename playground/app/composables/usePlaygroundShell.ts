@@ -16,8 +16,8 @@ export function usePlaygroundShell() {
   )
 
   return {
-    navigationCollapsed,
     mobileNavigationOpen,
+    navigationCollapsed,
     tableSize,
   }
 }

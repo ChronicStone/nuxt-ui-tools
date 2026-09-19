@@ -14,13 +14,6 @@ definePageMeta({
 const { t } = useI18n()
 
 const center = {
-  id: 'tc_paris',
-  name: 'Paris Academic Hub',
-  country: 'France',
-  products: [
-    { id: 'prod_be_4skills', name: 'Positionnement VTest Business English - 4 Skills' },
-    { id: 'prod_general_4skills', name: 'Positionnement VTest English - 4 Skills' },
-  ],
   affiliationGroups: [
     {
       id: 'school-level',
@@ -41,41 +34,61 @@ const center = {
       ],
     },
   ],
+  country: 'France',
+  id: 'tc_paris',
+  name: 'Paris Academic Hub',
+  products: [
+    { id: 'prod_be_4skills', name: 'Positionnement VTest Business English - 4 Skills' },
+    { id: 'prod_general_4skills', name: 'Positionnement VTest English - 4 Skills' },
+  ],
 }
 
 function createHappyPathSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.happy-path',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 100,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
-    context: [
-      {
-        key: 'products',
-        query: () => ({
-          queryKey: ['playground', 'spreadsheet', 'happy-path', 'products'],
-          queryFn: async () => center.products,
-        }),
+    buildRow: ({ row }) => ({
+      testCenterId: row.testCenterId,
+      secureCode: row.secureCode,
+      candidate: {
+        firstName: row.firstName,
+        lastName: row.lastName,
+        email: row.email,
       },
-      {
-        key: 'affiliationGroups',
-        query: () => ({
-          queryKey: ['playground', 'spreadsheet', 'happy-path', 'affiliation-groups'],
-          queryFn: async () => center.affiliationGroups,
-        }),
-      },
-    ],
+      examName: row.examNameRaw,
+      productId: row.productId,
+      completionDate: row.completionDate,
+      status: row.status,
+      country: row.country,
+      batchName: row.batchName,
+      scores: row.scores,
+    }),
     columns: {
+      dynamic: ({ dynamic, context }) => [
+        dynamic.optionGroups({
+          key: 'affiliations',
+          source: context.affiliationGroups,
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          targetKey: (group) => group.slug,
+          header: {
+            strategy: 'template',
+            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
+          },
+          options: (group) =>
+            group.items.map((item) => ({
+              label: item.name,
+              value: item.id,
+            })),
+          values: {
+            mode: 'csv',
+            separator: ',',
+            resolve: 'label',
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+          },
+          output: {
+            into: 'affiliations',
+          },
+        }),
+      ],
       static: (column) => [
         column.text('testCenterId', {
           match: {
@@ -168,50 +181,37 @@ function createHappyPathSchema() {
           },
         }),
       ],
-      dynamic: ({ dynamic, context }) => [
-        dynamic.optionGroups({
-          key: 'affiliations',
-          source: context.affiliationGroups,
-          itemKey: (group) => group.id,
-          itemLabel: (group) => group.name,
-          targetKey: (group) => group.slug,
-          header: {
-            strategy: 'template',
-            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-          },
-          options: (group) =>
-            group.items.map((item) => ({
-              label: item.name,
-              value: item.id,
-            })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
-          output: {
-            into: 'affiliations',
-          },
-        }),
-      ],
     },
-    buildRow: ({ row }) => ({
-      testCenterId: row.testCenterId,
-      secureCode: row.secureCode,
-      candidate: {
-        firstName: row.firstName,
-        lastName: row.lastName,
-        email: row.email,
+    context: [
+      {
+        key: 'products',
+        query: () => ({
+          queryKey: ['playground', 'spreadsheet', 'happy-path', 'products'],
+          queryFn: async () => center.products,
+        }),
       },
-      examName: row.examNameRaw,
-      productId: row.productId,
-      completionDate: row.completionDate,
-      status: row.status,
-      country: row.country,
-      batchName: row.batchName,
-      scores: row.scores,
-    }),
+      {
+        key: 'affiliationGroups',
+        query: () => ({
+          queryKey: ['playground', 'spreadsheet', 'happy-path', 'affiliation-groups'],
+          queryFn: async () => center.affiliationGroups,
+        }),
+      },
+    ],
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 100,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.happy-path',
+    matching: {
+      strategy: 'smart',
+    },
+    sheet: {
+      strategy: 'auto',
+    },
   })
 }
 
@@ -278,19 +278,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Assessments')
 
   return {
-    fileName: 'spreadsheet-happy-path.xlsx',
     binary: write(workbook, {
       type: 'buffer',
       bookType: 'xlsx',
     }),
+    fileName: 'spreadsheet-happy-path.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

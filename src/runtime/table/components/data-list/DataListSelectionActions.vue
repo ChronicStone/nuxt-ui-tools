@@ -35,7 +35,7 @@ const props = withDefaults(
     ui?: DataListSelectionActionsUi
     props?: DataListSelectionActionsProps
   }>(),
-  { position: 'absolute', maxVisible: undefined, scope: true },
+  { maxVisible: undefined, position: 'absolute', scope: true },
 )
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
@@ -49,19 +49,25 @@ const controlProps = computed<DataListSelectionActionsProps>(() =>
 )
 const actionProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: size.value },
+    { color: 'neutral', size: size.value, variant: 'ghost' },
     controlProps.value.action,
   ),
 )
 const overflowProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: size.value, icon: 'i-lucide-ellipsis-vertical', square: true },
+    {
+      color: 'neutral',
+      icon: 'i-lucide-ellipsis-vertical',
+      size: size.value,
+      square: true,
+      variant: 'ghost',
+    },
     controlProps.value.overflow,
   ),
 )
 const dismissProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: size.value, icon: 'i-lucide-x', square: true },
+    { color: 'neutral', icon: 'i-lucide-x', size: size.value, square: true, variant: 'ghost' },
     controlProps.value.dismiss,
   ),
 )
@@ -82,13 +88,13 @@ const visibleActions = computed(() => actions.value.slice(0, maxVisible.value))
 const overflowActions = computed(() => actions.value.slice(maxVisible.value))
 const overflowItems = computed(() =>
   overflowActions.value.map((action) => ({
-    label: resolveTableActionLabel(action.definition.label) ?? action.definition.key,
-    icon: isString(action.definition.icon) ? action.definition.icon : undefined,
     disabled: action.state.disabled,
+    icon: isString(action.definition.icon) ? action.definition.icon : undefined,
+    label: resolveTableActionLabel(action.definition.label) ?? action.definition.key,
     onSelect: () => action.execute(),
   })),
 )
-const selection = internals.tableApi.selection
+const { selection } = internals.tableApi
 
 type TableActionSlot = TableActionSlotProps<GenericObject, TableRuntimeRecord, TableRuntimeRecord>
 
@@ -154,7 +160,11 @@ function clearSelection() {
               <button
                 type="button"
                 class="nut-dl-selbar__scope-btn flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors"
-                :class="bulkScope === 'selection' ? 'bg-white/16 text-inverted' : 'text-inverted/60 hover:text-inverted'"
+                :class="
+                  bulkScope === 'selection'
+                    ? 'bg-white/16 text-inverted'
+                    : 'text-inverted/60 hover:text-inverted'
+                "
                 @click="internals.selection.setBulkScope('selection')"
               >
                 <span>{{ t('table.selectionBar.selection') }}</span>
@@ -163,18 +173,31 @@ function clearSelection() {
               <button
                 type="button"
                 class="nut-dl-selbar__scope-btn flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors"
-                :class="bulkScope === 'all' ? 'bg-white/16 text-inverted' : 'text-inverted/60 hover:text-inverted'"
+                :class="
+                  bulkScope === 'all'
+                    ? 'bg-white/16 text-inverted'
+                    : 'text-inverted/60 hover:text-inverted'
+                "
                 @click="internals.selection.setBulkScope('all')"
               >
                 <span>{{ t('table.selectionBar.allResults') }}</span>
-                <b class="font-semibold" :class="bulkScope === 'all' ? 'text-primary' : 'text-primary/70'">
+                <b
+                  class="font-semibold"
+                  :class="bulkScope === 'all' ? 'text-primary' : 'text-primary/70'"
+                >
                   {{ formatCount(matchingCount ?? 0) }}
                 </b>
               </button>
             </div>
             <span
               v-else
-              :class="mergeDataListUiClass('nut-dl-selbar__count px-2 font-semibold whitespace-nowrap', undefined, ui.count)"
+              :class="
+                mergeDataListUiClass(
+                  'nut-dl-selbar__count px-2 font-semibold whitespace-nowrap',
+                  undefined,
+                  ui.count,
+                )
+              "
               role="status"
             >
               {{ t('table.selectionBar.selection') }}
@@ -195,7 +218,9 @@ function clearSelection() {
                   <UButton
                     v-bind="actionProps"
                     :icon="isString(action.definition.icon) ? action.definition.icon : undefined"
-                    :label="resolveTableActionLabel(action.definition.label) ?? action.definition.key"
+                    :label="
+                      resolveTableActionLabel(action.definition.label) ?? action.definition.key
+                    "
                     :disabled="action.state.disabled"
                     :loading="action.state.loading || action.running"
                     :ui="{

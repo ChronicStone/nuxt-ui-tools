@@ -61,9 +61,13 @@ const normalizedHeight = computed(() =>
   isNumber(props.height) ? `${props.height}px` : props.height,
 )
 const viewportStyle = computed(() => {
-  if (props.fit === 'fill') return { minHeight: 0 }
-  if (props.fit === 'height' && normalizedHeight.value) return { height: normalizedHeight.value }
-  return undefined
+  if (props.fit === 'fill') {
+    return { minHeight: 0 }
+  }
+  if (props.fit === 'height' && normalizedHeight.value) {
+    return { height: normalizedHeight.value }
+  }
+  return
 })
 const rootUi = computed(() => dataListUi.ui.value.content?.ui)
 const resolvedSize = computed(
@@ -89,15 +93,17 @@ function clearQuery() {
 watch(
   () => internals.controls.tableLayout.value,
   () => {
-    nextTick(() => viewport.value?.scrollTo({ top: 0, left: 0 }))
+    nextTick().then(() => viewport.value?.scrollTo({ left: 0, top: 0 }))
   },
 )
 
 watch(
   () => internals.pagination.currentPage.value,
   () => {
-    if (internals.pagination.mode.value !== 'offset') return
-    nextTick(() => viewport.value?.scrollTo({ top: 0, left: 0 }))
+    if (internals.pagination.mode.value !== 'offset') {
+      return
+    }
+    nextTick().then(() => viewport.value?.scrollTo({ left: 0, top: 0 }))
   },
 )
 </script>

@@ -1,7 +1,7 @@
 import type { TableQueryStateFilterRule } from '../types'
 
 export function resolvePanelDefaultRules(options: {
-  definitions: Array<{ key: string }>
+  definitions: { key: string }[]
   getDefault: (key: string) => TableQueryStateFilterRule | undefined
 }) {
   return options.definitions.flatMap((definition) => {

@@ -8,18 +8,12 @@ describe('resolved filters', () => {
     const state = createResolvedFilterState({
       definitions: [
         {
-          kind: 'option' as const,
-          key: 'status',
-          label: 'Status',
           behavior: {
             defaultOperator: 'isAnyOf' as const,
           },
-          source: {
-            options: [
-              { label: 'Live', value: 'live' as const },
-              { label: 'Paused', value: 'paused' as const },
-            ],
-          },
+          key: 'status',
+          kind: 'option' as const,
+          label: 'Status',
           resolve({ rule }: TableFilterResolveContext) {
             return {
               type: 'group' as const,
@@ -33,6 +27,12 @@ describe('resolved filters', () => {
                 }),
               ),
             }
+          },
+          source: {
+            options: [
+              { label: 'Live', value: 'live' as const },
+              { label: 'Paused', value: 'paused' as const },
+            ],
           },
         },
       ],
@@ -48,8 +48,6 @@ describe('resolved filters', () => {
       },
       staticFilters: [
         {
-          type: 'group',
-          combinator: 'and',
           children: [
             {
               type: 'condition',
@@ -58,13 +56,13 @@ describe('resolved filters', () => {
               value: false,
             },
           ],
+          combinator: 'and',
+          type: 'group',
         },
       ],
     })
 
-    expect(state).toEqual({
-      type: 'group',
-      combinator: 'and',
+    expect(state).toStrictEqual({
       children: [
         {
           type: 'group',
@@ -97,6 +95,8 @@ describe('resolved filters', () => {
           ],
         },
       ],
+      combinator: 'and',
+      type: 'group',
     })
   })
 })

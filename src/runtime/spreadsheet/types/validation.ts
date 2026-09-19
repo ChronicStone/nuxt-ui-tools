@@ -1,5 +1,4 @@
-import type { SpreadsheetIssueLevel } from './shared'
-import type { SpreadsheetRecord } from './shared'
+import type { SpreadsheetIssueLevel, SpreadsheetRecord } from './shared'
 
 export type SpreadsheetLazyMessage<
   TValue,

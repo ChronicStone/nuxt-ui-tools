@@ -11,7 +11,7 @@ import { isFunction, isString } from './predicate'
 export type ResponsiveRuntimeValue = string | number | boolean | object | null
 type ResponsiveTransform = ResponsiveTransformKey | ResponsiveTransformer<ResponsiveRuntimeValue>
 
-export type ViewportLike = {
+export interface ViewportLike {
   breakpoint: { value: string }
   queries: { value: Record<string, { size: number }> }
 }
@@ -27,7 +27,9 @@ export function parseResponsiveValue(
     .map((token) => {
       const separatorIndex = token.indexOf(':')
 
-      if (separatorIndex === -1) return { breakpoint: breakpointKeys[0] ?? '', value: token }
+      if (separatorIndex === -1) {
+        return { breakpoint: breakpointKeys[0] ?? '', value: token }
+      }
 
       return {
         breakpoint: token.slice(0, separatorIndex),
@@ -69,11 +71,15 @@ export function resolveResponsiveValueAtBreakpoint(
   context: ResponsiveBreakpointContext,
   transform?: ResponsiveTransform,
 ): ResponsiveValueInput | ResponsiveRuntimeValue {
-  if (!isString(value)) return value
+  if (!isString(value)) {
+    return value
+  }
 
   const resolvedValue =
     parseResponsiveValue(value, context.breakpointKeys)[context.breakpoint] ?? null
-  if (resolvedValue === null) return null
+  if (resolvedValue === null) {
+    return null
+  }
 
   return transformResponsiveValue(resolvedValue, transform)
 }
@@ -88,16 +94,36 @@ function transformResponsiveValue(
   value: string,
   transform?: ResponsiveTransform,
 ): ResponsiveRuntimeValue {
-  if (transform === undefined || transform === 'string') return value
-  if (isResponsiveTransformer(transform)) return transform(value)
-  if (transform === 'boolean') return value === 'true'
-  if (transform === 'integer') return Number.parseInt(value, 10)
-  if (transform === 'float') return Number.parseFloat(value)
-  if (transform === 'grid-cols') return `grid-template-columns: repeat(${value}, minmax(0, 1fr))`
-  if (transform === 'grid-rows') return `grid-template-rows: repeat(${value}, minmax(0, 1fr))`
-  if (transform === 'col') return `grid-column: span ${value} / span ${value}`
-  if (transform === 'row') return `grid-row: span ${value} / span ${value}`
-  if (transform === 'maxWidth') return `max-width: ${value}`
+  if (transform === undefined || transform === 'string') {
+    return value
+  }
+  if (isResponsiveTransformer(transform)) {
+    return transform(value)
+  }
+  if (transform === 'boolean') {
+    return value === 'true'
+  }
+  if (transform === 'integer') {
+    return Number.parseInt(value, 10)
+  }
+  if (transform === 'float') {
+    return Number.parseFloat(value)
+  }
+  if (transform === 'grid-cols') {
+    return `grid-template-columns: repeat(${value}, minmax(0, 1fr))`
+  }
+  if (transform === 'grid-rows') {
+    return `grid-template-rows: repeat(${value}, minmax(0, 1fr))`
+  }
+  if (transform === 'col') {
+    return `grid-column: span ${value} / span ${value}`
+  }
+  if (transform === 'row') {
+    return `grid-row: span ${value} / span ${value}`
+  }
+  if (transform === 'maxWidth') {
+    return `max-width: ${value}`
+  }
 
   return `max-height: ${value}`
 }

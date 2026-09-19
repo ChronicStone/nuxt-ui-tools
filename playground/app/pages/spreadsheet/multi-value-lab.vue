@@ -2,11 +2,8 @@
 import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
-import {
-  useSpreadsheetImport,
-  type SpreadsheetData,
-  type SpreadsheetRowData,
-} from '#ui-tools/spreadsheet'
+import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
+import type { SpreadsheetData, SpreadsheetRowData } from '#ui-tools/spreadsheet'
 import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
@@ -17,9 +14,9 @@ definePageMeta({
 const { t } = useI18n()
 
 const center = {
+  country: 'France',
   id: 'tc_lyon',
   name: 'Lyon Import Lab',
-  country: 'France',
   products: [
     { id: 'prod_be_4skills', name: 'Business English 4 Skills' },
     { id: 'prod_general_4skills', name: 'General English 4 Skills' },
@@ -29,29 +26,16 @@ const center = {
 
 function createMultiValueSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.multi-value-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 100,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
-    context: [
-      {
-        key: 'products',
-        query: () => ({
-          queryKey: ['playground', 'spreadsheet', 'multi-value-lab', 'products'],
-          queryFn: async () => center.products,
-        }),
-      },
-    ],
+    buildRow: ({ row }) => ({
+      testCenterId: row.testCenterId,
+      candidateName: row.candidateName,
+      tags: row.tags,
+      scores: row.scores,
+      productIds: row.productIds,
+      statuses: row.statuses,
+      flags: row.flags,
+      notes: row.notes,
+    }),
     columns: {
       static: (column) => [
         column.text('testCenterId', {
@@ -145,16 +129,29 @@ function createMultiValueSchema() {
         }),
       ],
     },
-    buildRow: ({ row }) => ({
-      testCenterId: row.testCenterId,
-      candidateName: row.candidateName,
-      tags: row.tags,
-      scores: row.scores,
-      productIds: row.productIds,
-      statuses: row.statuses,
-      flags: row.flags,
-      notes: row.notes,
-    }),
+    context: [
+      {
+        key: 'products',
+        query: () => ({
+          queryKey: ['playground', 'spreadsheet', 'multi-value-lab', 'products'],
+          queryFn: async () => center.products,
+        }),
+      },
+    ],
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 100,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.multi-value-lab',
+    matching: {
+      strategy: 'smart',
+    },
+    sheet: {
+      strategy: 'auto',
+    },
   })
 }
 
@@ -212,19 +209,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Multi value import')
 
   return {
-    fileName: 'spreadsheet-multi-value-lab.xlsx',
     binary: write(workbook, {
       type: 'buffer',
       bookType: 'xlsx',
     }),
+    fileName: 'spreadsheet-multi-value-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

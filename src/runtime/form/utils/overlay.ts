@@ -1,12 +1,18 @@
-import type { FormValue } from '../types'
-import type { FormApiDisplayMode } from '../types'
-import type { FormDrawerConfig, FormFullscreenConfig, FormModalConfig } from '../types'
+import type {
+  FormValue,
+  FormApiDisplayMode,
+  FormDrawerConfig,
+  FormFullscreenConfig,
+  FormModalConfig,
+} from '../types'
 import { isRecord } from './path'
 import { isFunction, isNumber, isString } from './predicate'
 import { resolveFormText } from './text'
 
 export function normalizeFormOverlayMode(value: FormValue): FormApiDisplayMode {
-  if (value === 'drawer' || value === 'fullscreen') return value
+  if (value === 'drawer' || value === 'fullscreen') {
+    return value
+  }
   return 'modal'
 }
 
@@ -37,16 +43,22 @@ function getFormOverlayConfig(
   key: 'fullscreen',
 ): FormFullscreenConfig | undefined
 function getFormOverlayConfig(schema: FormValue, key: 'modal' | 'drawer' | 'fullscreen') {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
   const value = Object.getOwnPropertyDescriptor(schema, key)?.value
   return isRecord(value) ? value : undefined
 }
 
 function getFormOverlayText(schema: FormValue, key: 'title' | 'description') {
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return undefined
+  }
 
   const value = Object.getOwnPropertyDescriptor(schema, key)?.value
-  if (!isString(value) && !isNumber(value) && !isFunction(value)) return undefined
+  if (!isString(value) && !isNumber(value) && !isFunction(value)) {
+    return undefined
+  }
 
   const resolvedValue = resolveFormText(value)
   return resolvedValue === undefined ? undefined : String(resolvedValue)

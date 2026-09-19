@@ -9,7 +9,7 @@ import FilterSearchablePanel from './FilterSearchablePanel.vue'
 
 interface FilterOptionMultipleListSection {
   key: string
-  entries: Array<ReturnType<typeof useOptionFilterEditorState>['displayEntries']['value'][number]>
+  entries: ReturnType<typeof useOptionFilterEditorState>['displayEntries']['value'][number][]
   dividerBefore?: boolean
 }
 
@@ -43,13 +43,15 @@ function handleSelect(options: {
   index: number
   sectionKey: string
 }) {
-  if (options.entry.value == null) return
+  if (options.entry.value == null) {
+    return
+  }
 
   emit('selectEntry', {
     event: options.event,
-    value: options.entry.value,
     index: options.index,
     sectionKey: options.sectionKey,
+    value: options.entry.value,
   })
 }
 </script>

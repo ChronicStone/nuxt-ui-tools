@@ -1,24 +1,24 @@
 <script setup lang="ts">
 const examples = [
   {
-    label: 'Field labs',
     description:
       'Dedicated visual, sizing, interaction, and validation pages for every field kind.',
+    label: 'Field labs',
     to: '/form/fields',
   },
   {
-    label: 'Showcase',
     description: 'Field kinds, context resources, overlays, arrays, uploads, and live output.',
+    label: 'Showcase',
     to: '/form/showcase',
   },
   {
-    label: 'Validation',
     description: 'Required rules, async checks, dependencies, step scope, and submit lifecycle.',
+    label: 'Validation',
     to: '/form/validation',
   },
   {
-    label: 'Settings',
     description: 'Grouped controls, defaults, dirty state, reset, and typed submit output.',
+    label: 'Settings',
     to: '/form/settings',
   },
 ] as const

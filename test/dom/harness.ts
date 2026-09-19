@@ -1,14 +1,18 @@
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { defineComponent, h, nextTick, type Component, type VNodeChild } from 'vue'
-import { createMemoryHistory, createRouter, type Router } from 'vue-router'
+import { mount } from '@vue/test-utils'
+import type { VueWrapper } from '@vue/test-utils'
+import { defineComponent, h, nextTick } from 'vue'
+import type { Component, VNodeChild } from 'vue'
+import { createMemoryHistory, createRouter } from 'vue-router'
+import type { Router } from 'vue-router'
 
 import DataListRoot from '#ui-tools/table/components/data-list/DataListRoot.vue'
 import { useTable } from '#ui-tools/table/composables/use-table'
 import type { TableInternals } from '#ui-tools/table/composables/use-table-internals'
 import type { DataListControlSize, DataListDensity, DataListUiConfig } from '#ui-tools/table/types'
 
-import { setAppConfig, setBreakpoint, type BreakpointKey } from './nuxt-state'
+import { setAppConfig, setBreakpoint } from './nuxt-state'
+import type { BreakpointKey } from './nuxt-state'
 
 export interface MountOptions {
   schema: unknown
@@ -42,12 +46,12 @@ export async function mountDataList(options: MountOptions): Promise<Harness> {
   setAppConfig(options.appConfig ?? {})
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/', component: { render: () => h('div') } }],
+    routes: [{ component: { render: () => h('div') }, path: '/' }],
   })
   await router.push({ path: '/', query: options.query ?? {} })
   await router.isReady()
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } },
+    defaultOptions: { queries: { gcTime: 0, retry: false, staleTime: 0 } },
   })
   let table!: ReturnType<typeof useTable>
   const Host = defineComponent({
@@ -57,7 +61,7 @@ export async function mountDataList(options: MountOptions): Promise<Harness> {
       return () =>
         h(
           DataListRoot,
-          { table, ui: options.ui, density: options.density, size: options.size },
+          { density: options.density, size: options.size, table, ui: options.ui },
           {
             default: () =>
               options.render
@@ -74,7 +78,9 @@ export async function mountDataList(options: MountOptions): Promise<Harness> {
     global: { plugins: [router, [VueQueryPlugin, { queryClient }]] },
   })
   const internals = table.__internals
-  if (options.start !== false) internals.startup.start()
+  if (options.start !== false) {
+    internals.startup.start()
+  }
 
   async function flush(rounds = 3) {
     for (let index = 0; index < rounds; index++) {
@@ -87,24 +93,28 @@ export async function mountDataList(options: MountOptions): Promise<Harness> {
   async function until(predicate: () => boolean, timeout = 2000) {
     const started = Date.now()
     while (!predicate()) {
-      if (Date.now() - started > timeout) throw new Error('until(): timed out')
+      if (Date.now() - started > timeout) {
+        throw new Error('until(): timed out')
+      }
       await flush(1)
     }
     await nextTick()
   }
 
-  if (options.settle !== false) await flush()
+  if (options.settle !== false) {
+    await flush()
+  }
 
   return {
-    wrapper,
-    router,
-    queryClient,
-    internals,
-    table,
     flush,
-    until,
+    internals,
     query: () => router.currentRoute.value.query as Record<string, unknown>,
+    queryClient,
+    router,
+    table,
     unmount: () => wrapper.unmount(),
+    until,
+    wrapper,
   }
 }
 
@@ -122,6 +132,9 @@ export function rawRows<T = Record<string, unknown>>(harness: Harness) {
   return harness.internals.queryContent.rawData.value.rows as T[]
 }
 
-export function texts(wrapper: { findAll: (selector: string) => Array<{ text: () => string }> }, selector: string) {
+export function texts(
+  wrapper: { findAll: (selector: string) => { text: () => string }[] },
+  selector: string,
+) {
   return wrapper.findAll(selector).map((node) => node.text().trim())
 }

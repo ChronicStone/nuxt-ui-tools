@@ -11,21 +11,23 @@ import TableColumnHeader from '../../components/table/TableColumnHeader.vue'
 import TableRowActionsControl from '../../components/table/TableRowActionsControl.vue'
 import TableSelectionControl from '../../components/table/TableSelectionControl.vue'
 import type { GenericObject, TableRuntimeRecord } from '../../types'
-import { } from './menu'
+import type {} from './menu'
 import { findSchemaColumn } from './schema'
 import {
   ROW_ACTIONS_COLUMN_ID,
   ROW_ACTIONS_COLUMN_WIDTH,
   SELECT_COLUMN_ID,
   SELECT_COLUMN_WIDTH,
-  type SchemaTableColumn,
-  type TableCellRenderContext,
-  type TableColumnRenderParams,
-  type TableRuntimeColumn,
-  type UseTableColumnsParams,
+} from './types'
+import type {
+  SchemaTableColumn,
+  TableCellRenderContext,
+  TableColumnRenderParams,
+  TableRuntimeColumn,
+  UseTableColumnsParams,
 } from './types'
 
-type PlainRenderContextCacheState = {
+interface PlainRenderContextCacheState {
   contextSource: object
   pageContextSource: object
   plainContext: TableRuntimeRecord
@@ -39,7 +41,30 @@ const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<
 
 export function createSelectionColumn(options: { params: UseTableColumnsParams }) {
   return {
-    id: SELECT_COLUMN_ID,
+    cell: ({ row }: { row: { id: string } }) => {
+      const rowId = String(row.id)
+      return (
+        <TableSelectionControl
+          modelValue={options.params.selection.isRowSelected({ rowId })}
+          ariaLabel="Select row"
+          onToggle={(event: MouseEvent) =>
+            options.params.selection.toggleRowSelection({
+              rowId,
+              selected: !options.params.selection.isRowSelected({ rowId }),
+              shiftKey: event.shiftKey,
+            })
+          }
+        />
+      )
+    },
+
+    enableHiding: false,
+
+    enablePinning: true,
+
+    enableResizing: false,
+
+    enableSorting: false,
 
     header: () => (
       <TableSelectionControl
@@ -58,45 +83,29 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
         }
       />
     ),
-    cell: ({ row }: { row: { id: string } }) => {
-      const rowId = String(row.id)
-      return (
-        <TableSelectionControl
-          modelValue={options.params.selection.isRowSelected({ rowId })}
-          ariaLabel="Select row"
-          onToggle={(event: MouseEvent) =>
-            options.params.selection.toggleRowSelection({
-              rowId,
-              selected: !options.params.selection.isRowSelected({ rowId }),
-              shiftKey: event.shiftKey,
-            })
-          }
-        />
-      )
-    },
-    size: SELECT_COLUMN_WIDTH,
-    enableSorting: false,
-    enableHiding: false,
-    enablePinning: true,
-    enableResizing: false,
+
+    id: SELECT_COLUMN_ID,
+
     meta: {
       class: {
-        th: 'w-14 px-4',
         td: 'w-14 px-4',
+        th: 'w-14 px-4',
       },
       style: {
-        th: () => ({
-          width: `${SELECT_COLUMN_WIDTH}px`,
-          minWidth: `${SELECT_COLUMN_WIDTH}px`,
-          maxWidth: `${SELECT_COLUMN_WIDTH}px`,
-        }),
         td: () => ({
           width: `${SELECT_COLUMN_WIDTH}px`,
           minWidth: `${SELECT_COLUMN_WIDTH}px`,
           maxWidth: `${SELECT_COLUMN_WIDTH}px`,
         }),
+        th: () => ({
+          width: `${SELECT_COLUMN_WIDTH}px`,
+          minWidth: `${SELECT_COLUMN_WIDTH}px`,
+          maxWidth: `${SELECT_COLUMN_WIDTH}px`,
+        }),
       },
     },
+
+    size: SELECT_COLUMN_WIDTH,
   }
 }
 
@@ -116,8 +125,8 @@ export function createDataColumns(options: {
       }
 
       const column = findSchemaColumn({
-        schema: options.params.schema.value,
         columnId: runtimeColumn.id,
+        schema: options.params.schema.value,
       })
 
       if (!column) {
@@ -125,11 +134,21 @@ export function createDataColumns(options: {
       }
 
       return {
-        id: runtimeColumn.id,
         accessorFn:
           column.kind === 'field'
             ? (row: GenericObject) => getPathValue({ row, path: column.field })
             : undefined,
+        cell: ({ row }: { row: { original: GenericObject; index: number } }) =>
+          renderColumnCell({
+            column,
+            row: row.original,
+            rowIndex: row.index,
+            params: options.params,
+          }),
+        enableHiding: runtimeColumn.canHide,
+        enablePinning: true,
+        enableResizing: column.resizable !== false,
+        enableSorting: false,
         header: ({
           column: tableColumn,
           header,
@@ -150,38 +169,28 @@ export function createDataColumns(options: {
             resize={header.getResizeHandler?.()}
           />
         ),
-        cell: ({ row }: { row: { original: GenericObject; index: number } }) =>
-          renderColumnCell({
-            column,
-            row: row.original,
-            rowIndex: row.index,
-            params: options.params,
-          }),
-        enableSorting: false,
-        enableHiding: runtimeColumn.canHide,
-        enablePinning: true,
-        enableResizing: column.resizable !== false,
-        size: normalizeColumnSize({ size: column.width }),
-        minSize: normalizeColumnSize({ size: column.minWidth }) ?? 120,
+        id: runtimeColumn.id,
         maxSize: normalizeColumnSize({ size: column.maxWidth }),
         meta: {
           class: {
-            th: getColumnHeaderClass({ column }),
             td: getColumnCellClass({ column }),
+            th: getColumnHeaderClass({ column }),
           },
           style: {
-            th: ({ column: headerColumn }: { column: { getSize: () => number } }) => ({
-              width: `${headerColumn.getSize()}px`,
-              minWidth: `${headerColumn.getSize()}px`,
-              maxWidth: `${headerColumn.getSize()}px`,
-            }),
             td: ({ column: cellColumn }: { column: { getSize: () => number } }) => ({
               width: `${cellColumn.getSize()}px`,
               minWidth: `${cellColumn.getSize()}px`,
               maxWidth: `${cellColumn.getSize()}px`,
             }),
+            th: ({ column: headerColumn }: { column: { getSize: () => number } }) => ({
+              width: `${headerColumn.getSize()}px`,
+              minWidth: `${headerColumn.getSize()}px`,
+              maxWidth: `${headerColumn.getSize()}px`,
+            }),
           },
         },
+        minSize: normalizeColumnSize({ size: column.minWidth }) ?? 120,
+        size: normalizeColumnSize({ size: column.width }),
       }
     })
     .filter((column): column is Exclude<typeof column, null> => column !== null)
@@ -189,20 +198,19 @@ export function createDataColumns(options: {
 
 export function renderColumnCell(options: TableColumnRenderParams) {
   const cellContext = createCellRenderContext({
+    params: options.params,
     row: options.row,
     rowIndex: options.rowIndex,
-    params: options.params,
   })
 
   if (options.column.kind === 'field') {
     const value = getPathValue({
-      row: options.row,
       path: options.column.field,
+      row: options.row,
     })
 
     if (options.column.render) {
       return wrapRowScope({
-        scope: cellContext,
         content: wrapEllipsisContent({
           column: options.column,
           // SAFETY: field-column render receives the schema-derived row/value context.
@@ -220,11 +228,11 @@ export function renderColumnCell(options: TableColumnRenderParams) {
             fallbackValue: value,
           }),
         }),
+        scope: cellContext,
       })
     }
 
     return wrapRowScope({
-      scope: cellContext,
       content: wrapEllipsisContent({
         column: options.column,
         content: formatCellValue({ value }),
@@ -237,11 +245,11 @@ export function renderColumnCell(options: TableColumnRenderParams) {
           fallbackValue: value,
         }),
       }),
+      scope: cellContext,
     })
   }
 
   return wrapRowScope({
-    scope: cellContext,
     content: wrapEllipsisContent({
       column: options.column,
       // SAFETY: composite/display render receives the schema-derived row context.
@@ -252,6 +260,7 @@ export function renderColumnCell(options: TableColumnRenderParams) {
         fallbackValue: null,
       }),
     }),
+    scope: cellContext,
   })
 }
 
@@ -303,7 +312,7 @@ export function normalizeColumnSize(options: { size?: number | string }) {
     return Number.isFinite(parsed) ? parsed : undefined
   }
 
-  return undefined
+  return
 }
 
 function createCellRenderContext(options: {
@@ -312,23 +321,23 @@ function createCellRenderContext(options: {
   params: UseTableColumnsParams
 }): TableCellRenderContext {
   const tableApi = options.params.tableApi.value
-  if (!tableApi) throw new Error('Table API is not ready')
+  if (!tableApi) {
+    throw new Error('Table API is not ready')
+  }
   const plainRenderContext = resolvePlainRenderContext(options.params)
 
   return {
-    row: options.row,
-    index: options.rowIndex,
     context: plainRenderContext.plainContext,
-    pageContext: plainRenderContext.plainPageContext,
-    tableApi,
+    index: options.rowIndex,
     layout: options.params.tableLayout.value,
+    pageContext: plainRenderContext.plainPageContext,
+    row: options.row,
+    tableApi,
   }
 }
 
 export function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
   return {
-    id: ROW_ACTIONS_COLUMN_ID,
-    header: () => null,
     cell: ({ row }: { row: { original: GenericObject; index: number } }) => {
       const scope = createCellRenderContext({
         row: row.original,
@@ -342,29 +351,31 @@ export function createRowActionsColumn(options: { params: UseTableColumnsParams 
         </TableRowScopeProvider>
       )
     },
-    size: ROW_ACTIONS_COLUMN_WIDTH,
-    enableSorting: false,
     enableHiding: false,
     enablePinning: true,
     enableResizing: false,
+    enableSorting: false,
+    header: () => null,
+    id: ROW_ACTIONS_COLUMN_ID,
     meta: {
       class: {
-        th: 'w-13 px-2',
         td: 'w-13 px-2',
+        th: 'w-13 px-2',
       },
       style: {
-        th: () => ({
+        td: () => ({
           width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
           minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
           maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
         }),
-        td: () => ({
+        th: () => ({
           width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
           minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
           maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
         }),
       },
     },
+    size: ROW_ACTIONS_COLUMN_WIDTH,
   }
 }
 
@@ -381,8 +392,9 @@ function resolvePlainRenderContext(params: UseTableColumnsParams): PlainRenderCo
     cached &&
     cached.contextSource === contextSource &&
     cached.pageContextSource === pageContextSource
-  )
+  ) {
     return cached
+  }
 
   const nextCache: PlainRenderContextCacheState = {
     contextSource,
@@ -452,7 +464,7 @@ function formatCellValue(options: { value: unknown }) {
 function getPathValue(options: { row: GenericObject; path: string }) {
   return options.path.split('.').reduce<unknown>((value, key) => {
     if (!isObject(value)) {
-      return undefined
+      return
     }
 
     return value[key]

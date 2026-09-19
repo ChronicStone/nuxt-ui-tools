@@ -6,8 +6,7 @@ import { computed, ref } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
-import type { FormValue } from '../../types'
-import type { FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
+import type { FormValue, FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -35,8 +34,12 @@ const searchTerm = ref<string>('')
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    if (Array.isArray(value)) return value.filter(isOptionValue)
-    if (isOptionValue(value)) return value
+    if (Array.isArray(value)) {
+      return value.filter(isOptionValue)
+    }
+    if (isOptionValue(value)) {
+      return value
+    }
     return null
   },
   set: (value) => form.setValue(props.path, value),
@@ -70,7 +73,9 @@ async function handleCreateAction() {
 
 async function handleNativeCreate(label: string) {
   const normalizedLabel = label.trim()
-  if (!normalizedLabel) return
+  if (!normalizedLabel) {
+    return
+  }
   await handleCreate(normalizedLabel)
 }
 

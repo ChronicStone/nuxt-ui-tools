@@ -41,6 +41,7 @@ export type FormContextData<
   ? { [TKey in keyof TContext]: ResolveContextSource<TContext[TKey]> }
   : {}
 
+// oxlint-disable-next-line typescript/consistent-type-definitions -- a type alias keeps the implicit index signature runtime contexts rely on
 export type FormRuntimeContext = {
   [key: string]: FormSyncResource<FormValue> | FormAsyncResource<FormValue>
 }

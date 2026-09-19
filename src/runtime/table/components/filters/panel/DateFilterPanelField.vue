@@ -21,7 +21,10 @@ const props = defineProps<{
   size: DataListControlSize
   ui?: DataListFilterPanelUi
 }>()
-type PendingDateRange = { from?: Date; to?: Date }
+interface PendingDateRange {
+  from?: Date
+  to?: Date
+}
 
 const internals = useTableInternals()
 const pendingOperator = ref<TableDateFilterOperator>(resolveInitialOperator())
@@ -37,9 +40,9 @@ const isActive = computed(
   () =>
     internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
 )
-const localDate = shallowRef<CalendarDate | undefined>(undefined)
-const localRangeStart = shallowRef<CalendarDate | undefined>(undefined)
-const localRangeEnd = shallowRef<CalendarDate | undefined>(undefined)
+const localDate = shallowRef<CalendarDate | undefined>()
+const localRangeStart = shallowRef<CalendarDate | undefined>()
+const localRangeEnd = shallowRef<CalendarDate | undefined>()
 
 function resolveInitialOperator() {
   const operator = internals.filterPresentation.getPanelFilterOperator({
@@ -59,7 +62,9 @@ function handleOperatorChange(operator: TableFilterOperator) {
       ? operator
       : 'is'
 
-  if (filterUi.value.clearOnOperatorChange) clearFilter()
+  if (filterUi.value.clearOnOperatorChange) {
+    clearFilter()
+  }
 }
 
 function setSingleDate<TValue>(value: TValue) {
@@ -80,8 +85,8 @@ function setRangeEnd<TValue>(value: TValue) {
 function syncScalarDraft() {
   internals.filterPresentation.setPanelScalarFilterValue({
     key: props.definition.key,
-    value: localDate.value ? toJsDate(localDate.value) : undefined,
     operator: pendingOperator.value,
+    value: localDate.value ? toJsDate(localDate.value) : undefined,
   })
 }
 
@@ -89,13 +94,17 @@ function syncRangeDraft() {
   const from = localRangeStart.value ? toJsDate(localRangeStart.value) : undefined
   const to = localRangeEnd.value ? toJsDate(localRangeEnd.value) : undefined
   const value: PendingDateRange = {}
-  if (from) value.from = from
-  if (to) value.to = to
+  if (from) {
+    value.from = from
+  }
+  if (to) {
+    value.to = to
+  }
 
   internals.filterPresentation.setPanelScalarFilterValue({
     key: props.definition.key,
-    value: from || to ? value : undefined,
     operator: pendingOperator.value,
+    value: from || to ? value : undefined,
   })
 }
 
@@ -142,14 +151,18 @@ function coerceCalendarDate<TValue>(value: TValue) {
     return new CalendarDate(value.year, value.month, value.day)
   }
 
-  return undefined
+  return
 }
 
 function toCalendarDate<TValue>(value: TValue) {
-  if (!isDate(value) && !isString(value) && !isNumber(value)) return undefined
+  if (!isDate(value) && !isString(value) && !isNumber(value)) {
+    return undefined
+  }
 
   const resolvedDate = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(resolvedDate.getTime())) return undefined
+  if (Number.isNaN(resolvedDate.getTime())) {
+    return undefined
+  }
 
   return new CalendarDate(
     resolvedDate.getFullYear(),
@@ -167,7 +180,9 @@ resetLocalState()
 watch(
   () => internals.filterPresentation.panelOpen.value,
   (open) => {
-    if (!open) return
+    if (!open) {
+      return
+    }
     resetLocalState()
   },
 )

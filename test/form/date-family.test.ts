@@ -30,10 +30,9 @@ describe('date-family manual input', () => {
     expect(applyDateManualMask('2008202625082026', 'dd/MM/yyyy', true)).toBe(
       '20/08/2026 – 25/08/2026',
     )
-    expect(parseDateManualValue('20/08/2026 – 25/08/2026', 'dd/MM/yyyy', 'daterange')).toEqual([
-      '2026-08-20',
-      '2026-08-25',
-    ])
+    expect(
+      parseDateManualValue('20/08/2026 – 25/08/2026', 'dd/MM/yyyy', 'daterange'),
+    ).toStrictEqual(['2026-08-20', '2026-08-25'])
     expect(
       parseDateManualValue('25/08/2026 – 20/08/2026', 'dd/MM/yyyy', 'daterange'),
     ).toBeUndefined()
@@ -44,7 +43,7 @@ describe('date-family manual input', () => {
       '2026-08-20T14:35',
     )
     expect(parseDateManualValue('08/2026', 'MM/yyyy', 'month')).toBe('2026-08')
-    expect(parseDateManualValue('08/2026 – 11/2026', 'MM/yyyy', 'monthrange')).toEqual([
+    expect(parseDateManualValue('08/2026 – 11/2026', 'MM/yyyy', 'monthrange')).toStrictEqual([
       '2026-08',
       '2026-11',
     ])

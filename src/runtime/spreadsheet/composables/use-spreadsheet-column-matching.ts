@@ -1,4 +1,5 @@
-import { computed, shallowRef, type ComputedRef } from 'vue'
+import { computed, shallowRef } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { SpreadsheetNormalizedSchema, SpreadsheetRecord } from '../types'
 import {
@@ -62,14 +63,14 @@ export function useSpreadsheetColumnMatching(params: UseSpreadsheetColumnMatchin
   }
 
   return {
-    headerCells,
-    staticColumns,
-    dynamicColumns,
-    manualColumnAssignments,
-    columnMatches,
-    dynamicColumnMatches,
-    unmatchedColumns,
     assignColumn,
     clearColumnAssignment,
+    columnMatches,
+    dynamicColumnMatches,
+    dynamicColumns,
+    headerCells,
+    manualColumnAssignments,
+    staticColumns,
+    unmatchedColumns,
   }
 }

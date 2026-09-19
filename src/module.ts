@@ -69,16 +69,16 @@ const cookieEsmPath = join(dirname(require.resolve('cookiejs/package.json')), 'd
 
 export default defineNuxtModule<ModuleOptions>({
   defaults: {
-    prefix: 'Ui',
     global: false,
+    prefix: 'Ui',
   },
   meta: {
-    name: 'nuxt-ui-tools',
-    configKey: 'nuxtUiTools',
-    docs: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
     compatibility: {
       nuxt: '>=4.4.0',
     },
+    configKey: 'nuxtUiTools',
+    docs: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
+    name: 'nuxt-ui-tools',
   },
   moduleDependencies: {
     '@nuxt/ui': {
@@ -98,8 +98,9 @@ export default defineNuxtModule<ModuleOptions>({
       dirname(nuxtUiRequire.resolve('@internationalized/date')),
     )
 
-    for (const domain of publicRuntimeDomains)
+    for (const domain of publicRuntimeDomains) {
       nuxt.options.alias[`#ui-tools/${domain}`] = resolve(`./runtime/${domain}`)
+    }
     nuxt.options.alias['@nuxt/ui/components'] ??= nuxtUiComponentsDir
     nuxt.options.alias['@nuxt/ui/composables'] ??= join(nuxtUiRuntimeDir, 'composables')
     nuxt.options.alias['@nuxt/ui/runtime'] ??= nuxtUiRuntimeDir
@@ -126,8 +127,8 @@ export default defineNuxtModule<ModuleOptions>({
     setupComponents(resolve('./runtime'), options)
     addPlugin(resolve('./runtime/query-prefetch/plugins/link-prefetch.client'))
     addVitePlugin({
-      name: 'nuxt-ui-tools:query-prefetch-macro',
       enforce: 'pre',
+      name: 'nuxt-ui-tools:query-prefetch-macro',
       transform(code, id) {
         const path = id.split('?', 1)[0] ?? id
         if (!path.endsWith('.vue') || !/[\\/]pages[\\/]/.test(path)) return
@@ -161,7 +162,9 @@ function mergeViewportOptions(
 function normalizeViewportOptions(
   viewportOptions: Partial<ViewportOptions> | false | undefined,
 ): ViewportOptions {
-  if (viewportOptions === false) return mergeViewportOptions(undefined)
+  if (viewportOptions === false) {
+    return mergeViewportOptions(undefined)
+  }
   return mergeViewportOptions(viewportOptions)
 }
 

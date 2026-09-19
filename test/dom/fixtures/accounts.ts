@@ -1,7 +1,11 @@
 import { h } from 'vue'
 
 import { defineTableSchema } from '#ui-tools/table/schema'
-import type { TableCursorPageResult, TableQueryDefinition, TableSummariesSchema } from '#ui-tools/table/types'
+import type {
+  TableCursorPageResult,
+  TableQueryDefinition,
+  TableSummariesSchema,
+} from '#ui-tools/table/types'
 
 export type AccountStatus = 'active' | 'pending' | 'inactive'
 
@@ -17,21 +21,21 @@ export interface AccountRow {
   updatedAt: string
 }
 
-export const STATUS_COLOR = { active: '#ff9600', pending: '#b8b1a7', inactive: '#c0392b' } as const
-export const STATUS_LABEL = { active: 'Actif', pending: 'En attente', inactive: 'Inactif' } as const
+export const STATUS_COLOR = { active: '#ff9600', inactive: '#c0392b', pending: '#b8b1a7' } as const
+export const STATUS_LABEL = { active: 'Actif', inactive: 'Inactif', pending: 'En attente' } as const
 const STATUSES: AccountStatus[] = ['active', 'pending', 'inactive']
 const COUNTRIES = ['FR', 'DE', 'ES'] as const
 
 export function createAccounts(count: number): AccountRow[] {
   return Array.from({ length: count }, (_, index) => ({
-    id: `acc-${index + 1}`,
-    name: `Compte ${String(index + 1).padStart(3, '0')}`,
-    legalEntity: `Entité ${index + 1}`,
-    status: STATUSES[index % 3]!,
-    country: COUNTRIES[index % 3]!,
-    contracts: (index % 7) + 1,
     consumption: (index + 1) * 10,
+    contracts: (index % 7) + 1,
+    country: COUNTRIES[index % 3]!,
     edofSync: index % 2 === 0,
+    id: `acc-${index + 1}`,
+    legalEntity: `Entité ${index + 1}`,
+    name: `Compte ${String(index + 1).padStart(3, '0')}`,
+    status: STATUSES[index % 3]!,
     updatedAt: new Date(Date.UTC(2026, 0, 1 + (index % 28))).toISOString(),
   }))
 }
@@ -58,30 +62,7 @@ export const bulkActionCalls: string[] = []
 export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
   const rows = options.rows ?? createAccounts(60)
   return defineTableSchema({
-    tableKey: 'accounts',
-    rowKey: 'id',
     defaultLayout: 'table',
-    pagination:
-      options.pagination === false
-        ? false
-        : {
-            defaultSize: { table: 20, grid: 12 },
-            sizeOptions: { table: [10, 20, 50], grid: [12, 24] },
-            ...(options.pagination ?? {}),
-          },
-    selection: { mode: options.selection?.mode ?? 'auto', scope: options.selection?.scope ?? 'all' },
-    source: {
-      mode: 'client',
-      query: (context): TableQueryDefinition<AccountRow[]> => ({
-        queryKey: ['accounts', rows.length, options.fail ? 'fail' : 'ok'],
-        queryFn: async () => {
-          options.onQuery?.(context)
-          if (options.delay) await new Promise((resolve) => setTimeout(resolve, options.delay))
-          if (options.fail) throw new Error('boom')
-          return rows
-        },
-      }),
-    },
     filters: {
       search: { fields: ['name', 'legalEntity'], placeholder: 'Rechercher un compte…' },
       ui: (filter) => [
@@ -94,18 +75,34 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
           },
           display: { location: 'tag', order: 1 },
           source: {
-            options: STATUSES.map((value) => ({ value, label: STATUS_LABEL[value], color: STATUS_COLOR[value] })),
+            options: STATUSES.map((value) => ({
+              value,
+              label: STATUS_LABEL[value],
+              color: STATUS_COLOR[value],
+            })),
           },
           editor: { searchable: false, selection: { mode: 'multiple' } },
         }),
         filter.option('country', {
           label: 'Pays',
-          behavior: { defaultOperator: 'isAnyOf', operators: ['isAnyOf', 'is', 'isNot'], commitMode: 'auto' },
-          display: options.panelFilters ? { location: 'panel', order: 2, group: 'Identité' } : { location: 'tag-dynamic', order: 2 },
-          source: { options: COUNTRIES.map((value) => ({ value, label: value })), facet: 'exclude-self' },
+          behavior: {
+            defaultOperator: 'isAnyOf',
+            operators: ['isAnyOf', 'is', 'isNot'],
+            commitMode: 'auto',
+          },
+          display: options.panelFilters
+            ? { location: 'panel', order: 2, group: 'Identité' }
+            : { location: 'tag-dynamic', order: 2 },
+          source: {
+            options: COUNTRIES.map((value) => ({ value, label: value })),
+            facet: 'exclude-self',
+          },
           editor: { selection: { mode: 'multiple' } },
         }),
-        filter.boolean('edofSync', { label: 'Synchronisation EDOF', display: { location: 'tag-dynamic', order: 3 } }),
+        filter.boolean('edofSync', {
+          label: 'Synchronisation EDOF',
+          display: { location: 'tag-dynamic', order: 3 },
+        }),
         ...(options.panelFilters
           ? [
               filter.text('legalEntity', {
@@ -134,14 +131,49 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
               { key: 'name', label: 'Nom' },
               { key: 'status', label: 'Statut' },
             ],
-            renderItem: ({ row }) => h('article', { class: 'card', 'data-row': (row as AccountRow).id }, (row as AccountRow).name),
+            renderItem: ({ row }) =>
+              h(
+                'article',
+                { class: 'card', 'data-row': (row as AccountRow).id },
+                (row as AccountRow).name,
+              ),
           },
+    pagination:
+      options.pagination === false
+        ? false
+        : {
+            defaultSize: { table: 20, grid: 12 },
+            sizeOptions: { table: [10, 20, 50], grid: [12, 24] },
+            ...(options.pagination ?? {}),
+          },
+    rowKey: 'id',
+    selection: {
+      mode: options.selection?.mode ?? 'auto',
+      scope: options.selection?.scope ?? 'all',
+    },
+    source: {
+      mode: 'client',
+      query: (context): TableQueryDefinition<AccountRow[]> => ({
+        queryKey: ['accounts', rows.length, options.fail ? 'fail' : 'ok'],
+        queryFn: async () => {
+          options.onQuery?.(context)
+          if (options.delay) await new Promise((resolve) => setTimeout(resolve, options.delay))
+          if (options.fail) throw new Error('boom')
+          return rows
+        },
+      }),
+    },
     table: {
       enabled: options.tableEnabled ?? true,
       defaultSorting: { key: 'name', dir: 'asc' },
       ...(options.summaries === false
         ? {}
-        : { summaries: { scope: 'filtered', ...(options.summariesResolve ? { resolve: options.summariesResolve } : {}) } }),
+        : {
+            summaries: {
+              scope: 'filtered',
+              ...(options.summariesResolve ? { resolve: options.summariesResolve } : {}),
+            },
+          }),
       columns: (column) => [
         column.field('name', {
           label: 'Nom',
@@ -189,24 +221,50 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
         }),
       ],
     },
+    tableKey: 'accounts',
     ...(options.actions === false
       ? {}
       : {
           actions: [
-            { key: 'export', label: 'Exporter', icon: 'i-lucide-download', action: () => bulkActionCalls.push('export') },
-            { key: 'sync', label: 'Synchroniser', icon: 'i-lucide-refresh-cw', action: () => bulkActionCalls.push('sync') },
-            { key: 'archive', label: 'Archiver', icon: 'i-lucide-archive', action: () => bulkActionCalls.push('archive') },
-            { key: 'inactive', label: 'Passer inactif', icon: 'i-lucide-clock', action: () => bulkActionCalls.push('inactive') },
-            { key: 'delete', label: 'Supprimer', icon: 'i-lucide-trash-2', action: () => bulkActionCalls.push('delete') },
+            {
+              action: () => bulkActionCalls.push('export'),
+              icon: 'i-lucide-download',
+              key: 'export',
+              label: 'Exporter',
+            },
+            {
+              action: () => bulkActionCalls.push('sync'),
+              icon: 'i-lucide-refresh-cw',
+              key: 'sync',
+              label: 'Synchroniser',
+            },
+            {
+              action: () => bulkActionCalls.push('archive'),
+              icon: 'i-lucide-archive',
+              key: 'archive',
+              label: 'Archiver',
+            },
+            {
+              action: () => bulkActionCalls.push('inactive'),
+              icon: 'i-lucide-clock',
+              key: 'inactive',
+              label: 'Passer inactif',
+            },
+            {
+              action: () => bulkActionCalls.push('delete'),
+              icon: 'i-lucide-trash-2',
+              key: 'delete',
+              label: 'Supprimer',
+            },
           ],
         }),
     ...(options.rowActions === false
       ? {}
       : {
           rowActions: ({ row }) => [
-            { key: 'view', label: 'Voir la fiche', icon: 'i-lucide-arrow-right', action: () => {} },
+            { action: () => {}, icon: 'i-lucide-arrow-right', key: 'view', label: 'Voir la fiche' },
             ...((row as AccountRow).status === 'pending'
-              ? [{ key: 'activate', label: 'Activer', icon: 'i-lucide-check', action: () => {} }]
+              ? [{ action: () => {}, icon: 'i-lucide-check', key: 'activate', label: 'Activer' }]
               : []),
           ],
         }),
@@ -220,23 +278,40 @@ export interface AuditRow {
   at: string
 }
 
-export function createAuditSchema(options: { total?: number; pageSize?: number; delay?: number; onPage?: (cursor: string | null) => void } = {}) {
+export function createAuditSchema(
+  options: {
+    total?: number
+    pageSize?: number
+    delay?: number
+    onPage?: (cursor: string | null) => void
+  } = {},
+) {
   const total = options.total ?? 45
   const pageSize = options.pageSize ?? 20
   const rows: AuditRow[] = Array.from({ length: total }, (_, index) => ({
-    id: `evt-${index + 1}`,
     action: index % 2 ? 'update' : 'create',
     actor: `user-${(index % 5) + 1}`,
     at: new Date(Date.UTC(2026, 1, 1, index)).toISOString(),
+    id: `evt-${index + 1}`,
   }))
   return defineTableSchema({
-    tableKey: 'audit',
+    filters: { search: { fields: ['action', 'actor'] } },
+    grid: {
+      gridSize: 1,
+      mode: 'contained',
+      renderItem: ({ row }) =>
+        h('article', { class: 'card', 'data-row': (row as AuditRow).id }, (row as AuditRow).action),
+    },
+    pagination: { count: 'exact', mode: 'cursor', pageSize },
     rowKey: 'id',
-    pagination: { mode: 'cursor', pageSize, count: 'exact' },
     source: {
       mode: 'remote',
       query: (context): TableQueryDefinition<TableCursorPageResult<AuditRow>> => ({
-        queryKey: ['audit', context.pagination.mode === 'cursor' ? context.pagination.cursor : null, context.search.value],
+        queryKey: [
+          'audit',
+          context.pagination.mode === 'cursor' ? context.pagination.cursor : null,
+          context.search.value,
+        ],
         queryFn: async () => {
           const cursor = context.pagination.mode === 'cursor' ? context.pagination.cursor : null
           options.onPage?.(cursor)
@@ -246,12 +321,17 @@ export function createAuditSchema(options: { total?: number; pageSize?: number; 
           const next = start + pageSize < rows.length ? String(start + pageSize) : null
           return {
             rows: page,
-            pageInfo: { mode: 'cursor' as const, pageSize, nextCursor: next, count: 'exact' as const, rowCount: rows.length },
+            pageInfo: {
+              mode: 'cursor' as const,
+              pageSize,
+              nextCursor: next,
+              count: 'exact' as const,
+              rowCount: rows.length,
+            },
           }
         },
       }),
     },
-    filters: { search: { fields: ['action', 'actor'] } },
     table: {
       columns: (column) => [
         column.field('action', { label: 'Action', width: 160 }),
@@ -259,10 +339,6 @@ export function createAuditSchema(options: { total?: number; pageSize?: number; 
         column.field('at', { label: 'Date' }),
       ],
     },
-    grid: {
-      mode: 'contained',
-      gridSize: 1,
-      renderItem: ({ row }) => h('article', { class: 'card', 'data-row': (row as AuditRow).id }, (row as AuditRow).action),
-    },
+    tableKey: 'audit',
   })
 }

@@ -1,3 +1,4 @@
+/* oxlint-disable sort-keys -- defineSpreadsheetSchema infers row types from the declaration order of these literals */
 import { describe, expectTypeOf, it } from 'vitest'
 
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'

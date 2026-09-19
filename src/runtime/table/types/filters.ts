@@ -569,7 +569,7 @@ export interface TableFilterOptionValueEntry<TValue = TableFilterPrimitiveValue>
   /** CSS color rendered as a dot before the label in tags and editors. */
   color?: string
   count?: number
-  children?: ReadonlyArray<TableFilterOptionEntry<TValue>>
+  children?: readonly TableFilterOptionEntry<TValue>[]
 }
 
 export interface TableFilterOptionGroupEntry<TValue = TableFilterPrimitiveValue> {
@@ -578,7 +578,7 @@ export interface TableFilterOptionGroupEntry<TValue = TableFilterPrimitiveValue>
   icon?: string
   color?: string
   count?: number
-  children: ReadonlyArray<TableFilterOptionEntry<TValue>>
+  children: readonly TableFilterOptionEntry<TValue>[]
 }
 
 export type TableFilterOptionEntry<TValue = TableFilterPrimitiveValue> =
@@ -596,7 +596,7 @@ export interface TableFilterOptionQueryResultForPresentation<
   TValue = TableFilterPrimitiveValue,
   TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
 > {
-  options: ReadonlyArray<TableOptionEntryForPresentation<TValue, TPresentation>>
+  options: readonly TableOptionEntryForPresentation<TValue, TPresentation>[]
   nextCursor?: string | null
   total?: number
 }
@@ -609,7 +609,7 @@ export interface TableResolvedFilterOptionEntry<TValue = TableFilterPrimitiveVal
   color?: string
   count?: number
   selected: boolean
-  children: Array<TableResolvedFilterOptionEntry<TValue>>
+  children: TableResolvedFilterOptionEntry<TValue>[]
 }
 
 export interface TableVisibleFilterOptionEntry<TValue = TableFilterPrimitiveValue> {
@@ -753,7 +753,7 @@ export interface TableOptionFilterDefinition<
 > extends TableFilterDefinitionBase<TRow, TContext, TKey, TValue[], TableOptionFilterOperator> {
   kind: 'option'
   source?: {
-    options?: ReadonlyArray<TableOptionEntryForPresentation<TValue, TPresentation>>
+    options?: readonly TableOptionEntryForPresentation<TValue, TPresentation>[]
     query?: (
       context: TableFilterOptionQueryContext,
     ) => TableQueryDefinition<

@@ -1,6 +1,6 @@
 import type { GenericObject } from '../../shared/types/utils'
-import type { FormValue } from '../types'
 import type {
+  FormValue,
   FormAction,
   FormApi,
   FormContextData,

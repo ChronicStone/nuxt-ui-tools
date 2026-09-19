@@ -4,8 +4,13 @@ import { computed } from 'vue'
 
 import { getResponsiveValue } from '../../../shared/composables/use-responsive-value'
 import { useFormUi } from '../../composables/use-form-ui'
-import type { FormValue } from '../../types'
-import type { FormAction, FormActionContext, FormActionKey, FormRuntime } from '../../types'
+import type {
+  FormValue,
+  FormAction,
+  FormActionContext,
+  FormActionKey,
+  FormRuntime,
+} from '../../types'
 import { createPublicFormApi } from '../../utils/api'
 import { invokeFormFunction, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
@@ -22,12 +27,12 @@ const emit = defineEmits<{
 }>()
 
 const actionContext = computed<FormActionContext>(() => ({
-  currentStep: props.runtime.currentStepIndex.value,
-  api: createPublicFormApi(props.runtime),
   actionPending: props.runtime.actionPending.value,
-  isMultiStep: props.runtime.isStepped.value,
+  api: createPublicFormApi(props.runtime),
+  currentStep: props.runtime.currentStepIndex.value,
   isFirstStep: props.runtime.isFirstStep.value,
   isLastStep: props.runtime.isLastStep.value,
+  isMultiStep: props.runtime.isStepped.value,
 }))
 const visibleActions = computed(() =>
   props.actions.filter((action) => action.condition?.(actionContext.value) ?? true),
@@ -40,7 +45,9 @@ const actionsRight = computed(() =>
 )
 
 async function runAction(action: FormAction) {
-  if (isBuiltInAction(action, 'submit')) return
+  if (isBuiltInAction(action, 'submit')) {
+    return
+  }
   if (isBuiltInAction(action, 'next')) {
     await props.runtime.nextStep()
     return
@@ -58,7 +65,9 @@ async function runAction(action: FormAction) {
     return
   }
 
-  if ('action' in action) await action.action?.(actionContext.value)
+  if ('action' in action) {
+    await action.action?.(actionContext.value)
+  }
 }
 
 function resolveActionLabel(action: FormAction) {
@@ -76,36 +85,56 @@ function resolveActionWidth(action: FormAction) {
 }
 
 function resolveActionLink(action: FormAction) {
-  if (!('link' in action)) return undefined
-  if (isString(action.link)) return action.link
+  if (!('link' in action)) {
+    return undefined
+  }
+  if (isString(action.link)) {
+    return action.link
+  }
   const link = invokeFormFunction(action.link, [actionContext.value])
   return isString(link) ? link : undefined
 }
 
 function isActionDisabled(action: FormAction) {
   const disabled = action.disabled?.(actionContext.value) ?? false
-  if (disabled) return true
-  if (!props.runtime.actionPending.value) return false
+  if (disabled) {
+    return true
+  }
+  if (!props.runtime.actionPending.value) {
+    return false
+  }
   return !isActionLoading(action)
 }
 
 function isActionLoading(action: FormAction) {
-  if (!isBuiltInActionKey(action.key)) return false
+  if (!isBuiltInActionKey(action.key)) {
+    return false
+  }
   const pending = props.runtime.actionPending.value
-  if (pending === null) return false
+  if (pending === null) {
+    return false
+  }
   return action.key === pending
 }
 
 function resolveActionColor(action: FormAction) {
-  if (action.color) return action.color
-  if (action.type === 'primary') return 'primary'
-  return undefined
+  if (action.color) {
+    return action.color
+  }
+  if (action.type === 'primary') {
+    return 'primary'
+  }
+  return
 }
 
 function resolveActionVariant(action: FormAction) {
-  if (action.variant) return action.variant
-  if (action.type === 'primary') return 'solid'
-  return undefined
+  if (action.variant) {
+    return action.variant
+  }
+  if (action.type === 'primary') {
+    return 'solid'
+  }
+  return
 }
 
 function actionButtonClass(action: FormAction) {

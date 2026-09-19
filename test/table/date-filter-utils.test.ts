@@ -8,13 +8,13 @@ import {
   resolveDateFilterScalarPresets,
 } from '../../src/runtime/table/utils/filters/date'
 
-type TestRow = {
+interface TestRow {
   createdAt: string
 }
 
 const baseDefinition = {
-  kind: 'date',
   key: 'createdAt',
+  kind: 'date',
   label: 'Created at',
 } satisfies TableDateFilterDefinition<TestRow, object, 'createdAt'>
 
@@ -24,11 +24,15 @@ describe('date filter utils', () => {
 
     const presets = resolveDateFilterScalarPresets({
       definition: baseDefinition,
-      operator: 'before',
       now,
+      operator: 'before',
     })
 
-    expect(presets.map((preset) => preset.label)).toEqual(['Today', '7 days ago', 'Start of month'])
+    expect(presets.map((preset) => preset.label)).toStrictEqual([
+      'Today',
+      '7 days ago',
+      'Start of month',
+    ])
     expect(presets[1]?.value.getFullYear()).toBe(2026)
     expect(presets[1]?.value.getMonth()).toBe(2)
     expect(presets[1]?.value.getDate()).toBe(12)
@@ -55,11 +59,11 @@ describe('date filter utils', () => {
 
     const presets = resolveDateFilterScalarPresets({
       definition,
-      operator: 'after',
       now: new Date('2026-03-19T10:00:00.000Z'),
+      operator: 'after',
     })
 
-    expect(presets.map((preset) => preset.label)).toEqual(['Start of year'])
+    expect(presets.map((preset) => preset.label)).toStrictEqual(['Start of year'])
   })
 
   it('returns default range presets and responsive panel defaults', () => {
@@ -70,7 +74,7 @@ describe('date filter utils', () => {
       now,
     })
 
-    expect(presets.map((preset) => preset.label)).toEqual([
+    expect(presets.map((preset) => preset.label)).toStrictEqual([
       'Today',
       'Last 7 days',
       'Last 30 days',
@@ -90,23 +94,23 @@ describe('date filter utils', () => {
     const definition = {
       ...baseDefinition,
       editor: {
-        scalar: {
-          presets: false,
-        },
         range: {
-          presets: false,
           calendar: {
             months: {
-              mobile: 2,
               desktop: 1,
+              mobile: 2,
             },
           },
+          presets: false,
+        },
+        scalar: {
+          presets: false,
         },
       },
     } satisfies TableDateFilterDefinition<TestRow, object, 'createdAt'>
 
-    expect(resolveDateFilterScalarPresets({ definition, operator: 'is' })).toEqual([])
-    expect(resolveDateFilterRangePresets({ definition })).toEqual([])
+    expect(resolveDateFilterScalarPresets({ definition, operator: 'is' })).toStrictEqual([])
+    expect(resolveDateFilterRangePresets({ definition })).toStrictEqual([])
     expect(resolveDateFilterRangeCalendarPanels({ definition, mobile: true })).toBe(2)
     expect(resolveDateFilterRangeCalendarPanels({ definition, mobile: false })).toBe(1)
   })
@@ -116,16 +120,16 @@ describe('date filter utils', () => {
       ...baseDefinition,
       editor: {
         range: {
-          presets: false,
           calendar: {
             months: 2,
             pagedNavigation: true,
           },
+          presets: false,
         },
       },
     } satisfies TableDateFilterDefinition<TestRow, object, 'createdAt'>
 
-    expect(resolveDateFilterRangePresets({ definition })).toEqual([])
+    expect(resolveDateFilterRangePresets({ definition })).toStrictEqual([])
     expect(resolveDateFilterRangeCalendarPanels({ definition, mobile: true })).toBe(2)
     expect(resolveDateFilterRangeCalendarPanels({ definition, mobile: false })).toBe(2)
   })

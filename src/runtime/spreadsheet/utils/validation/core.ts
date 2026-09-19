@@ -45,7 +45,9 @@ function resolveSpreadsheetMessage(
     params: SpreadsheetValue[]
   },
 ): string {
-  if (isSpreadsheetMessageResolver(value)) return value(context)
+  if (isSpreadsheetMessageResolver(value)) {
+    return value(context)
+  }
   return String(value)
 }
 
@@ -57,15 +59,16 @@ function isSpreadsheetRuleOverride(
 
 function resolveSpreadsheetRuleFactoryInput(input: SpreadsheetValue[]) {
   const lastItem = input.at(-1)
-  if (!isSpreadsheetRuleOverride(lastItem))
+  if (!isSpreadsheetRuleOverride(lastItem)) {
     return {
       params: input,
       overrides: undefined,
     }
+  }
 
   return {
-    params: input.slice(0, -1),
     overrides: lastItem,
+    params: input.slice(0, -1),
   }
 }
 
@@ -84,8 +87,8 @@ function createSpreadsheetRuleInstance<
   return {
     $rule: true,
     flags: options.flags,
-    name: options.name,
     level: 'error',
+    name: options.name,
     validate(value): SpreadsheetRuleExecutionResult<SpreadsheetRecord> {
       const messageResolver = options.message
       const rawResult = options.validator(value, ...options.params)
@@ -160,10 +163,10 @@ function createRule(options: {
 
     return createSpreadsheetRuleInstance({
       flags: options.flags,
-      name: options.name,
-      validator: options.validator,
-      params,
       message: overrides?.message ?? options.message,
+      name: options.name,
+      params,
+      validator: options.validator,
     })
   }
 }
@@ -179,9 +182,9 @@ function validate(options: {
   message: SpreadsheetLazyMessage<SpreadsheetValue, [], SpreadsheetRecord>
 }) {
   const createInlineRule = createRule({
+    message: options.message,
     name: options.name,
     validator: options.validator,
-    message: options.message,
   })
 
   return createInlineRule()
@@ -195,12 +198,23 @@ const createSpreadsheetRuleBuilder = () => {
   const { t } = useUiToolsLocale()
 
   return {
-    validate,
-    required: createRule<unknown, [], {}, { required: true }>({
-      name: 'required',
-      flags: { required: true },
-      validator: (value: SpreadsheetValue) => value != null && value !== '',
-      message: () => t('spreadsheet.validation.required'),
+    between: createRule<number, [min: number, max: number], { min: number; max: number }>({
+      name: 'between',
+      validator: (value: number, min: number, max: number) => ({
+        $valid: createNumericValueGuard(value) && value >= min && value <= max,
+        min,
+        max,
+      }),
+      message: ({ value, params: [min, max] }) =>
+        t('spreadsheet.validation.between', { value, min, max }),
+    }),
+    max: createRule<number, [max: number], { max: number }>({
+      name: 'max',
+      validator: (value: number, max: number) => ({
+        $valid: createNumericValueGuard(value) && value <= max,
+        max,
+      }),
+      message: ({ value, params: [max] }) => t('spreadsheet.validation.max', { value, max }),
     }),
     maxLength: createRule<string, [max: number], { max: number }>({
       name: 'maxLength',
@@ -210,6 +224,14 @@ const createSpreadsheetRuleBuilder = () => {
       }),
       message: ({ value, params: [max] }) =>
         t('spreadsheet.validation.maxLength', { max, length: value.length }),
+    }),
+    min: createRule<number, [min: number], { min: number }>({
+      name: 'min',
+      validator: (value: number, min: number) => ({
+        $valid: createNumericValueGuard(value) && value >= min,
+        min,
+      }),
+      message: ({ value, params: [min] }) => t('spreadsheet.validation.min', { value, min }),
     }),
     minLength: createRule<string, [min: number], { min: number }>({
       name: 'minLength',
@@ -224,32 +246,6 @@ const createSpreadsheetRuleBuilder = () => {
       name: 'number',
       validator: (value: number) => createNumericValueGuard(value),
       message: () => t('spreadsheet.validation.number'),
-    }),
-    min: createRule<number, [min: number], { min: number }>({
-      name: 'min',
-      validator: (value: number, min: number) => ({
-        $valid: createNumericValueGuard(value) && value >= min,
-        min,
-      }),
-      message: ({ value, params: [min] }) => t('spreadsheet.validation.min', { value, min }),
-    }),
-    max: createRule<number, [max: number], { max: number }>({
-      name: 'max',
-      validator: (value: number, max: number) => ({
-        $valid: createNumericValueGuard(value) && value <= max,
-        max,
-      }),
-      message: ({ value, params: [max] }) => t('spreadsheet.validation.max', { value, max }),
-    }),
-    between: createRule<number, [min: number, max: number], { min: number; max: number }>({
-      name: 'between',
-      validator: (value: number, min: number, max: number) => ({
-        $valid: createNumericValueGuard(value) && value >= min && value <= max,
-        min,
-        max,
-      }),
-      message: ({ value, params: [min, max] }) =>
-        t('spreadsheet.validation.between', { value, min, max }),
     }),
     oneOf(values, overrides) {
       const ruleFactory = createRule<
@@ -277,6 +273,13 @@ const createSpreadsheetRuleBuilder = () => {
 
       return ruleFactory(values, overrides)
     },
+    required: createRule<unknown, [], {}, { required: true }>({
+      name: 'required',
+      flags: { required: true },
+      validator: (value: SpreadsheetValue) => value != null && value !== '',
+      message: () => t('spreadsheet.validation.required'),
+    }),
+    validate,
   } satisfies SpreadsheetRuleBuilder
 }
 
@@ -285,8 +288,12 @@ export const createSheetRule: CreateSpreadsheetRule = createRule
 export function resolveSpreadsheetRules<TValue>(
   rules: SpreadsheetFieldRulesInput<TValue> | undefined,
 ) {
-  if (!rules) return []
-  if (isSpreadsheetRuleFactory(rules)) return rules(createSpreadsheetRuleBuilder())
+  if (!rules) {
+    return []
+  }
+  if (isSpreadsheetRuleFactory(rules)) {
+    return rules(createSpreadsheetRuleBuilder())
+  }
   return rules
 }
 
@@ -302,18 +309,22 @@ export function executeSpreadsheetRules<TValue>(params: {
   rules: SpreadsheetFieldRulesInput<TValue> | undefined
 }) {
   const rules = resolveSpreadsheetRules(params.rules)
-  if (!rules.length) return []
+  if (!rules.length) {
+    return []
+  }
 
   return rules.flatMap((rule: SpreadsheetRule<TValue>, index: number) => {
     const result = rule.validate(params.value)
-    if (result.$valid) return []
+    if (result.$valid) {
+      return []
+    }
 
     return [
       {
-        ruleKey: rule.name,
-        level: rule.level,
         code: rule.name ?? `rule.${index}`,
+        level: rule.level,
         message: result.$message ?? '',
+        ruleKey: rule.name,
       },
     ]
   })

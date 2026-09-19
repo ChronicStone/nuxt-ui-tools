@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { DataListControlSize, DataListPaginationProps, DataListPaginationUi } from '../../types'
+import type {
+  DataListControlSize,
+  DataListPaginationProps,
+  DataListPaginationUi,
+} from '../../types'
 import TableFooter from '../layout/TableFooter.vue'
 
 defineProps<{

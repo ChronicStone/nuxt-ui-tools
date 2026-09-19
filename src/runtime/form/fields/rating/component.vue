@@ -31,7 +31,9 @@ const hoverValue = ref<number | null>(null)
 const visualValue = computed(() => hoverValue.value ?? model.value ?? 0)
 
 function setRating(value: number) {
-  if (disabled.value) return
+  if (disabled.value) {
+    return
+  }
   if (props.field.clearable === true && model.value === value) {
     model.value = null
     return
@@ -41,15 +43,21 @@ function setRating(value: number) {
 }
 
 function moveRating(event: KeyboardEvent) {
-  if (disabled.value) return
+  if (disabled.value) {
+    return
+  }
   const current = model.value ?? 0
-  if (event.key === 'Home') model.value = 1
-  else if (event.key === 'End') model.value = max.value
-  else if (event.key === 'ArrowRight' || event.key === 'ArrowUp')
+  if (event.key === 'Home') {
+    model.value = 1
+  } else if (event.key === 'End') {
+    model.value = max.value
+  } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
     model.value = Math.min(max.value, current + 1)
-  else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown')
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
     model.value = Math.max(1, current - 1)
-  else return
+  } else {
+    return
+  }
   event.preventDefault()
 }
 </script>

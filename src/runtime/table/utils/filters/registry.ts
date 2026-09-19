@@ -19,16 +19,21 @@ export function createDefaultFilterValue(
   }
 
   switch (normalizedDefinition.kind) {
-    case 'option':
+    case 'option': {
       return []
-    case 'boolean':
+    }
+    case 'boolean': {
       return true
-    case 'number':
+    }
+    case 'number': {
       return 0
-    case 'date':
+    }
+    case 'date': {
       return new Date()
-    default:
+    }
+    default: {
       return ''
+    }
   }
 }
 

@@ -20,8 +20,8 @@ const { form, params } = useFieldControl(
   () => props.path,
 )
 const grid = useFormContainerLayout({
-  layout: () => props.field.layout,
   formLayout: form.currentLayout,
+  layout: () => props.field.layout,
 })
 const title = computed(
   () => resolveRenderable(props.field.header) ?? resolveFormText(props.field.label),

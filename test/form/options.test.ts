@@ -13,19 +13,15 @@ describe('form option normalization', () => {
       [
         {
           id: 1,
-          title: () => 'Catalog',
           nodes: [{ id: 2, title: () => 42 }],
+          title: () => 'Catalog',
         },
       ],
-      { value: 'id', label: 'title', children: 'nodes' },
+      { children: 'nodes', label: 'title', value: 'id' },
     )
 
-    expect(options).toEqual([
+    expect(options).toStrictEqual([
       {
-        value: 1,
-        label: 'Catalog',
-        description: undefined,
-        disabled: false,
         children: [
           {
             value: 2,
@@ -34,27 +30,31 @@ describe('form option normalization', () => {
             disabled: false,
           },
         ],
+        description: undefined,
+        disabled: false,
+        label: 'Catalog',
+        value: 1,
       },
     ])
   })
 
   it('keeps valid nested values, removes duplicates, and preserves primitive types', () => {
     const options = normalizeOptionItems([
-      { value: '1', label: 'String', children: [{ value: 1, label: 'Number' }] },
+      { children: [{ value: 1, label: 'Number' }], label: 'String', value: '1' },
     ])
 
-    expect(normalizeOptionSelection(['1', 1, 1, 'missing'], options)).toEqual(['1', 1])
+    expect(normalizeOptionSelection(['1', 1, 1, 'missing'], options)).toStrictEqual(['1', 1])
     expect(formOptionKey('1')).not.toBe(formOptionKey(1))
   })
 
   it('deduplicates created options already returned by a refreshed source', () => {
-    const source = normalizeOptionItems([{ value: 'existing', label: 'From source' }])
+    const source = normalizeOptionItems([{ label: 'From source', value: 'existing' }])
     const created = normalizeOptionItems([
-      { value: 'existing', label: 'Created copy' },
-      { value: 'new', label: 'Created option' },
+      { label: 'Created copy', value: 'existing' },
+      { label: 'Created option', value: 'new' },
     ])
 
-    expect(mergeResolvedOptions(source, created).map((option) => option.label)).toEqual([
+    expect(mergeResolvedOptions(source, created).map((option) => option.label)).toStrictEqual([
       'From source',
       'Created option',
     ])

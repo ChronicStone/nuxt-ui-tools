@@ -1,8 +1,9 @@
-export default defineEventHandler(() => {
-  return new Response(HTML, {
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-  })
-})
+export default defineEventHandler(
+  () =>
+    new Response(HTML, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    }),
+)
 
 const HTML = /* html */ `<!DOCTYPE html>
 <html lang="en" class="dark">

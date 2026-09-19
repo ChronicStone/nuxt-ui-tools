@@ -6,9 +6,9 @@ import * as uiToolsLocales from '#ui-tools/i18n/locales'
 const { locale } = useI18n()
 
 useHead({
-  title: 'ExAssess · DataList playground',
-  meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }],
   htmlAttrs: { lang: 'fr' },
+  meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }],
+  title: 'ExAssess · DataList playground',
 })
 </script>
 

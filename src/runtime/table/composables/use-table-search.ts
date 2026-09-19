@@ -1,4 +1,5 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { TableSchemaView } from '../types'
 import { getFilterTextValue } from '../utils/filters/common'
@@ -23,16 +24,16 @@ export function useTableSearch(options: UseTableSearchParams) {
 
   const searchPlaceholder = computed(() =>
     getFilterTextValue({
-      value: options.schema.value.filters?.search?.placeholder,
       fallback: 'Search rows…',
+      value: options.schema.value.filters?.search?.placeholder,
     }),
   )
 
   const hasActiveSearch = computed(() => searchQuery.value.trim().length > 0)
 
   return {
-    searchQuery,
-    searchPlaceholder,
     hasActiveSearch,
+    searchPlaceholder,
+    searchQuery,
   }
 }

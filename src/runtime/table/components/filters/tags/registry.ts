@@ -8,10 +8,10 @@ import OptionFilterTag from './OptionFilterTag.vue'
 import TextFilterTag from './TextFilterTag.vue'
 
 const FILTER_TAG_COMPONENTS = {
-  option: OptionFilterTag,
   boolean: BooleanFilterTag,
   date: DateFilterTag,
   number: NumberFilterTag,
+  option: OptionFilterTag,
   text: TextFilterTag,
 } satisfies Record<TableUiFilterDefinition['kind'], Component>
 

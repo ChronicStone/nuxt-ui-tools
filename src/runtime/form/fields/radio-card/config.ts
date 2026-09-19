@@ -1,11 +1,11 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const radioCardFieldKind = defineFormFieldKind({
-  type: 'radio-card',
-  state: 'stateful',
-  ui: { label: true, description: true, hint: true },
   layout: { item: true },
   options: { enabled: true },
-  validation: true,
+  state: 'stateful',
   transform: true,
+  type: 'radio-card',
+  ui: { description: true, hint: true, label: true },
+  validation: true,
 })

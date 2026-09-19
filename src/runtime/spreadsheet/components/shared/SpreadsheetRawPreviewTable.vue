@@ -11,9 +11,9 @@ const props = defineProps<{
 
 const normalizedHeaders = computed(() =>
   props.headers.map((header, index) => ({
+    index,
     key: `column_${index}`,
     label: String(header ?? `Column ${index + 1}`),
-    index,
   })),
 )
 

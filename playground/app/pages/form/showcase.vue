@@ -15,12 +15,6 @@ function sleep(duration: number) {
 const formApi = useFormApi()
 
 const addressOptionForm = defineFormSchema({
-  formKey: 'playground.form.address-option',
-  title: 'Create address option',
-  layout: {
-    columns: 8,
-    gap: 16,
-  },
   fields: [
     {
       key: 'label',
@@ -54,30 +48,15 @@ const addressOptionForm = defineFormSchema({
       ],
     },
   ],
-})
-
-const showcaseForm = defineFormSchema({
-  formKey: 'playground.form.showcase',
-  title: 'Form field showcase',
+  formKey: 'playground.form.address-option',
   layout: {
     columns: 8,
     gap: 16,
   },
-  controls: {
-    dirtyCheck: true,
-    confirmNavOnDirty: true,
-    syncInput: true,
-    validate: true,
-  },
-  modal: {
-    maxWidth: 1100,
-    maxHeight: '90dvh',
-  },
-  drawer: {
-    width: 720,
-    resizable: true,
-    placement: 'right',
-  },
+  title: 'Create address option',
+})
+
+const showcaseForm = defineFormSchema({
   context: {
     countries: () =>
       queryOptions({
@@ -97,6 +76,17 @@ const showcaseForm = defineFormSchema({
       { label: 'Manager', value: 'manager', description: 'Operational access' },
       { label: 'Reviewer', value: 'reviewer', description: 'Read and comment' },
     ],
+  },
+  controls: {
+    confirmNavOnDirty: true,
+    dirtyCheck: true,
+    syncInput: true,
+    validate: true,
+  },
+  drawer: {
+    placement: 'right',
+    resizable: true,
+    width: 720,
   },
   fields: [
     {
@@ -906,6 +896,16 @@ const showcaseForm = defineFormSchema({
       },
     },
   ],
+  formKey: 'playground.form.showcase',
+  layout: {
+    columns: 8,
+    gap: 16,
+  },
+  modal: {
+    maxHeight: '90dvh',
+    maxWidth: 1100,
+  },
+  title: 'Form field showcase',
 })
 
 type ShowcaseOutput = ExtractFormOutput<typeof showcaseForm>
@@ -913,7 +913,6 @@ type ShowcaseOutput = ExtractFormOutput<typeof showcaseForm>
 const submitted = ref<ShowcaseOutput | null>(null)
 const overlayResult = ref<unknown | null>(null)
 const form = useForm({
-  schema: showcaseForm,
   onSubmit: async ({ formData, api }) => {
     await sleep(500)
     if (formData.profile.email === 'taken@example.com') {
@@ -924,13 +923,14 @@ const form = useForm({
     submitted.value = formData
     return { success: true, data: { savedAt: new Date().toISOString() } }
   },
+  schema: showcaseForm,
 })
 
 const liveState = form.state.internal
 const liveOutput = form.state.output
 const contextResources = form.context
-const isDirty = form.meta.isDirty
-const dirtyPaths = form.meta.dirtyPaths
+const { isDirty } = form.meta
+const { dirtyPaths } = form.meta
 
 async function openModalForm() {
   overlayResult.value = await formApi.createForm(showcaseForm, {
@@ -939,7 +939,7 @@ async function openModalForm() {
     onSubmit: async ({ formData }) => {
       await sleep(800)
       submitted.value = formData
-      return { success: true, data: { mode: 'modal', savedAt: new Date().toISOString() } }
+      return { data: { mode: 'modal', savedAt: new Date().toISOString() }, success: true }
     },
   })
 }
@@ -947,26 +947,26 @@ async function openModalForm() {
 async function openDrawerForm() {
   overlayResult.value = await formApi.createForm(showcaseForm, {
     id: 'playground-showcase-drawer',
-    mode: 'drawer',
     input: {
       profile: {
         firstName: 'Grace',
         lastName: 'Hopper',
       },
     },
+    mode: 'drawer',
   })
 }
 
 async function openResponsiveForm() {
   overlayResult.value = await formApi.createForm(showcaseForm, {
     id: 'playground-showcase-responsive',
-    mode: 'drawer md:modal',
     input: {
       profile: {
         firstName: 'Katherine',
         lastName: 'Johnson',
       },
     },
+    mode: 'drawer md:modal',
     onSubmit: async ({ formData }) => {
       await sleep(800)
       submitted.value = formData

@@ -20,8 +20,7 @@ const dataListUi = useDataListUi()
 const ui = computed(() => dataListUi.ui.value.table?.ui)
 const emptyProps = computed(() => dataListUi.ui.value.table?.props?.empty)
 const filtered = computed(
-  () =>
-    internals.filters.hasActiveUiFilters.value || Boolean(internals.filters.searchQuery.value),
+  () => internals.filters.hasActiveUiFilters.value || Boolean(internals.filters.searchQuery.value),
 )
 const icon = computed(
   () => emptyProps.value?.icon ?? (filtered.value ? 'i-lucide-search-x' : 'i-lucide-inbox'),
@@ -32,7 +31,9 @@ const title = computed(
     (filtered.value ? t('table.states.empty.filteredTitle') : t('table.states.empty.title')),
 )
 const description = computed(() => {
-  if (emptyProps.value?.description === false) return ''
+  if (emptyProps.value?.description === false) {
+    return ''
+  }
   return (
     emptyProps.value?.description ||
     (filtered.value
@@ -60,15 +61,25 @@ function reset() {
     role="status"
   >
     <div class="nut-dl-empty__art relative mb-4 flex size-14 items-center justify-center">
-      <span class="nut-dl-empty__ring absolute inset-0 rounded-2xl bg-elevated ring ring-inset ring-default" />
-      <span class="nut-dl-empty__ring nut-dl-empty__ring--back absolute inset-1.5 -z-10 rotate-6 rounded-xl bg-muted" />
+      <span
+        class="nut-dl-empty__ring absolute inset-0 rounded-2xl bg-elevated ring ring-inset ring-default"
+      />
+      <span
+        class="nut-dl-empty__ring nut-dl-empty__ring--back absolute inset-1.5 -z-10 rotate-6 rounded-xl bg-muted"
+      />
       <UIcon :name="icon" class="nut-dl-empty__icon relative size-5 text-muted" />
     </div>
     <div class="nut-dl-empty__title text-[14px] font-medium text-highlighted">{{ title }}</div>
-    <p v-if="description" class="nut-dl-empty__description mt-1 max-w-[34ch] text-[12.5px] leading-relaxed text-muted">
+    <p
+      v-if="description"
+      class="nut-dl-empty__description mt-1 max-w-[34ch] text-[12.5px] leading-relaxed text-muted"
+    >
       {{ description }}
     </p>
-    <div v-if="filtered || $slots.actions" class="nut-dl-empty__actions mt-4 flex items-center gap-2">
+    <div
+      v-if="filtered || $slots.actions"
+      class="nut-dl-empty__actions mt-4 flex items-center gap-2"
+    >
       <slot name="actions">
         <UButton
           color="neutral"

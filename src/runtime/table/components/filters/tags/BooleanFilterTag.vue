@@ -44,19 +44,19 @@ const isContentReady = ref<boolean>(false)
 const localValue = ref<boolean | null>(null)
 
 const optionSource = useTableFilterOptions({
-  definition: props.definition,
   active: computed(() => isSessionOpen.value),
-  ready: isContentReady,
-  searchQuery,
+  definition: props.definition,
   filters: internals.filters,
   queryContent: internals.queryContent,
+  ready: isContentReady,
   schema: internals.schema,
+  searchQuery,
 })
 
 const preview = computed(() =>
   internals.filters.getFilterPreview({
-    key: props.definition.key,
     entries: optionSource.sourceEntries.value,
+    key: props.definition.key,
   }),
 )
 
@@ -75,46 +75,52 @@ const entries = computed(() =>
     .filter((entry) => isBoolean(entry.value))
     .map((entry) => ({
       ...entry,
-      label: entry.value === true ? filterUi.value.labels.true : filterUi.value.labels.false,
       icon: entry.value === true ? filterUi.value.icons.true : filterUi.value.icons.false,
+      label: entry.value === true ? filterUi.value.labels.true : filterUi.value.labels.false,
       selected: localValue.value === entry.value,
     })),
 )
 
 const radioItems = computed(() =>
   entries.value.map((entry) => ({
-    label: entry.label,
-    value: String(entry.value),
+    color: entry.color,
     count: entry.count,
     icon: entry.icon,
-    color: entry.color,
+    label: entry.label,
+    value: String(entry.value),
   })),
 )
 
 const radioValue = computed({
   get: () => (localValue.value == null ? undefined : String(localValue.value)),
   set: (value: string | undefined) => {
-    if (value === 'true') localValue.value = true
-    else if (value === 'false') localValue.value = false
-    else return
+    if (value === 'true') {
+      localValue.value = true
+    } else if (value === 'false') {
+      localValue.value = false
+    } else {
+      return
+    }
 
-    if (filterUi.value.commitMode === 'auto') applyFilter()
+    if (filterUi.value.commitMode === 'auto') {
+      applyFilter()
+    }
   },
 })
 
 const session = useFilterTagSession({
-  isOpen: isSessionOpen,
-  session: props.session,
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
     internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
-  onOpen: initLocalState,
+  isOpen: isSessionOpen,
   onClose: () => {
     isContentReady.value = false
   },
-  onSessionClosed: () => emit('sessionClosed'),
   onDismiss: () => emit('dismiss'),
+  onOpen: initLocalState,
+  onSessionClosed: () => emit('sessionClosed'),
+  session: props.session,
 })
 
 function initLocalState() {

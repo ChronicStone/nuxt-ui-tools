@@ -15,13 +15,13 @@ describe('form field options', () => {
         fields: [
           {
             key: 'skill',
-            type: 'select',
             options: {
-              source: [],
               create: {
                 handler: ({ label }) => ({ label, value: label.toLocaleLowerCase() }),
               },
+              source: [],
             },
+            type: 'select',
           },
         ],
       }),
@@ -33,20 +33,24 @@ describe('form field options', () => {
       scope.run(() => {
         const runtime = useFormRuntime({ schema })
         const field = getSchemaFields(schema.value)[0]
-        if (!field) throw new Error('Missing option field')
+        if (!field) {
+          throw new Error('Missing option field')
+        }
         const path = ['skill']
         const options = useFieldOptions({
-          field: () => field,
-          path: () => path,
           api: computed(() => runtime.getFieldApi(path, field)),
           callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
-          register: runtime.registerFieldOptions,
+          field: () => field,
+          path: () => path,
           refreshFieldOptions: runtime.refreshFieldOptions,
+          register: runtime.registerFieldOptions,
         })
-        return { runtime, options }
+        return { options, runtime }
       }),
     )
-    if (!result) throw new Error('Failed to create option runtime')
+    if (!result) {
+      throw new Error('Failed to create option runtime')
+    }
 
     await result.options.create('Reliability')
 
@@ -62,9 +66,7 @@ describe('form field options', () => {
         fields: [
           {
             key: 'skill',
-            type: 'select',
             options: {
-              source: [],
               create: {
                 handler: ({ label }) => {
                   labels.push(label)
@@ -73,7 +75,9 @@ describe('form field options', () => {
                   })
                 },
               },
+              source: [],
             },
+            type: 'select',
           },
         ],
       }),
@@ -85,35 +89,39 @@ describe('form field options', () => {
       scope.run(() => {
         const runtime = useFormRuntime({ schema })
         const field = getSchemaFields(schema.value)[0]
-        if (!field) throw new Error('Missing option field')
+        if (!field) {
+          throw new Error('Missing option field')
+        }
         const path = ['skill']
         const options = useFieldOptions({
-          field: () => field,
-          path: () => path,
           api: computed(() => runtime.getFieldApi(path, field)),
           callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
-          register: runtime.registerFieldOptions,
+          field: () => field,
+          path: () => path,
           refreshFieldOptions: runtime.refreshFieldOptions,
+          register: runtime.registerFieldOptions,
         })
-        return { runtime, options }
+        return { options, runtime }
       }),
     )
-    if (!result) throw new Error('Failed to create option runtime')
+    if (!result) {
+      throw new Error('Failed to create option runtime')
+    }
 
     const firstCreation = result.options.create('  Platform  ')
     const concurrentCreation = result.options.create('Ignored')
 
-    expect(result.options.creating.value).toBe(true)
-    expect(await concurrentCreation).toBeNull()
-    expect(labels).toEqual(['Platform'])
+    expect(result.options.creating.value).toBeTruthy()
+    await expect(concurrentCreation).resolves.toBeNull()
+    expect(labels).toStrictEqual(['Platform'])
 
     resolveCreation?.({ label: 'Platform', value: 'platform' })
     await firstCreation
 
-    expect(result.options.creating.value).toBe(false)
+    expect(result.options.creating.value).toBeFalsy()
     expect(result.runtime.getValue('skill')).toBe('platform')
-    expect(await result.options.create('   ')).toBeNull()
-    expect(labels).toEqual(['Platform'])
+    await expect(result.options.create('   ')).resolves.toBeNull()
+    expect(labels).toStrictEqual(['Platform'])
     scope.stop()
   })
 
@@ -124,11 +132,11 @@ describe('form field options', () => {
         fields: [
           {
             key: 'skill',
-            type: 'select',
             options: async () => {
               runs += 1
               return [{ label: `Run ${runs}`, value: runs }]
             },
+            type: 'select',
           },
         ],
       }),
@@ -140,19 +148,23 @@ describe('form field options', () => {
       scope.run(() => {
         const runtime = useFormRuntime({ schema })
         const field = getSchemaFields(schema.value)[0]
-        if (!field) throw new Error('Missing option field')
+        if (!field) {
+          throw new Error('Missing option field')
+        }
         const path = ['skill']
         return useFieldOptions({
-          field: () => field,
-          path: () => path,
           api: computed(() => runtime.getFieldApi(path, field)),
           callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
-          register: runtime.registerFieldOptions,
+          field: () => field,
+          path: () => path,
           refreshFieldOptions: runtime.refreshFieldOptions,
+          register: runtime.registerFieldOptions,
         })
       }),
     )
-    if (!options) throw new Error('Failed to create option runtime')
+    if (!options) {
+      throw new Error('Failed to create option runtime')
+    }
 
     await nextTick()
     expect(runs).toBe(1)

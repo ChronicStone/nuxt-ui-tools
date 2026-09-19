@@ -50,30 +50,30 @@ const controlProps = computed<DataListPaginationProps>(() =>
 const paginationProps = computed(() =>
   mergeDataListProps<DataListPaginationControlProps>(
     {
-      color: 'neutral',
-      variant: 'ghost',
       activeColor: 'neutral',
       activeVariant: 'solid',
-      size: controlSize.value,
-      siblingCount: 1,
-      showEdges: true,
+      color: 'neutral',
       showControls: true,
+      showEdges: true,
+      siblingCount: 1,
+      size: controlSize.value,
+      variant: 'ghost',
     },
     controlProps.value.pagination,
   ),
 )
 const pageSizeProps = computed(() =>
-  mergeDataListProps<Pick<DataListSelectControlProps, 'color' | 'variant' | 'size' | 'icon' | 'trailingIcon'>>(
-    { color: 'neutral', variant: 'none', size: controlSize.value },
-    controlProps.value.pageSize,
-  ),
+  mergeDataListProps<
+    Pick<DataListSelectControlProps, 'color' | 'variant' | 'size' | 'icon' | 'trailingIcon'>
+  >({ color: 'neutral', size: controlSize.value, variant: 'none' }, controlProps.value.pageSize),
 )
 
 const total = computed(() => internals.pagination.rowCount.value ?? 0)
 const booting = computed(
   () =>
     internals.queryContent.status.value.isBooting ||
-    (internals.queryContent.status.value.isPending && internals.queryContent.data.value.rows.length === 0),
+    (internals.queryContent.status.value.isPending &&
+      internals.queryContent.data.value.rows.length === 0),
 )
 const from = computed(() =>
   total.value === 0
@@ -81,7 +81,10 @@ const from = computed(() =>
     : (internals.pagination.currentPage.value - 1) * internals.pagination.pageSize.value + 1,
 )
 const to = computed(() =>
-  Math.min(total.value, internals.pagination.currentPage.value * internals.pagination.pageSize.value),
+  Math.min(
+    total.value,
+    internals.pagination.currentPage.value * internals.pagination.pageSize.value,
+  ),
 )
 const summary = computed(() =>
   total.value === 0
@@ -165,14 +168,20 @@ function formatCount(value: number) {
             )
           "
         >
-          <span class="nut-dl-footer__size-label whitespace-nowrap">{{ t('table.footer.perPage') }}</span>
+          <span class="nut-dl-footer__size-label whitespace-nowrap">{{
+            t('table.footer.perPage')
+          }}</span>
           <USelect
             v-bind="pageSizeProps"
             :model-value="internals.pagination.pageSize.value"
             :items="pageSizeItems"
             :aria-label="t('table.footer.perPage')"
             :ui="{
-              base: mergeDataListUiClass('nut-dl-footer__select h-7 bg-transparent pl-1 pr-6 text-highlighted font-medium ring-0 shadow-none focus-visible:ring-0', undefined, ui.button),
+              base: mergeDataListUiClass(
+                'nut-dl-footer__select h-7 bg-transparent pl-1 pr-6 text-highlighted font-medium ring-0 shadow-none focus-visible:ring-0',
+                undefined,
+                ui.button,
+              ),
               trailing: 'pe-1.5',
               trailingIcon: 'size-3.5 text-dimmed',
             }"
@@ -206,7 +215,13 @@ function formatCount(value: number) {
       >
         <div
           v-if="compact && total > 0 && !booting"
-          :class="mergeDataListUiClass('nut-dl-pager nut-dl-pager--compact flex items-center gap-1.5', undefined, ui.controls)"
+          :class="
+            mergeDataListUiClass(
+              'nut-dl-pager nut-dl-pager--compact flex items-center gap-1.5',
+              undefined,
+              ui.controls,
+            )
+          "
         >
           <UButton
             color="neutral"
@@ -219,8 +234,15 @@ function formatCount(value: number) {
             :ui="{ base: mergeDataListUiClass('nut-dl-pager__btn', undefined, ui.button) }"
             @click="internals.pagination.previous()"
           />
-          <span class="nut-dl-pager__of min-w-11 text-center text-[12.5px] font-semibold tabular-nums text-highlighted">
-            {{ t('table.footer.pageOf', { current: formatCount(internals.pagination.currentPage.value), total: formatCount(internals.pagination.totalPages.value) }) }}
+          <span
+            class="nut-dl-pager__of min-w-11 text-center text-[12.5px] font-semibold tabular-nums text-highlighted"
+          >
+            {{
+              t('table.footer.pageOf', {
+                current: formatCount(internals.pagination.currentPage.value),
+                total: formatCount(internals.pagination.totalPages.value),
+              })
+            }}
           </span>
           <UButton
             color="neutral"
@@ -244,10 +266,18 @@ function formatCount(value: number) {
             root: mergeDataListUiClass('nut-dl-pager', undefined, ui.controls),
             list: 'gap-0.5',
             item: mergeDataListUiClass('nut-dl-pager__btn tabular-nums', undefined, ui.button),
-            first: mergeDataListUiClass(`nut-dl-pager__btn ${controlProps.firstLast === false ? 'hidden' : ''}`, undefined, ui.button),
+            first: mergeDataListUiClass(
+              `nut-dl-pager__btn ${controlProps.firstLast === false ? 'hidden' : ''}`,
+              undefined,
+              ui.button,
+            ),
             prev: mergeDataListUiClass('nut-dl-pager__btn', undefined, ui.button),
             next: mergeDataListUiClass('nut-dl-pager__btn', undefined, ui.button),
-            last: mergeDataListUiClass(`nut-dl-pager__btn ${controlProps.firstLast === false ? 'hidden' : ''}`, undefined, ui.button),
+            last: mergeDataListUiClass(
+              `nut-dl-pager__btn ${controlProps.firstLast === false ? 'hidden' : ''}`,
+              undefined,
+              ui.button,
+            ),
           }"
         />
       </slot>

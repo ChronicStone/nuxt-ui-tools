@@ -1,21 +1,21 @@
 <script setup lang="ts">
 const entries = [
   {
-    label: 'Forms',
     description: 'Schema fields, validation, overlays, settings, and typed output.',
     group: 'Abstraction',
+    label: 'Forms',
     to: '/form',
   },
   {
-    label: 'Tables',
     description: 'Client, remote, and composable data-list runtime examples.',
     group: 'Abstraction',
+    label: 'Tables',
     to: '/table',
   },
   {
-    label: 'Spreadsheet',
     description: 'Import-engine scenarios for matching, references, and validation.',
     group: 'Abstraction',
+    label: 'Spreadsheet',
     to: '/spreadsheet',
   },
 ] as const

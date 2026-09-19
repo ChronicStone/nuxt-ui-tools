@@ -6,14 +6,15 @@ import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import { hasProperty, isArray, isString } from '#ui-tools/shared/utils/predicate'
-import { defineTableSchema, useTable, type TableFilterOptionEntry } from '#ui-tools/table'
+import { defineTableSchema, useTable } from '#ui-tools/table'
+import type { TableFilterOptionEntry } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
 import DataList from '#ui-tools/table/components/DataList.vue'
 
 const { locale, t } = useI18n()
 const clientRows = createClientRows(5000)
 type DemoClientRow = (typeof clientRows)[number]
-type DemoCompanySeed = {
+interface DemoCompanySeed {
   name: string
   country: string
   region: string
@@ -59,36 +60,7 @@ const countryTreeOptions = buildCountryTreeOptions(clientRows)
 const skillTreeOptions = buildSkillTreeOptions()
 
 const clientSchema = defineTableSchema({
-  tableKey: 'demo-employees-client',
-  rowKey: 'id',
   defaultLayout: 'table',
-  pagination: {
-    defaultSize: {
-      table: 20,
-      grid: 12,
-    },
-    sizeOptions: {
-      table: [10, 20, 50, 100, 500, 1000],
-      grid: [12, 24, 48, 96, 144, 192, 240, 480],
-    },
-    showPageSizePicker: true,
-    showPagesList: true,
-    showPagesCount: true,
-  },
-  selection: {
-    mode: 'auto',
-    scope: 'all',
-  },
-  source: {
-    mode: 'client',
-    query: () => ({
-      queryKey: ['demo-employees-client'],
-      queryFn: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-        return clientRows
-      },
-    }),
-  },
   filters: {
     search: {
       fields: ['fullName', 'email', 'department.company.name', 'skills'],
@@ -321,6 +293,123 @@ const clientSchema = defineTableSchema({
       }),
     ],
   },
+  grid: {
+    defaultSorting: {
+      dir: 'asc',
+      key: 'fullName',
+    },
+    enabled: true,
+    gridSize: '1 md:2 lg:3 xl:4',
+    mode: 'flow',
+    renderItem: ({ row }) => (
+      <UCard
+        class="rounded-md h-full"
+        ui={{
+          root: 'flex h-full flex-col',
+          header: 'p-4',
+          body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
+          footer: 'mt-auto p-4 pt-3',
+        }}
+        v-slots={{
+          header: () => (
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-3">
+                <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
+                  {getInitials(row.fullName)}
+                </div>
+                <div class="min-w-0">
+                  <div class="truncate font-medium text-highlighted">{row.fullName}</div>
+                  <div class="mt-1 flex items-center gap-2 text-sm text-muted">
+                    <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
+                    <span class="truncate">{row.email}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex shrink-0 items-start gap-2">
+                <UBadge
+                  color={row.isActive ? 'success' : 'neutral'}
+                  variant={row.isActive ? 'soft' : 'subtle'}
+                  size="sm"
+                  label={
+                    row.isActive
+                      ? t('playground.tableCommon.status.online')
+                      : t('playground.tableCommon.status.paused')
+                  }
+                />
+                <UiRowActions
+                  content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
+                  modal={false}
+                >
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-ellipsis-vertical"
+                    size="sm"
+                    square
+                  />
+                </UiRowActions>
+              </div>
+            </div>
+          ),
+          default: () => (
+            <>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                  <div class="text-xs text-muted">{t('playground.tableCommon.cards.company')}</div>
+                  <div class="truncate text-sm font-medium text-highlighted">
+                    {row.department.company.name}
+                  </div>
+                </div>
+
+                <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
+                  <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
+                  <div class="text-sm font-medium text-highlighted">
+                    {formatCurrency(row.salary)}
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                {row.skills.slice(0, 4).map((skill) => (
+                  <UBadge
+                    key={skill}
+                    color="neutral"
+                    variant="subtle"
+                    size="xs"
+                    label={translateSkill(skill)}
+                  />
+                ))}
+              </div>
+            </>
+          ),
+          footer: () => (
+            <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
+              <div class="flex min-w-0 flex-1 items-center gap-2">
+                <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none">
+                  {getCountryFlag(row.department.company.country)}
+                </span>
+                <span class="truncate">{translateCountry(row.department.company.country)}</span>
+              </div>
+              <div class="shrink-0">{formatDate(row.hiredAt)}</div>
+            </div>
+          ),
+        }}
+      />
+    ),
+  },
+  pagination: {
+    defaultSize: {
+      grid: 12,
+      table: 20,
+    },
+    showPageSizePicker: true,
+    showPagesCount: true,
+    showPagesList: true,
+    sizeOptions: {
+      grid: [12, 24, 48, 96, 144, 192, 240, 480],
+      table: [10, 20, 50, 100, 500, 1000],
+    },
+  },
   rowActions: ({ row, tableApi, layout }) => [
     {
       key: 'copy-email',
@@ -382,11 +471,22 @@ const clientSchema = defineTableSchema({
       condition: () => layout === 'table',
     },
   ],
+  rowKey: 'id',
+  selection: {
+    mode: 'auto',
+    scope: 'all',
+  },
+  source: {
+    mode: 'client',
+    query: () => ({
+      queryKey: ['demo-employees-client'],
+      queryFn: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        return clientRows
+      },
+    }),
+  },
   table: {
-    defaultSorting: {
-      key: 'hiredAt',
-      dir: 'desc',
-    },
     columns: (column) => [
       column.field('fullName', {
         label: () => t('playground.tableCommon.columns.employee'),
@@ -503,111 +603,12 @@ const clientSchema = defineTableSchema({
         ),
       }),
     ],
-  },
-  grid: {
-    enabled: true,
-    mode: 'flow',
-    gridSize: '1 md:2 lg:3 xl:4',
-    renderItem: ({ row }) => (
-      <UCard
-        class="rounded-md h-full"
-        ui={{
-          root: 'flex h-full flex-col',
-          header: 'p-4',
-          body: 'flex min-h-0 flex-1 flex-col gap-4 p-4',
-          footer: 'mt-auto p-4 pt-3',
-        }}
-        v-slots={{
-          header: () => (
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex min-w-0 items-center gap-3">
-                <div class="flex size-10 items-center justify-center rounded-md bg-elevated text-sm font-semibold text-highlighted">
-                  {getInitials(row.fullName)}
-                </div>
-                <div class="min-w-0">
-                  <div class="truncate font-medium text-highlighted">{row.fullName}</div>
-                  <div class="mt-1 flex items-center gap-2 text-sm text-muted">
-                    <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
-                    <span class="truncate">{row.email}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex shrink-0 items-start gap-2">
-                <UBadge
-                  color={row.isActive ? 'success' : 'neutral'}
-                  variant={row.isActive ? 'soft' : 'subtle'}
-                  size="sm"
-                  label={
-                    row.isActive
-                      ? t('playground.tableCommon.status.online')
-                      : t('playground.tableCommon.status.paused')
-                  }
-                />
-                <UiRowActions
-                  content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
-                  modal={false}
-                >
-                  <UButton
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-lucide-ellipsis-vertical"
-                    size="sm"
-                    square
-                  />
-                </UiRowActions>
-              </div>
-            </div>
-          ),
-          default: () => (
-            <>
-              <div class="grid gap-3 sm:grid-cols-2">
-                <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                  <div class="text-xs text-muted">{t('playground.tableCommon.cards.company')}</div>
-                  <div class="truncate text-sm font-medium text-highlighted">
-                    {row.department.company.name}
-                  </div>
-                </div>
-
-                <div class="grid gap-1 rounded-md bg-elevated/60 p-2.5">
-                  <div class="text-xs text-muted">{t('playground.tableCommon.cards.salary')}</div>
-                  <div class="text-sm font-medium text-highlighted">
-                    {formatCurrency(row.salary)}
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex flex-wrap gap-2">
-                {row.skills.slice(0, 4).map((skill) => (
-                  <UBadge
-                    key={skill}
-                    color="neutral"
-                    variant="subtle"
-                    size="xs"
-                    label={translateSkill(skill)}
-                  />
-                ))}
-              </div>
-            </>
-          ),
-          footer: () => (
-            <div class="flex h-5 items-center justify-between gap-3 text-sm/5 text-muted">
-              <div class="flex min-w-0 flex-1 items-center gap-2">
-                <span class="inline-flex h-4 w-4 shrink-0 items-center justify-center text-sm leading-none">
-                  {getCountryFlag(row.department.company.country)}
-                </span>
-                <span class="truncate">{translateCountry(row.department.company.country)}</span>
-              </div>
-              <div class="shrink-0">{formatDate(row.hiredAt)}</div>
-            </div>
-          ),
-        }}
-      />
-    ),
     defaultSorting: {
-      key: 'fullName',
-      dir: 'asc',
+      dir: 'desc',
+      key: 'hiredAt',
     },
   },
+  tableKey: 'demo-employees-client',
 })
 
 const table = useTable(clientSchema)
@@ -643,14 +644,14 @@ function createClientRows(count: number) {
   faker.seed(42)
 
   const companies: DemoCompanySeed[] = [
-    { name: 'Northstar', country: 'United States', region: 'North America' },
-    { name: 'Atlas', country: 'Germany', region: 'Europe' },
-    { name: 'Rivet', country: 'United Kingdom', region: 'Europe' },
-    { name: 'Helio', country: 'Japan', region: 'Asia' },
-    { name: 'Monarch', country: 'France', region: 'Europe' },
-    { name: 'Vela', country: 'Canada', region: 'North America' },
-    { name: 'Kumo', country: 'Singapore', region: 'Asia' },
-    { name: 'Cinder', country: 'Spain', region: 'Europe' },
+    { country: 'United States', name: 'Northstar', region: 'North America' },
+    { country: 'Germany', name: 'Atlas', region: 'Europe' },
+    { country: 'United Kingdom', name: 'Rivet', region: 'Europe' },
+    { country: 'Japan', name: 'Helio', region: 'Asia' },
+    { country: 'France', name: 'Monarch', region: 'Europe' },
+    { country: 'Canada', name: 'Vela', region: 'North America' },
+    { country: 'Singapore', name: 'Kumo', region: 'Asia' },
+    { country: 'Spain', name: 'Cinder', region: 'Europe' },
   ]
   const departments: DemoDepartmentName[] = [
     'Engineering',
@@ -683,16 +684,16 @@ function createClientRows(count: number) {
     'UX Research',
   ]
   const salaryBaseByDepartment = {
-    Engineering: 128000,
-    Platform: 142000,
-    Operations: 96000,
-    Finance: 104000,
-    Product: 118000,
-    Design: 110000,
-    Security: 145000,
     Data: 136000,
-    Support: 82000,
+    Design: 110000,
+    Engineering: 128000,
+    Finance: 104000,
     Growth: 98000,
+    Operations: 96000,
+    Platform: 142000,
+    Product: 118000,
+    Security: 145000,
+    Support: 82000,
   } satisfies Record<DemoDepartmentName, number>
   const employmentTypes: EmploymentType[] = ['Full-time', 'Contract', 'Part-time']
   const workModes: WorkMode[] = ['Remote', 'Hybrid', 'On-site']
@@ -711,12 +712,12 @@ function createClientRows(count: number) {
     const company = faker.helpers.arrayElement(companies)
     const department = faker.helpers.arrayElement(departments)
     const fullName = faker.person.fullName()
-    const skillCount = faker.number.int({ min: 2, max: 5 })
+    const skillCount = faker.number.int({ max: 5, min: 2 })
     const skills = faker.helpers.arrayElements(skillCatalog, skillCount)
     const primarySkill = skills[0] ?? 'Generalist'
-    const yearsAtCompany = faker.number.int({ min: 0, max: 9 })
-    const salaryNoise = faker.number.int({ min: -14000, max: 52000 })
-    const salary = (salaryBaseByDepartment[department] ?? 100000) + salaryNoise
+    const yearsAtCompany = faker.number.int({ max: 9, min: 0 })
+    const salaryNoise = faker.number.int({ max: 52000, min: -14000 })
+    const salary = (salaryBaseByDepartment[department] ?? 100_000) + salaryNoise
     const hiredAt = faker.date
       .between({
         from: new Date(new Date().getFullYear() - 9, 0, 1),
@@ -727,89 +728,91 @@ function createClientRows(count: number) {
     const city = faker.location.city()
 
     return {
-      id: `client-${index + 1}`,
-      fullName,
+      bio: faker.person.bio(),
+      department: {
+        budgetCode: faker.finance.accountNumber(6),
+        company: {
+          country: company.country,
+          id: faker.string.uuid(),
+          name: company.name,
+        },
+        id: faker.string.uuid(),
+        name: department,
+      },
       email: faker.internet.email({
         firstName: fullName.split(' ')[0],
         lastName: fullName.split(' ').at(-1),
       }),
-      salary,
-      isActive,
-      hiredAt,
-      title: faker.person.jobTitle(),
-      bio: faker.person.bio(),
-      tenureYears: yearsAtCompany,
-      profileAccent: faker.color.rgb({ prefix: '#' }),
-      officeCity: city,
-      officeTimezone: faker.location.timeZone(),
       employmentType: faker.helpers.arrayElement(employmentTypes),
-      workMode: faker.helpers.arrayElement(workModes),
-      region: company.region,
-      department: {
-        id: faker.string.uuid(),
-        name: department,
-        budgetCode: faker.finance.accountNumber(6),
-        company: {
-          id: faker.string.uuid(),
-          name: company.name,
-          country: company.country,
-        },
-      },
-      skills,
-      skillTaxonomy: [...new Set(skills.flatMap(getSkillTaxonomyValues))],
+      fullName,
       highlights: faker.helpers.arrayElements(
         highlightCatalog,
         faker.number.int({ min: 1, max: 3 }),
       ),
+      hiredAt,
+      id: `client-${index + 1}`,
+      isActive,
+      officeCity: city,
+      officeTimezone: faker.location.timeZone(),
       primarySkill,
+      profileAccent: faker.color.rgb({ prefix: '#' }),
+      region: company.region,
+      salary,
+      skillTaxonomy: [...new Set(skills.flatMap(getSkillTaxonomyValues))],
+      skills,
+      tenureYears: yearsAtCompany,
+      title: faker.person.jobTitle(),
+      workMode: faker.helpers.arrayElement(workModes),
     }
   })
 }
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
-    style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
+    style: 'currency',
   }).format(value)
 }
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(locale.value === 'fr' ? 'fr-FR' : 'en-US', {
-    month: 'short',
     day: 'numeric',
+    month: 'short',
     year: 'numeric',
   }).format(new Date(value))
 }
 
 function getSkillTaxonomyValues(skill: string) {
   const entries = {
-    TypeScript: ['cat:engineering', 'cat:application', 'skill:typescript'],
-    Go: ['cat:engineering', 'cat:services', 'skill:go'],
-    Kubernetes: ['cat:engineering', 'cat:infrastructure', 'skill:kubernetes'],
-    'Distributed Systems': ['cat:engineering', 'cat:infrastructure', 'skill:distributed-systems'],
-    Security: ['cat:engineering', 'cat:security', 'skill:security'],
-    Rust: ['cat:engineering', 'cat:systems', 'skill:rust'],
-    Python: ['cat:data', 'cat:analysis', 'skill:python'],
-    GraphQL: ['cat:engineering', 'cat:application', 'skill:graphql'],
-    PostgreSQL: ['cat:data', 'cat:platform', 'skill:postgresql'],
-    'Machine Learning': ['cat:data', 'cat:intelligence', 'skill:machine-learning'],
     'Design Systems': ['cat:design', 'cat:systems', 'skill:design-systems'],
-    Observability: ['cat:engineering', 'cat:reliability', 'skill:observability'],
-    Terraform: ['cat:engineering', 'cat:infrastructure', 'skill:terraform'],
+    'Distributed Systems': ['cat:engineering', 'cat:infrastructure', 'skill:distributed-systems'],
+    Go: ['cat:engineering', 'cat:services', 'skill:go'],
+    GraphQL: ['cat:engineering', 'cat:application', 'skill:graphql'],
     'Incident Response': ['cat:engineering', 'cat:reliability', 'skill:incident-response'],
+    Kubernetes: ['cat:engineering', 'cat:infrastructure', 'skill:kubernetes'],
+    'Machine Learning': ['cat:data', 'cat:intelligence', 'skill:machine-learning'],
+    Observability: ['cat:engineering', 'cat:reliability', 'skill:observability'],
+    PostgreSQL: ['cat:data', 'cat:platform', 'skill:postgresql'],
     'Product Strategy': ['cat:product', 'cat:planning', 'skill:product-strategy'],
+    Python: ['cat:data', 'cat:analysis', 'skill:python'],
+    Rust: ['cat:engineering', 'cat:systems', 'skill:rust'],
+    Security: ['cat:engineering', 'cat:security', 'skill:security'],
+    Terraform: ['cat:engineering', 'cat:infrastructure', 'skill:terraform'],
+    TypeScript: ['cat:engineering', 'cat:application', 'skill:typescript'],
     'UX Research': ['cat:design', 'cat:research', 'skill:ux-research'],
   } satisfies Record<string, string[]>
 
-  if (!hasProperty(entries, skill)) return [skill]
+  if (!hasProperty(entries, skill)) {
+    return [skill]
+  }
   const taxonomy = entries[skill]
   return isArray(taxonomy) ? taxonomy.filter(isString) : [skill]
 }
 
 function buildCountryTreeOptions(rows: DemoClientRow[]) {
   const countriesByRegion = rows.reduce<Record<string, Set<string>>>((acc, row) => {
-    const region = row.region
+    const { region } = row
     const bucket = acc[region] ?? new Set<string>()
     bucket.add(row.department.company.country)
     return { ...acc, [region]: bucket }
@@ -818,21 +821,19 @@ function buildCountryTreeOptions(rows: DemoClientRow[]) {
   return Object.entries(countriesByRegion)
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([region, countries]) => ({
-      label: () => translateRegion(region),
       children: [...countries]
         .sort((left, right) => left.localeCompare(right))
         .map((country) => ({
           label: () => translateCountry(country),
           value: country,
         })),
-    })) satisfies ReadonlyArray<TableFilterOptionEntry<string>>
+      label: () => translateRegion(region),
+    })) satisfies readonly TableFilterOptionEntry<string>[]
 }
 
 function buildSkillTreeOptions() {
   return [
     {
-      label: () => translateCategory('Engineering'),
-      value: 'cat:engineering',
       children: [
         {
           label: () => translateCategory('Application'),
@@ -876,10 +877,10 @@ function buildSkillTreeOptions() {
           ],
         },
       ],
+      label: () => translateCategory('Engineering'),
+      value: 'cat:engineering',
     },
     {
-      label: () => translateCategory('Data'),
-      value: 'cat:data',
       children: [
         {
           label: () => translateCategory('Analysis'),
@@ -899,10 +900,10 @@ function buildSkillTreeOptions() {
           children: [{ label: () => translateSkill('PostgreSQL'), value: 'skill:postgresql' }],
         },
       ],
+      label: () => translateCategory('Data'),
+      value: 'cat:data',
     },
     {
-      label: () => translateCategory('Design'),
-      value: 'cat:design',
       children: [
         {
           label: () => translateCategory('Research'),
@@ -917,10 +918,10 @@ function buildSkillTreeOptions() {
           ],
         },
       ],
+      label: () => translateCategory('Design'),
+      value: 'cat:design',
     },
     {
-      label: () => translateCategory('Product'),
-      value: 'cat:product',
       children: [
         {
           label: () => translateCategory('Planning'),
@@ -930,8 +931,10 @@ function buildSkillTreeOptions() {
           ],
         },
       ],
+      label: () => translateCategory('Product'),
+      value: 'cat:product',
     },
-  ] satisfies ReadonlyArray<TableFilterOptionEntry<string>>
+  ] satisfies readonly TableFilterOptionEntry<string>[]
 }
 
 function getCountryFlag(country: string) {
@@ -948,14 +951,14 @@ function getCountryFlag(country: string) {
 
 function translateCountry(value: string) {
   const keyByCountry = {
+    Canada: 'canada',
     France: 'france',
     Germany: 'germany',
     Japan: 'japan',
-    'United Kingdom': 'unitedKingdom',
-    'United States': 'unitedStates',
-    Canada: 'canada',
     Singapore: 'singapore',
     Spain: 'spain',
+    'United Kingdom': 'unitedKingdom',
+    'United States': 'unitedStates',
     Unknown: 'unknown',
   } satisfies Record<string, string>
 
@@ -965,9 +968,9 @@ function translateCountry(value: string) {
 
 function translateRegion(value: string) {
   const keyByRegion = {
+    Asia: 'asia',
     Europe: 'europe',
     'North America': 'northAmerica',
-    Asia: 'asia',
   } satisfies Record<string, string>
 
   const key = hasProperty(keyByRegion, value) ? keyByRegion[value] : undefined
@@ -976,16 +979,16 @@ function translateRegion(value: string) {
 
 function translateDepartment(value: string) {
   const keyByDepartment = {
-    Engineering: 'engineering',
-    Platform: 'platform',
-    Operations: 'operations',
-    Finance: 'finance',
-    Product: 'product',
-    Design: 'design',
-    Security: 'security',
     Data: 'data',
-    Support: 'support',
+    Design: 'design',
+    Engineering: 'engineering',
+    Finance: 'finance',
     Growth: 'growth',
+    Operations: 'operations',
+    Platform: 'platform',
+    Product: 'product',
+    Security: 'security',
+    Support: 'support',
   } satisfies Record<string, string>
 
   const key = hasProperty(keyByDepartment, value) ? keyByDepartment[value] : undefined
@@ -994,21 +997,21 @@ function translateDepartment(value: string) {
 
 function translateCategory(value: string) {
   const keyByCategory = {
-    Engineering: 'engineering',
+    Analysis: 'analysis',
     Application: 'application',
+    Data: 'data',
+    Design: 'design',
+    Engineering: 'engineering',
     Infrastructure: 'infrastructure',
+    Intelligence: 'intelligence',
+    Planning: 'planning',
+    Platform: 'platform',
+    Product: 'product',
     Reliability: 'reliability',
+    Research: 'research',
     Security: 'security',
     Services: 'services',
-    Data: 'data',
-    Analysis: 'analysis',
-    Intelligence: 'intelligence',
-    Platform: 'platform',
-    Design: 'design',
-    Research: 'research',
     Systems: 'systems',
-    Product: 'product',
-    Planning: 'planning',
   } satisfies Record<string, string>
 
   const key = hasProperty(keyByCategory, value) ? keyByCategory[value] : undefined
@@ -1017,21 +1020,21 @@ function translateCategory(value: string) {
 
 function translateSkill(value: string) {
   const keyBySkill = {
-    TypeScript: 'typescript',
-    Go: 'go',
-    Kubernetes: 'kubernetes',
-    Security: 'security',
-    'Distributed Systems': 'distributedSystems',
-    Rust: 'rust',
-    Python: 'python',
-    GraphQL: 'graphql',
-    PostgreSQL: 'postgresql',
-    'Machine Learning': 'machineLearning',
     'Design Systems': 'designSystems',
-    Observability: 'observability',
-    Terraform: 'terraform',
+    'Distributed Systems': 'distributedSystems',
+    Go: 'go',
+    GraphQL: 'graphql',
     'Incident Response': 'incidentResponse',
+    Kubernetes: 'kubernetes',
+    'Machine Learning': 'machineLearning',
+    Observability: 'observability',
+    PostgreSQL: 'postgresql',
     'Product Strategy': 'productStrategy',
+    Python: 'python',
+    Rust: 'rust',
+    Security: 'security',
+    Terraform: 'terraform',
+    TypeScript: 'typescript',
     'UX Research': 'uxResearch',
   } satisfies Record<string, string>
 

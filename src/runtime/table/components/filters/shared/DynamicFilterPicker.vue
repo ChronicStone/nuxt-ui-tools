@@ -7,7 +7,6 @@ import { computed, nextTick, ref } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { isNumber } from '../../../../shared/utils/predicate'
-
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -66,15 +65,19 @@ const searchable = computed(() => {
 })
 const triggerProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
-    { color: 'neutral', variant: 'ghost', size: size.value },
+    { color: 'neutral', size: size.value, variant: 'ghost' },
     dataListUi.ui.value.filterTags?.props?.addTrigger,
     dataListUi.ui.value.addFilter?.props?.trigger,
   ),
 )
 
 const selectedDefinition = computed(() => {
-  if (selectedKey.value == null) return undefined
-  if (props.sessionDefinition?.key === selectedKey.value) return props.sessionDefinition
+  if (selectedKey.value == null) {
+    return undefined
+  }
+  if (props.sessionDefinition?.key === selectedKey.value) {
+    return props.sessionDefinition
+  }
   return props.definitions.find((definition) => definition.key === selectedKey.value)
 })
 
@@ -86,7 +89,9 @@ const operatorItems = computed(() =>
 
 const filteredDefinitions = computed(() => {
   const search = searchQuery.value.trim().toLowerCase()
-  if (!search) return props.definitions
+  if (!search) {
+    return props.definitions
+  }
 
   return props.definitions.filter((definition) =>
     props.getLabel(definition).toLowerCase().includes(search),
@@ -107,13 +112,17 @@ async function handleSelect(key: string) {
   }
 
   const defaultOperator = items[0]?.value
-  if (!defaultOperator) return
+  if (!defaultOperator) {
+    return
+  }
   await openEditor(defaultOperator)
 }
 
 async function openEditor(operator: TableFilterOperator) {
   const key = selectedKey.value
-  if (!key) return
+  if (!key) {
+    return
+  }
   pendingOperator.value = operator
   emit('select', key)
   await nextTick()
@@ -123,12 +132,16 @@ async function openEditor(operator: TableFilterOperator) {
 }
 
 function handleFocusOutside(event: Event) {
-  if (stageTransitioning.value) event.preventDefault()
+  if (stageTransitioning.value) {
+    event.preventDefault()
+  }
 }
 
 function handleOpenChange(nextOpen: boolean) {
   isOpen.value = nextOpen
-  if (!nextOpen && !releaseAfterCommit) releaseSession()
+  if (!nextOpen && !releaseAfterCommit) {
+    releaseSession()
+  }
 }
 
 function handleSessionClosed() {
@@ -152,7 +165,9 @@ function releaseSession() {
   searchQuery.value = ''
   stage.value = 'picker'
   stageDirection.value = 'backward'
-  if (key) emit('release', key)
+  if (key) {
+    emit('release', key)
+  }
 }
 
 function open() {
@@ -165,8 +180,11 @@ function close() {
 }
 
 function toggle() {
-  if (isOpen.value) close()
-  else open()
+  if (isOpen.value) {
+    close()
+  } else {
+    open()
+  }
 }
 </script>
 
@@ -209,8 +227,18 @@ function toggle() {
     <UButton
       v-else
       v-bind="triggerProps"
-      :icon="selectedDefinition ? (dataListUi.ui.value.filterTags?.props?.icon === false ? undefined : resolveFilterTriggerIcon(selectedDefinition)) : 'i-lucide-plus'"
-      :label="selectedDefinition ? getLabel(selectedDefinition) : (triggerProps.label ?? t('table.controls.addFilter'))"
+      :icon="
+        selectedDefinition
+          ? dataListUi.ui.value.filterTags?.props?.icon === false
+            ? undefined
+            : resolveFilterTriggerIcon(selectedDefinition)
+          : 'i-lucide-plus'
+      "
+      :label="
+        selectedDefinition
+          ? getLabel(selectedDefinition)
+          : (triggerProps.label ?? t('table.controls.addFilter'))
+      "
       :ui="{
         base: mergeDataListUiClass(
           `nut-dl-tag nut-dl-tag--add shrink-0 ${selectedDefinition ? '' : 'border border-dashed border-[var(--ui-border-accented)] text-muted hover:text-default hover:border-[var(--ui-text-dimmed)]'}`,
@@ -233,7 +261,13 @@ function toggle() {
         >
           <div
             v-if="pickerProps?.title !== false"
-            :class="mergeDataListUiClass('nut-dl-picker__title px-3 pt-2.5 pb-1 text-[12.5px] font-semibold text-muted', undefined, ui?.title)"
+            :class="
+              mergeDataListUiClass(
+                'nut-dl-picker__title px-3 pt-2.5 pb-1 text-[12.5px] font-semibold text-muted',
+                undefined,
+                ui?.title,
+              )
+            "
           >
             {{ t('table.controls.addFilter') }}
           </div>
@@ -262,7 +296,11 @@ function toggle() {
               @click="handleSelect(definition.key)"
             >
               <UIcon
-                :name="pickerProps?.icon === 'kind' ? resolveFilterTriggerIcon(definition) : 'i-lucide-plus'"
+                :name="
+                  pickerProps?.icon === 'kind'
+                    ? resolveFilterTriggerIcon(definition)
+                    : 'i-lucide-plus'
+                "
                 :class="
                   mergeDataListUiClass(
                     `${sizeClasses.optionIcon} shrink-0 text-muted`,
@@ -282,7 +320,15 @@ function toggle() {
               >
                 {{ getLabel(definition) }}
               </span>
-              <span :class="mergeDataListUiClass('inline-flex shrink-0 items-center text-dimmed', undefined, ui?.optionTrailingIcon)">
+              <span
+                :class="
+                  mergeDataListUiClass(
+                    'inline-flex shrink-0 items-center text-dimmed',
+                    undefined,
+                    ui?.optionTrailingIcon,
+                  )
+                "
+              >
                 <UIcon name="i-lucide-chevron-right" :class="geometry.icon" />
               </span>
             </button>
