@@ -42,6 +42,8 @@ import TableOverlayScrollbars from './table-overlay-scrollbars.vue'
 const LOAD_MORE_THRESHOLD = 6
 const VIRTUALIZE_ROW_THRESHOLD = 40
 const VIRTUALIZE_CELL_THRESHOLD = 240
+const VIRTUALIZE_COLUMN_THRESHOLD = 32
+const ANIMATION_WINDOW = 600
 const SKELETON_MIN_ROWS = 6
 
 const SIZE_TOKENS = {
@@ -142,6 +144,17 @@ const virtualized = computed(
 )
 
 const scrollRef = useTemplateRef<HTMLElement>('scrollRef')
+const rowHeights = new Map<string, number>()
+function measureRowHeight(element: Element) {
+  const key = element instanceof HTMLElement ? element.dataset.rowId : undefined
+  const height = element.getBoundingClientRect().height
+  if (key === undefined) {
+    return height
+  }
+  const next = Math.max(rowHeights.get(key) ?? 0, height)
+  rowHeights.set(key, next)
+  return next
+}
 const rowVirtualizer = useVirtualizer(
   computed(() => ({
     count: virtualized.value ? renderRows.value.length : 0,
@@ -149,7 +162,7 @@ const rowVirtualizer = useVirtualizer(
     getItemKey: (index: number) =>
       renderRows.value[index] ? getRowId(renderRows.value[index]!, index) : index,
     getScrollElement: () => scrollRef.value ?? null,
-    measureElement: (element: Element) => element.getBoundingClientRect().height,
+    measureElement: (element: Element) => measureRowHeight(element),
     overscan: 8,
   })),
 )
@@ -176,7 +189,10 @@ const centerColumns = computed(() => table.getCenterVisibleLeafColumns())
 const bodyWidth = ref(0)
 const bodyHeight = ref(0)
 const columnsOverflow = computed(
-  () => bodyWidth.value > 0 && table.getTotalSize() > bodyWidth.value,
+  () =>
+    bodyWidth.value > 0 &&
+    table.getTotalSize() > bodyWidth.value &&
+    centerColumns.value.length > VIRTUALIZE_COLUMN_THRESHOLD,
 )
 const columnVirtualizer = useVirtualizer(
   computed(() => ({
@@ -401,6 +417,16 @@ function renderSummary(columnId: string) {
 
 const dataEpoch = ref(0)
 const animateEpoch = ref(false)
+const enterFrom = ref(0)
+let animateTimer = 0
+function armAnimation(from = 0) {
+  enterFrom.value = from
+  animateEpoch.value = true
+  window.clearTimeout(animateTimer)
+  animateTimer = window.setTimeout(() => {
+    animateEpoch.value = false
+  }, ANIMATION_WINDOW)
+}
 watch(
   () => [
     internals.pagination.currentPage.value,
@@ -414,7 +440,8 @@ watch(
       return
     }
     dataEpoch.value += 1
-    animateEpoch.value = true
+    rowHeights.clear()
+    armAnimation()
     scrollRef.value?.scrollTo({ top: 0 })
   },
 )
@@ -469,9 +496,17 @@ function renderSkeletonCell(columnId: string, rowIndex: number) {
 }
 watch(isFirstLoad, (loading, was) => {
   if (was && !loading) {
-    animateEpoch.value = true
+    armAnimation()
   }
 })
+watch(
+  () => rows.value.length,
+  (next, previous) => {
+    if (cursorMode.value && previous > 0 && next > previous) {
+      armAnimation(previous)
+    }
+  },
+)
 
 const cursorMode = computed(() => internals.pagination.mode.value === 'cursor')
 const loadingMore = computed(
@@ -666,8 +701,13 @@ defineExpose({ resetColumnSizing })
             :data-index="virtual.index"
             :data-row-id="row.id"
             :style="
-              virtualized && animateEpoch
-                ? { '--nut-dl-i': Math.min(virtual.index - (virtualRows[0]?.index ?? 0), 24) }
+              virtualized && animateEpoch && virtual.index >= enterFrom
+                ? {
+                    '--nut-dl-i': Math.min(
+                      virtual.index - Math.max(enterFrom, virtualRows[0]?.index ?? 0),
+                      24,
+                    ),
+                  }
                 : undefined
             "
           >
@@ -909,6 +949,7 @@ defineExpose({ resetColumnSizing })
   display: none;
 }
 .nut-dl-th {
+  border-top: 1px solid var(--nut-dl-line);
   background: var(--nut-dl-head-bg);
   color: var(--nut-dl-head-fg);
   font-size: var(--nut-dl-head-font);
@@ -921,6 +962,7 @@ defineExpose({ resetColumnSizing })
 }
 .nut-dl-table__spacer {
   background: var(--nut-dl-head-bg);
+  border-top: 1px solid var(--nut-dl-line);
   border-bottom: 1px solid var(--nut-dl-line);
 }
 .nut-dl-tf {
