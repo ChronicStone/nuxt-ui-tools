@@ -1,18 +1,28 @@
 import { debounceFilter, throttleFilter, watchWithFilter } from '@vueuse/core'
 import { computed, onMounted } from 'vue'
 
-import type { FormField } from '../types'
+import type { FormValue, FormField } from '../types'
+import { isEqualFormValue } from '../utils/compare'
+import { cloneFormValue } from '../utils/path'
 import { isFunction, isNumber, isObject } from '../utils/predicate'
 import { useFormRuntimeContext } from './use-form-runtime'
+
+const UNSET: FormValue = Symbol('unset')
 
 export function useFieldEffects(field: () => FormField, path: () => readonly string[]) {
   const form = useFormRuntimeContext()
   const api = computed(() => form.getFieldApi(path(), field()))
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
 
+  let lastValue: FormValue = UNSET
+  let lastDeps: FormValue = UNSET
   watchWithFilter(
     () => form.getValue(path()),
     (value) => {
+      if (lastValue !== UNSET && isEqualFormValue(value, lastValue)) {
+        return
+      }
+      lastValue = cloneFormValue(value)
       const effect = Object.getOwnPropertyDescriptor(field(), 'watch')?.value
       if (isFunction(effect)) {
         form.trackEffect(effect({ api: api.value, value }))
@@ -26,7 +36,11 @@ export function useFieldEffects(field: () => FormField, path: () => readonly str
 
   watchWithFilter(
     () => params.value.deps,
-    () => {
+    (deps) => {
+      if (lastDeps !== UNSET && isEqualFormValue(deps, lastDeps)) {
+        return
+      }
+      lastDeps = cloneFormValue(deps)
       const effect = Object.getOwnPropertyDescriptor(field(), 'onDependencyChange')?.value
       if (isFunction(effect)) {
         form.trackEffect(effect(params.value))

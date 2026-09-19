@@ -11,7 +11,9 @@ import type {
   FormUiClass,
   FormValidationTrigger,
 } from '../types'
+import { isEqualFormValue } from '../utils/compare'
 import { createFormFieldInstance } from '../utils/field-instance'
+import { cloneFormValue } from '../utils/path'
 import { isFunction, isNumber, isObject, isString } from '../utils/predicate'
 import { mergeFormUiClass } from '../utils/ui'
 import { useFieldOptions } from './use-field-options'
@@ -115,9 +117,14 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     return t('form.fields.text.defaultPlaceholder')
   })
 
+  let lastValue = cloneFormValue(form.getValue(path()))
   watchWithFilter(
     () => form.getValue(path()),
-    async () => {
+    async (value) => {
+      if (isEqualFormValue(value, lastValue)) {
+        return
+      }
+      lastValue = cloneFormValue(value)
       api.value.validation.clearError()
       if (!createFormFieldInstance(field()).capability.has('validation')) {
         return
