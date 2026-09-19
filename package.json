@@ -156,6 +156,7 @@
     "@vueuse/core": "14.4.0",
     "cookiejs": "2.1.4",
     "libphonenumber-js": "1.13.11",
+    "maska": "3.2.1",
     "motion-v": "2.4.0",
     "nuxt-viewport": "2.6.0",
     "tailwind-merge": "^3.6.0"

@@ -35,6 +35,10 @@ export default defineUiToolsLocale<Messages>({
           end: 'Fin',
           start: 'Début',
         },
+        description: {
+          close: 'Fermer',
+          more: 'En savoir plus',
+        },
         hierarchy: {
           clear: 'Effacer la sélection',
           empty: 'Aucune option correspondante',
@@ -63,6 +67,7 @@ export default defineUiToolsLocale<Messages>({
           value: '{value} sur {max}',
         },
         text: {
+          clear: 'Effacer',
           defaultPlaceholder: 'Saisissez une valeur',
         },
         time: {

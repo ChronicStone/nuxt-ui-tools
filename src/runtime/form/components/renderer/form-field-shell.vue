@@ -3,17 +3,20 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UCollapsible from '@nuxt/ui/components/Collapsible.vue'
 import UFormField from '@nuxt/ui/components/FormField.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import UModal from '@nuxt/ui/components/Modal.vue'
+import UTooltip from '@nuxt/ui/components/Tooltip.vue'
 import { computed, ref } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { useFormFieldBare } from '../../composables/use-form-field-chrome'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormField } from '../../types'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { isRecord } from '../../utils/path'
-import { isFunction } from '../../utils/predicate'
+import { isFunction, isNumber, isString } from '../../utils/predicate'
 import { resolveRequired } from '../../utils/state'
-import { resolveFormText } from '../../utils/text'
+import { resolveFieldDescription, resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<{
@@ -32,9 +35,38 @@ const label = computed(() =>
     ? resolveFormText(props.field.label)
     : undefined,
 )
-const description = computed(() =>
+const { t } = useUiToolsLocale()
+const descriptionConfig = computed(() =>
   field.value.capability.has('description') && 'description' in props.field
-    ? resolveFormText(props.field.description)
+    ? resolveFieldDescription(props.field.description)
+    : undefined,
+)
+const description = computed(() =>
+  descriptionConfig.value?.display === 'inline' ? descriptionConfig.value.text : undefined,
+)
+const descriptionTooltip = computed(() =>
+  descriptionConfig.value?.display === 'tooltip' ? descriptionConfig.value : undefined,
+)
+const descriptionModal = computed(() =>
+  descriptionConfig.value?.display === 'modal' ? descriptionConfig.value : undefined,
+)
+const descriptionModalOpen = ref<boolean>(false)
+const labelPosition = computed(() => {
+  const layout = 'layout' in props.field ? props.field.layout : undefined
+  return layout?.labelPosition ?? form.currentLayout.value.labelPosition ?? 'top'
+})
+const labelWidth = computed(() => {
+  const layout = 'layout' in props.field ? props.field.layout : undefined
+  const width = layout?.labelWidth ?? form.currentLayout.value.labelWidth
+  if (isNumber(width)) {
+    return `${width}px`
+  }
+  return isString(width) ? width : undefined
+})
+const orientation = computed(() => (labelPosition.value === 'left' ? 'horizontal' : 'vertical'))
+const shellStyle = computed(() =>
+  orientation.value === 'horizontal' && labelWidth.value
+    ? { '--nut-form-label-width': labelWidth.value }
     : undefined,
 )
 const hint = computed(() =>
@@ -85,13 +117,21 @@ const open = ref<boolean>(!('collapsed' in props.field && props.field.collapsed 
 const collapsible = computed(() => 'collapsible' in props.field && props.field.collapsible === true)
 const fieldUi = computed(() => formUi.ui.value.field?.ui)
 const nuxtFieldUi = computed(() => ({
-  container: fieldUi.value?.container,
+  container: mergeFormUiClass(
+    orientation.value === 'horizontal' ? 'min-w-0 flex-1' : undefined,
+    fieldUi.value?.container,
+  ),
   description: fieldUi.value?.description,
   error: fieldUi.value?.error,
   help: fieldUi.value?.help,
   hint: fieldUi.value?.hint,
   label: fieldUi.value?.label,
-  labelWrapper: fieldUi.value?.labelWrapper,
+  labelWrapper: mergeFormUiClass(
+    orientation.value === 'horizontal' && labelWidth.value
+      ? 'w-(--nut-form-label-width) shrink-0'
+      : undefined,
+    fieldUi.value?.labelWrapper,
+  ),
   root: fieldUi.value?.root,
   wrapper: fieldUi.value?.wrapper,
 }))
@@ -119,8 +159,51 @@ function renderLabelExtra() {
     :help="shellHelp"
     :required="required"
     :size="formUi.controlSize.value"
+    :orientation="orientation"
+    :style="shellStyle"
     :ui="nuxtFieldUi"
   >
+    <template v-if="shellLabel && (descriptionTooltip || descriptionModal)" #label>
+      <span class="inline-flex items-center gap-1.5">
+        <span>{{ shellLabel }}</span>
+        <UTooltip v-if="descriptionTooltip" :text="descriptionTooltip.text">
+          <UIcon
+            name="i-lucide-circle-help"
+            class="size-3.5 text-dimmed"
+            tabindex="0"
+            role="img"
+            :aria-label="descriptionTooltip.text"
+            data-form-description-tooltip=""
+          />
+        </UTooltip>
+        <UModal
+          v-if="descriptionModal"
+          v-model:open="descriptionModalOpen"
+          :title="descriptionModal.title ?? shellLabel"
+          :ui="{ footer: 'justify-end' }"
+        >
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            data-form-description-modal=""
+          >
+            <UIcon name="i-lucide-info" class="size-3.5" aria-hidden="true" />
+            {{ t('form.fields.description.more') }}
+          </button>
+          <template #body>
+            <p class="text-sm text-default">{{ descriptionModal.text }}</p>
+          </template>
+          <template #footer>
+            <UButton
+              color="neutral"
+              variant="outline"
+              :label="t('form.fields.description.close')"
+              @click="descriptionModalOpen = false"
+            />
+          </template>
+        </UModal>
+      </span>
+    </template>
     <template v-if="shellLabelExtra !== undefined && shellLabelExtra !== null" #hint>
       <span :class="fieldUi?.labelExtra">
         <component :is="renderLabelExtra" />

@@ -366,6 +366,7 @@ export function createInputStub(
           })
         }
         return h('span', { class: uiClass(props.ui, 'root'), 'data-ui-wrap': name }, [
+          slots.leading?.(),
           h('input', {
             ...shared,
             onInput: (event: Event) => {

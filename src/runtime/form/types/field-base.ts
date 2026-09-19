@@ -62,6 +62,14 @@ export type FormFieldType =
   | 'card'
   | 'column'
 
+export type FormFieldDescriptionDisplay = 'inline' | 'tooltip' | 'modal'
+
+export interface FormFieldDescription {
+  text: FormText
+  display?: FormFieldDescriptionDisplay
+  title?: FormText
+}
+
 /**
  * Common stateful field properties.
  */
@@ -79,8 +87,8 @@ export interface FormStatefulFieldBase<
   default?: FormDynamic<TValue, { ctx: TContext; api: FormFieldApi<TValue, FormValue, TContext> }>
   /** Label rendered by the field wrapper. */
   label?: FormText
-  /** Optional supporting copy rendered near the control. */
-  description?: FormText
+  /** Optional supporting copy rendered near the control, or a tooltip/modal variant. */
+  description?: FormText | FormFieldDescription
   /** Optional right-side hint rendered by the field wrapper. */
   hint?: FormText
   /** Optional help text rendered under the control. */

@@ -1,7 +1,13 @@
 /**
  * Layout options available at form or step level.
  */
+export type FormLabelPosition = 'top' | 'left'
+
 export interface FormLayoutConfig {
+  /** Label placement for every field of the form. */
+  labelPosition?: FormLabelPosition
+  /** Label column width when labels sit on the left. */
+  labelWidth?: number | string
   /** Number of columns used by the current field grid. */
   columns?: number | string
   /** Default column span used by fields that do not define `layout.span`. */
@@ -18,6 +24,10 @@ export interface FormItemLayout {
   span?: number | string
   /** Fixed width used by renderers that lay fields out as columns, such as array tables. */
   width?: number | string
+  /** Label placement for this field. */
+  labelPosition?: FormLabelPosition
+  /** Label column width when the label sits on the left. */
+  labelWidth?: number | string
 }
 
 /**

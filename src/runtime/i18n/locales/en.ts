@@ -35,6 +35,10 @@ export default defineUiToolsLocale<Messages>({
           end: 'End',
           start: 'Start',
         },
+        description: {
+          close: 'Close',
+          more: 'Learn more',
+        },
         hierarchy: {
           clear: 'Clear selection',
           empty: 'No matching options',
@@ -63,6 +67,7 @@ export default defineUiToolsLocale<Messages>({
           value: '{value} of {max}',
         },
         text: {
+          clear: 'Clear',
           defaultPlaceholder: 'Enter a value',
         },
         time: {

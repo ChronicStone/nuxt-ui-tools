@@ -288,6 +288,11 @@ export interface UiToolsFormMessages {
   fields: {
     text: {
       defaultPlaceholder: string
+      clear: string
+    }
+    description: {
+      more: string
+      close: string
     }
     array: {
       addItem: string

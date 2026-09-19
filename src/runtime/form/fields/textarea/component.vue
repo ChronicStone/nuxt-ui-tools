@@ -33,6 +33,10 @@ const model = computed<string | undefined>({
       class="w-full"
       :placeholder="placeholder"
       :disabled="disabled"
+      :autoresize="field.autoresize"
+      :rows="field.rows"
+      :maxrows="field.maxrows"
+      :maxlength="field.maxlength"
       @blur="handleBlur"
     />
   </FormFieldShell>
