@@ -3,6 +3,20 @@ import { useForm, useFormApi } from '#ui-tools/form'
 import type { FormController, FormObject, FormSchema, FormValue } from '#ui-tools/form'
 
 import { arraysFormInput, arraysFormSchema } from '../../forms/arrays'
+import {
+  billedBulkFormSchema,
+  confirmFormSchema,
+  consumptionFormSchema,
+  invoiceFormSchema,
+  metadataFormInput,
+  metadataFormSchema,
+  presetFormInput,
+  presetFormSchema,
+  productFormInput,
+  productFormSchema,
+  productLineFormSchema,
+  versionTypeFormSchema,
+} from '../../forms/catalogue'
 import { contactFormSchema } from '../../forms/contact'
 import { parityFormInput, parityFormSchema } from '../../forms/parity'
 import {
@@ -96,6 +110,33 @@ const entries: FormEntry[] = [
       participants: [contacts[1]?.id ?? ''],
     },
   ),
+  register('product', 'Produit', 'Catalogue, onglets.', productFormSchema(), productFormInput),
+  register('productLine', 'Ligne de produits', 'Catalogue.', productLineFormSchema(), {}),
+  register('versionType', 'Type de version', 'Catalogue.', versionTypeFormSchema(), {}),
+  register(
+    'metadata',
+    'Métadonnée produit',
+    'Niveaux ordonnés.',
+    metadataFormSchema(),
+    metadataFormInput,
+  ),
+  register('preset', 'Préréglage', 'Catalogue, xl.', presetFormSchema(), presetFormInput),
+  register(
+    'consumption',
+    'Consommation',
+    'Sélections en cascade.',
+    consumptionFormSchema(accounts),
+    {},
+  ),
+  register(
+    'invoice',
+    'Facture',
+    'Rattachement, période, document.',
+    invoiceFormSchema(accounts),
+    {},
+  ),
+  register('billedBulk', 'Marquer la facturation', 'Liste radio.', billedBulkFormSchema(), {}),
+  register('confirm', 'Résilier le contrat', 'Confirmation dangereuse.', confirmFormSchema(), {}),
 ]
 
 async function openModal(entry: FormEntry) {
