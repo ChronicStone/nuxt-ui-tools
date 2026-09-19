@@ -469,7 +469,7 @@ function matchesFilterCondition<TRow extends GenericObject>(
     case 'isAnyOf':
       return matchIsAnyOf({ value, filter: condition.value })
     case 'isNot':
-      return !matchIs({ value, filter: condition.value })
+      return !matchIsAnyOf({ value, filter: condition.value })
     case 'gt':
       return matchComparison({ value, filter: condition.value, operator: 'gt' })
     case 'gte':
