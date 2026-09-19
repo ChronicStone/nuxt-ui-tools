@@ -191,7 +191,7 @@ export function createControlStub(name: string, tag = 'div') {
             class: [attrs.class, uiClass(props.ui, 'base'), uiClass(props.ui, 'root')],
             'data-ui': name,
             disabled: tag === 'button' ? Boolean(props.disabled) : undefined,
-            type: tag === 'button' ? 'button' : undefined,
+            type: tag === 'button' ? (dataValue(props.type) ?? 'button') : undefined,
             ...dataAttributes(props, controlKeys),
             ...uiAttributes(props.ui),
           },

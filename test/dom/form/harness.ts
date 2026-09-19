@@ -45,7 +45,11 @@ export interface FormHarness {
   form: FormController<unknown, FormValue>
   formApi: FormApiController
   input: Ref<FormObject | undefined>
+  setInputValue: (value: FormObject) => Promise<void>
+  setSyncInput: (value: boolean | readonly string[]) => Promise<void>
+  button: (label: string) => DOMWrapper<Element>
   submitted: { value: FormObject; result: { success: boolean; data?: FormValue } }[]
+  output: () => FormObject
   cancelled: FormObject[]
   flush: (rounds?: number) => Promise<void>
   until: (predicate: () => boolean, timeout?: number) => Promise<void>
@@ -70,10 +74,11 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
     defaultOptions: { queries: { gcTime: 0, retry: false, staleTime: 0 } },
   })
   const input = ref<FormObject | undefined>(options.input)
+  const syncInput = ref<boolean | readonly string[] | undefined>(options.syncInput)
   const submitted: FormHarness['submitted'] = []
   const cancelled: FormObject[] = []
   const captured = createCapture()
-  const wrapper = mount(createHost({ cancelled, captured, input, options, submitted }), {
+  const wrapper = mount(createHost({ cancelled, captured, input, options, submitted, syncInput }), {
     attachTo: document.body,
     global: { plugins: [router, [VueQueryPlugin, { queryClient }]] },
   })
@@ -126,6 +131,24 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
     await flush()
   }
 
+  async function setInputValue(value: FormObject) {
+    input.value = value
+    await flush()
+  }
+
+  async function setSyncInput(value: boolean | readonly string[]) {
+    syncInput.value = value
+    await flush()
+  }
+
+  function button(label: string) {
+    const found = wrapper.findAll('button').find((candidate) => candidate.text().trim() === label)
+    if (!found) {
+      throw new Error(`Button "${label}" is not rendered`)
+    }
+    return found
+  }
+
   if (options.settle !== false) {
     await flush()
   }
@@ -135,6 +158,7 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
   }
 
   return {
+    button,
     cancelled,
     control,
     field,
@@ -142,9 +166,13 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
     form,
     formApi,
     input,
+    // SAFETY: the harness mounts untyped schemas, so the controller output is the runtime FormObject.
+    output: () => form.output.value as FormObject,
     queryClient,
     router,
     setInput,
+    setInputValue,
+    setSyncInput,
     submit,
     submitted,
     unmount: () => wrapper.unmount(),
@@ -165,6 +193,7 @@ function createCapture(): HostCapture {
 interface HostParams {
   options: MountFormOptions
   input: Ref<FormObject | undefined>
+  syncInput: Ref<boolean | readonly string[] | undefined>
   submitted: FormHarness['submitted']
   cancelled: FormObject[]
   captured: HostCapture
@@ -180,7 +209,7 @@ function createHost(params: HostParams) {
         onSubmit: params.options.onSubmit,
         // SAFETY: the harness accepts any authored schema literal; the runtime validates it structurally.
         schema: params.options.schema as FormValue,
-        syncInput: params.options.syncInput,
+        syncInput: () => params.syncInput.value ?? false,
         validate: params.options.validate,
       })
       params.captured.form = form
@@ -208,6 +237,24 @@ function macrotask() {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, 0)
   })
+}
+
+export function deferred<T>() {
+  let release: (value: T) => void = noopResolve
+  // oxlint-disable-next-line avoid-new -- tests release these promises by hand
+  const promise = new Promise<T>((resolve) => {
+    release = resolve
+  })
+  return {
+    promise,
+    resolve: (value: T) => {
+      release(value)
+    },
+  }
+}
+
+function noopResolve() {
+  return null
 }
 
 export function labels(harness: FormHarness) {
