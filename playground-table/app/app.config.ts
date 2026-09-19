@@ -216,6 +216,13 @@ export default defineAppConfig({
         },
       },
     },
+    switch: {
+      variants: {
+        size: {
+          md: { base: 'w-[34px] h-5' },
+        },
+      },
+    },
     textarea: {
       compoundVariants: [
         {
