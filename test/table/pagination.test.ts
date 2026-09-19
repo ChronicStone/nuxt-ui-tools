@@ -17,14 +17,14 @@ describe('table pagination strategies', () => {
         mode: 'remote',
         query: () => ({
           queryFn: async () => ({
-            rows: [{ id: 'row-1' }],
             pageInfo: {
-              mode: 'cursor' as const,
-              pageSize: 24,
-              nextCursor: null,
               count: 'none' as const,
+              mode: 'cursor' as const,
+              nextCursor: null,
+              pageSize: 24,
               rowCount: null,
             },
+            rows: [{ id: 'row-1' }],
           }),
           queryKey: ['cursor-rows'],
         }),

@@ -741,13 +741,13 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     fields: [
       {
         fields: [
-          { key: 'prefix', type: 'text', label: 'Prefix', default: '+33', layout: { span: 2 } },
+          { default: '+33', key: 'prefix', label: 'Prefix', layout: { span: 2 }, type: 'text' },
           {
             key: 'number',
-            type: 'text',
             label: 'Phone',
-            placeholder: '6 12 34 56 78',
             layout: { span: 6 },
+            placeholder: '6 12 34 56 78',
+            type: 'text',
           },
         ],
         key: 'phoneParts',
@@ -757,21 +757,21 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       {
         fields: [
           {
-            key: 'currency',
-            type: 'select',
-            label: 'Currency',
-            options: ['EUR', 'USD', 'GBP'],
             default: 'EUR',
+            key: 'currency',
+            label: 'Currency',
             layout: { span: 2 },
+            options: ['EUR', 'USD', 'GBP'],
+            type: 'select',
           },
           {
             key: 'amount',
-            type: 'number',
             label: 'Amount',
-            min: 0,
-            step: 10,
-            placeholder: '2500',
             layout: { span: 5 },
+            min: 0,
+            placeholder: '2500',
+            step: 10,
+            type: 'number',
           },
         ],
         key: 'money',
@@ -780,8 +780,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
       {
         fields: [
-          { key: 'username', type: 'text', label: 'Username', placeholder: 'ada' },
-          { key: 'password', type: 'password', label: 'Password', placeholder: 'Secret' },
+          { key: 'username', label: 'Username', placeholder: 'ada', type: 'text' },
+          { key: 'password', label: 'Password', placeholder: 'Secret', type: 'password' },
         ],
         key: 'verticalCredentials',
         label: 'Vertical group',
@@ -816,9 +816,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     fields: [
       {
         fields: [
-          { key: 'firstName', type: 'text', label: 'First name', validation: required },
-          { key: 'lastName', type: 'text', label: 'Last name', validation: required },
-          { key: 'role', type: 'select', label: 'Role', options: roleOptions },
+          { key: 'firstName', label: 'First name', type: 'text', validation: required },
+          { key: 'lastName', label: 'Last name', type: 'text', validation: required },
+          { key: 'role', label: 'Role', options: roleOptions, type: 'select' },
         ],
         key: 'profile',
         label: 'Profile',
@@ -904,9 +904,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         addItemLabel: 'Add contact',
         draggable: true,
         fields: [
-          { key: 'name', type: 'text', label: 'Name', validation: required },
-          { key: 'email', type: 'text', label: 'Email', inputType: 'email' },
-          { key: 'role', type: 'select', label: 'Role', options: roleOptions },
+          { key: 'name', label: 'Name', type: 'text', validation: required },
+          { inputType: 'email', key: 'email', label: 'Email', type: 'text' },
+          { key: 'role', label: 'Role', options: roleOptions, type: 'select' },
         ],
         itemLabel: 'Contact',
         key: 'contacts',
@@ -925,9 +925,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       {
         addItemLabel: 'Add row',
         fields: [
-          { key: 'label', type: 'text', label: 'Label', validation: required },
-          { key: 'quantity', type: 'number', label: 'Quantity', min: 1, default: 1 },
-          { key: 'active', type: 'switch', label: 'Active', default: true },
+          { key: 'label', label: 'Label', type: 'text', validation: required },
+          { default: 1, key: 'quantity', label: 'Quantity', min: 1, type: 'number' },
+          { default: true, key: 'active', label: 'Active', type: 'switch' },
         ],
         key: 'items',
         label: 'Line items',
@@ -944,8 +944,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       {
         addItemLabel: 'Add milestone',
         fields: [
-          { key: 'title', type: 'text', label: 'Title', validation: required },
-          { key: 'date', type: 'date', label: 'Target date', clearable: true },
+          { key: 'title', label: 'Title', type: 'text', validation: required },
+          { clearable: true, key: 'date', label: 'Target date', type: 'date' },
         ],
         itemLabel: 'Milestone',
         key: 'milestones',
@@ -973,30 +973,30 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         variantKey: 'kind',
         variants: [
           {
+            fields: [
+              {
+                inputType: 'email',
+                key: 'address',
+                label: 'Email address',
+                type: 'text',
+                validation: required,
+              },
+            ],
             key: 'email',
             label: 'Email',
-            fields: [
-              {
-                key: 'address',
-                type: 'text',
-                label: 'Email address',
-                inputType: 'email',
-                validation: required,
-              },
-            ],
           },
           {
-            key: 'phone',
-            label: 'Phone',
             fields: [
               {
-                key: 'number',
-                type: 'phone-number',
-                label: 'Phone number',
                 defaultCountryCode: 'FR',
+                key: 'number',
+                label: 'Phone number',
+                type: 'phone-number',
                 validation: required,
               },
             ],
+            key: 'phone',
+            label: 'Phone',
           },
         ],
       },
@@ -1078,8 +1078,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     fields: [
       {
         fields: [
-          { key: 'code', type: 'text', label: 'Code', placeholder: 'AG-001' },
-          { key: 'region', type: 'select', label: 'Region', options: ['EU', 'US', 'APAC'] },
+          { key: 'code', label: 'Code', placeholder: 'AG-001', type: 'text' },
+          { key: 'region', label: 'Region', options: ['EU', 'US', 'APAC'], type: 'select' },
         ],
         key: 'identity',
         label: 'Identity',
@@ -1095,8 +1095,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       {
         bordered: true,
         fields: [
-          { key: 'enabled', type: 'switch', label: 'Enabled', default: false },
-          { key: 'scope', type: 'select', label: 'Scope', options: ['read', 'write', 'admin'] },
+          { default: false, key: 'enabled', label: 'Enabled', type: 'switch' },
+          { key: 'scope', label: 'Scope', options: ['read', 'write', 'admin'], type: 'select' },
         ],
         key: 'permissions',
         label: 'Bordered permissions',
@@ -1112,8 +1112,8 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         bordered: false,
         compact: true,
         fields: [
-          { key: 'required', type: 'checkbox', label: 'Required', default: false },
-          { key: 'sla', type: 'number', label: 'SLA · days', min: 0, max: 30, default: 2 },
+          { default: false, key: 'required', label: 'Required', type: 'checkbox' },
+          { default: 2, key: 'sla', label: 'SLA · days', max: 30, min: 0, type: 'number' },
         ],
         hoverable: false,
         key: 'approvalMatrix',
@@ -1332,12 +1332,12 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       {
         description: 'Children write at the current form level.',
         fields: [
-          { key: 'headline', type: 'text', label: 'Headline', validation: required },
+          { key: 'headline', label: 'Headline', type: 'text', validation: required },
           {
             key: 'status',
-            type: 'select',
             label: 'Status',
             options: ['draft', 'review', 'published'],
+            type: 'select',
           },
         ],
         key: 'profileCard',
@@ -1353,9 +1353,9 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     fields: [
       {
         fields: [
-          { key: 'title', type: 'text', label: 'Title' },
-          { key: 'notes', type: 'textarea', label: 'Notes' },
-          { key: 'enabled', type: 'switch', label: 'Enabled', default: true },
+          { key: 'title', label: 'Title', type: 'text' },
+          { key: 'notes', label: 'Notes', type: 'textarea' },
+          { default: true, key: 'enabled', label: 'Enabled', type: 'switch' },
         ],
         key: 'column',
         label: 'Column passthrough',

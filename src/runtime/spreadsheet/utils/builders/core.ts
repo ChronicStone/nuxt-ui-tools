@@ -34,8 +34,8 @@ export function createSpreadsheetColumnBuilder<
     const rules = resolveSpreadsheetRules(options.rules)
 
     return {
-      kind: 'text' as const,
       key,
+      kind: 'text' as const,
       ...options,
       rules,
     }
@@ -65,8 +65,8 @@ export function createSpreadsheetColumnBuilder<
     const rules = resolveSpreadsheetRules(options.rules)
 
     return {
-      kind: 'number' as const,
       key,
+      kind: 'number' as const,
       ...options,
       rules,
     }
@@ -93,8 +93,8 @@ export function createSpreadsheetColumnBuilder<
       const rules = resolveSpreadsheetRules(options.rules)
 
       return {
-        kind: 'boolean',
         key,
+        kind: 'boolean',
         ...options,
         rules,
       }
@@ -119,8 +119,8 @@ export function createSpreadsheetColumnBuilder<
       const rules = resolveSpreadsheetRules(options.rules)
 
       return {
-        kind: 'date',
         key,
+        kind: 'date',
         ...options,
         rules,
       }
@@ -145,8 +145,8 @@ export function createSpreadsheetColumnBuilder<
       const rules = resolveSpreadsheetRules(options.rules)
 
       return {
-        kind: 'email',
         key,
+        kind: 'email',
         ...options,
         rules,
       }
@@ -185,8 +185,8 @@ export function createSpreadsheetColumnBuilder<
       const rules = resolveSpreadsheetRules(options.rules)
 
       return {
-        kind: 'option',
         key,
+        kind: 'option',
         ...options,
         rules,
       }

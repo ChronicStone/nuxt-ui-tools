@@ -100,9 +100,9 @@ function createMultiValueSchema() {
             })),
           rules: (v) => [
             v.validate({
+              message: 'At least one product must be selected',
               name: 'selectedProducts',
               validator: (value: string[]) => value.length >= 1,
-              message: 'At least one product must be selected',
             }),
           ],
         }),

@@ -102,11 +102,11 @@ const schema = defineFormSchema({
     {
       key: 'status',
       options: queryOptions({
-        queryKey: ['statuses'],
         queryFn: async () => [
           { label: 'Draft', value: 'draft' },
           { label: 'Published', value: 'published' },
         ],
+        queryKey: ['statuses'],
       }),
       type: 'select',
     },
@@ -114,13 +114,13 @@ const schema = defineFormSchema({
       key: 'city',
       options: ({ ctx }) =>
         queryOptions({
-          queryKey: [
-            'cities',
-            ctx.countries.value?.map((country) => country.value).join(',') ?? 'none',
-          ],
           queryFn: async () => [
             { label: 'Paris', value: 'paris' },
             { label: 'Brussels', value: 'brussels' },
+          ],
+          queryKey: [
+            'cities',
+            ctx.countries.value?.map((country) => country.value).join(',') ?? 'none',
           ],
         }),
       type: 'select',
@@ -164,10 +164,10 @@ const schema = defineFormSchema({
         },
         {
           key: 'score',
-          type: 'number',
           transform: {
             output: (value) => String(value ?? 0),
           },
+          type: 'number',
         },
       ],
       key: 'meta',
@@ -220,11 +220,11 @@ const schema = defineFormSchema({
         },
         {
           key: 'countryCode',
-          type: 'select',
           options: [
             { label: 'France', value: 'FR' },
             { label: 'Belgium', value: 'BE' },
           ],
+          type: 'select',
         },
       ],
       key: 'addresses',

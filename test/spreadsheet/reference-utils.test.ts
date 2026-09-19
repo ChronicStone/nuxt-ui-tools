@@ -283,8 +283,8 @@ describe('spreadsheet reference utils', () => {
       references: (reference) => [
         reference.select('productId', {
           getOptions: ({ search }) => ({
-            queryKey: ['products', search],
             queryFn: async () => [],
+            queryKey: ['products', search],
           }),
           options: productOptions,
           source: 'examNameRaw',

@@ -61,8 +61,8 @@ const schema = defineFormSchema({
       fields: [
         {
           key: 'erpId',
-          type: 'text',
           label: 'ERP ID',
+          type: 'text',
         },
       ],
       key: 'metadata',

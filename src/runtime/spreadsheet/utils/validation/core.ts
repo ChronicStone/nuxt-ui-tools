@@ -106,8 +106,8 @@ function createSpreadsheetRuleInstance<
         return {
           $message: resolveSpreadsheetMessage(messageResolver, {
             $valid: false,
-            value,
             params: options.params,
+            value,
           }),
           $meta: Object.fromEntries([]),
           $valid: false,
@@ -203,16 +203,16 @@ function createSpreadsheetRuleBuilder() {
   return {
     between: createRule<number, [min: number, max: number], { min: number; max: number }>({
       message: ({ value, params: [min, max] }) =>
-        t('spreadsheet.validation.between', { value, min, max }),
+        t('spreadsheet.validation.between', { max, min, value }),
       name: 'between',
       validator: (value: number, min: number, max: number) => ({
         $valid: createNumericValueGuard(value) && value >= min && value <= max,
-        min,
         max,
+        min,
       }),
     }),
     max: createRule<number, [max: number], { max: number }>({
-      message: ({ value, params: [max] }) => t('spreadsheet.validation.max', { value, max }),
+      message: ({ value, params: [max] }) => t('spreadsheet.validation.max', { max, value }),
       name: 'max',
       validator: (value: number, max: number) => ({
         $valid: createNumericValueGuard(value) && value <= max,
@@ -221,7 +221,7 @@ function createSpreadsheetRuleBuilder() {
     }),
     maxLength: createRule<string, [max: number], { max: number }>({
       message: ({ value, params: [max] }) =>
-        t('spreadsheet.validation.maxLength', { max, length: value.length }),
+        t('spreadsheet.validation.maxLength', { length: value.length, max }),
       name: 'maxLength',
       validator: (value: string, max: number) => ({
         $valid: value.length <= max,
@@ -229,7 +229,7 @@ function createSpreadsheetRuleBuilder() {
       }),
     }),
     min: createRule<number, [min: number], { min: number }>({
-      message: ({ value, params: [min] }) => t('spreadsheet.validation.min', { value, min }),
+      message: ({ value, params: [min] }) => t('spreadsheet.validation.min', { min, value }),
       name: 'min',
       validator: (value: number, min: number) => ({
         $valid: createNumericValueGuard(value) && value >= min,
@@ -238,7 +238,7 @@ function createSpreadsheetRuleBuilder() {
     }),
     minLength: createRule<string, [min: number], { min: number }>({
       message: ({ value, params: [min] }) =>
-        t('spreadsheet.validation.minLength', { min, length: value.length }),
+        t('spreadsheet.validation.minLength', { length: value.length, min }),
       name: 'minLength',
       validator: (value: string, min: number) => ({
         $valid: value.length >= min,

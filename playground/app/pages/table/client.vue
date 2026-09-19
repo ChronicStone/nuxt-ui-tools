@@ -448,16 +448,16 @@ const clientSchema = defineTableSchema({
     {
       children: [
         {
+          action: () => tableApi.refresh(),
+          icon: 'i-lucide-refresh-cw',
           key: 'refresh',
           label: () => t('playground.tableClient.actions.refreshTable'),
-          icon: 'i-lucide-refresh-cw',
-          action: () => tableApi.refresh(),
         },
         {
+          condition: ({ layout: currentLayout }) => currentLayout === 'grid',
+          icon: 'i-lucide-layout-grid',
           key: 'grid-only',
           label: () => t('playground.tableClient.actions.gridContextOnly'),
-          icon: 'i-lucide-layout-grid',
-          condition: ({ layout: currentLayout }) => currentLayout === 'grid',
         },
       ],
       icon: 'i-lucide-ellipsis',

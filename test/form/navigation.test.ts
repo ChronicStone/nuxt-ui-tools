@@ -150,8 +150,8 @@ describe('form step navigation', () => {
                 validation: {
                   rules: [
                     {
-                      name: 'available-handle',
                       message: 'This handle is unavailable.',
+                      name: 'available-handle',
                       validate: async () => handleGate.promise,
                     },
                   ],

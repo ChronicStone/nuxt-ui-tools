@@ -69,7 +69,7 @@ describe('table package surface', () => {
       rowKey: 'id',
       source: {
         query: () => ({
-          queryFn: async () => [{ id: 'user_1', email: 'ada@example.com' }],
+          queryFn: async () => [{ email: 'ada@example.com', id: 'user_1' }],
           queryKey: ['users'],
         }),
       },
@@ -91,14 +91,14 @@ describe('table package surface', () => {
         mode: 'remote',
         query: () => ({
           queryFn: async () => ({
-            rows: [{ id: 1 }],
             pageInfo: {
-              mode: 'cursor' as const,
-              pageSize: 20,
-              nextCursor: null,
               count: 'none' as const,
+              mode: 'cursor' as const,
+              nextCursor: null,
+              pageSize: 20,
               rowCount: null,
             },
+            rows: [{ id: 1 }],
           }),
           queryKey: ['cursor-users'],
         }),
@@ -141,9 +141,9 @@ describe('table package surface', () => {
       mode: 'remote',
       query: (ctx) => ({
         queryFn: async () => ({
-          rows: [{ id: 1 }],
-          rowCount: 1,
           facets: [],
+          rowCount: 1,
+          rows: [{ id: 1 }],
         }),
         queryKey: ['remote-users', ctx.facets],
       }),

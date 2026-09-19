@@ -69,7 +69,7 @@ describe('table query prefetch', () => {
         query: (request) => ({
           queryFn: async () => {
             sourceRequest = request
-            return { rows: [{ id: 'user-1', name: 'Ada', status: 'active' }], rowCount: 1 }
+            return { rowCount: 1, rows: [{ id: 'user-1', name: 'Ada', status: 'active' }] }
           },
           queryKey: ['users', request],
         }),

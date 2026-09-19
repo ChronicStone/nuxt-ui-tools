@@ -66,12 +66,12 @@ const columns = {
       source: [
         {
           id: 'school-level',
-          name: 'School level',
-          slug: 'schoolLevel',
           items: [
             { id: 'primary', name: 'Primary' },
             { id: 'secondary', name: 'Secondary' },
           ],
+          name: 'School level',
+          slug: 'schoolLevel',
         },
       ] satisfies readonly DemoAffiliationGroup[],
       targetKey: (group) => group.slug,

@@ -81,18 +81,18 @@ const schema = defineTableSchema({
     mode: 'remote',
     query: (ctx: TableSourceRequestContext) => ({
       queryFn: async () => ({
+        rowCount: 1,
         rows: [
           {
             id: 1,
             name: 'Ada',
-            status: 'active' as const,
             organisation: {
               id: 'org_1',
               status: 'active' as const,
             },
+            status: 'active' as const,
           },
         ],
-        rowCount: 1,
       }),
       queryKey: ['users', ctx.search.value, ctx.facets],
     }),
@@ -179,17 +179,17 @@ describe('defineTableSchema inference', () => {
           ({
             queryFn: async () =>
               ({
+                rowCount: 1,
                 rows: [
                   {
-                    id: 'user_1',
                     email: 'ada@example.com',
+                    id: 'user_1',
                     organisation: {
                       id: 'org_1',
                       status: 'active' as const,
                     },
                   },
                 ],
-                rowCount: 1,
               }) satisfies DemoEmployeeListResult,
             queryKey: ['demo-users'],
           }) satisfies DemoEmployeeQuery,

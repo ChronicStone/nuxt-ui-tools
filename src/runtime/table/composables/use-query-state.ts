@@ -150,7 +150,7 @@ export function useQueryState(params: UseQueryStateParams) {
         defaultValue: resolveTableFilterDefaultRules(params.schema.value.filters?.ui ?? []),
         definitions: () => params.schema.value.filters?.ui ?? [],
         parse(entries, definitions) {
-          return parseTableFilterQueryState({ entries, definitions })
+          return parseTableFilterQueryState({ definitions, entries })
         },
         resolve(filter) {
           const definition = normalizeFilterDefinition(filter)
@@ -159,12 +159,12 @@ export function useQueryState(params: UseQueryStateParams) {
           const codec = createTableFilterValueCodec(definition)
 
           return operators.map((op) => ({
-            urlKey: op === defaultOp ? definition.key : `${definition.key}~${op}`,
             codec,
+            urlKey: op === defaultOp ? definition.key : `${definition.key}~${op}`,
           }))
         },
         serialize(rules, definitions) {
-          return serializeTableFilterQueryState({ rules, definitions })
+          return serializeTableFilterQueryState({ definitions, rules })
         },
         urlPrefix: 'ui',
       }),

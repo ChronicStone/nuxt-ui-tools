@@ -18,9 +18,9 @@ describe('resolved filters', () => {
             return {
               children: (Array.isArray(rule.value) ? rule.value : []).map(
                 (value): TableResolvedFilterNode<string> => ({
-                  type: 'condition' as const,
                   key: 'realStatus',
                   operator: 'is' as const,
+                  type: 'condition' as const,
                   value,
                 }),
               ),
@@ -67,9 +67,9 @@ describe('resolved filters', () => {
         {
           children: [
             {
-              type: 'condition',
               key: 'archived',
               operator: 'is',
+              type: 'condition',
               value: false,
             },
           ],
@@ -79,15 +79,15 @@ describe('resolved filters', () => {
         {
           children: [
             {
-              type: 'condition',
               key: 'realStatus',
               operator: 'is',
+              type: 'condition',
               value: 'live',
             },
             {
-              type: 'condition',
               key: 'realStatus',
               operator: 'is',
+              type: 'condition',
               value: 'paused',
             },
           ],

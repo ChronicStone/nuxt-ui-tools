@@ -173,39 +173,39 @@ describe(executeClientQuery, () => {
           filters: {
             children: [
               {
-                type: 'group',
-                combinator: 'or',
                 children: [
                   {
-                    type: 'group',
-                    combinator: 'and',
                     children: [
                       {
-                        type: 'condition',
                         key: 'status',
                         operator: 'is',
+                        type: 'condition',
                         value: 'active',
                       },
                       {
-                        type: 'condition',
                         key: 'verified',
                         operator: 'is',
+                        type: 'condition',
                         value: true,
                       },
                     ],
+                    combinator: 'and',
+                    type: 'group',
                   },
                   {
-                    type: 'condition',
                     key: 'status',
                     operator: 'is',
+                    type: 'condition',
                     value: 'inactive',
                   },
                 ],
+                combinator: 'or',
+                type: 'group',
               },
               {
-                type: 'condition',
                 key: 'score',
                 operator: 'between',
+                type: 'condition',
                 value: {
                   from: 1,
                   to: 30,
@@ -627,8 +627,8 @@ describe(executeClientQuery, () => {
           },
           sorting: [
             {
-              key: 'score',
               dir: 'desc',
+              key: 'score',
             },
           ],
         }),

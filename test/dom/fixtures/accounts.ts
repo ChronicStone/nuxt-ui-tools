@@ -77,9 +77,9 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
           label: 'Statut',
           source: {
             options: STATUSES.map((value) => ({
-              value,
-              label: STATUS_LABEL[value],
               color: STATUS_COLOR[value],
+              label: STATUS_LABEL[value],
+              value,
             })),
           },
         }),
@@ -90,13 +90,13 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
             operators: ['isAnyOf', 'is', 'isNot'],
           },
           display: options.panelFilters
-            ? { location: 'panel', order: 2, group: 'Identité' }
+            ? { group: 'Identité', location: 'panel', order: 2 }
             : { location: 'tag-dynamic', order: 2 },
           editor: { selection: { mode: 'multiple' } },
           label: 'Pays',
           source: {
             facet: 'exclude-self',
-            options: COUNTRIES.map((value) => ({ value, label: value })),
+            options: COUNTRIES.map((value) => ({ label: value, value })),
           },
         }),
         filter.boolean('edofSync', {
@@ -168,8 +168,8 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       }),
     },
     table: {
-      enabled: options.tableEnabled ?? true,
       defaultSorting: { dir: 'asc', key: 'name' },
+      enabled: options.tableEnabled ?? true,
       ...(options.summaries === false
         ? {}
         : {
@@ -321,14 +321,14 @@ export function createAuditSchema(
           const page = rows.slice(start, start + pageSize)
           const next = start + pageSize < rows.length ? String(start + pageSize) : null
           return {
-            rows: page,
             pageInfo: {
-              mode: 'cursor' as const,
-              pageSize,
-              nextCursor: next,
               count: 'exact' as const,
+              mode: 'cursor' as const,
+              nextCursor: next,
+              pageSize,
               rowCount: rows.length,
             },
+            rows: page,
           }
         },
         queryKey: [

@@ -27,9 +27,9 @@ const validationSchema = defineFormSchema({
         queryFn: async () => {
           await sleep(650)
           return [
-            { label: 'Design systems', value: 'design-systems', description: 'UI foundations' },
-            { label: 'Platform', value: 'platform', description: 'Shared runtime services' },
-            { label: 'Operations', value: 'operations', description: 'Customer workflows' },
+            { description: 'UI foundations', label: 'Design systems', value: 'design-systems' },
+            { description: 'Shared runtime services', label: 'Platform', value: 'platform' },
+            { description: 'Customer workflows', label: 'Operations', value: 'operations' },
           ]
         },
         queryKey: ['form-validation-teams'],
@@ -52,19 +52,19 @@ const validationSchema = defineFormSchema({
       fields: [
         {
           key: 'name',
-          type: 'text',
           label: 'Full name',
           placeholder: 'Ada Lovelace',
+          type: 'text',
           validation: {
             required: true,
           },
         },
         {
-          key: 'email',
-          type: 'text',
           inputType: 'email',
+          key: 'email',
           label: 'Email',
           placeholder: 'ada@example.com',
+          type: 'text',
           validation: {
             required: true,
             rules: [
@@ -82,14 +82,13 @@ const validationSchema = defineFormSchema({
           },
         },
         {
+          description: 'Try “taken” or “admin” to see the async rule fail.',
           key: 'handle',
-          type: 'text',
           label: 'Workspace handle',
           placeholder: 'ada-lovelace',
-          description: 'Try “taken” or “admin” to see the async rule fail.',
+          type: 'text',
           validation: {
             required: true,
-            trigger: 'input',
             rules: [
               {
                 name: 'handle-availability',
@@ -109,6 +108,7 @@ const validationSchema = defineFormSchema({
                 },
               },
             ],
+            trigger: 'input',
           },
         },
       ],
@@ -120,8 +120,8 @@ const validationSchema = defineFormSchema({
       fields: [
         {
           key: 'password',
-          type: 'password',
           label: 'Password',
+          type: 'password',
           validation: {
             required: true,
             rules: [
@@ -139,10 +139,10 @@ const validationSchema = defineFormSchema({
           },
         },
         {
-          key: 'confirmPassword',
-          type: 'password',
-          label: 'Confirm password',
           dependencies: [['password', 'password']],
+          key: 'confirmPassword',
+          label: 'Confirm password',
+          type: 'password',
           validation: {
             required: true,
             rules: [
@@ -162,13 +162,13 @@ const validationSchema = defineFormSchema({
         },
         {
           key: 'team',
-          type: 'select',
           label: 'Team',
-          searchable: true,
           options: {
-            source: ({ ctx }) => ctx.teams.value ?? [],
             allowOptionsRefresh: true,
+            source: ({ ctx }) => ctx.teams.value ?? [],
           },
+          searchable: true,
+          type: 'select',
           validation: {
             required: true,
           },

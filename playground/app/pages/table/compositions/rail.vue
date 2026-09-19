@@ -212,8 +212,8 @@ const schema = defineTableSchema({
     query: (request) => ({
       queryFn: async () => {
         const prepared = executeClientQuery({
-          rows: documents,
           request: { ...request, pagination: { mode: 'none' } },
+          rows: documents,
         })
         const pagination = request.pagination
         const cursor = pagination.mode === 'cursor' ? Number(pagination.cursor ?? 0) : 0
@@ -224,14 +224,14 @@ const schema = defineTableSchema({
         await new Promise((resolve) => setTimeout(resolve, 160))
 
         return {
-          rows,
           pageInfo: {
-            mode: 'cursor' as const,
-            pageSize,
-            nextCursor: nextOffset < prepared.rowCount ? String(nextOffset) : null,
             count: 'exact' as const,
+            mode: 'cursor' as const,
+            nextCursor: nextOffset < prepared.rowCount ? String(nextOffset) : null,
+            pageSize,
             rowCount: prepared.rowCount,
           },
+          rows,
         }
       },
       queryKey: ['table-composition-knowledge-base', request],

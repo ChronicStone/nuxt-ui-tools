@@ -17,7 +17,7 @@ const schema = defineTableSchema({
   source: {
     query: () => ({
       queryFn: async () => [
-        { id: '1', firstName: 'Ada', score: 3, createdAt: 'x', hidden: 1, dropped: 2 },
+        { createdAt: 'x', dropped: 2, firstName: 'Ada', hidden: 1, id: '1', score: 3 },
       ],
       queryKey: ['demo'],
     }),

@@ -128,7 +128,7 @@ const schema = defineTableSchema({
         display: { location: 'tag-dynamic' },
         editor: { selection: { mode: 'multiple' } },
         label: 'Groupe',
-        source: { options: GROUPS.map((g) => ({ value: g, label: g })) },
+        source: { options: GROUPS.map((g) => ({ label: g, value: g })) },
       }),
       filter.option('country', {
         behavior: { commitMode: 'auto', defaultOperator: 'isAnyOf' },

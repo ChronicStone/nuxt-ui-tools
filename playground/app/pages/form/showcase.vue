@@ -64,9 +64,9 @@ const showcaseForm = defineFormSchema({
           await sleep(700)
 
           return [
-            { label: 'France', value: 'FR', description: 'Default country' },
-            { label: 'Belgium', value: 'BE', description: 'Benelux' },
-            { label: 'Switzerland', value: 'CH', description: 'Alpine region' },
+            { description: 'Default country', label: 'France', value: 'FR' },
+            { description: 'Benelux', label: 'Belgium', value: 'BE' },
+            { description: 'Alpine region', label: 'Switzerland', value: 'CH' },
           ]
         },
         queryKey: ['form-showcase-countries'],
@@ -129,7 +129,7 @@ const showcaseForm = defineFormSchema({
       key: 'profile.email',
       label: 'Email',
       labelExtra: () =>
-        h(ULink, { href: 'mailto:support@example.com', class: 'text-xs' }, () => 'Need help?'),
+        h(ULink, { class: 'text-xs', href: 'mailto:support@example.com' }, () => 'Need help?'),
       placeholder: 'ada@example.com',
       transform: {
         output: (value) => value?.trim().toLowerCase() ?? '',
@@ -225,20 +225,20 @@ const showcaseForm = defineFormSchema({
         allowOptionsRefresh: true,
         source: ({ ctx }) =>
           queryOptions({
-            queryKey: [
-              'form-showcase-cities',
-              ctx.countries.value?.map((country) => country.value).join(',') ?? 'loading',
-            ],
             enabled: Boolean(ctx.countries.value),
             queryFn: async () => {
               await sleep(500)
 
               return [
-                { label: 'Paris', value: 'paris', description: 'France' },
-                { label: 'Brussels', value: 'brussels', description: 'Belgium' },
-                { label: 'Geneva', value: 'geneva', description: 'Switzerland' },
+                { description: 'France', label: 'Paris', value: 'paris' },
+                { description: 'Belgium', label: 'Brussels', value: 'brussels' },
+                { description: 'Switzerland', label: 'Geneva', value: 'geneva' },
               ]
             },
+            queryKey: [
+              'form-showcase-cities',
+              ctx.countries.value?.map((country) => country.value).join(',') ?? 'loading',
+            ],
           }),
       },
       searchable: true,
@@ -257,9 +257,9 @@ const showcaseForm = defineFormSchema({
             await sleep(450)
 
             return {
+              description: 'Created locally from the select menu',
               label,
               value: label.trim().toLowerCase().replace(/\s+/gu, '-'),
-              description: 'Created locally from the select menu',
             }
           },
           label: 'Create skill',
@@ -267,16 +267,16 @@ const showcaseForm = defineFormSchema({
         },
         source: () =>
           queryOptions({
-            queryKey: ['form-showcase-skills'],
             queryFn: async () => {
               await sleep(900)
 
               return [
-                { label: 'Frontend', value: 'frontend', description: 'Vue, Nuxt, UI systems' },
-                { label: 'Product', value: 'product', description: 'Discovery and delivery' },
-                { label: 'Operations', value: 'operations', description: 'Process and support' },
+                { description: 'Vue, Nuxt, UI systems', label: 'Frontend', value: 'frontend' },
+                { description: 'Discovery and delivery', label: 'Product', value: 'product' },
+                { description: 'Process and support', label: 'Operations', value: 'operations' },
               ]
             },
+            queryKey: ['form-showcase-skills'],
           }),
       },
       searchable: true,
@@ -295,7 +295,7 @@ const showcaseForm = defineFormSchema({
               mode: 'modal',
               onSubmit: async ({ formData }) => {
                 await sleep(500)
-                return { success: true, data: formData }
+                return { data: formData, success: true }
               },
             })
             if (!result.isCompleted) {
@@ -313,9 +313,9 @@ const showcaseForm = defineFormSchema({
             const country = isString(result.formData.country) ? result.formData.country : 'N/A'
 
             return {
+              description: `${city} · ${country}`,
               label,
               value: `${label}-${Date.now()}`.toLowerCase().replace(/\s+/gu, '-'),
-              description: `${city} · ${country}`,
             }
           },
           label: 'Add address',
@@ -324,8 +324,8 @@ const showcaseForm = defineFormSchema({
           await sleep(650)
 
           return [
-            { label: 'Paris office', value: 'addr-paris', description: 'FR' },
-            { label: 'Brussels warehouse', value: 'addr-brussels', description: 'BE' },
+            { description: 'FR', label: 'Paris office', value: 'addr-paris' },
+            { description: 'BE', label: 'Brussels warehouse', value: 'addr-brussels' },
           ]
         },
       },
@@ -337,9 +337,9 @@ const showcaseForm = defineFormSchema({
       key: 'profile.channels',
       label: 'Checkbox group',
       options: [
-        { label: 'Email', value: 'email', description: 'Transactional and digest messages' },
-        { label: 'SMS', value: 'sms', description: 'Urgent notifications only' },
-        { label: 'In-app', value: 'in-app', description: 'Product surface notifications' },
+        { description: 'Transactional and digest messages', label: 'Email', value: 'email' },
+        { description: 'Urgent notifications only', label: 'SMS', value: 'sms' },
+        { description: 'Product surface notifications', label: 'In-app', value: 'in-app' },
       ],
       type: 'checkbox-group',
       variant: 'card',
@@ -355,9 +355,9 @@ const showcaseForm = defineFormSchema({
           await sleep(450)
 
           return [
-            { label: 'Ada Lovelace', value: 'ada', description: 'Research' },
-            { label: 'Grace Hopper', value: 'grace', description: 'Engineering' },
-            { label: 'Katherine Johnson', value: 'katherine', description: 'Operations' },
+            { description: 'Research', label: 'Ada Lovelace', value: 'ada' },
+            { description: 'Engineering', label: 'Grace Hopper', value: 'grace' },
+            { description: 'Operations', label: 'Katherine Johnson', value: 'katherine' },
           ]
         },
       },
@@ -367,8 +367,8 @@ const showcaseForm = defineFormSchema({
       key: 'profile.plan',
       label: 'Radio cards',
       options: [
-        { label: 'Starter', value: 'starter', description: 'Light usage' },
-        { label: 'Scale', value: 'scale', description: 'Team workflows' },
+        { description: 'Light usage', label: 'Starter', value: 'starter' },
+        { description: 'Team workflows', label: 'Scale', value: 'scale' },
       ],
       type: 'radio-card',
     },
@@ -416,80 +416,80 @@ const showcaseForm = defineFormSchema({
       description: 'Grouped fields with a nested grid and dotted state.',
       fields: [
         {
+          default: 12,
           key: 'seats',
-          type: 'number',
           label: 'Seats',
           min: 1,
-          default: 12,
+          type: 'number',
         },
         {
-          key: 'confidence',
-          type: 'slider',
-          label: 'Confidence',
-          min: 0,
-          max: 100,
-          step: 5,
           default: 65,
+          key: 'confidence',
+          label: 'Confidence',
+          max: 100,
+          min: 0,
+          step: 5,
           tooltip: true,
+          type: 'slider',
         },
         {
-          key: 'priority',
-          type: 'rating',
-          label: 'Priority',
           default: 3,
+          key: 'priority',
+          label: 'Priority',
+          type: 'rating',
         },
         {
-          key: 'reviewTime',
-          type: 'time',
-          label: 'Review time',
           default: '09:30',
+          key: 'reviewTime',
+          label: 'Review time',
           minuteStep: 5,
+          type: 'time',
         },
         {
+          default: ['verified'],
           key: 'tags',
-          type: 'tag',
           label: 'Tags',
           placeholder: 'Add a tag',
-          default: ['verified'],
+          type: 'tag',
         },
         {
+          default: true,
           key: 'newsletter',
-          type: 'checkbox',
           label: 'Product updates',
-          default: true,
+          type: 'checkbox',
         },
         {
-          key: 'autosave',
-          type: 'switch',
-          label: 'Autosave draft',
-          description: 'Boolean switch with custom icons.',
           checkedIcon: 'i-lucide-check',
-          uncheckedIcon: 'i-lucide-x',
           default: true,
+          description: 'Boolean switch with custom icons.',
+          key: 'autosave',
+          label: 'Autosave draft',
+          type: 'switch',
+          uncheckedIcon: 'i-lucide-x',
         },
         {
-          key: 'accentColor',
-          type: 'color-picker',
-          label: 'Accent color popover',
           default: '#00C16A',
           format: 'hex',
+          key: 'accentColor',
+          label: 'Accent color popover',
+          type: 'color-picker',
         },
         {
-          key: 'inlineColor',
-          type: 'color-picker',
-          label: 'Inline color panel',
           default: '#7C3AED',
           display: 'inline',
           format: 'hex',
+          key: 'inlineColor',
+          label: 'Inline color panel',
+          type: 'color-picker',
         },
         {
           key: 'notes',
-          type: 'textarea',
           label: 'Notes',
-          placeholder: 'Internal notes...',
           layout: {
             span: 'full',
           },
+          placeholder: 'Internal notes...',
+          type: 'textarea',
         },
       ],
       key: 'settings',
@@ -504,16 +504,16 @@ const showcaseForm = defineFormSchema({
     {
       fields: [
         {
-          key: 'contactPrefix',
-          type: 'text',
-          label: 'Prefix',
           default: '+33',
+          key: 'contactPrefix',
+          label: 'Prefix',
+          type: 'text',
         },
         {
           key: 'contactNumber',
-          type: 'text',
           label: 'Phone',
           placeholder: '6 12 34 56 78',
+          type: 'text',
         },
       ],
       key: 'contact',
@@ -528,14 +528,14 @@ const showcaseForm = defineFormSchema({
       fields: [
         {
           key: 'cardHeadline',
-          type: 'text',
           label: 'Card headline',
+          type: 'text',
         },
         {
           key: 'cardStatus',
-          type: 'select',
           label: 'Card status',
           options: ['draft', 'ready', 'archived'],
+          type: 'select',
         },
       ],
       headerExtra: 'Passthrough',
@@ -551,9 +551,9 @@ const showcaseForm = defineFormSchema({
       fields: [
         {
           key: 'columnComment',
-          type: 'textarea',
           label: 'Column passthrough',
           placeholder: 'Column field output is not nested under the column key.',
+          type: 'textarea',
         },
       ],
       key: 'twoColumnComposition',
@@ -577,14 +577,14 @@ const showcaseForm = defineFormSchema({
       fields: [
         {
           key: 'name',
-          type: 'text',
           label: 'Name',
+          type: 'text',
         },
         {
-          key: 'email',
-          type: 'text',
           inputType: 'email',
+          key: 'email',
           label: 'Email',
+          type: 'text',
         },
       ],
       itemLabel: 'Contact',
@@ -603,17 +603,17 @@ const showcaseForm = defineFormSchema({
       fields: [
         {
           key: 'title',
-          type: 'text',
           label: 'Title',
+          type: 'text',
         },
         {
           key: 'dueDate',
-          type: 'date',
           label: 'Due date',
           manualInput: {
             format: 'dd/MM/yyyy',
             placeholder: 'dd/mm/yyyy',
           },
+          type: 'date',
         },
       ],
       itemLabel: 'Milestone',
@@ -660,12 +660,12 @@ const showcaseForm = defineFormSchema({
       label: 'Tree select',
       options: [
         {
-          key: 'engineering',
-          label: 'Engineering',
           children: [
             { key: 'frontend', label: 'Frontend' },
             { key: 'backend', label: 'Backend' },
           ],
+          key: 'engineering',
+          label: 'Engineering',
         },
         { key: 'operations', label: 'Operations' },
       ],
@@ -680,12 +680,12 @@ const showcaseForm = defineFormSchema({
       leafOnly: true,
       options: [
         {
-          key: 'europe',
-          label: 'Europe',
           children: [
             { key: 'france', label: 'France' },
             { key: 'belgium', label: 'Belgium' },
           ],
+          key: 'europe',
+          label: 'Europe',
         },
       ],
       type: 'cascader',
@@ -698,12 +698,12 @@ const showcaseForm = defineFormSchema({
       multiple: true,
       options: [
         {
-          key: 'products',
-          label: 'Products',
           children: [
             { key: 'auctions', label: 'Auctions' },
             { key: 'direct-sales', label: 'Direct sales' },
           ],
+          key: 'products',
+          label: 'Products',
         },
       ],
       type: 'tree-select',
@@ -715,12 +715,12 @@ const showcaseForm = defineFormSchema({
       multiple: true,
       options: [
         {
-          key: 'catalog',
-          label: 'Catalog',
           children: [
             { key: 'catalog.read', label: 'Read' },
             { key: 'catalog.write', label: 'Write' },
           ],
+          key: 'catalog',
+          label: 'Catalog',
         },
       ],
       props: { defaultExpanded: ['catalog'] },
@@ -731,12 +731,12 @@ const showcaseForm = defineFormSchema({
       label: 'Radio tree',
       options: [
         {
-          key: 'teams',
-          label: 'Teams',
           children: [
             { key: 'engineering', label: 'Engineering' },
             { key: 'operations', label: 'Operations' },
           ],
+          key: 'teams',
+          label: 'Teams',
         },
       ],
       props: { defaultExpanded: ['teams'] },
@@ -745,8 +745,8 @@ const showcaseForm = defineFormSchema({
     },
     {
       fields: [
-        { key: 'code', type: 'text', placeholder: 'Code' },
-        { key: 'region', type: 'select', options: ['EU', 'US'] },
+        { key: 'code', placeholder: 'Code', type: 'text' },
+        { key: 'region', options: ['EU', 'US'], type: 'select' },
       ],
       key: 'compactIdentity',
       label: 'Grouped controls',
@@ -755,8 +755,8 @@ const showcaseForm = defineFormSchema({
     },
     {
       fields: [
-        { key: 'enabled', type: 'switch', label: 'Enabled' },
-        { key: 'scope', type: 'select', label: 'Scope', options: ['own', 'all'] },
+        { key: 'enabled', label: 'Enabled', type: 'switch' },
+        { key: 'scope', label: 'Scope', options: ['own', 'all'], type: 'select' },
       ],
       key: 'permissions',
       label: 'Permission matrix',
@@ -772,8 +772,8 @@ const showcaseForm = defineFormSchema({
       confirmDelete: true,
       draggable: true,
       fields: [
-        { key: 'label', type: 'text', label: 'Label', validation: { required: true } },
-        { key: 'quantity', type: 'number', label: 'Quantity', default: 1 },
+        { key: 'label', label: 'Label', type: 'text', validation: { required: true } },
+        { default: 1, key: 'quantity', label: 'Quantity', type: 'number' },
       ],
       key: 'lineItems',
       label: 'Array table',
@@ -790,14 +790,14 @@ const showcaseForm = defineFormSchema({
       variantKey: 'kind',
       variants: [
         {
+          fields: [{ key: 'address', label: 'Email address', type: 'text' }],
           key: 'email',
           label: 'Email',
-          fields: [{ key: 'address', type: 'text', label: 'Email address' }],
         },
         {
+          fields: [{ key: 'number', label: 'Phone number', type: 'phone-number' }],
           key: 'phone',
           label: 'Phone',
-          fields: [{ key: 'number', type: 'phone-number', label: 'Phone number' }],
         },
       ],
     },

@@ -202,8 +202,8 @@ export function resolveBooleanFilterUi(
     preview: resolveTagPreview({
       base: definition.preview,
       empty: getFilterTextValue({
-        value: labels.empty,
         fallback: t('table.filters.booleans.empty'),
+        value: labels.empty,
       }),
       maxTags: 3,
       mode: 'summary',
