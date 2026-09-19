@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs'
 
 import { describe, expect, it } from 'vitest'
 
-const readRepositoryFile = (path: string) =>
-  readFileSync(new URL(`../${path}`, import.meta.url), 'utf-8')
+function readRepositoryFile(path: string) {
+  return readFileSync(new URL(`../${path}`, import.meta.url), 'utf-8')
+}
 
 describe('public package surface', () => {
   it('exports every release-ready runtime domain except spreadsheet', () => {

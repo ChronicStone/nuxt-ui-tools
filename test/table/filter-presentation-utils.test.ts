@@ -39,8 +39,9 @@ describe('panel rule resolution', () => {
 })
 
 describe('display resolution', () => {
-  const definition = (display?: TableUiFilterDefinition['display']) =>
-    ({ display, key: 'k', kind: 'text', label: 'K' }) as unknown as TableUiFilterDefinition
+  function definition(display?: TableUiFilterDefinition['display']) {
+    return { display, key: 'k', kind: 'text', label: 'K' } as unknown as TableUiFilterDefinition
+  }
 
   it('defaults to tag, keeps valid locations and rejects unknown ones', () => {
     expect(resolveFilterDisplayLocation()).toBe('tag')

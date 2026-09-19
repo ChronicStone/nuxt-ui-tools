@@ -10,14 +10,15 @@ import type { Harness } from '../harness'
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
-const mountTags = (
+function mountTags(
   options: Partial<Parameters<typeof mountLoaded>[0]> & { tagProps?: Record<string, unknown> } = {},
-) =>
-  mountLoaded({
+) {
+  return mountLoaded({
     schema: createAccountsSchema(),
     ...options,
     render: () => h(DataListFilterTags, { showAdd: true, showClear: true, ...options.tagProps }),
   })
+}
 
 describe('filter tags bar', () => {
   it('renders dormant tags dashed and the add-filter trigger', async () => {

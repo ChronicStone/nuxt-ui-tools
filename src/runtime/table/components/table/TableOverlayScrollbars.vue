@@ -110,8 +110,12 @@ function startDrag(axis: 'vertical' | 'horizontal', event: PointerEvent) {
   window.addEventListener('pointercancel', onUp)
 }
 
-const onEnter = () => (hovered.value = true)
-const onLeave = () => (hovered.value = false)
+function onEnter() {
+  return (hovered.value = true)
+}
+function onLeave() {
+  return (hovered.value = false)
+}
 
 function attach(el: HTMLElement | null) {
   observer?.disconnect()

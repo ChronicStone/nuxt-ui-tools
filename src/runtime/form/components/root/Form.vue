@@ -103,7 +103,7 @@ onMounted(async () => {
 })
 
 if (import.meta.client) {
-  const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  function handleBeforeUnload(event: BeforeUnloadEvent) {
     if (!shouldConfirmDirtyNavigation()) {
       return
     }

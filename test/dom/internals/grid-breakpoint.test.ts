@@ -53,7 +53,9 @@ describe('breakpoint composable', () => {
       component: Probe,
       schema: createAccountsSchema(),
     })
-    const probe = () => harness!.wrapper.find('[data-mobile]')
+    function probe() {
+      return harness!.wrapper.find('[data-mobile]')
+    }
     expect(probe().attributes('data-mobile')).toBe('true')
     expect(probe().attributes('data-tablet')).toBe('false')
     setBreakpoint('md')

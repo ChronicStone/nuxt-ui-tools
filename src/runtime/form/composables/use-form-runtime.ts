@@ -57,8 +57,8 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
 
   setContext(getSchemaContext(params.schema.value))
 
-  const apiFactory = (path: readonly string[], field?: FormField) =>
-    createFieldApi({
+  function apiFactory(path: readonly string[], field?: FormField) {
+    return createFieldApi({
       clearExternalError: () => validation.clearError(path),
       ctx: context,
       field,
@@ -75,6 +75,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       validateField: () =>
         field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
     })
+  }
 
   const state = useFormState({
     apiFactory,

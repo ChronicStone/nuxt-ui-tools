@@ -3,8 +3,9 @@ import { describe, expect, it } from 'vitest'
 
 import { transformQueryPrefetchMacro } from '../../src/internals/query-prefetch-transform'
 
-const transform = (source: string) =>
-  transformQueryPrefetchMacro(typescript, source, '/app/pages/products/[id].vue')
+function transform(source: string) {
+  return transformQueryPrefetchMacro(typescript, source, '/app/pages/products/[id].vue')
+}
 
 describe('query prefetch page macro', () => {
   it('adds the definition to existing object page metadata', () => {

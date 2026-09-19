@@ -10,16 +10,17 @@ import type { Harness } from '../harness'
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
-const mountFooter = (
+function mountFooter(
   options: Partial<Parameters<typeof mountLoaded>[0]> & {
     footerProps?: Record<string, unknown>
   } = {},
-) =>
-  mountLoaded({
+) {
+  return mountLoaded({
     schema: createAccountsSchema(),
     ...options,
     render: () => h(DataListPagination, options.footerProps),
   })
+}
 
 describe('TableFooter desktop', () => {
   it('renders the localized range, page size chip and pager', async () => {

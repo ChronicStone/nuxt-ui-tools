@@ -10,16 +10,17 @@ import type { Harness } from '../harness'
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
-const mountMenu = (
+function mountMenu(
   options: Partial<Parameters<typeof mountLoaded>[0]> & {
     menuProps?: Record<string, unknown>
   } = {},
-) =>
-  mountLoaded({
+) {
+  return mountLoaded({
     schema: createAccountsSchema(),
     ...options,
     render: () => h(DataListSortMenu, { layouts: ['table', 'grid'], ...options.menuProps }),
   })
+}
 
 describe('DataListSortMenu desktop', () => {
   it('shows the active sort in the trigger and lists sortable keys', async () => {

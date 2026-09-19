@@ -204,11 +204,13 @@ type ColumnSlot =
   | { kind: 'spacer'; colSpan: number; key: string }
 
 const columnSlots = computed<ColumnSlot[]>(() => {
-  const asSlot = (column: { id: string }): ColumnSlot => ({
-    columnId: column.id,
-    key: column.id,
-    kind: 'column',
-  })
+  function asSlot(column: { id: string }): ColumnSlot {
+    return {
+      columnId: column.id,
+      key: column.id,
+      kind: 'column',
+    }
+  }
   const slots: ColumnSlot[] = table.getStartVisibleLeafColumns().map(asSlot)
   if (!columnsOverflow.value) {
     slots.push(...centerColumns.value.map(asSlot), ...table.getEndVisibleLeafColumns().map(asSlot))
@@ -426,11 +428,12 @@ function renderSkeletonCell(columnId: string, rowIndex: number) {
   const kind =
     meta?.internal === 'selection' ? 'check' : meta?.internal ? 'none' : (meta?.skeleton ?? 'text')
   const seed = rowIndex * 7 + columnId.length
-  const line = (width: number, extra = '') =>
-    h('span', {
+  function line(width: number, extra = '') {
+    return h('span', {
       class: `nut-dl-skeleton block h-3 rounded ${extra}`,
       style: { width: `${width}%` },
     })
+  }
   return () => {
     if (kind === 'none') {
       return null

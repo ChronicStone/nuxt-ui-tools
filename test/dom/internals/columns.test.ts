@@ -62,7 +62,9 @@ describe('table columns', () => {
       size: 56,
     })
     expect(defs.at(-1)?.meta).toMatchObject({ align: 'right', internal: 'actions' })
-    const byId = (id: string) => defs.find((def) => def.id === id)!
+    function byId(id: string) {
+      return defs.find((def) => def.id === id)!
+    }
     expect(byId('name')).toMatchObject({ enableResizing: true, minSize: 200, size: 228 })
     expect(byId('name').meta).toMatchObject({ canHide: false, skeleton: 'avatar', sortable: true })
     expect(byId('contracts').meta.skeleton).toBe('number')

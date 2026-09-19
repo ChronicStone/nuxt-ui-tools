@@ -22,11 +22,14 @@ const TARGET_TYPE = {
   note: 'Mémo',
   user: 'Utilisateur',
 } as const
-const opts = (o: Record<string, string>) =>
-  Object.entries(o).map(([value, label]) => ({ label, value }))
+function opts(o: Record<string, string>) {
+  return Object.entries(o).map(([value, label]) => ({ label, value }))
+}
 const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' })
 const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
-const Dash = () => <span class="text-dimmed">—</span>
+function Dash() {
+  return <span class="text-dimmed">—</span>
+}
 
 async function queryAudit(
   request: TableSourceRequestContext<AuditEvent>,

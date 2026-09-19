@@ -35,7 +35,9 @@ export interface AuditEvent {
   details: string
 }
 
-const pick = <T>(arr: readonly T[], i: number) => arr[i % arr.length] as T
+function pick<T>(arr: readonly T[], i: number) {
+  return arr[i % arr.length] as T
+}
 
 export function makeAuditEvents(count: number, seed = 99): AuditEvent[] {
   faker.seed(seed)

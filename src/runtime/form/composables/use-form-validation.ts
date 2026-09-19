@@ -568,8 +568,9 @@ function buildLeafRules(params: {
     }
     const ruleName = resolveRuleName(rule, index)
     const messageKey = `${key}:${ruleName}`
-    const message = () =>
-      params.dynamicMessages.value.get(messageKey) ?? resolveRuleMessage(rule, params.field)
+    function message() {
+      return params.dynamicMessages.value.get(messageKey) ?? resolveRuleMessage(rule, params.field)
+    }
     if (isAsyncFunction(validate)) {
       output[ruleName] = withMessage(
         withAsync(async () =>

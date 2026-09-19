@@ -8,8 +8,9 @@ let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
 const rows = createAccounts(60)
-const sum = (list: typeof rows, key: 'contracts' | 'consumption') =>
-  list.reduce((total, row) => total + row[key], 0)
+function sum(list: typeof rows, key: 'contracts' | 'consumption') {
+  return list.reduce((total, row) => total + row[key], 0)
+}
 
 describe('table summaries', () => {
   it('derives aggregates over the filtered scope and resolves async cells', async () => {
@@ -95,7 +96,9 @@ describe('table summaries', () => {
   it('supports avg, min, max and count kinds', async () => {
     const schema = createAccountsSchema({ rows })
     const columns = schema.table?.columns ?? []
-    const byKey = (key: string) => columns.find((entry) => entry.key === key)!
+    function byKey(key: string) {
+      return columns.find((entry) => entry.key === key)!
+    }
     byKey('contracts').summary = 'avg'
     byKey('consumption').summary = 'max'
     byKey('country').summary = 'count'

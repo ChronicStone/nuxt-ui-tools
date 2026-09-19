@@ -11,14 +11,15 @@ let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 beforeEach(() => bulkActionCalls.splice(0))
 
-const mountBar = (
+function mountBar(
   options: Partial<Parameters<typeof mountLoaded>[0]> & { barProps?: Record<string, unknown> } = {},
-) =>
-  mountLoaded({
+) {
+  return mountLoaded({
     schema: createAccountsSchema(),
     ...options,
     render: () => h(DataListSelectionActions, options.barProps),
   })
+}
 
 describe('selection actions part', () => {
   it('appears with the selection and offers the scope switch', async () => {

@@ -11,7 +11,9 @@ let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
 const rows60 = createAccounts(60)
-const sum = (key: 'contracts' | 'consumption') => rows60.reduce((total, row) => total + row[key], 0)
+function sum(key: 'contracts' | 'consumption') {
+  return rows60.reduce((total, row) => total + row[key], 0)
+}
 
 async function mountTable(
   options: Parameters<typeof mountDataList>[0] & { tableProps?: Record<string, unknown> },

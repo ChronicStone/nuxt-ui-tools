@@ -194,7 +194,7 @@ function createNumericValueGuard(value: number) {
   return !Number.isNaN(value) && Number.isFinite(value)
 }
 
-const createSpreadsheetRuleBuilder = () => {
+function createSpreadsheetRuleBuilder() {
   const { t } = useUiToolsLocale()
 
   return {

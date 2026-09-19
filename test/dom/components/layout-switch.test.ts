@@ -10,16 +10,17 @@ import type { Harness } from '../harness'
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
-const mountSwitch = (
+function mountSwitch(
   options: Partial<Parameters<typeof mountLoaded>[0]> & {
     switchProps?: Record<string, unknown>
   } = {},
-) =>
-  mountLoaded({
+) {
+  return mountLoaded({
     schema: createAccountsSchema(),
     ...options,
     render: () => h(DataListLayoutSwitch, options.switchProps),
   })
+}
 
 describe('layout switch part', () => {
   it('renders both layouts with the active one highlighted and switches on click', async () => {

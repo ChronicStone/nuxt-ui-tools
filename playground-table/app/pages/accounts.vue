@@ -53,18 +53,30 @@ function withStress(rows: typeof baseAccounts, people: typeof contacts) {
   return out
 }
 
-const opts = (o: Record<string, string>) =>
-  Object.entries(o).map(([value, label]) => ({ label, value }))
-const contactOpts = (role: string) =>
-  contacts
+function opts(o: Record<string, string>) {
+  return Object.entries(o).map(([value, label]) => ({ label, value }))
+}
+function contactOpts(role: string) {
+  return contacts
     .filter((c) => c.roles.includes(role as never))
     .map((c) => ({ label: c.label, value: c.id }))
-const fmtNum = (v: number) => new Intl.NumberFormat('fr-FR').format(v).replaceAll(' ', '\u00A0')
-const fmtDate = (v: string) =>
-  new Date(v).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-const Bool = ({ v }: { v: boolean }) =>
-  v ? <span class="text-highlighted">✓</span> : <span class="text-dimmed">—</span>
-const Dash = () => <span class="text-dimmed">—</span>
+}
+function fmtNum(v: number) {
+  return new Intl.NumberFormat('fr-FR').format(v).replaceAll(' ', '\u00A0')
+}
+function fmtDate(v: string) {
+  return new Date(v).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+function Bool({ v }: { v: boolean }) {
+  return v ? <span class="text-highlighted">✓</span> : <span class="text-dimmed">—</span>
+}
+function Dash() {
+  return <span class="text-dimmed">—</span>
+}
 const STATUS_COLOR = { active: '#ff9600', inactive: '#c0392b', pending: '#b8b1a7' } as const
 
 const schema = defineTableSchema({

@@ -123,7 +123,9 @@ describe('runtime columns', () => {
       getSortableKey({ column: findSchemaColumn({ columnId: 'created_at_label', schema })! }),
     ).toBe('createdAt')
     expect(findSchemaColumn({ columnId: 'nope', schema })).toBeUndefined()
-    const none = () => null
+    function none() {
+      return null
+    }
     expect(
       getColumnHeaderIcon({ columnId: 'a', getPinnedState: none, getSortState: () => 'asc' }),
     ).toBe('i-lucide-arrow-up')

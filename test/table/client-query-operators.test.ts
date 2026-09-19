@@ -9,14 +9,16 @@ const rows = [
   { country: 'ES', id: 3, name: 'Gamma', score: 30, tags: [] },
 ]
 const search = { fields: ['name'] as never[], value: '' }
-const group = (key: string, operator: string, value: unknown): TableResolvedFilterGroup<string> =>
-  ({
+function group(key: string, operator: string, value: unknown): TableResolvedFilterGroup<string> {
+  return {
     children: [{ key, operator, type: 'condition', value }],
     combinator: 'and',
     type: 'group',
-  }) as TableResolvedFilterGroup<string>
-const ids = (filters: TableResolvedFilterGroup<string>) =>
-  filterClientRows({ filters, rows, search }).map((row) => row.id)
+  } as TableResolvedFilterGroup<string>
+}
+function ids(filters: TableResolvedFilterGroup<string>) {
+  return filterClientRows({ filters, rows, search }).map((row) => row.id)
+}
 
 describe('client filter operators', () => {
   it('matches isAnyOf and negates every listed value with isNot', () => {

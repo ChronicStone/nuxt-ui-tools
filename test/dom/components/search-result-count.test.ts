@@ -67,7 +67,9 @@ describe('search part', () => {
       render: () => h(DataListSearch),
       schema: createAccountsSchema({ delay: 40 }),
     })
-    const input = () => harness!.wrapper.find('input[data-ui="UInput"]')
+    function input() {
+      return harness!.wrapper.find('input[data-ui="UInput"]')
+    }
     expect(input().attributes('data-loading')).toBeUndefined()
     const refresh = harness.internals.queryContent.refreshData()()
     await harness.until(() => input().attributes('data-loading') === 'true')

@@ -47,8 +47,12 @@ export interface Account {
   createdAt: string
 }
 
-const pick = <T>(arr: readonly T[], i: number) => arr[i % arr.length] as T
-const keys = <T extends object>(o: T) => Object.keys(o) as (keyof T)[]
+function pick<T>(arr: readonly T[], i: number) {
+  return arr[i % arr.length] as T
+}
+function keys<T extends object>(o: T) {
+  return Object.keys(o) as (keyof T)[]
+}
 
 export function makeContacts(count: number, seed = 7): Contact[] {
   faker.seed(seed)
