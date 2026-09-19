@@ -44,7 +44,7 @@ export type { GroupFieldOutput } from '../fields/group/types'
 export type { MatrixFieldOutput } from '../fields/matrix/types'
 
 /* eslint-disable */
-export type ResolveFormFieldValue<TField> = TField extends { type: 'text' }
+type ResolveNullableFormFieldValue<TField> = TField extends { type: 'text' }
   ? TextFieldOutput
   : TField extends { type: 'password' }
     ? PasswordFieldOutput
@@ -117,5 +117,9 @@ export type ResolveFormFieldValue<TField> = TField extends { type: 'text' }
                                                                   ? ObjectFieldOutput<FormValue>
                                                                   : FormValue
 /* eslint-enable */
+
+export type ResolveFormFieldValue<TField> = TField extends { required: true }
+  ? NonNullable<ResolveNullableFormFieldValue<TField>>
+  : ResolveNullableFormFieldValue<TField>
 
 export type ExtractFormFieldInternalValue<TField> = ResolveFormFieldValue<TField>

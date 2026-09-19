@@ -90,7 +90,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   })
 
   const focus = useFormFocus({
-    getErrors: () => validation.errors.value,
+    getErrors: () => validation.validationErrors.value,
   })
 
   async function validate(options?: FormValidationOptions) {

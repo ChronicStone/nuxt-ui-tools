@@ -51,6 +51,59 @@ function createApiFactory(state: FormObject) {
 }
 
 describe('Regle-owned form validation', () => {
+  it('accepts native Regle validators at the field boundary', async () => {
+    const { email } = await import('@regle/rules')
+    const schema = defineFormSchema({
+      fields: [
+        {
+          key: 'email',
+          type: 'text',
+          required: true,
+          validators: {
+            email,
+          },
+        },
+      ],
+    })
+    const state = reactive<FormObject>({ email: 'invalid' })
+    const validation = useFormValidation({
+      schema: () => schema,
+      state,
+      context: {},
+      apiFactory: createApiFactory(state),
+      getValidationMode: () => true,
+    })
+
+    expect(await validation.validate()).toBe(false)
+    expect(validation.getFieldError(['email'])).toBe('The value must be a valid email address')
+
+    state.email = 'ada@example.com'
+    expect(await validation.validate()).toBe(true)
+  })
+
+  it('keeps custom errors visible without blocking validation', async () => {
+    const schema = defineFormSchema({
+      fields: [{ key: 'email', type: 'text' }],
+    })
+    const state = reactive<FormObject>({ email: 'ada@example.com' })
+    const validation = useFormValidation({
+      schema: () => schema,
+      state,
+      context: {},
+      apiFactory: createApiFactory(state),
+      getValidationMode: () => true,
+    })
+
+    validation.setError(['email'], 'This email is already registered.')
+
+    expect(validation.getFieldError(['email'])).toBe('This email is already registered.')
+    expect(validation.errors.value).toEqual([
+      { path: 'email', message: 'This email is already registered.' },
+    ])
+    expect(await validation.validate()).toBe(true)
+    expect(await validation.validateFields(schema.fields, [])).toBe(true)
+  })
+
   it('runs required and callback rules through the Regle tree', async () => {
     const schema = defineFormSchema({
       fields: [

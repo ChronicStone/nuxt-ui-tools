@@ -133,7 +133,8 @@ accepts renderable Vue content and takes precedence over the field's text-only `
 Submit handlers receive typed external-error controls through `api.setError(path, message)` and
 `api.clearError(path?)`. Map expected server failures to their owning fields and return
 `{ success: false }`; use one application-level toast only when the failure is not mapped. Editing
-a field clears its own external error automatically. When one error belongs to multiple fields,
+a field clears its own external error automatically. External errors remain visible but do not
+participate in validation or block a later submission attempt. When one error belongs to multiple fields,
 declare those fields as dependencies and clear the sibling error from `onDependencyChange`.
 
 In stepped forms, the built-in `Next` action validates only the visible step, then awaits

@@ -11,6 +11,8 @@ import type {
   FormRuntimeContext,
   FormValidationError,
   FormValidationMode,
+  FormValidators,
+  FormValidatorsConfig,
 } from '../types'
 import { resolveFieldDependencies } from '../utils/dependencies'
 import { createFormFieldInstance } from '../utils/field-instance'
@@ -147,7 +149,7 @@ export function useFormValidation(params: {
       asyncValid = await validateRegleStatuses(nextAsyncStatuses.map(({ status }) => status))
       storeValidatedMessages(nextAsyncStatuses)
       if (validationRuns.get('$form') !== run) return asyncValid
-      return syncResult.valid && asyncValid && customErrors.value.length === 0
+      return syncResult.valid && asyncValid
     } finally {
       removePendingPaths(pendingPaths, potentialAsyncPaths, pendingToken)
     }
@@ -195,13 +197,11 @@ export function useFormValidation(params: {
       asyncValid = await validateRegleStatuses(nextAsyncStatuses.map(({ status }) => status))
       storeValidatedMessages(nextAsyncStatuses)
       if (validationRuns.get(scope) !== run)
-        return !errors.value.some((error) => paths.some((path) => isScopedPath(error.path, path)))
+        return !validationErrors.value.some((error) =>
+          paths.some((path) => isScopedPath(error.path, path)),
+        )
 
-      return (
-        syncResult.valid &&
-        asyncValid &&
-        !errors.value.some((error) => paths.some((path) => isScopedPath(error.path, path)))
-      )
+      return syncResult.valid && asyncValid
     } finally {
       removePendingPaths(pendingPaths, potentialAsyncPaths, pendingToken)
     }
@@ -314,6 +314,7 @@ export function useFormValidation(params: {
 
   return {
     errors,
+    validationErrors,
     validate,
     validateFields,
     getFieldError,
@@ -484,7 +485,6 @@ function buildLeafRules(params: {
 }): RegleRuleTree {
   const output: RegleRuleTree = {}
   const validation = Object.getOwnPropertyDescriptor(params.field, 'validation')?.value
-  if (!isRecord(validation)) return output
   const key = params.path.join('.')
 
   if (params.mode !== 'rules' && resolveRequired(params.field, params.callbackParams))
@@ -494,7 +494,22 @@ function buildLeafRules(params: {
     )
 
   if (params.mode === 'required') return output
-  const authoredRules = Object.getOwnPropertyDescriptor(validation, 'rules')?.value
+
+  const authoredValidators: FormValidatorsConfig | undefined =
+    'validators' in params.field ? params.field.validators : undefined
+  let validators: FormValidators | undefined
+  if (isValidatorMap(authoredValidators)) validators = authoredValidators
+  else if (isFunction(authoredValidators)) validators = authoredValidators(params.callbackParams)
+  if (validators) {
+    for (const name in validators) {
+      const rule = validators[name]
+      if (rule) output[name] = rule
+    }
+  }
+
+  const authoredRules = isRecord(validation)
+    ? Object.getOwnPropertyDescriptor(validation, 'rules')?.value
+    : undefined
   if (!Array.isArray(authoredRules)) return output
 
   authoredRules.forEach((rule, index) => {
@@ -531,6 +546,10 @@ function buildLeafRules(params: {
   })
 
   return output
+}
+
+function isValidatorMap(value: FormValidatorsConfig | undefined): value is FormValidators {
+  return isObject(value)
 }
 
 function resolveRuleResult(

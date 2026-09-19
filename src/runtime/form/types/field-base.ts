@@ -4,7 +4,7 @@ import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
 import type { FormTransformConfig } from './transform'
 import type { FormDynamic, FormMaybePromise, FormObject, FormRenderable, FormText } from './utils'
-import type { FormValidationConfig } from './validation'
+import type { FormValidationConfig, FormValidatorsConfig } from './validation'
 
 /**
  * Field kinds targeted by the current form runtime plan.
@@ -95,6 +95,12 @@ export interface FormStatefulFieldBase<
   condition?: FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Validation behavior for this field. */
   validation?: FormValidationConfig<TValue, TContext, TDeps>
+  /** Marks this field as required. */
+  required?: boolean | FormFieldCallback<boolean, TContext, TDeps, TValue>
+  /** Message used by the required rule. */
+  requiredMessage?: FormText
+  /** Native Regle validation rules. */
+  validators?: FormValidatorsConfig<TContext>
   /** Input/output transforms for this field. */
   transform?: FormTransformConfig<TValue, FormValue, TContext, TDeps>
   /** Submit/output behavior for this field. */

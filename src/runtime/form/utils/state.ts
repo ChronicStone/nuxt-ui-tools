@@ -489,6 +489,10 @@ function applyOutputTransform(field: FormField, value: FormValue, params: FormFi
 }
 
 export function resolveRequired(field: FormField, params: FormFieldCallbackParams) {
+  const authoredRequired = Object.getOwnPropertyDescriptor(field, 'required')?.value
+  if (isFunction(authoredRequired)) return authoredRequired(params)
+  if (isBoolean(authoredRequired)) return authoredRequired
+
   const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
   if (!isRecord(validation)) return false
   const required = validation.required
@@ -497,6 +501,11 @@ export function resolveRequired(field: FormField, params: FormFieldCallbackParam
 }
 
 export function resolveRequiredMessage(field: FormField): string {
+  const authoredMessage = Object.getOwnPropertyDescriptor(field, 'requiredMessage')?.value
+  if (isFunction(authoredMessage)) return String(authoredMessage())
+  if (isNumber(authoredMessage)) return String(authoredMessage)
+  if (isString(authoredMessage)) return authoredMessage
+
   const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
   if (!isRecord(validation)) return 'This field is required.'
   const message = validation.requiredMessage

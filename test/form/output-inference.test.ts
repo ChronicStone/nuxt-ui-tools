@@ -357,6 +357,13 @@ const matrixSchema = defineFormSchema({
   ],
 })
 
+const requiredSchema = defineFormSchema({
+  fields: [
+    { key: 'email', type: 'text', required: true },
+    { key: 'password', type: 'password', required: true },
+  ],
+})
+
 function assertFormApiTypes(formApi: FormApiController) {
   const baseResult = formApi.createForm(schema)
   expectTypeOf<Awaited<typeof baseResult>>().toMatchTypeOf<FormApiCreateResult<SchemaOutput>>()
@@ -478,6 +485,13 @@ describe('form output inference', () => {
     expectTypeOf<ExtractFormFieldOutputValue<RatingField>>().toEqualTypeOf<number | null>()
     expectTypeOf<ExtractFormFieldOutputValue<TimeField>>().toEqualTypeOf<string | null>()
     expectTypeOf<ExtractFormFieldOutputValue<SelectedQueryField>>().toEqualTypeOf<'draft' | null>()
+  })
+
+  it('removes null from required field output', () => {
+    expectTypeOf<ExtractFormOutput<typeof requiredSchema>>().toEqualTypeOf<{
+      email: string
+      password: string
+    }>()
   })
 
   it('infers matrix rows and discriminated array variants', () => {

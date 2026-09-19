@@ -1,6 +1,8 @@
+import type { RegleRuleRaw } from '@regle/core'
+
 import type { FormValue } from './'
 import type { FormFieldCallback } from './callbacks'
-import type { FormMaybePromise, FormText } from './utils'
+import type { FormMaybePromise, FormObject, FormText } from './utils'
 
 /**
  * Result returned by a form validation rule.
@@ -70,3 +72,11 @@ export interface FormValidationConfig<TValue = FormValue, TContext = {}, TDeps =
   /** Additional field rules. */
   rules?: readonly FormValidationRule<TValue, TContext, TDeps>[]
 }
+
+/** Native Regle rules keyed by their validation name. */
+export type FormValidators = Record<string, RegleRuleRaw>
+
+/** Static or dependency-aware native Regle rules for one field. */
+export type FormValidatorsConfig<TContext = {}> =
+  | FormValidators
+  | FormFieldCallback<FormValidators, TContext, FormObject>
