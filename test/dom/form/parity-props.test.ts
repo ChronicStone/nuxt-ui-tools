@@ -9,13 +9,13 @@ describe('text parity props', () => {
     const schema = defineFormSchema({
       actions: [],
       fields: [
-        { key: 'vat', label: 'TVA', mask: '@@## ### ### ###', type: 'text' },
+        { key: 'vat', label: 'TVA', mask: 'AA## ### ### ###', type: 'text' },
         { key: 'siren', label: 'SIREN', mask: '### ### ###', maskOutput: 'raw', type: 'text' },
       ],
     })
     const harness = await mountForm({ schema })
 
-    await harness.setInput('vat', 'FR12345678901')
+    await harness.setInput('vat', 'fr12345678901')
     expect(harness.form.state.get('vat')).toBe('FR12 345 678 901')
 
     await harness.setInput('siren', '123456789')

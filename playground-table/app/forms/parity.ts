@@ -12,7 +12,7 @@ export function parityFormSchema() {
         description: { display: 'tooltip', text: 'Format contrôlé selon le pays' },
         key: 'vat',
         label: 'Numéro de TVA',
-        mask: '@@## ### ### ###',
+        mask: 'AA## ### ### ###',
         mono: true,
         placeholder: 'FR00 000 000 000',
         type: 'text',

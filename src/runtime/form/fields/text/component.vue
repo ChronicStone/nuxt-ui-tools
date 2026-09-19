@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
+import { vMaska } from 'maska/vue'
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormTextField } from '../../types'
-import { applyTextMask, stripTextMask } from '../../utils/mask'
+import { applyTextMask, maskDirectiveOptions, stripTextMask } from '../../utils/mask'
 import { isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
@@ -27,6 +28,7 @@ const model = computed<string | undefined>({
   get: () => displayValue(form.getValue(props.path)),
   set: (value) => form.setValue(props.path, normalize(value)),
 })
+const maskOptions = computed(() => maskDirectiveOptions(props.field.mask))
 const prefix = computed(() => resolveFormText(props.field.prefix))
 const suffix = computed(() => resolveFormText(props.field.suffix))
 const showClear = computed(
@@ -70,6 +72,7 @@ function clear() {
   <UInput
     v-if="bare"
     v-model="model"
+    v-maska="maskOptions"
     v-bind="controlProps"
     :class="controlClass"
     :type="field.inputType ?? 'text'"
@@ -103,6 +106,7 @@ function clear() {
   <FormFieldShell v-else :field="field" :path="path">
     <UInput
       v-model="model"
+      v-maska="maskOptions"
       v-bind="controlProps"
       :class="controlClass"
       :type="field.inputType ?? 'text'"
