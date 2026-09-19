@@ -64,8 +64,8 @@ export type FormFieldType =
 export interface FormStatefulFieldBase<
   TType extends FormFieldType,
   TValue,
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
 > {
   /** Raw path used to read/write the field value in form state. */
   key: string
@@ -131,7 +131,11 @@ export interface FormStatefulFieldBase<
 /**
  * Base properties for stateless visual fields.
  */
-export interface FormStatelessFieldBase<TType extends FormFieldType, TContext = {}, TDeps = {}> {
+export interface FormStatelessFieldBase<
+  TType extends FormFieldType,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   /** Stable key for renderer identity. Stateless fields do not write form state. */
   key: string
   /** Discriminant used by the field registry. */
@@ -149,7 +153,11 @@ export interface FormStatelessFieldBase<TType extends FormFieldType, TContext = 
 /**
  * Base properties for structural fields that render children.
  */
-export interface FormContainerFieldBase<TType extends FormFieldType, TContext = {}, TDeps = {}> {
+export interface FormContainerFieldBase<
+  TType extends FormFieldType,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   /** Stable renderer key. */
   key: string
   /** Discriminant used by the field registry. */

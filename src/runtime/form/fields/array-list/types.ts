@@ -6,7 +6,10 @@ export interface FormArrayVirtualFields {
   [key: string]: (index: number) => FormValue
 }
 
-export interface FormArrayActionParams<TContext = {}, TDeps = {}> {
+export interface FormArrayActionParams<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   index: number
   item: FormObject
   items: readonly FormObject[]
@@ -17,38 +20,47 @@ export interface FormArrayActionParams<TContext = {}, TDeps = {}> {
   getOptions: (key: string) => readonly FormValue[]
 }
 
-export interface FormArrayCustomAction<TContext = {}, TDeps = {}> {
+export interface FormArrayCustomAction<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   label: FormText
   icon?: string
   condition?: (params: FormArrayActionParams<TContext, TDeps>) => boolean
   action: (params: FormArrayActionParams<TContext, TDeps>) => FormMaybePromise<void>
 }
 
-export type FormArrayActionCondition<TContext = {}, TDeps = {}> =
-  | boolean
-  | ((params: FormArrayActionParams<TContext, TDeps>) => boolean)
+export type FormArrayActionCondition<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = boolean | ((params: FormArrayActionParams<TContext, TDeps>) => boolean)
 
-export interface FormArrayBaseAction<TContext = {}, TDeps = {}> {
+export interface FormArrayBaseAction<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   label?: FormText
   icon?: string
   condition?: FormArrayActionCondition<TContext, TDeps>
 }
 
-export type FormArrayAction<TContext = {}, TDeps = {}> =
+export type FormArrayAction<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> =
   | FormArrayActionCondition<TContext, TDeps>
   | FormArrayBaseAction<TContext, TDeps>
 
-export interface FormArrayFieldActions<TContext = {}, TDeps = {}> {
+export interface FormArrayFieldActions<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   addItem?: FormArrayAction<TContext, TDeps>
   deleteItem?: FormArrayAction<TContext, TDeps>
   custom?: readonly FormArrayCustomAction<TContext, TDeps>[]
 }
 
-export interface FormArrayListField<TContext = {}, TDeps = {}> extends FormContainerFieldBase<
-  'array-list',
-  TContext,
-  TDeps
-> {
+export interface FormArrayListField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormContainerFieldBase<'array-list', TContext, TDeps> {
   addItemLabel?: FormText
   emptyLabel?: FormText
   itemLabel?: FormText

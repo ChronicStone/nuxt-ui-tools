@@ -1,12 +1,10 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { NullableValue } from '../../types/field-output-utils'
 
-export interface FormOneTimeCodeField<TContext = {}, TDeps = {}> extends FormStatefulFieldBase<
-  'one-time-code',
-  string | null,
-  TContext,
-  TDeps
-> {
+export interface FormOneTimeCodeField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormStatefulFieldBase<'one-time-code', string | null, TContext, TDeps> {
   length?: number
   mask?: boolean
   otp?: boolean

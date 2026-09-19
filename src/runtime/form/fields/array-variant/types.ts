@@ -4,14 +4,17 @@ import type { FormContainerLayout } from '../../types/layout'
 import type { FormDynamic, FormObject, FormText } from '../../types/utils'
 import type { FormArrayFieldActions, FormArrayVirtualFields } from '../array-list/types'
 
-export interface FormArrayVariant<TContext = {}, TDeps = {}> {
+export interface FormArrayVariant<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> {
   key: string | number
   label: FormText
   fields: readonly FormField<TContext, TDeps>[]
   virtualFields?: FormArrayVirtualFields
 }
 
-export interface FormArrayVariantField<TContext = {}, TDeps = {}> {
+export interface FormArrayVariantField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   key: string
   type: 'array-variant'
   label?: FormText

@@ -27,32 +27,35 @@ export interface FormDateFamilyOptions {
   calendar?: FormDateFamilyCalendarOptions
 }
 
-export interface FormDateTimeField<TContext = {}, TDeps = {}>
+export interface FormDateTimeField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
   extends FormStatefulFieldBase<'datetime', string | null, TContext, TDeps>, FormDateFamilyOptions {
   minuteStep?: number
 }
 
-export interface FormDateRangeField<TContext = {}, TDeps = {}>
+export interface FormDateRangeField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
   extends
     FormStatefulFieldBase<'daterange', readonly [string, string] | null, TContext, TDeps>,
     FormDateFamilyOptions {}
 
-export interface FormMonthRangeField<TContext = {}, TDeps = {}>
+export interface FormMonthRangeField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
   extends
     FormStatefulFieldBase<'monthrange', readonly [string, string] | null, TContext, TDeps>,
     FormDateFamilyOptions {}
 
-export interface FormDateTimeRangeField<TContext = {}, TDeps = {}>
+export interface FormDateTimeRangeField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+>
   extends
     FormStatefulFieldBase<'datetimerange', readonly [string, string] | null, TContext, TDeps>,
     FormDateFamilyOptions {
   minuteStep?: number
 }
 
-export interface FormMonthField<TContext = {}, TDeps = {}>
+export interface FormMonthField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
   extends FormStatefulFieldBase<'month', string | null, TContext, TDeps>, FormDateFamilyOptions {}
 
-export interface FormYearField<TContext = {}, TDeps = {}>
+export interface FormYearField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>>
   extends
     FormStatefulFieldBase<'year', string | null, TContext, TDeps>,
     Pick<FormDateFamilyOptions, 'clearable' | 'manualInput' | 'manualInputFormat' | 'calendar'> {
@@ -67,7 +70,7 @@ export type DateTimeRangeFieldOutput = readonly [string, string] | NullableValue
 export type MonthFieldOutput = string | NullableValue
 export type YearFieldOutput = string | NullableValue
 
-export type FormDateFamilyField<TContext = {}, TDeps = {}> =
+export type FormDateFamilyField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> =
   | FormDateTimeField<TContext, TDeps>
   | FormDateRangeField<TContext, TDeps>
   | FormMonthRangeField<TContext, TDeps>

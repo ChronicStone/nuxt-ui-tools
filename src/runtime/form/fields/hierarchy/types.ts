@@ -41,8 +41,8 @@ interface FormTreeSelectionOptions {
 }
 
 export interface FormTreeSelectField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormHierarchyOption<TValue> = FormHierarchyOption<TValue>,
 >
@@ -55,8 +55,8 @@ export interface FormTreeSelectField<
 }
 
 export interface FormCascaderField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormHierarchyOption<TValue> = FormHierarchyOption<TValue>,
 >
@@ -68,8 +68,8 @@ export interface FormCascaderField<
 }
 
 export interface FormTreeField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormHierarchyOption<TValue> = FormHierarchyOption<TValue>,
 >
@@ -91,7 +91,7 @@ export type HierarchyFieldOutput<TField> = FallbackNever<
     : FormOptionValue | NullableValue
 >
 
-export type FormHierarchyField<TContext = {}, TDeps = {}> =
+export type FormHierarchyField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> =
   | FormTreeSelectField<TContext, TDeps>
   | FormCascaderField<TContext, TDeps>
   | FormTreeField<TContext, TDeps>

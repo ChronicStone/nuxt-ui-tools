@@ -117,7 +117,7 @@ export type { FormUploadField } from '../fields/upload/types'
  * Individual field schema contracts live beside their field implementation in
  * `src/runtime/form/fields/<kind>/types.ts`; this file only assembles the public union.
  */
-export type FormField<TContext = {}, TDeps = {}> =
+export type FormField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> =
   | FormTextField<TContext, TDeps>
   | FormPasswordField<TContext, TDeps>
   | FormTextareaField<TContext, TDeps>

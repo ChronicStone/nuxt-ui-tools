@@ -37,10 +37,10 @@ type FieldValueObject<TField, TValue> =
   FieldKey<TField> extends infer TKey
     ? TKey extends string
       ? string extends TKey
-        ? {}
+        ? NonNullable<unknown>
         : PathToObject<TKey, TValue>
-      : {}
-    : {}
+      : NonNullable<unknown>
+    : NonNullable<unknown>
 
 type OptionalPathToObject<Path extends string, Output> = Path extends `${infer First}.${infer Rest}`
   ? { [K in First]: OptionalPathToObject<Rest, Output> }
@@ -50,10 +50,10 @@ type OptionalFieldValueObject<TField, TValue> =
   FieldKey<TField> extends infer TKey
     ? TKey extends string
       ? string extends TKey
-        ? {}
+        ? NonNullable<unknown>
         : OptionalPathToObject<TKey, TValue>
-      : {}
-    : {}
+      : NonNullable<unknown>
+    : NonNullable<unknown>
 
 type ChildFields<TField> = TField extends { readonly fields: infer TFields }
   ? TFields extends readonly FormValue[]
@@ -65,7 +65,7 @@ type ChildFields<TField> = TField extends { readonly fields: infer TFields }
 
 type FieldsValue<TFields, TMode extends FormStateMode> = TFields extends readonly FormValue[]
   ? DeepTransformNestedPaths<UnionToIntersection<FieldObject<TFields[number], TMode>>>
-  : {}
+  : NonNullable<unknown>
 
 type VariantValue<
   TVariant,
@@ -86,7 +86,7 @@ type VirtualFieldsValue<TField> = TField extends { readonly virtualFields: infer
         ? TValue
         : never
     }
-  : {}
+  : NonNullable<unknown>
 
 type ArrayVariantValue<TField, TMode extends FormStateMode> = TField extends {
   readonly variantKey: infer TVariantKey extends string
@@ -129,7 +129,7 @@ type MatrixFieldValue<TField, TMode extends FormStateMode> = ApplyOutputMode<
 
 type StatefulFieldObject<TField, TMode extends FormStateMode> = TMode extends 'output'
   ? TField extends { submit: { omit: true } }
-    ? {}
+    ? NonNullable<unknown>
     : TField extends { condition: infer _TCondition }
       ? OptionalFieldValueObject<
           TField,
@@ -141,7 +141,7 @@ type StatefulFieldObject<TField, TMode extends FormStateMode> = TMode extends 'o
 type FieldObject<TField, TMode extends FormStateMode> = TField extends {
   type: 'info' | 'divider' | 'button'
 }
-  ? {}
+  ? NonNullable<unknown>
   : TField extends { type: 'input-group' | 'card' | 'column' }
     ? FieldsValue<ChildFields<TField>, TMode>
     : TField extends { type: 'object' | 'group' }
@@ -166,7 +166,7 @@ type StepObject<TStep, TMode extends FormStateMode> = TStep extends FormValue
 
 type StepsValue<TSteps, TMode extends FormStateMode> = TSteps extends readonly FormValue[]
   ? DeepTransformNestedPaths<UnionToIntersection<StepObject<TSteps[number], TMode>>>
-  : {}
+  : NonNullable<unknown>
 
 /**
  * Extracts the complete internal form value from a raw authored schema.
@@ -175,7 +175,7 @@ export type ExtractFormInternalValue<TSchema> = TSchema extends { readonly field
   ? DeepPrettify<FieldsValue<TFields, 'internal'>>
   : TSchema extends { readonly steps: infer TSteps }
     ? DeepPrettify<StepsValue<TSteps, 'internal'>>
-    : {}
+    : NonNullable<unknown>
 
 /**
  * Extracts the complete submitted output value from a raw authored schema.
@@ -184,4 +184,4 @@ export type ExtractFormOutput<TSchema> = TSchema extends { readonly fields: infe
   ? DeepPrettify<FieldsValue<TFields, 'output'>>
   : TSchema extends { readonly steps: infer TSteps }
     ? DeepPrettify<StepsValue<TSteps, 'output'>>
-    : {}
+    : NonNullable<unknown>

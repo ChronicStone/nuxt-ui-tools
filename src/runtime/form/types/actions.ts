@@ -2,9 +2,9 @@ import type { FormApi } from './api'
 import type { FormText } from './utils'
 
 export type FormActionKey = 'reset' | 'cancel' | 'submit' | 'previous' | 'next'
-export type FormActionSlot = 'left' | 'right' | (string & {})
-export type FormActionWidth = 'fit' | 'fill' | (string & {})
-export type FormActionType = 'primary' | (string & {})
+export type FormActionSlot = 'left' | 'right' | (string & NonNullable<unknown>)
+export type FormActionWidth = 'fit' | 'fill' | (string & NonNullable<unknown>)
+export type FormActionType = 'primary' | (string & NonNullable<unknown>)
 export type FormActionColor =
   | 'primary'
   | 'secondary'

@@ -1,12 +1,10 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FormObject } from '../../types/utils'
 
-export interface FormSliderField<TContext = {}, TDeps = {}> extends FormStatefulFieldBase<
-  'slider',
-  number | readonly number[],
-  TContext,
-  TDeps
-> {
+export interface FormSliderField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormStatefulFieldBase<'slider', number | readonly number[], TContext, TDeps> {
   min?: number
   max?: number
   step?: number

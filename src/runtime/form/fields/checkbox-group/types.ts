@@ -8,8 +8,8 @@ import type {
 } from '../../types/options'
 
 export interface FormCheckboxGroupField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
 > extends FormStatefulFieldBase<'checkbox-group', readonly TValue[] | null, TContext, TDeps> {

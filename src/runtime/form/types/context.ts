@@ -40,7 +40,7 @@ export type FormContextData<
   TContext extends FormContextDefinition | undefined = FormContextDefinition,
 > = TContext extends FormContextDefinition
   ? { [TKey in keyof TContext]: ResolveContextSource<TContext[TKey]> }
-  : {}
+  : NonNullable<unknown>
 
 // oxlint-disable-next-line typescript/consistent-type-definitions -- a type alias keeps the implicit index signature runtime contexts rely on
 export type FormRuntimeContext = {

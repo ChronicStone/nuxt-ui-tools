@@ -12,7 +12,11 @@ export type FormValidationResult = boolean | string | null | undefined
 /**
  * A single validation rule.
  */
-export interface FormValidationRule<TValue = FormValue, TContext = {}, TDeps = {}> {
+export interface FormValidationRule<
+  TValue = FormValue,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   /** Stable rule name used for debugging, i18n, and external error mapping. */
   name: string
   /** Returns true for valid values, false/string for invalid values. */
@@ -62,7 +66,11 @@ export interface FormValidationOptions {
 /**
  * Field validation configuration.
  */
-export interface FormValidationConfig<TValue = FormValue, TContext = {}, TDeps = {}> {
+export interface FormValidationConfig<
+  TValue = FormValue,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   /** Defines when the field starts showing validation feedback while editing. */
   trigger?: FormValidationTrigger
   /** Marks the field as required. */
@@ -77,6 +85,6 @@ export interface FormValidationConfig<TValue = FormValue, TContext = {}, TDeps =
 export type FormValidators = Record<string, RegleRuleRaw>
 
 /** Static or dependency-aware native Regle rules for one field. */
-export type FormValidatorsConfig<TContext = {}> =
+export type FormValidatorsConfig<TContext = NonNullable<unknown>> =
   | FormValidators
   | FormFieldCallback<FormValidators, TContext, FormObject>

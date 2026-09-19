@@ -8,8 +8,8 @@ import type {
 } from '../../types/options'
 
 export interface FormSwitchGroupField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
 > extends FormStatefulFieldBase<'switch-group', readonly TValue[] | null, TContext, TDeps> {

@@ -9,8 +9,8 @@ import type {
 import type { FormSelectCreateItem } from '../select/types'
 
 export interface FormAutoCompleteField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
 > extends FormStatefulFieldBase<

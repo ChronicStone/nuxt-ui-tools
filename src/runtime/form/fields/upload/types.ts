@@ -5,24 +5,27 @@ import type { NullableValue } from '../../types/field-output-utils'
 import type { FormObject } from '../../types/utils'
 
 export interface FormUploadCallbackParams<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
 > extends FormFieldCallbackParams<TContext, TDeps> {
   files: readonly File[]
 }
 
-export type FormUploadHandler<TContext = {}, TDeps = {}> = (
+export type FormUploadHandler<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> = (
   params: FormUploadCallbackParams<TContext, TDeps>,
 ) => Promise<string | FormObject | readonly string[] | readonly FormObject[] | null>
 
-export interface FormUploadDeleteParams<TContext = {}, TDeps = {}> extends FormFieldCallbackParams<
-  TContext,
-  TDeps
-> {
+export interface FormUploadDeleteParams<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormFieldCallbackParams<TContext, TDeps> {
   value: FormValue
 }
 
-export interface FormUploadField<TContext = {}, TDeps = {}> extends FormStatefulFieldBase<
+export interface FormUploadField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormStatefulFieldBase<
   'upload',
   string | FormObject | readonly string[] | readonly FormObject[] | null,
   TContext,

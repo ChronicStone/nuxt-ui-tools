@@ -2,8 +2,8 @@ import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FormOptionValue } from '../../types/options'
 
 export interface FormSwitchField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TTrue extends FormOptionValue = true,
   TFalse extends FormOptionValue = false,
 > extends FormStatefulFieldBase<'switch', TTrue | TFalse, TContext, TDeps> {

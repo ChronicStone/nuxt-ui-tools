@@ -3,8 +3,8 @@ import type { FieldOptionValue, NullableValue } from '../../types/field-output-u
 import type { FormOptionItem, FormOptionValue, FormOptionsSource } from '../../types/options'
 
 export interface FormRadioCardField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
 > extends FormStatefulFieldBase<'radio-card', TValue | null, TContext, TDeps> {

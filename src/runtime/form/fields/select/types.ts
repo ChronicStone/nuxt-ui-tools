@@ -16,8 +16,8 @@ export type FormSelectCreateItem =
     }
 
 export interface FormSelectField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
 > extends FormStatefulFieldBase<'select', TValue | readonly TValue[] | null, TContext, TDeps> {

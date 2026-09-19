@@ -4,8 +4,8 @@ import type { FormFieldApi } from './api'
  * Parameters passed to field-level callbacks.
  */
 export interface FormFieldCallbackParams<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue = FormValue,
   TOption = FormValue,
 > {
@@ -22,8 +22,8 @@ export interface FormFieldCallbackParams<
  */
 export type FormFieldCallback<
   TResult,
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue = FormValue,
   TOption = FormValue,
 > = (params: FormFieldCallbackParams<TContext, TDeps, TValue, TOption>) => TResult

@@ -64,7 +64,7 @@ export interface FormStepLifecycleParams<TOutput = FormObject> {
  * Step in a multi-step form schema.
  */
 export interface FormStep<
-  TContext = {},
+  TContext = NonNullable<unknown>,
   TFields extends readonly FormField<TContext>[] = readonly FormField<TContext>[],
 > {
   /** Stable step key used by navigation state and test selectors. */
@@ -148,7 +148,7 @@ export type ExtractFormContext<TSchema> = TSchema extends {
   readonly context?: infer TContext extends FormContextDefinition | undefined
 }
   ? FormContextData<TContext>
-  : {}
+  : NonNullable<unknown>
 
 /**
  * Extracts the authored fields from a form schema.
@@ -179,7 +179,9 @@ type NoExtraFieldProperties<TField, TExpected> =
 /**
  * Strict authored field shape used by schema helpers.
  */
-export type StrictFormField<TField, TContext = {}> = TField extends { type: infer TType }
+export type StrictFormField<TField, TContext = NonNullable<unknown>> = TField extends {
+  type: infer TType
+}
   ? TType extends FormFieldType
     ? NoExtraFieldProperties<TField, FormFieldByType<TType, TContext>>
     : never
@@ -188,6 +190,9 @@ export type StrictFormField<TField, TContext = {}> = TField extends { type: infe
 /**
  * Strict authored field collection used by schema helpers.
  */
-export type StrictFormFields<TFields extends readonly { type: FormFieldType }[], TContext = {}> = {
+export type StrictFormFields<
+  TFields extends readonly { type: FormFieldType }[],
+  TContext = NonNullable<unknown>,
+> = {
   readonly [TKey in keyof TFields]: StrictFormField<TFields[TKey], TContext>
 }

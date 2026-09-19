@@ -7,8 +7,8 @@ import type { FormFieldCallbackParams } from './callbacks'
 export interface FormTransformConfig<
   TInternal = FormValue,
   TExternal = TInternal,
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
 > {
   /** Converts an incoming raw value into the internal form value. Replaces legacy `preformat`. */
   input?: (

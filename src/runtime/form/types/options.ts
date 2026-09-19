@@ -32,7 +32,12 @@ export type FormOptionItem<TValue extends FormOptionValue = FormOptionValue> =
 /**
  * A static, sync-derived, promise-backed, or TanStack Query-backed option source.
  */
-export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = FormValue> =
+export type FormOptionsSource<
+  TOption,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+> =
   | readonly TOption[]
   | FormQueryOptions<readonly TOption[]>
   | FormFieldCallback<
@@ -47,8 +52,8 @@ export type FormOptionsSource<TOption, TContext = {}, TDeps = {}, TValue = FormV
  * Option creation hook for fields that can create a missing option from user input.
  */
 export interface FormCreateOptionParams<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue = FormValue,
   TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
@@ -56,7 +61,12 @@ export interface FormCreateOptionParams<
   label: string
 }
 
-export interface FormCreateOption<TOption, TContext = {}, TDeps = {}, TValue = FormValue> {
+export interface FormCreateOption<
+  TOption,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+> {
   /** Label shown by the create affordance. */
   label?: FormText
   /** Selects the newly-created option immediately. Defaults to `true`. */
@@ -70,8 +80,8 @@ export interface FormCreateOption<TOption, TContext = {}, TDeps = {}, TValue = F
 }
 
 export interface FormOptionsChangeParams<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue = FormValue,
   TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
@@ -82,7 +92,12 @@ export interface FormOptionsChangeParams<
 /**
  * Shared option configuration for option-based fields.
  */
-export interface FormOptionConfig<TOption, TContext = {}, TDeps = {}, TValue = FormValue> {
+export interface FormOptionConfig<
+  TOption,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+> {
   /** Static, sync-derived, promise-backed, or query-backed options. */
   source: FormOptionsSource<TOption, TContext, TDeps, TValue>
   /** Optional creation behavior for missing options. */
