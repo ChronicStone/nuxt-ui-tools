@@ -36,6 +36,21 @@ function createApiFactory(state: FormObject) {
       retry: async () => {},
       start: async () => {},
     },
+    form: {
+      clearError: () => {},
+      focus: () => Promise.resolve(false),
+      get: () => null,
+      initial: () => null,
+      nextStep: () => Promise.resolve(false),
+      output: () => ({}),
+      previousStep: () => Promise.resolve(false),
+      reset: () => Promise.resolve(),
+      set: () => {},
+      setError: () => {},
+      state: () => ({}),
+      submit: () => Promise.resolve(false),
+      validate: () => Promise.resolve(true),
+    },
     validation: {
       clearError: () => {},
       pending: () => false,
@@ -44,6 +59,7 @@ function createApiFactory(state: FormObject) {
     },
     value: {
       get: () => getPathValue(state, path),
+      initial: () => getPathValue(state, path),
       reset: () => {},
       set: () => {},
     },
@@ -81,7 +97,7 @@ describe('Regle-owned form validation', () => {
     await expect(validation.validate()).resolves.toBeTruthy()
   })
 
-  it('keeps custom errors visible without blocking validation', async () => {
+  it('blocks validation on custom errors unless they are marked non-blocking', async () => {
     const schema = defineFormSchema({
       fields: [{ key: 'email', type: 'text' }],
     })
@@ -98,8 +114,14 @@ describe('Regle-owned form validation', () => {
 
     expect(validation.getFieldError(['email'])).toBe('This email is already registered.')
     expect(validation.errors.value).toStrictEqual([
-      { message: 'This email is already registered.', path: 'email' },
+      { blocking: true, message: 'This email is already registered.', path: 'email' },
     ])
+    await expect(validation.validate()).resolves.toBeFalsy()
+    await expect(validation.validateFields(schema.fields, [])).resolves.toBeFalsy()
+
+    validation.setError(['email'], 'Double-check this address.', { blocking: false })
+
+    expect(validation.getFieldError(['email'])).toBe('Double-check this address.')
     await expect(validation.validate()).resolves.toBeTruthy()
     await expect(validation.validateFields(schema.fields, [])).resolves.toBeTruthy()
   })

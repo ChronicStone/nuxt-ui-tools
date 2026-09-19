@@ -6,9 +6,10 @@ export function createPublicFormApi(runtime: FormRuntime): FormApi {
     clearError: (path) => runtime.clearError(path ? pathSegments(path) : undefined),
     focus: runtime.focusField,
     get: runtime.getValue,
+    initial: runtime.getInitialValue,
     reset: runtime.reset,
     set: runtime.setValue,
-    setError: (path, message) => runtime.setError(pathSegments(path), message),
+    setError: (path, message, options) => runtime.setError(pathSegments(path), message, options),
     submit: async () => {
       await runtime.submit()
     },

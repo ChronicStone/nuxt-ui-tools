@@ -68,6 +68,9 @@ export default defineUiToolsLocale<Messages>({
           title: 'Form data unavailable',
         },
       },
+      validation: {
+        required: 'This field is required',
+      },
     },
     spreadsheet: {
       common: {

@@ -63,7 +63,7 @@ export interface FormControllerState<TInternal = FormObject, TOutput = FormObjec
   /** Writes an internal form value by raw path. Dotted paths create nested state. */
   set: (path: string, value: FormValue) => void
   /** Resets internal state to schema defaults and configured input. */
-  reset: () => void
+  reset: () => Promise<void>
 }
 
 export interface FormControllerMeta {
@@ -209,7 +209,7 @@ export interface FormController<TSchema = FormObject, TSubmitData = FormValue>
     submitHandler?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>,
   ) => Promise<FormSubmitHandlerResult<TSubmitData>>
   /** Ergonomic alias for `form.state.reset`. */
-  reset: () => void
+  reset: () => Promise<void>
   /** Ergonomic alias for `form.navigation.next`. */
   nextStep: () => Promise<boolean>
   /** Ergonomic alias for `form.navigation.previous`. */

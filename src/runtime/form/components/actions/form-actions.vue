@@ -57,7 +57,7 @@ async function runAction(action: FormAction) {
     return
   }
   if (isBuiltInAction(action, 'reset')) {
-    props.runtime.reset()
+    await props.runtime.reset()
     return
   }
   if (isBuiltInAction(action, 'cancel')) {

@@ -64,22 +64,105 @@ export function getSchemaLayout(schema: FormValue): FormLayoutConfig | undefined
   return normalizeLayout(Object.getOwnPropertyDescriptor(schema, 'layout')?.value)
 }
 
-export function buildInitialFormState(schema: FormValue, ctx: FormContextData, input?: FormObject) {
+export type InitialStateApiFactory = (state: FormObject, initial: FormObject) => FormFieldApiFactory
+
+export function buildInitialFormState(
+  schema: FormValue,
+  ctx: FormContextData,
+  input?: FormObject,
+  createApiFactory?: InitialStateApiFactory,
+) {
   const state: FormObject = {}
   if (input) {
     mergeFormObjects(state, input)
   }
+  const raw = cloneFormObject(state)
+  const inputApiFactory = createApiFactory?.(state, raw)
+  const scopes = isSteppedSchema(schema)
+    ? getSchemaSteps(schema).map((step) => ({
+        fields: step.fields,
+        parentPath: step.root ? [step.root] : [],
+      }))
+    : [{ fields: getSchemaFields(schema), parentPath: [] }]
 
-  if (isSteppedSchema(schema)) {
-    for (const step of getSchemaSteps(schema)) {
-      mergeMissingFieldDefaults(state, step.fields, ctx, step.root ? [step.root] : [])
-    }
-
-    return state
+  for (const scope of scopes) {
+    applyInputTransforms(state, scope.fields, ctx, scope.parentPath, inputApiFactory)
   }
-
-  mergeMissingFieldDefaults(state, getSchemaFields(schema), ctx, [])
+  const defaultsApiFactory = createApiFactory?.(state, cloneFormObject(state))
+  for (const scope of scopes) {
+    mergeMissingFieldDefaults(state, scope.fields, ctx, scope.parentPath, defaultsApiFactory)
+  }
   return state
+}
+
+function cloneFormObject(value: FormObject) {
+  const cloned = cloneFormValue(value)
+  return isRecord(cloned) ? cloned : {}
+}
+
+function applyInputTransforms(
+  target: FormObject,
+  fields: readonly FormField[],
+  ctx: FormContextData,
+  parentPath: readonly string[],
+  apiFactory: FormFieldApiFactory | undefined,
+) {
+  for (const field of fields) {
+    if (field.ignore === true) {
+      continue
+    }
+    const fieldInstance = createFormFieldInstance(field)
+    if (fieldInstance.state.is('stateless')) {
+      continue
+    }
+    if (isFlatPassthroughField(field)) {
+      applyInputTransforms(target, getChildFields(field), ctx, parentPath, apiFactory)
+      continue
+    }
+    const path = fieldPath(parentPath, field)
+    const value = getPathValue(target, path)
+    if (isObjectContainerField(field)) {
+      if (isRecord(value)) {
+        applyInputTransforms(target, getChildFields(field), ctx, path, apiFactory)
+      }
+      continue
+    }
+    if (fieldInstance.type.is('matrix')) {
+      for (const row of getMatrixRows(field)) {
+        if (isRecord(getPathValue(target, [...path, row]))) {
+          applyInputTransforms(target, getChildFields(field), ctx, [...path, row], apiFactory)
+        }
+      }
+      continue
+    }
+    if (isArrayField(field)) {
+      if (!Array.isArray(value)) {
+        continue
+      }
+      for (const [index, item] of value.entries()) {
+        if (isRecord(item)) {
+          applyInputTransforms(
+            target,
+            getArrayItemFields(field, item),
+            ctx,
+            [...path, String(index)],
+            apiFactory,
+          )
+        }
+      }
+      continue
+    }
+    if (isUndefined(value)) {
+      continue
+    }
+    const transform = Object.getOwnPropertyDescriptor(field, 'transform')?.value
+    if (!isRecord(transform) || !isFunction(transform.input)) {
+      continue
+    }
+    const api = apiFactory?.(path, field)
+    const params = api ? callbackParams({ api, ctx, field, parentPath, state: target }) : undefined
+    setPathValue(target, path, transform.input(value, params))
+  }
 }
 
 export function buildInitialFormFieldsState(fields: readonly FormField[], ctx: FormContextData) {
@@ -98,10 +181,20 @@ export function buildFormOutput(
 
   if (isSteppedSchema(schema)) {
     for (const step of getSchemaSteps(schema)) {
-      mergeFormObjects(
-        output,
-        buildFieldsOutput(step.fields, state, ctx, apiFactory, step.root ? [step.root] : []),
+      const stepOutput = buildFieldsOutput(
+        step.fields,
+        state,
+        ctx,
+        apiFactory,
+        step.root ? [step.root] : [],
       )
+      if (!step.root) {
+        mergeFormObjects(output, stepOutput)
+        continue
+      }
+      const rooted: FormObject = {}
+      setPathValue(rooted, step.root, stepOutput)
+      mergeFormObjects(output, rooted)
     }
 
     return output
@@ -209,6 +302,7 @@ function mergeMissingFieldDefaults(
   fields: readonly FormField[],
   ctx: FormContextData,
   parentPath: readonly string[],
+  apiFactory?: FormFieldApiFactory,
 ) {
   for (const field of fields) {
     if (field.ignore === true) {
@@ -219,7 +313,7 @@ function mergeMissingFieldDefaults(
       continue
     }
     if (isFlatPassthroughField(field)) {
-      mergeMissingFieldDefaults(target, getChildFields(field), ctx, parentPath)
+      mergeMissingFieldDefaults(target, getChildFields(field), ctx, parentPath, apiFactory)
       continue
     }
 
@@ -228,7 +322,7 @@ function mergeMissingFieldDefaults(
       if (!isRecord(getPathValue(target, path))) {
         setPathValue(target, path, {})
       }
-      mergeMissingFieldDefaults(target, getChildFields(field), ctx, path)
+      mergeMissingFieldDefaults(target, getChildFields(field), ctx, path, apiFactory)
       continue
     }
 
@@ -242,7 +336,7 @@ function mergeMissingFieldDefaults(
         if (!isRecord(getPathValue(target, rowPath))) {
           setPathValue(target, rowPath, {})
         }
-        mergeMissingFieldDefaults(target, getChildFields(field), ctx, rowPath)
+        mergeMissingFieldDefaults(target, getChildFields(field), ctx, rowPath, apiFactory)
       }
       continue
     }
@@ -258,17 +352,20 @@ function mergeMissingFieldDefaults(
         if (!isRecord(item)) {
           continue
         }
-        mergeMissingFieldDefaults(target, getArrayItemFields(field, item), ctx, [
-          ...path,
-          String(index),
-        ])
+        mergeMissingFieldDefaults(
+          target,
+          getArrayItemFields(field, item),
+          ctx,
+          [...path, String(index)],
+          apiFactory,
+        )
       }
       continue
     }
 
     const path = fieldPath(parentPath, field)
     if (isUndefined(getPathValue(target, path))) {
-      setPathValue(target, path, resolveFieldDefault(field, ctx))
+      setPathValue(target, path, resolveFieldDefault(field, ctx, apiFactory?.(path, field)))
     }
   }
 }
@@ -518,12 +615,12 @@ export function getMatrixRows(field: FormField) {
   })
 }
 
-function resolveFieldDefault(field: FormField, ctx: FormContextData) {
+function resolveFieldDefault(field: FormField, ctx: FormContextData, api?: FormFieldApi) {
   const fieldInstance = createFormFieldInstance(field)
   const value = Object.getOwnPropertyDescriptor(field, 'default')?.value
   if (!isUndefined(value)) {
     if (isFunction(value)) {
-      return cloneFormValue(invokeFormFunction(value, [{ ctx }]))
+      return cloneFormValue(invokeFormFunction(value, [{ api, ctx }]))
     }
     return cloneFormValue(value)
   }
@@ -597,7 +694,10 @@ export function resolveRequired(field: FormField, params: FormFieldCallbackParam
   return required ?? false
 }
 
-export function resolveRequiredMessage(field: FormField): string {
+export function resolveRequiredMessage(
+  field: FormField,
+  fallback = 'This field is required.',
+): string {
   const authoredMessage = Object.getOwnPropertyDescriptor(field, 'requiredMessage')?.value
   if (isFunction(authoredMessage)) {
     return String(authoredMessage())
@@ -611,7 +711,7 @@ export function resolveRequiredMessage(field: FormField): string {
 
   const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
   if (!isRecord(validation)) {
-    return 'This field is required.'
+    return fallback
   }
   const message = validation.requiredMessage
   if (isFunction(message)) {
@@ -623,7 +723,7 @@ export function resolveRequiredMessage(field: FormField): string {
   if (isString(message)) {
     return message
   }
-  return 'This field is required.'
+  return fallback
 }
 
 async function validateFieldRules(

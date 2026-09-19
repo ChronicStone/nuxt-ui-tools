@@ -90,8 +90,8 @@ export function useForm(params: RuntimeUseFormParams) {
     runtime.value?.clearErrors()
   }
 
-  function reset() {
-    runtime.value?.reset()
+  async function reset() {
+    await runtime.value?.reset()
   }
 
   async function nextStep() {

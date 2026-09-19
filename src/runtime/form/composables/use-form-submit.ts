@@ -65,6 +65,7 @@ export function useFormSubmitController<TSubmitData = FormValue>(params: {
     try {
       const isValid = await params.validate()
       if (!isValid) {
+        actionPending.value = null
         await params.focusFirstInvalid?.()
         return { success: false }
       }

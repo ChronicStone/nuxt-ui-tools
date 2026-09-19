@@ -282,6 +282,9 @@ export interface UiToolsFormMessages {
       action: string
     }
   }
+  validation: {
+    required: string
+  }
   fields: {
     text: {
       defaultPlaceholder: string

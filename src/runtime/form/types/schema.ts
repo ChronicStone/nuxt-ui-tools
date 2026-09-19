@@ -16,6 +16,8 @@ export interface FormDirtyNavigationConfig {
 export interface FormControlsConfig {
   /** Enables dirty metadata and field reset affordances. */
   dirtyCheck?: boolean
+  /** Paths whose changes never make the form dirty. Matches the path and everything nested under it. */
+  ignoreDirtyPaths?: readonly string[]
   /** Focuses the first field after mount, or a specific raw field path. */
   autoFocus?: boolean | string
   /** Warns before an inline dirty form is closed or navigated away from. */

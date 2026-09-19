@@ -97,7 +97,27 @@ function apiFactory(path: readonly string[]): FormFieldApi {
       setError: () => {},
       validate: async () => true,
     },
-    value: { get: () => getPathValue(activeState, path), reset: () => {}, set: () => {} },
+    form: {
+      clearError: () => {},
+      focus: () => Promise.resolve(false),
+      get: () => null,
+      initial: () => null,
+      nextStep: () => Promise.resolve(false),
+      output: () => ({}),
+      previousStep: () => Promise.resolve(false),
+      reset: () => Promise.resolve(),
+      set: () => {},
+      setError: () => {},
+      state: () => ({}),
+      submit: () => Promise.resolve(false),
+      validate: () => Promise.resolve(true),
+    },
+    value: {
+      get: () => getPathValue(activeState, path),
+      initial: () => getPathValue(activeState, path),
+      reset: () => {},
+      set: () => {},
+    },
   }
 }
 

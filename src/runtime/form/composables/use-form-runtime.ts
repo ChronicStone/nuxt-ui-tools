@@ -1,8 +1,10 @@
-import { computed, inject, provide, ref, watch } from 'vue'
+import { computed, inject, nextTick, provide, ref, watch } from 'vue'
 import type { InjectionKey } from 'vue'
 
+import { useUiToolsLocale } from '../../i18n/use-locale'
 import type {
   FormValue,
+  FormErrorOptions,
   FormField,
   FormFieldApi,
   FormFieldCallbackParams,
@@ -15,8 +17,14 @@ import type {
 import { createPublicFormApi } from '../utils/api'
 import { resolveFieldDependencies } from '../utils/dependencies'
 import { resolveFormLayoutConfig } from '../utils/layout'
-import { isRecord, pathSegments } from '../utils/path'
-import { isFunction, isObject, isUndefined } from '../utils/predicate'
+import {
+  getPathValue,
+  isRecord,
+  pathSegments,
+  relativePathSegments,
+  setPathValue,
+} from '../utils/path'
+import { isFunction, isObject, isPromise, isUndefined, stringArray } from '../utils/predicate'
 import {
   getSchemaFields,
   getSchemaLayout,
@@ -52,33 +60,88 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const optionRegistry = useFormOptionRegistry()
   const uploadRegistry = useFormUploadRegistry()
   const currentStepIndex = ref<number>(0)
-  const navigationActionPending = ref<'next' | 'previous' | null>(null)
+  const navigationActionPending = ref<'next' | 'previous' | 'reset' | null>(null)
+  const effects = createEffectLifecycle()
+  const { t } = useUiToolsLocale()
 
   setContext(getSchemaContext(params.schema.value))
 
-  function apiFactory(path: readonly string[], field?: FormField) {
-    return createFieldApi({
-      clearExternalError: () => validation.clearError(path),
-      ctx: context,
-      field,
-      focusField: () => focus.focusField(path),
-      getValue: state.getValue,
-      optionRegistry,
-      path,
-      pendingField: () => validation.isPending(path),
-      resetValue: state.resetValue,
-      setExternalError: (message) => validation.setError(path, message),
-      setValue: state.setValue,
-      state: state.state,
-      uploadRegistry,
-      validateField: () =>
-        field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
-    })
+  function createFormNamespace(
+    path: readonly string[],
+    read: {
+      getValue: (target: readonly string[]) => FormValue
+      getInitialValue: (target: readonly string[]) => FormValue
+      setValue: (target: readonly string[], value: FormValue) => void
+      state: () => FormObject
+    },
+  ): FormFieldApi['form'] {
+    const parentPath = path.slice(0, -1)
+    function resolve(target: string) {
+      return resolveRelativeFieldPath(parentPath, target)
+    }
+    return {
+      clearError: (target) => runtime.clearError(target ? resolve(target) : undefined),
+      focus: (target) => runtime.focusField(resolve(target)),
+      get: (target) => read.getValue(resolve(target)),
+      initial: (target) => read.getInitialValue(resolve(target)),
+      nextStep: () => runtime.nextStep(),
+      output: () => runtime.output.value,
+      previousStep: () => runtime.previousStep(),
+      reset: () => runtime.reset(),
+      set: (target, value) => read.setValue(resolve(target), value),
+      setError: (target, message, options) => runtime.setError(resolve(target), message, options),
+      state: () => read.state(),
+      submit: () => runtime.submit(),
+      validate: () => runtime.validate(),
+    }
   }
+
+  function createApiFactory(read: {
+    getValue: (target: readonly string[]) => FormValue
+    getInitialValue: (target: readonly string[]) => FormValue
+    setValue: (target: readonly string[], value: FormValue) => void
+    state: () => FormObject
+  }) {
+    return (path: readonly string[], field?: FormField) =>
+      createFieldApi({
+        clearExternalError: () => validation.clearError(path),
+        ctx: context,
+        field,
+        focusField: () => focus.focusField(path),
+        form: createFormNamespace(path, read),
+        getInitialValue: read.getInitialValue,
+        getValue: read.getValue,
+        optionRegistry,
+        path,
+        pendingField: () => validation.isPending(path),
+        resetValue: state.resetValue,
+        setExternalError: (message, options) => validation.setError(path, message, options),
+        setValue: read.setValue,
+        state: read.state(),
+        uploadRegistry,
+        validateField: () =>
+          field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
+      })
+  }
+
+  const apiFactory = createApiFactory({
+    getInitialValue: (target) => state.getInitialValue(target),
+    getValue: (target) => state.getValue(target),
+    setValue: (target, value) => state.setValue(target, value),
+    state: () => state.state,
+  })
 
   const state = useFormState({
     apiFactory,
+    bootstrapApiFactory: (draft, initial) =>
+      createApiFactory({
+        getInitialValue: (target) => getPathValue(initial, target),
+        getValue: (target) => getPathValue(draft, target),
+        setValue: (target, value) => setPathValueOf(draft, target, value),
+        state: () => draft,
+      }),
     context,
+    ignoreDirtyPaths: () => getSchemaIgnoredDirtyPaths(params.schema.value),
     input: params.input,
     schema: params.schema,
   })
@@ -86,6 +149,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const validation = useFormValidation({
     apiFactory,
     context,
+    getRequiredMessage: () => t('form.validation.required'),
     getValidationMode: () => params.validationMode?.value ?? true,
     schema: () => params.schema.value,
     state: state.state,
@@ -127,6 +191,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   let hasInitializedInput = !isUndefined(params.input?.value)
   state.initialize(params.input?.value)
 
+  let pendingInput: FormObject | undefined
   if (params.input) {
     watch(
       params.input,
@@ -137,10 +202,25 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
           return
         }
 
-        state.syncInput(input, params.syncInput?.value ?? false)
+        const paths = params.syncInput?.value ?? false
+        if (isSyncEnabled(paths)) {
+          pendingInput = undefined
+          state.syncInput(input, paths)
+          return
+        }
+        pendingInput = input
       },
       { deep: true },
     )
+  }
+  if (params.syncInput) {
+    watch(params.syncInput, (paths) => {
+      if (!isSyncEnabled(paths) || isUndefined(pendingInput)) {
+        return
+      }
+      state.syncInput(pendingInput, paths)
+      pendingInput = undefined
+    })
   }
 
   watch(params.schema, (schema) => {
@@ -302,6 +382,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
         state: state.state,
       }),
     getFieldError: validation.getFieldError,
+    getInitialValue: state.getInitialValue,
     getValue: state.getValue,
     goToStep: async (index) => {
       if (actionPending.value) {
@@ -312,11 +393,12 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
         return true
       }
       if (nextIndex > currentStepIndex.value) {
+        const valid = await withNavigationPending('next', () => validateCurrentStep())
+        if (!valid) {
+          await focus.focusFirstInvalid()
+          return false
+        }
         return withNavigationPending('next', async () => {
-          const valid = await validateCurrentStep({ focus: true })
-          if (!valid) {
-            return false
-          }
           const canProceed = await runBeforeNext()
           if (!canProceed) {
             return false
@@ -340,11 +422,12 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       if (actionPending.value) {
         return false
       }
+      const valid = await withNavigationPending('next', () => validateCurrentStep())
+      if (!valid) {
+        await focus.focusFirstInvalid()
+        return false
+      }
       return withNavigationPending('next', async () => {
-        const valid = await validateCurrentStep({ focus: true })
-        if (!valid) {
-          return false
-        }
         const canProceed = await runBeforeNext()
         if (!canProceed) {
           return false
@@ -391,12 +474,24 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     registerFieldElement: focus.registerField,
     registerFieldOptions: optionRegistry.register,
     registerFieldUpload: uploadRegistry.register,
-    reset: () => {
-      validation.clearError()
-      state.reset()
+    reset: async () => {
+      if (navigationActionPending.value === 'reset') {
+        await effects.settle()
+        return
+      }
+      navigationActionPending.value = 'reset'
+      try {
+        validation.clearError()
+        state.reset()
+        await settleEffectRounds()
+        state.rebaseline()
+      } finally {
+        navigationActionPending.value = null
+      }
     },
     schema: params.schema,
-    setError: (path, message) => validation.setError(pathSegments(path), message),
+    setError: (path, message, options) => validation.setError(pathSegments(path), message, options),
+    settleEffects: settleEffectRounds,
     setValue: state.setValue,
     shouldRender: (field, path) =>
       shouldRenderField(
@@ -416,8 +511,21 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       return result.success
     },
     submitHandler: submit.submitHandler,
+    trackEffect: effects.track,
     validate,
     validateCurrentStep,
+  }
+
+  async function settleEffectRounds() {
+    for (let round = 0; round < MAX_EFFECT_ROUNDS; round += 1) {
+      // oxlint-disable-next-line no-await-in-loop -- each round must observe the previous round's writes
+      await nextTick()
+      if (!effects.size()) {
+        return
+      }
+      // oxlint-disable-next-line no-await-in-loop -- each round must observe the previous round's writes
+      await effects.settle()
+    }
   }
 
   function commitStepChange(index: number) {
@@ -428,18 +536,79 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   return runtime
 }
 
+const MAX_EFFECT_ROUNDS = 25
+
+function isSyncEnabled(paths: boolean | readonly string[]) {
+  return paths === true || (Array.isArray(paths) && paths.length > 0)
+}
+
+function createEffectLifecycle() {
+  const pending = new Set<Promise<FormValue>>()
+
+  function track(effect: FormValue) {
+    if (!isPromise(effect)) {
+      return
+    }
+    const tracked: Promise<FormValue> = effect
+    pending.add(tracked)
+    void untrack(tracked)
+  }
+
+  async function untrack(tracked: Promise<FormValue>) {
+    try {
+      await tracked
+    } catch {
+      pending.delete(tracked)
+      return
+    }
+    pending.delete(tracked)
+  }
+
+  async function settle() {
+    while (pending.size) {
+      // oxlint-disable-next-line no-await-in-loop -- effects settled in one round may enqueue more
+      await Promise.allSettled(pending)
+    }
+  }
+
+  return { settle, size: () => pending.size, track }
+}
+
+function resolveRelativeFieldPath(parentPath: readonly string[], target: string) {
+  if (target === '$root') {
+    return []
+  }
+  if (target.startsWith('$parent')) {
+    return relativePathSegments(parentPath, target)
+  }
+  return pathSegments(target)
+}
+
+function setPathValueOf(target: FormObject, path: readonly string[], value: FormValue) {
+  setPathValue(target, path, value)
+}
+
+function getSchemaIgnoredDirtyPaths(schema: FormValue) {
+  if (!isRecord(schema) || !isRecord(schema.controls)) {
+    return []
+  }
+  return stringArray(schema.controls.ignoreDirtyPaths)
+}
+
 function createFieldApi(params: {
   path: readonly string[]
   field?: FormField
-  getValue: (path: string | readonly string[]) => FormValue
-  setValue: (path: string | readonly string[], value: FormValue) => void
+  form: FormFieldApi['form']
+  getValue: (path: readonly string[]) => FormValue
+  getInitialValue: (path: readonly string[]) => FormValue
+  setValue: (path: readonly string[], value: FormValue) => void
   resetValue: (path: string | readonly string[]) => void
   ctx: FormRuntime['context']
   state: FormObject
   optionRegistry: ReturnType<typeof useFormOptionRegistry>
   uploadRegistry: ReturnType<typeof useFormUploadRegistry>
   focusField: () => Promise<boolean>
-  setExternalError: (message: string) => void
+  setExternalError: (message: string, options?: FormErrorOptions) => void
   clearExternalError: () => void
   validateField: () => Promise<boolean>
   pendingField: () => boolean
@@ -477,6 +646,7 @@ function createFieldApi(params: {
       },
     },
     focus: params.focusField,
+    form: params.form,
     options: {
       add: (option) => params.optionRegistry.get(params.path).add(option),
       create: (label) => params.optionRegistry.get(params.path).create(label),
@@ -503,6 +673,7 @@ function createFieldApi(params: {
     },
     value: {
       get: () => params.getValue(params.path),
+      initial: () => params.getInitialValue(params.path),
       reset: () => params.resetValue(params.path),
       set: (value) => params.setValue(params.path, value),
     },

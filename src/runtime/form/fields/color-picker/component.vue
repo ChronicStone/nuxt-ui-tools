@@ -10,7 +10,6 @@ import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormColorPickerField } from '../../types'
 import { isString } from '../../utils/predicate'
-import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
   field: FormColorPickerField
@@ -18,13 +17,22 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, controlSize, disabled, interactionOwnerClass } = useFieldControl(
+const {
+  form,
+  controlProps,
+  controlSize,
+  disabled,
+  interactionOwnerClass,
+  placeholder: controlPlaceholder,
+} = useFieldControl(
   () => props.field,
   () => props.path,
 )
 const open = ref<boolean>(false)
 const display = computed(() => props.field.display ?? 'popover')
-const placeholder = computed(() => resolveFormText(props.field.placeholder) ?? '#000000')
+const placeholder = computed(() =>
+  props.field.placeholder === undefined ? '#000000' : controlPlaceholder.value,
+)
 const model = computed<string | undefined>({
   get: () => {
     const value = form.getValue(props.path)

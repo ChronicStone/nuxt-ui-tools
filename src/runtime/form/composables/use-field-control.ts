@@ -1,5 +1,5 @@
-import { debounceFilter, throttleFilter, watchWithFilter } from '@vueuse/core'
-import { computed, onMounted, onScopeDispose } from 'vue'
+import { watchWithFilter } from '@vueuse/core'
+import { computed, onScopeDispose } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
 import type {
@@ -13,7 +13,6 @@ import type {
 } from '../types'
 import { createFormFieldInstance } from '../utils/field-instance'
 import { isFunction, isNumber, isObject, isString } from '../utils/predicate'
-import { resolveFormText } from '../utils/text'
 import { mergeFormUiClass } from '../utils/ui'
 import { useFieldOptions } from './use-field-options'
 import { useFormFieldControlAttrs } from './use-form-field-chrome'
@@ -93,14 +92,24 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     const current = field()
     const value = Object.getOwnPropertyDescriptor(current, 'disabled')?.value
     const disabledByCallback = isFunction(value) ? value(params.value) === true : false
-    return disabledByCallback || (options.disableOnLoading.value && options.loading.value)
+    return (
+      disabledByCallback ||
+      form.actionPending.value !== null ||
+      (options.disableOnLoading.value && options.loading.value)
+    )
   })
 
   const placeholder = computed(() => {
     const current = field()
     const value = Object.getOwnPropertyDescriptor(current, 'placeholder')?.value
-    if (isString(value) || isNumber(value) || isFunction(value)) {
-      return resolveFormText(value) ?? t('form.fields.text.defaultPlaceholder')
+    if (isFunction(value)) {
+      const resolved = value(params.value)
+      return isString(resolved) || isNumber(resolved)
+        ? String(resolved)
+        : t('form.fields.text.defaultPlaceholder')
+    }
+    if (isString(value) || isNumber(value)) {
+      return String(value)
     }
 
     return t('form.fields.text.defaultPlaceholder')
@@ -128,38 +137,6 @@ export function useFieldControl(field: () => FormField, path: () => readonly str
     },
     { deep: true },
   )
-
-  watchWithFilter(
-    () => form.getValue(path()),
-    (value) => {
-      const effect = Object.getOwnPropertyDescriptor(field(), 'watch')?.value
-      if (isFunction(effect)) {
-        effect({ api: api.value, value })
-      }
-    },
-    {
-      ...resolveWatchOptions(field()),
-      eventFilter: resolveEffectFilter(field()),
-    },
-  )
-
-  watchWithFilter(
-    () => params.value.deps,
-    () => {
-      const effect = Object.getOwnPropertyDescriptor(field(), 'onDependencyChange')?.value
-      if (isFunction(effect)) {
-        void effect(params.value)
-      }
-    },
-    { deep: true, eventFilter: resolveEffectFilter(field()) },
-  )
-
-  onMounted(() => {
-    const effect = Object.getOwnPropertyDescriptor(field(), 'onRendered')?.value
-    if (isFunction(effect)) {
-      void effect(params.value)
-    }
-  })
 
   let blurBoundaryListening = false
   onScopeDispose(stopBlurBoundaryWatch)
@@ -318,31 +295,6 @@ function mergeControlClass(defaults: string | undefined, local: FormValue) {
 
 function isFormControlSize(value: FormValue): value is FormControlSize {
   return value === 'xs' || value === 'sm' || value === 'md' || value === 'lg' || value === 'xl'
-}
-
-function resolveWatchOptions(field: FormField) {
-  const options = Object.getOwnPropertyDescriptor(field, 'watchOptions')?.value
-  if (!isObject(options) || options === null || Array.isArray(options)) {
-    return {}
-  }
-  return {
-    deep: options.deep === true,
-    immediate: options.immediate === true,
-  }
-}
-
-function resolveEffectFilter(field: FormField) {
-  const effect = Object.getOwnPropertyDescriptor(field, 'stateEffect')?.value
-  if (!isObject(effect) || effect === null || Array.isArray(effect)) {
-    return
-  }
-  const duration = isNumber(effect.duration) ? effect.duration : 0
-  if (effect.type === 'debounce') {
-    return debounceFilter(duration)
-  }
-  if (effect.type === 'throttle') {
-    return throttleFilter(duration)
-  }
 }
 
 function getValidationTrigger(field: FormField): FormValidationTrigger {

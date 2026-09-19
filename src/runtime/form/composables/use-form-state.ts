@@ -4,6 +4,7 @@ import type { ComputedRef } from 'vue'
 import type { FormValue, FormField, FormFieldApi, FormObject, FormRuntimeContext } from '../types'
 import { cloneFormValue, getPathValue, isRecord, setPathValue } from '../utils/path'
 import { buildFormOutput, buildInitialFormState } from '../utils/state'
+import type { InitialStateApiFactory } from '../utils/state'
 
 export type FormFieldApiFactory = (path: readonly string[], field?: FormField) => FormFieldApi
 
@@ -12,21 +13,37 @@ export function useFormState(params: {
   input?: ComputedRef<FormObject | undefined>
   context: FormRuntimeContext
   apiFactory: FormFieldApiFactory
+  bootstrapApiFactory?: InitialStateApiFactory
+  ignoreDirtyPaths?: () => readonly string[]
 }) {
   const state = reactive<FormObject>({})
   const initialState = ref<FormObject>({})
   const output = computed(() =>
     buildFormOutput(params.schema.value, state, params.context, params.apiFactory),
   )
-  const dirtyPaths = computed(() => collectDirtyPaths(initialState.value, state))
+  const dirtyPaths = computed(() => {
+    const ignored = params.ignoreDirtyPaths?.() ?? []
+    return collectDirtyPaths(initialState.value, state).filter(
+      (path) => !ignored.some((ignoredPath) => isPathWithin(path, ignoredPath)),
+    )
+  })
   const isDirty = computed(() => dirtyPaths.value.length > 0)
+
+  function buildInitial(input: FormObject | undefined) {
+    return buildInitialFormState(
+      params.schema.value,
+      params.context,
+      input,
+      params.bootstrapApiFactory,
+    )
+  }
 
   function initialize(input = params.input?.value) {
     for (const key of Object.keys(state)) {
       delete state[key]
     }
 
-    const initial = buildInitialFormState(params.schema.value, params.context, input)
+    const initial = buildInitial(input)
     initialState.value = cloneFormObject(initial)
     for (const [key, value] of Object.entries(initial)) {
       state[key] = value
@@ -35,6 +52,14 @@ export function useFormState(params: {
 
   function reset() {
     initialize()
+  }
+
+  function rebaseline() {
+    initialState.value = cloneFormObject(state)
+  }
+
+  function getInitialValue(path: string | readonly string[]) {
+    return getPathValue(initialState.value, path)
   }
 
   function resetValue(path: string | readonly string[]) {
@@ -50,7 +75,7 @@ export function useFormState(params: {
       return
     }
 
-    const next = buildInitialFormState(params.schema.value, params.context, input)
+    const next = buildInitial(input)
     for (const path of paths) {
       const value = cloneFormValue(getPathValue(next, path))
       setPathValue(state, path, value)
@@ -60,10 +85,12 @@ export function useFormState(params: {
 
   return {
     dirtyPaths,
+    getInitialValue,
     getValue: (path: string | readonly string[]) => getPathValue(state, path),
     initialize,
     isDirty,
     output,
+    rebaseline,
     reset,
     resetValue,
     setValue: (path: string | readonly string[], value: FormValue) =>
@@ -71,6 +98,10 @@ export function useFormState(params: {
     state,
     syncInput,
   }
+}
+
+function isPathWithin(path: string, scope: string) {
+  return path === scope || path.startsWith(`${scope}.`)
 }
 
 function cloneFormObject(value: FormObject) {

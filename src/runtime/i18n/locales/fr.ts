@@ -68,6 +68,9 @@ export default defineUiToolsLocale<Messages>({
           title: 'Données du formulaire indisponibles',
         },
       },
+      validation: {
+        required: 'Ce champ est requis',
+      },
     },
     spreadsheet: {
       common: {

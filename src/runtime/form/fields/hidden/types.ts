@@ -2,10 +2,7 @@ import type { FormValue } from '../../types'
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FieldDefaultValue, FallbackNever } from '../../types/field-output-utils'
 
-export interface FormHiddenField<
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
-> extends Pick<
+export type FormHiddenField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> = Pick<
   FormStatefulFieldBase<'hidden', FormValue, TContext, TDeps>,
   | 'key'
   | 'type'
@@ -16,6 +13,11 @@ export interface FormHiddenField<
   | 'transform'
   | 'submit'
   | 'ignore'
-> {}
+  | 'watch'
+  | 'watchOptions'
+  | 'onDependencyChange'
+  | 'onRendered'
+  | 'stateEffect'
+>
 
 export type HiddenFieldOutput<TField> = FallbackNever<FieldDefaultValue<TField>, FormValue>

@@ -3,6 +3,7 @@ import UAlert from '@nuxt/ui/components/Alert.vue'
 import { computed, ref, useId, watchEffect } from 'vue'
 import type { Component } from 'vue'
 
+import { useFieldEffects } from '../../composables/use-field-effects'
 import {
   provideFormFieldBare,
   provideFormFieldControlAttrs,
@@ -89,6 +90,10 @@ const field = computed(() => createFormFieldInstance(props.field))
 const path = computed(() => fieldPath(props.parentPath, props.field))
 const childPath = computed(() => childParentPath(props.parentPath, props.field))
 const visible = computed(() => form.shouldRender(props.field, path.value))
+useFieldEffects(
+  () => props.field,
+  () => path.value,
+)
 const renderer = computed(() => fieldRenderers.get(field.value.type.value) ?? null)
 const rendererProps = computed(() => {
   const baseProps = {

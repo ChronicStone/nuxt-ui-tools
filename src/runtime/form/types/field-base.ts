@@ -1,4 +1,5 @@
 import type { FormValue } from './'
+import type { FormFieldApi } from './api'
 import type { FormFieldCallback } from './callbacks'
 import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
@@ -72,7 +73,7 @@ export interface FormStatefulFieldBase<
   /** Discriminant used by the field registry. */
   type: TType
   /** Initial field value. */
-  default?: FormDynamic<TValue, { ctx: TContext }>
+  default?: FormDynamic<TValue, { ctx: TContext; api: FormFieldApi<TValue, FormValue, TContext> }>
   /** Label rendered by the field wrapper. */
   label?: FormText
   /** Optional supporting copy rendered near the control. */
@@ -81,8 +82,8 @@ export interface FormStatefulFieldBase<
   hint?: FormText
   /** Optional rich content rendered beside the label. Takes precedence over `hint`. */
   labelExtra?: FormRenderable
-  /** Placeholder forwarded to controls that support placeholders. */
-  placeholder?: FormText
+  /** Placeholder forwarded to controls that support placeholders. Callbacks receive `{ ctx, deps, api }`. */
+  placeholder?: FormText | FormFieldCallback<FormText, TContext, TDeps, TValue>
   /** Raw dependency paths read before evaluating callbacks. */
   dependencies?: readonly (string | readonly [string, string])[]
   /** Item layout options for this field. */
@@ -109,7 +110,7 @@ export interface FormStatefulFieldBase<
     omit?: boolean
   }
   /** Runs after this field value changes. */
-  watch?: (params: { value: TValue; api: import('./api').FormFieldApi<TValue> }) => void
+  watch?: (params: { value: TValue; api: FormFieldApi<TValue> }) => void
   /** Vue watch options used by the field value effect. */
   watchOptions?: { deep?: boolean; immediate?: boolean }
   /** Runs when the resolved dependency object changes. */
@@ -168,6 +169,8 @@ export interface FormContainerFieldBase<
   description?: FormText
   /** Child fields rendered inside this field. */
   fields: readonly FormField<TContext, TDeps>[]
+  /** Raw dependency paths read before evaluating callbacks. */
+  dependencies?: readonly (string | readonly [string, string])[]
   /** Container layout options. */
   layout?: FormContainerLayout
   /** UI-library-specific props. */
@@ -176,4 +179,14 @@ export interface FormContainerFieldBase<
   condition?: FormFieldCallback<boolean, TContext, TDeps>
   /** Excludes this container and its children from the runtime. */
   ignore?: boolean
+  /** Runs after the container value changes. */
+  watch?: (params: { value: FormValue; api: FormFieldApi<FormValue> }) => void
+  /** Vue watch options used by the container value effect. */
+  watchOptions?: { deep?: boolean; immediate?: boolean }
+  /** Runs when the resolved dependency object changes. */
+  onDependencyChange?: FormFieldCallback<FormMaybePromise<void>, TContext, TDeps>
+  /** Runs after the container renderer is mounted. */
+  onRendered?: FormFieldCallback<FormMaybePromise<void>, TContext, TDeps>
+  /** Debounces or throttles value/dependency effects. */
+  stateEffect?: { type: 'debounce' | 'throttle'; duration: number }
 }

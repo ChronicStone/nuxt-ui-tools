@@ -6,6 +6,7 @@ import type { Ref } from 'vue'
 
 import type {
   FormValue,
+  FormErrorOptions,
   FormField,
   FormObject,
   FormRuntimeContext,
@@ -62,6 +63,7 @@ export function useFormValidation(params: {
   context: FormRuntimeContext
   apiFactory: FormFieldApiFactory
   getValidationMode: () => FormValidationMode
+  getRequiredMessage?: () => string
 }) {
   const customErrors = ref<readonly FormValidationError[]>([])
   const touchedPaths = ref<readonly string[]>([])
@@ -77,6 +79,7 @@ export function useFormValidation(params: {
         apiFactory: params.apiFactory,
         context: params.context,
         dynamicMessages,
+        getRequiredMessage: params.getRequiredMessage,
         includeAsync: true,
         mode: params.getValidationMode(),
         schema: params.schema(),
@@ -91,6 +94,7 @@ export function useFormValidation(params: {
         apiFactory: params.apiFactory,
         context: params.context,
         dynamicMessages,
+        getRequiredMessage: params.getRequiredMessage,
         includeAsync: false,
         mode: params.getValidationMode(),
         schema: params.schema(),
@@ -153,7 +157,7 @@ export function useFormValidation(params: {
       if (validationRuns.get('$form') !== run) {
         return asyncValid
       }
-      return syncResult.valid && asyncValid
+      return syncResult.valid && asyncValid && !hasBlockingErrors(paths)
     } finally {
       removePendingPaths(pendingPaths, potentialAsyncPaths, pendingToken)
     }
@@ -208,7 +212,7 @@ export function useFormValidation(params: {
         )
       }
 
-      return syncResult.valid && asyncValid
+      return syncResult.valid && asyncValid && !hasBlockingErrors(paths)
     } finally {
       removePendingPaths(pendingPaths, potentialAsyncPaths, pendingToken)
     }
@@ -227,12 +231,18 @@ export function useFormValidation(params: {
     return resolveFieldErrors(key)[0]
   }
 
-  function setError(path: readonly string[], message: string) {
+  function setError(path: readonly string[], message: string, options?: FormErrorOptions) {
     const key = path.join('.')
     customErrors.value = [
       ...customErrors.value.filter((error) => error.path !== key),
-      { message, path: key },
+      { blocking: options?.blocking !== false, message, path: key },
     ]
+  }
+
+  function hasBlockingErrors(paths: readonly string[]) {
+    return customErrors.value.some(
+      (error) => error.blocking !== false && paths.some((path) => isScopedPath(error.path, path)),
+    )
   }
 
   function clearError(path?: readonly string[]) {
@@ -353,6 +363,7 @@ function buildRegleRules(params: {
   includeAsync: boolean
   mode: FormValidationMode
   dynamicMessages: Ref<Map<string, string>>
+  getRequiredMessage?: () => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
   if (isSteppedSchemaForRules(params.schema)) {
@@ -388,6 +399,7 @@ function buildFieldRules(params: {
   includeAsync: boolean
   mode: FormValidationMode
   dynamicMessages: Ref<Map<string, string>>
+  getRequiredMessage?: () => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
 
@@ -515,6 +527,7 @@ function buildLeafRules(params: {
   includeAsync: boolean
   mode: FormValidationMode
   dynamicMessages: Ref<Map<string, string>>
+  getRequiredMessage?: () => string
 }): RegleRuleTree {
   const output: RegleRuleTree = {}
   const validation = Object.getOwnPropertyDescriptor(params.field, 'validation')?.value
@@ -523,7 +536,7 @@ function buildLeafRules(params: {
   if (params.mode !== 'rules' && resolveRequired(params.field, params.callbackParams)) {
     output.required = withMessage(
       (value: FormValue) => !isEmptyValue(value),
-      resolveRequiredMessage(params.field),
+      resolveRequiredMessage(params.field, params.getRequiredMessage?.()),
     )
   }
 

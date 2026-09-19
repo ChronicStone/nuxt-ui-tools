@@ -2,6 +2,7 @@ import type { ComputedRef, Ref } from 'vue'
 
 import type { FormValue } from './'
 import type {
+  FormErrorOptions,
   FormFieldApi,
   FormSubmitAction,
   FormSubmitHandler,
@@ -73,6 +74,9 @@ export interface FormRuntime {
   canGoPrevious: ComputedRef<boolean>
   canGoNext: ComputedRef<boolean>
   getValue: (path: string | readonly string[]) => FormValue
+  getInitialValue: (path: string | readonly string[]) => FormValue
+  trackEffect: (effect: FormValue) => void
+  settleEffects: () => Promise<void>
   setValue: (path: string | readonly string[], value: FormValue) => void
   getFieldApi: (path: readonly string[], field?: FormField) => FormFieldApi
   getFieldCallbackParams: (path: readonly string[], field: FormField) => FormFieldCallbackParams
@@ -85,7 +89,7 @@ export interface FormRuntime {
   shouldRender: (field: FormField, path: readonly string[]) => boolean
   validate: (options?: FormValidationOptions) => Promise<boolean>
   validateCurrentStep: (options?: FormValidationOptions) => Promise<boolean>
-  setError: (path: string | readonly string[], message: string) => void
+  setError: (path: string | readonly string[], message: string, options?: FormErrorOptions) => void
   clearError: (path?: string | readonly string[]) => void
   focusRequest: Ref<FormFocusRequest | null>
   registerFieldElement: (path: string | readonly string[], element: HTMLElement) => () => void
@@ -94,7 +98,7 @@ export interface FormRuntime {
   clearErrors: () => void
   submitHandler: (submitHandler?: FormSubmitHandler<FormObject>) => Promise<FormSubmitHandlerResult>
   submit: () => Promise<boolean>
-  reset: () => void
+  reset: () => Promise<void>
   nextStep: () => Promise<boolean>
   previousStep: () => Promise<boolean>
   goToStep: (index: number) => Promise<boolean>
