@@ -3,6 +3,7 @@ import { useForm, useFormApi } from '#ui-tools/form'
 import type { FormController, FormObject, FormSchema, FormValue } from '#ui-tools/form'
 
 import { accountFormSchema } from '../../forms/account'
+import { assessImportFormSchema } from '../../forms/assess-import'
 import { arraysFormInput, arraysFormSchema } from '../../forms/arrays'
 import {
   billedBulkFormSchema,
@@ -181,6 +182,13 @@ const entries: FormEntry[] = [
     email: 'thao@exassess.com',
     remember: true,
   }),
+  register(
+    'assessImport',
+    'Importer des assessments',
+    'Étape fichier de l’assistant d’import.',
+    assessImportFormSchema(),
+    {},
+  ),
 ]
 
 async function openModal(entry: FormEntry) {
