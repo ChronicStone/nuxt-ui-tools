@@ -387,7 +387,8 @@ describe('Regle-owned form validation', () => {
               {
                 name: 'available-handle',
                 validate: async () => {
-                  const gate = gates[(runIndex += 1)]
+                  const gate = gates[runIndex]
+                  runIndex += 1
                   await gate.promise
                   return true
                 },

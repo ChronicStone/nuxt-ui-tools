@@ -261,7 +261,11 @@ function* lazySortRows<TRow extends GenericObject>(
   let cursor = 0
 
   while (cursor < buffer.length) {
-    yield buffer[(cursor += 1)]!
+    const item = buffer[cursor]
+    cursor += 1
+    if (item !== undefined) {
+      yield item
+    }
 
     while (buffer.length < cursor + 1000) {
       const next = iterator.next()

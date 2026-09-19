@@ -89,7 +89,8 @@ export function useTableSummaries(params: UseTableSummariesParams) {
   }
 
   async function compute() {
-    const run = (token += 1)
+    token += 1
+    const run = token
     if (!enabled.value) {
       cells.value = {}
       return
