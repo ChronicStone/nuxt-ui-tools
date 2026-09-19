@@ -23,9 +23,7 @@ type FormSchemaSubmit<TContext extends FormContextDefinition | undefined> = (par
 
 interface FormSchemaBase<TContext extends FormContextDefinition | undefined> {
   formKey?: string
-  eyebrow?: FormText
-  title?: FormText
-  description?: FormText
+  header?: import('../types').FormHeaderConfig
   context: TContext
   layout?: FormLayoutConfig
   showStepper?: boolean

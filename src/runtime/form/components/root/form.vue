@@ -16,12 +16,14 @@ import { provideFormRuntime, useFormRuntime } from '../../composables/use-form-r
 import { provideFormUi } from '../../composables/use-form-ui'
 import type {
   FormValue,
+  FormHeaderDisplay,
   FormObject,
   FormRendererController,
   FormRenderShell,
   FormUiConfig,
   FormValidationMode,
 } from '../../types'
+import { getFormHeader } from '../../utils/overlay'
 import { isRecord } from '../../utils/path'
 import {
   isBoolean,
@@ -154,9 +156,16 @@ const displayedFields = computed(() =>
 const displayedParentPath = computed(() =>
   displayedStep.value?.root ? [displayedStep.value.root] : [],
 )
-const title = computed(() => resolveFormText(getSchemaTitle(schemaRef.value)))
-const eyebrow = computed(() => resolveFormText(getSchemaText(schemaRef.value, 'eyebrow')))
-const description = computed(() => resolveFormText(getSchemaText(schemaRef.value, 'description')))
+const header = computed(() => getFormHeader(schemaRef.value))
+const title = computed(() => resolveFormText(getHeaderText(header.value, 'title')))
+const eyebrow = computed(() => resolveFormText(getHeaderText(header.value, 'eyebrow')))
+const description = computed(() => resolveFormText(getHeaderText(header.value, 'description')))
+const showHeading = computed(() => {
+  if (!title.value && !eyebrow.value && !description.value) {
+    return false
+  }
+  return headerDisplayed(getHeaderDisplay(header.value), shell.value)
+})
 const showStepper = computed(() => getSchemaShowStepper(schemaRef.value))
 const grid = useFormGridLayout({ layout: runtime.currentLayout })
 const shell = computed(() => props.shell ?? 'inline')
@@ -271,20 +280,40 @@ function stepLabel(index: number) {
   return runtime.steps.value[index]?.label ?? `Step ${index + 1}`
 }
 
-function getSchemaText(schema: FormValue, key: string) {
-  if (!isRecord(schema)) {
+function getHeaderText(headerConfig: FormValue, key: string) {
+  if (!isRecord(headerConfig)) {
     return
   }
-  const value = Object.getOwnPropertyDescriptor(schema, key)?.value
+  const value = Object.getOwnPropertyDescriptor(headerConfig, key)?.value
   return isString(value) || isNumber(value) || isFunction(value) ? value : undefined
 }
 
-function getSchemaTitle(schema: FormValue) {
-  if (!isRecord(schema)) {
-    return
+function getHeaderDisplay(headerConfig: FormValue): FormHeaderDisplay {
+  if (!isRecord(headerConfig)) {
+    return 'overlay'
   }
-  const value = Object.getOwnPropertyDescriptor(schema, 'title')?.value
-  return isString(value) || isNumber(value) || isFunction(value) ? value : undefined
+  const value = Object.getOwnPropertyDescriptor(headerConfig, 'display')?.value
+  if (value === 'always' || value === 'never' || value === 'overlay') {
+    return value
+  }
+  return Array.isArray(value) ? value.filter(isRenderShell) : 'overlay'
+}
+
+function headerDisplayed(display: FormHeaderDisplay, currentShell: FormRenderShell) {
+  if (display === 'always') {
+    return true
+  }
+  if (display === 'never') {
+    return false
+  }
+  if (display === 'overlay') {
+    return currentShell !== 'inline'
+  }
+  return display.includes(currentShell)
+}
+
+function isRenderShell(value: FormValue): value is FormRenderShell {
+  return value === 'inline' || value === 'drawer' || value === 'modal' || value === 'fullscreen'
 }
 
 function getSchemaUi(schema: FormValue): FormUiConfig | undefined {
@@ -380,12 +409,9 @@ async function focusFirstRenderedField() {
 
 <template>
   <form novalidate :class="rootClass" @submit.prevent="submit">
-    <header
-      v-if="title || eyebrow || description || runtime.isStepped.value || isOverlayShell"
-      :class="headerClass"
-    >
+    <header v-if="showHeading || runtime.isStepped.value || isOverlayShell" :class="headerClass">
       <div
-        v-if="title || isOverlayShell"
+        v-if="showHeading || isOverlayShell"
         :class="
           mergeFormUiClass(
             'flex items-start justify-between gap-4',
@@ -394,7 +420,7 @@ async function focusFirstRenderedField() {
         "
       >
         <div
-          v-if="title || eyebrow || description"
+          v-if="showHeading"
           :class="mergeFormUiClass('grid min-w-0 gap-1', formUi.ui.value.root?.ui?.heading)"
         >
           <p

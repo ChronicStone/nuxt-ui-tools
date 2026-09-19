@@ -74,7 +74,7 @@ const settingsSchema = defineFormSchema({
     columns: 8,
     gap: 16,
   },
-  title: 'Workspace settings',
+  header: { title: 'Workspace settings' },
 })
 
 const form = useForm({

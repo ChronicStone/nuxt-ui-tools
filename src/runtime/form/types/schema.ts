@@ -3,7 +3,7 @@ import type { FormAction } from './actions'
 import type { FormApi, FormSubmitHandler } from './api'
 import type { FormContextData, FormContextDefinition } from './context'
 import type { FormField, FormFieldType } from './field'
-import type { FormLayoutConfig } from './layout'
+import type { FormLayoutConfig, FormRenderShell } from './layout'
 import type { FormUiConfig } from './ui'
 import type { FormMaybePromise, FormObject, FormText } from './utils'
 import type { FormValidationMode } from './validation'
@@ -26,6 +26,20 @@ export interface FormControlsConfig {
   syncInput?: boolean | readonly string[]
   /** Selects required, custom-rule, all, or no validation. */
   validate?: FormValidationMode
+}
+
+/** Where the schema header renders: only in overlay shells, everywhere, never, or in listed shells. */
+export type FormHeaderDisplay = 'overlay' | 'always' | 'never' | readonly FormRenderShell[]
+
+export interface FormHeaderConfig {
+  /** Small caption above the title, typically the entity or domain name. */
+  eyebrow?: FormText
+  /** Form title. Also used as the overlay's accessible name. */
+  title?: FormText
+  /** Supporting copy under the title. */
+  description?: FormText
+  /** Defaults to `'overlay'`. */
+  display?: FormHeaderDisplay
 }
 
 export interface FormModalConfig {
@@ -101,12 +115,8 @@ export interface FormSchema<
 > {
   /** Stable key used by persistence, diagnostics, and test selectors. */
   formKey?: string
-  /** Optional small caption rendered above the title, such as the entity name. */
-  eyebrow?: FormText
-  /** Optional user-facing title for full-form renderers. */
-  title?: FormText
-  /** Optional supporting copy rendered under the title. */
-  description?: FormText
+  /** Header rendered by form shells. Shown in overlays by default, see `header.display`. */
+  header?: FormHeaderConfig
   /** Form-scoped data sources exposed to fields as `ctx`. */
   context?: TContext
   /** Form-level field grid layout. */

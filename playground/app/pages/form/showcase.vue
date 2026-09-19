@@ -53,7 +53,7 @@ const addressOptionForm = defineFormSchema({
     columns: 8,
     gap: 16,
   },
-  title: 'Create address option',
+  header: { title: 'Create address option' },
 })
 
 const showcaseForm = defineFormSchema({
@@ -923,7 +923,7 @@ const showcaseForm = defineFormSchema({
     maxHeight: '90dvh',
     maxWidth: 1100,
   },
-  title: 'Form field showcase',
+  header: { title: 'Form field showcase' },
 })
 
 type ShowcaseOutput = ExtractFormOutput<typeof showcaseForm>

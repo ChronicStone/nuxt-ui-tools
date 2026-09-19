@@ -178,7 +178,7 @@ const validationSchema = defineFormSchema({
       title: 'Security',
     },
   ],
-  title: 'Validation assessment',
+  header: { title: 'Validation assessment' },
 })
 
 const form = useForm({

@@ -31,7 +31,7 @@ const schema = computed(() => ({
     columns: 2,
     gap: 20,
   },
-  title: definition.value?.label,
+  header: { display: 'always', title: definition.value?.label },
 }))
 const input = computed(() => definition.value?.input)
 const formUi = computed<FormUiConfig>(() => ({

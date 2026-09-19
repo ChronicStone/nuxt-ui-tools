@@ -17,11 +17,19 @@ export function normalizeFormOverlayMode(value: FormValue): FormApiDisplayMode {
 }
 
 export function getFormOverlayTitle(schema: FormValue) {
-  return getFormOverlayText(schema, 'title')
+  return getFormOverlayText(getFormHeader(schema), 'title')
 }
 
 export function getFormOverlayDescription(schema: FormValue) {
-  return getFormOverlayText(schema, 'description')
+  return getFormOverlayText(getFormHeader(schema), 'description')
+}
+
+export function getFormHeader(schema: FormValue): FormValue {
+  if (!isRecord(schema)) {
+    return
+  }
+  const header = Object.getOwnPropertyDescriptor(schema, 'header')?.value
+  return isRecord(header) ? header : undefined
 }
 
 export function getFormModalConfig(schema: FormValue): FormModalConfig | undefined {

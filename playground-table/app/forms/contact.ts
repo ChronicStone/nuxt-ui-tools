@@ -105,11 +105,13 @@ export function contactFormSchema(accounts: readonly Account[]) {
         type: 'checkbox',
       },
     ],
-    description:
-      'Une personne physique rattachée à un ou plusieurs comptes. L’accès à l’espace client se donne ensuite par invitation.',
-    eyebrow: 'Contact',
     formKey: 'contact',
+    header: {
+      description:
+        'Une personne physique rattachée à un ou plusieurs comptes. L’accès à l’espace client se donne ensuite par invitation.',
+      eyebrow: 'Contact',
+      title: 'Nouveau contact',
+    },
     modal: { maxWidth: 760 },
-    title: 'Nouveau contact',
   })
 }
