@@ -207,7 +207,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           create: {
             handler: async ({ label }) => {
               await sleep(350)
-              return { label, value: label.toLowerCase().replaceAll(/\s+/g, '-') }
+              return { label, value: label.toLowerCase().replaceAll(/\s+/gu, '-') }
             },
             label: 'Create role',
           },
@@ -224,7 +224,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           create: {
             handler: async ({ label }) => {
               await sleep(500)
-              return { label, value: label.toLowerCase().replaceAll(/\s+/g, '-') }
+              return { label, value: label.toLowerCase().replaceAll(/\s+/gu, '-') }
             },
             label: 'Create role',
           },
@@ -429,7 +429,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           create: {
             handler: async ({ label }) => {
               await sleep(350)
-              return { label, value: label.toLowerCase().replaceAll(/\s+/g, '-') }
+              return { label, value: label.toLowerCase().replaceAll(/\s+/gu, '-') }
             },
             label: 'Create role',
           },
@@ -447,7 +447,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
           create: {
             handler: async ({ label }) => {
               await sleep(500)
-              return { label, value: label.toLowerCase().replaceAll(/\s+/g, '-') }
+              return { label, value: label.toLowerCase().replaceAll(/\s+/gu, '-') }
             },
             label: 'Create role',
           },

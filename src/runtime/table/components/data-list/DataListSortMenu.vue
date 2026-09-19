@@ -73,7 +73,9 @@ const sortLabels = computed(() => {
     labels.set(option.key, isString(option.label) ? option.label : String(option.label()))
   }
   for (const column of internals.tableColumns.runtimeColumns.value) {
-    if (column.sortableKey) labels.set(column.sortableKey, column.label)
+    if (column.sortableKey) {
+      labels.set(column.sortableKey, column.label)
+    }
   }
   return labels
 })
@@ -120,8 +122,8 @@ function humanize(value: string) {
     value
       .split('.')
       .at(-1)
-      ?.replaceAll(/[_-]+/g, ' ')
-      .replaceAll(/\b\w/g, (char) => char.toUpperCase()) ?? value
+      ?.replaceAll(/[_-]+/gu, ' ')
+      .replaceAll(/\b\w/gu, (char) => char.toUpperCase()) ?? value
   )
 }
 </script>

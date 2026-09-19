@@ -359,8 +359,9 @@ const remoteSchema = defineTableSchema({
     mode: 'remote',
     query: (params) => ({
       queryFn: async () => {
-        if (params.pagination.mode !== 'offset')
+        if (params.pagination.mode !== 'offset') {
           throw new Error('The remote employee demo uses offset pagination.')
+        }
 
         return demoEmployeesClient.queryTable(params)
       },
@@ -518,7 +519,7 @@ function shiftDays(value: Date, amount: number) {
 
 function getInitials(value: string) {
   return value
-    .split(/\s+/)
+    .split(/\s+/u)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')

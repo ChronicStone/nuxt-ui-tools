@@ -22,7 +22,7 @@ export function parseResponsiveValue(
 ): Record<string, string | null> {
   const tokens = value
     .trim()
-    .split(/\s+/)
+    .split(/\s+/u)
     .filter(Boolean)
     .map((token) => {
       const separatorIndex = token.indexOf(':')

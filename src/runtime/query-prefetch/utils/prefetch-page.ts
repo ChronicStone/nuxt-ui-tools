@@ -49,7 +49,6 @@ export function prefetchPage(to: RouteLocationRaw): Promise<void> {
       if (import.meta.client) {
         return preloadRouteComponents(route.fullPath, router)
       }
-      return
     }),
     definition
       ? Promise.resolve().then(() =>

@@ -7,6 +7,7 @@ import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { DataListButtonProps, TableUiFilterDefinition } from '../../../types'
@@ -45,7 +46,7 @@ const selectedDefinition = computed(() =>
 const activeCount = computed(
   () =>
     definitions.value.filter(
-      (definition) => internals.filters.getActiveFilterState({ key: definition.key }) != null,
+      (definition) => !isNullish(internals.filters.getActiveFilterState({ key: definition.key })),
     ).length,
 )
 

@@ -9,7 +9,7 @@ import type ts from 'typescript'
  * resolved route carries its own prefetch definition.
  */
 
-const SCRIPT_SETUP_TAG_RE = /<script\b(?=[^>]*\bsetup\b)[^>]*>/
+const SCRIPT_SETUP_TAG_RE = /<script\b(?=[^>]*\bsetup\b)[^>]*>/u
 
 interface TextEdit {
   end: number

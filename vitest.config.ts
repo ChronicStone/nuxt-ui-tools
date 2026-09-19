@@ -8,17 +8,17 @@ export default defineConfig({
   plugins: [vue(), vueJsx()],
   resolve: {
     alias: [
-      { find: /^#ui-tools\/(.*)$/, replacement: `${root}src/runtime/$1` },
-      { find: /^nuxt\/app$/, replacement: `${root}test/dom/stubs/nuxt-app.ts` },
+      { find: /^#ui-tools\/(.*)$/u, replacement: `${root}src/runtime/$1` },
+      { find: /^nuxt\/app$/u, replacement: `${root}test/dom/stubs/nuxt-app.ts` },
       {
-        find: /^@nuxt\/ui\/composables\/useLocale$/,
+        find: /^@nuxt\/ui\/composables\/useLocale$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui-locale.ts`,
       },
       {
-        find: /^@nuxt\/ui\/components\/(.*)\.vue$/,
+        find: /^@nuxt\/ui\/components\/(.*)\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/$1.ts`,
       },
-      { find: /^vue-draggable-plus$/, replacement: `${root}test/dom/stubs/vue-draggable-plus.ts` },
+      { find: /^vue-draggable-plus$/u, replacement: `${root}test/dom/stubs/vue-draggable-plus.ts` },
     ],
   },
   test: {

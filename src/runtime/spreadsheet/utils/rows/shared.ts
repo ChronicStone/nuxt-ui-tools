@@ -23,11 +23,11 @@ import { executeSpreadsheetRules } from '../validation'
 export function normalizeSpreadsheetText(value: SpreadsheetValue) {
   return String(value ?? '')
     .normalize('NFD')
-    .replaceAll(/[\u0300-\u036F]/g, '')
-    .replaceAll(/\s*\*\s*$/g, '')
-    .replaceAll(/\s*\(required\)\s*$/gi, '')
+    .replaceAll(/[\u0300-\u036F]/gu, '')
+    .replaceAll(/\s*\*\s*$/gu, '')
+    .replaceAll(/\s*\(required\)\s*$/giu, '')
     .trim()
-    .replaceAll(/\s+/g, ' ')
+    .replaceAll(/\s+/gu, ' ')
     .toLowerCase()
 }
 
@@ -49,13 +49,13 @@ export function applySpreadsheetNormalization(
         return result.toLowerCase()
       }
       if (token === 'accent-insensitive') {
-        return result.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        return result.normalize('NFD').replace(/[\u0300-\u036f]/gu, '')
       }
 
       return result
     }, nextValue)
-    .replaceAll(/\s*\*\s*$/g, '')
-    .replaceAll(/\s*\(required\)\s*$/gi, '')
+    .replaceAll(/\s*\*\s*$/gu, '')
+    .replaceAll(/\s*\(required\)\s*$/giu, '')
 }
 
 export function applySpreadsheetModifiers(
@@ -78,10 +78,10 @@ export function applySpreadsheetModifiers(
       return result.toUpperCase()
     }
     if (modifier === 'normalizeSpaces') {
-      return result.replace(/\s+/g, ' ')
+      return result.replace(/\s+/gu, ' ')
     }
     if (modifier === 'accent-insensitive') {
-      return result.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      return result.normalize('NFD').replace(/[\u0300-\u036f]/gu, '')
     }
 
     return result
@@ -170,8 +170,6 @@ function parseSpreadsheetBooleanValue(value: string) {
   if (['false', '0', 'no'].includes(normalized)) {
     return false
   }
-
-  return
 }
 
 function pushSpreadsheetParseIssue(params: {
@@ -250,8 +248,6 @@ function parseSpreadsheetEnumColumnValue<TContext>(
     message: issueText.unrecognizedValue(token),
     rowIndex: cell.rowIndex,
   })
-
-  return
 }
 
 function parseSpreadsheetOptionColumnValue<TContext>(
@@ -492,7 +488,5 @@ export async function parseSpreadsheetCellValue<TContext>(
       message: error instanceof Error ? error.message : issueText.parseFailed(cell.header),
       rowIndex: cell.rowIndex,
     })
-
-    return
   }
 }

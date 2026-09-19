@@ -2,7 +2,14 @@ import { useQuery } from '@tanstack/vue-query'
 import { computed, unref } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 
-import { isBoolean, isFunction, isNumber, isObject, isString } from '../../shared/utils/predicate'
+import {
+  isBoolean,
+  isFunction,
+  isNumber,
+  isObject,
+  isString,
+  isNullish,
+} from '../../shared/utils/predicate'
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
   TableBooleanFilterDefinition,
@@ -258,7 +265,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
   const selectableSourceEntries = computed(() =>
     sourceEntries.value.filter(
       (entry): entry is TableResolvedFilterOptionEntry & { value: string | number | boolean } =>
-        entry.value != null,
+        !isNullish(entry.value),
     ),
   )
 
@@ -297,7 +304,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     if (optionUi.value?.presentation === 'tree') {
       return flattenFilterOptionEntries(filteredTreeState.value.entries).filter(
         (entry): entry is TableResolvedFilterOptionEntry & { value: string | number | boolean } =>
-          entry.value != null,
+          !isNullish(entry.value),
       )
     }
 
@@ -344,7 +351,7 @@ function getSelectedValues(options: { filters: ReturnType<typeof useTableFilters
   if (Array.isArray(rule?.value)) {
     return rule.value
   }
-  if (rule?.value != null) {
+  if (!isNullish(rule?.value)) {
     return [rule.value]
   }
   return []

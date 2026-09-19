@@ -556,8 +556,6 @@ function getNumberScalarOperatorOverride(
   ) {
     return editor?.operators?.[operator]?.scalar
   }
-
-  return
 }
 
 function getNumberRangeOperatorOverride(
@@ -567,7 +565,6 @@ function getNumberRangeOperatorOverride(
   if (operator === 'between') {
     return editor?.operators?.between?.range
   }
-  return
 }
 
 function getDateScalarOperatorOverride(
@@ -577,8 +574,6 @@ function getDateScalarOperatorOverride(
   if (operator === 'is' || operator === 'isNot' || operator === 'before' || operator === 'after') {
     return editor?.operators?.[operator]?.scalar
   }
-
-  return
 }
 
 function getDateRangeOperatorOverride(
@@ -588,5 +583,4 @@ function getDateRangeOperatorOverride(
   if (operator === 'between') {
     return editor?.operators?.between?.range
   }
-  return
 }

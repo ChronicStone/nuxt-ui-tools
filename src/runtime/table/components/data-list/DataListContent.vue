@@ -67,7 +67,6 @@ const viewportStyle = computed(() => {
   if (props.fit === 'height' && normalizedHeight.value) {
     return { height: normalizedHeight.value }
   }
-  return
 })
 const rootUi = computed(() => dataListUi.ui.value.content?.ui)
 const resolvedSize = computed(

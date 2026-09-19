@@ -2,7 +2,6 @@ import type {
   SpreadsheetColumnDefinition,
   SpreadsheetColumnResolveDefinition,
   SpreadsheetColumnGroupDefinition,
-  NormalizeSpreadsheetSchema,
   SpreadsheetResolutionDefinition,
   SpreadsheetColumnsDefinition,
   SpreadsheetContextItem,
@@ -17,6 +16,7 @@ import {
   createSpreadsheetDynamicBuilder,
 } from '../utils/builders'
 import { isSpreadsheetRecord } from '../utils/object'
+export { type NormalizeSpreadsheetSchema } from '../types'
 
 function isSpreadsheetColumnGroupDefinition(
   value: SpreadsheetValue,
@@ -226,7 +226,6 @@ export function normalizeSpreadsheetSchema<
     steps,
   }
 }
-export type { NormalizeSpreadsheetSchema }
 
 function normalizeSpreadsheetSteps(schema: {
   sheet?: unknown

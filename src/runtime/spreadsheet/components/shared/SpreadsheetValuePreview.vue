@@ -4,6 +4,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isNullish } from '../../../shared/utils/predicate'
 import type { SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import { formatSpreadsheetCell } from '../../utils/display'
 import { getSpreadsheetObjectEntries, isSpreadsheetRecord } from '../../utils/object'
@@ -31,7 +32,7 @@ function getCompactObjectEntries(value: SpreadsheetRecord) {
 }
 
 function getValueKind(value: SpreadsheetValue) {
-  if (value == null) {
+  if (isNullish(value)) {
     return 'empty'
   }
   if (Array.isArray(value)) {

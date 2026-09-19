@@ -407,7 +407,7 @@ async function validateFields(
     if (isArrayField(field)) {
       const value = getPathValue(state, path)
       if (Array.isArray(value)) {
-        for (const index of value.keys())
+        for (const index of value.keys()) {
           errors.push(
             ...(await validateFields(
               getArrayItemFields(field, isRecord(value[index]) ? value[index] : {}),
@@ -418,6 +418,7 @@ async function validateFields(
               mode,
             )),
           )
+        }
       }
       continue
     }

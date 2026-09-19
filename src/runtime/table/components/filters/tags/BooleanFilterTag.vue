@@ -5,7 +5,7 @@ import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed, ref } from 'vue'
 
-import { isBoolean } from '../../../../shared/utils/predicate'
+import { isBoolean, isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableFilterOptions } from '../../../composables/use-table-filter-options'
@@ -92,7 +92,7 @@ const radioItems = computed(() =>
 )
 
 const radioValue = computed({
-  get: () => (localValue.value == null ? undefined : String(localValue.value)),
+  get: () => (isNullish(localValue.value) ? undefined : String(localValue.value)),
   set: (value: string | undefined) => {
     if (value === 'true') {
       localValue.value = true
@@ -112,7 +112,7 @@ const session = useFilterTagSession({
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
-    internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
+    !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   isOpen: isSessionOpen,
   onClose: () => {
     isContentReady.value = false
@@ -145,7 +145,7 @@ function handleContentMounted() {
 }
 
 function applyFilter() {
-  if (localValue.value == null) {
+  if (isNullish(localValue.value)) {
     internals.filters.clearFilter({ key: props.definition.key })
   } else {
     internals.filters.setScalarFilterValue({

@@ -1,6 +1,8 @@
 import { defineComponent, h } from 'vue'
 import type { PropType, VNodeChild } from 'vue'
 
+import { isNullish } from '#ui-tools/shared/utils/predicate'
+
 type Any = Record<string, unknown>
 interface MenuItem {
   label?: string
@@ -20,7 +22,7 @@ function dataAttributes(props: Any, keys: string[]) {
     if (value === undefined || value === null || value === false) {
       continue
     }
-    out[`data-${key.replaceAll(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`] =
+    out[`data-${key.replaceAll(/[A-Z]/gu, (c) => `-${c.toLowerCase()}`)}`] =
       value === '' ? 'true' : String(value)
   }
   return out
@@ -131,12 +133,18 @@ export function createControlStub(name: string, tag = 'div') {
       return () => {
         const ui = props.ui as Any | undefined
         const children: VNodeChild[] = []
-        if (slots.leading) children.push(h('span', { 'data-ui-slot': 'leading' }, slots.leading()))
-        if (props.label != null)
+        if (slots.leading) {
+          children.push(h('span', { 'data-ui-slot': 'leading' }, slots.leading()))
+        }
+        if (!isNullish(props.label)) {
           children.push(h('span', { 'data-ui-label': '' }, String(props.label)))
-        if (slots.default) children.push(...(slots.default() ?? []))
-        if (slots.trailing)
+        }
+        if (slots.default) {
+          children.push(...(slots.default() ?? []))
+        }
+        if (slots.trailing) {
           children.push(h('span', { 'data-ui-slot': 'trailing' }, slots.trailing()))
+        }
         return h(
           tag,
           {
@@ -183,17 +191,23 @@ export function createOverlayStub(name: string) {
         const open = props.open !== false
         const content: VNodeChild[] = []
         if (open) {
-          if (props.title) content.push(h('h2', { 'data-ui-title': '' }, String(props.title)))
-          if (slots.header)
+          if (props.title) {
+            content.push(h('h2', { 'data-ui-title': '' }, String(props.title)))
+          }
+          if (slots.header) {
             content.push(h('div', { 'data-ui-slot': 'header' }, slots.header({ close: () => {} })))
-          if (slots.content)
+          }
+          if (slots.content) {
             content.push(
               h('div', { 'data-ui-slot': 'content' }, slots.content({ close: () => {} })),
             )
-          if (slots.body)
+          }
+          if (slots.body) {
             content.push(h('div', { 'data-ui-slot': 'body' }, slots.body({ close: () => {} })))
-          if (slots.footer)
+          }
+          if (slots.footer) {
             content.push(h('div', { 'data-ui-slot': 'footer' }, slots.footer({ close: () => {} })))
+          }
         }
         const items = renderItems(props.items)
         return h(
@@ -320,7 +334,7 @@ export function createInputStub(
             },
             placeholder: props.placeholder,
             type: kind === 'number' ? 'number' : ((props.type as string | undefined) ?? 'text'),
-            value: props.modelValue == null ? '' : String(props.modelValue),
+            value: isNullish(props.modelValue) ? '' : String(props.modelValue),
           }),
           slots.trailing?.(),
         ])

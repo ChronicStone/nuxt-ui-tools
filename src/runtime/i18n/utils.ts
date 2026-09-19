@@ -27,7 +27,7 @@ export function translateUiToolsMessage<TMessages>(
     return path
   }
 
-  return message.replaceAll(/\{(\w+)\}/g, (_, key: string) => `${option?.[key] ?? `{${key}}`}`)
+  return message.replaceAll(/\{(\w+)\}/gu, (_, key: string) => `${option?.[key] ?? `{${key}}`}`)
 }
 
 export function buildUiToolsTranslator<TMessages>(

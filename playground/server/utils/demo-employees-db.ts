@@ -313,8 +313,8 @@ function seedDemoEmployees(client: Database.Database) {
     const fullName = `${firstName} ${lastName}`
     const emailName = `${firstName}.${lastName}`
       .normalize('NFD')
-      .replaceAll(/[\u0300-\u036F]/g, '')
-      .replaceAll(/[^a-zA-Z.]/g, '')
+      .replaceAll(/[\u0300-\u036F]/gu, '')
+      .replaceAll(/[^a-zA-Z.]/gu, '')
       .toLowerCase()
 
     insertEmployee.run(

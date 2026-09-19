@@ -4,8 +4,7 @@ import { buildNumberFilterPreview } from './number-preview'
 import { buildOptionFilterPreview } from './option-preview'
 import { buildTextFilterPreview } from './text-preview'
 import type { FilterPreviewOptionEntry, FilterPreviewResult } from './types'
-
-export type { FilterPreviewResult, FilterPreviewOptionEntry }
+export { type FilterPreviewOptionEntry, type FilterPreviewResult } from './types'
 
 const EMPTY_PREVIEW: FilterPreviewResult = {
   active: false,

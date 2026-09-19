@@ -8,7 +8,14 @@ import { computed, ref, shallowRef, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isArray, isDate, isNumber, isObject, isString } from '../../../../shared/utils/predicate'
+import {
+  isArray,
+  isDate,
+  isNumber,
+  isObject,
+  isString,
+  isNullish,
+} from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -180,7 +187,7 @@ const session = useFilterTagSession({
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
-    internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
+    !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   onClose: () => {
     pendingOperator.value = undefined
   },
@@ -361,8 +368,6 @@ function coerceCalendarDate<TValue>(value: TValue) {
   ) {
     return new CalendarDate(value.year, value.month, value.day)
   }
-
-  return
 }
 
 function toCalendarDate<TValue>(value: TValue) {

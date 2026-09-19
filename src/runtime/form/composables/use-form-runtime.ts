@@ -18,8 +18,6 @@ import { resolveFormLayoutConfig } from '../utils/layout'
 import { isRecord, pathSegments } from '../utils/path'
 import { isFunction, isObject, isUndefined } from '../utils/predicate'
 import {
-  childParentPath,
-  fieldPath,
   getSchemaFields,
   getSchemaLayout,
   getSchemaSteps,
@@ -33,6 +31,7 @@ import { useFormState } from './use-form-state'
 import { useFormSubmitController } from './use-form-submit'
 import { useFormUploadRegistry } from './use-form-upload-registry'
 import { useFormValidation } from './use-form-validation'
+export { childParentPath, fieldPath } from '../utils/state'
 
 const formRuntimeKey: InjectionKey<FormRuntime> = Symbol('nuxt-ui-tools-form-runtime')
 
@@ -305,15 +304,23 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     getFieldError: validation.getFieldError,
     getValue: state.getValue,
     goToStep: async (index) => {
-      if (actionPending.value) return false
+      if (actionPending.value) {
+        return false
+      }
       const nextIndex = Math.min(Math.max(index, 0), steps.value.length - 1)
-      if (nextIndex === currentStepIndex.value) return true
+      if (nextIndex === currentStepIndex.value) {
+        return true
+      }
       if (nextIndex > currentStepIndex.value) {
         return withNavigationPending('next', async () => {
           const valid = await validateCurrentStep({ focus: true })
-          if (!valid) return false
+          if (!valid) {
+            return false
+          }
           const canProceed = await runBeforeNext()
-          if (!canProceed) return false
+          if (!canProceed) {
+            return false
+          }
 
           commitStepChange(nextIndex)
           return true
@@ -330,36 +337,52 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     isStepped,
     markFieldTouched: validation.markTouched,
     nextStep: async () => {
-      if (actionPending.value) return false
+      if (actionPending.value) {
+        return false
+      }
       return withNavigationPending('next', async () => {
         const valid = await validateCurrentStep({ focus: true })
-        if (!valid) return false
+        if (!valid) {
+          return false
+        }
         const canProceed = await runBeforeNext()
-        if (!canProceed) return false
+        if (!canProceed) {
+          return false
+        }
 
         const nextIndex = resolveNextStepIndex()
-        if (nextIndex === null) return false
+        if (nextIndex === null) {
+          return false
+        }
         commitStepChange(nextIndex)
         return true
       })
     },
     output: state.output,
     previousStep: async () => {
-      if (actionPending.value) return false
+      if (actionPending.value) {
+        return false
+      }
       const handler = getSchemaLifecycleHandler(params.schema.value, 'onBeforePrevious')
       if (!handler) {
         const previousIndex = resolvePreviousStepIndex()
-        if (previousIndex === null) return false
+        if (previousIndex === null) {
+          return false
+        }
         commitStepChange(previousIndex)
         return true
       }
 
       return withNavigationPending('previous', async () => {
         const canProceed = await runBeforePrevious()
-        if (!canProceed) return false
+        if (!canProceed) {
+          return false
+        }
 
         const previousIndex = resolvePreviousStepIndex()
-        if (previousIndex === null) return false
+        if (previousIndex === null) {
+          return false
+        }
         commitStepChange(previousIndex)
         return true
       })
@@ -435,7 +458,9 @@ function createFieldApi(params: {
       patch: (key, value) => patchContextResourceValue(contextResource(key), value),
       refresh: async (key) => {
         const resource = params.ctx[key]
-        if (isRefreshableResource(resource)) await resource.refresh()
+        if (isRefreshableResource(resource)) {
+          await resource.refresh()
+        }
       },
       refreshAll: async () => {
         const refreshTasks = Object.values(params.ctx).map((resource) =>
@@ -537,5 +562,3 @@ function fieldCallbackParams(params: {
     deps: resolveFieldDependencies(params),
   }
 }
-
-export { childParentPath, fieldPath }

@@ -3,9 +3,9 @@ import type { SpreadsheetValue } from '../../types'
 export function normalizeSpreadsheetReferenceText(value: SpreadsheetValue) {
   return String(value ?? '')
     .normalize('NFD')
-    .replaceAll(/[\u0300-\u036F]/g, '')
+    .replaceAll(/[\u0300-\u036F]/gu, '')
     .trim()
-    .replaceAll(/\s+/g, ' ')
+    .replaceAll(/\s+/gu, ' ')
     .toLowerCase()
 }
 

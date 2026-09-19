@@ -4,7 +4,7 @@ import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
 import USlider from '@nuxt/ui/components/Slider.vue'
 import { computed, ref, watch } from 'vue'
 
-import { isArray, isDate, isNumber, isObject } from '../../../../shared/utils/predicate'
+import { isArray, isDate, isNumber, isObject, isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -95,7 +95,7 @@ const scalarValue = computed<number | undefined>({
     return localValue.value === '' ? undefined : Number(localValue.value)
   },
   set(value) {
-    localValue.value = value == null || Number.isNaN(value) ? '' : String(value)
+    localValue.value = isNullish(value) || Number.isNaN(value) ? '' : String(value)
   },
 })
 
@@ -113,7 +113,7 @@ const session = useFilterTagSession({
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
-    internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
+    !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   onClose: () => {
     pendingOperator.value = undefined
   },
@@ -140,8 +140,8 @@ function initLocalState() {
   if (operator.value === 'between') {
     if (isObject(value) && !isDate(value)) {
       rangeValue.value = {
-        from: value.from == null ? '' : String(value.from),
-        to: value.to == null ? '' : String(value.to),
+        from: isNullish(value.from) ? '' : String(value.from),
+        to: isNullish(value.to) ? '' : String(value.to),
       }
     } else {
       rangeValue.value = { from: '', to: '' }
@@ -151,7 +151,7 @@ function initLocalState() {
     return
   }
 
-  localValue.value = value == null ? '' : String(value)
+  localValue.value = isNullish(value) ? '' : String(value)
   rangeValue.value = { from: '', to: '' }
 }
 
@@ -228,7 +228,7 @@ function updateScalarValue(value: number | undefined) {
 function updateRangeFrom(value: number | undefined) {
   rangeValue.value = {
     ...rangeValue.value,
-    from: value == null ? '' : String(value),
+    from: isNullish(value) ? '' : String(value),
   }
   commitIfAuto()
 }
@@ -236,7 +236,7 @@ function updateRangeFrom(value: number | undefined) {
 function updateRangeTo(value: number | undefined) {
   rangeValue.value = {
     ...rangeValue.value,
-    to: value == null ? '' : String(value),
+    to: isNullish(value) ? '' : String(value),
   }
   commitIfAuto()
 }

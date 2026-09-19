@@ -5,7 +5,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import { hasProperty, isArray, isString } from '#ui-tools/shared/utils/predicate'
+import { hasProperty, isArray, isString, isNullish } from '#ui-tools/shared/utils/predicate'
 import { defineTableSchema, useTable } from '#ui-tools/table'
 import type { TableFilterOptionEntry } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
@@ -219,7 +219,7 @@ const clientSchema = defineTableSchema({
         preview: {
           formatter: (value) => formatCurrency(value),
           rangeFormatter: ({ from, to }) =>
-            `${from == null ? t('playground.tableCommon.range.min') : formatCurrency(from)} - ${to == null ? t('playground.tableCommon.range.max') : formatCurrency(to)}`,
+            `${isNullish(from) ? t('playground.tableCommon.range.min') : formatCurrency(from)} - ${isNullish(to) ? t('playground.tableCommon.range.max') : formatCurrency(to)}`,
         },
       }),
       filter.date('hiredAt', {
@@ -634,7 +634,7 @@ function shiftDays(value: Date, amount: number) {
 
 function getInitials(value: string) {
   return value
-    .split(/\s+/)
+    .split(/\s+/u)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')

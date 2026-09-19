@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { isNullish } from '#ui-tools/shared/utils/predicate'
 import { defineTableSchema, useTable } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/RowActions.vue'
 import type { TableCursorPageResult, TableSourceRequestContext } from '#ui-tools/table/types'
@@ -242,7 +243,7 @@ const schema = defineTableSchema({
         align: 'right',
         label: 'Durée',
         render: ({ row }) =>
-          row.duration == null ? (
+          isNullish(row.duration) ? (
             <Dash />
           ) : (
             <span class="tabular-nums text-muted">{row.duration} ms</span>

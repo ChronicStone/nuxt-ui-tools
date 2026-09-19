@@ -74,7 +74,9 @@ function updateItems(value: readonly FormObject[]) {
 
   if (Array.isArray(current)) {
     current.forEach((item, index) => {
-      if (isFormObject(item)) applyVirtualFields(item, index)
+      if (isFormObject(item)) {
+        applyVirtualFields(item, index)
+      }
     })
   }
 }

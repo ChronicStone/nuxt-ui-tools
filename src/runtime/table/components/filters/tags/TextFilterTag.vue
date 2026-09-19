@@ -3,6 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import { computed, ref } from 'vue'
 
+import { isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -81,14 +82,14 @@ function initLocalState() {
   const value = internals.filters.getFilterState({
     key: props.definition.key,
   })?.value
-  localValue.value = value == null ? '' : String(value)
+  localValue.value = isNullish(value) ? '' : String(value)
 }
 
 const session = useFilterTagSession({
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
-    internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
+    !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   onClose: () => {
     pendingOperator.value = undefined
   },
@@ -138,7 +139,7 @@ function handleOperatorChange(op: TableFilterOperator) {
 }
 
 function handleValueUpdate(value: string | number | undefined) {
-  localValue.value = value == null ? '' : String(value)
+  localValue.value = isNullish(value) ? '' : String(value)
 
   if (filterUi.value.commitMode === 'auto') {
     internals.filters.setScalarFilterValue({

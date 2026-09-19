@@ -156,8 +156,12 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       query: (context): TableQueryDefinition<AccountRow[]> => ({
         queryFn: async () => {
           options.onQuery?.(context)
-          if (options.delay) await new Promise((resolve) => setTimeout(resolve, options.delay))
-          if (options.fail) throw new Error('boom')
+          if (options.delay) {
+            await new Promise((resolve) => setTimeout(resolve, options.delay))
+          }
+          if (options.fail) {
+            throw new Error('boom')
+          }
           return rows
         },
         queryKey: ['accounts', rows.length, options.fail ? 'fail' : 'ok'],
@@ -310,7 +314,9 @@ export function createAuditSchema(
         queryFn: async () => {
           const cursor = context.pagination.mode === 'cursor' ? context.pagination.cursor : null
           options.onPage?.(cursor)
-          if (options.delay) await new Promise((resolve) => setTimeout(resolve, options.delay))
+          if (options.delay) {
+            await new Promise((resolve) => setTimeout(resolve, options.delay))
+          }
           const start = cursor ? Number(cursor) : 0
           const page = rows.slice(start, start + pageSize)
           const next = start + pageSize < rows.length ? String(start + pageSize) : null

@@ -199,7 +199,6 @@ const contextError = computed<string | undefined>(() => {
     }
     return t('form.states.contextError.description')
   }
-  return
 })
 
 async function submit() {
@@ -345,7 +344,9 @@ async function focusFirstRenderedField() {
     (field) => `${parentPath.value.join('.')}${parentPath.value.length ? '.' : ''}${field.key}`,
   )
   for (const path of paths) {
-    if (await runtime.focusField(path)) return
+    if (await runtime.focusField(path)) {
+      return
+    }
   }
 }
 </script>

@@ -22,5 +22,4 @@ export function resolveFormBoundaryText(value: FormValue) {
     const resolved = invokeFormFunction(value)
     return isString(resolved) || isNumber(resolved) ? String(resolved) : undefined
   }
-  return
 }

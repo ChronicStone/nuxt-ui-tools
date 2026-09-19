@@ -45,7 +45,9 @@ function createRefineRelationsSchema() {
               message: 'General score must be numeric when provided',
               name: 'numericScore',
               validator: (value: string) => {
-                if (!value.trim()) return true
+                if (!value.trim()) {
+                  return true
+                }
                 const numericValue = Number(value)
                 return !Number.isNaN(numericValue) && Number.isFinite(numericValue)
               },

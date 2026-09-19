@@ -142,8 +142,12 @@ const showcaseForm = defineFormSchema({
             name: 'email',
             validate: ({ api }) => {
               const value = api.value.get()
-              if (!value) return true
-              if (!isString(value)) return 'Enter a valid email address.'
+              if (!value) {
+                return true
+              }
+              if (!isString(value)) {
+                return 'Enter a valid email address.'
+              }
               return value.includes('@') || 'Enter a valid email address.'
             },
           },
@@ -162,7 +166,9 @@ const showcaseForm = defineFormSchema({
             name: 'phone',
             validate: ({ api }) => {
               const value = api.value.get()
-              if (!value) return true
+              if (!value) {
+                return true
+              }
               return (
                 (isString(value) && value.startsWith('+')) ||
                 'Enter a valid international phone number.'
@@ -252,7 +258,7 @@ const showcaseForm = defineFormSchema({
 
             return {
               label,
-              value: label.trim().toLowerCase().replace(/\s+/g, '-'),
+              value: label.trim().toLowerCase().replace(/\s+/gu, '-'),
               description: 'Created locally from the select menu',
             }
           },
@@ -292,7 +298,9 @@ const showcaseForm = defineFormSchema({
                 return { success: true, data: formData }
               },
             })
-            if (!result.isCompleted) return null
+            if (!result.isCompleted) {
+              return null
+            }
 
             const label =
               isString(result.formData.label) && result.formData.label.trim()
@@ -306,7 +314,7 @@ const showcaseForm = defineFormSchema({
 
             return {
               label,
-              value: `${label}-${Date.now()}`.toLowerCase().replace(/\s+/g, '-'),
+              value: `${label}-${Date.now()}`.toLowerCase().replace(/\s+/gu, '-'),
               description: `${city} · ${country}`,
             }
           },
@@ -809,7 +817,9 @@ const showcaseForm = defineFormSchema({
         handler: async ({ files }) => {
           await sleep(600)
           const file = files[0]
-          if (!file) return null
+          if (!file) {
+            return null
+          }
 
           return {
             name: file.name,
@@ -840,7 +850,9 @@ const showcaseForm = defineFormSchema({
             name: 'otp-length',
             validate: ({ api }) => {
               const value = api.value.get()
-              if (!value) return true
+              if (!value) {
+                return true
+              }
               return (isString(value) && value.length === 6) || 'Enter the 6 digit code.'
             },
           },
@@ -857,8 +869,12 @@ const showcaseForm = defineFormSchema({
             name: 'password-length',
             validate: ({ api }) => {
               const value = api.value.get()
-              if (!value) return true
-              if (!isString(value)) return 'Password must be at least 8 characters.'
+              if (!value) {
+                return true
+              }
+              if (!isString(value)) {
+                return 'Password must be at least 8 characters.'
+              }
               return value.length >= 8 || 'Password must be at least 8 characters.'
             },
           },
@@ -879,7 +895,9 @@ const showcaseForm = defineFormSchema({
             name: 'password-confirmation',
             validate: ({ api, deps }) => {
               const value = api.value.get()
-              if (!value) return true
+              if (!value) {
+                return true
+              }
               const password = 'password' in deps ? deps.password : null
               return value === password || 'Passwords do not match.'
             },

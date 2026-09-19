@@ -38,7 +38,7 @@ describe('ColumnPanel', () => {
   it('lists configurable columns with pinned rows and toggles visibility', async () => {
     harness = await mountPanel()
     const w = harness.wrapper
-    expect(w.find('.nut-dl-colpanel__title').text().replaceAll(/\s+/g, ' ')).toBe(
+    expect(w.find('.nut-dl-colpanel__title').text().replaceAll(/\s+/gu, ' ')).toBe(
       'Colonnes · 6 sur 7',
     )
     expect(w.find('.nut-dl-colpanel input[data-ui="UInput"]').exists()).toBeFalsy()

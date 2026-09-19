@@ -5,7 +5,7 @@ import { computed } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isString } from '../../../shared/utils/predicate'
+import { isString, isNullish } from '../../../shared/utils/predicate'
 import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import type { TableActionController } from '../../composables/use-table-actions'
@@ -79,7 +79,7 @@ const scopeEnabled = computed(
   () =>
     props.scope &&
     internals.schema.value.selection?.scope !== 'page' &&
-    matchingCount.value != null &&
+    !isNullish(matchingCount.value) &&
     matchingCount.value > 0,
 )
 const bulkScope = computed(() => internals.selection.bulkScope.value)

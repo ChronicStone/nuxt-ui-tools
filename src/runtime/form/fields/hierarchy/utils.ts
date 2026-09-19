@@ -29,13 +29,18 @@ export function resolveHierarchySelection(params: {
 
   if (params.bubble) {
     for (const item of [...flattenOptions(params.items)].reverse()) {
-      if (!item.children?.length) continue
+      if (!item.children?.length) {
+        continue
+      }
       const key = formOptionKey(item.value)
       const allChildrenSelected = item.children.every((child) =>
         values.has(formOptionKey(child.value)),
       )
-      if (allChildrenSelected) values.set(key, item.value)
-      else values.delete(key)
+      if (allChildrenSelected) {
+        values.set(key, item.value)
+      } else {
+        values.delete(key)
+      }
     }
   }
 

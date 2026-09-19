@@ -29,7 +29,7 @@ describe('DataListSortMenu desktop', () => {
     const trigger = w.find('.nut-dl-sortbtn')
     expect(trigger.attributes('data-icon')).toBe('i-lucide-arrow-down-up')
     expect(trigger.attributes('data-variant')).toBe('outline')
-    expect(trigger.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/g, '')).toBe('TriNom')
+    expect(trigger.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/gu, '')).toBe('TriNom')
     expect(trigger.find('.nut-dl-sortbtn__label [data-ui="UIcon"]').attributes('data-name')).toBe(
       'i-lucide-arrow-up',
     )
@@ -56,7 +56,7 @@ describe('DataListSortMenu desktop', () => {
     await w.findAll('[data-ui-item]').at(-1)!.trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.sortingState.value.dir).toBe('desc')
-    expect(w.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/g, '')).toBe('TriStatut')
+    expect(w.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/gu, '')).toBe('TriStatut')
     expect(w.find('.nut-dl-sortbtn__label [data-ui="UIcon"]').attributes('data-name')).toBe(
       'i-lucide-arrow-down',
     )

@@ -33,7 +33,7 @@ describe('selection actions part', () => {
     expect(bar.classes()).toContain('absolute')
     expect(w.find('.nut-dl-selbar__bar').attributes('aria-label')).toBe('Sélection')
     const scope = w.findAll('.nut-dl-selbar__scope-btn')
-    expect(scope.map((b) => b.text().replaceAll(/\s+/g, ''))).toStrictEqual([
+    expect(scope.map((b) => b.text().replaceAll(/\s+/gu, ''))).toStrictEqual([
       'Sélection2',
       'Touslesrésultats60',
     ])
@@ -99,7 +99,7 @@ describe('selection actions part', () => {
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
     await harness.flush()
     expect(harness.wrapper.find('.nut-dl-selbar__scope').exists()).toBeFalsy()
-    expect(harness.wrapper.find('.nut-dl-selbar__count').text().replaceAll(/\s+/g, '')).toBe(
+    expect(harness.wrapper.find('.nut-dl-selbar__count').text().replaceAll(/\s+/gu, '')).toBe(
       'Sélection1',
     )
     harness.unmount()

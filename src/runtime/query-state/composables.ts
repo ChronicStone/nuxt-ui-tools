@@ -17,6 +17,7 @@ import type { Router } from 'vue-router'
 import type { GenericObject } from '#ui-tools/shared/types/utils'
 import { hasProperty, isObject } from '#ui-tools/shared/utils/predicate'
 
+import { isNullish } from '../shared/utils/predicate'
 import { QueryStateClient } from './client'
 import type { HistoryMode } from './client'
 import type { QueryCodec } from './codecs'
@@ -141,7 +142,7 @@ export function useQueryState<TValue, TDefault extends TValue>(
 
   function readFromClient(): ResolveDefaultedValue<TValue, TDefault> {
     const raw = client.get(key)
-    if (raw == null) {
+    if (isNullish(raw)) {
       // SAFETY: a non-undefined default is narrowed by the overload contract.
       return defaultValue as ResolveDefaultedValue<TValue, TDefault>
     }
@@ -161,7 +162,7 @@ export function useQueryState<TValue, TDefault extends TValue>(
     if (changedKey !== key) {
       return
     }
-    if (rawValue == null) {
+    if (isNullish(rawValue)) {
       // SAFETY: a non-undefined default is narrowed by the overload contract.
       internal.value = defaultValue as ResolveDefaultedValue<TValue, TDefault>
       return
@@ -385,7 +386,7 @@ export function useQueryStates<T extends QueryStatesSchema>(
     const def = schema[propKey] as StaticQueryStateOptions
     const urlKey = staticUrlKeys.get(propKey)!
     const raw = client.get(urlKey)
-    if (raw == null) {
+    if (isNullish(raw)) {
       return def.defaultValue
     }
     const parsed = def.codec.parse(raw)
@@ -410,7 +411,7 @@ export function useQueryStates<T extends QueryStatesSchema>(
       for (const { urlKey, codec } of resolvedKeys) {
         const fullKey = `${fullPrefix}.${urlKey}`
         const raw = client.get(fullKey)
-        if (raw != null && raw !== '') {
+        if (!isNullish(raw) && raw !== '') {
           entries.set(urlKey, codec.parse(raw))
         }
       }
@@ -456,7 +457,7 @@ export function useQueryStates<T extends QueryStatesSchema>(
         }
       }
 
-      if (codec && val != null) {
+      if (codec && !isNullish(val)) {
         const existing = updates.findIndex((u) => u.key === fullKey)
         const serializedValue = codec.serialize(val)
         if (existing !== -1) {

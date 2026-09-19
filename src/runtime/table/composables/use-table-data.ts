@@ -838,7 +838,9 @@ function createCursorQueryDefinition(options: {
         },
       })
 
-      if (!definition.queryFn) throw new Error('Cursor table sources must provide a queryFn.')
+      if (!definition.queryFn) {
+        throw new Error('Cursor table sources must provide a queryFn.')
+      }
       return definition.queryFn(queryContext)
     },
     queryKey: [...firstPageDefinition.queryKey, { tableCursorRevision: options.revision }],

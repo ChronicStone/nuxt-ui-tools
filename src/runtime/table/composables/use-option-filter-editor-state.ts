@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 
+import { isNullish } from '../../shared/utils/predicate'
 import type {
   TableFilterOptionEntry,
   TableOptionFilterDefinition,
@@ -57,7 +58,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
         filterUi: filterUi.value,
       }),
       selected:
-        entry.value != null &&
+        !isNullish(entry.value) &&
         options.selectedValues.value.some((value) => String(value) === String(entry.value)),
     })),
   )
@@ -141,9 +142,11 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
   const flatRadioValue = computed({
     get: () =>
-      options.selectedValues.value[0] == null ? undefined : String(options.selectedValues.value[0]),
+      isNullish(options.selectedValues.value[0])
+        ? undefined
+        : String(options.selectedValues.value[0]),
     set: (value: string | undefined) => {
-      if (value == null) {
+      if (isNullish(value)) {
         return
       }
 
@@ -176,21 +179,21 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const treeRadioValue = computed({
     get: () => {
       const selected = options.selectedValues.value[0]
-      if (selected == null) {
+      if (isNullish(selected)) {
         return undefined
       }
 
       return visibleTreeEntries.value.find(
-        (entry) => entry.value != null && String(entry.value) === String(selected),
+        (entry) => !isNullish(entry.value) && String(entry.value) === String(selected),
       )?.id
     },
     set: (value: string | undefined) => {
-      if (value == null) {
+      if (isNullish(value)) {
         return
       }
 
       const match = visibleTreeEntries.value.find((entry) => entry.id === value)
-      if (!match || !match.selectable || match.value == null) {
+      if (!match || !match.selectable || isNullish(match.value)) {
         return
       }
 
@@ -206,7 +209,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     const labels = optionSource.sourceEntries.value
       .filter(
         (entry) =>
-          entry.value != null &&
+          !isNullish(entry.value) &&
           options.selectedValues.value.some((value) => String(value) === String(entry.value)),
       )
       .map((entry) => entry.label)
@@ -251,7 +254,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     }
 
     if (
-      filterUi.value.selection.max != null &&
+      !isNullish(filterUi.value.selection.max) &&
       options.selectedValues.value.length >= filterUi.value.selection.max
     ) {
       return
@@ -279,7 +282,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       return
     }
 
-    if (entry.value == null) {
+    if (isNullish(entry.value)) {
       return
     }
     toggleValue(entry.value)
@@ -334,7 +337,10 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     const missingValues = descendantValues.filter((value) => !currentKeys.has(String(value)))
     const nextValues = [...options.selectedValues.value, ...missingValues]
 
-    if (filterUi.value.selection.max != null && nextValues.length > filterUi.value.selection.max) {
+    if (
+      !isNullish(filterUi.value.selection.max) &&
+      nextValues.length > filterUi.value.selection.max
+    ) {
       return
     }
 
@@ -366,7 +372,7 @@ function resolveRowIcon(options: {
   entry: { label: string; value?: PrimitiveFilterValue; count?: number; icon?: string }
   filterUi: ReturnType<typeof resolveOptionFilterUi>
 }) {
-  if (options.entry.value == null) {
+  if (isNullish(options.entry.value)) {
     return options.entry.icon
   }
 
@@ -398,7 +404,7 @@ function mapSelectedTreeEntries(options: {
       filterUi: options.filterUi,
     }),
     selected:
-      entry.value != null &&
+      !isNullish(entry.value) &&
       options.selectedValues.some((value) => String(value) === String(entry.value)),
   }))
 }

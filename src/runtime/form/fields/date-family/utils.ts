@@ -70,7 +70,7 @@ export function dateManualPlaceholder(format: string, range: boolean) {
 }
 
 export function applyDateManualMask(value: string, format: string, range: boolean) {
-  const digits = value.replaceAll(/\D/g, '')
+  const digits = value.replaceAll(/\D/gu, '')
   const width = formatDigitWidth(format)
   if (!width) {
     return value
@@ -99,7 +99,7 @@ export function parseDateManualValue(
     return undefined
   }
 
-  const digits = value.replaceAll(/\D/g, '')
+  const digits = value.replaceAll(/\D/gu, '')
   if (isDateFamilyRange(type)) {
     if (digits.length !== width * 2) {
       return undefined
@@ -148,7 +148,7 @@ export function calendarValueFromCanonical(type: FormDateFamilyType, value: stri
     return validYear(year) ? new CalendarDate(year, 1, 1) : undefined
   }
 
-  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(value)
+  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?/u.exec(value)
   if (!match) {
     return undefined
   }
@@ -196,7 +196,7 @@ export function serializeCalendarValue(
 }
 
 export function timeValueFromCanonical(value: string) {
-  const match = /T(\d{2}):(\d{2})/.exec(value)
+  const match = /T(\d{2}):(\d{2})/u.exec(value)
   if (!match) {
     return undefined
   }
@@ -217,7 +217,7 @@ export function timeRangeFromCanonical(values: readonly [string, string]): FormT
 }
 
 export function serializeTimeValue(existing: string, value: { hour: number; minute: number }) {
-  const date = /^(\d{4}-\d{2}-\d{2})/.exec(existing)?.[1]
+  const date = /^(\d{4}-\d{2}-\d{2})/u.exec(existing)?.[1]
   if (!date) {
     return existing
   }
@@ -237,7 +237,7 @@ export function canonicalDateFromValue(value: FormDateSeedValue) {
 }
 
 export function canonicalDateToJsDate(value: string) {
-  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?(?:T(\d{2}):(\d{2}))?/.exec(value)
+  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?(?:T(\d{2}):(\d{2}))?/u.exec(value)
   if (!match) {
     return undefined
   }
@@ -376,7 +376,7 @@ function canonicalParts(value: string, type: FormDateFamilyType): DateParts | un
     return { day: 1, hour: 0, minute: 0, month: 1, year }
   }
 
-  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?(?:T(\d{2}):(\d{2}))?/.exec(value)
+  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?(?:T(\d{2}):(\d{2}))?/u.exec(value)
   if (!match) {
     return undefined
   }
@@ -434,7 +434,7 @@ function formatDigitWidth(format: string) {
 
 function tokenizeDateFormat(format: string): DateFormatPart[] {
   const parts: DateFormatPart[] = []
-  const pattern = /yyyy|MM|dd|HH|mm/g
+  const pattern = /yyyy|MM|dd|HH|mm/gu
   let offset = 0
   let match = pattern.exec(format)
 

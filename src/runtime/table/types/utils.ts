@@ -9,17 +9,15 @@ import type {
   UnionToIntersection,
 } from '../../shared'
 import type { TableApi } from './table-api'
-
+export { type ComputedRef, type Ref } from 'vue'
 export type {
-  ComputedRef,
   LazyTextValue,
   MaybePromise,
   NestedPaths,
   Prettify,
-  Ref,
   RenderableType,
   UnionToIntersection,
-}
+} from '../../shared'
 
 export type GenericObject = object
 

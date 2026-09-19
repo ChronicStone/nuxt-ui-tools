@@ -107,7 +107,7 @@ describe('filter tags bar', () => {
     await harness.flush()
     expect(harness.internals.filterPresentation.dynamicSessionDefinition.value).toBeUndefined()
     const operators = w.findAll('[data-filter-stage-content] button')
-    expect(operators.map((b) => b.text().replaceAll(/\s+/g, ''))).toStrictEqual([
+    expect(operators.map((b) => b.text().replaceAll(/\s+/gu, ''))).toStrictEqual([
       'parmiin',
       'est=',
       "n'estpas≠",

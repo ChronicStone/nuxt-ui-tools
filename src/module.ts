@@ -131,10 +131,14 @@ export default defineNuxtModule<ModuleOptions>({
       name: 'nuxt-ui-tools:query-prefetch-macro',
       transform(code, id) {
         const path = id.split('?', 1)[0] ?? id
-        if (!path.endsWith('.vue') || !/[\\/]pages[\\/]/.test(path)) return
+        if (!path.endsWith('.vue') || !/[\\/]pages[\\/]/u.test(path)) {
+          return
+        }
 
         const transformed = transformQueryPrefetchMacro(typescript, code, id)
-        if (!transformed || transformed === code) return
+        if (!transformed || transformed === code) {
+          return
+        }
         return { code: transformed, map: null }
       },
     })

@@ -7,6 +7,7 @@ import type { VNodeChild } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -89,7 +90,7 @@ const matchingCount = computed(
 const live = computed(() => props.commitMode === 'live')
 const hasDraft = computed(() =>
   presentation.panelDefinitions.value.some(
-    (definition) => presentation.getPanelDraftFilterState({ key: definition.key }) != null,
+    (definition) => !isNullish(presentation.getPanelDraftFilterState({ key: definition.key })),
   ),
 )
 

@@ -19,7 +19,9 @@ export function syncFormArrayItems(target: FormValue, source: readonly FormObjec
     }
 
     for (const key of Object.keys(current)) {
-      if (!(key in snapshot)) delete current[key]
+      if (!(key in snapshot)) {
+        delete current[key]
+      }
     }
     for (const [key, value] of Object.entries(snapshot)) {
       current[key] = value

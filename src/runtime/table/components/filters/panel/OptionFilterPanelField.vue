@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
+import { isBoolean, isNumber, isString, isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import { useTableInternals } from '../../../composables/use-table-internals'
@@ -59,7 +59,9 @@ const state = useOptionFilterEditorState({
 
 const isActive = computed(
   () =>
-    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+    !isNullish(
+      internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }),
+    ),
 )
 const operatorItems = computed(() =>
   internals.filters.getFilterOperatorOptions({
@@ -80,7 +82,7 @@ const chips = computed(
 )
 const chipEntries = computed(() =>
   state.displayEntries.value
-    .filter((entry) => entry.value != null)
+    .filter((entry) => !isNullish(entry.value))
     .map((entry) => ({
       color: entry.color,
       count: entry.count,

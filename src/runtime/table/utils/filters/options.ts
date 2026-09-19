@@ -1,6 +1,6 @@
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isNumber } from '../../../shared/utils/predicate'
+import { isNumber, isNullish } from '../../../shared/utils/predicate'
 import type {
   TableBooleanFilterDefinition,
   TableFilterOptionEntry,
@@ -47,7 +47,7 @@ export function resolveFilterOptionEntries(options: {
     entries: sourceOptions,
     getCount: (value) =>
       countByValue.get(String(value)) ??
-      (options.deriveCounts === false || value == null
+      (options.deriveCounts === false || isNullish(value)
         ? options.missingCountFallback
         : countOptionMatches({
             candidate: value,
@@ -118,7 +118,7 @@ function resolveOptionEntryTree(options: {
   parentId?: string
 }): TableResolvedFilterOptionEntry[] {
   return options.entries.map((entry, index) => {
-    const idPart = entry.value == null ? `group-${index}` : `${index}:${String(entry.value)}`
+    const idPart = isNullish(entry.value) ? `group-${index}` : `${index}:${String(entry.value)}`
     const id = options.parentId ? `${options.parentId}/${idPart}` : idPart
     const children = resolveOptionEntryTree({
       entries: entry.children ?? [],
@@ -127,13 +127,12 @@ function resolveOptionEntryTree(options: {
       selectedValues: options.selectedValues,
     })
     const derivedCount = options.getCount(entry.value)
-    const selected =
-      entry.value == null
-        ? false
-        : isFilterValueSelected({
-            candidate: entry.value,
-            values: options.selectedValues,
-          })
+    const selected = isNullish(entry.value)
+      ? false
+      : isFilterValueSelected({
+          candidate: entry.value,
+          values: options.selectedValues,
+        })
 
     return {
       children,

@@ -1,3 +1,4 @@
+import { isNullish } from '../../../shared/utils/predicate'
 import type { TableResolvedFilterOptionEntry, TableVisibleFilterOptionEntry } from '../../types'
 
 export function flattenFilterOptionEntries(
@@ -115,9 +116,9 @@ function flattenVisibleEntries(options: {
 }): TableVisibleFilterOptionEntry[] {
   return options.entries.flatMap((entry) => {
     const expandable = entry.children.length > 0
-    const selectable = entry.value != null && (options.selectable === 'all' || !expandable)
+    const selectable = !isNullish(entry.value) && (options.selectable === 'all' || !expandable)
     const branchSelectable =
-      entry.value == null && expandable && options.branchSelection === 'children'
+      isNullish(entry.value) && expandable && options.branchSelection === 'children'
     const current: TableVisibleFilterOptionEntry = {
       branchSelectable,
       color: entry.color,
@@ -155,7 +156,7 @@ function collectSelectableValues(options: {
 }): (string | number | boolean)[] {
   const expandable = options.entry.children.length > 0
   const ownValue =
-    options.entry.value != null && (options.selectable === 'all' || !expandable)
+    !isNullish(options.entry.value) && (options.selectable === 'all' || !expandable)
       ? [options.entry.value]
       : []
 

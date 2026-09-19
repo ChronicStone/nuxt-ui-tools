@@ -35,9 +35,9 @@ function humanizeKey(value: string) {
     value
       .split('.')
       .at(-1)
-      ?.replaceAll(/([a-z0-9])([A-Z])/g, '$1 $2')
-      .replaceAll(/[_-]+/g, ' ')
-      .replaceAll(/\b\w/g, (char) => char.toUpperCase()) ?? value
+      ?.replaceAll(/([a-z0-9])([A-Z])/gu, '$1 $2')
+      .replaceAll(/[_-]+/gu, ' ')
+      .replaceAll(/\b\w/gu, (char) => char.toUpperCase()) ?? value
   )
 }
 </script>

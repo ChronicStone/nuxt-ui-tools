@@ -10,6 +10,7 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref, shallowRef, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
+import { isNullish } from '../../../shared/utils/predicate'
 import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue } from '../../types'
@@ -344,7 +345,7 @@ function clearValue() {
 }
 
 function canonicalDateFromFormValue(value: FormValue) {
-  if (value instanceof Date || isString(value) || isNumber(value) || value == null) {
+  if (value instanceof Date || isString(value) || isNumber(value) || isNullish(value)) {
     return canonicalDateFromValue(value)
   }
   return ''

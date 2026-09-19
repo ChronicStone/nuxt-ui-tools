@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 
+import { isNullish } from '../../shared/utils/predicate'
 import type {
   DataListFilterPanelCommitMode,
   TableFilterOperator,
@@ -38,7 +39,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
   const resolved = computed<TableResolvedFilterPresentation[]>(() =>
     definitions.value.map((definition) => {
-      const active = options.filters.getActiveFilterState({ key: definition.key }) != null
+      const active = !isNullish(options.filters.getActiveFilterState({ key: definition.key }))
       const location = resolveFilterDisplayLocation(definition.display?.location)
       const visible = location !== 'tag-dynamic' || active
 
@@ -83,7 +84,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     }),
   )
   const dynamicSessionDefinition = computed(() =>
-    dynamicSessionKey.value == null
+    isNullish(dynamicSessionKey.value)
       ? undefined
       : definitions.value.find((definition) => definition.key === dynamicSessionKey.value),
   )
@@ -99,7 +100,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   const activePanelCount = computed(
     () =>
       panelDefinitions.value.filter(
-        (definition) => options.filters.getActiveFilterState({ key: definition.key }) != null,
+        (definition) => !isNullish(options.filters.getActiveFilterState({ key: definition.key })),
       ).length,
   )
 
@@ -220,7 +221,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     value: TableQueryStateFilterValue | null | undefined
     operator?: TableFilterOperator
   }) {
-    if (input.value == null || input.value === '') {
+    if (isNullish(input.value) || input.value === '') {
       clearPanelFilter({ key: input.key })
       return
     }

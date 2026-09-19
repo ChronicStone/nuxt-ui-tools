@@ -1,6 +1,6 @@
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isArray, isNumber, isObject, isString } from '../../../shared/utils/predicate'
+import { isArray, isNumber, isObject, isString, isNullish } from '../../../shared/utils/predicate'
 import { resolveTextValue } from '../../../shared/utils/render'
 import type {
   TableDateFilterDefinition,
@@ -72,7 +72,7 @@ export function flattenFilterValues(options: { value: unknown }): unknown[] {
     )
   }
 
-  if (options.value == null) {
+  if (isNullish(options.value)) {
     return []
   }
 
@@ -113,8 +113,6 @@ export function toDateFilterValue(options: {
 
     return from && !Number.isNaN(from.getTime()) ? from : undefined
   }
-
-  return
 }
 
 export function formatFilterDate(options: { value: Date }) {
@@ -185,8 +183,6 @@ export function toMaybeDate(options: { value: unknown }) {
     const date = new Date(options.value)
     return Number.isNaN(date.getTime()) ? undefined : date
   }
-
-  return
 }
 
 function areFilterValuesEqual(options: { left: unknown; right: unknown }) {
@@ -194,13 +190,13 @@ function areFilterValuesEqual(options: { left: unknown; right: unknown }) {
     const left =
       options.left instanceof Date
         ? options.left
-        : options.left == null
+        : isNullish(options.left)
           ? undefined
           : new Date(String(options.left))
     const right =
       options.right instanceof Date
         ? options.right
-        : options.right == null
+        : isNullish(options.right)
           ? undefined
           : new Date(String(options.right))
 

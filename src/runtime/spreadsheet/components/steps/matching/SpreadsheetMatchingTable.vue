@@ -6,6 +6,7 @@ import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 import { isNumber } from '#ui-tools/shared'
 
+import { isNullish } from '../../../../shared/utils/predicate'
 import type { SpreadsheetColumnAssignmentOption } from '../../../types'
 
 type MatchingOption = SpreadsheetColumnAssignmentOption & {
@@ -75,7 +76,7 @@ function getRequiredBadgeColor(required: boolean) {
 
 function handleAssign(row: ExpectedFieldRow, value: string) {
   if (value === '__ignore__') {
-    if (row.selectedHeaderIndex == null) {
+    if (isNullish(row.selectedHeaderIndex)) {
       return
     }
     emit('assign', {

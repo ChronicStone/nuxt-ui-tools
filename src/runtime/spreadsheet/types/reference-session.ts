@@ -1,6 +1,7 @@
 import type { SpreadsheetReferenceDefinition } from './references'
 import type { SpreadsheetResolutionDefinition } from './resolution'
 import type { SpreadsheetRowIssue } from './rows'
+import type { SpreadsheetRecord } from './shared'
 
 export interface SpreadsheetReferenceCandidate<TValue = unknown, TOption = unknown> {
   value: TValue
@@ -28,8 +29,6 @@ export interface SpreadsheetReferenceResolution<TValue = unknown, TOption = unkn
   selectedLabel?: string
   candidates: SpreadsheetReferenceCandidate<TValue, TOption>[]
 }
-
-import type { SpreadsheetRecord } from './shared'
 
 export interface SpreadsheetResolvedReferenceRow<TRow = SpreadsheetRecord> {
   index: number

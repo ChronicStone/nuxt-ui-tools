@@ -45,6 +45,7 @@ import { treeSelectFieldKind } from './tree-select/config'
 import { treeFieldKind } from './tree/config'
 import { uploadFieldKind } from './upload/config'
 import { yearFieldKind } from './year/config'
+export { arrayListFieldKind } from './array-list/config'
 
 export const formFieldKinds = [
   textFieldKind,
@@ -95,53 +96,3 @@ export const formFieldKinds = [
   cardFieldKind,
   columnFieldKind,
 ] as const
-
-export {
-  arrayListFieldKind,
-  arrayTableFieldKind,
-  arrayTabsFieldKind,
-  arrayVariantFieldKind,
-  autoCompleteFieldKind,
-  buttonFieldKind,
-  cardFieldKind,
-  checkboxCardFieldKind,
-  checkboxGroupFieldKind,
-  checkboxFieldKind,
-  colorPickerFieldKind,
-  cascaderFieldKind,
-  columnFieldKind,
-  customComponentFieldKind,
-  dateFieldKind,
-  dateRangeFieldKind,
-  dateTimeFieldKind,
-  dateTimeRangeFieldKind,
-  dividerFieldKind,
-  fileFieldKind,
-  hiddenFieldKind,
-  groupFieldKind,
-  infoFieldKind,
-  inputGroupFieldKind,
-  matrixFieldKind,
-  monthFieldKind,
-  monthRangeFieldKind,
-  numberFieldKind,
-  oneTimeCodeFieldKind,
-  objectFieldKind,
-  passwordFieldKind,
-  phoneNumberFieldKind,
-  radioCardFieldKind,
-  radioFieldKind,
-  ratingFieldKind,
-  selectFieldKind,
-  sliderFieldKind,
-  switchGroupFieldKind,
-  switchFieldKind,
-  tagFieldKind,
-  textareaFieldKind,
-  textFieldKind,
-  timeFieldKind,
-  treeFieldKind,
-  treeSelectFieldKind,
-  uploadFieldKind,
-  yearFieldKind,
-}

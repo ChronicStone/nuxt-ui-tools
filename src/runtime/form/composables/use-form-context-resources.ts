@@ -120,7 +120,9 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
       },
       set value(value) {
         const nextSource = querySource.value
-        if (nextSource) queryClient.setQueryData<FormValue, FormValue>(nextSource.queryKey, value)
+        if (nextSource) {
+          queryClient.setQueryData<FormValue, FormValue>(nextSource.queryKey, value)
+        }
       },
     }
 

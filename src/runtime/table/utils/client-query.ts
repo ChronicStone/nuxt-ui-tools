@@ -5,6 +5,7 @@ import {
   isNumber,
   isObject,
   isString,
+  isNullish,
 } from '../../shared/utils/predicate'
 import type {
   TableFacetExecutionResult,
@@ -580,15 +581,15 @@ function matchBetween(options: { value: unknown; filter: unknown }): boolean {
   return toValueList(options.value).some((item) => {
     const comparable = normalizeComparable(item)
 
-    if (comparable == null) {
+    if (isNullish(comparable)) {
       return false
     }
 
-    if (from != null && comparable < from) {
+    if (!isNullish(from) && comparable < from) {
       return false
     }
 
-    if (to != null && comparable > to) {
+    if (!isNullish(to) && comparable > to) {
       return false
     }
 
@@ -602,14 +603,14 @@ function matchComparison(options: {
   operator: 'gt' | 'gte' | 'lt' | 'lte'
 }): boolean {
   const expected = normalizeComparable(options.filter)
-  if (expected == null) {
+  if (isNullish(expected)) {
     return false
   }
 
   return toValueList(options.value).some((item) => {
     const comparable = normalizeComparable(item)
 
-    if (comparable == null) {
+    if (isNullish(comparable)) {
       return false
     }
 
@@ -642,7 +643,7 @@ function areEqual(options: { left: unknown; right: unknown }): boolean {
   if (isDate(options.left) || isDate(options.right)) {
     const leftValue = normalizeComparable(options.left)
     const rightValue = normalizeComparable(options.right)
-    return leftValue != null && leftValue === rightValue
+    return !isNullish(leftValue) && leftValue === rightValue
   }
 
   return options.left === options.right
@@ -652,15 +653,15 @@ function compareUnknownValues(options: { left: unknown; right: unknown }): numbe
   const leftComparable = normalizeComparableForSort(options.left)
   const rightComparable = normalizeComparableForSort(options.right)
 
-  if (leftComparable == null && rightComparable == null) {
+  if (isNullish(leftComparable) && isNullish(rightComparable)) {
     return 0
   }
 
-  if (leftComparable == null) {
+  if (isNullish(leftComparable)) {
     return 1
   }
 
-  if (rightComparable == null) {
+  if (isNullish(rightComparable)) {
     return -1
   }
 
@@ -699,7 +700,7 @@ function normalizeComparableForSort<TValue>(value: TValue): number | string | nu
     return value.toLocaleLowerCase()
   }
 
-  if (value == null) {
+  if (isNullish(value)) {
     return null
   }
 
@@ -718,7 +719,7 @@ function normalizeComparable<TValue>(value: TValue): number | string | null {
   if (isString(value)) {
     const maybeTimestamp = Date.parse(value)
 
-    if (!Number.isNaN(maybeTimestamp) && /\d{4}-\d{2}-\d{2}/.test(value)) {
+    if (!Number.isNaN(maybeTimestamp) && /\d{4}-\d{2}-\d{2}/u.test(value)) {
       return maybeTimestamp
     }
 
@@ -733,7 +734,7 @@ function normalizeComparable<TValue>(value: TValue): number | string | null {
 }
 
 function normalizeString<TValue>(value: TValue): string {
-  if (value == null) {
+  if (isNullish(value)) {
     return ''
   }
 

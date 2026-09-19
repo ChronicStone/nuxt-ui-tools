@@ -1,3 +1,1 @@
-import { UPaginationStub } from './factory'
-
-export default UPaginationStub
+export { UPaginationStub as default } from './factory'

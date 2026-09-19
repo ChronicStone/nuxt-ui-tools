@@ -3,7 +3,7 @@ import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
 import UInputDate from '@nuxt/ui/components/InputDate.vue'
 import { computed, ref, shallowRef, watch } from 'vue'
 
-import { isDate, isNumber, isObject, isString } from '../../../../shared/utils/predicate'
+import { isDate, isNumber, isObject, isString, isNullish } from '../../../../shared/utils/predicate'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
   DataListControlSize,
@@ -38,7 +38,9 @@ const operatorItems = computed(() =>
 const filterUi = computed(() => resolveDateFilterUi(props.definition, pendingOperator.value))
 const isActive = computed(
   () =>
-    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+    !isNullish(
+      internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }),
+    ),
 )
 const localDate = shallowRef<CalendarDate | undefined>()
 const localRangeStart = shallowRef<CalendarDate | undefined>()
@@ -150,8 +152,6 @@ function coerceCalendarDate<TValue>(value: TValue) {
   ) {
     return new CalendarDate(value.year, value.month, value.day)
   }
-
-  return
 }
 
 function toCalendarDate<TValue>(value: TValue) {

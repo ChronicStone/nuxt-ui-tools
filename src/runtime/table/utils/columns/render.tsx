@@ -4,7 +4,14 @@
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 import type { VNodeChild } from 'vue'
 
-import { isArray, isFunction, isNumber, isObject, isString } from '../../../shared/utils/predicate'
+import {
+  isArray,
+  isFunction,
+  isNumber,
+  isObject,
+  isString,
+  isNullish,
+} from '../../../shared/utils/predicate'
 import TableRowScopeProvider from '../../components/actions/TableRowScopeProvider.vue'
 import TableCellEllipsis from '../../components/table/TableCellEllipsis'
 import TableColumnHeader from '../../components/table/TableColumnHeader.vue'
@@ -311,8 +318,6 @@ export function normalizeColumnSize(options: { size?: number | string }) {
     const parsed = Number.parseFloat(options.size)
     return Number.isFinite(parsed) ? parsed : undefined
   }
-
-  return
 }
 
 function createCellRenderContext(options: {
@@ -427,12 +432,12 @@ function resolveEllipsisTitle(options: {
       return String(title(options.params))
     }
 
-    if (title != null) {
+    if (!isNullish(title)) {
       return String(title)
     }
   }
 
-  return options.fallbackValue == null ? null : String(options.fallbackValue)
+  return isNullish(options.fallbackValue) ? null : String(options.fallbackValue)
 }
 
 function isEllipsisTitleResolver<TValue>(
@@ -442,7 +447,7 @@ function isEllipsisTitleResolver<TValue>(
 }
 
 function formatCellValue(options: { value: unknown }) {
-  if (options.value == null) {
+  if (isNullish(options.value)) {
     return '—'
   }
 

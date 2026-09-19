@@ -124,7 +124,9 @@ export function useTableSummaries(params: UseTableSummariesParams) {
               cells.value = { ...cells.value, [column.id]: { error: null, loading: false, value } }
             })
             .catch((error: unknown) => {
-              if (run !== token) return
+              if (run !== token) {
+                return
+              }
               cells.value = {
                 ...cells.value,
                 [column.id]: { error: toError(error), loading: false, value: undefined },
@@ -168,17 +170,22 @@ export function useTableSummaries(params: UseTableSummariesParams) {
               merged[key] = { error: null, loading: false, value }
             }
             for (const column of columns.value) {
-              if (merged[column.id]?.loading)
+              if (merged[column.id]?.loading) {
                 merged[column.id] = { ...merged[column.id]!, loading: false }
+              }
             }
             cells.value = merged
           })
           .catch((error: unknown) => {
-            if (run !== token) return
+            if (run !== token) {
+              return
+            }
             const merged = { ...cells.value }
-            for (const column of columns.value)
-              if (merged[column.id]?.loading)
+            for (const column of columns.value) {
+              if (merged[column.id]?.loading) {
                 merged[column.id] = { error: toError(error), loading: false, value: undefined }
+              }
+            }
             cells.value = merged
           }),
       )
@@ -189,8 +196,9 @@ export function useTableSummaries(params: UseTableSummariesParams) {
           merged[column.id]?.loading &&
           !isResolver(column.summary) &&
           !(isConfig(column.summary) && column.summary.resolve)
-        )
+        ) {
           merged[column.id] = { error: null, loading: false, value: undefined }
+        }
       }
       cells.value = merged
     }

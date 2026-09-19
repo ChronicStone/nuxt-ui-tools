@@ -1,5 +1,7 @@
 import { shallowRef, computed } from 'vue'
 
+import { isNullish } from '../../shared/utils/predicate'
+
 type TableStartupPhase = 'booting' | 'scheduled' | 'active'
 
 export function useTableStartup() {
@@ -15,12 +17,12 @@ export function useTableStartup() {
       return
     }
 
-    if (firstFrameId.value != null) {
+    if (!isNullish(firstFrameId.value)) {
       globalThis.window.cancelAnimationFrame(firstFrameId.value)
       firstFrameId.value = null
     }
 
-    if (secondFrameId.value != null) {
+    if (!isNullish(secondFrameId.value)) {
       globalThis.window.cancelAnimationFrame(secondFrameId.value)
       secondFrameId.value = null
     }

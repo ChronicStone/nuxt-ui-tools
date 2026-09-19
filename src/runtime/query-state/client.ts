@@ -11,6 +11,8 @@ import type { Router, LocationQuery } from 'vue-router'
 
 import { isString } from '#ui-tools/shared/utils/predicate'
 
+import { isNullish } from '../shared/utils/predicate'
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -85,7 +87,7 @@ export class QueryStateClient {
   /** Read directly from the current route query. */
   private readFromRoute(key: string): string | null {
     const value = this.router.currentRoute.value.query[key]
-    if (value == null) {
+    if (isNullish(value)) {
       return null
     }
     if (Array.isArray(value)) {
@@ -179,7 +181,7 @@ export class QueryStateClient {
     const nextQuery: LocationQuery = { ...currentQuery }
 
     for (const { key, value } of updates) {
-      if (value == null) {
+      if (isNullish(value)) {
         delete nextQuery[key]
       } else {
         nextQuery[key] = value
@@ -219,14 +221,13 @@ export class QueryStateClient {
     // Invalidate cache entries that differ from the route
     for (const [key, cached] of this.cache) {
       const routeValue = query[key]
-      const rawRoute =
-        routeValue == null
-          ? null
-          : Array.isArray(routeValue)
-            ? (routeValue[0] ?? null)
-            : isString(routeValue)
-              ? routeValue
-              : null
+      const rawRoute = isNullish(routeValue)
+        ? null
+        : Array.isArray(routeValue)
+          ? (routeValue[0] ?? null)
+          : isString(routeValue)
+            ? routeValue
+            : null
 
       if (rawRoute !== cached) {
         this.cache.set(key, rawRoute)

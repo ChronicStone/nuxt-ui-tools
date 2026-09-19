@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isNullish } from '../../../../shared/utils/predicate'
 import type { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
 import FilterOptionLoadingList from './FilterOptionLoadingList.vue'
@@ -43,7 +44,7 @@ function handleSelect(options: {
   index: number
   sectionKey: string
 }) {
-  if (options.entry.value == null) {
+  if (isNullish(options.entry.value)) {
     return
   }
 

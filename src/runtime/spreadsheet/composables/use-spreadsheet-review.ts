@@ -5,6 +5,7 @@ import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isNullish } from '../../shared/utils/predicate'
 import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePreview.vue'
 import type {
   SpreadsheetRecord,
@@ -142,12 +143,12 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     reviewRows.value.filter((row) => row.issues.length > 0 && !isDiscarded(row.index)),
   )
   const inspectedRow = computed(() =>
-    inspectedRowIndex.value == null
+    isNullish(inspectedRowIndex.value)
       ? null
       : (reviewRows.value.find((row) => row.index === inspectedRowIndex.value) ?? null),
   )
   const inspectedIssueRowPosition = computed(() =>
-    inspectedRow.value == null
+    isNullish(inspectedRow.value)
       ? -1
       : issueRows.value.findIndex((row) => row.index === inspectedRow.value?.index),
   )

@@ -6,7 +6,7 @@ import { computed, ref } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useRangeSelect } from '../../../../shared'
-import { isBoolean, isNumber, isString } from '../../../../shared/utils/predicate'
+import { isBoolean, isNumber, isString, isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
@@ -87,7 +87,7 @@ const session = useFilterTagSession({
   dynamic: props.dynamic,
   embedded: props.embedded,
   hasCommittedState: () =>
-    internals.filters.getActiveFilterState({ key: props.definition.key }) != null,
+    !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   isOpen: isSessionOpen,
   onClose: () => {
     isContentReady.value = false
@@ -174,7 +174,7 @@ function initLocalState() {
         <TValue>(value: TValue): value is TValue & (string | number | boolean) =>
           isString(value) || isNumber(value) || isBoolean(value),
       )
-    : committedRule?.value != null &&
+    : !isNullish(committedRule?.value) &&
         (isString(committedRule.value) ||
           isNumber(committedRule.value) ||
           isBoolean(committedRule.value))

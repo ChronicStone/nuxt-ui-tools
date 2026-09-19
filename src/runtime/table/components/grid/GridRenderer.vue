@@ -119,7 +119,9 @@ function measureVirtualRow(element: Element | ComponentPublicInstance | null) {
     rowVirtualizer.value.measureElement(resolved)
   } else {
     nextTick(() => {
-      if (resolved.isConnected) rowVirtualizer.value.measureElement(resolved)
+      if (resolved.isConnected) {
+        rowVirtualizer.value.measureElement(resolved)
+      }
     })
   }
 }

@@ -2,7 +2,7 @@
 import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
 import { computed, ref } from 'vue'
 
-import { isDate, isNumber, isObject } from '../../../../shared/utils/predicate'
+import { isDate, isNumber, isObject, isNullish } from '../../../../shared/utils/predicate'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
   DataListControlSize,
@@ -34,7 +34,9 @@ const operatorItems = computed(() =>
 const filterUi = computed(() => resolveNumberFilterUi(props.definition, pendingOperator.value))
 const isActive = computed(
   () =>
-    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+    !isNullish(
+      internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }),
+    ),
 )
 
 const scalarValue = computed<number | undefined>({
@@ -72,12 +74,12 @@ const rangeValue = computed({
       key: props.definition.key,
       operator: pendingOperator.value,
       value:
-        value.from == null && value.to == null
+        isNullish(value.from) && isNullish(value.to)
           ? undefined
           : Object.fromEntries(
               [
-                value.from == null ? undefined : ['from', value.from],
-                value.to == null ? undefined : ['to', value.to],
+                isNullish(value.from) ? undefined : ['from', value.from],
+                isNullish(value.to) ? undefined : ['to', value.to],
               ].filter((entry): entry is [string, number] => entry !== undefined),
             ),
     })

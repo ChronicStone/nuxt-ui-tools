@@ -8,6 +8,7 @@ import {
   isFunction,
   isNumber,
   isObject,
+  isNullish,
   isString,
 } from '../../shared/utils/predicate'
 import { QUERY_DEFAULTS } from '../constants/query-state'
@@ -308,7 +309,7 @@ function resolveFilterState(
     for (const operator of resolveFilterSupportedOperators(definition)) {
       const urlKey = operator === defaultOperator ? definition.key : `${definition.key}~${operator}`
       const raw = queryValue(route, `f.ui.${urlKey}`)
-      if (raw == null || raw === '') {
+      if (isNullish(raw) || raw === '') {
         continue
       }
       entries.set(urlKey, createTableFilterValueCodec(definition).parse(raw))

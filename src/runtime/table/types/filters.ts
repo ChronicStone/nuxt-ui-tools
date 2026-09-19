@@ -16,6 +16,7 @@ import type {
   TableKnownFieldPath,
   TableTextValue,
 } from './utils'
+export { type TableFilterOperator } from './query-state'
 
 export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
   fields: TableFieldPath<TRow>[]
@@ -826,8 +827,6 @@ export type TableUiFilterDefinition<
   | TableBooleanFilterDefinition<TRow, TContext, TKey>
   | TableNumberFilterDefinition<TRow, TContext, TKey>
   | TableDateFilterDefinition<TRow, TContext, TKey>
-
-export type { TableFilterOperator }
 
 export type TableTextFilterOptions<
   TRow extends GenericObject = GenericObject,

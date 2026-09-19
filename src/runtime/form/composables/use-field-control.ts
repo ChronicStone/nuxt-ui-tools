@@ -304,7 +304,9 @@ function mergeControlUi(...configs: readonly FormValue[]): FormControlUi {
       continue
     }
     for (const [slot, value] of Object.entries(config)) {
-      if (isString(value)) merged[slot] = value
+      if (isString(value)) {
+        merged[slot] = value
+      }
     }
   }
   return merged
@@ -341,7 +343,6 @@ function resolveEffectFilter(field: FormField) {
   if (effect.type === 'throttle') {
     return throttleFilter(duration)
   }
-  return
 }
 
 function getValidationTrigger(field: FormField): FormValidationTrigger {

@@ -2,6 +2,7 @@
 import UTable from '@nuxt/ui/components/Table.vue'
 import { computed } from 'vue'
 
+import { isNullish } from '../../../shared/utils/predicate'
 import type { SpreadsheetRecord } from '../../types'
 import { isSpreadsheetRecord } from '../../utils/object'
 
@@ -24,7 +25,7 @@ function flattenRecord(value: SpreadsheetRecord, prefix = ''): Record<string, st
 
     return {
       ...acc,
-      [nextKey]: nextValue == null ? '' : String(nextValue),
+      [nextKey]: isNullish(nextValue) ? '' : String(nextValue),
     }
   }, {})
 }

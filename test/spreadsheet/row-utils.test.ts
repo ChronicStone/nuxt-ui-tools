@@ -38,7 +38,7 @@ describe('spreadsheet row utils', () => {
             required: true,
           },
           {
-            from: /^Last name$/i,
+            from: /^Last name$/iu,
             key: 'lastName',
             kind: 'text',
             required: true,

@@ -17,7 +17,7 @@ import type {
   TableUiFilterCollection,
   TableUiFilterDefinition,
 } from '../types'
-
+export { type TableSortKey } from '../types'
 export function createTableColumnBuilder<
   TRow extends GenericObject,
   TContext extends GenericObject,
@@ -164,5 +164,3 @@ export function resolveUiFilters<
 ): TableUiFilterDefinition<TRow, TContext, TKey>[] | undefined {
   return resolveCollection(filters, createTableFilterBuilder<TRow, TContext>())
 }
-
-export type { TableSortKey }

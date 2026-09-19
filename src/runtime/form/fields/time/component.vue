@@ -70,7 +70,7 @@ function parseTime(value: string | undefined) {
   if (!value) {
     return undefined
   }
-  const match = /^(\d{1,2})(?::(\d{1,2}))?$/.exec(value)
+  const match = /^(\d{1,2})(?::(\d{1,2}))?$/u.exec(value)
   if (!match) {
     return undefined
   }

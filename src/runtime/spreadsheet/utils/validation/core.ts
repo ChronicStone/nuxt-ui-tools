@@ -1,6 +1,7 @@
 import { useUiToolsLocale } from '#ui-tools/i18n'
 import { isBoolean, isFunction } from '#ui-tools/shared/utils/predicate'
 
+import { isNullish } from '../../../shared/utils/predicate'
 import type { SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import type {
   CreateSpreadsheetRule,
@@ -94,12 +95,13 @@ function createSpreadsheetRuleInstance<
       const rawResult = options.validator(value, ...options.params)
 
       if (isBoolean(rawResult)) {
-        if (rawResult)
+        if (rawResult) {
           return {
             $message: null,
             $meta: Object.fromEntries([]),
             $valid: true,
           }
+        }
 
         return {
           $message: resolveSpreadsheetMessage(messageResolver, {
@@ -119,12 +121,13 @@ function createSpreadsheetRuleInstance<
         $valid: rawResult.$valid,
       }
 
-      if (result.$valid)
+      if (result.$valid) {
         return {
           $message: null,
           $meta: result.$meta,
           $valid: true,
         }
+      }
 
       return {
         ...result,
@@ -277,7 +280,7 @@ function createSpreadsheetRuleBuilder() {
       flags: { required: true },
       message: () => t('spreadsheet.validation.required'),
       name: 'required',
-      validator: (value: SpreadsheetValue) => value != null && value !== '',
+      validator: (value: SpreadsheetValue) => !isNullish(value) && value !== '',
     }),
     validate,
   } satisfies SpreadsheetRuleBuilder

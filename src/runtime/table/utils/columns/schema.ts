@@ -95,8 +95,6 @@ export function getSortableKey(options: { column: SchemaTableColumn }) {
   if (options.column.kind === 'composite') {
     return options.column.sortableKey
   }
-
-  return
 }
 
 export function uniqueColumnIds(options: { columnIds: string[] }) {
@@ -105,9 +103,9 @@ export function uniqueColumnIds(options: { columnIds: string[] }) {
 
 function humanizeKey(options: { value: string }) {
   return options.value
-    .replaceAll(/[_-]+/g, ' ')
-    .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
-    .replaceAll(/\s+/g, ' ')
+    .replaceAll(/[_-]+/gu, ' ')
+    .replaceAll(/([a-z])([A-Z])/gu, '$1 $2')
+    .replaceAll(/\s+/gu, ' ')
     .trim()
-    .replace(/^./, (char) => char.toUpperCase())
+    .replace(/^./u, (char) => char.toUpperCase())
 }

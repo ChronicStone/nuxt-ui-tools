@@ -72,7 +72,9 @@ const validationSchema = defineFormSchema({
                 name: 'email-format',
                 validate: ({ api }) => {
                   const value = api.value.get()
-                  if (!value) return true
+                  if (!value) {
+                    return true
+                  }
                   return (isString(value) && value.includes('@')) || 'Use a valid email.'
                 },
               },
@@ -127,7 +129,9 @@ const validationSchema = defineFormSchema({
                 name: 'password-length',
                 validate: ({ api }) => {
                   const value = api.value.get()
-                  if (!value) return true
+                  if (!value) {
+                    return true
+                  }
                   return (isString(value) && value.length >= 8) || 'Use at least 8 characters.'
                 },
               },
@@ -146,7 +150,9 @@ const validationSchema = defineFormSchema({
                 name: 'password-match',
                 validate: ({ api, deps }) => {
                   const value = api.value.get()
-                  if (!value) return true
+                  if (!value) {
+                    return true
+                  }
                   const password = 'password' in deps ? deps.password : null
                   return value === password || 'Passwords must match.'
                 },

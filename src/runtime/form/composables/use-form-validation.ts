@@ -660,7 +660,7 @@ function toReglePath(path: string, state: FormObject) {
   const reglePath: string[] = []
   let current: FormValue = state
   for (const segment of pathSegments(path)) {
-    if (Array.isArray(current) && /^\d+$/.test(segment)) {
+    if (Array.isArray(current) && /^\d+$/u.test(segment)) {
       reglePath.push('$each')
     }
     reglePath.push(segment)

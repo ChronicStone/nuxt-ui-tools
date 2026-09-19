@@ -23,7 +23,6 @@ const model = computed<string | number | boolean | undefined>({
     if (isString(value) || isNumber(value) || isBoolean(value)) {
       return value
     }
-    return
   },
   set: (value) => form.setValue(props.path, value),
 })

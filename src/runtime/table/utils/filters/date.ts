@@ -1,6 +1,6 @@
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
-import { isFunction } from '../../../shared/utils/predicate'
+import { isFunction, isNullish } from '../../../shared/utils/predicate'
 import type {
   TableDateFilterDefinition,
   TableDateFilterOperator,
@@ -115,7 +115,7 @@ function getScalarPresetDefinitions(options: {
   if (presets === false) {
     return []
   }
-  if (presets == null) {
+  if (isNullish(presets)) {
     return DEFAULT_SCALAR_PRESETS[options.operator]
   }
   if (presets === true) {
@@ -137,7 +137,7 @@ function getRangePresetDefinitions(
   if (presets === false) {
     return []
   }
-  if (presets == null) {
+  if (isNullish(presets)) {
     return DEFAULT_RANGE_PRESETS
   }
   if (presets === true) {

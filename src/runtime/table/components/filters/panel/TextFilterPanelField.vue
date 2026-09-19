@@ -2,6 +2,7 @@
 import UInput from '@nuxt/ui/components/Input.vue'
 import { computed, ref } from 'vue'
 
+import { isNullish } from '../../../../shared/utils/predicate'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
   DataListControlSize,
@@ -36,7 +37,7 @@ const localValue = computed({
     const value = internals.filterPresentation.getPanelDraftFilterState({
       key: props.definition.key,
     })?.value
-    return value == null ? '' : String(value)
+    return isNullish(value) ? '' : String(value)
   },
   set: (value: string) => {
     internals.filterPresentation.setPanelScalarFilterValue({
@@ -49,7 +50,9 @@ const localValue = computed({
 
 const isActive = computed(
   () =>
-    internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }) != null,
+    !isNullish(
+      internals.filterPresentation.getPanelDraftFilterState({ key: props.definition.key }),
+    ),
 )
 
 function resolveInitialOperator() {

@@ -124,7 +124,6 @@ function resolveActionColor(action: FormAction) {
   if (action.type === 'primary') {
     return 'primary'
   }
-  return
 }
 
 function resolveActionVariant(action: FormAction) {
@@ -134,7 +133,6 @@ function resolveActionVariant(action: FormAction) {
   if (action.type === 'primary') {
     return 'solid'
   }
-  return
 }
 
 function actionButtonClass(action: FormAction) {

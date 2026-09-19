@@ -3,7 +3,7 @@ import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isBoolean, isNumber, isString } from '../../shared/utils/predicate'
+import { isBoolean, isNumber, isString, isNullish } from '../../shared/utils/predicate'
 import type {
   TableFilterOptionEntry,
   TableFilterOperator,
@@ -92,7 +92,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
     const rule = getFilterState({ key: input.key })
     const selectedValues = Array.isArray(rule?.value)
       ? rule.value
-      : rule?.value == null
+      : isNullish(rule?.value)
         ? []
         : [rule.value]
 
@@ -106,7 +106,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
         selectedValues,
       }),
     ).filter(
-      (entry): entry is typeof entry & { value: string | number | boolean } => entry.value != null,
+      (entry): entry is typeof entry & { value: string | number | boolean } =>
+        !isNullish(entry.value),
     )
   }
 
@@ -138,8 +139,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
 
     return {
       ...preview,
-      active: rule != null && hasValue,
-      dirty: getActiveFilterState({ key: input.key }) != null,
+      active: !isNullish(rule) && hasValue,
+      dirty: !isNullish(getActiveFilterState({ key: input.key })),
     }
   }
 
@@ -225,7 +226,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
           <TValue>(value: TValue): value is TValue & (string | number | boolean) =>
             isString(value) || isNumber(value) || isBoolean(value),
         )
-      : currentRule?.value == null
+      : isNullish(currentRule?.value)
         ? []
         : isString(currentRule.value) || isNumber(currentRule.value) || isBoolean(currentRule.value)
           ? [currentRule.value]
@@ -249,7 +250,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
   }) {
     const currentRule = getFilterState({ key: input.key })
 
-    if (input.value == null || input.value === '') {
+    if (isNullish(input.value) || input.value === '') {
       apiRemoveFilter({ key: input.key })
       return
     }

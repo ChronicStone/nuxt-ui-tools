@@ -6,9 +6,8 @@ import type {
   FormFieldState,
   FormFieldType,
 } from '../types'
-
+export { type FormFieldCapability, type FormFieldState } from '../types'
 export type FormFieldKind = FormFieldKindDefinition
-export type { FormFieldCapability, FormFieldState }
 
 /**
  * Internal public instance for checking authored field behavior against the field-kind registry.

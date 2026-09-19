@@ -9,7 +9,7 @@ import {
 } from '#ui-tools/query-state/codecs'
 
 import type { GenericObject } from '../../shared/types/utils'
-import { isBoolean, isNumber, isObject, isString } from '../../shared/utils/predicate'
+import { isBoolean, isNumber, isObject, isString, isNullish } from '../../shared/utils/predicate'
 import { DEFAULT_FILTER_OPERATOR, PAGINATION_DEFAULTS } from '../constants/query-state'
 import type {
   TableFilterOperator,
@@ -187,7 +187,7 @@ export function createTableFilterValueCodec(
       return parseScalar(rawValue, definition)
     },
     serialize(value) {
-      if (value == null) {
+      if (isNullish(value)) {
         return null
       }
 
@@ -424,7 +424,7 @@ function hasFilterValue(value: TableQueryStateFilterValue): boolean {
     return value.length > 0
   }
   if (isRange(value)) {
-    return value.from != null || value.to != null
+    return !isNullish(value.from) || !isNullish(value.to)
   }
   return true
 }
@@ -443,7 +443,7 @@ function isTableFilterValue<T>(value: T): value is T & TableQueryStateFilterValu
   }
 
   return [value.from, value.to].every(
-    (item) => item == null || isNumber(item) || item instanceof Date,
+    (item) => isNullish(item) || isNumber(item) || item instanceof Date,
   )
 }
 
@@ -506,7 +506,7 @@ function isMinMaxNumberRange<T>(value: T): value is T & { min?: number; max?: nu
   const minValue = 'min' in value ? value.min : undefined
   const maxValue = 'max' in value ? value.max : undefined
 
-  return (minValue == null || isNumber(minValue)) && (maxValue == null || isNumber(maxValue))
+  return (isNullish(minValue) || isNumber(minValue)) && (isNullish(maxValue) || isNumber(maxValue))
 }
 
 function serializeScalar(value: string | number | boolean | Date): string {
@@ -522,7 +522,7 @@ function serializeScalar(value: string | number | boolean | Date): string {
 }
 
 function serializeOptionalScalar<T>(value: T): string {
-  if (value == null) {
+  if (isNullish(value)) {
     return ''
   }
   if (isString(value) || isNumber(value) || isBoolean(value) || value instanceof Date) {

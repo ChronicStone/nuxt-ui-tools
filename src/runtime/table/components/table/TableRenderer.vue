@@ -353,7 +353,6 @@ function pinnedOffset(column: {
   if (side === 'end') {
     return { right: `${column.getAfter('end')}px` }
   }
-  return
 }
 
 function isLastStart(column: { id: string }) {

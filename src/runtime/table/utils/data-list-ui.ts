@@ -264,7 +264,9 @@ export function mergeDataListUiConfig(
         ...appUi?.control,
         ...componentUi?.control,
       }
-      if (size !== undefined) control.size = size
+      if (size !== undefined) {
+        control.size = size
+      }
       return control
     })(),
     default: mergeUiConfig(appUi?.default, componentUi?.default),

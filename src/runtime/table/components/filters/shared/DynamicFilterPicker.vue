@@ -6,7 +6,7 @@ import { computed, nextTick, ref } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isNumber } from '../../../../shared/utils/predicate'
+import { isNumber, isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -72,7 +72,7 @@ const triggerProps = computed(() =>
 )
 
 const selectedDefinition = computed(() => {
-  if (selectedKey.value == null) {
+  if (isNullish(selectedKey.value)) {
     return undefined
   }
   if (props.sessionDefinition?.key === selectedKey.value) {
@@ -82,7 +82,7 @@ const selectedDefinition = computed(() => {
 })
 
 const operatorItems = computed(() =>
-  selectedKey.value == null
+  isNullish(selectedKey.value)
     ? []
     : internals.filters.getFilterOperatorOptions({ key: selectedKey.value }),
 )
