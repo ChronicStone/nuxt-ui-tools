@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, type VNodeChild } from 'vue'
@@ -8,16 +10,30 @@ import { VueDraggable } from 'vue-draggable-plus'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isNumber } from '../../../shared/utils/predicate'
+
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
-import type { DataListColumnPanelUi, DataListControlSize } from '../../types'
+import type {
+  DataListBadgeProps,
+  DataListButtonProps,
+  DataListCheckboxProps,
+  DataListColumnPanelProps,
+  DataListColumnPanelUi,
+  DataListControlSize,
+} from '../../types'
 import {
+  mergeDataListProps,
   mergeDataListUiClass,
   resolveDataListControlGeometry,
   resolveDataListPopoverContentClass,
 } from '../../utils'
 
-const props = defineProps<{ size?: DataListControlSize; ui?: DataListColumnPanelUi }>()
+const props = defineProps<{
+  size?: DataListControlSize
+  ui?: DataListColumnPanelUi
+  props?: DataListColumnPanelProps
+}>()
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
 const { t } = useUiToolsLocale()
@@ -29,6 +45,57 @@ const resolvedSize = computed(
   () => props.size ?? dataListUi.ui.value.columnPanel?.size ?? dataListUi.controlSize.value,
 )
 const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.value))
+const controlProps = computed<DataListColumnPanelProps>(() =>
+  mergeDataListProps(dataListUi.ui.value.columnPanel?.props, props.props),
+)
+const triggerProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>(
+    {
+      color: 'neutral',
+      variant: 'outline',
+      size: resolvedSize.value,
+      icon: 'i-lucide-layers',
+      label: t('table.controls.view'),
+    },
+    controlProps.value.trigger,
+  ),
+)
+const countProps = computed(() =>
+  controlProps.value.count === false
+    ? null
+    : mergeDataListProps<DataListBadgeProps>(
+        { color: 'neutral', variant: 'subtle', size: resolvedSize.value },
+        controlProps.value.count,
+      ),
+)
+const searchable = computed(() => {
+  const search = controlProps.value.search ?? 30
+  return isNumber(search) ? configurableColumns.value.length > search : search
+})
+const checkboxProps = computed(() =>
+  mergeDataListProps<DataListCheckboxProps>(
+    { color: 'primary', size: 'sm' },
+    controlProps.value.checkbox,
+  ),
+)
+const resetProps = computed(() =>
+  mergeDataListProps<DataListButtonProps>(
+    { color: 'neutral', variant: 'link', size: resolvedSize.value },
+    controlProps.value.reset,
+  ),
+)
+function isVisible(columnId: string) {
+  return internals.tableColumns.tableState.value.columnVisibility?.[columnId] !== false
+}
+function isRequired(column: { required?: boolean; canHide?: boolean }) {
+  return column.required === true || column.canHide === false
+}
+const visibleCount = computed(
+  () =>
+    configurableColumns.value.filter(
+      (column) => internals.tableColumns.tableState.value.columnVisibility?.[column.id] !== false,
+    ).length,
+)
 
 defineSlots<{
   trigger?: (props: {
@@ -124,102 +191,82 @@ function toggle() {
       }"
     >
       <UButton
-        color="neutral"
-        variant="outline"
-        :size="resolvedSize"
-        icon="i-lucide-sliders-horizontal"
-        :label="t('table.controls.view')"
-        :ui="{ base: ui.trigger }"
-      />
+        v-bind="triggerProps"
+        :ui="{ base: mergeDataListUiClass('nut-dl-colbtn', undefined, ui.trigger) }"
+      >
+        <template v-if="countProps" #trailing>
+          <UBadge
+            v-bind="countProps"
+            :label="String(visibleCount)"
+            :class="mergeDataListUiClass('nut-dl-colbtn__count tabular-nums', undefined, ui.count)"
+          />
+        </template>
+      </UButton>
     </slot>
 
     <template #content>
       <div
-        :class="mergeDataListUiClass('w-full min-w-0 max-w-full bg-default', undefined, ui.panel)"
+        :class="mergeDataListUiClass('nut-dl-colpanel w-full min-w-0 max-w-full bg-default', undefined, ui.panel)"
       >
         <div
           :class="
             mergeDataListUiClass(
-              `border-b border-default ${geometry.panelPadding}`,
+              'nut-dl-colpanel__title flex items-center gap-1 px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[0.06em] text-dimmed uppercase',
               undefined,
-              ui.searchHeader,
+              ui.title,
             )
           "
+        >
+          <span>{{ t('table.controls.view') }}</span>
+          <span class="font-medium">
+            · {{ t('table.controls.columnsCount', { visible: visibleCount, total: configurableColumns.length }) }}
+          </span>
+        </div>
+
+        <div
+          v-if="searchable"
+          :class="mergeDataListUiClass(`px-2 pb-1`, undefined, ui.searchHeader)"
         >
           <UInput
             :model-value="internals.controls.columnsPanelSearch.value"
             @update:model-value="internals.controls.columnsPanelSearch.value = String($event ?? '')"
-            :size="resolvedSize"
+            size="sm"
             icon="i-lucide-search"
             :placeholder="t('table.controls.searchColumns')"
             color="neutral"
-            variant="ghost"
+            variant="soft"
             :ui="{ root: mergeDataListUiClass('w-full', undefined, ui.search) }"
           />
         </div>
 
         <div
           :class="
-            mergeDataListUiClass(
-              `grid max-h-80 gap-1 overflow-y-auto ${geometry.listPadding}`,
-              undefined,
-              ui.list,
-            )
+            mergeDataListUiClass('nut-dl-colpanel__list grid max-h-80 gap-px overflow-y-auto px-2 py-1', undefined, ui.list)
           "
         >
-          <div
-            v-if="!internals.controls.columnsPanelSearch.value"
-            :class="mergeDataListUiClass('grid gap-0.5', undefined, ui.section)"
-          >
+          <template v-if="!internals.controls.columnsPanelSearch.value">
             <div
               v-for="column in pinnedLeft"
               :key="column.id"
-              :class="
-                mergeDataListUiClass(
-                  `flex items-center rounded-md transition-colors hover:bg-elevated/70 ${geometry.row}`,
-                  undefined,
-                  ui.row,
-                )
-              "
+              :class="mergeDataListUiClass('nut-dl-colpanel__row group/col flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated', undefined, ui.row)"
             >
-              <div
-                :class="
-                  mergeDataListUiClass(
-                    'flex size-6 items-center justify-center rounded-md text-muted',
-                    undefined,
-                    ui.icon,
-                  )
-                "
-              >
-                <UIcon name="i-lucide-pin" class="size-4" />
-              </div>
+              <UCheckbox
+                v-bind="checkboxProps"
+                :model-value="isVisible(column.id)"
+                :disabled="isRequired(column)"
+                :aria-label="column.label"
+                @update:model-value="toggleColumn(column.id)"
+              />
               <button
                 type="button"
-                class="flex min-w-0 flex-1 items-center gap-3 text-left"
+                class="flex min-w-0 flex-1 items-center gap-2 text-left text-[13px]"
+                :class="isRequired(column) ? 'text-dimmed' : 'text-highlighted'"
+                :disabled="isRequired(column)"
                 @click="toggleColumn(column.id)"
               >
-                <UIcon v-if="column.icon" :name="column.icon" class="size-4 text-muted" />
-                <span :class="mergeDataListUiClass('truncate text-default', undefined, ui.label)">{{
-                  column.label
-                }}</span>
+                <span :class="mergeDataListUiClass('truncate', undefined, ui.label)">{{ column.label }}</span>
               </button>
-              <UIcon
-                :name="
-                  internals.tableColumns.tableState.value.columnVisibility?.[column.id] === false
-                    ? 'i-lucide-eye-off'
-                    : 'i-lucide-check'
-                "
-                class="size-4 shrink-0"
-                :class="
-                  mergeDataListUiClass(
-                    internals.tableColumns.tableState.value.columnVisibility?.[column.id] === false
-                      ? 'text-muted'
-                      : 'text-default',
-                    undefined,
-                    ui.stateIcon,
-                  )
-                "
-              />
+              <UIcon name="i-lucide-pin" :class="mergeDataListUiClass('size-3.5 shrink-0 text-dimmed', undefined, ui.icon)" />
             </div>
 
             <VueDraggable
@@ -232,202 +279,122 @@ function toggle() {
               ghost-class="column-panel-row-ghost"
               chosen-class="column-panel-row-chosen"
               drag-class="column-panel-row-dragging"
-              :class="mergeDataListUiClass('grid gap-0.5', undefined, ui.section)"
+              :class="mergeDataListUiClass('grid gap-px', undefined, ui.section)"
             >
               <div
                 v-for="column in draggableColumns"
                 :key="column.id"
-                :class="
-                  mergeDataListUiClass(
-                    `flex items-center rounded-md transition-colors hover:bg-elevated/70 ${geometry.row}`,
-                    undefined,
-                    ui.row,
-                  )
-                "
+                :class="mergeDataListUiClass('nut-dl-colpanel__row group/col flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated', undefined, ui.row)"
               >
+                <UCheckbox
+                  v-bind="checkboxProps"
+                  :model-value="isVisible(column.id)"
+                  :disabled="isRequired(column)"
+                  :aria-label="column.label"
+                  @update:model-value="toggleColumn(column.id)"
+                />
+                <button
+                  type="button"
+                  class="flex min-w-0 flex-1 items-center gap-2 text-left text-[13px] text-highlighted"
+                  @click="toggleColumn(column.id)"
+                >
+                  <span :class="mergeDataListUiClass('truncate', undefined, ui.label)">{{ column.label }}</span>
+                </button>
                 <button
                   type="button"
                   :class="
                     mergeDataListUiClass(
-                      'column-drag-handle flex size-6 cursor-grab items-center justify-center rounded-md text-muted hover:bg-elevated active:cursor-grabbing',
+                      'column-drag-handle flex size-6 cursor-grab items-center justify-center rounded-md text-dimmed opacity-0 transition-opacity group-hover/col:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
                       undefined,
                       ui.handle,
                     )
                   "
+                  :aria-label="column.label"
                 >
-                  <UIcon name="i-lucide-grip" class="size-4" />
+                  <UIcon name="i-lucide-grip-vertical" class="size-3.5" />
                 </button>
-
-                <button
-                  type="button"
-                  class="flex min-w-0 flex-1 items-center gap-3 text-left"
-                  @click="toggleColumn(column.id)"
-                >
-                  <UIcon v-if="column.icon" :name="column.icon" class="size-4 text-muted" />
-                  <span
-                    :class="mergeDataListUiClass('truncate text-default', undefined, ui.label)"
-                    >{{ column.label }}</span
-                  >
-                </button>
-
-                <UIcon
-                  :name="
-                    internals.tableColumns.tableState.value.columnVisibility?.[column.id] === false
-                      ? 'i-lucide-eye-off'
-                      : 'i-lucide-check'
-                  "
-                  class="size-4 shrink-0"
-                  :class="
-                    mergeDataListUiClass(
-                      internals.tableColumns.tableState.value.columnVisibility?.[column.id] ===
-                        false
-                        ? 'text-muted'
-                        : 'text-default',
-                      undefined,
-                      ui.stateIcon,
-                    )
-                  "
-                />
               </div>
             </VueDraggable>
 
             <div
               v-for="column in pinnedRight"
               :key="column.id"
-              :class="
-                mergeDataListUiClass(
-                  `flex items-center rounded-md transition-colors hover:bg-elevated/70 ${geometry.row}`,
-                  undefined,
-                  ui.row,
-                )
-              "
+              :class="mergeDataListUiClass('nut-dl-colpanel__row group/col flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated', undefined, ui.row)"
             >
-              <div
-                :class="
-                  mergeDataListUiClass(
-                    'flex size-6 items-center justify-center rounded-md text-muted',
-                    undefined,
-                    ui.icon,
-                  )
-                "
-              >
-                <UIcon name="i-lucide-pin" class="size-4" />
-              </div>
+              <UCheckbox
+                v-bind="checkboxProps"
+                :model-value="isVisible(column.id)"
+                :disabled="isRequired(column)"
+                :aria-label="column.label"
+                @update:model-value="toggleColumn(column.id)"
+              />
               <button
                 type="button"
-                class="flex min-w-0 flex-1 items-center gap-3 text-left"
+                class="flex min-w-0 flex-1 items-center gap-2 text-left text-[13px]"
+                :class="isRequired(column) ? 'text-dimmed' : 'text-highlighted'"
+                :disabled="isRequired(column)"
                 @click="toggleColumn(column.id)"
               >
-                <UIcon v-if="column.icon" :name="column.icon" class="size-4 text-muted" />
-                <span :class="mergeDataListUiClass('truncate text-default', undefined, ui.label)">{{
-                  column.label
-                }}</span>
+                <span :class="mergeDataListUiClass('truncate', undefined, ui.label)">{{ column.label }}</span>
               </button>
-              <UIcon
-                :name="
-                  internals.tableColumns.tableState.value.columnVisibility?.[column.id] === false
-                    ? 'i-lucide-eye-off'
-                    : 'i-lucide-check'
-                "
-                class="size-4 shrink-0"
-                :class="
-                  mergeDataListUiClass(
-                    internals.tableColumns.tableState.value.columnVisibility?.[column.id] === false
-                      ? 'text-muted'
-                      : 'text-default',
-                    undefined,
-                    ui.stateIcon,
-                  )
-                "
-              />
+              <UIcon name="i-lucide-pin" :class="mergeDataListUiClass('size-3.5 shrink-0 text-dimmed', undefined, ui.icon)" />
             </div>
-          </div>
+          </template>
 
-          <div v-else :class="mergeDataListUiClass('grid gap-0.5', undefined, ui.section)">
-            <button
+          <template v-else>
+            <div
               v-for="column in filteredColumns"
               :key="column.id"
-              type="button"
-              :class="
-                mergeDataListUiClass(
-                  `flex items-center rounded-md text-left transition-colors hover:bg-elevated/70 ${geometry.row}`,
-                  undefined,
-                  ui.row,
-                )
-              "
-              @click="toggleColumn(column.id)"
+              :class="mergeDataListUiClass('nut-dl-colpanel__row flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated', undefined, ui.row)"
             >
-              <div
-                :class="
-                  mergeDataListUiClass(
-                    'flex size-6 items-center justify-center rounded-md text-muted',
-                    undefined,
-                    ui.icon,
-                  )
-                "
-              >
-                <UIcon
-                  :name="
-                    internals.tableColumns.getPinnedState({ columnId: column.id })
-                      ? 'i-lucide-pin'
-                      : (column.icon ?? 'i-lucide-columns-3')
-                  "
-                  class="size-4"
-                />
-              </div>
-              <span
-                :class="
-                  mergeDataListUiClass('min-w-0 flex-1 truncate text-default', undefined, ui.label)
-                "
-                >{{ column.label }}</span
-              >
-              <UIcon
-                :name="
-                  internals.tableColumns.tableState.value.columnVisibility?.[column.id] === false
-                    ? 'i-lucide-eye-off'
-                    : 'i-lucide-check'
-                "
-                class="size-4 shrink-0"
-                :class="
-                  mergeDataListUiClass(
-                    internals.tableColumns.tableState.value.columnVisibility?.[column.id] === false
-                      ? 'text-muted'
-                      : 'text-default',
-                    undefined,
-                    ui.stateIcon,
-                  )
-                "
+              <UCheckbox
+                v-bind="checkboxProps"
+                :model-value="isVisible(column.id)"
+                :disabled="isRequired(column)"
+                :aria-label="column.label"
+                @update:model-value="toggleColumn(column.id)"
               />
-            </button>
-          </div>
+              <button
+                type="button"
+                class="flex min-w-0 flex-1 items-center gap-2 text-left text-[13px]"
+                :class="isRequired(column) ? 'text-dimmed' : 'text-highlighted'"
+                :disabled="isRequired(column)"
+                @click="toggleColumn(column.id)"
+              >
+                <span :class="mergeDataListUiClass('truncate', undefined, ui.label)">{{ column.label }}</span>
+              </button>
+            </div>
+            <div
+              v-if="!filteredColumns.length"
+              :class="mergeDataListUiClass('px-2 py-3 text-[12.5px] text-muted', undefined, ui.empty)"
+            >
+              {{ t('table.controls.noMatchingFilters') }}
+            </div>
+          </template>
         </div>
 
         <div
           :class="
             mergeDataListUiClass(
-              `flex items-center justify-between border-t border-default ${geometry.footer}`,
+              'nut-dl-colpanel__footer flex items-center justify-between border-t border-default px-4 py-2.5 text-[12.5px]',
               undefined,
               ui.footer,
             )
           "
         >
-          <div
-            :class="
-              mergeDataListUiClass(`${geometry.text} text-muted`, undefined, ui.footerSummary)
-            "
-          >
-            {{ t('table.controls.configurableColumns', { count: configurableColumns.length }) }}
-          </div>
-
           <UButton
-            color="neutral"
-            variant="ghost"
-            :size="resolvedSize"
-            icon="i-lucide-rotate-ccw"
+            v-bind="resetProps"
             :label="t('table.controls.resetColumns')"
-            :ui="{ base: ui.reset }"
+            :ui="{ base: mergeDataListUiClass('px-0 text-muted hover:text-default', undefined, ui.reset) }"
             @click="internals.tableColumns.reset()"
           />
+          <button
+            type="button"
+            :class="mergeDataListUiClass('text-muted hover:text-default', undefined, ui.close)"
+            @click="close"
+          >
+            {{ t('table.controls.close') }}
+          </button>
         </div>
       </div>
     </template>
@@ -437,18 +404,9 @@ function toggle() {
 <style scoped>
 :deep(.column-panel-row-ghost) {
   opacity: 0.35;
-  background-color: rgb(var(--ui-bg-elevated) / 0.55);
 }
-
-:deep(.column-panel-row-chosen) {
-  background-color: rgb(var(--ui-bg-elevated) / 0.8);
-}
-
 :deep(.column-panel-row-dragging) {
-  opacity: 1;
-  background-color: rgb(var(--ui-bg-default));
-  box-shadow:
-    0 12px 28px rgb(15 23 42 / 0.14),
-    0 2px 6px rgb(15 23 42 / 0.08);
+  background-color: var(--ui-bg);
+  box-shadow: 0 12px 28px rgb(31 29 26 / 0.14);
 }
 </style>
