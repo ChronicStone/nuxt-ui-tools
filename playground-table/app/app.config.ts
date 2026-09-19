@@ -223,6 +223,13 @@ export default defineAppConfig({
         },
       },
     },
+    tabs: {
+      variants: {
+        size: {
+          md: { trigger: 'h-[34px] px-2.5 text-[13px] font-medium gap-1.5' },
+        },
+      },
+    },
     textarea: {
       compoundVariants: [
         {
