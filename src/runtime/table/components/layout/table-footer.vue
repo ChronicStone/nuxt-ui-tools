@@ -182,6 +182,8 @@ function formatCount(value: number) {
                 undefined,
                 ui.button,
               ),
+              content: 'w-auto min-w-[6rem]',
+              item: 'pr-8',
               trailing: 'pe-1.5',
               trailingIcon: 'size-3.5 text-dimmed',
             }"
