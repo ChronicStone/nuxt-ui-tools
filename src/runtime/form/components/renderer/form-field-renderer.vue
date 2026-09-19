@@ -59,6 +59,7 @@ import type { FormValue, FormField, FormFieldType, FormItemLayout, FormObject } 
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { focusFormFieldElement } from '../../utils/focus'
 import { isObject } from '../../utils/predicate'
+import { isArrayField } from '../../utils/state'
 import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
@@ -191,10 +192,11 @@ function resolveFieldLayout(): FormItemLayout | undefined {
     return undefined
   }
   const layout = Object.getOwnPropertyDescriptor(props.field, 'layout')?.value
+  const fullByDefault = field.value.state.is('stateless') || isArrayField(props.field)
   if (isLayout(layout)) {
-    return layout
+    return fullByDefault ? { span: 'full', ...layout } : layout
   }
-  return field.value.state.is('stateless') ? { span: 'full' } : undefined
+  return fullByDefault ? { span: 'full' } : undefined
 }
 
 function isLayout(value: FormValue): value is FormItemLayout {

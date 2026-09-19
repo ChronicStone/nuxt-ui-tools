@@ -46,6 +46,28 @@ describe('array primitive', () => {
     harness.unmount()
   })
 
+  it('rejects a pending item on submit even when the item field is not marked required', async () => {
+    const onSubmit = vi.fn<() => boolean>(() => true)
+    const schema = defineFormSchema({
+      fields: [
+        {
+          addItemLabel: 'Add address',
+          field: { placeholder: 'Address', type: 'text' },
+          key: 'addresses',
+          type: 'array-primitive',
+        },
+      ],
+    })
+    const harness = await mountForm({ input: { addresses: ['a@exassess.com'] }, onSubmit, schema })
+
+    await harness.button('Add address').trigger('click')
+    await harness.until(() => harness.wrapper.findAll('[data-form-array-item]').length === 2)
+    await harness.submit()
+    await harness.until(() => errorOf(harness, 'addresses.1') === 'Ce champ est requis')
+    expect(onSubmit).not.toHaveBeenCalled()
+    harness.unmount()
+  })
+
   it('submits the primitive list and removes items', async () => {
     const onSubmit = vi.fn<() => boolean>(() => true)
     const harness = await mountForm({

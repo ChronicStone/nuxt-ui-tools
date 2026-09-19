@@ -740,7 +740,7 @@ export function getPrimitiveArrayItemField(field: FormField, index: number): For
   if (!isRecord(itemField)) {
     return null
   }
-  const candidate = { ...itemField, key: String(index) }
+  const candidate = { required: true, ...itemField, key: String(index) }
   return isFormField(candidate) ? candidate : null
 }
 
