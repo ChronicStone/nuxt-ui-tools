@@ -11,7 +11,8 @@ import { useFormUi } from '../../composables/use-form-ui'
 import type { FormField } from '../../types'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { isRecord } from '../../utils/path'
-import { isBoolean, isFunction, isObject } from '../../utils/predicate'
+import { isFunction } from '../../utils/predicate'
+import { resolveRequired } from '../../utils/state'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -58,16 +59,14 @@ const required = computed(() => {
   if (!field.value.capability.has('validation')) {
     return false
   }
-  const validation = Object.getOwnPropertyDescriptor(props.field, 'validation')?.value
-  if (!isObject(validation) || validation === null || Array.isArray(validation)) {
-    return false
-  }
-  const value = Object.getOwnPropertyDescriptor(validation, 'required')?.value
-  if (isFunction(value)) {
-    return value(form.getFieldCallbackParams(props.path, props.field)) === true
-  }
-  return isBoolean(value) ? value : false
+  return resolveRequired(props.field, form.getFieldCallbackParams(props.path, props.field))
 })
+const help = computed(() =>
+  field.value.capability.has('hint') && 'help' in props.field
+    ? resolveFormText(props.field.help)
+    : undefined,
+)
+const shellHelp = computed(() => (props.inlineLabel ? undefined : help.value))
 const dirty = computed(
   () =>
     'dirtyCheck' in props.field &&
@@ -117,6 +116,7 @@ function renderLabelExtra() {
     :description="shellDescription"
     :hint="shellLabelExtra === undefined || shellLabelExtra === null ? shellHint : undefined"
     :error="error"
+    :help="shellHelp"
     :required="required"
     :size="formUi.controlSize.value"
     :ui="nuxtFieldUi"

@@ -10,6 +10,10 @@ const nav = [
     ],
     label: 'Relations',
   },
+  {
+    items: [{ icon: 'i-lucide-clipboard-list', label: 'Formulaires', to: '/forms' }],
+    label: 'Moteur',
+  },
 ]
 
 watch(

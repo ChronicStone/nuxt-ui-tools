@@ -80,6 +80,8 @@ export interface FormStatefulFieldBase<
   description?: FormText
   /** Optional right-side hint rendered by the field wrapper. */
   hint?: FormText
+  /** Optional help text rendered under the control. */
+  help?: FormText
   /** Optional rich content rendered beside the label. Takes precedence over `hint`. */
   labelExtra?: FormRenderable
   /** Placeholder forwarded to controls that support placeholders. Callbacks receive `{ ctx, deps, api }`. */

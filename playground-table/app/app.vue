@@ -15,9 +15,11 @@ useHead({
 <template>
   <UApp :locale="locales[locale as 'fr' | 'en']">
     <NutToolsProvider :locale="uiToolsLocales[locale as 'fr' | 'en']">
-      <NuxtLayout>
-        <NuxtPage />
-      </NuxtLayout>
+      <NutFormProvider>
+        <NuxtLayout>
+          <NuxtPage />
+        </NuxtLayout>
+      </NutFormProvider>
     </NutToolsProvider>
   </UApp>
 </template>

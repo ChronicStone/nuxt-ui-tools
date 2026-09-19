@@ -78,26 +78,32 @@ function getBaseFormAction(
   }
   if (key === 'previous') {
     return {
+      color: 'neutral',
       disabled: (context) => context.isFirstStep,
       key,
       label: () => t('form.actions.prevButton'),
       slot,
+      variant: 'outline',
       width: 'fill md:fit',
     }
   }
   if (key === 'reset') {
     return {
+      color: 'neutral',
       key,
       label: () => t('form.actions.resetButton'),
       slot,
+      variant: 'outline',
       width: 'fill md:fit',
     }
   }
 
   return {
+    color: 'neutral',
     key,
     label: () => t('form.actions.cancelButton'),
     slot,
+    variant: 'outline',
     width: 'fill md:fit',
   }
 }

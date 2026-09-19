@@ -185,7 +185,10 @@ function resolveFieldLayout(): FormItemLayout | undefined {
     return undefined
   }
   const layout = Object.getOwnPropertyDescriptor(props.field, 'layout')?.value
-  return isLayout(layout) ? layout : undefined
+  if (isLayout(layout)) {
+    return layout
+  }
+  return field.value.state.is('stateless') ? { span: 'full' } : undefined
 }
 
 function isLayout(value: FormValue): value is FormItemLayout {

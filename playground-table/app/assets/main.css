@@ -427,3 +427,70 @@ body {
 .ex-card--audit .ex-card__meta {
   grid-template-columns: 1fr 1fr;
 }
+
+.ex-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--ex-surface);
+}
+.ex-forms {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) minmax(280px, 1fr);
+  gap: 28px;
+  align-items: start;
+  padding: 22px 28px 40px;
+}
+.ex-form-card {
+  background: var(--ex-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  padding: 22px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.ex-form-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ex-form-card-head h2 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+.ex-form-card-head small {
+  color: var(--ui-text-muted);
+  font-size: 13px;
+}
+.ex-form-result {
+  position: sticky;
+  top: 22px;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: var(--ui-bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ex-form-result pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: var(--ui-text-toned);
+}
+@media (max-width: 1023px) {
+  .ex-forms {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px 16px 32px;
+  }
+  .ex-form-result {
+    position: static;
+  }
+}
