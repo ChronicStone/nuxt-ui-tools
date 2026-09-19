@@ -81,14 +81,14 @@ function humanize(value: string) {
       {{ t('table.filters.sheet.order') }}
     </div>
     <div
-      class="nut-dl-sort__dir grid grid-cols-2 gap-0.5 rounded-md bg-elevated p-0.5"
+      class="nut-dl-sort__dir grid grid-cols-[repeat(2,minmax(0,1fr))] gap-0.5 overflow-hidden rounded-md bg-elevated p-0.5"
       :class="compact ? 'mx-2.5 mb-2.5' : 'mx-4 mb-5'"
     >
       <button
         v-for="dir in ['asc', 'desc'] as const"
         :key="dir"
         type="button"
-        class="flex items-center justify-center gap-1.5 rounded-[5px] font-medium"
+        class="flex min-w-0 items-center justify-center gap-1.5 rounded-[5px] px-1 font-medium whitespace-nowrap"
         :class="[
           compact ? 'h-7 text-[12px]' : 'h-8 text-[12.5px]',
           activeDirection === dir
