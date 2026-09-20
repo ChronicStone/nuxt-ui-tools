@@ -146,6 +146,7 @@ const actionHint = computed(() => {
   if (activeStep.value === 'references') {
     return t('spreadsheet.common.referencesStepHint')
   }
+  return undefined
 })
 
 const primaryActionLabel = computed(() => {

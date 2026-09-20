@@ -11,7 +11,6 @@ import type {
   FormSubmitHandler,
   FormStep,
   FormStepLifecycleParams,
-  FormText,
   FormUiConfig,
 } from '../types'
 

@@ -158,7 +158,7 @@ const calendarRange = computed<
   | undefined
 >(() => {
   if (!localRangeStart.value || !localRangeEnd.value) {
-    return
+    return undefined
   }
 
   return {

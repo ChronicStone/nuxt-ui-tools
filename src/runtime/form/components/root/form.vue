@@ -227,6 +227,7 @@ const contextError = computed<string | undefined>(() => {
     }
     return t('form.states.contextError.description')
   }
+  return undefined
 })
 
 async function submit() {

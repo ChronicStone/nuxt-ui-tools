@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker/locale/fr'
 
-import { ACCOUNT_STATUS, ACCOUNT_TYPE, COUNTRY, CURRENCY, GROUPS, MANAGER_LOCATIONS } from './enums'
+import { ACCOUNT_TYPE, COUNTRY, CURRENCY, GROUPS, MANAGER_LOCATIONS } from './enums'
 import type { AccountStatus, AccountType, CountryCode, Currency } from './enums'
 
 export interface Contact {
@@ -78,7 +78,6 @@ export function makeContacts(count: number, seed = 7): Contact[] {
 
 export function makeAccounts(count: number, contacts: Contact[], seed = 42): Account[] {
   faker.seed(seed)
-  const statuses = keys(ACCOUNT_STATUS)
   const types = keys(ACCOUNT_TYPE)
   const countries = keys(COUNTRY)
   const bms = contacts.filter((c) => c.roles.includes('businessManager'))
