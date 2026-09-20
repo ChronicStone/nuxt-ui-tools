@@ -15,12 +15,11 @@ import type {
   TableSortingRule,
 } from '../../types'
 
-type ClientTableSourceResult = GenericObject[] | TableSourceExecutionResult
-type RemoteTableSourceResult =
-  | TableSourceExecutionResult
-  | TableOffsetPageResult
-  | TableCursorPageResult
-type TableSourceResult = ClientTableSourceResult | RemoteTableSourceResult
+interface TableSourceRowsResult {
+  rows: readonly GenericObject[]
+}
+
+type TableSourceResult = readonly GenericObject[] | TableSourceRowsResult
 
 type TableSourceRow<TResult> =
   TableRowsFromSourceResult<Awaited<TResult>> extends infer TRow
@@ -28,6 +27,18 @@ type TableSourceRow<TResult> =
       ? TRow
       : GenericObject
     : GenericObject
+
+type ClientTableSourceResult<TResult> = TResult extends readonly GenericObject[]
+  ? TableSourceRow<TResult>[]
+  : TableSourceExecutionResult<TableSourceRow<TResult>>
+
+type RemoteTableSourceResult<TResult> = TResult extends {
+  pageInfo: { nextCursor: string | null }
+}
+  ? TableCursorPageResult<TableSourceRow<TResult>>
+  : TResult extends { pageInfo: { pageIndex: number } }
+    ? TableOffsetPageResult<TableSourceRow<TResult>>
+    : TableSourceExecutionResult<TableSourceRow<TResult>>
 
 interface TableSourceInferenceContext {
   pagination: TablePaginationState
@@ -45,12 +56,12 @@ type TableSourceQueryDefinition<TResult> = Omit<TableQueryDefinition<unknown>, '
   queryFn: (context: QueryFunctionContext<QueryKey, string | null>) => TResult | Promise<TResult>
 }
 
-interface ClientTableSourceInput<TResult extends ClientTableSourceResult> {
+interface ClientTableSourceInput<TResult extends TableSourceResult> {
   mode?: 'client'
   query: (context: TableSourceInferenceContext) => TableSourceQueryDefinition<TResult>
 }
 
-interface RemoteTableSourceInput<TResult extends RemoteTableSourceResult> {
+interface RemoteTableSourceInput<TResult extends TableSourceRowsResult> {
   mode: 'remote'
   query: (context: TableSourceInferenceContext) => TableSourceQueryDefinition<TResult>
   facets?: TableRemoteSource['facets']
@@ -79,12 +90,12 @@ interface TableSourceInput {
  * })
  * ```
  */
-export function tableSource<TResult extends RemoteTableSourceResult>(
+export function tableSource<TResult extends TableSourceRowsResult>(
   source: RemoteTableSourceInput<TResult>,
-): TableRemoteSource<TableSourceRow<TResult>, GenericObject, TResult>
-export function tableSource<TResult extends ClientTableSourceResult>(
+): TableRemoteSource<TableSourceRow<TResult>, GenericObject, RemoteTableSourceResult<TResult>>
+export function tableSource<TResult extends TableSourceResult>(
   source: ClientTableSourceInput<TResult>,
-): TableClientSource<TableSourceRow<TResult>, GenericObject, TResult>
+): TableClientSource<TableSourceRow<TResult>, GenericObject, ClientTableSourceResult<TResult>>
 export function tableSource(source: TableSourceInput) {
   return source
 }

@@ -1,5 +1,7 @@
 <script setup lang="tsx">
-import { defineTableSchema, useTable } from '#ui-tools/table'
+import UButton from '@nuxt/ui/components/Button.vue'
+
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/row-actions.vue'
 
 import { ACCOUNT_STATUS, ACCOUNT_TYPE, COUNTRY, GROUPS, MANAGER_LOCATIONS } from '../data/enums'
@@ -269,7 +271,7 @@ const schema = defineTableSchema({
   ],
   rowKey: 'id',
   selection: { mode: 'auto', scope: 'all' },
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryFn: async () => {
@@ -278,7 +280,7 @@ const schema = defineTableSchema({
       },
       queryKey: ['accounts', accounts.length],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('name', {

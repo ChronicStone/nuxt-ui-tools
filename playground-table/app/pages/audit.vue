@@ -1,18 +1,23 @@
 <script setup lang="tsx">
+import UButton from '@nuxt/ui/components/Button.vue'
+
 import { isNullish } from '#ui-tools/shared/utils/predicate'
-import { defineTableSchema, useTable } from '#ui-tools/table'
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/row-actions.vue'
-import type { TableCursorPageResult, TableSourceRequestContext } from '#ui-tools/table/types'
 import { filterClientRows, sortClientRows } from '#ui-tools/table/utils'
 
 import { AUDIT_ACTIONS, makeAuditEvents } from '../data/audit'
-import type { AuditEvent } from '../data/audit'
 
 const events = makeAuditEvents(4000)
 const PAGE = 60
 
 const OUTCOME = { failed: 'Échec', skipped: 'Ignoré', succeeded: 'Succès' } as const
 const OUTCOME_COLOR = { failed: '#c0392b', skipped: '#b8b1a7', succeeded: '#ff9600' } as const
+const OUTCOME_OPTIONS = [
+  { color: OUTCOME_COLOR.failed, label: OUTCOME.failed, value: 'failed' },
+  { color: OUTCOME_COLOR.skipped, label: OUTCOME.skipped, value: 'skipped' },
+  { color: OUTCOME_COLOR.succeeded, label: OUTCOME.succeeded, value: 'succeeded' },
+] as const
 const ACTOR_TYPE = { external: 'Externe', system: 'Système', user: 'Utilisateur' } as const
 const TARGET_TYPE = {
   account: 'Compte',
@@ -30,33 +35,6 @@ const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short
 const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
 function Dash() {
   return <span class="text-dimmed">—</span>
-}
-
-async function queryAudit(
-  request: TableSourceRequestContext<AuditEvent>,
-): Promise<TableCursorPageResult<AuditEvent>> {
-  await new Promise((r) => setTimeout(r, 450))
-  const filtered = filterClientRows({
-    filters: request.filters,
-    rows: events,
-    search: request.search,
-  })
-  const sorted = sortClientRows({ rows: filtered, sorting: request.sorting })
-  const { pagination } = request
-  const size = pagination.mode === 'cursor' ? pagination.pageSize || PAGE : PAGE
-  const start = pagination.mode === 'cursor' && pagination.cursor ? Number(pagination.cursor) : 0
-  const rows = sorted.slice(start, start + size)
-  const next = start + size
-  return {
-    pageInfo: {
-      count: 'exact',
-      mode: 'cursor',
-      nextCursor: next < sorted.length ? String(next) : null,
-      pageSize: size,
-      rowCount: sorted.length,
-    },
-    rows,
-  }
 }
 
 const schema = defineTableSchema({
@@ -80,10 +58,7 @@ const schema = defineTableSchema({
         editor: { searchable: false, selection: { mode: 'multiple' } },
         label: 'Résultat',
         source: {
-          options: opts(OUTCOME).map((o) => ({
-            ...o,
-            color: OUTCOME_COLOR[o.value as keyof typeof OUTCOME_COLOR],
-          })),
+          options: OUTCOME_OPTIONS,
         },
       }),
       filter.option('actorType', {
@@ -161,13 +136,37 @@ const schema = defineTableSchema({
     { icon: 'i-lucide-copy', key: 'copy', label: 'Copier l’identifiant' },
   ],
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'remote',
-    query: (request: TableSourceRequestContext<AuditEvent>) => ({
-      queryFn: () => queryAudit(request),
+    query: (request) => ({
+      queryFn: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 450))
+        const filtered = filterClientRows({
+          filters: request.filters,
+          rows: events,
+          search: request.search,
+        })
+        const sorted = sortClientRows({ rows: filtered, sorting: request.sorting })
+        const { pagination } = request
+        const size = pagination.mode === 'cursor' ? pagination.pageSize || PAGE : PAGE
+        const start =
+          pagination.mode === 'cursor' && pagination.cursor ? Number(pagination.cursor) : 0
+        const rows = sorted.slice(start, start + size)
+        const next = start + size
+        return {
+          pageInfo: {
+            count: 'exact',
+            mode: 'cursor',
+            nextCursor: next < sorted.length ? String(next) : null,
+            pageSize: size,
+            rowCount: sorted.length,
+          },
+          rows,
+        }
+      },
       queryKey: ['audit', request],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('at', {

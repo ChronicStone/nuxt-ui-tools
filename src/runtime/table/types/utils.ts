@@ -2,7 +2,6 @@ import type { ComputedRef, Ref } from 'vue'
 
 import type {
   LazyTextValue,
-  MaybePromise,
   NestedPaths,
   Prettify,
   RenderableType,
@@ -124,9 +123,9 @@ export type MaybeComputedRef<TValue> = TValue | Ref<TValue> | ComputedRef<TValue
 
 export type TableSchemaSource<TSchema> = TSchema | TableSchemaRefLike<TSchema> | (() => TSchema)
 
-export type TableRowsFromSourceResult<TResult> = TResult extends (infer TRow)[]
+export type TableRowsFromSourceResult<TResult> = TResult extends readonly (infer TRow)[]
   ? TRow
-  : TResult extends { rows: (infer TRow)[] }
+  : TResult extends { rows: readonly (infer TRow)[] }
     ? TRow
     : never
 

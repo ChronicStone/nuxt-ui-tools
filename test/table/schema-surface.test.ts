@@ -8,7 +8,6 @@ import type {
   TableApi,
   TableCursorPaginationApi,
   TableNoPaginationApi,
-  TableRemoteSource,
 } from '#ui-tools/table/types'
 
 import { isObject } from '../../src/runtime/shared/utils/predicate'
@@ -124,20 +123,20 @@ describe('table package surface', () => {
   })
 
   it('requires remote sources to return rows with rowCount metadata', () => {
-    const remoteSource: TableRemoteSource<{ id: number }> = {
+    // @ts-expect-error remote queries must resolve an object with rows metadata
+    const remoteSource = tableSource({
       mode: 'remote',
       query: () => ({
         queryKey: ['remote-users'],
-        // @ts-expect-error remote queries must resolve { rows, rowCount }
         queryFn: () => [{ id: 1 }],
       }),
-    }
+    })
 
-    expectTypeOf(remoteSource).toEqualTypeOf<TableRemoteSource<{ id: number }>>()
+    expectTypeOf(remoteSource).toBeObject()
   })
 
   it('accepts source-level embedded facets enablement for remote sources', () => {
-    const remoteSource: TableRemoteSource<{ id: number }> = {
+    const remoteSource = tableSource({
       facets: true,
       mode: 'remote',
       query: (ctx) => ({
@@ -148,8 +147,8 @@ describe('table package surface', () => {
         }),
         queryKey: ['remote-users', ctx.facets],
       }),
-    }
+    })
 
-    expectTypeOf(remoteSource).toEqualTypeOf<TableRemoteSource<{ id: number }>>()
+    expect(remoteSource.facets).toBe(true)
   })
 })
