@@ -572,7 +572,7 @@ Refined the runtime ownership to better match the shared-ui architecture:
 - `use-form-context-resources.ts` owns form-scoped `ctx` resource normalization
 - `use-form-state.ts` owns internal state, output state, initialization, reset, and raw path get/set
 - `use-form-validation.ts` owns validation errors, field errors, custom field errors, full-form validation, and current-scope validation
-- `use-form-submit.ts` owns `actionPending`, `submitHandler`, schema `onBeforeSubmit`, schema `submit`, and the public `useFormSubmit` helper
+- At this stage, `use-form-submit.ts` owned `actionPending`, `submitHandler`, schema `onBeforeSubmit`, schema `submit`, and a public `useFormSubmit` helper. The public helper was removed before v1 in favor of `useForm`.
 - `use-form-runtime.ts` is now a facade that wires those owned composables together
 
 The public form component now exposes and emits:
@@ -596,7 +596,7 @@ The playground now displays three side panels:
 
 The `Next` action now validates the current step before navigation. Final submit validates the whole form before running the submit lifecycle.
 
-Added inference coverage for `useFormSubmit` so submit handlers receive submitted output, including output transforms, rather than internal state.
+The earlier `useFormSubmit` helper had inference coverage so submit handlers received submitted output, including output transforms, rather than internal state. That coverage now lives on `useForm`, the sole public controller.
 
 Validation after this slice:
 
@@ -789,7 +789,7 @@ The controller is typed from the schema:
 - `form.context` uses `ExtractFormContext<typeof schema>`
 - submit handlers receive transformed submitted output
 
-`useFormSubmit` remains available for explicit ref/target-style submission, but the playground now uses the controller API as the main path.
+The ref/target-style `useFormSubmit` API was removed before v1. The playground and package surface now use `useForm` as the sole controller path.
 
 The form runtime also exposes richer navigation controls internally:
 

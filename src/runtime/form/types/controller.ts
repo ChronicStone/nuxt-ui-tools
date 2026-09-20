@@ -1,12 +1,7 @@
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
 import type { FormValue } from './'
-import type {
-  FormSubmitAction,
-  FormSubmitHandler,
-  FormSubmitHandlerResult,
-  FormSubmitTarget,
-} from './api'
+import type { FormSubmitAction, FormSubmitHandler, FormSubmitHandlerResult } from './api'
 import type { ExtractFormInternalValue, ExtractFormOutput } from './output'
 import type { FormRuntime, FormRuntimeStep } from './runtime'
 import type { ExtractFormContext } from './schema'
@@ -164,8 +159,10 @@ export interface FormRendererController {
  * state inspection, autosave flows, custom action bars, wizard navigation, and explicit
  * submit handling.
  */
-export interface FormController<TSchema = FormObject, TSubmitData = FormValue>
-  extends FormSubmitTarget<ExtractFormOutput<TSchema>, TSubmitData>, FormRendererController {
+export interface FormController<
+  TSchema = FormObject,
+  TSubmitData = FormValue,
+> extends FormRendererController {
   /** Schema bound to this controller. */
   schema: ComputedRef<TSchema>
   /** Initial input state bound to this controller. */

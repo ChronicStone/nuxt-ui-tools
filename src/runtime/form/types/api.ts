@@ -1,5 +1,3 @@
-import type { ComputedRef } from 'vue'
-
 import type { NestedPaths } from '../../shared/types/utils'
 import type { FormValue } from './'
 import type { FormContextData } from './context'
@@ -259,11 +257,4 @@ export type FormSubmitHandler<TOutput = FormObject, TSubmitData = FormValue> = (
 export interface FormSubmitHandlerResult<TSubmitData = FormValue> {
   success: boolean
   data?: TSubmitData
-}
-
-export interface FormSubmitTarget<TOutput = FormObject, TSubmitData = FormValue> {
-  actionPending: ComputedRef<FormSubmitAction | null>
-  submitHandler: (
-    submitHandler?: FormSubmitHandler<TOutput, TSubmitData>,
-  ) => Promise<FormSubmitHandlerResult<TSubmitData>>
 }

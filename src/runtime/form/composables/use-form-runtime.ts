@@ -36,7 +36,7 @@ import { getSchemaContext, useFormContextResources } from './use-form-context-re
 import { useFormFocus } from './use-form-focus'
 import { useFormOptionRegistry } from './use-form-option-registry'
 import { useFormState } from './use-form-state'
-import { useFormSubmitController } from './use-form-submit'
+import { useFormSubmission } from './use-form-submission'
 import { useFormUploadRegistry } from './use-form-upload-registry'
 import { useFormValidation } from './use-form-validation'
 
@@ -182,7 +182,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     return valid
   }
 
-  const submit = useFormSubmitController({
+  const submit = useFormSubmission({
     beforeNext: () => (isStepped.value ? runBeforeNext() : Promise.resolve(true)),
     focusFirstInvalid: focus.focusFirstInvalid,
     getApi: () => createPublicFormApi(runtime),

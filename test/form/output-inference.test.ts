@@ -1,8 +1,7 @@
 import { queryOptions } from '@tanstack/vue-query'
 import { describe, expectTypeOf, it } from 'vitest'
-import { shallowRef } from 'vue'
 
-import { defineFormSchema, useForm, useFormSubmit } from '#ui-tools/form'
+import { defineFormSchema, useForm } from '#ui-tools/form'
 import type {
   ExtractFormContext,
   ExtractFormFieldInternalValue,
@@ -13,7 +12,6 @@ import type {
   ExtractFormOutput,
   FormApiController,
   FormApiCreateResult,
-  FormSubmitTarget,
 } from '#ui-tools/form'
 
 const schema = defineFormSchema({
@@ -527,27 +525,6 @@ describe('form output inference', () => {
       | { kind: 'email'; address: string | null; rank: number }
       | { kind: 'phone'; number: string | null }
     >()
-  })
-
-  it('types useFormSubmit handlers from submitted output', () => {
-    const formRef = shallowRef<FormSubmitTarget<SchemaOutput> | null>(null)
-
-    useFormSubmit({
-      formRef,
-      onSubmit: ({ formData, api }) => {
-        expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
-        expectTypeOf(formData.meta.score).toEqualTypeOf<string>()
-        expectTypeOf(formData.roles).toEqualTypeOf<readonly ('admin' | 'reviewer')[] | null>()
-        api.setError('profile.name', 'This name is unavailable.')
-        api.clearError('profile.name')
-        api.clearError()
-        // @ts-expect-error external errors target fields in the inferred submitted output
-        api.setError('missing', 'Unknown field.')
-
-        return { success: true }
-      },
-      schema,
-    })
   })
 
   it('types useForm controller state, output, and submit handlers from the schema', () => {
