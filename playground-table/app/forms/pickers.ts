@@ -1,13 +1,7 @@
-import type { FormRemoteOptionConfig } from '#ui-tools/form'
+import type { FormOptionItem, FormOptionValue, FormRemoteOptionConfig } from '#ui-tools/form'
 
 import type { Account, Contact } from '../data/accounts'
 import { wait } from '../utils/wait'
-
-interface PickerOption {
-  label: string
-  description?: string
-  value: string
-}
 
 interface Named {
   id: string
@@ -15,7 +9,11 @@ interface Named {
   description?: string
 }
 
-function remoteSource(items: readonly Named[]): FormRemoteOptionConfig<PickerOption> {
+type PickerValue = FormOptionValue | readonly FormOptionValue[] | null
+
+function remoteSource(
+  items: readonly Named[],
+): FormRemoteOptionConfig<FormOptionItem, NonNullable<unknown>, NonNullable<unknown>, PickerValue> {
   return {
     mode: 'remote',
     pagination: { size: 8, type: 'page' },

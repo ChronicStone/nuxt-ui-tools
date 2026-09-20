@@ -130,7 +130,7 @@ export function contractFormSchema(accounts: readonly Account[]) {
         type: 'checkbox',
       },
       {
-        condition: ({ deps }) => deps.hasAgent === true,
+        condition: ({ deps }) => 'hasAgent' in deps && deps.hasAgent === true,
         dependencies: ['hasAgent'],
         key: 'agent',
         label: 'Agent',
@@ -138,7 +138,7 @@ export function contractFormSchema(accounts: readonly Account[]) {
         type: 'select',
       },
       {
-        condition: ({ deps }) => deps.hasAgent === true,
+        condition: ({ deps }) => 'hasAgent' in deps && deps.hasAgent === true,
         dependencies: ['hasAgent'],
         key: 'agentRate',
         label: 'Taux de commission',
@@ -226,7 +226,7 @@ export function contractFormSchema(accounts: readonly Account[]) {
           },
           { key: 'file', label: 'Fichier', props: { accept: 'application/pdf' }, type: 'file' },
         ],
-        help: 'Trois documents maximum. Un type déjà utilisé n’est plus proposé.',
+        description: 'Trois documents maximum. Un type déjà utilisé n’est plus proposé.',
         key: 'docs',
         label: 'Pièces jointes',
         layout: { span: 'full' },

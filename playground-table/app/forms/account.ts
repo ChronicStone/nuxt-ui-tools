@@ -88,7 +88,7 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         type: 'select',
       },
       {
-        condition: ({ deps }) => isTestCenterType(deps.accountType),
+        condition: ({ deps }) => isTestCenterType('accountType' in deps ? deps.accountType : null),
         dependencies: ['accountType'],
         help: 'Requis pour les types Centre de test',
         key: 'testCenter',
@@ -98,7 +98,7 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         type: 'text',
       },
       {
-        condition: ({ deps }) => !isTestCenterType(deps.accountType),
+        condition: ({ deps }) => !isTestCenterType('accountType' in deps ? deps.accountType : null),
         dependencies: ['accountType'],
         disabled: () => true,
         help: 'Défini par la synchronisation VTest',

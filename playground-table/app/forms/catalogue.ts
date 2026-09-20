@@ -375,7 +375,10 @@ export function consumptionFormSchema(accounts: readonly Account[]) {
         key: 'contract',
         label: 'Contrat',
         onDependencyChange: ({ api }) => api.value.set(null),
-        options: ({ deps }) => (isString(deps.account) ? contractsOf(deps.account) : []),
+        options: ({ deps }) => {
+          const account = 'account' in deps ? deps.account : null
+          return isString(account) ? contractsOf(account) : []
+        },
         props: { mono: true },
         required: true,
         type: 'select',
@@ -388,10 +391,12 @@ export function consumptionFormSchema(accounts: readonly Account[]) {
         layout: { span: 'full' },
         onDependencyChange: ({ api }) => api.value.set(null),
         options: ({ deps }) => {
-          if (!isString(deps.account) || !isString(deps.contract)) {
+          const account = 'account' in deps ? deps.account : null
+          const contractId = 'contract' in deps ? deps.contract : null
+          if (!isString(account) || !isString(contractId)) {
             return []
           }
-          const contract = contractsOf(deps.account).find((item) => item.value === deps.contract)
+          const contract = contractsOf(account).find((item) => item.value === contractId)
           return PRODUCT_LINES.filter((line) => contract?.products.includes(line.value))
         },
         required: true,
@@ -473,7 +478,10 @@ export function invoiceFormSchema(accounts: readonly Account[]) {
         key: 'contract',
         label: 'Contrat',
         onDependencyChange: ({ api }) => api.value.set(null),
-        options: ({ deps }) => (isString(deps.account) ? contractsOf(deps.account) : []),
+        options: ({ deps }) => {
+          const account = 'account' in deps ? deps.account : null
+          return isString(account) ? contractsOf(account) : []
+        },
         props: { mono: true },
         required: true,
         type: 'select',
