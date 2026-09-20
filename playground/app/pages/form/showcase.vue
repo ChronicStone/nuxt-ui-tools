@@ -4,7 +4,7 @@ import { queryOptions } from '@tanstack/vue-query'
 import { h, ref } from 'vue'
 
 import { defineFormSchema, useForm, useFormApi } from '#ui-tools/form'
-import type { ExtractFormOutput } from '#ui-tools/form'
+import type { ExtractFormOutput, FormContextData } from '#ui-tools/form'
 
 import { isString } from '../../../../src/runtime/shared/utils/predicate'
 
@@ -13,6 +13,31 @@ function sleep(duration: number) {
 }
 
 const formApi = useFormApi()
+
+const showcaseContext = {
+  countries: () =>
+    queryOptions({
+      queryFn: async () => {
+        await sleep(700)
+
+        return [
+          { description: 'Default country', label: 'France', value: 'FR' },
+          { description: 'Benelux', label: 'Belgium', value: 'BE' },
+          { description: 'Alpine region', label: 'Switzerland', value: 'CH' },
+        ]
+      },
+      queryKey: ['form-showcase-countries'],
+    }),
+  roles: [
+    { description: 'Full access', label: 'Owner', value: 'owner' },
+    { description: 'Operational access', label: 'Manager', value: 'manager' },
+    { description: 'Read and comment', label: 'Reviewer', value: 'reviewer' },
+  ],
+}
+
+function isShowcaseContext(value: object): value is FormContextData<typeof showcaseContext> {
+  return 'countries' in value && 'roles' in value
+}
 
 const addressOptionForm = defineFormSchema({
   fields: [
@@ -57,26 +82,7 @@ const addressOptionForm = defineFormSchema({
 })
 
 const showcaseForm = defineFormSchema({
-  context: {
-    countries: () =>
-      queryOptions({
-        queryFn: async () => {
-          await sleep(700)
-
-          return [
-            { description: 'Default country', label: 'France', value: 'FR' },
-            { description: 'Benelux', label: 'Belgium', value: 'BE' },
-            { description: 'Alpine region', label: 'Switzerland', value: 'CH' },
-          ]
-        },
-        queryKey: ['form-showcase-countries'],
-      }),
-    roles: [
-      { description: 'Full access', label: 'Owner', value: 'owner' },
-      { description: 'Operational access', label: 'Manager', value: 'manager' },
-      { description: 'Read and comment', label: 'Reviewer', value: 'reviewer' },
-    ],
-  },
+  context: { ...showcaseContext },
   controls: {
     confirmNavOnDirty: true,
     dirtyCheck: true,
@@ -125,12 +131,12 @@ const showcaseForm = defineFormSchema({
       },
     },
     {
-      inputType: 'email',
       key: 'profile.email',
       label: 'Email',
       labelExtra: () =>
         h(ULink, { class: 'text-xs', href: 'mailto:support@example.com' }, () => 'Need help?'),
       placeholder: 'ada@example.com',
+      props: { inputType: 'email' },
       transform: {
         output: (value) => value?.trim().toLowerCase() ?? '',
       },
@@ -155,10 +161,9 @@ const showcaseForm = defineFormSchema({
       },
     },
     {
-      clearable: true,
-      defaultCountryCode: 'FR',
       key: 'profile.phone',
       label: 'Phone number',
+      props: { clearable: true, defaultCountryCode: 'FR' },
       type: 'phone-number',
       validation: {
         rules: [
@@ -179,18 +184,20 @@ const showcaseForm = defineFormSchema({
       },
     },
     {
-      calendar: {
-        yearRange: [1920, 2035],
-      },
-      clearable: true,
       key: 'profile.birthDate',
       label: 'Localized date',
-      manualInput: {
-        format: 'dd/MM/yyyy',
-        placeholder: 'dd/mm/yyyy',
-      },
-      previewFormat: {
-        dateStyle: 'medium',
+      props: {
+        calendar: {
+          yearRange: [1920, 2035],
+        },
+        clearable: true,
+        manualInput: {
+          format: 'dd/MM/yyyy',
+          placeholder: 'dd/mm/yyyy',
+        },
+        previewFormat: {
+          dateStyle: 'medium',
+        },
       },
       type: 'date',
     },
@@ -207,9 +214,10 @@ const showcaseForm = defineFormSchema({
       label: 'Context select',
       options: {
         allowOptionsRefresh: true,
-        source: ({ ctx }) => ctx.countries.value ?? [],
+        source: ({ ctx }: { ctx: object }) =>
+          isShowcaseContext(ctx) ? (ctx.countries.value ?? []) : [],
       },
-      searchable: true,
+      props: { searchable: true },
       type: 'select',
     },
     {
@@ -223,9 +231,9 @@ const showcaseForm = defineFormSchema({
       label: 'Query options depending on context',
       options: {
         allowOptionsRefresh: true,
-        source: ({ ctx }) =>
+        source: ({ ctx }: { ctx: object }) =>
           queryOptions({
-            enabled: Boolean(ctx.countries.value),
+            enabled: isShowcaseContext(ctx) && Boolean(ctx.countries.value),
             queryFn: async () => {
               await sleep(500)
 
@@ -237,18 +245,16 @@ const showcaseForm = defineFormSchema({
             },
             queryKey: [
               'form-showcase-cities',
-              ctx.countries.value?.map((country) => country.value).join(',') ?? 'loading',
+              isShowcaseContext(ctx)
+                ? (ctx.countries.value?.map((country) => country.value).join(',') ?? 'loading')
+                : 'loading',
             ],
           }),
       },
-      searchable: true,
+      props: { searchable: true },
       type: 'select',
     },
     {
-      createItem: {
-        position: 'bottom',
-        when: 'empty',
-      },
       key: 'profile.skill',
       label: 'Creatable option query',
       options: {
@@ -279,7 +285,13 @@ const showcaseForm = defineFormSchema({
             queryKey: ['form-showcase-skills'],
           }),
       },
-      searchable: true,
+      props: {
+        createItem: {
+          position: 'bottom',
+          when: 'empty',
+        },
+        searchable: true,
+      },
       type: 'select',
     },
     {
@@ -329,7 +341,7 @@ const showcaseForm = defineFormSchema({
           ]
         },
       },
-      searchable: true,
+      props: { searchable: true },
       type: 'select',
     },
     {
@@ -341,14 +353,12 @@ const showcaseForm = defineFormSchema({
         { description: 'Urgent notifications only', label: 'SMS', value: 'sms' },
         { description: 'Product surface notifications', label: 'In-app', value: 'in-app' },
       ],
+      props: { variant: 'card' },
       type: 'checkbox-group',
-      variant: 'card',
     },
     {
-      clearable: true,
       key: 'profile.assignees',
       label: 'Autocomplete',
-      multiple: true,
       options: {
         allowOptionsRefresh: true,
         source: async () => {
@@ -361,6 +371,7 @@ const showcaseForm = defineFormSchema({
           ]
         },
       },
+      props: { clearable: true, multiple: true },
       type: 'auto-complete',
     },
     {
@@ -376,23 +387,23 @@ const showcaseForm = defineFormSchema({
       key: 'profile.flags',
       label: 'Checkbox cards',
       options: ['priority', 'audited'],
-      orientation: 'horizontal',
+      props: { orientation: 'horizontal' },
       type: 'checkbox-card',
     },
     {
-      checkedIcon: 'i-lucide-check',
       key: 'profile.alerts',
       label: 'Switch group',
       options: [
         { label: 'Email alerts', value: 'email' },
         { label: 'SMS alerts', value: 'sms' },
       ],
+      props: {
+        checkedIcon: 'i-lucide-check',
+        uncheckedIcon: 'i-lucide-x',
+      },
       type: 'switch-group',
-      uncheckedIcon: 'i-lucide-x',
     },
     {
-      color: 'neutral',
-      icon: 'i-lucide-refresh-cw',
       key: 'refreshCountries',
       label: 'Refresh context countries',
       layout: {
@@ -401,8 +412,12 @@ const showcaseForm = defineFormSchema({
       onClick: async ({ api }) => {
         await api.context.refresh('countries')
       },
+      props: {
+        color: 'neutral',
+        icon: 'i-lucide-refresh-cw',
+        variant: 'soft',
+      },
       type: 'button',
-      variant: 'soft',
     },
     {
       key: 'section.layout',
@@ -419,17 +434,14 @@ const showcaseForm = defineFormSchema({
           default: 12,
           key: 'seats',
           label: 'Seats',
-          min: 1,
+          props: { min: 1 },
           type: 'number',
         },
         {
           default: 65,
           key: 'confidence',
           label: 'Confidence',
-          max: 100,
-          min: 0,
-          step: 5,
-          tooltip: true,
+          props: { max: 100, min: 0, step: 5, tooltip: true },
           type: 'slider',
         },
         {
@@ -442,7 +454,7 @@ const showcaseForm = defineFormSchema({
           default: '09:30',
           key: 'reviewTime',
           label: 'Review time',
-          minuteStep: 5,
+          props: { minuteStep: 5 },
           type: 'time',
         },
         {
@@ -459,27 +471,28 @@ const showcaseForm = defineFormSchema({
           type: 'checkbox',
         },
         {
-          checkedIcon: 'i-lucide-check',
           default: true,
           description: 'Boolean switch with custom icons.',
           key: 'autosave',
           label: 'Autosave draft',
+          props: {
+            checkedIcon: 'i-lucide-check',
+            uncheckedIcon: 'i-lucide-x',
+          },
           type: 'switch',
-          uncheckedIcon: 'i-lucide-x',
         },
         {
           default: '#00C16A',
-          format: 'hex',
           key: 'accentColor',
           label: 'Accent color popover',
+          props: { format: 'hex' },
           type: 'color-picker',
         },
         {
           default: '#7C3AED',
-          display: 'inline',
-          format: 'hex',
           key: 'inlineColor',
           label: 'Inline color panel',
+          props: { display: 'inline', format: 'hex' },
           type: 'color-picker',
         },
         {
@@ -581,9 +594,9 @@ const showcaseForm = defineFormSchema({
           type: 'text',
         },
         {
-          inputType: 'email',
           key: 'email',
           label: 'Email',
+          props: { inputType: 'email' },
           type: 'text',
         },
       ],
@@ -609,9 +622,11 @@ const showcaseForm = defineFormSchema({
         {
           key: 'dueDate',
           label: 'Due date',
-          manualInput: {
-            format: 'dd/MM/yyyy',
-            placeholder: 'dd/mm/yyyy',
+          props: {
+            manualInput: {
+              format: 'dd/MM/yyyy',
+              placeholder: 'dd/mm/yyyy',
+            },
           },
           type: 'date',
         },
@@ -632,15 +647,15 @@ const showcaseForm = defineFormSchema({
       type: 'divider',
     },
     {
-      clearable: true,
       key: 'schedule.startsAt',
       label: 'Date and time',
+      props: { clearable: true },
       type: 'datetime',
     },
     {
-      clearable: true,
       key: 'schedule.period',
       label: 'Date range',
+      props: { clearable: true },
       type: 'daterange',
     },
     {
@@ -654,7 +669,12 @@ const showcaseForm = defineFormSchema({
       type: 'datetimerange',
     },
     { key: 'schedule.month', label: 'Month', type: 'month' },
-    { key: 'schedule.year', label: 'Year', max: 2040, min: 2020, type: 'year' },
+    {
+      key: 'schedule.year',
+      label: 'Year',
+      props: { max: 2040, min: 2020 },
+      type: 'year',
+    },
     {
       key: 'taxonomy.category',
       label: 'Tree select',
@@ -669,15 +689,16 @@ const showcaseForm = defineFormSchema({
         },
         { key: 'operations', label: 'Operations' },
       ],
-      searchable: true,
-      selectionControl: 'radio',
-      showPath: true,
+      props: {
+        searchable: true,
+        selectionControl: 'radio',
+        showPath: true,
+      },
       type: 'tree-select',
     },
     {
       key: 'taxonomy.path',
       label: 'Cascader',
-      leafOnly: true,
       options: [
         {
           children: [
@@ -688,14 +709,12 @@ const showcaseForm = defineFormSchema({
           label: 'Europe',
         },
       ],
+      props: { leafOnly: true },
       type: 'cascader',
     },
     {
-      cascade: true,
-      clearable: true,
       key: 'taxonomy.categories',
       label: 'Checkbox tree select',
-      multiple: true,
       options: [
         {
           children: [
@@ -706,13 +725,12 @@ const showcaseForm = defineFormSchema({
           label: 'Products',
         },
       ],
+      props: { cascade: true, clearable: true, multiple: true },
       type: 'tree-select',
     },
     {
-      cascade: true,
       key: 'taxonomy.scopes',
       label: 'Checkbox tree',
-      multiple: true,
       options: [
         {
           children: [
@@ -723,7 +741,7 @@ const showcaseForm = defineFormSchema({
           label: 'Catalog',
         },
       ],
-      props: { defaultExpanded: ['catalog'] },
+      props: { cascade: true, defaultExpanded: ['catalog'], multiple: true },
       type: 'tree',
     },
     {
@@ -739,8 +757,7 @@ const showcaseForm = defineFormSchema({
           label: 'Teams',
         },
       ],
-      props: { defaultExpanded: ['teams'] },
-      selectionControl: 'radio',
+      props: { defaultExpanded: ['teams'], selectionControl: 'radio' },
       type: 'tree',
     },
     {
@@ -770,7 +787,6 @@ const showcaseForm = defineFormSchema({
     },
     {
       confirmDelete: true,
-      draggable: true,
       fields: [
         { key: 'label', label: 'Label', type: 'text', validation: { required: true } },
         { default: 1, key: 'quantity', label: 'Quantity', type: 'number' },
@@ -778,14 +794,15 @@ const showcaseForm = defineFormSchema({
       key: 'lineItems',
       label: 'Array table',
       layout: { span: 'full' },
+      props: { draggable: true },
       type: 'array-table',
       virtualFields: { position: (index) => index + 1 },
     },
     {
-      displayMode: 'tabs',
       key: 'contactMethods',
       label: 'Discriminated contacts',
       layout: { span: 'full' },
+      props: { displayMode: 'tabs' },
       type: 'array-variant',
       variantKey: 'kind',
       variants: [
@@ -802,16 +819,16 @@ const showcaseForm = defineFormSchema({
       ],
     },
     {
-      accept: 'image/*',
       key: 'avatar',
       label: 'File',
+      props: { accept: 'image/*' },
       type: 'file',
     },
     {
-      accept: 'application/pdf,image/*',
       key: 'identityDocument',
       label: 'Upload',
       output: 'object',
+      props: { accept: 'application/pdf,image/*' },
       type: 'upload',
       upload: {
         handler: async ({ files }) => {
@@ -838,11 +855,10 @@ const showcaseForm = defineFormSchema({
       type: 'divider',
     },
     {
-      inputType: 'number',
       key: 'security.otp',
       label: 'One-time code',
-      length: 6,
       placeholder: '0',
+      props: { inputType: 'number', length: 6 },
       type: 'one-time-code',
       validation: {
         rules: [

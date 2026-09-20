@@ -6,10 +6,23 @@ import { defineFormField, defineFormFields, defineFormSchema, formFieldKinds } f
 import type {
   ExtractFormContext,
   ExtractFormFields,
+  FormField,
   FormHiddenField,
   FormOption,
   FormTextField,
 } from '#ui-tools/form'
+
+interface ExplicitContext {
+  countries: readonly string[]
+}
+
+const explicitContext: ExplicitContext = { countries: ['FR', 'BE'] }
+const dynamicFields: readonly FormField[] = [{ key: 'name', type: 'text' }]
+
+const externallyTypedSchema = defineFormSchema({
+  context: explicitContext,
+  fields: dynamicFields,
+})
 
 const schema = defineFormSchema({
   context: {
@@ -90,6 +103,15 @@ describe('defineFormSchema inference', () => {
   it('preserves authored field literals', () => {
     expectTypeOf<SchemaFields[number]['type']>().toMatchTypeOf<
       'text' | 'select' | 'checkbox' | 'hidden' | 'object'
+    >()
+  })
+
+  it('accepts interface-backed context and dynamically assembled fields', () => {
+    expectTypeOf<
+      ExtractFormContext<typeof externallyTypedSchema>['countries']['value']
+    >().toEqualTypeOf<readonly string[]>()
+    expectTypeOf<ExtractFormFields<typeof externallyTypedSchema>>().toEqualTypeOf<
+      readonly FormField[]
     >()
   })
 

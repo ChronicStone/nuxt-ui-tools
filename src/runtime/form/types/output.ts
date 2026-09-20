@@ -4,7 +4,7 @@ import type {
   PathToObject,
   UnionToIntersection,
 } from '../../shared/types/utils'
-import type { FormValue } from './'
+import type { FormObject, FormValue } from './'
 import type {
   ArrayCollapseFieldOutput,
   ArrayListFieldOutput,
@@ -76,7 +76,9 @@ type TabsFieldsValue<TField, TMode extends FormStateMode> = TField extends {
   : NonNullable<unknown>
 
 type FieldsValue<TFields, TMode extends FormStateMode> = TFields extends readonly FormValue[]
-  ? DeepTransformNestedPaths<UnionToIntersection<FieldObject<TFields[number], TMode>>>
+  ? number extends TFields['length']
+    ? FormObject
+    : DeepTransformNestedPaths<UnionToIntersection<FieldObject<TFields[number], TMode>>>
   : NonNullable<unknown>
 
 type VariantValue<

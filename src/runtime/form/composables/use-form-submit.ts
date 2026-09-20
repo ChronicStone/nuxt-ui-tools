@@ -1,7 +1,6 @@
 import { computed, ref, toValue } from 'vue'
 import type { MaybeRefOrGetter, Ref } from 'vue'
 
-import type { GenericObject } from '../../shared/types/utils'
 import type {
   FormValue,
   ExtractFormOutput,
@@ -17,10 +16,7 @@ import type {
 import { isRecord } from '../utils/path'
 import { isFunction } from '../utils/predicate'
 
-export function useFormSubmit<
-  const TSchema extends GenericObject,
-  TSubmitData = FormValue,
->(params: {
+export function useFormSubmit<const TSchema extends object, TSubmitData = FormValue>(params: {
   formRef: Ref<FormSubmitTarget<ExtractFormOutput<TSchema>, TSubmitData> | null | undefined>
   schema: MaybeRefOrGetter<TSchema>
   onSubmit: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>

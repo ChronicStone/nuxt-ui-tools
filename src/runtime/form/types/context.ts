@@ -1,6 +1,5 @@
 import type { QueryKey } from '@tanstack/vue-query'
 
-import type { GenericObject } from '../../shared/types/utils'
 import type { FormValue } from './'
 import type { FormAsyncResource, FormContextResource, FormSyncResource } from './utils'
 
@@ -28,7 +27,9 @@ export type FormContextSource<TValue = FormValue> =
 /**
  * Object of named context sources declared by a form schema.
  */
-export type FormContextDefinition = GenericObject
+export type FormContextDefinition = object
+
+type FormContextFallback = { [key: string]: FormValue }
 
 type ResolveContextSource<TSource> = TSource extends () => infer TResult
   ? FormContextResource<TResult>
@@ -38,7 +39,7 @@ type ResolveContextSource<TSource> = TSource extends () => infer TResult
  * Fully typed context object exposed to field callbacks as `ctx`.
  */
 export type FormContextData<
-  TContext extends FormContextDefinition | undefined = FormContextDefinition,
+  TContext extends FormContextDefinition | undefined = FormContextFallback,
 > = TContext extends FormContextDefinition
   ? { [TKey in keyof TContext]: ResolveContextSource<TContext[TKey]> }
   : NonNullable<unknown>

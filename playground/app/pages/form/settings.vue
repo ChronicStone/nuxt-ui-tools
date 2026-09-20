@@ -11,7 +11,6 @@ const settingsSchema = defineFormSchema({
     syncInput: true,
     validate: true,
   },
-  description: 'A small settings surface with grouped preferences and explicit submit state.',
   fields: [
     {
       key: 'workspace.name',
@@ -70,7 +69,10 @@ const settingsSchema = defineFormSchema({
     },
   ],
   formKey: 'playground.form.settings',
-  header: { title: 'Workspace settings' },
+  header: {
+    description: 'A small settings surface with grouped preferences and explicit submit state.',
+    title: 'Workspace settings',
+  },
   layout: {
     columns: 8,
     gap: 16,

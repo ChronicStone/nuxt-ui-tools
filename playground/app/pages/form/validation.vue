@@ -7,6 +7,7 @@ import { queryOptions } from '@tanstack/vue-query'
 import { computed, ref } from 'vue'
 
 import { defineFormSchema, useForm } from '#ui-tools/form'
+import type { FormContextData } from '#ui-tools/form'
 
 import { isString } from '../../../../src/runtime/shared/utils/predicate'
 
@@ -20,21 +21,27 @@ const submitMessage = ref('Submit the form to exercise the server-like lifecycle
 const lastSubmitted = ref<unknown | null>(null)
 const lastValidation = ref<'idle' | 'valid' | 'invalid'>('idle')
 
+const validationContext = {
+  teams: () =>
+    queryOptions({
+      queryFn: async () => {
+        await sleep(650)
+        return [
+          { description: 'UI foundations', label: 'Design systems', value: 'design-systems' },
+          { description: 'Shared runtime services', label: 'Platform', value: 'platform' },
+          { description: 'Customer workflows', label: 'Operations', value: 'operations' },
+        ]
+      },
+      queryKey: ['form-validation-teams'],
+    }),
+}
+
+function isValidationContext(value: object): value is FormContextData<typeof validationContext> {
+  return 'teams' in value
+}
+
 const validationSchema = defineFormSchema({
-  context: {
-    teams: () =>
-      queryOptions({
-        queryFn: async () => {
-          await sleep(650)
-          return [
-            { description: 'UI foundations', label: 'Design systems', value: 'design-systems' },
-            { description: 'Shared runtime services', label: 'Platform', value: 'platform' },
-            { description: 'Customer workflows', label: 'Operations', value: 'operations' },
-          ]
-        },
-        queryKey: ['form-validation-teams'],
-      }),
-  },
+  context: { ...validationContext },
   controls: {
     autoFocus: true,
     syncInput: true,
@@ -61,10 +68,10 @@ const validationSchema = defineFormSchema({
           },
         },
         {
-          inputType: 'email',
           key: 'email',
           label: 'Email',
           placeholder: 'ada@example.com',
+          props: { inputType: 'email' },
           type: 'text',
           validation: {
             required: true,
@@ -166,9 +173,10 @@ const validationSchema = defineFormSchema({
           label: 'Team',
           options: {
             allowOptionsRefresh: true,
-            source: ({ ctx }) => ctx.teams.value ?? [],
+            source: ({ ctx }: { ctx: object }) =>
+              isValidationContext(ctx) ? (ctx.teams.value ?? []) : [],
           },
-          searchable: true,
+          props: { searchable: true },
           type: 'select',
           validation: {
             required: true,

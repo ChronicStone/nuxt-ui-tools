@@ -1,4 +1,3 @@
-import type { GenericObject } from '../../shared/types/utils'
 import type {
   FormValue,
   FormAction,
@@ -13,6 +12,7 @@ import type {
   FormStep,
   FormStepLifecycleParams,
   FormText,
+  FormUiConfig,
 } from '../types'
 
 type FormSchemaSubmit<TContext extends FormContextDefinition | undefined> = (params: {
@@ -26,6 +26,7 @@ interface FormSchemaBase<TContext extends FormContextDefinition | undefined> {
   header?: import('../types').FormHeaderConfig
   context: TContext
   layout?: FormLayoutConfig
+  ui?: FormUiConfig
   showStepper?: boolean
   controls?: import('../types').FormControlsConfig
   modal?: import('../types').FormModalConfig
@@ -107,25 +108,21 @@ export function defineFormSchema<const TSchema>(
 export function defineFormSchema<
   const TContext extends FormContextDefinition,
   const TFields extends readonly FormField<FormContextData<NoInfer<TContext>>>[],
-  const TSchema extends GenericObject,
->(schema: TSchema & FormSchemaWithContextFields<TContext, TFields>): TSchema
+>(
+  schema: FormSchemaWithContextFields<TContext, TFields>,
+): FormSchemaWithContextFields<TContext, TFields>
 export function defineFormSchema<
   const TContext extends FormContextDefinition,
   const TSteps extends readonly FormStep<FormContextData<NoInfer<TContext>>>[],
-  const TSchema extends GenericObject,
 >(
-  schema: TSchema & FormSchemaWithContextSteps<TContext, TSteps>,
-): TSchema & FormSchemaWithContextSteps<TContext, TSteps>
+  schema: FormSchemaWithContextSteps<TContext, TSteps>,
+): FormSchemaWithContextSteps<TContext, TSteps>
 export function defineFormSchema<
   const TFields extends readonly FormField<FormContextData<undefined>>[],
-  const TSchema extends GenericObject,
->(schema: TSchema & FormSchemaWithoutContextFields<TFields>): TSchema
+>(schema: FormSchemaWithoutContextFields<TFields>): FormSchemaWithoutContextFields<TFields>
 export function defineFormSchema<
   const TSteps extends readonly FormStep<FormContextData<undefined>>[],
-  const TSchema extends GenericObject,
->(
-  schema: TSchema & FormSchemaWithoutContextSteps<TSteps>,
-): TSchema & FormSchemaWithoutContextSteps<TSteps>
+>(schema: FormSchemaWithoutContextSteps<TSteps>): FormSchemaWithoutContextSteps<TSteps>
 export function defineFormSchema(schema: FormValue) {
   return schema
 }
