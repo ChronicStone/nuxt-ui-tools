@@ -4,7 +4,7 @@
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v0.1.3...v1.0.0)
 
-Version 1.0.0 promotes the form and table engines from their initial public runtime to the stable package contract. It consolidates 189 commits across the runtime, public types, tests, consumer skills, and two integration playgrounds.
+Version 1.0.0 promotes the form and table engines from their initial public runtime to the stable package contract. It consolidates more than 200 commits across the runtime, public types, tests, consumer skills, and two integration playgrounds.
 
 ### Migration notes
 
@@ -62,11 +62,14 @@ Version 1.0.0 promotes the form and table engines from their initial public runt
 - **table:** Fill initial table loading space with the correct number of skeleton rows and use a non-destructive bottom loader for infinite mode.
 - **table:** Fix sticky headers by making the DataList viewport the scroll owner, stabilize row heights during horizontal scrolling, and keep virtualized table/grid content contained.
 - **table:** Correct `isNot` client filtering, option-count visibility, selection pressed state, filter-tag leave layout, sort-menu interaction, page-size width, and mobile sheet height.
+- **table:** Honor schema-owned responsive header controls and pagination visibility flags across the default composed DataList surface.
+- **table:** Hydrate cursor-prefetched data under the infinite-query cache key and shape consumed by the runtime, including page-context rows.
 - **table:** Align sortable headers with cell content while retaining padded hover affordances, and keep column order and pinned option placement stable during interaction.
 - **module:** Fix runtime Tailwind source injection against current Nuxt UI CSS generation.
 - **module:** Restore public component registration after normalizing source filenames to kebab-case.
 - **query-prefetch:** Import the Nuxt plugin helper from the correct application boundary.
 - **tests:** Keep pure runtime utilities isolated from Nuxt app-only imports so the test projects run cleanly under Nuxt 4.5+.
+- **tests:** Typecheck both integration playgrounds in local and CI release gates.
 
 ### 🧰 Developer experience
 
