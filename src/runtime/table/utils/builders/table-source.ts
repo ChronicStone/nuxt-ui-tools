@@ -1,4 +1,4 @@
-import type { QueryFunctionContext, QueryKey } from '@tanstack/vue-query'
+import type { QueryKey, UseQueryOptions } from '@tanstack/vue-query'
 
 import type {
   GenericObject,
@@ -9,6 +9,7 @@ import type {
   TablePaginationState,
   TableQueryDefinition,
   TableRemoteSource,
+  TableRemoteSourceRequest,
   TableResolvedFilterGroup,
   TableRowsFromSourceResult,
   TableSourceExecutionResult,
@@ -52,24 +53,38 @@ interface TableSourceInferenceContext {
   facets?: TableGlobalFacetDescriptor<never>[]
 }
 
-type TableSourceQueryDefinition<TResult> = Omit<TableQueryDefinition<unknown>, 'queryFn'> & {
-  queryFn: (context: QueryFunctionContext<QueryKey, string | null>) => TResult | Promise<TResult>
+interface TableSourceQueryDefinition {
+  queryKey: QueryKey
 }
 
-interface ClientTableSourceInput<TResult extends TableSourceResult> {
+type TableSourceQueryResult<TQuery> = TQuery extends UseQueryOptions<
+  infer TResult,
+  any,
+  any,
+  any
+>
+  ? Awaited<TResult>
+  : TQuery extends { queryFn?: (...args: never[]) => infer TResult }
+    ? Awaited<TResult>
+    : never
+
+interface ClientTableSourceInput<TQuery extends TableSourceQueryDefinition> {
   mode?: 'client'
-  query: (context: TableSourceInferenceContext) => TableSourceQueryDefinition<TResult>
+  query: (context: TableSourceInferenceContext) => TQuery
 }
 
-interface RemoteTableSourceInput<TResult extends TableSourceRowsResult> {
+interface RemoteTableSourceInput<TQuery extends TableSourceQueryDefinition> {
   mode: 'remote'
-  query: (context: TableSourceInferenceContext) => TableSourceQueryDefinition<TResult>
+  query: (
+    request: TableRemoteSourceRequest<GenericObject, string>,
+    context: GenericObject,
+  ) => TQuery
   facets?: TableRemoteSource['facets']
 }
 
 interface TableSourceInput {
   mode?: 'client' | 'remote'
-  query: (context: never) => TableQueryDefinition<TableSourceResult>
+  query: (...args: any[]) => TableSourceQueryDefinition
   facets?: TableRemoteSource['facets']
 }
 
@@ -90,12 +105,20 @@ interface TableSourceInput {
  * })
  * ```
  */
-export function tableSource<TResult extends TableSourceRowsResult>(
-  source: RemoteTableSourceInput<TResult>,
-): TableRemoteSource<TableSourceRow<TResult>, GenericObject, RemoteTableSourceResult<TResult>>
-export function tableSource<TResult extends TableSourceResult>(
-  source: ClientTableSourceInput<TResult>,
-): TableClientSource<TableSourceRow<TResult>, GenericObject, ClientTableSourceResult<TResult>>
+export function tableSource<TQuery extends TableSourceQueryDefinition>(
+  source: RemoteTableSourceInput<TQuery>,
+): TableRemoteSource<
+  TableSourceRow<TableSourceQueryResult<TQuery>>,
+  GenericObject,
+  RemoteTableSourceResult<TableSourceQueryResult<TQuery>>
+>
+export function tableSource<TQuery extends TableSourceQueryDefinition>(
+  source: ClientTableSourceInput<TQuery>,
+): TableClientSource<
+  TableSourceRow<TableSourceQueryResult<TQuery>>,
+  GenericObject,
+  ClientTableSourceResult<TableSourceQueryResult<TQuery>>
+>
 export function tableSource(source: TableSourceInput) {
   return source
 }

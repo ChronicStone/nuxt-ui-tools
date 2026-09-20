@@ -29,6 +29,7 @@ import type {
   TableUiFilterDefinition,
 } from '../types'
 import { createTableCursorQueryKey } from './cursor-query'
+import { toTableRemoteSourceRequest } from './source-request'
 import {
   hasPerFilterFacetQuery,
   resolveTableFacetMode,
@@ -221,7 +222,10 @@ function resolveSourcePrefetchQuery(options: {
   schema: TableSchemaView
   request: TableSourceRequestContext<GenericObject, TablePrefetchContext, string>
 }) {
-  const definition = options.schema.source.query(options.request)
+  const definition =
+    options.schema.source.mode === 'remote'
+      ? options.schema.source.query(toTableRemoteSourceRequest(options.request), options.request.context)
+      : options.schema.source.query(options.request)
   if (options.request.pagination.mode !== 'cursor' || !definition.queryFn) return definition
 
   const queryFn = definition.queryFn

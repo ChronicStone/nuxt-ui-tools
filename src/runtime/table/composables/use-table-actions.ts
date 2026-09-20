@@ -61,10 +61,7 @@ export function useTableActions(options: UseTableActionsParams) {
     context: toPlainRecord(options.queryContent.contextData.value),
     matchingCount: options.queryContent.data.value.rowCount ?? null,
     pageContext: toPlainRecord(options.queryContent.pageContextData.value),
-    request: {
-      ...options.queryContent.requestContext.value,
-      context: toPlainRecord(options.queryContent.requestContext.value.context),
-    },
+    request: options.queryContent.sourceRequest.value,
     scope: options.selection.bulkScope.value,
     selectedRows: options.selection.selectedRows.value,
   }))
