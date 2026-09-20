@@ -137,6 +137,22 @@ describe('filter tags bar', () => {
     expect(harness.internals.filterPresentation.dynamicSessionDefinition.value).toBeUndefined()
   })
 
+  it('offers facet-only remote values in the dynamic filter editor', async () => {
+    harness = await mountTags({ schema: createAccountsSchema({ embeddedFacets: true }) })
+    const w = harness.wrapper
+
+    await w.find('.nut-dl-tag--add').trigger('click')
+    await harness.flush()
+    await must(
+      w.findAll('[data-filter-stage-content] button.rounded-md').find((row) => row.text() === 'Pays'),
+    ).trigger('click')
+    await harness.flush()
+    await must(w.findAll('[data-filter-stage-content] button')[0]).trigger('click')
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-editor__head').exists())
+
+    expect(texts(w, '.nut-dl-option')).toStrictEqual(['FR20', 'DE20', 'ES20'])
+  })
+
   it('applies filter tag props and add-filter picker options from the config layer', async () => {
     harness = await mountTags({
       schema: createAccountsSchema({ statusDefault: ['active'] }),

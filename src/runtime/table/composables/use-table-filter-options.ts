@@ -254,7 +254,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     resolveFilterOptionEntries({
       definition: options.definition,
       deriveCounts: false,
-      facetCounts: shouldResolveCounts.value ? resolvedFacetCounts.value : [],
+      facetCounts: resolvedFacetCounts.value,
       missingCountFallback: shouldResolveCounts.value && usesFacetCounts.value ? 0 : undefined,
       options: hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value,
       rows: [],

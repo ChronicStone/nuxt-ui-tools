@@ -26,24 +26,26 @@ function handleFocusOutside(event: Event) {
 </script>
 
 <template>
-  <template v-if="embedded">
-    <slot name="content" />
-  </template>
-  <UPopover
-    v-else
-    :open="open"
-    :content="{
-      side: 'bottom',
-      align: 'start',
-      sideOffset: 8,
-      onFocusOutside: handleFocusOutside,
-    }"
-    :ui="{ content: resolvedContentClass }"
-    @update:open="emit('updateOpen', $event)"
-  >
-    <slot />
-    <template #content>
+  <div class="contents">
+    <template v-if="embedded">
       <slot name="content" />
     </template>
-  </UPopover>
+    <UPopover
+      v-else
+      :open="open"
+      :content="{
+        side: 'bottom',
+        align: 'start',
+        sideOffset: 8,
+        onFocusOutside: handleFocusOutside,
+      }"
+      :ui="{ content: resolvedContentClass }"
+      @update:open="emit('updateOpen', $event)"
+    >
+      <slot />
+      <template #content>
+        <slot name="content" />
+      </template>
+    </UPopover>
+  </div>
 </template>
