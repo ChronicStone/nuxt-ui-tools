@@ -41,6 +41,7 @@ const validationSchema = defineFormSchema({
     validate: true,
   },
   formKey: 'playground.form.validation-assessment',
+  header: { title: 'Validation assessment' },
   layout: {
     columns: 1,
     gap: 16,
@@ -178,7 +179,6 @@ const validationSchema = defineFormSchema({
       title: 'Security',
     },
   ],
-  header: { title: 'Validation assessment' },
 })
 
 const form = useForm({

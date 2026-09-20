@@ -43,7 +43,7 @@ describe('table search orchestration', () => {
       })),
     })
 
-    expect([searchState.searchQuery.value, searchState.searchPlaceholder.value]).toEqual([
+    expect([searchState.searchQuery.value, searchState.searchPlaceholder.value]).toStrictEqual([
       'Ada',
       'Search team',
     ])
@@ -55,7 +55,7 @@ describe('table search orchestration', () => {
       searchState.searchQuery.value,
       filters.value.search,
       pagination.value.pageIndex,
-    ]).toEqual(['Grace', 'Grace', 1])
+    ]).toStrictEqual(['Grace', 'Grace', 1])
   })
 })
 

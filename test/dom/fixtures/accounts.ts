@@ -146,7 +146,7 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
         : {
             defaultSize: { grid: 12, table: 20 },
             sizeOptions: { grid: [12, 24], table: [10, 20, 50] },
-            ...(options.pagination ?? {}),
+            ...options.pagination,
           },
     rowKey: 'id',
     selection: {

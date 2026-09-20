@@ -35,12 +35,15 @@ describe('DataListSortMenu desktop', () => {
       trigger.attributes('data-variant'),
       trigger.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/gu, ''),
       trigger.find('.nut-dl-sortbtn__label [data-ui="UIcon"]').attributes('data-name'),
-    ]).toEqual(['i-lucide-arrow-down-up', 'outline', 'TriNom', 'i-lucide-arrow-up'])
+    ]).toStrictEqual(['i-lucide-arrow-down-up', 'outline', 'TriNom', 'i-lucide-arrow-up'])
     const items = w.findAll('.nut-dl-sort__row')
     expect([
       items.map((item) => item.text()),
       must(items[0]).classes().includes('nut-dl-sort__row--active'),
-    ]).toEqual([['Nom', 'Statut', 'Pays', 'Entité légale', 'EDOF', 'Contrats', 'Conso.'], true])
+    ]).toStrictEqual([
+      ['Nom', 'Statut', 'Pays', 'Entité légale', 'EDOF', 'Contrats', 'Conso.'],
+      true,
+    ])
 
     await must(items[1]).trigger('click')
     await harness.flush()
@@ -54,7 +57,7 @@ describe('DataListSortMenu desktop', () => {
       harness.internals.tableColumns.sortingState.value.dir,
       w.find('.nut-dl-sortbtn__label').text().replaceAll(/\s+/gu, ''),
       w.find('.nut-dl-sortbtn__label [data-ui="UIcon"]').attributes('data-name'),
-    ]).toEqual(['desc', 'TriStatut', 'i-lucide-arrow-down'])
+    ]).toStrictEqual(['desc', 'TriStatut', 'i-lucide-arrow-down'])
   })
 
   it('is hidden for layouts it does not cover and uses grid sort options in grid mode', async () => {
@@ -99,7 +102,7 @@ describe('DataListSortMenu mobile sheet', () => {
       trigger.attributes('data-icon'),
       trigger.attributes('aria-label'),
       w.find('[data-ui="UDrawer"]').attributes('data-open'),
-    ]).toEqual(['true', 'i-lucide-arrow-down-up', 'Trier', 'false'])
+    ]).toStrictEqual(['true', 'i-lucide-arrow-down-up', 'Trier', 'false'])
     await trigger.trigger('click')
     await harness.flush()
     expect(texts(w, '.nut-dl-sort__caption')).toStrictEqual(['Trier par', 'Ordre'])

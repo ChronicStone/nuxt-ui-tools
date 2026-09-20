@@ -48,12 +48,12 @@ describe('data-list UI', () => {
     expect([
       resolveDataListContentShellClass({ layout: 'grid', surface: 'plain' }),
       resolveDataListTableDensity('compact').rowHeight,
-    ]).toEqual(['grid gap-5', 40])
+    ]).toStrictEqual(['grid gap-5', 40])
     expect(resolveDataListTableDensity('comfortable').row).toContain('min-h-14')
     expect([
       resolveDataListTableSize('xs').rowHeight,
       resolveDataListTableSize('xl').rowHeight,
-    ]).toEqual([36, 64])
+    ]).toStrictEqual([36, 64])
   })
 
   it('scales the complete filter editor surface with its control size', () => {

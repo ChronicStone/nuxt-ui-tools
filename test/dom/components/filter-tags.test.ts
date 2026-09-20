@@ -33,7 +33,7 @@ describe('filter tags bar', () => {
     expect(dormant.find('[data-ui="UIcon"]').exists()).toBeTruthy()
     expect(w.find('.nut-dl-tag--active').exists()).toBeFalsy()
     const add = w.find('.nut-dl-tag--add')
-    expect([add.attributes('data-label'), add.attributes('data-icon')]).toEqual([
+    expect([add.attributes('data-label'), add.attributes('data-icon')]).toStrictEqual([
       'Ajouter un filtre',
       'i-lucide-plus',
     ])
@@ -48,17 +48,16 @@ describe('filter tags bar', () => {
     const w = harness.wrapper
     const active = w.find('.nut-dl-tag--active')
     expect(active.exists()).toBeTruthy()
-    expect([active.find('.nut-dl-tag__label').text(), texts(w, '.nut-dl-tag__text')]).toEqual([
-      'Statut',
-      ['Actif', 'En attente'],
-    ])
+    expect([active.find('.nut-dl-tag__label').text(), texts(w, '.nut-dl-tag__text')]).toStrictEqual(
+      ['Statut', ['Actif', 'En attente']],
+    )
     const dots = w.findAll('.nut-dl-tag__dot')
     expect(dots).toHaveLength(2)
     expect(must(dots[0]).attributes('style')).toContain(STATUS_COLOR.active)
     expect(w.find('.nut-dl-tag__sep').exists()).toBeFalsy()
     expect(w.find('[data-ui="UBadge"]').exists()).toBeFalsy()
     const dismiss = w.find('.nut-dl-tag__dismiss')
-    expect([dismiss.attributes('data-icon'), dismiss.attributes('aria-label')]).toEqual([
+    expect([dismiss.attributes('data-icon'), dismiss.attributes('aria-label')]).toStrictEqual([
       'i-lucide-chevron-down',
       'Statut',
     ])
@@ -74,7 +73,7 @@ describe('filter tags bar', () => {
     expect([
       [active.find('.nut-dl-tag__label').text(), texts(active, '.nut-dl-tag__text')],
       active.findAll('.nut-dl-tag__sep').length,
-    ]).toEqual([['Pays', ['FR', 'DE']], 1])
+    ]).toStrictEqual([['Pays', ['FR', 'DE']], 1])
     expect(active.find('[data-label="parmi"]').exists()).toBeTruthy()
     expect(active.find('[data-label="parmi"]').attributes('data-trailing-icon')).toBe(
       'i-lucide-chevron-down',
@@ -84,7 +83,7 @@ describe('filter tags bar', () => {
       dismiss.attributes('data-icon'),
       w.find('.nut-dl-tag--clear').attributes('data-icon'),
       w.find('.nut-dl-tag--clear').text(),
-    ]).toEqual(['i-lucide-x', 'i-lucide-rotate-ccw', 'Réinitialiser'])
+    ]).toStrictEqual(['i-lucide-x', 'i-lucide-rotate-ccw', 'Réinitialiser'])
 
     await dismiss.trigger('click')
     await harness.flush()
@@ -111,7 +110,7 @@ describe('filter tags bar', () => {
       rows.map((row) => row.text()),
       must(rows[0]).find('[data-ui="UIcon"]').attributes('data-name'),
       must(rows[0]!.findAll('[data-ui="UIcon"]').at(-1)).attributes('data-name'),
-    ]).toEqual([['Pays', 'Synchronisation EDOF'], 'i-lucide-plus', 'i-lucide-chevron-right'])
+    ]).toStrictEqual([['Pays', 'Synchronisation EDOF'], 'i-lucide-plus', 'i-lucide-chevron-right'])
 
     await must(rows[0]).trigger('click')
     await harness.flush()
@@ -127,7 +126,7 @@ describe('filter tags bar', () => {
     expect([
       harness.internals.filterPresentation.dynamicSessionDefinition.value?.key,
       w.find('.nut-dl-tag--add').attributes('data-label'),
-    ]).toEqual(['country', 'Pays'])
+    ]).toStrictEqual(['country', 'Pays'])
     await harness.until(() => must(harness).wrapper.find('.nut-dl-editor__head').exists())
     const head = w.find('.nut-dl-editor__head')
     expect(head.find('.nut-dl-editor__back').exists()).toBeTruthy()
@@ -213,7 +212,7 @@ describe('mobile filter sheet', () => {
     expect([
       must(rows[1]).find('.nut-dl-sheet__value').text(),
       w.find('.nut-dl-sheet__footer button:last-child').text(),
-    ]).toEqual(['', 'Terminé'])
+    ]).toStrictEqual(['', 'Terminé'])
     expect(w.find('.nut-dl-sheet__footer button:first-child').attributes('disabled')).toBeDefined()
 
     await must(rows[1]).trigger('click')

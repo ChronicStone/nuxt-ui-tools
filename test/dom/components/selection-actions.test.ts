@@ -57,7 +57,7 @@ describe('selection actions part', () => {
       must(actions[0]).attributes('data-variant'),
       texts(w, '.nut-dl-selbar__actions [data-ui-item]'),
       w.find('.nut-dl-selbar__more').attributes('aria-label'),
-    ]).toEqual([
+    ]).toStrictEqual([
       ['Exporter', 'Synchroniser', 'Archiver'],
       'i-lucide-download',
       'ghost',
@@ -128,7 +128,7 @@ describe('selection actions part', () => {
     const w = harness.wrapper
     expect(w.find('.nut-dl-selbar__bar').classes()).toContain('bar-x')
     const action = w.find('.nut-dl-selbar__action')
-    expect([action.attributes('data-variant'), action.attributes('data-size')]).toEqual([
+    expect([action.attributes('data-variant'), action.attributes('data-size')]).toStrictEqual([
       'soft',
       'md',
     ])

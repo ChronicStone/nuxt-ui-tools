@@ -5,7 +5,7 @@ import type { TableInternals } from '#ui-tools/table/composables/use-table-inter
 import type { DataListUiConfig } from '#ui-tools/table/types'
 import { mergeDataListUiConfig } from '#ui-tools/table/utils'
 
-type DataListTable = {
+interface DataListTable {
   schema: ComputedRef<{ tableKey: string }>
   __internals: TableInternals
 }

@@ -88,7 +88,7 @@ describe(mergeDataListUiConfig, () => {
         table: { gutter: 20, props: { checkbox: { color: 'primary' } } },
       },
     )
-    expect([merged.search, merged.filterTags]).toEqual([
+    expect([merged.search, merged.filterTags]).toStrictEqual([
       {
         props: { input: { color: 'neutral', variant: 'outline' } },
         ui: { base: 'cmp-base', root: 'app-root' },
@@ -106,7 +106,7 @@ describe(mergeDataListUiConfig, () => {
       props: { chips: 4 },
       ui: { chip: 'cmp-chip' },
     })
-    expect([merged.table, merged.grid, merged.pagination, merged.selectionActions]).toEqual([
+    expect([merged.table, merged.grid, merged.pagination, merged.selectionActions]).toStrictEqual([
       {
         gutter: 20,
         props: { checkbox: { color: 'primary' } },

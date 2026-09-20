@@ -18,7 +18,6 @@ import TableColumnHeader from '../../components/table/table-column-header.vue'
 import TableRowActionsControl from '../../components/table/table-row-actions-control.vue'
 import TableSelectionControl from '../../components/table/table-selection-control.vue'
 import type { GenericObject, TableRuntimeRecord } from '../../types'
-import type {} from './menu'
 import { findSchemaColumn } from './schema'
 import {
   ROW_ACTIONS_COLUMN_ID,

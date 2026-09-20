@@ -16,6 +16,7 @@ import type {
   TableKnownFieldPath,
   TableTextValue,
 } from './utils'
+
 export { type TableFilterOperator } from './query-state'
 
 export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {

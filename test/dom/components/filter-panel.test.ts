@@ -38,7 +38,7 @@ describe('filter slideover trigger', () => {
       trigger.attributes('data-variant'),
       trigger.attributes('aria-expanded'),
       trigger.text(),
-    ]).toEqual(['i-lucide-funnel', 'outline', 'false', 'Filtres'])
+    ]).toStrictEqual(['i-lucide-funnel', 'outline', 'false', 'Filtres'])
     expect(trigger.find('.nut-dl-fpanel-trigger__count').exists()).toBeFalsy()
     expect(harness.wrapper.find('[data-ui="USlideover"]').attributes('data-open')).toBe('false')
 
@@ -63,7 +63,7 @@ describe('filter slideover content', () => {
     harness = await mountPanel()
     const w = harness.wrapper
     const panel = w.find('[data-ui="USlideover"]')
-    expect([panel.attributes('data-open'), panel.attributes('data-side')]).toEqual([
+    expect([panel.attributes('data-open'), panel.attributes('data-side')]).toStrictEqual([
       'true',
       'right',
     ])
@@ -76,7 +76,7 @@ describe('filter slideover content', () => {
       texts(w, '.nut-dl-fpanel__label'),
       w.find('.nut-dl-fpanel__matching').text(),
       w.find('.nut-dl-fpanel__reset').attributes('data-label'),
-    ]).toEqual([
+    ]).toStrictEqual([
       'Filtres',
       '60 résultats',
       'Fermer',
@@ -90,7 +90,7 @@ describe('filter slideover content', () => {
       w.find('.nut-dl-fpanel__apply').attributes('data-label'),
       w.find('.nut-dl-fpanel__apply').attributes('data-color'),
       w.find('input[data-ui="UInput"]').attributes('placeholder'),
-    ]).toEqual(['Appliquer', 'primary', 'Entité…'])
+    ]).toStrictEqual(['Appliquer', 'primary', 'Entité…'])
     expect(w.find('input[data-ui="UInputNumber"]').exists()).toBeTruthy()
   })
 
@@ -102,7 +102,7 @@ describe('filter slideover content', () => {
       chips.map((chip) => chip.find('.nut-dl-chip__label').text()),
       chips.map((chip) => chip.find('.nut-dl-chip__count').text()),
       must(chips[0]).attributes('aria-pressed'),
-    ]).toEqual([['FR', 'DE', 'ES'], ['20', '20', '20'], 'false'])
+    ]).toStrictEqual([['FR', 'DE', 'ES'], ['20', '20', '20'], 'false'])
     expect(w.find('.nut-dl-fpanel__meta').exists()).toBeFalsy()
 
     await must(chips[0]).trigger('click')
@@ -116,7 +116,7 @@ describe('filter slideover content', () => {
       ],
       harness.internals.filters.getFilterState({ key: 'country' }),
       w.find('.nut-dl-fpanel__reset').attributes('disabled'),
-    ]).toEqual([['true', '1 sélectionnés', 'true'], undefined, undefined])
+    ]).toStrictEqual([['true', '1 sélectionnés', 'true'], undefined, undefined])
 
     await w.find('.nut-dl-chip[data-value="DE"]').trigger('click')
     await harness.flush()
@@ -128,7 +128,7 @@ describe('filter slideover content', () => {
       harness.internals.filters.getFilterState({ key: 'country' })?.value,
       harness.internals.queryContent.data.value.rowCount,
       w.find('.nut-dl-fpanel-trigger__count').attributes('data-label'),
-    ]).toEqual([['FR', 'DE'], 40, '1'])
+    ]).toStrictEqual([['FR', 'DE'], 40, '1'])
   })
 
   it('edits text and number fields and resets the draft', async () => {
@@ -167,7 +167,7 @@ describe('filter slideover content', () => {
       w.find('.nut-dl-fpanel__matching').text(),
       w.find('.nut-dl-fpanel__results').text(),
       w.find('.nut-dl-chip[data-value="ES"] .nut-dl-chip__count').text(),
-    ]).toEqual([['ES'], 20, '20 résultats correspondent', '20 résultats', '20'])
+    ]).toStrictEqual([['ES'], 20, '20 résultats correspondent', '20 résultats', '20'])
     await w.find('.nut-dl-fpanel__apply').trigger('click')
     await harness.flush()
     expect(harness.internals.filterPresentation.panelOpen.value).toBeFalsy()
@@ -233,7 +233,7 @@ describe('filter slideover content', () => {
       trigger.attributes('data-variant'),
       trigger.attributes('data-size'),
       trigger.text(),
-    ]).toEqual(['soft', 'sm', 'Affiner'])
+    ]).toStrictEqual(['soft', 'sm', 'Affiner'])
     expect(w.find('[data-ui="USlideover"]').attributes('data-slot-content')).toContain('content-x')
     expect(w.find('.nut-dl-fpanel__title').classes()).toContain('title-x')
     expect(w.find('.nut-dl-fpanel__description').text()).toBe('Affinez la liste.')
@@ -244,7 +244,7 @@ describe('filter slideover content', () => {
     expect([
       w.find('.nut-dl-fpanel__apply').attributes('data-color'),
       w.find('.nut-dl-fpanel__reset').attributes('data-variant'),
-    ]).toEqual(['neutral', 'link'])
+    ]).toStrictEqual(['neutral', 'link'])
     harness.internals.filters.replaceFilters({
       rules: [{ key: 'country', operator: 'isAnyOf', value: ['FR'] }],
     })
@@ -278,7 +278,7 @@ describe('filter slideover content', () => {
     expect([
       chips.map((chip) => chip.find('.nut-dl-chip__label').text()),
       chips.map((chip) => chip.find('.nut-dl-chip__count').text()),
-    ]).toEqual([
+    ]).toStrictEqual([
       ['Oui', 'Non'],
       ['30', '30'],
     ])

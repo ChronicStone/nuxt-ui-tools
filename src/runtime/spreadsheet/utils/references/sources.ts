@@ -37,7 +37,7 @@ export function collectSpreadsheetReferenceSources(
 
     return [
       {
-        entries: Array.from(entries.entries()).map(([value, rowIndexes]) => ({
+        entries: [...entries.entries()].map(([value, rowIndexes]) => ({
           rowIndexes,
           value,
         })),

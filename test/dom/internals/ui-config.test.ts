@@ -78,7 +78,7 @@ describe('data list UI config', () => {
       ui.filterTags.ui,
       ui.table.gutter,
       ui.table.ui.td,
-    ]).toEqual([
+    ]).toStrictEqual([
       '300px',
       { color: 'neutral', variant: 'outline' },
       { icon: false, trigger: { size: 'xs' } },
@@ -103,7 +103,7 @@ describe('data list UI config', () => {
       },
     })
     let state = read(harness)
-    expect([state.size, state.ui.search.width, state.ui.pagination.ui.root]).toEqual([
+    expect([state.size, state.ui.search.width, state.ui.pagination.ui.root]).toStrictEqual([
       'md',
       '340px',
       'px-5',
@@ -118,7 +118,7 @@ describe('data list UI config', () => {
       state.ui.search.width,
       state.ui.pagination.size,
       state.ui.pagination.ui.root,
-    ]).toEqual(['lg', 'comfortable', '100%', 'md', 'px-4'])
+    ]).toStrictEqual(['lg', 'comfortable', '100%', 'md', 'px-4'])
     expect(state.ui.mobile).toBeDefined()
   })
 })

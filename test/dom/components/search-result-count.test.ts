@@ -22,7 +22,7 @@ describe('search part', () => {
       input.attributes('data-icon'),
       input.attributes('data-variant'),
       input.attributes('data-size'),
-    ]).toEqual(['Rechercher un compte…', 'i-lucide-search', 'outline', 'md'])
+    ]).toStrictEqual(['Rechercher un compte…', 'i-lucide-search', 'outline', 'md'])
     expect(input.attributes('style')).toContain('width: 21rem')
     expect(input.classes()).toContain('nut-dl-search')
 
@@ -33,7 +33,7 @@ describe('search part', () => {
     expect([
       harness.internals.filters.searchQuery.value,
       harness.internals.queryContent.data.value.rowCount,
-    ]).toEqual(['Compte 01', 10])
+    ]).toStrictEqual(['Compte 01', 10])
 
     await input.setValue('Compte 02')
     await input.trigger('blur')
@@ -65,7 +65,7 @@ describe('search part', () => {
       input.attributes('data-variant'),
       input.attributes('data-color'),
       input.attributes('placeholder'),
-    ]).toEqual(['lg', 'soft', 'primary', 'Custom'])
+    ]).toStrictEqual(['lg', 'soft', 'primary', 'Custom'])
     expect(input.classes()).toContain('root-x')
   })
 

@@ -107,7 +107,7 @@ describe('table query prefetch', () => {
       facetQueryCalls,
       pageContextRows,
       pageContextAccount,
-    ]).toEqual([
+    ]).toStrictEqual([
       { account: { id: 'account-1' } },
       {
         count: 'exact',

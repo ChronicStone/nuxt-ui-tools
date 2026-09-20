@@ -33,7 +33,7 @@ describe('ColumnPanel', () => {
     expect(trigger.attributes('data-label')).toBe('Colonnes')
     expect(trigger.attributes('data-icon')).toBe('i-lucide-layers')
     expect(trigger.attributes('data-variant')).toBe('outline')
-    expect(trigger.find('.nut-dl-colbtn__count').exists()).toBe(false)
+    expect(trigger.find('.nut-dl-colbtn__count').exists()).toBeFalsy()
   })
 
   it('lists configurable columns with pinned rows and toggles visibility', async () => {
@@ -59,14 +59,14 @@ describe('ColumnPanel', () => {
     expect([
       must(rows[3]).find('input[type="checkbox"]').attributes('checked'),
       must(rows[1]).find('input[type="checkbox"]').attributes('data-color'),
-    ]).toEqual([undefined, 'primary'])
+    ]).toStrictEqual([undefined, 'primary'])
 
     await must(rows[1]).find('input[type="checkbox"]').trigger('click')
     await harness.flush()
     expect(
       harness.internals.tableColumns.visibleOrderedColumns.value.map((c) => c.id),
     ).not.toContain('status')
-    expect(w.find('.nut-dl-colbtn__count').exists()).toBe(false)
+    expect(w.find('.nut-dl-colbtn__count').exists()).toBeFalsy()
     await must(w.findAll('.nut-dl-colpanel__row')[3]).find('button.flex-1').trigger('click')
     await harness.flush()
     expect(harness.internals.tableColumns.visibleOrderedColumns.value.map((c) => c.id)).toContain(

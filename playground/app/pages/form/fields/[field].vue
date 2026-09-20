@@ -27,11 +27,11 @@ const schema = computed(() => ({
   },
   fields: definition.value ? getFormFieldPlaygroundFields(definition.value) : [],
   formKey: `playground.form.field.${definition.value?.id ?? 'unknown'}`,
+  header: { display: 'always', title: definition.value?.label },
   layout: {
     columns: 2,
     gap: 20,
   },
-  header: { display: 'always', title: definition.value?.label },
 }))
 const input = computed(() => definition.value?.input)
 const formUi = computed<FormUiConfig>(() => ({

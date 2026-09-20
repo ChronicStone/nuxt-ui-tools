@@ -53,7 +53,7 @@ watch(
   },
   { flush: 'pre' },
 )
-watch(tableRows, () => nextTick(flipCards), { flush: 'post' })
+watch(tableRows, () => nextTick().then(flipCards), { flush: 'post' })
 function flipCards() {
   if (!flipPositions.size) {
     return
@@ -159,7 +159,7 @@ function measureVirtualRow(element: Element | ComponentPublicInstance | null) {
   if (resolved.isConnected) {
     rowVirtualizer.value.measureElement(resolved)
   } else {
-    nextTick(() => {
+    nextTick().then(() => {
       if (resolved.isConnected) {
         rowVirtualizer.value.measureElement(resolved)
       }

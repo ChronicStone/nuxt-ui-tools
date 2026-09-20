@@ -41,7 +41,7 @@ export interface TableSelectionSchema {
 }
 
 export interface PaginationConfig {
-  sizeOptions?: Array<number> | { [key in TableLayout]: Array<number> }
+  sizeOptions?: number[] | { [key in TableLayout]: number[] }
   defaultSize?: number | { [key in TableLayout]: number }
   showPageSizePicker?: boolean
   showPagesList?: boolean

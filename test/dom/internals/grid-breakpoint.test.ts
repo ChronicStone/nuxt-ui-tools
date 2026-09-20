@@ -21,7 +21,7 @@ describe('grid geometry', () => {
       grid.rowChunks.value.length,
       grid.rowChunks.value[0],
       grid.rowChunks.value.at(-1)?.rows.length,
-    ]).toEqual([
+    ]).toStrictEqual([
       ['contained', 3, 1, 3],
       7,
       expect.objectContaining({ end: 3, index: 0, start: 0 }),
@@ -30,11 +30,11 @@ describe('grid geometry', () => {
 
     setBreakpoint('md')
     await harness.flush()
-    expect([grid.columnCount.value, grid.rowChunks.value.length]).toEqual([2, 10])
+    expect([grid.columnCount.value, grid.rowChunks.value.length]).toStrictEqual([2, 10])
 
     setBreakpoint('sm')
     await harness.flush()
-    expect([grid.columnCount.value, grid.rowChunks.value.length]).toEqual([1, 20])
+    expect([grid.columnCount.value, grid.rowChunks.value.length]).toStrictEqual([1, 20])
   })
 })
 

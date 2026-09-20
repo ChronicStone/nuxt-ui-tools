@@ -49,6 +49,7 @@ import { treeSelectFieldKind } from './tree-select/config'
 import { treeFieldKind } from './tree/config'
 import { uploadFieldKind } from './upload/config'
 import { yearFieldKind } from './year/config'
+
 export { arrayListFieldKind } from './array-list/config'
 
 export const formFieldKinds = [

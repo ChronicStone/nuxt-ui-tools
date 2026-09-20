@@ -36,7 +36,7 @@ describe('layout switch part', () => {
       must(buttons[0]).attributes('data-active'),
       must(buttons[0]).attributes('data-variant'),
       must(buttons[1]).attributes('data-variant'),
-    ]).toEqual([
+    ]).toStrictEqual([
       ['Vue tableau', 'Vue grille'],
       ['i-lucide-menu', 'i-lucide-box'],
       'true',
@@ -49,7 +49,7 @@ describe('layout switch part', () => {
     expect([
       harness.internals.controls.tableLayout.value,
       must(w.findAll('.nut-dl-layout__btn')[1]).attributes('data-active'),
-    ]).toEqual(['grid', 'true'])
+    ]).toStrictEqual(['grid', 'true'])
   })
 
   it('honours order, labels, icons and props layers', async () => {
@@ -73,7 +73,7 @@ describe('layout switch part', () => {
       must(buttons[1]).attributes('data-icon'),
       must(buttons[1]).attributes('data-variant'),
       must(buttons[1]).attributes('data-size'),
-    ]).toEqual([['Grid', 'Table'], 'i-lucide-rows-3', 'ghost', 'sm'])
+    ]).toStrictEqual([['Grid', 'Table'], 'i-lucide-rows-3', 'ghost', 'sm'])
     expect(must(buttons[1]).classes()).toContain('btn-x')
     expect(harness.wrapper.find('.nut-dl-layout').classes()).toContain('root-x')
   })

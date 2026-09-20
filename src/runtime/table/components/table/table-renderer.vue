@@ -149,7 +149,7 @@ const scrollRef = useTemplateRef<HTMLElement>('scrollRef')
 const rowHeights = new Map<string, number>()
 function measureRowHeight(element: Element) {
   const key = element instanceof HTMLElement ? element.dataset.rowId : undefined
-  const height = element.getBoundingClientRect().height
+  const { height } = element.getBoundingClientRect()
   if (key === undefined) {
     return height
   }
@@ -313,7 +313,7 @@ function measureRow(element: Element | ComponentPublicInstance | null) {
   if (element.isConnected) {
     rowVirtualizer.value.measureElement(element)
   } else {
-    nextTick(() => element.isConnected && rowVirtualizer.value.measureElement(element))
+    nextTick().then(() => element.isConnected && rowVirtualizer.value.measureElement(element))
   }
 }
 
@@ -434,7 +434,7 @@ watch(
   },
   { flush: 'pre' },
 )
-watch(rows, () => nextTick(flipRows), { flush: 'post' })
+watch(rows, () => nextTick().then(flipRows), { flush: 'post' })
 function flipRows() {
   if (!flipPositions.size) {
     return

@@ -102,7 +102,7 @@ describe('filter ui utils', () => {
       optionUi.selection.mode,
       booleanUi.labels.true,
       booleanUi.labels.false,
-    ]).toEqual([
+    ]).toStrictEqual([
       'tree',
       'leaf-only',
       'remote',

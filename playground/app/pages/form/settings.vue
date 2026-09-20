@@ -70,11 +70,11 @@ const settingsSchema = defineFormSchema({
     },
   ],
   formKey: 'playground.form.settings',
+  header: { title: 'Workspace settings' },
   layout: {
     columns: 8,
     gap: 16,
   },
-  header: { title: 'Workspace settings' },
 })
 
 const form = useForm({

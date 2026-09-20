@@ -24,7 +24,7 @@ describe('table summaries', () => {
       summaries.scopes.value,
       summaries.count.value,
       summaries.cell('contracts'),
-    ]).toEqual([
+    ]).toStrictEqual([
       ['contracts', 'consumption'],
       'filtered',
       ['filtered', 'page', 'selection'],
@@ -40,7 +40,11 @@ describe('table summaries', () => {
       summaries.cell('consumption').value,
       summaries.format('consumption'),
       summaries.format('contracts'),
-    ]).toEqual([sum(rows, 'consumption'), `${sum(rows, 'consumption')} t`, sum(rows, 'contracts')])
+    ]).toStrictEqual([
+      sum(rows, 'consumption'),
+      `${sum(rows, 'consumption')} t`,
+      sum(rows, 'contracts'),
+    ])
     expect(summaries.loading.value).toBeFalsy()
   })
 
@@ -50,7 +54,7 @@ describe('table summaries', () => {
     summaries.setScope('page')
     await harness.flush()
     const page = rows.slice(0, 20)
-    expect([summaries.count.value, summaries.cell('contracts').value]).toEqual([
+    expect([summaries.count.value, summaries.cell('contracts').value]).toStrictEqual([
       20,
       sum(page, 'contracts'),
     ])
@@ -58,7 +62,7 @@ describe('table summaries', () => {
     harness.internals.selection.selectRows({ rowIds: ['acc-1', 'acc-2'] })
     summaries.setScope('selection')
     await harness.flush()
-    expect([summaries.count.value, summaries.cell('contracts').value]).toEqual([
+    expect([summaries.count.value, summaries.cell('contracts').value]).toStrictEqual([
       2,
       sum(rows.slice(0, 2), 'contracts'),
     ])
@@ -67,7 +71,7 @@ describe('table summaries', () => {
     harness.internals.filters.setOptionFilterValues({ key: 'status', values: ['active'] })
     await harness.flush()
     const active = rows.filter((row) => row.status === 'active')
-    expect([summaries.count.value, summaries.cell('contracts').value]).toEqual([
+    expect([summaries.count.value, summaries.cell('contracts').value]).toStrictEqual([
       active.length,
       sum(active, 'contracts'),
     ])

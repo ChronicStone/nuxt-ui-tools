@@ -23,7 +23,7 @@ describe('pagination helpers', () => {
       getPaginationMode({ pagination: { mode: 'cursor' } }),
       getDefaultPageSize({ layout: 'table', schema: base }),
       getDefaultPageSize({ layout: 'grid', schema: base }),
-    ]).toEqual(['offset', 'none', 'cursor', 50, 10])
+    ]).toStrictEqual(['offset', 'none', 'cursor', 50, 10])
     const custom = {
       ...base,
       pagination: { defaultSize: { table: 25 }, sizeOptions: { table: [25, 75] } },
@@ -33,7 +33,7 @@ describe('pagination helpers', () => {
       getDefaultPageSize({ layout: 'grid', schema: custom }),
       getPageSizeOptions({ layout: 'table', schema: custom }),
       getPageSizeOptions({ layout: 'grid', schema: custom }),
-    ]).toEqual([25, 10, [25, 75], [10, 20, 50, 100]])
+    ]).toStrictEqual([25, 10, [25, 75], [10, 20, 50, 100]])
     const flat = {
       ...base,
       pagination: { defaultSize: 30, sizeOptions: [30, 60] },
@@ -41,7 +41,7 @@ describe('pagination helpers', () => {
     expect([
       getDefaultPageSize({ layout: 'grid', schema: flat }),
       getPageSizeOptions({ layout: 'grid', schema: flat }),
-    ]).toEqual([30, [30, 60]])
+    ]).toStrictEqual([30, [30, 60]])
     const cursor = {
       ...base,
       pagination: { mode: 'cursor', pageSize: { grid: 8 } },
@@ -50,7 +50,7 @@ describe('pagination helpers', () => {
       getDefaultPageSize({ layout: 'grid', schema: cursor }),
       getDefaultPageSize({ layout: 'table', schema: cursor }),
       getPageSizeOptions({ layout: 'table', schema: cursor }),
-    ]).toEqual([8, 50, [10, 20, 50, 100, 200, 500]])
+    ]).toStrictEqual([8, 50, [10, 20, 50, 100, 200, 500]])
   })
 
   it('derives default sorts and sort keys per layout', () => {

@@ -16,12 +16,12 @@ describe('filter presentation', () => {
       presentation.dormantDynamicDefinitions.value.map((definition) => definition.key),
       presentation.activeDynamicDefinitions.value,
       presentation.panelDefinitions.value.map((definition) => definition.key),
-    ]).toEqual([['status'], ['edofSync'], [], ['country', 'legalEntity', 'contracts']])
+    ]).toStrictEqual([['status'], ['edofSync'], [], ['country', 'legalEntity', 'contracts']])
     expect(presentation.hasPanelFilters.value).toBeTruthy()
     expect([
       presentation.panelSections.value.map((section) => section.label),
       presentation.panelSections.value[0]?.items.map((item) => item.key),
-    ]).toEqual([
+    ]).toStrictEqual([
       ['Identité', 'Volumes'],
       ['country', 'legalEntity'],
     ])
@@ -45,7 +45,7 @@ describe('filter presentation', () => {
       presentation.dynamicSessionDefinition.value?.key,
       presentation.dormantDynamicDefinitions.value.map((definition) => definition.key),
       presentation.activeDynamicDefinitions.value,
-    ]).toEqual(['country', ['edofSync'], []])
+    ]).toStrictEqual(['country', ['edofSync'], []])
 
     harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['FR'] })
     await harness.flush()
@@ -54,7 +54,7 @@ describe('filter presentation', () => {
     expect([
       presentation.activeDynamicDefinitions.value.map((definition) => definition.key),
       presentation.dormantDynamicDefinitions.value.map((definition) => definition.key),
-    ]).toEqual([['country'], ['edofSync']])
+    ]).toStrictEqual([['country'], ['edofSync']])
 
     presentation.releaseDynamicSession({ key: 'edofSync' })
     harness.internals.filters.clearFilter({ key: 'country' })
@@ -75,7 +75,7 @@ describe('filter presentation', () => {
       presentation.getPanelDraftFilterState({ key: 'legalEntity' }),
       harness.internals.filters.getFilterState({ key: 'legalEntity' }),
       presentation.activePanelCount.value,
-    ]).toEqual([
+    ]).toStrictEqual([
       expect.objectContaining({
         key: 'legalEntity',
         operator: 'contains',
@@ -92,7 +92,7 @@ describe('filter presentation', () => {
       harness.internals.filters.getFilterState({ key: 'legalEntity' })?.value,
       presentation.activePanelCount.value,
       harness.internals.queryContent.data.value.rowCount,
-    ]).toEqual(['Entité 1', 1, 11])
+    ]).toStrictEqual(['Entité 1', 1, 11])
 
     presentation.openPanel()
     presentation.setPanelFilterOperator({ key: 'legalEntity', operator: 'is' })

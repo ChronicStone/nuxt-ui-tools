@@ -460,10 +460,10 @@ export function useQueryStates<T extends QueryStatesSchema>(
       if (codec && !isNullish(val)) {
         const existing = updates.findIndex((u) => u.key === fullKey)
         const serializedValue = codec.serialize(val)
-        if (existing !== -1) {
-          updates[existing]!.value = serializedValue
-        } else {
+        if (existing === -1) {
           updates.push({ key: fullKey, value: serializedValue })
+        } else {
+          updates[existing]!.value = serializedValue
         }
       }
     }

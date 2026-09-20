@@ -19,7 +19,7 @@ describe('offset pagination', () => {
       pagination.totalPages.value,
       pagination.rowCount.value,
       pagination.loadedCount.value,
-    ]).toEqual(['offset', 20, 1, 3, 60, 20])
+    ]).toStrictEqual(['offset', 20, 1, 3, 60, 20])
     expect(pagination.canPreviousPage.value).toBeFalsy()
     expect(pagination.canNextPage.value).toBeTruthy()
     expect(pagination.pageSizeOptions.value).toStrictEqual([10, 20, 50])
@@ -40,7 +40,7 @@ describe('offset pagination', () => {
       pagination.currentPage.value,
       harness.query()['p.page'],
       rows<AccountRow>(harness)[0]?.id,
-    ]).toEqual([2, '2', 'acc-21'])
+    ]).toStrictEqual([2, '2', 'acc-21'])
 
     pagination.setPage(99)
     await harness.flush()
@@ -54,7 +54,7 @@ describe('offset pagination', () => {
 
     pagination.setPage(0)
     await harness.flush()
-    expect([pagination.currentPage.value, harness.query()['p.page']]).toEqual([1, undefined])
+    expect([pagination.currentPage.value, harness.query()['p.page']]).toStrictEqual([1, undefined])
   })
 
   it('changes the page size and resets to the first page', async () => {
@@ -118,12 +118,12 @@ describe('no pagination', () => {
       pagination.mode.value,
       pagination.loadedCount.value,
       pagination.pageSize.value,
-    ]).toEqual(['none', 60, 60])
+    ]).toStrictEqual(['none', 60, 60])
     expect(pagination.canNextPage.value).toBeFalsy()
     expect(pagination.canPreviousPage.value).toBeFalsy()
     pagination.next()
     await harness.flush()
-    expect([pagination.currentPage.value, pagination.noneState.value]).toEqual([
+    expect([pagination.currentPage.value, pagination.noneState.value]).toStrictEqual([
       1,
       {
         loadedCount: 60,
@@ -143,7 +143,7 @@ describe('cursor pagination', () => {
       pagination.mode.value,
       pagination.loadedCount.value,
       pagination.rowCount.value,
-    ]).toEqual(['cursor', 20, 45])
+    ]).toStrictEqual(['cursor', 20, 45])
     expect(pagination.canNextPage.value).toBeTruthy()
     expect(pagination.canPreviousPage.value).toBeFalsy()
     expect(onPage).toHaveBeenLastCalledWith(null)

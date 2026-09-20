@@ -59,7 +59,7 @@ describe('form field kinds', () => {
     expect(field.capability.has('options')).toBeTruthy()
     expect(field.capability.hasAll(['label', 'validation', 'transform'])).toBeTruthy()
     expect(field.capability.has('upload')).toBeFalsy()
-    expect([field.config?.type, field.raw]).toEqual(['select', rawField])
+    expect([field.config?.type, field.raw]).toStrictEqual(['select', rawField])
   })
 
   it('uses the registry as the source of truth for field type support', () => {

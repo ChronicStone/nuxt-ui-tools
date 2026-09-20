@@ -16,6 +16,7 @@ import {
   createSpreadsheetDynamicBuilder,
 } from '../utils/builders'
 import { isSpreadsheetRecord } from '../utils/object'
+
 export { type NormalizeSpreadsheetSchema } from '../types'
 
 function isSpreadsheetColumnGroupDefinition(

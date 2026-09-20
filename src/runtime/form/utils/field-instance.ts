@@ -6,6 +6,7 @@ import type {
   FormFieldState,
   FormFieldType,
 } from '../types'
+
 export { type FormFieldCapability, type FormFieldState } from '../types'
 export type FormFieldKind = FormFieldKindDefinition
 

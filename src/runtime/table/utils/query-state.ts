@@ -111,9 +111,8 @@ export function getDefaultSort(params: {
     return null
   } else if (isString(defaultSorting)) {
     return { dir: 'asc' as const, key: defaultSorting }
-  } else {
-    return defaultSorting
   }
+  return defaultSorting
 }
 
 export function getSortKeys(params: { schema: TableSchemaView; layout: TableLayout }): string[] {

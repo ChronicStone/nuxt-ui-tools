@@ -70,7 +70,7 @@ function getPublicComponents(
 }
 
 function toKebabCase(value: string) {
-  return value.replace(/([a-z0-9])([A-Z])/gu, '$1-$2').toLowerCase()
+  return value.replaceAll(/([a-z0-9])([A-Z])/gu, '$1-$2').toLowerCase()
 }
 
 export function setupComponents(

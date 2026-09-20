@@ -28,8 +28,8 @@ function humanize(value: string) {
     value
       .split('.')
       .at(-1)
-      ?.replace(/[_-]+/gu, ' ')
-      .replace(/\b\w/gu, (char) => char.toUpperCase()) ?? value
+      ?.replaceAll(/[_-]+/gu, ' ')
+      .replaceAll(/\b\w/gu, (char) => char.toUpperCase()) ?? value
   )
 }
 </script>

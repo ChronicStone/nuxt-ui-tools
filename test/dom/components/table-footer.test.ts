@@ -32,13 +32,13 @@ describe('TableFooter desktop', () => {
       w.find('.nut-dl-footer__range').text(),
       w.find('.nut-dl-footer__range').attributes('role'),
       w.find('.nut-dl-footer__size-label').text(),
-    ]).toEqual(['1–20 sur 60', 'status', 'Par page'])
+    ]).toStrictEqual(['1–20 sur 60', 'status', 'Par page'])
     const select = w.find('select[data-ui="USelect"]')
     expect([
       select.findAll('option').map((option) => option.text()),
       (select.element as HTMLSelectElement).value,
       select.attributes('data-variant'),
-    ]).toEqual([['10', '20', '50'], '20', 'none'])
+    ]).toStrictEqual([['10', '20', '50'], '20', 'none'])
     const pager = w.find('[data-ui="UPagination"]')
     expect(pager.attributes()).toMatchObject({
       'data-active-variant': 'solid',
@@ -60,7 +60,7 @@ describe('TableFooter desktop', () => {
     expect([
       harness.internals.pagination.currentPage.value,
       w.find('.nut-dl-footer__range').text(),
-    ]).toEqual([2, '21–40 sur 60'])
+    ]).toStrictEqual([2, '21–40 sur 60'])
     await w.find('[data-ui-page-next]').trigger('click')
     await harness.flush()
     expect(w.find('.nut-dl-footer__range').text()).toBe('41–60 sur 60')
@@ -73,7 +73,7 @@ describe('TableFooter desktop', () => {
       harness.internals.pagination.pageSize.value,
       w.find('.nut-dl-footer__range').text(),
       w.find('[data-ui="UPagination"]').attributes('data-pages'),
-    ]).toEqual([50, '1–50 sur 60', '2'])
+    ]).toStrictEqual([50, '1–50 sur 60', '2'])
   })
 
   it('applies props layers and hides first/last buttons on demand', async () => {
@@ -97,7 +97,7 @@ describe('TableFooter desktop', () => {
       pager.attributes('data-variant'),
       pager.attributes('data-active-color'),
       pager.attributes('data-size'),
-    ]).toEqual(['outline', 'primary', 'sm'])
+    ]).toStrictEqual(['outline', 'primary', 'sm'])
     expect(pager.find('[data-ui-page-first]').classes()).toContain('hidden')
     expect(pager.find('[data-ui-page-last]').classes()).toContain('hidden')
     expect(pager.find('[data-ui-page="1"]').classes()).toContain('btn-x')
@@ -145,13 +145,13 @@ describe('TableFooter compact', () => {
       must(buttons[0]).attributes('data-icon'),
       must(buttons[0]).attributes('data-square'),
       must(buttons[0]).attributes('aria-label'),
-    ]).toEqual(['i-lucide-chevron-left', 'true', 'Page précédente'])
+    ]).toStrictEqual(['i-lucide-chevron-left', 'true', 'Page précédente'])
     await must(buttons[1]).trigger('click')
     await harness.flush()
     expect([
       pager.find('.nut-dl-pager__of').text(),
       w.find('.nut-dl-footer__range').text(),
-    ]).toEqual(['2 / 3', '21–40 sur 60'])
+    ]).toStrictEqual(['2 / 3', '21–40 sur 60'])
   })
 
   it('forwards named slots to the footer', async () => {

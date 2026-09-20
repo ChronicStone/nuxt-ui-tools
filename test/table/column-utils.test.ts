@@ -61,7 +61,7 @@ describe('runtime columns', () => {
       columns[1],
       columns[2],
       columns[3],
-    ]).toEqual([
+    ]).toStrictEqual([
       ['firstName', 'score', 'created_at_label', 'actions-col', 'hidden'],
       expect.objectContaining({
         canHide: true,
@@ -121,7 +121,7 @@ describe('runtime columns', () => {
       resolveColumnLabel({ column: score }),
       resolveColumnLabel({ column: { ...score, label: () => ({}) as never } }),
       getSortableKey({ column: must(findSchemaColumn({ columnId: 'firstName', schema })) }),
-    ]).toEqual(['Score total', 'Score', 'firstName'])
+    ]).toStrictEqual(['Score total', 'Score', 'firstName'])
     expect(getSortableKey({ column: score })).toBeUndefined()
     expect(
       getSortableKey({ column: must(findSchemaColumn({ columnId: 'created_at_label', schema })) }),
@@ -145,7 +145,7 @@ describe('runtime columns', () => {
         getPinnedState: none,
         getSortState: none,
       }),
-    ]).toEqual([
+    ]).toStrictEqual([
       'i-lucide-arrow-up',
       'i-lucide-arrow-down',
       'i-lucide-chevrons-up-down',

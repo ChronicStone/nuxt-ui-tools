@@ -43,6 +43,7 @@ export function useFormOptionRegistry() {
 
 function createEmptyOptionState(): FormOptionRuntimeState {
   return {
+    activate: () => {},
     add: () => {},
     creatable: computed<boolean>(() => false),
     create: async () => null,
@@ -51,14 +52,13 @@ function createEmptyOptionState(): FormOptionRuntimeState {
     disableOnLoading: computed<boolean>(() => false),
     error: computed<FormValue | null>(() => null),
     fetching: computed<boolean>(() => false),
-    items: computed<readonly ResolvedFormOption[]>(() => []),
-    loading: computed<boolean>(() => false),
-    pending: computed<boolean>(() => false),
-    activate: () => {},
     hasMore: computed<boolean>(() => false),
+    items: computed<readonly ResolvedFormOption[]>(() => []),
     loadChildren: () => Promise.resolve(),
     loadMore: () => Promise.resolve(),
+    loading: computed<boolean>(() => false),
     loadingMore: computed<boolean>(() => false),
+    pending: computed<boolean>(() => false),
     prefetchDistance: computed<number | 'viewport'>(() => 'viewport'),
     refresh: async () => {},
     refreshable: computed<boolean>(() => false),

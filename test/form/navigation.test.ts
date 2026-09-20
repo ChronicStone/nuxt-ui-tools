@@ -82,7 +82,7 @@ describe('form step navigation', () => {
 
     nextGate.resolve()
     await expect(nextRequest).resolves.toBeTruthy()
-    expect([runtime.currentStepIndex.value, runtime.actionPending.value]).toEqual([1, null])
+    expect([runtime.currentStepIndex.value, runtime.actionPending.value]).toStrictEqual([1, null])
     expect(runtime.getFieldApi(['name']).validation.pending()).toBeFalsy()
 
     const previousRequest = runtime.previousStep()
@@ -92,7 +92,7 @@ describe('form step navigation', () => {
 
     previousGate.resolve()
     await expect(previousRequest).resolves.toBeTruthy()
-    expect([runtime.currentStepIndex.value, runtime.actionPending.value]).toEqual([0, null])
+    expect([runtime.currentStepIndex.value, runtime.actionPending.value]).toStrictEqual([0, null])
     scope.stop()
   })
 

@@ -32,7 +32,7 @@ describe('table columns', () => {
     expect([
       name,
       columns.runtimeColumns.value.find((column) => column.id === 'country')?.lines,
-    ]).toEqual([
+    ]).toStrictEqual([
       expect.objectContaining({
         canHide: false,
         pinned: 'left',
@@ -49,13 +49,13 @@ describe('table columns', () => {
       columns.runtimeColumns.value.find((column) => column.id === 'contracts')?.summary,
       columns.getPinnedState({ columnId: 'name' }),
       columns.getPinnedState({ columnId: ROW_ACTIONS_COLUMN_ID }),
-    ]).toEqual(['sum', 'left', 'right'])
+    ]).toStrictEqual(['sum', 'left', 'right'])
   })
 
   it('creates TanStack column defs with internal columns and header floors', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const defs = harness.internals.tableColumns.columnDefs.value
-    expect([defs[0], defs[0]?.meta.internal, defs.at(-1), defs.at(-1)?.meta]).toEqual([
+    expect([defs[0], defs[0]?.meta.internal, defs.at(-1), defs.at(-1)?.meta]).toStrictEqual([
       expect.objectContaining({
         enableResizing: false,
         id: SELECT_COLUMN_ID,
@@ -79,7 +79,7 @@ describe('table columns', () => {
       byId('contracts').meta.skeleton,
       byId('country').meta,
       byId('edofSync').meta,
-    ]).toEqual([
+    ]).toStrictEqual([
       expect.objectContaining({ enableResizing: true, minSize: 200, size: 228 }),
       expect.objectContaining({ canHide: false, skeleton: 'avatar', sortable: true }),
       'number',
@@ -132,12 +132,12 @@ describe('table columns', () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const columns = harness.internals.tableColumns
     const menu = columns.getMenuItems({ columnId: 'status' })
-    expect([menu[0], menu[1]?.map((item) => item.label)]).toEqual([
+    expect([menu[0], menu[1]?.map((item) => item.label)]).toStrictEqual([
       [{ class: 'nut-dl-colmenu__title', label: 'Statut', type: 'label' }],
       ['Trier A → Z', 'Trier Z → A', 'Ne plus trier'],
     ])
     expect(menu[1]?.[2]?.disabled).toBeTruthy()
-    expect([menu[2]?.map((item) => item.label), menu[3]?.[0]]).toEqual([
+    expect([menu[2]?.map((item) => item.label), menu[3]?.[0]]).toStrictEqual([
       ['Épingler à gauche', 'Épingler à droite'],
       expect.objectContaining({ disabled: false, label: 'Masquer la colonne' }),
     ])
@@ -147,15 +147,15 @@ describe('table columns', () => {
     expect([
       columns.getSortState({ columnId: 'status' }),
       columns.getMenuItems({ columnId: 'status' })[1]?.[1]?.class,
-    ]).toEqual(['desc', 'nut-dl-colmenu__item--active'])
+    ]).toStrictEqual(['desc', 'nut-dl-colmenu__item--active'])
 
     const nameMenu = columns.getMenuItems({ columnId: 'name' })
-    expect([nameMenu.at(-1)?.[0], nameMenu[2]?.[0]?.label]).toEqual([
+    expect([nameMenu.at(-1)?.[0], nameMenu[2]?.[0]?.label]).toStrictEqual([
       expect.objectContaining({ disabled: true, label: 'Masquer la colonne' }),
       'Désépingler',
     ])
     const actions = columns.getMenuItems({ columnId: ROW_ACTIONS_COLUMN_ID })
-    expect([actions.map((group) => group.length), actions[1]?.[0]?.label]).toEqual([
+    expect([actions.map((group) => group.length), actions[1]?.[0]?.label]).toStrictEqual([
       [1, 1, 1],
       'Désépingler',
     ])
@@ -167,7 +167,7 @@ describe('table columns', () => {
     expect([
       [columns.sortingState.value, columns.sortKeys.value],
       harness.query()['s.key'],
-    ]).toEqual([
+    ]).toStrictEqual([
       [
         { active: true, dir: 'asc', key: 'name' },
         ['name', 'status', 'country', 'legalEntity', 'edofSync', 'contracts', 'consumption'],
@@ -184,7 +184,7 @@ describe('table columns', () => {
       [harness.internals.pagination.currentPage.value, harness.query()['s.key']],
       harness.query()['s.dir'],
       rows<AccountRow>(harness)[0]?.status,
-    ]).toEqual([
+    ]).toStrictEqual([
       expect.objectContaining({ dir: 'asc', key: 'status' }),
       [1, 'status'],
       undefined,
@@ -197,7 +197,7 @@ describe('table columns', () => {
       columns.getSortState({ columnId: 'status' }),
       harness.query()['s.dir'],
       rows<AccountRow>(harness)[0]?.status,
-    ]).toEqual(['desc', 'desc', 'pending'])
+    ]).toStrictEqual(['desc', 'desc', 'pending'])
 
     columns.setSortDirection('asc')
     await harness.flush()

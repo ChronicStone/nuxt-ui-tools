@@ -17,6 +17,7 @@ import type {
   TableUiFilterCollection,
   TableUiFilterDefinition,
 } from '../types'
+
 export { type TableSortKey } from '../types'
 export function createTableColumnBuilder<
   TRow extends GenericObject,

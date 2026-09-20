@@ -36,7 +36,7 @@ describe('client filter operators', () => {
       ids(group('score', 'lte', 20)),
       ids(group('score', 'between', { from: 15, to: 30 })),
       ids(group('name', 'contains', 'am')),
-    ]).toEqual([[1, 2], [2, 3], [2, 3], [1, 2], [2, 3], [3]])
+    ]).toStrictEqual([[1, 2], [2, 3], [2, 3], [1, 2], [2, 3], [3]])
   })
 
   it('applies the search over configured fields', () => {

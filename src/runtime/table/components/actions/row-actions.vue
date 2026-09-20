@@ -38,9 +38,10 @@ interface SheetItem {
   dividerBefore: boolean
 }
 const sheetItems = computed<SheetItem[]>(() => {
-  const groups = (Array.isArray(items.value[0]) ? items.value : [items.value]) as Array<
-    Omit<SheetItem, 'dividerBefore'>
-  >[]
+  const groups = (Array.isArray(items.value[0]) ? items.value : [items.value]) as Omit<
+    SheetItem,
+    'dividerBefore'
+  >[][]
   return groups.flatMap((group, index) =>
     group.map((item, itemIndex) => ({ ...item, dividerBefore: index > 0 && itemIndex === 0 })),
   )

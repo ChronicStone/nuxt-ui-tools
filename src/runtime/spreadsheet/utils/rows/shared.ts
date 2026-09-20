@@ -49,7 +49,7 @@ export function applySpreadsheetNormalization(
         return result.toLowerCase()
       }
       if (token === 'accent-insensitive') {
-        return result.normalize('NFD').replace(/[\u0300-\u036f]/gu, '')
+        return result.normalize('NFD').replaceAll(/[\u0300-\u036F]/gu, '')
       }
 
       return result
@@ -78,10 +78,10 @@ export function applySpreadsheetModifiers(
       return result.toUpperCase()
     }
     if (modifier === 'normalizeSpaces') {
-      return result.replace(/\s+/gu, ' ')
+      return result.replaceAll(/\s+/gu, ' ')
     }
     if (modifier === 'accent-insensitive') {
-      return result.normalize('NFD').replace(/[\u0300-\u036f]/gu, '')
+      return result.normalize('NFD').replaceAll(/[\u0300-\u036F]/gu, '')
     }
 
     return result

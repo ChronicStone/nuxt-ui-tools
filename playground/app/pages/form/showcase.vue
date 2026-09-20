@@ -49,11 +49,11 @@ const addressOptionForm = defineFormSchema({
     },
   ],
   formKey: 'playground.form.address-option',
+  header: { title: 'Create address option' },
   layout: {
     columns: 8,
     gap: 16,
   },
-  header: { title: 'Create address option' },
 })
 
 const showcaseForm = defineFormSchema({
@@ -915,6 +915,7 @@ const showcaseForm = defineFormSchema({
     },
   ],
   formKey: 'playground.form.showcase',
+  header: { title: 'Form field showcase' },
   layout: {
     columns: 8,
     gap: 16,
@@ -923,7 +924,6 @@ const showcaseForm = defineFormSchema({
     maxHeight: '90dvh',
     maxWidth: 1100,
   },
-  header: { title: 'Form field showcase' },
 })
 
 type ShowcaseOutput = ExtractFormOutput<typeof showcaseForm>

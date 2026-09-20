@@ -42,7 +42,7 @@ describe('table layout', () => {
     expect([
       harness.internals.controls.tableLayout.value,
       harness.internals.controls.layoutState.value.available,
-    ]).toEqual(['grid', ['grid']])
+    ]).toStrictEqual(['grid', ['grid']])
     expect(harness.query().l).toBeUndefined()
 
     setBreakpoint('xl')
