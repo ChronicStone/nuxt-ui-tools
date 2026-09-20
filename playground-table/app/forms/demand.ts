@@ -52,13 +52,20 @@ const REMINDER_OPTIONS = [
 ]
 
 const RECIPIENT_MODES = [
-  { description: 'Business Manager, représentant légal, facturation', label: 'Référents du compte', value: 'all' },
+  {
+    description: 'Business Manager, représentant légal, facturation',
+    label: 'Référents du compte',
+    value: 'all',
+  },
   { label: 'Business Manager uniquement', value: 'bm' },
 ]
 
 export function sendDemandFormSchema(accounts: readonly Account[]) {
   return defineFormSchema({
-    actions: [{ key: 'cancel', label: 'Annuler' }, { key: 'submit', label: 'Envoyer la demande' }],
+    actions: [
+      { key: 'cancel', label: 'Annuler' },
+      { key: 'submit', label: 'Envoyer la demande' },
+    ],
     fields: [
       { key: 'templateSection', label: 'Modèle', type: 'section' },
       {
@@ -111,7 +118,10 @@ export function sendDemandFormSchema(accounts: readonly Account[]) {
         dependencies: ['mode'],
         key: 'accountStatus',
         label: 'Statut',
-        options: [{ label: 'Actifs', value: 'active' }, { label: 'Tous', value: 'any' }],
+        options: [
+          { label: 'Actifs', value: 'active' },
+          { label: 'Tous', value: 'any' },
+        ],
         type: 'select',
       },
       {

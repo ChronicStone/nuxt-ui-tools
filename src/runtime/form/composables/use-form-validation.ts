@@ -1147,7 +1147,13 @@ function resolveDateFieldBounds(
 }
 
 function isDateSeedValue(value: FormValue): value is FormDateSeedValue {
-  return value instanceof Date || isString(value) || isNumber(value) || value === null || value === undefined
+  return (
+    value instanceof Date ||
+    isString(value) ||
+    isNumber(value) ||
+    value === null ||
+    value === undefined
+  )
 }
 
 function dateFieldBoundValue(value: FormValue, type: FormDateFamilyType, edge: 'start' | 'end') {

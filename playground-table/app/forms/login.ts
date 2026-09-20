@@ -2,9 +2,7 @@ import { defineFormSchema } from '#ui-tools/form'
 
 export function loginFormSchema() {
   return defineFormSchema({
-    actions: [
-      { icon: 'i-lucide-arrow-right', key: 'submit', label: 'Se connecter' },
-    ],
+    actions: [{ icon: 'i-lucide-arrow-right', key: 'submit', label: 'Se connecter' }],
     fields: [
       {
         key: 'email',

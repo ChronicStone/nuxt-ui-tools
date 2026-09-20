@@ -3,8 +3,8 @@ import { useForm, useFormApi } from '#ui-tools/form'
 import type { FormController, FormObject, FormSchema, FormValue } from '#ui-tools/form'
 
 import { accountFormSchema } from '../../forms/account'
-import { assessImportFormSchema } from '../../forms/assess-import'
 import { arraysFormInput, arraysFormSchema } from '../../forms/arrays'
+import { assessImportFormSchema } from '../../forms/assess-import'
 import {
   billedBulkFormSchema,
   confirmFormSchema,

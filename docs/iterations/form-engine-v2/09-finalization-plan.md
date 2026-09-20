@@ -6,32 +6,32 @@ Goal: bring `src/runtime/form` to production parity with the tars-monorepo V1 en
 
 ## Sources
 
-| Role | Path |
-| --- | --- |
-| V1 engine (reference behaviours) | `AGORASTORE/NEW_STACK/tars-monorepo/packages/shared-ui/src/runtime/lib/form` (167 files, ~15k lines) |
-| V1 contract docs | `tars-monorepo/.agents/skills/tars-form-engine/` (SKILL + 3 references) |
-| V1 tests | `tars-monorepo/packages/shared-ui/test/form/` (24 files, incl. `remote-options.test.ts` 41k, `remote-tree-options.test.ts` 18k) |
-| V2 engine (target) | `src/runtime/form` (~16.5k lines, 47 field folders) |
-| V2 tests | `test/form/*.test.ts` (15 unit files, no DOM harness) |
-| Atelier maquettes | `exassess-app-cloudflare/tmp/admin-ui-exploration/src-identity4/*.js`, built by `build-identity4.sh` |
-| Table-phase tooling to reuse | `test/dom/harness.ts`, stubs in `test/dom/stubs/nuxt-ui/*`, `shot.mjs` / `measure.mjs` / `pxdiff.mjs` in the exploration folder |
+| Role                             | Path                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| V1 engine (reference behaviours) | `AGORASTORE/NEW_STACK/tars-monorepo/packages/shared-ui/src/runtime/lib/form` (167 files, ~15k lines)                            |
+| V1 contract docs                 | `tars-monorepo/.agents/skills/tars-form-engine/` (SKILL + 3 references)                                                         |
+| V1 tests                         | `tars-monorepo/packages/shared-ui/test/form/` (24 files, incl. `remote-options.test.ts` 41k, `remote-tree-options.test.ts` 18k) |
+| V2 engine (target)               | `src/runtime/form` (~16.5k lines, 47 field folders)                                                                             |
+| V2 tests                         | `test/form/*.test.ts` (15 unit files, no DOM harness)                                                                           |
+| Atelier maquettes                | `exassess-app-cloudflare/tmp/admin-ui-exploration/src-identity4/*.js`, built by `build-identity4.sh`                            |
+| Table-phase tooling to reuse     | `test/dom/harness.ts`, stubs in `test/dom/stubs/nuxt-ui/*`, `shot.mjs` / `measure.mjs` / `pxdiff.mjs` in the exploration folder |
 
 ## V1 → V2 gap matrix
 
 ### Field kinds
 
-| Kind | V1 | V2 | Action |
-| --- | --- | --- | --- |
-| `alpha-select` | full (mobile drawer, letter groups, quick nav) | missing | dropped (2026-09-19): not needed in V2 |
-| `array-collapse` | full (accordion, summaryTemplate, defaultExpanded, draggable) | done (2026-09-19) | index-based expanded state, invalid items reveal themselves |
-| `array-primitive` | full (single item field, preview, unique) | done (2026-09-19) | items validated through a Regle mirror; pending item is `undefined` |
-| `array-tabs` | component | shared array-list component | `tabAction` added; panels render the active item only |
-| `array-variant` | component | shared array-list component | present |
-| `cascader` | component | shared tree popover | dropped (2026-09-19): not needed in V2, the tree popover stays as the fallback renderer |
-| `tree-select`, `tree` | component, lazy remote children, `resolveSelected` paths, `selectionControl`, `showChildrenCount`, `expandParentOnClick` | shared `hierarchy/component.vue` eager only | port remote lazy loading + paginated roots + selection controls |
-| `datetime`, `daterange`, `datetimerange`, `month`, `monthrange`, `year` | one `DateField.vue` with Naive picker + maskito manual input | `date-family/component.vue` shared: manual input with mask, ranges with draft confirm, time inputs, calendar options | siblings present (2026-09-19); `shortcuts`, `isDateDisabled`, `defaultTime` move to the parity-props phase |
-| `rich-text` | absent in V1 | absent | deferred (2026-09-19) to a later iteration; maquette forms use a textarea meanwhile |
-| all others (text, password, textarea, number, select, checkbox, switch, radio, radio-card, checkbox-group, checkbox-card, switch-group, matrix, slider, tag, rating, color-picker, one-time-code, phone-number, auto-complete, file, upload, object, group, input-group, info, divider, card, column, button, hidden, custom-component, array-list, array-table) | present | present | polish pass + parity props |
+| Kind                                                                                                                                                                                                                                                                                                                                                             | V1                                                                                                                       | V2                                                                                                                   | Action                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `alpha-select`                                                                                                                                                                                                                                                                                                                                                   | full (mobile drawer, letter groups, quick nav)                                                                           | missing                                                                                                              | dropped (2026-09-19): not needed in V2                                                                     |
+| `array-collapse`                                                                                                                                                                                                                                                                                                                                                 | full (accordion, summaryTemplate, defaultExpanded, draggable)                                                            | done (2026-09-19)                                                                                                    | index-based expanded state, invalid items reveal themselves                                                |
+| `array-primitive`                                                                                                                                                                                                                                                                                                                                                | full (single item field, preview, unique)                                                                                | done (2026-09-19)                                                                                                    | items validated through a Regle mirror; pending item is `undefined`                                        |
+| `array-tabs`                                                                                                                                                                                                                                                                                                                                                     | component                                                                                                                | shared array-list component                                                                                          | `tabAction` added; panels render the active item only                                                      |
+| `array-variant`                                                                                                                                                                                                                                                                                                                                                  | component                                                                                                                | shared array-list component                                                                                          | present                                                                                                    |
+| `cascader`                                                                                                                                                                                                                                                                                                                                                       | component                                                                                                                | shared tree popover                                                                                                  | dropped (2026-09-19): not needed in V2, the tree popover stays as the fallback renderer                    |
+| `tree-select`, `tree`                                                                                                                                                                                                                                                                                                                                            | component, lazy remote children, `resolveSelected` paths, `selectionControl`, `showChildrenCount`, `expandParentOnClick` | shared `hierarchy/component.vue` eager only                                                                          | port remote lazy loading + paginated roots + selection controls                                            |
+| `datetime`, `daterange`, `datetimerange`, `month`, `monthrange`, `year`                                                                                                                                                                                                                                                                                          | one `DateField.vue` with Naive picker + maskito manual input                                                             | `date-family/component.vue` shared: manual input with mask, ranges with draft confirm, time inputs, calendar options | siblings present (2026-09-19); `shortcuts`, `isDateDisabled`, `defaultTime` move to the parity-props phase |
+| `rich-text`                                                                                                                                                                                                                                                                                                                                                      | absent in V1                                                                                                             | absent                                                                                                               | deferred (2026-09-19) to a later iteration; maquette forms use a textarea meanwhile                        |
+| all others (text, password, textarea, number, select, checkbox, switch, radio, radio-card, checkbox-group, checkbox-card, switch-group, matrix, slider, tag, rating, color-picker, one-time-code, phone-number, auto-complete, file, upload, object, group, input-group, info, divider, card, column, button, hidden, custom-component, array-list, array-table) | present                                                                                                                  | present                                                                                                              | polish pass + parity props                                                                                 |
 
 ### Options runtime (biggest gap)
 
@@ -47,19 +47,19 @@ V2 `use-field-options.ts` (468 lines) handles static, sync, promise, query sourc
 
 ### Base field properties
 
-| V1 | V2 | Action |
-| --- | --- | --- |
-| `labelPosition: 'left' \| 'top'`, `labelWidth` | absent | add `layout.labelPosition` + width; account form and settings use top labels, array-table rows need bare inputs |
-| `description` as `{ type: 'tooltip' \| 'modal' }` | plain text | add tooltip/modal description variants |
-| `showHint`, `requiredLabel` | absent | add or fold into `hint` config |
-| `width` | absent | `layout.width` |
-| text `mask`, `prefix`, `suffix`, `clearable`, `showCount`, `maxlength` | `inputType` only | add (maskito or nuxt-ui mask), prefix/suffix slots (maquette: `€`, `tests`, `1 USD =`) |
-| number `precision`, formatting, suffix | `min`, `max`, `step` | add locale formatting, suffix, `mono` |
-| textarea `autosize`, `rows`, `showCount` | none | add |
-| select `max`, `maxTagCount`, `renderTag`, `renderLabel`, `virtualScroll`, `fallbackOption` | `multiple`, `searchable`, `clearable`, `createItem` | add `max`, tag rendering slots, avatar-chip variant (`cchip` in maquette), virtualization |
-| upload progress, preview, download | handler + onDelete | add progress + preview/download hooks, dropzone variant (`filez`) |
-| form `layout.scale`, `textOverrides`, `accessKeys`, `apps` | `ui` config | `ui` covers scale; access rules out of scope |
-| schema `title` render fn, `testId` | `title`, `formKey` | keep V2 |
+| V1                                                                                         | V2                                                  | Action                                                                                                          |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `labelPosition: 'left' \| 'top'`, `labelWidth`                                             | absent                                              | add `layout.labelPosition` + width; account form and settings use top labels, array-table rows need bare inputs |
+| `description` as `{ type: 'tooltip' \| 'modal' }`                                          | plain text                                          | add tooltip/modal description variants                                                                          |
+| `showHint`, `requiredLabel`                                                                | absent                                              | add or fold into `hint` config                                                                                  |
+| `width`                                                                                    | absent                                              | `layout.width`                                                                                                  |
+| text `mask`, `prefix`, `suffix`, `clearable`, `showCount`, `maxlength`                     | `inputType` only                                    | add (maskito or nuxt-ui mask), prefix/suffix slots (maquette: `€`, `tests`, `1 USD =`)                          |
+| number `precision`, formatting, suffix                                                     | `min`, `max`, `step`                                | add locale formatting, suffix, `mono`                                                                           |
+| textarea `autosize`, `rows`, `showCount`                                                   | none                                                | add                                                                                                             |
+| select `max`, `maxTagCount`, `renderTag`, `renderLabel`, `virtualScroll`, `fallbackOption` | `multiple`, `searchable`, `clearable`, `createItem` | add `max`, tag rendering slots, avatar-chip variant (`cchip` in maquette), virtualization                       |
+| upload progress, preview, download                                                         | handler + onDelete                                  | add progress + preview/download hooks, dropzone variant (`filez`)                                               |
+| form `layout.scale`, `textOverrides`, `accessKeys`, `apps`                                 | `ui` config                                         | `ui` covers scale; access rules out of scope                                                                    |
+| schema `title` render fn, `testId`                                                         | `title`, `formKey`                                  | keep V2                                                                                                         |
 
 ### Layout and shells
 
@@ -76,26 +76,26 @@ Every entry below must render through `NutForm`, inline and as modal where appli
 
 ### Page forms (inline, section nav)
 
-| Page key | Form | Notable fields |
-| --- | --- | --- |
-| `accountNew` / `accountForm` | account create/edit, 6 sections, sticky `fnav` with done/optional state | radio-card type picker (`tcards`), select, checkbox with hint, text with mono/icon, file (image + PDF), 3-col contacts, contact chips (array-primitive of remote select), address block |
-| `contractForm` | contract create/edit, 4 sections + readiness checklist | remote account picker, date ×3, select ×4, conditional agent block, array-table of products (select, select mono, number €, number €, computed margin, checkbox, remove), array-list targets (text, number suffix, date, date), array-list documents (select + dropzone) |
-| `demandSend` | 3 numbered sections + recap rail | radio-card templates, radio group `fp-opts`, chips with popover picker, select, checkbox-group reminders with computed dates |
-| `demandTemplate` / `formEditor` | builder: outline + canvas + inspector | inspector = inline form with locale segment, textarea, switches, options array-primitive; canvas rendered by the engine from a dynamic schema |
-| `assessImport` | 4-step wizard rail | select, checkbox, dropzone, validation table, per-row select mapping |
-| `settings` | 5 sections | switch rows (`fe-sw`), flags list, team table with select per row, notification matrix (checkbox matrix) |
-| `login` | card-less login | text, password with toggle, checkbox, link |
+| Page key                        | Form                                                                    | Notable fields                                                                                                                                                                                                                                                           |
+| ------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `accountNew` / `accountForm`    | account create/edit, 6 sections, sticky `fnav` with done/optional state | radio-card type picker (`tcards`), select, checkbox with hint, text with mono/icon, file (image + PDF), 3-col contacts, contact chips (array-primitive of remote select), address block                                                                                  |
+| `contractForm`                  | contract create/edit, 4 sections + readiness checklist                  | remote account picker, date ×3, select ×4, conditional agent block, array-table of products (select, select mono, number €, number €, computed margin, checkbox, remove), array-list targets (text, number suffix, date, date), array-list documents (select + dropzone) |
+| `demandSend`                    | 3 numbered sections + recap rail                                        | radio-card templates, radio group `fp-opts`, chips with popover picker, select, checkbox-group reminders with computed dates                                                                                                                                             |
+| `demandTemplate` / `formEditor` | builder: outline + canvas + inspector                                   | inspector = inline form with locale segment, textarea, switches, options array-primitive; canvas rendered by the engine from a dynamic schema                                                                                                                            |
+| `assessImport`                  | 4-step wizard rail                                                      | select, checkbox, dropzone, validation table, per-row select mapping                                                                                                                                                                                                     |
+| `settings`                      | 5 sections                                                              | switch rows (`fe-sw`), flags list, team table with select per row, notification matrix (checkbox matrix)                                                                                                                                                                 |
+| `login`                         | card-less login                                                         | text, password with toggle, checkbox, link                                                                                                                                                                                                                               |
 
 ### Modals (55 registered, grouped by pattern)
 
-| Pattern | Modals |
-| --- | --- |
-| Sectioned CRUD (`msec` + `mrow`) | contact, group, rate, testcenter, location, memo, memoEdit, productLine, versionType, product (tabs), news (tabs), presetForm (xl), consumption, invoice, assessEdit, webhook, apiKey, profile (tabs), support |
-| Confirm with options | cReady (checklist + checkbox), cSign, cTerminate (danger), cAmend, cDuplicate, dRelaunch (chips + rich text), dReturn, dApprove, dCancel, dClarify, dConfirmSend, certForce (danger), certAbandon, accStatus, confirm |
-| Radio list (`fp-opts` / `md-list.pick`) | billedBulk, certSync, exportAccount, preset, dSaveFile, memoAddUser, pickResource |
-| Checkbox list (`fp-opts`) | accSync, accActivate, apiKey scopes, webhook events |
-| Array editors | cTarget (rows), cProducts (xl table), cFiles (rows + dropzone), metadata (sortable chips), affGroup (chips), userAccounts (list with select per row) |
-| Read-only | certHistory, certReport (filters) |
+| Pattern                                 | Modals                                                                                                                                                                                                                |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sectioned CRUD (`msec` + `mrow`)        | contact, group, rate, testcenter, location, memo, memoEdit, productLine, versionType, product (tabs), news (tabs), presetForm (xl), consumption, invoice, assessEdit, webhook, apiKey, profile (tabs), support        |
+| Confirm with options                    | cReady (checklist + checkbox), cSign, cTerminate (danger), cAmend, cDuplicate, dRelaunch (chips + rich text), dReturn, dApprove, dCancel, dClarify, dConfirmSend, certForce (danger), certAbandon, accStatus, confirm |
+| Radio list (`fp-opts` / `md-list.pick`) | billedBulk, certSync, exportAccount, preset, dSaveFile, memoAddUser, pickResource                                                                                                                                     |
+| Checkbox list (`fp-opts`)               | accSync, accActivate, apiKey scopes, webhook events                                                                                                                                                                   |
+| Array editors                           | cTarget (rows), cProducts (xl table), cFiles (rows + dropzone), metadata (sortable chips), affGroup (chips), userAccounts (list with select per row)                                                                  |
+| Read-only                               | certHistory, certReport (filters)                                                                                                                                                                                     |
 
 Field patterns to add for parity with the maquette: `eyebrow`, `tabs`, `section` container variant with caption, `note` info variant, option-card radio/checkbox groups (`fp-opt`), avatar chips, sortable chips, dropzone file variant, computed read-only cell in array-table, danger submit action, disabled submit with checklist.
 
@@ -116,10 +116,10 @@ Field patterns to add for parity with the maquette: `eyebrow`, `tabs`, `section`
 3. `accessKeys` / `apps` stay in the app layer.
 4. Keep curated V2 props, but expose real control and power: every Nuxt UI primitive prop that matters (pickers, selects, editors, uploads) gets a typed field property or a typed `props` passthrough. Never leave a behaviour reachable only by forking the component.
 5. The sticky section navigation on long page forms is app-level composition, not an engine feature. The engine only guarantees stable section anchors and inline `NutForm` blocks that share one controller.
-7. Keep V2's field-scoped property typing (no shared properties leaking onto kinds that cannot use them). Parity means behaviours and features, not V1's type shapes.
-8. Custom errors set through the API are non-blocking by default and block submit only when set with `blocking: true`. A value change clears them.
-9. Accessibility and keyboard behaviour are part of parity: Enter submits from any single-line control, invalid submit focuses the first invalid field and announces its error, every control is labelled (aria-labelledby or aria-label), overlays trap and restore focus, option menus and trees are fully keyboard operable. Covered by a dedicated DOM spec.
-6. Pixel comparison against `identity4.html` with `shot.mjs` / `pxdiff` when the render can be isolated; otherwise side-by-side screenshots.
+6. Keep V2's field-scoped property typing (no shared properties leaking onto kinds that cannot use them). Parity means behaviours and features, not V1's type shapes.
+7. Custom errors set through the API are non-blocking by default and block submit only when set with `blocking: true`. A value change clears them.
+8. Accessibility and keyboard behaviour are part of parity: Enter submits from any single-line control, invalid submit focuses the first invalid field and announces its error, every control is labelled (aria-labelledby or aria-label), overlays trap and restore focus, option menus and trees are fully keyboard operable. Covered by a dedicated DOM spec.
+9. Pixel comparison against `identity4.html` with `shot.mjs` / `pxdiff` when the render can be isolated; otherwise side-by-side screenshots.
 
 ## Progress log
 
@@ -189,7 +189,7 @@ Phases 1-4 and 6 are complete, each with verifiable evidence (tests, commits, sc
 
 Phase 5 cannot be taken to "every field kind × 3 sizes × 2 themes × 2 viewports, pixel-perfect against identity4.html" as a literal checklist, for a reason no amount of further auditing changes: several field kinds this session traced (`colorPicker`, `pinInput`, `slider`) have **no corresponding element in the Atelier maquette at all** — none of the 7 page forms or 55 modals catalogued in this same document use them. There is no maquette pixel to match against for those, in any theme or viewport. The `tabs` container has two maquette candidates that are different UI patterns (a 28px segmented control, a 34px vertical modal sidebar list); picking one is a design decision this document should record once made, not something further code inspection resolves.
 
-What *is* now done: the two systemic typography/sizing gaps that affected every field in every form (`formField`, dead `select` config) are fixed and verified; the size scale (`sm`/`md`/`lg`) is proven correct end-to-end; `switch` is fixed and verified; every field kind actually exercised by a maquette form (all of Phase 6's inventory) has been screenshot-verified in light and dark, at 1440 and 390px. That is the finalization this branch delivers.
+What _is_ now done: the two systemic typography/sizing gaps that affected every field in every form (`formField`, dead `select` config) are fixed and verified; the size scale (`sm`/`md`/`lg`) is proven correct end-to-end; `switch` is fixed and verified; every field kind actually exercised by a maquette form (all of Phase 6's inventory) has been screenshot-verified in light and dark, at 1440 and 390px. That is the finalization this branch delivers.
 
 ### Correction: tabs container has a maquette match after all
 
