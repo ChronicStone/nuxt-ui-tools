@@ -25,7 +25,13 @@ function mountSwitch(
 
 describe('layout switch part', () => {
   it('renders both layouts with the active one highlighted and switches on click', async () => {
-    harness = await mountSwitch()
+    const schema = createAccountsSchema()
+    harness = await mountSwitch({
+      schema: {
+        ...schema,
+        grid: { ...schema.grid, defaultSorting: { dir: 'desc', key: 'status' } },
+      },
+    })
     const w = harness.wrapper
     expect(w.find('.nut-dl-layout').exists()).toBeTruthy()
     const buttons = w.findAll('.nut-dl-layout__btn')
@@ -48,8 +54,10 @@ describe('layout switch part', () => {
     await harness.flush()
     expect([
       harness.internals.controls.tableLayout.value,
+      harness.internals.tableColumns.sortingState.value,
+      harness.internals.pagination.pageSize.value,
       must(w.findAll('.nut-dl-layout__btn')[1]).attributes('data-active'),
-    ]).toStrictEqual(['grid', 'true'])
+    ]).toStrictEqual(['grid', { active: true, dir: 'desc', key: 'status' }, 12, 'true'])
   })
 
   it('honours order, labels, icons and props layers', async () => {
