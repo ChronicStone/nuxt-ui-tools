@@ -36,7 +36,7 @@ jobs:
         run: bun run lint
 
       - name: Typecheck
-        run: bun run typecheck
+        run: bun run typecheck && bun run typecheck:playgrounds
 
       - name: Test
         run: bun run test
