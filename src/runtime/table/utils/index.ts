@@ -1,6 +1,7 @@
 export * from './actions'
 export * from './client-query'
 export * from './columns'
+export * from './cursor-query'
 export * from './data-list-ui'
 export * from './facets'
 export * from './filters'

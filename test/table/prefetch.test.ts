@@ -2,9 +2,9 @@ import { QueryClient } from '@tanstack/vue-query'
 import { describe, expect, it } from 'vitest'
 
 import { executeQueryPrefetchPlan } from '#ui-tools/query-prefetch/utils/plan'
-import { defineTableSchema } from '#ui-tools/table/schema'
+import { defineTableSchema, tableSource } from '#ui-tools/table'
 import type { TableSourceRequestContext } from '#ui-tools/table/types'
-import { prefetchTable } from '#ui-tools/table/utils/prefetch'
+import { createTableCursorQueryKey, prefetchTable } from '#ui-tools/table/utils'
 
 describe('table query prefetch', () => {
   it('prefetches context, route-derived source state, facets, options, and page context in order', async () => {
@@ -57,7 +57,7 @@ describe('table query prefetch', () => {
       ],
       pagination: { defaultSize: 10 },
       rowKey: 'id',
-      source: {
+      source: tableSource({
         facets: (request) => ({
           queryFn: () => {
             facetQueryCalls += 1
@@ -73,7 +73,7 @@ describe('table query prefetch', () => {
           },
           queryKey: ['users', request],
         }),
-      },
+      }),
       table: {
         columns: (column) => [column.field('name', { label: 'Name' })],
         defaultSorting: { dir: 'asc', key: 'name' },
@@ -127,5 +127,66 @@ describe('table query prefetch', () => {
       1,
       { id: 'account-1' },
     ])
+  })
+
+  it('prefetches cursor sources into the runtime infinite-query cache shape', async () => {
+    let pageContextRows = 0
+    const schema = defineTableSchema({
+      pageContext: [
+        {
+          key: 'summary',
+          query: ({ rows }) => ({
+            queryFn: () => {
+              pageContextRows = rows.length
+              return rows.length
+            },
+            queryKey: ['cursor-summary', rows.length],
+          }),
+        },
+      ],
+      pagination: { count: 'exact', mode: 'cursor', pageSize: 20 },
+      rowKey: 'id',
+      source: tableSource({
+        mode: 'remote',
+        query: (request) => ({
+          queryFn: () => ({
+            pageInfo: {
+              count: 'exact',
+              mode: 'cursor',
+              nextCursor: 'page-2',
+              pageSize: 20,
+              rowCount: 2,
+            },
+            rows: [
+              { id: 'audit-1', request },
+              { id: 'audit-2', request },
+            ],
+          }),
+          queryKey: ['audit', request],
+        }),
+      }),
+      table: { columns: (column) => [column.field('id')] },
+      tableKey: 'audit',
+    })
+    const queryClient = new QueryClient()
+    const plan = prefetchTable({ route: { query: {} }, schema })
+
+    await executeQueryPrefetchPlan(plan, { queryClient })
+
+    const request = {
+      context: {},
+      facets: undefined,
+      filters: { children: [], combinator: 'and', type: 'group' },
+      pagination: { count: 'exact', cursor: null, mode: 'cursor', pageSize: 20 },
+      search: { fields: [], value: '' },
+      sorting: [],
+    }
+    expect(
+      queryClient.getQueryData(createTableCursorQueryKey(['audit', request], 0)),
+    ).toMatchObject({
+      pageParams: [null],
+      pages: [{ rows: [{ id: 'audit-1' }, { id: 'audit-2' }] }],
+    })
+    expect(pageContextRows).toBe(2)
   })
 })

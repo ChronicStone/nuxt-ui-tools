@@ -25,6 +25,7 @@ import type {
   TableRuntimeRecord,
 } from '../types'
 import {
+  createTableCursorQueryKey,
   executeClientFacets,
   filterClientRows,
   flattenTableCursorPages,
@@ -843,7 +844,7 @@ function createCursorQueryDefinition(options: {
       }
       return definition.queryFn(queryContext)
     },
-    queryKey: [...firstPageDefinition.queryKey, { tableCursorRevision: options.revision }],
+    queryKey: createTableCursorQueryKey(firstPageDefinition.queryKey, options.revision),
   }
 }
 

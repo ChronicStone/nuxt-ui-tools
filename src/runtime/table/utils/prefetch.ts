@@ -1,3 +1,5 @@
+import type { InfiniteData } from '@tanstack/vue-query'
+
 import type { QueryPrefetchRuntimeRoute } from '#ui-tools/query-prefetch/types/page'
 import type { QueryPrefetchOption, QueryPrefetchQueries } from '#ui-tools/query-prefetch/types/plan'
 import { defineQueryPrefetchPlan } from '#ui-tools/query-prefetch/utils/plan'
@@ -18,11 +20,15 @@ import type {
   TableFilterState,
   TableLayout,
   TablePaginationState,
+  TableCursorPageResult,
+  TableOffsetPageResult,
   TableSchemaView,
+  TableSourceExecutionResult,
   TableSourceRequestContext,
   TableSortingRule,
   TableUiFilterDefinition,
 } from '../types'
+import { createTableCursorQueryKey } from './cursor-query'
 import {
   hasPerFilterFacetQuery,
   resolveTableFacetMode,
@@ -41,6 +47,11 @@ import {
 import { createResolvedFilterState } from './resolved-filters'
 
 type TablePrefetchContext = import('../../shared/types/utils').GenericObject
+type TablePrefetchSourceResult =
+  | GenericObject[]
+  | TableSourceExecutionResult
+  | TableOffsetPageResult
+  | TableCursorPageResult
 interface QueryWithDefaults {
   staleTime?: number
   refetchOnWindowFocus?: boolean
@@ -139,10 +150,7 @@ function resolveTableQueries(options: {
   const entries: (readonly [string, QueryPrefetchOption])[] = [
     [
       'source',
-      withQueryDefaults(
-        options.schema.source.query(options.request),
-        QUERY_DEFAULTS.staleTime.data,
-      ),
+      withQueryDefaults(resolveSourcePrefetchQuery(options), QUERY_DEFAULTS.staleTime.data),
     ],
   ]
   const definitions = options.schema.filters?.ui ?? []
@@ -207,6 +215,32 @@ function resolveTableQueries(options: {
   }
 
   return Object.fromEntries(entries)
+}
+
+function resolveSourcePrefetchQuery(options: {
+  schema: TableSchemaView
+  request: TableSourceRequestContext<GenericObject, TablePrefetchContext, string>
+}) {
+  const definition = options.schema.source.query(options.request)
+  if (options.request.pagination.mode !== 'cursor' || !definition.queryFn) return definition
+
+  const queryFn = definition.queryFn
+  return {
+    ...definition,
+    queryFn: async (queryContext) => ({
+      pageParams: [null],
+      pages: [
+        await queryFn({
+          ...queryContext,
+          direction: 'forward',
+          pageParam: null,
+        }),
+      ],
+    }),
+    queryKey: createTableCursorQueryKey(definition.queryKey, 0),
+  } satisfies import('../types').TableQueryDefinition<
+    InfiniteData<TablePrefetchSourceResult, string | null>
+  >
 }
 
 function resolvePrefetchRequest(options: {
@@ -380,6 +414,9 @@ function resolvePrefetchedRows<TValue>(value: TValue): GenericObject[] {
   if (!isObject(value)) {
     return []
   }
+
+  const pages = 'pages' in value ? value.pages : undefined
+  if (isArray(pages)) return pages.flatMap((page) => resolvePrefetchedRows(page))
 
   const rows = 'rows' in value ? value.rows : undefined
   return isArray(rows) ? rows.filter(isGenericObject) : []
