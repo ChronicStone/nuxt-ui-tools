@@ -2,28 +2,7 @@ import type { RegleRuleRaw } from '@regle/core'
 
 import type { FormValue } from './'
 import type { FormFieldCallback } from './callbacks'
-import type { FormMaybePromise, FormObject, FormText } from './utils'
-
-/**
- * Result returned by a form validation rule.
- */
-export type FormValidationResult = boolean | string | null | undefined
-
-/**
- * A single validation rule.
- */
-export interface FormValidationRule<
-  TValue = FormValue,
-  TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
-> {
-  /** Stable rule name used for debugging, i18n, and external error mapping. */
-  name: string
-  /** Returns true for valid values, false/string for invalid values. */
-  validate: FormFieldCallback<FormMaybePromise<FormValidationResult>, TContext, TDeps, TValue>
-  /** Default message used when `validate` returns false. */
-  message?: FormText
-}
+import type { FormObject, FormText } from './utils'
 
 /**
  * Controls when a field starts running validation while the user edits it.
@@ -35,8 +14,8 @@ export interface FormValidationRule<
  */
 export type FormValidationTrigger = 'blur' | 'input' | 'submit'
 
-/** Selects which authored validation layers are evaluated. */
-export type FormValidationMode = boolean | 'required' | 'rules'
+/** Selects which native Regle validation layers are evaluated. */
+export type FormValidationMode = boolean | 'required' | 'validators'
 
 /**
  * Concrete validation error stored by the form runtime.
@@ -79,8 +58,6 @@ export interface FormValidationConfig<
   required?: boolean | FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Message used by the default required rule. */
   requiredMessage?: FormText
-  /** Additional field rules. */
-  rules?: readonly FormValidationRule<TValue, TContext, TDeps>[]
 }
 
 /** Native Regle rules keyed by their validation name. */

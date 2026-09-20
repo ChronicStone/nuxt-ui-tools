@@ -5,11 +5,7 @@ import type { FormFieldApi, FormObject } from '#ui-tools/form'
 
 import { useFormUploadRegistry } from '../../src/runtime/form/composables/use-form-upload-registry'
 import { syncFormArrayItems } from '../../src/runtime/form/utils/array'
-import {
-  buildFormOutput,
-  buildInitialFormState,
-  validateFormState,
-} from '../../src/runtime/form/utils/state'
+import { buildFormOutput, buildInitialFormState } from '../../src/runtime/form/utils/state'
 import { getPathValue } from '../../src/runtime/shared/utils/path'
 
 const schema = defineFormSchema({
@@ -20,16 +16,7 @@ const schema = defineFormSchema({
         {
           key: 'scope',
           type: 'text',
-          validation: {
-            required: true,
-            rules: [
-              {
-                message: 'Invalid scope',
-                name: 'scope',
-                validate: ({ api }) => api.value.get() !== 'forbidden',
-              },
-            ],
-          },
+          required: true,
         },
       ],
       key: 'permissions',
@@ -230,29 +217,5 @@ describe('form V1 nested runtime', () => {
 
     unregister()
     expect(registry.get(['identityDocument'])).toBeUndefined()
-  })
-
-  it('applies required and rule validation modes independently inside matrix cells', async () => {
-    const state = buildInitialFormState(
-      schema,
-      {},
-      {
-        permissions: {
-          orders: { scope: null },
-          users: { scope: 'forbidden' },
-        },
-      },
-    )
-    activeState = state
-
-    const requiredErrors = await validateFormState(schema, state, {}, apiFactory, 'required')
-    const ruleErrors = await validateFormState(schema, state, {}, apiFactory, 'rules')
-
-    expect(requiredErrors).toStrictEqual([
-      { message: 'This field is required.', path: 'permissions.orders.scope' },
-    ])
-    expect(ruleErrors).toStrictEqual([
-      { message: 'Invalid scope', path: 'permissions.users.scope' },
-    ])
   })
 })

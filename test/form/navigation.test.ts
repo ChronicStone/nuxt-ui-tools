@@ -1,3 +1,4 @@
+import { withAsync, withMessage } from '@regle/rules'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { describe, expect, it, vi } from 'vitest'
 import { computed, createApp, effectScope, nextTick } from 'vue'
@@ -42,16 +43,11 @@ describe('form step navigation', () => {
               {
                 key: 'name',
                 type: 'text',
-                validation: {
-                  rules: [
-                    {
-                      name: 'available-name',
-                      validate: async () => {
-                        await validationGate.promise
-                        return true
-                      },
-                    },
-                  ],
+                validators: {
+                  availableName: withAsync(async () => {
+                    await validationGate.promise
+                    return true
+                  }),
                 },
               },
             ],
@@ -145,14 +141,11 @@ describe('form step navigation', () => {
                 key: 'handle',
                 layout: { span: 1 },
                 type: 'text',
-                validation: {
-                  rules: [
-                    {
-                      message: 'This handle is unavailable.',
-                      name: 'available-handle',
-                      validate: async () => handleGate.promise,
-                    },
-                  ],
+                validators: {
+                  availableHandle: withMessage(
+                    withAsync(async () => handleGate.promise),
+                    'This handle is unavailable.',
+                  ),
                 },
               },
             ],

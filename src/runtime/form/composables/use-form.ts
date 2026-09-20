@@ -200,7 +200,7 @@ function getSchemaSyncInput(schema: FormValue): boolean | readonly string[] {
 function getSchemaValidationMode(schema: FormValue): FormValidationMode {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'validate')?.value : undefined
-  return value === false || value === 'required' || value === 'rules' ? value : true
+  return value === false || value === 'required' || value === 'validators' ? value : true
 }
 
 function getSchemaControls(schema: FormValue) {

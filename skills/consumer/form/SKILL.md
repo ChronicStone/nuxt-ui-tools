@@ -71,12 +71,23 @@ virtual fields. Action callbacks receive the row `index`, `item`, full `items`, 
 
 ```vue
 <script setup lang="ts">
+import { email, withMessage } from '@regle/rules'
 import { defineFormSchema, useForm } from '#ui-tools/form'
 
 const accountForm = defineFormSchema({
   formKey: 'account',
   title: 'Account',
-  fields: [{ key: 'profile.email', type: 'text', label: 'Email' }],
+  fields: [
+    {
+      key: 'profile.email',
+      type: 'text',
+      label: 'Email',
+      required: true,
+      validators: {
+        email: withMessage(email, 'Enter a valid email address.'),
+      },
+    },
+  ],
 })
 
 const form = useForm({
@@ -104,10 +115,12 @@ field. The same focus behavior is used by the built-in next/submit actions.
 Fields validate live after their first blur/touch by default, so initial focus does not show
 errors before the user has interacted with the field.
 
-Validation is implemented with Regle internally. The runtime owns the Regle tree, required and
-authored rule execution, async completion, collection (`array-list`, `array-table`, and variants)
-paths, and stable field error mapping; consumers only author the existing `validation` config and
-do not need to create a second validator or pass a Standard Schema adapter.
+Validation is implemented with Regle. Set `required` and `requiredMessage` directly on the field,
+and provide native `@regle/rules` entries through `validators`. `validators` may also be a
+dependency callback, so cross-field rules can use resolved `deps` without creating a second
+validator tree. The runtime owns async completion, collection (`array-list`, `array-table`, and
+variants) paths, and stable field error mapping. Use `validation.trigger` only when a field should
+start validating on `input` or wait until `submit`; the default is `blur`.
 
 Mounted field callbacks can read `api.validation.pending()`. It is derived directly from the
 Regle field and rule status, so it is `true` only while that field's asynchronous rules are
@@ -120,7 +133,7 @@ The renderer uses a native form submit event. Pressing Enter from a focused sing
 runs the same validation and submit lifecycle as the built-in submit action, while Enter in a
 textarea keeps its normal newline behavior.
 
-`validate` accepts `true`, `false`, `'required'`, or `'rules'`. `syncInput` accepts `true` or a
+`validate` accepts `true`, `false`, `'required'`, or `'validators'`. `syncInput` accepts `true` or a
 list of paths; when omitted, later input changes do not replace local edits.
 
 Schema `controls` can set `dirtyCheck`, `autoFocus`, `confirmNavOnDirty`, `syncInput`, and

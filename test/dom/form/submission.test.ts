@@ -1,3 +1,4 @@
+import { withAsync, withMessage } from '@regle/rules'
 import { describe, expect, it, vi } from 'vitest'
 
 import { defineFormSchema } from '#ui-tools/form'
@@ -149,14 +150,11 @@ describe('form submission', () => {
           key: 'email',
           label: 'Email',
           type: 'text',
-          validation: {
-            rules: [
-              {
-                message: 'This email is already used',
-                name: 'available',
-                validate: async ({ api }) => await checkAvailability(String(api.value.get() ?? '')),
-              },
-            ],
+          validators: {
+            available: withMessage(
+              withAsync(async (value) => await checkAvailability(String(value ?? ''))),
+              'This email is already used',
+            ),
           },
         },
       ],

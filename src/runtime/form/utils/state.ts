@@ -7,7 +7,6 @@ import type {
   FormLayoutConfig,
   FormObject,
   FormText,
-  FormValidationMode,
 } from '../types'
 import { resolveFieldDependencies } from './dependencies'
 import { createFormFieldInstance, isRegisteredFormFieldType } from './field-instance'
@@ -20,11 +19,6 @@ import {
   isString,
   isUndefined,
 } from './predicate'
-
-export interface FormSubmitError {
-  path: string
-  message: string
-}
 
 export interface RuntimeFormStep {
   key?: string
@@ -207,38 +201,6 @@ export function buildFormOutput(
   return buildFieldsOutput(getSchemaFields(schema), state, ctx, apiFactory, [])
 }
 
-export async function validateFormState(
-  schema: FormValue,
-  state: FormObject,
-  ctx: FormContextData,
-  apiFactory: FormFieldApiFactory,
-  mode: FormValidationMode = true,
-) {
-  if (mode === false) {
-    return []
-  }
-  const errors: FormSubmitError[] = []
-
-  if (isSteppedSchema(schema)) {
-    for (const step of getSchemaSteps(schema)) {
-      errors.push(
-        ...(await validateFields(
-          step.fields,
-          state,
-          ctx,
-          apiFactory,
-          step.root ? [step.root] : [],
-          mode,
-        )),
-      )
-    }
-
-    return errors
-  }
-
-  return validateFields(getSchemaFields(schema), state, ctx, apiFactory, [], mode)
-}
-
 export function collectFormFieldPaths(schema: FormValue) {
   if (isSteppedSchema(schema)) {
     return getSchemaSteps(schema).flatMap((step) =>
@@ -254,27 +216,6 @@ export function collectFormFieldsPaths(
   parentPath: readonly string[],
 ) {
   return collectFieldPaths(fields, parentPath)
-}
-
-export async function validateFormFields(params: {
-  fields: readonly FormField[]
-  state: FormObject
-  ctx: FormContextData
-  apiFactory: FormFieldApiFactory
-  parentPath: readonly string[]
-  mode?: FormValidationMode
-}) {
-  if (params.mode === false) {
-    return []
-  }
-  return await validateFields(
-    params.fields,
-    params.state,
-    params.ctx,
-    params.apiFactory,
-    params.parentPath,
-    params.mode ?? true,
-  )
 }
 
 export type FormFieldApiFactory = (path: readonly string[], field?: FormField) => FormFieldApi
@@ -473,117 +414,6 @@ function buildFieldsOutput(
   return output
 }
 
-async function validateFields(
-  fields: readonly FormField[],
-  state: FormObject,
-  ctx: FormContextData,
-  apiFactory: FormFieldApiFactory,
-  parentPath: readonly string[],
-  mode: FormValidationMode,
-) {
-  const errors: FormSubmitError[] = []
-
-  for (const field of fields) {
-    if (field.ignore === true) {
-      continue
-    }
-    const fieldInstance = createFormFieldInstance(field)
-    if (fieldInstance.state.is('stateless')) {
-      continue
-    }
-    if (isFlatPassthroughField(field)) {
-      errors.push(
-        ...(await validateFields(getChildFields(field), state, ctx, apiFactory, parentPath, mode)),
-      )
-      continue
-    }
-
-    const path = fieldPath(parentPath, field)
-    const api = apiFactory(path, field)
-    const params = callbackParams({
-      api,
-      ctx,
-      field,
-      parentPath,
-      state,
-    })
-    if (!shouldRenderField(field, params)) {
-      continue
-    }
-
-    if (isObjectContainerField(field)) {
-      errors.push(
-        ...(await validateFields(getChildFields(field), state, ctx, apiFactory, path, mode)),
-      )
-      continue
-    }
-
-    if (isPrimitiveArrayField(field)) {
-      errors.push(
-        ...(await validatePrimitiveArrayItems(
-          field,
-          getPathValue(state, path),
-          state,
-          ctx,
-          apiFactory,
-          path,
-          mode,
-        )),
-      )
-    }
-
-    if (isArrayField(field)) {
-      const value = getPathValue(state, path)
-      if (Array.isArray(value)) {
-        for (const index of value.keys()) {
-          errors.push(
-            ...(await validateFields(
-              getArrayItemFields(field, isRecord(value[index]) ? value[index] : {}),
-              state,
-              ctx,
-              apiFactory,
-              [...path, String(index)],
-              mode,
-            )),
-          )
-        }
-      }
-      continue
-    }
-
-    if (fieldInstance.type.is('matrix')) {
-      for (const row of getMatrixRows(field)) {
-        errors.push(
-          ...(await validateFields(
-            getChildFields(field),
-            state,
-            ctx,
-            apiFactory,
-            [...path, row],
-            mode,
-          )),
-        )
-      }
-      continue
-    }
-
-    const value = getPathValue(state, path)
-    const required = mode !== 'rules' && resolveRequired(field, params)
-    if (required && isEmptyValue(value)) {
-      errors.push({
-        message: resolveRequiredMessage(field),
-        path: path.join('.'),
-      })
-    }
-
-    if (mode !== 'required') {
-      errors.push(...(await validateFieldRules(field, value, params, path)))
-    }
-  }
-
-  return errors
-}
-
 function collectFieldPaths(
   fields: readonly FormField[],
   parentPath: readonly string[],
@@ -692,43 +522,6 @@ function buildPrimitiveArrayOutput(
     })
     return [applyOutputTransform(itemField, item, itemParams)]
   })
-}
-
-async function validatePrimitiveArrayItems(
-  field: FormField,
-  value: FormValue,
-  state: FormObject,
-  ctx: FormContextData,
-  apiFactory: FormFieldApiFactory,
-  path: readonly string[],
-  mode: FormValidationMode,
-) {
-  const errors: FormSubmitError[] = []
-  if (!Array.isArray(value)) {
-    return errors
-  }
-  for (const [index, item] of value.entries()) {
-    const itemField = getPrimitiveArrayItemField(field, index)
-    if (!itemField) {
-      continue
-    }
-    const itemPath = [...path, String(index)]
-    const itemParams = callbackParams({
-      api: apiFactory(itemPath, itemField),
-      ctx,
-      field: itemField,
-      parentPath: path,
-      state,
-    })
-    if (mode !== 'rules' && resolveRequired(itemField, itemParams) && isEmptyValue(item)) {
-      errors.push({ message: resolveRequiredMessage(itemField), path: itemPath.join('.') })
-    }
-    if (mode !== 'required') {
-      // oxlint-disable-next-line no-await-in-loop -- item rules run in order so messages stay index-aligned
-      errors.push(...(await validateFieldRules(itemField, item, itemParams, itemPath)))
-    }
-  }
-  return errors
 }
 
 export function readStaticFieldProp(field: FormField, name: string): FormValue {
@@ -877,61 +670,6 @@ export function resolveRequiredMessage(
     return message
   }
   return fallback
-}
-
-async function validateFieldRules(
-  field: FormField,
-  value: FormValue,
-  params: FormFieldCallbackParams,
-  path: readonly string[],
-) {
-  const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
-  if (!isRecord(validation)) {
-    return []
-  }
-  const rules = Object.getOwnPropertyDescriptor(validation, 'rules')?.value
-  if (!Array.isArray(rules)) {
-    return []
-  }
-
-  const errors: FormSubmitError[] = []
-  for (const rule of rules) {
-    if (!isRecord(rule)) {
-      continue
-    }
-    const validate = Object.getOwnPropertyDescriptor(rule, 'validate')?.value
-    if (!isFunction(validate)) {
-      continue
-    }
-
-    const result = await validate({
-      ...params,
-      api: params.api,
-    })
-
-    if (result === true || result === null || isUndefined(result)) {
-      continue
-    }
-
-    errors.push({
-      message: isString(result) ? result : resolveRuleMessage(rule, value),
-      path: path.join('.'),
-    })
-  }
-
-  return errors
-}
-
-function resolveRuleMessage(rule: FormObject, _value: FormValue) {
-  const message = Object.getOwnPropertyDescriptor(rule, 'message')?.value
-  if (isFunction(message)) {
-    return String(message())
-  }
-  if (isString(message) || isNumber(message)) {
-    return String(message)
-  }
-  const name = Object.getOwnPropertyDescriptor(rule, 'name')?.value
-  return isString(name) ? `Invalid value for ${name}.` : 'Invalid value.'
 }
 
 export function isEmptyValue(value: FormValue) {
