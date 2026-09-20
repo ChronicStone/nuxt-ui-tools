@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import UButton from '@nuxt/ui/components/Button.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, nextTick, ref, watch } from 'vue'
-
-import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { isNumber } from '../../../shared/utils/predicate'
 import { useDataListUi } from '../../composables/use-data-list-ui'
@@ -15,11 +11,8 @@ import type {
   DataListContentUi,
   DataListControlSize,
 } from '../../types'
-import {
-  mergeDataListUiClass,
-  resolveDataListContentShellClass,
-  resolveDataListControlGeometry,
-} from '../../utils'
+import { mergeDataListUiClass, resolveDataListContentShellClass } from '../../utils'
+import DataListErrorState from './data-list-error-state.vue'
 import DataListGrid from './data-list-grid.vue'
 import DataListTable from './data-list-table.vue'
 
@@ -36,7 +29,6 @@ const props = withDefaults(
 )
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
-const { t } = useUiToolsLocale()
 const viewport = ref<HTMLElement | null>(null)
 provideDataListViewport(viewport)
 
@@ -44,9 +36,11 @@ const rows = computed(() => internals.queryContent.data.value.rows)
 const loading = computed(
   () =>
     internals.queryContent.status.value.isBooting ||
-    (internals.queryContent.status.value.isPending && rows.value.length === 0),
+    ((internals.queryContent.status.value.isPending ||
+      internals.queryContent.status.value.isFetching) &&
+      rows.value.length === 0),
 )
-const error = computed(() => (rows.value.length ? null : internals.queryContent.error.value))
+const error = computed(() => internals.queryContent.error.value)
 const empty = computed(() => !loading.value && !error.value && rows.value.length === 0)
 const hasActiveQuery = computed(
   () => internals.filters.hasActiveSearch.value || internals.filters.hasActiveUiFilters.value,
@@ -73,7 +67,6 @@ const rootUi = computed(() => dataListUi.ui.value.content?.ui)
 const resolvedSize = computed(
   () => props.size ?? dataListUi.ui.value.content?.size ?? dataListUi.controlSize.value,
 )
-const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.value))
 const shellClass = computed(() =>
   resolveDataListContentShellClass({
     layout: internals.controls.tableLayout.value,
@@ -128,81 +121,13 @@ watch(
       :name="$slots['initial-loading'] ? 'initial-loading' : 'loading'"
       :layout="internals.controls.tableLayout.value"
     />
-    <slot v-else-if="error" name="error" :error="error" :retry="refresh">
-      <div
-        :class="
-          mergeDataListUiClass(
-            'grid min-h-64 place-items-center px-4 py-10 text-center',
-            rootUi?.error,
-            ui?.error,
-          )
-        "
-      >
-        <div
-          :class="
-            mergeDataListUiClass(
-              `flex max-w-md items-start text-left ${geometry.toolbarGap}`,
-              rootUi?.errorBody,
-              ui?.errorBody,
-            )
-          "
-        >
-          <span
-            :class="
-              mergeDataListUiClass(
-                'grid size-9 shrink-0 place-items-center rounded-md bg-error/10 text-error',
-                rootUi?.errorIcon,
-                ui?.errorIcon,
-              )
-            "
-          >
-            <UIcon name="i-lucide-cloud-alert" class="size-4" />
-          </span>
-          <div
-            :class="
-              mergeDataListUiClass(
-                `min-w-0 flex-1 ${geometry.text}`,
-                rootUi?.errorCopy,
-                ui?.errorCopy,
-              )
-            "
-          >
-            <div
-              :class="
-                mergeDataListUiClass(
-                  'font-medium text-highlighted',
-                  rootUi?.errorTitle,
-                  ui?.errorTitle,
-                )
-              "
-            >
-              {{ t('table.states.gridError.title') }}
-            </div>
-            <p
-              :class="
-                mergeDataListUiClass(
-                  'mt-0.5 leading-5 text-muted',
-                  rootUi?.errorDescription,
-                  ui?.errorDescription,
-                )
-              "
-            >
-              {{ t('table.states.gridError.description') }}
-            </p>
-            <UButton
-              color="neutral"
-              variant="soft"
-              :size="resolvedSize"
-              icon="i-lucide-refresh-cw"
-              class="mt-3"
-              :ui="{ base: mergeDataListUiClass(rootUi?.retry, ui?.retry) }"
-              @click="refresh"
-            >
-              {{ t('table.states.gridError.action') }}
-            </UButton>
-          </div>
-        </div>
-      </div>
+    <slot
+      v-else-if="error && internals.controls.tableLayout.value === 'grid'"
+      name="error"
+      :error="error"
+      :retry="refresh"
+    >
+      <DataListErrorState min-height="16rem" :size="resolvedSize" :ui="ui" @retry="refresh" />
     </slot>
     <slot
       v-else-if="empty && $slots.empty"
@@ -233,6 +158,9 @@ watch(
       >
         <slot v-if="internals.controls.tableLayout.value === 'table'" name="table" :rows="rows">
           <DataListTable :size="resolvedSize" :fill="fit !== 'content'" class="min-h-0 flex-1">
+            <template v-if="$slots.error" #error="scope">
+              <slot name="error" v-bind="scope" />
+            </template>
             <template #empty>
               <slot name="empty-table">
                 <slot

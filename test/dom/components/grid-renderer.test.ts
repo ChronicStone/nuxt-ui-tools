@@ -105,6 +105,26 @@ describe('grid renderer part', () => {
     expect(retry.text()).toContain('Réessayer')
   })
 
+  it('replaces stale cards with the error state while preserving successful page data', async () => {
+    let fail = false
+    harness = await mountLoaded({
+      query: { l: 'grid' },
+      render: () => h(GridRenderer),
+      schema: flowSchema({ embeddedFacets: true, fail: () => fail }),
+    })
+    expect(harness.wrapper.findAll('.nut-dl-grid__item')).toHaveLength(60)
+
+    fail = true
+    harness.internals.filters.searchQuery.value = 'replacement request'
+    await harness.until(() => Boolean(must(harness).internals.queryContent.error.value))
+
+    expect(harness.wrapper.find('.nut-dl-grid__state').text()).toContain(
+      'Impossible de charger cette grille',
+    )
+    expect(harness.wrapper.findAll('.nut-dl-grid__item')).toHaveLength(0)
+    expect(harness.internals.queryContent.data.value.rowCount).toBe(60)
+  })
+
   it('shows the loading-more footer while cursor pages stream in flow mode', async () => {
     const schema = createAuditSchema({ delay: 60, pageSize: 20, total: 45 })
     must(schema.grid).mode = 'flow'

@@ -35,6 +35,7 @@ import {
   SELECT_COLUMN_ID,
   SELECT_COLUMN_WIDTH,
 } from '../../utils/columns/types'
+import DataListErrorState from '../data-list/data-list-error-state.vue'
 import TableCell from './table-cell'
 import TableColumnHeader from './table-column-header.vue'
 import TableEmptyState from './table-empty-state.vue'
@@ -77,13 +78,20 @@ let rowMountFrame = 0
 const isFirstLoad = computed(
   () =>
     status.value.isBooting ||
-    (status.value.isPending && rows.value.length === 0) ||
+    ((status.value.isPending || status.value.isFetching) && rows.value.length === 0) ||
     (!rowsMounted.value && rows.value.length > 0),
 )
 const refreshing = computed(
   () => rows.value.length > 0 && (status.value.isFetching || status.value.isRefreshing),
 )
-const empty = computed(() => !isFirstLoad.value && rows.value.length === 0)
+const error = computed(() =>
+  rows.value.length === 0 ? internals.queryContent.error.value : null,
+)
+const empty = computed(() => !isFirstLoad.value && !error.value && rows.value.length === 0)
+
+function refresh() {
+  void internals.queryContent.refreshData()()
+}
 
 const resolvedSize = computed(
   () => props.size ?? dataListUi.ui.value.table?.size ?? dataListUi.controlSize.value,
@@ -957,7 +965,16 @@ defineExpose({ resetColumnSizing })
         </tfoot>
       </table>
 
-      <div v-if="empty" class="nut-dl-table__empty sticky left-0 w-full">
+      <div v-if="error" class="nut-dl-table__error sticky left-0 w-full">
+        <slot name="error" :error="error" :retry="refresh">
+          <DataListErrorState
+            :min-height="fill ? 'calc(100% - var(--nut-dl-head-h))' : '16rem'"
+            :size="resolvedSize"
+            @retry="refresh"
+          />
+        </slot>
+      </div>
+      <div v-else-if="empty" class="nut-dl-table__empty sticky left-0 w-full">
         <slot name="empty">
           <TableEmptyState
             :min-height="fill ? 'calc(100% - var(--nut-dl-head-h))' : '16rem'"
