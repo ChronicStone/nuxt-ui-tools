@@ -169,6 +169,8 @@
     "@nuxt/ui": "^4.10.0",
     "@tiptap/y-tiptap": "3.0.9",
     "@types/node": "25.4.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitejs/plugin-vue-jsx": "^5.1.6",
     "@vue/test-utils": "2.5.1",
     "changelogen": "^0.6.2",
     "happy-dom": "20.14.5",

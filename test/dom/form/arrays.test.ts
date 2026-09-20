@@ -37,7 +37,7 @@ describe('array table mutation', () => {
       schema,
     })
 
-    expect(harness.wrapper.findAll('tbody tr')).toHaveLength(1)
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 1)
     expect(harness.output()).toStrictEqual({
       lines: [{ amountInCents: 1200, description: 'First line', position: 1 }],
     })
