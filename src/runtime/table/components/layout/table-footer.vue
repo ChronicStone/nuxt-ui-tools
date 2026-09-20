@@ -105,6 +105,24 @@ const page = computed({
   get: () => internals.pagination.currentPage.value,
   set: (value: number) => internals.pagination.setPage(value),
 })
+const paginationControls = computed(() => {
+  const pagination = internals.schema.value.pagination
+  if (!pagination || pagination.mode === 'cursor') {
+    return { showPageSizePicker: true, showPagesCount: true, showPagesList: true }
+  }
+  return {
+    showPageSizePicker: pagination.showPageSizePicker ?? true,
+    showPagesCount: pagination.showPagesCount ?? true,
+    showPagesList: pagination.showPagesList ?? true,
+  }
+})
+const showFooter = computed(
+  () =>
+    internals.pagination.mode.value === 'offset' &&
+    (paginationControls.value.showPageSizePicker ||
+      paginationControls.value.showPagesCount ||
+      paginationControls.value.showPagesList),
+)
 
 function formatCount(value: number) {
   return new Intl.NumberFormat(locale.value.code).format(value)
@@ -113,7 +131,7 @@ function formatCount(value: number) {
 
 <template>
   <footer
-    v-if="internals.pagination.mode.value === 'offset'"
+    v-if="showFooter"
     :class="
       mergeDataListUiClass(
         `nut-dl-footer flex flex-wrap items-center gap-x-3 gap-y-2 text-muted ${geometry.footer}`,
@@ -132,6 +150,7 @@ function formatCount(value: number) {
       "
     >
       <slot
+        v-if="paginationControls.showPagesCount"
         name="selected-count"
         :selected="internals.selection.selectedCount.value"
         :total="total"
@@ -153,7 +172,7 @@ function formatCount(value: number) {
       </slot>
 
       <slot
-        v-if="!compact && !booting"
+        v-if="paginationControls.showPageSizePicker && !compact && !booting"
         name="page-size"
         :page-size="internals.pagination.pageSize.value"
         :options="internals.pagination.pageSizeOptions.value"
@@ -194,6 +213,7 @@ function formatCount(value: number) {
     </div>
 
     <div
+      v-if="paginationControls.showPagesList"
       :class="
         mergeDataListUiClass(
           `nut-dl-footer__pages ml-auto flex items-center ${geometry.toolbarGap}`,

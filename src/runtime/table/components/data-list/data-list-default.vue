@@ -16,6 +16,7 @@ import DataListPagination from './data-list-pagination.vue'
 import DataListRefresh from './data-list-refresh.vue'
 import DataListSearch from './data-list-search.vue'
 import DataListSelectionActions from './data-list-selection-actions.vue'
+import DataListSortMenu from './data-list-sort-menu.vue'
 
 const props = defineProps<{
   title?: string
@@ -29,6 +30,7 @@ const titleText = computed(() => props.title ?? humanizeKey(internals.schema.val
 const contentHeight = computed(() => props.height ?? '36rem')
 const rootUi = computed(() => dataListUi.ui.value.default?.ui)
 const geometry = computed(() => resolveDataListControlGeometry(dataListUi.controlSize.value))
+const controls = internals.controls.headerControls
 
 function humanizeKey(value: string) {
   return (
@@ -89,9 +91,9 @@ function humanizeKey(value: string) {
           "
         >
           <DataListSearch />
-          <DataListFilterTags show-add show-clear />
-          <DataListActionsDropdown v-if="!$slots.actions" />
-          <slot name="actions" />
+          <DataListFilterTags v-if="controls.filters" show-add show-clear />
+          <DataListActionsDropdown v-if="controls.actions && !$slots.actions" />
+          <slot v-if="controls.actions" name="actions" />
         </div>
         <div
           :class="
@@ -102,10 +104,11 @@ function humanizeKey(value: string) {
             )
           "
         >
-          <DataListFilterPanel />
-          <DataListColumnPanel />
-          <DataListRefresh />
-          <DataListLayoutSwitch />
+          <DataListSortMenu v-if="controls.sort" />
+          <DataListFilterPanel v-if="controls.filters" />
+          <DataListColumnPanel v-if="controls.columns" />
+          <DataListRefresh v-if="controls.refresh" />
+          <DataListLayoutSwitch v-if="controls.layout" />
         </div>
       </div>
     </header>

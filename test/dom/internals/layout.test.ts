@@ -69,4 +69,42 @@ describe('table layout', () => {
     expect(harness.internals.controls.columnsPanelOpen.value).toBeTruthy()
     expect(harness.internals.controls.columnsPanelSearch.value).toBe('pays')
   })
+
+  it('resolves schema controls by breakpoint and active layout', async () => {
+    harness = await mountLoaded({
+      breakpoint: 'sm',
+      schema: createAccountsSchema({
+        controls: {
+          actions: false,
+          columns: { grid: false, table: true },
+          filters: 'false md:true',
+          layout: () => ({ grid: false, table: true }),
+          refresh: 'true lg:false',
+          sort: { grid: true, table: false },
+        },
+      }),
+    })
+
+    expect(harness.internals.controls.headerControls.value).toStrictEqual({
+      actions: false,
+      columns: true,
+      filters: false,
+      layout: true,
+      refresh: true,
+      sort: false,
+    })
+
+    harness.internals.controls.setTableLayout('grid')
+    setBreakpoint('xl')
+    await harness.flush()
+
+    expect(harness.internals.controls.headerControls.value).toStrictEqual({
+      actions: false,
+      columns: false,
+      filters: true,
+      layout: false,
+      refresh: false,
+      sort: true,
+    })
+  })
 })

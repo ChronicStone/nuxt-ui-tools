@@ -1,11 +1,7 @@
 import { h } from 'vue'
 
-import { defineTableSchema } from '#ui-tools/table/schema'
-import type {
-  TableCursorPageResult,
-  TableQueryDefinition,
-  TableSummariesSchema,
-} from '#ui-tools/table/types'
+import { defineTableSchema, tableSource } from '#ui-tools/table'
+import type { TableControlsSchema, TableSummariesSchema } from '#ui-tools/table/types'
 
 import { must } from '../../helpers/must'
 
@@ -57,6 +53,7 @@ export interface AccountsSchemaOptions {
   panelFilters?: boolean
   statusDefault?: AccountStatus[]
   fail?: boolean
+  controls?: TableControlsSchema
 }
 
 export const bulkActionCalls: string[] = []
@@ -64,6 +61,7 @@ export const bulkActionCalls: string[] = []
 export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
   const rows = options.rows ?? createAccounts(60)
   return defineTableSchema({
+    controls: options.controls,
     defaultLayout: 'table',
     filters: {
       search: { fields: ['name', 'legalEntity'], placeholder: 'Rechercher un compte…' },
@@ -153,9 +151,9 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       mode: options.selection?.mode ?? 'auto',
       scope: options.selection?.scope ?? 'all',
     },
-    source: {
+    source: tableSource({
       mode: 'client',
-      query: (context): TableQueryDefinition<AccountRow[]> => ({
+      query: (context) => ({
         queryFn: async () => {
           options.onQuery?.(context)
           if (options.delay) {
@@ -168,7 +166,7 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
         },
         queryKey: ['accounts', rows.length, options.fail ? 'fail' : 'ok'],
       }),
-    },
+    }),
     table: {
       defaultSorting: { dir: 'asc', key: 'name' },
       enabled: options.tableEnabled ?? true,
@@ -310,9 +308,9 @@ export function createAuditSchema(
     },
     pagination: { count: 'exact', mode: 'cursor', pageSize },
     rowKey: 'id',
-    source: {
+    source: tableSource({
       mode: 'remote',
-      query: (context): TableQueryDefinition<TableCursorPageResult<AuditRow>> => ({
+      query: (context) => ({
         queryFn: async () => {
           const cursor = context.pagination.mode === 'cursor' ? context.pagination.cursor : null
           options.onPage?.(cursor)
@@ -339,7 +337,7 @@ export function createAuditSchema(
           context.search.value,
         ],
       }),
-    },
+    }),
     table: {
       columns: (column) => [
         column.field('action', { label: 'Action', width: 160 }),

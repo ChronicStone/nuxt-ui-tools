@@ -128,6 +128,20 @@ describe('TableFooter desktop', () => {
     harness = await mountFooter({ schema: createAuditSchema() })
     expect(harness.wrapper.find('footer').exists()).toBeFalsy()
   })
+
+  it('honors the schema pagination visibility flags', async () => {
+    harness = await mountFooter({
+      schema: createAccountsSchema({
+        pagination: {
+          showPageSizePicker: false,
+          showPagesCount: false,
+          showPagesList: false,
+        },
+      }),
+    })
+
+    expect(harness.wrapper.find('footer').exists()).toBeFalsy()
+  })
 })
 
 describe('TableFooter compact', () => {

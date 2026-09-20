@@ -24,7 +24,7 @@ export type TableLayoutControl<TLayout extends TableLayout = TableLayout> =
   | boolean
   | string
   | Partial<Record<TLayout, boolean | string>>
-  | (() => boolean | Partial<Record<TLayout, boolean | string>>)
+  | (() => boolean | string | Partial<Record<TLayout, boolean | string>>)
 
 export interface TableControlsSchema {
   refresh?: TableLayoutControl
