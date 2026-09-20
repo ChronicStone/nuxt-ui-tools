@@ -9,6 +9,10 @@
  */
 import type { Router, LocationQuery } from 'vue-router'
 
+import { isString } from '#ui-tools/shared/utils/predicate'
+
+import { isNullish } from '../shared/utils/predicate'
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -28,7 +32,7 @@ export interface QueryStateClientOptions {
   defaultHistoryMode?: HistoryMode
 }
 
-type PendingUpdate = {
+interface PendingUpdate {
   key: string
   value: string | null // null = remove from URL
   historyMode: HistoryMode
@@ -52,12 +56,12 @@ export class QueryStateClient {
 
   // Devtools
   private _devtoolsListeners = new Set<() => void>()
-  private _mutationLog: Array<{
+  private _mutationLog: {
     timestamp: number
     key: string
     value: string | null
     historyMode: HistoryMode
-  }> = []
+  }[] = []
 
   /** Create a query-state client backed by the provided router. */
   constructor(options: QueryStateClientOptions) {
@@ -83,8 +87,15 @@ export class QueryStateClient {
   /** Read directly from the current route query. */
   private readFromRoute(key: string): string | null {
     const value = this.router.currentRoute.value.query[key]
-    if (value == null) return null
-    return Array.isArray(value) ? (value[0] as string | null) : (value as string)
+    if (isNullish(value)) {
+      return null
+    }
+    if (Array.isArray(value)) {
+      // SAFETY: vue-router query arrays contain only strings or null values.
+      return value[0] ?? null
+    }
+    // SAFETY: vue-router LocationQueryScalar is a string or null at this boundary.
+    return isString(value) ? value : null
   }
 
   // ---------------------------------------------------------------------------
@@ -98,8 +109,8 @@ export class QueryStateClient {
 
     const mode = historyMode ?? this.defaultHistoryMode
 
-    this.pendingUpdates.push({ key, value, historyMode: mode })
-    this._mutationLog.push({ timestamp: Date.now(), key, value, historyMode: mode })
+    this.pendingUpdates.push({ historyMode: mode, key, value })
+    this._mutationLog.push({ historyMode: mode, key, timestamp: Date.now(), value })
 
     this.scheduleFlush()
 
@@ -112,18 +123,18 @@ export class QueryStateClient {
   }
 
   /** Queue multiple param updates as a single batch. */
-  setBatch(updates: Array<{ key: string; value: string | null }>, historyMode?: HistoryMode): void {
+  setBatch(updates: { key: string; value: string | null }[], historyMode?: HistoryMode): void {
     const mode = historyMode ?? this.defaultHistoryMode
 
     const now = Date.now()
     for (const update of updates) {
       this.cache.set(update.key, update.value)
-      this.pendingUpdates.push({ key: update.key, value: update.value, historyMode: mode })
+      this.pendingUpdates.push({ historyMode: mode, key: update.key, value: update.value })
       this._mutationLog.push({
-        timestamp: now,
-        key: update.key,
-        value: update.value,
         historyMode: mode,
+        key: update.key,
+        timestamp: now,
+        value: update.value,
       })
     }
 
@@ -143,7 +154,9 @@ export class QueryStateClient {
   // ---------------------------------------------------------------------------
 
   private scheduleFlush(): void {
-    if (this.flushScheduled) return
+    if (this.flushScheduled) {
+      return
+    }
     this.flushScheduled = true
 
     // Use queueMicrotask for maximum batching within a single tick
@@ -153,7 +166,9 @@ export class QueryStateClient {
   private flush(): void {
     this.flushScheduled = false
 
-    if (!this.pendingUpdates.length) return
+    if (!this.pendingUpdates.length) {
+      return
+    }
 
     const updates = this.pendingUpdates
     this.pendingUpdates = []
@@ -166,7 +181,7 @@ export class QueryStateClient {
     const nextQuery: LocationQuery = { ...currentQuery }
 
     for (const { key, value } of updates) {
-      if (value == null) {
+      if (isNullish(value)) {
         delete nextQuery[key]
       } else {
         nextQuery[key] = value
@@ -174,7 +189,9 @@ export class QueryStateClient {
     }
 
     // Only navigate if something actually changed
-    if (queryEquals(currentQuery, nextQuery)) return
+    if (queryEquals(currentQuery, nextQuery)) {
+      return
+    }
 
     const navigate = usePush
       ? this.router.push.bind(this.router)
@@ -199,17 +216,18 @@ export class QueryStateClient {
   // ---------------------------------------------------------------------------
 
   syncFromRoute(): void {
-    const query = this.router.currentRoute.value.query
+    const { query } = this.router.currentRoute.value
 
     // Invalidate cache entries that differ from the route
     for (const [key, cached] of this.cache) {
       const routeValue = query[key]
-      const rawRoute =
-        routeValue == null
-          ? null
-          : Array.isArray(routeValue)
-            ? (routeValue[0] as string | null)
-            : (routeValue as string)
+      const rawRoute = isNullish(routeValue)
+        ? null
+        : Array.isArray(routeValue)
+          ? (routeValue[0] ?? null)
+          : isString(routeValue)
+            ? routeValue
+            : null
 
       if (rawRoute !== cached) {
         this.cache.set(key, rawRoute)
@@ -245,17 +263,19 @@ export class QueryStateClient {
   }
 
   private notifyDevtools(): void {
-    for (const fn of this._devtoolsListeners) fn()
+    for (const fn of this._devtoolsListeners) {
+      fn()
+    }
   }
 
   /** Snapshot of all internal state for devtools inspection. */
   __devtools__() {
     return {
       cache: Object.fromEntries(this.cache),
-      pendingUpdates: [...this.pendingUpdates],
-      subscriberCount: this.subscribers.size,
       mutationLog: this._mutationLog.slice(-50), // keep last 50
+      pendingUpdates: [...this.pendingUpdates],
       routeQuery: { ...this.router.currentRoute.value.query },
+      subscriberCount: this.subscribers.size,
     }
   }
 }
@@ -268,10 +288,14 @@ function queryEquals(a: LocationQuery, b: LocationQuery): boolean {
   const aKeys = Object.keys(a)
   const bKeys = Object.keys(b)
 
-  if (aKeys.length !== bKeys.length) return false
+  if (aKeys.length !== bKeys.length) {
+    return false
+  }
 
   for (const key of aKeys) {
-    if (a[key] !== b[key]) return false
+    if (a[key] !== b[key]) {
+      return false
+    }
   }
 
   return true

@@ -7,15 +7,21 @@ export interface FormMatrixRow<TKey extends string = string> {
   label: FormText
 }
 
-export interface FormMatrixField<TContext = {}, TDeps = {}> extends FormStatefulFieldBase<
-  'matrix',
-  object,
-  TContext,
-  TDeps
-> {
+export interface FormMatrixProps {
+  minWidth?: number | string
+  rowHeaderWidth?: number | string
+  bordered?: boolean
+  striped?: boolean
+  hoverable?: boolean
+  compact?: boolean
+}
+
+export interface FormMatrixField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormStatefulFieldBase<'matrix', object, TContext, TDeps, FormMatrixProps> {
   rows: readonly FormMatrixRow[]
   fields: readonly FormField<TContext, TDeps>[]
-  minWidth?: number | string
 }
 
 export type MatrixFieldOutput<TRows extends readonly FormMatrixRow[], TChildren> = {

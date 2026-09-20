@@ -1,39 +1,42 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
-import type { FieldOptionValue, FallbackNever, NullableValue } from '../../types/field-output-utils'
 import type {
-  FormOptionConfig,
-  FormOptionItem,
-  FormOptionValue,
-  FormOptionsSource,
-} from '../../types/options'
+  FieldOptionValue,
+  FieldProps,
+  FallbackNever,
+  NullableValue,
+} from '../../types/field-output-utils'
+import type { FormAnyOptionConfig, FormOptionItem, FormOptionValue } from '../../types/options'
 import type { FormSelectCreateItem } from '../select/types'
 
+export interface FormAutoCompleteProps {
+  multiple?: boolean
+  clearable?: boolean
+  createItem?: FormSelectCreateItem
+}
+
 export interface FormAutoCompleteField<
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
 > extends FormStatefulFieldBase<
   'auto-complete',
   TValue | readonly TValue[] | null,
   TContext,
-  TDeps
+  TDeps,
+  FormAutoCompleteProps
 > {
-  options:
-    | FormOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
-    | FormOptionsSource<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
-  multiple?: boolean
-  clearable?: boolean
-  createItem?: FormSelectCreateItem
+  options: FormAnyOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
 }
 
-type AutoCompleteFieldValue<TField> = TField extends { multiple: true }
-  ? readonly FieldOptionValue<TField>[] | NullableValue
-  : FieldOptionValue<TField> | NullableValue
+type AutoCompleteFieldValue<TField> =
+  FieldProps<TField> extends { multiple: true }
+    ? readonly FieldOptionValue<TField>[] | NullableValue
+    : FieldOptionValue<TField> | NullableValue
 
 export type AutoCompleteFieldOutput<TField> = FallbackNever<
   AutoCompleteFieldValue<TField>,
-  TField extends { multiple: true }
+  FieldProps<TField> extends { multiple: true }
     ? readonly FormOptionValue[] | NullableValue
     : FormOptionValue | NullableValue
 >

@@ -1,4 +1,5 @@
 import type { DeepPrettify, PathToObject, UnionToIntersection } from '../../shared/types/utils'
+import type { FormValue } from './'
 import type { FormObject } from './utils'
 
 type DependencySource<TDependency> = TDependency extends readonly [infer TSource, infer _TTarget]
@@ -20,25 +21,25 @@ type DependencyTarget<TDependency> = TDependency extends readonly [infer _TSourc
 type PathValue<TSource, TPath extends string> = TPath extends '$root'
   ? TSource
   : TPath extends `$parent${string}`
-    ? unknown
+    ? FormValue
     : TPath extends `${infer THead}.${infer TTail}`
       ? THead extends keyof TSource
         ? PathValue<TSource[THead], TTail>
-        : unknown
+        : FormValue
       : TPath extends keyof TSource
         ? TSource[TPath]
-        : unknown
+        : FormValue
 
 type DependencyObject<TDependency, TState> =
   DependencyTarget<TDependency> extends infer TTarget
     ? TTarget extends string
       ? PathToObject<TTarget, PathValue<TState, DependencySource<TDependency>>>
-      : {}
-    : {}
+      : NonNullable<unknown>
+    : NonNullable<unknown>
 
-type DependenciesValue<TDependencies, TState> = TDependencies extends readonly unknown[]
+type DependenciesValue<TDependencies, TState> = TDependencies extends readonly FormValue[]
   ? UnionToIntersection<DependencyObject<TDependencies[number], TState>>
-  : {}
+  : NonNullable<unknown>
 
 /**
  * Extracts the `deps` object made available to callbacks for a single field.
@@ -60,4 +61,4 @@ export type ExtractFormFieldDependencies<TField, TState = FormObject> = TField e
   readonly dependencies: infer TDependencies
 }
   ? DeepPrettify<DependenciesValue<TDependencies, TState>>
-  : {}
+  : NonNullable<unknown>

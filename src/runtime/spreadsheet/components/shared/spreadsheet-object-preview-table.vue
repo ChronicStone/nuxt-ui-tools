@@ -1,0 +1,77 @@
+<script setup lang="ts">
+import UTable from '@nuxt/ui/components/Table.vue'
+import { computed } from 'vue'
+
+import { isNullish } from '../../../shared/utils/predicate'
+import type { SpreadsheetRecord } from '../../types'
+import { isSpreadsheetRecord } from '../../utils/object'
+
+function flattenRecord(value: SpreadsheetRecord, prefix = ''): Record<string, string> {
+  return Object.entries(value).reduce<Record<string, string>>((acc, [key, nextValue]) => {
+    const nextKey = prefix ? `${prefix}.${key}` : key
+    if (Array.isArray(nextValue)) {
+      return {
+        ...acc,
+        [nextKey]: nextValue.join(', '),
+      }
+    }
+
+    if (isSpreadsheetRecord(nextValue)) {
+      return {
+        ...acc,
+        ...flattenRecord(nextValue, nextKey),
+      }
+    }
+
+    return {
+      ...acc,
+      [nextKey]: isNullish(nextValue) ? '' : String(nextValue),
+    }
+  }, {})
+}
+
+const props = defineProps<{
+  rows: readonly SpreadsheetRecord[]
+}>()
+
+const flattenedRows = computed(() =>
+  props.rows.map((row, index) => ({
+    __rowLabel: index + 1,
+    ...flattenRecord(row),
+  })),
+)
+
+const columnKeys = computed(() => {
+  const keys = new Set<string>()
+  for (const row of flattenedRows.value) {
+    for (const key of Object.keys(row)) {
+      if (key === '__rowLabel') {
+        continue
+      }
+      keys.add(key)
+    }
+  }
+
+  return [...keys]
+})
+
+const columns = computed(() => [
+  {
+    accessorKey: '__rowLabel',
+    header: '#',
+  },
+  ...columnKeys.value.map((key) => ({
+    accessorKey: key,
+    header: key,
+  })),
+])
+</script>
+
+<template>
+  <UTable
+    :data="flattenedRows"
+    :columns="columns"
+    sticky="header"
+    class="border-t border-default/70"
+  />
+</template>

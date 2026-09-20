@@ -1,7 +1,9 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
+import { isBoolean, isNumber, isString, isNullish } from '../../shared/utils/predicate'
 import type {
   TableFilterOptionEntry,
   TableFilterOperator,
@@ -21,6 +23,7 @@ import {
   resolveTableFilterDefaultRules,
   resolveFilterOptionEntries,
 } from '../utils'
+import type { FilterPreviewOptionEntry } from '../utils/filters/preview'
 import type { UseTableDataReturn } from './use-table-data'
 import { useTableSearch } from './use-table-search'
 import type { useTableState } from './use-table-state'
@@ -34,8 +37,8 @@ export interface UseTableFiltersParams {
 export function useTableFilters(params: UseTableFiltersParams) {
   const { t } = useUiToolsLocale()
   const search = useTableSearch({
-    schema: params.schema,
     queryState: params.state.queryState,
+    schema: params.schema,
   })
 
   const definitions = computed<TableUiFilterDefinition[]>(
@@ -49,8 +52,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
   )
   const activeUiFilters = computed<TableQueryStateFilterRule[]>(() =>
     resolveTableActiveFilterRules({
-      rules: effectiveUiFilters.value,
       definitions: definitions.value,
+      rules: effectiveUiFilters.value,
     }),
   )
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
@@ -78,7 +81,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
   function getFilterOptionEntries(input: {
     key: string
     entries?: TableFilterOptionEntry[]
-    facetCounts?: Array<{ value: string | number | boolean; count: number }>
+    facetCounts?: { value: string | number | boolean; count: number }[]
   }) {
     const definition = getDefinition({ key: input.key })
 
@@ -89,49 +92,55 @@ export function useTableFilters(params: UseTableFiltersParams) {
     const rule = getFilterState({ key: input.key })
     const selectedValues = Array.isArray(rule?.value)
       ? rule.value
-      : rule?.value != null
-        ? [rule.value]
-        : []
+      : isNullish(rule?.value)
+        ? []
+        : [rule.value]
 
     return flattenFilterOptionEntries(
       resolveFilterOptionEntries({
         definition,
-        rows: [],
-        options: input.entries,
-        facetCounts: input.facetCounts,
-        selectedValues,
         deriveCounts: false,
+        facetCounts: input.facetCounts,
+        options: input.entries,
+        rows: [],
+        selectedValues,
       }),
     ).filter(
-      (entry): entry is typeof entry & { value: string | number | boolean } => entry.value != null,
+      (entry): entry is typeof entry & { value: string | number | boolean } =>
+        !isNullish(entry.value),
     )
   }
 
-  function getFilterPreview(input: {
-    key: string
-    entries?: Array<{ label: string; value: string | number | boolean }>
-  }) {
+  function getFilterPreview(input: { key: string; entries?: FilterPreviewOptionEntry[] }) {
     const definition = getDefinition({ key: input.key })
 
     if (!definition) {
-      return buildFilterPreview({
-        definition: {
-          kind: 'text',
-          key: input.key,
-          label: input.key,
-        },
-      })
+      return {
+        ...buildFilterPreview({
+          definition: {
+            key: input.key,
+            kind: 'text',
+            label: input.key,
+          },
+        }),
+        active: false,
+        dirty: false,
+      }
     }
 
     const preview = buildFilterPreview({
       definition,
-      rule: getFilterState({ key: input.key }),
       optionEntries: input.entries,
+      rule: getFilterState({ key: input.key }),
     })
+
+    const rule = getFilterState({ key: input.key })
+    const hasValue = Boolean(preview.tags?.length) || Boolean(preview.summary)
 
     return {
       ...preview,
-      active: getActiveFilterState({ key: input.key }) != null,
+      active: !isNullish(rule) && hasValue,
+      dirty: !isNullish(getActiveFilterState({ key: input.key })),
     }
   }
 
@@ -152,8 +161,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
 
   function getFilterOperatorOptions(input: { key: string }) {
     return getFilterOperators(input.key).map((operator) => ({
-      value: operator,
       label: t(`table.filters.operators.${operator}`),
+      value: operator,
     }))
   }
 
@@ -200,8 +209,8 @@ export function useTableFilters(params: UseTableFiltersParams) {
 
     addFilter(input.key, input.values, {
       operator: resolveActiveOperator({
-        inputOperator: input.operator,
         currentOperator: currentRule?.operator,
+        inputOperator: input.operator,
       }),
     })
   }
@@ -214,25 +223,23 @@ export function useTableFilters(params: UseTableFiltersParams) {
     const currentRule = getFilterState({ key: input.key })
     const currentValues = Array.isArray(currentRule?.value)
       ? currentRule.value.filter(
-          (value: unknown): value is string | number | boolean =>
-            typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean',
+          <TValue>(value: TValue): value is TValue & (string | number | boolean) =>
+            isString(value) || isNumber(value) || isBoolean(value),
         )
-      : currentRule?.value != null
-        ? typeof currentRule.value === 'string' ||
-          typeof currentRule.value === 'number' ||
-          typeof currentRule.value === 'boolean'
+      : isNullish(currentRule?.value)
+        ? []
+        : isString(currentRule.value) || isNumber(currentRule.value) || isBoolean(currentRule.value)
           ? [currentRule.value]
           : []
-        : []
 
-    const nextValues = currentValues.some((value: unknown) => String(value) === String(input.value))
-      ? currentValues.filter((value: unknown) => String(value) !== String(input.value))
+    const nextValues = currentValues.some((value) => String(value) === String(input.value))
+      ? currentValues.filter((value) => String(value) !== String(input.value))
       : [...currentValues, input.value]
 
     setOptionFilterValues({
       key: input.key,
-      values: nextValues,
       operator: input.operator,
+      values: nextValues,
     })
   }
 
@@ -243,15 +250,15 @@ export function useTableFilters(params: UseTableFiltersParams) {
   }) {
     const currentRule = getFilterState({ key: input.key })
 
-    if (input.value == null || input.value === '') {
+    if (isNullish(input.value) || input.value === '') {
       apiRemoveFilter({ key: input.key })
       return
     }
 
     addFilter(input.key, input.value, {
       operator: resolveActiveOperator({
-        inputOperator: input.operator,
         currentOperator: currentRule?.operator,
+        inputOperator: input.operator,
       }),
     })
   }
@@ -265,10 +272,9 @@ export function useTableFilters(params: UseTableFiltersParams) {
     value: TableQueryStateFilterValue,
     options?: { operator?: TableFilterOperator },
   ) {
-    const nextRule: TableQueryStateFilterRule = {
-      key,
-      ...(options?.operator ? { operator: options.operator } : {}),
-      value,
+    const nextRule: TableQueryStateFilterRule = { key, value }
+    if (options?.operator) {
+      nextRule.operator = options.operator
     }
 
     params.state.queryState.resetPagination()
@@ -319,37 +325,37 @@ export function useTableFilters(params: UseTableFiltersParams) {
     params.state.queryState.filters.value = {
       ...params.state.queryState.filters.value,
       ui: mergeTableFilterDefaultRules({
-        rules: input.rules,
         definitions: definitions.value,
+        rules: input.rules,
       }),
     }
   }
 
   return {
-    searchQuery: search.searchQuery,
-    searchPlaceholder: search.searchPlaceholder,
-    hasActiveSearch: search.hasActiveSearch,
+    activeUiFilters,
+    clearAllFilters,
+    clearFilter: apiRemoveFilter,
     definitions,
     effectiveUiFilters,
-    activeUiFilters,
-    hasActiveUiFilters,
-    getDefinition,
-    getFilterState,
     getActiveFilterState,
     getDefaultFilterState,
-    getFilterOptionEntries,
-    getFilterPreview,
+    getDefaultFilterValueForOperator,
+    getDefinition,
+    getFilterLabelText,
     getFilterOperator,
     getFilterOperatorOptions,
-    getDefaultFilterValueForOperator,
+    getFilterOptionEntries,
+    getFilterPreview,
+    getFilterState,
+    hasActiveSearch: search.hasActiveSearch,
+    hasActiveUiFilters,
+    replaceFilters,
+    searchPlaceholder: search.searchPlaceholder,
+    searchQuery: search.searchQuery,
     setFilterOperator,
     setOptionFilterValues,
-    toggleOptionFilterValue,
     setScalarFilterValue,
-    clearFilter: apiRemoveFilter,
-    clearAllFilters,
-    replaceFilters,
-    getFilterLabelText,
+    toggleOptionFilterValue,
   }
 }
 

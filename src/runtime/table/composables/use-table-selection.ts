@@ -1,7 +1,8 @@
-import { computed, ref, watch, type ComputedRef } from 'vue'
+import { computed, ref, watch } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { GenericObject, TableSchemaView } from '../types'
-import { resolveTableRowId } from '../utils'
+import { hasConfiguredTableActions, resolveTableRowId } from '../utils'
 import type { useTableData } from './use-table-data'
 
 export interface UseTableSelectionParams {
@@ -11,25 +12,32 @@ export interface UseTableSelectionParams {
 
 export function useTableSelection(options: UseTableSelectionParams) {
   const selectedKeys = ref<string[]>([])
+  const bulkScope = ref<'selection' | 'all'>('selection')
   const lastTouchedRowId = ref<string | null>(null)
   const pageRows = computed<GenericObject[]>(() => options.queryContent.data.value.rows)
 
   const selectionEnabled = computed(() => {
     const mode =
       options.schema.value.table?.selection ?? options.schema.value.selection?.mode ?? 'auto'
-    return mode !== false
+    if (mode !== 'auto') {
+      return mode
+    }
+
+    return hasConfiguredTableActions(options.schema.value)
   })
   const selectionScope = computed<'page' | 'all'>(() => {
-    if (options.schema.value.source.mode === 'remote') return 'page'
+    if (options.schema.value.source.mode === 'remote') {
+      return 'page'
+    }
     return options.schema.value.selection?.scope ?? 'all'
   })
   const selectionRows = computed<GenericObject[]>(() =>
     selectionScope.value === 'all' ? options.queryContent.selectableRows.value : pageRows.value,
   )
-  const pageRowIds = computed(() => pageRows.value.map((row, index) => getRowId({ row, index })))
+  const pageRowIds = computed(() => pageRows.value.map((row, index) => getRowId({ index, row })))
 
   const scopeRowIds = computed(() =>
-    selectionRows.value.map((row, index) => getRowId({ row, index })),
+    selectionRows.value.map((row, index) => getRowId({ index, row })),
   )
 
   const rowSelection = computed({
@@ -57,16 +65,16 @@ export function useTableSelection(options: UseTableSelectionParams) {
 
   const selectedRows = computed(() =>
     selectionRows.value.filter((row, index) =>
-      selectedKeys.value.includes(getRowId({ row, index })),
+      selectedKeys.value.includes(getRowId({ index, row })),
     ),
   )
 
   function getRowId(params: { row: GenericObject; index?: number }) {
     return String(
       resolveTableRowId({
-        rowKey: options.schema.value.rowKey,
-        row: params.row,
         index: params.index,
+        row: params.row,
+        rowKey: options.schema.value.rowKey,
       }),
     )
   }
@@ -169,7 +177,9 @@ export function useTableSelection(options: UseTableSelectionParams) {
   watch(
     scopeRowIds,
     (rowIds) => {
-      if (!selectedKeys.value.length && !lastTouchedRowId.value) return
+      if (!selectedKeys.value.length && !lastTouchedRowId.value) {
+        return
+      }
 
       const visibleIdSet = new Set(rowIds)
       selectedKeys.value = selectedKeys.value.filter((rowId) => visibleIdSet.has(rowId))
@@ -181,27 +191,39 @@ export function useTableSelection(options: UseTableSelectionParams) {
     { immediate: true },
   )
 
+  function setBulkScope(scope: 'selection' | 'all') {
+    bulkScope.value = scope
+  }
+
+  watch(selectedCount, (count) => {
+    if (count === 0) {
+      bulkScope.value = 'selection'
+    }
+  })
+
   return {
-    selectionEnabled,
-    rowSelection,
-    selectedKeys,
-    selectedRows,
-    selectedCount,
     allSelected,
-    partiallySelected,
-    lastTouchedRowId,
+    bulkScope,
+    clearSelection,
     getRowId,
     isRowSelected,
-    setRowSelection,
-    selectRows,
-    unselectRows,
-    clearSelection,
+    lastTouchedRowId,
+    partiallySelected,
+    rowSelection,
     selectAllRows,
+    selectRows,
+    selectedCount,
+    selectedKeys,
+    selectedRows,
+    selectionEnabled,
+    setBulkScope,
+    setRowSelection,
     toggleAllRows,
     toggleRowSelection,
+    unselectRows,
   }
 }
 
 function uniqueRowIds(rowIds: string[]) {
-  return Array.from(new Set(rowIds))
+  return [...new Set(rowIds)]
 }

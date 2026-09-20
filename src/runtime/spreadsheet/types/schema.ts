@@ -3,6 +3,7 @@ import type { LazyTextValue, NestedPaths } from '#ui-tools/shared/types/utils'
 import type { SpreadsheetColumnsDefinition, SpreadsheetResolvedColumns } from './columns'
 import type { SpreadsheetContextDataFromItems, SpreadsheetContextItem } from './context'
 import type { ExtractSpreadsheetValidationRow, SpreadsheetRowData } from './inference'
+import type { SpreadsheetValue } from './shared'
 import type { SpreadsheetFieldRules, SpreadsheetRuleBuilder } from './validation'
 
 export interface SpreadsheetFileDefinition {
@@ -76,7 +77,7 @@ export type SpreadsheetRelationsDefinition<TRow> = readonly {
 export type SpreadsheetBuildRowDefinition<TContext = unknown, TRow = unknown> = (params: {
   context: TContext
   row: TRow
-}) => unknown | Promise<unknown>
+}) => SpreadsheetValue | Promise<SpreadsheetValue>
 
 export interface SpreadsheetSchema<
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly [],

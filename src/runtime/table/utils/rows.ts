@@ -1,6 +1,7 @@
+import { isObject } from '../../shared/utils/predicate'
 import type { GenericObject, TableRowKey } from '../types'
 
-type PathReadableRecord = Record<string, unknown>
+type PathReadableRecord = import('../../shared/types/utils').GenericObject
 
 export function resolveTableRowId(options: {
   rowKey: TableRowKey<GenericObject>
@@ -10,24 +11,24 @@ export function resolveTableRowId(options: {
   if (Array.isArray(options.rowKey)) {
     return (
       options.rowKey
-        .map((key) => String(getTableRowValue({ row: options.row, path: key }) ?? ''))
+        .map((key) => String(getTableRowValue({ path: key, row: options.row }) ?? ''))
         .join('::') || String(options.index ?? 0)
     )
   }
 
-  return String(getTableRowValue({ row: options.row, path: options.rowKey }) ?? options.index ?? 0)
+  return String(getTableRowValue({ path: options.rowKey, row: options.row }) ?? options.index ?? 0)
 }
 
-export function getTableRowValue(options: { row: unknown; path: string }) {
+export function getTableRowValue<TValue>(options: { row: TValue; path: string }) {
   return options.path.split('.').reduce<unknown>((value, key) => {
     if (!isPathReadableRecord(value)) {
-      return undefined
+      return
     }
 
     return value[key]
   }, options.row)
 }
 
-function isPathReadableRecord(value: unknown): value is PathReadableRecord {
-  return value !== null && typeof value === 'object'
+function isPathReadableRecord<TValue>(value: TValue): value is TValue & PathReadableRecord {
+  return isObject(value)
 }

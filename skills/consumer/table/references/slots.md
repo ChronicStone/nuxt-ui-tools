@@ -2,8 +2,10 @@
 
 `<UiDataList />` is the polished assembled table/grid recipe: it supplies the page shell, toolbar, sensible spacing, content surface, and pagination. Use `<UiDataListRoot>` and public parts when the application owns that layout; the root itself renders no wrapper and only provides behavior, lifecycle, locale, and UI defaults. Both paths use the same table instance and runtime.
 
+Set `size="xs" | "sm" | "md" | "lg" | "xl"` on `UiDataList` or `UiDataListRoot` to choose one scale for the entire composed surface. The root size drives controls, filter editors and popovers, panel spacing, table header/row/cell geometry, result counts, loading/empty/error states, grid actions, selection actions, and pagination. A granular part's own `size` prop still wins for that part. `density="compact" | "default" | "comfortable"` remains a compatibility fallback for callers that do not set `size`; when `size` is present, the five-step size scale is authoritative.
+
 ```vue
-<UiDataListRoot :table="table" density="compact">
+<UiDataListRoot :table="table" size="sm">
   <header class="flex items-center gap-2 border-b p-3">
     <h1 class="mr-auto">Templates</h1>
     <UiDataListSearch />
@@ -37,6 +39,12 @@
 ```
 
 Public parts include search, filter tags, add/clear/panel filters, result count, refresh, column panel, sort menu, layout switch, content, forced table/grid renderers, offset pagination, and cursor infinite loading.
+
+`UiDataListFilterPanel` accepts `mode="panel"` for a raw inline panel and
+`commit-mode="live" | "submit"` for its filter update contract. Action surfaces
+follow the same granular model: `UiDataListActionsDropdown` is the built-in
+dropdown, while `UiDataListActionsToolbar` exposes action definitions and state
+through its slots for custom rendering.
 
 ## Replacing triggers
 
@@ -79,22 +87,26 @@ The `empty` slot receives `layout`, `refresh`, `hasActiveQuery`, and `clearQuery
 
 ## Sizing and density
 
-Root `density` resolves control sizes for all package parts. Override one part without changing the others:
+Root `size` is the universal scale. Override one part without changing the others, either through that component's `size` prop or the root UI config:
 
 ```vue
 <UiDataListRoot
   :table="table"
-  density="compact"
+  size="lg"
   :ui="{
-    search: { size: 'md', width: '20rem' },
-    filterTags: { size: 'xs' },
+    search: { size: 'sm', width: '20rem' },
+    filterTags: { size: 'md' },
+    table: { size: 'xl' },
+    resultCount: { size: 'xs' },
     pagination: { size: 'sm' },
     content: { ui: { root: 'p-3' } },
   }"
 >
 ```
 
-Each public part also accepts a flat Nuxt UI-style `ui` map. Slot names follow the rendered anatomy, so a page can change the search input itself, a trigger, a panel surface, state copy, a grid item, or pagination controls without replacing the component:
+The five root sizes are intentionally granular rather than aliases: `xs`, `sm`, `md`, `lg`, and `xl` each produce distinct table geometry and filter-editor spacing. Use `density` only as the older three-step fallback when a consumer has not adopted root sizing yet.
+
+Each public part also accepts a flat Nuxt UI-style `ui` map. Slot names follow the rendered anatomy, so a page can change the search input itself, a trigger, a panel surface, state copy, a grid item, or pagination controls without replacing the component. `UiDataListContent` is boundary-free by default for granular compositions; the assembled `UiDataList` opts into its single contained table surface, and a custom composition can request `surface="contained"` when it owns that boundary.
 
 ```vue
 <UiDataListSearch :ui="{ root: 'w-64', base: 'text-xs' }" />

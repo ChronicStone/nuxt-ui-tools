@@ -4,6 +4,12 @@ import type { FormOptionValue } from './options'
 export type FormStateMode = 'internal' | 'output'
 export type NullableValue = null
 
+export type FieldProps<TField> = TField extends { readonly props: infer TProps }
+  ? TProps extends (...args: never[]) => infer TResult
+    ? TResult
+    : TProps
+  : NonNullable<unknown>
+
 export type AwaitedValue<TValue> = TValue extends Promise<infer TResolved> ? TResolved : TValue
 
 export type FallbackNever<TValue, TFallback> = [TValue] extends [never] ? TFallback : TValue

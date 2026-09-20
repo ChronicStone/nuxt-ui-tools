@@ -1,11 +1,10 @@
 import { describe, expectTypeOf, it } from 'vitest'
 
-import { defineTableSchema } from '#ui-tools/table/schema'
+import { defineTableSchema, tableSource } from '#ui-tools/table'
 import type {
   ExtractTableContextData,
   ExtractTablePageContextData,
   ExtractTableRow,
-  TableQueryDefinition,
 } from '#ui-tools/table/types'
 
 interface DemoEmployeeRow {
@@ -22,47 +21,29 @@ interface DemoEmployeeListResult {
   rowCount: number
 }
 
-type DemoEmployeeQuery = TableQueryDefinition<DemoEmployeeListResult>
+function getDemoEmployeeList(): DemoEmployeeListResult {
+  return {
+    rowCount: 1,
+    rows: [
+      {
+        email: 'ada@example.com',
+        id: 'user_1',
+        organisation: {
+          id: 'org_1',
+          status: 'active',
+        },
+      },
+    ],
+  }
+}
 
 const schema = defineTableSchema({
-  tableKey: 'users',
-  rowKey: 'id',
-  source: {
-    mode: 'remote',
-    facets: true,
-    query: (ctx) => ({
-      queryKey: ['users', ctx.search.value, ctx.facets],
-      queryFn: async () => ({
-        rows: [
-          {
-            id: 1,
-            name: 'Ada',
-            status: 'active' as const,
-            organisation: {
-              id: 'org_1',
-              status: 'active' as const,
-            },
-          },
-        ],
-        rowCount: 1,
-      }),
-    }),
-  },
   context: [
     {
       key: 'organisationId',
       query: () => ({
+        queryFn: () => 'org_123',
         queryKey: ['organisation'],
-        queryFn: async () => 'org_123' as string,
-      }),
-    },
-  ],
-  pageContext: [
-    {
-      key: 'rowCountLabel',
-      query: ({ rows, context }) => ({
-        queryKey: ['summary', rows.length, context.organisationId],
-        queryFn: async () => `${rows.length}:${context.organisationId}`,
       }),
     },
   ],
@@ -70,33 +51,74 @@ const schema = defineTableSchema({
     search: {
       fields: ['name', 'organisation.status'],
     },
+    static: [
+      {
+        key: 'organisation.id',
+        operator: 'is',
+        value: (context) => {
+          expectTypeOf(context.organisationId).toEqualTypeOf<string>()
+          return context.organisationId
+        },
+      },
+    ],
     ui: (filter) => [
       filter.text('name', {
-        label: 'Name',
         editor: {
-          placeholder: 'Search users',
           inputType: 'search',
+          placeholder: 'Search users',
         },
+        label: 'Name',
       }),
       filter.option('organisation.status', {
-        label: 'Status',
         behavior: {
           defaultOperator: 'isAnyOf',
-        },
-        source: {
-          options: [
-            { label: 'Active', value: 'active' as const },
-            { label: 'Inactive', value: 'inactive' as const },
-          ],
         },
         editor: {
           selection: {
             mode: 'multiple',
           },
         },
+        label: 'Status',
+        source: {
+          options: [
+            { label: 'Active', value: 'active' as const },
+            { label: 'Inactive', value: 'inactive' as const },
+          ],
+        },
       }),
     ],
   },
+  pageContext: [
+    {
+      key: 'rowCountLabel',
+      query: ({ rows, context }) => ({
+        queryFn: () => `${rows.length}:${context.organisationId}`,
+        queryKey: ['summary', rows.length, context.organisationId],
+      }),
+    },
+  ],
+  rowKey: 'id',
+  source: tableSource({
+    facets: true,
+    mode: 'remote',
+    query: (ctx) => ({
+      queryFn: () => ({
+        rowCount: 1,
+        rows: [
+          {
+            id: 1,
+            name: 'Ada',
+            organisation: {
+              id: 'org_1',
+              status: 'active' as const,
+            },
+            status: 'active' as const,
+          },
+        ],
+      }),
+      queryKey: ['users', ctx.search.value, ctx.facets],
+    }),
+  }),
   table: {
     columns: (column) => [
       column.field('name', {
@@ -111,19 +133,20 @@ const schema = defineTableSchema({
       }),
       column.composite('statusSummary', {
         label: 'Status',
-        sortableKey: 'organisation.status',
         render: (params) => {
           expectTypeOf(params.row.organisation.status).toEqualTypeOf<'active'>()
 
           return params.row.organisation.status
         },
+        sortableKey: 'organisation.status',
       }),
     ],
     defaultSorting: {
-      key: 'organisation.status',
       dir: 'desc',
+      key: 'organisation.status',
     },
   },
+  tableKey: 'users',
 })
 
 type ContextData = ExtractTableContextData<typeof schema>
@@ -149,11 +172,11 @@ describe('defineTableSchema inference', () => {
 
   it('exposes optional global facet descriptors on the source query context', () => {
     expectTypeOf<SourceContext['facets']>().toMatchTypeOf<
-      | Array<{
+      | {
           key: string
           mode?: 'exclude-self' | 'include-self'
           limit?: number
-        }>
+        }[]
       | undefined
     >()
   })
@@ -172,28 +195,13 @@ describe('defineTableSchema inference', () => {
 
   it('keeps interface-backed query rows inferred without requiring an index signature', () => {
     const interfaceSchema = defineTableSchema({
-      tableKey: 'demo-users',
       rowKey: 'id',
-      source: {
-        query: () =>
-          ({
-            queryKey: ['demo-users'],
-            queryFn: async () =>
-              ({
-                rows: [
-                  {
-                    id: 'user_1',
-                    email: 'ada@example.com',
-                    organisation: {
-                      id: 'org_1',
-                      status: 'active' as const,
-                    },
-                  },
-                ],
-                rowCount: 1,
-              }) satisfies DemoEmployeeListResult,
-          }) satisfies DemoEmployeeQuery,
-      },
+      source: tableSource({
+        query: () => ({
+          queryFn: getDemoEmployeeList,
+          queryKey: ['demo-users'],
+        }),
+      }),
       table: {
         columns: (column) => [
           column.field('email', {
@@ -207,6 +215,7 @@ describe('defineTableSchema inference', () => {
           }),
         ],
       },
+      tableKey: 'demo-users',
     })
 
     type InterfaceRow = ExtractTableRow<typeof interfaceSchema>

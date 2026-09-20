@@ -3,15 +3,16 @@ import { pathSegments } from './path'
 
 export function createPublicFormApi(runtime: FormRuntime): FormApi {
   return {
-    get: runtime.getValue,
-    set: runtime.setValue,
-    validate: runtime.validate,
-    setError: (path, message) => runtime.setError(pathSegments(path), message),
     clearError: (path) => runtime.clearError(path ? pathSegments(path) : undefined),
     focus: runtime.focusField,
+    get: runtime.getValue,
+    initial: runtime.getInitialValue,
+    reset: runtime.reset,
+    set: runtime.setValue,
+    setError: (path, message, options) => runtime.setError(pathSegments(path), message, options),
     submit: async () => {
       await runtime.submit()
     },
-    reset: runtime.reset,
+    validate: runtime.validate,
   }
 }

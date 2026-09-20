@@ -8,24 +8,24 @@ describe('form field defaults', () => {
   it('initializes every multiple selection field with an empty collection', () => {
     const schema = defineFormSchema({
       fields: [
-        { key: 'checkboxes', type: 'checkbox-group', options: [] },
-        { key: 'cards', type: 'checkbox-card', options: [] },
-        { key: 'switches', type: 'switch-group', options: [] },
-        { key: 'select', type: 'select', multiple: true, options: [] },
-        { key: 'autocomplete', type: 'auto-complete', multiple: true, options: [] },
-        { key: 'tree', type: 'tree', multiple: true, options: [] },
-        { key: 'file', type: 'file', multiple: true },
+        { key: 'checkboxes', options: [], type: 'checkbox-group' },
+        { key: 'cards', options: [], type: 'checkbox-card' },
+        { key: 'switches', options: [], type: 'switch-group' },
+        { key: 'select', options: [], props: { multiple: true }, type: 'select' },
+        { key: 'autocomplete', options: [], props: { multiple: true }, type: 'auto-complete' },
+        { key: 'tree', options: [], props: { multiple: true }, type: 'tree' },
+        { key: 'file', props: { multiple: true }, type: 'file' },
       ],
     })
 
-    expect(buildInitialFormState(schema, {})).toEqual({
-      checkboxes: [],
-      cards: [],
-      switches: [],
-      select: [],
+    expect(buildInitialFormState(schema, {})).toStrictEqual({
       autocomplete: [],
-      tree: [],
+      cards: [],
+      checkboxes: [],
       file: [],
+      select: [],
+      switches: [],
+      tree: [],
     })
   })
 })

@@ -1,7 +1,13 @@
 import type { ComputedRef, Ref } from 'vue'
 
-import type { FormFieldApi } from './api'
-import type { FormSubmitAction, FormSubmitHandler, FormSubmitHandlerResult } from './api'
+import type { FormValue } from './'
+import type {
+  FormErrorOptions,
+  FormFieldApi,
+  FormSubmitAction,
+  FormSubmitHandler,
+  FormSubmitHandlerResult,
+} from './api'
 import type { FormFieldCallbackParams } from './callbacks'
 import type { FormRuntimeContext } from './context'
 import type { FormField } from './field'
@@ -17,7 +23,7 @@ import type { FormValidationError, FormValidationMode, FormValidationOptions } f
  */
 export interface UseFormRuntimeParams {
   /** Authored schema currently rendered by the form. */
-  schema: ComputedRef<unknown>
+  schema: ComputedRef<FormValue>
   /** Optional initial internal state provided by a controller or direct form usage. */
   input?: ComputedRef<FormObject | undefined>
   syncInput?: ComputedRef<boolean | readonly string[]>
@@ -48,7 +54,7 @@ export interface FormRuntimeStep {
  * exposed as top-level consumer API without deliberate design.
  */
 export interface FormRuntime {
-  schema: ComputedRef<unknown>
+  schema: ComputedRef<FormValue>
   state: FormObject
   output: ComputedRef<FormObject>
   dirtyPaths: ComputedRef<readonly string[]>
@@ -67,8 +73,11 @@ export interface FormRuntime {
   isLastStep: ComputedRef<boolean>
   canGoPrevious: ComputedRef<boolean>
   canGoNext: ComputedRef<boolean>
-  getValue: (path: string | readonly string[]) => unknown
-  setValue: (path: string | readonly string[], value: unknown) => void
+  getValue: (path: string | readonly string[]) => FormValue
+  getInitialValue: (path: string | readonly string[]) => FormValue
+  trackEffect: (effect: FormValue) => void
+  settleEffects: () => Promise<void>
+  setValue: (path: string | readonly string[], value: FormValue) => void
   getFieldApi: (path: readonly string[], field?: FormField) => FormFieldApi
   getFieldCallbackParams: (path: readonly string[], field: FormField) => FormFieldCallbackParams
   registerFieldOptions: (path: readonly string[], state: FormOptionRuntimeState) => () => void
@@ -80,7 +89,7 @@ export interface FormRuntime {
   shouldRender: (field: FormField, path: readonly string[]) => boolean
   validate: (options?: FormValidationOptions) => Promise<boolean>
   validateCurrentStep: (options?: FormValidationOptions) => Promise<boolean>
-  setError: (path: string | readonly string[], message: string) => void
+  setError: (path: string | readonly string[], message: string, options?: FormErrorOptions) => void
   clearError: (path?: string | readonly string[]) => void
   focusRequest: Ref<FormFocusRequest | null>
   registerFieldElement: (path: string | readonly string[], element: HTMLElement) => () => void
@@ -89,7 +98,7 @@ export interface FormRuntime {
   clearErrors: () => void
   submitHandler: (submitHandler?: FormSubmitHandler<FormObject>) => Promise<FormSubmitHandlerResult>
   submit: () => Promise<boolean>
-  reset: () => void
+  reset: () => Promise<void>
   nextStep: () => Promise<boolean>
   previousStep: () => Promise<boolean>
   goToStep: (index: number) => Promise<boolean>

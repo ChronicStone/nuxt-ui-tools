@@ -26,19 +26,19 @@ const context = [
     key: 'affiliationGroups',
     query: () =>
       ({
-        queryKey: ['affiliation-groups', 'tc_123'],
-        queryFn: async () =>
+        queryFn: () =>
           [
             {
               id: 'school-level',
-              name: 'School level',
-              slug: 'schoolLevel',
               items: [
                 { id: 'primary', name: 'Primary' },
                 { id: 'secondary', name: 'Secondary' },
               ],
+              name: 'School level',
+              slug: 'schoolLevel',
             },
           ] satisfies readonly DemoAffiliationGroup[],
+        queryKey: ['affiliation-groups', 'tc_123'],
       }) satisfies SpreadsheetQueryDefinition<readonly DemoAffiliationGroup[]>,
   },
 ] satisfies readonly [SpreadsheetContextItem<'affiliationGroups', readonly DemoAffiliationGroup[]>]
@@ -46,72 +46,72 @@ const context = [
 type ContextData = ExtractSpreadsheetContextData<{ context: typeof context }>
 
 const columns = {
-  static: (column) => [
-    column.text('examNameRaw', {
-      required: true,
-      match: {
-        headers: ['Exam name'],
-      },
-    }),
-    column.number('scores.general'),
-  ],
   dynamic: ({ dynamic }) => [
     dynamic.optionGroups({
-      key: 'affiliations',
-      source: [
-        {
-          id: 'school-level',
-          name: 'School level',
-          slug: 'schoolLevel',
-          items: [
-            { id: 'primary', name: 'Primary' },
-            { id: 'secondary', name: 'Secondary' },
-          ],
-        },
-      ] satisfies readonly DemoAffiliationGroup[],
-      itemKey: (group) => group.id,
-      itemLabel: (group) => group.name,
-      targetKey: (group) => group.slug,
       header: {
         strategy: 'template',
         template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
       },
+      itemKey: (group) => group.id,
+      itemLabel: (group) => group.name,
+      key: 'affiliations',
       options: (group) =>
         group.items.map((item) => ({
           label: item.name,
           value: item.id,
         })),
-      values: {
-        mode: 'csv',
-        separator: ',',
-        resolve: 'label',
-      },
       output: {
         into: 'affiliations',
       },
+      source: [
+        {
+          id: 'school-level',
+          items: [
+            { id: 'primary', name: 'Primary' },
+            { id: 'secondary', name: 'Secondary' },
+          ],
+          name: 'School level',
+          slug: 'schoolLevel',
+        },
+      ] satisfies readonly DemoAffiliationGroup[],
+      targetKey: (group) => group.slug,
+      values: {
+        mode: 'csv',
+        resolve: 'label',
+        separator: ',',
+      },
     }),
+  ],
+  static: (column) => [
+    column.text('examNameRaw', {
+      match: {
+        headers: ['Exam name'],
+      },
+      required: true,
+    }),
+    column.number('scores.general'),
   ],
 } satisfies SpreadsheetColumnsDefinition<ContextData>
 
 const schema = defineSpreadsheetSchema({
-  importKey: 'assessment.results',
-  context,
   columns,
+  context,
+  importKey: 'assessment.results',
 })
 
 const normalized = normalizeSpreadsheetSchema(schema)
 
-describe('normalizeSpreadsheetSchema', () => {
+describe(normalizeSpreadsheetSchema, () => {
   it('resolves static columns into a runtime-ready array', () => {
     expect(normalized.columns.static).toHaveLength(2)
     expect(normalized.columns.static[0]).toMatchObject({
-      kind: 'text',
       key: 'examNameRaw',
+      kind: 'text',
       required: true,
     })
     expect(normalized.columns.static[1]).toMatchObject({
-      kind: 'number',
       key: 'scores.general',
+      kind: 'number',
     })
   })
 
@@ -121,9 +121,9 @@ describe('normalizeSpreadsheetSchema', () => {
         affiliationGroups: [
           {
             id: 'school-level',
+            items: [{ id: 'primary', name: 'Primary' }],
             name: 'School level',
             slug: 'schoolLevel',
-            items: [{ id: 'primary', name: 'Primary' }],
           },
         ],
       },
@@ -131,9 +131,9 @@ describe('normalizeSpreadsheetSchema', () => {
         affiliationGroups: [
           {
             id: 'school-level',
+            items: [{ id: 'primary', name: 'Primary' }],
             name: 'School level',
             slug: 'schoolLevel',
-            items: [{ id: 'primary', name: 'Primary' }],
           },
         ],
       }),
@@ -141,8 +141,8 @@ describe('normalizeSpreadsheetSchema', () => {
 
     expect(dynamicColumns).toHaveLength(1)
     expect(dynamicColumns[0]).toMatchObject({
-      kind: 'option-groups',
       key: 'affiliations',
+      kind: 'option-groups',
     })
   })
 

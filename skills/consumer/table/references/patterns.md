@@ -6,7 +6,7 @@
 const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
-  source: { ... },
+  source: tableSource({ ... }),
   filters: { ... },
   table: {
     columns: (column) => [
@@ -24,13 +24,13 @@ Keep behavior in the schema instead of rebuilding table logic outside the packag
 const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'remote',
     query: (request) => ({
       queryKey: ['employees', request],
       queryFn: async () => api.queryEmployees(request),
     }),
-  },
+  }),
   filters: {
     search: {
       fields: ['fullName', 'email'],

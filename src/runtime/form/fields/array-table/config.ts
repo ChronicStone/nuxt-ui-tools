@@ -1,8 +1,8 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const arrayTableFieldKind = defineFormFieldKind({
-  type: 'array-table',
+  layout: { container: true, item: true },
   state: 'passthrough',
-  ui: { label: true, description: true },
-  layout: { item: true, container: true },
+  type: 'array-table',
+  ui: { description: true, label: true },
 })

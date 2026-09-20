@@ -328,7 +328,7 @@ The old event mirror pattern is no longer the intended API for normal usage:
 @submit @update:state @update:output @update:dirty @update:dirty-paths
 ```
 
-`useFormSubmit` remains available as a lower-level explicit target helper, but `useForm` should drive the default DX.
+`useForm` is the sole public form controller. Submission state and lifecycle orchestration stay internal to the rendered form runtime rather than exposing a second ref-driven composable.
 
 ## Validation
 

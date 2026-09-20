@@ -1,62 +1,59 @@
 import { queryOptions } from '@tanstack/vue-query'
 import { describe, expectTypeOf, it } from 'vitest'
-import { shallowRef } from 'vue'
 
-import { defineFormSchema, useForm, useFormSubmit } from '#ui-tools/form'
+import { defineFormSchema, useForm } from '#ui-tools/form'
 import type {
   ExtractFormContext,
   ExtractFormFieldInternalValue,
   ExtractFormFieldOutputValue,
   ExtractFormFields,
+  FormObject,
   ExtractFormInternalValue,
   ExtractFormOutput,
   FormApiController,
   FormApiCreateResult,
-  FormSubmitTarget,
 } from '#ui-tools/form'
 
 const schema = defineFormSchema({
-  formKey: 'exassess.profile',
   context: {
     countries: () =>
       queryOptions({
-        queryKey: ['countries'],
         queryFn: async () => ({
           items: [
             { label: 'France', value: 'FR' },
             { label: 'Belgium', value: 'BE' },
           ],
         }),
+        queryKey: ['countries'],
         select: (data) => data.items,
       }),
     session: () => Promise.resolve({ id: 'session_1' }),
-    tenant: { id: 'tenant_1', currency: 'EUR' },
+    tenant: { currency: 'EUR', id: 'tenant_1' },
   },
   fields: [
     {
-      key: 'profile.name',
-      type: 'text',
       disabled: ({ api }) => {
         expectTypeOf(api.value.get()).toEqualTypeOf<string | null>()
 
         return false
       },
+      key: 'profile.name',
       transform: {
         output: (value) => value?.trim() ?? '',
       },
+      type: 'text',
     },
     {
       key: 'age',
       type: 'number',
     },
     {
+      default: true,
       key: 'active',
       type: 'checkbox',
-      default: true,
     },
     {
       key: 'country',
-      type: 'select',
       options: ({ ctx, api }) => {
         expectTypeOf(ctx.countries.value).toEqualTypeOf<
           { label: string; value: string }[] | undefined
@@ -85,65 +82,66 @@ const schema = defineFormSchema({
 
         return ctx.countries.value ?? []
       },
+      type: 'select',
     },
     {
       key: 'currency',
-      type: 'select',
       options: [
         { label: 'Euro', value: 'EUR' },
         { label: 'Dollar', value: 'USD' },
       ],
+      type: 'select',
     },
     {
       key: 'roles',
-      type: 'select',
-      multiple: true,
       options: ['admin', 'reviewer'],
+      props: { multiple: true },
+      type: 'select',
     },
     {
       key: 'status',
-      type: 'select',
       options: queryOptions({
-        queryKey: ['statuses'],
         queryFn: async () => [
           { label: 'Draft', value: 'draft' },
           { label: 'Published', value: 'published' },
         ],
+        queryKey: ['statuses'],
       }),
+      type: 'select',
     },
     {
       key: 'city',
-      type: 'select',
       options: ({ ctx }) =>
         queryOptions({
-          queryKey: [
-            'cities',
-            ctx.countries.value?.map((country) => country.value).join(',') ?? 'none',
-          ],
           queryFn: async () => [
             { label: 'Paris', value: 'paris' },
             { label: 'Brussels', value: 'brussels' },
           ],
+          queryKey: [
+            'cities',
+            ctx.countries.value?.map((country) => country.value).join(',') ?? 'none',
+          ],
         }),
+      type: 'select',
     },
     {
       key: 'startedAt',
       type: 'date',
     },
     {
-      key: 'phone',
-      type: 'phone-number',
-      defaultCountryCode: 'FR',
       disabled: ({ api }) => {
         expectTypeOf(api.value.get()).toEqualTypeOf<string | null>()
 
         return false
       },
+      key: 'phone',
+      props: { defaultCountryCode: 'FR' },
+      type: 'phone-number',
     },
     {
       key: 'document',
-      type: 'upload',
       output: 'object',
+      type: 'upload',
       upload: {
         handler: async ({ files }) => {
           expectTypeOf(files).toEqualTypeOf<readonly File[]>()
@@ -153,13 +151,11 @@ const schema = defineFormSchema({
       },
     },
     {
+      default: () => 'internal_1',
       key: 'internalId',
       type: 'hidden',
-      default: () => 'internal_1',
     },
     {
-      key: 'meta',
-      type: 'object',
       fields: [
         {
           key: 'externalId',
@@ -167,16 +163,16 @@ const schema = defineFormSchema({
         },
         {
           key: 'score',
-          type: 'number',
           transform: {
             output: (value) => String(value ?? 0),
           },
+          type: 'number',
         },
       ],
+      key: 'meta',
+      type: 'object',
     },
     {
-      key: 'coordinates',
-      type: 'input-group',
       fields: [
         {
           key: 'lat',
@@ -187,11 +183,10 @@ const schema = defineFormSchema({
           type: 'number',
         },
       ],
+      key: 'coordinates',
+      type: 'input-group',
     },
     {
-      key: 'presentation',
-      type: 'card',
-      label: 'Presentation',
       fields: [
         {
           key: 'headline',
@@ -202,20 +197,21 @@ const schema = defineFormSchema({
           type: 'text',
         },
       ],
+      key: 'presentation',
+      label: 'Presentation',
+      type: 'card',
     },
     {
-      key: 'stacked',
-      type: 'column',
       fields: [
         {
           key: 'columnNote',
           type: 'text',
         },
       ],
+      key: 'stacked',
+      type: 'column',
     },
     {
-      key: 'addresses',
-      type: 'array-list',
       fields: [
         {
           key: 'line1',
@@ -223,56 +219,59 @@ const schema = defineFormSchema({
         },
         {
           key: 'countryCode',
-          type: 'select',
           options: [
             { label: 'France', value: 'FR' },
             { label: 'Belgium', value: 'BE' },
           ],
+          type: 'select',
         },
       ],
+      key: 'addresses',
+      type: 'array-list',
     },
     {
+      content: 'This field does not write to output',
       key: 'profileHint',
       type: 'info',
-      content: 'This field does not write to output',
     },
   ],
+  formKey: 'exassess.profile',
 })
 
 const steppedLifecycleSchema = defineFormSchema({
-  steps: [
-    {
-      key: 'first',
-      fields: [
-        {
-          key: 'firstName',
-          type: 'text',
-        },
-      ],
-    },
-    {
-      key: 'second',
-      fields: [
-        {
-          key: 'lastName',
-          type: 'text',
-        },
-      ],
-    },
-  ],
   onBeforeNext: ({ api, formData, stepIndex }) => {
     expectTypeOf(api.validate({ focus: true })).toEqualTypeOf<Promise<boolean>>()
-    expectTypeOf(formData).toEqualTypeOf<unknown>()
+    expectTypeOf(formData).toEqualTypeOf<FormObject>()
     expectTypeOf(stepIndex).toEqualTypeOf<number>()
     return true
   },
   onBeforePrevious: ({ api }) => {
     expectTypeOf(api.focus('firstName')).toEqualTypeOf<Promise<boolean>>()
   },
-  skipStep: ({ stepIndex }) => stepIndex > 10,
   onStepSkipped: ({ api }) => {
     api.reset()
   },
+  skipStep: ({ stepIndex }) => stepIndex > 10,
+  steps: [
+    {
+      fields: [
+        {
+          key: 'firstName',
+          type: 'text',
+        },
+      ],
+      key: 'first',
+    },
+    {
+      fields: [
+        {
+          key: 'lastName',
+          type: 'text',
+        },
+      ],
+      key: 'second',
+    },
+  ],
 })
 
 void steppedLifecycleSchema
@@ -284,40 +283,57 @@ type SchemaOutput = ExtractFormOutput<typeof schema>
 type NameField = Extract<SchemaFields[number], { key: 'profile.name' }>
 type CurrencyField = Extract<SchemaFields[number], { key: 'currency' }>
 type RolesField = Extract<SchemaFields[number], { key: 'roles' }>
-type TagField = { key: 'tags'; type: 'tag' }
-type RangeSliderField = { key: 'scoreRange'; type: 'slider'; multiple: true }
-type MultipleFileField = { key: 'avatar'; type: 'file'; multiple: true }
-type AutoCompleteField = {
+interface TagField {
+  key: 'tags'
+  type: 'tag'
+}
+interface RangeSliderField {
+  key: 'scoreRange'
+  type: 'slider'
+  props: { multiple: true }
+}
+interface MultipleFileField {
+  key: 'avatar'
+  type: 'file'
+  props: { multiple: true }
+}
+interface AutoCompleteField {
   key: 'assignees'
   type: 'auto-complete'
-  multiple: true
+  props: { multiple: true }
   options: readonly [{ label: 'Ada'; value: 'ada' }, { label: 'Grace'; value: 'grace' }]
 }
-type RadioCardField = {
+interface RadioCardField {
   key: 'plan'
   type: 'radio-card'
   options: readonly [{ label: 'Basic'; value: 'basic' }, { label: 'Pro'; value: 'pro' }]
 }
-type CheckboxCardField = {
+interface CheckboxCardField {
   key: 'features'
   type: 'checkbox-card'
   options: readonly ['reports', 'exports']
 }
-type SwitchGroupField = {
+interface SwitchGroupField {
   key: 'notifications'
   type: 'switch-group'
   options: readonly ['email', 'sms']
 }
-type RatingField = { key: 'rating'; type: 'rating' }
-type TimeField = { key: 'startsAt'; type: 'time' }
+interface RatingField {
+  key: 'rating'
+  type: 'rating'
+}
+interface TimeField {
+  key: 'startsAt'
+  type: 'time'
+}
 const selectedStatusOptions = queryOptions({
-  queryKey: ['selected-statuses'],
   queryFn: async () => ({
     items: [{ label: 'Draft', value: 'draft' }] as const,
   }),
+  queryKey: ['selected-statuses'],
   select: (data) => data.items,
 })
-type SelectedQueryField = {
+interface SelectedQueryField {
   key: 'selectedStatus'
   type: 'select'
   options: typeof selectedStatusOptions
@@ -325,16 +341,16 @@ type SelectedQueryField = {
 const matrixSchema = defineFormSchema({
   fields: [
     {
+      fields: [
+        { key: 'read', type: 'switch' },
+        { key: 'scope', options: ['own', 'all'], type: 'select' },
+      ],
       key: 'permissions',
-      type: 'matrix',
       rows: [
         { key: 'users', label: 'Users' },
         { key: 'orders', label: 'Orders' },
       ],
-      fields: [
-        { key: 'read', type: 'switch' },
-        { key: 'scope', type: 'select', options: ['own', 'all'] },
-      ],
+      type: 'matrix',
     },
     {
       key: 'contacts',
@@ -342,18 +358,25 @@ const matrixSchema = defineFormSchema({
       variantKey: 'kind',
       variants: [
         {
+          fields: [{ key: 'address', type: 'text' }],
           key: 'email',
           label: 'Email',
-          fields: [{ key: 'address', type: 'text' }],
           virtualFields: { rank: (index) => index + 1 },
         },
         {
+          fields: [{ key: 'number', type: 'phone-number' }],
           key: 'phone',
           label: 'Phone',
-          fields: [{ key: 'number', type: 'phone-number' }],
         },
       ],
     },
+  ],
+})
+
+const requiredSchema = defineFormSchema({
+  fields: [
+    { key: 'email', required: true, type: 'text' },
+    { key: 'password', required: true, type: 'password' },
   ],
 })
 
@@ -372,7 +395,7 @@ function assertFormApiTypes(formApi: FormApiController) {
     mode: 'drawer',
     onSubmit: ({ formData }) => {
       expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
-      return { success: true, data: { id: 'created-account' } }
+      return { data: { id: 'created-account' }, success: true }
     },
   })
   expectTypeOf<Awaited<typeof submitResult>>().toMatchTypeOf<
@@ -480,6 +503,13 @@ describe('form output inference', () => {
     expectTypeOf<ExtractFormFieldOutputValue<SelectedQueryField>>().toEqualTypeOf<'draft' | null>()
   })
 
+  it('removes null from required field output', () => {
+    expectTypeOf<ExtractFormOutput<typeof requiredSchema>>().toEqualTypeOf<{
+      email: string
+      password: string
+    }>()
+  })
+
   it('infers matrix rows and discriminated array variants', () => {
     type MatrixOutput = ExtractFormOutput<typeof matrixSchema>
 
@@ -497,30 +527,8 @@ describe('form output inference', () => {
     >()
   })
 
-  it('types useFormSubmit handlers from submitted output', () => {
-    const formRef = shallowRef<FormSubmitTarget<SchemaOutput> | null>(null)
-
-    useFormSubmit({
-      formRef,
-      schema,
-      onSubmit: ({ formData, api }) => {
-        expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
-        expectTypeOf(formData.meta.score).toEqualTypeOf<string>()
-        expectTypeOf(formData.roles).toEqualTypeOf<readonly ('admin' | 'reviewer')[] | null>()
-        api.setError('profile.name', 'This name is unavailable.')
-        api.clearError('profile.name')
-        api.clearError()
-        // @ts-expect-error external errors target fields in the inferred submitted output
-        api.setError('missing', 'Unknown field.')
-
-        return { success: true }
-      },
-    })
-  })
-
   it('types useForm controller state, output, and submit handlers from the schema', () => {
     const form = useForm({
-      schema,
       onSubmit: ({ formData }) => {
         expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
         expectTypeOf(formData.meta.score).toEqualTypeOf<string>()
@@ -528,6 +536,7 @@ describe('form output inference', () => {
 
         return { success: true }
       },
+      schema,
     })
 
     type FormController = typeof form

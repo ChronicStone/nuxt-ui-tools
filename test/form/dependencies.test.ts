@@ -13,16 +13,16 @@ const schema = defineFormSchema({
     },
     {
       key: 'profile.country',
-      type: 'select',
       options: [
         { label: 'France', value: 'FR' },
         { label: 'Belgium', value: 'BE' },
       ],
+      type: 'select',
     },
     {
+      dependencies: ['password', ['profile.country', 'country']],
       key: 'confirmPassword',
       type: 'password',
-      dependencies: ['password', ['profile.country', 'country']],
     },
   ],
 })
@@ -40,8 +40,6 @@ describe('form field dependencies', () => {
 
   it('resolves string, aliased, scoped parent, and root dependencies at runtime', () => {
     const field = defineFormField({
-      key: 'city',
-      type: 'text',
       dependencies: [
         'account.name',
         ['account.country', 'country'],
@@ -49,31 +47,33 @@ describe('form field dependencies', () => {
         ['$parent:1.region', 'parentRegion'],
         ['$root', 'root'],
       ],
+      key: 'city',
+      type: 'text',
     })
 
     const state = {
       account: {
-        name: 'Ada',
-        country: 'FR',
-        region: 'eu-west',
         address: {
           city: 'Paris',
         },
+        country: 'FR',
+        name: 'Ada',
+        region: 'eu-west',
       },
     }
 
     expect(
       resolveFieldDependencies({
         field,
-        state,
         parentPath: ['account', 'address'],
+        state,
       }),
-    ).toEqual({
+    ).toStrictEqual({
       'account.name': 'Ada',
       country: 'FR',
-      siblingCity: 'Paris',
       parentRegion: 'eu-west',
       root: state,
+      siblingCity: 'Paris',
     })
   })
 })

@@ -1,0 +1,7 @@
+:root {
+  --nut-form-veil: rgba(31, 29, 26, 0.18);
+}
+
+.dark {
+  --nut-form-veil: rgba(0, 0, 0, 0.45);
+}

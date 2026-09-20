@@ -11,19 +11,21 @@ export interface FormPhoneCountryOption {
   flag: string
 }
 
-export interface FormPhoneNumberField<TContext = {}, TDeps = {}> extends FormStatefulFieldBase<
-  'phone-number',
-  string | null,
-  TContext,
-  TDeps
-> {
+export interface FormPhoneNumberProps {
   countryCodes?: readonly CountryCode[] | ((option: FormPhoneCountryOption) => boolean)
   defaultCountryCode?: 'detect' | CountryCode
   storedCountryCode?: CountryCode
   numberType?: readonly NumberType[]
   format?: 'international' | 'national' | 'uri' | 'e164'
+  displayFormat?: 'national' | 'raw'
+  validityIndicator?: boolean
   resetOnCountryChange?: boolean
   clearable?: boolean
 }
+
+export type FormPhoneNumberField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormStatefulFieldBase<'phone-number', string | null, TContext, TDeps, FormPhoneNumberProps>
 
 export type PhoneNumberFieldOutput = string | NullableValue

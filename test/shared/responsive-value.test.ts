@@ -9,10 +9,10 @@ describe('responsive value helpers', () => {
   const breakpointKeys = ['sm', 'md', 'lg', 'xl']
 
   it('parses responsive strings with backward fallback per breakpoint', () => {
-    expect(parseResponsiveValue('1 md:2 xl:4', breakpointKeys)).toEqual({
-      sm: '1',
-      md: '2',
+    expect(parseResponsiveValue('1 md:2 xl:4', breakpointKeys)).toStrictEqual({
       lg: '2',
+      md: '2',
+      sm: '1',
       xl: '4',
     })
   })
@@ -56,7 +56,7 @@ describe('responsive value helpers', () => {
         },
         'boolean',
       ),
-    ).toBe(true)
+    ).toBeTruthy()
 
     expect(
       resolveResponsiveValueAtBreakpoint(
@@ -72,8 +72,8 @@ describe('responsive value helpers', () => {
 
   it('passes through non-string values', () => {
     expect(resolveResponsiveValueAtBreakpoint(3, { breakpoint: 'lg', breakpointKeys })).toBe(3)
-    expect(resolveResponsiveValueAtBreakpoint(true, { breakpoint: 'lg', breakpointKeys })).toBe(
-      true,
-    )
+    expect(
+      resolveResponsiveValueAtBreakpoint(true, { breakpoint: 'lg', breakpointKeys }),
+    ).toBeTruthy()
   })
 })

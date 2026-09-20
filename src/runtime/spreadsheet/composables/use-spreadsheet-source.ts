@@ -1,4 +1,5 @@
-import { computed, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 import type {
   SpreadsheetBinaryRef,
@@ -22,8 +23,8 @@ export interface UseSpreadsheetSourceParams {
 export function useSpreadsheetSource(params: UseSpreadsheetSourceParams) {
   const workbook = shallowRef<SpreadsheetWorkbookData | null>(null)
   const selection = shallowRef<SpreadsheetWorkbookSelection>({
-    sheetName: params.initialSelection?.sheetName,
     headerRowIndex: params.initialSelection?.headerRowIndex ?? 0,
+    sheetName: params.initialSelection?.sheetName,
   })
   const status = shallowRef({
     initialized: false,
@@ -62,10 +63,12 @@ export function useSpreadsheetSource(params: UseSpreadsheetSourceParams) {
 
     try {
       const nextWorkbook = await parseSpreadsheetWorkbook({
-        source,
         fileName: params.fileName?.value,
+        source,
       })
-      if (runId !== nextRunId) return
+      if (runId !== nextRunId) {
+        return
+      }
 
       workbook.value = nextWorkbook
       selection.value = {
@@ -78,7 +81,9 @@ export function useSpreadsheetSource(params: UseSpreadsheetSourceParams) {
         isReady: true,
       }
     } catch (nextError) {
-      if (runId !== nextRunId) return
+      if (runId !== nextRunId) {
+        return
+      }
 
       workbook.value = null
       error.value = nextError
@@ -115,15 +120,15 @@ export function useSpreadsheetSource(params: UseSpreadsheetSourceParams) {
   )
 
   return {
-    workbook,
-    selection,
-    sheet,
-    headers,
-    rows,
-    status,
     error,
+    headers,
     refreshWorkbook,
-    setSheetName,
+    rows,
+    selection,
     setHeaderRowIndex,
+    setSheetName,
+    sheet,
+    status,
+    workbook,
   }
 }

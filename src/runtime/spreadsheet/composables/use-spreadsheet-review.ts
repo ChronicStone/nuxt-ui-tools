@@ -1,11 +1,18 @@
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
-import { computed, ref, type ComputedRef, h } from 'vue'
+import { computed, ref, h } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import SpreadsheetValuePreview from '../components/shared/SpreadsheetValuePreview.vue'
-import type { SpreadsheetRowIssue, SpreadsheetResolvedReferenceRow } from '../types'
+import { isNullish } from '../../shared/utils/predicate'
+import SpreadsheetValuePreview from '../components/shared/spreadsheet-value-preview.vue'
+import type {
+  SpreadsheetRecord,
+  SpreadsheetRowIssue,
+  SpreadsheetResolvedReferenceRow,
+  SpreadsheetValue,
+} from '../types'
 import { formatSpreadsheetCell, humanizeSpreadsheetKey } from '../utils/display'
 import {
   getSpreadsheetLeafPaths,
@@ -16,12 +23,12 @@ import {
 export type SpreadsheetReviewTab = 'all' | 'valid' | 'invalid' | 'discarded'
 export type SpreadsheetReviewIssueFilter = 'all' | 'blocking' | 'warning'
 
-interface SpreadsheetReviewRow extends SpreadsheetResolvedReferenceRow<Record<string, unknown>> {
-  rowObject: Record<string, unknown>
+interface SpreadsheetReviewRow extends SpreadsheetResolvedReferenceRow<SpreadsheetRecord> {
+  rowObject: SpreadsheetRecord
 }
 
 export interface UseSpreadsheetReviewParams {
-  resolvedRows: ComputedRef<readonly SpreadsheetResolvedReferenceRow<Record<string, unknown>>[]>
+  resolvedRows: ComputedRef<readonly SpreadsheetResolvedReferenceRow<SpreadsheetRecord>[]>
   maxRecords: ComputedRef<number>
 }
 
@@ -60,7 +67,9 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   function setActiveTab(value: SpreadsheetReviewTab) {
     activeTab.value = value
     clearSelection()
-    if (value === 'valid' || value === 'discarded') issueFilter.value = 'all'
+    if (value === 'valid' || value === 'discarded') {
+      issueFilter.value = 'all'
+    }
   }
 
   function setIssueFilter(value: SpreadsheetReviewIssueFilter) {
@@ -68,7 +77,7 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     clearSelection()
   }
 
-  function selectAllVisible(checked: boolean | 'indeterminate') {
+  function selectAllVisible(checked: SpreadsheetValue) {
     if (checked !== true) {
       clearSelection()
       return
@@ -83,9 +92,9 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
 
   function discardSelectedRows() {
     const discardableIndexes = selectedRowIndexes.value.filter((index) => !isDiscarded(index))
-    manuallyDiscardedRowIndexes.value = Array.from(
-      new Set([...manuallyDiscardedRowIndexes.value, ...discardableIndexes]),
-    )
+    manuallyDiscardedRowIndexes.value = [
+      ...new Set([...manuallyDiscardedRowIndexes.value, ...discardableIndexes]),
+    ]
     clearSelection()
   }
 
@@ -97,7 +106,9 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   }
 
   function discardRow(index: number) {
-    if (isDiscarded(index)) return
+    if (isDiscarded(index)) {
+      return
+    }
     manuallyDiscardedRowIndexes.value = [...manuallyDiscardedRowIndexes.value, index]
   }
 
@@ -132,12 +143,12 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
     reviewRows.value.filter((row) => row.issues.length > 0 && !isDiscarded(row.index)),
   )
   const inspectedRow = computed(() =>
-    inspectedRowIndex.value == null
+    isNullish(inspectedRowIndex.value)
       ? null
       : (reviewRows.value.find((row) => row.index === inspectedRowIndex.value) ?? null),
   )
   const inspectedIssueRowPosition = computed(() =>
-    inspectedRow.value == null
+    isNullish(inspectedRow.value)
       ? -1
       : issueRows.value.findIndex((row) => row.index === inspectedRow.value?.index),
   )
@@ -155,35 +166,35 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   )
   const stats = computed(() => [
     {
-      key: 'ready',
-      value: validRows.value.length,
-      label: t('spreadsheet.steps.review.ready'),
-      hint: t('spreadsheet.steps.review.validRows', { count: validRows.value.length }),
-      valueClass: 'text-success',
       accentClass: 'bg-success',
       cardClass: 'border-default/70',
+      hint: t('spreadsheet.steps.review.validRows', { count: validRows.value.length }),
+      key: 'ready',
+      label: t('spreadsheet.steps.review.ready'),
+      value: validRows.value.length,
+      valueClass: 'text-success',
     },
     {
-      key: 'invalid',
-      value: invalidRows.value.length,
-      label: t('spreadsheet.steps.review.invalid', { count: invalidRows.value.length }),
+      accentClass: 'bg-error',
+      cardClass: 'border-default/70',
       hint: invalidRows.value.length
         ? `${t('spreadsheet.steps.review.blocking', { count: blockingIssueCount.value })} · ${t('spreadsheet.steps.review.warnings', { count: warningIssueCount.value })}`
         : t('spreadsheet.steps.review.noBlockingIssues'),
+      key: 'invalid',
+      label: t('spreadsheet.steps.review.invalid', { count: invalidRows.value.length }),
+      value: invalidRows.value.length,
       valueClass: 'text-error',
-      accentClass: 'bg-error',
-      cardClass: 'border-default/70',
     },
     {
-      key: 'discarded',
-      value: discardedRows.value.length,
-      label: t('spreadsheet.steps.review.discarded', { count: discardedRows.value.length }),
+      accentClass: 'bg-warning',
+      cardClass: discardedRows.value.length ? 'border-warning/40' : 'border-default/70',
       hint: discardedRows.value.length
         ? t('spreadsheet.steps.review.willNotBeImported')
         : t('spreadsheet.steps.review.nothingDiscarded'),
+      key: 'discarded',
+      label: t('spreadsheet.steps.review.discarded', { count: discardedRows.value.length }),
+      value: discardedRows.value.length,
       valueClass: 'text-warning',
-      accentClass: 'bg-warning',
-      cardClass: discardedRows.value.length ? 'border-warning/40' : 'border-default/70',
     },
   ])
   const hasOverflow = computed(() => reviewRows.value.length > params.maxRecords.value)
@@ -235,11 +246,15 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
             ? discardedRows.value
             : reviewRows.value
 
-    if (activeTab.value === 'valid' || activeTab.value === 'discarded') return baseRows
-    if (issueFilter.value === 'blocking')
+    if (activeTab.value === 'valid' || activeTab.value === 'discarded') {
+      return baseRows
+    }
+    if (issueFilter.value === 'blocking') {
       return baseRows.filter((row) => hasBlockingIssue(row.issues))
-    if (issueFilter.value === 'warning')
+    }
+    if (issueFilter.value === 'warning') {
       return baseRows.filter((row) => !hasBlockingIssue(row.issues) && hasWarningIssue(row.issues))
+    }
     return baseRows
   })
   const selectedRowIndexes = computed(() =>
@@ -270,53 +285,63 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   })
 
   function getRowStatus(index: number, issues: readonly SpreadsheetRowIssue[]) {
-    if (isDiscarded(index))
+    if (isDiscarded(index)) {
       return {
-        label: t('spreadsheet.steps.review.discardedStatus'),
         color: 'neutral' as const,
         icon: 'i-lucide-ban',
+        label: t('spreadsheet.steps.review.discardedStatus'),
       }
+    }
 
-    if (hasBlockingIssue(issues))
+    if (hasBlockingIssue(issues)) {
       return {
-        label: t('spreadsheet.steps.review.blockingStatus'),
         color: 'error' as const,
         icon: 'i-lucide-circle-x',
+        label: t('spreadsheet.steps.review.blockingStatus'),
       }
+    }
 
-    if (hasWarningIssue(issues))
+    if (hasWarningIssue(issues)) {
       return {
-        label: t('spreadsheet.steps.review.warningStatus'),
         color: 'warning' as const,
         icon: 'i-lucide-triangle-alert',
+        label: t('spreadsheet.steps.review.warningStatus'),
       }
+    }
 
     return {
-      label: t('spreadsheet.steps.review.validStatus'),
       color: 'success' as const,
       icon: 'i-lucide-circle-check',
+      label: t('spreadsheet.steps.review.validStatus'),
     }
   }
 
   function getIssueBadge(issue: SpreadsheetRowIssue) {
-    if (issue.level === 'error')
-      return { label: t('spreadsheet.steps.review.issueBadgeBlocking'), color: 'error' as const }
+    if (issue.level === 'error') {
+      return { color: 'error' as const, label: t('spreadsheet.steps.review.issueBadgeBlocking') }
+    }
 
-    return { label: t('spreadsheet.steps.review.issueBadgeWarning'), color: 'warning' as const }
+    return { color: 'warning' as const, label: t('spreadsheet.steps.review.issueBadgeWarning') }
   }
 
   function getIssueValueTone(issue: SpreadsheetRowIssue) {
-    if (issue.level === 'error') return 'bg-error/6'
+    if (issue.level === 'error') {
+      return 'bg-error/6'
+    }
     return 'bg-warning/10'
   }
 
-  function getIssueValue(rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) {
-    if (!issue.columnKey) return t('spreadsheet.steps.review.noValue')
+  function getIssueValue(rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) {
+    if (!issue.columnKey) {
+      return t('spreadsheet.steps.review.noValue')
+    }
     return formatSpreadsheetCell(getSpreadsheetValueAtPath(rowData, issue.columnKey))
   }
 
-  function getIssueRawValue(rowData: Record<string, unknown>, issue: SpreadsheetRowIssue) {
-    if (!issue.columnKey) return undefined
+  function getIssueRawValue(rowData: SpreadsheetRecord, issue: SpreadsheetRowIssue) {
+    if (!issue.columnKey) {
+      return
+    }
     return getSpreadsheetValueAtPath(rowData, issue.columnKey)
   }
 
@@ -332,28 +357,26 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
   }
 
   function getRowToneClass(row: { index: number; issues: readonly SpreadsheetRowIssue[] }) {
-    if (isDiscarded(row.index)) return 'opacity-45'
-    if (hasBlockingIssue(row.issues)) return 'bg-error/5'
-    if (hasWarningIssue(row.issues)) return 'bg-warning/5'
+    if (isDiscarded(row.index)) {
+      return 'opacity-45'
+    }
+    if (hasBlockingIssue(row.issues)) {
+      return 'bg-error/5'
+    }
+    if (hasWarningIssue(row.issues)) {
+      return 'bg-warning/5'
+    }
     return ''
   }
 
   const reviewTableColumns = computed(() => [
     {
-      id: 'select',
-      header: () =>
-        h('div', { class: 'flex justify-center' }, [
-          h(UCheckbox, {
-            modelValue: allVisibleSelected.value,
-            'onUpdate:modelValue': selectAllVisible,
-          }),
-        ]),
       cell: ({ row }: { row: { original: { index: number } } }) =>
         h('div', { class: 'flex justify-center' }, [
           h(UCheckbox, {
-            modelValue: rowSelection.value[String(row.original.index)] ?? false,
             disabled: isOverflowRow(row.original.index) && activeTab.value !== 'discarded',
-            'onUpdate:modelValue': (value: boolean | 'indeterminate') => {
+            modelValue: rowSelection.value[String(row.original.index)] ?? false,
+            'onUpdate:modelValue': (value: SpreadsheetValue) => {
               rowSelection.value = {
                 ...rowSelection.value,
                 [String(row.original.index)]: value === true,
@@ -361,16 +384,22 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
             },
           }),
         ]),
+      header: () =>
+        h('div', { class: 'flex justify-center' }, [
+          h(UCheckbox, {
+            modelValue: allVisibleSelected.value,
+            'onUpdate:modelValue': selectAllVisible,
+          }),
+        ]),
+      id: 'select',
       meta: {
         class: {
-          th: 'w-12',
           td: 'w-12',
+          th: 'w-12',
         },
       },
     },
     {
-      id: 'row',
-      header: t('spreadsheet.steps.review.row'),
       accessorFn: (row: { index: number }) => row.index + 1,
       cell: ({
         row,
@@ -386,91 +415,97 @@ export function useSpreadsheetReview(params: UseSpreadsheetReviewParams) {
           h(
             UBadge,
             {
-              color: status.color,
-              variant: 'soft',
-              size: 'sm',
-              icon: status.icon,
               class: 'font-medium',
+              color: status.color,
+              icon: status.icon,
+              size: 'sm',
+              variant: 'soft',
             },
             () => statusLabel,
           ),
         ])
       },
+      header: t('spreadsheet.steps.review.row'),
+      id: 'row',
       meta: {
         class: {
-          th: 'w-44',
           td: 'w-44 align-top',
+          th: 'w-44',
         },
       },
     },
     ...tableColumns.value.map((column: string) => ({
-      id: column,
-      header: humanizeSpreadsheetKey(column),
-      accessorFn: (row: { data: Record<string, unknown> }) =>
+      accessorFn: (row: { data: SpreadsheetRecord }) =>
         formatSpreadsheetCell(getSpreadsheetValueAtPath(row.data, column)),
-      cell: ({ row }: { row: { original: { data: Record<string, unknown> } } }) =>
+      cell: ({ row }: { row: { original: { data: SpreadsheetRecord } } }) =>
         h(SpreadsheetValuePreview, {
-          value: getSpreadsheetValueAtPath(row.original.data, column),
           compact: true,
+          value: getSpreadsheetValueAtPath(row.original.data, column),
         }),
+      header: humanizeSpreadsheetKey(column),
+      id: column,
       meta: {
         class: {
-          th: 'min-w-44',
           td: 'min-w-44 max-w-80 align-top text-toned',
+          th: 'min-w-44',
         },
       },
     })),
   ])
 
   function inspectPrevIssueRow() {
-    if (inspectedIssueRowPosition.value <= 0) return
+    if (inspectedIssueRowPosition.value <= 0) {
+      return
+    }
     inspectedRowIndex.value = issueRows.value[inspectedIssueRowPosition.value - 1]?.index ?? null
   }
 
   function inspectNextIssueRow() {
-    if (inspectedIssueRowPosition.value < 0) return
+    if (inspectedIssueRowPosition.value < 0) {
+      return
+    }
     inspectedRowIndex.value = issueRows.value[inspectedIssueRowPosition.value + 1]?.index ?? null
   }
 
   return {
     activeTab,
-    issueFilter,
-    inspectedRow,
-    inspectedIssueRowPosition,
-    issueRows,
-    rowSelection,
-    selectedRowIndexes,
-    visibleRows,
-    stats,
-    hasOverflow,
-    overflowCount,
-    tabItems,
-    issueFilterItems,
     canDiscardSelection,
     canRestoreSelection,
-    reviewTableColumns,
-    tableColumns,
-    formatSpreadsheetCell,
-    getSpreadsheetObjectEntries,
-    humanizeSpreadsheetKey,
-    getIssueBadge,
-    getIssueValueTone,
-    getIssueValue,
-    getIssueRawValue,
-    getRelatedIssueCount,
-    getRowToneClass,
-    getRowStatus,
-    setActiveTab,
-    setIssueFilter,
-    discardSelectedRows,
-    restoreSelectedRows,
-    discardRow,
-    restoreRow,
-    inspectRow,
     closeInspection,
-    inspectPrevIssueRow,
+    discardRow,
+    discardSelectedRows,
+    formatSpreadsheetCell,
+    getIssueBadge,
+    getIssueRawValue,
+    getIssueValue,
+    getIssueValueTone,
+    getRelatedIssueCount,
+    getRowStatus,
+    getRowToneClass,
+    getSpreadsheetObjectEntries,
+    hasOverflow,
+    humanizeSpreadsheetKey,
     inspectNextIssueRow,
+    inspectPrevIssueRow,
+    inspectRow,
+    inspectedIssueRowPosition,
+    inspectedRow,
     isDiscarded,
     isManuallyDiscarded,
+    issueFilter,
+    issueFilterItems,
+    issueRows,
+    overflowCount,
+    restoreRow,
+    restoreSelectedRows,
+    reviewTableColumns,
+    rowSelection,
+    selectedRowIndexes,
+    setActiveTab,
+    setIssueFilter,
+    stats,
+    tabItems,
+    tableColumns,
+    visibleRows,
   }
 }

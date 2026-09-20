@@ -11,6 +11,8 @@ export function provideDataListViewport(element: Ref<HTMLElement | null>) {
 
 export function useDataListViewport() {
   const state = useInjectedDataListViewportState()
-  if (!state) throw new Error('useDataListViewport must be called inside <DataListContent>')
+  if (!state) {
+    throw new Error('useDataListViewport must be called inside <DataListContent>')
+  }
   return state
 }

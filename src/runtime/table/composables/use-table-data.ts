@@ -1,31 +1,35 @@
-import {
-  useInfiniteQuery,
-  useQueries,
-  useQuery,
-  type InfiniteData,
-  type QueryKey,
-} from '@tanstack/vue-query'
-import { computed, shallowRef, watch, type ComputedRef } from 'vue'
+import { keepPreviousData, useInfiniteQuery, useQueries, useQuery } from '@tanstack/vue-query'
+import type { InfiniteData, QueryKey } from '@tanstack/vue-query'
+import { computed, shallowRef, watch } from 'vue'
+import type { ComputedRef } from 'vue'
 
+import { isArray, isFunction, isNumber, isObject, isString } from '../../shared/utils/predicate'
 import { QUERY_DEFAULTS } from '../constants/query-state'
 import type {
   GenericObject,
   TableCursorPageResult,
   TableExternalState,
   TableFacetExecutionResult,
+  TableFacetsContext,
   TableFacetResult,
   TableFacetRequestDescriptor,
   TableGlobalFacetDescriptor,
   TableInfiniteQueryDefinition,
+  TableOffsetPageResult,
   TableQueryDefinition,
+  TableRemoteFacetSource,
   TableSchemaView,
   TableSourceExecutionResult,
   TableSourceRequestContext,
+  TableRefreshResult,
+  TableRuntimeRecord,
 } from '../types'
 import {
+  createTableCursorQueryKey,
   executeClientFacets,
   filterClientRows,
   flattenTableCursorPages,
+  resolveTableGlobalFacetDescriptors,
   isTableCursorPageResult,
   paginateClientRows,
   resolveTableRowId,
@@ -42,13 +46,13 @@ export interface UseTableDataParams {
 
 export interface UseTableDataReturn {
   context: ReturnType<typeof useQueries>
-  contextData: ComputedRef<Record<string, unknown>>
+  contextData: ComputedRef<TableRuntimeRecord>
   pageContext: ReturnType<typeof useQueries>
-  pageContextData: ComputedRef<Record<string, unknown>>
+  pageContextData: ComputedRef<TableRuntimeRecord>
   facetsBaseContext: ComputedRef<{
     filters: TableSourceRequestContext['filters']
     search: TableSourceRequestContext['search']
-    context: Record<string, unknown>
+    context: TableRuntimeRecord
   }>
   requestContext: ComputedRef<TableSourceRequestContext>
   searchParams: ComputedRef<TableSourceRequestContext>
@@ -74,15 +78,15 @@ export interface UseTableDataReturn {
     isPageContextPending: boolean
     isPageContextFetching: boolean
   }>
-  refreshContext: () => Promise<unknown[]>
+  refreshContext: () => Promise<TableRefreshResult[]>
   refreshData: () => (
     ...args: Parameters<ReturnType<typeof useQuery>['refetch']>
-  ) => Promise<unknown>
-  refreshPageContext: () => Promise<unknown[]>
+  ) => Promise<TableRefreshResult>
+  refreshPageContext: () => Promise<TableRefreshResult[]>
   updateRows: (rows: GenericObject[]) => void
 }
 
-type CombinedQueryResult = {
+interface CombinedQueryResult {
   key?: string
   data?: unknown
   error?: unknown
@@ -90,10 +94,14 @@ type CombinedQueryResult = {
   isFetching?: boolean
   isSuccess?: boolean
   isRefetching?: boolean
-  refetch: () => Promise<unknown>
+  refetch: () => Promise<TableRefreshResult>
 }
 
-type TableRuntimeSourceResult = GenericObject[] | TableSourceExecutionResult | TableCursorPageResult
+type TableRuntimeSourceResult =
+  | GenericObject[]
+  | TableSourceExecutionResult
+  | TableOffsetPageResult
+  | TableCursorPageResult
 
 export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const contextItems = computed(() =>
@@ -101,24 +109,25 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   )
 
   const context = useQueries({
-    queries: () =>
-      contextItems.value.map((item) =>
-        withEnabled(item.query(), params.startup.isActive.value, {
-          staleTime: QUERY_DEFAULTS.staleTime.context,
-          refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
-        }),
-      ),
     combine: (results) =>
       results.map((result, index) => ({
         key: contextItems.value[index]?.key,
         ...result,
       })),
+    queries: () =>
+      contextItems.value.map((item) =>
+        withEnabled(item.query(), params.startup.isActive.value, {
+          refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+          staleTime: QUERY_DEFAULTS.staleTime.context,
+        }),
+      ),
   })
 
+  // SAFETY: the `combine` callback above adds the optional key while preserving TanStack result fields.
   const contextResults = computed(() => context.value as CombinedQueryResult[])
 
   const contextData = computed(() =>
-    contextResults.value.reduce<Record<string, unknown>>((acc, item) => {
+    contextResults.value.reduce<TableRuntimeRecord>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -146,45 +155,36 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   )
   const requestFilters = computed(() => params.state.resolvedFilterState.value)
   const requestSearch = computed(() => ({
-    value: params.state.queryState.filters.value.search,
     fields: params.schema.value.filters?.search?.fields ?? [],
+    value: params.state.queryState.filters.value.search,
   }))
   const facetsBaseContext = computed<UseTableDataReturn['facetsBaseContext']['value']>(() => ({
+    context: contextData.value,
     filters: requestFilters.value,
     search: requestSearch.value,
-    context: contextData.value,
   }))
   const globalFacetDescriptors = computed<TableGlobalFacetDescriptor<string>[]>(() =>
-    (params.schema.value.filters?.ui ?? []).flatMap((definition) => {
-      if (definition.kind !== 'option' && definition.kind !== 'boolean') return []
-
-      const descriptor = toGlobalFacetDescriptor({
-        key: definition.key,
-        facet: definition.source?.facet,
-      })
-
-      return descriptor ? [descriptor] : []
-    }),
+    resolveTableGlobalFacetDescriptors(params.schema.value.filters?.ui ?? []),
   )
   const remoteSource = computed(() =>
     params.schema.value.source.mode === 'remote' ? params.schema.value.source : null,
   )
-  const hasRemoteFacetQuery = computed(() => typeof remoteSource.value?.facets === 'function')
+  const hasRemoteFacetQuery = computed(() => isRemoteFacetQuery(remoteSource.value?.facets))
   const usesEmbeddedRemoteFacets = computed(() => remoteSource.value?.facets === true)
   const facetsContextKey = computed(() => JSON.stringify(facetsBaseContext.value))
   const lastResolvedEmbeddedFacetsKey = shallowRef<string | null>(null)
   const requestContext = computed<TableSourceRequestContext>(() => ({
-    context: contextData.value as TableSourceRequestContext['context'],
-    pagination: requestPagination.value,
-    sorting: requestSorting.value,
-    filters: requestFilters.value,
-    search: requestSearch.value,
+    context: contextData.value,
     facets:
       usesEmbeddedRemoteFacets.value &&
       globalFacetDescriptors.value.length > 0 &&
       facetsContextKey.value !== lastResolvedEmbeddedFacetsKey.value
         ? globalFacetDescriptors.value
         : undefined,
+    filters: requestFilters.value,
+    pagination: requestPagination.value,
+    search: requestSearch.value,
+    sorting: requestSorting.value,
   }))
 
   const searchParams = requestContext
@@ -195,16 +195,19 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const query = useQuery<TableRuntimeSourceResult, Error, TableRuntimeSourceResult, QueryKey>(
     computed(() => {
       const definition = resolveSourceDefinition({
-        source: params.schema.value.source,
-        request: requestContext.value,
         context: contextData.value,
+        request: requestContext.value,
+        source: params.schema.value.source,
       })
 
-      if (isCursorPagination.value) return disabledQueryDefinition('cursor')
+      if (isCursorPagination.value) {
+        return disabledQueryDefinition('cursor')
+      }
 
       return withEnabled(definition, params.startup.isActive.value && isContextReady.value, {
-        staleTime: dataStaleTime.value,
+        placeholderData: keepPreviousData,
         refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+        staleTime: dataStaleTime.value,
       })
     }),
   )
@@ -216,19 +219,21 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     string | null
   >(
     computed(() => {
-      if (!isCursorPagination.value) return disabledInfiniteQueryDefinition()
+      if (!isCursorPagination.value) {
+        return disabledInfiniteQueryDefinition()
+      }
 
       return withInfiniteEnabled(
         createCursorQueryDefinition({
-          source: params.schema.value.source,
-          request: requestContext.value,
           context: contextData.value,
+          request: requestContext.value,
           revision: params.state.queryState.paginationRevision.value,
+          source: params.schema.value.source,
         }),
         params.startup.isActive.value && isContextReady.value,
         {
-          staleTime: dataStaleTime.value,
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+          staleTime: dataStaleTime.value,
         },
       )
     }),
@@ -239,13 +244,13 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
       if (
         !hasRemoteFacetQuery.value ||
-        typeof facetsSource !== 'function' ||
+        !isRemoteFacetQuery(facetsSource) ||
         !globalFacetDescriptors.value.length
       ) {
         return {
-          queryKey: ['table-global-facets', 'disabled'],
-          queryFn: async () => ({ facets: [] }) as TableFacetExecutionResult<string>,
           enabled: false,
+          queryFn: async (): Promise<TableFacetExecutionResult<string>> => ({ facets: [] }),
+          queryKey: ['table-global-facets', 'disabled'],
         } satisfies TableQueryDefinition<TableFacetExecutionResult<string>> & {
           enabled: boolean
         }
@@ -260,16 +265,16 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         facetsSource(facetContext),
         params.startup.isActive.value && isContextReady.value,
         {
-          staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+          staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
         },
       )
     }),
   )
 
   const rawDataState = shallowRef<TableExternalState>({
-    rows: [],
     rowCount: 0,
+    rows: [],
   })
   const cursorRowOverrides = shallowRef<Map<string, GenericObject>>(new Map())
   const embeddedFacetsState = shallowRef<TableFacetResult<string>[]>([])
@@ -279,33 +284,43 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       pages: infiniteQuery.data.value?.pages ?? [],
       rowKey: params.schema.value.rowKey,
     })
-    if (!cursorRowOverrides.value.size) return flattened
+    if (!cursorRowOverrides.value.size) {
+      return flattened
+    }
 
     return {
+      rowCount: flattened.rowCount,
       rows: mergeRowsByKey({
         currentRows: flattened.rows,
         nextRows: [...cursorRowOverrides.value.values()],
         rowKey: params.schema.value.rowKey,
       }),
-      rowCount: flattened.rowCount,
     }
   })
   const rawData = computed<TableExternalState>(() =>
     isCursorPagination.value ? cursorRawData.value : rawDataState.value,
   )
   const clientFilteredRows = computed(() => {
-    if (!params.startup.isActive.value) return []
-    if (params.schema.value.source.mode !== 'client') return rawData.value.rows
+    if (!params.startup.isActive.value) {
+      return []
+    }
+    if (params.schema.value.source.mode !== 'client') {
+      return rawData.value.rows
+    }
 
     return filterClientRows({
-      rows: rawData.value.rows,
       filters: requestFilters.value,
+      rows: rawData.value.rows,
       search: requestSearch.value,
     })
   })
   const clientSortedRows = computed(() => {
-    if (!params.startup.isActive.value) return []
-    if (params.schema.value.source.mode !== 'client') return clientFilteredRows.value
+    if (!params.startup.isActive.value) {
+      return []
+    }
+    if (params.schema.value.source.mode !== 'client') {
+      return clientFilteredRows.value
+    }
 
     return sortClientRows({
       rows: clientFilteredRows.value,
@@ -313,45 +328,55 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     })
   })
   const data = computed<TableExternalState>(() => {
-    if (!params.startup.isActive.value)
+    if (!params.startup.isActive.value) {
       return {
-        rows: [],
         rowCount: 0,
+        rows: [],
       }
+    }
 
-    if (params.schema.value.source.mode !== 'client') return rawData.value
+    if (params.schema.value.source.mode !== 'client') {
+      return rawData.value
+    }
 
     return paginateClientRows({
-      rows: clientSortedRows.value,
       pagination: requestPagination.value,
+      rows: clientSortedRows.value,
     })
   })
   const selectableRows = computed<GenericObject[]>(() =>
-    !params.startup.isActive.value
-      ? []
-      : params.schema.value.source.mode === 'client'
+    params.startup.isActive.value
+      ? params.schema.value.source.mode === 'client'
         ? clientSortedRows.value
-        : data.value.rows,
+        : data.value.rows
+      : [],
   )
   const clientFacetDescriptors = computed<TableFacetRequestDescriptor<string>[]>(() =>
     globalFacetDescriptors.value.map((facet) => ({
       key: facet.key,
-      mode: facet.mode,
       limit: facet.limit,
+      mode: facet.mode,
     })),
   )
   const facets = computed<TableFacetExecutionResult<string>>(() => {
-    if (!params.startup.isActive.value) return { facets: [] }
-    if (params.schema.value.source.mode === 'client')
+    if (!params.startup.isActive.value) {
+      return { facets: [] }
+    }
+    if (params.schema.value.source.mode === 'client') {
       return executeClientFacets({
-        rows: rawData.value.rows,
-        request: requestContext.value,
         facets: clientFacetDescriptors.value,
+        request: requestContext.value,
+        rows: rawData.value.rows,
       })
+    }
 
-    if (hasRemoteFacetQuery.value) return globalFacetsQuery.data.value ?? { facets: [] }
+    if (hasRemoteFacetQuery.value) {
+      return globalFacetsQuery.data.value ?? { facets: [] }
+    }
 
-    if (usesEmbeddedRemoteFacets.value) return { facets: embeddedFacetsState.value }
+    if (usesEmbeddedRemoteFacets.value) {
+      return { facets: embeddedFacetsState.value }
+    }
 
     return { facets: [] }
   })
@@ -384,6 +409,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   )
 
   const pageContext = useQueries({
+    combine: (results) =>
+      results.map((result, index) => ({
+        key: pageContextItems.value[index]?.key,
+        ...result,
+      })),
     queries: () => {
       if (!isPageContextEnabled.value) {
         return []
@@ -392,28 +422,24 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       return pageContextItems.value.map((item) =>
         withEnabled(
           item.query({
+            context: contextData.value,
             rows: data.value.rows,
-            context: contextData.value as never,
           }),
           true,
           {
-            staleTime: QUERY_DEFAULTS.staleTime.context,
             refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+            staleTime: QUERY_DEFAULTS.staleTime.context,
           },
         ),
       )
     },
-    combine: (results) =>
-      results.map((result, index) => ({
-        key: pageContextItems.value[index]?.key,
-        ...result,
-      })),
   })
 
+  // SAFETY: the `combine` callback above adds the optional key while preserving TanStack result fields.
   const pageContextResults = computed(() => pageContext.value as CombinedQueryResult[])
 
   const pageContextData = computed(() =>
-    pageContextResults.value.reduce<Record<string, unknown>>((acc, item) => {
+    pageContextResults.value.reduce<TableRuntimeRecord>((acc, item) => {
       if (!item.key) {
         return acc
       }
@@ -456,18 +482,18 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     if (!params.startup.isActive.value) {
       return {
         initialized: false,
-        phase: params.startup.phase.value,
         isBooting: true,
-        isPending: true,
+        isContextFetching: false,
+        isContextPending: false,
+        isDataFetching: false,
+        isDataPending: false,
         isFetching: false,
+        isPageContextFetching: false,
+        isPageContextPending: false,
+        isPending: true,
         isRefreshing: false,
         isRevalidating: false,
-        isContextPending: false,
-        isContextFetching: false,
-        isDataPending: false,
-        isDataFetching: false,
-        isPageContextPending: false,
-        isPageContextFetching: false,
+        phase: params.startup.phase.value,
       }
     }
 
@@ -480,21 +506,21 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
     return {
       initialized: initialized.value,
-      phase: params.startup.phase.value,
       isBooting: false,
+      isContextFetching: isContextFetching.value,
+      isContextPending: isContextPending.value,
+      isDataFetching,
+      isDataPending,
+      isFetching: isContextFetching.value || isDataFetching || isPageContextFetching.value,
+      isPageContextFetching: isPageContextFetching.value,
+      isPageContextPending: isPageContextPending.value,
       isPending:
         isContextPending.value ||
         (!isActiveDataSuccess.value && isDataPending) ||
         (!initialized.value && isPageContextPending.value),
-      isFetching: isContextFetching.value || isDataFetching || isPageContextFetching.value,
       isRefreshing,
       isRevalidating: isActiveDataRefetching.value && rawData.value.rows.length > 0,
-      isContextPending: isContextPending.value,
-      isContextFetching: isContextFetching.value,
-      isDataPending,
-      isDataFetching,
-      isPageContextPending: isPageContextPending.value,
-      isPageContextFetching: isPageContextFetching.value,
+      phase: params.startup.phase.value,
     }
   })
 
@@ -502,12 +528,16 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     () => query.data.value,
     (nextQueryData) => {
       const normalized = normalizeExternalState(nextQueryData)
-      if (sameExternalState(rawDataState.value, normalized)) return
+      if (sameExternalState(rawDataState.value, normalized)) {
+        return
+      }
 
       rawDataState.value = normalized
 
       const embeddedFacets = extractEmbeddedFacets(nextQueryData)
-      if (!embeddedFacets) return
+      if (!embeddedFacets) {
+        return
+      }
 
       embeddedFacetsState.value = embeddedFacets
       lastResolvedEmbeddedFacetsKey.value = facetsContextKey.value
@@ -518,11 +548,15 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   watch(
     () => infiniteQuery.data.value?.pages,
     (pages) => {
-      if (!pages) return
+      if (!pages) {
+        return
+      }
 
-      for (let index = pages.length - 1; index >= 0; index--) {
+      for (let index = pages.length - 1; index >= 0; index -= 1) {
         const embeddedFacets = extractEmbeddedFacets(pages[index])
-        if (!embeddedFacets) continue
+        if (!embeddedFacets) {
+          continue
+        }
 
         embeddedFacetsState.value = embeddedFacets
         lastResolvedEmbeddedFacetsKey.value = facetsContextKey.value
@@ -558,15 +592,18 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   }
 
   function updateRows(rows: GenericObject[]) {
-    if (!rows.length) return
+    if (!rows.length) {
+      return
+    }
 
     if (isCursorPagination.value) {
       const nextOverrides = new Map(cursorRowOverrides.value)
-      for (const [index, row] of rows.entries())
+      for (const [index, row] of rows.entries()) {
         nextOverrides.set(
-          resolveTableRowId({ rowKey: params.schema.value.rowKey, row, index }),
+          resolveTableRowId({ index, row, rowKey: params.schema.value.rowKey }),
           row,
         )
+      }
       cursorRowOverrides.value = nextOverrides
       return
     }
@@ -577,106 +614,120 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       rowKey: params.schema.value.rowKey,
     })
 
-    if (sameRows(rawDataState.value.rows, nextRawRows)) return
+    if (sameRows(rawDataState.value.rows, nextRawRows)) {
+      return
+    }
 
     rawDataState.value = {
-      rows: nextRawRows,
       rowCount: rawDataState.value.rowCount,
+      rows: nextRawRows,
     }
   }
 
   return {
     context,
     contextData,
+    data,
+    error,
+    facets,
+    facetsBaseContext,
+    infiniteQuery,
     pageContext,
     pageContextData,
-    facetsBaseContext,
-    requestContext,
-    searchParams,
     query,
-    infiniteQuery,
     rawData,
-    data,
-    selectableRows,
-    facets,
-    error,
-    status,
     refreshContext,
     refreshData,
     refreshPageContext,
+    requestContext,
+    searchParams,
+    selectableRows,
+    status,
     updateRows,
   }
 }
 
-function normalizeExternalState(result: unknown): TableExternalState {
-  if (Array.isArray(result)) {
+function normalizeExternalState<TValue>(result: TValue): TableExternalState {
+  if (isArray(result)) {
     return {
-      rows: result,
       rowCount: result.length,
+      rows: result,
     }
   }
 
   if (isTableExternalState(result)) {
     return {
-      rows: result.rows,
       rowCount: result.rowCount,
+      rows: result.rows,
+    }
+  }
+
+  if (isTableOffsetPageResult(result)) {
+    return {
+      rowCount: result.pageInfo.rowCount,
+      rows: result.rows,
     }
   }
 
   return {
-    rows: [],
     rowCount: 0,
+    rows: [],
   }
 }
 
-function extractEmbeddedFacets(result: unknown): TableFacetResult<string>[] | undefined {
-  if (!result || typeof result !== 'object' || !('facets' in result)) return undefined
-
-  const { facets } = result as { facets?: unknown }
-  if (!Array.isArray(facets)) return undefined
-
-  return facets as TableFacetResult<string>[]
-}
-
-function toGlobalFacetDescriptor(options: {
-  key: string
-  facet: GlobalFacetSpec | undefined
-}): TableGlobalFacetDescriptor<string> | null {
-  if (!options.facet) return null
-  if (hasPerFilterFacetQuery(options.facet)) return null
-
-  return {
-    key: options.key,
-    mode: resolveFacetMode(options.facet),
-    limit: typeof options.facet === 'object' ? options.facet.limit : undefined,
+function extractEmbeddedFacets<TValue>(result: TValue): TableFacetResult<string>[] | undefined {
+  if (!isObject(result) || !('facets' in result)) {
+    return undefined
   }
+
+  const { facets } = result
+  if (!isArray(facets)) {
+    return undefined
+  }
+
+  return facets.filter(isTableFacetResult)
 }
 
-function hasPerFilterFacetQuery(facet: GlobalFacetSpec) {
-  return typeof facet === 'object' && typeof facet.query === 'function'
+function isTableExternalState<TValue>(value: TValue): value is TValue & TableExternalState {
+  if (!isObject(value)) {
+    return false
+  }
+  if (!('rows' in value) || !('rowCount' in value)) {
+    return false
+  }
+
+  return isArray(value.rows) && isNumber(value.rowCount)
 }
 
-function resolveFacetMode(facet: GlobalFacetSpec): 'exclude-self' | 'include-self' {
-  if (facet === 'include-self') return 'include-self'
-  if (typeof facet === 'object' && facet.mode === 'include-self') return 'include-self'
-  return 'exclude-self'
+function isTableOffsetPageResult<TValue>(value: TValue): value is TValue & TableOffsetPageResult {
+  if (!isObject(value) || !('rows' in value) || !('pageInfo' in value)) {
+    return false
+  }
+  if (!isArray(value.rows) || !isObject(value.pageInfo)) {
+    return false
+  }
+  if (!('mode' in value.pageInfo) || value.pageInfo.mode !== 'offset') {
+    return false
+  }
+  if (!('rowCount' in value.pageInfo)) {
+    return false
+  }
+
+  return isNumber(value.pageInfo.rowCount)
 }
 
-type GlobalFacetSpec =
-  | boolean
-  | 'exclude-self'
-  | 'include-self'
-  | {
-      mode?: 'exclude-self' | 'include-self'
-      limit?: number
-      query?: unknown
-    }
+function isTableFacetResult<TValue>(value: TValue): value is TValue & TableFacetResult<string> {
+  return (
+    isObject(value) &&
+    'key' in value &&
+    isStringKey(value.key) &&
+    'options' in value &&
+    isArray(value.options)
+  )
+}
 
-function isTableExternalState(value: unknown): value is TableExternalState {
-  if (!value || typeof value !== 'object') return false
-  if (!('rows' in value) || !('rowCount' in value)) return false
-
-  return Array.isArray(value.rows) && typeof value.rowCount === 'number'
+function isStringKey<TValue>(value: TValue): value is TValue & string {
+  return isString(value)
 }
 
 function sameExternalState(left: TableExternalState, right: TableExternalState) {
@@ -684,11 +735,17 @@ function sameExternalState(left: TableExternalState, right: TableExternalState) 
 }
 
 function sameRows(left: unknown[], right: unknown[]) {
-  if (left === right) return true
-  if (left.length !== right.length) return false
+  if (left === right) {
+    return true
+  }
+  if (left.length !== right.length) {
+    return false
+  }
 
-  for (let index = 0; index < left.length; index++) {
-    if (left[index] !== right[index]) return false
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false
+    }
   }
 
   return true
@@ -701,33 +758,49 @@ function mergeRowsByKey(options: {
 }) {
   const replacements = new Map(
     options.nextRows.map((row, index) => [
-      resolveTableRowId({ rowKey: options.rowKey, row, index }),
+      resolveTableRowId({ index, row, rowKey: options.rowKey }),
       row,
     ]),
   )
 
   return options.currentRows.map((row, index) => {
-    const nextRow = replacements.get(resolveTableRowId({ rowKey: options.rowKey, row, index }))
+    const nextRow = replacements.get(resolveTableRowId({ index, row, rowKey: options.rowKey }))
     return nextRow ?? row
   })
 }
 
 function withEnabled<TData = unknown>(
-  query: TableQueryDefinition<TData>,
+  query: TableQueryDefinition<TData> & { enabled?: boolean },
   enabled: boolean,
-  defaults?: { staleTime?: number; refetchOnWindowFocus?: boolean },
-): TableQueryDefinition<TData> & { enabled: boolean } {
+  defaults?: {
+    staleTime?: number
+    refetchOnWindowFocus?: boolean
+    placeholderData?: typeof keepPreviousData
+  },
+): TableQueryDefinition<TData> & { enabled: boolean; placeholderData?: typeof keepPreviousData } {
   return {
     ...query,
-    ...(defaults ?? {}),
-    enabled: enabled && (query as { enabled?: boolean }).enabled !== false,
-  } as TableQueryDefinition<TData> & { enabled: boolean }
+    ...defaults,
+    enabled: enabled && query.enabled !== false,
+  }
+}
+
+function isRemoteFacetQuery<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+  TKey extends string,
+>(
+  value: TableRemoteFacetSource<TRow, TContext, TKey> | undefined,
+): value is (
+  context: TableFacetsContext<TRow, TContext, TKey>,
+) => TableQueryDefinition<TableFacetExecutionResult<TKey>> {
+  return isFunction(value)
 }
 
 function resolveSourceDefinition(options: {
   source: TableSchemaView['source']
   request: TableSourceRequestContext
-  context: Record<string, unknown>
+  context: TableRuntimeRecord
 }): TableQueryDefinition<TableRuntimeSourceResult> {
   return options.source.query({ ...options.request, context: options.context })
 }
@@ -735,16 +808,22 @@ function resolveSourceDefinition(options: {
 function createCursorQueryDefinition(options: {
   source: TableSchemaView['source']
   request: TableSourceRequestContext
-  context: Record<string, unknown>
+  context: TableRuntimeRecord
   revision: number
 }): TableInfiniteQueryDefinition<TableRuntimeSourceResult> {
   const firstPageDefinition = resolveSourceDefinition(options)
-  const pagination = options.request.pagination
-  if (pagination.mode !== 'cursor')
+  const { pagination } = options.request
+  if (pagination.mode !== 'cursor') {
     throw new Error('Cursor query definitions require cursor pagination.')
+  }
 
   return {
-    queryKey: [...firstPageDefinition.queryKey, { tableCursorRevision: options.revision }],
+    enabled: isQueryDefinitionEnabled(firstPageDefinition),
+    getNextPageParam(lastPage) {
+      return isTableCursorPageResult(lastPage)
+        ? (lastPage.pageInfo.nextCursor ?? undefined)
+        : undefined
+    },
     initialPageParam: null,
     async queryFn(queryContext) {
       const definition = resolveSourceDefinition({
@@ -752,46 +831,45 @@ function createCursorQueryDefinition(options: {
         request: {
           ...options.request,
           pagination: {
-            mode: 'cursor',
-            cursor: queryContext.pageParam,
-            pageSize: pagination.pageSize,
             count: pagination.count,
+            cursor: queryContext.pageParam,
+            mode: 'cursor',
+            pageSize: pagination.pageSize,
           },
         },
       })
 
-      if (!definition.queryFn) throw new Error('Cursor table sources must provide a queryFn.')
+      if (!definition.queryFn) {
+        throw new Error('Cursor table sources must provide a queryFn.')
+      }
       return definition.queryFn(queryContext)
     },
-    getNextPageParam(lastPage) {
-      return isTableCursorPageResult(lastPage)
-        ? (lastPage.pageInfo.nextCursor ?? undefined)
-        : undefined
-    },
-    enabled: isQueryDefinitionEnabled(firstPageDefinition),
+    queryKey: createTableCursorQueryKey(firstPageDefinition.queryKey, options.revision),
   }
 }
 
 function isQueryDefinitionEnabled(query: TableQueryDefinition<TableRuntimeSourceResult>) {
-  if (!('enabled' in query)) return true
+  if (!('enabled' in query)) {
+    return true
+  }
   return query.enabled !== false
 }
 
 function disabledQueryDefinition(reason: string) {
   return {
-    queryKey: ['table-data-disabled', reason],
-    queryFn: async () => [],
     enabled: false,
+    queryFn: async () => [],
+    queryKey: ['table-data-disabled', reason],
   } satisfies TableQueryDefinition<TableRuntimeSourceResult> & { enabled: false }
 }
 
 function disabledInfiniteQueryDefinition() {
   return {
-    queryKey: ['table-infinite-data-disabled'],
-    queryFn: async () => [],
-    initialPageParam: null,
-    getNextPageParam: () => undefined,
     enabled: false,
+    getNextPageParam: () => null,
+    initialPageParam: null,
+    queryFn: async () => [],
+    queryKey: ['table-infinite-data-disabled'],
   } satisfies TableInfiniteQueryDefinition<TableRuntimeSourceResult> & { enabled: false }
 }
 
@@ -802,7 +880,7 @@ function withInfiniteEnabled<TData = unknown>(
 ): TableInfiniteQueryDefinition<TData> & { enabled: boolean } {
   return {
     ...query,
-    ...(defaults ?? {}),
+    ...defaults,
     enabled: enabled && query.enabled !== false,
   }
 }

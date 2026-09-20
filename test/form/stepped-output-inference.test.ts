@@ -13,7 +13,6 @@ const resetPasswordSchema = defineFormSchema({
   showStepper: false,
   steps: [
     {
-      key: 'credentials',
       fields: [
         {
           key: 'password',
@@ -23,17 +22,18 @@ const resetPasswordSchema = defineFormSchema({
           },
         },
         {
-          key: 'confirmPassword',
-          type: 'password',
           dependencies: ['password'],
-          validation: {
-            required: true,
-          },
+          key: 'confirmPassword',
           submit: {
             omit: true,
           },
+          type: 'password',
+          validation: {
+            required: true,
+          },
         },
       ],
+      key: 'credentials',
     },
   ],
 })
@@ -42,30 +42,30 @@ const rootedSchema = defineFormSchema({
   formKey: 'account.wizard',
   steps: [
     {
-      key: 'account',
-      root: 'account',
       fields: [
         {
           key: 'name',
           type: 'text',
         },
         {
+          default: true,
           key: 'enabled',
           type: 'checkbox',
-          default: true,
         },
       ],
+      key: 'account',
+      root: 'account',
     },
     {
-      key: 'metadata',
-      root: 'meta.extra',
       fields: [
         {
+          condition: () => true,
           key: 'erpId',
           type: 'text',
-          condition: () => true,
         },
       ],
+      key: 'metadata',
+      root: 'meta.extra',
     },
   ],
 })

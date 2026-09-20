@@ -1,6 +1,7 @@
 import type { ComputedRef, WritableComputedRef } from 'vue'
 
 import type { useTableData } from '../composables/use-table-data'
+import type { useTablePagination } from '../composables/use-table-pagination'
 import type { TableFilterState } from './query-state'
 import type { TableSchemaView } from './schema'
 import type {
@@ -13,12 +14,21 @@ import type {
   TableSortingRule,
 } from './utils'
 
-export type PublicTableQueryState = {
+export interface PublicTableQueryState {
   layout: TableLayout
   pagination: TablePaginationState
   sorting: { sortKey: string; sortDirection: 'asc' | 'desc' } | null
   filters: TableFilterState
 }
+
+export interface TableRefreshResult {
+  data?: unknown
+  error?: unknown
+}
+
+export type TableLoadMoreResult = Awaited<
+  ReturnType<ReturnType<typeof useTablePagination>['loadMore']>
+>
 
 export interface TableOffsetPaginationApi {
   mode: 'offset'
@@ -50,7 +60,7 @@ export interface TableCursorPaginationApi {
     isLoadingMore: boolean
     loadMoreError: unknown
   }>
-  loadMore: () => Promise<unknown>
+  loadMore: () => Promise<TableLoadMoreResult>
   reset: () => void
 }
 
@@ -68,7 +78,13 @@ export type TablePaginationApi<TSchema> = TSchema extends { pagination: false }
   ? TableNoPaginationApi
   : TSchema extends { pagination: { mode: 'cursor' } }
     ? TableCursorPaginationApi
-    : TableOffsetPaginationApi
+    : TSchema extends { pagination?: infer TPagination }
+      ? TPagination extends false
+        ? TableNoPaginationApi
+        : TPagination extends { mode: 'cursor' }
+          ? TableCursorPaginationApi
+          : TableOffsetPaginationApi
+      : TableOffsetPaginationApi
 
 export interface TableApi<TSchema = TableSchemaView> {
   state: {

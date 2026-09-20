@@ -1,3 +1,4 @@
+import { isArray, isObject } from '../../shared/utils/predicate'
 import type {
   GenericObject,
   TableFilterState,
@@ -8,11 +9,15 @@ import type {
 } from '../types'
 import { normalizeFilterDefinition, resolveFilterDefaultOperator } from './query-state'
 
-export function createResolvedFilterState(params: {
-  definitions: Array<TableUiFilterDefinition<GenericObject, GenericObject, string>>
-  filters: TableFilterState<string>
-  staticFilters?: Array<TableStaticFilterNode<GenericObject, GenericObject, string>>
-  context?: GenericObject
+export function createResolvedFilterState<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TKey extends string = string,
+>(params: {
+  definitions: TableUiFilterDefinition<TRow, TContext, TKey>[]
+  filters: TableFilterState<TKey>
+  staticFilters?: TableStaticFilterNode<TRow, TContext, TKey>[]
+  context?: TContext
 }): TableResolvedFilterGroup<string> {
   const children: TableResolvedFilterNode<string>[] = []
 
@@ -29,25 +34,25 @@ export function createResolvedFilterState(params: {
 
     if (!definition) {
       children.push({
-        type: 'condition',
         key: rule.key,
         operator,
+        type: 'condition',
         value: rule.value,
       })
       continue
     }
 
     const resolvedNode: TableResolvedFilterNode<string> | null = definition.resolve?.({
+      context: params.context,
+      definition,
       rule: {
         ...rule,
         operator,
       },
-      definition,
-      context: params.context,
     }) ?? {
-      type: 'condition',
       key: rule.key,
       operator,
+      type: 'condition',
       value: rule.value,
     }
 
@@ -57,15 +62,17 @@ export function createResolvedFilterState(params: {
   }
 
   return {
-    type: 'group',
-    combinator: 'and',
     children,
+    combinator: 'and',
+    type: 'group',
   }
 }
 
-function normalizeStaticFilterNode(
-  filter: TableStaticFilterNode<GenericObject, GenericObject, string>,
-): TableResolvedFilterNode<string> {
+function normalizeStaticFilterNode<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+  TKey extends string,
+>(filter: TableStaticFilterNode<TRow, TContext, TKey>): TableResolvedFilterNode<string> {
   if (isResolvedFilterGroup(filter)) {
     return {
       ...filter,
@@ -74,9 +81,9 @@ function normalizeStaticFilterNode(
   }
 
   return {
-    type: 'condition',
     key: filter.key,
     operator: filter.operator,
+    type: 'condition',
     value: filter.value,
   }
 }
@@ -94,15 +101,17 @@ function normalizeResolvedFilterNode(
   return node
 }
 
-function isResolvedFilterGroup(
-  value: TableStaticFilterNode<GenericObject, GenericObject, string>,
-): value is TableResolvedFilterGroup<string> {
+function isResolvedFilterGroup<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+  TKey extends string,
+>(value: TableStaticFilterNode<TRow, TContext, TKey>): value is TableResolvedFilterGroup<TKey> {
   return (
     !!value &&
-    typeof value === 'object' &&
+    isObject(value) &&
     'type' in value &&
     value.type === 'group' &&
     'children' in value &&
-    Array.isArray(value.children)
+    isArray(value.children)
   )
 }

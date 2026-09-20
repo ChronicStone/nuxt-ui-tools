@@ -9,7 +9,7 @@ import {
   createSpreadsheetReferenceResolutions,
 } from '#ui-tools/spreadsheet'
 import { defineSpreadsheetSchema, normalizeSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
-import type { SpreadsheetParsedRow } from '#ui-tools/spreadsheet/types'
+import type { SpreadsheetParsedRow, SpreadsheetRecord } from '#ui-tools/spreadsheet/types'
 
 import { useSpreadsheetReferences } from '../../src/runtime/spreadsheet/composables/use-spreadsheet-references'
 
@@ -21,85 +21,85 @@ const productOptions = [
 describe('spreadsheet reference utils', () => {
   const references = [
     {
-      kind: 'select' as const,
       field: 'productId',
-      source: 'examNameRaw',
-      options: productOptions,
       getOptions: ({ search }: { search: string }) => ({
+        queryFn: () => [],
         queryKey: ['products', search],
-        queryFn: async () => [],
       }),
+      kind: 'select' as const,
+      options: productOptions,
+      source: 'examNameRaw',
     },
   ]
 
-  const rows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+  const rows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
     {
+      data: {
+        examNameRaw: 'Business English 4 Skills',
+      },
       index: 0,
+      isValid: true,
+      issues: [],
       source: ['Business English 4 Skills'],
+    },
+    {
       data: {
         examNameRaw: 'Business English 4 Skills',
       },
-      issues: [],
-      isValid: true,
-    },
-    {
       index: 1,
-      source: ['Business English 4 Skills'],
-      data: {
-        examNameRaw: 'Business English 4 Skills',
-      },
-      issues: [],
       isValid: true,
+      issues: [],
+      source: ['Business English 4 Skills'],
     },
     {
-      index: 2,
-      source: ['Unknown External Product'],
       data: {
         examNameRaw: 'Unknown External Product',
       },
-      issues: [],
+      index: 2,
       isValid: true,
+      issues: [],
+      source: ['Unknown External Product'],
     },
   ]
 
   it('creates sorted candidates from reference options', () => {
     const candidates = createSpreadsheetReferenceCandidates({
-      sourceValue: 'Business English 4 Skills',
-      reference: references[0],
       options: references[0].options ?? [],
+      reference: references[0],
+      sourceValue: 'Business English 4 Skills',
     })
 
     expect(candidates[0]).toMatchObject({
-      value: 'prod_1',
       label: 'Business English 4 Skills',
       score: 1,
+      value: 'prod_1',
     })
   })
 
   it('keeps full option list even when no recommendation score is found', () => {
     const candidates = createSpreadsheetReferenceCandidates({
-      sourceValue: 'Unknown External Product',
-      reference: references[0],
       options: references[0].options ?? [],
+      reference: references[0],
+      sourceValue: 'Unknown External Product',
     })
 
     expect(candidates).toHaveLength(2)
-    expect(candidates.every((candidate) => candidate.score === 0)).toBe(true)
+    expect(candidates.every((candidate) => candidate.score === 0)).toBeTruthy()
   })
 
   it('creates one resolution per distinct imported source value', () => {
     const resolutions = createSpreadsheetReferenceResolutions({
+      context: {},
       references,
       rows,
-      context: {},
     })
 
     expect(resolutions).toHaveLength(2)
     expect(resolutions[0]).toMatchObject({
       referenceField: 'productId',
+      selectedValue: 'prod_1',
       sourceValue: 'Business English 4 Skills',
       status: 'matched',
-      selectedValue: 'prod_1',
     })
     expect(resolutions[1]).toMatchObject({
       sourceValue: 'Unknown External Product',
@@ -110,30 +110,30 @@ describe('spreadsheet reference utils', () => {
 
   it('applies reference selections back onto all matching rows', () => {
     const resolvedRows = applySpreadsheetReferenceResolutions({
-      rows,
       references,
       resolutions: [
         {
-          referenceField: 'productId',
-          sourceField: 'examNameRaw',
-          outputField: 'product.id',
-          sourceValue: 'Business English 4 Skills',
-          rowIndexes: [0, 1],
-          status: 'matched',
-          selectedValue: 'prod_1',
-          selectedLabel: 'Business English 4 Skills',
           candidates: [],
+          outputField: 'product.id',
+          referenceField: 'productId',
+          rowIndexes: [0, 1],
+          selectedLabel: 'Business English 4 Skills',
+          selectedValue: 'prod_1',
+          sourceField: 'examNameRaw',
+          sourceValue: 'Business English 4 Skills',
+          status: 'matched',
         },
         {
-          referenceField: 'productId',
-          sourceField: 'examNameRaw',
-          outputField: 'product.id',
-          sourceValue: 'Unknown External Product',
-          rowIndexes: [2],
-          status: 'unresolved',
           candidates: [],
+          outputField: 'product.id',
+          referenceField: 'productId',
+          rowIndexes: [2],
+          sourceField: 'examNameRaw',
+          sourceValue: 'Unknown External Product',
+          status: 'unresolved',
         },
       ],
+      rows,
     })
 
     expect(resolvedRows[0]?.data).toMatchObject({
@@ -142,60 +142,60 @@ describe('spreadsheet reference utils', () => {
         id: 'prod_1',
       },
     })
-    expect(resolvedRows[2]?.issues).toEqual([])
+    expect(resolvedRows[2]?.issues).toStrictEqual([])
   })
 
   it('creates query requests for unresolved references with remote targets', () => {
     const requests = createSpreadsheetReferenceQueryRequests({
-      references,
-      rows,
       context: {
         products: references[0].options,
       },
+      references,
+      rows,
     })
 
     expect(requests).toHaveLength(1)
-    expect(requests[0]?.query.queryKey).toEqual(['products', 'Unknown External Product'])
+    expect(requests[0]?.query.queryKey).toStrictEqual(['products', 'Unknown External Product'])
   })
 
   it('resolves array-bound references into array outputs', () => {
-    const multiRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+    const multiRows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
       {
-        index: 0,
-        source: ['Business English 4 Skills', 'Reading Placement Test'],
         data: {
           examNamesRaw: ['Business English 4 Skills', 'Reading Placement Test'],
         },
-        issues: [],
+        index: 0,
         isValid: true,
+        issues: [],
+        source: ['Business English 4 Skills', 'Reading Placement Test'],
       },
     ]
 
     const multiReferences = [
       {
-        kind: 'select' as const,
         field: 'productIds',
-        source: 'examNamesRaw',
+        kind: 'select' as const,
         options: productOptions,
+        source: 'examNamesRaw',
       },
     ]
 
     const resolutions = createSpreadsheetReferenceResolutions({
+      context: {},
       references: multiReferences,
       rows: multiRows,
-      context: {},
     })
 
     expect(resolutions).toHaveLength(2)
-    expect(resolutions.map((resolution) => resolution.sourceValue)).toEqual([
+    expect(resolutions.map((resolution) => resolution.sourceValue)).toStrictEqual([
       'Business English 4 Skills',
       'Reading Placement Test',
     ])
 
     const resolvedRows = applySpreadsheetReferenceResolutions({
-      rows: multiRows,
       references: multiReferences,
       resolutions,
+      rows: multiRows,
     })
 
     expect(resolvedRows[0]?.data).toMatchObject({
@@ -206,60 +206,60 @@ describe('spreadsheet reference utils', () => {
 
   it('lets unresolved references pass unless reference rules invalidate the row', () => {
     const requiredReference = createSheetRule<unknown, [], { required: true }, { required: true }>({
-      name: 'requiredReference',
       flags: { required: true },
+      message: 'Product reference is required',
+      name: 'requiredReference',
       validator: (value) => ({
         $valid: Boolean(value),
         required: true,
       }),
-      message: 'Product reference is required',
     })
 
     const referenceDefinitions = [
       {
-        kind: 'select' as const,
         field: 'productId',
-        source: 'examNameRaw',
+        kind: 'select' as const,
         options: productOptions,
+        source: 'examNameRaw',
       },
       {
-        kind: 'select' as const,
         field: 'requiredProductId',
-        source: 'examNameRaw',
+        kind: 'select' as const,
         options: productOptions,
         rules: [requiredReference()],
+        source: 'examNameRaw',
       },
     ]
 
     const unresolvedRows = applySpreadsheetReferenceResolutions({
-      rows,
       references: referenceDefinitions,
       resolutions: [
         {
-          referenceField: 'productId',
-          sourceField: 'examNameRaw',
-          outputField: 'productId',
-          sourceValue: 'Unknown External Product',
-          rowIndexes: [2],
-          status: 'unresolved',
           candidates: [],
+          outputField: 'productId',
+          referenceField: 'productId',
+          rowIndexes: [2],
+          sourceField: 'examNameRaw',
+          sourceValue: 'Unknown External Product',
+          status: 'unresolved',
         },
         {
-          referenceField: 'requiredProductId',
-          sourceField: 'examNameRaw',
-          outputField: 'requiredProductId',
-          sourceValue: 'Unknown External Product',
-          rowIndexes: [2],
-          status: 'unresolved',
           candidates: [],
+          outputField: 'requiredProductId',
+          referenceField: 'requiredProductId',
+          rowIndexes: [2],
+          sourceField: 'examNameRaw',
+          sourceValue: 'Unknown External Product',
+          status: 'unresolved',
         },
       ],
+      rows,
     })
 
     expect(unresolvedRows[2]?.data).toMatchObject({
       examNameRaw: 'Unknown External Product',
     })
-    expect(unresolvedRows[2]?.issues).toEqual([
+    expect(unresolvedRows[2]?.issues).toStrictEqual([
       expect.objectContaining({
         code: 'requiredReference',
         columnKey: 'requiredProductId',
@@ -270,7 +270,6 @@ describe('spreadsheet reference utils', () => {
 
   it('orchestrates auto and manual selections in the reference composable', () => {
     const schema = defineSpreadsheetSchema({
-      importKey: 'assessment.results',
       columns: {
         static: (column) => [
           column.text('examNameRaw', {
@@ -280,34 +279,35 @@ describe('spreadsheet reference utils', () => {
           }),
         ],
       },
+      importKey: 'assessment.results',
       references: (reference) => [
         reference.select('productId', {
-          source: 'examNameRaw',
-          options: productOptions,
           getOptions: ({ search }) => ({
+            queryFn: () => [],
             queryKey: ['products', search],
-            queryFn: async () => [],
           }),
+          options: productOptions,
+          source: 'examNameRaw',
         }),
       ],
     })
     const normalizedSchema = normalizeSpreadsheetSchema(schema)
 
     const referenceState = useSpreadsheetReferences({
-      schema: computed(() => normalizedSchema),
       contextData: computed(() => ({
         products: references[0].options,
       })),
       rows: computed(() => rows),
+      schema: computed(() => normalizedSchema),
     })
 
     expect(referenceState.unresolvedResolutions.value).toHaveLength(1)
 
     referenceState.selectReference({
       referenceField: 'productId',
-      sourceValue: 'Unknown External Product',
-      selectedValue: 'prod_2',
       selectedLabel: 'Reading Placement Test',
+      selectedValue: 'prod_2',
+      sourceValue: 'Unknown External Product',
     })
 
     expect(referenceState.unresolvedResolutions.value).toHaveLength(0)
@@ -321,7 +321,6 @@ describe('spreadsheet reference utils', () => {
 
   it('resolves column-level resolve definitions in place without keeping the raw source field', () => {
     const schema = defineSpreadsheetSchema({
-      importKey: 'assessment.resolve',
       columns: {
         static: (column) => [
           column.text('productId', {
@@ -334,64 +333,64 @@ describe('spreadsheet reference utils', () => {
           }),
         ],
       },
+      importKey: 'assessment.resolve',
     })
     const normalizedSchema = normalizeSpreadsheetSchema(schema)
 
-    const parsedRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+    const parsedRows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
       {
-        index: 0,
-        source: ['Business English 4 Skills'],
         data: {
           productId: 'Business English 4 Skills',
         },
-        issues: [],
+        index: 0,
         isValid: true,
+        issues: [],
+        source: ['Business English 4 Skills'],
       },
       {
-        index: 1,
-        source: ['Unknown External Product'],
         data: {
           productId: 'Unknown External Product',
         },
-        issues: [],
+        index: 1,
         isValid: true,
+        issues: [],
+        source: ['Unknown External Product'],
       },
     ]
 
     const resolutions = createSpreadsheetReferenceResolutions({
+      context: {},
       references: normalizedSchema.resolutions,
       rows: parsedRows,
-      context: {},
     })
 
     expect(resolutions).toHaveLength(2)
     expect(resolutions[0]).toMatchObject({
       scope: 'column',
-      targetField: 'productId',
-      status: 'matched',
       selectedValue: 'prod_1',
+      status: 'matched',
+      targetField: 'productId',
     })
     expect(resolutions[1]).toMatchObject({
       scope: 'column',
-      targetField: 'productId',
       status: 'unresolved',
+      targetField: 'productId',
     })
 
     const resolvedRows = applySpreadsheetReferenceResolutions({
-      rows: parsedRows,
       references: normalizedSchema.resolutions,
       resolutions,
+      rows: parsedRows,
     })
 
     expect(resolvedRows[0]?.data).toMatchObject({
       productId: 'prod_1',
     })
-    expect(resolvedRows[1]?.data).toEqual({})
+    expect(resolvedRows[1]?.data).toStrictEqual({})
   })
 
   it('applies column resolve rules only after resolution and lets manual selections override auto-match', () => {
     const schema = defineSpreadsheetSchema({
-      importKey: 'assessment.resolve.rules',
       columns: {
         static: (column) => [
           column.text('productId', {
@@ -409,41 +408,42 @@ describe('spreadsheet reference utils', () => {
           }),
         ],
       },
+      importKey: 'assessment.resolve.rules',
     })
     const normalizedSchema = normalizeSpreadsheetSchema(schema)
 
-    const parsedRows: SpreadsheetParsedRow<Record<string, unknown>>[] = [
+    const parsedRows: SpreadsheetParsedRow<SpreadsheetRecord>[] = [
       {
-        index: 0,
-        source: ['Unknown External Product'],
         data: {
           productId: 'Unknown External Product',
         },
-        issues: [],
+        index: 0,
         isValid: true,
+        issues: [],
+        source: ['Unknown External Product'],
       },
       {
-        index: 1,
-        source: ['Business English 4 Skills'],
         data: {
           productId: 'Business English 4 Skills',
         },
-        issues: [],
+        index: 1,
         isValid: true,
+        issues: [],
+        source: ['Business English 4 Skills'],
       },
     ]
 
     const resolutionState = useSpreadsheetReferences({
+      contextData: computed(() => ({})),
+      rows: computed(() => parsedRows),
       schema: computed(() => ({
         ...normalizedSchema,
         relations: [],
       })),
-      contextData: computed(() => ({})),
-      rows: computed(() => parsedRows),
     })
 
     expect(resolutionState.unresolvedResolutions.value).toHaveLength(1)
-    expect(resolutionState.resolvedRows.value[0]?.issues).toEqual([
+    expect(resolutionState.resolvedRows.value[0]?.issues).toStrictEqual([
       expect.objectContaining({
         code: 'required',
         columnKey: 'productId',
@@ -453,15 +453,15 @@ describe('spreadsheet reference utils', () => {
 
     resolutionState.selectReference({
       referenceField: 'productId',
-      sourceValue: 'Unknown External Product',
-      selectedValue: 'prod_2',
       selectedLabel: 'Reading Placement Test',
+      selectedValue: 'prod_2',
+      sourceValue: 'Unknown External Product',
     })
 
     expect(resolutionState.unresolvedResolutions.value).toHaveLength(0)
     expect(resolutionState.resolvedRows.value[0]?.data).toMatchObject({
       productId: 'prod_2',
     })
-    expect(resolutionState.resolvedRows.value[0]?.issues).toEqual([])
+    expect(resolutionState.resolvedRows.value[0]?.issues).toStrictEqual([])
   })
 })

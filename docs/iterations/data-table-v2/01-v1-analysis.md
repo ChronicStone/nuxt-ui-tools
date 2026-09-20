@@ -12,7 +12,7 @@ Main pieces:
 - data execution: `composables/useTableData.ts`
 - filters and quick filters: `types/filters.ts`, `composables/useTableFilters.ts`, `utils/filter.tsx`
 - layout, controls, actions, view parsing: `useTableLayout.ts`, `useTableControls.ts`, `useTableActions.tsx`, `useTableView.ts`
-- rendering: `components/DataList.vue`, `components/table/*`, `components/grid/*`
+- rendering: `components/data-list.vue`, `components/table/*`, `components/grid/*`
 
 ## Strong Parts Worth Keeping
 

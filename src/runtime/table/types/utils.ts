@@ -2,7 +2,6 @@ import type { ComputedRef, Ref } from 'vue'
 
 import type {
   LazyTextValue,
-  MaybePromise,
   NestedPaths,
   Prettify,
   RenderableType,
@@ -10,18 +9,20 @@ import type {
 } from '../../shared'
 import type { TableApi } from './table-api'
 
+export { type ComputedRef, type Ref } from 'vue'
 export type {
-  ComputedRef,
   LazyTextValue,
   MaybePromise,
   NestedPaths,
   Prettify,
-  Ref,
   RenderableType,
   UnionToIntersection,
-}
+} from '../../shared'
 
 export type GenericObject = object
+
+/** Runtime records retain arbitrary decoded values while keeping dictionary ownership explicit. */
+export type TableRuntimeRecord = import('../../shared/types/utils').GenericObject
 
 export type TypeFromPath<
   TValue,
@@ -114,7 +115,7 @@ export type TableDefaultSort<TKey extends string = string> =
       dir: TableSortingDirection
     }
 
-export type TableSchemaRefLike<TValue> = {
+export interface TableSchemaRefLike<TValue> {
   value: TValue
 }
 
@@ -122,9 +123,9 @@ export type MaybeComputedRef<TValue> = TValue | Ref<TValue> | ComputedRef<TValue
 
 export type TableSchemaSource<TSchema> = TSchema | TableSchemaRefLike<TSchema> | (() => TSchema)
 
-export type TableRowsFromSourceResult<TResult> = TResult extends (infer TRow)[]
+export type TableRowsFromSourceResult<TResult> = TResult extends readonly (infer TRow)[]
   ? TRow
-  : TResult extends { rows: (infer TRow)[] }
+  : TResult extends { rows: readonly (infer TRow)[] }
     ? TRow
     : never
 
@@ -139,7 +140,7 @@ type MergeContextItem<TItem> = TItem extends {
   query: (...args: any[]) => import('@tanstack/vue-query').UseQueryOptions<infer TValue>
 }
   ? { [K in TKey]: Awaited<TValue> }
-  : {}
+  : NonNullable<unknown>
 
 type MergeContextItemUnion<TItem> = UnionToIntersection<MergeContextItem<TItem>>
 
@@ -159,11 +160,11 @@ export type ExtractTableRow<TSchema> = NormalizeExtractedRow<
 export type ExtractTableContextData<TSchema> = Prettify<
   TableResolvedSchema<TSchema> extends { context?: infer TItems extends unknown[] }
     ? MergeContextItemUnion<TItems[number]>
-    : {}
+    : NonNullable<unknown>
 >
 
 export type ExtractTablePageContextData<TSchema> = Prettify<
   TableResolvedSchema<TSchema> extends { pageContext?: infer TItems extends unknown[] }
     ? MergeContextItemUnion<TItems[number]>
-    : {}
+    : NonNullable<unknown>
 >

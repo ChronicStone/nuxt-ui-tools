@@ -4,10 +4,10 @@ import type {
   GenericObject,
   InferTableSourceRow,
   ResolvedTableSchema,
-  TableColumnCollection,
   TableContextDataFromItems,
   TableContextItem,
   TableKnownFieldPath,
+  TableColumnCollection,
   TablePageContextItem,
   TablePaginationSchema,
   TableSource,
@@ -50,11 +50,19 @@ export function defineTableSchema<
 ): ResolvedTableSchema<InferredTableSchema<TSource, TContextItems, TPageContextItems>> & {
   pagination: TPagination
 } {
+  // SAFETY: schema transformation preserves every input field while resolving only column/filter collections.
   return {
     ...schema,
+    filters: schema.filters
+      ? {
+          ...schema.filters,
+          ui: resolveUiFilters(schema.filters.ui),
+        }
+      : undefined,
     table: schema.table
       ? {
           ...schema.table,
+          // SAFETY: the schema's inferred row/context contracts are preserved by the final schema return contract.
           columns: resolveColumns(
             schema.table.columns as TableColumnCollection<
               GenericObject,
@@ -64,12 +72,6 @@ export function defineTableSchema<
               string
             >,
           ),
-        }
-      : undefined,
-    filters: schema.filters
-      ? {
-          ...schema.filters,
-          ui: resolveUiFilters(schema.filters.ui),
         }
       : undefined,
   } as ResolvedTableSchema<InferredTableSchema<TSource, TContextItems, TPageContextItems>> & {

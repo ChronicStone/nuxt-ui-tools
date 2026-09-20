@@ -1,13 +1,21 @@
 import { computed, ref } from 'vue'
 
+import { isNullish } from '../../shared/utils/predicate'
 import type {
+  DataListFilterPanelCommitMode,
   TableFilterOperator,
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
   TableResolvedFilterPresentation,
 } from '../types'
-import { resolveFilterDisplayLocation, resolveFilterDisplayOrder } from '../utils'
+import { resolvePanelCommitRules, resolvePanelDefaultRules } from '../utils/filter-presentation'
+import {
+  resolveFilterDisplayLocation,
+  resolveFilterDisplayOrder,
+} from '../utils/filters/presentation'
 import type { useTableFilters } from './use-table-filters'
+
+export { resolvePanelCommitRules, resolvePanelDefaultRules } from '../utils/filter-presentation'
 
 export interface UseTableFilterPresentationParams {
   filters: ReturnType<typeof useTableFilters>
@@ -16,29 +24,32 @@ export interface UseTableFilterPresentationParams {
 export function useTableFilterPresentation(options: UseTableFilterPresentationParams) {
   const dynamicSessionKey = ref<string | null>(null)
   const panelOpen = ref<boolean>(false)
+  const panelCommitMode = ref<DataListFilterPanelCommitMode>('submit')
   const panelDraftFilters = ref<TableQueryStateFilterRule[]>([])
 
   const definitions = computed(() =>
     [...options.filters.definitions.value].sort((left, right) => {
       const orderDiff = resolveFilterDisplayOrder(left) - resolveFilterDisplayOrder(right)
-      if (orderDiff !== 0) return orderDiff
+      if (orderDiff !== 0) {
+        return orderDiff
+      }
       return left.key.localeCompare(right.key)
     }),
   )
 
   const resolved = computed<TableResolvedFilterPresentation[]>(() =>
     definitions.value.map((definition) => {
-      const active = options.filters.getActiveFilterState({ key: definition.key }) != null
+      const active = !isNullish(options.filters.getActiveFilterState({ key: definition.key }))
       const location = resolveFilterDisplayLocation(definition.display?.location)
       const visible = location !== 'tag-dynamic' || active
 
       return {
+        active,
+        group: definition.display?.group,
         key: definition.key,
         location,
         order: resolveFilterDisplayOrder(definition),
-        group: definition.display?.group,
         panelSection: definition.display?.panel?.section,
-        active,
         visible,
       }
     }),
@@ -73,7 +84,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     }),
   )
   const dynamicSessionDefinition = computed(() =>
-    dynamicSessionKey.value == null
+    isNullish(dynamicSessionKey.value)
       ? undefined
       : definitions.value.find((definition) => definition.key === dynamicSessionKey.value),
   )
@@ -89,7 +100,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   const activePanelCount = computed(
     () =>
       panelDefinitions.value.filter(
-        (definition) => options.filters.getActiveFilterState({ key: definition.key }) != null,
+        (definition) => !isNullish(options.filters.getActiveFilterState({ key: definition.key })),
       ).length,
   )
 
@@ -100,13 +111,16 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
       const section = definition.display?.panel?.section ?? definition.display?.group ?? 'Filters'
       const existing = sections.get(section)
 
-      if (existing) existing.push(definition)
-      else sections.set(section, [definition])
+      if (existing) {
+        existing.push(definition)
+      } else {
+        sections.set(section, [definition])
+      }
     }
 
     return [...sections.entries()].map(([label, items]) => ({
-      label,
       items,
+      label,
     }))
   })
 
@@ -115,15 +129,20 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   }
 
   function releaseDynamicSession(input: { key: string }) {
-    if (dynamicSessionKey.value !== input.key) return
+    if (dynamicSessionKey.value !== input.key) {
+      return
+    }
     dynamicSessionKey.value = null
   }
 
   function openPanel() {
-    panelDraftFilters.value = options.filters.effectiveUiFilters.value
-      .filter((rule) => isPanelKey(rule.key))
-      .map((rule) => ({ ...rule }))
+    syncPanelDraft()
     panelOpen.value = true
+  }
+
+  function setPanelCommitMode(mode: DataListFilterPanelCommitMode) {
+    panelCommitMode.value = mode
+    syncPanelDraft()
   }
 
   function closePanel() {
@@ -131,33 +150,34 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   }
 
   function resetPanelDraft() {
-    panelDraftFilters.value = options.filters.effectiveUiFilters.value
-      .filter((rule) => isPanelKey(rule.key))
-      .map((rule) => ({ ...rule }))
+    syncPanelDraft()
   }
 
   function clearPanelDraft() {
-    panelDraftFilters.value = panelDefinitions.value.flatMap((definition) => {
-      const defaultRule = options.filters.getDefaultFilterState({ key: definition.key })
-      return defaultRule ? [{ ...defaultRule }] : []
+    panelDraftFilters.value = resolvePanelDefaultRules({
+      definitions: panelDefinitions.value,
+      getDefault: (key) => options.filters.getDefaultFilterState({ key }),
     })
-    const preservedRules = options.filters.effectiveUiFilters.value.filter(
-      (rule) => !isPanelKey(rule.key),
-    )
-    options.filters.replaceFilters({
-      rules: [...preservedRules, ...panelDraftFilters.value],
-    })
+    if (panelCommitMode.value === 'live') {
+      commitPanelDraft({ close: false })
+    }
   }
 
   function applyPanelDraft() {
-    const nextPanelRules = panelDraftFilters.value.map((rule) => ({ ...rule }))
-    const preservedRules = options.filters.effectiveUiFilters.value.filter(
-      (rule) => !isPanelKey(rule.key),
-    )
+    commitPanelDraft({ close: true })
+  }
+
+  function commitPanelDraft(input: { close?: boolean } = {}) {
     options.filters.replaceFilters({
-      rules: [...preservedRules, ...nextPanelRules],
+      rules: resolvePanelCommitRules({
+        currentRules: options.filters.effectiveUiFilters.value,
+        panelKeys: panelDefinitions.value.map((definition) => definition.key),
+        panelRules: panelDraftFilters.value,
+      }),
     })
-    panelOpen.value = false
+    if (input.close !== false) {
+      panelOpen.value = false
+    }
   }
 
   function getPanelDraftFilterState(input: { key: string }) {
@@ -166,7 +186,9 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
   function getPanelFilterOperator(input: { key: string }) {
     const rule = getPanelDraftFilterState(input)
-    if (rule?.operator) return rule.operator
+    if (rule?.operator) {
+      return rule.operator
+    }
     return options.filters.getFilterOperator({ key: input.key })
   }
 
@@ -176,8 +198,8 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     if (current) {
       upsertPanelRule({
         key: input.key,
-        value: current.value,
         operator: input.operator,
+        value: current.value,
       })
       return
     }
@@ -189,8 +211,8 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
     upsertPanelRule({
       key: input.key,
-      value,
       operator: input.operator,
+      value,
     })
   }
 
@@ -199,21 +221,21 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     value: TableQueryStateFilterValue | null | undefined
     operator?: TableFilterOperator
   }) {
-    if (input.value == null || input.value === '') {
+    if (isNullish(input.value) || input.value === '') {
       clearPanelFilter({ key: input.key })
       return
     }
 
     upsertPanelRule({
       key: input.key,
-      value: input.value,
       operator: input.operator ?? getPanelFilterOperator({ key: input.key }),
+      value: input.value,
     })
   }
 
   function setPanelOptionFilterValues(input: {
     key: string
-    values: Array<string | number | boolean>
+    values: (string | number | boolean)[]
     operator?: TableFilterOperator
   }) {
     if (!input.values.length) {
@@ -223,8 +245,8 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
 
     upsertPanelRule({
       key: input.key,
-      value: input.values,
       operator: input.operator ?? getPanelFilterOperator({ key: input.key }),
+      value: input.values,
     })
   }
 
@@ -234,6 +256,9 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
       ...panelDraftFilters.value.filter((rule) => rule.key !== input.key),
       ...(defaultRule ? [{ ...defaultRule }] : []),
     ]
+    if (panelCommitMode.value === 'live') {
+      commitPanelDraft({ close: false })
+    }
   }
 
   function isPanelKey(key: string) {
@@ -245,31 +270,43 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
       ...panelDraftFilters.value.filter((item) => item.key !== rule.key),
       rule,
     ]
+    if (panelCommitMode.value === 'live') {
+      commitPanelDraft({ close: false })
+    }
+  }
+
+  function syncPanelDraft() {
+    panelDraftFilters.value = options.filters.effectiveUiFilters.value
+      .filter((rule) => isPanelKey(rule.key))
+      .map((rule) => ({ ...rule }))
   }
 
   return {
-    resolved,
-    tagDefinitions,
+    activateDynamicFilter,
     activeDynamicDefinitions,
+    activePanelCount,
+    applyPanelDraft,
+    clearPanelDraft,
+    clearPanelFilter,
+    closePanel,
+    commitPanelDraft,
     dormantDynamicDefinitions,
     dynamicSessionDefinition,
-    panelDefinitions,
-    panelSections,
-    hasPanelFilters,
-    activePanelCount,
-    panelOpen,
-    activateDynamicFilter,
-    releaseDynamicSession,
-    openPanel,
-    closePanel,
-    resetPanelDraft,
-    clearPanelDraft,
-    applyPanelDraft,
     getPanelDraftFilterState,
     getPanelFilterOperator,
+    hasPanelFilters,
+    openPanel,
+    panelCommitMode,
+    panelDefinitions,
+    panelOpen,
+    panelSections,
+    releaseDynamicSession,
+    resetPanelDraft,
+    resolved,
+    setPanelCommitMode,
     setPanelFilterOperator,
-    setPanelScalarFilterValue,
     setPanelOptionFilterValues,
-    clearPanelFilter,
+    setPanelScalarFilterValue,
+    tagDefinitions,
   }
 }

@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import { fr } from '#ui-tools/i18n'
 import {
-  type SpreadsheetCellValue,
-  type SpreadsheetRuleBuilder,
   createSheetRule,
   createSpreadsheetDynamicBuilder,
   createSpreadsheetHeaderCells,
@@ -14,6 +12,7 @@ import {
   matchSpreadsheetDynamicColumns,
   parseSpreadsheetRows,
 } from '#ui-tools/spreadsheet'
+import type { SpreadsheetCellValue, SpreadsheetRuleBuilder } from '#ui-tools/spreadsheet'
 
 interface DemoDynamicAffiliationItem {
   id: string
@@ -31,27 +30,27 @@ describe('spreadsheet row utils', () => {
   it('flattens grouped static columns and matches them against headers', () => {
     const columns = flattenSpreadsheetStaticColumns([
       {
-        kind: 'group',
-        key: 'candidate',
         columns: [
           {
-            kind: 'text',
-            key: 'firstName',
             from: 'First name',
+            key: 'firstName',
+            kind: 'text',
             required: true,
           },
           {
-            kind: 'text',
+            from: /^Last name$/iu,
             key: 'lastName',
-            from: /^Last name$/i,
+            kind: 'text',
             required: true,
           },
         ],
+        key: 'candidate',
+        kind: 'group',
       },
       {
-        kind: 'text',
-        key: 'examNameRaw',
         from: 'Exam name',
+        key: 'examNameRaw',
+        kind: 'text',
         required: true,
       },
     ])
@@ -62,7 +61,11 @@ describe('spreadsheet row utils', () => {
     const unmatched = getSpreadsheetUnmatchedColumns(columns, matches)
 
     expect(matches).toHaveLength(3)
-    expect(matches.map((match) => match.key)).toEqual(['firstName', 'lastName', 'examNameRaw'])
+    expect(matches.map((match) => match.key)).toStrictEqual([
+      'firstName',
+      'lastName',
+      'examNameRaw',
+    ])
     expect(unmatched).toHaveLength(0)
   })
 
@@ -75,21 +78,21 @@ describe('spreadsheet row utils', () => {
         max: number
       }
     >({
+      message: ({ value, params: [min, max] }) => `${value} must be between ${min} and ${max}`,
       name: 'scoreBand',
       validator: (value, min, max) => ({
         $valid: value >= min && value <= max,
-        min,
         max,
+        min,
       }),
-      message: ({ value, params: [min, max] }) => `${value} must be between ${min} and ${max}`,
     })
 
     const matches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
         {
-          kind: 'text',
-          key: 'examNameRaw',
           from: 'Exam name',
+          key: 'examNameRaw',
+          kind: 'text',
           rules: (v: SpreadsheetRuleBuilder) => [
             v.required({
               message: 'Exam name is required',
@@ -97,10 +100,10 @@ describe('spreadsheet row utils', () => {
           ],
         },
         {
-          kind: 'number',
-          key: 'scores.general',
           from: 'General level',
-          parse: async ({ cell }: { cell: SpreadsheetCellValue }) => Number(cell.text),
+          key: 'scores.general',
+          kind: 'number',
+          parse: ({ cell }: { cell: SpreadsheetCellValue }) => Number(cell.text),
           rules: (v: SpreadsheetRuleBuilder) => [
             v.number({
               message: 'Score must be numeric',
@@ -109,22 +112,22 @@ describe('spreadsheet row utils', () => {
           ],
         },
         {
-          kind: 'text',
-          key: 'batchName',
           from: 'Batch',
+          key: 'batchName',
+          kind: 'text',
           rules: (v: SpreadsheetRuleBuilder) => [
             v.oneOf(['spring-2026', '_internal']),
             v.validate({
+              message: ({ value }) => `"${value}" cannot start with underscore`,
               name: 'noUnderscore',
               validator: (value: string) => !value.startsWith('_'),
-              message: ({ value }) => `"${value}" cannot start with underscore`,
             }),
           ],
         },
         {
-          kind: 'text',
-          key: 'candidate.email',
           from: 'Email',
+          key: 'candidate.email',
+          kind: 'text',
           parse: ({ cell }: { cell: SpreadsheetCellValue }) => cell.text.toLowerCase(),
         },
       ]),
@@ -134,32 +137,32 @@ describe('spreadsheet row utils', () => {
     const rows = await parseSpreadsheetRows<{
       products: readonly string[]
     }>({
+      context: {
+        products: ['prod_1'],
+      },
+      matches,
       rows: [
         ['Business English 4 Skills', '84', 'spring-2026', 'JOHN@EXAMPLE.COM'],
         ['', 'oops', '_internal', 'JANE@EXAMPLE.COM'],
       ],
-      matches,
-      context: {
-        products: ['prod_1'],
-      },
     })
 
     expect(rows).toHaveLength(2)
     expect(rows[0]).toMatchObject({
-      isValid: true,
       data: {
+        batchName: 'spring-2026',
+        candidate: {
+          email: 'john@example.com',
+        },
         examNameRaw: 'Business English 4 Skills',
         scores: {
           general: 84,
         },
-        candidate: {
-          email: 'john@example.com',
-        },
-        batchName: 'spring-2026',
       },
+      isValid: true,
     })
-    expect(rows[1]?.isValid).toBe(false)
-    expect(rows[1]?.issues).toEqual([
+    expect(rows[1]?.isValid).toBeFalsy()
+    expect(rows[1]?.issues).toStrictEqual([
       expect.objectContaining({
         code: 'required',
         columnKey: 'examNameRaw',
@@ -187,9 +190,9 @@ describe('spreadsheet row utils', () => {
     const matches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
         {
-          kind: 'option',
-          key: 'productId',
           from: 'Product',
+          key: 'productId',
+          kind: 'option',
           options: ({
             context,
           }: {
@@ -203,9 +206,9 @@ describe('spreadsheet row utils', () => {
             })),
         },
         {
-          kind: 'option',
-          key: 'selectedProductId',
           from: 'Selected product',
+          key: 'selectedProductId',
+          kind: 'option',
           options: ({
             context,
           }: {
@@ -223,31 +226,31 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [
-        ['Business English 4 Skills', 'Reading Placement Test'],
-        ['Unknown product', 'Business English 4 Skills'],
-      ],
-      matches,
       context: {
         products: [
           { id: 'prod_1', name: 'Business English 4 Skills' },
           { id: 'prod_2', name: 'Reading Placement Test' },
         ] as const,
       },
+      matches,
+      rows: [
+        ['Business English 4 Skills', 'Reading Placement Test'],
+        ['Unknown product', 'Business English 4 Skills'],
+      ],
     })
 
     expect(rows[0]).toMatchObject({
-      isValid: true,
       data: {
         productId: 'prod_1',
         selectedProductId: 'prod_2',
       },
+      isValid: true,
     })
     expect(rows[1]).toMatchObject({
-      isValid: false,
       data: {
         selectedProductId: 'prod_1',
       },
+      isValid: false,
       issues: [
         expect.objectContaining({
           code: 'option.not_found',
@@ -262,15 +265,15 @@ describe('spreadsheet row utils', () => {
     const matches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
         {
-          kind: 'text',
-          key: 'candidate.email',
           from: 'Email',
+          key: 'candidate.email',
+          kind: 'text',
           modifiers: ['trim', 'lowercase'],
         },
         {
-          kind: 'number',
-          key: 'candidate.score',
           from: 'Score',
+          key: 'candidate.score',
+          kind: 'number',
           modifiers: ['trim'],
         },
       ]),
@@ -278,19 +281,19 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [['  JOHN@EXAMPLE.COM  ', ' 84 ']],
-      matches,
       context: {},
+      matches,
+      rows: [['  JOHN@EXAMPLE.COM  ', ' 84 ']],
     })
 
     expect(rows[0]).toMatchObject({
-      isValid: true,
       data: {
         candidate: {
           email: 'john@example.com',
           score: 84,
         },
       },
+      isValid: true,
     })
   })
 
@@ -298,13 +301,13 @@ describe('spreadsheet row utils', () => {
     const matches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
         {
-          kind: 'text',
-          key: 'tags',
           from: 'Tags',
+          key: 'tags',
+          kind: 'text',
           modifiers: ['trim'],
           multiple: {
-            separator: ',',
             itemModifiers: ['trim', 'lowercase'],
+            separator: ',',
           },
         },
       ]),
@@ -312,16 +315,16 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [['  Alpha, BETA ,  Gamma  ']],
-      matches,
       context: {},
+      matches,
+      rows: [['  Alpha, BETA ,  Gamma  ']],
     })
 
     expect(rows[0]).toMatchObject({
-      isValid: true,
       data: {
         tags: ['alpha', 'beta', 'gamma'],
       },
+      isValid: true,
     })
   })
 
@@ -329,33 +332,33 @@ describe('spreadsheet row utils', () => {
     const matches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
         {
-          kind: 'text',
-          key: 'tags',
           from: 'Tags',
+          key: 'tags',
+          kind: 'text',
           multiple: true,
         },
         {
-          kind: 'number',
-          key: 'scores',
           from: 'Scores',
+          key: 'scores',
+          kind: 'number',
           multiple: {
             separator: ';',
           },
           rules: (v: SpreadsheetRuleBuilder) => [
             v.validate({
+              message: 'All scores must be at least 50',
               name: 'allPassing',
               validator: (value: number[]) => value.every((score) => score >= 50),
-              message: 'All scores must be at least 50',
             }),
           ],
         },
         {
-          kind: 'option',
-          key: 'productIds',
           from: 'Products',
+          key: 'productIds',
+          kind: 'option',
           multiple: {
-            separator: ',',
             matchBy: 'label',
+            separator: ',',
           },
           options: ({
             context,
@@ -374,34 +377,34 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [
-        ['alpha, beta', '82;91', 'Business English 4 Skills, Reading Placement Test'],
-        ['solo', '82;oops', 'Business English 4 Skills, Unknown product'],
-      ],
-      matches,
       context: {
         products: [
           { id: 'prod_1', name: 'Business English 4 Skills' },
           { id: 'prod_2', name: 'Reading Placement Test' },
         ] as const,
       },
+      matches,
+      rows: [
+        ['alpha, beta', '82;91', 'Business English 4 Skills, Reading Placement Test'],
+        ['solo', '82;oops', 'Business English 4 Skills, Unknown product'],
+      ],
     })
 
     expect(rows[0]).toMatchObject({
-      isValid: true,
       data: {
-        tags: ['alpha', 'beta'],
-        scores: [82, 91],
         productIds: ['prod_1', 'prod_2'],
+        scores: [82, 91],
+        tags: ['alpha', 'beta'],
       },
+      isValid: true,
     })
     expect(rows[1]).toMatchObject({
-      isValid: false,
       data: {
-        tags: ['solo'],
-        scores: [82],
         productIds: ['prod_1'],
+        scores: [82],
+        tags: ['solo'],
       },
+      isValid: false,
       issues: [
         expect.objectContaining({
           code: 'number.invalid',
@@ -438,33 +441,33 @@ describe('spreadsheet row utils', () => {
   it('creates a compact summary for parsed rows', () => {
     const summary = createSpreadsheetRowSummary([
       {
-        index: 0,
-        source: ['a'],
         data: { examNameRaw: 'A' },
-        issues: [],
+        index: 0,
         isValid: true,
+        issues: [],
+        source: ['a'],
       },
       {
-        index: 1,
-        source: ['b'],
         data: {},
+        index: 1,
+        isValid: false,
         issues: [
           {
-            level: 'error',
             code: 'cell.required',
+            level: 'error',
             message: 'Missing value',
             rowIndex: 1,
           },
         ],
-        isValid: false,
+        source: ['b'],
       },
     ])
 
-    expect(summary).toEqual({
-      totalRows: 2,
-      validRows: 1,
+    expect(summary).toStrictEqual({
       invalidRows: 1,
       issueCount: 1,
+      totalRows: 2,
+      validRows: 1,
     })
   })
 
@@ -479,9 +482,9 @@ describe('spreadsheet row utils', () => {
     const staticMatches = matchSpreadsheetColumns(
       flattenSpreadsheetStaticColumns([
         {
-          kind: 'text',
-          key: 'examNameRaw',
           from: 'Exam name',
+          key: 'examNameRaw',
+          kind: 'text',
           required: true,
         },
       ]),
@@ -491,44 +494,44 @@ describe('spreadsheet row utils', () => {
     const dynamicMatches = matchSpreadsheetDynamicColumns(
       [
         dynamic.optionGroups({
-          key: 'affiliations',
-          source: [
-            {
-              id: 'school-level',
-              slug: 'schoolLevel',
-              name: 'School level',
-              items: [
-                { id: 'primary', name: 'Primary' },
-                { id: 'secondary', name: 'Secondary' },
-              ],
-            },
-            {
-              id: 'program',
-              slug: 'program',
-              name: 'Program',
-              items: [{ id: 'business-english', name: 'Business English' }],
-            },
-          ] satisfies readonly DemoDynamicAffiliationGroup[],
-          itemKey: (item) => item.id,
-          itemLabel: (item) => item.name,
-          targetKey: (item) => item.slug,
           header: {
             strategy: 'template',
             template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
           },
+          itemKey: (item) => item.id,
+          itemLabel: (item) => item.name,
+          key: 'affiliations',
           options: (item) =>
             item.items.map((option) => ({
               label: option.name,
               value: option.id,
             })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
           output: {
             into: 'affiliations',
+          },
+          source: [
+            {
+              id: 'school-level',
+              items: [
+                { id: 'primary', name: 'Primary' },
+                { id: 'secondary', name: 'Secondary' },
+              ],
+              name: 'School level',
+              slug: 'schoolLevel',
+            },
+            {
+              id: 'program',
+              items: [{ id: 'business-english', name: 'Business English' }],
+              name: 'Program',
+              slug: 'program',
+            },
+          ] satisfies readonly DemoDynamicAffiliationGroup[],
+          targetKey: (item) => item.slug,
+          values: {
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+            mode: 'csv',
+            resolve: 'label',
+            separator: ',',
           },
         }),
       ],
@@ -537,22 +540,22 @@ describe('spreadsheet row utils', () => {
     )
 
     const rows = await parseSpreadsheetRows({
-      rows: [['Business English 4 Skills', 'Primary, Secondary', 'Business English']],
-      matches: staticMatches,
-      dynamicMatches,
       context: {},
+      dynamicMatches,
+      matches: staticMatches,
+      rows: [['Business English 4 Skills', 'Primary, Secondary', 'Business English']],
     })
 
-    expect(dynamicMatches.map((match) => match.targetKey)).toEqual(['schoolLevel', 'program'])
+    expect(dynamicMatches.map((match) => match.targetKey)).toStrictEqual(['schoolLevel', 'program'])
     expect(rows[0]).toMatchObject({
-      isValid: true,
       data: {
-        examNameRaw: 'Business English 4 Skills',
         affiliations: {
-          schoolLevel: ['primary', 'secondary'],
           program: ['business-english'],
+          schoolLevel: ['primary', 'secondary'],
         },
+        examNameRaw: 'Business English 4 Skills',
       },
+      isValid: true,
     })
   })
 })

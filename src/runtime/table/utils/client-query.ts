@@ -1,4 +1,12 @@
-import { isArray, isDate, isObject, isString } from '../../shared/utils/predicate'
+import {
+  isArray,
+  isBoolean,
+  isDate,
+  isNumber,
+  isObject,
+  isString,
+  isNullish,
+} from '../../shared/utils/predicate'
 import type {
   TableFacetExecutionResult,
   TableFacetOptionResult,
@@ -25,8 +33,8 @@ export function executeClientQuery<
   TContext extends GenericObject = GenericObject,
 >(params: TableClientQueryParams<TRow, TContext>): TableSourceExecutionResult<TRow> {
   const filteredRows = filterClientRows({
-    rows: params.rows,
     filters: params.request.filters,
+    rows: params.rows,
     search: params.request.search,
   })
   const sortedRows = sortClientRows({
@@ -35,8 +43,8 @@ export function executeClientQuery<
   })
 
   return paginateClientRows({
-    rows: sortedRows,
     pagination: params.request.pagination,
+    rows: sortedRows,
   })
 }
 
@@ -56,9 +64,9 @@ export function executeClientFacets<
   return {
     facets: params.facets.map((facet) =>
       resolveClientFacet({
-        rows: params.rows,
-        request: params.request,
         facet,
+        request: params.request,
+        rows: params.rows,
       }),
     ),
   }
@@ -124,8 +132,8 @@ function resolveClientFacet<
     search: options.request.search,
   })
   const counts = countFacetOptions({
-    rows: matchingRows,
     key: options.facet.key,
+    rows: matchingRows,
     search: options.facet.search,
   })
   const start = resolveFacetOffset(options.facet.cursor)
@@ -135,11 +143,11 @@ function resolveClientFacet<
 
   return {
     key: options.facet.key,
-    options: limited,
     nextCursor:
       options.facet.limit && start + options.facet.limit < counts.length
         ? String(start + options.facet.limit)
         : null,
+    options: limited,
     total: counts.length,
   }
 }
@@ -154,9 +162,9 @@ function matchesSearch<TRow extends GenericObject>(
 
   return search.fields.some((field) =>
     pathMatchesSearchValue({
-      value: row,
       path: String(field),
       search: search.value,
+      value: row,
     }),
   )
 }
@@ -168,9 +176,9 @@ function pathMatchesSearchValue(options: {
 }): boolean {
   const segments = options.path.split('.')
   return matchSearchPathSegments({
-    value: options.value,
-    segments,
     search: options.search,
+    segments,
+    value: options.value,
   })
 }
 
@@ -181,17 +189,17 @@ function matchSearchPathSegments(options: {
 }): boolean {
   if (options.segments.length === 0) {
     return valueMatchesSearch({
-      value: options.value,
       search: options.search,
+      value: options.value,
     })
   }
 
   if (isArray(options.value)) {
     return options.value.some((item) =>
       matchSearchPathSegments({
-        value: item,
-        segments: options.segments,
         search: options.search,
+        segments: options.segments,
+        value: item,
       }),
     )
   }
@@ -206,9 +214,9 @@ function matchSearchPathSegments(options: {
   }
 
   return matchSearchPathSegments({
-    value: (options.value as Record<string, unknown>)[head],
-    segments: tail,
     search: options.search,
+    segments: tail,
+    value: options.value[head],
   })
 }
 
@@ -218,8 +226,8 @@ function valueMatchesSearch(options: { value: unknown; search: string }): boolea
   if (isArray(options.value)) {
     return options.value.some((item) =>
       valueMatchesSearch({
-        value: item,
         search: normalizedSearch,
+        value: item,
       }),
     )
   }
@@ -242,7 +250,9 @@ function* lazySortRows<TRow extends GenericObject>(
 
   while (buffer.length < 1000) {
     const next = iterator.next()
-    if (next.done) break
+    if (next.done) {
+      break
+    }
     buffer.push(next.value)
   }
 
@@ -251,17 +261,23 @@ function* lazySortRows<TRow extends GenericObject>(
   let cursor = 0
 
   while (cursor < buffer.length) {
-    yield buffer[cursor++]!
+    const item = buffer[cursor]
+    cursor += 1
+    if (item !== undefined) {
+      yield item
+    }
 
     while (buffer.length < cursor + 1000) {
       const next = iterator.next()
-      if (next.done) break
+      if (next.done) {
+        break
+      }
 
       const insertIndex = findInsertIndex({
-        rows: buffer,
-        value: next.value,
         compare,
         offset: cursor,
+        rows: buffer,
+        value: next.value,
       })
       buffer.splice(insertIndex, 0, next.value)
     }
@@ -275,11 +291,13 @@ function createRowComparator<TRow extends GenericObject>(
     for (const rule of sorting) {
       const direction = rule.dir === 'desc' ? -1 : 1
       const comparison = compareUnknownValues({
-        left: getFilterTargetValue({ source: left, key: rule.key }),
-        right: getFilterTargetValue({ source: right, key: rule.key }),
+        left: getFilterTargetValue({ key: rule.key, source: left }),
+        right: getFilterTargetValue({ key: rule.key, source: right }),
       })
 
-      if (comparison !== 0) return comparison * direction
+      if (comparison !== 0) {
+        return comparison * direction
+      }
     }
 
     return 0
@@ -299,7 +317,12 @@ function findInsertIndex<TRow>(options: {
   while (low < high) {
     const mid = Math.floor((low + high) / 2)
 
-    if (options.compare(options.value, options.rows[mid] as TRow) < 0) {
+    const row = options.rows[mid]
+    if (row === undefined) {
+      throw new RangeError(`Missing row at sorted insert index ${mid}.`)
+    }
+
+    if (options.compare(options.value, row) < 0) {
       high = mid
       continue
     }
@@ -316,7 +339,7 @@ function paginateRows<TRow extends GenericObject>(
 ): TableSourceExecutionResult<TRow> {
   if (pagination.mode !== 'offset') {
     const collected = [...rows]
-    return { rows: collected, rowCount: collected.length }
+    return { rowCount: collected.length, rows: collected }
   }
 
   const pageIndex = Math.max(1, pagination.pageIndex || 1)
@@ -329,22 +352,22 @@ function paginateRows<TRow extends GenericObject>(
 
   for (const row of rows) {
     if (index < start) {
-      index++
+      index += 1
       continue
     }
 
     if (collected.length < pageSize) {
       collected.push(row)
-      index++
+      index += 1
       continue
     }
 
-    remaining++
+    remaining += 1
   }
 
   return {
-    rows: collected,
     rowCount: index + remaining,
+    rows: collected,
   }
 }
 
@@ -356,7 +379,9 @@ function removeFilterKeyFromGroup(options: {
 
   for (const child of options.group.children) {
     if (child.type === 'condition') {
-      if (child.key !== options.key) children.push(child)
+      if (child.key !== options.key) {
+        children.push(child)
+      }
       continue
     }
 
@@ -364,7 +389,9 @@ function removeFilterKeyFromGroup(options: {
       group: child,
       key: options.key,
     })
-    if (nextGroup.children.length) children.push(nextGroup)
+    if (nextGroup.children.length) {
+      children.push(nextGroup)
+    }
   }
 
   return {
@@ -384,15 +411,20 @@ function countFacetOptions<TRow extends GenericObject>(options: {
   for (const row of options.rows) {
     const seenInRow = new Set<string>()
 
-    for (const value of toValueList(getFilterTargetValue({ source: row, key: options.key }))) {
-      if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean')
+    for (const value of toValueList(getFilterTargetValue({ key: options.key, source: row }))) {
+      if (!isString(value) && !isNumber(value) && !isBoolean(value)) {
         continue
+      }
 
       const searchValue = String(value).toLocaleLowerCase()
-      if (normalizedSearch.length && !searchValue.includes(normalizedSearch)) continue
+      if (normalizedSearch.length && !searchValue.includes(normalizedSearch)) {
+        continue
+      }
 
-      const mapKey = `${typeof value}:${String(value)}`
-      if (seenInRow.has(mapKey)) continue
+      const mapKey = `${resolvePrimitiveValueKind(value)}:${String(value)}`
+      if (seenInRow.has(mapKey)) {
+        continue
+      }
 
       seenInRow.add(mapKey)
       const current = countByValue.get(mapKey)
@@ -402,8 +434,8 @@ function countFacetOptions<TRow extends GenericObject>(options: {
       }
 
       countByValue.set(mapKey, {
-        value,
         count: 1,
+        value,
       })
     }
   }
@@ -415,12 +447,16 @@ function compareFacetOptions(
   left: TableFacetOptionResult<string | number | boolean>,
   right: TableFacetOptionResult<string | number | boolean>,
 ) {
-  if (left.count !== right.count) return right.count - left.count
+  if (left.count !== right.count) {
+    return right.count - left.count
+  }
   return compareUnknownValues({ left: left.value, right: right.value })
 }
 
 function resolveFacetOffset(cursor?: string | null) {
-  if (!cursor) return 0
+  if (!cursor) {
+    return 0
+  }
 
   const value = Number(cursor)
   return Number.isFinite(value) && value > 0 ? value : 0
@@ -448,53 +484,61 @@ function matchesFilterCondition<TRow extends GenericObject>(
   condition: TableResolvedFilterCondition<string>,
 ): boolean {
   const value = getFilterTargetValue({
-    source: row,
     key: condition.key,
+    source: row,
   })
 
   switch (condition.operator) {
-    case 'contains':
-      return matchContains({ value, filter: condition.value })
-    case 'is':
-      return matchIs({ value, filter: condition.value })
-    case 'isAnyOf':
-      return matchIsAnyOf({ value, filter: condition.value })
-    case 'isNot':
-      return !matchIs({ value, filter: condition.value })
-    case 'gt':
-      return matchComparison({ value, filter: condition.value, operator: 'gt' })
-    case 'gte':
-      return matchComparison({ value, filter: condition.value, operator: 'gte' })
-    case 'lt':
-      return matchComparison({ value, filter: condition.value, operator: 'lt' })
-    case 'lte':
-      return matchComparison({ value, filter: condition.value, operator: 'lte' })
-    case 'between':
-      return matchBetween({ value, filter: condition.value })
-    case 'before':
-      return matchComparison({ value, filter: condition.value, operator: 'lt' })
-    case 'after':
-      return matchComparison({ value, filter: condition.value, operator: 'gt' })
-    default:
+    case 'contains': {
+      return matchContains({ filter: condition.value, value })
+    }
+    case 'is': {
+      return matchIs({ filter: condition.value, value })
+    }
+    case 'isAnyOf': {
+      return matchIsAnyOf({ filter: condition.value, value })
+    }
+    case 'isNot': {
+      return !matchIsAnyOf({ filter: condition.value, value })
+    }
+    case 'gt': {
+      return matchComparison({ filter: condition.value, operator: 'gt', value })
+    }
+    case 'gte': {
+      return matchComparison({ filter: condition.value, operator: 'gte', value })
+    }
+    case 'lt': {
+      return matchComparison({ filter: condition.value, operator: 'lt', value })
+    }
+    case 'lte': {
+      return matchComparison({ filter: condition.value, operator: 'lte', value })
+    }
+    case 'between': {
+      return matchBetween({ filter: condition.value, value })
+    }
+    case 'before': {
+      return matchComparison({ filter: condition.value, operator: 'lt', value })
+    }
+    case 'after': {
+      return matchComparison({ filter: condition.value, operator: 'gt', value })
+    }
+    default: {
       return false
+    }
   }
 }
 
-function getFilterTargetValue(options: { source: unknown; key: string }): unknown {
+function getFilterTargetValue<TSource>(options: { source: TSource; key: string }) {
   return options.key.split('.').reduce<unknown>((current, segment) => {
     if (isArray(current)) {
-      return current.map((item) =>
-        item != null && typeof item === 'object'
-          ? (item as Record<string, unknown>)[segment]
-          : undefined,
-      )
+      return current.map((item) => (isObject(item) ? item[segment] : undefined))
     }
 
-    if (!current || typeof current !== 'object') {
-      return undefined
+    if (!isObject(current)) {
+      return
     }
 
-    return (current as Record<string, unknown>)[segment]
+    return current[segment]
   }, options.source)
 }
 
@@ -524,8 +568,8 @@ function matchIsAnyOf(options: { value: unknown; filter: unknown }): boolean {
 
   return options.filter.some((candidate) =>
     matchIs({
-      value: options.value,
       filter: candidate,
+      value: options.value,
     }),
   )
 }
@@ -535,27 +579,21 @@ function matchBetween(options: { value: unknown; filter: unknown }): boolean {
     return false
   }
 
-  const from =
-    'from' in options.filter
-      ? normalizeComparable((options.filter as Record<string, unknown>).from)
-      : null
-  const to =
-    'to' in options.filter
-      ? normalizeComparable((options.filter as Record<string, unknown>).to)
-      : null
+  const from = 'from' in options.filter ? normalizeComparable(options.filter.from) : null
+  const to = 'to' in options.filter ? normalizeComparable(options.filter.to) : null
 
   return toValueList(options.value).some((item) => {
     const comparable = normalizeComparable(item)
 
-    if (comparable == null) {
+    if (isNullish(comparable)) {
       return false
     }
 
-    if (from != null && comparable < from) {
+    if (!isNullish(from) && comparable < from) {
       return false
     }
 
-    if (to != null && comparable > to) {
+    if (!isNullish(to) && comparable > to) {
       return false
     }
 
@@ -569,31 +607,35 @@ function matchComparison(options: {
   operator: 'gt' | 'gte' | 'lt' | 'lte'
 }): boolean {
   const expected = normalizeComparable(options.filter)
-  if (expected == null) {
+  if (isNullish(expected)) {
     return false
   }
 
   return toValueList(options.value).some((item) => {
     const comparable = normalizeComparable(item)
 
-    if (comparable == null) {
+    if (isNullish(comparable)) {
       return false
     }
 
     switch (options.operator) {
-      case 'gt':
+      case 'gt': {
         return comparable > expected
-      case 'gte':
+      }
+      case 'gte': {
         return comparable >= expected
-      case 'lt':
+      }
+      case 'lt': {
         return comparable < expected
-      case 'lte':
+      }
+      case 'lte': {
         return comparable <= expected
+      }
     }
   })
 }
 
-function toValueList(value: unknown): unknown[] {
+function toValueList<TValue>(value: TValue): unknown[] {
   if (!isArray(value)) {
     return [value]
   }
@@ -605,7 +647,7 @@ function areEqual(options: { left: unknown; right: unknown }): boolean {
   if (isDate(options.left) || isDate(options.right)) {
     const leftValue = normalizeComparable(options.left)
     const rightValue = normalizeComparable(options.right)
-    return leftValue != null && leftValue === rightValue
+    return !isNullish(leftValue) && leftValue === rightValue
   }
 
   return options.left === options.right
@@ -615,19 +657,19 @@ function compareUnknownValues(options: { left: unknown; right: unknown }): numbe
   const leftComparable = normalizeComparableForSort(options.left)
   const rightComparable = normalizeComparableForSort(options.right)
 
-  if (leftComparable == null && rightComparable == null) {
+  if (isNullish(leftComparable) && isNullish(rightComparable)) {
     return 0
   }
 
-  if (leftComparable == null) {
+  if (isNullish(leftComparable)) {
     return 1
   }
 
-  if (rightComparable == null) {
+  if (isNullish(rightComparable)) {
     return -1
   }
 
-  if (typeof leftComparable === 'string' && typeof rightComparable === 'string') {
+  if (isString(leftComparable) && isString(rightComparable)) {
     return leftComparable.localeCompare(rightComparable, undefined, {
       numeric: true,
       sensitivity: 'base',
@@ -641,7 +683,7 @@ function compareUnknownValues(options: { left: unknown; right: unknown }): numbe
   return leftComparable < rightComparable ? -1 : 1
 }
 
-function normalizeComparableForSort(value: unknown): number | string | null {
+function normalizeComparableForSort<TValue>(value: TValue): number | string | null {
   if (isArray(value)) {
     return normalizeComparableForSort(value[0])
   }
@@ -650,11 +692,11 @@ function normalizeComparableForSort(value: unknown): number | string | null {
     return value.getTime()
   }
 
-  if (typeof value === 'number') {
-    return Number.isNaN(value) ? null : value
+  if (isNumber(value)) {
+    return value
   }
 
-  if (typeof value === 'boolean') {
+  if (isBoolean(value)) {
     return value ? 1 : 0
   }
 
@@ -662,43 +704,53 @@ function normalizeComparableForSort(value: unknown): number | string | null {
     return value.toLocaleLowerCase()
   }
 
-  if (value == null) {
+  if (isNullish(value)) {
     return null
   }
 
   return String(value).toLocaleLowerCase()
 }
 
-function normalizeComparable(value: unknown): number | string | null {
+function normalizeComparable<TValue>(value: TValue): number | string | null {
   if (isDate(value)) {
     return value.getTime()
   }
 
-  if (typeof value === 'number') {
-    return Number.isNaN(value) ? null : value
+  if (isNumber(value)) {
+    return value
   }
 
-  if (typeof value === 'string') {
+  if (isString(value)) {
     const maybeTimestamp = Date.parse(value)
 
-    if (!Number.isNaN(maybeTimestamp) && /\d{4}-\d{2}-\d{2}/.test(value)) {
+    if (!Number.isNaN(maybeTimestamp) && /\d{4}-\d{2}-\d{2}/u.test(value)) {
       return maybeTimestamp
     }
 
     return value.toLocaleLowerCase()
   }
 
-  if (typeof value === 'boolean') {
+  if (isBoolean(value)) {
     return value ? 1 : 0
   }
 
   return null
 }
 
-function normalizeString(value: unknown): string {
-  if (value == null) {
+function normalizeString<TValue>(value: TValue): string {
+  if (isNullish(value)) {
     return ''
   }
 
   return String(value).toLocaleLowerCase()
+}
+
+function resolvePrimitiveValueKind<TValue>(value: TValue): 'string' | 'number' | 'boolean' {
+  if (isString(value)) {
+    return 'string'
+  }
+  if (isNumber(value)) {
+    return 'number'
+  }
+  return 'boolean'
 }

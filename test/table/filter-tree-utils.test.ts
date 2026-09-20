@@ -10,35 +10,36 @@ import {
   flattenFilterOptionEntries,
   flattenVisibleFilterOptionTree,
 } from '../../src/runtime/table/utils/filters/tree'
+import { must } from '../helpers/must'
 
 const entries: TableResolvedFilterOptionEntry[] = [
   {
+    children: [
+      {
+        children: [],
+        id: '0:engineering/0:frontend',
+        label: 'Frontend',
+        selected: false,
+        value: 'frontend',
+      },
+      {
+        children: [],
+        id: '0:engineering/1:backend',
+        label: 'Backend',
+        selected: false,
+        value: 'backend',
+      },
+    ],
     id: '0:engineering',
     label: 'Engineering',
     selected: false,
-    children: [
-      {
-        id: '0:engineering/0:frontend',
-        label: 'Frontend',
-        value: 'frontend',
-        selected: false,
-        children: [],
-      },
-      {
-        id: '0:engineering/1:backend',
-        label: 'Backend',
-        value: 'backend',
-        selected: false,
-        children: [],
-      },
-    ],
   },
   {
+    children: [],
     id: '1:operations',
     label: 'Operations',
-    value: 'operations',
     selected: false,
-    children: [],
+    value: 'operations',
   },
 ]
 
@@ -51,8 +52,8 @@ describe('filter tree utils', () => {
 
     expect(result.entries).toHaveLength(1)
     expect(result.entries[0]?.label).toBe('Engineering')
-    expect(result.entries[0]?.children.map((child) => child.label)).toEqual(['Frontend'])
-    expect(result.expandedIds).toEqual(['0:engineering'])
+    expect(result.entries[0]?.children.map((child) => child.label)).toStrictEqual(['Frontend'])
+    expect(result.expandedIds).toStrictEqual(['0:engineering'])
   })
 
   it('collects branch ids and flattens visible entries with leaf-only selection', () => {
@@ -64,42 +65,42 @@ describe('filter tree utils', () => {
     })
 
     expect(flattenFilterOptionEntries(entries)).toHaveLength(4)
-    expect(visible[0]?.selectable).toBe(false)
-    expect(visible[0]?.branchSelectable).toBe(true)
+    expect(visible[0]?.selectable).toBeFalsy()
+    expect(visible[0]?.branchSelectable).toBeTruthy()
     expect(visible[1]?.depth).toBe(1)
-    expect(visible[1]?.selectable).toBe(true)
+    expect(visible[1]?.selectable).toBeTruthy()
   })
 
   it('collects selectable descendant values for branch selection', () => {
     expect(
       collectSelectableDescendantValues({
-        entry: entries[0]!,
+        entry: must(entries[0]),
         selectable: 'leaf-only',
       }),
-    ).toEqual(['frontend', 'backend'])
+    ).toStrictEqual(['frontend', 'backend'])
 
     expect(
       collectSelectableDescendantValues({
-        entry: entries[0]!,
+        entry: must(entries[0]),
         selectable: 'all',
       }),
-    ).toEqual(['frontend', 'backend'])
+    ).toStrictEqual(['frontend', 'backend'])
   })
 
   it('collects selected ancestor branch ids for reopening selected paths', () => {
     expect(
       collectSelectedBranchIds([
         {
-          ...entries[0]!,
+          ...must(entries[0]),
           children: [
             {
-              ...entries[0]!.children[0]!,
+              ...must(entries[0]!.children[0]),
               selected: true,
             },
-            entries[0]!.children[1]!,
+            must(entries[0]!.children[1]),
           ],
         },
       ]),
-    ).toEqual(['0:engineering'])
+    ).toStrictEqual(['0:engineering'])
   })
 })

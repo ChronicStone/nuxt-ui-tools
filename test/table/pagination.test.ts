@@ -7,35 +7,35 @@ import { getPaginationMode } from '#ui-tools/table/utils/query-state'
 describe('table pagination strategies', () => {
   it('resolves offset, cursor, and none from schema configuration', () => {
     const source = {
-      query: () => ({ queryKey: ['rows'], queryFn: async () => [{ id: 'row-1' }] }),
+      query: () => ({ queryFn: () => [{ id: 'row-1' }], queryKey: ['rows'] }),
     }
-    const offset = defineTableSchema({ tableKey: 'offset', rowKey: 'id', source })
+    const offset = defineTableSchema({ rowKey: 'id', source, tableKey: 'offset' })
     const cursor = defineTableSchema({
-      tableKey: 'cursor',
+      pagination: { mode: 'cursor', pageSize: 24 },
       rowKey: 'id',
       source: {
         mode: 'remote',
         query: () => ({
-          queryKey: ['cursor-rows'],
-          queryFn: async () => ({
-            rows: [{ id: 'row-1' }],
+          queryFn: () => ({
             pageInfo: {
-              mode: 'cursor' as const,
-              pageSize: 24,
-              nextCursor: null,
               count: 'none' as const,
+              mode: 'cursor' as const,
+              nextCursor: null,
+              pageSize: 24,
               rowCount: null,
             },
+            rows: [{ id: 'row-1' }],
           }),
+          queryKey: ['cursor-rows'],
         }),
       },
-      pagination: { mode: 'cursor', pageSize: 24 },
+      tableKey: 'cursor',
     })
     const none = defineTableSchema({
-      tableKey: 'none',
+      pagination: false,
       rowKey: 'id',
       source,
-      pagination: false,
+      tableKey: 'none',
     })
 
     expect(getPaginationMode(offset)).toBe('offset')
@@ -45,38 +45,38 @@ describe('table pagination strategies', () => {
 
   it('flattens cursor pages, de-duplicates row keys, and preserves an exact total', () => {
     const result = flattenTableCursorPages({
-      rowKey: 'id',
       pages: [
         {
+          pageInfo: {
+            count: 'exact',
+            mode: 'cursor',
+            nextCursor: 'page-2',
+            pageSize: 2,
+            rowCount: 3,
+          },
           rows: [
             { id: 'row-1', label: 'First' },
             { id: 'row-2', label: 'Old' },
           ],
-          pageInfo: {
-            mode: 'cursor',
-            pageSize: 2,
-            nextCursor: 'page-2',
-            count: 'exact',
-            rowCount: 3,
-          },
         },
         {
+          pageInfo: {
+            count: 'exact',
+            mode: 'cursor',
+            nextCursor: null,
+            pageSize: 2,
+            rowCount: 3,
+          },
           rows: [
             { id: 'row-2', label: 'Updated' },
             { id: 'row-3', label: 'Third' },
           ],
-          pageInfo: {
-            mode: 'cursor',
-            pageSize: 2,
-            nextCursor: null,
-            count: 'exact',
-            rowCount: 3,
-          },
         },
       ],
+      rowKey: 'id',
     })
 
-    expect(result.rows).toEqual([
+    expect(result.rows).toStrictEqual([
       { id: 'row-1', label: 'First' },
       { id: 'row-2', label: 'Updated' },
       { id: 'row-3', label: 'Third' },
@@ -86,19 +86,19 @@ describe('table pagination strategies', () => {
 
   it('keeps total count unknown when cursor counting is disabled', () => {
     const result = flattenTableCursorPages({
-      rowKey: 'id',
       pages: [
         {
-          rows: [{ id: 'row-1' }],
           pageInfo: {
-            mode: 'cursor',
-            pageSize: 1,
-            nextCursor: null,
             count: 'none',
+            mode: 'cursor',
+            nextCursor: null,
+            pageSize: 1,
             rowCount: null,
           },
+          rows: [{ id: 'row-1' }],
         },
       ],
+      rowKey: 'id',
     })
 
     expect(result.rows).toHaveLength(1)

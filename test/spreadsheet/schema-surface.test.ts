@@ -1,3 +1,4 @@
+/* oxlint-disable sort-keys -- defineSpreadsheetSchema infers row types from the declaration order of these literals */
 import { readFileSync } from 'node:fs'
 
 import { describe, expect, expectTypeOf, it } from 'vitest'
@@ -18,8 +19,9 @@ describe('spreadsheet package surface', () => {
   })
 
   it('declares TanStack Query on the package boundary', () => {
+    // SAFETY: package.json is the repository-owned file read immediately above and has this peer dependency shape.
     const packageJson = JSON.parse(
-      readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../package.json', import.meta.url), 'utf-8'),
     ) as { peerDependencies?: Record<string, string> }
 
     expect(packageJson.peerDependencies?.['@tanstack/vue-query']).toBeDefined()
@@ -32,7 +34,7 @@ describe('spreadsheet package surface', () => {
         query: () =>
           ({
             queryKey: ['products', 'org_123'],
-            queryFn: async () => [{ id: 'prod_1', name: 'Demo product' }],
+            queryFn: () => [{ id: 'prod_1', name: 'Demo product' }],
           }) satisfies SpreadsheetQueryDefinition<readonly { id: string; name: string }[]>,
       },
     ] satisfies readonly SpreadsheetContextItem<string, unknown>[]
@@ -78,7 +80,7 @@ describe('spreadsheet package surface', () => {
         query: () =>
           ({
             queryKey: ['products', 'org_456'],
-            queryFn: async () => [
+            queryFn: () => [
               { id: 'prod_1', name: 'Demo product' },
               { id: 'prod_2', name: 'Advanced product' },
             ],

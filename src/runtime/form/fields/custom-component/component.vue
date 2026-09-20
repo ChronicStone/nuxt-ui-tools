@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormCustomComponentField } from '../../types'
 

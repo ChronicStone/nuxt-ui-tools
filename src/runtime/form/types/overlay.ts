@@ -1,5 +1,6 @@
 import type { ComputedRef, Ref } from 'vue'
 
+import type { FormValue } from './'
 import type { FormSubmitHandlerResult } from './api'
 import type { FormRendererController } from './controller'
 import type { FormDrawerConfig, FormFullscreenConfig, FormModalConfig } from './schema'
@@ -32,7 +33,7 @@ export interface FormOverlayLayoutEmits {
 }
 
 export type FormOverlayResolution =
-  | { type: 'complete'; formData: FormObject; submitData?: unknown }
+  | { type: 'complete'; formData: FormObject; submitData?: FormValue }
   | { type: 'cancel'; formData: FormObject }
 
 export interface FormOverlayController {
@@ -42,6 +43,6 @@ export interface FormOverlayController {
   description: ComputedRef<string | undefined>
   dismissible: ComputedRef<boolean>
   handleOpenUpdate: (value: boolean) => void
-  handleSubmitted: (formData: FormObject, result: FormSubmitHandlerResult<unknown>) => void
+  handleSubmitted: (formData: FormObject, result: FormSubmitHandlerResult<FormValue>) => void
   resolveAfterClose: () => void
 }

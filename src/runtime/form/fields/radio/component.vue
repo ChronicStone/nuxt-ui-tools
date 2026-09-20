@@ -2,24 +2,26 @@
 import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRadioField } from '../../types'
+import { isBoolean, isNumber, isString } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormRadioField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
 )
 const model = computed<string | number | boolean | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    if (isString(value) || isNumber(value) || isBoolean(value)) {
       return value
+    }
     return undefined
   },
   set: (value) => form.setValue(props.path, value),
@@ -34,7 +36,11 @@ const items = computed(() => [...options.items.value])
       v-bind="controlProps"
       value-key="value"
       label-key="label"
+      description-key="description"
       :items="items"
+      :variant="fieldProps.variant === 'table' ? 'list' : (fieldProps.variant ?? 'list')"
+      :orientation="fieldProps.orientation"
+      :indicator="fieldProps.indicator"
       :disabled="disabled"
       @blur="handleBlur"
     />

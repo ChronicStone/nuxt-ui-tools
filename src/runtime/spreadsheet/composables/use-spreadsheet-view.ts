@@ -13,68 +13,68 @@ export function useSpreadsheetView(params: {
   const activeStep = ref<string>('upload')
   const steps = computed<SpreadsheetStepItem[]>(() => [
     {
-      value: 'upload',
-      title: resolveTextValue(
-        params.stepConfig?.()?.upload?.title,
-        params.t('spreadsheet.steps.upload.title'),
-      ),
       description: resolveTextValue(
         params.stepConfig?.()?.upload?.description,
         params.t('spreadsheet.steps.upload.description'),
       ),
       icon: 'i-lucide-upload',
+      title: resolveTextValue(
+        params.stepConfig?.()?.upload?.title,
+        params.t('spreadsheet.steps.upload.title'),
+      ),
+      value: 'upload',
     },
     {
-      value: 'structure',
-      title: resolveTextValue(
-        params.stepConfig?.()?.structure?.title,
-        params.t('spreadsheet.steps.structure.title'),
-      ),
       description: resolveTextValue(
         params.stepConfig?.()?.structure?.description,
         params.t('spreadsheet.steps.structure.description'),
       ),
       icon: 'i-lucide-table-properties',
+      title: resolveTextValue(
+        params.stepConfig?.()?.structure?.title,
+        params.t('spreadsheet.steps.structure.title'),
+      ),
+      value: 'structure',
     },
     {
-      value: 'matching',
-      title: resolveTextValue(
-        params.stepConfig?.()?.matching?.title,
-        params.t('spreadsheet.steps.matching.title'),
-      ),
       description: resolveTextValue(
         params.stepConfig?.()?.matching?.description,
         params.t('spreadsheet.steps.matching.description'),
       ),
       icon: 'i-lucide-columns-3',
+      title: resolveTextValue(
+        params.stepConfig?.()?.matching?.title,
+        params.t('spreadsheet.steps.matching.title'),
+      ),
+      value: 'matching',
     },
     ...(params.hasReferences()
       ? [
           {
-            value: 'references',
-            title: resolveTextValue(
-              params.stepConfig?.()?.references?.title,
-              params.t('spreadsheet.steps.references.title'),
-            ),
             description: resolveTextValue(
               params.stepConfig?.()?.references?.description,
               params.t('spreadsheet.steps.references.description'),
             ),
             icon: 'i-lucide-link-2',
+            title: resolveTextValue(
+              params.stepConfig?.()?.references?.title,
+              params.t('spreadsheet.steps.references.title'),
+            ),
+            value: 'references',
           },
         ]
       : []),
     {
-      value: 'review',
-      title: resolveTextValue(
-        params.stepConfig?.()?.review?.title,
-        params.t('spreadsheet.steps.review.title'),
-      ),
       description: resolveTextValue(
         params.stepConfig?.()?.review?.description,
         params.t('spreadsheet.steps.review.description'),
       ),
       icon: 'i-lucide-clipboard-check',
+      title: resolveTextValue(
+        params.stepConfig?.()?.review?.title,
+        params.t('spreadsheet.steps.review.title'),
+      ),
+      value: 'review',
     },
   ])
   const activeStepIndex = computed(() =>
@@ -86,19 +86,25 @@ export function useSpreadsheetView(params: {
   )
 
   function goToNextStep() {
-    if (!canGoNext.value) return
+    if (!canGoNext.value) {
+      return
+    }
     activeStep.value = steps.value[activeStepIndex.value + 1]?.value ?? activeStep.value
   }
 
   function goToPrevStep() {
-    if (!canGoPrev.value) return
+    if (!canGoPrev.value) {
+      return
+    }
     activeStep.value = steps.value[activeStepIndex.value - 1]?.value ?? activeStep.value
   }
 
   watch(
     steps,
     (nextSteps) => {
-      if (nextSteps.some((step) => step.value === activeStep.value)) return
+      if (nextSteps.some((step) => step.value === activeStep.value)) {
+        return
+      }
       activeStep.value = nextSteps[0]?.value ?? 'upload'
     },
     {
@@ -107,12 +113,12 @@ export function useSpreadsheetView(params: {
   )
 
   return {
-    steps,
     activeStep,
     activeStepIndex,
-    canGoPrev,
     canGoNext,
+    canGoPrev,
     goToNextStep,
     goToPrevStep,
+    steps,
   }
 }

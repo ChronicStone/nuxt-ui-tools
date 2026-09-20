@@ -1,0 +1,1045 @@
+.D-atelier {
+  --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-d: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --h2-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --num-font: 'Helvetica Neue', Helvetica, sans-serif;
+  --fs: 13px;
+  --bg: #f4efe8;
+  --sf: #ffffff;
+  --sf2: #f7f3ee;
+  --sf-hov: #faf7f2;
+  --inp: #ffffff;
+  --inp-ln: #e8e2da;
+  --inp-sh: none;
+  --ln: #e8e2da;
+  --ln2: #f1ece5;
+  --ln3: #d3cbc0;
+  --card-ln: transparent;
+  --btn-ln: #e8e2da;
+  --fg: #1f1d1a;
+  --fg2: #45413b;
+  --fg3: #6b655d;
+  --fg4: #a39c93;
+  --ac: #ff9600;
+  --ac-hov: #f08c00;
+  --ac-fg: #1f1d1a;
+  --ac-soft: #fff1de;
+  --ac-soft2: #ffe2bc;
+  --ac-ink: #b85e00;
+  --ac-ring: rgba(255, 150, 0, 0.3);
+  --ok: #1f1d1a;
+  --ok-soft: #f1ece5;
+  --warn: #b85e00;
+  --warn-soft: #fff1de;
+  --bad: #a8463c;
+  --bad-soft: #f8ece9;
+  --c1: #ff9600;
+  --c2: #e4ddd3;
+  --c3: #1f1d1a;
+  --c4: #b85e00;
+  --c1-soft: rgba(255, 150, 0, 0.14);
+  --r: 7px;
+  --r2: 9px;
+  --r3: 12px;
+  --pill-r: 5px;
+  --sh1: none;
+  --btn-sh: none;
+  --pri-sh: none;
+  --seg-bg: #f7f3ee;
+  --seg-ln: transparent;
+  --seg-on: #ffffff;
+  --seg-on-fg: #1f1d1a;
+  --seg-sh: 0 0 0 1px #e8e2da;
+  --pop-bg: #ffffff;
+  --pop-ln: #e8e2da;
+  --pop-sh: 0 10px 30px -12px rgba(31, 29, 26, 0.2);
+  --pal-sh: -20px 0 60px -20px rgba(31, 29, 26, 0.25);
+  --veil: rgba(31, 29, 26, 0.18);
+  --sheet-side: #fbf9f6;
+  --strip-bg: #ffffff;
+  --sbw: 240px;
+  --sb-bg: #fbf9f6;
+  --sb-fg: #1f1d1a;
+  --sb-fg2: #5c564e;
+  --sb-fg3: #a39c93;
+  --sb-ic: #a39c93;
+  --sb-ln: #e8e2da;
+  --sb-pad: 20px 12px 14px;
+  --sb-hov: #f4efe8;
+  --sb-on: #fff1de;
+  --sb-on-fg: #1f1d1a;
+  --sb-on-ic: #ff9600;
+  --sb-on-sh: none;
+  --sb-bd: #ff9600;
+  --sb-bd-fg: #1f1d1a;
+  --sb-inp: #ffffff;
+  --sb-inp-ln: #e8e2da;
+  --sb-inp-sh: none;
+  --sb-av: #1f1d1a;
+  --sb-av-fg: #fff;
+  --wm: #1f1d1a;
+  --pad: 0;
+  --ph-mb: 0;
+  --h1: 30px;
+  --h1-w: 300;
+  --h1-ls: -0.04em;
+  --h2: 14px;
+  --h2-w: 600;
+  --h2-ls: -0.01em;
+  --ni-h: 32px;
+  --gap: 1px;
+  --mod-pad: 22px 24px;
+  --kpi-fs: 44px;
+  --kpi-w: 300;
+  --kpi-ls: -0.05em;
+  --tag-r: 7px;
+  --tag-ln: #e8e2da;
+  --tag-bg: #ffffff;
+  --tag-sh: none;
+  --th-bg: #fbf9f6;
+  --th-fs: 11px;
+  --th-w: 600;
+  --th-ls: 0.04em;
+  --th-tt: none;
+  --th-fg: #6b655d;
+  --row-h: 44px;
+  --row-hov: #faf7f2;
+  --row-sel: #fff6e8;
+  --av-r: 7px;
+  --av-bg: #f7f3ee;
+  --av-fg: #6b655d;
+  --selbar-bg: #fff1de;
+  --selbar-fg: #1f1d1a;
+  --selbar-hov: rgba(0, 0, 0, 0.06);
+  --selbar-sh: none;
+  --tb-pad: 12px 20px;
+  --pf-pad: 10px 20px;
+}
+.D-atelier .main {
+  display: flex;
+  flex-direction: column;
+}
+.D-atelier .ph {
+  background: #ffffff;
+  border-bottom: 1px solid var(--ln);
+  padding: 22px 28px 20px;
+  margin: 0;
+}
+.D-atelier .ph .t p {
+  font-weight: 300;
+  font-size: 13.5px;
+}
+.D-atelier .content {
+  padding: 24px 28px 60px;
+}
+.D-atelier .card {
+  border-radius: 0;
+}
+.D-atelier .kpis {
+  background: var(--ln);
+  border: 1px solid var(--ln);
+  border-radius: 9px;
+  overflow: hidden;
+  gap: 1px;
+  margin-bottom: 24px;
+}
+.D-atelier .kpi .l {
+  font-weight: 400;
+  color: var(--fg3);
+}
+.D-atelier .kpi .v {
+  margin-top: 6px;
+}
+.D-atelier .kpi .bt {
+  font-weight: 300;
+}
+.D-atelier .kpi .bt .pill {
+  font-weight: 600;
+  background: transparent;
+  padding: 0;
+  color: var(--ok);
+}
+.D-atelier .g {
+  gap: 1px;
+  background: var(--ln);
+  border: 1px solid var(--ln);
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.D-atelier .g .card {
+  border: 0;
+}
+.D-atelier .mh h2 small {
+  font-weight: 300;
+}
+.D-atelier .type {
+  color: var(--fg3);
+  font-weight: 300;
+}
+.D-atelier .nm b {
+  font-weight: 400;
+}
+.D-atelier .nm small {
+  font-weight: 300;
+}
+.D-atelier table.dt td {
+  font-weight: 300;
+  color: var(--fg);
+}
+.D-atelier .st {
+  font-weight: 400;
+}
+.D-atelier .acc {
+  gap: 0;
+}
+.D-atelier .l-card .card.list {
+  border: 1px solid var(--ln);
+  border-radius: 9px;
+  overflow: hidden;
+}
+.D-atelier .l-card .tb {
+  background: #ffffff;
+}
+.D-atelier .btn.pri {
+  border-radius: 7px;
+}
+.D-atelier .sheet.slide .tabs {
+  background: #fbf9f6;
+}
+.D-atelier .login {
+  grid-template-columns: minmax(0, 1fr) 480px;
+  min-height: var(--sh);
+  background: #ffffff;
+  position: relative;
+}
+.D-atelier .login .top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  z-index: 2;
+}
+.D-atelier .login .top .loc {
+  height: 30px;
+  padding: 0 8px 0 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--fg3);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid var(--ln);
+  background: #fff;
+}
+.D-atelier .login .top .loc .ic {
+  width: 12px;
+  height: 12px;
+}
+.D-atelier .login .top .ib {
+  border: 1px solid var(--ln);
+  background: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  margin-left: 8px;
+}
+.D-atelier .login .l {
+  padding: 64px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ln);
+  position: relative;
+  overflow: hidden;
+}
+.D-atelier .login .l::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--ln3) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.35;
+  mask-image: radial-gradient(60% 60% at 30% 40%, #000, transparent 80%);
+  -webkit-mask-image: radial-gradient(60% 60% at 30% 40%, #000, transparent 80%);
+}
+.D-atelier .login .l > * {
+  position: relative;
+}
+.D-atelier .login .l .kicker {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ac-ink);
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.D-atelier .login .l .kicker::before {
+  content: '';
+  width: 22px;
+  height: 2px;
+  background: var(--ac);
+}
+.D-atelier .login .l h2 {
+  margin-top: 14px;
+  font-size: 56px;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+  max-width: 600px;
+  color: var(--fg);
+}
+.D-atelier .login .l h2 b {
+  font-weight: 300;
+  color: var(--ac);
+}
+.D-atelier .login .l p {
+  margin-top: 18px;
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--fg3);
+  max-width: 440px;
+  line-height: 1.5;
+}
+.D-atelier .login .l .modes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: 36px;
+  background: var(--ln);
+  border: 1px solid var(--ln);
+  border-radius: 9px;
+  overflow: hidden;
+  max-width: 640px;
+}
+.D-atelier .login .l .modes div {
+  background: #fff;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--fg3);
+  font-weight: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.D-atelier .login .l .modes div b {
+  font-weight: 600;
+  color: var(--fg);
+}
+.D-atelier .login .l .modes div i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ln3);
+  margin-bottom: 6px;
+}
+.D-atelier .login .l .modes div.on i {
+  background: var(--ac);
+}
+.D-atelier .login .l .foot {
+  margin-top: 36px;
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--fg4);
+}
+.D-atelier .login .r {
+  background: var(--bg);
+  display: grid;
+  place-items: center;
+  padding: 64px 40px 40px;
+}
+.D-atelier .login .box {
+  max-width: 360px;
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--ln);
+  border-radius: 12px;
+  padding: 28px 28px 22px;
+}
+.D-atelier .login .lf-h h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.D-atelier .login .lf-h p {
+  font-size: 13px;
+  margin-top: 4px;
+}
+.D-atelier .login .lf label {
+  font-weight: 500;
+  font-size: 12.5px;
+}
+.D-atelier .login .lf .btn.pri {
+  background: #ff9600;
+  border-color: #ff9600;
+  color: #1f1d1a;
+  height: 36px;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.D-atelier .login .lf .inp {
+  height: 36px;
+  font-size: 13px;
+  background: #fff;
+}
+.D-atelier .login .lf {
+  gap: 12px;
+}
+.D-atelier .login .lf .lang {
+  display: none;
+}
+.D-atelier .login .lf .row {
+  font-size: 12px;
+}
+.D-atelier .login .below {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ln2);
+  font-size: 12px;
+  color: var(--fg4);
+  display: flex;
+  justify-content: space-between;
+}
+.D-atelier .login .below a {
+  color: var(--fg2);
+  font-weight: 500;
+}
+.D-atelier .login .build {
+  color: var(--fg4);
+}
+.D-atelier.dark .login .box,
+.D-atelier.dark .login .top .loc,
+.D-atelier.dark .login .top .ib,
+.D-atelier.dark .login .lf .inp {
+  background: var(--sf);
+  border-color: var(--ln);
+}
+.D-atelier.dark .login .l .modes div {
+  background: var(--sf);
+}
+.D-atelier .login .lf label {
+  font-weight: 400;
+}
+
+.D-atelier.p-list .main {
+  height: var(--sh);
+  overflow: hidden;
+}
+.D-atelier.p-list .acc {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.D-atelier .l-card .card.list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+}
+.D-atelier .l-card .tb {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--ln);
+}
+.D-atelier .dt-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 0;
+}
+.D-atelier table.dt th {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+.D-atelier table.dt td {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+.D-atelier table.dt td:first-child,
+.D-atelier table.dt th:first-child {
+  padding-left: 20px;
+}
+.D-atelier table.dt tr:last-child td {
+  border-bottom: 1px solid var(--ln2);
+}
+.D-atelier .pfoot {
+  border-top: 1px solid var(--ln);
+  background: #fff;
+}
+
+.D-atelier .list.v-cards .acard {
+  background: #fff;
+  border: 1px solid var(--ln);
+  border-radius: 9px;
+}
+.D-atelier .selbar {
+  position: absolute;
+  left: 50%;
+  bottom: 74px;
+  transform: translateX(-50%);
+  height: 44px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #1f1d1a;
+  color: #fff;
+  box-shadow: 0 20px 50px -18px rgba(31, 29, 26, 0.6);
+  gap: 10px;
+  overflow: visible;
+}
+.D-atelier .selbar b {
+  font-size: 13px;
+  white-space: nowrap;
+  margin-right: 2px;
+}
+.D-atelier .selbar .ab {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  gap: 7px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+}
+.D-atelier .selbar .ab:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.D-atelier .selbar > b {
+  padding-left: 10px;
+}
+.D-atelier .selbar > b::after {
+  content: '';
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  margin: 0 8px 0 14px;
+  vertical-align: -4px;
+}
+.D-atelier .selbar .scope button b {
+  color: #ffb558;
+}
+.D-atelier .selbar .scope button.on b {
+  color: #ff9600;
+}
+.D-atelier.dark .selbar .scope button b {
+  color: #b85e00;
+}
+.D-atelier.dark .selbar .scope button.on b {
+  color: #d97800;
+}
+.D-atelier .selbar .scope + .acts {
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+.D-atelier .selbar .ab .ic {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+}
+.D-atelier .selbar .ab.danger {
+  color: #ffb3a8;
+}
+.D-atelier .selbar .ab.ic-only {
+  width: 32px;
+}
+.D-atelier .selbar .x {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  color: #fff;
+  opacity: 0.7;
+}
+.D-atelier .selbar .x:hover {
+  opacity: 1;
+}
+.D-atelier .selbar .more .menu {
+  color: #1f1d1a;
+}
+.D-atelier .sb-search {
+  height: 38px;
+  background: #fff;
+  border-color: var(--ln);
+  color: var(--fg3);
+  margin: 18px 0 12px;
+}
+.D-atelier .sb-top {
+  padding: 6px 8px 0;
+}
+.D-atelier table.dt th {
+  height: 42px;
+}
+.D-atelier .tb .inp.srch {
+  width: 340px;
+}
+.D-atelier .sb-search {
+  height: 36px;
+  background: #fff;
+  color: var(--fg3);
+}
+.D-atelier .sb-search kbd {
+  border-color: var(--ln);
+  color: var(--fg4);
+}
+.D-atelier .selbar.dock {
+  background: #fff1de;
+  border-bottom: 1px solid #ffe2bc;
+}
+.D-atelier .chk.on,
+.D-atelier .chk.mix {
+  background: #ff9600;
+  border-color: #ff9600;
+  color: #1f1d1a;
+}
+.D-atelier .pager .pgs button.on {
+  background: #1f1d1a;
+  color: #fff;
+}
+.D-atelier .btn.pri {
+  background: #ff9600;
+  border-color: #ff9600;
+  color: #1f1d1a;
+}
+.D-atelier .st.active::before {
+  background: #ff9600;
+}
+.D-atelier .st.pending::before {
+  background: #1f1d1a;
+  opacity: 0.35;
+}
+.D-atelier .kpi .bt .pill {
+  color: var(--fg);
+}
+.D-atelier .kpi .bt .pill::before {
+  content: '▲ ';
+  font-size: 9px;
+  color: var(--ac);
+}
+
+.D-atelier.dark {
+  --bg: #262320;
+  --sf: #2c2926;
+  --sf2: #353230;
+  --sf-hov: #33302d;
+  --inp: #242220;
+  --inp-ln: #3e3a36;
+  --ln: rgba(255, 255, 255, 0.08);
+  --ln2: rgba(255, 255, 255, 0.05);
+  --ln3: rgba(255, 255, 255, 0.14);
+  --btn-ln: #3e3a36;
+  --fg: #ece7e0;
+  --fg2: #cdc6bc;
+  --fg3: #9b948b;
+  --fg4: #6f6963;
+  --ac: #ff9600;
+  --ac-hov: #ffa524;
+  --ac-fg: #1f1d1a;
+  --ac-soft: rgba(255, 150, 0, 0.14);
+  --ac-soft2: rgba(255, 150, 0, 0.24);
+  --ac-ink: #ffb558;
+  --ac-ring: rgba(255, 150, 0, 0.35);
+  --ok: #ece7e0;
+  --ok-soft: #353230;
+  --warn: #ffb558;
+  --warn-soft: rgba(255, 150, 0, 0.14);
+  --bad: #f0a094;
+  --bad-soft: rgba(240, 160, 148, 0.14);
+  --c1: #ff9600;
+  --c2: #4a453f;
+  --c3: #ece7e0;
+  --c4: #ffb558;
+  --c1-soft: rgba(255, 150, 0, 0.07);
+  --seg-bg: #242220;
+  --seg-on: #3a3633;
+  --seg-on-fg: #ece7e0;
+  --seg-sh: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --pop-bg: #353230;
+  --pop-ln: rgba(255, 255, 255, 0.08);
+  --pop-sh: 0 16px 40px -12px rgba(0, 0, 0, 0.55);
+  --pal-sh: 0 40px 100px -30px rgba(0, 0, 0, 0.7);
+  --veil: rgba(0, 0, 0, 0.45);
+  --sheet-side: #2c2926;
+  --strip-bg: #353230;
+  --sb-bg: #211e1c;
+  --sb-fg: #ece7e0;
+  --sb-fg2: #b8b1a7;
+  --sb-fg3: #6f6963;
+  --sb-ic: #6f6963;
+  --sb-ln: rgba(255, 255, 255, 0.07);
+  --sb-hov: #2a2724;
+  --sb-on: rgba(255, 150, 0, 0.14);
+  --sb-on-fg: #ece7e0;
+  --sb-on-ic: #ff9600;
+  --sb-inp: #2a2724;
+  --sb-inp-ln: #3a3633;
+  --sb-av: #ece7e0;
+  --sb-av-fg: #1f1d1a;
+  --tag-ln: #3e3a36;
+  --tag-bg: #2c2926;
+  --th-bg: #302d2a;
+  --th-fg: #9b948b;
+  --row-hov: #302d2a;
+  --row-sel: rgba(255, 150, 0, 0.1);
+  --av-bg: #353230;
+  --av-fg: #b8b1a7;
+  --selbar-bg: #ece7e0;
+  --selbar-fg: #1f1d1a;
+}
+.D-atelier.dark .ph {
+  background: var(--sf);
+  border-color: var(--ln);
+}
+.D-atelier.dark .l-card .card.list,
+.D-atelier.dark .pfoot,
+.D-atelier.dark .l-card .tb {
+  background: var(--sf);
+}
+.D-atelier.dark .pfoot {
+  border-color: var(--ln);
+}
+.D-atelier.dark .list.v-cards .body {
+  background: var(--bg);
+}
+.D-atelier.dark .list.v-cards .acard {
+  background: var(--sf);
+  border-color: var(--ln);
+}
+.D-atelier.dark .kpis,
+.D-atelier.dark .g {
+  background: var(--ln);
+  border-color: var(--ln);
+}
+.D-atelier.dark .kpi,
+.D-atelier.dark .g .card {
+  background: var(--sf);
+}
+.D-atelier.dark .btn {
+  background: #33302d;
+  border-color: #3e3a36;
+  color: var(--fg);
+}
+.D-atelier.dark .btn:hover {
+  background: #3a3633;
+}
+.D-atelier.dark .btn.pri {
+  background: #ff9600;
+  border-color: #ff9600;
+  color: #1f1d1a;
+}
+.D-atelier.dark .inp {
+  background: var(--inp);
+  border-color: var(--inp-ln);
+}
+.D-atelier.dark .ftag {
+  background: #33302d;
+  border-color: #3e3a36;
+}
+.D-atelier.dark .ftag.on {
+  background: var(--ac-soft);
+  border-color: transparent;
+}
+.D-atelier.dark .addf {
+  border-color: #4a453f;
+  color: var(--fg3);
+}
+.D-atelier.dark .selbar {
+  background: #ece7e0;
+  color: #1f1d1a;
+  box-shadow: 0 20px 50px -18px rgba(0, 0, 0, 0.7);
+}
+.D-atelier.dark .selbar .ab {
+  background: transparent;
+  color: #1f1d1a;
+}
+.D-atelier.dark .selbar .scope {
+  background: rgba(0, 0, 0, 0.07);
+}
+.D-atelier.dark .selbar .scope button {
+  color: rgba(31, 29, 26, 0.6);
+}
+.D-atelier.dark .selbar .scope button.on {
+  background: #fff;
+  color: #1f1d1a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.D-atelier.dark .selbar .scope button:hover {
+  color: #1f1d1a;
+}
+.D-atelier.dark .selbar .ab:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+.D-atelier.dark .selbar > b::after {
+  background: rgba(0, 0, 0, 0.15);
+}
+.D-atelier.dark .selbar .scope + .acts {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+.D-atelier.dark .selbar .ab.danger {
+  color: #a8463c;
+}
+.D-atelier.dark .selbar .x {
+  color: #1f1d1a;
+}
+.D-atelier.dark .selbar .more .menu {
+  background: #353230;
+  color: #ece7e0;
+  box-shadow:
+    0 16px 40px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.D-atelier.dark .selbar .more .menu button {
+  color: #ece7e0;
+}
+.D-atelier.dark .chk {
+  background: #242220;
+  border-color: #4a453f;
+}
+.D-atelier.dark .chk.on,
+.D-atelier.dark .chk.mix {
+  background: #ff9600;
+  border-color: #ff9600;
+  color: #1f1d1a;
+}
+.D-atelier.dark .st.pending::before {
+  background: #ece7e0;
+  opacity: 0.45;
+}
+.D-atelier.dark .pager .pgs button.on {
+  background: #ece7e0;
+  color: #1f1d1a;
+}
+.D-atelier.dark .type {
+  color: var(--fg3);
+}
+.D-atelier.dark tr.selnote td {
+  background: rgba(255, 150, 0, 0.1);
+  color: var(--fg2);
+}
+.D-atelier.dark .sb-search {
+  background: #2a2724;
+  border-color: #3a3633;
+  color: var(--fg3);
+}
+.D-atelier.dark .sb-search kbd {
+  border-color: #3e3a36;
+}
+.D-atelier.dark .sb-top .loc:hover,
+.D-atelier.dark .sb-top .loc.on {
+  background: #2a2724;
+}
+.D-atelier.dark .login {
+  background: var(--bg);
+}
+.D-atelier.dark .login .l {
+  border-color: var(--ln);
+}
+.D-atelier.dark .login .l .modes {
+  background: var(--ln);
+  border-color: var(--ln);
+}
+.D-atelier.dark .login .l .modes div {
+  background: var(--sf);
+}
+.D-atelier.dark .login .l .modes div.on {
+  background: rgba(255, 150, 0, 0.14);
+}
+.D-atelier.dark .login .r {
+  background: #2c2926;
+}
+.D-atelier.dark table.dt th {
+  background: var(--th-bg);
+}
+.D-atelier.dark .bool.y {
+  color: #ece7e0;
+}
+.D-atelier.dark .hb-bar,
+.D-atelier.dark .prog i {
+  background: #3a3633;
+}
+.D-atelier.dark .li .av,
+.D-atelier.dark .act .tile {
+  background: #353230;
+}
+.D-atelier.dark .pill {
+  background: #3a3633;
+  color: var(--fg2);
+}
+
+.D-atelier .ftag {
+  height: 34px;
+  border-radius: 7px;
+  background: var(--sf2);
+  border: 1px solid var(--ln);
+  padding: 0 6px 0 11px;
+  color: var(--fg3);
+  gap: 5px;
+  font-weight: 500;
+}
+.D-atelier .ftag b {
+  color: var(--fg);
+  font-weight: 500;
+}
+.D-atelier .ftag:hover {
+  background: #f1ece5;
+  border-color: var(--ln3);
+}
+.D-atelier .ftag.on {
+  background: var(--ac-soft);
+  border-color: var(--ac-soft2);
+  color: var(--ac-ink);
+}
+.D-atelier .ftag .ic.c {
+  color: var(--fg4);
+  margin-left: 2px;
+}
+.D-atelier .ftag .x {
+  width: 22px;
+  height: 22px;
+  color: var(--fg4);
+}
+.D-atelier .ftag .x:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--fg);
+}
+.D-atelier .addf {
+  height: 34px;
+  border-radius: 7px;
+  border: 1px dashed var(--ln3);
+  color: var(--fg3);
+  padding: 0 12px;
+}
+.D-atelier .addf:hover {
+  background: var(--sf2);
+  color: var(--fg);
+  border-color: var(--ln3);
+}
+.D-atelier .btn.ghost.reset {
+  height: 34px;
+  padding: 0 10px;
+  color: var(--fg3);
+  font-weight: 500;
+  gap: 6px;
+}
+.D-atelier .btn.ghost.reset .ic {
+  width: 14px;
+  height: 14px;
+}
+.D-atelier .btn.ghost.reset:hover {
+  color: var(--fg);
+  background: var(--sf2);
+}
+.D-atelier.dark .ftag {
+  background: #33302d;
+  border-color: #3e3a36;
+  color: var(--fg3);
+}
+.D-atelier.dark .ftag:hover {
+  background: #3a3633;
+}
+.D-atelier.dark .ftag.on {
+  background: var(--ac-soft);
+  color: var(--ac-ink);
+}
+.D-atelier.dark .addf:hover,
+.D-atelier.dark .btn.ghost.reset:hover {
+  background: #33302d;
+}
+
+.D-atelier.m .main,
+.D-atelier.t .main {
+  padding: 0;
+}
+.D-atelier.t .ph {
+  padding: 20px 24px 16px;
+  margin: 0;
+}
+.D-atelier.t .content {
+  padding: 20px 24px 32px;
+}
+.D-atelier.t .login .r {
+  background: var(--bg);
+  display: grid;
+}
+.D-atelier.t .login .top {
+  background: var(--bg);
+}
+.D-atelier.t .login .build {
+  display: none;
+}
+.D-atelier.m .ph {
+  padding: 16px 16px 14px;
+  margin: 0;
+}
+.D-atelier.m .content {
+  padding: 16px 16px 24px;
+}
+.D-atelier.m .kpis {
+  border-radius: 9px;
+}
+.D-atelier.m .login .r {
+  background: var(--bg);
+  display: block;
+  padding: 76px 16px 24px;
+}
+.D-atelier.m .login .box {
+  border-radius: 12px;
+}
+.D-atelier.m .login .build {
+  display: none;
+}
+.D-atelier.m .login .top {
+  height: 56px;
+  background: var(--bg);
+}
+.D-atelier.m .mbar .wm {
+  margin-left: 2px;
+}
+.D-atelier.m .selbar .acts .ab {
+  height: 34px;
+  padding: 0 10px;
+}
+.D-atelier.m .selbar > b::after {
+  display: none;
+}
+.D-atelier.m.p-list .ph {
+  padding-bottom: 12px;
+}
+.D-atelier.m .ph .acts .btn:not(.pri) {
+  flex: 1;
+  justify-content: center;
+}
+.D-atelier.p-account .main,
+.D-atelier.p-accountForm .main {
+  padding: 0;
+  display: block;
+}
+.D-atelier.p-account .ah {
+  background: var(--sf);
+  border-bottom: 1px solid var(--ln);
+}
+.D-atelier .fcols {
+  padding: 24px 28px 0;
+}
+.D-atelier.m.p-account .main,
+.D-atelier.m.p-accountForm .main {
+  padding: 0;
+}
+.D-atelier .akpis .akpi .v {
+  font-weight: 300;
+}

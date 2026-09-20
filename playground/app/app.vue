@@ -11,18 +11,18 @@ const lang = computed(() => locales[locale.value].code)
 const dir = computed(() => locales[locale.value].dir)
 
 useHead({
-  title: 'nuxt-ui-tools - Playground',
+  htmlAttrs: {
+    dir,
+    lang,
+  },
   meta: [
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { content: 'width=device-width, initial-scale=1', name: 'viewport' },
     {
-      name: 'description',
       content: 'Interactive playground for validating nuxt-ui-tools runtime behavior and UI.',
+      name: 'description',
     },
   ],
-  htmlAttrs: {
-    lang,
-    dir,
-  },
+  title: 'nuxt-ui-tools - Playground',
 })
 </script>
 

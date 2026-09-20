@@ -2,10 +2,11 @@
 import UCard from '@nuxt/ui/components/Card.vue'
 import { computed } from 'vue'
 
-import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
+import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormContainerLayout } from '../../composables/use-form-layout'
 import type { FormCardField } from '../../types'
+import { invokeFormFunction, isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
@@ -19,8 +20,8 @@ const { form, params } = useFieldControl(
   () => props.path,
 )
 const grid = useFormContainerLayout({
-  layout: () => props.field.layout,
   formLayout: form.currentLayout,
+  layout: () => props.field.layout,
 })
 const title = computed(
   () => resolveRenderable(props.field.header) ?? resolveFormText(props.field.label),
@@ -31,8 +32,8 @@ const footer = computed(() => resolveRenderable(props.field.footer))
 const action = computed(() => resolveRenderable(props.field.action))
 
 function resolveRenderable(value: FormCardField['header']) {
-  const resolved = typeof value === 'function' ? value(params.value) : value
-  return typeof resolved === 'string' || typeof resolved === 'number' ? String(resolved) : undefined
+  const resolved = invokeFormFunction(value, [params.value]) ?? value
+  return isString(resolved) || isNumber(resolved) ? String(resolved) : undefined
 }
 </script>
 

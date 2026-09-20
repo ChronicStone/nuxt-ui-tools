@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
-import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
+import SpreadsheetImport from '#ui-tools/spreadsheet/components/spreadsheet-import.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
 definePageMeta({
@@ -24,20 +24,6 @@ const centers = [
 
 function createColumnResolveSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.column-resolve-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 20,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
     columns: {
       static: (column) => [
         column.text('candidateName', {
@@ -69,6 +55,20 @@ function createColumnResolveSchema() {
         }),
       ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 20,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.column-resolve-lab',
+    matching: {
+      strategy: 'smart',
+    },
+    sheet: {
+      strategy: 'auto',
+    },
   })
 }
 
@@ -88,19 +88,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Column resolve')
 
   return {
-    fileName: 'spreadsheet-column-resolve-lab.xlsx',
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
+    fileName: 'spreadsheet-column-resolve-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

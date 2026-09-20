@@ -1,13 +1,14 @@
+import type { FormValue } from './'
 import type { FormFieldCallbackParams } from './callbacks'
 
 /**
  * Input/output transform hooks for a stateful field.
  */
 export interface FormTransformConfig<
-  TInternal = unknown,
+  TInternal = FormValue,
   TExternal = TInternal,
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
 > {
   /** Converts an incoming raw value into the internal form value. Replaces legacy `preformat`. */
   input?: (

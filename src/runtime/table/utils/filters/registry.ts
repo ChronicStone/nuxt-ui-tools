@@ -1,3 +1,4 @@
+import { isNullish } from '../../../shared/utils/predicate'
 import type {
   TableFilterOperator,
   TableQueryStateFilterValue,
@@ -14,21 +15,26 @@ export function createDefaultFilterValue(
 
   const normalizedDefinition = normalizeFilterDefinition(definition)
 
-  if (normalizedDefinition.defaultValue != null) {
+  if (!isNullish(normalizedDefinition.defaultValue)) {
     return normalizedDefinition.defaultValue
   }
 
   switch (normalizedDefinition.kind) {
-    case 'option':
+    case 'option': {
       return []
-    case 'boolean':
+    }
+    case 'boolean': {
       return true
-    case 'number':
+    }
+    case 'number': {
       return 0
-    case 'date':
+    }
+    case 'date': {
       return new Date()
-    default:
+    }
+    default: {
       return ''
+    }
   }
 }
 

@@ -6,10 +6,10 @@ import UPopover from '@nuxt/ui/components/Popover.vue'
 import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormColorPickerField } from '../../types'
-import { resolveFormText } from '../../utils/text'
+import { isString } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormColorPickerField
@@ -17,23 +17,38 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, disabled } = useFieldControl(
+const {
+  fieldProps,
+  form,
+  controlProps,
+  controlSize,
+  disabled,
+  interactionOwnerClass,
+  placeholder: controlPlaceholder,
+} = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['display', 'clearable'] },
 )
 const open = ref<boolean>(false)
-const display = computed(() => props.field.display ?? 'popover')
-const placeholder = computed(() => resolveFormText(props.field.placeholder) ?? '#000000')
+const display = computed(() => fieldProps.value.display ?? 'popover')
+const placeholder = computed(() =>
+  props.field.placeholder === undefined ? '#000000' : controlPlaceholder.value,
+)
 const model = computed<string | undefined>({
   get: () => {
     const value = form.getValue(props.path)
-    return typeof value === 'string' ? value : undefined
+    return isString(value) ? value : undefined
   },
   set: (value) => form.setValue(props.path, value ?? null),
 })
 
 function clearColor() {
   model.value = undefined
+}
+
+function preventPopoverAutoFocus(event: Event) {
+  event.preventDefault()
 }
 </script>
 
@@ -44,13 +59,21 @@ function clearColor() {
       v-model="model"
       v-bind="controlProps"
       :disabled="disabled"
-      :format="field.format ?? 'hex'"
-      :throttle="field.throttle"
+      :format="fieldProps.format ?? 'hex'"
+      :throttle="fieldProps.throttle"
     />
     <UPopover
       v-else
       v-model:open="open"
-      :content="{ side: 'bottom', sideOffset: 8, collisionPadding: 12, avoidCollisions: true }"
+      :content="{
+        side: 'bottom',
+        align: 'start',
+        sideOffset: 8,
+        collisionPadding: 12,
+        avoidCollisions: true,
+        onOpenAutoFocus: preventPopoverAutoFocus,
+      }"
+      :ui="{ content: interactionOwnerClass }"
       :class="display === 'swatch' ? 'w-fit' : 'w-full'"
     >
       <template #anchor>
@@ -59,8 +82,10 @@ function clearColor() {
           type="button"
           color="neutral"
           variant="outline"
+          :size="controlSize"
           :disabled="disabled"
           :aria-label="t('form.fields.color.open')"
+          @click="open = true"
         >
           <span
             class="size-5 rounded-sm border border-default"
@@ -86,7 +111,7 @@ function clearColor() {
           <template #trailing>
             <div class="flex items-center gap-0.5">
               <UButton
-                v-if="field.clearable === true && model"
+                v-if="fieldProps.clearable === true && model"
                 icon="i-lucide-x"
                 color="neutral"
                 variant="ghost"
@@ -94,7 +119,7 @@ function clearColor() {
                 :disabled="disabled"
                 :aria-label="t('form.fields.color.clear')"
                 @mousedown.prevent
-                @click="clearColor"
+                @click.stop="clearColor"
               />
             </div>
           </template>
@@ -102,12 +127,13 @@ function clearColor() {
       </template>
 
       <template #content>
-        <div class="p-1">
+        <div class="p-2">
           <UColorPicker
             v-model="model"
+            :size="controlSize"
             :disabled="disabled"
-            :format="field.format ?? 'hex'"
-            :throttle="field.throttle"
+            :format="fieldProps.format ?? 'hex'"
+            :throttle="fieldProps.throttle"
           />
         </div>
       </template>

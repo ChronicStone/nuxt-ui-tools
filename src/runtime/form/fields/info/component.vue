@@ -4,6 +4,7 @@ import { computed } from 'vue'
 
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormInfoField } from '../../types'
+import { invokeFormFunction, isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 
 const props = defineProps<{
@@ -11,25 +12,24 @@ const props = defineProps<{
   path: readonly string[]
 }>()
 
-const { params } = useFieldControl(
+const { fieldProps, params } = useFieldControl(
   () => props.field,
   () => props.path,
 )
 
 const description = computed(() => {
-  const content = props.field.content
-  if (typeof content === 'function') {
-    const value = content(params.value)
-    return typeof value === 'string' || typeof value === 'number' ? String(value) : undefined
-  }
-
-  if (typeof content === 'string' || typeof content === 'number' || typeof content === 'function')
-    return resolveFormText(content)
-
-  return undefined
+  const { content } = props.field
+  const resolved = invokeFormFunction(content, [params.value]) ?? content
+  return isString(resolved) || isNumber(resolved) ? String(resolved) : undefined
 })
 </script>
 
 <template>
-  <UAlert color="neutral" variant="soft" icon="i-lucide-info" :description="description" />
+  <UAlert
+    :color="fieldProps.color ?? 'neutral'"
+    :variant="fieldProps.variant ?? 'soft'"
+    :icon="fieldProps.icon === false ? undefined : (fieldProps.icon ?? 'i-lucide-info')"
+    :title="resolveFormText(fieldProps.title)"
+    :description="description"
+  />
 </template>

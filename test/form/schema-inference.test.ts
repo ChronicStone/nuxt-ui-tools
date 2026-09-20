@@ -6,37 +6,48 @@ import { defineFormField, defineFormFields, defineFormSchema, formFieldKinds } f
 import type {
   ExtractFormContext,
   ExtractFormFields,
+  FormField,
   FormHiddenField,
   FormOption,
   FormTextField,
 } from '#ui-tools/form'
 
+interface ExplicitContext {
+  countries: readonly string[]
+}
+
+const explicitContext: ExplicitContext = { countries: ['FR', 'BE'] }
+const dynamicFields: readonly FormField[] = [{ key: 'name', type: 'text' }]
+
+const externallyTypedSchema = defineFormSchema({
+  context: explicitContext,
+  fields: dynamicFields,
+})
+
 const schema = defineFormSchema({
-  formKey: 'exassess.account',
   context: {
     countries: () =>
       queryOptions({
-        queryKey: ['countries'],
         queryFn: async () => [
           { label: 'France', value: 'FR' },
           { label: 'Belgium', value: 'BE' },
         ],
+        queryKey: ['countries'],
       }),
     preferredCurrency: 'EUR',
   },
   fields: [
     {
       key: 'name',
-      type: 'text',
       label: 'Name',
       labelExtra: () => h('a', { href: '/help' }, 'Help'),
+      type: 'text',
       validation: {
         required: true,
       },
     },
     {
       key: 'country',
-      type: 'select',
       label: 'Country',
       options: ({ ctx }) => {
         expectTypeOf(ctx.countries.value).toEqualTypeOf<
@@ -46,34 +57,36 @@ const schema = defineFormSchema({
 
         return ctx.countries.value ?? []
       },
+      type: 'select',
     },
     {
-      key: 'accepted',
-      type: 'checkbox',
-      label: 'Accepted',
       default: false,
+      key: 'accepted',
+      label: 'Accepted',
+      type: 'checkbox',
     },
     {
+      default: 'account_123',
       key: 'internalId',
       type: 'hidden',
-      default: 'account_123',
     },
     {
+      fields: [
+        {
+          key: 'erpId',
+          label: 'ERP ID',
+          type: 'text',
+        },
+      ],
       key: 'metadata',
-      type: 'object',
       layout: {
         columns: 2,
         span: 'full',
       },
-      fields: [
-        {
-          key: 'erpId',
-          type: 'text',
-          label: 'ERP ID',
-        },
-      ],
+      type: 'object',
     },
   ],
+  formKey: 'exassess.account',
 })
 
 type SchemaContext = ExtractFormContext<typeof schema>
@@ -93,22 +106,31 @@ describe('defineFormSchema inference', () => {
     >()
   })
 
+  it('accepts interface-backed context and dynamically assembled fields', () => {
+    expectTypeOf<
+      ExtractFormContext<typeof externallyTypedSchema>['countries']['value']
+    >().toEqualTypeOf<readonly string[]>()
+    expectTypeOf<ExtractFormFields<typeof externallyTypedSchema>>().toEqualTypeOf<
+      readonly FormField[]
+    >()
+  })
+
   it('keeps helper inference for extracted fields', () => {
     const field = defineFormField({
       key: 'email',
+      props: { inputType: 'email' },
       type: 'text',
-      inputType: 'email',
     })
 
     const fields = defineFormFields([
       field,
       {
         key: 'status',
-        type: 'radio',
         options: [
           { label: 'Active', value: 'active' },
           { label: 'Inactive', value: 'inactive' },
         ],
+        type: 'radio',
       },
     ])
 
@@ -121,20 +143,21 @@ describe('defineFormSchema inference', () => {
       fields: [
         {
           key: 'permissions',
-          type: 'tree',
-          multiple: true,
-          selectionControl: 'checkbox',
-          selectionBehavior: 'toggle',
-          propagateSelect: true,
-          bubbleSelect: true,
           options: [{ key: 'catalog', label: 'Catalog' }],
+          props: {
+            bubbleSelect: true,
+            multiple: true,
+            propagateSelect: true,
+            selectionBehavior: 'toggle',
+            selectionControl: 'checkbox',
+          },
+          type: 'tree',
         },
         {
           key: 'owner',
-          type: 'tree-select',
-          selectionControl: 'radio',
-          selectionBehavior: 'replace',
           options: [{ key: 'engineering', label: 'Engineering' }],
+          props: { selectionBehavior: 'replace', selectionControl: 'radio' },
+          type: 'tree-select',
         },
       ],
     })
@@ -147,7 +170,7 @@ describe('defineFormSchema inference', () => {
   it('exposes the planned field-kind registry', () => {
     expect(formFieldKinds.map((kind) => kind.type)).toContain('text')
     expect(formFieldKinds.map((kind) => kind.type)).toContain('upload')
-    expect(formFieldKinds.map((kind) => kind.type)).toEqual(
+    expect(formFieldKinds.map((kind) => kind.type)).toStrictEqual(
       expect.arrayContaining([
         'datetime',
         'daterange',
@@ -173,8 +196,8 @@ describe('form field property ownership', () => {
       fields: [
         {
           key: 'status',
-          type: 'select',
           options: [{ label: 'Draft', value: 'draft' }] satisfies FormOption[],
+          type: 'select',
         },
       ],
     })

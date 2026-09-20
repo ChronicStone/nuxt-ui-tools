@@ -1,8 +1,12 @@
-import type { SpreadsheetReferenceDefinition, SpreadsheetResolutionDefinition } from '../../types'
+import type {
+  SpreadsheetReferenceDefinition,
+  SpreadsheetResolutionDefinition,
+  SpreadsheetValue,
+} from '../../types'
 import { isSpreadsheetRecord } from '../object'
 
 export function isSpreadsheetResolutionDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetResolutionDefinition {
   return (
     isSpreadsheetRecord(value) &&
@@ -14,7 +18,7 @@ export function isSpreadsheetResolutionDefinition(
 }
 
 export function isSpreadsheetPublicReferenceDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetReferenceDefinition {
   return (
     isSpreadsheetRecord(value) &&
@@ -29,18 +33,22 @@ export function normalizeSpreadsheetRuntimeResolutions(
   entries: readonly unknown[],
 ): SpreadsheetResolutionDefinition[] {
   return entries.flatMap((entry) => {
-    if (isSpreadsheetResolutionDefinition(entry)) return [entry]
-    if (!isSpreadsheetPublicReferenceDefinition(entry)) return []
+    if (isSpreadsheetResolutionDefinition(entry)) {
+      return [entry]
+    }
+    if (!isSpreadsheetPublicReferenceDefinition(entry)) {
+      return []
+    }
 
     return [
       {
-        kind: 'select',
-        scope: 'reference',
-        targetField: entry.field,
-        sourceField: entry.source,
-        options: entry.options,
         getOptions: entry.getOptions,
+        kind: 'select',
+        options: entry.options,
         rules: entry.rules,
+        scope: 'reference',
+        sourceField: entry.source,
+        targetField: entry.field,
       },
     ] satisfies readonly SpreadsheetResolutionDefinition[]
   })

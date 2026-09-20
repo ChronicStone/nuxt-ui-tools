@@ -17,6 +17,10 @@ That is acceptable when the complexity pays for itself in public API quality.
 - one resolved schema shape used by the runtime
 - utility types extracted only when reused or meaningfully clarifying
 
+For table sources, use `tableSource(...)` inline inside `defineTableSchema(...)` to finish source
+result inference before the surrounding schema derives its row-aware contracts. Do not extract or
+manually annotate the source at the usage site.
+
 ## Avoid
 
 - duplicating source row shape in multiple separate generic parameters when one can derive from another

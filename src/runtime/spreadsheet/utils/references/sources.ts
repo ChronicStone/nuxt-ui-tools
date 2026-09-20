@@ -1,15 +1,19 @@
-import type { SpreadsheetParsedRow } from '../../types'
+import type { SpreadsheetParsedRow, SpreadsheetRecord, SpreadsheetValue } from '../../types'
 import { getSpreadsheetValueAtPath } from '../object'
 import { normalizeSpreadsheetRuntimeResolutions } from './guards'
 
-export function collectSpreadsheetReferenceTokens(value: unknown) {
+export function collectSpreadsheetReferenceTokens(value: SpreadsheetValue) {
   const items = Array.isArray(value) ? value : [value]
   const tokens: string[] = []
 
   for (const item of items) {
     const token = String(item ?? '').trim()
-    if (!token) continue
-    if (tokens.includes(token)) continue
+    if (!token) {
+      continue
+    }
+    if (tokens.includes(token)) {
+      continue
+    }
     tokens.push(token)
   }
 
@@ -18,7 +22,7 @@ export function collectSpreadsheetReferenceTokens(value: unknown) {
 
 export function collectSpreadsheetReferenceSources(
   references: readonly unknown[],
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[],
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[],
 ) {
   return normalizeSpreadsheetRuntimeResolutions(references).flatMap((entry) => {
     const entries = new Map<string, number[]>()
@@ -33,11 +37,11 @@ export function collectSpreadsheetReferenceSources(
 
     return [
       {
-        reference: entry,
-        entries: Array.from(entries.entries()).map(([value, rowIndexes]) => ({
-          value,
+        entries: [...entries.entries()].map(([value, rowIndexes]) => ({
           rowIndexes,
+          value,
         })),
+        reference: entry,
       },
     ]
   })

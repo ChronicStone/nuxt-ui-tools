@@ -23,7 +23,9 @@ export interface FormRootUi {
   header?: FormUiClass
   headerContent?: FormUiClass
   heading?: FormUiClass
+  eyebrow?: FormUiClass
   title?: FormUiClass
+  description?: FormUiClass
   stepper?: FormUiClass
   step?: FormUiClass
   viewport?: FormUiClass
@@ -50,9 +52,24 @@ export interface FormFieldUi {
   help?: FormUiClass
   body?: FormUiClass
   content?: FormUiClass
+  pending?: FormUiClass
   collapsible?: FormUiClass
   collapseTrigger?: FormUiClass
   reset?: FormUiClass
+}
+
+export interface FormSectionUi {
+  root?: FormUiClass
+  label?: FormUiClass
+  description?: FormUiClass
+}
+
+export interface FormTabsUi {
+  root?: FormUiClass
+  list?: FormUiClass
+  trigger?: FormUiClass
+  content?: FormUiClass
+  fields?: FormUiClass
 }
 
 export interface FormActionsUi {
@@ -125,8 +142,43 @@ export interface FormArrayListUi {
   action?: FormUiClass
 }
 
+export interface FormArrayCollapseUi {
+  root?: FormUiClass
+  header?: FormUiClass
+  title?: FormUiClass
+  description?: FormUiClass
+  empty?: FormUiClass
+  list?: FormUiClass
+  item?: FormUiClass
+  itemHeader?: FormUiClass
+  trigger?: FormUiClass
+  arrow?: FormUiClass
+  itemTitle?: FormUiClass
+  summary?: FormUiClass
+  itemActions?: FormUiClass
+  body?: FormUiClass
+  fields?: FormUiClass
+  add?: FormUiClass
+  action?: FormUiClass
+}
+
+export interface FormArrayPrimitiveUi {
+  root?: FormUiClass
+  empty?: FormUiClass
+  list?: FormUiClass
+  item?: FormUiClass
+  preview?: FormUiClass
+  control?: FormUiClass
+  action?: FormUiClass
+  add?: FormUiClass
+}
+
 export interface FormArrayTableUi {
   root?: FormUiClass
+  header?: FormUiClass
+  title?: FormUiClass
+  description?: FormUiClass
+  frame?: FormUiClass
   viewport?: FormUiClass
   table?: FormUiClass
   head?: FormUiClass
@@ -138,7 +190,9 @@ export interface FormArrayTableUi {
   cell?: FormUiClass
   control?: FormUiClass
   actionsCell?: FormUiClass
+  error?: FormUiClass
   empty?: FormUiClass
+  addCell?: FormUiClass
   add?: FormUiClass
   action?: FormUiClass
 }
@@ -169,12 +223,16 @@ export interface FormUiConfig {
   root?: FormUiPartConfig<FormRootUi>
   field?: FormUiPartConfig<FormFieldUi>
   actions?: FormUiPartConfig<FormActionsUi>
+  section?: FormUiPartConfig<FormSectionUi>
+  tabs?: FormUiPartConfig<FormTabsUi>
   group?: FormUiPartConfig<FormGroupUi>
   tree?: FormUiPartConfig<FormTreeUi>
   treeSelect?: FormUiPartConfig<FormTreeSelectUi>
   matrix?: FormUiPartConfig<FormMatrixUi>
   arrayList?: FormUiPartConfig<FormArrayListUi>
   arrayTable?: FormUiPartConfig<FormArrayTableUi>
+  arrayCollapse?: FormUiPartConfig<FormArrayCollapseUi>
+  arrayPrimitive?: FormUiPartConfig<FormArrayPrimitiveUi>
   modal?: FormUiPartConfig<FormOverlayUi>
   drawer?: FormUiPartConfig<FormOverlayUi>
   fullscreen?: FormUiPartConfig<FormOverlayUi>

@@ -9,6 +9,10 @@ export interface UiToolsTableMessages {
   footer: {
     rowsSelected: string
     rowsPerPage: string
+    perPage: string
+    range: string
+    rangeEmpty: string
+    pageOf: string
     page: string
     pageSizeOption: string
     previousPage: string
@@ -18,6 +22,10 @@ export interface UiToolsTableMessages {
   }
   controls: {
     addFilter: string
+    resetFilters: string
+    columnsCount: string
+    close: string
+    loadingMore: string
     searchFilters: string
     noMatchingFilters: string
     view: string
@@ -26,6 +34,19 @@ export interface UiToolsTableMessages {
     resetColumns: string
     sort: string
     loadMore: string
+    clearSelection: string
+  }
+  selectionBar: {
+    selection: string
+    allResults: string
+    more: string
+    clear: string
+  }
+  summaries: {
+    total: string
+    page: string
+    filtered: string
+    selection: string
   }
   columnsMenu: {
     sortAsc: string
@@ -37,10 +58,24 @@ export interface UiToolsTableMessages {
     hideColumn: string
   }
   filters: {
+    editor: {
+      clear: string
+    }
+    sheet: {
+      done: string
+      back: string
+      sortBy: string
+      order: string
+    }
     panel: {
       trigger: string
       clearAll: string
       apply: string
+      done: string
+      reset: string
+      results: string
+      matching: string
+      matchMode: string
     }
     options: {
       empty: string
@@ -74,6 +109,9 @@ export interface UiToolsTableMessages {
     empty: {
       title: string
       description: string
+      filteredTitle: string
+      filteredDescription: string
+      reset: string
     }
     gridError: {
       title: string
@@ -237,15 +275,58 @@ export interface UiToolsFormMessages {
     cancelButton: string
     resetButton: string
   }
+  states: {
+    contextError: {
+      title: string
+      description: string
+      action: string
+    }
+  }
+  validation: {
+    required: string
+    dateMin: string
+    dateMax: string
+  }
   fields: {
     text: {
       defaultPlaceholder: string
+      clear: string
+    }
+    description: {
+      more: string
+      close: string
+    }
+    file: {
+      drop: string
+      replace: string
+      remove: string
+      add: string
+    }
+    array: {
+      addItem: string
+      removeItem: string
+      dragItem: string
+      editItem: string
+      confirmDelete: string
+      empty: string
+      item: string
+      expand: string
+      collapse: string
+      unique: string
+    }
+    password: {
+      show: string
+      hide: string
     }
     options: {
       refresh: string
       create: string
       creating: string
       createNamed: string
+      loadMore: string
+      loadingMore: string
+      retry: string
+      loadError: string
     }
     hierarchy: {
       search: string
@@ -259,6 +340,7 @@ export interface UiToolsFormMessages {
       start: string
       end: string
       clear: string
+      confirm: string
     }
     time: {
       format: string
@@ -278,6 +360,7 @@ export interface UiToolsFormMessages {
     phone: {
       country: string
       number: string
+      clear: string
     }
   }
 }

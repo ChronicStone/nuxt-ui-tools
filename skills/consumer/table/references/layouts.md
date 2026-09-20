@@ -54,13 +54,13 @@ const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
   defaultLayout: 'table',
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryKey: ['employees'],
       queryFn: async () => rows,
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('fullName', { label: 'Employee' }),

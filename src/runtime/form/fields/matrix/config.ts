@@ -1,10 +1,10 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const matrixFieldKind = defineFormFieldKind({
-  type: 'matrix',
+  layout: { container: true, item: true },
   state: 'stateful',
-  ui: { label: true, description: true, hint: true },
-  layout: { item: true, container: true },
-  validation: true,
   transform: true,
+  type: 'matrix',
+  ui: { description: true, hint: true, label: true },
+  validation: true,
 })

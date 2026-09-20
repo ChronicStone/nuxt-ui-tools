@@ -12,6 +12,7 @@ The normal consumer flow is:
 ## Main Public APIs
 
 - `defineTableSchema`
+- `tableSource`
 - `useTable`
 - `DataList`
 
@@ -21,13 +22,13 @@ The normal consumer flow is:
 const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryKey: ['employees'],
       queryFn: async () => rows,
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('fullName', { label: 'Employee' }),
@@ -40,7 +41,7 @@ const table = useTable(schema)
 ```
 
 ```vue
-<DataList :table="table" />
+<DataList :table="table" size="sm" />
 ```
 
 ## Coverage Map

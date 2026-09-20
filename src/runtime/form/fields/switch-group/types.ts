@@ -7,18 +7,27 @@ import type {
   FormOptionsSource,
 } from '../../types/options'
 
-export interface FormSwitchGroupField<
-  TContext = {},
-  TDeps = {},
-  TValue extends FormOptionValue = FormOptionValue,
-  TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
-> extends FormStatefulFieldBase<'switch-group', readonly TValue[] | null, TContext, TDeps> {
-  options:
-    | FormOptionConfig<TOption, TContext, TDeps, readonly TValue[] | null>
-    | FormOptionsSource<TOption, TContext, TDeps, readonly TValue[] | null>
+export interface FormSwitchGroupProps {
   orientation?: 'horizontal' | 'vertical'
   checkedIcon?: string
   uncheckedIcon?: string
+}
+
+export interface FormSwitchGroupField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue extends FormOptionValue = FormOptionValue,
+  TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
+> extends FormStatefulFieldBase<
+  'switch-group',
+  readonly TValue[] | null,
+  TContext,
+  TDeps,
+  FormSwitchGroupProps
+> {
+  options:
+    | FormOptionConfig<TOption, TContext, TDeps, readonly TValue[] | null>
+    | FormOptionsSource<TOption, TContext, TDeps, readonly TValue[] | null>
 }
 
 export type SwitchGroupFieldOutput<TField> = readonly FieldOptionValue<TField>[] | NullableValue

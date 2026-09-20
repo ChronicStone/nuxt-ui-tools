@@ -1,4 +1,5 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { TableResolvedFilterGroup, TableSchemaView } from '../types'
 import { createResolvedFilterState } from '../utils'
@@ -12,8 +13,8 @@ export interface UseTableStateParams {
 
 export function useTableState(params: UseTableStateParams) {
   const queryState = useQueryState({
-    schema: params.schema,
     activeLayout: params.layout.activeLayout,
+    schema: params.schema,
   })
 
   const resolvedFilterState = computed<TableResolvedFilterGroup<string>>(() =>

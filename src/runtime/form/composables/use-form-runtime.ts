@@ -1,7 +1,10 @@
-import { computed, inject, provide, ref, watch } from 'vue'
+import { computed, inject, nextTick, provide, ref, watch } from 'vue'
 import type { InjectionKey } from 'vue'
 
+import { useUiToolsLocale } from '../../i18n/use-locale'
 import type {
+  FormValue,
+  FormErrorOptions,
   FormField,
   FormFieldApi,
   FormFieldCallbackParams,
@@ -14,12 +17,15 @@ import type {
 import { createPublicFormApi } from '../utils/api'
 import { resolveFieldDependencies } from '../utils/dependencies'
 import { resolveFormLayoutConfig } from '../utils/layout'
-import { isRecord, pathSegments } from '../utils/path'
 import {
-  childParentPath,
-  collectFormFieldPaths,
-  collectFormFieldsPaths,
-  fieldPath,
+  getPathValue,
+  isRecord,
+  pathSegments,
+  relativePathSegments,
+  setPathValue,
+} from '../utils/path'
+import { isFunction, isObject, isPromise, isUndefined, stringArray } from '../utils/predicate'
+import {
   getSchemaFields,
   getSchemaLayout,
   getSchemaSteps,
@@ -30,9 +36,11 @@ import { getSchemaContext, useFormContextResources } from './use-form-context-re
 import { useFormFocus } from './use-form-focus'
 import { useFormOptionRegistry } from './use-form-option-registry'
 import { useFormState } from './use-form-state'
-import { useFormSubmitController } from './use-form-submit'
+import { useFormSubmission } from './use-form-submission'
 import { useFormUploadRegistry } from './use-form-upload-registry'
 import { useFormValidation } from './use-form-validation'
+
+export { childParentPath, fieldPath } from '../utils/state'
 
 const formRuntimeKey: InjectionKey<FormRuntime> = Symbol('nuxt-ui-tools-form-runtime')
 
@@ -42,7 +50,9 @@ export function provideFormRuntime(runtime: FormRuntime) {
 
 export function useFormRuntimeContext() {
   const runtime = inject(formRuntimeKey)
-  if (!runtime) throw new Error('Form runtime is not provided.')
+  if (!runtime) {
+    throw new Error('Form runtime is not provided.')
+  }
   return runtime
 }
 
@@ -51,50 +61,113 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const optionRegistry = useFormOptionRegistry()
   const uploadRegistry = useFormUploadRegistry()
   const currentStepIndex = ref<number>(0)
-  const navigationActionPending = ref<'next' | 'previous' | null>(null)
+  const navigationActionPending = ref<'next' | 'previous' | 'reset' | null>(null)
+  const effects = createEffectLifecycle()
+  const { t } = useUiToolsLocale()
 
   setContext(getSchemaContext(params.schema.value))
 
-  const apiFactory = (path: readonly string[], field?: FormField) =>
-    createFieldApi({
-      path,
-      field,
-      getValue: state.getValue,
-      setValue: state.setValue,
-      resetValue: state.resetValue,
-      ctx: context,
-      state: state.state,
-      optionRegistry,
-      uploadRegistry,
-      focusField: () => focus.focusField(path),
-      setExternalError: (message) => validation.setError(path, message),
-      clearExternalError: () => validation.clearError(path),
-      validateField: () =>
-        field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
-    })
+  function createFormNamespace(
+    path: readonly string[],
+    read: {
+      getValue: (target: readonly string[]) => FormValue
+      getInitialValue: (target: readonly string[]) => FormValue
+      setValue: (target: readonly string[], value: FormValue) => void
+      state: () => FormObject
+    },
+  ): FormFieldApi['form'] {
+    const parentPath = path.slice(0, -1)
+    function resolve(target: string) {
+      return resolveRelativeFieldPath(parentPath, target)
+    }
+    return {
+      clearError: (target) => runtime.clearError(target ? resolve(target) : undefined),
+      focus: (target) => runtime.focusField(resolve(target)),
+      get: (target) => read.getValue(resolve(target)),
+      initial: (target) => read.getInitialValue(resolve(target)),
+      nextStep: () => runtime.nextStep(),
+      output: () => runtime.output.value,
+      previousStep: () => runtime.previousStep(),
+      reset: () => runtime.reset(),
+      set: (target, value) => read.setValue(resolve(target), value),
+      setError: (target, message, options) => runtime.setError(resolve(target), message, options),
+      state: () => read.state(),
+      submit: () => runtime.submit(),
+      validate: () => runtime.validate(),
+    }
+  }
+
+  function createApiFactory(read: {
+    getValue: (target: readonly string[]) => FormValue
+    getInitialValue: (target: readonly string[]) => FormValue
+    setValue: (target: readonly string[], value: FormValue) => void
+    state: () => FormObject
+  }) {
+    return (path: readonly string[], field?: FormField) =>
+      createFieldApi({
+        clearExternalError: () => validation.clearError(path),
+        ctx: context,
+        field,
+        focusField: () => focus.focusField(path),
+        form: createFormNamespace(path, read),
+        getInitialValue: read.getInitialValue,
+        getValue: read.getValue,
+        optionRegistry,
+        path,
+        pendingField: () => validation.isPending(path),
+        resetValue: state.resetValue,
+        setExternalError: (message, options) => validation.setError(path, message, options),
+        setValue: read.setValue,
+        state: read.state(),
+        uploadRegistry,
+        validateField: () =>
+          field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
+      })
+  }
+
+  const apiFactory = createApiFactory({
+    getInitialValue: (target) => state.getInitialValue(target),
+    getValue: (target) => state.getValue(target),
+    setValue: (target, value) => state.setValue(target, value),
+    state: () => state.state,
+  })
 
   const state = useFormState({
-    schema: params.schema,
-    input: params.input,
-    context,
     apiFactory,
+    bootstrapApiFactory: (draft, initial) =>
+      createApiFactory({
+        getInitialValue: (target) => getPathValue(initial, target),
+        getValue: (target) => getPathValue(draft, target),
+        setValue: (target, value) => setPathValueOf(draft, target, value),
+        state: () => draft,
+      }),
+    context,
+    ignoreDirtyPaths: () => getSchemaIgnoredDirtyPaths(params.schema.value),
+    input: params.input,
+    schema: params.schema,
   })
 
   const validation = useFormValidation({
+    apiFactory,
+    context,
+    getDateMaxMessage: (max: string) => t('form.validation.dateMax', { max }),
+    getDateMinMessage: (min: string) => t('form.validation.dateMin', { min }),
+    getRequiredMessage: () => t('form.validation.required'),
+    getUniqueMessage: () => t('form.fields.array.unique'),
+    getValidationMode: () => params.validationMode?.value ?? true,
     schema: () => params.schema.value,
     state: state.state,
-    context,
-    apiFactory,
-    getValidationMode: () => params.validationMode?.value ?? true,
   })
 
   const focus = useFormFocus({
-    getErrors: () => validation.errors.value,
+    getErrors: () => validation.validationErrors.value,
   })
 
   async function validate(options?: FormValidationOptions) {
     const valid = await validation.validate()
-    if (!valid && options?.focus) await focus.focusFirstInvalid()
+    if (!valid && options?.focus) {
+      await focus.focusFirstInvalid()
+    }
     return valid
   }
 
@@ -103,39 +176,56 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       currentFields.value,
       currentStepRoot.value ? [currentStepRoot.value] : [],
     )
-    if (!valid && options?.focus) await focus.focusFirstInvalid()
+    if (!valid && options?.focus) {
+      await focus.focusFirstInvalid()
+    }
     return valid
   }
 
-  const submit = useFormSubmitController({
-    validate: () => {
-      validation.markAllTouched(collectFormFieldPaths(params.schema.value))
-      return validate()
-    },
+  const submit = useFormSubmission({
+    beforeNext: () => (isStepped.value ? runBeforeNext() : Promise.resolve(true)),
     focusFirstInvalid: focus.focusFirstInvalid,
-    getOutput: () => state.output.value,
     getApi: () => createPublicFormApi(runtime),
-    getSchema: () => params.schema.value,
     getContext: () => context,
+    getOutput: () => state.output.value,
+    getSchema: () => params.schema.value,
+    validate,
   })
 
-  let hasInitializedInput = typeof params.input?.value !== 'undefined'
+  let hasInitializedInput = !isUndefined(params.input?.value)
   state.initialize(params.input?.value)
 
-  if (params.input)
+  let pendingInput: FormObject | undefined
+  if (params.input) {
     watch(
       params.input,
       (input) => {
-        if (!hasInitializedInput && typeof input !== 'undefined') {
+        if (!hasInitializedInput && !isUndefined(input)) {
           hasInitializedInput = true
           state.initialize(input)
           return
         }
 
-        state.syncInput(input, params.syncInput?.value ?? false)
+        const paths = params.syncInput?.value ?? false
+        if (isSyncEnabled(paths)) {
+          pendingInput = undefined
+          state.syncInput(input, paths)
+          return
+        }
+        pendingInput = input
       },
       { deep: true },
     )
+  }
+  if (params.syncInput) {
+    watch(params.syncInput, (paths) => {
+      if (!isSyncEnabled(paths) || isUndefined(pendingInput)) {
+        return
+      }
+      state.syncInput(pendingInput, paths)
+      pendingInput = undefined
+    })
+  }
 
   watch(params.schema, (schema) => {
     currentStepIndex.value = 0
@@ -145,16 +235,22 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   })
 
   const currentFields = computed(() => {
-    if (!isSteppedSchema(params.schema.value)) return getSchemaFields(params.schema.value)
+    if (!isSteppedSchema(params.schema.value)) {
+      return getSchemaFields(params.schema.value)
+    }
     return getSchemaSteps(params.schema.value)[currentStepIndex.value]?.fields ?? []
   })
   const currentStepRoot = computed(() => {
-    if (!isSteppedSchema(params.schema.value)) return undefined
+    if (!isSteppedSchema(params.schema.value)) {
+      return
+    }
     return getSchemaSteps(params.schema.value)[currentStepIndex.value]?.root
   })
   const currentLayout = computed(() => {
     const schemaLayout = getSchemaLayout(params.schema.value)
-    if (!isSteppedSchema(params.schema.value)) return resolveFormLayoutConfig(schemaLayout)
+    if (!isSteppedSchema(params.schema.value)) {
+      return resolveFormLayoutConfig(schemaLayout)
+    }
 
     return resolveFormLayoutConfig(
       schemaLayout,
@@ -163,13 +259,12 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   })
   const steps = computed<readonly FormRuntimeStep[]>(() =>
     getSchemaSteps(params.schema.value).map((step, index) => ({
-      key: step.key ?? String(index + 1),
-      label:
-        typeof step.title === 'function'
-          ? String(step.title())
-          : String(step.title ?? step.key ?? `Step ${index + 1}`),
       active: currentStepIndex.value === index,
       index,
+      key: step.key ?? String(index + 1),
+      label: isFunction(step.title)
+        ? String(step.title())
+        : String(step.title ?? step.key ?? `Step ${index + 1}`),
       root: step.root,
     })),
   )
@@ -183,12 +278,12 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
 
   async function runBeforeNext() {
     const handler = getSchemaLifecycleHandler(params.schema.value, 'onBeforeNext')
-    if (!handler) return true
+    if (!handler) {
+      return true
+    }
 
     try {
-      const result = await withNavigationPending('next', () =>
-        handler(createStepLifecycleParams(currentStepIndex.value)),
-      )
+      const result = await handler(createStepLifecycleParams(currentStepIndex.value))
       return result !== false
     } catch {
       return false
@@ -197,12 +292,12 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
 
   async function runBeforePrevious() {
     const handler = getSchemaLifecycleHandler(params.schema.value, 'onBeforePrevious')
-    if (!handler) return true
+    if (!handler) {
+      return true
+    }
 
     try {
-      await withNavigationPending('previous', () =>
-        handler(createStepLifecycleParams(currentStepIndex.value)),
-      )
+      await handler(createStepLifecycleParams(currentStepIndex.value))
       return true
     } catch {
       return false
@@ -256,187 +351,289 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
 
   function createStepLifecycleParams(stepIndex: number) {
     return {
-      step: getSchemaSteps(params.schema.value)[stepIndex],
-      stepIndex,
-      formData: state.output.value,
-      stepData: state.output.value,
       api: createPublicFormApi(runtime),
+      formData: state.output.value,
+      step: getSchemaSteps(params.schema.value)[stepIndex],
+      stepData: state.output.value,
+      stepIndex,
     }
   }
 
   const runtime: FormRuntime = {
-    schema: params.schema,
-    state: state.state,
-    output: state.output,
-    dirtyPaths: state.dirtyPaths,
-    isDirty: state.isDirty,
-    errors: validation.errors,
-    context,
     actionPending,
-    currentStepIndex,
+    canGoNext,
+    canGoPrevious,
+    clearError: (path) => validation.clearError(path ? pathSegments(path) : undefined),
+    clearErrors: () => validation.clearError(),
+    context,
     currentFields,
-    currentStepRoot,
     currentLayout,
     currentStep,
-    steps,
-    isStepped,
-    isFirstStep,
-    isLastStep,
-    canGoPrevious,
-    canGoNext,
-    getValue: state.getValue,
-    setValue: state.setValue,
+    currentStepIndex,
+    currentStepRoot,
+    dirtyPaths: state.dirtyPaths,
+    errors: validation.errors,
+    focusField: focus.focusField,
+    focusFirstInvalid: focus.focusFirstInvalid,
+    focusRequest: focus.request,
     getFieldApi: apiFactory,
     getFieldCallbackParams: (path, field) =>
       fieldCallbackParams({
-        field,
-        state: state.state,
-        ctx: context,
         api: apiFactory(path, field),
+        ctx: context,
+        field,
         parentPath: path.slice(0, -1),
+        state: state.state,
       }),
+    getFieldError: validation.getFieldError,
+    getInitialValue: state.getInitialValue,
+    getValue: state.getValue,
+    goToStep: async (index) => {
+      if (actionPending.value) {
+        return false
+      }
+      const nextIndex = Math.min(Math.max(index, 0), steps.value.length - 1)
+      if (nextIndex === currentStepIndex.value) {
+        return true
+      }
+      if (nextIndex > currentStepIndex.value) {
+        const valid = await withNavigationPending('next', () => validateCurrentStep())
+        if (!valid) {
+          await focus.focusFirstInvalid()
+          return false
+        }
+        return withNavigationPending('next', async () => {
+          const canProceed = await runBeforeNext()
+          if (!canProceed) {
+            return false
+          }
+
+          commitStepChange(nextIndex)
+          return true
+        })
+      }
+
+      commitStepChange(nextIndex)
+      return true
+    },
+    isDirty: state.isDirty,
+    isFieldTouched: validation.isTouched,
+    isFirstStep,
+    isLastStep,
+    isStepped,
+    markFieldTouched: validation.markTouched,
+    nextStep: async () => {
+      if (actionPending.value) {
+        return false
+      }
+      const valid = await withNavigationPending('next', () => validateCurrentStep())
+      if (!valid) {
+        await focus.focusFirstInvalid()
+        return false
+      }
+      return withNavigationPending('next', async () => {
+        const canProceed = await runBeforeNext()
+        if (!canProceed) {
+          return false
+        }
+
+        const nextIndex = resolveNextStepIndex()
+        if (nextIndex === null) {
+          return false
+        }
+        commitStepChange(nextIndex)
+        return true
+      })
+    },
+    output: state.output,
+    previousStep: async () => {
+      if (actionPending.value) {
+        return false
+      }
+      const handler = getSchemaLifecycleHandler(params.schema.value, 'onBeforePrevious')
+      if (!handler) {
+        const previousIndex = resolvePreviousStepIndex()
+        if (previousIndex === null) {
+          return false
+        }
+        commitStepChange(previousIndex)
+        return true
+      }
+
+      return withNavigationPending('previous', async () => {
+        const canProceed = await runBeforePrevious()
+        if (!canProceed) {
+          return false
+        }
+
+        const previousIndex = resolvePreviousStepIndex()
+        if (previousIndex === null) {
+          return false
+        }
+        commitStepChange(previousIndex)
+        return true
+      })
+    },
+    refreshFieldOptions: optionRegistry.refreshMany,
+    registerFieldElement: focus.registerField,
     registerFieldOptions: optionRegistry.register,
     registerFieldUpload: uploadRegistry.register,
-    refreshFieldOptions: optionRegistry.refreshMany,
-    getFieldError: validation.getFieldError,
-    markFieldTouched: validation.markTouched,
-    isFieldTouched: validation.isTouched,
+    reset: async () => {
+      if (navigationActionPending.value === 'reset') {
+        await effects.settle()
+        return
+      }
+      navigationActionPending.value = 'reset'
+      try {
+        validation.clearError()
+        state.reset()
+        await settleEffectRounds()
+        state.rebaseline()
+      } finally {
+        navigationActionPending.value = null
+      }
+    },
+    schema: params.schema,
+    setError: (path, message, options) => validation.setError(pathSegments(path), message, options),
+    setValue: state.setValue,
+    settleEffects: settleEffectRounds,
     shouldRender: (field, path) =>
       shouldRenderField(
         field,
         fieldCallbackParams({
-          field,
-          state: state.state,
-          ctx: context,
           api: apiFactory(path, field),
+          ctx: context,
+          field,
           parentPath: path.slice(0, -1),
+          state: state.state,
         }),
       ),
-    validate,
-    validateCurrentStep,
-    setError: (path, message) => validation.setError(pathSegments(path), message),
-    clearError: (path) => validation.clearError(path ? pathSegments(path) : undefined),
-    focusRequest: focus.request,
-    registerFieldElement: focus.registerField,
-    focusField: focus.focusField,
-    focusFirstInvalid: focus.focusFirstInvalid,
-    clearErrors: () => validation.clearError(),
-    submitHandler: submit.submitHandler,
+    state: state.state,
+    steps,
     submit: async () => {
       const result = await submit.submitHandler()
       return result.success
     },
-    reset: () => {
-      validation.clearError()
-      state.reset()
-    },
-    nextStep: async () => {
-      validation.markAllTouched(
-        collectFormFieldsPaths(
-          currentFields.value,
-          currentStepRoot.value ? [currentStepRoot.value] : [],
-        ),
-      )
-      const valid = await validateCurrentStep({ focus: true })
-      if (!valid) return false
-      const canProceed = await runBeforeNext()
-      if (!canProceed) return false
+    submitHandler: submit.submitHandler,
+    trackEffect: effects.track,
+    validate,
+    validateCurrentStep,
+  }
 
-      const nextIndex = resolveNextStepIndex()
-      if (nextIndex === null) return false
-      currentStepIndex.value = nextIndex
-      return true
-    },
-    previousStep: async () => {
-      const canProceed = await runBeforePrevious()
-      if (!canProceed) return false
-
-      const previousIndex = resolvePreviousStepIndex()
-      if (previousIndex === null) return false
-      currentStepIndex.value = previousIndex
-      return true
-    },
-    goToStep: async (index) => {
-      const nextIndex = Math.min(Math.max(index, 0), steps.value.length - 1)
-      if (nextIndex === currentStepIndex.value) return true
-      if (nextIndex > currentStepIndex.value) {
-        validation.markAllTouched(
-          collectFormFieldsPaths(
-            currentFields.value,
-            currentStepRoot.value ? [currentStepRoot.value] : [],
-          ),
-        )
-        const valid = await validateCurrentStep({ focus: true })
-        if (!valid) return false
-        const canProceed = await runBeforeNext()
-        if (!canProceed) return false
+  async function settleEffectRounds() {
+    for (let round = 0; round < MAX_EFFECT_ROUNDS; round += 1) {
+      // oxlint-disable-next-line no-await-in-loop -- each round must observe the previous round's writes
+      await nextTick()
+      if (!effects.size()) {
+        return
       }
+      // oxlint-disable-next-line no-await-in-loop -- each round must observe the previous round's writes
+      await effects.settle()
+    }
+  }
 
-      currentStepIndex.value = nextIndex
-      return true
-    },
+  function commitStepChange(index: number) {
+    validation.clearValidationState()
+    currentStepIndex.value = index
   }
 
   return runtime
 }
 
+const MAX_EFFECT_ROUNDS = 25
+
+function isSyncEnabled(paths: boolean | readonly string[]) {
+  return paths === true || (Array.isArray(paths) && paths.length > 0)
+}
+
+function createEffectLifecycle() {
+  const pending = new Set<Promise<FormValue>>()
+
+  function track(effect: FormValue) {
+    if (!isPromise(effect)) {
+      return
+    }
+    const tracked: Promise<FormValue> = effect
+    pending.add(tracked)
+    void untrack(tracked)
+  }
+
+  async function untrack(tracked: Promise<FormValue>) {
+    try {
+      await tracked
+    } catch {
+      pending.delete(tracked)
+      return
+    }
+    pending.delete(tracked)
+  }
+
+  async function settle() {
+    while (pending.size) {
+      // oxlint-disable-next-line no-await-in-loop -- effects settled in one round may enqueue more
+      await Promise.allSettled(pending)
+    }
+  }
+
+  return { settle, size: () => pending.size, track }
+}
+
+function resolveRelativeFieldPath(parentPath: readonly string[], target: string) {
+  if (target === '$root') {
+    return []
+  }
+  if (target.startsWith('$parent')) {
+    return relativePathSegments(parentPath, target)
+  }
+  return pathSegments(target)
+}
+
+function setPathValueOf(target: FormObject, path: readonly string[], value: FormValue) {
+  setPathValue(target, path, value)
+}
+
+function getSchemaIgnoredDirtyPaths(schema: FormValue) {
+  if (!isRecord(schema) || !isRecord(schema.controls)) {
+    return []
+  }
+  return stringArray(schema.controls.ignoreDirtyPaths)
+}
+
 function createFieldApi(params: {
   path: readonly string[]
   field?: FormField
-  getValue: (path: string | readonly string[]) => unknown
-  setValue: (path: string | readonly string[], value: unknown) => void
+  form: FormFieldApi['form']
+  getValue: (path: readonly string[]) => FormValue
+  getInitialValue: (path: readonly string[]) => FormValue
+  setValue: (path: readonly string[], value: FormValue) => void
   resetValue: (path: string | readonly string[]) => void
   ctx: FormRuntime['context']
   state: FormObject
   optionRegistry: ReturnType<typeof useFormOptionRegistry>
   uploadRegistry: ReturnType<typeof useFormUploadRegistry>
   focusField: () => Promise<boolean>
-  setExternalError: (message: string) => void
+  setExternalError: (message: string, options?: FormErrorOptions) => void
   clearExternalError: () => void
   validateField: () => Promise<boolean>
+  pendingField: () => boolean
 }): FormFieldApi {
   function contextResource(key: string) {
     const resource = params.ctx[key]
-    if (!resource) throw new Error(`Unknown form context resource: ${key}`)
+    if (!resource) {
+      throw new Error(`Unknown form context resource: ${key}`)
+    }
     return resource
   }
 
-  const api: FormFieldApi<unknown, unknown, FormRuntime['context']> = {
-    value: {
-      get: () => params.getValue(params.path),
-      set: (value) => params.setValue(params.path, value),
-      reset: () => params.resetValue(params.path),
-    },
-    options: {
-      get: () => params.optionRegistry.get(params.path).items.value,
-      pending: () => params.optionRegistry.get(params.path).pending.value,
-      fetching: () => params.optionRegistry.get(params.path).fetching.value,
-      loading: () => params.optionRegistry.get(params.path).loading.value,
-      creating: () => params.optionRegistry.get(params.path).creating.value,
-      refreshable: () => params.optionRegistry.get(params.path).refreshable.value,
-      error: () => params.optionRegistry.get(params.path).error.value,
-      refresh: () => params.optionRegistry.get(params.path).refresh(),
-      add: (option) => params.optionRegistry.get(params.path).add(option),
-      create: (label) => params.optionRegistry.get(params.path).create(label),
-    },
-    upload: {
-      start: async () => await params.uploadRegistry.get(params.path)?.start(),
-      cancel: async () => await params.uploadRegistry.get(params.path)?.cancel(),
-      retry: async () => await params.uploadRegistry.get(params.path)?.retry(),
-      remove: async (value) => await params.uploadRegistry.get(params.path)?.remove(value),
-    },
+  const api: FormFieldApi<FormValue, FormValue, FormRuntime['context']> = {
     context: {
       get: (key) => contextResource(key),
-      set: (key, value) => {
-        contextResource(key).value = value
-      },
-      update: (key, updater) => {
-        updateContextResourceValue(contextResource(key), updater)
-      },
       patch: (key, value) => patchContextResourceValue(contextResource(key), value),
       refresh: async (key) => {
         const resource = params.ctx[key]
-        if (isRefreshableResource(resource)) await resource.refresh()
+        if (isRefreshableResource(resource)) {
+          await resource.refresh()
+        }
       },
       refreshAll: async () => {
         const refreshTasks = Object.values(params.ctx).map((resource) =>
@@ -445,30 +642,72 @@ function createFieldApi(params: {
 
         await Promise.all(refreshTasks)
       },
-    },
-    validation: {
-      validate: params.validateField,
-      setError: params.setExternalError,
-      clearError: params.clearExternalError,
+      set: (key, value) => {
+        contextResource(key).value = value
+      },
+      update: (key, updater) => {
+        updateContextResourceValue(contextResource(key), updater)
+      },
     },
     focus: params.focusField,
+    form: params.form,
+    options: {
+      activate: () => params.optionRegistry.get(params.path).activate(),
+      add: (option) => params.optionRegistry.get(params.path).add(option),
+      create: (label) => params.optionRegistry.get(params.path).create(label),
+      creating: () => params.optionRegistry.get(params.path).creating.value,
+      error: () => params.optionRegistry.get(params.path).error.value,
+      fetching: () => params.optionRegistry.get(params.path).fetching.value,
+      get: () => params.optionRegistry.get(params.path).items.value,
+      hasMore: () => params.optionRegistry.get(params.path).hasMore.value,
+      loadMore: () => params.optionRegistry.get(params.path).loadMore(),
+      loading: () => params.optionRegistry.get(params.path).loading.value,
+      pending: () => params.optionRegistry.get(params.path).pending.value,
+      refresh: () => params.optionRegistry.get(params.path).refresh(),
+      refreshable: () => params.optionRegistry.get(params.path).refreshable.value,
+      remote: () => params.optionRegistry.get(params.path).remote.value,
+      retry: () => params.optionRegistry.get(params.path).retry(),
+      search: () => params.optionRegistry.get(params.path).search.value,
+      selected: () => params.optionRegistry.get(params.path).selectedItems.value,
+      setSearch: (term) => params.optionRegistry.get(params.path).setSearch(term),
+    },
+    upload: {
+      cancel: async () => await params.uploadRegistry.get(params.path)?.cancel(),
+      remove: async (value) => await params.uploadRegistry.get(params.path)?.remove(value),
+      retry: async () => await params.uploadRegistry.get(params.path)?.retry(),
+      start: async () => await params.uploadRegistry.get(params.path)?.start(),
+    },
+    validation: {
+      clearError: params.clearExternalError,
+      pending: params.pendingField,
+      setError: params.setExternalError,
+      validate: params.validateField,
+    },
+    value: {
+      get: () => params.getValue(params.path),
+      initial: () => params.getInitialValue(params.path),
+      reset: () => params.resetValue(params.path),
+      set: (value) => params.setValue(params.path, value),
+    },
   }
 
   return api
 }
 
-function updateContextResourceValue<TResource extends { value: unknown }>(
+function updateContextResourceValue<TResource extends { value: FormValue }>(
   resource: TResource,
   updater: (value: TResource['value']) => TResource['value'],
 ) {
   resource.value = updater(resource.value)
 }
 
-function patchContextResourceValue(resource: unknown, patch: unknown) {
-  if (!isContextValueResource(resource)) return
+function patchContextResourceValue(resource: FormValue, patch: FormValue) {
+  if (!isContextValueResource(resource)) {
+    return
+  }
 
   const current = resource.value
-  const patchValue = typeof patch === 'function' ? patch(current) : patch
+  const patchValue = isFunction(patch) ? patch(current) : patch
   if (isRecord(current) && isRecord(patchValue)) {
     resource.value = { ...current, ...patchValue }
     return
@@ -477,23 +716,20 @@ function patchContextResourceValue(resource: unknown, patch: unknown) {
   resource.value = patchValue
 }
 
-function isContextValueResource(value: unknown): value is { value: unknown } {
-  return typeof value === 'object' && value !== null && 'value' in value
+function isContextValueResource(value: FormValue): value is { value: FormValue } {
+  return isObject(value) && value !== null && 'value' in value
 }
 
-function isRefreshableResource(value: unknown): value is { refresh: () => Promise<void> } {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'refresh' in value &&
-    typeof value.refresh === 'function'
-  )
+function isRefreshableResource(value: FormValue): value is { refresh: () => Promise<void> } {
+  return isObject(value) && value !== null && 'refresh' in value && isFunction(value.refresh)
 }
 
-function getSchemaLifecycleHandler(schema: unknown, key: string) {
-  if (!isRecord(schema)) return undefined
+function getSchemaLifecycleHandler(schema: FormValue, key: string) {
+  if (!isRecord(schema)) {
+    return
+  }
   const handler = Object.getOwnPropertyDescriptor(schema, key)?.value
-  return typeof handler === 'function' ? handler : undefined
+  return isFunction(handler) ? handler : undefined
 }
 
 function fieldCallbackParams(params: {
@@ -504,10 +740,8 @@ function fieldCallbackParams(params: {
   parentPath: readonly string[]
 }): FormFieldCallbackParams {
   return {
+    api: params.api,
     ctx: params.ctx,
     deps: resolveFieldDependencies(params),
-    api: params.api,
   }
 }
-
-export { childParentPath, fieldPath }

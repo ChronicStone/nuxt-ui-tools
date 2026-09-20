@@ -1,19 +1,33 @@
 import type { FormContainerFieldBase } from '../../types/field-base'
-import type { FormText } from '../../types/utils'
-import type { FormObject } from '../../types/utils'
-import type { FormArrayFieldActions, FormArrayVirtualFields } from '../array-list/types'
+import type { FormRenderable, FormText, FormObject } from '../../types/utils'
+import type {
+  FormArrayActionParams,
+  FormArrayFieldActions,
+  FormArrayListProps,
+  FormArrayVirtualFields,
+} from '../array-list/types'
 
-export interface FormArrayTabsField<TContext = {}, TDeps = {}> extends FormContainerFieldBase<
-  'array-tabs',
-  TContext,
-  TDeps
-> {
+export interface FormArrayTabActionParams<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormArrayActionParams<TContext, TDeps> {
+  setActiveTab: (index: number) => void
+}
+
+export interface FormArrayTabsField<
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> extends FormContainerFieldBase<'array-tabs', TContext, TDeps, FormArrayListProps> {
   addItemLabel?: FormText
   emptyLabel?: FormText
   itemLabel?: FormText
-  compact?: boolean
   confirmDelete?: boolean | FormText
   headerTemplate?: (item: FormObject, index: number, deps: TDeps) => FormText
+  tabAction?: (
+    item: FormObject,
+    index: number,
+    params: FormArrayTabActionParams<TContext, TDeps>,
+  ) => FormRenderable
   transformOnCreate?: (item: FormObject, index: number, deps: TDeps) => FormObject
   virtualFields?: FormArrayVirtualFields
   extraProperties?: boolean

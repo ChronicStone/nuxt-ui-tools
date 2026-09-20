@@ -1,7 +1,9 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { getResponsiveValue } from '#ui-tools/shared'
 
+import { isFunction, isNumber } from '../../shared/utils/predicate'
 import { GRID_DEFAULTS } from '../constants/grid'
 import type { GenericObject, TableExternalState, TableGridMode, TableSchemaView } from '../types'
 
@@ -38,18 +40,18 @@ export function useTableGrid<TRow extends GenericObject>(options: UseTableGridPa
   const rows = computed(() => options.data.value.rows)
   const rowChunks = computed(() =>
     chunkRows({
-      rows: rows.value,
       cardsPerRow: cardsPerRow.value,
+      rows: rows.value,
     }),
   )
 
   return {
-    mode,
-    rows,
-    rowChunks,
+    cardsPerRow,
     columnCount,
     itemColumnSpan,
-    cardsPerRow,
+    mode,
+    rowChunks,
+    rows,
   }
 }
 
@@ -58,10 +60,18 @@ function clampGridUnit(value: number) {
 }
 
 function resolveResponsiveGridNumber(value: number | string | (() => number | string)) {
-  const resolvedValue = typeof value === 'function' ? value() : value
-  if (typeof resolvedValue === 'number') return resolvedValue
+  const resolvedValue = isResponsiveGridValueResolver(value) ? value() : value
+  if (isNumber(resolvedValue)) {
+    return resolvedValue
+  }
 
   return getResponsiveValue(resolvedValue, 'integer')
+}
+
+function isResponsiveGridValueResolver(
+  value: number | string | (() => number | string),
+): value is () => number | string {
+  return isFunction(value)
 }
 
 function chunkRows<TRow>(options: { rows: TRow[]; cardsPerRow: number }): GridRowChunk<TRow>[] {
@@ -72,10 +82,10 @@ function chunkRows<TRow>(options: { rows: TRow[]; cardsPerRow: number }): GridRo
       const end = start + options.cardsPerRow
 
       return {
-        index,
-        start,
         end,
+        index,
         rows: options.rows.slice(start, end),
+        start,
       }
     },
   )

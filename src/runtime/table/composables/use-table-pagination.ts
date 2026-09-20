@@ -1,4 +1,5 @@
-import { computed, ref, watch, type ComputedRef } from 'vue'
+import { computed, ref, watch } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { TableSchemaView } from '../types'
 import { getDefaultPageSize, getPageSizeOptions } from '../utils'
@@ -28,7 +29,9 @@ export function useTablePagination(options: UseTablePaginationParams) {
   })
   const pageSize = computed(() => {
     const pagination = options.state.queryState.pagination.value
-    if (pagination.mode === 'none') return Math.max(1, loadedCount.value)
+    if (pagination.mode === 'none') {
+      return Math.max(1, loadedCount.value)
+    }
     return pagination.pageSize
   })
   const totalPages = computed(() =>
@@ -36,8 +39,12 @@ export function useTablePagination(options: UseTablePaginationParams) {
   )
   const canPreviousPage = computed(() => mode.value === 'offset' && currentPage.value > 1)
   const canNextPage = computed(() => {
-    if (mode.value === 'cursor') return infiniteHasNextPage.value
-    if (mode.value === 'none') return false
+    if (mode.value === 'cursor') {
+      return infiniteHasNextPage.value
+    }
+    if (mode.value === 'none') {
+      return false
+    }
     return currentPage.value < totalPages.value
   })
   const infiniteHasNextPage = computed(() => options.queryContent.infiniteQuery.hasNextPage.value)
@@ -48,34 +55,61 @@ export function useTablePagination(options: UseTablePaginationParams) {
       : null,
   )
   const state = computed(() => ({
-    mode: mode.value,
-    pageIndex: currentPage.value,
-    pageSize: pageSize.value,
-    pageCount: totalPages.value,
-    loadedCount: loadedCount.value,
-    totalCount: rowCount.value,
     hasNextPage: canNextPage.value,
     hasPreviousPage: canPreviousPage.value,
     isLoadingMore: isLoadingMore.value,
     loadMoreError: loadMoreError.value,
+    loadedCount: loadedCount.value,
+    mode: mode.value,
+    pageCount: totalPages.value,
+    pageIndex: currentPage.value,
+    pageSize: pageSize.value,
+    totalCount: rowCount.value,
+  }))
+  const offsetState = computed(() => ({
+    hasNextPage: canNextPage.value,
+    hasPreviousPage: canPreviousPage.value,
+    loadedCount: loadedCount.value,
+    mode: 'offset' as const,
+    pageCount: totalPages.value,
+    pageIndex: currentPage.value,
+    pageSize: pageSize.value,
+    totalCount: rowCount.value ?? loadedCount.value,
+  }))
+  const cursorState = computed(() => ({
+    hasNextPage: canNextPage.value,
+    isLoadingMore: isLoadingMore.value,
+    loadMoreError: loadMoreError.value,
+    loadedCount: loadedCount.value,
+    mode: 'cursor' as const,
+    totalCount: rowCount.value,
+  }))
+  const noneState = computed(() => ({
+    loadedCount: loadedCount.value,
+    mode: 'none' as const,
+    totalCount: rowCount.value,
   }))
   const pageSizeOptions = computed(() =>
     getPageSizeOptions({
-      schema: options.schema.value,
       layout: options.layout.activeLayout.value,
+      schema: options.schema.value,
     }),
   )
   const compatiblePageSize = computed(() => {
-    if (pageSizeOptions.value.includes(pageSize.value)) return pageSize.value
+    if (pageSizeOptions.value.includes(pageSize.value)) {
+      return pageSize.value
+    }
 
     return getDefaultPageSize({
-      schema: options.schema.value,
       layout: options.layout.activeLayout.value,
+      schema: options.schema.value,
     })
   })
 
   function setPage(page: number) {
-    if (mode.value !== 'offset') return
+    if (mode.value !== 'offset') {
+      return
+    }
     options.state.queryState.setOffsetPagination({
       pageIndex: Math.max(1, Math.min(page, totalPages.value)),
       pageSize: pageSize.value,
@@ -83,7 +117,9 @@ export function useTablePagination(options: UseTablePaginationParams) {
   }
 
   function setPageSize(nextPageSize: number) {
-    if (mode.value !== 'offset') return
+    if (mode.value !== 'offset') {
+      return
+    }
     options.state.queryState.setOffsetPagination({ pageIndex: 1, pageSize: nextPageSize })
   }
 
@@ -100,16 +136,24 @@ export function useTablePagination(options: UseTablePaginationParams) {
   }
 
   async function loadMore() {
-    if (mode.value !== 'cursor' || !infiniteHasNextPage.value || isLoadingMore.value) return
+    if (mode.value !== 'cursor' || !infiniteHasNextPage.value || isLoadingMore.value) {
+      return
+    }
     return options.queryContent.infiniteQuery.fetchNextPage()
   }
 
   watch(
     [pageSizeOptions, compatiblePageSize],
     ([optionsList, nextPageSize]) => {
-      if (mode.value !== 'offset') return
-      if (optionsList.includes(pageSize.value)) return
-      if (nextPageSize === pageSize.value) return
+      if (mode.value !== 'offset') {
+        return
+      }
+      if (optionsList.includes(pageSize.value)) {
+        return
+      }
+      if (nextPageSize === pageSize.value) {
+        return
+      }
 
       setPageSize(nextPageSize)
     },
@@ -127,30 +171,35 @@ export function useTablePagination(options: UseTablePaginationParams) {
         return
       }
 
-      if (isFetching) return
+      if (isFetching) {
+        return
+      }
       stableRemoteRowCount.value = nextRowCount
     },
     { immediate: true },
   )
 
   return {
-    mode,
-    rowCount,
-    loadedCount,
-    currentPage,
-    pageSize,
-    totalPages,
-    canPreviousPage,
     canNextPage,
+    canPreviousPage,
+    currentPage,
+    cursorState,
     isLoadingMore,
+    loadMore,
     loadMoreError,
-    state,
-    pageSizeOptions,
-    setPage,
-    setPageSize,
+    loadedCount,
+    mode,
     next,
+    noneState,
+    offsetState,
+    pageSize,
+    pageSizeOptions,
     previous,
     reset,
-    loadMore,
+    rowCount,
+    setPage,
+    setPageSize,
+    state,
+    totalPages,
   }
 }

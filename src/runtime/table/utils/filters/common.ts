@@ -1,27 +1,32 @@
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isArray, isObject } from '../../../shared/utils/predicate'
+import { isArray, isNumber, isObject, isString, isNullish } from '../../../shared/utils/predicate'
 import { resolveTextValue } from '../../../shared/utils/render'
 import type {
   TableDateFilterDefinition,
   TableQueryStateFilterRule,
   TableTextValue,
+  RenderableType,
   TableUiFilterDefinition,
 } from '../../types'
 
-type DateRangeLike = {
+interface DateRangeLike {
   from?: unknown
   to?: unknown
 }
 
 export function getFilterLabelText(options: {
-  label: TableTextValue | TableUiFilterDefinition['label'] | (() => unknown)
+  label: TableTextValue | TableUiFilterDefinition['label'] | (() => RenderableType)
 }) {
-  if (typeof options.label === 'number') return String(options.label)
-  if (typeof options.label === 'string') return options.label
+  if (isNumber(options.label)) {
+    return String(options.label)
+  }
+  if (isString(options.label)) {
+    return options.label
+  }
 
   const resolved = options.label()
-  return typeof resolved === 'string' || typeof resolved === 'number' ? String(resolved) : ''
+  return isString(resolved) || isNumber(resolved) ? String(resolved) : ''
 }
 
 export function getFilterTextValue(options: {
@@ -38,27 +43,23 @@ export function getFilterRuleValue(options: { rule?: TableQueryStateFilterRule }
 export function getFilterPathValues(options: { source: unknown; key: string }): unknown[] {
   return flattenFilterValues({
     value: readFilterPathValue({
-      source: options.source,
       key: options.key,
+      source: options.source,
     }),
   })
 }
 
-export function readFilterPathValue(options: { source: unknown; key: string }): unknown {
+export function readFilterPathValue<TSource>(options: { source: TSource; key: string }) {
   return options.key.split('.').reduce<unknown>((current, segment) => {
     if (isArray(current)) {
-      return current.map((item) =>
-        item != null && typeof item === 'object'
-          ? (item as Record<string, unknown>)[segment]
-          : undefined,
-      )
+      return current.map((item) => (isObject(item) ? item[segment] : undefined))
     }
 
-    if (!current || typeof current !== 'object') {
-      return undefined
+    if (!isObject(current)) {
+      return
     }
 
-    return (current as Record<string, unknown>)[segment]
+    return current[segment]
   }, options.source)
 }
 
@@ -71,15 +72,17 @@ export function flattenFilterValues(options: { value: unknown }): unknown[] {
     )
   }
 
-  if (options.value == null) {
+  if (isNullish(options.value)) {
     return []
   }
 
   return [options.value]
 }
 
-export function isDateRangeValue(options: { value: unknown }): options is { value: DateRangeLike } {
-  if (!options.value || !isObject(options.value) || isArray(options.value)) {
+export function isDateRangeValue<TValue>(options: {
+  value: TValue
+}): options is { value: TValue & DateRangeLike } {
+  if (!isObject(options.value) || isArray(options.value)) {
     return false
   }
 
@@ -94,7 +97,7 @@ export function toDateFilterValue(options: {
     return options.value
   }
 
-  if (typeof options.value === 'string' || typeof options.value === 'number') {
+  if (isString(options.value) || isNumber(options.value)) {
     const date = new Date(options.value)
     return Number.isNaN(date.getTime()) ? undefined : date
   }
@@ -110,15 +113,13 @@ export function toDateFilterValue(options: {
 
     return from && !Number.isNaN(from.getTime()) ? from : undefined
   }
-
-  return undefined
 }
 
 export function formatFilterDate(options: { value: Date }) {
   const { locale } = useUiToolsLocale()
   return new Intl.DateTimeFormat(locale.value.code, {
-    month: 'short',
     day: 'numeric',
+    month: 'short',
     year: 'numeric',
   }).format(options.value)
 }
@@ -129,27 +130,30 @@ export function isFilterValueSelected(options: { values: unknown[]; candidate: u
   )
 }
 
-export function getDateRangeValue(options: { value: unknown }) {
-  return isDateRangeValue({ value: options.value }) ? (options.value as DateRangeLike) : undefined
+export function getDateRangeValue<TValue>(options: { value: TValue }) {
+  return isDateRangeValue(options) ? options.value : undefined
 }
 
-type NumberRangeLike = {
+interface NumberRangeLike {
   from?: number
   to?: number
 }
 
-function isNumberRangeValue(options: { value: unknown }): options is { value: NumberRangeLike } {
-  if (!options.value || !isObject(options.value) || isArray(options.value)) {
+function isNumberRangeValue<TValue>(options: {
+  value: TValue
+}): options is { value: TValue & NumberRangeLike } {
+  if (!isObject(options.value) || isArray(options.value)) {
     return false
   }
 
-  return 'from' in options.value || 'to' in options.value
+  return (
+    (!('from' in options.value) || isNumber(options.value.from)) &&
+    (!('to' in options.value) || isNumber(options.value.to))
+  )
 }
 
-export function getNumberRangeValue(options: { value: unknown }) {
-  return isNumberRangeValue({ value: options.value })
-    ? (options.value as NumberRangeLike)
-    : undefined
+export function getNumberRangeValue<TValue>(options: { value: TValue }) {
+  return isNumberRangeValue(options) ? options.value : undefined
 }
 
 export function formatFilterNumber(options: { value: number }) {
@@ -158,11 +162,11 @@ export function formatFilterNumber(options: { value: number }) {
 }
 
 export function toMaybeNumber(options: { value: unknown }): number | undefined {
-  if (typeof options.value === 'number') {
+  if (isNumber(options.value)) {
     return options.value
   }
 
-  if (typeof options.value === 'string') {
+  if (isString(options.value)) {
     const n = Number(options.value)
     return Number.isNaN(n) ? undefined : n
   }
@@ -175,12 +179,10 @@ export function toMaybeDate(options: { value: unknown }) {
     return options.value
   }
 
-  if (typeof options.value === 'string' || typeof options.value === 'number') {
+  if (isString(options.value) || isNumber(options.value)) {
     const date = new Date(options.value)
     return Number.isNaN(date.getTime()) ? undefined : date
   }
-
-  return undefined
 }
 
 function areFilterValuesEqual(options: { left: unknown; right: unknown }) {
@@ -188,15 +190,15 @@ function areFilterValuesEqual(options: { left: unknown; right: unknown }) {
     const left =
       options.left instanceof Date
         ? options.left
-        : options.left != null
-          ? new Date(String(options.left))
-          : undefined
+        : isNullish(options.left)
+          ? undefined
+          : new Date(String(options.left))
     const right =
       options.right instanceof Date
         ? options.right
-        : options.right != null
-          ? new Date(String(options.right))
-          : undefined
+        : isNullish(options.right)
+          ? undefined
+          : new Date(String(options.right))
 
     return left?.getTime() === right?.getTime()
   }

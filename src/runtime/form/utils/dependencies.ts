@@ -1,5 +1,6 @@
-import type { FormField, FormObject } from '../types'
+import type { FormValue, FormField, FormObject } from '../types'
 import { getScopedPathValue } from './path'
+import { isString } from './predicate'
 
 interface NormalizedFieldDependency {
   source: string
@@ -13,11 +14,15 @@ export function resolveFieldDependencies(params: {
 }) {
   const output: FormObject = {}
   const dependencies = Object.getOwnPropertyDescriptor(params.field, 'dependencies')?.value
-  if (!Array.isArray(dependencies)) return output
+  if (!Array.isArray(dependencies)) {
+    return output
+  }
 
   for (const dependency of dependencies) {
     const normalized = normalizeFieldDependency(dependency)
-    if (!normalized) continue
+    if (!normalized) {
+      continue
+    }
 
     output[normalized.target] = getScopedPathValue(
       params.state,
@@ -29,11 +34,17 @@ export function resolveFieldDependencies(params: {
   return output
 }
 
-function normalizeFieldDependency(value: unknown): NormalizedFieldDependency | null {
-  if (typeof value === 'string') return { source: value, target: value }
-  if (!Array.isArray(value)) return null
+function normalizeFieldDependency(value: FormValue): NormalizedFieldDependency | null {
+  if (isString(value)) {
+    return { source: value, target: value }
+  }
+  if (!Array.isArray(value)) {
+    return null
+  }
 
   const [source, target] = value
-  if (typeof source !== 'string' || typeof target !== 'string') return null
+  if (!isString(source) || !isString(target)) {
+    return null
+  }
   return { source, target }
 }

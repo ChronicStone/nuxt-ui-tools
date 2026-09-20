@@ -18,42 +18,53 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
     fieldElements.set(key, element)
 
     return () => {
-      if (fieldElements.get(key) === element) fieldElements.delete(key)
+      if (fieldElements.get(key) === element) {
+        fieldElements.delete(key)
+      }
     }
   }
 
   async function focusField(path: string | readonly string[]) {
     await nextTick()
     const key = normalizeFormFocusPath(path)
-    request.value = { path: key, sequence: ++sequence }
+    sequence += 1
+    request.value = { path: key, sequence }
     await nextTick()
     const focused =
       (await focusFormFieldElement(fieldElements.get(key) ?? null)) || (await focusFormField(path))
-    if (focused) return true
+    if (focused) {
+      return true
+    }
+    if (!import.meta.client) {
+      return false
+    }
 
     await waitForFocusRequest()
     const element = fieldElements.get(key)
     return Boolean(document.activeElement && element?.contains(document.activeElement))
   }
 
-  async function focusFirstInvalid(errors = params.getErrors()) {
+  async function focusFirstInvalid(errors?: readonly FormValidationError[]) {
     await nextTick()
-    for (const error of errors) {
+    const resolvedErrors = errors ?? params.getErrors()
+    for (const error of resolvedErrors) {
       const focused = await focusField(error.path)
-      if (focused) return true
+      if (focused) {
+        return true
+      }
     }
 
-    return focusFirstInvalidFormField(errors)
+    return focusFirstInvalidFormField(resolvedErrors)
   }
 
   return {
-    request,
-    registerField,
     focusField,
     focusFirstInvalid,
+    registerField,
+    request,
   }
 }
 
 function waitForFocusRequest() {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, 160))
+  return new Promise<void>((resolve) => setTimeout(resolve, 160))
 }

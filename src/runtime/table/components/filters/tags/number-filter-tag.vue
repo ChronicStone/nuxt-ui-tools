@@ -1,0 +1,473 @@
+<script setup lang="ts">
+import UButton from '@nuxt/ui/components/Button.vue'
+import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
+import USlider from '@nuxt/ui/components/Slider.vue'
+import { computed, ref, watch } from 'vue'
+
+import { isArray, isDate, isNumber, isObject, isNullish } from '../../../../shared/utils/predicate'
+import { useDataListUi } from '../../../composables/use-data-list-ui'
+import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
+import { useTableInternals } from '../../../composables/use-table-internals'
+import type {
+  TableFilterOperator,
+  TableNumberFilterDefinition,
+  TableNumberFilterOperator,
+} from '../../../types'
+import {
+  mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveFilterEditorSizeClasses,
+  resolveFilterTriggerIcon,
+  resolveNumberFilterUi,
+} from '../../../utils'
+import FilterMatchModePanel from '../shared/filter-match-mode-panel.vue'
+import FilterPopoverShell from '../shared/filter-popover-shell.vue'
+import FilterStageTransition from '../shared/filter-stage-transition.vue'
+import TableFilterTrigger from '../shared/filter-trigger-tag.vue'
+
+const props = defineProps<{
+  definition: TableNumberFilterDefinition
+  dynamic?: boolean
+  session?: boolean
+  embedded?: boolean
+  initialOperator?: TableFilterOperator
+}>()
+const emit = defineEmits<{
+  dismiss: []
+  sessionClosed: []
+}>()
+
+const internals = useTableInternals()
+const dataListUi = useDataListUi()
+const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
+const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
+const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
+const localValue = ref<string>('')
+const rangeValue = ref<{ from: string; to: string }>({ from: '', to: '' })
+const stage = ref<'editor' | 'match-mode'>('editor')
+const stageDirection = ref<'forward' | 'backward'>('forward')
+const stageTransitioning = ref<boolean>(false)
+
+const preview = computed(() =>
+  internals.filters.getFilterPreview({
+    key: props.definition.key,
+  }),
+)
+
+const operator = computed<TableNumberFilterOperator>(() => {
+  const value =
+    pendingOperator.value ??
+    internals.filters.getFilterOperator({
+      key: props.definition.key,
+    })
+
+  return value === 'isNot' ||
+    value === 'gt' ||
+    value === 'gte' ||
+    value === 'lt' ||
+    value === 'lte' ||
+    value === 'between'
+    ? value
+    : 'is'
+})
+
+const operatorLabel = computed(
+  () =>
+    internals.filters
+      .getFilterOperatorOptions({
+        key: props.definition.key,
+      })
+      .find((item) => item.value === operator.value)?.label ?? 'is',
+)
+
+const operatorItems = computed(() =>
+  internals.filters.getFilterOperatorOptions({
+    key: props.definition.key,
+  }),
+)
+
+const filterUi = computed(() => resolveNumberFilterUi(props.definition, operator.value))
+
+const scalarValue = computed<number | undefined>({
+  get() {
+    return localValue.value === '' ? undefined : Number(localValue.value)
+  },
+  set(value) {
+    localValue.value = isNullish(value) || Number.isNaN(value) ? '' : String(value)
+  },
+})
+
+const sliderBounds = computed(() => ({
+  max: filterUi.value.max ?? 100,
+  min: filterUi.value.min ?? 0,
+}))
+
+const sliderRangeValue = computed<number[]>(() => [
+  rangeValue.value.from === '' ? sliderBounds.value.min : Number(rangeValue.value.from),
+  rangeValue.value.to === '' ? sliderBounds.value.max : Number(rangeValue.value.to),
+])
+
+const session = useFilterTagSession({
+  dynamic: props.dynamic,
+  embedded: props.embedded,
+  hasCommittedState: () =>
+    !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
+  onClose: () => {
+    pendingOperator.value = undefined
+  },
+  onDismiss: () => emit('dismiss'),
+  onOpen: initLocalState,
+  onSessionClosed: () => emit('sessionClosed'),
+  session: props.session,
+})
+
+watch(
+  () => operator.value,
+  () => {
+    if (session.isOpen.value) {
+      initLocalState()
+    }
+  },
+)
+
+function initLocalState() {
+  const value = internals.filters.getFilterState({
+    key: props.definition.key,
+  })?.value
+
+  if (operator.value === 'between') {
+    if (isObject(value) && !isDate(value)) {
+      rangeValue.value = {
+        from: isNullish(value.from) ? '' : String(value.from),
+        to: isNullish(value.to) ? '' : String(value.to),
+      }
+    } else {
+      rangeValue.value = { from: '', to: '' }
+    }
+
+    localValue.value = ''
+    return
+  }
+
+  localValue.value = isNullish(value) ? '' : String(value)
+  rangeValue.value = { from: '', to: '' }
+}
+
+function handleActivate(op: TableFilterOperator) {
+  pendingOperator.value = op
+  stage.value = 'editor'
+  stageDirection.value = 'backward'
+  session.open()
+}
+
+function handleRequestMatchMode() {
+  stageDirection.value = 'forward'
+  stageTransitioning.value = true
+  stage.value = 'match-mode'
+  session.open()
+}
+
+function handleOperatorChange(op: TableFilterOperator) {
+  localValue.value = ''
+  rangeValue.value = { from: '', to: '' }
+
+  pendingOperator.value = op
+  stageDirection.value = 'forward'
+  stageTransitioning.value = true
+  stage.value = 'editor'
+}
+
+function commitIfAuto() {
+  if (filterUi.value.commitMode === 'auto') {
+    applyFilter()
+  }
+}
+
+function applyFilter() {
+  const nextOperator = pendingOperator.value
+  pendingOperator.value = undefined
+
+  if (operator.value === 'between') {
+    internals.filters.setScalarFilterValue({
+      key: props.definition.key,
+      operator: nextOperator,
+      value:
+        rangeValue.value.from === '' && rangeValue.value.to === ''
+          ? undefined
+          : Object.fromEntries(
+              [
+                rangeValue.value.from === '' ? undefined : ['from', Number(rangeValue.value.from)],
+                rangeValue.value.to === '' ? undefined : ['to', Number(rangeValue.value.to)],
+              ].filter((entry): entry is [string, number] => entry !== undefined),
+            ),
+    })
+    session.close()
+    return
+  }
+
+  internals.filters.setScalarFilterValue({
+    key: props.definition.key,
+    operator: nextOperator,
+    value: scalarValue.value,
+  })
+  session.close()
+}
+
+function clearFilter() {
+  internals.filters.clearFilter({ key: props.definition.key })
+  session.close()
+}
+
+function updateScalarValue(value: number | undefined) {
+  scalarValue.value = value
+  commitIfAuto()
+}
+
+function updateRangeFrom(value: number | undefined) {
+  rangeValue.value = {
+    ...rangeValue.value,
+    from: isNullish(value) ? '' : String(value),
+  }
+  commitIfAuto()
+}
+
+function updateRangeTo(value: number | undefined) {
+  rangeValue.value = {
+    ...rangeValue.value,
+    to: isNullish(value) ? '' : String(value),
+  }
+  commitIfAuto()
+}
+
+function updateSliderScalarValue<TValue>(value: TValue) {
+  if (!isNumber(value)) {
+    return
+  }
+  scalarValue.value = value
+  commitIfAuto()
+}
+
+function updateSliderRangeValue<TValue>(value: TValue) {
+  if (!isArray(value) || value.length < 2) {
+    return
+  }
+
+  const [from, to] = value
+  if (!isNumber(from) || !isNumber(to)) {
+    return
+  }
+
+  rangeValue.value = {
+    from: String(from),
+    to: String(to),
+  }
+  commitIfAuto()
+}
+
+function resolveIncrementConfig(hideStepper: boolean) {
+  return hideStepper ? false : { variant: 'ghost' as const }
+}
+</script>
+
+<template>
+  <FilterPopoverShell
+    :open="session.isOpen.value"
+    :embedded="embedded"
+    :transitioning="stageTransitioning"
+    :content-class="
+      mergeDataListUiClass(
+        `${sizeClasses.editor} overflow-hidden p-0`,
+        undefined,
+        dataListFilterUi?.popoverContent,
+      )
+    "
+    @update-open="session.handleOpenChange"
+  >
+    <slot
+      name="trigger"
+      :preview="preview"
+      :active="preview.active"
+      :open="session.isOpen.value"
+      :trigger-props="{
+        type: 'button',
+        'aria-haspopup': 'dialog',
+        'aria-expanded': session.isOpen.value,
+      }"
+    >
+      <TableFilterTrigger
+        :label="internals.filters.getFilterLabelText({ label: definition.label })"
+        :leading-icon="resolveFilterTriggerIcon(definition)"
+        :operator="operator"
+        :operator-label="operatorLabel"
+        :operator-items="operatorItems"
+        :preview-summary="preview.summary"
+        :dynamic="dynamic"
+        :active="preview.active"
+        @activate="handleActivate"
+        @request-match-mode="handleRequestMatchMode"
+        @clear="clearFilter"
+      />
+    </slot>
+
+    <template #content>
+      <FilterStageTransition
+        :stage-key="stage"
+        :direction="stageDirection"
+        @settled="stageTransitioning = false"
+      >
+        <FilterMatchModePanel
+          v-if="stage === 'match-mode'"
+          :items="operatorItems"
+          :selected="operator"
+          :size="size"
+          :ui="dataListFilterUi"
+          @select="handleOperatorChange"
+        />
+        <div
+          v-else
+          :class="
+            mergeDataListUiClass(
+              `${sizeClasses.editor} w-full min-w-0 max-w-full bg-default`,
+              undefined,
+              dataListFilterUi?.editor,
+            )
+          "
+        >
+          <div
+            v-if="operator === 'between'"
+            :class="
+              mergeDataListUiClass(
+                `grid border-b border-default ${geometry.toolbarGap} ${sizeClasses.searchHeader}`,
+                undefined,
+                dataListFilterUi?.inputs,
+              )
+            "
+          >
+            <div
+              v-if="
+                filterUi.range.display === 'inputs' || filterUi.range.display === 'inputs-slider'
+              "
+              :class="['grid grid-cols-2', geometry.toolbarGap]"
+            >
+              <UInputNumber
+                :model-value="rangeValue.from === '' ? undefined : Number(rangeValue.from)"
+                :placeholder="filterUi.range.inputs.fromPlaceholder"
+                :min="filterUi.min"
+                :max="filterUi.max"
+                :step="filterUi.step"
+                :format-options="filterUi.formatOptions"
+                :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
+                :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+                :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+                :size="size"
+                @update:model-value="updateRangeFrom"
+                @keydown.enter.prevent="applyFilter"
+              />
+
+              <UInputNumber
+                :model-value="rangeValue.to === '' ? undefined : Number(rangeValue.to)"
+                :placeholder="filterUi.range.inputs.toPlaceholder"
+                :min="filterUi.min"
+                :max="filterUi.max"
+                :step="filterUi.step"
+                :format-options="filterUi.formatOptions"
+                :disable-wheel-change="filterUi.range.inputs.disableWheelChange"
+                :increment="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+                :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
+                :size="size"
+                @update:model-value="updateRangeTo"
+                @keydown.enter.prevent="applyFilter"
+              />
+            </div>
+
+            <USlider
+              v-if="
+                filterUi.range.display === 'slider' || filterUi.range.display === 'inputs-slider'
+              "
+              :model-value="sliderRangeValue"
+              :min="filterUi.range.slider.min ?? sliderBounds.min"
+              :max="filterUi.range.slider.max ?? sliderBounds.max"
+              :step="filterUi.range.slider.step ?? filterUi.step"
+              :min-steps-between-thumbs="filterUi.range.minGap"
+              :tooltip="filterUi.range.slider.showTooltip"
+              :class="dataListFilterUi?.slider"
+              @update:model-value="updateSliderRangeValue"
+            />
+          </div>
+
+          <div
+            v-else
+            :class="
+              mergeDataListUiClass(
+                `grid border-b border-default ${geometry.toolbarGap} ${sizeClasses.searchHeader}`,
+                undefined,
+                dataListFilterUi?.inputs,
+              )
+            "
+          >
+            <UInputNumber
+              v-if="
+                filterUi.scalar.display === 'input' || filterUi.scalar.display === 'input-slider'
+              "
+              :model-value="scalarValue"
+              :placeholder="filterUi.scalar.input.placeholder"
+              :min="filterUi.min"
+              :max="filterUi.max"
+              :step="filterUi.step"
+              :format-options="filterUi.formatOptions"
+              :disable-wheel-change="filterUi.scalar.input.disableWheelChange"
+              :increment="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
+              :decrement="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
+              :size="size"
+              @update:model-value="updateScalarValue"
+              @keydown.enter.prevent="applyFilter"
+            />
+
+            <USlider
+              v-if="
+                filterUi.scalar.display === 'slider' || filterUi.scalar.display === 'input-slider'
+              "
+              :model-value="scalarValue"
+              :min="filterUi.scalar.slider.min ?? sliderBounds.min"
+              :max="filterUi.scalar.slider.max ?? sliderBounds.max"
+              :step="filterUi.scalar.slider.step ?? filterUi.step"
+              :tooltip="filterUi.scalar.slider.showTooltip"
+              :class="dataListFilterUi?.slider"
+              @update:model-value="updateSliderScalarValue"
+            />
+          </div>
+
+          <div
+            v-if="filterUi.commitMode === 'manual'"
+            :class="
+              mergeDataListUiClass(
+                `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
+                undefined,
+                dataListFilterUi?.footer,
+              )
+            "
+          >
+            <UButton
+              color="neutral"
+              variant="ghost"
+              :size="size"
+              :label="filterUi.actions.clear"
+              :ui="{ base: dataListFilterUi?.clear }"
+              @click="clearFilter"
+            />
+            <UButton
+              color="neutral"
+              variant="subtle"
+              :size="size"
+              :label="filterUi.actions.apply"
+              :ui="{ base: dataListFilterUi?.apply }"
+              @click="applyFilter"
+            />
+          </div>
+        </div>
+      </FilterStageTransition>
+    </template>
+  </FilterPopoverShell>
+</template>

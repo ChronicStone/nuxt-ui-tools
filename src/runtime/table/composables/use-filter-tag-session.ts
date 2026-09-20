@@ -1,4 +1,5 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
+import type { Ref } from 'vue'
 
 export interface UseFilterTagSessionParams {
   isOpen?: Ref<boolean>
@@ -14,7 +15,9 @@ export interface UseFilterTagSessionParams {
 
 export function useFilterTagSession(options: UseFilterTagSessionParams) {
   const isOpen = options.isOpen ?? ref<boolean>(false)
-  if (options.embedded) isOpen.value = true
+  if (options.embedded) {
+    isOpen.value = true
+  }
 
   function runCloseEffects() {
     options.onClose()
@@ -24,17 +27,23 @@ export function useFilterTagSession(options: UseFilterTagSessionParams) {
       return
     }
 
-    if (options.dynamic && !options.hasCommittedState()) options.onDismiss()
+    if (options.dynamic && !options.hasCommittedState()) {
+      options.onDismiss()
+    }
   }
 
   function open() {
-    if (isOpen.value) return
+    if (isOpen.value) {
+      return
+    }
     isOpen.value = true
     options.onOpen()
   }
 
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen && !isOpen.value) return
+    if (!nextOpen && !isOpen.value) {
+      return
+    }
     isOpen.value = nextOpen
 
     if (nextOpen) {
@@ -46,17 +55,21 @@ export function useFilterTagSession(options: UseFilterTagSessionParams) {
   }
 
   function close() {
-    if (!isOpen.value) return
+    if (!isOpen.value) {
+      return
+    }
     isOpen.value = false
     runCloseEffects()
   }
 
-  if (options.embedded) queueMicrotask(options.onOpen)
+  if (options.embedded) {
+    queueMicrotask(options.onOpen)
+  }
 
   return {
+    close,
+    handleOpenChange,
     isOpen,
     open,
-    handleOpenChange,
-    close,
   }
 }

@@ -1,28 +1,36 @@
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
+import { isNumber, isNullish } from '../../../shared/utils/predicate'
 import type {
   TableBooleanFilterDefinition,
   TableFilterOptionEntry,
   TableResolvedFilterOptionEntry,
   TableUiFilterDefinition,
 } from '../../types'
-import { getFilterLabelText, getFilterPathValues, isFilterValueSelected } from './common'
+import {
+  getFilterLabelText,
+  getFilterPathValues,
+  getFilterTextValue,
+  isFilterValueSelected,
+} from './common'
 
 export function resolveFilterOptionEntries(options: {
   definition: TableUiFilterDefinition
   rows: unknown[]
-  options?: ReadonlyArray<TableFilterOptionEntry>
+  options?: readonly TableFilterOptionEntry[]
   selectedValues?: unknown[]
   deriveCounts?: boolean
-  facetCounts?: Array<{ value: string | number | boolean; count: number }>
+  facetCounts?: { value: string | number | boolean; count: number }[]
   missingCountFallback?: number
 }) {
   if (options.definition.kind === 'boolean') {
     return createBooleanEntries({
       definition: options.definition,
-      rows: options.rows,
-      selectedValues: options.selectedValues ?? [],
       deriveCounts: options.deriveCounts ?? true,
       facetCounts: options.facetCounts ?? [],
       missingCountFallback: options.missingCountFallback,
+      rows: options.rows,
+      selectedValues: options.selectedValues ?? [],
     })
   }
 
@@ -37,16 +45,16 @@ export function resolveFilterOptionEntries(options: {
 
   return resolveOptionEntryTree({
     entries: sourceOptions,
-    selectedValues: options.selectedValues ?? [],
     getCount: (value) =>
       countByValue.get(String(value)) ??
-      (options.deriveCounts === false || value == null
+      (options.deriveCounts === false || isNullish(value)
         ? options.missingCountFallback
         : countOptionMatches({
-            rows: options.rows,
-            key: options.definition.key,
             candidate: value,
+            key: options.definition.key,
+            rows: options.rows,
           })),
+    selectedValues: options.selectedValues ?? [],
   })
 }
 
@@ -55,7 +63,7 @@ function createBooleanEntries(options: {
   rows: unknown[]
   selectedValues: unknown[]
   deriveCounts: boolean
-  facetCounts: Array<{ value: string | number | boolean; count: number }>
+  facetCounts: { value: string | number | boolean; count: number }[]
   missingCountFallback?: number
 }) {
   const trueCount = options.facetCounts.find((entry) => entry.value === true)?.count
@@ -63,90 +71,90 @@ function createBooleanEntries(options: {
 
   return [
     {
-      id: '0:true',
-      label: 'Yes',
-      value: true,
+      children: [],
       count:
         trueCount ??
         (options.deriveCounts
           ? countOptionMatches({
-              rows: options.rows,
-              key: options.definition.key,
               candidate: true,
+              key: options.definition.key,
+              rows: options.rows,
             })
           : options.missingCountFallback),
+      id: '0:true',
+      label: booleanLabel(options.definition, true),
       selected: isFilterValueSelected({
-        values: options.selectedValues,
         candidate: true,
+        values: options.selectedValues,
       }),
-      children: [],
+      value: true,
     },
     {
-      id: '1:false',
-      label: 'No',
-      value: false,
+      children: [],
       count:
         falseCount ??
         (options.deriveCounts
           ? countOptionMatches({
-              rows: options.rows,
-              key: options.definition.key,
               candidate: false,
+              key: options.definition.key,
+              rows: options.rows,
             })
           : options.missingCountFallback),
+      id: '1:false',
+      label: booleanLabel(options.definition, false),
       selected: isFilterValueSelected({
-        values: options.selectedValues,
         candidate: false,
+        values: options.selectedValues,
       }),
-      children: [],
+      value: false,
     },
   ]
 }
 
 function resolveOptionEntryTree(options: {
-  entries: ReadonlyArray<TableFilterOptionEntry>
+  entries: readonly TableFilterOptionEntry[]
   selectedValues: unknown[]
   getCount: (value: string | number | boolean | undefined) => number | undefined
   parentId?: string
 }): TableResolvedFilterOptionEntry[] {
   return options.entries.map((entry, index) => {
-    const idPart = entry.value == null ? `group-${index}` : `${index}:${String(entry.value)}`
+    const idPart = isNullish(entry.value) ? `group-${index}` : `${index}:${String(entry.value)}`
     const id = options.parentId ? `${options.parentId}/${idPart}` : idPart
     const children = resolveOptionEntryTree({
       entries: entry.children ?? [],
-      selectedValues: options.selectedValues,
       getCount: options.getCount,
       parentId: id,
+      selectedValues: options.selectedValues,
     })
     const derivedCount = options.getCount(entry.value)
-    const selected =
-      entry.value == null
-        ? false
-        : isFilterValueSelected({
-            values: options.selectedValues,
-            candidate: entry.value,
-          })
+    const selected = isNullish(entry.value)
+      ? false
+      : isFilterValueSelected({
+          candidate: entry.value,
+          values: options.selectedValues,
+        })
 
     return {
+      children,
+      color: entry.color,
+      count: entry.count ?? sumChildCounts(children) ?? derivedCount,
+      icon: entry.icon,
       id,
       label: getFilterLabelText({
         label: entry.label,
       }),
-      value: entry.value,
-      icon: entry.icon,
-      count: entry.count ?? sumChildCounts(children) ?? derivedCount,
       selected,
-      children,
+      value: entry.value,
     }
   })
 }
 
 function sumChildCounts(entries: TableResolvedFilterOptionEntry[]) {
-  const counts = entries
-    .map((entry) => entry.count)
-    .filter((count): count is number => typeof count === 'number')
+  const counts = entries.map((entry) => entry.count).filter(isNumber)
 
-  if (!counts.length) return undefined
+  if (!counts.length) {
+    return
+  }
   return counts.reduce((total, count) => total + count, 0)
 }
 
@@ -157,20 +165,29 @@ function countOptionMatches(options: {
 }) {
   return options.rows.reduce<number>((count, row) => {
     const values = getFilterPathValues({
-      source: row,
       key: options.key,
+      source: row,
     })
 
     return (
       count +
       (values.some((value) =>
         isFilterValueSelected({
-          values: [value],
           candidate: options.candidate,
+          values: [value],
         }),
       )
         ? 1
         : 0)
     )
   }, 0)
+}
+
+function booleanLabel(definition: TableBooleanFilterDefinition, value: boolean) {
+  const { t } = useUiToolsLocale()
+  const custom = value ? definition.editor?.labels?.true : definition.editor?.labels?.false
+  return getFilterTextValue({
+    fallback: t(value ? 'table.filters.booleans.true' : 'table.filters.booleans.false'),
+    value: custom,
+  })
 }

@@ -1,11 +1,18 @@
-import type { TableColumnCollection } from './columns'
+import type {
+  TableColumnCollection,
+  TableSummaryRequest,
+  TableSummaryScope,
+  TableSummaryValue,
+} from './columns'
 import type {
   GenericObject,
   TableDefaultSort,
   TableGridSortOption,
   TableLayout,
   TableRowRenderParams,
+  RenderableType,
   TableSortKey,
+  TableTextValue,
 } from './utils'
 
 export interface TablePersistenceOptions {
@@ -17,7 +24,7 @@ export type TableLayoutControl<TLayout extends TableLayout = TableLayout> =
   | boolean
   | string
   | Partial<Record<TLayout, boolean | string>>
-  | (() => boolean | Partial<Record<TLayout, boolean | string>>)
+  | (() => boolean | string | Partial<Record<TLayout, boolean | string>>)
 
 export interface TableControlsSchema {
   refresh?: TableLayoutControl
@@ -33,8 +40,8 @@ export interface TableSelectionSchema {
   scope?: 'page' | 'all'
 }
 
-export type PaginationConfig = {
-  sizeOptions?: Array<number> | { [key in TableLayout]: Array<number> }
+export interface PaginationConfig {
+  sizeOptions?: number[] | { [key in TableLayout]: number[] }
   defaultSize?: number | { [key in TableLayout]: number }
   showPageSizePicker?: boolean
   showPagesList?: boolean
@@ -66,8 +73,8 @@ export interface TableGridSchema<
 > {
   enabled?: boolean | string | (() => boolean | string)
   mode?: TableGridMode
-  renderItem?: (params: TableRowRenderParams<TRow, TContext, TPageContext>) => unknown
-  renderSkeleton?: (params: { layout?: 'grid' }) => unknown
+  renderItem?: (params: TableRowRenderParams<TRow, TContext, TPageContext>) => RenderableType
+  renderSkeleton?: (params: { layout?: 'grid' }) => RenderableType
   gridSize?: number | string | (() => number | string)
   itemSize?: number | string | (() => number | string)
   sortOptions?: TableGridSortOption<TSortKey>[]
@@ -86,4 +93,20 @@ export interface TableTableSchema<
   childrenKey?: TableSortKey<TRow>
   defaultSorting?: TableDefaultSort<TSortKey>
   selection?: boolean | 'auto'
+  summaries?: TableSummariesSchema<TRow>
+}
+
+export interface TableSummariesSchema<TRow extends GenericObject = GenericObject> {
+  /** Rows the aggregates describe; defaults to `filtered`. */
+  scope?: TableSummaryScope
+  /** Scopes the footer toggle offers; defaults to all three when selection is enabled. */
+  scopes?: TableSummaryScope[]
+  /** Footer label; defaults to a localized "Total". */
+  label?: TableTextValue
+  /** Resolves every column summary at once, typically from the server; merged over derived values. */
+  resolve?: (context: {
+    scope: TableSummaryScope
+    rows: TRow[]
+    request: TableSummaryRequest
+  }) => Record<string, TableSummaryValue> | Promise<Record<string, TableSummaryValue>>
 }

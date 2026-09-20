@@ -1,6 +1,7 @@
 import { computed, shallowRef, toValue } from 'vue'
 
 import type {
+  FormValue,
   FormController,
   FormObject,
   FormSubmitAction,
@@ -13,8 +14,9 @@ import type {
   FormValidationMode,
 } from '../types'
 import { isRecord } from '../utils/path'
+import { isBoolean, isUndefined, stringArray } from '../utils/predicate'
 
-export function useForm<const TSchema, TSubmitData = unknown>(
+export function useForm<const TSchema, TSubmitData = FormValue>(
   params: UseFormParams<TSchema, TSubmitData>,
 ): FormController<TSchema, TSubmitData>
 export function useForm(params: RuntimeUseFormParams) {
@@ -22,14 +24,10 @@ export function useForm(params: RuntimeUseFormParams) {
   const schema = computed(() => toValue(params.schema))
   const input = computed(() => (params.input ? toValue(params.input) : undefined))
   const syncInput = computed<boolean | readonly string[]>(() =>
-    typeof params.syncInput !== 'undefined'
-      ? toValue(params.syncInput)
-      : getSchemaSyncInput(schema.value),
+    isUndefined(params.syncInput) ? getSchemaSyncInput(schema.value) : toValue(params.syncInput),
   )
   const validationMode = computed<FormValidationMode>(() =>
-    typeof params.validate !== 'undefined'
-      ? toValue(params.validate)
-      : getSchemaValidationMode(schema.value),
+    isUndefined(params.validate) ? getSchemaValidationMode(schema.value) : toValue(params.validate),
   )
   const isBound = computed(() => runtime.value !== null)
   const context = computed(() => runtime.value?.context ?? {})
@@ -54,14 +52,16 @@ export function useForm(params: RuntimeUseFormParams) {
   const canGoNext = computed(() => runtime.value?.canGoNext.value ?? false)
 
   async function submitHandler(
-    externalSubmitHandler?: FormSubmitHandler<FormObject, unknown>,
-  ): Promise<FormSubmitHandlerResult<unknown>> {
+    externalSubmitHandler?: FormSubmitHandler<FormObject, FormValue>,
+  ): Promise<FormSubmitHandlerResult<FormValue>> {
     const current = runtime.value
-    if (!current) return { success: false }
+    if (!current) {
+      return { success: false }
+    }
     return await current.submitHandler(externalSubmitHandler ?? params.onSubmit)
   }
 
-  async function submit(externalSubmitHandler?: FormSubmitHandler<FormObject, unknown>) {
+  async function submit(externalSubmitHandler?: FormSubmitHandler<FormObject, FormValue>) {
     const result = await submitHandler(externalSubmitHandler)
     return result.success
   }
@@ -90,8 +90,8 @@ export function useForm(params: RuntimeUseFormParams) {
     runtime.value?.clearErrors()
   }
 
-  function reset() {
-    runtime.value?.reset()
+  async function reset() {
+    await runtime.value?.reset()
   }
 
   async function nextStep() {
@@ -111,30 +111,32 @@ export function useForm(params: RuntimeUseFormParams) {
   }
 
   function unbind(previousRuntime: FormRuntime) {
-    if (runtime.value === previousRuntime) runtime.value = null
+    if (runtime.value === previousRuntime) {
+      runtime.value = null
+    }
   }
 
   const state = {
+    get: (path: string) => runtime.value?.getValue(path),
     internal,
     output,
-    get: (path: string) => runtime.value?.getValue(path),
-    set: (path: string, value: unknown) => runtime.value?.setValue(path, value),
     reset,
+    set: (path: string, value: FormValue) => runtime.value?.setValue(path, value),
   }
   const meta = {
+    dirtyPaths,
     isBound,
     isDirty,
-    dirtyPaths,
   }
   const validation = {
+    clear: clearErrors,
     errors,
+    focusFirstInvalid,
+    getError,
     hasErrors,
     isValid,
     validate,
     validateCurrentStep,
-    focusFirstInvalid,
-    getError,
-    clear: clearErrors,
   }
   const submission = {
     actionPending,
@@ -143,64 +145,68 @@ export function useForm(params: RuntimeUseFormParams) {
     submitHandler,
   }
   const navigation = {
-    currentStepIndex,
+    canGoNext,
+    canGoPrevious,
     currentStep,
-    steps,
-    isStepped,
+    currentStepIndex,
+    goTo: goToStep,
     isFirstStep,
     isLastStep,
-    canGoPrevious,
-    canGoNext,
+    isStepped,
     next: nextStep,
     previous: previousStep,
-    goTo: goToStep,
+    steps,
   }
 
   return {
-    schema,
-    input,
-    syncInput,
-    validationMode,
-    context,
-    state,
-    meta,
-    validation,
-    submission,
-    navigation,
-    internal,
-    output,
-    errors,
-    dirtyPaths,
-    isDirty,
     actionPending,
-    isSubmitting,
-    validate,
+    bind,
+    context,
+    dirtyPaths,
+    errors,
     focus,
+    input,
+    internal,
+    isDirty,
+    isSubmitting,
+    meta,
+    navigation,
+    nextStep,
+    output,
+    previousStep,
+    reset,
+    schema,
+    state,
+    submission,
     submit,
     submitHandler,
-    reset,
-    nextStep,
-    previousStep,
-    bind,
+    syncInput,
     unbind,
+    validate,
+    validation,
+    validationMode,
   }
 }
 
-function getSchemaSyncInput(schema: unknown): boolean | readonly string[] {
+function getSchemaSyncInput(schema: FormValue): boolean | readonly string[] {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'syncInput')?.value : undefined
-  if (typeof value === 'boolean') return value
-  return Array.isArray(value) ? value.filter((path) => typeof path === 'string') : false
+  if (isBoolean(value)) {
+    return value
+  }
+  return stringArray(value)
 }
 
-function getSchemaValidationMode(schema: unknown): FormValidationMode {
+function getSchemaValidationMode(schema: FormValue): FormValidationMode {
   const controls = getSchemaControls(schema)
   const value = controls ? Object.getOwnPropertyDescriptor(controls, 'validate')?.value : undefined
   return value === false || value === 'required' || value === 'rules' ? value : true
 }
 
-function getSchemaControls(schema: unknown) {
-  if (!isRecord(schema)) return undefined
+function getSchemaControls(schema: FormValue) {
+  if (!isRecord(schema)) {
+    return
+  }
   const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
   return isRecord(controls) ? controls : undefined
 }

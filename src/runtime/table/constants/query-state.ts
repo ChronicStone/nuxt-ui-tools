@@ -1,12 +1,12 @@
 import type { TableFilterOperator, TableQueryStateFilterKind } from '../types/query-state'
 
-export const DEFAULT_FILTER_OPERATOR: Record<TableQueryStateFilterKind, TableFilterOperator> = {
-  text: 'contains',
-  option: 'isAnyOf',
+export const DEFAULT_FILTER_OPERATOR = {
   boolean: 'is',
-  number: 'is',
   date: 'is',
-}
+  number: 'is',
+  option: 'isAnyOf',
+  text: 'contains',
+} satisfies Record<TableQueryStateFilterKind, TableFilterOperator>
 
 export const PAGINATION_DEFAULTS = {
   defaultSize: { grid: 10, table: 50 },
@@ -18,14 +18,14 @@ export const PAGINATION_DEFAULTS = {
 
 /** Default TanStack Query options applied to all table queries. */
 export const QUERY_DEFAULTS = {
+  refetchOnWindowFocus: false,
   /** How long fetched data is considered fresh (ms). Prevents refetches on remount/focus. */
   staleTime: {
-    /** Main data query */
-    data: 30_000,
     /** Context / page-context side queries */
     context: 60_000,
+    /** Main data query */
+    data: 30_000,
     /** Filter option queries (facets, remote options) */
     filterOptions: 30_000,
   },
-  refetchOnWindowFocus: false,
 }

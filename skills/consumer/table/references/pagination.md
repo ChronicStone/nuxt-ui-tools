@@ -26,13 +26,13 @@ const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
   pagination: { mode: 'cursor', pageSize: 24, count: 'none' },
-  source: {
+  source: tableSource({
     mode: 'remote',
     query: (request) => ({
       queryKey: ['employees', request],
       queryFn: async () => api.listEmployees(request),
     }),
-  },
+  }),
 })
 ```
 

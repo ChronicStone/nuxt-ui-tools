@@ -1,7 +1,9 @@
-import { computed, inject, provide, shallowRef, type InjectionKey } from 'vue'
+import { computed, inject, provide, shallowRef } from 'vue'
+import type { InjectionKey } from 'vue'
 
 import type { MaybeComputedRef, TableApi, TableSchemaView } from '../types'
 import { resolveSchemaSource } from '../utils'
+import { useTableActions } from './use-table-actions'
 import { useTableApi } from './use-table-api'
 import { useTableColumns } from './use-table-columns'
 import { useTableControls } from './use-table-controls'
@@ -14,89 +16,110 @@ import { useTablePagination } from './use-table-pagination'
 import { useTableSelection } from './use-table-selection'
 import { useTableStartup } from './use-table-startup'
 import { useTableState } from './use-table-state'
+import { useTableSummaries } from './use-table-summaries'
 
 function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TSchema> }) {
-  const publicSchema = computed(() => resolveSchemaSource({ schema: options.rawSchema }))
+  const publicSchema = computed<TSchema>(() => resolveSchemaSource({ schema: options.rawSchema }))
+  // SAFETY: the runtime consumes the normalized table contract while publicSchema preserves caller inference.
   const schema = computed(() => publicSchema.value as TableSchemaView)
   const tableApi = shallowRef<TableApi<TSchema> | null>(null)
   const startup = useTableStartup()
   const layout = useTableLayout({ schema })
   const state = useTableState({
-    schema,
     layout,
+    schema,
   })
   const queryContent = useTableData({
     schema,
-    state,
     startup,
+    state,
   })
   const selection = useTableSelection({
-    schema,
     queryContent,
+    schema,
   })
   const controls = useTableControls({
-    schema,
     layout,
+    schema,
   })
   const filters = useTableFilters({
+    queryContent,
     schema,
     state,
-    queryContent,
   })
   const filterPresentation = useTableFilterPresentation({
     filters,
   })
   const grid = useTableGrid({
-    schema,
     data: queryContent.data,
+    schema,
   })
   const tableColumns = useTableColumns({
-    schema,
-    state,
     data: queryContent,
+    schema,
     selection,
-    tableLayout: controls.tableLayout,
+    state,
     tableApi,
+    tableLayout: controls.tableLayout,
+  })
+  const summaries = useTableSummaries({
+    queryContent,
+    runtimeColumns: tableColumns.runtimeColumns,
+    schema,
+    selection,
   })
   const pagination = useTablePagination({
+    layout,
+    queryContent,
     schema,
-    layout,
     state,
-    queryContent,
   })
 
-  tableApi.value = useTableApi({
-    runtimeSchema: schema,
-    layout,
-    state,
-    selection,
-    controls,
+  tableApi.value = useTableApi<TSchema>({
     columns: tableColumns,
+    controls,
     filters,
+    layout,
     pagination,
+    publicSchema,
     queryContent,
+    runtimeSchema: schema,
+    selection,
+    state,
   })
 
-  if (!tableApi.value) throw new Error('Failed to initialize table API')
+  if (!tableApi.value) {
+    throw new Error('Failed to initialize table API')
+  }
+
+  const actions = useTableActions({
+    queryContent,
+    schema,
+    selection,
+    tableApi,
+  })
 
   return {
-    schema,
+    actions,
+    controls,
+    filterPresentation,
+    filters,
+    grid,
     layout,
-    startup,
+    pagination,
+    queryContent,
     queryState: state.queryState,
     resolvedFilterState: state.resolvedFilterState,
-    queryContent,
-    tableApi: tableApi.value,
+    schema,
     selection,
-    filters,
-    filterPresentation,
-    grid,
-    controls,
+    startup,
+    summaries,
+    tableApi: tableApi.value,
     tableColumns,
-    pagination,
   }
 }
 
+// SAFETY: the injection key is private to this module and every provider uses the same TableInternals contract.
 const TABLE_INTERNALS_KEY = Symbol('nuxt-ui-tools.table.internals') as InjectionKey<TableInternals>
 
 function provideTableInternals(internals: TableInternals) {
@@ -111,7 +134,9 @@ function useProvideTableInternals<TSchema>(options: { rawSchema: MaybeComputedRe
 
 function useTableInternals() {
   const internals = inject(TABLE_INTERNALS_KEY, null)
-  if (!internals) throw new Error('useTableInternals must be called inside a <DataList> component')
+  if (!internals) {
+    throw new Error('useTableInternals must be called inside a <DataList> component')
+  }
   return internals
 }
 

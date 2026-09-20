@@ -1,13 +1,14 @@
 {
   "name": "nuxt-ui-tools",
-  "version": "0.1.3",
+  "version": "1.0.0",
   "description": "Nuxt module and runtime toolkit for UI-heavy Nuxt applications",
   "homepage": "https://github.com/ChronicStone/nuxt-ui-tools#readme",
   "bugs": "https://github.com/ChronicStone/nuxt-ui-tools/issues",
   "license": "MIT",
   "repository": "github:ChronicStone/nuxt-ui-tools",
   "workspaces": [
-    "playground"
+    "playground",
+    "playground-table"
   ],
   "files": [
     "dist"
@@ -27,6 +28,9 @@
       ],
       "query-state": [
         "./dist/runtime/query-state/index.d.ts"
+      ],
+      "query-prefetch": [
+        "./dist/runtime/query-prefetch/index.d.ts"
       ],
       "shared": [
         "./dist/runtime/shared/index.d.ts"
@@ -60,6 +64,14 @@
     "#ui-tools/query-state/*": {
       "types": "./dist/runtime/query-state/*.d.ts",
       "default": "./dist/runtime/query-state/*.js"
+    },
+    "#ui-tools/query-prefetch": {
+      "types": "./dist/runtime/query-prefetch/index.d.ts",
+      "default": "./dist/runtime/query-prefetch/index.js"
+    },
+    "#ui-tools/query-prefetch/*": {
+      "types": "./dist/runtime/query-prefetch/*.d.ts",
+      "default": "./dist/runtime/query-prefetch/*.js"
     },
     "#ui-tools/shared": {
       "types": "./dist/runtime/shared/index.d.ts",
@@ -95,6 +107,10 @@
       "types": "./dist/runtime/query-state/index.d.ts",
       "import": "./dist/runtime/query-state/index.js"
     },
+    "./query-prefetch": {
+      "types": "./dist/runtime/query-prefetch/index.d.ts",
+      "import": "./dist/runtime/query-prefetch/index.js"
+    },
     "./shared": {
       "types": "./dist/runtime/shared/index.d.ts",
       "import": "./dist/runtime/shared/index.js"
@@ -114,52 +130,70 @@
     "dev": "npm run dev:prepare && nuxt dev playground",
     "dev:build": "nuxt build playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run typecheck:playgrounds && npm run test",
     "release": "npm run check && npm run build && changelogen --release",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint --fix .",
+    "lint": "oxlint -c oxlint.config.ts .",
+    "lint:fix": "oxlint -c oxlint.config.ts --fix .",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=4096\" vue-tsc --noEmit",
     "typecheck:playground": "cd playground && npm run typecheck",
+    "typecheck:playground-table": "cd playground-table && npm run typecheck",
+    "typecheck:playgrounds": "npm run typecheck:playground && npm run typecheck:playground-table",
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest watch",
-    "clean": "rm -rf dist .nuxt node_modules playground/.nuxt playground/.output playground/node_modules"
+    "clean": "rm -rf dist .nuxt node_modules playground/.nuxt playground/.output playground/node_modules",
+    "dev:table": "npm run dev:prepare:table && nuxt dev playground-table --port 3100",
+    "dev:prepare:table": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground-table"
   },
   "dependencies": {
-    "@internationalized/date": "^3.12.0",
-    "@nuxt/kit": "^4.4.2",
-    "@tanstack/pacer": "0.19.0",
-    "@tanstack/vue-virtual": "3.13.23",
-    "@vueuse/core": "14.2.1",
-    "cookiejs": "2.1.3",
-    "libphonenumber-js": "1.13.1",
-    "motion-v": "2.0.1",
-    "nuxt-viewport": "2.4.0",
-    "tailwind-merge": "^3.5.0"
+    "@internationalized/date": "^3.12.3",
+    "@nuxt/kit": "^4.5.2",
+    "@regle/core": "1.29.1",
+    "@regle/rules": "1.29.1",
+    "@tanstack/pacer": "0.22.0",
+    "@tanstack/vue-table": "9.2.3",
+    "@tanstack/vue-virtual": "3.13.36",
+    "@vueuse/core": "14.4.0",
+    "cookiejs": "2.1.4",
+    "libphonenumber-js": "1.13.11",
+    "maska": "3.2.1",
+    "motion-v": "2.4.0",
+    "nuxt-viewport": "2.6.0",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@nuxt/module-builder": "^1.0.2",
-    "@nuxt/schema": "^4.4.2",
-    "@nuxt/ui": "^4.5.1",
+    "@nuxt/module-builder": "^1.0.3",
+    "@nuxt/schema": "^4.5.2",
+    "@nuxt/ui": "^4.10.0",
+    "@tiptap/y-tiptap": "3.0.9",
     "@types/node": "25.4.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitejs/plugin-vue-jsx": "^5.1.6",
+    "@vue/test-utils": "2.5.1",
     "changelogen": "^0.6.2",
-    "nuxt": "^4.4.2",
-    "oxfmt": "0.38.0",
-    "oxlint": "1.53.0",
+    "happy-dom": "20.14.5",
+    "nuxt": "^4.5.2",
+    "oxfmt": "0.64.0",
+    "oxlint": "^1.82.0",
     "typescript": "~5.9.3",
-    "vitest": "^4.1.0",
-    "vue-tsc": "^3.2.5",
+    "ultracite": "7.12.0",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.3.10",
     "xlsx": "0.18.5"
   },
   "peerDependencies": {
-    "@nuxt/ui": ">=4.5.1",
-    "@tanstack/vue-query": ">=5.0.0",
-    "nuxt": ">=4.4.0",
-    "tailwindcss": ">=4.0.0",
-    "vue": ">=3.5.0",
-    "vue-draggable-plus": ">=0.6.0",
-    "vue-router": ">=4.5.0"
+    "@nuxt/ui": ">=4.10.0",
+    "@tanstack/vue-query": ">=5.101.4",
+    "nuxt": ">=4.5.2",
+    "tailwindcss": ">=4.3.3",
+    "typescript": ">=5.9.0",
+    "vue": ">=3.5.41",
+    "vue-draggable-plus": ">=0.6.1",
+    "vue-router": ">=4.6.4"
+  },
+  "overrides": {
+    "@tiptap/y-tiptap": "3.0.9"
   }
 }

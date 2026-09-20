@@ -7,33 +7,33 @@ describe('filter tag session', () => {
   it('opens synchronously without a timer or animation-frame handoff', () => {
     const session = useFilterTagSession({
       hasCommittedState: () => false,
-      onOpen: vi.fn(),
       onClose: vi.fn(),
-      onSessionClosed: vi.fn(),
       onDismiss: vi.fn(),
+      onOpen: vi.fn(),
+      onSessionClosed: vi.fn(),
     })
 
     session.open()
-    expect(session.isOpen.value).toBe(true)
+    expect(session.isOpen.value).toBeTruthy()
   })
 
   it('initializes an embedded editor without scheduling an overlay handoff', async () => {
     const onOpen = vi.fn()
     const isOpen = ref<boolean>(false)
     const session = useFilterTagSession({
-      isOpen,
       embedded: true,
       hasCommittedState: () => false,
-      onOpen,
+      isOpen,
       onClose: vi.fn(),
-      onSessionClosed: vi.fn(),
       onDismiss: vi.fn(),
+      onOpen,
+      onSessionClosed: vi.fn(),
     })
 
-    expect(session.isOpen.value).toBe(true)
-    expect(isOpen.value).toBe(true)
+    expect(session.isOpen.value).toBeTruthy()
+    expect(isOpen.value).toBeTruthy()
     await Promise.resolve()
-    expect(onOpen).toHaveBeenCalledTimes(1)
+    expect(onOpen).toHaveBeenCalledOnce()
   })
 
   it('dismisses uncommitted dynamic sessions on close', () => {
@@ -43,17 +43,17 @@ describe('filter tag session', () => {
     const session = useFilterTagSession({
       dynamic: true,
       hasCommittedState: () => false,
-      onOpen: vi.fn(),
       onClose,
-      onSessionClosed: vi.fn(),
       onDismiss,
+      onOpen: vi.fn(),
+      onSessionClosed: vi.fn(),
     })
 
     session.handleOpenChange(true)
     session.handleOpenChange(false)
 
-    expect(onClose).toHaveBeenCalledTimes(1)
-    expect(onDismiss).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(onDismiss).toHaveBeenCalledOnce()
   })
 
   it('prefers session close notifications over dynamic dismissals', () => {
@@ -61,19 +61,19 @@ describe('filter tag session', () => {
     const onDismiss = vi.fn()
 
     const session = useFilterTagSession({
-      session: true,
       dynamic: true,
       hasCommittedState: () => false,
-      onOpen: vi.fn(),
       onClose: vi.fn(),
-      onSessionClosed,
       onDismiss,
+      onOpen: vi.fn(),
+      onSessionClosed,
+      session: true,
     })
 
     session.handleOpenChange(true)
     session.handleOpenChange(false)
 
-    expect(onSessionClosed).toHaveBeenCalledTimes(1)
+    expect(onSessionClosed).toHaveBeenCalledOnce()
     expect(onDismiss).not.toHaveBeenCalled()
   })
 })

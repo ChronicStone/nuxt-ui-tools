@@ -2,17 +2,18 @@
 import USwitch from '@nuxt/ui/components/Switch.vue'
 import { computed, useId } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
-import type { FormOptionValue, FormSwitchGroupField } from '../../types'
+import type { FormValue, FormOptionValue, FormSwitchGroupField } from '../../types'
 import { formOptionKey } from '../../utils/options'
+import { isBoolean, isNumber, isString } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormSwitchGroupField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -36,8 +37,8 @@ function toggleOption(value: FormOptionValue, checked: boolean) {
   model.value = current.filter((item) => item !== value)
 }
 
-function isOptionValue(value: unknown): value is FormOptionValue {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+function isOptionValue(value: FormValue): value is FormOptionValue {
+  return isString(value) || isNumber(value) || isBoolean(value)
 }
 </script>
 
@@ -46,7 +47,7 @@ function isOptionValue(value: unknown): value is FormOptionValue {
     <div
       role="group"
       class="grid gap-3"
-      :class="field.orientation === 'horizontal' ? 'sm:flex sm:flex-wrap' : ''"
+      :class="fieldProps.orientation === 'horizontal' ? 'sm:flex sm:flex-wrap' : ''"
     >
       <USwitch
         v-for="item in items"
@@ -58,8 +59,8 @@ function isOptionValue(value: unknown): value is FormOptionValue {
         :aria-label="item.label"
         :description="item.description"
         :disabled="disabled || item.disabled"
-        :checked-icon="field.checkedIcon"
-        :unchecked-icon="field.uncheckedIcon"
+        :checked-icon="fieldProps.checkedIcon"
+        :unchecked-icon="fieldProps.uncheckedIcon"
         @update:model-value="toggleOption(item.value, $event === true)"
         @blur="handleBlur"
       />

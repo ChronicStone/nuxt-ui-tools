@@ -3,9 +3,10 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRatingField } from '../../types'
+import { isNumber } from '../../utils/predicate'
 
 const props = defineProps<{
   field: FormRatingField
@@ -13,25 +14,28 @@ const props = defineProps<{
 }>()
 const { t } = useUiToolsLocale()
 
-const { form, controlProps, disabled, handleBlur } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: ['clearable'] },
 )
 const model = computed<number | null>({
   get: () => {
     const value = form.getValue(props.path)
-    return typeof value === 'number' ? value : null
+    return isNumber(value) ? value : null
   },
   set: (value) => form.setValue(props.path, value),
 })
-const max = computed(() => Math.max(1, props.field.max ?? 5))
-const icon = computed(() => props.field.icon ?? 'i-lucide-star')
+const max = computed(() => Math.max(1, fieldProps.value.max ?? 5))
+const icon = computed(() => fieldProps.value.icon ?? 'i-lucide-star')
 const hoverValue = ref<number | null>(null)
 const visualValue = computed(() => hoverValue.value ?? model.value ?? 0)
 
 function setRating(value: number) {
-  if (disabled.value) return
-  if (props.field.clearable === true && model.value === value) {
+  if (disabled.value) {
+    return
+  }
+  if (fieldProps.value.clearable === true && model.value === value) {
     model.value = null
     return
   }
@@ -40,15 +44,21 @@ function setRating(value: number) {
 }
 
 function moveRating(event: KeyboardEvent) {
-  if (disabled.value) return
+  if (disabled.value) {
+    return
+  }
   const current = model.value ?? 0
-  if (event.key === 'Home') model.value = 1
-  else if (event.key === 'End') model.value = max.value
-  else if (event.key === 'ArrowRight' || event.key === 'ArrowUp')
+  if (event.key === 'Home') {
+    model.value = 1
+  } else if (event.key === 'End') {
+    model.value = max.value
+  } else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
     model.value = Math.min(max.value, current + 1)
-  else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown')
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
     model.value = Math.max(1, current - 1)
-  else return
+  } else {
+    return
+  }
   event.preventDefault()
 }
 </script>

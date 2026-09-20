@@ -1,12 +1,13 @@
+import type { FormValue } from './'
 import type { FormFieldApi } from './api'
 /**
  * Parameters passed to field-level callbacks.
  */
 export interface FormFieldCallbackParams<
-  TContext = {},
-  TDeps = {},
-  TValue = unknown,
-  TOption = unknown,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+  TOption = FormValue,
 > {
   /** Fully typed form-scoped context declared on the schema. */
   ctx: TContext
@@ -21,8 +22,8 @@ export interface FormFieldCallbackParams<
  */
 export type FormFieldCallback<
   TResult,
-  TContext = {},
-  TDeps = {},
-  TValue = unknown,
-  TOption = unknown,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+  TOption = FormValue,
 > = (params: FormFieldCallbackParams<TContext, TDeps, TValue, TOption>) => TResult

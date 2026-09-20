@@ -1,8 +1,8 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const arrayListFieldKind = defineFormFieldKind({
-  type: 'array-list',
+  layout: { container: true, item: true },
   state: 'passthrough',
-  ui: { label: true, description: true },
-  layout: { item: true, container: true },
+  type: 'array-list',
+  ui: { description: true, label: true },
 })

@@ -1,3 +1,4 @@
+import { isNullish } from '../../../../shared/utils/predicate'
 import type {
   TableNumberFilterDefinition,
   TableNumberFilterOperator,
@@ -16,33 +17,36 @@ export function buildNumberFilterPreview(options: {
   const preview = operator === 'between' ? filterUi.range.preview : filterUi.scalar.preview
   const range = getNumberRangeValue({ value: options.rule.value })
 
-  if (range && (range.from != null || range.to != null)) {
+  if (range && (!isNullish(range.from) || !isNullish(range.to))) {
     const start = toMaybeNumber({ value: range.from })
     const end = toMaybeNumber({ value: range.to })
     const summary = preview.rangeFormatter
       ? preview.rangeFormatter({ from: start ?? undefined, to: end ?? undefined })
       : [start, end]
-          .filter((value): value is number => value != null)
+          .filter((value): value is number => !isNullish(value))
           .map((value) => formatFilterNumber({ value }))
           .join(' - ')
 
     return {
       active: true,
-      count: [start, end].filter((v) => v != null).length,
-      tags: [],
+      count: [start, end].filter((v) => !isNullish(v)).length,
+      entries: [],
       summary: prefixPreviewLabel(preview.label, summary),
+      tags: [],
     }
   }
 
   const num = toMaybeNumber({ value: options.rule.value })
-  const summary =
-    num != null ? (preview.formatter?.(num) ?? formatFilterNumber({ value: num })) : ''
+  const summary = isNullish(num)
+    ? ''
+    : (preview.formatter?.(num) ?? formatFilterNumber({ value: num }))
 
   return {
     active: Boolean(summary),
     count: summary ? 1 : 0,
-    tags: [],
+    entries: [],
     summary: prefixPreviewLabel(preview.label, summary),
+    tags: [],
   }
 }
 
@@ -56,8 +60,9 @@ function resolveNumberOperator(
     value === 'lt' ||
     value === 'lte' ||
     value === 'between'
-  )
+  ) {
     return value
+  }
 
   return 'is'
 }

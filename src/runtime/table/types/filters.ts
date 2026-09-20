@@ -17,6 +17,8 @@ import type {
   TableTextValue,
 } from './utils'
 
+export { type TableFilterOperator } from './query-state'
+
 export interface TableSearchFilter<TRow extends GenericObject = GenericObject> {
   fields: TableFieldPath<TRow>[]
   placeholder?: TableTextValue
@@ -566,16 +568,19 @@ export interface TableFilterOptionValueEntry<TValue = TableFilterPrimitiveValue>
   label: TableTextValue
   value: TValue
   icon?: string
+  /** CSS color rendered as a dot before the label in tags and editors. */
+  color?: string
   count?: number
-  children?: ReadonlyArray<TableFilterOptionEntry<TValue>>
+  children?: readonly TableFilterOptionEntry<TValue>[]
 }
 
 export interface TableFilterOptionGroupEntry<TValue = TableFilterPrimitiveValue> {
   label: TableTextValue
   value?: undefined
   icon?: string
+  color?: string
   count?: number
-  children: ReadonlyArray<TableFilterOptionEntry<TValue>>
+  children: readonly TableFilterOptionEntry<TValue>[]
 }
 
 export type TableFilterOptionEntry<TValue = TableFilterPrimitiveValue> =
@@ -593,7 +598,7 @@ export interface TableFilterOptionQueryResultForPresentation<
   TValue = TableFilterPrimitiveValue,
   TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
 > {
-  options: ReadonlyArray<TableOptionEntryForPresentation<TValue, TPresentation>>
+  options: readonly TableOptionEntryForPresentation<TValue, TPresentation>[]
   nextCursor?: string | null
   total?: number
 }
@@ -603,9 +608,10 @@ export interface TableResolvedFilterOptionEntry<TValue = TableFilterPrimitiveVal
   label: string
   value?: TValue
   icon?: string
+  color?: string
   count?: number
   selected: boolean
-  children: Array<TableResolvedFilterOptionEntry<TValue>>
+  children: TableResolvedFilterOptionEntry<TValue>[]
 }
 
 export interface TableVisibleFilterOptionEntry<TValue = TableFilterPrimitiveValue> {
@@ -613,6 +619,7 @@ export interface TableVisibleFilterOptionEntry<TValue = TableFilterPrimitiveValu
   label: string
   value?: TValue
   icon?: string
+  color?: string
   count?: number
   selected: boolean
   depth: number
@@ -668,7 +675,7 @@ export interface TableStaticFilterRule<
 > {
   key: TKey
   operator: TableFilterOperator
-  value: unknown | ((context: TContext) => unknown)
+  value: TableQueryStateFilterValue | ((context: TContext) => TableQueryStateFilterValue)
 }
 
 export interface TableResolvedFilterCondition<TKey extends string = string, TValue = unknown> {
@@ -704,8 +711,9 @@ export interface TableFilterResolveContext<
   context?: TContext
 }
 
-export type TableFilterResolveResult<TKey extends string = string> =
-  TableResolvedFilterNode<TKey> | null
+export type TableFilterResolveResult<
+  TKey extends string = string,
+> = TableResolvedFilterNode<TKey> | null
 
 interface TableFilterDefinitionBase<
   TRow extends GenericObject = GenericObject,
@@ -747,7 +755,7 @@ export interface TableOptionFilterDefinition<
 > extends TableFilterDefinitionBase<TRow, TContext, TKey, TValue[], TableOptionFilterOperator> {
   kind: 'option'
   source?: {
-    options?: ReadonlyArray<TableOptionEntryForPresentation<TValue, TPresentation>>
+    options?: readonly TableOptionEntryForPresentation<TValue, TPresentation>[]
     query?: (
       context: TableFilterOptionQueryContext,
     ) => TableQueryDefinition<
@@ -820,8 +828,6 @@ export type TableUiFilterDefinition<
   | TableBooleanFilterDefinition<TRow, TContext, TKey>
   | TableNumberFilterDefinition<TRow, TContext, TKey>
   | TableDateFilterDefinition<TRow, TContext, TKey>
-
-export type { TableFilterOperator }
 
 export type TableTextFilterOptions<
   TRow extends GenericObject = GenericObject,

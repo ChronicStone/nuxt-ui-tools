@@ -1,6 +1,7 @@
-import type { GenericObject } from '../../shared/types/utils'
 import type {
+  FormValue,
   FormAction,
+  FormObject,
   FormApi,
   FormContextData,
   FormContextDefinition,
@@ -10,32 +11,33 @@ import type {
   FormSubmitHandler,
   FormStep,
   FormStepLifecycleParams,
-  FormText,
+  FormUiConfig,
 } from '../types'
 
 type FormSchemaSubmit<TContext extends FormContextDefinition | undefined> = (params: {
-  value: unknown
+  value: FormValue
   api: FormApi
   ctx: FormContextData<TContext>
 }) => Promise<void> | void
 
 interface FormSchemaBase<TContext extends FormContextDefinition | undefined> {
   formKey?: string
-  title?: FormText
+  header?: import('../types').FormHeaderConfig
   context: TContext
   layout?: FormLayoutConfig
+  ui?: FormUiConfig
   showStepper?: boolean
   controls?: import('../types').FormControlsConfig
   modal?: import('../types').FormModalConfig
   drawer?: import('../types').FormDrawerConfig
   fullscreen?: import('../types').FormFullscreenConfig
   actions?: readonly FormAction[]
-  onBeforeSubmit?: FormSubmitHandler<unknown, never>
+  onBeforeSubmit?: FormSubmitHandler<FormValue, never>
   submit?: FormSchemaSubmit<TContext>
-  onBeforeNext?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<boolean | void>
-  onBeforePrevious?: (params: FormStepLifecycleParams<unknown>) => FormMaybePromise<void>
-  skipStep?: (params: FormStepLifecycleParams<unknown>) => boolean
-  onStepSkipped?: (params: Omit<FormStepLifecycleParams<unknown>, 'stepData'>) => void
+  onBeforeNext?: (params: FormStepLifecycleParams<FormObject>) => FormMaybePromise<boolean | void>
+  onBeforePrevious?: (params: FormStepLifecycleParams<FormObject>) => FormMaybePromise<void>
+  skipStep?: (params: FormStepLifecycleParams<FormObject>) => boolean
+  onStepSkipped?: (params: Omit<FormStepLifecycleParams<FormObject>, 'stepData'>) => void
 }
 
 interface FormSchemaWithContextFields<
@@ -97,7 +99,7 @@ export function defineFormSchema<const TSchema>(
   schema: TSchema extends {
     readonly context?: undefined
     readonly fields?: never
-    readonly steps: readonly unknown[]
+    readonly steps: readonly FormValue[]
   }
     ? TSchema
     : never,
@@ -105,26 +107,22 @@ export function defineFormSchema<const TSchema>(
 export function defineFormSchema<
   const TContext extends FormContextDefinition,
   const TFields extends readonly FormField<FormContextData<NoInfer<TContext>>>[],
-  const TSchema extends GenericObject,
->(schema: TSchema & FormSchemaWithContextFields<TContext, TFields>): TSchema
+>(
+  schema: FormSchemaWithContextFields<TContext, TFields>,
+): FormSchemaWithContextFields<TContext, TFields>
 export function defineFormSchema<
   const TContext extends FormContextDefinition,
   const TSteps extends readonly FormStep<FormContextData<NoInfer<TContext>>>[],
-  const TSchema extends GenericObject,
 >(
-  schema: TSchema & FormSchemaWithContextSteps<TContext, TSteps>,
-): TSchema & FormSchemaWithContextSteps<TContext, TSteps>
+  schema: FormSchemaWithContextSteps<TContext, TSteps>,
+): FormSchemaWithContextSteps<TContext, TSteps>
 export function defineFormSchema<
   const TFields extends readonly FormField<FormContextData<undefined>>[],
-  const TSchema extends GenericObject,
->(schema: TSchema & FormSchemaWithoutContextFields<TFields>): TSchema
+>(schema: FormSchemaWithoutContextFields<TFields>): FormSchemaWithoutContextFields<TFields>
 export function defineFormSchema<
   const TSteps extends readonly FormStep<FormContextData<undefined>>[],
-  const TSchema extends GenericObject,
->(
-  schema: TSchema & FormSchemaWithoutContextSteps<TSteps>,
-): TSchema & FormSchemaWithoutContextSteps<TSteps>
-export function defineFormSchema(schema: unknown) {
+>(schema: FormSchemaWithoutContextSteps<TSteps>): FormSchemaWithoutContextSteps<TSteps>
+export function defineFormSchema(schema: FormValue) {
   return schema
 }
 

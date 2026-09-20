@@ -8,13 +8,49 @@ import type {
   TableRowRenderParams,
   TableSortKey,
   TableTextValue,
+  TableRuntimeRecord,
 } from './utils'
+
+export type TableColumnSkeleton = 'text' | 'avatar' | 'dot' | 'check' | 'badge' | 'number' | 'none'
+
+export type TableSummaryKind = 'sum' | 'avg' | 'count' | 'min' | 'max'
+export type TableSummaryScope = 'page' | 'filtered' | 'selection'
+export type TableSummaryValue = string | number | boolean | Date | null | undefined
+
+export type TableSummaryRequest = object | null | undefined
+
+export interface TableSummaryContext<TRow extends GenericObject = GenericObject> {
+  rows: TRow[]
+  scope: TableSummaryScope
+  columnKey: string
+  request: TableSummaryRequest
+}
+
+export interface TableColumnSummaryConfig<TRow extends GenericObject = GenericObject> {
+  /** Derived aggregate computed from the rows in scope. */
+  kind?: TableSummaryKind
+  /** Custom (possibly async) resolver; wins over `kind`. */
+  resolve?: (context: TableSummaryContext<TRow>) => TableSummaryValue | Promise<TableSummaryValue>
+  /** Formats the resolved value for display. */
+  format?: (value: TableSummaryValue, context: TableSummaryContext<TRow>) => string | number
+  /** Renders the cell content; receives the loading state. */
+  render?: (params: {
+    value: TableSummaryValue
+    loading: boolean
+    scope: TableSummaryScope
+  }) => RenderableType
+}
+
+export type TableColumnSummary<TRow extends GenericObject = GenericObject> =
+  | TableSummaryKind
+  | TableColumnSummaryConfig<TRow>
+  | ((context: TableSummaryContext<TRow>) => TableSummaryValue | Promise<TableSummaryValue>)
 
 export interface TableColumnCellDataAttributes {
   [key: `data-${string}`]: string | number | boolean | undefined
 }
 
-export type TableColumnCellProps = Record<string, unknown> & TableColumnCellDataAttributes
+export type TableColumnCellProps = TableRuntimeRecord & TableColumnCellDataAttributes
 
 interface TableColumnBase<
   TRow extends GenericObject = GenericObject,
@@ -37,11 +73,17 @@ interface TableColumnBase<
   pinned?: TableColumnPinned
   align?: TableColumnAlign
   labelAlign?: TableColumnAlign
-  ellipsis?: boolean | Record<string, unknown>
+  ellipsis?: boolean | TableRuntimeRecord
   resizable?: boolean
   condition?: () => boolean
   enabled?: boolean
   required?: boolean
+  /** Footer aggregate for this column. */
+  summary?: TableColumnSummary<TRow>
+  /** Placeholder shape rendered while the first page loads. */
+  skeleton?: TableColumnSkeleton
+  /** Maximum wrapped lines before clamping; defaults to 3, `ellipsis: true` forces one line. */
+  lines?: number
   visible?: boolean | ((context: TContext) => boolean)
   cellProps?: (params: TParams) => TableColumnCellProps
   colSpan?: (params: TParams) => number
@@ -70,7 +112,7 @@ interface TableFieldColumnBase<
   TRow,
   TContext,
   TPageContext,
-  Extract<TField, string>,
+  TField,
   TableFieldRenderParams<TRow, TContext, TPageContext, TField>
 > {
   kind: 'field'
@@ -154,7 +196,7 @@ export interface TableColumnBuilder<
   TPageContext extends GenericObject = GenericObject,
   TSortKey extends string = TableSortKey<TRow>,
 > {
-  field<TField extends TableKnownFieldPath<TRow>>(
+  field<TField extends TableKnownFieldPath<TRow> & string>(
     field: TField,
     options?: TableFieldColumnOptions<TRow, TContext, TPageContext, TField>,
   ): TableFieldColumn<TRow, TContext, TPageContext, TField>

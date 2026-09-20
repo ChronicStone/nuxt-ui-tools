@@ -1,9 +1,11 @@
+import type { FormValue } from './'
+import type { FormFieldApi } from './api'
 import type { FormFieldCallback } from './callbacks'
 import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
 import type { FormTransformConfig } from './transform'
 import type { FormDynamic, FormMaybePromise, FormObject, FormRenderable, FormText } from './utils'
-import type { FormValidationConfig } from './validation'
+import type { FormValidationConfig, FormValidatorsConfig } from './validation'
 
 /**
  * Field kinds targeted by the current form runtime plan.
@@ -34,7 +36,9 @@ export type FormFieldType =
   | 'hidden'
   | 'info'
   | 'divider'
+  | 'section'
   | 'input-group'
+  | 'tabs'
   | 'object'
   | 'custom-component'
   | 'file'
@@ -43,6 +47,8 @@ export type FormFieldType =
   | 'array-table'
   | 'array-tabs'
   | 'array-variant'
+  | 'array-collapse'
+  | 'array-primitive'
   | 'tree-select'
   | 'cascader'
   | 'tree'
@@ -57,52 +63,75 @@ export type FormFieldType =
   | 'card'
   | 'column'
 
+export type FormFieldDescriptionDisplay = 'inline' | 'tooltip' | 'modal'
+
+export interface FormFieldDescription {
+  text: FormText
+  display?: FormFieldDescriptionDisplay
+  title?: FormText
+}
+
 /**
  * Common stateful field properties.
  */
+export type FormFieldProps<
+  TProps = FormObject,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> = FormDynamic<TProps & FormObject, { ctx: TContext; deps: TDeps }>
+
 export interface FormStatefulFieldBase<
   TType extends FormFieldType,
   TValue,
-  TContext = {},
-  TDeps = {},
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TProps = FormObject,
 > {
   /** Raw path used to read/write the field value in form state. */
   key: string
   /** Discriminant used by the field registry. */
   type: TType
   /** Initial field value. */
-  default?: FormDynamic<TValue, { ctx: TContext }>
+  default?: FormDynamic<TValue, { ctx: TContext; api: FormFieldApi<TValue, FormValue, TContext> }>
   /** Label rendered by the field wrapper. */
   label?: FormText
-  /** Optional supporting copy rendered near the control. */
-  description?: FormText
+  /** Optional supporting copy rendered near the control, or a tooltip/modal variant. */
+  description?: FormText | FormFieldDescription
   /** Optional right-side hint rendered by the field wrapper. */
   hint?: FormText
+  /** Optional help text rendered under the control. */
+  help?: FormText
   /** Optional rich content rendered beside the label. Takes precedence over `hint`. */
   labelExtra?: FormRenderable
-  /** Placeholder forwarded to controls that support placeholders. */
-  placeholder?: FormText
+  /** Placeholder forwarded to controls that support placeholders. Callbacks receive `{ ctx, deps, api }`. */
+  placeholder?: FormText | FormFieldCallback<FormText, TContext, TDeps, TValue>
   /** Raw dependency paths read before evaluating callbacks. */
   dependencies?: readonly (string | readonly [string, string])[]
   /** Item layout options for this field. */
   layout?: FormItemLayout
-  /** UI-library-specific props. This intentionally stays open because Nuxt UI props can evolve. */
-  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
+  /** Control props: the typed props of this kind plus any Nuxt UI prop as passthrough. */
+  props?: FormFieldProps<TProps, TContext, TDeps>
   /** Disables the field without removing it from form state. */
   disabled?: FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Controls whether the field is rendered. Hidden fields can still be part of form state. */
   condition?: FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Validation behavior for this field. */
   validation?: FormValidationConfig<TValue, TContext, TDeps>
+  /** Marks this field as required. */
+  required?: boolean | FormFieldCallback<boolean, TContext, TDeps, TValue>
+  /** Message used by the required rule. */
+  requiredMessage?: FormText
+  /** Native Regle validation rules. */
+  validators?: FormValidatorsConfig<TContext>
   /** Input/output transforms for this field. */
-  transform?: FormTransformConfig<TValue, unknown, TContext, TDeps>
+  transform?: FormTransformConfig<TValue, FormValue, TContext, TDeps>
   /** Submit/output behavior for this field. */
   submit?: {
     /** Excludes the field from submitted output while keeping it in internal form state. */
     omit?: boolean
   }
   /** Runs after this field value changes. */
-  watch?: (params: { value: TValue; api: import('./api').FormFieldApi<TValue> }) => void
+  watch?: (params: { value: TValue; api: FormFieldApi<TValue> }) => void
   /** Vue watch options used by the field value effect. */
   watchOptions?: { deep?: boolean; immediate?: boolean }
   /** Runs when the resolved dependency object changes. */
@@ -124,15 +153,20 @@ export interface FormStatefulFieldBase<
 /**
  * Base properties for stateless visual fields.
  */
-export interface FormStatelessFieldBase<TType extends FormFieldType, TContext = {}, TDeps = {}> {
+export interface FormStatelessFieldBase<
+  TType extends FormFieldType,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TProps = FormObject,
+> {
   /** Stable key for renderer identity. Stateless fields do not write form state. */
   key: string
   /** Discriminant used by the field registry. */
   type: TType
   /** Item layout options for this field. */
   layout?: FormItemLayout
-  /** UI-library-specific props. */
-  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
+  /** Control props: the typed props of this kind plus any Nuxt UI prop as passthrough. */
+  props?: FormFieldProps<TProps, TContext, TDeps>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
   /** Excludes this renderer from the runtime. */
@@ -142,7 +176,12 @@ export interface FormStatelessFieldBase<TType extends FormFieldType, TContext = 
 /**
  * Base properties for structural fields that render children.
  */
-export interface FormContainerFieldBase<TType extends FormFieldType, TContext = {}, TDeps = {}> {
+export interface FormContainerFieldBase<
+  TType extends FormFieldType,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TProps = FormObject,
+> {
   /** Stable renderer key. */
   key: string
   /** Discriminant used by the field registry. */
@@ -153,12 +192,24 @@ export interface FormContainerFieldBase<TType extends FormFieldType, TContext = 
   description?: FormText
   /** Child fields rendered inside this field. */
   fields: readonly FormField<TContext, TDeps>[]
+  /** Raw dependency paths read before evaluating callbacks. */
+  dependencies?: readonly (string | readonly [string, string])[]
   /** Container layout options. */
   layout?: FormContainerLayout
-  /** UI-library-specific props. */
-  props?: FormDynamic<FormObject, { ctx: TContext; deps: TDeps }>
+  /** Control props: the typed props of this kind plus any Nuxt UI prop as passthrough. */
+  props?: FormFieldProps<TProps, TContext, TDeps>
   /** Controls whether the field is rendered. */
   condition?: FormFieldCallback<boolean, TContext, TDeps>
   /** Excludes this container and its children from the runtime. */
   ignore?: boolean
+  /** Runs after the container value changes. */
+  watch?: (params: { value: FormValue; api: FormFieldApi<FormValue> }) => void
+  /** Vue watch options used by the container value effect. */
+  watchOptions?: { deep?: boolean; immediate?: boolean }
+  /** Runs when the resolved dependency object changes. */
+  onDependencyChange?: FormFieldCallback<FormMaybePromise<void>, TContext, TDeps>
+  /** Runs after the container renderer is mounted. */
+  onRendered?: FormFieldCallback<FormMaybePromise<void>, TContext, TDeps>
+  /** Debounces or throttles value/dependency effects. */
+  stateEffect?: { type: 'debounce' | 'throttle'; duration: number }
 }

@@ -5,18 +5,18 @@ import { createEnumCodec, stringCodec, useQueryState, useQueryStates } from '#ui
 
 function useExplicitLayoutState() {
   return useQueryState({
-    key: 'l',
     codec: createEnumCodec(['grid', 'table']),
     defaultValue: 'table',
+    key: 'l',
     omitDefault: true,
   })
 }
 
 function useOptionalLayoutState() {
   return useQueryState({
-    key: 'l',
     codec: createEnumCodec(['grid', 'table']),
     defaultValue: undefined,
+    key: 'l',
     omitDefault: true,
   })
 }
@@ -29,14 +29,14 @@ function useCombinedQueryStates() {
         defaultValue: 'table',
         omitDefault: true,
       },
-      search: {
-        codec: stringCodec,
-        defaultValue: '',
-      },
       optionalLayout: {
         codec: createEnumCodec(['grid', 'table']),
         defaultValue: undefined,
         omitDefault: true,
+      },
+      search: {
+        codec: stringCodec,
+        defaultValue: '',
       },
     },
   })

@@ -33,9 +33,13 @@ import type { TextFieldOutput } from '../fields/text/types'
 import type { TextareaFieldOutput } from '../fields/textarea/types'
 import type { TimeFieldOutput } from '../fields/time/types'
 import type { UploadFieldOutput } from '../fields/upload/types'
+import type { FormValue } from './'
+
 export type { FormStateMode, NullableValue } from './field-output-utils'
 export type { ObjectFieldOutput } from '../fields/object/types'
+export type { ArrayCollapseFieldOutput } from '../fields/array-collapse/types'
 export type { ArrayListFieldOutput } from '../fields/array-list/types'
+export type { ArrayPrimitiveFieldOutput } from '../fields/array-primitive/types'
 export type { ArrayTableFieldOutput } from '../fields/array-table/types'
 export type { ArrayTabsFieldOutput } from '../fields/array-tabs/types'
 export type { ArrayVariantFieldOutput } from '../fields/array-variant/types'
@@ -43,7 +47,7 @@ export type { GroupFieldOutput } from '../fields/group/types'
 export type { MatrixFieldOutput } from '../fields/matrix/types'
 
 /* eslint-disable */
-export type ResolveFormFieldValue<TField> = TField extends { type: 'text' }
+type ResolveNullableFormFieldValue<TField> = TField extends { type: 'text' }
   ? TextFieldOutput
   : TField extends { type: 'password' }
     ? PasswordFieldOutput
@@ -113,8 +117,12 @@ export type ResolveFormFieldValue<TField> = TField extends { type: 'text' }
                                                                   }
                                                                 ? HierarchyFieldOutput<TField>
                                                                 : TField extends { type: 'object' }
-                                                                  ? ObjectFieldOutput<unknown>
-                                                                  : unknown
+                                                                  ? ObjectFieldOutput<FormValue>
+                                                                  : FormValue
 /* eslint-enable */
+
+export type ResolveFormFieldValue<TField> = TField extends { required: true }
+  ? NonNullable<ResolveNullableFormFieldValue<TField>>
+  : ResolveNullableFormFieldValue<TField>
 
 export type ExtractFormFieldInternalValue<TField> = ResolveFormFieldValue<TField>

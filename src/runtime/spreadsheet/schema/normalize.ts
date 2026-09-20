@@ -2,45 +2,44 @@ import type {
   SpreadsheetColumnDefinition,
   SpreadsheetColumnResolveDefinition,
   SpreadsheetColumnGroupDefinition,
-  NormalizeSpreadsheetSchema,
   SpreadsheetResolutionDefinition,
   SpreadsheetColumnsDefinition,
   SpreadsheetContextItem,
   SpreadsheetDynamicBuilder,
   SpreadsheetReferenceDefinition,
+  SpreadsheetRecord,
+  SpreadsheetValue,
 } from '../types'
 import {
   resolveSpreadsheetColumns,
   resolveSpreadsheetReferences,
   createSpreadsheetDynamicBuilder,
 } from '../utils/builders'
+import { isSpreadsheetRecord } from '../utils/object'
+
+export { type NormalizeSpreadsheetSchema } from '../types'
 
 function isSpreadsheetColumnGroupDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetColumnGroupDefinition<string, readonly unknown[]> {
   return (
-    value !== null &&
-    typeof value === 'object' &&
-    'kind' in value &&
-    value.kind === 'group' &&
-    'columns' in value
+    isSpreadsheetRecord(value) && 'kind' in value && value.kind === 'group' && 'columns' in value
   )
 }
 
 function isSpreadsheetResolvableColumnDefinition(
-  value: unknown,
+  value: SpreadsheetValue,
 ): value is SpreadsheetColumnDefinition<
   string,
   unknown,
   boolean,
-  Record<string, unknown>,
+  SpreadsheetRecord,
   undefined,
   unknown,
-  SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+  SpreadsheetColumnResolveDefinition<SpreadsheetRecord, unknown>
 > {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isSpreadsheetRecord(value) &&
     'kind' in value &&
     value.kind !== 'group' &&
     'key' in value &&
@@ -49,10 +48,11 @@ function isSpreadsheetResolvableColumnDefinition(
   )
 }
 
-function isSpreadsheetReferenceDefinition(value: unknown): value is SpreadsheetReferenceDefinition {
+function isSpreadsheetReferenceDefinition(
+  value: SpreadsheetValue,
+): value is SpreadsheetReferenceDefinition {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isSpreadsheetRecord(value) &&
     'kind' in value &&
     value.kind === 'select' &&
     'field' in value &&
@@ -66,19 +66,19 @@ function collectSpreadsheetResolutionColumns(
   string,
   unknown,
   boolean,
-  Record<string, unknown>,
+  SpreadsheetRecord,
   undefined,
   unknown,
-  SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+  SpreadsheetColumnResolveDefinition<SpreadsheetRecord, unknown>
 >[] {
   const resolvedColumns: SpreadsheetColumnDefinition<
     string,
     unknown,
     boolean,
-    Record<string, unknown>,
+    SpreadsheetRecord,
     undefined,
     unknown,
-    SpreadsheetColumnResolveDefinition<Record<string, unknown>, unknown>
+    SpreadsheetColumnResolveDefinition<SpreadsheetRecord, unknown>
   >[] = []
 
   for (const entry of entries) {
@@ -87,7 +87,9 @@ function collectSpreadsheetResolutionColumns(
       continue
     }
 
-    if (isSpreadsheetResolvableColumnDefinition(entry)) resolvedColumns.push(entry)
+    if (isSpreadsheetResolvableColumnDefinition(entry)) {
+      resolvedColumns.push(entry)
+    }
   }
 
   return resolvedColumns
@@ -100,17 +102,19 @@ function normalizeSpreadsheetResolutionDefinitions(params: {
   const columnResolutions = collectSpreadsheetResolutionColumns(
     params.columns,
   ).flatMap<SpreadsheetResolutionDefinition>((column) => {
-    if (!column.resolve) return []
+    if (!column.resolve) {
+      return []
+    }
 
     return [
       {
-        kind: 'select',
-        scope: 'column',
-        targetField: column.key,
-        sourceField: column.key,
-        options: column.resolve.options,
         getOptions: column.resolve.getOptions,
+        kind: 'select',
+        options: column.resolve.options,
         rules: column.rules,
+        scope: 'column',
+        sourceField: column.key,
+        targetField: column.key,
       },
     ]
   })
@@ -118,16 +122,18 @@ function normalizeSpreadsheetResolutionDefinitions(params: {
   const referenceResolutions: SpreadsheetResolutionDefinition[] = []
 
   for (const entry of params.references) {
-    if (!isSpreadsheetReferenceDefinition(entry)) continue
+    if (!isSpreadsheetReferenceDefinition(entry)) {
+      continue
+    }
 
     referenceResolutions.push({
-      kind: 'select',
-      scope: 'reference',
-      targetField: entry.field,
-      sourceField: entry.source,
-      options: entry.options,
       getOptions: entry.getOptions,
+      kind: 'select',
+      options: entry.options,
       rules: entry.rules,
+      scope: 'reference',
+      sourceField: entry.source,
+      targetField: entry.field,
     })
   }
 
@@ -162,7 +168,9 @@ export function resolveSpreadsheetDynamicColumns<TContext>(
   },
   context: TContext,
 ) {
-  if (!columns?.dynamic) return []
+  if (!columns?.dynamic) {
+    return []
+  }
 
   return columns.dynamic({
     context,
@@ -200,26 +208,25 @@ export function normalizeSpreadsheetSchema<
 
   return {
     ...schema,
-    sheet: steps.structure?.sheet,
+    buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
+    columns: {
+      dynamic: resolvedColumns?.dynamic ?? (() => []),
+      static: staticColumns,
+    },
+    context: schema.context ?? [],
     header: steps.structure?.header,
     matching: steps.matching,
-    review: steps.review,
-    steps,
-    context: schema.context ?? [],
-    columns: {
-      static: staticColumns,
-      dynamic: resolvedColumns?.dynamic ?? (() => []),
-    },
     references,
+    relations: schema.relations ?? [],
     resolutions: normalizeSpreadsheetResolutionDefinitions({
       columns: staticColumns,
       references,
     }),
-    relations: schema.relations ?? [],
-    buildRow: resolveSpreadsheetBuildRow(schema.buildRow),
+    review: steps.review,
+    sheet: steps.structure?.sheet,
+    steps,
   }
 }
-export type { NormalizeSpreadsheetSchema }
 
 function normalizeSpreadsheetSteps(schema: {
   sheet?: unknown
@@ -232,18 +239,6 @@ function normalizeSpreadsheetSteps(schema: {
   const structure = toRecord(steps.structure)
 
   return {
-    upload: toRecord(steps.upload),
-    structure: {
-      ...structure,
-      sheet: {
-        ...toRecord(schema.sheet),
-        ...toRecord(structure.sheet),
-      },
-      header: {
-        ...toRecord(schema.header),
-        ...toRecord(structure.header),
-      },
-    },
     matching: {
       ...toRecord(schema.matching),
       ...toRecord(steps.matching),
@@ -253,13 +248,25 @@ function normalizeSpreadsheetSteps(schema: {
       ...toRecord(schema.review),
       ...toRecord(steps.review),
     },
+    structure: {
+      ...structure,
+      header: {
+        ...toRecord(schema.header),
+        ...toRecord(structure.header),
+      },
+      sheet: {
+        ...toRecord(schema.sheet),
+        ...toRecord(structure.sheet),
+      },
+    },
+    upload: toRecord(steps.upload),
   }
 }
 
-function toRecord(value: unknown) {
+function toRecord(value: SpreadsheetValue): SpreadsheetRecord {
   return isRecord(value) ? value : {}
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object'
+function isRecord<T>(value: T): value is T & SpreadsheetRecord {
+  return isSpreadsheetRecord(value)
 }

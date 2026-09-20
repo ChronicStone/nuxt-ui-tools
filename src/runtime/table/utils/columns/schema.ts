@@ -1,6 +1,7 @@
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
-import type { GenericObject, TableSchemaView } from '../../types'
+import { isFunction, isNumber, isString } from '../../../shared/utils/predicate'
+import type { TableRuntimeRecord, TableSchemaView } from '../../types'
 import type { SchemaTableColumn, TableRuntimeColumn } from './types'
 
 export function findSchemaColumn(options: {
@@ -10,24 +11,33 @@ export function findSchemaColumn(options: {
   return (options.schema.table?.columns ?? []).find((column) => column.key === options.columnId)
 }
 
-export function createRuntimeColumns(options: { schema: TableSchemaView; context: GenericObject }) {
+export function createRuntimeColumns(options: {
+  schema: TableSchemaView
+  context: TableRuntimeRecord
+}) {
   return (options.schema.table?.columns ?? [])
     .filter((column) => (column.condition?.() ?? true) && (column.enabled ?? true))
-    .map(
-      (column): TableRuntimeColumn => ({
-        id: column.key,
-        label: resolveColumnLabel({ column }),
-        icon: column.icon,
-        sortableKey: getSortableKey({ column }),
-        canHide: !column.required,
-        defaultVisible: resolveColumnVisibility({
-          column,
-          context: options.context,
-        }),
-        configurable: true,
-        pinned: column.pinned,
+    .map((column): TableRuntimeColumn => ({
+      align: column.align,
+      canHide: !column.required,
+      configurable: true,
+      defaultVisible: resolveColumnVisibility({
+        column,
+        context: options.context,
       }),
-    )
+      ellipsis: column.ellipsis === true,
+      icon: column.icon,
+      id: column.key,
+      label: resolveColumnLabel({ column }),
+      lines: column.lines,
+      maxWidth: column.maxWidth,
+      minWidth: column.minWidth,
+      pinned: column.pinned,
+      skeleton: column.skeleton,
+      sortableKey: getSortableKey({ column }),
+      summary: column.summary,
+      width: column.width,
+    }))
 }
 
 export function createOrderedColumns(options: {
@@ -50,9 +60,9 @@ export function createVisibleOrderedColumns(options: {
 }
 
 export function resolveColumnLabel(options: { column: SchemaTableColumn }) {
-  if (typeof options.column.label === 'function') {
+  if (isFunction(options.column.label)) {
     const resolved = options.column.label()
-    return typeof resolved === 'string' || typeof resolved === 'number'
+    return isString(resolved) || isNumber(resolved)
       ? String(resolved)
       : humanizeKey({ value: options.column.key })
   }
@@ -62,13 +72,19 @@ export function resolveColumnLabel(options: { column: SchemaTableColumn }) {
 
 export function resolveColumnVisibility(options: {
   column: SchemaTableColumn
-  context: GenericObject
+  context: TableRuntimeRecord
 }) {
-  if (typeof options.column.visible === 'function') {
-    return options.column.visible(options.context as never)
+  if (isVisibilityResolver(options.column.visible)) {
+    return options.column.visible(options.context)
   }
 
   return options.column.visible ?? true
+}
+
+function isVisibilityResolver(
+  value: SchemaTableColumn['visible'],
+): value is Exclude<SchemaTableColumn['visible'], boolean | undefined> {
+  return isFunction(value)
 }
 
 export function getSortableKey(options: { column: SchemaTableColumn }) {
@@ -79,19 +95,17 @@ export function getSortableKey(options: { column: SchemaTableColumn }) {
   if (options.column.kind === 'composite') {
     return options.column.sortableKey
   }
-
-  return undefined
 }
 
 export function uniqueColumnIds(options: { columnIds: string[] }) {
-  return Array.from(new Set(options.columnIds))
+  return [...new Set(options.columnIds)]
 }
 
 function humanizeKey(options: { value: string }) {
   return options.value
-    .replace(/[_-]+/g, ' ')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/\s+/g, ' ')
+    .replaceAll(/[_-]+/gu, ' ')
+    .replaceAll(/([a-z])([A-Z])/gu, '$1 $2')
+    .replaceAll(/\s+/gu, ' ')
     .trim()
-    .replace(/^./, (char) => char.toUpperCase())
+    .replace(/^./u, (char) => char.toUpperCase())
 }

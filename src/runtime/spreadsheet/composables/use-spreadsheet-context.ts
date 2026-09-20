@@ -1,13 +1,14 @@
 import { useQueries } from '@tanstack/vue-query'
-import { computed, type ComputedRef } from 'vue'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { SpreadsheetNormalizedSchema } from '../types'
 import {
-  type SpreadsheetContextQueryResult,
   createSpreadsheetContextData,
   createSpreadsheetContextQueries,
   createSpreadsheetContextStatus,
 } from '../utils'
+import type { SpreadsheetContextQueryResult } from '../utils'
 
 export interface UseSpreadsheetContextParams {
   schema: ComputedRef<SpreadsheetNormalizedSchema>
@@ -17,12 +18,12 @@ export function useSpreadsheetContext(params: UseSpreadsheetContextParams) {
   const contextItems = computed(() => params.schema.value.context)
 
   const context = useQueries({
-    queries: () => createSpreadsheetContextQueries(contextItems.value),
     combine: (results: SpreadsheetContextQueryResult[]) =>
       results.map((result, index) => ({
         key: contextItems.value[index]?.key,
         ...result,
       })),
+    queries: () => createSpreadsheetContextQueries(contextItems.value),
   })
 
   const contextResults = computed(() => context.value)
@@ -41,11 +42,11 @@ export function useSpreadsheetContext(params: UseSpreadsheetContextParams) {
 
   return {
     context,
+    contextData,
     contextItems,
     contextResults,
-    contextData,
-    status,
     error,
     refreshContext,
+    status,
   }
 }

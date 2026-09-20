@@ -1,4 +1,6 @@
+import type { FormArrayCollapseField } from '../fields/array-collapse/types'
 import type { FormArrayListField } from '../fields/array-list/types'
+import type { FormArrayPrimitiveField } from '../fields/array-primitive/types'
 import type { FormArrayTableField } from '../fields/array-table/types'
 import type { FormArrayTabsField } from '../fields/array-tabs/types'
 import type { FormArrayVariantField } from '../fields/array-variant/types'
@@ -40,10 +42,12 @@ import type { FormPhoneNumberField } from '../fields/phone-number/types'
 import type { FormRadioCardField } from '../fields/radio-card/types'
 import type { FormRadioField } from '../fields/radio/types'
 import type { FormRatingField } from '../fields/rating/types'
+import type { FormSectionField } from '../fields/section/types'
 import type { FormSelectField } from '../fields/select/types'
 import type { FormSliderField } from '../fields/slider/types'
 import type { FormSwitchGroupField } from '../fields/switch-group/types'
 import type { FormSwitchField } from '../fields/switch/types'
+import type { FormTabsField } from '../fields/tabs/types'
 import type { FormTagField } from '../fields/tag/types'
 import type { FormTextField } from '../fields/text/types'
 import type { FormTextareaField } from '../fields/textarea/types'
@@ -56,7 +60,12 @@ export type {
   FormStatefulFieldBase,
   FormStatelessFieldBase,
 } from './field-base'
+export type { FormArrayCollapseField } from '../fields/array-collapse/types'
 export type { FormArrayListField } from '../fields/array-list/types'
+export type {
+  FormArrayPrimitiveField,
+  FormArrayPrimitiveItemField,
+} from '../fields/array-primitive/types'
 export type { FormArrayTableField } from '../fields/array-table/types'
 export type { FormArrayTabsField } from '../fields/array-tabs/types'
 export type { FormArrayVariantField } from '../fields/array-variant/types'
@@ -80,6 +89,7 @@ export type {
   FormYearField,
 } from '../fields/date-family/types'
 export type { FormDividerField } from '../fields/divider/types'
+export type { FormSectionField } from '../fields/section/types'
 export type { FormFileField } from '../fields/file/types'
 export type { FormHiddenField } from '../fields/hidden/types'
 export type { FormGroupField } from '../fields/group/types'
@@ -105,6 +115,7 @@ export type { FormSelectCreateItem, FormSelectField } from '../fields/select/typ
 export type { FormSliderField } from '../fields/slider/types'
 export type { FormSwitchGroupField } from '../fields/switch-group/types'
 export type { FormSwitchField } from '../fields/switch/types'
+export type { FormTab, FormTabsField } from '../fields/tabs/types'
 export type { FormTagField } from '../fields/tag/types'
 export type { FormTextField } from '../fields/text/types'
 export type { FormTextareaField } from '../fields/textarea/types'
@@ -117,7 +128,7 @@ export type { FormUploadField } from '../fields/upload/types'
  * Individual field schema contracts live beside their field implementation in
  * `src/runtime/form/fields/<kind>/types.ts`; this file only assembles the public union.
  */
-export type FormField<TContext = {}, TDeps = {}> =
+export type FormField<TContext = NonNullable<unknown>, TDeps = NonNullable<unknown>> =
   | FormTextField<TContext, TDeps>
   | FormPasswordField<TContext, TDeps>
   | FormTextareaField<TContext, TDeps>
@@ -146,7 +157,9 @@ export type FormField<TContext = {}, TDeps = {}> =
   | FormHiddenField<TContext, TDeps>
   | FormInfoField<TContext, TDeps>
   | FormDividerField<TContext, TDeps>
+  | FormSectionField<TContext, TDeps>
   | FormInputGroupField<TContext, TDeps>
+  | FormTabsField<TContext, TDeps>
   | FormGroupField<TContext, TDeps>
   | FormObjectField<TContext, TDeps>
   | FormMatrixField<TContext, TDeps>
@@ -157,6 +170,8 @@ export type FormField<TContext = {}, TDeps = {}> =
   | FormArrayTableField<TContext, TDeps>
   | FormArrayTabsField<TContext, TDeps>
   | FormArrayVariantField<TContext, TDeps>
+  | FormArrayCollapseField<TContext, TDeps>
+  | FormArrayPrimitiveField<TContext, TDeps>
   | FormSliderField<TContext, TDeps>
   | FormColorPickerField<TContext, TDeps>
   | FormOneTimeCodeField<TContext, TDeps>

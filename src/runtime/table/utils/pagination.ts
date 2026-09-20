@@ -1,3 +1,4 @@
+import { isArray, isObject } from '../../shared/utils/predicate'
 import type {
   GenericObject,
   TableCursorPageResult,
@@ -6,12 +7,21 @@ import type {
 } from '../types'
 import { resolveTableRowId } from './rows'
 
-export function isTableCursorPageResult(value: unknown): value is TableCursorPageResult {
-  if (!value || typeof value !== 'object') return false
-  if (!('rows' in value) || !('pageInfo' in value)) return false
-  if (!Array.isArray(value.rows) || !value.pageInfo || typeof value.pageInfo !== 'object')
+export function isTableCursorPageResult<TValue>(
+  value: TValue,
+): value is TValue & TableCursorPageResult {
+  if (!isObject(value)) {
     return false
-  if (!('mode' in value.pageInfo)) return false
+  }
+  if (!('rows' in value) || !('pageInfo' in value)) {
+    return false
+  }
+  if (!isArray(value.rows) || !isObject(value.pageInfo)) {
+    return false
+  }
+  if (!('mode' in value.pageInfo)) {
+    return false
+  }
 
   return value.pageInfo.mode === 'cursor'
 }
@@ -24,13 +34,16 @@ export function flattenTableCursorPages(options: {
   let rowCount: number | null = null
 
   for (const page of options.pages) {
-    if (!isTableCursorPageResult(page)) continue
+    if (!isTableCursorPageResult(page)) {
+      continue
+    }
 
-    for (const [index, row] of page.rows.entries())
-      rows.set(resolveTableRowId({ rowKey: options.rowKey, row, index }), row)
+    for (const [index, row] of page.rows.entries()) {
+      rows.set(resolveTableRowId({ index, row, rowKey: options.rowKey }), row)
+    }
 
     rowCount = page.pageInfo.rowCount
   }
 
-  return { rows: [...rows.values()], rowCount }
+  return { rowCount, rows: [...rows.values()] }
 }

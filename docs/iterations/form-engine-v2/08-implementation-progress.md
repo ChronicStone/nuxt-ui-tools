@@ -269,7 +269,7 @@ Added:
 
 - `types/actions.ts` for built-in and custom form action contracts
 - `composables/use-form-actions.ts` for default/overridden action resolution
-- `components/actions/FormActions.vue` for rendering and action dispatch
+- `components/actions/form-actions.vue` for rendering and action dispatch
 
 Default behavior now matches shared-ui:
 
@@ -365,11 +365,11 @@ The filtered form typecheck is clean. The full `vue-tsc` command still fails on 
 
 Refined the provider-owned overlay slice to match the `shared-ui` layout responsibility split more closely:
 
-- `components/provider/FormProvider.vue` owns provider registration and active instances
-- `components/provider/FormOverlayHost.vue` selects the current overlay layout
+- `components/provider/form-provider.vue` owns provider registration and active instances
+- `components/provider/form-overlay-host.vue` selects the current overlay layout
 - `composables/use-form-overlay-controller.ts` owns mounted form controller binding, submit/cancel resolution, and runtime controls
 - `composables/use-form-overlay-layout.ts` owns responsive display-mode resolution through shared `useResponsiveValue`
-- `components/layout/ModalLayout.vue`, `DrawerLayout.vue`, and `FullscreenLayout.vue` own Nuxt UI layout shell and close-complete events
+- `components/layout/modal-layout.vue`, `DrawerLayout.vue`, and `FullscreenLayout.vue` own Nuxt UI layout shell and close-complete events
 - the previous broad `FormOverlayRenderer.vue` path was removed
 
 The playground now exposes the form runtime from the visible home surface and shell navigation:
@@ -526,9 +526,9 @@ Concrete cleanup landed:
 - moved generic path/object helpers into `src/runtime/shared/utils/path.ts`
 - kept form-named path aliases in `src/runtime/form/utils/path.ts` as compatibility/clarity exports
 - moved root/renderer components into concern folders:
-  - `components/root/Form.vue`
-  - `components/renderer/FormFieldRenderer.vue`
-  - `components/renderer/FormFieldShell.vue`
+  - `components/root/form.vue`
+  - `components/renderer/form-field-renderer.vue`
+  - `components/renderer/form-field-shell.vue`
 - split field-specific output inference into field folders:
   - `fields/text/types.ts`
   - `fields/select/types.ts`
@@ -572,7 +572,7 @@ Refined the runtime ownership to better match the shared-ui architecture:
 - `use-form-context-resources.ts` owns form-scoped `ctx` resource normalization
 - `use-form-state.ts` owns internal state, output state, initialization, reset, and raw path get/set
 - `use-form-validation.ts` owns validation errors, field errors, custom field errors, full-form validation, and current-scope validation
-- `use-form-submit.ts` owns `actionPending`, `submitHandler`, schema `onBeforeSubmit`, schema `submit`, and the public `useFormSubmit` helper
+- At this stage, `use-form-submit.ts` owned `actionPending`, `submitHandler`, schema `onBeforeSubmit`, schema `submit`, and a public `useFormSubmit` helper. The public helper was removed before v1 in favor of `useForm`.
 - `use-form-runtime.ts` is now a facade that wires those owned composables together
 
 The public form component now exposes and emits:
@@ -596,7 +596,7 @@ The playground now displays three side panels:
 
 The `Next` action now validates the current step before navigation. Final submit validates the whole form before running the submit lifecycle.
 
-Added inference coverage for `useFormSubmit` so submit handlers receive submitted output, including output transforms, rather than internal state.
+The earlier `useFormSubmit` helper had inference coverage so submit handlers received submitted output, including output transforms, rather than internal state. That coverage now lives on `useForm`, the sole public controller.
 
 Validation after this slice:
 
@@ -789,7 +789,7 @@ The controller is typed from the schema:
 - `form.context` uses `ExtractFormContext<typeof schema>`
 - submit handlers receive transformed submitted output
 
-`useFormSubmit` remains available for explicit ref/target-style submission, but the playground now uses the controller API as the main path.
+The ref/target-style `useFormSubmit` API was removed before v1. The playground and package surface now use `useForm` as the sole controller path.
 
 The form runtime also exposes richer navigation controls internally:
 

@@ -36,13 +36,13 @@ type SpreadsheetResolvedReferences<TReferences> = TReferences extends (
     ? readonly SpreadsheetExtractedReference<TReferences[number]>[]
     : readonly []
 
-type SpreadsheetSchemaDefinition<
+interface SpreadsheetSchemaDefinition<
   TImportKey extends string,
   TContextItems extends readonly SpreadsheetContextItem<string, unknown>[],
   TColumns,
   TReferences,
   TBuildRow,
-> = {
+> {
   importKey: TImportKey
   file?: SpreadsheetFileDefinition
   sheet?: SpreadsheetSheetStepDefinition
@@ -134,7 +134,9 @@ export function defineSpreadsheetSchema(schema: {
   columns?: SpreadsheetColumnsDefinition<unknown>
   relations?: undefined
 }) {
-  if (!schema.columns) return withSpreadsheetRefine(schema)
+  if (!schema.columns) {
+    return withSpreadsheetRefine(schema)
+  }
 
   return withSpreadsheetRefine({
     ...schema,

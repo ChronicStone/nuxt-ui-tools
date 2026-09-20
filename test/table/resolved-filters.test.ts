@@ -8,31 +8,31 @@ describe('resolved filters', () => {
     const state = createResolvedFilterState({
       definitions: [
         {
-          kind: 'option' as const,
-          key: 'status',
-          label: 'Status',
           behavior: {
             defaultOperator: 'isAnyOf' as const,
+          },
+          key: 'status',
+          kind: 'option' as const,
+          label: 'Status',
+          resolve({ rule }: TableFilterResolveContext) {
+            return {
+              children: (Array.isArray(rule.value) ? rule.value : []).map(
+                (value): TableResolvedFilterNode<string> => ({
+                  key: 'realStatus',
+                  operator: 'is' as const,
+                  type: 'condition' as const,
+                  value,
+                }),
+              ),
+              combinator: 'or' as const,
+              type: 'group' as const,
+            }
           },
           source: {
             options: [
               { label: 'Live', value: 'live' as const },
               { label: 'Paused', value: 'paused' as const },
             ],
-          },
-          resolve({ rule }: TableFilterResolveContext) {
-            return {
-              type: 'group' as const,
-              combinator: 'or' as const,
-              children: (Array.isArray(rule.value) ? rule.value : []).map(
-                (value): TableResolvedFilterNode<string> => ({
-                  type: 'condition' as const,
-                  key: 'realStatus',
-                  operator: 'is' as const,
-                  value,
-                }),
-              ),
-            }
           },
         },
       ],
@@ -48,55 +48,55 @@ describe('resolved filters', () => {
       },
       staticFilters: [
         {
-          type: 'group',
-          combinator: 'and',
           children: [
             {
-              type: 'condition',
               key: 'archived',
               operator: 'is',
+              type: 'condition',
               value: false,
             },
           ],
+          combinator: 'and',
+          type: 'group',
         },
       ],
     })
 
-    expect(state).toEqual({
-      type: 'group',
-      combinator: 'and',
+    expect(state).toStrictEqual({
       children: [
         {
-          type: 'group',
-          combinator: 'and',
           children: [
             {
-              type: 'condition',
               key: 'archived',
               operator: 'is',
+              type: 'condition',
               value: false,
             },
           ],
+          combinator: 'and',
+          type: 'group',
         },
         {
-          type: 'group',
-          combinator: 'or',
           children: [
             {
-              type: 'condition',
               key: 'realStatus',
               operator: 'is',
+              type: 'condition',
               value: 'live',
             },
             {
-              type: 'condition',
               key: 'realStatus',
               operator: 'is',
+              type: 'condition',
               value: 'paused',
             },
           ],
+          combinator: 'or',
+          type: 'group',
         },
       ],
+      combinator: 'and',
+      type: 'group',
     })
   })
 })

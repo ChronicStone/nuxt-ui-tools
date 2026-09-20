@@ -8,16 +8,22 @@ Main entrypoints:
 
 - `src/runtime/table/index.ts`
 - `src/runtime/table/schema/index.ts`
+- `src/runtime/table/utils/builders/table-source.ts`
 - `src/runtime/table/composables/use-table.ts`
 
 What they do:
 
 - expose the package-facing surface
+- seal source query-result inference with inline `tableSource(...)`
 - let consumers define a schema
 - let consumers instantiate a table object
 
 This layer should stay clean and inference-friendly.
 If internals are awkward, fix the internals instead of leaking complexity outward.
+
+`tableSource(...)` is an inline inference boundary, not a separately declared source factory. Keep
+usage inside `defineTableSchema({ source: tableSource({ ... }) })`; schema context remains available
+to static filters, while page context derives after the source row has been inferred.
 
 ## 2. Orchestration Root
 

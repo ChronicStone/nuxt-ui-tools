@@ -1,6 +1,6 @@
 import { addComponent } from '@nuxt/kit'
 
-type PublicComponent = {
+interface PublicComponent {
   name: string
   filePath: string
   global: boolean | undefined
@@ -18,19 +18,22 @@ function getPublicComponents(
   return [
     // I18n
     {
-      name: `${prefix}ToolsProvider`,
       filePath: `${runtimeDir}/i18n/provider.vue`,
       global: options.global,
+      name: `${prefix}ToolsProvider`,
     },
 
     // Table
     {
-      name: `${prefix}DataList`,
-      filePath: `${runtimeDir}/table/components/DataList.vue`,
+      filePath: `${runtimeDir}/table/components/data-list.vue`,
       global: options.global,
+      name: `${prefix}DataList`,
     },
     ...[
       'Root',
+      'ActionsDropdown',
+      'ActionsToolbar',
+      'SelectionActions',
       'Search',
       'FilterTags',
       'AddFilter',
@@ -47,23 +50,27 @@ function getPublicComponents(
       'Pagination',
       'InfiniteLoader',
     ].map((part) => ({
-      name: `${prefix}DataList${part}`,
-      filePath: `${runtimeDir}/table/components/data-list/DataList${part}.vue`,
+      filePath: `${runtimeDir}/table/components/data-list/data-list-${toKebabCase(part)}.vue`,
       global: options.global,
+      name: `${prefix}DataList${part}`,
     })),
 
     // Form
     {
-      name: `${prefix}Form`,
-      filePath: `${runtimeDir}/form/components/root/Form.vue`,
+      filePath: `${runtimeDir}/form/components/root/form.vue`,
       global: options.global,
+      name: `${prefix}Form`,
     },
     {
-      name: `${prefix}FormProvider`,
-      filePath: `${runtimeDir}/form/components/provider/FormProvider.vue`,
+      filePath: `${runtimeDir}/form/components/provider/form-provider.vue`,
       global: options.global,
+      name: `${prefix}FormProvider`,
     },
   ]
+}
+
+function toKebabCase(value: string) {
+  return value.replaceAll(/([a-z0-9])([A-Z])/gu, '$1-$2').toLowerCase()
 }
 
 export function setupComponents(
@@ -73,5 +80,7 @@ export function setupComponents(
     global?: boolean
   },
 ) {
-  for (const component of getPublicComponents(runtimeDir, options)) addComponent(component)
+  for (const component of getPublicComponents(runtimeDir, options)) {
+    addComponent(component)
+  }
 }

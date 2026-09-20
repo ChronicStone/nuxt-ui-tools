@@ -2,7 +2,8 @@ import { computed, toValue } from 'vue'
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
 import type { TableApi } from '../types'
-import { createTableInternals, type TableInternals } from './use-table-internals'
+import { createTableInternals } from './use-table-internals'
+import type { TableInternals } from './use-table-internals'
 
 export function useTable<TSchema>(
   schema: MaybeRefOrGetter<TSchema>,
@@ -14,7 +15,7 @@ export function useTable<TSchema>(
 
   return {
     ...internals.tableApi,
-    schema: resolvedSchema,
     __internals: internals,
+    schema: resolvedSchema,
   }
 }

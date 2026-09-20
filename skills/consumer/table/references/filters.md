@@ -137,8 +137,26 @@ instead of leaving defaulted filters empty.
 
 Important rule:
 
-- filters rendered in the panel always use panel-level staged apply
+- drawer panels default to staged apply; granular panels choose `live` or `submit` with `commit-mode`
 - `behavior.commitMode` matters for direct surfaces such as tag and tag-dynamic editors
+
+## Granular Raw Filter Panel
+
+`<UiDataListFilterPanel mode="panel" />` renders the filter fields inline, without a
+slideover, so the page owns the surrounding layout. Use `commit-mode="live"` for
+immediate query updates or `commit-mode="submit"` to stage edits until Apply:
+
+```vue
+<aside class="w-72">
+  <UiDataListFilterPanel mode="panel" commit-mode="live" />
+</aside>
+```
+
+Submit mode keeps edits in the panel draft; Clear resets the draft to configured
+defaults and Apply commits it. Live mode applies field changes immediately and
+does not render an Apply footer. The same options can be supplied through the
+`DataListRoot` `ui.filterPanel` config when a shared composition should use one
+mode consistently.
 
 ### `display`
 

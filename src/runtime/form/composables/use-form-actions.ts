@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
-import type { FormAction, FormActionKey, FormRenderShell, FormRuntime } from '../types'
+import type { FormValue, FormAction, FormActionKey, FormRenderShell, FormRuntime } from '../types'
 import { isRecord } from '../utils/path'
 
 export function useFormActions(params: {
@@ -14,10 +14,13 @@ export function useFormActions(params: {
   return computed<readonly FormAction[]>(() => {
     const configuredActions =
       getCurrentStepActions(params.runtime) ?? getSchemaActions(params.runtime.schema.value)
-    if (configuredActions)
+    if (configuredActions) {
       return configuredActions.map((action) => normalizeFormAction(action, params, t))
+    }
 
-    if (!params.runtime.isStepped.value) return [getBaseFormAction('submit', params, t)]
+    if (!params.runtime.isStepped.value) {
+      return [getBaseFormAction('submit', params, t)]
+    }
 
     return [
       getBaseFormAction('previous', params, t),
@@ -35,7 +38,9 @@ function normalizeFormAction(
   },
   t: (key: string) => string,
 ): FormAction {
-  if (!isBaseFormAction(action)) return action
+  if (!isBaseFormAction(action)) {
+    return action
+  }
   return {
     ...getBaseFormAction(action.key, params, t),
     ...action,
@@ -50,71 +55,91 @@ function getBaseFormAction(
   },
   t: (key: string) => string,
 ): FormAction {
-  const slot = params.shell.value !== 'inline' ? 'right' : 'left'
-  if (key === 'submit')
+  const slot = params.shell.value === 'inline' ? 'left' : 'right'
+  if (key === 'submit') {
     return {
+      condition: (context) => (context.isMultiStep ? context.isLastStep : true),
       key,
       label: () => t('form.actions.submitButton'),
-      condition: (context) => (context.isMultiStep ? context.isLastStep : true),
+      slot,
       type: 'primary',
       width: 'fill md:fit',
-      slot,
     }
-  if (key === 'next')
+  }
+  if (key === 'next') {
     return {
+      condition: (context) => !context.isLastStep,
       key,
       label: () => t('form.actions.nextButton'),
-      condition: (context) => !context.isLastStep,
+      slot,
       type: 'primary',
       width: 'fill md:fit',
-      slot,
     }
-  if (key === 'previous')
+  }
+  if (key === 'previous') {
     return {
+      color: 'neutral',
+      disabled: (context) => context.isFirstStep,
       key,
       label: () => t('form.actions.prevButton'),
-      disabled: (context) => context.isFirstStep,
-      width: 'fill md:fit',
       slot,
+      variant: 'outline',
+      width: 'fill md:fit',
     }
-  if (key === 'reset')
+  }
+  if (key === 'reset') {
     return {
+      color: 'neutral',
       key,
       label: () => t('form.actions.resetButton'),
-      width: 'fill md:fit',
       slot,
+      variant: 'outline',
+      width: 'fill md:fit',
     }
+  }
 
   return {
+    color: 'neutral',
     key,
     label: () => t('form.actions.cancelButton'),
-    width: 'fill md:fit',
     slot,
+    variant: 'outline',
+    width: 'fill md:fit',
   }
 }
 
-function getSchemaActions(schema: unknown) {
-  if (!isRecord(schema)) return undefined
+function getSchemaActions(schema: FormValue) {
+  if (!isRecord(schema)) {
+    return
+  }
   const actions = Object.getOwnPropertyDescriptor(schema, 'actions')?.value
   return isFormActionList(actions) ? actions : undefined
 }
 
 function getCurrentStepActions(runtime: FormRuntime) {
-  if (!runtime.isStepped.value) return undefined
+  if (!runtime.isStepped.value) {
+    return
+  }
   const schema = runtime.schema.value
-  if (!isRecord(schema)) return undefined
+  if (!isRecord(schema)) {
+    return
+  }
 
   const steps = Object.getOwnPropertyDescriptor(schema, 'steps')?.value
-  if (!Array.isArray(steps)) return undefined
+  if (!Array.isArray(steps)) {
+    return
+  }
 
   const step = steps[runtime.currentStepIndex.value]
-  if (!isRecord(step)) return undefined
+  if (!isRecord(step)) {
+    return
+  }
 
   const actions = Object.getOwnPropertyDescriptor(step, 'actions')?.value
   return isFormActionList(actions) ? actions : undefined
 }
 
-function isFormActionList(value: unknown): value is readonly FormAction[] {
+function isFormActionList(value: FormValue): value is readonly FormAction[] {
   return Array.isArray(value)
 }
 
@@ -122,7 +147,7 @@ function isBaseFormAction(action: FormAction): action is FormAction & { key: For
   return isFormActionKey(action.key)
 }
 
-function isFormActionKey(value: unknown): value is FormActionKey {
+function isFormActionKey(value: FormValue): value is FormActionKey {
   return (
     value === 'reset' ||
     value === 'cancel' ||

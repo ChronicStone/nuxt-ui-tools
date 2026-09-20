@@ -16,23 +16,13 @@ describe('table search orchestration', () => {
       ui: [],
     })
     const pagination = ref({
+      count: 'exact' as const,
       mode: 'offset' as const,
       pageIndex: 2,
       pageSize: 20,
-      count: 'exact' as const,
     })
+    // SAFETY: this focused test supplies only the query-state members useTableSearch reads.
     const searchState = useTableSearch({
-      schema: computed(() => ({
-        tableKey: 'users',
-        rowKey: 'id',
-        source: { query: () => ({ queryKey: ['users'] }) },
-        filters: {
-          search: {
-            fields: ['name'],
-            placeholder: 'Search team',
-          },
-        },
-      })),
       queryState: {
         filters,
         pagination,
@@ -40,17 +30,32 @@ describe('table search orchestration', () => {
           pagination.value = { ...pagination.value, pageIndex: 1 }
         },
       } as never,
+      schema: computed(() => ({
+        filters: {
+          search: {
+            fields: ['name'],
+            placeholder: 'Search team',
+          },
+        },
+        rowKey: 'id',
+        source: { query: () => ({ queryKey: ['users'] }) },
+        tableKey: 'users',
+      })),
     })
 
-    expect(searchState.searchQuery.value).toBe('Ada')
-    expect(searchState.searchPlaceholder.value).toBe('Search team')
-    expect(searchState.hasActiveSearch.value).toBe(true)
+    expect([searchState.searchQuery.value, searchState.searchPlaceholder.value]).toStrictEqual([
+      'Ada',
+      'Search team',
+    ])
+    expect(searchState.hasActiveSearch.value).toBeTruthy()
 
     searchState.searchQuery.value = 'Grace'
 
-    expect(searchState.searchQuery.value).toBe('Grace')
-    expect(filters.value.search).toBe('Grace')
-    expect(pagination.value.pageIndex).toBe(1)
+    expect([
+      searchState.searchQuery.value,
+      filters.value.search,
+      pagination.value.pageIndex,
+    ]).toStrictEqual(['Grace', 'Grace', 1])
   })
 })
 
@@ -58,29 +63,29 @@ describe('filter value registry', () => {
   it('derives stable defaults by filter kind', () => {
     expect(
       createDefaultFilterValue({
-        kind: 'text',
         key: 'name',
+        kind: 'text',
         label: 'Name',
       }),
     ).toBe('')
 
     expect(
       createDefaultFilterValue({
-        kind: 'option',
         key: 'status',
+        kind: 'option',
         label: 'Status',
       }),
-    ).toEqual([])
+    ).toStrictEqual([])
 
     expect(
       createFilterValueForOperator({
         definition: {
-          kind: 'number',
           key: 'salary',
+          kind: 'number',
           label: 'Salary',
         },
         operator: 'between',
       }),
-    ).toEqual({ from: undefined, to: undefined })
+    ).toStrictEqual({ from: undefined, to: undefined })
   })
 })

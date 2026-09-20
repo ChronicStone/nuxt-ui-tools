@@ -1,5 +1,5 @@
-import type { TableSourceExecutionResult } from '#ui-tools/table'
-import type { GenericObject, TableResolvedFilterGroup } from '#ui-tools/table/types'
+import type { TableCursorPageResult, TableOffsetPageResult } from '#ui-tools/table'
+import type { GenericObject, TableSourceRequestContext } from '#ui-tools/table/types'
 
 export interface DemoCompany {
   id: string
@@ -39,29 +39,15 @@ export interface DemoEmployeeRow extends GenericObject {
   employeeSkills: DemoEmployeeSkill[]
 }
 
-export interface DemoEmployeesTableRequest {
-  pagination: {
-    pageIndex: number
-    pageSize: number
-  }
-  sorting: Array<{
-    key: string
-    dir: 'asc' | 'desc'
-  }>
-  filters: TableResolvedFilterGroup<string>
-  search: {
-    value: string
-    fields: string[]
-  }
-  context: Record<string, unknown>
-  facets?: Array<{
-    key: string
-    mode?: 'exclude-self' | 'include-self'
-    limit?: number
-  }>
-}
+export type DemoEmployeesTableRequest = TableSourceRequestContext<
+  DemoEmployeeRow,
+  GenericObject,
+  string
+>
 
-export type DemoEmployeesTableResponse = TableSourceExecutionResult<DemoEmployeeRow, string>
+export type DemoEmployeesTableResponse =
+  | TableOffsetPageResult<DemoEmployeeRow, string>
+  | TableCursorPageResult<DemoEmployeeRow, string>
 
 export interface FilterOptionsRequest {
   search?: string
@@ -70,10 +56,10 @@ export interface FilterOptionsRequest {
 }
 
 export interface FilterOptionsResponse {
-  options: Array<{
+  options: {
     value: string
     label: string
-  }>
+  }[]
   nextCursor?: string | null
   total?: number
 }
@@ -81,30 +67,30 @@ export interface FilterOptionsResponse {
 export type DemoEmployeeFilterOptionsResource = 'companies' | 'departments' | 'skills'
 
 export const demoEmployeesClient = {
-  queryTable(request: DemoEmployeesTableRequest) {
-    return $fetch<DemoEmployeesTableResponse>('/api/table/demo-employees/query', {
-      method: 'POST',
-      body: request,
-    })
-  },
   filterOptions: {
     companies(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/companies', {
-        method: 'POST',
         body: options.request,
+        method: 'POST',
       })
     },
     departments(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/departments', {
-        method: 'POST',
         body: options.request,
+        method: 'POST',
       })
     },
     skills(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/skills', {
-        method: 'POST',
         body: options.request,
+        method: 'POST',
       })
     },
+  },
+  queryTable(request: DemoEmployeesTableRequest) {
+    return $fetch<DemoEmployeesTableResponse>('/api/table/demo-employees/query', {
+      body: request,
+      method: 'POST',
+    })
   },
 }

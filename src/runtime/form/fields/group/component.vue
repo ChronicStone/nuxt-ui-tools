@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 
-import FormFieldRenderer from '../../components/renderer/FormFieldRenderer.vue'
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFormUi } from '../../composables/use-form-ui'
 import { mergeFormUiClass } from '../../utils/ui'
 import type { FormGroupField } from './types'
@@ -21,7 +21,11 @@ const formUi = useFormUi()
     <UFieldGroup
       :size="formUi.controlSize.value"
       :class="
-        mergeFormUiClass('w-full', formUi.ui.value.group?.ui?.root, formUi.ui.value.group?.ui?.base)
+        mergeFormUiClass(
+          'w-full [&>button:has(+input[data-hidden]:last-child)]:rounded-e-md',
+          formUi.ui.value.group?.ui?.root,
+          formUi.ui.value.group?.ui?.base,
+        )
       "
     >
       <FormFieldRenderer

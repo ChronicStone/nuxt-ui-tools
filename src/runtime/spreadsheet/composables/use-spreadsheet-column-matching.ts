@@ -1,6 +1,7 @@
-import { computed, shallowRef, type ComputedRef } from 'vue'
+import { computed, shallowRef } from 'vue'
+import type { ComputedRef } from 'vue'
 
-import type { SpreadsheetNormalizedSchema } from '../types'
+import type { SpreadsheetNormalizedSchema, SpreadsheetRecord } from '../types'
 import {
   createSpreadsheetHeaderCells,
   flattenSpreadsheetStaticColumns,
@@ -12,7 +13,7 @@ import { createSpreadsheetDynamicBuilder } from '../utils/builders'
 
 export interface UseSpreadsheetColumnMatchingParams {
   schema: ComputedRef<SpreadsheetNormalizedSchema>
-  contextData: ComputedRef<Record<string, unknown>>
+  contextData: ComputedRef<SpreadsheetRecord>
   headers: ComputedRef<readonly unknown[]>
 }
 
@@ -62,14 +63,14 @@ export function useSpreadsheetColumnMatching(params: UseSpreadsheetColumnMatchin
   }
 
   return {
-    headerCells,
-    staticColumns,
-    dynamicColumns,
-    manualColumnAssignments,
-    columnMatches,
-    dynamicColumnMatches,
-    unmatchedColumns,
     assignColumn,
     clearColumnAssignment,
+    columnMatches,
+    dynamicColumnMatches,
+    dynamicColumns,
+    headerCells,
+    manualColumnAssignments,
+    staticColumns,
+    unmatchedColumns,
   }
 }

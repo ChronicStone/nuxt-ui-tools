@@ -1,8 +1,8 @@
 import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const groupFieldKind = defineFormFieldKind({
-  type: 'group',
+  layout: { container: true, item: true },
   state: 'passthrough',
-  ui: { label: true, description: true },
-  layout: { item: true, container: true },
+  type: 'group',
+  ui: { description: true, label: true },
 })

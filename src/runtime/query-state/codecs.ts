@@ -1,3 +1,4 @@
+import { isNullish } from '../shared/utils/predicate'
 /**
  * Serializes and parses a single query-string value.
  *
@@ -61,11 +62,15 @@ export function createEnumCodec<const T extends readonly string[]>(
   const set = new Set<string>(values)
   return {
     parse(raw) {
-      if (set.has(raw)) return raw as T[number]
-      return undefined
+      if (set.has(raw)) {
+        // SAFETY: the set was created from `values`, so a present raw value is one of T[number].
+        return raw as T[number]
+      }
     },
     serialize(value) {
-      if (value != null && set.has(value)) return value
+      if (!isNullish(value) && set.has(value)) {
+        return value
+      }
       return null
     },
   }
@@ -85,11 +90,15 @@ export function createEnumCodec<const T extends readonly string[]>(
 export function createArrayCodec<T>(itemCodec: QueryCodec<T>, separator = ','): QueryCodec<T[]> {
   return {
     parse(raw) {
-      if (!raw) return []
+      if (!raw) {
+        return []
+      }
       return raw.split(separator).map((part) => itemCodec.parse(part))
     },
     serialize(value) {
-      if (!value.length) return null
+      if (!value.length) {
+        return null
+      }
       return value
         .map((item) => itemCodec.serialize(item))
         .filter(Boolean)

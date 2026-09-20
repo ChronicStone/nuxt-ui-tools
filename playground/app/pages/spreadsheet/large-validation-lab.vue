@@ -4,7 +4,7 @@ import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { createSheetRule, useSpreadsheetImport } from '#ui-tools/spreadsheet'
-import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
+import SpreadsheetImport from '#ui-tools/spreadsheet/components/spreadsheet-import.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
 definePageMeta({
@@ -14,47 +14,47 @@ definePageMeta({
 const { t } = useI18n()
 
 const center = {
-  id: 'tc_madrid',
-  country: 'Spain',
-  products: [
-    { id: 'prod_be_4skills', name: 'Positionnement VTest Business English - 4 Skills' },
-    { id: 'prod_general_4skills', name: 'Positionnement VTest English - 4 Skills' },
-    { id: 'prod_career_screen', name: 'Career Screening English Bundle' },
-  ],
   affiliationGroups: [
     {
       id: 'school-level',
-      name: 'School level',
-      slug: 'schoolLevel',
       items: [
         { id: 'secondary', name: 'Secondary' },
         { id: 'higher-education', name: 'Higher education' },
         { id: 'professional', name: 'Professional' },
       ],
+      name: 'School level',
+      slug: 'schoolLevel',
     },
     {
       id: 'programme',
-      name: 'Programme',
-      slug: 'programme',
       items: [
         { id: 'general-english', name: 'General English' },
         { id: 'business-english', name: 'Business English' },
         { id: 'career-readiness', name: 'Career Readiness' },
       ],
+      name: 'Programme',
+      slug: 'programme',
     },
+  ],
+  country: 'Spain',
+  id: 'tc_madrid',
+  products: [
+    { id: 'prod_be_4skills', name: 'Positionnement VTest Business English - 4 Skills' },
+    { id: 'prod_general_4skills', name: 'Positionnement VTest English - 4 Skills' },
+    { id: 'prod_career_screen', name: 'Career Screening English Bundle' },
   ],
 } as const
 
 type SpreadsheetProduct = (typeof center.products)[number]
-type SpreadsheetAffiliationOption = {
+interface SpreadsheetAffiliationOption {
   id: string
   name: string
 }
 
-const batchCodeRule = createSheetRule<string, [], {}>({
+const batchCodeRule = createSheetRule<string, [], NonNullable<unknown>>({
+  message: ({ value }) => `"${value}" cannot start with underscore`,
   name: 'batchCode',
   validator: (value) => !value.startsWith('_'),
-  message: ({ value }) => `"${value}" cannot start with underscore`,
 })
 
 const centerMatchRule = createSheetRule<
@@ -64,12 +64,12 @@ const centerMatchRule = createSheetRule<
     expectedId: string
   }
 >({
+  message: ({ params: [expectedId] }) => `Row test center must be ${expectedId}`,
   name: 'testCenterMatch',
   validator: (value, expectedId) => ({
     $valid: value === expectedId,
     expectedId,
   }),
-  message: ({ params: [expectedId] }) => `Row test center must be ${expectedId}`,
 })
 
 const scoreBandRule = createSheetRule<
@@ -80,26 +80,45 @@ const scoreBandRule = createSheetRule<
     max: number
   }
 >({
+  message: ({ value, params: [min, max] }) => `${value} must be between ${min} and ${max}`,
   name: 'scoreBand',
   validator: (value, min, max) => ({
     $valid: !Number.isNaN(value) && value >= min && value <= max,
-    min,
     max,
+    min,
   }),
-  message: ({ value, params: [min, max] }) => `${value} must be between ${min} and ${max}`,
 })
 
 function createLargeValidationSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.large-validation-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 500,
-    },
-    sheet: { strategy: 'selection' },
-    header: { strategy: 'selection' },
-    matching: { strategy: 'smart' },
     columns: {
+      dynamic: ({ dynamic }) => [
+        dynamic.optionGroups({
+          header: {
+            strategy: 'template',
+            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
+          },
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          key: 'affiliations',
+          options: (group: { items: readonly SpreadsheetAffiliationOption[] }) =>
+            group.items.map((item: SpreadsheetAffiliationOption) => ({
+              label: item.name,
+              value: item.id,
+            })),
+          output: {
+            into: 'affiliations',
+          },
+          source: center.affiliationGroups,
+          targetKey: (group) => group.slug,
+          values: {
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+            mode: 'csv',
+            resolve: 'label',
+            separator: ',',
+          },
+        }),
+      ],
       static: (column) => [
         column.text('testCenterId', {
           match: { headers: ['Test center ID'] },
@@ -164,43 +183,24 @@ function createLargeValidationSchema() {
           ],
         }),
       ],
-      dynamic: ({ dynamic }) => [
-        dynamic.optionGroups({
-          key: 'affiliations',
-          source: center.affiliationGroups,
-          itemKey: (group) => group.id,
-          itemLabel: (group) => group.name,
-          targetKey: (group) => group.slug,
-          header: {
-            strategy: 'template',
-            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-          },
-          options: (group: { items: readonly SpreadsheetAffiliationOption[] }) =>
-            group.items.map((item: SpreadsheetAffiliationOption) => ({
-              label: item.name,
-              value: item.id,
-            })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
-          output: {
-            into: 'affiliations',
-          },
-        }),
-      ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 500,
+    },
+    header: { strategy: 'selection' },
+    importKey: 'playground.spreadsheet.large-validation-lab',
+    matching: { strategy: 'smart' },
     references: (reference) => [
       reference.select('productId', {
-        source: 'examNameRaw',
         options: center.products.map((product: SpreadsheetProduct) => ({
           label: product.name,
           value: product.id,
         })),
+        source: 'examNameRaw',
       }),
     ],
+    sheet: { strategy: 'selection' },
   }).refine({
     relations: [
       {
@@ -220,7 +220,7 @@ const schema = createLargeValidationSchema()
 const spreadsheet = useSpreadsheetImport(schema)
 
 function createWorkbook() {
-  faker.seed(20260326)
+  faker.seed(20_260_326)
 
   const rowCount = 250
   const invalidRowCount = Math.floor(rowCount * 0.2)
@@ -260,19 +260,29 @@ function createWorkbook() {
         'Done',
         `Madrid Wave ${Math.floor(index / 25) + 1}`,
         center.country,
-        String(faker.number.int({ min: 48, max: 98 })),
-        String(faker.number.int({ min: 42, max: 96 })),
+        String(faker.number.int({ max: 98, min: 48 })),
+        String(faker.number.int({ max: 96, min: 42 })),
         schoolLevel,
         programme,
       ]
 
-      if (!invalidIndexes.has(index)) return baseRow
+      if (!invalidIndexes.has(index)) {
+        return baseRow
+      }
 
       const invalidVariant = index % 4
-      if (invalidVariant === 0) baseRow[0] = 'tc_barcelona'
-      if (invalidVariant === 1) baseRow[3] = ''
-      if (invalidVariant === 2) baseRow[10] = 'oops'
-      if (invalidVariant === 3) baseRow[8] = `_internal-${index + 1}`
+      if (invalidVariant === 0) {
+        baseRow[0] = 'tc_barcelona'
+      }
+      if (invalidVariant === 1) {
+        baseRow[3] = ''
+      }
+      if (invalidVariant === 2) {
+        baseRow[10] = 'oops'
+      }
+      if (invalidVariant === 3) {
+        baseRow[8] = `_internal-${index + 1}`
+      }
 
       return baseRow
     }),
@@ -283,19 +293,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Bulk import')
 
   return {
-    fileName: 'spreadsheet-large-validation-lab.xlsx',
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
+    fileName: 'spreadsheet-large-validation-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

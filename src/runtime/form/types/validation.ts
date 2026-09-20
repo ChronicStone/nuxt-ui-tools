@@ -1,5 +1,8 @@
+import type { RegleRuleRaw } from '@regle/core'
+
+import type { FormValue } from './'
 import type { FormFieldCallback } from './callbacks'
-import type { FormMaybePromise, FormText } from './utils'
+import type { FormMaybePromise, FormObject, FormText } from './utils'
 
 /**
  * Result returned by a form validation rule.
@@ -9,7 +12,11 @@ export type FormValidationResult = boolean | string | null | undefined
 /**
  * A single validation rule.
  */
-export interface FormValidationRule<TValue = unknown, TContext = {}, TDeps = {}> {
+export interface FormValidationRule<
+  TValue = FormValue,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   /** Stable rule name used for debugging, i18n, and external error mapping. */
   name: string
   /** Returns true for valid values, false/string for invalid values. */
@@ -39,6 +46,8 @@ export interface FormValidationError {
   path: string
   /** Resolved message safe to display in the UI. */
   message: string
+  /** External errors only block submit when set with `blocking: true`. */
+  blocking?: boolean
 }
 
 /**
@@ -59,7 +68,11 @@ export interface FormValidationOptions {
 /**
  * Field validation configuration.
  */
-export interface FormValidationConfig<TValue = unknown, TContext = {}, TDeps = {}> {
+export interface FormValidationConfig<
+  TValue = FormValue,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+> {
   /** Defines when the field starts showing validation feedback while editing. */
   trigger?: FormValidationTrigger
   /** Marks the field as required. */
@@ -69,3 +82,11 @@ export interface FormValidationConfig<TValue = unknown, TContext = {}, TDeps = {
   /** Additional field rules. */
   rules?: readonly FormValidationRule<TValue, TContext, TDeps>[]
 }
+
+/** Native Regle rules keyed by their validation name. */
+export type FormValidators = Record<string, RegleRuleRaw>
+
+/** Static or dependency-aware native Regle rules for one field. */
+export type FormValidatorsConfig<TContext = NonNullable<unknown>> =
+  | FormValidators
+  | FormFieldCallback<FormValidators, TContext, FormObject>

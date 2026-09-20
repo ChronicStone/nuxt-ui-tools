@@ -7,8 +7,8 @@ import type {
   FormFieldType,
 } from '../types'
 
+export { type FormFieldCapability, type FormFieldState } from '../types'
 export type FormFieldKind = FormFieldKindDefinition
-export type { FormFieldCapability, FormFieldState }
 
 /**
  * Internal public instance for checking authored field behavior against the field-kind registry.
@@ -87,27 +87,27 @@ export function createFormFieldInstance<const TField extends FormField>(
   }
 
   return {
-    raw,
-    is,
-    isAny: (states) => states.some(is),
-    has,
-    hasAny: (capabilities) => capabilities.some(has),
-    hasAll: (capabilities) => capabilities.every(has),
-    type: {
-      value: raw.type,
-      is: (type) => raw.type === type,
-      isAny: (types) => types.some((type) => raw.type === type),
-    },
-    config,
-    state: {
-      value: state,
-      is,
-      isAny: (states) => states.some(is),
-    },
     capability: {
       has,
-      hasAny: (capabilities) => capabilities.some(has),
       hasAll: (capabilities) => capabilities.every(has),
+      hasAny: (capabilities) => capabilities.some(has),
+    },
+    config,
+    has,
+    hasAll: (capabilities) => capabilities.every(has),
+    hasAny: (capabilities) => capabilities.some(has),
+    is,
+    isAny: (states) => states.some(is),
+    raw,
+    state: {
+      is,
+      isAny: (states) => states.some(is),
+      value: state,
+    },
+    type: {
+      is: (type) => raw.type === type,
+      isAny: (types) => types.some((type) => raw.type === type),
+      value: raw.type,
     },
   }
 }
@@ -121,18 +121,44 @@ export function isRegisteredFormFieldType(type: string): type is FormFieldType {
 }
 
 export function fieldKindHas(kind: FormFieldKind, capability: FormFieldCapability) {
-  if (capability === 'value') return kind.state === 'stateful'
-  if (capability === 'children') return kind.state === 'passthrough'
-  if (capability === 'label') return kind.ui?.label === true
-  if (capability === 'description') return kind.ui?.description === true
-  if (capability === 'hint') return kind.ui?.hint === true
-  if (capability === 'layout') return kind.layout?.item === true || kind.layout?.container === true
-  if (capability === 'itemLayout') return kind.layout?.item === true
-  if (capability === 'containerLayout') return kind.layout?.container === true
-  if (capability === 'options') return kind.options?.enabled === true
-  if (capability === 'upload') return kind.upload?.enabled === true
-  if (capability === 'validation') return kind.validation === true
-  if (capability === 'transform') return kind.transform === true
-  if (capability === 'submit') return kind.state === 'stateful'
+  if (capability === 'value') {
+    return kind.state === 'stateful'
+  }
+  if (capability === 'children') {
+    return kind.state === 'passthrough'
+  }
+  if (capability === 'label') {
+    return kind.ui?.label === true
+  }
+  if (capability === 'description') {
+    return kind.ui?.description === true
+  }
+  if (capability === 'hint') {
+    return kind.ui?.hint === true
+  }
+  if (capability === 'layout') {
+    return kind.layout?.item === true || kind.layout?.container === true
+  }
+  if (capability === 'itemLayout') {
+    return kind.layout?.item === true
+  }
+  if (capability === 'containerLayout') {
+    return kind.layout?.container === true
+  }
+  if (capability === 'options') {
+    return kind.options?.enabled === true
+  }
+  if (capability === 'upload') {
+    return kind.upload?.enabled === true
+  }
+  if (capability === 'validation') {
+    return kind.validation === true
+  }
+  if (capability === 'transform') {
+    return kind.transform === true
+  }
+  if (capability === 'submit') {
+    return kind.state === 'stateful'
+  }
   return false
 }

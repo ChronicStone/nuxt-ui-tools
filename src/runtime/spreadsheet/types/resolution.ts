@@ -5,7 +5,7 @@ import type {
   SpreadsheetOptionItem,
   SpreadsheetOptionsSource,
 } from './options'
-import type { SpreadsheetQueryDefinition } from './shared'
+import type { SpreadsheetQueryDefinition, SpreadsheetRecord } from './shared'
 import type { SpreadsheetFieldRulesInput } from './validation'
 
 export type SpreadsheetResolvedSelectionValue<TSourceValue, TValue> =
@@ -30,7 +30,7 @@ export interface SpreadsheetColumnResolveDefinition<
   TValue = SpreadsheetResolvedSelectionValue<TSourceValue, InferSpreadsheetOptionValue<TOption>>,
 > {
   options: SpreadsheetOptionsSource<{ context: TContext }, TOption>
-  getOptions?: SpreadsheetResolutionQueryResolver<TContext, Record<string, unknown>, TOption>
+  getOptions?: SpreadsheetResolutionQueryResolver<TContext, SpreadsheetRecord, TOption>
   __sourceValueType?: TSourceValue
   __valueType?: TValue
 }
@@ -65,8 +65,8 @@ export interface SpreadsheetResolutionDefinition<
   TSourceValue = unknown,
   TValue = unknown,
   TOption extends SpreadsheetOptionItem = SpreadsheetOptionItem,
-  TContext = Record<string, unknown>,
-  TRow = Record<string, unknown>,
+  TContext = SpreadsheetRecord,
+  TRow = SpreadsheetRecord,
   TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined =
     | SpreadsheetFieldRulesInput<TValue>
     | undefined,
@@ -89,4 +89,4 @@ export type SpreadsheetSchemaContextData<TSchema> = TSchema extends {
   context?: infer TContextItems extends readonly SpreadsheetContextItem<string, unknown>[]
 }
   ? SpreadsheetContextDataFromItems<TContextItems>
-  : Record<string, unknown>
+  : SpreadsheetRecord

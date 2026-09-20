@@ -2,17 +2,19 @@
 import UCheckboxGroup from '@nuxt/ui/components/CheckboxGroup.vue'
 import { computed } from 'vue'
 
-import FormFieldShell from '../../components/renderer/FormFieldShell.vue'
+import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
-import type { FormCheckboxGroupField, FormOptionValue } from '../../types'
+import type { FormValue, FormCheckboxGroupField, FormOptionValue } from '../../types'
 import { formOptionKey } from '../../utils/options'
+import { isBoolean, isNumber, isString, isUndefined } from '../../utils/predicate'
+import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<{
   field: FormCheckboxGroupField
   path: readonly string[]
 }>()
 
-const { form, controlProps, disabled, handleBlur, options } = useFieldControl(
+const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
 )
@@ -29,16 +31,23 @@ const model = computed<string[]>({
       props.path,
       value.flatMap((key) => {
         const optionValue = valueByKey.value.get(key)
-        return typeof optionValue === 'undefined' ? [] : [optionValue]
+        return isUndefined(optionValue) ? [] : [optionValue]
       }),
     ),
 })
 const items = computed(() =>
   options.items.value.map((item) => ({ ...item, value: formOptionKey(item.value) })),
 )
+const groupUi = computed(() => ({
+  ...controlProps.value.ui,
+  fieldset: mergeFormUiClass(
+    controlProps.value.ui?.fieldset,
+    fieldProps.value.orientation === 'horizontal' ? 'flex-wrap' : undefined,
+  ),
+}))
 
-function isOptionValue(value: unknown): value is FormOptionValue {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+function isOptionValue(value: FormValue): value is FormOptionValue {
+  return isString(value) || isNumber(value) || isBoolean(value)
 }
 </script>
 
@@ -51,9 +60,10 @@ function isOptionValue(value: unknown): value is FormOptionValue {
       value-key="value"
       label-key="label"
       description-key="description"
-      :orientation="field.orientation"
-      :variant="field.variant === 'table' ? 'list' : (field.variant ?? 'list')"
-      :indicator="field.indicator"
+      :orientation="fieldProps.orientation"
+      :ui="groupUi"
+      :variant="fieldProps.variant === 'table' ? 'list' : (fieldProps.variant ?? 'list')"
+      :indicator="fieldProps.indicator"
       :disabled="disabled"
       @blur="handleBlur"
     />

@@ -1,5 +1,16 @@
 import type { QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
 
+import type { GenericObject } from '#ui-tools/shared/types/utils'
+
+/** Runtime values decoded from spreadsheet cells, rows, and external references. */
+export type SpreadsheetValue = GenericObject[string]
+
+/** Named row/context contract for spreadsheet data that is decoded at runtime. */
+// oxlint-disable-next-line typescript/consistent-type-definitions -- a type alias keeps the implicit index signature spreadsheet rows rely on
+export type SpreadsheetRecord = {
+  [key: string]: SpreadsheetValue
+}
+
 export type SpreadsheetQueryDefinition<TData = unknown> = Omit<
   UseQueryOptions<TData>,
   'queryFn'

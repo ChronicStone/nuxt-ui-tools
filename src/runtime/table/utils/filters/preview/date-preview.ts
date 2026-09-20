@@ -29,8 +29,9 @@ export function buildDateFilterPreview(options: {
     return {
       active: true,
       count: [start, end].filter(Boolean).length,
-      tags: [],
+      entries: [],
       summary: prefixPreviewLabel(preview.label, summary),
+      tags: [],
     }
   }
 
@@ -42,13 +43,14 @@ export function buildDateFilterPreview(options: {
   return {
     active: Boolean(date),
     count: date ? 1 : 0,
-    tags: [],
+    entries: [],
     summary: date
       ? prefixPreviewLabel(
           preview.label,
           preview.formatter?.(date) ?? formatFilterDate({ value: date }),
         )
       : '',
+    tags: [],
   }
 }
 

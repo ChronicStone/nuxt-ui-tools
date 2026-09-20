@@ -1,12 +1,5 @@
-import {
-  computed,
-  inject,
-  provide,
-  toValue,
-  type ComputedRef,
-  type InjectionKey,
-  type Ref,
-} from 'vue'
+import { computed, inject, provide, toValue } from 'vue'
+import type { ComputedRef, InjectionKey, Ref } from 'vue'
 
 import { normalizeSpreadsheetSchema } from '../schema'
 import type { SpreadsheetBinaryRef } from '../types'
@@ -40,36 +33,37 @@ function createSpreadsheetInternals<TSchema extends { importKey: string }>(optio
   const publicSchema = computed(() => resolveSpreadsheetSchemaSource(options.rawSchema))
   const schema = computed(() => normalizeSpreadsheetSchema(publicSchema.value))
   const source = useSpreadsheetSource({
-    source: options.source,
     fileName: computed(() =>
       options.fileName ? resolveSpreadsheetValue(options.fileName) : undefined,
     ),
+    source: options.source,
   })
   const context = useSpreadsheetContext({
     schema,
   })
   const rows = useSpreadsheetRows({
-    schema,
     contextData: context.contextData,
     headers: source.headers,
     rows: source.rows,
+    schema,
   })
   const resolutions = useSpreadsheetResolutions({
-    schema,
     contextData: context.contextData,
     rows: computed(() => rows.parsedRows.value),
+    schema,
   })
 
   return {
+    context,
+    references: resolutions,
+    resolutions,
+    rows,
     schema,
     source,
-    context,
-    rows,
-    resolutions,
-    references: resolutions,
   }
 }
 
+// SAFETY: this module creates and provides the only value stored under this injection key.
 const SPREADSHEET_INTERNALS_KEY = Symbol(
   'nuxt-ui-tools.spreadsheet.internals',
 ) as InjectionKey<SpreadsheetInternals>
@@ -90,8 +84,9 @@ function useProvideSpreadsheetInternals(options: {
 
 function useSpreadsheetInternals() {
   const internals = inject(SPREADSHEET_INTERNALS_KEY, null)
-  if (!internals)
+  if (!internals) {
     throw new Error('useSpreadsheetInternals must be called inside a spreadsheet provider')
+  }
   return internals
 }
 

@@ -1,16 +1,21 @@
+import { isFunction, isString } from '#ui-tools/shared/utils/predicate'
+
 import type {
   SpreadsheetParsedRow,
   SpreadsheetReferenceQueryRequest,
   SpreadsheetRelationDefinition,
   SpreadsheetReferenceResolution,
+  SpreadsheetRecord,
   SpreadsheetResolvedReferenceRow,
   SpreadsheetRowIssue,
+  SpreadsheetValue,
 } from '../../types'
 import {
   cloneSpreadsheetRowData,
   deleteSpreadsheetValueAtPath,
   getSpreadsheetValueAtPath,
   setSpreadsheetValueAtPath,
+  isSpreadsheetRecord,
 } from '../object'
 import { resolveSpreadsheetOptionEntries } from '../options'
 import { executeSpreadsheetRules, resolveSpreadsheetRelationRules } from '../validation/core'
@@ -19,56 +24,55 @@ import { isSpreadsheetResolutionDefinition, normalizeSpreadsheetRuntimeResolutio
 import { collectSpreadsheetReferenceSources, collectSpreadsheetReferenceTokens } from './sources'
 
 function isSpreadsheetRelationDefinition(
-  value: unknown,
-): value is SpreadsheetRelationDefinition<Record<string, unknown>> {
+  value: SpreadsheetValue,
+): value is SpreadsheetRelationDefinition<SpreadsheetRecord> {
   return (
-    value !== null &&
-    typeof value === 'object' &&
+    isSpreadsheetRecord(value) &&
     'column' in value &&
-    typeof value.column === 'string' &&
+    isString(value.column) &&
     'rules' in value &&
-    typeof value.rules === 'function'
+    isFunction(value.rules)
   )
 }
 
 export function createSpreadsheetReferenceResolutions(params: {
   references: readonly unknown[]
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
-  context: Record<string, unknown>
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[]
+  context: SpreadsheetRecord
 }) {
   return collectSpreadsheetReferenceSources(params.references, params.rows).flatMap(
     ({ reference, entries }) =>
       entries.map<SpreadsheetReferenceResolution>((entry) => {
         const candidates = createSpreadsheetReferenceCandidates({
-          sourceValue: entry.value,
-          reference,
           options: resolveSpreadsheetOptionEntries(reference.options, {
             context: params.context,
           }),
+          reference,
+          sourceValue: entry.value,
         })
         const bestCandidate = candidates[0]
         const isMatched = Boolean(bestCandidate && bestCandidate.score >= 0.9)
 
         return {
-          scope: reference.scope,
-          resolutionField: reference.targetField,
-          targetField: reference.targetField,
-          referenceField: reference.targetField,
-          sourceField: reference.sourceField,
-          outputField: reference.targetField,
-          sourceValue: entry.value,
-          rowIndexes: entry.rowIndexes,
-          status: isMatched ? 'matched' : 'unresolved',
-          selectedValue: isMatched ? bestCandidate?.value : undefined,
-          selectedLabel: isMatched ? bestCandidate?.label : undefined,
           candidates,
+          outputField: reference.targetField,
+          referenceField: reference.targetField,
+          resolutionField: reference.targetField,
+          rowIndexes: entry.rowIndexes,
+          scope: reference.scope,
+          selectedLabel: isMatched ? bestCandidate?.label : undefined,
+          selectedValue: isMatched ? bestCandidate?.value : undefined,
+          sourceField: reference.sourceField,
+          sourceValue: entry.value,
+          status: isMatched ? 'matched' : 'unresolved',
+          targetField: reference.targetField,
         }
       }),
   )
 }
 
 export function applySpreadsheetReferenceResolutions(params: {
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[]
   references: readonly unknown[]
   resolutions: readonly SpreadsheetReferenceResolution[]
   relations?: readonly unknown[]
@@ -82,24 +86,30 @@ export function applySpreadsheetReferenceResolutions(params: {
     return groups
   }, new Map<string, SpreadsheetReferenceResolution[]>())
 
-  return params.rows.map<SpreadsheetResolvedReferenceRow<Record<string, unknown>>>((row) => {
+  return params.rows.map<SpreadsheetResolvedReferenceRow<SpreadsheetRecord>>((row) => {
     const data = cloneSpreadsheetRowData(row.data)
     const issues: SpreadsheetRowIssue[] = [...row.issues]
     const multiValueOutputs = new Map<string, unknown[]>()
 
     for (const definition of resolutionDefinitions) {
-      if (definition.scope !== 'column') continue
+      if (definition.scope !== 'column') {
+        continue
+      }
       deleteSpreadsheetValueAtPath(data, definition.targetField)
     }
 
     for (const [sourceField, resolutions] of resolutionsBySourceField.entries()) {
       const rawValue = getSpreadsheetValueAtPath(row.data, sourceField)
       const sourceTokens = collectSpreadsheetReferenceTokens(rawValue)
-      if (!sourceTokens.length) continue
+      if (!sourceTokens.length) {
+        continue
+      }
 
       for (const sourceValue of sourceTokens) {
         const resolution = resolutions.find((entry) => entry.sourceValue === sourceValue)
-        if (!resolution) continue
+        if (!resolution) {
+          continue
+        }
 
         if (resolution.selectedValue !== undefined) {
           if (Array.isArray(rawValue)) {
@@ -113,15 +123,16 @@ export function applySpreadsheetReferenceResolutions(params: {
       }
     }
 
-    for (const [outputField, values] of multiValueOutputs.entries())
+    for (const [outputField, values] of multiValueOutputs.entries()) {
       setSpreadsheetValueAtPath(data, outputField, values)
+    }
 
     for (const reference of resolutionDefinitions) {
       const value = getSpreadsheetValueAtPath(data, reference.targetField)
 
       const referenceIssues = executeSpreadsheetRules({
-        value,
         rules: reference.rules,
+        value,
       })
 
       issues.push(
@@ -133,23 +144,27 @@ export function applySpreadsheetReferenceResolutions(params: {
             message: string
           }) => ({
             ...issue,
-            rowIndex: row.index,
             columnKey: reference.targetField,
+            rowIndex: row.index,
           }),
         ),
       )
     }
 
     for (const relation of params.relations ?? []) {
-      if (!isSpreadsheetRelationDefinition(relation)) continue
-      if (relation.condition && !relation.condition(data)) continue
+      if (!isSpreadsheetRelationDefinition(relation)) {
+        continue
+      }
+      if (relation.condition && !relation.condition(data)) {
+        continue
+      }
 
       const relationIssues = executeSpreadsheetRules({
-        value: getSpreadsheetValueAtPath(data, relation.column),
         rules: resolveSpreadsheetRelationRules({
           row: data,
           rules: relation.rules,
         }),
+        value: getSpreadsheetValueAtPath(data, relation.column),
       })
 
       issues.push(
@@ -161,56 +176,62 @@ export function applySpreadsheetReferenceResolutions(params: {
             message: string
           }) => ({
             ...issue,
-            rowIndex: row.index,
             columnKey: relation.column,
+            rowIndex: row.index,
           }),
         ),
       )
     }
 
     return {
-      index: row.index,
-      source: row.source,
       data,
-      issues,
+      index: row.index,
       isValid: issues.every((issue) => issue.level !== 'error'),
+      issues,
+      source: row.source,
     }
   })
 }
 
 export function createSpreadsheetReferenceQueryRequests(params: {
   references: readonly unknown[]
-  rows: readonly SpreadsheetParsedRow<Record<string, unknown>>[]
-  context: Record<string, unknown>
+  rows: readonly SpreadsheetParsedRow<SpreadsheetRecord>[]
+  context: SpreadsheetRecord
 }) {
   return createSpreadsheetReferenceResolutions({
+    context: params.context,
     references: params.references,
     rows: params.rows,
-    context: params.context,
   }).flatMap<SpreadsheetReferenceQueryRequest>((resolution) => {
     const referenceEntry = normalizeSpreadsheetRuntimeResolutions(params.references).find(
       (entry) => entry.targetField === (resolution.targetField ?? resolution.referenceField),
     )
-    if (!isSpreadsheetResolutionDefinition(referenceEntry)) return []
+    if (!isSpreadsheetResolutionDefinition(referenceEntry)) {
+      return []
+    }
 
     const reference = referenceEntry
-    if (!reference.getOptions || resolution.status === 'matched') return []
+    if (!reference.getOptions || resolution.status === 'matched') {
+      return []
+    }
 
     const sourceRow = params.rows.find((row) => row.index === resolution.rowIndexes[0])
-    if (!sourceRow) return []
+    if (!sourceRow) {
+      return []
+    }
 
     return [
       {
-        scope: reference.scope,
-        resolutionField: reference.targetField,
-        targetField: reference.targetField,
-        referenceField: reference.targetField,
-        sourceValue: resolution.sourceValue,
         query: reference.getOptions({
           context: params.context,
           row: sourceRow.data,
           search: resolution.sourceValue,
         }),
+        referenceField: reference.targetField,
+        resolutionField: reference.targetField,
+        scope: reference.scope,
+        sourceValue: resolution.sourceValue,
+        targetField: reference.targetField,
       },
     ]
   })

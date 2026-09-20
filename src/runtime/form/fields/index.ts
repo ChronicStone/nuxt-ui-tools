@@ -1,4 +1,6 @@
+import { arrayCollapseFieldKind } from './array-collapse/config'
 import { arrayListFieldKind } from './array-list/config'
+import { arrayPrimitiveFieldKind } from './array-primitive/config'
 import { arrayTableFieldKind } from './array-table/config'
 import { arrayTabsFieldKind } from './array-tabs/config'
 import { arrayVariantFieldKind } from './array-variant/config'
@@ -33,10 +35,12 @@ import { phoneNumberFieldKind } from './phone-number/config'
 import { radioCardFieldKind } from './radio-card/config'
 import { radioFieldKind } from './radio/config'
 import { ratingFieldKind } from './rating/config'
+import { sectionFieldKind } from './section/config'
 import { selectFieldKind } from './select/config'
 import { sliderFieldKind } from './slider/config'
 import { switchGroupFieldKind } from './switch-group/config'
 import { switchFieldKind } from './switch/config'
+import { tabsFieldKind } from './tabs/config'
 import { tagFieldKind } from './tag/config'
 import { textFieldKind } from './text/config'
 import { textareaFieldKind } from './textarea/config'
@@ -45,6 +49,8 @@ import { treeSelectFieldKind } from './tree-select/config'
 import { treeFieldKind } from './tree/config'
 import { uploadFieldKind } from './upload/config'
 import { yearFieldKind } from './year/config'
+
+export { arrayListFieldKind } from './array-list/config'
 
 export const formFieldKinds = [
   textFieldKind,
@@ -59,8 +65,10 @@ export const formFieldKinds = [
   hiddenFieldKind,
   infoFieldKind,
   dividerFieldKind,
+  sectionFieldKind,
   inputGroupFieldKind,
   objectFieldKind,
+  tabsFieldKind,
   customComponentFieldKind,
   dateTimeFieldKind,
   dateRangeFieldKind,
@@ -79,6 +87,8 @@ export const formFieldKinds = [
   arrayTableFieldKind,
   arrayTabsFieldKind,
   arrayVariantFieldKind,
+  arrayCollapseFieldKind,
+  arrayPrimitiveFieldKind,
   sliderFieldKind,
   tagFieldKind,
   buttonFieldKind,
@@ -95,53 +105,3 @@ export const formFieldKinds = [
   cardFieldKind,
   columnFieldKind,
 ] as const
-
-export {
-  arrayListFieldKind,
-  arrayTableFieldKind,
-  arrayTabsFieldKind,
-  arrayVariantFieldKind,
-  autoCompleteFieldKind,
-  buttonFieldKind,
-  cardFieldKind,
-  checkboxCardFieldKind,
-  checkboxGroupFieldKind,
-  checkboxFieldKind,
-  colorPickerFieldKind,
-  cascaderFieldKind,
-  columnFieldKind,
-  customComponentFieldKind,
-  dateFieldKind,
-  dateRangeFieldKind,
-  dateTimeFieldKind,
-  dateTimeRangeFieldKind,
-  dividerFieldKind,
-  fileFieldKind,
-  hiddenFieldKind,
-  groupFieldKind,
-  infoFieldKind,
-  inputGroupFieldKind,
-  matrixFieldKind,
-  monthFieldKind,
-  monthRangeFieldKind,
-  numberFieldKind,
-  oneTimeCodeFieldKind,
-  objectFieldKind,
-  passwordFieldKind,
-  phoneNumberFieldKind,
-  radioCardFieldKind,
-  radioFieldKind,
-  ratingFieldKind,
-  selectFieldKind,
-  sliderFieldKind,
-  switchGroupFieldKind,
-  switchFieldKind,
-  tagFieldKind,
-  textareaFieldKind,
-  textFieldKind,
-  timeFieldKind,
-  treeFieldKind,
-  treeSelectFieldKind,
-  uploadFieldKind,
-  yearFieldKind,
-}

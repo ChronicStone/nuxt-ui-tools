@@ -1,8 +1,10 @@
-import { computed, shallowRef, watch, type ComputedRef } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type {
   SpreadsheetNormalizedSchema,
   SpreadsheetParsedRow,
+  SpreadsheetRecord,
   SpreadsheetReferenceResolution,
 } from '../types'
 import {
@@ -13,8 +15,8 @@ import {
 
 export interface UseSpreadsheetResolutionsParams {
   schema: ComputedRef<SpreadsheetNormalizedSchema>
-  contextData: ComputedRef<Record<string, unknown>>
-  rows: ComputedRef<readonly SpreadsheetParsedRow<Record<string, unknown>>[]>
+  contextData: ComputedRef<SpreadsheetRecord>
+  rows: ComputedRef<readonly SpreadsheetParsedRow<SpreadsheetRecord>[]>
 }
 
 function createResolutionId(resolution: SpreadsheetReferenceResolution) {
@@ -27,9 +29,9 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
   )
   const autoResolutions = computed(() =>
     createSpreadsheetReferenceResolutions({
+      context: params.contextData.value,
       references: resolutionDefinitions.value,
       rows: params.rows.value,
-      context: params.contextData.value,
     }),
   )
   const manualSelections = shallowRef<Record<string, SpreadsheetReferenceResolution>>({})
@@ -44,17 +46,17 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
   )
   const resolvedRows = computed(() =>
     applySpreadsheetReferenceResolutions({
-      rows: params.rows.value,
       references: resolutionDefinitions.value,
-      resolutions: resolutions.value,
       relations: params.schema.value.relations,
+      resolutions: resolutions.value,
+      rows: params.rows.value,
     }),
   )
   const queryRequests = computed(() =>
     createSpreadsheetReferenceQueryRequests({
+      context: params.contextData.value,
       references: resolutionDefinitions.value,
       rows: params.rows.value,
-      context: params.contextData.value,
     }),
   )
   const status = computed(() => ({
@@ -71,15 +73,17 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
   }) {
     const key = `${selection.resolutionField}::${selection.sourceValue}`
     const current = resolutions.value.find((resolution) => createResolutionId(resolution) === key)
-    if (!current) return
+    if (!current) {
+      return
+    }
 
     manualSelections.value = {
       ...manualSelections.value,
       [key]: {
         ...current,
-        status: 'matched',
-        selectedValue: selection.selectedValue,
         selectedLabel: selection.selectedLabel,
+        selectedValue: selection.selectedValue,
+        status: 'matched',
       },
     }
   }
@@ -96,15 +100,17 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
   })
 
   return {
+    clearReference: (selection: { referenceField: string; sourceValue: string }) =>
+      clearResolution({
+        resolutionField: selection.referenceField,
+        sourceValue: selection.sourceValue,
+      }),
+    clearResolution,
+    queryRequests,
+    referenceDefinitions: resolutionDefinitions,
     resolutionDefinitions,
     resolutions,
-    unresolvedResolutions,
     resolvedRows,
-    queryRequests,
-    status,
-    selectResolution,
-    clearResolution,
-    referenceDefinitions: resolutionDefinitions,
     selectReference: (selection: {
       referenceField: string
       sourceValue: string
@@ -113,14 +119,12 @@ export function useSpreadsheetResolutions(params: UseSpreadsheetResolutionsParam
     }) =>
       selectResolution({
         resolutionField: selection.referenceField,
-        sourceValue: selection.sourceValue,
-        selectedValue: selection.selectedValue,
         selectedLabel: selection.selectedLabel,
-      }),
-    clearReference: (selection: { referenceField: string; sourceValue: string }) =>
-      clearResolution({
-        resolutionField: selection.referenceField,
+        selectedValue: selection.selectedValue,
         sourceValue: selection.sourceValue,
       }),
+    selectResolution,
+    status,
+    unresolvedResolutions,
   }
 }

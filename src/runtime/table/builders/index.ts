@@ -1,3 +1,4 @@
+import { isFunction } from '../../shared/utils/predicate'
 import type {
   GenericObject,
   TableBooleanFilterOptions,
@@ -17,6 +18,7 @@ import type {
   TableUiFilterDefinition,
 } from '../types'
 
+export { type TableSortKey } from '../types'
 export function createTableColumnBuilder<
   TRow extends GenericObject,
   TContext extends GenericObject,
@@ -24,24 +26,13 @@ export function createTableColumnBuilder<
   TSortKey extends string = TableSortKey<TRow>,
 >(): TableColumnBuilder<TRow, TContext, TPageContext, TSortKey> {
   return {
-    field<TField extends TableKnownFieldPath<TRow>>(
-      field: TField,
-      options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField> = {},
-    ) {
-      return {
-        kind: 'field',
-        key: field as Extract<TField, string>,
-        field,
-        ...options,
-      }
-    },
     composite<TKey extends string>(
       key: TKey,
       options: TableCompositeColumnOptions<TRow, TContext, TPageContext, TKey, TSortKey>,
     ) {
       return {
-        kind: 'composite',
         key,
+        kind: 'composite',
         ...options,
       }
     },
@@ -50,8 +41,19 @@ export function createTableColumnBuilder<
       options: TableDisplayColumnOptions<TRow, TContext, TPageContext, TKey>,
     ) {
       return {
-        kind: 'display',
         key,
+        kind: 'display',
+        ...options,
+      }
+    },
+    field<TField extends TableKnownFieldPath<TRow> & string>(
+      field: TField,
+      options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField> = {},
+    ) {
+      return {
+        field,
+        key: field,
+        kind: 'field',
         ...options,
       }
     },
@@ -63,13 +65,33 @@ export function createTableFilterBuilder<
   TContext extends GenericObject = GenericObject,
 >(): TableFilterBuilder<TRow, TContext> {
   return {
-    text<TKey extends TableKnownFieldPath<TRow>>(
+    boolean<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableTextFilterOptions<TRow, TContext, TKey>,
+      options: TableBooleanFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'text',
         key,
+        kind: 'boolean',
+        ...options,
+      }
+    },
+    date<TKey extends TableKnownFieldPath<TRow>>(
+      key: TKey,
+      options: TableDateFilterOptions<TRow, TContext, TKey>,
+    ) {
+      return {
+        key,
+        kind: 'date',
+        ...options,
+      }
+    },
+    number<TKey extends TableKnownFieldPath<TRow>>(
+      key: TKey,
+      options: TableNumberFilterOptions<TRow, TContext, TKey>,
+    ) {
+      return {
+        key,
+        kind: 'number',
         ...options,
       }
     },
@@ -79,38 +101,18 @@ export function createTableFilterBuilder<
       TPresentation extends import('../types').TableOptionFilterPresentation = 'list',
     >(key: TKey, options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>) {
       return {
+        key,
         kind: 'option',
-        key,
         ...options,
       }
     },
-    boolean<TKey extends TableKnownFieldPath<TRow>>(
+    text<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableBooleanFilterOptions<TRow, TContext, TKey>,
+      options: TableTextFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
-        kind: 'boolean',
         key,
-        ...options,
-      }
-    },
-    number<TKey extends TableKnownFieldPath<TRow>>(
-      key: TKey,
-      options: TableNumberFilterOptions<TRow, TContext, TKey>,
-    ) {
-      return {
-        kind: 'number',
-        key,
-        ...options,
-      }
-    },
-    date<TKey extends TableKnownFieldPath<TRow>>(
-      key: TKey,
-      options: TableDateFilterOptions<TRow, TContext, TKey>,
-    ) {
-      return {
-        kind: 'date',
-        key,
+        kind: 'text',
         ...options,
       }
     },
@@ -125,11 +127,17 @@ export function resolveCollection<TBuilder, TResult>(
     return undefined
   }
 
-  if (typeof collection === 'function') {
-    return (collection as (builder: TBuilder) => TResult)(builder)
+  if (isCollectionResolver<TBuilder, TResult>(collection)) {
+    return collection(builder)
   }
 
   return collection
+}
+
+function isCollectionResolver<TBuilder, TResult>(
+  value: TResult | ((builder: TBuilder) => TResult),
+): value is (builder: TBuilder) => TResult {
+  return isFunction(value)
 }
 
 export function resolveColumns<
@@ -141,6 +149,7 @@ export function resolveColumns<
     | TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey>
     | undefined = TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey> | undefined,
 >(columns: TColumns): TColumns extends (...args: never[]) => infer TResult ? TResult : TColumns {
+  // SAFETY: resolveCollection returns the exact conditional TResult selected by TColumns.
   return resolveCollection(
     columns,
     createTableColumnBuilder<TRow, TContext, TPageContext, TSortKey>(),
@@ -156,5 +165,3 @@ export function resolveUiFilters<
 ): TableUiFilterDefinition<TRow, TContext, TKey>[] | undefined {
   return resolveCollection(filters, createTableFilterBuilder<TRow, TContext>())
 }
-
-export type { TableSortKey }

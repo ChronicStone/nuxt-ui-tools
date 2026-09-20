@@ -5,13 +5,14 @@ import { buildOptionFilterPreview } from './option-preview'
 import { buildTextFilterPreview } from './text-preview'
 import type { FilterPreviewOptionEntry, FilterPreviewResult } from './types'
 
-export type { FilterPreviewResult, FilterPreviewOptionEntry }
+export { type FilterPreviewOptionEntry, type FilterPreviewResult } from './types'
 
 const EMPTY_PREVIEW: FilterPreviewResult = {
   active: false,
   count: 0,
-  tags: [],
+  entries: [],
   summary: '',
+  tags: [],
 }
 
 export function buildFilterPreview(options: {
@@ -26,8 +27,8 @@ export function buildFilterPreview(options: {
   if (options.definition.kind === 'option' || options.definition.kind === 'boolean') {
     return buildOptionFilterPreview({
       definition: options.definition,
-      rule: options.rule,
       optionEntries: options.optionEntries ?? [],
+      rule: options.rule,
     })
   }
 

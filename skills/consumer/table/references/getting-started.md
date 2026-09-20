@@ -23,13 +23,13 @@ Keep the standard Nuxt UI CSS import from the official setup as well:
 const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryKey: ['employees'],
       queryFn: async () => rows,
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('fullName', { label: 'Employee' }),
@@ -42,10 +42,13 @@ const schema = defineTableSchema({
 const table = useTable(schema)
 ```
 
+Keep `tableSource(...)` inline in `defineTableSchema(...)`. It is an inference boundary, so consumers
+should not extract the source into a separately annotated constant or provide source generics.
+
 Render it with:
 
 ```vue
-<DataList :table="table" />
+<DataList :table="table" size="sm" />
 ```
 
 ## What You Get

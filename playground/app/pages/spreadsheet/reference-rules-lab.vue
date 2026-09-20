@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
-import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
+import SpreadsheetImport from '#ui-tools/spreadsheet/components/spreadsheet-import.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
 definePageMeta({
@@ -19,20 +19,6 @@ const products = [
 
 function createReferenceRulesSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.reference-rules-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 20,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
     columns: {
       static: (column) => [
         column.text('candidateName', {
@@ -53,21 +39,35 @@ function createReferenceRulesSchema() {
         }),
       ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 20,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.reference-rules-lab',
+    matching: {
+      strategy: 'smart',
+    },
     references: (reference) => [
       reference.select('optionalProductId', {
-        source: 'optionalProductLabel',
         options: products,
+        source: 'optionalProductLabel',
       }),
       reference.select('requiredProductId', {
-        source: 'requiredProductLabel',
         options: products,
         rules: (v) => [
           v.required({
             message: 'Required product must be matched before import',
           }),
         ],
+        source: 'requiredProductLabel',
       }),
     ],
+    sheet: {
+      strategy: 'auto',
+    },
   })
 }
 
@@ -87,19 +87,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Reference rules')
 
   return {
-    fileName: 'spreadsheet-reference-rules-lab.xlsx',
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
+    fileName: 'spreadsheet-reference-rules-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

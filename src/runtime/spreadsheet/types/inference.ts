@@ -19,7 +19,9 @@ import type { InferSpreadsheetOptionValue } from './options'
 import type { InferSpreadsheetReferenceValue, SpreadsheetReferenceDefinition } from './references'
 import type { SpreadsheetFieldRules, SpreadsheetRule } from './validation'
 
-type IntersectionOrEmpty<TValue> = [TValue] extends [never] ? {} : UnionToIntersection<TValue>
+type IntersectionOrEmpty<TValue> = [TValue] extends [never]
+  ? NonNullable<unknown>
+  : UnionToIntersection<TValue>
 
 type StaticEntriesFromColumns<TColumns> = TColumns extends {
   static?: (...args: infer _Args) => infer TResult
@@ -149,7 +151,7 @@ type CollectionRecordOutput<TItems> = TItems extends readonly (infer TItem)[]
           : PathToObject<TId, TBuild>
         : never
     >
-  : {}
+  : NonNullable<unknown>
 
 type DynamicCollectionOutput<TColumn> =
   TColumn extends SpreadsheetDynamicCollectionDefinition<
@@ -178,7 +180,7 @@ type DynamicRowOutput<TColumns> = DeepPrettify<
   DeepTransformNestedPaths<
     DynamicEntriesFromColumns<TColumns> extends readonly (infer TEntry)[]
       ? IntersectionOrEmpty<DynamicColumnOutput<TEntry>>
-      : {}
+      : NonNullable<unknown>
   >
 >
 
@@ -203,7 +205,7 @@ type ReferenceRowOutput<TReferences> = TReferences extends readonly unknown[]
   ? DeepPrettify<
       DeepTransformNestedPaths<IntersectionOrEmpty<ReferenceOutput<TReferences[number]>>>
     >
-  : {}
+  : NonNullable<unknown>
 
 export type SpreadsheetRowData<TColumns, TReferences = readonly []> = DeepPrettify<
   StaticRowOutput<TColumns> & DynamicRowOutput<TColumns> & ReferenceRowOutput<TReferences>
@@ -230,7 +232,7 @@ export type ExtractSpreadsheetContextData<TSchema> = TSchema extends {
   context?: infer TContextItems extends readonly SpreadsheetContextItem<string, unknown>[]
 }
   ? SpreadsheetContextDataFromItems<TContextItems>
-  : {}
+  : NonNullable<unknown>
 
 export type ExtractSpreadsheetSubmitPayload<TSchema> = TSchema extends {
   buildRow?: (...args: infer _Args) => infer TResult

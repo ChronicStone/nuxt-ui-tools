@@ -1,5 +1,6 @@
 import type { Locale } from '#ui-tools/i18n/types'
 import type { DeepPartial } from '#ui-tools/shared/types/utils'
+import { isObject } from '#ui-tools/shared/utils/predicate'
 
 interface DefineUiToolsLocaleOptions<TMessages> {
   name: string
@@ -36,26 +37,32 @@ function mergeLocaleMessages<TMessages>(
   base: TMessages,
   extension: DeepPartial<TMessages> | undefined,
 ): TMessages {
-  if (!extension) return base
-  if (!isObject(base) || !isObject(extension)) return (extension ?? base) as TMessages
-
-  const merged: Record<string, unknown> = { ...base }
-
-  for (const key of Object.keys(extension)) {
-    const baseValue = merged[key]
-    const extensionValue = extension[key as keyof typeof extension]
-
-    if (extensionValue === undefined) continue
-
-    merged[key] =
-      isObject(baseValue) && isObject(extensionValue)
-        ? mergeLocaleMessages(baseValue, extensionValue)
-        : extensionValue
+  if (!extension) {
+    return base
+  }
+  if (!isObject(base) || !isObject(extension)) {
+    // SAFETY: both candidates originate from the same locale tree, so a primitive leaf keeps TMessages.
+    return (extension ?? base) as TMessages
   }
 
-  return merged as TMessages
-}
+  const merged = { ...base }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
+  for (const [key, extensionValue] of Object.entries(extension)) {
+    const baseValue = merged[key]
+
+    if (extensionValue === undefined) {
+      continue
+    }
+
+    Object.assign(merged, {
+      [key]:
+        isObject(baseValue) && isObject(extensionValue)
+          ? mergeLocaleMessages(baseValue, extensionValue)
+          : extensionValue,
+    })
+  }
+
+  // SAFETY: `merged` starts from the complete base tree and only replaces matching leaves or
+  // recursively merges partial branches, so every required `TMessages` property remains present.
+  return merged as TMessages
 }

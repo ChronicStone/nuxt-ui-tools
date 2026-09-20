@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
-import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
+import SpreadsheetImport from '#ui-tools/spreadsheet/components/spreadsheet-import.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
 definePageMeta({
@@ -13,45 +13,64 @@ definePageMeta({
 const { t } = useI18n()
 
 const center = {
-  id: 'tc_newyork',
-  country: 'United States',
-  products: [
-    { id: 'prod_corp_4skills', name: 'Placement Test Corporate English - 4 Skills' },
-    { id: 'prod_remote_screening', name: 'Remote Screening Bundle' },
-  ],
   affiliationGroups: [
     {
       id: 'district',
-      name: 'District',
-      slug: 'district',
       items: [
         { id: 'manhattan', name: 'Manhattan' },
         { id: 'queens', name: 'Queens' },
       ],
+      name: 'District',
+      slug: 'district',
     },
     {
       id: 'delivery-format',
-      name: 'Delivery format',
-      slug: 'deliveryFormat',
       items: [
         { id: 'onsite', name: 'Onsite' },
         { id: 'remote', name: 'Remote' },
       ],
+      name: 'Delivery format',
+      slug: 'deliveryFormat',
     },
+  ],
+  country: 'United States',
+  id: 'tc_newyork',
+  products: [
+    { id: 'prod_corp_4skills', name: 'Placement Test Corporate English - 4 Skills' },
+    { id: 'prod_remote_screening', name: 'Remote Screening Bundle' },
   ],
 }
 
 function createReferenceReconciliationSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.reference-reconciliation',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 100,
-    },
-    sheet: { strategy: 'selection' },
-    header: { strategy: 'selection' },
-    matching: { strategy: 'smart' },
     columns: {
+      dynamic: ({ dynamic }) => [
+        dynamic.optionGroups({
+          header: {
+            strategy: 'template',
+            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
+          },
+          itemKey: (group) => group.id,
+          itemLabel: (group) => group.name,
+          key: 'affiliations',
+          options: (group) =>
+            group.items.map((item) => ({
+              label: item.name,
+              value: item.id,
+            })),
+          output: {
+            into: 'affiliations',
+          },
+          source: center.affiliationGroups,
+          targetKey: (group) => group.slug,
+          values: {
+            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
+            mode: 'csv',
+            resolve: 'label',
+            separator: ',',
+          },
+        }),
+      ],
       static: (column) => [
         column.text('testCenterId', {
           match: { headers: ['Test center ID'] },
@@ -94,43 +113,24 @@ function createReferenceReconciliationSchema() {
         }),
         column.text('batchName', { match: { headers: ['Batch'] } }),
       ],
-      dynamic: ({ dynamic }) => [
-        dynamic.optionGroups({
-          key: 'affiliations',
-          source: center.affiliationGroups,
-          itemKey: (group) => group.id,
-          itemLabel: (group) => group.name,
-          targetKey: (group) => group.slug,
-          header: {
-            strategy: 'template',
-            template: ({ source }) => `${source.name}: PRÉREQUIS CECR`,
-          },
-          options: (group) =>
-            group.items.map((item) => ({
-              label: item.name,
-              value: item.id,
-            })),
-          values: {
-            mode: 'csv',
-            separator: ',',
-            resolve: 'label',
-            itemModifiers: ['trim', 'case-insensitive', 'accent-insensitive'],
-          },
-          output: {
-            into: 'affiliations',
-          },
-        }),
-      ],
     },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 100,
+    },
+    header: { strategy: 'selection' },
+    importKey: 'playground.spreadsheet.reference-reconciliation',
+    matching: { strategy: 'smart' },
     references: (reference) => [
       reference.select('productId', {
-        source: 'examNameRaw',
         options: center.products.map((product) => ({
           label: product.name,
           value: product.id,
         })),
+        source: 'examNameRaw',
       }),
     ],
+    sheet: { strategy: 'selection' },
   })
 }
 
@@ -188,19 +188,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Assessments')
 
   return {
-    fileName: 'spreadsheet-reference-reconciliation.xlsx',
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
+    fileName: 'spreadsheet-reference-reconciliation.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

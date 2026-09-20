@@ -10,12 +10,12 @@ import { buildFilterPreview } from '../../src/runtime/table/utils/filters/previe
 describe('filter preview formatters', () => {
   it('uses custom number preview formatters', () => {
     const definition = {
-      kind: 'number',
       key: 'salary',
+      kind: 'number',
       label: 'Salary',
       preview: {
-        label: 'Salary',
         formatter: (value: number) => `$${value.toLocaleString('en-US')}`,
+        label: 'Salary',
         rangeFormatter: ({ from, to }: { from?: number; to?: number }) =>
           `${from ?? 0} USD -> ${to ?? 0} USD`,
       },
@@ -24,15 +24,15 @@ describe('filter preview formatters', () => {
     const scalarRule = {
       key: 'salary',
       operator: 'gte',
-      value: 125000,
+      value: 125_000,
     } satisfies TableQueryStateFilterRule
 
     const rangeRule = {
       key: 'salary',
       operator: 'between',
       value: {
-        from: 100000,
-        to: 150000,
+        from: 100_000,
+        to: 150_000,
       },
     } satisfies TableQueryStateFilterRule
 
@@ -44,12 +44,12 @@ describe('filter preview formatters', () => {
 
   it('uses custom date preview formatters', () => {
     const definition = {
-      kind: 'date',
       key: 'createdAt',
+      kind: 'date',
       label: 'Created',
       preview: {
-        label: 'Created',
         formatter: (value: Date) => value.toISOString().slice(0, 10),
+        label: 'Created',
         rangeFormatter: ({ from, to }: { from?: Date; to?: Date }) =>
           [from, to]
             .filter((value): value is Date => value instanceof Date)

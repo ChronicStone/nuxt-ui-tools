@@ -1,0 +1,140 @@
+<script setup lang="ts">
+import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
+import USkeleton from '@nuxt/ui/components/Skeleton.vue'
+import { computed } from 'vue'
+
+import { useDataListUi } from '../../../composables/use-data-list-ui'
+import type {
+  DataListCheckboxProps,
+  DataListControlSize,
+  DataListFilterEditorUi,
+  TableResolvedFilterOptionEntry,
+} from '../../../types'
+import {
+  mergeDataListProps,
+  mergeDataListUiClass,
+  resolveDataListControlGeometry,
+  resolveFilterEditorSizeClasses,
+} from '../../../utils'
+
+interface FilterOptionMultipleListSection {
+  key: string
+  entries: (TableResolvedFilterOptionEntry & { selected?: boolean; icon?: string })[]
+  dividerBefore?: boolean
+}
+
+const props = defineProps<{
+  sections: FilterOptionMultipleListSection[]
+  showCounts: boolean
+  countLoading: boolean
+  selectedIcon?: string
+  truncate?: boolean
+  size?: DataListControlSize
+  ui?: DataListFilterEditorUi
+}>()
+
+const emit = defineEmits<{
+  select: [
+    options: {
+      event: MouseEvent
+      entry: TableResolvedFilterOptionEntry & { selected?: boolean; icon?: string }
+      index: number
+      sectionKey: string
+    },
+  ]
+}>()
+
+const dataListUi = useDataListUi()
+const size = computed(
+  () => props.size ?? dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value,
+)
+const ui = computed(() => props.ui ?? dataListUi.ui.value.filterTags?.ui)
+const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const checkboxProps = computed(() =>
+  mergeDataListProps<DataListCheckboxProps>(
+    { color: 'primary' },
+    dataListUi.ui.value.filterTags?.props?.optionCheckbox,
+  ),
+)
+const geometry = computed(() => resolveDataListControlGeometry(size.value))
+</script>
+
+<template>
+  <div :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
+    <template v-for="section in props.sections" :key="section.key">
+      <div
+        v-if="section.dividerBefore && section.entries.length"
+        :class="mergeDataListUiClass('my-1 border-t border-default', undefined, ui?.listDivider)"
+      />
+
+      <div
+        v-for="(entry, index) in section.entries"
+        :key="entry.value == null ? entry.label : String(entry.value)"
+        :class="
+          mergeDataListUiClass(
+            `nut-dl-option flex items-center rounded-md text-left outline-none transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
+            undefined,
+            ui?.option,
+          )
+        "
+      >
+        <UCheckbox
+          :model-value="entry.selected ?? false"
+          v-bind="checkboxProps"
+          :size="size"
+          :aria-label="entry.label"
+          :icon="props.selectedIcon"
+          :ui="{ base: ui?.optionCheckbox }"
+          @click.stop="emit('select', { event: $event, entry, index, sectionKey: section.key })"
+        />
+
+        <button
+          type="button"
+          :class="['flex min-w-0 flex-1 items-center text-left', geometry.toolbarGap]"
+          @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
+        >
+          <span
+            v-if="entry.color"
+            class="nut-dl-option__dot size-[7px] shrink-0 rounded-full"
+            :style="{ background: entry.color }"
+            aria-hidden="true"
+          />
+          <UIcon
+            v-else-if="entry.icon"
+            :name="entry.icon"
+            :class="
+              mergeDataListUiClass(
+                `${sizeClasses.optionIcon} shrink-0 text-muted`,
+                undefined,
+                ui?.optionIcon,
+              )
+            "
+          />
+          <span
+            :class="
+              mergeDataListUiClass(
+                `min-w-0 flex-1 ${sizeClasses.optionLabel} ${(props.truncate ?? true) ? 'truncate' : ''}`,
+                undefined,
+                ui?.optionLabel,
+              )
+            "
+          >
+            {{ entry.label }}
+          </span>
+        </button>
+
+        <USkeleton
+          v-if="props.showCounts && props.countLoading"
+          :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
+        />
+        <span
+          v-else-if="props.showCounts && entry.count != null"
+          :class="mergeDataListUiClass('shrink-0 text-muted', undefined, ui?.optionCount)"
+        >
+          {{ entry.count }}
+        </span>
+      </div>
+    </template>
+  </div>
+</template>

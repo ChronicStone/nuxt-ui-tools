@@ -1,3 +1,3 @@
 <script setup lang="ts">
-await navigateTo('/table-client', { replace: true })
+await navigateTo('/table/client', { replace: true })
 </script>

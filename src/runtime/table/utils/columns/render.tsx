@@ -1,36 +1,43 @@
 /** @jsxImportSource vue */
 /// <reference types="vue/jsx" />
 
-import UButton from '@nuxt/ui/components/Button.vue'
-import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
-import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import type { VNodeChild } from 'vue'
 
-import RowActions from '../../components/actions/RowActions.vue'
-import TableRowScopeProvider from '../../components/actions/TableRowScopeProvider.vue'
-import TableCellEllipsis from '../../components/table/TableCellEllipsis'
-import type { GenericObject } from '../../types'
-import { getColumnHeaderIcon } from './menu'
+import {
+  isArray,
+  isFunction,
+  isNumber,
+  isObject,
+  isString,
+  isNullish,
+} from '../../../shared/utils/predicate'
+import TableRowScopeProvider from '../../components/actions/table-row-scope-provider.vue'
+import TableCellEllipsis from '../../components/table/table-cell-ellipsis'
+import TableColumnHeader from '../../components/table/table-column-header.vue'
+import TableRowActionsControl from '../../components/table/table-row-actions-control.vue'
+import TableSelectionControl from '../../components/table/table-selection-control.vue'
+import type { GenericObject, TableRuntimeRecord } from '../../types'
 import { findSchemaColumn } from './schema'
 import {
   ROW_ACTIONS_COLUMN_ID,
   ROW_ACTIONS_COLUMN_WIDTH,
   SELECT_COLUMN_ID,
   SELECT_COLUMN_WIDTH,
-  type SchemaTableColumn,
-  type TableCellRenderContext,
-  type TableColumnRenderParams,
-  type TableRuntimeColumn,
-  type UseTableColumnsParams,
+} from './types'
+import type {
+  SchemaTableColumn,
+  TableCellRenderContext,
+  TableColumnRenderParams,
+  TableRuntimeColumn,
+  UseTableColumnsParams,
 } from './types'
 
-type PlainRenderContextCacheState = {
+interface PlainRenderContextCacheState {
   contextSource: object
   pageContextSource: object
-  plainContext: Record<string, unknown>
-  plainPageContext: Record<string, unknown>
+  plainContext: TableRuntimeRecord
+  plainPageContext: TableRuntimeRecord
 }
 
 const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<
@@ -40,78 +47,71 @@ const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<
 
 export function createSelectionColumn(options: { params: UseTableColumnsParams }) {
   return {
-    id: SELECT_COLUMN_ID,
+    cell: ({ row }: { row: { id: string } }) => {
+      const rowId = String(row.id)
+      return (
+        <TableSelectionControl
+          modelValue={options.params.selection.isRowSelected({ rowId })}
+          ariaLabel="Select row"
+          onToggle={(event: MouseEvent) =>
+            options.params.selection.toggleRowSelection({
+              rowId,
+              selected: !options.params.selection.isRowSelected({ rowId }),
+              shiftKey: event.shiftKey,
+            })
+          }
+        />
+      )
+    },
+
+    enableHiding: false,
+
+    enablePinning: true,
+
+    enableResizing: false,
+
+    enableSorting: false,
 
     header: () => (
-      <button
-        type="button"
-        class="inline-flex items-center"
-        onClick={(event: MouseEvent) => {
-          event.preventDefault()
-          event.stopPropagation()
+      <TableSelectionControl
+        modelValue={
+          options.params.selection.allSelected.value
+            ? true
+            : options.params.selection.partiallySelected.value
+              ? 'indeterminate'
+              : false
+        }
+        ariaLabel="Select all rows"
+        onToggle={() =>
           options.params.selection.toggleAllRows({
             selected: !options.params.selection.allSelected.value,
           })
-        }}
-      >
-        <UCheckbox
-          modelValue={
-            options.params.selection.allSelected.value
-              ? true
-              : options.params.selection.partiallySelected.value
-                ? 'indeterminate'
-                : false
-          }
-          color="neutral"
-        />
-      </button>
+        }
+      />
     ),
-    cell: ({ row }: { row: { id: string } }) => (
-      <button
-        type="button"
-        class="inline-flex items-center"
-        onClick={(event: MouseEvent) => {
-          event.preventDefault()
-          event.stopPropagation()
 
-          const rowId = String(row.id)
+    id: SELECT_COLUMN_ID,
 
-          options.params.selection.toggleRowSelection({
-            rowId,
-            selected: !options.params.selection.isRowSelected({ rowId }),
-            shiftKey: event.shiftKey,
-          })
-        }}
-      >
-        <UCheckbox
-          modelValue={options.params.selection.isRowSelected({ rowId: String(row.id) })}
-          color="neutral"
-        />
-      </button>
-    ),
-    size: SELECT_COLUMN_WIDTH,
-    enableSorting: false,
-    enableHiding: false,
-    enablePinning: true,
-    enableResizing: false,
     meta: {
       class: {
-        th: 'w-14 px-4',
         td: 'w-14 px-4',
+        th: 'w-14 px-4',
       },
       style: {
-        th: () => ({
-          width: `${SELECT_COLUMN_WIDTH}px`,
-          minWidth: `${SELECT_COLUMN_WIDTH}px`,
-          maxWidth: `${SELECT_COLUMN_WIDTH}px`,
-        }),
         td: () => ({
-          width: `${SELECT_COLUMN_WIDTH}px`,
-          minWidth: `${SELECT_COLUMN_WIDTH}px`,
           maxWidth: `${SELECT_COLUMN_WIDTH}px`,
+          minWidth: `${SELECT_COLUMN_WIDTH}px`,
+          width: `${SELECT_COLUMN_WIDTH}px`,
+        }),
+        th: () => ({
+          maxWidth: `${SELECT_COLUMN_WIDTH}px`,
+          minWidth: `${SELECT_COLUMN_WIDTH}px`,
+          width: `${SELECT_COLUMN_WIDTH}px`,
         }),
       },
     },
+
+    size: SELECT_COLUMN_WIDTH,
   }
 }
 
@@ -131,8 +131,8 @@ export function createDataColumns(options: {
       }
 
       const column = findSchemaColumn({
-        schema: options.params.schema.value,
         columnId: runtimeColumn.id,
+        schema: options.params.schema.value,
       })
 
       if (!column) {
@@ -140,11 +140,21 @@ export function createDataColumns(options: {
       }
 
       return {
-        id: runtimeColumn.id,
         accessorFn:
           column.kind === 'field'
-            ? (row: GenericObject) => getPathValue({ row, path: column.field })
+            ? (row: GenericObject) => getPathValue({ path: column.field, row })
             : undefined,
+        cell: ({ row }: { row: { original: GenericObject; index: number } }) =>
+          renderColumnCell({
+            column,
+            params: options.params,
+            row: row.original,
+            rowIndex: row.index,
+          }),
+        enableHiding: runtimeColumn.canHide,
+        enablePinning: true,
+        enableResizing: column.resizable !== false,
+        enableSorting: false,
         header: ({
           column: tableColumn,
           header,
@@ -152,108 +162,41 @@ export function createDataColumns(options: {
           column: { getCanHide?: () => boolean; resetSize?: () => void }
           header: { getIsResizing?: () => boolean; getResizeHandler?: () => (event: Event) => void }
         }) => (
-          <div class="group/column-header relative flex h-full w-full items-center">
-            <UDropdownMenu
-              size="sm"
-              items={options.getMenuItems({ columnId: runtimeColumn.id })}
-              content={{ align: 'start', side: 'bottom', sideOffset: 10 }}
-              modal={false}
-              ui={{ content: 'w-fit p-1 shadow-none' }}
-              v-slots={{
-                default: () => (
-                  <button
-                    type="button"
-                    class="inline-flex h-8 min-w-0 max-w-full items-center gap-2 rounded-md px-2.5 text-left text-sm text-default transition-colors hover:bg-elevated"
-                  >
-                    <div class="flex min-w-0 items-center gap-2.5">
-                      {runtimeColumn.icon ? (
-                        <UIcon name={runtimeColumn.icon} class="size-4 shrink-0 text-muted" />
-                      ) : null}
-                      <TableCellEllipsis
-                        title={runtimeColumn.label}
-                        wrapperClass="min-w-0 max-w-full"
-                      >
-                        {runtimeColumn.label}
-                      </TableCellEllipsis>
-                    </div>
-                    <UIcon
-                      name={getColumnHeaderIcon({
-                        columnId: runtimeColumn.id,
-                        canHide: tableColumn.getCanHide?.(),
-                        getSortState: options.getSortState,
-                        getPinnedState: options.getPinnedState,
-                      })}
-                      class="size-4 shrink-0 text-muted"
-                    />
-                    {options.getPinnedState({ columnId: runtimeColumn.id }) ? (
-                      <UIcon name="i-lucide-pin" class="size-3.5 shrink-0 text-muted" />
-                    ) : null}
-                  </button>
-                ),
-              }}
-            />
-
-            {column.resizable !== false ? (
-              <div
-                aria-label={`Resize ${runtimeColumn.label} column`}
-                role="separator"
-                class={[
-                  'absolute inset-y-1 -right-1 z-20 w-3 cursor-col-resize touch-none select-none opacity-0',
-                  "transition-opacity duration-150 after:absolute after:inset-y-0 after:left-1/2 after:w-px after:-translate-x-1/2 after:rounded-full after:content-['']",
-                  header.getIsResizing?.()
-                    ? 'opacity-100 after:bg-primary'
-                    : 'group-hover/table-head:opacity-100 hover:opacity-100 after:bg-accented/70',
-                ]}
-                onDblclick={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  tableColumn.resetSize?.()
-                }}
-                onMousedown={(event: MouseEvent) => {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  header.getResizeHandler?.()(event)
-                }}
-                onTouchstart={(event: TouchEvent) => {
-                  event.stopPropagation()
-                  header.getResizeHandler?.()(event)
-                }}
-              />
-            ) : null}
-          </div>
+          <TableColumnHeader
+            label={runtimeColumn.label}
+            icon={runtimeColumn.icon}
+            sortable={Boolean(runtimeColumn.sortableKey)}
+            sortState={options.getSortState({ columnId: runtimeColumn.id })}
+            pinned={Boolean(options.getPinnedState({ columnId: runtimeColumn.id }))}
+            items={options.getMenuItems({ columnId: runtimeColumn.id })}
+            resizable={column.resizable !== false}
+            resizing={header.getIsResizing?.() ?? false}
+            resetSize={tableColumn.resetSize}
+            resize={header.getResizeHandler?.()}
+          />
         ),
-        cell: ({ row }: { row: { original: GenericObject; index: number } }) =>
-          renderColumnCell({
-            column,
-            row: row.original,
-            rowIndex: row.index,
-            params: options.params,
-          }),
-        enableSorting: false,
-        enableHiding: runtimeColumn.canHide,
-        enablePinning: true,
-        enableResizing: column.resizable !== false,
-        size: normalizeColumnSize({ size: column.width }),
-        minSize: normalizeColumnSize({ size: column.minWidth }) ?? 120,
+        id: runtimeColumn.id,
         maxSize: normalizeColumnSize({ size: column.maxWidth }),
         meta: {
           class: {
-            th: getColumnHeaderClass({ column }),
             td: getColumnCellClass({ column }),
+            th: getColumnHeaderClass({ column }),
           },
           style: {
-            th: ({ column: headerColumn }: { column: { getSize: () => number } }) => ({
-              width: `${headerColumn.getSize()}px`,
-              minWidth: `${headerColumn.getSize()}px`,
-              maxWidth: `${headerColumn.getSize()}px`,
-            }),
             td: ({ column: cellColumn }: { column: { getSize: () => number } }) => ({
-              width: `${cellColumn.getSize()}px`,
-              minWidth: `${cellColumn.getSize()}px`,
               maxWidth: `${cellColumn.getSize()}px`,
+              minWidth: `${cellColumn.getSize()}px`,
+              width: `${cellColumn.getSize()}px`,
+            }),
+            th: ({ column: headerColumn }: { column: { getSize: () => number } }) => ({
+              maxWidth: `${headerColumn.getSize()}px`,
+              minWidth: `${headerColumn.getSize()}px`,
+              width: `${headerColumn.getSize()}px`,
             }),
           },
         },
+        minSize: normalizeColumnSize({ size: column.minWidth }) ?? 120,
+        size: normalizeColumnSize({ size: column.width }),
       }
     })
     .filter((column): column is Exclude<typeof column, null> => column !== null)
@@ -261,66 +204,69 @@ export function createDataColumns(options: {
 
 export function renderColumnCell(options: TableColumnRenderParams) {
   const cellContext = createCellRenderContext({
+    params: options.params,
     row: options.row,
     rowIndex: options.rowIndex,
-    params: options.params,
   })
 
   if (options.column.kind === 'field') {
     const value = getPathValue({
-      row: options.row,
       path: options.column.field,
+      row: options.row,
     })
 
     if (options.column.render) {
       return wrapRowScope({
-        scope: cellContext,
         content: wrapEllipsisContent({
           column: options.column,
+          // SAFETY: field-column render receives the schema-derived row/value context.
           content: options.column.render({
             ...cellContext,
+            // SAFETY: path resolution is checked by the schema field contract at column creation.
             value: value as never,
           } as never),
           title: resolveEllipsisTitle({
             column: options.column,
+            fallbackValue: value,
             params: {
               ...cellContext,
               value,
             },
-            fallbackValue: value,
           }),
         }),
+        scope: cellContext,
       })
     }
 
     return wrapRowScope({
-      scope: cellContext,
       content: wrapEllipsisContent({
         column: options.column,
         content: formatCellValue({ value }),
         title: resolveEllipsisTitle({
           column: options.column,
+          fallbackValue: value,
           params: {
             ...cellContext,
             value,
           },
-          fallbackValue: value,
         }),
       }),
+      scope: cellContext,
     })
   }
 
   return wrapRowScope({
-    scope: cellContext,
     content: wrapEllipsisContent({
       column: options.column,
+      // SAFETY: composite/display render receives the schema-derived row context.
       content: options.column.render(cellContext as never),
       title: resolveEllipsisTitle({
         column: options.column,
-        params: cellContext,
         fallbackValue: null,
+        params: cellContext,
       }),
     }),
+    scope: cellContext,
   })
 }
 
@@ -363,16 +309,14 @@ export function getColumnCellClass(options: { column: SchemaTableColumn }) {
 }
 
 export function normalizeColumnSize(options: { size?: number | string }) {
-  if (typeof options.size === 'number') {
+  if (isNumber(options.size)) {
     return options.size
   }
 
-  if (typeof options.size === 'string') {
+  if (isString(options.size)) {
     const parsed = Number.parseFloat(options.size)
     return Number.isFinite(parsed) ? parsed : undefined
   }
-
-  return undefined
 }
 
 function createCellRenderContext(options: {
@@ -381,77 +325,61 @@ function createCellRenderContext(options: {
   params: UseTableColumnsParams
 }): TableCellRenderContext {
   const tableApi = options.params.tableApi.value
-  if (!tableApi) throw new Error('Table API is not ready')
+  if (!tableApi) {
+    throw new Error('Table API is not ready')
+  }
   const plainRenderContext = resolvePlainRenderContext(options.params)
 
   return {
-    row: options.row,
-    index: options.rowIndex,
     context: plainRenderContext.plainContext,
-    pageContext: plainRenderContext.plainPageContext,
-    tableApi,
+    index: options.rowIndex,
     layout: options.params.tableLayout.value,
+    pageContext: plainRenderContext.plainPageContext,
+    row: options.row,
+    tableApi,
   }
 }
 
-function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
+export function createRowActionsColumn(options: { params: UseTableColumnsParams }) {
   return {
-    id: ROW_ACTIONS_COLUMN_ID,
-    header: () => null,
     cell: ({ row }: { row: { original: GenericObject; index: number } }) => {
       const scope = createCellRenderContext({
+        params: options.params,
         row: row.original,
         rowIndex: row.index,
-        params: options.params,
       })
 
       return (
         <TableRowScopeProvider scope={scope}>
-          <div class="flex justify-end">
-            <RowActions
-              size="sm"
-              content={{ align: 'end', side: 'bottom', sideOffset: 8 }}
-              modal={false}
-              portal
-              ui={{ content: 'z-[80] min-w-48' }}
-            >
-              <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-ellipsis-vertical"
-                size="sm"
-                square
-                aria-label="Row actions"
-                class="bg-transparent text-muted shadow-none ring-0 hover:bg-accented/60 hover:text-default focus-visible:bg-accented/60 focus-visible:text-default"
-              />
-            </RowActions>
-          </div>
+          <TableRowActionsControl />
         </TableRowScopeProvider>
       )
     },
-    size: ROW_ACTIONS_COLUMN_WIDTH,
-    enableSorting: false,
     enableHiding: false,
     enablePinning: true,
     enableResizing: false,
+    enableSorting: false,
+    header: () => null,
+    id: ROW_ACTIONS_COLUMN_ID,
     meta: {
       class: {
-        th: 'w-13 px-2',
         td: 'w-13 px-2',
+        th: 'w-13 px-2',
       },
       style: {
-        th: () => ({
-          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
-          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
-          maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
-        }),
         td: () => ({
-          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
-          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
           maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+        }),
+        th: () => ({
+          maxWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          minWidth: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
+          width: `${ROW_ACTIONS_COLUMN_WIDTH}px`,
         }),
       },
     },
+    size: ROW_ACTIONS_COLUMN_WIDTH,
   }
 }
 
@@ -468,8 +396,9 @@ function resolvePlainRenderContext(params: UseTableColumnsParams): PlainRenderCo
     cached &&
     cached.contextSource === contextSource &&
     cached.pageContextSource === pageContextSource
-  )
+  ) {
     return cached
+  }
 
   const nextCache: PlainRenderContextCacheState = {
     contextSource,
@@ -482,7 +411,7 @@ function resolvePlainRenderContext(params: UseTableColumnsParams): PlainRenderCo
   return nextCache
 }
 
-function toPlainRecord(value: object) {
+function toPlainRecord(value: GenericObject): TableRuntimeRecord {
   return Object.fromEntries(Object.entries(value))
 }
 
@@ -495,27 +424,29 @@ function resolveEllipsisTitle(options: {
     return null
   }
 
-  if (typeof options.column.ellipsis === 'object' && options.column.ellipsis !== null) {
+  if (isObject(options.column.ellipsis)) {
     const title = 'title' in options.column.ellipsis ? options.column.ellipsis.title : undefined
 
     if (isEllipsisTitleResolver(title)) {
       return String(title(options.params))
     }
 
-    if (title != null) {
+    if (!isNullish(title)) {
       return String(title)
     }
   }
 
-  return options.fallbackValue == null ? null : String(options.fallbackValue)
+  return isNullish(options.fallbackValue) ? null : String(options.fallbackValue)
 }
 
-function isEllipsisTitleResolver(value: unknown): value is (params: unknown) => unknown {
-  return typeof value === 'function'
+function isEllipsisTitleResolver<TValue>(
+  value: TValue,
+): value is TValue & ((params: TValue) => VNodeChild) {
+  return isFunction(value)
 }
 
 function formatCellValue(options: { value: unknown }) {
-  if (options.value == null) {
+  if (isNullish(options.value)) {
     return '—'
   }
 
@@ -523,11 +454,11 @@ function formatCellValue(options: { value: unknown }) {
     return options.value.toLocaleString()
   }
 
-  if (Array.isArray(options.value)) {
+  if (isArray(options.value)) {
     return options.value.join(', ')
   }
 
-  if (typeof options.value === 'object') {
+  if (isObject(options.value)) {
     return JSON.stringify(options.value)
   }
 
@@ -536,10 +467,10 @@ function formatCellValue(options: { value: unknown }) {
 
 function getPathValue(options: { row: GenericObject; path: string }) {
   return options.path.split('.').reduce<unknown>((value, key) => {
-    if (value == null || typeof value !== 'object') {
-      return undefined
+    if (!isObject(value)) {
+      return
     }
 
-    return (value as Record<string, unknown>)[key]
+    return value[key]
   }, options.row)
 }

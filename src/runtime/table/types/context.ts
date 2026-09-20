@@ -30,7 +30,7 @@ type ContextItemRecord<TItem> = TItem extends {
             : never
         : never
     }
-  : {}
+  : NonNullable<unknown>
 
 export type TableContextDataFromItems<TItems extends unknown[]> = Prettify<
   UnionToIntersection<ContextItemRecord<TItems[number]>>

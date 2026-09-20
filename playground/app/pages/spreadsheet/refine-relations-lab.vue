@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { utils, write } from 'xlsx'
 
 import { useSpreadsheetImport } from '#ui-tools/spreadsheet'
-import SpreadsheetImport from '#ui-tools/spreadsheet/components/SpreadsheetImport.vue'
+import SpreadsheetImport from '#ui-tools/spreadsheet/components/spreadsheet-import.vue'
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
 
 definePageMeta({
@@ -14,20 +14,6 @@ const { t } = useI18n()
 
 function createRefineRelationsSchema() {
   return defineSpreadsheetSchema({
-    importKey: 'playground.spreadsheet.refine-relations-lab',
-    file: {
-      accept: ['.xlsx', '.xls', '.csv'],
-      maxRecords: 50,
-    },
-    sheet: {
-      strategy: 'auto',
-    },
-    header: {
-      strategy: 'detected',
-    },
-    matching: {
-      strategy: 'smart',
-    },
     columns: {
       static: (column) => [
         column.text('candidateName', {
@@ -56,13 +42,15 @@ function createRefineRelationsSchema() {
           },
           rules: (v) => [
             v.validate({
+              message: 'General score must be numeric when provided',
               name: 'numericScore',
               validator: (value: string) => {
-                if (!value.trim()) return true
+                if (!value.trim()) {
+                  return true
+                }
                 const numericValue = Number(value)
                 return !Number.isNaN(numericValue) && Number.isFinite(numericValue)
               },
-              message: 'General score must be numeric when provided',
             }),
           ],
         }),
@@ -77,6 +65,20 @@ function createRefineRelationsSchema() {
           },
         }),
       ],
+    },
+    file: {
+      accept: ['.xlsx', '.xls', '.csv'],
+      maxRecords: 50,
+    },
+    header: {
+      strategy: 'detected',
+    },
+    importKey: 'playground.spreadsheet.refine-relations-lab',
+    matching: {
+      strategy: 'smart',
+    },
+    sheet: {
+      strategy: 'auto',
     },
   }).refine({
     relations: [
@@ -94,9 +96,9 @@ function createRefineRelationsSchema() {
         condition: (row) => row.status === 'Draft',
         rules: (v) => [
           v.validate({
+            message: 'General score must stay empty while status is Draft',
             name: 'draftScoreEmpty',
             validator: (value: string | undefined) => !value?.trim(),
-            message: 'General score must stay empty while status is Draft',
           }),
         ],
       },
@@ -105,14 +107,14 @@ function createRefineRelationsSchema() {
         condition: (row) => row.status === 'Done',
         rules: (v, row) => [
           v.validate({
+            message: () => {
+              const limit = row.country === 'FR' ? 18 : 32
+              return `Notes must be at most ${limit} characters when status is Done for ${row.country}`
+            },
             name: 'doneNotesLength',
             validator: (value: string | undefined) => {
               const limit = row.country === 'FR' ? 18 : 32
               return (value?.length ?? 0) <= limit
-            },
-            message: () => {
-              const limit = row.country === 'FR' ? 18 : 32
-              return `Notes must be at most ${limit} characters when status is Done for ${row.country}`
             },
           }),
         ],
@@ -155,19 +157,19 @@ function createWorkbook() {
   utils.book_append_sheet(workbook, sheet, 'Refine relations')
 
   return {
-    fileName: 'spreadsheet-refine-relations-lab.xlsx',
     binary: write(workbook, {
-      type: 'buffer',
       bookType: 'xlsx',
+      type: 'buffer',
     }),
+    fileName: 'spreadsheet-refine-relations-lab.xlsx',
   }
 }
 
 onMounted(() => {
   const workbook = createWorkbook()
   spreadsheet.loadSource({
-    source: workbook.binary,
     fileName: workbook.fileName,
+    source: workbook.binary,
   })
 })
 </script>

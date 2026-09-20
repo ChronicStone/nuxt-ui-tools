@@ -5,6 +5,9 @@ Current source modes:
 - `client`
 - `remote`
 
+Wrap either source mode with `tableSource(...)` directly inside `defineTableSchema(...)`. The helper
+preserves query-result inference; it is not intended for separately declared, manually typed sources.
+
 ## Client Mode
 
 Use client mode when the dataset can be loaded locally and queried in-memory.
@@ -12,7 +15,7 @@ Use client mode when the dataset can be loaded locally and queried in-memory.
 Example:
 
 ```ts
-source: {
+source: tableSource({
   mode: 'client',
   query: () => ({
     queryKey: ['employees'],
@@ -21,7 +24,7 @@ source: {
       { id: '2', fullName: 'Luca Sato', email: 'luca@example.com' },
     ],
   }),
-}
+})
 ```
 
 What you return:
@@ -44,13 +47,13 @@ Use remote mode when filtering, sorting, pagination, or option counts should be 
 Example:
 
 ```ts
-source: {
+source: tableSource({
   mode: 'remote',
   query: (request) => ({
     queryKey: ['employees', request],
     queryFn: async () => api.queryTable({ request }),
   }),
-}
+})
 ```
 
 What your `request` contains:
@@ -61,14 +64,33 @@ What your `request` contains:
 - search
 - context
 
-What your API should return:
+What your API may return for offset pagination:
 
 ```ts
+// compact table-native shape
 {
   rows: EmployeeRow[],
   rowCount: number
 }
+
+// resource-style shape, accepted directly (for example drizzle-resource)
+{
+  rows: EmployeeRow[],
+  pageInfo: {
+    mode: 'offset',
+    pageIndex: number,
+    pageSize: number,
+    hasNextPage: boolean,
+    count: 'exact',
+    rowCount: number,
+  },
+  facets?: TableFacetResult[],
+}
 ```
+
+Cursor sources return the matching `pageInfo: { mode: 'cursor', nextCursor, ... }` shape. This lets
+query-resource backends pass their page result straight through without an adapter that only moves
+`pageInfo.rowCount` to the root.
 
 Remote mode can also provide:
 
@@ -76,6 +98,19 @@ Remote mode can also provide:
 - remote filter-option queries
 
 Remote facet counts are configured on the filter with `source.facet` and implemented on the source with `source.facets(...)`.
+
+## Route prefetch
+
+Pair a table page with the `defineQueryPrefetch(...)` macro when links should warm the exact
+destination state before navigation:
+
+```ts
+defineQueryPrefetch('employees', ({ route }) => prefetchTable({ route, schema: employeesSchema() }))
+```
+
+`prefetchTable(...)` resolves the route's `l`, `p.*`, `s.*`, and `f.*` query keys and stages context,
+source/facet/option, then page-context queries in dependency order. The mounted table reuses the
+same TanStack Query cache entries.
 
 ## Choosing Between Them
 

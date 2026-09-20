@@ -9,24 +9,24 @@ export default defineNuxtModule({
     const { resolve } = createResolver(import.meta.url)
 
     addCustomTab(() => ({
+      icon: 'carbon:data-vis-1',
       name: 'query-state',
       title: 'Query State',
-      icon: 'carbon:data-vis-1',
       view: {
-        type: 'iframe',
-        src: '/__query-devtools',
         persistent: true,
+        src: '/__query-devtools',
+        type: 'iframe',
       },
     }))
 
     addServerHandler({
-      route: '/__query-devtools',
       handler: resolve('../server/routes/__query-devtools.get'),
+      route: '/__query-devtools',
     })
 
     addPlugin({
-      src: resolve('../app/plugins/query-devtools.client'),
       mode: 'client',
+      src: resolve('../app/plugins/query-devtools.client'),
     })
   },
 })

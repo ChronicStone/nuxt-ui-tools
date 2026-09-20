@@ -1,3 +1,4 @@
+/* oxlint-disable sort-keys -- defineSpreadsheetSchema infers row types from the declaration order of these literals */
 import { describe, expectTypeOf, it } from 'vitest'
 
 import { defineSpreadsheetSchema } from '#ui-tools/spreadsheet/schema'
@@ -38,7 +39,7 @@ const contextItems = [
     query: () =>
       ({
         queryKey: ['affiliation-groups', 'tc_123'],
-        queryFn: async () => affiliationGroups,
+        queryFn: () => affiliationGroups,
       }) satisfies SpreadsheetQueryDefinition<readonly DemoAffiliationGroup[]>,
   },
   {
@@ -46,7 +47,7 @@ const contextItems = [
     query: () =>
       ({
         queryKey: ['products', 'tc_123'],
-        queryFn: async () =>
+        queryFn: () =>
           [
             { id: 'prod_1', name: 'Business English 4 Skills' },
             { id: 'prod_2', name: 'Reading Placement Test' },

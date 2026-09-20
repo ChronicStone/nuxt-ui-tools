@@ -1,4 +1,4 @@
-import type { QueryCodec } from '#ui-tools/query-state'
+import type { QueryCodec } from '#ui-tools/query-state/codecs'
 import {
   booleanCodec,
   createArrayCodec,
@@ -6,9 +6,10 @@ import {
   dateISOCodec,
   numberCodec,
   stringCodec,
-} from '#ui-tools/query-state'
+} from '#ui-tools/query-state/codecs'
 
-import { isObject, isString } from '../../shared/utils/predicate'
+import type { GenericObject } from '../../shared/types/utils'
+import { isBoolean, isNumber, isObject, isString, isNullish } from '../../shared/utils/predicate'
 import { DEFAULT_FILTER_OPERATOR, PAGINATION_DEFAULTS } from '../constants/query-state'
 import type {
   TableFilterOperator,
@@ -27,8 +28,12 @@ import type {
 export function getPaginationMode(schema: {
   pagination?: TablePaginationSchema
 }): TablePaginationState['mode'] {
-  if (schema.pagination === false) return 'none'
-  if (schema.pagination?.mode === 'cursor') return 'cursor'
+  if (schema.pagination === false) {
+    return 'none'
+  }
+  if (schema.pagination?.mode === 'cursor') {
+    return 'cursor'
+  }
   return 'offset'
 }
 
@@ -37,22 +42,31 @@ export function getDefaultPageSize(params: {
   layout: TableLayout
 }): number {
   const paginationConf = params.schema.pagination
-  if (!paginationConf || typeof paginationConf !== 'object')
+  if (!isObject(paginationConf)) {
     return PAGINATION_DEFAULTS.defaultSize[params.layout]
+  }
   if ('mode' in paginationConf && paginationConf.mode === 'cursor') {
-    if (isObject(paginationConf.pageSize))
+    if (isNumber(paginationConf.pageSize)) {
+      return paginationConf.pageSize
+    }
+    if (isLayoutNumberMap(paginationConf.pageSize)) {
       return (
         paginationConf.pageSize[params.layout] ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
       )
+    }
 
-    return paginationConf.pageSize ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
+    return PAGINATION_DEFAULTS.defaultSize[params.layout]
   }
-  if (isObject(paginationConf.defaultSize))
+  if (isNumber(paginationConf.defaultSize)) {
+    return paginationConf.defaultSize
+  }
+  if (isLayoutNumberMap(paginationConf.defaultSize)) {
     return (
       paginationConf.defaultSize[params.layout] ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
     )
+  }
 
-  return paginationConf.defaultSize ?? PAGINATION_DEFAULTS.defaultSize[params.layout]
+  return PAGINATION_DEFAULTS.defaultSize[params.layout]
 }
 
 export function getPageSizeOptions(params: {
@@ -61,7 +75,7 @@ export function getPageSizeOptions(params: {
 }): number[] {
   const paginationConf = params.schema.pagination
 
-  if (!paginationConf || typeof paginationConf !== 'object') {
+  if (!isObject(paginationConf)) {
     return PAGINATION_DEFAULTS.sizes[params.layout]
   }
 
@@ -73,11 +87,19 @@ export function getPageSizeOptions(params: {
     return paginationConf.sizeOptions
   }
 
-  if (isObject(paginationConf.sizeOptions)) {
+  if (isLayoutPageSizeMap(paginationConf.sizeOptions)) {
     return paginationConf.sizeOptions[params.layout] ?? PAGINATION_DEFAULTS.sizes[params.layout]
   }
 
   return PAGINATION_DEFAULTS.sizes[params.layout]
+}
+
+function isLayoutNumberMap<T>(value: T): value is T & Partial<Record<TableLayout, number>> {
+  return isObject(value)
+}
+
+function isLayoutPageSizeMap<T>(value: T): value is T & Partial<Record<TableLayout, number[]>> {
+  return isObject(value)
 }
 
 export function getDefaultSort(params: {
@@ -85,9 +107,12 @@ export function getDefaultSort(params: {
   layout: TableLayout
 }): { key: string; dir: TableSortingDirection } | null {
   const defaultSorting = params.schema[params.layout]?.defaultSorting
-  if (!defaultSorting) return null
-  else if (isString(defaultSorting)) return { key: defaultSorting, dir: 'asc' as const }
-  else return defaultSorting
+  if (!defaultSorting) {
+    return null
+  } else if (isString(defaultSorting)) {
+    return { dir: 'asc' as const, key: defaultSorting }
+  }
+  return defaultSorting
 }
 
 export function getSortKeys(params: { schema: TableSchemaView; layout: TableLayout }): string[] {
@@ -128,32 +153,40 @@ export function createTableFilterValueCodec(
         return definition.defaultValue
       }
 
-      if (definition.kind === 'option' && rawValue.includes(',')) {
+      if (definition.kind === 'option') {
         return createArrayCodec(stringCodec).parse(rawValue)
       }
 
       if (definition.kind === 'number' && rawValue.includes('..')) {
         const [from, to] = rawValue.split('..')
+        const range: TableQueryStateFilterValue = {}
 
-        return {
-          ...(from ? { from: numberCodec.parse(from) } : {}),
-          ...(to ? { to: numberCodec.parse(to) } : {}),
+        if (from) {
+          range.from = numberCodec.parse(from)
         }
+        if (to) {
+          range.to = numberCodec.parse(to)
+        }
+        return range
       }
 
       if (definition.kind === 'date' && rawValue.includes('..')) {
         const [from, to] = rawValue.split('..')
+        const range: TableQueryStateFilterValue = {}
 
-        return {
-          ...(from ? { from: dateISOCodec.parse(from) } : {}),
-          ...(to ? { to: dateISOCodec.parse(to) } : {}),
+        if (from) {
+          range.from = dateISOCodec.parse(from)
         }
+        if (to) {
+          range.to = dateISOCodec.parse(to)
+        }
+        return range
       }
 
       return parseScalar(rawValue, definition)
     },
     serialize(value) {
-      if (value == null) {
+      if (isNullish(value)) {
         return null
       }
 
@@ -162,10 +195,8 @@ export function createTableFilterValueCodec(
       }
 
       if (isRange(value)) {
-        const from =
-          value.from == null ? '' : serializeScalar(value.from as string | number | boolean | Date)
-        const to =
-          value.to == null ? '' : serializeScalar(value.to as string | number | boolean | Date)
+        const from = serializeOptionalScalar(value.from)
+        const to = serializeOptionalScalar(value.to)
         return `${from}..${to}`
       }
 
@@ -173,11 +204,11 @@ export function createTableFilterValueCodec(
         return dateISOCodec.serialize(value)
       }
 
-      if (typeof value === 'number') {
+      if (isNumber(value)) {
         return numberCodec.serialize(value)
       }
 
-      if (typeof value === 'boolean') {
+      if (isBoolean(value)) {
         return booleanCodec.serialize(value)
       }
 
@@ -189,7 +220,9 @@ export function createTableFilterValueCodec(
 export function resolveFilterDefaultOperator(
   definition: TableQueryStateFilterDefinition,
 ): TableFilterOperator {
-  if (definition.defaultOperator) return definition.defaultOperator
+  if (definition.defaultOperator) {
+    return definition.defaultOperator
+  }
   return DEFAULT_FILTER_OPERATOR[definition.kind]
 }
 
@@ -198,7 +231,9 @@ export function resolveFilterSupportedOperators(
 ): TableFilterOperator[] {
   const defaultOperator = resolveFilterDefaultOperator(definition)
 
-  if (!definition.operators?.length) return [defaultOperator]
+  if (!definition.operators?.length) {
+    return [defaultOperator]
+  }
   return [...new Set([defaultOperator, ...definition.operators])]
 }
 
@@ -226,28 +261,32 @@ export function normalizeFilterDefinition(
     return {
       ...definition,
       defaultOperator,
-      operators,
       defaultValue,
+      operators,
     }
   }
 
   if (isMinMaxNumberRange(defaultValue)) {
+    const range: TableQueryStateFilterValue = {}
+    if ('min' in defaultValue) {
+      range.from = defaultValue.min
+    }
+    if ('max' in defaultValue) {
+      range.to = defaultValue.max
+    }
     return {
       ...definition,
       defaultOperator,
+      defaultValue: range,
       operators,
-      defaultValue: {
-        ...('min' in defaultValue ? { from: defaultValue.min } : {}),
-        ...('max' in defaultValue ? { to: defaultValue.max } : {}),
-      },
     }
   }
 
   return {
     ...definition,
     defaultOperator,
-    operators,
     defaultValue,
+    operators,
   }
 }
 
@@ -294,7 +333,7 @@ export function isTableFilterRuleDefault(options: {
   definition: TableUiFilterDefinition
 }): boolean {
   const normalizedDefinition = normalizeFilterDefinition(options.definition)
-  const defaultValue = normalizedDefinition.defaultValue
+  const { defaultValue } = normalizedDefinition
 
   return (
     defaultValue !== undefined &&
@@ -318,7 +357,7 @@ export function resolveTableActiveFilterRules(options: {
 }): TableQueryStateFilterRule[] {
   return options.rules.filter((rule) => {
     const definition = options.definitions.find((candidate) => candidate.key === rule.key)
-    return !definition || !isTableFilterRuleDefault({ rule, definition })
+    return !definition || !isTableFilterRuleDefault({ definition, rule })
   })
 }
 
@@ -344,7 +383,7 @@ export function parseTableFilterQueryState(options: {
     }
   }
 
-  return mergeTableFilterDefaultRules({ rules, definitions: options.definitions })
+  return mergeTableFilterDefaultRules({ definitions: options.definitions, rules })
 }
 
 export function serializeTableFilterQueryState(options: {
@@ -355,7 +394,9 @@ export function serializeTableFilterQueryState(options: {
 
   for (const rule of options.rules) {
     const filter = options.definitions.find((definition) => definition.key === rule.key)
-    if (!filter || isTableFilterRuleDefault({ rule, definition: filter })) continue
+    if (!filter || isTableFilterRuleDefault({ definition: filter, rule })) {
+      continue
+    }
 
     const definition = normalizeFilterDefinition(filter)
     const operator = rule.operator ?? resolveFilterDefaultOperator(definition)
@@ -368,41 +409,40 @@ export function serializeTableFilterQueryState(options: {
   return result
 }
 
-function isRange(value: unknown): value is TableQueryStateFilterRange<unknown> {
-  if (!value || typeof value !== 'object') {
-    return false
-  }
+type FilterRangeValue = TableQueryStateFilterRange<GenericObject[string]>
 
-  return 'from' in value || 'to' in value
+function isRange<T>(value: T): value is T & FilterRangeValue {
+  return isObject(value) && ('from' in value || 'to' in value)
 }
 
 function hasFilterValue(value: TableQueryStateFilterValue): boolean {
-  if (Array.isArray(value)) return value.length > 0
-  if (typeof value === 'string') return value.length > 0
-  if (isRange(value)) return value.from != null || value.to != null
+  if (Array.isArray(value)) {
+    return value.length > 0
+  }
+  if (isString(value)) {
+    return value.length > 0
+  }
+  if (isRange(value)) {
+    return !isNullish(value.from) || !isNullish(value.to)
+  }
   return true
 }
 
-function isTableFilterValue(value: unknown): value is TableQueryStateFilterValue {
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean' ||
-    value instanceof Date
-  ) {
+function isTableFilterValue<T>(value: T): value is T & TableQueryStateFilterValue {
+  if (isString(value) || isNumber(value) || isBoolean(value) || value instanceof Date) {
     return true
   }
 
   if (Array.isArray(value)) {
-    return value.every(
-      (item) => typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean',
-    )
+    return value.every((item) => isString(item) || isNumber(item) || isBoolean(item))
   }
 
-  if (!isRange(value)) return false
+  if (!isRange(value)) {
+    return false
+  }
 
   return [value.from, value.to].every(
-    (item) => item == null || typeof item === 'number' || item instanceof Date,
+    (item) => isNullish(item) || isNumber(item) || item instanceof Date,
   )
 }
 
@@ -411,12 +451,16 @@ function areFilterValuesEqual(
   right: TableQueryStateFilterValue,
 ): boolean {
   if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false
+    }
 
     const unmatched = [...right]
     for (const value of left) {
       const index = unmatched.findIndex((candidate) => Object.is(candidate, value))
-      if (index === -1) return false
+      if (index === -1) {
+        return false
+      }
       unmatched.splice(index, 1)
     }
 
@@ -428,7 +472,9 @@ function areFilterValuesEqual(
   }
 
   if (isRange(left) || isRange(right)) {
-    if (!isRange(left) || !isRange(right)) return false
+    if (!isRange(left) || !isRange(right)) {
+      return false
+    }
 
     return (
       areOptionalFilterValuesEqual(left.from, right.from) &&
@@ -439,7 +485,7 @@ function areFilterValuesEqual(
   return Object.is(left, right)
 }
 
-function areOptionalFilterValuesEqual(left: unknown, right: unknown): boolean {
+function areOptionalFilterValuesEqual<TLeft, TRight>(left: TLeft, right: TRight): boolean {
   if (left instanceof Date || right instanceof Date) {
     return left instanceof Date && right instanceof Date && left.getTime() === right.getTime()
   }
@@ -447,8 +493,8 @@ function areOptionalFilterValuesEqual(left: unknown, right: unknown): boolean {
   return Object.is(left, right)
 }
 
-function isMinMaxNumberRange(value: unknown): value is { min?: number; max?: number } {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+function isMinMaxNumberRange<T>(value: T): value is T & { min?: number; max?: number } {
+  if (!isObject(value) || Array.isArray(value)) {
     return false
   }
 
@@ -459,10 +505,7 @@ function isMinMaxNumberRange(value: unknown): value is { min?: number; max?: num
   const minValue = 'min' in value ? value.min : undefined
   const maxValue = 'max' in value ? value.max : undefined
 
-  return (
-    (minValue == null || typeof minValue === 'number') &&
-    (maxValue == null || typeof maxValue === 'number')
-  )
+  return (isNullish(minValue) || isNumber(minValue)) && (isNullish(maxValue) || isNumber(maxValue))
 }
 
 function serializeScalar(value: string | number | boolean | Date): string {
@@ -470,11 +513,21 @@ function serializeScalar(value: string | number | boolean | Date): string {
     return value.toISOString()
   }
 
-  if (typeof value === 'boolean') {
+  if (isBoolean(value)) {
     return value ? 'true' : 'false'
   }
 
   return String(value)
+}
+
+function serializeOptionalScalar<T>(value: T): string {
+  if (isNullish(value)) {
+    return ''
+  }
+  if (isString(value) || isNumber(value) || isBoolean(value) || value instanceof Date) {
+    return serializeScalar(value)
+  }
+  return ''
 }
 
 function parseScalar(

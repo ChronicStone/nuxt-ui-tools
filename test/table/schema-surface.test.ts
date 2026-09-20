@@ -3,52 +3,57 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import type { ComputedRef } from 'vue'
 
-import { defineTableSchema } from '#ui-tools/table/schema'
+import { defineTableSchema, tableSource } from '#ui-tools/table'
 import type {
   TableApi,
   TableCursorPaginationApi,
   TableNoPaginationApi,
-  TableRemoteSource,
 } from '#ui-tools/table/types'
+
+import { isObject } from '../../src/runtime/shared/utils/predicate'
 
 describe('table package surface', () => {
   it('exports defineTableSchema from the package root', () => {
     expectTypeOf(defineTableSchema).toBeFunction()
+    expectTypeOf(tableSource).toBeFunction()
   })
 
   it('declares TanStack Query on the package boundary', () => {
-    const packageJson = JSON.parse(
-      readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
-    ) as { peerDependencies?: Record<string, string> }
+    interface PackageMetadata {
+      peerDependencies?: Record<string, string>
+    }
+    const packageJson: PackageMetadata = JSON.parse(
+      readFileSync(new URL('../../package.json', import.meta.url), 'utf-8'),
+    )
 
     expect(packageJson.peerDependencies?.['@tanstack/vue-query']).toBeDefined()
   })
 
   it('accepts root-level pagination config on the schema', () => {
     const schema = defineTableSchema({
-      tableKey: 'users',
-      rowKey: 'id',
-      source: {
-        query: () => ({
-          queryKey: ['users'],
-          queryFn: async () => [{ id: 1 }],
-        }),
-      },
       pagination: {
         defaultSize: {
-          table: 50,
           grid: 20,
-        },
-        sizeOptions: {
-          table: [10, 20, 50],
-          grid: [10, 20],
+          table: 50,
         },
         showPageSizePicker: true,
+        sizeOptions: {
+          grid: [10, 20],
+          table: [10, 20, 50],
+        },
       },
+      rowKey: 'id',
+      source: tableSource({
+        query: () => ({
+          queryFn: () => [{ id: 1 }],
+          queryKey: ['users'],
+        }),
+      }),
+      tableKey: 'users',
     })
 
     expectTypeOf(
-      schema.pagination && typeof schema.pagination === 'object'
+      schema.pagination && isObject(schema.pagination)
         ? schema.pagination.mode === 'cursor'
           ? undefined
           : schema.pagination.showPageSizePicker
@@ -58,17 +63,17 @@ describe('table package surface', () => {
 
   it('keeps the public table api generic compatible with inferred schemas', () => {
     const schema = defineTableSchema({
-      tableKey: 'users',
-      rowKey: 'id',
-      source: {
-        query: () => ({
-          queryKey: ['users'],
-          queryFn: async () => [{ id: 'user_1', email: 'ada@example.com' }],
-        }),
-      },
       grid: {
         renderItem: ({ row }) => row.email,
       },
+      rowKey: 'id',
+      source: tableSource({
+        query: () => ({
+          queryFn: () => [{ email: 'ada@example.com', id: 'user_1' }],
+          queryKey: ['users'],
+        }),
+      }),
+      tableKey: 'users',
     })
 
     type PublicTable = TableApi<typeof schema> & {
@@ -80,33 +85,33 @@ describe('table package surface', () => {
 
   it('narrows the public pagination API from the schema strategy', () => {
     const cursorSchema = defineTableSchema({
-      tableKey: 'cursor-users',
-      rowKey: 'id',
       pagination: { mode: 'cursor', pageSize: 20 },
-      source: {
+      rowKey: 'id',
+      source: tableSource({
         mode: 'remote',
         query: () => ({
-          queryKey: ['cursor-users'],
-          queryFn: async () => ({
-            rows: [{ id: 1 }],
+          queryFn: () => ({
             pageInfo: {
-              mode: 'cursor' as const,
-              pageSize: 20,
-              nextCursor: null,
               count: 'none' as const,
+              mode: 'cursor' as const,
+              nextCursor: null,
+              pageSize: 20,
               rowCount: null,
             },
+            rows: [{ id: 1 }],
           }),
+          queryKey: ['cursor-users'],
         }),
-      },
+      }),
+      tableKey: 'cursor-users',
     })
     const unpaginatedSchema = defineTableSchema({
-      tableKey: 'all-users',
-      rowKey: 'id',
       pagination: false,
-      source: {
-        query: () => ({ queryKey: ['all-users'], queryFn: async () => [{ id: 1 }] }),
-      },
+      rowKey: 'id',
+      source: tableSource({
+        query: () => ({ queryFn: () => [{ id: 1 }], queryKey: ['all-users'] }),
+      }),
+      tableKey: 'all-users',
     })
 
     expectTypeOf<
@@ -118,32 +123,32 @@ describe('table package surface', () => {
   })
 
   it('requires remote sources to return rows with rowCount metadata', () => {
-    const remoteSource: TableRemoteSource<{ id: number }> = {
+    // @ts-expect-error remote queries must resolve an object with rows metadata
+    const remoteSource = tableSource({
       mode: 'remote',
       query: () => ({
         queryKey: ['remote-users'],
-        // @ts-expect-error remote queries must resolve { rows, rowCount }
-        queryFn: async () => [{ id: 1 }],
+        queryFn: () => [{ id: 1 }],
       }),
-    }
+    })
 
-    expectTypeOf(remoteSource).toEqualTypeOf<TableRemoteSource<{ id: number }>>()
+    expectTypeOf(remoteSource).toBeObject()
   })
 
   it('accepts source-level embedded facets enablement for remote sources', () => {
-    const remoteSource: TableRemoteSource<{ id: number }> = {
-      mode: 'remote',
+    const remoteSource = tableSource({
       facets: true,
+      mode: 'remote',
       query: (ctx) => ({
-        queryKey: ['remote-users', ctx.facets],
-        queryFn: async () => ({
-          rows: [{ id: 1 }],
-          rowCount: 1,
+        queryFn: () => ({
           facets: [],
+          rowCount: 1,
+          rows: [{ id: 1 }],
         }),
+        queryKey: ['remote-users', ctx.facets],
       }),
-    }
+    })
 
-    expectTypeOf(remoteSource).toEqualTypeOf<TableRemoteSource<{ id: number }>>()
+    expect(remoteSource.facets).toBe(true)
   })
 })

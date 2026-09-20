@@ -1,7 +1,10 @@
-import { computed, shallowReactive } from 'vue'
+import { computed, ref, shallowReactive } from 'vue'
 
-import type { FormOptionRuntimeState } from '../types'
+import type { FormValue, FormOptionRuntimeState } from '../types'
 import type { ResolvedFormOption } from '../utils/options'
+import { isString } from '../utils/predicate'
+
+const emptyLabel = ref<string | undefined>()
 
 export function useFormOptionRegistry() {
   const states = shallowReactive<Record<string, FormOptionRuntimeState>>({})
@@ -12,7 +15,9 @@ export function useFormOptionRegistry() {
     states[key] = state
 
     return () => {
-      if (states[key] === state) delete states[key]
+      if (states[key] === state) {
+        delete states[key]
+      }
     }
   }
 
@@ -29,29 +34,41 @@ export function useFormOptionRegistry() {
   }
 
   return {
-    register,
     get,
     refresh,
     refreshMany,
+    register,
   }
 }
 
 function createEmptyOptionState(): FormOptionRuntimeState {
   return {
-    items: computed<readonly ResolvedFormOption[]>(() => []),
-    pending: computed<boolean>(() => false),
-    fetching: computed<boolean>(() => false),
-    loading: computed<boolean>(() => false),
-    creating: computed<boolean>(() => false),
-    creatable: computed<boolean>(() => false),
-    createLabel: computed<string | undefined>(() => undefined),
-    error: computed<unknown | null>(() => null),
-    disableOnLoading: computed<boolean>(() => false),
-    refreshable: computed<boolean>(() => false),
-    selectCreatedOption: computed<boolean>(() => true),
-    refresh: async () => {},
+    activate: () => {},
     add: () => {},
+    creatable: computed<boolean>(() => false),
     create: async () => null,
+    createLabel: computed<string | undefined>(() => emptyLabel.value),
+    creating: computed<boolean>(() => false),
+    disableOnLoading: computed<boolean>(() => false),
+    error: computed<FormValue | null>(() => null),
+    fetching: computed<boolean>(() => false),
+    hasMore: computed<boolean>(() => false),
+    items: computed<readonly ResolvedFormOption[]>(() => []),
+    loadChildren: () => Promise.resolve(),
+    loadMore: () => Promise.resolve(),
+    loading: computed<boolean>(() => false),
+    loadingMore: computed<boolean>(() => false),
+    pending: computed<boolean>(() => false),
+    prefetchDistance: computed<number | 'viewport'>(() => 'viewport'),
+    refresh: async () => {},
+    refreshable: computed<boolean>(() => false),
+    remote: computed<boolean>(() => false),
+    retry: () => Promise.resolve(),
+    retryable: computed<boolean>(() => false),
+    search: computed<string>(() => ''),
+    selectCreatedOption: computed<boolean>(() => true),
+    selectedItems: computed<readonly ResolvedFormOption[]>(() => []),
+    setSearch: () => {},
   }
 }
 
@@ -60,5 +77,5 @@ function optionStateKey(path: readonly string[]) {
 }
 
 function optionPathSegments(path: string | readonly string[]) {
-  return typeof path === 'string' ? path.split('.').filter(Boolean) : path
+  return isString(path) ? path.split('.').filter(Boolean) : path
 }

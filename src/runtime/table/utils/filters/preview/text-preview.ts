@@ -17,14 +17,15 @@ export function buildTextFilterPreview(options: {
     options.rule.operator === 'is' || options.rule.operator === 'isNot'
       ? options.rule.operator
       : 'contains'
-  const preview = resolveTextFilterUi(options.definition, operator).preview
+  const { preview } = resolveTextFilterUi(options.definition, operator)
   const resolvedSummary = summary ? prefixPreviewLabel(preview.label, summary) : ''
 
   return {
     active: Boolean(resolvedSummary),
     count: resolvedSummary ? 1 : 0,
-    tags: [],
+    entries: [],
     summary: resolvedSummary,
+    tags: [],
   }
 }
 
