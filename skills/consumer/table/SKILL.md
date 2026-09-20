@@ -8,6 +8,7 @@ description: Use this skill when building or debugging table usage with nuxt-ui-
 Use this skill for package-consumer tasks involving:
 
 - `defineTableSchema(...)`
+- `tableSource(...)`
 - `useTable(...)`
 - `DataList`
 - `DataListRoot` and granular rendering parts

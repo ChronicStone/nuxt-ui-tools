@@ -1,12 +1,10 @@
 import { describe, expectTypeOf, it } from 'vitest'
 
-import { defineTableSchema } from '#ui-tools/table/schema'
+import { defineTableSchema, tableSource } from '#ui-tools/table'
 import type {
   ExtractTableContextData,
   ExtractTablePageContextData,
   ExtractTableRow,
-  TableQueryDefinition,
-  TableSourceRequestContext,
 } from '#ui-tools/table/types'
 
 interface DemoEmployeeRow {
@@ -23,7 +21,21 @@ interface DemoEmployeeListResult {
   rowCount: number
 }
 
-type DemoEmployeeQuery = TableQueryDefinition<DemoEmployeeListResult>
+function getDemoEmployeeList(): DemoEmployeeListResult {
+  return {
+    rowCount: 1,
+    rows: [
+      {
+        email: 'ada@example.com',
+        id: 'user_1',
+        organisation: {
+          id: 'org_1',
+          status: 'active',
+        },
+      },
+    ],
+  }
+}
 
 const schema = defineTableSchema({
   context: [
@@ -39,6 +51,16 @@ const schema = defineTableSchema({
     search: {
       fields: ['name', 'organisation.status'],
     },
+    static: [
+      {
+        key: 'organisation.id',
+        operator: 'is',
+        value: (context) => {
+          expectTypeOf(context.organisationId).toEqualTypeOf<string>()
+          return context.organisationId
+        },
+      },
+    ],
     ui: (filter) => [
       filter.text('name', {
         editor: {
@@ -76,10 +98,10 @@ const schema = defineTableSchema({
     },
   ],
   rowKey: 'id',
-  source: {
+  source: tableSource({
     facets: true,
     mode: 'remote',
-    query: (ctx: TableSourceRequestContext) => ({
+    query: (ctx) => ({
       queryFn: () => ({
         rowCount: 1,
         rows: [
@@ -96,7 +118,7 @@ const schema = defineTableSchema({
       }),
       queryKey: ['users', ctx.search.value, ctx.facets],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('name', {
@@ -174,26 +196,12 @@ describe('defineTableSchema inference', () => {
   it('keeps interface-backed query rows inferred without requiring an index signature', () => {
     const interfaceSchema = defineTableSchema({
       rowKey: 'id',
-      source: {
-        query: () =>
-          ({
-            queryFn: () =>
-              ({
-                rowCount: 1,
-                rows: [
-                  {
-                    email: 'ada@example.com',
-                    id: 'user_1',
-                    organisation: {
-                      id: 'org_1',
-                      status: 'active' as const,
-                    },
-                  },
-                ],
-              }) satisfies DemoEmployeeListResult,
-            queryKey: ['demo-users'],
-          }) satisfies DemoEmployeeQuery,
-      },
+      source: tableSource({
+        query: () => ({
+          queryFn: getDemoEmployeeList,
+          queryKey: ['demo-users'],
+        }),
+      }),
       table: {
         columns: (column) => [
           column.field('email', {

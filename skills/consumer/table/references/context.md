@@ -36,13 +36,22 @@ const schema = defineTableSchema({
       }),
     },
   ],
-  source: {
-    mode: 'remote',
-    query: ({ context }) => ({
-      queryKey: ['employees', context.viewer.companyId],
-      queryFn: async () => api.listEmployees(context.viewer.companyId),
-    }),
+  filters: {
+    static: [
+      {
+        key: 'companyId',
+        operator: 'is',
+        value: (context) => context.viewer.companyId,
+      },
+    ],
   },
+  source: tableSource({
+    mode: 'remote',
+    query: (request) => ({
+      queryKey: ['employees', request],
+      queryFn: async () => api.listEmployees(request),
+    }),
+  }),
   table: {
     columns: (column) => [column.field('fullName', { label: 'Employee' })],
   },
@@ -51,5 +60,5 @@ const schema = defineTableSchema({
 
 In this example:
 
-- `context.viewer` is available before the main table query runs
+- `context.viewer` is typed in static filters, which are resolved before the main query
 - `pageContext.salaryStats` is resolved from the current page rows and shared context

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import type { ComputedRef } from 'vue'
 
-import { defineTableSchema } from '#ui-tools/table/schema'
+import { defineTableSchema, tableSource } from '#ui-tools/table'
 import type {
   TableApi,
   TableCursorPaginationApi,
@@ -16,6 +16,7 @@ import { isObject } from '../../src/runtime/shared/utils/predicate'
 describe('table package surface', () => {
   it('exports defineTableSchema from the package root', () => {
     expectTypeOf(defineTableSchema).toBeFunction()
+    expectTypeOf(tableSource).toBeFunction()
   })
 
   it('declares TanStack Query on the package boundary', () => {
@@ -43,12 +44,12 @@ describe('table package surface', () => {
         },
       },
       rowKey: 'id',
-      source: {
+      source: tableSource({
         query: () => ({
           queryFn: () => [{ id: 1 }],
           queryKey: ['users'],
         }),
-      },
+      }),
       tableKey: 'users',
     })
 
@@ -67,12 +68,12 @@ describe('table package surface', () => {
         renderItem: ({ row }) => row.email,
       },
       rowKey: 'id',
-      source: {
+      source: tableSource({
         query: () => ({
           queryFn: () => [{ email: 'ada@example.com', id: 'user_1' }],
           queryKey: ['users'],
         }),
-      },
+      }),
       tableKey: 'users',
     })
 
@@ -87,7 +88,7 @@ describe('table package surface', () => {
     const cursorSchema = defineTableSchema({
       pagination: { mode: 'cursor', pageSize: 20 },
       rowKey: 'id',
-      source: {
+      source: tableSource({
         mode: 'remote',
         query: () => ({
           queryFn: () => ({
@@ -102,15 +103,15 @@ describe('table package surface', () => {
           }),
           queryKey: ['cursor-users'],
         }),
-      },
+      }),
       tableKey: 'cursor-users',
     })
     const unpaginatedSchema = defineTableSchema({
       pagination: false,
       rowKey: 'id',
-      source: {
+      source: tableSource({
         query: () => ({ queryFn: () => [{ id: 1 }], queryKey: ['all-users'] }),
-      },
+      }),
       tableKey: 'all-users',
     })
 

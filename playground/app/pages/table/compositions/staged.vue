@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 
-import { defineTableSchema, useTable } from '#ui-tools/table'
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 
 type InvoiceStatus = 'Open' | 'Paid' | 'Overdue'
 interface InvoiceRow {
@@ -120,13 +120,13 @@ const schema = defineTableSchema({
   },
   pagination: { defaultSize: 8, showPageSizePicker: false, showPagesCount: false },
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryFn: () => invoices,
       queryKey: ['table-composition-staged-invoices'],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('number', { label: 'Invoice' }),

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineTableSchema, useTable } from '#ui-tools/table'
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 
 type QueueState = 'Queued' | 'Running' | 'Complete'
 interface OperationRow {
@@ -115,13 +115,13 @@ const schema = defineTableSchema({
   pagination: { defaultSize: 8, showPageSizePicker: false, showPagesCount: false },
   rowKey: 'id',
   selection: { mode: 'auto', scope: 'page' },
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryFn: () => operations,
       queryKey: ['table-composition-operations'],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('job', { label: 'Job' }),

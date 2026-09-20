@@ -10,7 +10,8 @@ Version 1.0.0 promotes the form and table engines from their initial public runt
 
 - **Runtime baseline:** Raise the supported stack to Nuxt `>=4.5.2`, Nuxt UI `>=4.10.0`, Vue `>=3.5.41`, Vue Router `>=4.6.4`, TanStack Vue Query `>=5.101.4`, Tailwind CSS `>=4.3.3`, and TypeScript `>=5.9.0`.
 - **Form schemas:** Move Nuxt UI control-specific options into each field's `props` object. Field behavior, layout, validation, option loading, and presentation remain schema-owned through their dedicated contracts.
-- **Table schemas:** Adopt the rebuilt data-list, column, filter, action, selection, summary, layout, and locale contracts. Consumers using low-level runtime internals should migrate to the public schema builders, `useTable(...)`, composed DataList components, and exposed table API.
+- **Form controller:** Replace the ref-driven `useFormSubmit(...)` helper with `useForm(...)`, which now owns typed submission state, handlers, validation, navigation, and rendered runtime binding through one controller.
+- **Table schemas:** Adopt the rebuilt data-list, column, filter, action, selection, summary, layout, and locale contracts. Define sources inline with `source: tableSource({ ... })` so query results drive row inference without manual source annotations; consumers using low-level runtime internals should migrate to the public schema builders, `useTable(...)`, composed DataList components, and exposed table API.
 - **Components:** Keep the public Nuxt component names stable while normalizing internal component files to kebab-case and expanding the composed DataList component family.
 - **Publishing:** Add the `query-prefetch` package entrypoint and auto-imports. The spreadsheet engine remains internal and is not part of the public 1.0.0 surface.
 
@@ -32,6 +33,7 @@ Version 1.0.0 promotes the form and table engines from their initial public runt
 #### Table engine
 
 - Rebuild the DataList schema, locale, runtime state, root configuration merge, TanStack adapter, and public API inference around composable table, grid, and mobile surfaces.
+- Add the inline `tableSource(...)` inference boundary so client and remote query results propagate through columns, filters, actions, and page context without separately typed source constants.
 - Add first-class local, remote offset, and cursor/infinite data modes with exact counts, embedded facets, previous-data retention, initial skeleton rows, non-destructive refresh/loading states, and contained virtualization.
 - Add schema-owned row, toolbar, and bulk actions; selection scopes; public action state/execution APIs; dropdown/toolbar renderers; and a floating selection action bar.
 - Add summaries, virtualized table and grid renderers, stable row heights, sticky headers, contained horizontal scrolling, and row/card motion during sort and filter transitions.

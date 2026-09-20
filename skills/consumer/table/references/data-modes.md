@@ -5,6 +5,9 @@ Current source modes:
 - `client`
 - `remote`
 
+Wrap either source mode with `tableSource(...)` directly inside `defineTableSchema(...)`. The helper
+preserves query-result inference; it is not intended for separately declared, manually typed sources.
+
 ## Client Mode
 
 Use client mode when the dataset can be loaded locally and queried in-memory.
@@ -12,7 +15,7 @@ Use client mode when the dataset can be loaded locally and queried in-memory.
 Example:
 
 ```ts
-source: {
+source: tableSource({
   mode: 'client',
   query: () => ({
     queryKey: ['employees'],
@@ -21,7 +24,7 @@ source: {
       { id: '2', fullName: 'Luca Sato', email: 'luca@example.com' },
     ],
   }),
-}
+})
 ```
 
 What you return:
@@ -44,13 +47,13 @@ Use remote mode when filtering, sorting, pagination, or option counts should be 
 Example:
 
 ```ts
-source: {
+source: tableSource({
   mode: 'remote',
   query: (request) => ({
     queryKey: ['employees', request],
     queryFn: async () => api.queryTable({ request }),
   }),
-}
+})
 ```
 
 What your `request` contains:

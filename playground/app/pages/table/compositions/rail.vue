@@ -2,7 +2,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import { defineTableSchema, useTable } from '#ui-tools/table'
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 import { executeClientQuery } from '#ui-tools/table/utils'
 
 type KnowledgeStatus = 'Published' | 'Draft' | 'Archived'
@@ -207,7 +207,7 @@ const schema = defineTableSchema({
   },
   pagination: { count: 'exact', mode: 'cursor', pageSize: 10 },
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'remote',
     query: (request) => ({
       queryFn: async () => {
@@ -236,7 +236,7 @@ const schema = defineTableSchema({
       },
       queryKey: ['table-composition-knowledge-base', request],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('title', { label: 'Document' }),

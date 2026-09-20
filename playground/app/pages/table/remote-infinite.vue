@@ -1,24 +1,11 @@
 <script setup lang="tsx">
 import UBadge from '@nuxt/ui/components/Badge.vue'
 
-import { defineTableSchema, useTable } from '#ui-tools/table'
-import type { TableRemoteSource } from '#ui-tools/table'
-import type { GenericObject } from '#ui-tools/table/types'
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 
 import { demoEmployeesClient } from '../../lib/demo-employees-api'
-import type { DemoEmployeeRow, DemoEmployeesTableResponse } from '../../lib/demo-employees-api'
 
 const { tableSize } = usePlaygroundShell()
-
-const remoteSource: TableRemoteSource<DemoEmployeeRow, GenericObject, DemoEmployeesTableResponse> =
-  {
-    facets: true,
-    mode: 'remote',
-    query: (request) => ({
-      queryFn: () => demoEmployeesClient.queryTable(request),
-      queryKey: ['demo-employees-infinite', request],
-    }),
-  }
 
 const schema = defineTableSchema({
   defaultLayout: 'table',
@@ -71,7 +58,14 @@ const schema = defineTableSchema({
     pageSize: 18,
   },
   rowKey: 'id',
-  source: remoteSource,
+  source: tableSource({
+    facets: true,
+    mode: 'remote',
+    query: (request) => ({
+      queryFn: () => demoEmployeesClient.queryTable(request),
+      queryKey: ['demo-employees-infinite', request],
+    }),
+  }),
   table: {
     columns: (column) => [
       column.field('fullName', {

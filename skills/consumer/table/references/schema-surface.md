@@ -6,7 +6,7 @@ The current schema sections are:
 defineTableSchema({
   tableKey,
   rowKey,
-  source,
+  source: tableSource({ ... }),
   defaultLayout,
   pagination,
   context,
@@ -29,13 +29,13 @@ defineTableSchema({
 const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryKey: ['employees'],
       queryFn: async () => rows,
     }),
-  },
+  }),
   table: {
     columns: (column) => [column.field('fullName', { label: 'Employee' })],
   },

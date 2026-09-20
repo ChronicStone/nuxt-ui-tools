@@ -6,7 +6,7 @@ import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import { hasProperty, isArray, isString, isNullish } from '#ui-tools/shared/utils/predicate'
-import { defineTableSchema, useTable } from '#ui-tools/table'
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 import type { TableFilterOptionEntry } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/row-actions.vue'
 import DataList from '#ui-tools/table/components/data-list.vue'
@@ -476,7 +476,7 @@ const clientSchema = defineTableSchema({
     mode: 'auto',
     scope: 'all',
   },
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryFn: async () => {
@@ -485,7 +485,7 @@ const clientSchema = defineTableSchema({
       },
       queryKey: ['demo-employees-client'],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('fullName', {

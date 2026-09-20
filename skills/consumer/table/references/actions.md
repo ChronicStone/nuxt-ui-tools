@@ -23,13 +23,13 @@ When `rowActions` is present:
 const schema = defineTableSchema({
   tableKey: 'employees',
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryKey: ['employees'],
       queryFn: async () => rows,
     }),
-  },
+  }),
   rowActions: ({ row, tableApi, layout }) => [
     {
       key: 'open-profile',

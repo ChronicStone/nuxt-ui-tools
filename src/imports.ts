@@ -60,6 +60,7 @@ export function setupImports(runtimeDir: string) {
       { from: 'table', name: 'createTableFilterBuilder' },
       { from: 'table', name: 'defineTableSchema' },
       { from: 'table', name: 'prefetchTable' },
+      { from: 'table', name: 'tableSource' },
       { from: 'table', name: 'useTable' },
     ]),
 

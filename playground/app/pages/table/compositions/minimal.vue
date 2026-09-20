@@ -3,7 +3,7 @@ import UBadge from '@nuxt/ui/components/Badge.vue'
 import UCard from '@nuxt/ui/components/Card.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 
-import { defineTableSchema, useTable } from '#ui-tools/table'
+import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 
 type DirectoryTeam = 'Design' | 'Engineering' | 'Finance' | 'Operations' | 'Platform'
 type DirectoryPresence = 'Paris' | 'Montreal' | 'Tokyo' | 'Remote'
@@ -192,13 +192,13 @@ const schema = defineTableSchema({
   },
   pagination: false,
   rowKey: 'id',
-  source: {
+  source: tableSource({
     mode: 'client',
     query: () => ({
       queryFn: () => contacts,
       queryKey: ['table-composition-directory'],
     }),
-  },
+  }),
   table: {
     columns: (column) => [
       column.field('name', { label: 'Name' }),
