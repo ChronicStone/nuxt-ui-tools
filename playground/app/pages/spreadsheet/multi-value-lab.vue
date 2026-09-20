@@ -26,16 +26,6 @@ const center = {
 
 function createMultiValueSchema() {
   return defineSpreadsheetSchema({
-    buildRow: ({ row }) => ({
-      candidateName: row.candidateName,
-      flags: row.flags,
-      notes: row.notes,
-      productIds: row.productIds,
-      scores: row.scores,
-      statuses: row.statuses,
-      tags: row.tags,
-      testCenterId: row.testCenterId,
-    }),
     columns: {
       static: (column) => [
         column.text('testCenterId', {
@@ -129,6 +119,16 @@ function createMultiValueSchema() {
         }),
       ],
     },
+    buildRow: ({ row }) => ({
+      candidateName: row.candidateName,
+      flags: row.flags,
+      notes: row.notes,
+      productIds: row.productIds,
+      scores: row.scores,
+      statuses: row.statuses,
+      tags: row.tags,
+      testCenterId: row.testCenterId,
+    }),
     context: [
       {
         key: 'products',

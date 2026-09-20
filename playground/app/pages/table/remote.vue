@@ -5,10 +5,12 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import { hasProperty, isString } from '#ui-tools/shared/utils/predicate'
 import { defineTableSchema, useTable } from '#ui-tools/table'
-import type { TableFilterOptionEntry } from '#ui-tools/table'
+import type { TableFilterOptionEntry, TableRemoteSource } from '#ui-tools/table'
 import DataList from '#ui-tools/table/components/data-list.vue'
+import type { GenericObject } from '#ui-tools/table/types'
 
 import { demoEmployeesClient } from '../../lib/demo-employees-api'
+import type { DemoEmployeeRow, DemoEmployeesTableResponse } from '../../lib/demo-employees-api'
 
 const { locale, t } = useI18n()
 const { tableSize } = usePlaygroundShell()
@@ -30,6 +32,22 @@ const countryTreeOptions = [
     label: () => translateRegion('Asia'),
   },
 ] satisfies readonly TableFilterOptionEntry<string>[]
+
+const remoteSource: TableRemoteSource<DemoEmployeeRow, GenericObject, DemoEmployeesTableResponse> =
+  {
+    facets: true,
+    mode: 'remote',
+    query: (params) => ({
+      queryFn: () => {
+        if (params.pagination.mode !== 'offset') {
+          throw new Error('The remote employee demo uses offset pagination.')
+        }
+
+        return demoEmployeesClient.queryTable(params)
+      },
+      queryKey: ['demo-employees', params],
+    }),
+  }
 
 const remoteSchema = defineTableSchema({
   defaultLayout: 'table',
@@ -354,20 +372,7 @@ const remoteSchema = defineTableSchema({
     },
   },
   rowKey: 'id',
-  source: {
-    facets: true,
-    mode: 'remote',
-    query: (params) => ({
-      queryFn: () => {
-        if (params.pagination.mode !== 'offset') {
-          throw new Error('The remote employee demo uses offset pagination.')
-        }
-
-        return demoEmployeesClient.queryTable(params)
-      },
-      queryKey: ['demo-employees', params],
-    }),
-  },
+  source: remoteSource,
   table: {
     columns: (column) => [
       column.field('fullName', {

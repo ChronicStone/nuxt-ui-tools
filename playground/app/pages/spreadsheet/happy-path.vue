@@ -45,22 +45,6 @@ const center = {
 
 function createHappyPathSchema() {
   return defineSpreadsheetSchema({
-    buildRow: ({ row }) => ({
-      batchName: row.batchName,
-      candidate: {
-        email: row.email,
-        firstName: row.firstName,
-        lastName: row.lastName,
-      },
-      completionDate: row.completionDate,
-      country: row.country,
-      examName: row.examNameRaw,
-      productId: row.productId,
-      scores: row.scores,
-      secureCode: row.secureCode,
-      status: row.status,
-      testCenterId: row.testCenterId,
-    }),
     columns: {
       dynamic: ({ dynamic, context }) => [
         dynamic.optionGroups({
@@ -182,6 +166,22 @@ function createHappyPathSchema() {
         }),
       ],
     },
+    buildRow: ({ row }) => ({
+      batchName: row.batchName,
+      candidate: {
+        email: row.email,
+        firstName: row.firstName,
+        lastName: row.lastName,
+      },
+      completionDate: row.completionDate,
+      country: row.country,
+      examName: row.examNameRaw,
+      productId: row.productId,
+      scores: row.scores,
+      secureCode: row.secureCode,
+      status: row.status,
+      testCenterId: row.testCenterId,
+    }),
     context: [
       {
         key: 'products',
