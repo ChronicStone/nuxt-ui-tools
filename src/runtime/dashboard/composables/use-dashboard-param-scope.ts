@@ -100,9 +100,7 @@ export function useDashboardParamScope(params: {
  * Exposes several scopes' values through one object, e.g. shared params plus a view's own params
  * inside the view's query factories. Reads and writes go straight to the owning scope.
  */
-export function mergeDashboardParamValues(
-  scopes: readonly DashboardParamScope[],
-): object {
+export function mergeDashboardParamValues(scopes: readonly DashboardParamScope[]): object {
   const merged = {}
   for (const scope of scopes) {
     for (const key of scope.keys) {
