@@ -14,6 +14,14 @@ import {
 export const OPERATIONS_SORT_KEYS = ['name', 'sessions', 'success', 'change', 'delay'] as const
 export type OperationsSortKey = (typeof OPERATIONS_SORT_KEYS)[number]
 
+/** Values of an unfiltered dashboard: the filter bar flags and resets anything else. */
+export const ANALYTICS_DEFAULTS = {
+  compare: true,
+  comparison: 'previous',
+  currency: 'EUR',
+  year: 2026,
+} as const
+
 function sum(values: readonly (number | null)[]) {
   return values.reduce<number>((total, value) => total + (value ?? 0), 0)
 }
@@ -31,7 +39,7 @@ function cumulate(values: readonly (number | null)[]) {
 export const analyticsDashboard = defineDashboardSchema({
   key: 'analytics',
   params: (p) => ({
-    year: p.enum(YEARS, { defaultValue: 2026 }),
+    year: p.enum(YEARS, { defaultValue: ANALYTICS_DEFAULTS.year }),
   }),
   views: (view) => ({
     consumption: view({
@@ -43,8 +51,8 @@ export const analyticsDashboard = defineDashboardSchema({
           resolveSelected: ({ values }) => api.accounts.byIds(values),
           search: { debounce: 200 },
         }),
-        compare: p.boolean({ defaultValue: true }),
-        currency: p.enum(CURRENCIES, { defaultValue: 'EUR' }),
+        compare: p.boolean({ defaultValue: ANALYTICS_DEFAULTS.compare }),
+        currency: p.enum(CURRENCIES, { defaultValue: ANALYTICS_DEFAULTS.currency }),
       }),
       queries: ({ background, deferred, essential, params }) => ({
         summary: essential.query(() => ({
@@ -218,7 +226,7 @@ export const analyticsDashboard = defineDashboardSchema({
         /** Day picked on the sessions chart (`YYYY-MM-DD`); narrows the accounts table. */
         day: p.string(),
         /** Period the KPIs and the daily chart compare against. */
-        compare: p.comparison({ defaultValue: 'previous' }),
+        compare: p.comparison({ defaultValue: ANALYTICS_DEFAULTS.comparison }),
       }),
       queries: ({ background, deferred, essential, params }) => ({
         kpis: essential.query(() => ({
