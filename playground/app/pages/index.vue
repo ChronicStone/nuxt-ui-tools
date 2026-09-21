@@ -1,6 +1,12 @@
 <script setup lang="ts">
 const entries = [
   {
+    description: 'Typed params, staged queries, derived values, and state-aware chart blocks.',
+    group: 'Abstraction',
+    label: 'Dashboards',
+    to: '/dashboard',
+  },
+  {
     description: 'Schema fields, validation, overlays, settings, and typed output.',
     group: 'Abstraction',
     label: 'Forms',
