@@ -4,6 +4,7 @@
 const schema = defineDashboardSchema({
   key: 'analytics',          // identity; used in default query keys
   urlPrefix: 'stats',        // optional: prefix every URL key (two dashboards on one page)
+  autoRefresh: 60,           // optional: default auto-refresh interval in seconds (0: off)
   params: (p) => ({ ... }),  // shared params
   queries: (ctx) => ({ ... }),
   derive: (ctx) => ({ ... }),
@@ -116,7 +117,9 @@ dashboard.params.year // shared params (writable)
 dashboard.options.year // option handles (see params.md)
 dashboard.state // root + current view essentials
 dashboard.refreshing // a refresh() is in flight
+dashboard.updatedAt // oldest fetch time on screen (root + current view), epoch ms
 await dashboard.refresh() // refetch every active query of opened scopes
+dashboard.autoRefresh = 30 // poll every active query every 30 s (URL key `refresh`); 0 turns it off
 
 dashboard.consumption.params.currency
 dashboard.consumption.productLines.params.tracked // widget params
@@ -125,7 +128,13 @@ dashboard.view.current // only when views exist
 ```
 
 Resource members: `data`, `state` (`idle | loading | ready | error`), `error`, `refreshing`,
-`active`, `stage`, `params`, `options`, `activate()`, `refresh()`.
+`updatedAt` (last successful fetch, epoch ms; a derived value reports its oldest input), `active`,
+`stage`, `params`, `options`, `activate()`, `refresh()`. Views expose `updatedAt` too.
+
+`autoRefresh` sets TanStack's `refetchInterval` on every active query: idle and inactive-view
+queries do not poll, polling pauses while the page is in a background tab, and a query's own
+`refetchInterval` wins. `UiDashboardRefresh` is a ready-made control for it (see blocks.md).
 
 Reserved names — a query, derived value, or view named `params`, `options`, `state`,
-`refreshing`, `refresh`, `view`, or `schema`, or colliding with a sibling, is a compile error.
+`refreshing`, `refresh`, `updatedAt`, `autoRefresh`, `view`, or `schema`, or colliding with a
+sibling, is a compile error.

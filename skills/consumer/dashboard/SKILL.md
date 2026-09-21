@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools-dashboard
-description: Use this skill when building analytics dashboards with nuxt-ui-tools as a package consumer. Covers defineDashboardSchema, useDashboard, typed URL-synced params (including remote paginated pickers), staged queries (essential / background / deferred), derived values, views (tabs), widget-scoped params, and the dashboard blocks (stats, unovis charts, lists, bars, funnel, custom widgets) with their automatic loading, error, empty, and refresh states.
+description: Use this skill when building analytics dashboards with nuxt-ui-tools as a package consumer. Covers defineDashboardSchema, useDashboard, typed URL-synced params (including remote paginated pickers), staged queries (essential / background / deferred), derived values, views (tabs), widget-scoped params, and the dashboard blocks (stats with trends and goals, stat groups, gauges, unovis charts with highlights and value labels, lists with progress rings, bars, funnel, alerts, activity feeds, sortable tables, custom widgets) with their automatic loading, error, empty, and refresh states, card menus (table view, CSV, expand, custom items), header and footer actions, row actions, drill-down and selected state, card tabs, split cards, comparison periods, auto-refresh, and data freshness.
 ---
 
 # nuxt-ui-tools Dashboard
@@ -12,6 +12,11 @@ Use this skill for package-consumer tasks involving:
 - staged queries, dependent queries (`requires`), and `derive`
 - dashboard views (tabs) and widget-scoped params
 - `UiDashboardGrid`, `UiDashboardStat`, `UiDashboardWidget`, chart and list blocks
+- `UiDashboardAlerts`, `UiDashboardFeed`, `UiDashboardTable`, `UiDashboardRelativeTime`
+- `UiDashboardStats` (stat groups), `UiDashboardGauge`, `UiDashboardTabs`, `UiDashboardRefresh`
+- card menus (`menu`), `actions`, `rowActions`, freshness lines (`freshness`, `updatedAt`)
+- drill-down (`@select`) with its `selected` state, chart `highlight` and `labels`
+- comparison periods (`p.comparison`, `compare` accessors) and auto-refresh (`autoRefresh`)
 
 Focused references:
 
@@ -108,4 +113,12 @@ What you get without writing it:
 - Put shared calculations in `derive`, not in page `computed`s, so blocks get their state for free.
 - Controls are yours: the engine owns values, codecs, URL keys, and option lists; render them with
   Nuxt UI components.
+- Drill down by writing a param from `@select` (`({ row }) => (dashboard.x.params.day = row.day)`):
+  the URL, the affected queries, and every bound block follow.
+- Show the stored value back with `selected`, so the picked bar or row stays marked.
+- Put `menu` and `freshness` on the grid once rather than on every block.
+- Split a card by nesting a `variant="panels"` grid; switch a block's data with `UiDashboardTabs`
+  bound to one of its widget params.
+- Compare periods with `p.comparison()` and `resolveDashboardComparisonRange`, then pass `compare`
+  accessors to stats and chart series: deltas, captions, and legends follow.
 - Call `useDashboard` once in `<script setup>`; all queries and URL bindings are created there.

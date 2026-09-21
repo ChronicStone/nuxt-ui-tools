@@ -4,20 +4,21 @@ Params are typed, URL-synced values. The engine renders no controls; bind them w
 
 ## Kinds
 
-| Builder                                   | Value type                                | URL form                  |
-| ----------------------------------------- | ----------------------------------------- | ------------------------- |
-| `p.string()`                              | `string \| undefined`                     | `abc`                     |
-| `p.number()`                              | `number \| undefined`                     | `42`                      |
-| `p.boolean()`                             | `boolean \| undefined`                    | `true` / `false`          |
-| `p.date()`                                | `Date \| undefined`                       | `2026-03-01` (local date) |
-| `p.dateRange()`                           | `{ start: Date; end: Date } \| undefined` | `2026-03-01..2026-03-31`  |
-| `p.enum([2024, 2025])`                    | `2024 \| 2025 \| undefined`               | `2025`                    |
-| `p.enum(values, { multiple: true })`      | `Value[]` (never undefined)               | `a,b`                     |
-| `p.options(items)`                        | item value union                          | value                     |
-| `p.options(items, { multiple: true })`    | item value array                          | `a,b`                     |
-| `p.remote(config)`                        | `string \| undefined`                     | id                        |
-| `p.remote({ ...config, multiple: true })` | `string[]`                                | `id1,id2`                 |
-| `p.custom(codec)`                         | codec value                               | codec output              |
+| Builder                                   | Value type                                    | URL form                  |
+| ----------------------------------------- | --------------------------------------------- | ------------------------- |
+| `p.string()`                              | `string \| undefined`                         | `abc`                     |
+| `p.number()`                              | `number \| undefined`                         | `42`                      |
+| `p.boolean()`                             | `boolean \| undefined`                        | `true` / `false`          |
+| `p.date()`                                | `Date \| undefined`                           | `2026-03-01` (local date) |
+| `p.dateRange()`                           | `{ start: Date; end: Date } \| undefined`     | `2026-03-01..2026-03-31`  |
+| `p.enum([2024, 2025])`                    | `2024 \| 2025 \| undefined`                   | `2025`                    |
+| `p.enum(values, { multiple: true })`      | `Value[]` (never undefined)                   | `a,b`                     |
+| `p.options(items)`                        | item value union                              | value                     |
+| `p.options(items, { multiple: true })`    | item value array                              | `a,b`                     |
+| `p.remote(config)`                        | `string \| undefined`                         | id                        |
+| `p.remote({ ...config, multiple: true })` | `string[]`                                    | `id1,id2`                 |
+| `p.comparison()`                          | `'previous' \| 'year' \| 'none' \| undefined` | `year`                    |
+| `p.custom(codec)`                         | codec value                                   | codec output              |
 
 Every builder accepts:
 
@@ -36,6 +37,7 @@ picker) restores the default.
 | ------------------------- | ------------------------ |
 | shared param              | `<param>`                |
 | current view              | `view`                   |
+| auto-refresh interval     | `refresh` (seconds)      |
 | view param                | `<view>.<param>`         |
 | widget param (root query) | `<query>.<param>`        |
 | widget param (view query) | `<view>.<query>.<param>` |
@@ -45,9 +47,45 @@ With `urlPrefix: 'stats'`, every key is prefixed: `stats.year`, `stats.view`, â€
 dashboards share a page, or when bare root param names could collide with other URL state.
 
 A root param cannot use the URL key `view` while the dashboard has views (it would shadow the
-current view): rename it or set its `urlKey`. This is checked when the dashboard is created.
+current view), nor `refresh` (the auto-refresh interval): rename it or set its `urlKey`. This is
+checked when the dashboard is created.
 
 Example: `?year=2025&view=consumption&consumption.currency=USD&consumption.productLines.tracked=en,fr`
+
+## Comparison Period
+
+`p.comparison({ defaultValue: 'previous' })` declares the period a dashboard compares against:
+`'previous'` (the same number of days right before the range), `'year'` (the same dates a year
+earlier), or `'none'`. Its option handle carries localized labels ("Previous period", "Previous
+year", "No comparison"), ready for a select:
+
+```vue
+<USelect v-model="dashboard.params.compare" v-bind="dashboard.options.compare.menu" />
+```
+
+`resolveDashboardComparisonRange(range, mode)` (auto-imported) returns the range to fetch, or
+`undefined` for `'none'`. It counts calendar days, so it never drifts across daylight-saving
+changes; Feb 29 falls back to Feb 28 a year earlier.
+
+```ts
+params: (p) => ({
+  range: p.dateRange({ defaultValue: lastThirtyDays() }),
+  compare: p.comparison({ defaultValue: 'previous' }),
+}),
+queries: ({ essential, params }) => ({
+  revenue: essential.query(() => ({
+    queryKey: ['revenue', params.range, params.compare],
+    queryFn: () =>
+      api.revenue({
+        range: params.range,
+        previous: resolveDashboardComparisonRange(params.range, params.compare),
+      }),
+  })),
+}),
+```
+
+Blocks then show the comparison: a stat's `compare` accessor (default delta and caption), a chart
+series' `compare` accessor (faded bars or a dashed line). See blocks.md.
 
 ## Widget-Scoped Params
 

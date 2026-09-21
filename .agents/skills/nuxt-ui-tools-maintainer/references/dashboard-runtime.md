@@ -14,15 +14,20 @@ utils/        builders/dashboard-params.ts (the `p` builder; DashboardParamBuild
               params/codecs.ts, schema.ts (erase generics once), resource.ts (slot-backed facade),
               tracker.ts (derive read tracking), state.ts (state combine, refresh, URL prefixes),
               options.ts, charts.ts (palette, series, nice max / tick count, axis, per-locale
-              formatters), chart-frame.ts (tooltip HTML), ui.ts (resolveDashboardClasses, app
-              config reader), visibility.ts (one shared IntersectionObserver)
+              formatters), chart-frame.ts (tooltip HTML, chart → data table), ui.ts
+              (resolveDashboardClasses, app config reader, table and selectable-row classes),
+              visibility.ts (one shared IntersectionObserver), export.ts (data cells, CSV, file
+              download), time.ts (relative time, day headings), sparkline.ts (stat trend paths
+              and mini bars), comparison.ts (resolveDashboardComparisonRange, exported)
 composables/  use-dashboard (entry) → use-dashboard-scope (root + one per view)
               → use-dashboard-param-scope (one useQueryStates per scope) → use-dashboard-options
               / use-dashboard-remote-options; use-dashboard-resource (one useQuery);
               use-dashboard-derived; use-dashboard-views; use-dashboard-api (facade only);
-              use-dashboard-block, use-dashboard-chart, use-dashboard-format,
-              use-dashboard-ui (app config + panels grid context) (blocks)
-components/   dashboard-card.vue (shell: chrome + phases), blocks, block/ (state, skeleton),
+              use-dashboard-block, use-dashboard-chart, use-dashboard-format, use-dashboard-time
+              (one shared clock), use-dashboard-ui (app config + grid context) (blocks)
+components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table view, expand
+              dialog, freshness), blocks, dashboard-tabs.vue / dashboard-refresh.vue (controls),
+              block/ (state, skeleton, data-table, ring, row-actions),
               charts/renderer.ts (the only seam allowed to import unovis) + charts/unovis/*
               (xy-layers.ts resolves one axis into unovis inputs; dashboard-xy-marks.vue draws
               an axis' areas, lines, markers, and references)
@@ -47,6 +52,13 @@ components/   dashboard-card.vue (shell: chrome + phases), blocks, block/ (state
   (`year`, `view`, `consumption.currency`); `urlPrefix` namespaces them. Do not abbreviate.
 - `useDashboardApi` is a facade: plain objects with getters over owned refs, `markRaw`, no refs
   exposed. It must not own behaviour.
+- `useDashboard` owns the auto-refresh interval: one `useQueryState` (URL key `refresh`, seconds,
+  default `schema.autoRefresh`), turned into a `refetchInterval` computed (ms, `0` off) that every
+  scope hands to its resources. Resources put it before the query's own options, so a query's
+  `refetchInterval` wins. A root param using the URL key `refresh` throws, like `view`.
+- `p.comparison()` is an option param of kind `comparison` (values `previous | year | none`).
+  `useDashboardOptions` localizes its item labels through the library messages
+  (`dashboard.compare.*`), so they follow the locale; the codec and URL form are an enum's.
 
 ## Blocks And Rendering
 
@@ -64,10 +76,49 @@ components/   dashboard-card.vue (shell: chrome + phases), blocks, block/ (state
   later wins). Block `ui` props are `DashboardBlockUi & <Block>Ui`; part names must not collide with
   the card's (`root`, `header`, `title`, `subtitle`, `actions`, `body`, `footer`). The card root is
   merged separately so panel cells can drop border/radius after the app's `card.root`.
-- `DashboardGrid variant="panels"` provides a context (`provideDashboardGrid`); cards read it with
-  `useDashboardGridContext` and switch to panel chrome.
+- `DashboardGrid` provides a context (`provideDashboardGrid`): `panels` switches cards to panel
+  chrome; `menu` and `freshness` are defaults for blocks that do not set their own (nested grids
+  inherit from their parent).
 - Boolean props are cast to `false` when absent. Blocks spread `...block` into the card, so each
-  block destructures `card = true` and forwards `:card`; otherwise `card` arrives as `false`.
+  block destructures `card = true`, `menu = undefined`, `freshness = undefined` and forwards them;
+  otherwise `card` arrives as `false` and `menu` / `freshness` can no longer inherit from the grid.
+  `= undefined` compiles to a default, which is what stops the cast.
+- The card owns the menu. Blocks pass `tabulate` (a function, read only when an action runs), and
+  opt out with `expandable` / `viewAsTable`. The default slot renders a second time inside the
+  expand dialog with `{ expanded: true }`: charts draw taller, lists lift `limit`.
+- `select` is declared as an `onSelect` prop (not an emit) so blocks know whether anyone listens.
+  Destructure it: left in `...block` it would reach the card root as a native `select` listener.
+  Rows become selectable with a stretched button (`DASHBOARD_ROW_BUTTON`) over a `relative` row,
+  so the list keeps its semantics; controls inside a row sit above it (`z-[1]`). The row box never
+  moves: the hover / selected tint is a `::before` reaching 8px past both edges (`isolate` keeps it
+  behind the content), so row dividers stay aligned with the card content. Do not bring back
+  negative margins on rows. Table rows use `DASHBOARD_TABLE_ROW_BUTTON`, which stays inside the
+  row because the table may scroll sideways.
+- The card header is `[title + actions, wrapping] [menu]`: the menu keeps the top-right corner,
+  wrapped actions align to the end, and a subtitle that does not fit goes under the title.
+- XY selection maps the click position through the container's margins, padding, and x domain;
+  it does not depend on hover, so taps work.
+- `selected` / `highlight` / `labels` are resolved in `useDashboardChart`: the frame carries
+  `emphasis` (per datum, `null` when none; a selection wins over a highlight), `selection`
+  (indexes, drawn as an x band on line-only charts), and `valueLabels`. Bars fade outside the
+  emphasis through their unovis color accessor (called with the datum and the series index);
+  value labels are HTML spans placed with the same margins and domains as the container.
+- A series' `compare` expands in `resolveDashboardSeries` into a `<key>:compare` series right
+  after it (a faded bar, or a dashed line), so the legend, tooltip, table view, and CSV get it
+  for free.
+- Row actions (`block/dashboard-row-actions.vue`) render `inline` items as icon buttons and the
+  rest in a `⋮` menu, above the stretched row button. Selected rows use `DASHBOARD_SELECTED_ROW`
+  (same inset as a selectable row) and set `aria-pressed` on the row button.
+- `menu` may be a function of `DashboardMenuContext` (title, table(), download(), expand()); the
+  card tells it from an entries array with `Array.isArray`. `actions` (Nuxt UI button props plus
+  `placement`) render in the header or as a footer row, in every phase.
+- Narrow "value or callback" props by the value side (`isString`, `isNumber`, literal checks):
+  `isFunction` does not narrow unions of values and callbacks usefully.
+- `VisCrosshair` declares only `data` and forwards its other attributes to unovis as written:
+  pass its config as a camelCase object (`v-bind`), never as kebab-case attributes.
+- Relative times read one module-level clock (`use-dashboard-time.ts`): one interval while any
+  consumer is mounted, refreshed on every setup so SSR and new blocks never show a stale time.
+  `<time>` elements carry `data-allow-mismatch="text"`.
 - `--nut-dash-*` defaults are declared under `:where(:root)`: module CSS loads after app CSS, so a
   plain `:root` default would override the app's tokens.
 - unovis child components ignore their own `data` when the container provides one. The XY renderer
@@ -99,23 +150,49 @@ components/   dashboard-card.vue (shell: chrome + phases), blocks, block/ (state
 ## Tests
 
 - `test/dashboard/schema-inference.test.ts` — params, defaults, `requires`, derive, views, guards.
-- `test/dom/dashboard/engine.test.ts` — staging, views, URL keys, derive state, refresh, options.
+- `test/dom/dashboard/engine.test.ts` — staging, views, URL keys, derive state, refresh, options,
+  auto-refresh (URL, schema default, `refetchInterval`), comparison params.
 - `test/dashboard/charts.test.ts` — axis bounds and ticks, colors, series axes, per-locale
   formatters, class layering, XY layer resolution.
+- `test/dashboard/data.test.ts` — CSV per locale, chart tables, relative times and day headings,
+  oldest `updatedAt`, sparkline paths and mini bars, comparison ranges.
 - `test/dom/dashboard/blocks.test.ts` + `fixtures/` — phases, retry, lists, widget slots, charts,
-  card vs panel chrome (the `card` boolean-casting regression), toolbar and footer ghost;
+  card vs panel chrome (the `card` boolean-casting regression), toolbar and footer ghost, card
+  menu (table view, CSV, expand), grid menu inheritance, `select`, alerts, feed, table sorting,
+  stat variants, actions and function menus, row actions and selection, chart emphasis and
+  labels, stat groups, gauges, tabs, stat `compare`, the refresh control;
   `fixtures/template-inference.vue` pins template typing with `@vue-expect-error`.
+  The DOM harness runs in French (`fr` locale).
 - unovis is aliased to `test/dom/stubs/unovis-*.ts` in `vitest.config.ts`.
 
 ## Playground
 
 `playground-table/app/pages/dashboard.vue` is the acceptance page: both identity4 tabs in the
-Atelier theme (schema in `app/dashboards/analytics.ts`, artifact data and formulas in
-`app/data/dashboard.ts`, header controls in `app/components/dash-*.vue`, theme in `app.config.ts`
-and `app/assets/main.css`). The unovis entries are listed in its `vite.optimizeDeps.include`.
+Atelier theme, plus an "Opérations" tab showing every operational block and card feature (stat
+trends / goals / status, alerts, feed, sortable table with its sort in widget params, chart
+drill-down into a view param, grid-level `menu` and `freshness`, `dashboard.updatedAt` in the
+header, comparison period, auto-refresh control, split pane with a stat group, gauge, labeled
+chart, segment tabs, row actions, selection mirrored between the table and a ring list). Schema in
+`app/dashboards/analytics.ts`, mock data in `app/data/dashboard.ts`, header
+controls in `app/components/dash-*.vue`, theme in `app.config.ts` and `app/assets/main.css` (use
+its tokens, not hex colors, so dark mode follows). The playground is pinned to French
+(`detectBrowserLanguage: false`). The unovis entries are listed in its `vite.optimizeDeps.include`.
 
 `playground/app/pages/dashboard/analytics.vue` is the engine demo (English, default theme);
-`sales.vue` is the single-view example; mock data lives in `playground/app/lib/demo-dashboard-api.ts`.
+`sales.vue` is the single-view example; `operations.vue` shows the operational blocks and every
+card feature (split pane, stat group, gauge, tabs, row actions, selection, comparison,
+auto-refresh) on the stock theme with inline mocks. Mock data for the first two lives in `playground/app/lib/demo-dashboard-api.ts`.
+Check theme changes there: the default playground pins primary to black / white, which is where
+palette collisions show.
+
+## Default Palette
+
+`tokens.css` maps the six slots to primary, neutral-400/500, secondary, a primary tint, warning,
+and a secondary tint. Success and info are left out because stock Nuxt UI gives them the same hue
+as primary (green) and secondary (blue). Tints use relative color syntax (`oklch(from …)`) with a
+fixed lightness, so they differ from their base even when primary is monochrome. A `color-mix`
+fallback covers browsers without relative colors. Nuxt UI has no `--ui-neutral`, so
+`resolveDashboardColor('neutral')` returns `var(--ui-text-muted)`.
 
 ## Keep In Sync
 
