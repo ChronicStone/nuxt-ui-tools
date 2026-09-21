@@ -1,6 +1,11 @@
 <script setup lang="ts" generic="TValue extends string | number">
 const model = defineModel<TValue>({ required: true })
-defineProps<{ items: readonly TValue[]; label: string }>()
+const { format = String } = defineProps<{
+  items: readonly TValue[]
+  label: string
+  /** Button text of a value. Defaults to the value itself. */
+  format?: (value: TValue) => string
+}>()
 </script>
 
 <template>
@@ -14,7 +19,7 @@ defineProps<{ items: readonly TValue[]; label: string }>()
       :class="{ on: model === item }"
       @click="model = item"
     >
-      {{ item }}
+      {{ format(item) }}
     </button>
   </div>
 </template>
@@ -35,7 +40,7 @@ defineProps<{ items: readonly TValue[]; label: string }>()
   height: 28px;
   padding: 0 12px;
   border-radius: 4px;
-  color: #6b655d;
+  color: var(--ex-ink-soft);
   font-size: 12.5px;
   font-weight: 500;
   transition:

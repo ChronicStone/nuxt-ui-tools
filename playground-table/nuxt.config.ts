@@ -18,6 +18,8 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   i18n: {
     defaultLocale: 'fr',
+    // The pages are a French product mock: follow `defaultLocale`, not the browser language.
+    detectBrowserLanguage: false,
     locales: [
       { code: 'fr', language: 'fr-FR', name: 'Français' },
       { code: 'en', language: 'en-US', name: 'English' },

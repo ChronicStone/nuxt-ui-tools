@@ -5,9 +5,14 @@ import {
   CURRENCIES,
   dashboardApi as api,
   MONTH_INDEXES,
+  OPERATIONS_SEGMENTS,
   PRODUCT_IDS,
   YEARS,
 } from '../data/dashboard'
+
+/** Sortable columns of the operations accounts table. */
+export const OPERATIONS_SORT_KEYS = ['name', 'sessions', 'success', 'change', 'delay'] as const
+export type OperationsSortKey = (typeof OPERATIONS_SORT_KEYS)[number]
 
 function sum(values: readonly (number | null)[]) {
   return values.reduce<number>((total, value) => total + (value ?? 0), 0)
@@ -20,7 +25,8 @@ function cumulate(values: readonly (number | null)[]) {
 
 /**
  * Tableau de bord (identity4, Atelier): a shared `year`, a consumption view (currency, one remote
- * account, comparison toggle, tracked product lines) and a candidates view (months and accounts).
+ * account, comparison toggle, tracked product lines), a candidates view (months and accounts), and
+ * an operations view (a drill-down day, the accounts table sort in widget params).
  */
 export const analyticsDashboard = defineDashboardSchema({
   key: 'analytics',
@@ -201,6 +207,63 @@ export const analyticsDashboard = defineDashboardSchema({
             queryKey: ['candidates', 'delay', params.year, params.months, params.accounts],
           }),
         }),
+      }),
+    }),
+
+    // Showcase of the operational blocks: KPI trends, goals and status, alerts, activity feed,
+    // a sortable table, drill-down from a chart, and the card menu.
+    operations: view({
+      label: 'Opérations',
+      params: (p) => ({
+        /** Day picked on the sessions chart (`YYYY-MM-DD`); narrows the accounts table. */
+        day: p.string(),
+        /** Period the KPIs and the daily chart compare against. */
+        compare: p.comparison({ defaultValue: 'previous' }),
+      }),
+      queries: ({ background, deferred, essential, params }) => ({
+        kpis: essential.query(() => ({
+          queryFn: () => api.operations.summary(params),
+          queryKey: ['operations', 'kpis', params.year, params.compare],
+        })),
+        daily: essential.query({
+          defaultValue: [],
+          query: () => ({
+            queryFn: () => api.operations.daily(params),
+            queryKey: ['operations', 'daily', params.year, params.compare],
+          }),
+        }),
+        alerts: essential.query({
+          defaultValue: [],
+          query: () => ({ queryFn: api.operations.alerts, queryKey: ['operations', 'alerts'] }),
+        }),
+        activity: background.query({
+          defaultValue: [],
+          query: () => ({ queryFn: api.operations.activity, queryKey: ['operations', 'activity'] }),
+        }),
+        accounts: deferred.query({
+          defaultValue: [],
+          // Table sort and segment tab, kept in the URL with the query they belong to.
+          params: (p) => ({
+            sort: p.enum(OPERATIONS_SORT_KEYS, { defaultValue: 'sessions' }),
+            order: p.enum(['desc', 'asc'], { defaultValue: 'desc' }),
+            segment: p.enum(OPERATIONS_SEGMENTS, { defaultValue: 'all' }),
+          }),
+          query: ({ params: widget }) => ({
+            queryFn: () =>
+              api.operations.accounts({
+                day: params.day,
+                segment: widget.segment,
+                year: params.year,
+              }),
+            queryKey: ['operations', 'accounts', params.year, params.day, widget.segment],
+          }),
+        }),
+      }),
+      derive: ({ data }) => ({
+        sessionsTotal: () => sum(data.daily.map((row) => row.sessions)),
+        /** Monthly certificates of the year, as chart rows. */
+        certificatesByMonth: () =>
+          (data.kpis?.certificatesTrend ?? []).map((value, month) => ({ month, value })),
       }),
     }),
   }),

@@ -42,6 +42,11 @@
   --nut-dl-table-foot-weight: 300;
   --nut-dl-accent-ink: #b85e00;
   --ex-row-hover: #faf7f2;
+  /* Control inks: labels on controls, and their secondary text. */
+  --ex-ink: #45413b;
+  --ex-ink-soft: #6b655d;
+  --ex-accent-line: #ffe2bc;
+  --ex-chip: #f7f3ee;
   --ex-ok: #2f6b4f;
   --ex-warn: #b85e00;
   --ex-bad: #c0392b;
@@ -93,6 +98,10 @@
   --nut-dl-table-row-hover: #302d2a;
   --nut-dl-table-row-selected: rgb(255 150 0 / 0.1);
   --ex-row-hover: #33302c;
+  --ex-ink: #ddd6cd;
+  --ex-ink-soft: #a8a097;
+  --ex-accent-line: rgb(255 150 0 / 0.35);
+  --ex-chip: #3d3935;
   --nut-dash-s2: #ece7e0;
   --nut-dash-s3: #ffb558;
   --nut-dash-s4: #4a453f;

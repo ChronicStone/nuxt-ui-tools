@@ -78,17 +78,17 @@ function onListScroll(event: Event) {
   border: 1px solid var(--ui-border);
   border-radius: 7px;
   background: var(--ex-surface);
-  color: #45413b;
+  color: var(--ex-ink);
   font-size: 13px;
   white-space: nowrap;
   transition: background 0.12s;
 }
 .dash-sel:hover {
-  background: #faf7f2;
+  background: var(--ex-row-hover);
 }
 .dash-sel.has {
   color: var(--ui-text);
-  border-color: #d3cbc0;
+  border-color: var(--ui-border-accented);
 }
 .dash-sel-label {
   max-width: 220px;
@@ -123,7 +123,7 @@ function onListScroll(event: Event) {
   transition: background 0.12s;
 }
 .dash-btn:hover {
-  background: #faf7f2;
+  background: var(--ex-row-hover);
 }
 .dash-btn--sm {
   height: 28px;
@@ -143,7 +143,7 @@ function onListScroll(event: Event) {
 }
 .dash-pop-title {
   padding: 10px 12px 8px;
-  color: #6b655d;
+  color: var(--ex-ink-soft);
   font-size: 12.5px;
   font-weight: 600;
 }
@@ -187,7 +187,7 @@ function onListScroll(event: Event) {
   text-align: start;
 }
 .dash-it:hover {
-  background: #faf7f2;
+  background: var(--ex-row-hover);
 }
 .dash-it.on {
   font-weight: 500;
@@ -195,7 +195,7 @@ function onListScroll(event: Event) {
 .dash-it > .dash-it-ic {
   width: 16px;
   height: 16px;
-  color: #6b655d;
+  color: var(--ex-ink-soft);
   flex: none;
 }
 .dash-it > span:not([class]) {
@@ -220,7 +220,7 @@ function onListScroll(event: Event) {
   background: var(--ui-bg-muted);
   font-size: 9.5px;
   font-weight: 600;
-  color: #6b655d;
+  color: var(--ex-ink-soft);
 }
 .dash-chk {
   display: inline-grid;
@@ -228,7 +228,7 @@ function onListScroll(event: Event) {
   width: 18px;
   height: 18px;
   flex: none;
-  border: 1px solid #d3cbc0;
+  border: 1px solid var(--ui-border-accented);
   border-radius: 5px;
   background: var(--ex-surface);
   color: transparent;

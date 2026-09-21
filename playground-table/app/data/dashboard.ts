@@ -4,6 +4,8 @@
  * states are visible. Values only depend on the request, so switching params back and forth is
  * stable.
  */
+import type { DashboardComparison } from '#ui-tools/dashboard'
+
 import { useAccountsData } from '../composables/use-accounts-data'
 import { wait } from '../utils/wait'
 
@@ -462,6 +464,267 @@ export const dashboardApi = {
           .map((account) => ({ label: account.name, value: account.id })),
       ),
   },
+
+  operations: {
+    summary: (input: { year: DashboardYear; compare: DashboardComparison }) =>
+      respond(`ops-summary-${input.year}-${input.compare}`, (): OperationsSummary => {
+        const scale = yearScale(input.year)
+        const sessions = recentDays().map((_, index) => Math.round(96 * scale * wave(index, 3)))
+        const period = sum(sessions)
+        const ratio = comparisonRatio(input.compare)
+        return {
+          passedPeriod: Math.round(period * 0.78),
+          retakesPeriod: Math.round(period * 0.09),
+          sessionsPeriod: period,
+          sessionsPeriodPrevious: ratio === null ? null : Math.round(period * ratio),
+          successPeriodPrevious:
+            ratio === null ? null : 0.774 * Math.min(1.04, scale) * (ratio + 0.06),
+          certificates: Math.round(1_240 * scale),
+          certificatesGoal: 1_500,
+          certificatesTrend: MONTH_INDEXES.slice(0, 9).map((month) =>
+            Math.round(1_100 * scale * wave(month, 7)),
+          ),
+          correctionDelay: 1.8 / scale,
+          correctionPrevious: 2.3 / scale,
+          correctionTrend: sessions.map((_, index) => Number((2.6 - index * 0.05).toFixed(2))),
+          sessionsToday: sessions.at(-1) ?? 0,
+          sessionsTrend: sessions,
+          sessionsYesterday: sessions.at(-2) ?? 0,
+          successGoal: 0.8,
+          successPrevious: 0.752,
+          successRate: 0.774 * Math.min(1.04, scale),
+          successTrend: MONTH_INDEXES.slice(0, 9).map((month) => 0.72 + (month % 4) * 0.018),
+        }
+      }),
+    daily: (input: { year: DashboardYear; compare: DashboardComparison }) =>
+      respond(`ops-daily-${input.year}-${input.compare}`, (): OperationsDay[] => {
+        const ratio = comparisonRatio(input.compare)
+        return recentDays().map((day, index) => {
+          const sessions = Math.round(96 * yearScale(input.year) * wave(index, 3))
+          return {
+            day,
+            passed: Math.round(sessions * (0.7 + (index % 5) * 0.04)),
+            previous: ratio === null ? null : Math.round(sessions * ratio * wave(index + 5, 2)),
+            sessions,
+          }
+        })
+      }),
+    alerts: () =>
+      respond('ops-alerts', (): OperationsAlert[] => [
+        {
+          action: 'Planifier',
+          count: 3,
+          detail: 'Comptes créés cette semaine, sans session planifiée',
+          id: 'new-accounts',
+          level: 'info',
+          title: 'Nouveaux comptes à accompagner',
+        },
+        {
+          action: 'Examiner',
+          count: 12,
+          detail: 'Comportements signalés par la surveillance en ligne',
+          id: 'flagged',
+          level: 'error',
+          title: 'Sessions à revoir',
+        },
+        {
+          count: '92 %',
+          detail: 'Blade Academy · tests achetés consommés',
+          id: 'quota',
+          level: 'warning',
+          title: 'Quota presque atteint',
+        },
+        {
+          action: 'Relancer',
+          count: 4,
+          detail: 'Pièces justificatives manquantes',
+          id: 'edof',
+          level: 'error',
+          title: 'Dossiers EDOF bloqués',
+        },
+        {
+          count: 7,
+          detail: 'Productions écrites en attente depuis plus de 5 jours',
+          id: 'late',
+          level: 'warning',
+          title: 'Corrections en retard',
+        },
+        {
+          count: 248,
+          detail: 'Import des candidats Bunkerlab terminé',
+          id: 'import',
+          level: 'success',
+          title: 'Import terminé',
+        },
+      ]),
+    activity: () =>
+      respond('ops-activity', (): OperationsEvent[] => {
+        const now = Date.now()
+        let elapsed = 4 * 60_000
+        return Array.from({ length: 16 }, (_, index) => {
+          const kind = EVENT_KINDS[index % EVENT_KINDS.length] ?? 'session'
+          const account = CERT_ACCOUNTS[(index * 5) % CERT_ACCOUNTS.length] ?? 'Zia'
+          const at = now - elapsed
+          elapsed += (22 + ((index * 53) % 170)) * 60_000
+          return { at, id: `event-${index}`, kind, ...describeEvent(kind, account, index) }
+        })
+      }),
+    accounts: (input: { year: DashboardYear; day?: string; segment: OperationsSegment }) =>
+      respond(
+        `ops-accounts-${input.year}-${input.day ?? 'all'}-${input.segment}`,
+        (): OperationsAccount[] => {
+          // A selected day keeps roughly one fourteenth of the period's sessions.
+          const share = input.day ? 1 / 14 : 1
+          return CERT_ROWS.slice(0, 12).flatMap((row, index) => {
+            const kind = index % 3 === 1 ? 'school' : 'company'
+            if (input.segment !== 'all' && input.segment !== kind) return []
+            return [
+              {
+                change: Number((((index * 29) % 41) - 14).toFixed(1)),
+                completion: Math.round(row.completion * 100),
+                delay: Number((1.1 + ((index * 17) % 30) / 10).toFixed(1)),
+                id: row.id,
+                kind,
+                name: row.name,
+                sessions: Math.max(
+                  1,
+                  Math.round(row.registered * 0.6 * yearScale(input.year) * share * wave(index, 5)),
+                ),
+                success: Number((row.success * 100).toFixed(1)),
+              },
+            ]
+          })
+        },
+      ),
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Operations
+// ---------------------------------------------------------------------------
+
+export interface OperationsSummary {
+  /** Sessions over the last 14 days, and over the comparison period (`null`: no comparison). */
+  sessionsPeriod: number
+  sessionsPeriodPrevious: number | null
+  successPeriodPrevious: number | null
+  passedPeriod: number
+  retakesPeriod: number
+  sessionsToday: number
+  sessionsYesterday: number
+  sessionsTrend: number[]
+  successRate: number
+  successPrevious: number
+  successGoal: number
+  successTrend: number[]
+  correctionDelay: number
+  correctionPrevious: number
+  correctionTrend: number[]
+  certificates: number
+  certificatesGoal: number
+  certificatesTrend: number[]
+}
+export interface OperationsDay {
+  /** Local midnight, epoch milliseconds. */
+  day: number
+  sessions: number
+  passed: number
+  /** Sessions of the matching day in the comparison period, `null` without comparison. */
+  previous: number | null
+}
+export interface OperationsAlert {
+  id: string
+  level: 'error' | 'warning' | 'info' | 'success'
+  title: string
+  detail: string
+  count: number | string
+  action?: string
+}
+export type OperationsEventKind = 'certificate' | 'session' | 'account' | 'flag' | 'payment'
+export interface OperationsEvent {
+  id: string
+  at: number
+  kind: OperationsEventKind
+  text: string
+  detail: string
+}
+/** Account segments of the operations accounts table (its tabs). */
+export const OPERATIONS_SEGMENTS = ['all', 'company', 'school'] as const
+export type OperationsSegment = (typeof OPERATIONS_SEGMENTS)[number]
+
+export interface OperationsAccount {
+  id: string
+  name: string
+  kind: Exclude<OperationsSegment, 'all'>
+  /** Graded share of the account's sessions, in percent. */
+  completion: number
+  sessions: number
+  /** Success rate, in percent. */
+  success: number
+  /** Change of sessions vs the previous period, in percent. */
+  change: number
+  /** Average correction delay, in days. */
+  delay: number
+}
+
+const EVENT_KINDS: readonly OperationsEventKind[] = [
+  'certificate',
+  'session',
+  'payment',
+  'session',
+  'flag',
+  'certificate',
+  'account',
+]
+
+function describeEvent(kind: OperationsEventKind, account: string, index: number) {
+  const count = 6 + ((index * 7) % 30)
+  if (kind === 'certificate')
+    return {
+      detail: 'English General · 4 compétences',
+      text: `${account} a délivré ${count} certificats`,
+    }
+  if (kind === 'session')
+    return {
+      detail: `${count} candidats · surveillance en ligne`,
+      text: `Session ouverte · ${account}`,
+    }
+  if (kind === 'payment')
+    return {
+      detail: `${(count * 58).toLocaleString('fr-FR')} € HT`,
+      text: `Facture réglée · ${account}`,
+    }
+  if (kind === 'flag')
+    return {
+      detail: `${account} · changement d’onglet répété`,
+      text: 'Session signalée par la surveillance',
+    }
+  return { detail: 'Centre de test agréé', text: `Nouveau compte · ${account}` }
+}
+
+/** The last 14 days as local midnights, oldest first. */
+function recentDays(count = 14) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Array.from({ length: count }, (_, index) => {
+    const day = new Date(today)
+    day.setDate(today.getDate() - (count - 1 - index))
+    return day.getTime()
+  })
+}
+
+/** Level of the comparison period relative to the current one; `null` without comparison. */
+function comparisonRatio(compare: DashboardComparison) {
+  return compare === 'none' ? null : compare === 'year' ? 0.78 : 0.91
+}
+
+function yearScale(year: DashboardYear) {
+  return year === 2026 ? 1 : year === 2025 ? 0.86 : 0.71
+}
+
+/** Deterministic variation around 1 (0.8 to 1.2). */
+function wave(index: number, seed: number) {
+  return 0.8 + ((index * 37 + seed * 11) % 41) / 100
 }
 
 interface CandidatesInput {

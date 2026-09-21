@@ -2,8 +2,18 @@
 import { useNow, useScroll } from '@vueuse/core'
 
 import { useDashboard } from '#ui-tools/dashboard'
+import type {
+  DashboardComparison,
+  DashboardMenuContext,
+  DashboardRowAction,
+  DashboardSelectEvent,
+  DashboardSeries,
+  DashboardTableColumn,
+  DashboardTableSort,
+} from '#ui-tools/dashboard'
 
-import { analyticsDashboard } from '../dashboards/analytics'
+import { analyticsDashboard, OPERATIONS_SORT_KEYS } from '../dashboards/analytics'
+import type { OperationsSortKey } from '../dashboards/analytics'
 import {
   CERT_ROWS,
   CURRENCIES,
@@ -13,11 +23,21 @@ import {
   PRODUCTS,
   YEARS,
 } from '../data/dashboard'
-import type { MonthIndex, ProductId, ProductLineMonth } from '../data/dashboard'
+import type {
+  MonthIndex,
+  OperationsAccount,
+  OperationsAlert,
+  OperationsDay,
+  OperationsEvent,
+  OperationsEventKind,
+  ProductId,
+  ProductLineMonth,
+} from '../data/dashboard'
 
 const dashboard = useDashboard(analyticsDashboard)
 const conso = dashboard.consumption
 const cand = dashboard.candidates
+const ops = dashboard.operations
 
 // --- Formatting (fr-FR, as in the artifact) -------------------------------------------------
 
@@ -61,14 +81,7 @@ const scroller = useTemplateRef<HTMLElement>('scroller')
 const { y: scrollY } = useScroll(scroller)
 const stuck = computed(() => scrollY.value > 0)
 
-const now = useNow({ interval: 30_000 })
-const syncedAt = ref(Date.now())
-watch(
-  () => dashboard.refreshing,
-  (refreshing) => {
-    if (!refreshing) syncedAt.value = Date.now()
-  },
-)
+const now = useNow({ interval: 60_000 })
 const today = computed(() => {
   const text = new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',
@@ -77,10 +90,6 @@ const today = computed(() => {
     year: 'numeric',
   }).format(now.value)
   return text.charAt(0).toUpperCase() + text.slice(1)
-})
-const synced = computed(() => {
-  const minutes = Math.floor((now.value.getTime() - syncedAt.value) / 60_000)
-  return minutes < 1 ? 'synchronisé à l’instant' : `synchronisé il y a ${minutes} min`
 })
 
 // Consumption: one remote account.
@@ -274,6 +283,164 @@ type CefrRow = (typeof cand.cefr.data)[number]
 const cefrSeries = [
   { color: 'series-1', key: 'share', label: 'Part', value: (row: CefrRow) => row.share },
 ]
+
+// --- Operations blocks ----------------------------------------------------------------------
+
+const dayFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' })
+const weekdayFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', weekday: 'short' })
+const days = (value: number) => `${fmt1(value)} j`
+
+/** `YYYY-MM-DD` of a local midnight: the URL form of the picked day. */
+function isoDay(time: number) {
+  const date = new Date(time)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${String(date.getDate()).padStart(2, '0')}`
+}
+const pickedDay = computed(() => {
+  const [dayYear, dayMonth, dayOfMonth] = (ops.params.day ?? '').split('-').map(Number)
+  return dayYear && dayMonth && dayOfMonth
+    ? dayFormat.format(new Date(dayYear, dayMonth - 1, dayOfMonth))
+    : ''
+})
+
+// Comparison period: a view param with localized options; the chart adds its faded bars.
+const COMPARISONS: readonly DashboardComparison[] = ['previous', 'year', 'none']
+const comparisonLabel = (value: DashboardComparison) =>
+  ops.options.compare.items.find((item) => item.value === value)?.label ?? value
+const comparedTo = computed(() =>
+  ops.params.compare === 'year' ? 'l’an dernier' : 'la période précédente',
+)
+const compareCaption = (value: string) => `contre ${value} sur ${comparedTo.value}`
+
+// Drill-down: a bar narrows the accounts table to its day; the same bar clears it.
+const dailySeries = computed<DashboardSeries<OperationsDay>[]>(() => [
+  {
+    color: 'series-1',
+    compare: ops.params.compare === 'none' ? undefined : (row) => row.previous,
+    compareLabel: ops.params.compare === 'year' ? 'Sessions (an dernier)' : undefined,
+    key: 'sessions',
+    label: 'Sessions',
+    value: (row) => row.sessions,
+  },
+])
+function pickDay({ row }: DashboardSelectEvent<OperationsDay>) {
+  const day = isoDay(row.day)
+  ops.params.day = ops.params.day === day ? undefined : day
+}
+
+function alertAction(alert: OperationsAlert) {
+  const { action } = alert
+  if (!action) return null
+  return {
+    label: action,
+    onClick: () => toast.add({ color: 'neutral', title: `${action} · ${alert.title}` }),
+  }
+}
+function openAlert({ row }: DashboardSelectEvent<OperationsAlert>) {
+  toast.add({ color: 'neutral', description: row.detail, title: row.title })
+}
+
+const eventKinds: Record<OperationsEventKind, { icon: string; color: string }> = {
+  account: { color: 'series-3', icon: 'i-lucide-building-2' },
+  certificate: { color: 'series-1', icon: 'i-lucide-award' },
+  flag: { color: 'error', icon: 'i-lucide-shield-alert' },
+  payment: { color: 'success', icon: 'i-lucide-receipt' },
+  session: { color: 'neutral', icon: 'i-lucide-monitor-play' },
+}
+function openEvent({ row }: DashboardSelectEvent<OperationsEvent>) {
+  toast.add({ color: 'neutral', description: row.detail, title: row.text })
+}
+
+const accountColumns: DashboardTableColumn<OperationsAccount>[] = [
+  { key: 'name', label: 'Compte', value: (row) => row.name },
+  { key: 'sessions', label: 'Sessions', type: 'bar', value: (row) => row.sessions, width: '30%' },
+  { key: 'success', label: 'Réussite', type: 'percent', value: (row) => row.success },
+  { key: 'change', label: 'Évolution', type: 'delta', value: (row) => row.change },
+  { format: days, key: 'delay', label: 'Délai moyen', type: 'number', value: (row) => row.delay },
+]
+// The table sort lives in the accounts query's widget params, so it is in the URL.
+const accountsSort = computed<DashboardTableSort | null>({
+  get: () => ({ direction: ops.accounts.params.order, key: ops.accounts.params.sort }),
+  set: (next) => {
+    ops.accounts.params.sort = next && isSortKey(next.key) ? next.key : 'sessions'
+    ops.accounts.params.order = next?.direction ?? 'desc'
+  },
+})
+function isSortKey(key: string): key is OperationsSortKey {
+  return OPERATIONS_SORT_KEYS.some((entry) => entry === key)
+}
+function openAccount({ row }: DashboardSelectEvent<OperationsAccount>) {
+  toast.add({
+    color: 'neutral',
+    description: `${nf(row.sessions)} sessions · ${fmt1(row.success)} % de réussite`,
+    title: `Ouvrir ${row.name}`,
+  })
+}
+// The accounts table: a segment tab (widget param), one picked account mirrored by the
+// completion list, row actions, and a menu built from the card's own table.
+const pickedAccount = ref<string | null>(null)
+function toggleAccount({ row }: DashboardSelectEvent<OperationsAccount>) {
+  pickedAccount.value = pickedAccount.value === row.id ? null : row.id
+}
+const segmentTabs = computed(() =>
+  [
+    { label: 'Tous', value: 'all' as const },
+    { label: 'Entreprises', value: 'company' as const },
+    { label: 'Écoles', value: 'school' as const },
+  ].map((tab) => ({
+    ...tab,
+    // The count of the open tab, once its rows are in.
+    count:
+      ops.accounts.params.segment === tab.value && ops.accounts.state === 'ready'
+        ? ops.accounts.data.length
+        : null,
+  })),
+)
+function accountActions(row: OperationsAccount): DashboardRowAction[] {
+  return [
+    {
+      icon: 'i-lucide-eye',
+      inline: true,
+      label: 'Aperçu',
+      onSelect: () => openAccount({ index: 0, row }),
+    },
+    { icon: 'i-lucide-external-link', label: 'Ouvrir le compte', to: '/accounts' },
+    { icon: 'i-lucide-mail', label: 'Contacter le référent' },
+    { type: 'separator' },
+    { color: 'error', icon: 'i-lucide-pause', label: 'Suspendre les sessions' },
+  ]
+}
+function accountsMenu(context: DashboardMenuContext) {
+  return [
+    'table' as const,
+    'csv' as const,
+    {
+      icon: 'i-lucide-clipboard-copy',
+      label: 'Copier pour un tableur',
+      onSelect: () => {
+        const table = context.table()
+        if (!table) return
+        const grid = [
+          table.columns.map((column) => column.label),
+          ...table.rows.map((row) => row.map((cell) => cell.text)),
+        ]
+        void navigator.clipboard?.writeText(grid.map((cells) => cells.join('\t')).join('\n'))
+        toast.add({ color: 'neutral', title: `${context.title} · copié` })
+      },
+    },
+    'expand' as const,
+  ]
+}
+function alertActions(alert: OperationsAlert): DashboardRowAction[] {
+  return [
+    {
+      icon: 'i-lucide-bell-off',
+      label: 'Masquer 24 h',
+      onSelect: () => toast.add({ color: 'neutral', title: `${alert.title} · masqué` }),
+    },
+    { icon: 'i-lucide-check', label: 'Marquer comme traité' },
+  ]
+}
 </script>
 
 <template>
@@ -282,7 +449,13 @@ const cefrSeries = [
       <header class="ex-ph ex-ph--dash">
         <div class="min-w-0">
           <h1>Tableau de bord</h1>
-          <p>{{ today }} · {{ synced }}</p>
+          <p>
+            {{ today }} ·
+            <template v-if="dashboard.updatedAt">
+              mis à jour <NutDashboardRelativeTime :value="dashboard.updatedAt" />
+            </template>
+            <template v-else>chargement…</template>
+          </p>
         </div>
 
         <div class="dash-ctl">
@@ -334,6 +507,27 @@ const cefrSeries = [
               >
                 <UIcon name="i-lucide-check" class="size-3" />
                 Comparer à {{ previousYear }}
+              </button>
+            </template>
+
+            <template v-else-if="dashboard.view.current === 'operations'">
+              <DashSeg v-model="dashboard.params.year" :items="YEARS" label="Année" />
+              <DashSeg
+                v-model="ops.params.compare"
+                :items="COMPARISONS"
+                :format="comparisonLabel"
+                label="Comparer à"
+              />
+              <button
+                v-if="pickedDay"
+                type="button"
+                class="dash-chip on"
+                :aria-label="`Retirer le filtre du ${pickedDay}`"
+                @click="ops.params.day = undefined"
+              >
+                <UIcon name="i-lucide-calendar" class="size-3" />
+                Journée du {{ pickedDay }}
+                <UIcon name="i-lucide-x" class="size-3" />
               </button>
             </template>
 
@@ -402,7 +596,13 @@ const cefrSeries = [
             </template>
           </div>
           <div class="dash-ctl-r">
-            <button type="button" class="dash-btn">
+            <NutDashboardRefresh
+              v-if="dashboard.view.current === 'operations'"
+              :dashboard
+              :updated="false"
+              size="md"
+            />
+            <button v-else type="button" class="dash-btn">
               <UIcon name="i-lucide-download" class="size-[15px]" />
               {{
                 dashboard.view.current === 'consumption' ? 'Exporter' : 'Rapport de certification'
@@ -720,7 +920,7 @@ const cefrSeries = [
     </div>
 
     <!-- Candidats et certifications -->
-    <div v-else class="ex-dash-content">
+    <div v-else-if="dashboard.view.current === 'candidates'" class="ex-dash-content">
       <NutDashboardGrid variant="panels" columns="2 md:3 xl:6">
         <NutDashboardStat
           size="1"
@@ -889,6 +1089,254 @@ const cefrSeries = [
         </NutDashboardBars>
       </NutDashboardGrid>
     </div>
+
+    <!-- Opérations: every operational block, with the card menu and freshness on each grid -->
+    <div v-else class="ex-dash-content">
+      <NutDashboardGrid variant="panels" columns="2 xl:4">
+        <NutDashboardStat
+          size="1"
+          :source="ops.kpis"
+          label="Sessions sur 14 jours"
+          :value="(d) => d.sessionsPeriod"
+          :format="nf"
+          :compare="(d) => d.sessionsPeriodPrevious"
+          :compare-label="compareCaption"
+          :delta-format="dl"
+          :trend="(d) => d.sessionsTrend"
+          trend-type="bars"
+        />
+        <NutDashboardStat
+          size="1"
+          :source="ops.kpis"
+          label="Taux de réussite"
+          :value="(d) => d.successRate * 100"
+          :format="(value) => `${fmt1(value)} %`"
+          :delta="
+            (d) =>
+              d.successPeriodPrevious === null
+                ? null
+                : (d.successRate - d.successPeriodPrevious) * 100
+          "
+          :delta-format="pts"
+          :caption="
+            (d) =>
+              d.successPeriodPrevious === null
+                ? undefined
+                : compareCaption(pf(d.successPeriodPrevious))
+          "
+          :goal="(d) => d.successGoal * 100"
+          :status="
+            (d) =>
+              d.successRate < d.successGoal
+                ? { color: 'warning', label: 'Sous l’objectif' }
+                : { color: 'success', label: 'Objectif atteint' }
+          "
+        />
+        <NutDashboardStat
+          size="1"
+          :source="ops.kpis"
+          label="Délai de correction"
+          :value="(d) => d.correctionDelay"
+          :format="days"
+          :delta="(d) => change(d.correctionDelay, d.correctionPrevious)"
+          :delta-format="dl"
+          invert-delta
+          caption="entre passage et résultat"
+          :trend="(d) => d.correctionTrend"
+          trend-type="line"
+          trend-color="series-3"
+          :status="
+            (d) =>
+              d.correctionDelay <= 2
+                ? { color: 'success', label: 'Dans les temps' }
+                : { color: 'error', label: 'En retard' }
+          "
+        />
+        <NutDashboardStat
+          size="1"
+          :source="ops.kpis"
+          label="Certificats délivrés"
+          :value="(d) => d.certificates"
+          :format="nf"
+          caption="ce mois-ci"
+          :goal="(d) => d.certificatesGoal"
+        />
+      </NutDashboardGrid>
+
+      <!-- A panels grid is one card split in panes: the chart and its period summary -->
+      <NutDashboardGrid variant="panels" menu freshness>
+        <NutDashboardBarChart
+          size="12 xl:8"
+          :source="ops.daily"
+          title="Sessions par jour"
+          subtitle="cliquez une journée pour filtrer les comptes"
+          :x="(row) => row.day"
+          :x-format="(value) => weekdayFormat.format(Number(value))"
+          x-label="Journée"
+          :series="dailySeries"
+          :selected="(row) => isoDay(row.day) === ops.params.day"
+          :points="14"
+          :height="300"
+          @select="pickDay"
+        />
+        <NutDashboardStats
+          size="12 xl:4"
+          :source="ops.kpis"
+          title="Sur la période"
+          subtitle="14 derniers jours"
+          columns="1"
+          :items="[
+            {
+              key: 'sessions',
+              label: 'Sessions passées',
+              icon: 'i-lucide-monitor-play',
+              value: (d) => d.sessionsPeriod,
+              format: nf,
+              progress: (d) => (d.sessionsPeriod / 1_600) * 100,
+            },
+            {
+              key: 'passed',
+              label: 'Candidats reçus',
+              icon: 'i-lucide-circle-check',
+              color: 'success',
+              value: (d) => d.passedPeriod,
+              format: nf,
+              progress: (d) => (d.passedPeriod / d.sessionsPeriod) * 100,
+            },
+            {
+              key: 'retakes',
+              label: 'À repasser',
+              icon: 'i-lucide-rotate-ccw',
+              color: 'warning',
+              value: (d) => d.retakesPeriod,
+              format: nf,
+              status: () => ({ color: 'warning', label: 'À suivre' }),
+            },
+          ]"
+          :actions="[{ label: 'Voir le rapport', placement: 'footer', to: '/accounts' }]"
+        />
+      </NutDashboardGrid>
+
+      <NutDashboardGrid variant="panels" menu freshness>
+        <NutDashboardAlerts
+          size="12 xl:5"
+          :source="ops.alerts"
+          title="À traiter"
+          subtitle="par priorité"
+          :severity="(alert) => alert.level"
+          :label="(alert) => alert.title"
+          :description="(alert) => alert.detail"
+          :value="(alert) => alert.count"
+          :action="alertAction"
+          :row-actions="alertActions"
+          :limit="5"
+          @select="openAlert"
+        />
+        <NutDashboardGauge
+          size="12 md:6 xl:3"
+          :source="ops.kpis"
+          title="Objectif mensuel"
+          subtitle="certificats délivrés"
+          :value="(d) => d.certificates"
+          :max="(d) => d.certificatesGoal * 1.1"
+          :target="(d) => d.certificatesGoal"
+          :format="nf"
+          caption="certificats"
+          :color="(_, share) => (share >= 1 / 1.1 ? 'success' : 'series-1')"
+          :actions="[{ icon: 'i-lucide-target', label: 'Modifier', variant: 'ghost' }]"
+        />
+        <NutDashboardBarChart
+          size="12 md:6 xl:4"
+          :source="ops.certificatesByMonth"
+          title="Certificats"
+          :subtitle="`par mois · ${year}`"
+          :x="(row) => MONTHS[row.month] ?? ''"
+          :series="[{ key: 'value', label: 'Certificats', value: (row) => row.value }]"
+          :format="nf"
+          highlight="last"
+          labels
+          :legend="false"
+          :points="9"
+          :height="200"
+        />
+      </NutDashboardGrid>
+
+      <NutDashboardGrid variant="panels" menu freshness>
+        <NutDashboardTable
+          v-model:sort="accountsSort"
+          size="12"
+          :source="ops.accounts"
+          title="Performance par compte"
+          :subtitle="pickedDay ? `journée du ${pickedDay}` : '14 derniers jours'"
+          :columns="accountColumns"
+          :limit="8"
+          :menu="accountsMenu"
+          :selected="(row) => row.id === pickedAccount"
+          :row-actions="accountActions"
+          :actions="[
+            {
+              label: 'Tous les comptes',
+              placement: 'footer',
+              to: '/accounts',
+              trailingIcon: 'i-lucide-arrow-right',
+            },
+          ]"
+          @select="toggleAccount"
+        >
+          <template #toolbar>
+            <NutDashboardTabs v-model="ops.accounts.params.segment" :items="segmentTabs" />
+            <span v-if="pickedDay" class="dash-chip-tag">
+              <UIcon name="i-lucide-calendar" class="size-3 text-(--ui-text-dimmed)" />
+              Journée du {{ pickedDay }}
+              <button
+                type="button"
+                :aria-label="`Retirer le filtre du ${pickedDay}`"
+                @click="ops.params.day = undefined"
+              >
+                <UIcon name="i-lucide-x" class="size-2.5" />
+              </button>
+            </span>
+          </template>
+          <template #cell-name="{ row, value }">
+            <span class="flex min-w-0 items-center gap-2.5">
+              <span class="dash-it-av">{{ initials(row.name) }}</span>
+              <span class="truncate">{{ value }}</span>
+            </span>
+          </template>
+        </NutDashboardTable>
+      </NutDashboardGrid>
+
+      <NutDashboardGrid variant="panels" menu freshness>
+        <NutDashboardList
+          size="12 xl:5"
+          :source="ops.accounts"
+          title="Avancement des corrections"
+          subtitle="part des sessions corrigées"
+          leading="ring"
+          :percent="(row) => row.completion"
+          :color="(row) => (row.completion < 60 ? 'warning' : 'series-1')"
+          :label="(row) => row.name"
+          :description="(row) => (row.kind === 'school' ? 'École' : 'Entreprise')"
+          :value="(row) => days(row.delay)"
+          :selected="(row) => row.id === pickedAccount"
+          :limit="6"
+          @select="toggleAccount"
+        />
+        <NutDashboardFeed
+          size="12 xl:7"
+          :source="ops.activity"
+          title="Activité récente"
+          group-by="day"
+          :label="(event) => event.text"
+          :description="(event) => event.detail"
+          :time="(event) => event.at"
+          :icon="(event) => eventKinds[event.kind].icon"
+          :color="(event) => eventKinds[event.kind].color"
+          :limit="7"
+          @select="openEvent"
+        />
+      </NutDashboardGrid>
+    </div>
   </div>
 </template>
 
@@ -946,7 +1394,7 @@ const cefrSeries = [
   border: 1px solid var(--ui-border);
   border-radius: 999px;
   background: var(--ex-surface);
-  color: #6b655d;
+  color: var(--ex-ink-soft);
   font-size: 12.5px;
   font-weight: 500;
   transition:
@@ -958,13 +1406,13 @@ const cefrSeries = [
   opacity: 0;
 }
 .dash-chip.on {
-  border-color: #ffe2bc;
+  border-color: var(--ex-accent-line);
   background: var(--ex-selection);
   color: var(--ui-text);
 }
 .dash-chip.on :deep(svg) {
   opacity: 1;
-  color: #b85e00;
+  color: var(--nut-dl-accent-ink);
 }
 .ex-dtabs {
   display: flex;
@@ -981,7 +1429,7 @@ const cefrSeries = [
   padding: 0 12px;
   font-size: 14px;
   font-weight: 500;
-  color: #6b655d;
+  color: var(--ex-ink-soft);
 }
 .ex-dtabs button:hover,
 .ex-dtabs button.on {
@@ -1006,7 +1454,7 @@ const cefrSeries = [
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: #6b655d;
+  color: var(--ex-ink-soft);
   font-size: 12.5px;
   font-weight: 500;
   white-space: nowrap;
@@ -1021,8 +1469,8 @@ const cefrSeries = [
   height: 28px;
   padding: 0 6px 0 10px;
   border-radius: 999px;
-  background: var(--ui-bg-muted);
-  color: #45413b;
+  background: var(--ex-chip);
+  color: var(--ex-ink);
   font-size: 12.5px;
   font-weight: 500;
 }
@@ -1040,7 +1488,7 @@ const cefrSeries = [
   color: var(--ui-text-dimmed);
 }
 .dash-chip-tag button:hover {
-  background: var(--ui-border);
+  background: var(--ui-border-accented);
   color: var(--ui-text);
 }
 @media (max-width: 1023px) {
