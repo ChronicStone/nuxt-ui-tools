@@ -713,11 +713,7 @@ defineExpose({ resetColumnSizing })
               </th>
             </template>
           </tr>
-          <tr
-            class="nut-dl-progress"
-            :data-active="refreshing"
-            aria-hidden="true"
-          >
+          <tr class="nut-dl-progress" :data-active="refreshing" aria-hidden="true">
             <th
               :colspan="leafColumns.length"
               class="sticky top-[var(--nut-dl-head-h)] z-[3] h-0 p-0"
