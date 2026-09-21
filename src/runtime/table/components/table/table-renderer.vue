@@ -84,9 +84,7 @@ const isFirstLoad = computed(
 const refreshing = computed(
   () => rows.value.length > 0 && (status.value.isFetching || status.value.isRefreshing),
 )
-const error = computed(() =>
-  rows.value.length === 0 ? internals.queryContent.error.value : null,
-)
+const error = computed(() => (rows.value.length === 0 ? internals.queryContent.error.value : null))
 const empty = computed(() => !isFirstLoad.value && !error.value && rows.value.length === 0)
 
 function refresh() {
@@ -965,10 +963,14 @@ defineExpose({ resetColumnSizing })
         </tfoot>
       </table>
 
-      <div v-if="error" class="nut-dl-table__error sticky left-0 w-full">
+      <div
+        v-if="error"
+        class="nut-dl-table__error sticky left-0 w-full"
+        :style="{ height: fill ? 'calc(100% - var(--nut-dl-head-h))' : undefined }"
+      >
         <slot name="error" :error="error" :retry="refresh">
           <DataListErrorState
-            :min-height="fill ? 'calc(100% - var(--nut-dl-head-h))' : '16rem'"
+            :min-height="fill ? '100%' : '16rem'"
             :size="resolvedSize"
             @retry="refresh"
           />

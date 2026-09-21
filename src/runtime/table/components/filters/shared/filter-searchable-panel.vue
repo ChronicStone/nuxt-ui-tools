@@ -55,7 +55,10 @@ const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size))
         variant="none"
         :autofocus="autofocus"
         :size="size"
-        :ui="{ root: ui?.search, base: ui?.searchInput }"
+        :ui="{
+          root: ui?.search,
+          base: mergeDataListUiClass('h-8', undefined, ui?.searchInput),
+        }"
       />
     </div>
 
@@ -82,7 +85,12 @@ const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size))
         "
       >
         <slot name="empty">
-          {{ emptyLabel }}
+          <div class="grid justify-items-center gap-2">
+            <span class="flex size-8 items-center justify-center rounded-full bg-elevated">
+              <span class="i-lucide-search-x size-4" aria-hidden="true" />
+            </span>
+            <span>{{ emptyLabel }}</span>
+          </div>
         </slot>
       </div>
     </UScrollArea>

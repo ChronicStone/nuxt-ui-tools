@@ -36,6 +36,15 @@ describe('ColumnPanel', () => {
     expect(trigger.find('.nut-dl-colbtn__count').exists()).toBeFalsy()
   })
 
+  it('keeps an icon-only column trigger available on mobile', async () => {
+    harness = await mountPanel({ breakpoint: 'sm', panelProps: { mobile: true } })
+    const trigger = harness.wrapper.find('.nut-dl-colbtn')
+    expect(trigger.attributes('data-label')).toBeUndefined()
+    expect(trigger.attributes('data-icon')).toBe('i-lucide-layers')
+    expect(trigger.attributes('aria-label')).toBe('Colonnes')
+    expect(trigger.find('.nut-dl-colbtn__count').exists()).toBeFalsy()
+  })
+
   it('lists configurable columns with pinned rows and toggles visibility', async () => {
     harness = await mountPanel()
     const w = harness.wrapper

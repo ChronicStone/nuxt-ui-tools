@@ -78,7 +78,7 @@ const modelValue = defineModel<string | undefined>({
           "
         />
 
-        <span class="min-w-0 flex-1" :class="item.truncate ? 'truncate' : ''">
+        <span class="min-w-0 flex-1 truncate">
           {{ item.label }}
         </span>
         <USkeleton

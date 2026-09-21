@@ -94,9 +94,18 @@ export function useTableActions(options: UseTableActionsParams) {
       return
     }
 
+    const actionContext = context.value
     runningKeys.value = [...runningKeys.value, definition.key]
+    const selectionClear =
+      'selectionClear' in definition ? (definition.selectionClear ?? 'never') : 'never'
+    if (selectionClear === 'trigger') {
+      selectionApi.clear()
+    }
     try {
-      await definition.action(context.value)
+      await definition.action(actionContext)
+      if (selectionClear === 'success') {
+        selectionApi.clear()
+      }
     } finally {
       runningKeys.value = runningKeys.value.filter((key) => key !== definition.key)
     }

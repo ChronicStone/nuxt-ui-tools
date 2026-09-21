@@ -46,6 +46,7 @@ export interface AccountsSchemaOptions {
   actions?: boolean
   rowActions?: boolean
   selection?: { mode?: boolean | 'auto'; scope?: 'page' | 'all' }
+  selectionClear?: 'trigger' | 'success' | 'never'
   grid?: boolean
   tableEnabled?: boolean | string
   summaries?: boolean
@@ -58,6 +59,7 @@ export interface AccountsSchemaOptions {
 }
 
 export const bulkActionCalls: string[] = []
+export const bulkActionSelections: string[][] = []
 
 export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
   const rows = options.rows ?? createAccounts(60)
@@ -288,10 +290,16 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       : {
           actions: [
             {
-              action: () => bulkActionCalls.push('export'),
+              action: (context) => {
+                bulkActionCalls.push('export')
+                bulkActionSelections.push(
+                  context.selectedRows.map((row) => String((row as AccountRow).id)),
+                )
+              },
               icon: 'i-lucide-download',
               key: 'export',
               label: 'Exporter',
+              selectionClear: options.selectionClear,
             },
             {
               action: () => bulkActionCalls.push('sync'),

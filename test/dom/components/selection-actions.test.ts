@@ -4,13 +4,16 @@ import { h } from 'vue'
 import DataListSelectionActions from '#ui-tools/table/components/data-list/data-list-selection-actions.vue'
 
 import { must } from '../../helpers/must'
-import { bulkActionCalls, createAccountsSchema } from '../fixtures/accounts'
+import { bulkActionCalls, bulkActionSelections, createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded, texts } from '../harness'
 import type { Harness } from '../harness'
 
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
-beforeEach(() => bulkActionCalls.splice(0))
+beforeEach(() => {
+  bulkActionCalls.splice(0)
+  bulkActionSelections.splice(0)
+})
 
 function mountBar(
   options: Partial<Parameters<typeof mountLoaded>[0]> & { barProps?: Record<string, unknown> } = {},
@@ -78,6 +81,19 @@ describe('selection actions part', () => {
     await harness.flush()
     expect(harness.internals.selection.selectedCount.value).toBe(0)
     await harness.until(() => !must(harness).wrapper.find('.nut-dl-selbar').exists())
+  })
+
+  it('clears bulk selection at the configured lifecycle boundary', async () => {
+    harness = await mountBar({ schema: createAccountsSchema({ selectionClear: 'trigger' }) })
+    harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
+    await harness.flush()
+
+    await must(harness.wrapper.findAll('.nut-dl-selbar__action')[0]).trigger('click')
+    await harness.flush()
+
+    expect(bulkActionCalls).toContain('export')
+    expect(bulkActionSelections).toStrictEqual([['acc-1']])
+    expect(harness.internals.selection.selectedCount.value).toBe(0)
   })
 
   it('keeps one inline action on mobile and honours maxVisible', async () => {

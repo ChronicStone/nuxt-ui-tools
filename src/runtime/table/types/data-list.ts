@@ -4,8 +4,15 @@ import type { CheckboxProps } from '@nuxt/ui/components/Checkbox.vue'
 import type { InputProps } from '@nuxt/ui/components/Input.vue'
 import type { PaginationProps } from '@nuxt/ui/components/Pagination.vue'
 import type { SelectProps } from '@nuxt/ui/components/Select.vue'
+import type { ComputedRef } from 'vue'
 
+import type { TableInternals } from '../composables/use-table-internals'
 import type { TableLayout } from './utils'
+
+export interface DataListTable {
+  schema: ComputedRef<{ tableKey: string }>
+  __internals: TableInternals
+}
 
 export type DataListDensity = 'compact' | 'default' | 'comfortable'
 export type DataListControlSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'

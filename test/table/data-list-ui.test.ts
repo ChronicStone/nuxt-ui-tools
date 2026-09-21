@@ -58,21 +58,21 @@ describe('data-list UI', () => {
 
   it('scales the complete filter editor surface with its control size', () => {
     expect(resolveFilterEditorSizeClasses('sm')).toMatchObject({
-      editor: 'w-[min(14rem,calc(100vw-1rem))] min-w-44 max-w-56',
+      editor: 'w-[min(18rem,calc(100vw-1rem))] min-w-44 max-w-[calc(100vw-1rem)]',
       footer: 'p-1.5',
       option: expect.stringContaining('text-xs'),
-      searchHeader: 'p-1.5',
+      searchHeader: 'p-1',
     })
     expect(resolveFilterEditorSizeClasses('md')).toMatchObject({
-      editor: 'w-[min(15rem,calc(100vw-1rem))] min-w-48 max-w-60',
+      editor: 'w-[min(20rem,calc(100vw-1rem))] min-w-48 max-w-[calc(100vw-1rem)]',
       option: expect.stringContaining('text-[13px]'),
     })
     expect(resolveFilterEditorSizeClasses('lg')).toMatchObject({
-      editor: 'w-[min(17rem,calc(100vw-1rem))] min-w-52 max-w-68',
+      editor: 'w-[min(22rem,calc(100vw-1rem))] min-w-52 max-w-[calc(100vw-1rem)]',
       option: expect.stringContaining('py-2'),
     })
     expect(resolveFilterEditorSizeClasses('xl')).toMatchObject({
-      editor: 'w-[min(21rem,calc(100vw-1rem))] min-w-60 max-w-84',
+      editor: 'w-[min(24rem,calc(100vw-1rem))] min-w-60 max-w-[calc(100vw-1rem)]',
       option: expect.stringContaining('text-base'),
     })
   })

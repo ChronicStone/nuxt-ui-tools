@@ -144,7 +144,9 @@ describe('filter tags bar', () => {
     await w.find('.nut-dl-tag--add').trigger('click')
     await harness.flush()
     await must(
-      w.findAll('[data-filter-stage-content] button.rounded-md').find((row) => row.text() === 'Pays'),
+      w
+        .findAll('[data-filter-stage-content] button.rounded-md')
+        .find((row) => row.text() === 'Pays'),
     ).trigger('click')
     await harness.flush()
     await must(w.findAll('[data-filter-stage-content] button')[0]).trigger('click')
@@ -207,8 +209,9 @@ describe('mobile filter sheet', () => {
     const w = harness.wrapper
     expect(w.find('.nut-dl-tag--dormant').exists()).toBeFalsy()
     const trigger = w.find('.nut-dl-sheet-trigger')
-    expect(trigger.text()).toContain('Filtres')
+    expect(trigger.text()).toBe('')
     expect(trigger.attributes('data-icon')).toBe('i-lucide-funnel')
+    expect(trigger.attributes('aria-label')).toBe('Filtres')
     expect(trigger.find('[data-ui="UBadge"]').exists()).toBeFalsy()
     expect(w.find('[data-ui="UDrawer"]').attributes('data-open')).toBe('false')
 

@@ -97,7 +97,7 @@ describe('TableRenderer skeleton and tokens', () => {
 describe('TableRenderer structure', () => {
   it('keeps the table header visible and renders the retry state inside the body on failure', async () => {
     harness = await mountDataList({
-      render: () => h(TableRenderer, { height: '400px' }),
+      render: () => h(TableRenderer, { fill: true }),
       schema: createAccountsSchema({ fail: true }),
     })
     await harness.until(() => Boolean(harness?.internals.queryContent.error.value))
@@ -105,8 +105,10 @@ describe('TableRenderer structure', () => {
     const table = harness.wrapper.find('.nut-dl-table')
 
     expect(texts(table, '.nut-dl-th__label')).toContain('Nom')
-    expect(table.find('.nut-dl-table__error').exists()).toBeTruthy()
-    expect(table.find('.nut-dl-table__error button').text()).toBe('Réessayer')
+    const error = table.find('.nut-dl-table__error')
+    expect(error.attributes('style')).toContain('height: calc(100% - var(--nut-dl-head-h))')
+    expect(error.find('[style]').attributes('style')).toContain('min-height: 100%')
+    expect(error.find('button').text()).toBe('Réessayer')
     expect(table.find('.nut-dl-table__empty').exists()).toBeFalsy()
     expect(table.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')).toHaveLength(0)
   })

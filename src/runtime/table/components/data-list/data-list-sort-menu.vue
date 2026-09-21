@@ -178,15 +178,21 @@ function humanize(value: string) {
         v-bind="triggerControlProps"
         icon="i-lucide-arrow-down-up"
         :ui="{
-          base: mergeDataListUiClass('nut-dl-sortbtn', undefined, resolvedUi.trigger),
-          label: resolvedUi.triggerLabel,
+          base: mergeDataListUiClass(
+            'nut-dl-sortbtn min-w-0 max-w-full',
+            undefined,
+            resolvedUi.trigger,
+          ),
+          label: mergeDataListUiClass('min-w-0', undefined, resolvedUi.triggerLabel),
           leadingIcon: resolvedUi.triggerLeadingIcon,
           trailingIcon: resolvedUi.triggerTrailingIcon,
         }"
       >
-        <span class="nut-dl-sortbtn__label flex items-center gap-1.5">
-          <span>{{ label ?? t('table.controls.sort') }}</span>
-          <span v-if="activeLabel" class="font-semibold text-highlighted">{{ activeLabel }}</span>
+        <span class="nut-dl-sortbtn__label flex min-w-0 items-center gap-1.5">
+          <span class="shrink-0">{{ label ?? t('table.controls.sort') }}</span>
+          <span v-if="activeLabel" class="min-w-0 truncate font-semibold text-highlighted">{{
+            activeLabel
+          }}</span>
           <UIcon
             v-if="activeLabel"
             :name="activeDirection === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'"

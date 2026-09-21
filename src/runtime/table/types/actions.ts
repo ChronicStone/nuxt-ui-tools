@@ -44,6 +44,7 @@ export interface TableBulkAction<
   TPageContext extends GenericObject = GenericObject,
 > extends TableToolbarAction<TRow, TContext, TPageContext> {
   requiresSelection?: boolean
+  selectionClear?: 'trigger' | 'success' | 'never'
 }
 
 /** Runtime state exposed for a configured toolbar or bulk action. */
