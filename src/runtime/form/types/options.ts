@@ -1,3 +1,11 @@
+import type {
+  RemoteCursorOptionsPage,
+  RemoteOptionsPage,
+  RemoteOptionsPageRequest,
+  RemoteOptionsPagination,
+  RemoteOptionsResult,
+  RemoteOptionsSearch,
+} from '../../shared/types/remote-options'
 import type { FormValue } from './'
 import type { FormFieldCallback, FormFieldCallbackParams } from './callbacks'
 import type { FormQueryOptions } from './context'
@@ -117,25 +125,14 @@ export interface FormOptionConfig<
   disableOnLoading?: boolean
 }
 
-/**
- * Page envelope returned by an index-paginated remote option source.
- */
-export interface FormRemoteOptionsPage<TOption> {
-  options: readonly TOption[]
-  hasMore: boolean
-}
+/** @deprecated Use `RemoteOptionsPage` from `#ui-tools/shared`. Kept for public type compatibility. */
+export type FormRemoteOptionsPage<TOption> = RemoteOptionsPage<TOption>
 
-/**
- * Page envelope returned by a cursor-paginated remote option source.
- */
-export interface FormRemoteCursorOptionsPage<TOption> {
-  options: readonly TOption[]
-  nextCursor: string | null
-}
+/** @deprecated Use `RemoteCursorOptionsPage` from `#ui-tools/shared`. Kept for public type compatibility. */
+export type FormRemoteCursorOptionsPage<TOption> = RemoteCursorOptionsPage<TOption>
 
-export type FormRemoteOptionsResult<TOption> =
-  | FormRemoteOptionsPage<TOption>
-  | FormRemoteCursorOptionsPage<TOption>
+/** @deprecated Use `RemoteOptionsResult` from `#ui-tools/shared`. Kept for public type compatibility. */
+export type FormRemoteOptionsResult<TOption> = RemoteOptionsResult<TOption>
 
 export interface FormRemoteOptionsRequest<
   TContext = NonNullable<unknown>,
@@ -146,7 +143,7 @@ export interface FormRemoteOptionsRequest<
   /** Current debounced search term. Empty when the menu lists unfiltered options. */
   search: string
   /** Requested page. `cursor` is set for cursor pagination and `index` for page pagination. */
-  page: { index: number; cursor: string | null; size: number }
+  page: RemoteOptionsPageRequest
   /** Parent option whose direct children are requested. Undefined for root pages. */
   parent?: NoInfer<TOption>
 }
@@ -163,20 +160,11 @@ export interface FormRemoteSelectedRequest<
 
 export type FormRemoteSource<TResult> = FormQueryOptions<TResult> | Promise<TResult>
 
-export interface FormRemotePagination {
-  type: 'page' | 'cursor'
-  /** Page size forwarded to the source. */
-  size: number
-  /** Distance from the list end that triggers the next page: pixels, or `'viewport'` for three viewport heights. Defaults to `'viewport'`. */
-  prefetchDistance?: number | 'viewport'
-}
+/** @deprecated Use `RemoteOptionsPagination` from `#ui-tools/shared`. Kept for public type compatibility. */
+export type FormRemotePagination = RemoteOptionsPagination
 
-export interface FormRemoteSearch {
-  /** Debounce applied to typed search terms, in milliseconds. Defaults to 250. */
-  debounce?: number
-  /** Minimum term length before a search request runs. Defaults to 0. */
-  minLength?: number
-}
+/** @deprecated Use `RemoteOptionsSearch` from `#ui-tools/shared`. Kept for public type compatibility. */
+export type FormRemoteSearch = RemoteOptionsSearch
 
 /**
  * Remote option configuration: server-side search, pagination, and selected-value hydration.
@@ -191,13 +179,13 @@ export interface FormRemoteOptionConfig<
   /** Loads one page of options for the current search, page, and optional parent. */
   source: (
     request: FormRemoteOptionsRequest<TContext, TDeps, TValue, TOption>,
-  ) => FormRemoteSource<FormRemoteOptionsResult<TOption>>
+  ) => FormRemoteSource<RemoteOptionsResult<TOption>>
   /** Hydrates selected values that the loaded pages do not contain. */
   resolveSelected?: (
     request: FormRemoteSelectedRequest<TContext, TDeps, TValue, TOption>,
   ) => FormRemoteSource<readonly TOption[]>
-  pagination: FormRemotePagination
-  search?: FormRemoteSearch
+  pagination: RemoteOptionsPagination
+  search?: RemoteOptionsSearch
   /** Dependency aliases whose changes reset the loaded pages and re-run selected hydration. */
   refreshOn?: readonly string[]
   /** Clears selected values the latest successful selected hydration did not return. Defaults to `false`. */

@@ -1,5 +1,6 @@
-import type { InfiniteData, QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type { InfiniteData, QueryFunction, QueryKey } from '@tanstack/vue-query'
 
+import type { QueryDefinition } from '../../shared/types/query'
 import type { TableResolvedFilterGroup } from './filters'
 import type {
   GenericObject,
@@ -10,10 +11,8 @@ import type {
   TableRowsFromSourceResult,
 } from './utils'
 
-export type TableQueryDefinition<TData = unknown> = Omit<UseQueryOptions<TData>, 'queryFn'> & {
-  queryKey: QueryKey
-  queryFn?: QueryFunction<TData, QueryKey, string | null>
-}
+/** Table name of the shared `QueryDefinition`, kept for public type compatibility. */
+export type TableQueryDefinition<TData = unknown> = QueryDefinition<TData>
 
 export interface TableInfiniteQueryDefinition<TData = unknown> {
   queryKey: QueryKey
