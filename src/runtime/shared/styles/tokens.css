@@ -5,3 +5,190 @@
 .dark {
   --nut-form-veil: rgba(0, 0, 0, 0.45);
 }
+
+/* Dashboard: palette, semantic colors, and chart theme, mapped onto Nuxt UI tokens so charts follow
+ * the app theme and dark mode without re-rendering. Zero specificity (`:where`), so any app rule
+ * overrides them regardless of stylesheet order.
+ *
+ * The palette only uses theme colors that differ in stock Nuxt UI (primary and success are both
+ * green, secondary and info both blue): primary, neutral, secondary, a primary tint, warning, and a
+ * secondary tint. Tints mix into the page background rather than reading a fixed shade, so they stay
+ * apart from their base color even when an app pins the whole primary scale to one ink. */
+:where(:root) {
+  --nut-dash-s1: var(--ui-primary);
+  --nut-dash-s2: var(--ui-color-neutral-400);
+  --nut-dash-s3: var(--ui-secondary);
+  --nut-dash-s4: color-mix(in oklab, var(--ui-primary) 20%, var(--ui-bg));
+  --nut-dash-s5: var(--ui-warning);
+  --nut-dash-s6: color-mix(in oklab, var(--ui-secondary) 35%, var(--ui-bg));
+  /* Positive change text, its ▲ mark, and negative change text / ▼ mark. */
+  --nut-dash-up: var(--ui-success);
+  --nut-dash-up-mark: var(--nut-dash-up);
+  --nut-dash-down: var(--ui-error);
+  /* Secondary bars (all but the leading row) and the empty part of bar tracks. */
+  --nut-dash-muted: var(--ui-border-accented);
+  --nut-dash-track: var(--ui-bg-elevated);
+  --nut-dash-grid: var(--ui-border-muted);
+  --nut-dash-axis: var(--ui-text-dimmed);
+  --nut-dash-ref: var(--ui-text-dimmed);
+  --nut-dash-ref-label: var(--ui-text-muted);
+  /* Skeleton ghost shapes and the moving highlight of their shimmer. */
+  --nut-dash-ghost: var(--ui-bg-accented);
+  --nut-dash-ghost-shine: color-mix(in oklab, var(--ui-bg) 70%, transparent);
+}
+
+:where(.dark) {
+  --nut-dash-s2: var(--ui-color-neutral-500);
+  --nut-dash-s4: color-mix(in oklab, var(--ui-primary) 30%, var(--ui-bg));
+  --nut-dash-s6: color-mix(in oklab, var(--ui-secondary) 40%, var(--ui-bg));
+}
+
+/* Where relative colors are supported, tints get a fixed lightness (and a softened chroma of their
+ * base hue), so a pale primary tint reads the same whether the primary is black, green, or yellow. */
+@supports (color: oklch(from red l c h)) {
+  :where(:root) {
+    --nut-dash-s4: oklch(from var(--ui-primary) 0.88 calc(c * 0.45) h);
+    --nut-dash-s6: oklch(from var(--ui-secondary) 0.8 calc(c * 0.55) h);
+  }
+
+  :where(.dark) {
+    --nut-dash-s4: oklch(from var(--ui-primary) 0.42 calc(c * 0.6) h);
+    --nut-dash-s6: oklch(from var(--ui-secondary) 0.45 calc(c * 0.65) h);
+  }
+}
+
+.nut-dash-chart {
+  --vis-font-family: inherit;
+  --vis-axis-tick-label-color: var(--nut-dash-axis);
+  --vis-axis-tick-label-font-size: 10px;
+  --vis-axis-grid-color: var(--nut-dash-grid);
+  --vis-axis-domain-color: var(--nut-dash-grid);
+  --vis-crosshair-line-stroke-color: var(--ui-border-accented);
+  --vis-crosshair-circle-stroke-color: var(--ui-bg);
+  --vis-tooltip-background-color: var(--ui-bg);
+  --vis-tooltip-border-color: var(--ui-border);
+  --vis-tooltip-text-color: var(--ui-text);
+  --vis-tooltip-padding: 8px 10px;
+  --vis-tooltip-border-radius: calc(var(--ui-radius) * 1.5);
+  --vis-tooltip-shadow-color: rgb(0 0 0 / 8%);
+  --vis-plotline-label-font-size: 10px;
+}
+
+/* Bars dim slightly under the pointer, like the rest of the dashboard's hover affordances. */
+.nut-dash-chart--bars [data-vis-component] rect:hover {
+  opacity: 0.8;
+}
+
+.nut-dash-tip {
+  display: flex;
+  min-width: 9rem;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.nut-dash-tip-title {
+  color: var(--ui-text-muted);
+  font-weight: 500;
+}
+
+.nut-dash-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nut-dash-tip-row i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.nut-dash-tip-row span {
+  flex: 1;
+  color: var(--ui-text-muted);
+}
+
+.nut-dash-tip-row b {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Skeleton: ghost shapes, with a highlight sweeping across while the source loads. The sweep is one
+ * overlay per skeleton animated with `transform` only, so it runs on the compositor: no repaint per
+ * frame however many shapes the skeleton draws. Over the card surface the overlay is invisible; over
+ * a ghost it reads as a passing highlight. */
+.nut-dash-ghost {
+  background: var(--nut-dash-ghost);
+}
+
+.nut-dash-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.nut-dash-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 25%,
+    var(--nut-dash-ghost-shine) 50%,
+    transparent 75%
+  );
+  transform: translateX(-100%);
+  animation: nut-dash-shimmer 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes nut-dash-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.nut-dash-enter {
+  animation: nut-dash-enter 0.28s ease-out;
+}
+
+@keyframes nut-dash-enter {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.nut-dash-progress {
+  animation: nut-dash-progress 1.1s ease-in-out infinite;
+}
+
+@keyframes nut-dash-progress {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(300%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nut-dash-shimmer::after {
+    display: none;
+  }
+
+  .nut-dash-enter {
+    animation: none;
+  }
+
+  .nut-dash-progress {
+    animation-duration: 3s;
+  }
+}

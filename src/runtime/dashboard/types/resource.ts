@@ -1,0 +1,152 @@
+import type { QueryKey } from '@tanstack/vue-query'
+
+import type { DashboardOptionsHandles } from './options'
+import type {
+  DashboardEmptyMap,
+  DashboardParamBuilder,
+  DashboardParamMap,
+  DashboardParamValues,
+} from './params'
+import type { DashboardKeyError } from './schema'
+
+/**
+ * Fetch stage of a query.
+ *
+ * - `essential` fetches as soon as its scope is active and drives the scope `state`.
+ * - `background` fetches once every essential query of the same scope has settled.
+ * - `deferred` never fetches until `resource.activate()` runs (blocks call it when they mount or
+ *   scroll into view).
+ */
+export type DashboardStage = 'essential' | 'background' | 'deferred'
+
+export type DashboardResourceState = 'idle' | 'loading' | 'ready' | 'error'
+
+/**
+ * Contract every block binds to through `:source`. Query resources and derived resources both
+ * satisfy it. Every member is a plain value read through a getter — there is no `.value`.
+ */
+export interface DashboardSourceLike<TData = unknown> {
+  /** Stable identity, e.g. `consumption.productLines`. */
+  readonly id: string
+  readonly data: TData
+  readonly state: DashboardResourceState
+  readonly error: unknown
+  /** A background refetch is running while `state` is still `'ready'`. */
+  readonly refreshing: boolean
+  /**
+   * When the data was last fetched successfully (epoch milliseconds). `undefined` until the first
+   * success. A derived value reports its oldest input.
+   */
+  readonly updatedAt: number | undefined
+  /** Opts an idle `deferred` resource in. No-op for other resources. */
+  activate(): void
+  refresh(): Promise<void>
+}
+
+/** A declared query, as exposed on the dashboard facade. */
+export interface DashboardResource<
+  TData,
+  TParams extends DashboardParamMap = DashboardEmptyMap,
+  TStage extends DashboardStage = DashboardStage,
+> extends DashboardSourceLike<TData> {
+  readonly kind: 'query'
+  readonly stage: TStage
+  /** `false` while the owning view has never been opened or a `deferred` query was not activated. */
+  readonly active: boolean
+  /** Widget-scoped params, URL-synced under this resource's key. */
+  readonly params: DashboardParamValues<TParams>
+  /** Option handles for option-backed widget params. */
+  readonly options: DashboardOptionsHandles<TParams>
+}
+
+/** A value declared in `derive`, exposed as a resource whose state follows the data it reads. */
+export interface DashboardDerived<TData> extends DashboardSourceLike<TData> {
+  readonly kind: 'derived'
+}
+
+export type DashboardSourceMap = Record<string, DashboardSourceLike>
+
+/** Data of a source once it is `ready` (`undefined` is excluded, `null` is kept). */
+export type DashboardReadyData<TSource> =
+  TSource extends DashboardSourceLike<infer TData> ? Exclude<TData, undefined> : never
+
+/** Row type of a source whose ready data is an array. */
+export type DashboardSourceRow<TSource> =
+  DashboardReadyData<TSource> extends readonly (infer TRow)[] ? TRow : never
+
+/** Minimal query shape accepted from query factories (TanStack `queryOptions()` objects fit). */
+export interface DashboardQueryLike {
+  queryKey: QueryKey
+}
+
+/** Result type of a query definition, read from its `queryFn`. */
+export type DashboardQueryData<TQuery> = TQuery extends { queryFn?: infer TFn }
+  ? TFn extends (...args: never[]) => infer TResult
+    ? Awaited<TResult>
+    : never
+  : never
+
+/** Scope handed to the configured query factory. */
+export interface DashboardQueryScope<TParams extends DashboardParamMap, TRequired> {
+  /** Widget-scoped params declared on this query. */
+  params: Readonly<DashboardParamValues<TParams>>
+  /** Non-nullish value returned by `requires`. */
+  required: NonNullable<TRequired>
+}
+
+export interface DashboardQueryInput<
+  TQuery extends DashboardQueryLike,
+  TParams extends DashboardParamMap,
+  TRequired,
+> {
+  /** Widget-scoped params, URL-synced under `<scope>.<queryKey>.<param>`. */
+  params?: (p: DashboardParamBuilder) => TParams
+  /**
+   * Gate and narrow. While it returns `null` or `undefined`, the resource stays `idle` and never
+   * fetches; once set, `scope.required` is the non-nullish value. Reading another resource's
+   * `data` here expresses a dependent query.
+   */
+  requires?: () => TRequired
+  /** Extra boolean gate, combined with `requires` and with stage activation. */
+  enabled?: () => boolean
+  /** Reactive query factory returning a TanStack query definition. */
+  query: (scope: DashboardQueryScope<NoInfer<TParams>, NoInfer<TRequired>>) => TQuery
+  /** Keep previous data while a new key loads. Defaults to `true`. */
+  keepPreviousData?: boolean
+  staleTime?: number
+}
+
+/**
+ * One fetch stage. Declared once and instantiated for `essential`, `background` and `deferred`.
+ */
+export interface DashboardQueryStage<TStage extends DashboardStage> {
+  /** Plain query. `data` is `T | undefined`. */
+  query<TQuery extends DashboardQueryLike>(
+    factory: () => TQuery,
+  ): DashboardResource<DashboardQueryData<TQuery> | undefined, DashboardEmptyMap, TStage>
+
+  /** Configured query without a default. `data` is `T | undefined`. */
+  query<
+    TQuery extends DashboardQueryLike,
+    const TParams extends DashboardParamMap = DashboardEmptyMap,
+    TRequired = undefined,
+  >(
+    input: DashboardQueryInput<TQuery, TParams, TRequired> & { defaultValue?: undefined },
+  ): DashboardResource<DashboardQueryData<TQuery> | undefined, TParams, TStage>
+
+  /**
+   * Configured query with a default. `data` is always defined. The default is inferred on its own
+   * (so property order inside the object does not matter) and checked against the query result: a
+   * mismatching default turns the resource into a `DashboardKeyError`, rejected by `queries`.
+   */
+  query<
+    TQuery extends DashboardQueryLike,
+    const TParams extends DashboardParamMap = DashboardEmptyMap,
+    TRequired = undefined,
+    TDefault = never,
+  >(
+    input: DashboardQueryInput<TQuery, TParams, TRequired> & { defaultValue: TDefault },
+  ): [TDefault] extends [DashboardQueryData<TQuery>]
+    ? DashboardResource<DashboardQueryData<TQuery>, TParams, TStage>
+    : DashboardKeyError<'defaultValue is not assignable to the query data type.'>
+}

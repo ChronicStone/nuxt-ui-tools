@@ -28,6 +28,8 @@ Then load the domain reference that matches the task:
   `.agents/skills/nuxt-ui-tools-maintainer/references/shared-runtime.md`
 - form runtime:
   `.agents/skills/nuxt-ui-tools-maintainer/references/form-runtime.md`
+- dashboard runtime:
+  `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md`
 
 For technical foundation work, also load the matching skill:
 

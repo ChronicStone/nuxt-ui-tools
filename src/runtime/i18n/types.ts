@@ -366,7 +366,75 @@ export interface UiToolsFormMessages {
   }
 }
 
+export interface UiToolsDashboardMessages {
+  states: {
+    loading: string
+    refreshing: string
+    empty: string
+    error: string
+    errorDescription: string
+    retry: string
+  }
+  funnel: {
+    base: string
+    fromPrevious: string
+  }
+  menu: {
+    label: string
+    showTable: string
+    hideTable: string
+    download: string
+    expand: string
+  }
+  table: {
+    category: string
+    label: string
+    value: string
+    total: string
+    share: string
+    change: string
+    severity: string
+    time: string
+    description: string
+    actions: string
+  }
+  freshness: {
+    updated: string
+    /** Label before a relative time ("Updated" · 3 min ago). */
+    prefix: string
+  }
+  stat: {
+    goal: string
+  }
+  compare: {
+    previous: string
+    year: string
+    none: string
+    /** Stat caption with `compare`: "vs {value} previous period". */
+    caption: string
+    /** Legend label of a series' comparison: "{label} (previous period)". */
+    series: string
+  }
+  refresh: {
+    label: string
+    auto: string
+    off: string
+  }
+  /** Accessible name of a row's `⋮` menu. */
+  rowActions: string
+  alerts: {
+    empty: string
+    severity: {
+      error: string
+      warning: string
+      info: string
+      success: string
+    }
+  }
+}
+
 export interface Messages {
+  dashboard: UiToolsDashboardMessages
   form: UiToolsFormMessages
   table: UiToolsTableMessages
   spreadsheet: UiToolsSpreadsheetMessages

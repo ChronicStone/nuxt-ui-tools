@@ -42,9 +42,31 @@
   --nut-dl-table-foot-weight: 300;
   --nut-dl-accent-ink: #b85e00;
   --ex-row-hover: #faf7f2;
+  /* Control inks: labels on controls, and their secondary text. */
+  --ex-ink: #45413b;
+  --ex-ink-soft: #6b655d;
+  --ex-accent-line: #ffe2bc;
+  --ex-chip: #f7f3ee;
   --ex-ok: #2f6b4f;
   --ex-warn: #b85e00;
   --ex-bad: #c0392b;
+  /* Dashboard (Atelier): k0…k5 palette, ink for good news with an orange ▲, brick for bad news. */
+  --nut-dash-s1: #ff9600;
+  --nut-dash-s2: #1f1d1a;
+  --nut-dash-s3: #b85e00;
+  --nut-dash-s4: #d9d0c3;
+  --nut-dash-s5: #8e857a;
+  --nut-dash-s6: #c0392b;
+  --nut-dash-up: #1f1d1a;
+  --nut-dash-up-mark: #ff9600;
+  --nut-dash-down: #a8463c;
+  --nut-dash-muted: #e4ddd3;
+  --nut-dash-track: #f7f3ee;
+  --nut-dash-grid: #f1ece5;
+  --nut-dash-axis: #a39c93;
+  --nut-dash-ref: #a39c93;
+  --nut-dash-ref-label: #6b655d;
+  --nut-dash-ghost: #f3eee7;
 }
 
 .dark {
@@ -76,6 +98,22 @@
   --nut-dl-table-row-hover: #302d2a;
   --nut-dl-table-row-selected: rgb(255 150 0 / 0.1);
   --ex-row-hover: #33302c;
+  --ex-ink: #ddd6cd;
+  --ex-ink-soft: #a8a097;
+  --ex-accent-line: rgb(255 150 0 / 0.35);
+  --ex-chip: #3d3935;
+  --nut-dash-s2: #ece7e0;
+  --nut-dash-s3: #ffb558;
+  --nut-dash-s4: #4a453f;
+  --nut-dash-up: #ece7e0;
+  --nut-dash-down: #f0a094;
+  --nut-dash-muted: #4a453f;
+  --nut-dash-track: #353230;
+  --nut-dash-grid: rgb(255 255 255 / 0.05);
+  --nut-dash-axis: #6f6963;
+  --nut-dash-ref: #6f6963;
+  --nut-dash-ref-label: #9b948b;
+  --nut-dash-ghost: #34312d;
 }
 
 html,

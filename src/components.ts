@@ -55,6 +55,37 @@ function getPublicComponents(
       name: `${prefix}DataList${part}`,
     })),
 
+    // Dashboard
+    ...[
+      'Grid',
+      'Card',
+      'Stat',
+      'Stats',
+      'Gauge',
+      'Tabs',
+      'Refresh',
+      'Widget',
+      'List',
+      'Bars',
+      'PairedBars',
+      'Funnel',
+      'StackBar',
+      'BarChart',
+      'LineChart',
+      'ComboChart',
+      'DonutChart',
+      'Alerts',
+      'Feed',
+      'Table',
+      'Legend',
+      'Total',
+      'RelativeTime',
+    ].map((part) => ({
+      filePath: `${runtimeDir}/dashboard/components/dashboard-${toKebabCase(part)}.vue`,
+      global: options.global,
+      name: `${prefix}Dashboard${part}`,
+    })),
+
     // Form
     {
       filePath: `${runtimeDir}/form/components/root/form.vue`,

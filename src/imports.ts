@@ -64,6 +64,13 @@ export function setupImports(runtimeDir: string) {
       { from: 'table', name: 'useTable' },
     ]),
 
+    // Dashboard
+    ...withRuntime(runtimeDir, [
+      { from: 'dashboard', name: 'defineDashboardSchema' },
+      { from: 'dashboard', name: 'useDashboard' },
+      { from: 'dashboard', name: 'resolveDashboardComparisonRange' },
+    ]),
+
     // Form
     ...withRuntime(runtimeDir, [
       { from: 'form', name: 'defineFormField' },
