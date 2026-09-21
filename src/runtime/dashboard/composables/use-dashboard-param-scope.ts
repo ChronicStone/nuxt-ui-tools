@@ -17,6 +17,20 @@ const emptyFacade = markRaw({})
 const noUrlKeys: readonly string[] = []
 
 /**
+ * What one param scope exposes. Declared rather than inferred: the inferred type would carry Vue's
+ * `Raw<…>` marker, which declaration files cannot name.
+ */
+export interface DashboardParamScope {
+  keys: readonly string[]
+  /** Option handles of option-backed params, by param key. */
+  options: Readonly<Record<string, DashboardOptionsHandle>>
+  /** URL segments of this scope's params, before the scope prefix. */
+  urlKeys: readonly string[]
+  /** Writable facade: one getter / setter per param. */
+  values: object
+}
+
+/**
  * Owns the params of one scope (dashboard root, a view, or a query's widget params): exactly one
  * `useQueryStates` instance, a writable values facade, and the option handles of option-backed
  * params. Scopes without params allocate nothing.
@@ -25,7 +39,7 @@ export function useDashboardParamScope(params: {
   definitions: DashboardParamMap
   prefix: string
   queryKey: QueryKey
-}) {
+}): DashboardParamScope {
   const entries = Object.entries(params.definitions).flatMap(([key, definition]) =>
     isRuntimeParam(definition) ? [[key, definition] as const] : [],
   )
@@ -87,7 +101,7 @@ export function useDashboardParamScope(params: {
  * inside the view's query factories. Reads and writes go straight to the owning scope.
  */
 export function mergeDashboardParamValues(
-  scopes: readonly ReturnType<typeof useDashboardParamScope>[],
+  scopes: readonly DashboardParamScope[],
 ): object {
   const merged = {}
   for (const scope of scopes) {
