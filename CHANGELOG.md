@@ -1,5 +1,59 @@
 # Changelog
 
+## v1.1.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.0.1...v1.1.0)
+
+Version 1.1.0 adds the dashboard engine, the third runtime domain next to forms and tables. A dashboard is declared once as a typed schema (URL-synced params, staged queries, derived values, optional views) and composed in the template from generic blocks that bring their own loading skeleton, scoped error with retry, empty state, refresh indicator, card menu, and actions. Typing flows from each query result to the accessors written in the template, so a wrong field is a compile error.
+
+### Migration notes
+
+- **Additive release:** no existing public API changes behaviour.
+- **Charts:** the chart blocks render with unovis, a new optional peer dependency. Install `@unovis/vue` and `@unovis/ts` (`>=1.6.0`) to use `BarChart`, `LineChart`, `ComboChart`, and `DonutChart`; every other block works without them.
+- **Shared contracts:** the form's `FormRemoteOptionsPage`, `FormRemoteCursorOptionsPage`, `FormRemoteOptionsResult`, `FormRemotePagination`, and `FormRemoteSearch` types are now deprecated aliases of the shared `RemoteOptions*` contract, and `TableQueryDefinition` aliases the shared `QueryDefinition`. Existing imports keep working.
+
+### 🚀 Enhancements
+
+#### Dashboard schema and runtime
+
+- Add `defineDashboardSchema(...)` and `useDashboard(...)` (auto-imported, `nuxt-ui-tools/dashboard` entrypoint): a facade with no `.value`, where params are writable `v-model` targets and every query or derived value can be bound to a block.
+- Add typed, URL-synced params: `string`, `number`, `boolean`, `date`, `dateRange`, `enum`, `options`, `remote` (searchable, paginated, with selected-value hydration), `comparison`, and `custom` codecs, with `multiple`, `defaultValue` narrowing, `urlKey`, `omitDefault`, and `historyMode`. Option-backed params expose handles ready for `USelect` / `USelectMenu`.
+- Add staged queries: `essential` (drives the dashboard state), `background` (waits for essentials to settle), and `deferred` (fetches when a block nears the viewport, on mount, or manually), with `requires` gating that narrows dependent queries, `enabled`, `defaultValue`, and previous-data retention.
+- Add derived values: each entry is a resource whose state follows the sources it actually read.
+- Add optional views (tabs) with their own params and queries: a view's queries stay idle until it opens once, then stay warm; the current view is in the URL and in history.
+- Add widget-scoped params on queries, URL-synced under the query (`<view>.<query>.<param>`), for per-card state such as a table sort or a segment tab.
+- Add readable URL keys named after the schema (`year`, `view`, `consumption.currency`), `urlPrefix` for several dashboards on one page, and compile-time plus runtime guards against reserved or colliding keys.
+- Add `updatedAt` on every resource, derived value, view, and the dashboard (the oldest fetch on screen), single-flight `refresh()`, and `autoRefresh`: a schema default, a writable facade member kept in the URL (`refresh`), applied as a `refetchInterval` on every active query and paused in background tabs.
+- Add comparison periods: `p.comparison()` (`'previous' | 'year' | 'none'`, localized option labels) and `resolveDashboardComparisonRange(range, mode)` (calendar days, Feb 29 falls back to Feb 28).
+
+#### Dashboard blocks
+
+- Add `DashboardGrid` with responsive column and row spans, `cards` and `panels` variants (joined cells separated by rules), and nested grids for split cards; grids pass `menu` and `freshness` to their blocks.
+- Add `DashboardStat` with deltas (direction and good/bad color), captions, sparklines as area, line, or mini bars, goal progress, status badges, and `compare` (default delta and "vs … previous period" caption); `DashboardStats` for several figures from one source (deltas, progress, badges; plain, divided, or tile layouts); and `DashboardGauge` (arc or ring, target tick, threshold colors).
+- Add unovis charts behind an async renderer seam: `DashboardBarChart`, `DashboardLineChart`, `DashboardComboChart` (bars and lines on two value axes), and `DashboardDonutChart`, with accessor-based series, stacking, areas, reference lines, comparison lines, per-series comparison periods (faded bars or dashed lines), `highlight`, value `labels`, and round axes for negative values.
+- Add `DashboardList` (avatars, codes, icons, progress rings, shares, deltas), `DashboardBars`, `DashboardPairedBars`, `DashboardFunnel`, and `DashboardStackBar`.
+- Add `DashboardAlerts` (severity-sorted rows with actions and an all-clear state), `DashboardFeed` (a timeline with day headings and live relative times), and `DashboardTable` (text, number, delta, percent, and inline bar columns, `v-model:sort`, sticky header, `#cell-<key>` slots).
+- Add `DashboardWidget` for custom content with the same states, `DashboardCard` for fully custom cards, `DashboardTabs` (a typed tab strip for widget params or local switches), `DashboardRefresh` (refresh button, auto-refresh menu, "Updated …"), `DashboardRelativeTime`, `DashboardLegend`, and `DashboardTotal`.
+- Add automatic states on every block: shaped skeletons (values never in the DOM while loading), a retryable error scoped to the block, empty states, and a background refresh bar that keeps stale values readable.
+
+#### Dashboard cards and interaction
+
+- Add card menus: a data table view, CSV export (locale-aware separators and decimals), an expand dialog, custom Nuxt UI items, or a function of the block's context (`title`, `table()`, `download()`, `expand()`).
+- Add card `actions` (header buttons, or full-width buttons under the content) and a `freshness` line ("Updated 3 min ago") on one shared clock.
+- Add `select` on every row and chart block (charts select by click or tap position), `selected` to show the stored value (row tint and accent, faded bars and segments, a band on line charts), and `rowActions` (inline icon buttons and a `⋮` menu) on list, bars, alerts, feed, and table rows.
+- Add theming through `--nut-dash-*` tokens mapped onto Nuxt UI (a default palette that stays distinct on the stock theme, dark mode included) and class overrides layered library defaults → `appConfig.nuxtUiTools.dashboard` → the block's `ui` prop.
+- Add English and French messages for every dashboard string.
+
+#### Shared, docs, and playgrounds
+
+- Share the query definition and remote-option contracts between the form, table, and dashboard runtimes.
+- Add the dashboard consumer skill (schema, params, blocks) and the maintainer runtime reference.
+- Add dashboard examples to the playground (analytics with two views, a single-view schema, and an operations dashboard on the stock theme) and reproduce the identity4 analytics design in `playground-table`, with an Opérations tab for the operational features.
+
+### ❤️ Contributors
+
+- THAO-Cyprien
+
 ## v1.0.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.0.0...v1.0.1)
