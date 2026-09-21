@@ -1,8 +1,4 @@
-import type {
-  GenericObject,
-  TableRemoteSourceRequest,
-  TableSourceRequestContext,
-} from '../types'
+import type { GenericObject, TableRemoteSourceRequest, TableSourceRequestContext } from '../types'
 
 export function toTableRemoteSourceRequest<TRow extends GenericObject>(
   request: TableSourceRequestContext<TRow>,

@@ -57,20 +57,12 @@ const geometry = computed(() => resolveDataListControlGeometry(resolvedSize.valu
       </span>
       <div
         :class="
-          mergeDataListUiClass(
-            `min-w-0 flex-1 ${geometry.text}`,
-            rootUi?.errorCopy,
-            ui?.errorCopy,
-          )
+          mergeDataListUiClass(`min-w-0 flex-1 ${geometry.text}`, rootUi?.errorCopy, ui?.errorCopy)
         "
       >
         <div
           :class="
-            mergeDataListUiClass(
-              'font-medium text-highlighted',
-              rootUi?.errorTitle,
-              ui?.errorTitle,
-            )
+            mergeDataListUiClass('font-medium text-highlighted', rootUi?.errorTitle, ui?.errorTitle)
           "
         >
           {{ t('table.states.gridError.title') }}
