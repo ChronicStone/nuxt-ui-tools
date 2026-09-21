@@ -2,11 +2,19 @@
 import { useMounted } from '@vueuse/core'
 import { computed } from 'vue'
 
-import { useDashboardChart } from '../composables/use-dashboard-chart'
+import type { LazyTextValue } from '#ui-tools/shared/types/utils'
+
+import {
+  resolveDashboardExpandedHeight,
+  useDashboardChart,
+} from '../composables/use-dashboard-chart'
 import type {
   DashboardAxisOptions,
   DashboardBlockBaseProps,
+  DashboardHighlight,
   DashboardReferenceLine,
+  DashboardSelected,
+  DashboardSelectEvent,
   DashboardSeries,
   DashboardSourceLike,
   DashboardValueFormat,
@@ -18,8 +26,11 @@ import DashboardCard from './dashboard-card.vue'
 const {
   source,
   card = true,
+  menu = undefined,
+  freshness = undefined,
   x,
   xFormat,
+  xLabel,
   series,
   comparison,
   stacked = false,
@@ -29,6 +40,10 @@ const {
   height = 250,
   legend = true,
   points = 12,
+  highlight,
+  selected,
+  labels = false,
+  onSelect,
   ...block
 } = defineProps<
   DashboardBlockBaseProps & {
@@ -36,6 +51,8 @@ const {
     /** Category of each row (month, account…). Rows are plotted in order. */
     x: (row: TRow, index: number) => string | number | Date
     xFormat?: (value: string | number | Date) => string
+    /** Header of the category column in the table view and CSV export. */
+    xLabel?: LazyTextValue
     series: readonly DashboardSeries<TRow>[]
     /** Dashed line drawn over the bars, e.g. the previous period. */
     comparison?: DashboardSeries<TRow>
@@ -50,6 +67,14 @@ const {
     legend?: boolean
     /** Expected number of x positions, drawn by the loading skeleton before data arrives. */
     points?: number
+    /** Bars drawn at full strength (`max`, `min`, `last`, or an accessor); the others fade. */
+    highlight?: DashboardHighlight<TRow>
+    /** Rows shown as selected: their bars stay, the others fade (wins over `highlight`). */
+    selected?: DashboardSelected<TRow>
+    /** Prints each group's value above its bars (the stack total when `stacked`). */
+    labels?: boolean
+    /** A click on the chart selects the x position under the pointer. */
+    onSelect?: (event: DashboardSelectEvent<TRow>) => void
   }
 >()
 
@@ -71,12 +96,17 @@ const skeletonPoints = computed(() => source.data?.length || points)
 const chart = useDashboardChart<TRow>({
   defaultType: 'bar',
   format: () => format,
+  highlight: () => highlight,
+  labels: () => labels,
+  onSelect: () => onSelect,
   references: () => reference,
   rows: () => source.data ?? [],
+  selected: () => selected,
   series: () => allSeries.value,
   stacked: () => stacked,
   x: () => x,
   xFormat: () => xFormat,
+  xLabel: () => xLabel,
   yAxis: () => yAxis,
 })
 </script>
@@ -85,9 +115,12 @@ const chart = useDashboardChart<TRow>({
   <DashboardCard
     v-bind="block"
     :card
+    :menu
+    :freshness
     :source
     :legend="legend ? chart.legend.value : undefined"
     :is-empty="chart.frame.value.data.length === 0 || chart.frame.value.series.length === 0"
+    :tabulate="chart.tabulate"
   >
     <template #skeleton>
       <DashboardSkeleton
@@ -108,7 +141,16 @@ const chart = useDashboardChart<TRow>({
       <slot name="footer" />
     </template>
 
-    <component :is="dashboardChartRenderer.xy" v-if="mounted" :frame="chart.frame.value" :height />
-    <div v-else aria-hidden="true" :style="{ height: `${height}px` }" />
+    <template #default="{ expanded }">
+      <component
+        :is="dashboardChartRenderer.xy"
+        v-if="mounted"
+        :frame="chart.frame.value"
+        :height="expanded ? resolveDashboardExpandedHeight(height) : height"
+        :selectable="chart.selectable.value"
+        @select="chart.select"
+      />
+      <div v-else aria-hidden="true" :style="{ height: `${height}px` }" />
+    </template>
   </DashboardCard>
 </template>

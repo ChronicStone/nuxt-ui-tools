@@ -1,7 +1,12 @@
 import { markRaw } from 'vue'
+import type { WritableComputedRef } from 'vue'
 
 import type { DashboardResourceState, DashboardSchemaLike } from '../types'
-import { combineDashboardStates, refreshDashboardSources } from '../utils/state'
+import {
+  combineDashboardStates,
+  refreshDashboardSources,
+  resolveDashboardUpdatedAt,
+} from '../utils/state'
 import type { useDashboardScope } from './use-dashboard-scope'
 import type { useDashboardViews } from './use-dashboard-views'
 
@@ -11,6 +16,8 @@ import type { useDashboardViews } from './use-dashboard-views'
  */
 export function useDashboardApi(params: {
   schema: DashboardSchemaLike
+  /** Auto-refresh interval in seconds (URL-synced). */
+  autoRefresh: WritableComputedRef<number>
   root: ReturnType<typeof useDashboardScope>
   views: ReturnType<typeof useDashboardViews> | null
 }): object {
@@ -44,9 +51,21 @@ export function useDashboardApi(params: {
     root,
     ...(views?.views.filter((view) => view.opened.value).map((view) => view.scope) ?? []),
   ]
+  // What is on screen: the root and the current view.
+  const visibleScopes = () => {
+    const current = views?.views.find((view) => view.key === views.current.value)
+    return current ? [root, current.scope] : [root]
+  }
 
   Object.defineProperties(api, {
     ...scopeMembers(root),
+    autoRefresh: {
+      enumerable: true,
+      get: () => params.autoRefresh.value,
+      set: (seconds: number) => {
+        params.autoRefresh.value = Number.isFinite(seconds) ? Math.max(0, Math.round(seconds)) : 0
+      },
+    },
     refresh: { enumerable: true, value: () => refreshDashboardSources(openedScopes()) },
     refreshing: {
       enumerable: true,
@@ -55,12 +74,12 @@ export function useDashboardApi(params: {
     schema: { enumerable: true, value: params.schema },
     state: {
       enumerable: true,
-      get: (): DashboardResourceState => {
-        const current = views?.views.find((view) => view.key === views.current.value)
-        return combineDashboardStates(
-          current ? [root.state.value, current.scope.state.value] : [root.state.value],
-        )
-      },
+      get: (): DashboardResourceState =>
+        combineDashboardStates(visibleScopes().map((scope) => scope.state.value)),
+    },
+    updatedAt: {
+      enumerable: true,
+      get: () => resolveDashboardUpdatedAt(visibleScopes().map((scope) => scope.updatedAt.value)),
     },
   })
 
@@ -91,5 +110,6 @@ function scopeMembers(scope: ReturnType<typeof useDashboardScope>): PropertyDesc
     refresh: { enumerable: true, value: scope.refresh },
     refreshing: { enumerable: true, get: () => scope.refreshing.value },
     state: { enumerable: true, get: () => scope.state.value },
+    updatedAt: { enumerable: true, get: () => scope.updatedAt.value },
   }
 }

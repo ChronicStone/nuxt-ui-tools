@@ -68,6 +68,7 @@ export function setupImports(runtimeDir: string) {
     ...withRuntime(runtimeDir, [
       { from: 'dashboard', name: 'defineDashboardSchema' },
       { from: 'dashboard', name: 'useDashboard' },
+      { from: 'dashboard', name: 'resolveDashboardComparisonRange' },
     ]),
 
     // Form

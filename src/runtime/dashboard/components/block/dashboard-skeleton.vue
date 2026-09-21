@@ -14,7 +14,11 @@ const props = withDefaults(
     /** Chart height in pixels, x labels included. */
     height?: number
     /** Leading visual of `rows`. */
-    leading?: 'avatar' | 'code'
+    leading?: 'avatar' | 'code' | 'icon'
+    /** Columns of `table`. */
+    columns?: number
+    /** Extra line of `stat`: a sparkline or a progress bar. */
+    extra?: 'trend' | 'goal'
     /** `donut` legend placement. */
     layout?: 'side' | 'stacked'
     /** Diameter of the `donut` ring. */
@@ -23,6 +27,7 @@ const props = withDefaults(
     seed?: string
   }>(),
   {
+    columns: 4,
     count: 0,
     diameter: 150,
     height: 250,
@@ -68,12 +73,81 @@ const funnelWidths = computed(() =>
 </script>
 
 <template>
-  <!-- KPI: value, then delta and caption -->
+  <!-- KPI: value, then delta and caption, then a sparkline or a progress bar -->
   <div v-if="kind === 'stat'" class="flex flex-col gap-2.5 pt-1.5">
     <div class="nut-dash-ghost h-[26px] w-[58%] rounded-md" />
     <div class="flex items-center gap-2">
       <div class="nut-dash-ghost h-3 w-12 rounded-sm" />
       <div class="nut-dash-ghost h-3 w-[40%] rounded-sm opacity-70" />
+    </div>
+    <svg
+      v-if="extra === 'trend'"
+      class="mt-1.5 h-8 w-full overflow-visible"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path
+        :d="linePath"
+        fill="none"
+        stroke="var(--nut-dash-ghost)"
+        stroke-width="2"
+        vector-effect="non-scaling-stroke"
+        stroke-linecap="round"
+      />
+    </svg>
+    <div v-else-if="extra === 'goal'" class="mt-1.5 flex flex-col gap-1.5">
+      <div class="h-1.5 rounded-full bg-[var(--nut-dash-track)]">
+        <div class="nut-dash-ghost h-full w-3/5 rounded-full" />
+      </div>
+      <div class="nut-dash-ghost h-2 w-[45%] rounded-sm opacity-70" />
+    </div>
+  </div>
+
+  <!-- Feed: a rail of markers, two lines per event, and a time -->
+  <div v-else-if="kind === 'feed'" class="flex flex-col">
+    <div v-for="(width, index) in widths" :key="index" class="flex gap-3 pb-3.5">
+      <div class="flex w-7 shrink-0 flex-col items-center">
+        <div class="nut-dash-ghost size-7 rounded-full" />
+        <div v-if="index < widths.length - 1" class="mt-1 w-px flex-1 bg-[var(--nut-dash-grid)]" />
+      </div>
+      <div class="flex min-w-0 flex-1 flex-col gap-1.5 pt-1">
+        <div class="flex items-center gap-3">
+          <div class="nut-dash-ghost h-2.5 rounded-sm" :style="{ width: `${width}%` }" />
+          <div class="nut-dash-ghost ms-auto h-2 w-10 shrink-0 rounded-sm opacity-70" />
+        </div>
+        <div class="nut-dash-ghost h-2 w-[40%] rounded-sm opacity-70" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Table: header labels, then rows of cells (first column wider, numbers to the end) -->
+  <div v-else-if="kind === 'table'" class="flex flex-col">
+    <div class="flex gap-5 pb-2.5">
+      <div
+        v-for="column in columns"
+        :key="column"
+        class="flex flex-1"
+        :class="column === 1 ? 'grow-[2]' : 'justify-end'"
+      >
+        <div class="nut-dash-ghost h-2 w-14 rounded-sm opacity-70" />
+      </div>
+    </div>
+    <div
+      v-for="(width, index) in widths"
+      :key="index"
+      class="flex items-center gap-5 border-t border-[var(--nut-dash-grid)] py-[11px]"
+    >
+      <div
+        v-for="column in columns"
+        :key="column"
+        class="flex flex-1"
+        :class="column === 1 ? 'grow-[2]' : 'justify-end'"
+      >
+        <div
+          class="nut-dash-ghost h-2.5 rounded-sm"
+          :style="{ width: column === 1 ? `${width}%` : `${36 + ((index + column) % 3) * 14}%` }"
+        />
+      </div>
     </div>
   </div>
 
@@ -134,6 +208,31 @@ const funnelWidths = computed(() =>
       <div v-for="index in points" :key="index" class="flex flex-1 justify-center">
         <div class="nut-dash-ghost h-2 w-5 rounded-sm opacity-70" />
       </div>
+    </div>
+  </div>
+
+  <!-- Stat group: label, value, and meta line per figure -->
+  <div v-else-if="kind === 'stats'" class="flex flex-wrap gap-x-6 gap-y-5">
+    <div
+      v-for="index in Math.max(1, count || 3)"
+      :key="index"
+      class="flex min-w-24 flex-1 flex-col gap-2"
+    >
+      <div class="nut-dash-ghost h-2.5 w-[55%] rounded-sm opacity-70" />
+      <div class="nut-dash-ghost h-5 w-[70%] rounded-md" />
+      <div class="nut-dash-ghost h-2 w-[40%] rounded-sm opacity-70" />
+    </div>
+  </div>
+
+  <!-- Gauge: an open arc and its scale -->
+  <div v-else-if="kind === 'gauge'" class="flex flex-col items-center gap-3 pt-1">
+    <div
+      class="rounded-full border-[12px] border-[var(--nut-dash-ghost)] border-b-transparent"
+      :style="{ height: `${diameter}px`, width: `${diameter}px` }"
+    />
+    <div class="flex justify-between" :style="{ width: `${diameter}px` }">
+      <div class="nut-dash-ghost h-2 w-6 rounded-sm opacity-70" />
+      <div class="nut-dash-ghost h-2 w-8 rounded-sm opacity-70" />
     </div>
   </div>
 
@@ -228,12 +327,21 @@ const funnelWidths = computed(() =>
     <div v-for="(width, index) in widths" :key="index" class="flex items-center gap-3 py-[9px]">
       <div
         v-if="leading"
-        :class="leading === 'avatar' ? 'size-[30px] rounded-[7px]' : 'h-[22px] w-8 rounded-[5px]'"
+        :class="
+          leading === 'code'
+            ? 'h-[22px] w-8 rounded-[5px]'
+            : leading === 'icon'
+              ? 'size-8 rounded-lg'
+              : 'size-[30px] rounded-[7px]'
+        "
         class="nut-dash-ghost shrink-0"
       />
       <div class="flex min-w-0 flex-1 flex-col gap-1.5">
         <div class="nut-dash-ghost h-2.5 rounded-sm" :style="{ width: `${width}%` }" />
-        <div v-if="leading === 'avatar'" class="nut-dash-ghost h-2 w-[30%] rounded-sm opacity-70" />
+        <div
+          v-if="leading === 'avatar' || leading === 'icon'"
+          class="nut-dash-ghost h-2 w-[30%] rounded-sm opacity-70"
+        />
       </div>
       <div class="nut-dash-ghost h-3 w-10 shrink-0 rounded-sm" />
     </div>

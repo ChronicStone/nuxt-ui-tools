@@ -1,7 +1,11 @@
 import { computed, markRaw } from 'vue'
 
 import type { DashboardDerived, DashboardResourceState, DashboardSourceLike } from '../types'
-import { combineDashboardStates, refreshDashboardSources } from '../utils/state'
+import {
+  combineDashboardStates,
+  refreshDashboardSources,
+  resolveDashboardUpdatedAt,
+} from '../utils/state'
 import type { DashboardReadTracker } from '../utils/tracker'
 
 /**
@@ -53,6 +57,9 @@ export function useDashboardDerived(params: {
     },
     get state() {
       return state.value
+    },
+    get updatedAt() {
+      return resolveDashboardUpdatedAt(evaluation.value.sources.map((source) => source.updatedAt))
     },
   })
 }

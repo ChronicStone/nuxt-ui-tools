@@ -1,6 +1,7 @@
 <script setup lang="ts" generic="TRow">
 import { computed } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { LazyTextValue } from '#ui-tools/shared/types/utils'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
@@ -9,19 +10,28 @@ import { useDashboardUi } from '../composables/use-dashboard-ui'
 import type {
   DashboardBlockBaseProps,
   DashboardBlockUi,
+  DashboardDataTable,
   DashboardPairedBarsUi,
+  DashboardSelectEvent,
   DashboardSeriesColor,
   DashboardSourceLike,
   DashboardValueFormat,
 } from '../types'
 import { resolveDashboardColor } from '../utils/charts'
-import { resolveDashboardClasses } from '../utils/ui'
+import { toDashboardCell } from '../utils/export'
+import {
+  DASHBOARD_ROW_BUTTON,
+  DASHBOARD_SELECTABLE_ROW,
+  resolveDashboardClasses,
+} from '../utils/ui'
 import DashboardSkeleton from './block/dashboard-skeleton.vue'
 import DashboardCard from './dashboard-card.vue'
 
 const {
   source,
   card = true,
+  menu = undefined,
+  freshness = undefined,
   label,
   total,
   value,
@@ -31,6 +41,7 @@ const {
   colors,
   limit,
   rowKey,
+  onSelect,
   ui,
   ...block
 } = defineProps<
@@ -47,8 +58,11 @@ const {
     format?: DashboardValueFormat
     /** `[total, value]` colors. */
     colors?: readonly [DashboardSeriesColor, DashboardSeriesColor]
+    /** Rows shown in the card. The expand dialog, table view, and CSV export show them all. */
     limit?: number
     rowKey?: (row: TRow, index: number) => PropertyKey
+    /** Makes each row a button. */
+    onSelect?: (event: DashboardSelectEvent<TRow>) => void
     ui?: DashboardBlockUi & DashboardPairedBarsUi
   }
 >()
@@ -59,6 +73,7 @@ defineSlots<{
   footer?: () => unknown
 }>()
 
+const { t } = useUiToolsLocale()
 const formats = useDashboardFormat()
 const appUi = useDashboardUi()
 const classes = computed(() =>
@@ -84,29 +99,68 @@ const legend = computed(() =>
       ]
     : undefined,
 )
-const rows = computed(() => {
-  const data = source.data ?? []
-  const visible = limit ? data.slice(0, limit) : data
-  const largest = Math.max(0, ...visible.map((row) => total(row)))
-  const formatValue = format ?? formats.number.value
-  return visible.map((row, index) => {
+const formatValue = computed(() => format ?? formats.number.value)
+const entries = computed(() =>
+  (source.data ?? []).map((row, index) => {
     const outer = total(row)
     const inner = value(row)
     return {
-      inner: formatValue(inner),
+      index,
+      inner,
       innerWidth: outer > 0 ? `${Math.min(100, (inner / outer) * 100)}%` : '0%',
       key: rowKey?.(row, index) ?? index,
       label: resolveTextValue(label(row)),
-      outer: formatValue(outer),
-      outerWidth: largest > 0 ? `${(outer / largest) * 100}%` : '0%',
+      outer,
       ratio: outer > 0 ? formats.percent.value(Math.round((inner / outer) * 100)) : '',
+      row,
     }
-  })
-})
+  }),
+)
+function visible(expanded: boolean) {
+  const shown = limit && !expanded ? entries.value.slice(0, limit) : entries.value
+  const largest = Math.max(0, ...shown.map((entry) => entry.outer))
+  return shown.map((entry) => ({
+    ...entry,
+    outerWidth: largest > 0 ? `${(entry.outer / largest) * 100}%` : '0%',
+  }))
+}
+
+function tabulate(): DashboardDataTable {
+  return {
+    columns: [
+      { key: 'label', label: t('dashboard.table.label'), numeric: false },
+      {
+        key: 'value',
+        label: resolveTextValue(valueLabel, t('dashboard.table.value')),
+        numeric: true,
+      },
+      {
+        key: 'total',
+        label: resolveTextValue(totalLabel, t('dashboard.table.total')),
+        numeric: true,
+      },
+    ],
+    rows: entries.value.map((entry) => [
+      toDashboardCell(entry.label),
+      toDashboardCell(entry.inner, formatValue.value(entry.inner)),
+      toDashboardCell(entry.outer, formatValue.value(entry.outer)),
+    ]),
+  }
+}
 </script>
 
 <template>
-  <DashboardCard v-bind="block" :card :ui :source :legend :is-empty="rows.length === 0">
+  <DashboardCard
+    v-bind="block"
+    :card
+    :menu
+    :freshness
+    :ui
+    :source
+    :legend
+    :is-empty="entries.length === 0"
+    :tabulate
+  >
     <template #skeleton>
       <DashboardSkeleton kind="paired" :count="limit ?? 8" />
     </template>
@@ -120,28 +174,43 @@ const rows = computed(() => {
       <slot name="footer" />
     </template>
 
-    <ul class="flex flex-col">
-      <li v-for="entry in rows" :key="entry.key" :class="classes.row">
-        <span :class="classes.label" :title="entry.label">{{ entry.label }}</span>
-        <div :class="classes.track">
-          <div
-            class="relative h-full rounded-full transition-[width] duration-500 ease-out"
-            :style="{ background: totalColor, width: entry.outerWidth }"
-          >
+    <template #default="{ expanded }">
+      <ul class="flex flex-col">
+        <li
+          v-for="entry in visible(expanded)"
+          :key="entry.key"
+          :class="[classes.row, onSelect && DASHBOARD_SELECTABLE_ROW]"
+        >
+          <span :class="classes.label" :title="entry.label">{{ entry.label }}</span>
+          <div :class="classes.track">
             <div
-              class="absolute inset-y-0 start-0 rounded-full transition-[width] duration-500 ease-out"
-              :style="{ background: valueColor, width: entry.innerWidth }"
-            />
+              class="relative h-full rounded-full transition-[width] duration-500 ease-out"
+              :style="{ background: totalColor, width: entry.outerWidth }"
+            >
+              <div
+                class="absolute inset-y-0 start-0 rounded-full transition-[width] duration-500 ease-out"
+                :style="{ background: valueColor, width: entry.innerWidth }"
+              />
+            </div>
           </div>
-        </div>
-        <span :class="classes.value">
-          <b class="text-[13.5px] font-semibold text-highlighted">{{ entry.inner }}</b>
-          <span class="text-xs text-muted">/ {{ entry.outer }}</span>
-          <small class="min-w-[34px] text-end text-[11.5px] text-dimmed max-sm:hidden">
-            {{ entry.ratio }}
-          </small>
-        </span>
-      </li>
-    </ul>
+          <span :class="classes.value">
+            <b class="text-[13.5px] font-semibold text-highlighted">
+              {{ formatValue(entry.inner) }}
+            </b>
+            <span class="text-xs text-muted">/ {{ formatValue(entry.outer) }}</span>
+            <small class="min-w-[34px] text-end text-[11.5px] text-dimmed max-sm:hidden">
+              {{ entry.ratio }}
+            </small>
+          </span>
+          <button
+            v-if="onSelect"
+            type="button"
+            :class="DASHBOARD_ROW_BUTTON"
+            :aria-label="entry.label"
+            @click="onSelect({ index: entry.index, row: entry.row })"
+          />
+        </li>
+      </ul>
+    </template>
   </DashboardCard>
 </template>

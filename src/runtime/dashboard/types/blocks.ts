@@ -1,3 +1,7 @@
+import type { ButtonProps } from '@nuxt/ui/components/Button.vue'
+import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
+import type { RouteLocationRaw } from 'vue-router'
+
 import type { LazyTextValue } from '../../shared/types/utils'
 import type { DashboardBlockUi } from './ui'
 
@@ -27,7 +31,31 @@ export interface DashboardSeries<TRow> {
    * always use the left axis.
    */
   axis?: 'left' | 'right'
+  /**
+   * The same measure over the comparison period (previous period, previous year). Drawn next to the
+   * series in a faded tone of its color (dashed for lines), and listed in the legend, tooltip,
+   * table view, and CSV.
+   */
+  compare?: (row: TRow, index: number) => number | null | undefined
+  /** Legend label of `compare`. Defaults to "<label> (previous period)". */
+  compareLabel?: LazyTextValue
 }
+
+/**
+ * Emphasized bars of a bar chart: the largest, the smallest, the last, or the rows an accessor
+ * picks. The other bars take a faded tone of their color.
+ */
+export type DashboardHighlight<TRow> =
+  | 'max'
+  | 'min'
+  | 'last'
+  | ((row: TRow, index: number) => boolean)
+
+/**
+ * Rows shown as selected, typically the value a `select` handler stored in a param (drill-down,
+ * cross-filter). Selected rows are marked; in charts the other bars, points, and segments recede.
+ */
+export type DashboardSelected<TRow> = (row: TRow, index: number) => boolean
 
 export interface DashboardAxisOptions {
   format?: DashboardValueFormat
@@ -58,6 +86,142 @@ export type DashboardSkeletonKind =
   | 'funnel'
   | 'stack'
   | 'paired'
+  | 'feed'
+  | 'table'
+  | 'stats'
+  | 'gauge'
+
+/**
+ * Built-in card menu actions: `table` switches the content to a data table, `csv` downloads that
+ * data, `expand` opens the card in a large dialog.
+ */
+export type DashboardMenuAction = 'table' | 'csv' | 'expand'
+
+/** Entries of a card menu: built-in actions and Nuxt UI dropdown items, in display order. */
+export type DashboardMenuEntries = readonly (DashboardMenuAction | DropdownMenuItem)[]
+
+/** What a function `menu` receives: the block's own data actions, to reuse in custom items. */
+export interface DashboardMenuContext {
+  /** Resolved block title. */
+  title: string
+  /** The block's tabular data (the table view / CSV source); `undefined` until content shows. */
+  table: () => DashboardDataTable | undefined
+  /** Downloads that table as CSV. */
+  download: () => void
+  /** Opens the expand dialog. */
+  expand: () => void
+}
+
+/**
+ * Card menu, opened from a `…` button in the header. `true` lists every built-in action the block
+ * supports; an array picks and orders built-in actions and mixes in Nuxt UI dropdown items; a
+ * function builds that array from the block's context (its table, CSV download, expand).
+ */
+export type DashboardMenu =
+  | boolean
+  | DashboardMenuEntries
+  | ((context: DashboardMenuContext) => DashboardMenuEntries)
+
+/**
+ * Button of a block, in its header next to the menu (default) or full width under the content.
+ * Takes any Nuxt UI button prop: `label`, `icon`, `to`, `onClick`, `color`, `variant`, `loading`…
+ */
+export interface DashboardAction extends ButtonProps {
+  placement?: 'header' | 'footer'
+}
+
+/** Action on one row: a Nuxt UI dropdown item, listed in the row's `⋮` menu. */
+export interface DashboardRowAction extends DropdownMenuItem {
+  /** Renders the action as an icon button on the row instead (needs an `icon`). */
+  inline?: boolean
+}
+
+/** Builds the actions of one row. An empty result leaves the row without actions. */
+export type DashboardRowActions<TRow> = (
+  row: TRow,
+  index: number,
+) => readonly DashboardRowAction[] | null | undefined
+
+/** One column of a block's tabular data. */
+export interface DashboardDataColumn {
+  key: string
+  label: string
+  /** Numeric columns align to the end and export their raw values. */
+  numeric: boolean
+}
+
+/** One cell: the raw value (exported to CSV) and its display text. */
+export interface DashboardDataCell {
+  value: string | number | null
+  text: string
+}
+
+/** Tabular view of a block's data, behind the `table` and `csv` menu actions. */
+export interface DashboardDataTable {
+  columns: DashboardDataColumn[]
+  rows: DashboardDataCell[][]
+}
+
+/** A point in time as blocks receive it: a `Date`, epoch milliseconds, or an ISO string. */
+export type DashboardTimeValue = Date | number | string
+
+/** Payload of a block's `select` event: the clicked row and its index in the source data. */
+export interface DashboardSelectEvent<TRow> {
+  row: TRow
+  index: number
+}
+
+/** Status of a KPI, shown as a colored dot and label on the title row. */
+export interface DashboardStatus {
+  color: 'success' | 'warning' | 'error' | 'info' | 'neutral'
+  label?: LazyTextValue
+}
+
+/** Severity of an alert row, most severe first. */
+export type DashboardAlertSeverity = 'error' | 'warning' | 'info' | 'success'
+
+/** Button at the end of an alert row. */
+export interface DashboardAlertAction {
+  label: LazyTextValue
+  icon?: string
+  to?: RouteLocationRaw
+  onClick?: (event: MouseEvent) => void
+}
+
+/** One column of `UiDashboardTable`. */
+export interface DashboardTableColumn<TRow> {
+  /** Stable identity: sort key and `#cell-<key>` slot name. */
+  key: string
+  label?: LazyTextValue
+  /** Cell value. Numbers go through `format` and sort numerically. */
+  value: (row: TRow, index: number) => LazyTextValue | null | undefined
+  /**
+   * `text` (default); `number`; `delta` (signed percent, colored by sign); `percent` (a share);
+   * `bar` (the number with an inline bar scaled to the column maximum).
+   */
+  type?: 'text' | 'number' | 'delta' | 'percent' | 'bar'
+  format?: DashboardValueFormat
+  /** `delta` columns: a decrease is good news. */
+  invert?: boolean
+  /** `bar` columns: bar color. */
+  color?: DashboardSeriesColor
+  /** `bar` columns: value of a full bar. Defaults to the column maximum. */
+  max?: number
+  /** Defaults to `end` for numeric types, `start` otherwise. */
+  align?: 'start' | 'center' | 'end'
+  /** Header click sorts by this column. Defaults to `true`. */
+  sortable?: boolean
+  /** Column width, any CSS length. */
+  width?: string
+  /** Classes of the column's cells. */
+  class?: string
+}
+
+/** Sort state of `UiDashboardTable` (`v-model:sort`). */
+export interface DashboardTableSort {
+  key: string
+  direction: 'asc' | 'desc'
+}
 
 /** Visual state a block renders, reduced from its source. */
 export type DashboardBlockPhase = 'idle' | 'loading' | 'empty' | 'error' | 'content'
@@ -88,8 +252,50 @@ export interface DashboardBlockBaseProps {
   activation?: DashboardBlockActivation
   /** Empty state content. Defaults to a localized "no data" message. */
   empty?: DashboardEmptyContent
+  /** Card menu. Inherits the enclosing grid's `menu` when omitted. */
+  menu?: DashboardMenu
+  /** Buttons in the header, next to the menu, or full width under the content (`placement`). */
+  actions?: readonly DashboardAction[]
+  /**
+   * Shows when the data was last fetched ("Updated 3 min ago") under the content. Inherits the
+   * enclosing grid's `freshness` when omitted.
+   */
+  freshness?: boolean
   /** Class overrides for the card parts, merged over `appConfig.nuxtUiTools.dashboard.card`. */
   ui?: DashboardBlockUi
+}
+
+/** One figure of `UiDashboardStats`, read from the source data. */
+export interface DashboardStatsItem<TData> {
+  /** Stable identity. */
+  key: string
+  label: LazyTextValue
+  /** Numbers go through `format` (locale number format by default). */
+  value: (data: TData) => LazyTextValue | null | undefined
+  format?: DashboardValueFormat
+  /** Change in percent, colored by sign. `null` hides it. */
+  delta?: (data: TData) => number | null | undefined
+  /** A decrease is good news. */
+  invertDelta?: boolean
+  /** Secondary text after the delta. */
+  caption?: LazyTextValue | ((data: TData) => LazyTextValue | undefined)
+  icon?: string
+  /** Accent of the icon and the progress bar. Defaults to the palette order. */
+  color?: DashboardSeriesColor
+  /** Completion in percent (0–100), drawn as a bar under the value. `null` hides it. */
+  progress?: (data: TData) => number | null | undefined
+  /** Badge next to the value ("Good", "At risk"). `null` hides it. */
+  status?: (data: TData) => DashboardStatus | null | undefined
+}
+
+/** One tab of `UiDashboardTabs`. */
+export interface DashboardTab<TValue extends string | number = string | number> {
+  value: TValue
+  label: LazyTextValue
+  icon?: string
+  /** Count shown after the label (items waiting in that tab…). */
+  count?: number | null
+  disabled?: boolean
 }
 
 /** Legend entry rendered in a block header. */

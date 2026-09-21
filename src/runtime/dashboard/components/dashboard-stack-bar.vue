@@ -1,6 +1,7 @@
 <script setup lang="ts" generic="TRow">
 import { computed } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { LazyTextValue } from '#ui-tools/shared/types/utils'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
@@ -9,23 +10,33 @@ import { useDashboardUi } from '../composables/use-dashboard-ui'
 import type {
   DashboardBlockBaseProps,
   DashboardBlockUi,
+  DashboardDataTable,
+  DashboardSelectEvent,
   DashboardSeriesColor,
   DashboardSourceLike,
   DashboardStackBarUi,
 } from '../types'
 import { resolveDashboardColor } from '../utils/charts'
-import { resolveDashboardClasses } from '../utils/ui'
+import { toDashboardCell } from '../utils/export'
+import {
+  DASHBOARD_ROW_BUTTON,
+  DASHBOARD_SELECTABLE_ROW,
+  resolveDashboardClasses,
+} from '../utils/ui'
 import DashboardSkeleton from './block/dashboard-skeleton.vue'
 import DashboardCard from './dashboard-card.vue'
 
 const {
   source,
   card = true,
+  menu = undefined,
+  freshness = undefined,
   label,
   value,
   text,
   color,
   legendColumns = 2,
+  onSelect,
   ui,
   ...block
 } = defineProps<
@@ -38,6 +49,8 @@ const {
     color?: (row: TRow, index: number) => DashboardSeriesColor | undefined
     /** Legend columns from the `sm` breakpoint (one column below). */
     legendColumns?: 1 | 2
+    /** Makes each segment and legend entry selectable. */
+    onSelect?: (event: DashboardSelectEvent<TRow>) => void
     ui?: DashboardBlockUi & DashboardStackBarUi
   }
 >()
@@ -48,6 +61,7 @@ defineSlots<{
   footer?: () => unknown
 }>()
 
+const { t } = useUiToolsLocale()
 const formats = useDashboardFormat()
 const appUi = useDashboardUi()
 const classes = computed(() =>
@@ -75,17 +89,45 @@ const parts = computed(() => {
     const amount = values[index] ?? 0
     const share = total > 0 ? (amount / total) * 100 : 0
     return {
+      amount,
       color: resolveDashboardColor(color?.(row, index), index),
+      index,
       label: resolveTextValue(label(row)),
+      row,
+      share,
       text: text ? resolveTextValue(text(row, share)) : formats.percent.value(share),
       width: `${share}%`,
     }
   })
 })
+
+function tabulate(): DashboardDataTable {
+  return {
+    columns: [
+      { key: 'label', label: t('dashboard.table.label'), numeric: false },
+      { key: 'value', label: t('dashboard.table.value'), numeric: true },
+      { key: 'share', label: t('dashboard.table.share'), numeric: true },
+    ],
+    rows: parts.value.map((part) => [
+      toDashboardCell(part.label),
+      toDashboardCell(part.amount, formats.number.value(part.amount)),
+      toDashboardCell(Math.round(part.share * 10) / 10, formats.percent.value(part.share)),
+    ]),
+  }
+}
 </script>
 
 <template>
-  <DashboardCard v-bind="block" :card :ui :source :is-empty="parts.length === 0">
+  <DashboardCard
+    v-bind="block"
+    :card
+    :menu
+    :freshness
+    :ui
+    :source
+    :is-empty="parts.length === 0"
+    :tabulate
+  >
     <template #skeleton>
       <DashboardSkeleton kind="stack" />
     </template>
@@ -101,15 +143,21 @@ const parts = computed(() => {
 
     <div :class="classes.track">
       <i
-        v-for="(part, index) in parts"
-        :key="index"
+        v-for="part in parts"
+        :key="part.index"
         class="block h-full transition-[width] duration-500 ease-out"
+        :class="onSelect && 'cursor-pointer'"
         :style="{ background: part.color, width: part.width }"
         :title="`${part.label} · ${part.text}`"
+        @click="onSelect?.({ index: part.index, row: part.row })"
       />
     </div>
     <ul :class="classes.legend">
-      <li v-for="(part, index) in parts" :key="index" :class="classes.item">
+      <li
+        v-for="part in parts"
+        :key="part.index"
+        :class="[classes.item, onSelect && DASHBOARD_SELECTABLE_ROW]"
+      >
         <span
           aria-hidden="true"
           class="size-[9px] shrink-0 rounded-[3px]"
@@ -119,6 +167,13 @@ const parts = computed(() => {
         <b class="shrink-0 font-semibold whitespace-nowrap text-highlighted tabular-nums">
           {{ part.text }}
         </b>
+        <button
+          v-if="onSelect"
+          type="button"
+          :class="DASHBOARD_ROW_BUTTON"
+          :aria-label="part.label"
+          @click="onSelect({ index: part.index, row: part.row })"
+        />
       </li>
     </ul>
   </DashboardCard>

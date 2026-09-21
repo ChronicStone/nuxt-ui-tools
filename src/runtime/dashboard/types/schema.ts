@@ -74,6 +74,8 @@ export type DashboardReservedKey =
   | 'state'
   | 'refreshing'
   | 'refresh'
+  | 'updatedAt'
+  | 'autoRefresh'
   | 'view'
   | 'schema'
 
@@ -163,6 +165,8 @@ export interface DashboardSchema<
   readonly key: string
   /** Prefix prepended to every URL key this dashboard owns. Use it when two dashboards share a page. */
   readonly urlPrefix?: string
+  /** Default auto-refresh interval in seconds (`0`: off). */
+  readonly autoRefresh?: number
   readonly params?: (p: DashboardParamBuilder) => TParams
   readonly queries?: (context: never) => TQueries
   readonly derive?: (context: never) => TDerive
@@ -174,6 +178,7 @@ export interface DashboardSchema<
 export interface DashboardSchemaLike {
   readonly key: string
   readonly urlPrefix?: string
+  readonly autoRefresh?: number
   readonly params?: (p: DashboardParamBuilder) => DashboardParamMap
   readonly queries?: (context: never) => DashboardSourceMap
   readonly derive?: (context: never) => DashboardDeriveMap
@@ -219,6 +224,11 @@ export interface DashboardScopeMembers<TParams> {
   readonly state: DashboardResourceState
   /** A refresh started by `refresh()` is in flight. */
   readonly refreshing: boolean
+  /**
+   * Oldest `updatedAt` among the active queries (the dashboard root also counts the current
+   * view): everything on screen is at least this fresh. `undefined` until one has loaded.
+   */
+  readonly updatedAt: number | undefined
   /** Refetches every active query of this scope. */
   refresh(): Promise<void>
 }
@@ -249,6 +259,16 @@ type DashboardViewHandles<TViews> = {
   readonly [K in keyof TViews]: DashboardViewHandle<TViews[K], K & string>
 }
 
+/** Runtime members of the dashboard root only. */
+export interface DashboardRootMembers {
+  /**
+   * Auto-refresh interval in seconds, `0` when off. Writable and URL-synced under `refresh`. Every
+   * active query refetches on that interval while the page is visible (polling pauses in a
+   * background tab); a query's own `refetchInterval` wins.
+   */
+  autoRefresh: number
+}
+
 type DashboardRootViewMembers<TViews> = [keyof TViews] extends [never]
   ? unknown
   : { readonly view: DashboardViewController<keyof TViews & string> }
@@ -259,5 +279,6 @@ export type DashboardApi<TSchema> = Prettify<
     DashboardDerivedResources<InferDerive<TSchema>> &
     DashboardViewHandles<InferViews<TSchema>> &
     DashboardScopeMembers<InferParams<TSchema>> &
+    DashboardRootMembers &
     DashboardRootViewMembers<InferViews<TSchema>> & { readonly schema: TSchema }
 >

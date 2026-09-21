@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { defineDashboardSchema } from '#ui-tools/dashboard'
 
@@ -239,6 +239,106 @@ describe('dashboard views', () => {
     await refreshed
     await flush()
     expect(dashboard.refreshing).toBe(false)
+  })
+
+  it('reports when the data on screen was last fetched', async () => {
+    vi.useFakeTimers({ now: 1_000_000, toFake: ['Date'] })
+    try {
+      const usage = deferredSource<number[]>()
+      const funnel = deferredSource<number[]>()
+      const { dashboard, flush } = await mountDashboard({
+        schema: createViewsSchema({ funnel, usage }),
+      })
+      expect(dashboard.usage.lines.updatedAt).toBeUndefined()
+      expect(dashboard.updatedAt).toBeUndefined()
+
+      usage.calls[0]?.resolve([1])
+      await flush()
+      expect(dashboard.usage.lines.updatedAt).toBe(1_000_000)
+      // A derived value is as fresh as its oldest input.
+      expect(dashboard.usage.total.updatedAt).toBe(1_000_000)
+      expect(dashboard.usage.updatedAt).toBe(1_000_000)
+      expect(dashboard.updatedAt).toBe(1_000_000)
+
+      vi.setSystemTime(1_060_000)
+      dashboard.view.current = 'funnel'
+      await flush()
+      funnel.calls[0]?.resolve([3])
+      await flush()
+      expect(dashboard.funnel.steps.updatedAt).toBe(1_060_000)
+      // On screen: the root (no queries) and the funnel view.
+      expect(dashboard.updatedAt).toBe(1_060_000)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+function createLiveSchema(summary: ReturnType<typeof deferredSource<number>>) {
+  return defineDashboardSchema({
+    autoRefresh: 60,
+    key: 'live',
+    queries: ({ essential }) => ({
+      summary: essential.query(() => ({ queryFn: summary.fn, queryKey: ['summary'] })),
+    }),
+  })
+}
+
+describe('dashboard auto-refresh', () => {
+  it('starts from the URL or the schema default and polls every active query', async () => {
+    const summary = deferredSource<number>()
+    const { dashboard, flush, query, queryClient } = await mountDashboard({
+      query: { refresh: '30' },
+      schema: createLiveSchema(summary),
+    })
+    const interval = () =>
+      queryClient.getQueryCache().find({ queryKey: ['summary'] })?.observers[0]?.options
+        .refetchInterval
+
+    expect(dashboard.autoRefresh).toBe(30)
+    expect(interval()).toBe(30_000)
+
+    dashboard.autoRefresh = 0
+    await flush()
+    expect(query()).toEqual({ refresh: '0' })
+    expect(interval()).toBe(false)
+
+    // Back to the schema default: the URL key goes away.
+    dashboard.autoRefresh = 60
+    await flush()
+    expect(query()).toEqual({})
+    expect(interval()).toBe(60_000)
+  })
+
+  it('rejects a root param that would shadow the auto-refresh URL key', async () => {
+    const schema = defineDashboardSchema({
+      key: 'shadowed-refresh',
+      params: (p) => ({ refresh: p.boolean() }),
+    })
+    await expect(mountDashboard({ schema })).rejects.toThrow(/URL key "refresh" is reserved/u)
+  })
+})
+
+describe('dashboard comparison param', () => {
+  it('offers localized comparison modes, typed and URL-synced', async () => {
+    const schema = defineDashboardSchema({
+      key: 'compare',
+      params: (p) => ({ compare: p.comparison({ defaultValue: 'previous' }) }),
+    })
+    const { dashboard, flush, query } = await mountDashboard({ schema })
+
+    expect(dashboard.params.compare).toBe('previous')
+    expect(dashboard.options.compare.items.map((item) => [item.value, item.label])).toEqual([
+      ['previous', 'Période précédente'],
+      ['year', 'Année précédente'],
+      ['none', 'Sans comparaison'],
+    ])
+    dashboard.params.compare = 'none'
+    await flush()
+    expect(query()).toEqual({ compare: 'none' })
+    expect(dashboard.options.compare.selected.map((item) => item.label)).toEqual([
+      'Sans comparaison',
+    ])
   })
 })
 

@@ -4,6 +4,7 @@ import type { DashboardRuntimeSchema, DashboardRuntimeScopeInput } from '../type
 interface DashboardRuntimeSchemaInput extends DashboardRuntimeScopeInput {
   key: string
   urlPrefix?: string
+  autoRefresh?: number
   defaultView?: string
   views?: (
     view: (input: DashboardRuntimeScopeInput) => DashboardRuntimeScopeInput,
@@ -11,12 +12,14 @@ interface DashboardRuntimeSchemaInput extends DashboardRuntimeScopeInput {
 }
 
 const reservedKeys: ReadonlySet<string> = new Set<DashboardReservedKey>([
+  'autoRefresh',
   'options',
   'params',
   'refresh',
   'refreshing',
   'schema',
   'state',
+  'updatedAt',
   'view',
 ])
 
@@ -31,6 +34,7 @@ export function resolveDashboardRuntimeSchema(schema: DashboardSchemaLike): Dash
   const views = Object.entries(input.views?.((view) => view) ?? {})
 
   return {
+    autoRefresh: input.autoRefresh,
     defaultView: input.defaultView ?? views[0]?.[0],
     derive: input.derive,
     key: input.key,

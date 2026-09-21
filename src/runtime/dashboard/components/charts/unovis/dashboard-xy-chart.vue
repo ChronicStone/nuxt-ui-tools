@@ -2,6 +2,7 @@
 import VisAxis from '@unovis/vue/components/axis'
 import VisCrosshair from '@unovis/vue/components/crosshair'
 import VisGroupedBar from '@unovis/vue/components/grouped-bar'
+import VisPlotband from '@unovis/vue/components/plotband'
 import VisStackedBar from '@unovis/vue/components/stacked-bar'
 import VisTooltip from '@unovis/vue/components/tooltip'
 import VisXYContainer from '@unovis/vue/containers/xy-container'
@@ -12,6 +13,7 @@ import type {
   DashboardChartDatum,
   DashboardChartFrame,
   DashboardChartFrameAxis,
+  DashboardChartValueLabel,
 } from '../../../types'
 import { renderDashboardChartTooltip } from '../../../utils/chart-frame'
 import DashboardXyMarks from './dashboard-xy-marks.vue'
@@ -20,7 +22,26 @@ import { resolveDashboardXyLayer } from './xy-layers'
 const props = defineProps<{
   frame: DashboardChartFrame
   height: number
+  /** A click selects the x position under the pointer. */
+  selectable?: boolean
 }>()
+const emit = defineEmits<{ select: [index: number] }>()
+
+/**
+ * Maps a click (or a tap: no hover needed) to the nearest x position, through the same margins,
+ * padding, and domain the container plots with.
+ */
+function select(event: MouseEvent) {
+  const box = event.currentTarget
+  if (!props.selectable || !(box instanceof HTMLElement)) return
+  const rect = box.getBoundingClientRect()
+  const start = margin.value.left + (padding.value.left ?? 0)
+  const width = rect.width - start - margin.value.right - (padding.value.right ?? 0)
+  if (width <= 0) return
+  const [from, to] = props.frame.xDomain
+  const index = Math.round(from + ((event.clientX - rect.left - start) / width) * (to - from))
+  if (index >= 0 && index < props.frame.data.length) emit('select', index)
+}
 
 const reducedMotion = usePreferredReducedMotion()
 const duration = computed(() => (reducedMotion.value === 'reduce' ? 0 : 450))
@@ -71,13 +92,40 @@ const formatAxis = (axis: DashboardChartFrameAxis | null) => (value: number | Da
 const formatLeft = computed(() => formatAxis(props.frame.left))
 const formatRight = computed(() => formatAxis(props.frame.right))
 const tooltip = (datum: DashboardChartDatum) => renderDashboardChartTooltip(props.frame, datum)
+// `VisCrosshair` declares only `data` and forwards its other attributes to unovis as written, so
+// its config keys must be camelCase: a kebab-case binding would never reach it.
+const crosshair = { hideWhenFarFromPointer: false, template: tooltip }
+
+// Bars mark a selection by fading the rest; line-only charts get a band behind the picked x.
+const bands = computed(() => (hasBars.value ? [] : props.frame.selection))
+const bandColor = 'color-mix(in oklab, var(--ui-primary) 9%, transparent)'
+
+/**
+ * Places a value label above its bar group (below it for negative values), through the same
+ * margins, padding, and domains the container plots with: HTML text stays crisp and themable.
+ */
+function labelStyle(label: DashboardChartValueLabel) {
+  const start = margin.value.left + (padding.value.left ?? 0)
+  const end = margin.value.right + (padding.value.right ?? 0)
+  const [from, to] = props.frame.xDomain
+  const [min, max] = props.frame.left.domain
+  const fraction = to === from ? 0.5 : (label.index - from) / (to - from)
+  const plot = props.height - margin.value.top - margin.value.bottom
+  const ratio = max === min ? 0 : (label.value - min) / (max - min)
+  return {
+    left: `calc(${start}px + (100% - ${start + end}px) * ${fraction})`,
+    top: `${margin.value.top + plot * (1 - ratio)}px`,
+    transform: label.value < 0 ? 'translate(-50%, 4px)' : 'translate(-50%, calc(-100% - 4px))',
+  }
+}
 </script>
 
 <template>
   <div
     class="nut-dash-chart relative w-full"
-    :class="hasBars && 'nut-dash-chart--bars'"
+    :class="[hasBars && 'nut-dash-chart--bars', selectable && 'cursor-pointer']"
     :style="{ height: `${height}px` }"
+    @click="select"
   >
     <VisXYContainer
       :height="height"
@@ -88,6 +136,14 @@ const tooltip = (datum: DashboardChartDatum) => renderDashboardChartTooltip(prop
       :y-domain="frame.left.domain"
       :duration="duration"
     >
+      <VisPlotband
+        v-for="index in bands"
+        :key="`band-${index}`"
+        axis="x"
+        :from="index - 0.5"
+        :to="index + 0.5"
+        :color="bandColor"
+      />
       <VisStackedBar
         v-if="frame.stacked && hasBars"
         :data="frame.data"
@@ -128,7 +184,7 @@ const tooltip = (datum: DashboardChartDatum) => renderDashboardChartTooltip(prop
         :tick-line="false"
         :domain-line="false"
       />
-      <VisCrosshair :data="frame.data" :template="tooltip" :hide-when-far-from-pointer="false" />
+      <VisCrosshair :data="frame.data" v-bind="crosshair" />
       <VisTooltip />
     </VisXYContainer>
 
@@ -156,5 +212,17 @@ const tooltip = (datum: DashboardChartDatum) => renderDashboardChartTooltip(prop
         :domain-line="false"
       />
     </VisXYContainer>
+
+    <span
+      v-for="label in frame.valueLabels"
+      :key="`label-${label.index}`"
+      aria-hidden="true"
+      class="pointer-events-none absolute text-[10.5px] leading-none whitespace-nowrap tabular-nums"
+      :class="label.strong ? 'font-semibold text-highlighted' : 'text-muted'"
+      :style="labelStyle(label)"
+      data-value-label
+    >
+      {{ label.text }}
+    </span>
   </div>
 </template>

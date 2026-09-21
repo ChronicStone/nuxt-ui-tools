@@ -5,9 +5,57 @@ export default defineUiToolsLocale<Messages>({
   code: 'fr',
   messages: {
     dashboard: {
+      alerts: {
+        empty: 'Rien à signaler',
+        severity: {
+          error: 'Critique',
+          info: 'Information',
+          success: 'Résolu',
+          warning: 'À surveiller',
+        },
+      },
+      compare: {
+        caption: 'vs {value} sur la période précédente',
+        none: 'Sans comparaison',
+        previous: 'Période précédente',
+        series: '{label} (période précédente)',
+        year: 'Année précédente',
+      },
+      freshness: {
+        prefix: 'Mis à jour',
+        updated: 'Mis à jour {time}',
+      },
       funnel: {
         base: 'base 100 %',
         fromPrevious: '{value} de l’étape précédente',
+      },
+      menu: {
+        download: 'Télécharger en CSV',
+        expand: 'Agrandir',
+        hideTable: 'Masquer le tableau',
+        label: 'Actions de la carte',
+        showTable: 'Afficher en tableau',
+      },
+      refresh: {
+        auto: 'Actualisation automatique',
+        label: 'Actualiser',
+        off: 'Désactivée',
+      },
+      rowActions: 'Actions pour {label}',
+      stat: {
+        goal: 'Objectif {value}',
+      },
+      table: {
+        actions: 'Actions',
+        category: 'Catégorie',
+        change: 'Évolution',
+        description: 'Détail',
+        label: 'Libellé',
+        severity: 'Niveau',
+        share: 'Part',
+        time: 'Date',
+        total: 'Total',
+        value: 'Valeur',
       },
       states: {
         empty: 'Aucune donnée sur la période',

@@ -5,9 +5,57 @@ export default defineUiToolsLocale<Messages>({
   code: 'en',
   messages: {
     dashboard: {
+      alerts: {
+        empty: 'Nothing needs attention',
+        severity: {
+          error: 'Critical',
+          info: 'Info',
+          success: 'Resolved',
+          warning: 'Warning',
+        },
+      },
+      compare: {
+        caption: 'vs {value} previous period',
+        none: 'No comparison',
+        previous: 'Previous period',
+        series: '{label} (previous period)',
+        year: 'Previous year',
+      },
+      freshness: {
+        prefix: 'Updated',
+        updated: 'Updated {time}',
+      },
       funnel: {
         base: 'base 100%',
         fromPrevious: '{value} of the previous step',
+      },
+      menu: {
+        download: 'Download CSV',
+        expand: 'Expand',
+        hideTable: 'Hide table',
+        label: 'Card actions',
+        showTable: 'View as table',
+      },
+      refresh: {
+        auto: 'Auto-refresh',
+        label: 'Refresh',
+        off: 'Off',
+      },
+      rowActions: 'Actions for {label}',
+      stat: {
+        goal: 'Goal {value}',
+      },
+      table: {
+        actions: 'Actions',
+        category: 'Category',
+        change: 'Change',
+        description: 'Details',
+        label: 'Label',
+        severity: 'Severity',
+        share: 'Share',
+        time: 'Time',
+        total: 'Total',
+        value: 'Value',
       },
       states: {
         empty: 'No data for this period',

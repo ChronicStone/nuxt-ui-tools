@@ -3,6 +3,7 @@ import type {
   DashboardChartFrame,
   DashboardChartFrameSeries,
 } from '../../../types'
+import { fadeDashboardColor } from '../../../utils/charts'
 
 type DashboardXyAccessor = (datum: DashboardChartDatum) => number | undefined
 
@@ -55,6 +56,22 @@ function seriesSet(series: readonly DashboardChartFrameSeries[]): DashboardXySer
   }
 }
 
+/** Bars: each datum outside the frame's emphasis takes a faded tone of its series color. */
+function barSet(
+  series: readonly DashboardChartFrameSeries[],
+  emphasis: readonly boolean[] | null,
+): DashboardXySeriesSet {
+  const base = seriesSet(series)
+  if (!emphasis) return base
+  return {
+    ...base,
+    color: (datum, index) => {
+      const color = base.color(datum, index)
+      return Array.isArray(datum) || emphasis[datum.index] ? color : fadeDashboardColor(color)
+    },
+  }
+}
+
 /** Only the points where the series has a value, so fills and markers do not drop to zero. */
 function definedData(frame: DashboardChartFrame, series: DashboardChartFrameSeries) {
   return frame.data.filter((datum) => datum.values[series.index] !== undefined)
@@ -80,7 +97,10 @@ export function resolveDashboardXyLayer(
         opacity: entry.dashed ? 0.06 : 0.14,
         y: accessor(entry),
       })),
-    bars: seriesSet(series.filter((entry) => entry.type === 'bar')),
+    bars: barSet(
+      series.filter((entry) => entry.type === 'bar'),
+      frame.emphasis,
+    ),
     dashed: seriesSet(lines.filter((entry) => entry.dashed)),
     dots: solid.map((entry) => ({
       color: entry.color,

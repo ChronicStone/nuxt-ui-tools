@@ -42,6 +42,7 @@ export interface DashboardRuntimeScopeInput {
 export interface DashboardRuntimeSchema extends DashboardRuntimeScopeInput {
   key: string
   urlPrefix?: string
+  autoRefresh?: number
   defaultView?: string
   views: [key: string, view: DashboardRuntimeScopeInput][]
 }

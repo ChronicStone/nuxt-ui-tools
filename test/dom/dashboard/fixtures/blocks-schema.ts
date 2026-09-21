@@ -22,10 +22,21 @@ export interface Step {
   label: string
   count: number
 }
+export interface Alert {
+  level: 'error' | 'warning' | 'info' | 'success'
+  title: string
+  count: number
+}
+export interface Activity {
+  text: string
+  at: number
+}
 
 export function createBlockSources() {
   return {
     accounts: deferredSource<Account[]>(),
+    activity: deferredSource<Activity[]>(),
+    alerts: deferredSource<Alert[]>(),
     months: deferredSource<Month[]>(),
     steps: deferredSource<Step[]>(),
     summary: deferredSource<Summary>(),
@@ -41,6 +52,14 @@ export function createBlocksSchema(sources: BlockSources) {
       accounts: essential.query({
         defaultValue: [],
         query: () => ({ queryFn: sources.accounts.fn, queryKey: ['accounts'] }),
+      }),
+      activity: essential.query({
+        defaultValue: [],
+        query: () => ({ queryFn: sources.activity.fn, queryKey: ['activity'] }),
+      }),
+      alerts: essential.query({
+        defaultValue: [],
+        query: () => ({ queryFn: sources.alerts.fn, queryKey: ['alerts'] }),
       }),
       months: essential.query({
         defaultValue: [],
@@ -72,3 +91,18 @@ export type BlockScenario =
   | 'bar-chart'
   | 'panels'
   | 'toolbar'
+  | 'menu'
+  | 'grid-menu'
+  | 'select'
+  | 'alerts'
+  | 'feed'
+  | 'table'
+  | 'stat-variants'
+  | 'actions'
+  | 'row-actions'
+  | 'chart-emphasis'
+  | 'stats'
+  | 'gauge'
+  | 'tabs'
+  | 'stat-compare'
+  | 'refresh'

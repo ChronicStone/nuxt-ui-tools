@@ -26,8 +26,8 @@ type DashboardViewsGuard<TQueries, TDerive, TViews> = [
  * views (tabs). Nothing runs here — `useDashboard(schema)` instantiates it.
  *
  * Keys are checked at compile time: a query, derived value, or view named after a runtime member
- * (`params`, `options`, `state`, `refreshing`, `refresh`, `view`, `schema`) or after a sibling is a
- * type error.
+ * (`params`, `options`, `state`, `refreshing`, `refresh`, `updatedAt`, `autoRefresh`, `view`,
+ * `schema`) or after a sibling is a type error.
  *
  * @example
  * ```ts
@@ -64,6 +64,11 @@ export function defineDashboardSchema<
     key: string
     /** Prefix prepended to every URL key this dashboard owns. */
     urlPrefix?: string
+    /**
+     * Default auto-refresh interval in seconds (`0`: off). `dashboard.autoRefresh` changes it at
+     * runtime and keeps it in the URL (`refresh`).
+     */
+    autoRefresh?: number
     /**
      * Views (tabs). Each view owns params and queries; queries of a view never fetch until the
      * view is opened once, then stay warm.

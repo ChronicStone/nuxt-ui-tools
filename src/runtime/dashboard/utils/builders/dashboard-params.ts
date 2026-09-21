@@ -1,5 +1,6 @@
 import type { QueryCodec, StaticQueryStateOptions } from '../../../query-state'
 import type {
+  DashboardComparison,
   DashboardDateRange,
   DashboardOption,
   DashboardOptionValue,
@@ -142,6 +143,27 @@ function remoteParam(
   return defineParam('remote', optionalStringCodec, { ...options, remote })
 }
 
+/** Values of `p.comparison`, in menu order. */
+export const DASHBOARD_COMPARISONS = [
+  'previous',
+  'year',
+  'none',
+] as const satisfies readonly DashboardComparison[]
+
+function comparisonParam<const TDefault extends DashboardComparison | undefined = undefined>(
+  options?: DashboardParamOptions<TDefault>,
+): DashboardParamDefinition<ResolveParamValue<DashboardComparison, TDefault>> & {
+  readonly kind: 'comparison'
+}
+function comparisonParam(options?: DashboardParamOptions<unknown>): DashboardParamLike {
+  // Labels are localized by the option handle; these are fallbacks.
+  const items = DASHBOARD_COMPARISONS.map((value) => ({ label: value, value }))
+  return defineParam('comparison', createOptionValueCodec(DASHBOARD_COMPARISONS), {
+    ...options,
+    items,
+  })
+}
+
 function customParam<TValue, const TDefault extends TValue | undefined = undefined>(
   codec: QueryCodec<TValue>,
   options?: DashboardParamOptions<TDefault>,
@@ -163,6 +185,11 @@ function customParam(
  */
 export const dashboardParamBuilder = {
   boolean: booleanParam,
+  /**
+   * Comparison period: `'previous'`, `'year'`, or `'none'`. Its option handle carries localized
+   * labels; `resolveDashboardComparisonRange(range, mode)` turns it into the range to fetch.
+   */
+  comparison: comparisonParam,
   custom: customParam,
   date: dateParam,
   /** Inclusive date range, serialized as `YYYY-MM-DD..YYYY-MM-DD`. */

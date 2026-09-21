@@ -248,5 +248,29 @@ describe('dashboard schema inference', () => {
         }),
       }),
     })
+
+    defineDashboardSchema({
+      key: 'auto-refresh',
+      // @ts-expect-error `autoRefresh` is a runtime member of the facade
+      derive: () => ({ autoRefresh: () => 1 }),
+    })
+  })
+
+  it('types comparison params and the writable auto-refresh interval', () => {
+    const compared = defineDashboardSchema({
+      key: 'compared',
+      params: (p) => ({
+        compare: p.comparison({ defaultValue: 'previous' }),
+        optional: p.comparison(),
+      }),
+    })
+    const mountCompared = () => useDashboard(compared)
+    type Compared = ReturnType<typeof mountCompared>
+    expectTypeOf<Compared['params']['compare']>().toEqualTypeOf<'previous' | 'year' | 'none'>()
+    expectTypeOf<Compared['params']['optional']>().toEqualTypeOf<
+      'previous' | 'year' | 'none' | undefined
+    >()
+    expectTypeOf<keyof Compared['options']>().toEqualTypeOf<'compare' | 'optional'>()
+    expectTypeOf<Compared['autoRefresh']>().toEqualTypeOf<number>()
   })
 })

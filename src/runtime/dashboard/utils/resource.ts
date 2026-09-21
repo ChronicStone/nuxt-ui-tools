@@ -55,5 +55,8 @@ export function createDashboardResourceFacade(
     get state(): DashboardResourceState {
       return slot.value?.state.value ?? 'idle'
     },
+    get updatedAt() {
+      return slot.value?.updatedAt.value
+    },
   })
 }

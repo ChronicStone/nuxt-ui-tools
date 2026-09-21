@@ -11,7 +11,11 @@ import { dashboardParamBuilder } from '../utils/builders/dashboard-params'
 import { createDashboardResourceFacade } from '../utils/resource'
 import type { DashboardResourceSlot } from '../utils/resource'
 import { assertDashboardMemberKey } from '../utils/schema'
-import { combineDashboardStates, refreshDashboardSources } from '../utils/state'
+import {
+  combineDashboardStates,
+  refreshDashboardSources,
+  resolveDashboardUpdatedAt,
+} from '../utils/state'
 import { createDashboardTrackedData } from '../utils/tracker'
 import type { DashboardReadTracker } from '../utils/tracker'
 import { useDashboardDerived } from './use-dashboard-derived'
@@ -36,6 +40,8 @@ export function useDashboardScope(params: {
   input: DashboardRuntimeScopeInput
   prefix: string
   active: ComputedRef<boolean>
+  /** Dashboard auto-refresh interval in milliseconds, `0` when off. */
+  refetchInterval: ComputedRef<number>
   /** Root params, visible inside a view's builders. */
   shared?: ReturnType<typeof useDashboardParamScope>
   /** Root queries and derived values, readable from a view's `derive`. */
@@ -92,7 +98,13 @@ export function useDashboardScope(params: {
       id: scopeKey ? `${scopeKey}.${key}` : key,
       input: declaration.input,
       key,
-      scope: { active: params.active, prefix: params.prefix, queryKey, settled },
+      scope: {
+        active: params.active,
+        prefix: params.prefix,
+        queryKey,
+        refetchInterval: params.refetchInterval,
+        settled,
+      },
       stage: declaration.stage,
     })
     declaration.slot.value = resource
@@ -132,6 +144,12 @@ export function useDashboardScope(params: {
     return combined === 'idle' ? 'ready' : combined
   })
 
+  const updatedAt = computed<number | undefined>(() =>
+    resolveDashboardUpdatedAt(
+      resources.flatMap((resource) => (resource.active.value ? [resource.updatedAt.value] : [])),
+    ),
+  )
+
   const refreshing = shallowRef<boolean>(false)
   let pending: Promise<void> | null = null
 
@@ -146,5 +164,14 @@ export function useDashboardScope(params: {
     return pending
   }
 
-  return { label: input.label, members, paramScope, refresh, refreshing, resources, state }
+  return {
+    label: input.label,
+    members,
+    paramScope,
+    refresh,
+    refreshing,
+    resources,
+    state,
+    updatedAt,
+  }
 }

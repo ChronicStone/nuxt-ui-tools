@@ -5,7 +5,7 @@ import { computed } from 'vue'
 import { useResponsiveValue } from '#ui-tools/shared/composables/use-responsive-value'
 
 import { provideDashboardGrid, useDashboardUi } from '../composables/use-dashboard-ui'
-import type { DashboardGridUi } from '../types'
+import type { DashboardGridUi, DashboardMenu } from '../types'
 
 const props = withDefaults(
   defineProps<{
@@ -20,12 +20,20 @@ const props = withDefaults(
     gap?: string
     /** Grid span when this grid is nested in another grid, responsive. */
     size?: string
+    /** Card menu of every block inside that does not set its own `menu`. */
+    menu?: DashboardMenu
+    /** `freshness` of every block inside that does not set its own. */
+    freshness?: boolean
     ui?: DashboardGridUi
   }>(),
-  { columns: '12', gap: '1rem', variant: 'cards' },
+  { columns: '12', freshness: undefined, gap: '1rem', menu: undefined, variant: 'cards' },
 )
 
-provideDashboardGrid(() => props.variant === 'panels')
+provideDashboardGrid({
+  freshness: () => props.freshness,
+  menu: () => props.menu,
+  panels: () => props.variant === 'panels',
+})
 
 const appUi = useDashboardUi()
 const columns = useResponsiveValue(() => props.columns, 'grid-cols')

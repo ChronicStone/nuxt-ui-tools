@@ -33,6 +33,11 @@ export interface DashboardSourceLike<TData = unknown> {
   readonly error: unknown
   /** A background refetch is running while `state` is still `'ready'`. */
   readonly refreshing: boolean
+  /**
+   * When the data was last fetched successfully (epoch milliseconds). `undefined` until the first
+   * success. A derived value reports its oldest input.
+   */
+  readonly updatedAt: number | undefined
   /** Opts an idle `deferred` resource in. No-op for other resources. */
   activate(): void
   refresh(): Promise<void>

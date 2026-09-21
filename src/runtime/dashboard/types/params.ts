@@ -18,7 +18,14 @@ export type DashboardParamKind =
   | 'enum'
   | 'options'
   | 'remote'
+  | 'comparison'
   | 'custom'
+
+/**
+ * Period a dashboard compares against: the one right before the current range (`previous`), the
+ * same dates a year earlier (`year`), or no comparison (`none`).
+ */
+export type DashboardComparison = 'previous' | 'year' | 'none'
 
 /** Primitive value an option-backed param can hold. */
 export type DashboardOptionValue = string | number
@@ -130,9 +137,11 @@ export type DashboardParamValues<TParams> = {
     : never
 }
 
-/** Keys of params that carry option items (`p.enum`, `p.options`, `p.remote`). */
+/** Keys of params that carry option items (`p.enum`, `p.options`, `p.remote`, `p.comparison`). */
 export type DashboardOptionParamKeys<TParams> = {
-  [K in keyof TParams]: TParams[K] extends { readonly kind: 'enum' | 'options' | 'remote' }
+  [K in keyof TParams]: TParams[K] extends {
+    readonly kind: 'enum' | 'options' | 'remote' | 'comparison'
+  }
     ? K
     : never
 }[keyof TParams]

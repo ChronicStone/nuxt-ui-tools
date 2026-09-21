@@ -1,4 +1,5 @@
 import { computed, shallowRef, watch } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { createEnumCodec, useQueryState } from '../../query-state'
 import { resolveTextValue } from '../../shared/utils/render'
@@ -20,6 +21,7 @@ import { useDashboardScope } from './use-dashboard-scope'
 export function useDashboardViews(params: {
   schema: DashboardRuntimeSchema
   root: ReturnType<typeof useDashboardScope>
+  refetchInterval: ComputedRef<number>
   tracker: DashboardReadTracker
 }) {
   const { schema } = params
@@ -50,6 +52,7 @@ export function useDashboardViews(params: {
       active: computed<boolean>(() => opened.value),
       input,
       prefix: resolveDashboardScopePrefix(schema.urlPrefix, key),
+      refetchInterval: params.refetchInterval,
       rootSources,
       schemaKey: schema.key,
       scopeKey: key,

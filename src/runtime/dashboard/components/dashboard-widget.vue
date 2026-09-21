@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import type {
   DashboardBlockBaseProps,
+  DashboardDataTable,
   DashboardLegendItem,
   DashboardSkeletonKind,
   DashboardSourceLike,
@@ -12,8 +13,12 @@ import DashboardCard from './dashboard-card.vue'
 const {
   source,
   card = true,
+  menu = undefined,
+  freshness = undefined,
   isEmpty,
   skeleton = 'rows',
+  tabulate,
+  expandable = true,
   ...block
 } = defineProps<
   DashboardBlockBaseProps & {
@@ -23,6 +28,10 @@ const {
     legend?: readonly DashboardLegendItem[]
     /** Built-in skeleton drawn while the source loads, unless a `#skeleton` slot is given. */
     skeleton?: DashboardSkeletonKind
+    /** Tabular data behind the `table` and `csv` menu actions. */
+    tabulate?: (data: TData & ({} | null)) => DashboardDataTable
+    /** Offers the `expand` menu action; the default slot receives `expanded`. */
+    expandable?: boolean
   }
 >()
 
@@ -31,6 +40,8 @@ defineSlots<{
     data: TData & ({} | null)
     refreshing: boolean
     refresh: () => Promise<void>
+    /** Rendered in the expand dialog. */
+    expanded: boolean
   }) => unknown
   skeleton?: () => unknown
   'header-right'?: (props: { data: (TData & ({} | null)) | undefined }) => unknown
@@ -48,10 +59,24 @@ const blank = computed(() => {
   if (isEmpty) return isEmpty(data)
   return data === null || (Array.isArray(data) && data.length === 0)
 })
+const tabulateReady = computed(() => {
+  const current = ready.value
+  return tabulate && current ? () => tabulate(current.data) : undefined
+})
 </script>
 
 <template>
-  <DashboardCard v-bind="block" :card :source :is-empty="blank" :skeleton>
+  <DashboardCard
+    v-bind="block"
+    :card
+    :menu
+    :freshness
+    :source
+    :is-empty="blank"
+    :skeleton
+    :tabulate="tabulateReady"
+    :expandable
+  >
     <template v-if="$slots.skeleton" #skeleton>
       <slot name="skeleton" />
     </template>
@@ -64,11 +89,14 @@ const blank = computed(() => {
     <template v-if="$slots.footer" #footer>
       <slot v-if="ready" name="footer" :data="ready.data" />
     </template>
-    <slot
-      v-if="ready"
-      :data="ready.data"
-      :refreshing="source.refreshing"
-      :refresh="source.refresh"
-    />
+    <template #default="{ expanded }">
+      <slot
+        v-if="ready"
+        :data="ready.data"
+        :refreshing="source.refreshing"
+        :refresh="source.refresh"
+        :expanded
+      />
+    </template>
   </DashboardCard>
 </template>

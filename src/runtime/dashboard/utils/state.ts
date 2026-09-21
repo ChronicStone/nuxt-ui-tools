@@ -14,6 +14,15 @@ export function combineDashboardStates(
   return 'ready'
 }
 
+/** Oldest defined timestamp of a set of sources: they are all at least this fresh. */
+export function resolveDashboardUpdatedAt(values: readonly (number | undefined)[]) {
+  let oldest: number | undefined
+  for (const value of values) {
+    if (value !== undefined && (oldest === undefined || value < oldest)) oldest = value
+  }
+  return oldest
+}
+
 /** Refreshes sources in parallel and reports every failure at once. */
 export async function refreshDashboardSources(
   sources: readonly { refresh: () => Promise<void> }[],
@@ -25,6 +34,14 @@ export async function refreshDashboardSources(
 
 /** URL segment of the current view. A root param cannot use it while the dashboard has views. */
 export const DASHBOARD_VIEW_URL_KEY = 'view'
+
+/** URL segment of the auto-refresh interval. A root param cannot use it. */
+export const DASHBOARD_REFRESH_URL_KEY = 'refresh'
+
+/** URL key of the auto-refresh interval: `refresh`, or `<urlPrefix>.refresh`. */
+export function resolveDashboardRefreshKey(urlPrefix: string | undefined) {
+  return joinDashboardUrlKey(urlPrefix, DASHBOARD_REFRESH_URL_KEY)
+}
 
 /** Joins the non-empty segments of a URL key with dots. */
 export function joinDashboardUrlKey(...segments: readonly (string | undefined)[]) {

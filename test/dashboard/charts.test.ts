@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest'
 import type { DashboardChartFrame } from '#ui-tools/dashboard'
 import { resolveDashboardXyLayer } from '#ui-tools/dashboard/components/charts/unovis/xy-layers'
 import {
+  fadeDashboardColor,
   niceDashboardMax,
   niceDashboardTickCount,
   resolveDashboardAxis,
   resolveDashboardColor,
+  resolveDashboardEmphasis,
   resolveDashboardFormats,
   resolveDashboardSeries,
 } from '#ui-tools/dashboard/utils/charts'
@@ -46,6 +48,8 @@ describe('dashboard series', () => {
     expect(resolveDashboardColor(undefined, 7)).toBe('var(--nut-dash-s2)')
     expect(resolveDashboardColor('series-3', 0)).toBe('var(--nut-dash-s3)')
     expect(resolveDashboardColor('primary', 0)).toBe('var(--ui-primary)')
+    // Nuxt UI defines no `--ui-neutral`.
+    expect(resolveDashboardColor('neutral', 0)).toBe('var(--ui-text-muted)')
     expect(resolveDashboardColor('#ff9600', 0)).toBe('#ff9600')
   })
 
@@ -95,6 +99,7 @@ describe('dashboard xy layers', () => {
       { index: 0, values: [10, 8, 30] },
       { index: 1, values: [12, undefined, 31] },
     ],
+    emphasis: null,
     labels: ['Jan', 'Feb'],
     left: { domain: [0, 20], format, ticks: [0, 10, 20] },
     references: [
@@ -131,7 +136,9 @@ describe('dashboard xy layers', () => {
         type: 'line',
       },
     ],
+    selection: [],
     stacked: false,
+    valueLabels: [],
     xDomain: [0, 1],
   }
 
@@ -156,5 +163,89 @@ describe('dashboard xy layers', () => {
     expect(right.solid.y[0]?.({ index: 0, values: [1, 2, 3] })).toBe(3)
     expect(right.lineColor).toBe('var(--c)')
     expect(right.references[0]).toMatchObject({ position: 'top-left', text: 'Target' })
+  })
+
+  it('fades the bars outside the emphasis', () => {
+    const bars: DashboardChartFrame = {
+      ...frame,
+      emphasis: [false, true],
+      series: [
+        {
+          axis: 'left',
+          color: 'var(--a)',
+          dashed: false,
+          index: 0,
+          key: 'used',
+          label: 'Used',
+          type: 'bar',
+        },
+      ],
+    }
+    const { color } = resolveDashboardXyLayer(bars, 'left').bars
+    expect(color({ index: 1, values: [] }, 0)).toBe('var(--a)')
+    expect(color({ index: 0, values: [] }, 0)).toBe(fadeDashboardColor('var(--a)'))
+  })
+})
+
+describe('dashboard emphasis and comparison', () => {
+  const rows = ['a', 'b', 'c']
+  const totals = [4, 9, 9]
+
+  it('picks the highlighted datums, the first of ties, and lets a selection win', () => {
+    expect(resolveDashboardEmphasis(rows, totals, undefined, undefined)).toBeNull()
+    expect(resolveDashboardEmphasis(rows, totals, 'max', undefined)).toEqual([false, true, false])
+    expect(resolveDashboardEmphasis(rows, totals, 'min', undefined)).toEqual([true, false, false])
+    expect(resolveDashboardEmphasis(rows, totals, 'last', undefined)).toEqual([false, false, true])
+    expect(resolveDashboardEmphasis(rows, totals, (row) => row === 'a', undefined)).toEqual([
+      true,
+      false,
+      false,
+    ])
+    // Nothing selected: the highlight still applies.
+    expect(resolveDashboardEmphasis(rows, totals, 'max', () => false)).toEqual([false, true, false])
+    expect(resolveDashboardEmphasis(rows, totals, 'max', (row) => row === 'c')).toEqual([
+      false,
+      false,
+      true,
+    ])
+  })
+
+  it('expands a series with `compare` into a faded comparison series', () => {
+    const [bar, previousBar, line, previousLine] = resolveDashboardSeries<{ now: number }>(
+      [
+        { compare: () => 1, key: 'sales', label: 'Sales', value: (row) => row.now },
+        {
+          compare: () => 2,
+          compareLabel: 'Last year',
+          key: 'rate',
+          type: 'area',
+          value: (row) => row.now,
+        },
+      ],
+      'bar',
+      (label) => `${label} (before)`,
+    )
+    expect(bar).toMatchObject({ dashed: false, key: 'sales', type: 'bar' })
+    expect(previousBar).toMatchObject({
+      color: fadeDashboardColor('var(--nut-dash-s1)', 38),
+      dashed: false,
+      key: 'sales:compare',
+      label: 'Sales (before)',
+      type: 'bar',
+    })
+    expect(line?.type).toBe('area')
+    expect(previousLine).toMatchObject({ dashed: true, label: 'Last year', type: 'line' })
+    expect(previousLine?.value({ now: 5 }, 0)).toBe(2)
+  })
+
+  it('rounds diverging axes to a step that keeps zero on a tick', () => {
+    expect(resolveDashboardAxis([-17, 23, 8], undefined)).toEqual({
+      domain: [-20, 40],
+      ticks: [-20, 0, 20, 40],
+    })
+    expect(resolveDashboardAxis([-4, 2], undefined)).toEqual({
+      domain: [-6, 4],
+      ticks: [-6, -4, -2, 0, 2, 4],
+    })
   })
 })

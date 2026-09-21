@@ -27,6 +27,8 @@ export function useDashboardResource(params: {
     settled: ComputedRef<boolean>
     prefix: string
     queryKey: QueryKey
+    /** Dashboard auto-refresh interval in milliseconds, `0` when off. */
+    refetchInterval: ComputedRef<number>
   }
 }) {
   const { input, stage, scope } = params
@@ -52,8 +54,11 @@ export function useDashboardResource(params: {
 
   function resolveDefinition(): DashboardResolvedQueryDefinition {
     const definition = input.query({ params: widget.values, required: required.value })
+    const interval = scope.refetchInterval.value
     return {
       placeholderData: input.keepPreviousData === false ? undefined : keepPreviousData,
+      // Polling pauses while the page is hidden (TanStack's `refetchIntervalInBackground: false`).
+      refetchInterval: interval > 0 ? interval : false,
       refetchOnWindowFocus: DASHBOARD_QUERY_DEFAULTS.refetchOnWindowFocus,
       staleTime: input.staleTime ?? DASHBOARD_QUERY_DEFAULTS.staleTime[stage],
       ...definition,
@@ -70,6 +75,12 @@ export function useDashboardResource(params: {
     enabled.value && query.data.value !== undefined ? query.data.value : input.defaultValue,
   )
   const refreshing = computed<boolean>(() => state.value === 'ready' && query.isFetching.value)
+  // Placeholder data (the previous key's result) has no fetch time of its own: `0` until it lands.
+  const updatedAt = computed<number | undefined>(() =>
+    state.value === 'ready' && query.dataUpdatedAt.value > 0
+      ? query.dataUpdatedAt.value
+      : undefined,
+  )
 
   function activate() {
     activated.value = true
@@ -91,6 +102,7 @@ export function useDashboardResource(params: {
     refreshing,
     stage,
     state,
+    updatedAt,
     widget,
   }
 }
@@ -98,6 +110,7 @@ export function useDashboardResource(params: {
 type DashboardResolvedQueryDefinition = QueryDefinition & {
   enabled: boolean
   placeholderData?: typeof keepPreviousData
+  refetchInterval?: number | false
   refetchOnWindowFocus?: boolean
   staleTime?: number
 }
