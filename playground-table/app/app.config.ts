@@ -1,4 +1,25 @@
 export default defineAppConfig({
+  nuxtUiTools: {
+    // Atelier: flat white panels joined by 1px rules, light numerals, warm grey secondary text.
+    dashboard: {
+      card: {
+        root: 'rounded-[9px] px-6 py-[22px]',
+        subtitle: 'text-xs font-light text-[#6b655d]',
+        title: 'text-sm font-semibold tracking-[-0.01em] text-default',
+      },
+      grid: {
+        panel: 'bg-[var(--ex-surface)]',
+        panels: 'rounded-[9px]',
+      },
+      list: { description: 'text-[#6b655d]', share: 'text-[#6b655d]' },
+      stat: {
+        label: 'text-[12.5px] font-normal text-[#6b655d]',
+        meta: 'font-light text-[#6b655d]',
+        value: 'text-[26px] font-light tracking-[-0.05em] text-default',
+      },
+      total: { label: 'text-[#6b655d]', value: 'text-default' },
+    },
+  },
   ui: {
     badge: {
       variants: {

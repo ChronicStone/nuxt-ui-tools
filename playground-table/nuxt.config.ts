@@ -34,7 +34,23 @@ export default defineNuxtConfig({
   ssr: false,
   vite: {
     optimizeDeps: {
-      include: ['@faker-js/faker'],
+      include: [
+        '@faker-js/faker',
+        // Dashboard charts load lazily; pre-bundling avoids a reload the first time one renders.
+        '@unovis/ts',
+        '@unovis/vue/components/area',
+        '@unovis/vue/components/axis',
+        '@unovis/vue/components/crosshair',
+        '@unovis/vue/components/donut',
+        '@unovis/vue/components/grouped-bar',
+        '@unovis/vue/components/line',
+        '@unovis/vue/components/plotline',
+        '@unovis/vue/components/scatter',
+        '@unovis/vue/components/stacked-bar',
+        '@unovis/vue/components/tooltip',
+        '@unovis/vue/containers/single-container',
+        '@unovis/vue/containers/xy-container',
+      ],
     },
   },
 })
