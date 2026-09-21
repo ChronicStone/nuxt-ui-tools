@@ -61,10 +61,7 @@ export function useTableActions(options: UseTableActionsParams) {
     context: toPlainRecord(options.queryContent.contextData.value),
     matchingCount: options.queryContent.data.value.rowCount ?? null,
     pageContext: toPlainRecord(options.queryContent.pageContextData.value),
-    request: {
-      ...options.queryContent.requestContext.value,
-      context: toPlainRecord(options.queryContent.requestContext.value.context),
-    },
+    request: options.queryContent.sourceRequest.value,
     scope: options.selection.bulkScope.value,
     selectedRows: options.selection.selectedRows.value,
   }))
@@ -97,9 +94,18 @@ export function useTableActions(options: UseTableActionsParams) {
       return
     }
 
+    const actionContext = context.value
     runningKeys.value = [...runningKeys.value, definition.key]
+    const selectionClear =
+      'selectionClear' in definition ? (definition.selectionClear ?? 'never') : 'never'
+    if (selectionClear === 'trigger') {
+      selectionApi.clear()
+    }
     try {
-      await definition.action(context.value)
+      await definition.action(actionContext)
+      if (selectionClear === 'success') {
+        selectionApi.clear()
+      }
     } finally {
       runningKeys.value = runningKeys.value.filter((key) => key !== definition.key)
     }

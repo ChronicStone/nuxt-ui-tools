@@ -95,6 +95,40 @@ describe('TableRenderer skeleton and tokens', () => {
 })
 
 describe('TableRenderer structure', () => {
+  it('shows the header progress line while existing rows revalidate', async () => {
+    harness = await mountTable({ schema: createAccountsSchema({ delay: 80 }) })
+    const progress = harness.wrapper.find('.nut-dl-progress')
+
+    expect(progress.attributes('data-active')).toBe('false')
+    expect(harness.wrapper.findAll('tbody tr.nut-dl-row').length).toBeGreaterThan(0)
+
+    const refresh = harness.internals.queryContent.refreshData()()
+    await harness.until(() => progress.attributes('data-active') === 'true')
+
+    expect(harness.wrapper.findAll('tbody tr.nut-dl-row').length).toBeGreaterThan(0)
+
+    await refresh
+    await harness.until(() => progress.attributes('data-active') === 'false')
+  })
+
+  it('keeps the table header visible and renders the retry state inside the body on failure', async () => {
+    harness = await mountDataList({
+      render: () => h(TableRenderer, { fill: true }),
+      schema: createAccountsSchema({ fail: true }),
+    })
+    await harness.until(() => Boolean(harness?.internals.queryContent.error.value))
+    await harness.flush()
+    const table = harness.wrapper.find('.nut-dl-table')
+
+    expect(texts(table, '.nut-dl-th__label')).toContain('Nom')
+    const error = table.find('.nut-dl-table__error')
+    expect(error.attributes('style')).toContain('height: calc(100% - var(--nut-dl-head-h))')
+    expect(error.find('[style]').attributes('style')).toContain('min-height: 100%')
+    expect(error.find('button').text()).toBe('Réessayer')
+    expect(table.find('.nut-dl-table__empty').exists()).toBeFalsy()
+    expect(table.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')).toHaveLength(0)
+  })
+
   it('renders headers, pinned seams, internal columns and body rows', async () => {
     harness = await mountTable({ schema: createAccountsSchema() })
     const w = harness.wrapper
@@ -372,6 +406,23 @@ describe('TableRenderer empty state', () => {
     await harness.until(() => !must(harness).wrapper.find('.nut-dl-empty').exists())
     expect(harness.internals.filters.searchQuery.value).toBe('')
     expect(harness.wrapper.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')).toHaveLength(20)
+  })
+
+  it('shows loading rows instead of a false empty state while remote results recover', async () => {
+    harness = await mountTable({
+      schema: createAccountsSchema({ delay: 40, embeddedFacets: true }),
+    })
+    harness.internals.filters.searchQuery.value = 'no matching account'
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-empty').exists())
+
+    harness.internals.filters.searchQuery.value = ''
+    await harness.until(
+      () => must(harness).wrapper.find('.nut-dl-table').attributes('data-loading') === 'true',
+    )
+
+    expect(harness.wrapper.find('.nut-dl-empty').exists()).toBeFalsy()
+    expect(harness.wrapper.findAll('tr.nut-dl-row--skeleton').length).toBeGreaterThanOrEqual(6)
+    await harness.until(() => must(harness).internals.queryContent.data.value.rows.length > 0)
   })
 
   it('honours empty state overrides from the ui config', async () => {

@@ -12,6 +12,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { isNumber } from '../../../shared/utils/predicate'
+import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import type {
@@ -36,6 +37,7 @@ const props = defineProps<{
 }>()
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
+const { isMobile } = useDataListBreakpoint()
 const { t } = useUiToolsLocale()
 const ui = computed<DataListColumnPanelUi>(() => ({
   ...dataListUi.ui.value.columnPanel?.ui,
@@ -53,15 +55,16 @@ const triggerProps = computed(() =>
     {
       color: 'neutral',
       icon: 'i-lucide-layers',
-      label: t('table.controls.view'),
+      label: isMobile.value ? undefined : t('table.controls.view'),
       size: resolvedSize.value,
+      square: isMobile.value,
       variant: 'outline',
     },
     controlProps.value.trigger,
   ),
 )
 const countProps = computed(() =>
-  controlProps.value.count === false
+  isMobile.value || controlProps.value.count === false
     ? null
     : controlProps.value.count
       ? mergeDataListProps<DataListBadgeProps>(
@@ -196,6 +199,8 @@ function toggle() {
     >
       <UButton
         v-bind="triggerProps"
+        :aria-label="t('table.controls.view')"
+        :title="t('table.controls.view')"
         :ui="{ base: mergeDataListUiClass('nut-dl-colbtn', undefined, ui.trigger) }"
       >
         <template v-if="countProps" #trailing>

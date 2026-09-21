@@ -9,7 +9,14 @@ export interface FormPasswordVisibilityToggle {
   hideLabel?: FormText
 }
 
+export interface FormPasswordRequirement {
+  key: string
+  label: FormText
+  validate: (value: string) => boolean
+}
+
 export interface FormPasswordProps {
+  requirements?: readonly FormPasswordRequirement[]
   visibilityToggle?: boolean | FormPasswordVisibilityToggle
 }
 

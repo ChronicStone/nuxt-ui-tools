@@ -2,7 +2,7 @@
 /// <reference types="vue/jsx" />
 
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
-import type { VNodeChild } from 'vue'
+import { h, type VNodeChild } from 'vue'
 
 import {
   isArray,
@@ -349,11 +349,7 @@ export function createRowActionsColumn(options: { params: UseTableColumnsParams 
         rowIndex: row.index,
       })
 
-      return (
-        <TableRowScopeProvider scope={scope}>
-          <TableRowActionsControl />
-        </TableRowScopeProvider>
-      )
+      return h(TableRowScopeProvider, { scope }, { default: () => <TableRowActionsControl /> })
     },
     enableHiding: false,
     enablePinning: true,
@@ -384,7 +380,7 @@ export function createRowActionsColumn(options: { params: UseTableColumnsParams 
 }
 
 function wrapRowScope(options: { scope: TableCellRenderContext; content: VNodeChild }) {
-  return <TableRowScopeProvider scope={options.scope}>{options.content}</TableRowScopeProvider>
+  return h(TableRowScopeProvider, { scope: options.scope }, { default: () => options.content })
 }
 
 function resolvePlainRenderContext(params: UseTableColumnsParams): PlainRenderContextCacheState {

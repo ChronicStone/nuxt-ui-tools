@@ -113,14 +113,15 @@ function clearAll() {
   >
     <UButton
       v-bind="triggerProps"
+      :aria-label="t('table.filters.panel.trigger')"
+      :title="t('table.filters.panel.trigger')"
+      :square="!activeCount"
       :ui="{
         base: mergeDataListUiClass('nut-dl-sheet-trigger shrink-0', undefined, ui?.sheetTrigger),
       }"
     >
-      <span class="flex items-center gap-2">
-        <span>{{ t('table.filters.panel.trigger') }}</span>
+      <span v-if="activeCount" class="flex items-center">
         <UBadge
-          v-if="activeCount"
           color="neutral"
           variant="solid"
           size="xs"

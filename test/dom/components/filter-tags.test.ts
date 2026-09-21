@@ -25,6 +25,7 @@ describe('filter tags bar', () => {
   it('renders dormant tags dashed and the add-filter trigger', async () => {
     harness = await mountTags()
     const w = harness.wrapper
+    expect(w.find('.nut-dl-tags').classes()).toContain('contents')
     const dormant = w.find('.nut-dl-tag--dormant')
     expect(dormant.exists()).toBeTruthy()
     expect(dormant.text()).toBe('Statut')
@@ -137,6 +138,24 @@ describe('filter tags bar', () => {
     expect(harness.internals.filterPresentation.dynamicSessionDefinition.value).toBeUndefined()
   })
 
+  it('offers facet-only remote values in the dynamic filter editor', async () => {
+    harness = await mountTags({ schema: createAccountsSchema({ embeddedFacets: true }) })
+    const w = harness.wrapper
+
+    await w.find('.nut-dl-tag--add').trigger('click')
+    await harness.flush()
+    await must(
+      w
+        .findAll('[data-filter-stage-content] button.rounded-md')
+        .find((row) => row.text() === 'Pays'),
+    ).trigger('click')
+    await harness.flush()
+    await must(w.findAll('[data-filter-stage-content] button')[0]).trigger('click')
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-editor__head').exists())
+
+    expect(texts(w, '.nut-dl-option')).toStrictEqual(['FR20', 'DE20', 'ES20'])
+  })
+
   it('applies filter tag props and add-filter picker options from the config layer', async () => {
     harness = await mountTags({
       schema: createAccountsSchema({ statusDefault: ['active'] }),
@@ -191,8 +210,9 @@ describe('mobile filter sheet', () => {
     const w = harness.wrapper
     expect(w.find('.nut-dl-tag--dormant').exists()).toBeFalsy()
     const trigger = w.find('.nut-dl-sheet-trigger')
-    expect(trigger.text()).toContain('Filtres')
+    expect(trigger.text()).toBe('')
     expect(trigger.attributes('data-icon')).toBe('i-lucide-funnel')
+    expect(trigger.attributes('aria-label')).toBe('Filtres')
     expect(trigger.find('[data-ui="UBadge"]').exists()).toBeFalsy()
     expect(w.find('[data-ui="UDrawer"]').attributes('data-open')).toBe('false')
 

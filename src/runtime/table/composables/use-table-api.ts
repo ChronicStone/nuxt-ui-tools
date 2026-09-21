@@ -83,7 +83,10 @@ export function useTableApi<TSchema = TableSchemaView>(
   }
 
   const layoutApi: TableApi<TSchema>['layout'] = {
-    set: params.controls.setTableLayout,
+    set(layout) {
+      params.controls.setTableLayout(layout)
+      params.columns.setSorting(getDefaultSort({ layout, schema: params.runtimeSchema.value }))
+    },
     state: params.controls.layoutState,
   }
 

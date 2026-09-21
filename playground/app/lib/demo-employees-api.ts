@@ -1,5 +1,5 @@
 import type { TableCursorPageResult, TableOffsetPageResult } from '#ui-tools/table'
-import type { GenericObject, TableSourceRequestContext } from '#ui-tools/table/types'
+import type { GenericObject, TableRemoteSourceRequest } from '#ui-tools/table/types'
 
 export interface DemoCompany {
   id: string
@@ -39,11 +39,7 @@ export interface DemoEmployeeRow extends GenericObject {
   employeeSkills: DemoEmployeeSkill[]
 }
 
-export type DemoEmployeesTableRequest = TableSourceRequestContext<
-  DemoEmployeeRow,
-  GenericObject,
-  string
->
+export type DemoEmployeesTableRequest = TableRemoteSourceRequest<GenericObject, string>
 
 export type DemoEmployeesTableResponse =
   | TableOffsetPageResult<DemoEmployeeRow, string>

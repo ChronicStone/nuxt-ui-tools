@@ -89,12 +89,11 @@ const showInitialLoading = computed(
 )
 const showRefreshing = computed(
   () =>
+    !internals.queryContent.error.value &&
     tableRows.value.length > 0 &&
     (status.value.isFetching || status.value.isRefreshing || status.value.isRevalidating),
 )
-const showError = computed(
-  () => Boolean(internals.queryContent.error.value) && tableRows.value.length === 0,
-)
+const showError = computed(() => Boolean(internals.queryContent.error.value))
 const showEmpty = computed(
   () => !showInitialLoading.value && !showError.value && tableRows.value.length === 0,
 )

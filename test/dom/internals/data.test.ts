@@ -57,6 +57,21 @@ describe('table data lifecycle', () => {
     expect(harness.internals.queryContent.status.value.isPending).toBeFalsy()
   })
 
+  it('preserves the last successful pagination contract when a replacement request fails', async () => {
+    let fail = false
+    harness = await mountLoaded({
+      schema: createAccountsSchema({ embeddedFacets: true, fail: () => fail }),
+    })
+    expect(harness.internals.queryContent.data.value.rowCount).toBe(60)
+
+    fail = true
+    harness.internals.filters.searchQuery.value = 'replacement request'
+    await harness.until(() => Boolean(must(harness).internals.queryContent.error.value))
+
+    expect(harness.internals.queryContent.data.value.rowCount).toBe(60)
+    expect(harness.internals.queryContent.data.value.rows).toHaveLength(60)
+  })
+
   it('refreshes data and forwards the request context to the source', async () => {
     const onQuery = vi.fn()
     harness = await mountLoaded({ schema: createAccountsSchema({ onQuery }) })
@@ -73,6 +88,25 @@ describe('table data lifecycle', () => {
     expect(onQuery).toHaveBeenCalledTimes(2)
     expect(harness.internals.queryContent.requestContext.value.sorting).toStrictEqual([
       { dir: 'asc', key: 'name' },
+    ])
+  })
+
+  it('keeps embedded remote facets available after the row request settles', async () => {
+    harness = await mountLoaded({ schema: createAccountsSchema({ embeddedFacets: true }) })
+
+    await harness.until(
+      () => harness?.internals.queryContent.facets.value.facets[0]?.options.length === 3,
+    )
+
+    expect(harness.internals.queryContent.facets.value.facets).toStrictEqual([
+      {
+        key: 'country',
+        options: [
+          { count: 20, value: 'FR' },
+          { count: 20, value: 'DE' },
+          { count: 20, value: 'ES' },
+        ],
+      },
     ])
   })
 

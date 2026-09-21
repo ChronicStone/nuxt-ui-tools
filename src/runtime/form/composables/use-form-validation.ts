@@ -1,11 +1,12 @@
 import { useRegle } from '@regle/core'
 import type { RegleRuleRaw } from '@regle/core'
-import { withAsync, withMessage } from '@regle/rules'
+import { withMessage } from '@regle/rules'
 import { computed, nextTick, reactive, ref, unref, watch } from 'vue'
 import type { Ref } from 'vue'
 
 import { calendarSeedFromValue, isDateFamilyRange } from '../fields/date-family/utils'
 import type { FormDateFamilyType, FormDateSeedValue } from '../fields/date-family/utils'
+import type { FormPasswordRequirement } from '../fields/password/types'
 import type {
   FormValue,
   FormErrorOptions,
@@ -20,14 +21,7 @@ import type {
 import { resolveFieldDependencies } from '../utils/dependencies'
 import { createFormFieldInstance } from '../utils/field-instance'
 import { getPathValue, isRecord, pathSegments } from '../utils/path'
-import {
-  isBoolean,
-  isFunction,
-  isNumber,
-  isObject,
-  isString,
-  isUndefined,
-} from '../utils/predicate'
+import { isBoolean, isFunction, isNumber, isObject, isString } from '../utils/predicate'
 import {
   fieldPath,
   getArrayItemFields,
@@ -42,7 +36,7 @@ import {
   resolveRequiredMessage,
   shouldRenderField,
 } from '../utils/state'
-import { resolveFormBoundaryText } from '../utils/text'
+import { resolveFormBoundaryText, resolveFormText } from '../utils/text'
 import type { FormFieldApiFactory } from './use-form-state'
 
 type RegleRule = (value: FormValue) => boolean | Promise<boolean>
@@ -59,9 +53,8 @@ interface RegleCollectionRules {
 /**
  * Connects schema-owned field rules to Regle's validation tree.
  *
- * Regle owns validation execution, dirty state, async completion, and error collection. The
- * package-specific callback rules are converted to native Regle rules at the schema boundary,
- * so renderers only consume the resulting field errors.
+ * Regle owns validation execution, dirty state, async completion, and error collection, so
+ * renderers only consume the resulting field errors.
  */
 export function useFormValidation(params: {
   schema: () => FormValue
@@ -77,7 +70,6 @@ export function useFormValidation(params: {
   const customErrors = ref<readonly FormValidationError[]>([])
   const touchedPaths = ref<readonly string[]>([])
   const pendingPaths = ref<ReadonlyMap<string, ReadonlySet<string>>>(new Map())
-  const dynamicMessages = ref<Map<string, string>>(new Map())
   const validatedMessages = ref<ReadonlyMap<string, readonly string[]>>(new Map())
   const validationRuns = new Map<string, number>()
 
@@ -87,7 +79,6 @@ export function useFormValidation(params: {
       buildRegleRules({
         apiFactory: params.apiFactory,
         context: params.context,
-        dynamicMessages,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
@@ -105,7 +96,6 @@ export function useFormValidation(params: {
       buildRegleRules({
         apiFactory: params.apiFactory,
         context: params.context,
-        dynamicMessages,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
@@ -125,7 +115,6 @@ export function useFormValidation(params: {
       buildPrimitiveItemRules({
         apiFactory: params.apiFactory,
         context: params.context,
-        dynamicMessages,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
@@ -143,7 +132,6 @@ export function useFormValidation(params: {
       buildPrimitiveItemRules({
         apiFactory: params.apiFactory,
         context: params.context,
-        dynamicMessages,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
         getRequiredMessage: params.getRequiredMessage,
@@ -222,7 +210,6 @@ export function useFormValidation(params: {
 
     resetRegleRoots()
     const paths = collectFormFieldsPathsForSchema(params.schema(), params.state)
-    clearDynamicMessages(paths)
     clearValidatedMessages(paths)
     const prepared = prepareReglePaths(
       { items: itemsRegle.r$, main: regle.r$ },
@@ -279,7 +266,6 @@ export function useFormValidation(params: {
       return true
     }
 
-    clearDynamicMessages(paths)
     clearValidatedMessages(paths)
     const prepared = prepareReglePaths(
       { items: itemsRegle.r$, main: regle.r$ },
@@ -358,7 +344,6 @@ export function useFormValidation(params: {
     if (!path) {
       customErrors.value = []
       touchedPaths.value = []
-      dynamicMessages.value = new Map()
       validatedMessages.value = new Map()
       resetRegleRoots()
       return
@@ -371,11 +356,6 @@ export function useFormValidation(params: {
     touchedPaths.value = touchedPaths.value.filter(
       (touchedPath) => touchedPath !== key && !touchedPath.startsWith(`${key}.`),
     )
-    dynamicMessages.value = new Map(
-      [...dynamicMessages.value.entries()].filter(
-        ([messageKey]) => !messageKey.startsWith(`${key}:`),
-      ),
-    )
     validatedMessages.value = new Map(
       [...validatedMessages.value.entries()].filter(
         ([messagePath]) => messagePath !== key && !messagePath.startsWith(`${key}.`),
@@ -386,17 +366,8 @@ export function useFormValidation(params: {
   function clearValidationState() {
     customErrors.value = []
     touchedPaths.value = []
-    dynamicMessages.value = new Map()
     validatedMessages.value = new Map()
     resetRegleRoots()
-  }
-
-  function clearDynamicMessages(paths: readonly string[]) {
-    dynamicMessages.value = new Map(
-      [...dynamicMessages.value.entries()].filter(
-        ([messageKey]) => !paths.some((path) => messageKey.startsWith(`${path}:`)),
-      ),
-    )
   }
 
   function clearValidatedMessages(paths: readonly string[]) {
@@ -471,7 +442,6 @@ function buildRegleRules(params: {
   apiFactory: FormFieldApiFactory
   includeAsync: boolean
   mode: FormValidationMode
-  dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
   getDateMinMessage?: (bound: string) => string
@@ -510,7 +480,6 @@ function buildFieldRules(params: {
   apiFactory: FormFieldApiFactory
   includeAsync: boolean
   mode: FormValidationMode
-  dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
   getDateMinMessage?: (bound: string) => string
@@ -646,17 +615,13 @@ function buildLeafRules(params: {
   }
   includeAsync: boolean
   mode: FormValidationMode
-  dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
   getDateMinMessage?: (bound: string) => string
   getDateMaxMessage?: (bound: string) => string
 }): RegleRuleTree {
   const output: RegleRuleTree = {}
-  const validation = Object.getOwnPropertyDescriptor(params.field, 'validation')?.value
-  const key = params.path.join('.')
-
-  if (params.mode !== 'rules' && resolveRequired(params.field, params.callbackParams)) {
+  if (params.mode !== 'validators' && resolveRequired(params.field, params.callbackParams)) {
     output.required = withMessage(
       (value: FormValue) => !isEmptyValue(value),
       resolveRequiredMessage(params.field, params.getRequiredMessage?.()),
@@ -668,6 +633,7 @@ function buildLeafRules(params: {
   }
 
   applyDateBoundsRules(output, params)
+  applyPasswordRequirementRules(output, params)
 
   const authoredValidators: FormValidatorsConfig | undefined =
     'validators' in params.field ? params.field.validators : undefined
@@ -680,113 +646,48 @@ function buildLeafRules(params: {
   if (validators) {
     for (const name in validators) {
       const rule = validators[name]
-      if (rule) {
+      if (rule && (params.includeAsync || !isAsyncValidator(rule))) {
         output[name] = rule
       }
     }
   }
 
-  const authoredRules = isRecord(validation)
-    ? Object.getOwnPropertyDescriptor(validation, 'rules')?.value
-    : undefined
-  if (!Array.isArray(authoredRules)) {
-    return output
+  return output
+}
+
+function applyPasswordRequirementRules(
+  output: RegleRuleTree,
+  params: Parameters<typeof buildLeafRules>[0],
+) {
+  if (params.field.type !== 'password') {
+    return
   }
 
-  authoredRules.forEach((rule, index) => {
-    if (!isRecord(rule)) {
-      return
-    }
-    const validate = Object.getOwnPropertyDescriptor(rule, 'validate')?.value
-    if (!isFunction(validate)) {
-      return
-    }
-    if (!params.includeAsync && isAsyncFunction(validate)) {
-      return
-    }
-    const ruleName = resolveRuleName(rule, index)
-    const messageKey = `${key}:${ruleName}`
-    function message() {
-      return params.dynamicMessages.value.get(messageKey) ?? resolveRuleMessage(rule, params.field)
-    }
-    if (isAsyncFunction(validate)) {
-      output[ruleName] = withMessage(
-        withAsync(async () =>
-          resolveRuleResult(
-            await validate({ ...params.callbackParams, api: params.callbackParams.api }),
-            messageKey,
-            params.dynamicMessages,
-          ),
-        ),
-        message,
-      )
-    } else {
-      output[ruleName] = withMessage(
-        () =>
-          resolveRuleResult(
-            validate({ ...params.callbackParams, api: params.callbackParams.api }),
-            messageKey,
-            params.dynamicMessages,
-          ),
-        message,
-      )
-    }
-  })
+  const authoredProps = Object.getOwnPropertyDescriptor(params.field, 'props')?.value
+  const resolvedProps = isFunction(authoredProps)
+    ? authoredProps(params.callbackParams)
+    : authoredProps
+  if (!isObject(resolvedProps) || !Array.isArray(resolvedProps.requirements)) {
+    return
+  }
 
-  return output
+  for (const requirement of resolvedProps.requirements as readonly FormPasswordRequirement[]) {
+    output[`requirement:${requirement.key}`] = withMessage(
+      (value: FormValue) => isEmptyValue(value) || (isString(value) && requirement.validate(value)),
+      resolveFormText(requirement.label) ?? requirement.key,
+    )
+  }
 }
 
 function isValidatorMap(value: FormValidatorsConfig | undefined): value is FormValidators {
   return isObject(value)
 }
 
-function resolveRuleResult(
-  result: FormValue,
-  messageKey: string,
-  dynamicMessages: Ref<Map<string, string>>,
-) {
-  if (isString(result)) {
-    setDynamicMessage(dynamicMessages, messageKey, result)
-    return false
+function isAsyncValidator(rule: RegleRuleRaw) {
+  if (isObject(rule)) {
+    return rule._async === true
   }
-  clearDynamicMessage(dynamicMessages, messageKey)
-  return result === true || result === null || isUndefined(result)
-}
-
-function isAsyncFunction(value: (...args: never[]) => FormValue) {
-  return Object.getPrototypeOf(value)?.constructor?.name === 'AsyncFunction'
-}
-
-function setDynamicMessage(messages: Ref<Map<string, string>>, key: string, value: string) {
-  const next = new Map(messages.value)
-  next.set(key, value)
-  messages.value = next
-}
-
-function clearDynamicMessage(messages: Ref<Map<string, string>>, key: string) {
-  if (!messages.value.has(key)) {
-    return
-  }
-  const next = new Map(messages.value)
-  next.delete(key)
-  messages.value = next
-}
-
-function resolveRuleName(rule: FormObject, index: number) {
-  const name = Object.getOwnPropertyDescriptor(rule, 'name')?.value
-  return isString(name) && name.length ? name : `rule-${index + 1}`
-}
-
-function resolveRuleMessage(rule: FormObject, field: FormField) {
-  const message = Object.getOwnPropertyDescriptor(rule, 'message')?.value
-  if (isFunction(message)) {
-    return String(message())
-  }
-  if (isString(message) || isNumber(message)) {
-    return String(message)
-  }
-  const name = Object.getOwnPropertyDescriptor(rule, 'name')?.value
-  return isString(name) ? `Invalid value for ${name}.` : `Invalid value for ${field.key}.`
+  return isFunction(rule) && Object.getPrototypeOf(rule)?.constructor?.name === 'AsyncFunction'
 }
 
 function resolveRegleStatusErrors(status: FormValue) {
@@ -1018,7 +919,6 @@ function buildPrimitiveItemRules(params: {
   apiFactory: FormFieldApiFactory
   includeAsync: boolean
   mode: FormValidationMode
-  dynamicMessages: Ref<Map<string, string>>
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
   getDateMinMessage?: (bound: string) => string

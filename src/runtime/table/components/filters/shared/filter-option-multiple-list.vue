@@ -129,10 +129,10 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
           :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
         />
         <span
-          v-else-if="props.showCounts && entry.count != null"
+          v-else-if="props.showCounts"
           :class="mergeDataListUiClass('shrink-0 text-muted', undefined, ui?.optionCount)"
         >
-          {{ entry.count }}
+          {{ entry.count ?? 0 }}
         </span>
       </div>
     </template>

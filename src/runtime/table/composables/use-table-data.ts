@@ -18,6 +18,7 @@ import type {
   TableOffsetPageResult,
   TableQueryDefinition,
   TableRemoteFacetSource,
+  TableRemoteSourceRequest,
   TableSchemaView,
   TableSourceExecutionResult,
   TableSourceRequestContext,
@@ -34,6 +35,7 @@ import {
   paginateClientRows,
   resolveTableRowId,
   sortClientRows,
+  toTableRemoteSourceRequest,
 } from '../utils'
 import type { UseTableStartupReturn } from './use-table-startup'
 import type { useTableState } from './use-table-state'
@@ -55,6 +57,7 @@ export interface UseTableDataReturn {
     context: TableRuntimeRecord
   }>
   requestContext: ComputedRef<TableSourceRequestContext>
+  sourceRequest: ComputedRef<TableRemoteSourceRequest>
   searchParams: ComputedRef<TableSourceRequestContext>
   query: ReturnType<typeof useQuery>
   infiniteQuery: ReturnType<typeof useInfiniteQuery>
@@ -186,6 +189,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     search: requestSearch.value,
     sorting: requestSorting.value,
   }))
+  const sourceRequest = computed(() => toTableRemoteSourceRequest(requestContext.value))
 
   const searchParams = requestContext
 
@@ -197,6 +201,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
       const definition = resolveSourceDefinition({
         context: contextData.value,
         request: requestContext.value,
+        sourceRequest: sourceRequest.value,
         source: params.schema.value.source,
       })
 
@@ -227,6 +232,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         createCursorQueryDefinition({
           context: contextData.value,
           request: requestContext.value,
+          sourceRequest: sourceRequest.value,
           revision: params.state.queryState.paginationRevision.value,
           source: params.schema.value.source,
         }),
@@ -527,6 +533,10 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   watch(
     () => query.data.value,
     (nextQueryData) => {
+      if (nextQueryData === undefined && query.isError.value) {
+        return
+      }
+
       const normalized = normalizeExternalState(nextQueryData)
       if (sameExternalState(rawDataState.value, normalized)) {
         return
@@ -640,6 +650,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     refreshData,
     refreshPageContext,
     requestContext,
+    sourceRequest,
     searchParams,
     selectableRows,
     status,
@@ -800,14 +811,18 @@ function isRemoteFacetQuery<
 function resolveSourceDefinition(options: {
   source: TableSchemaView['source']
   request: TableSourceRequestContext
+  sourceRequest: TableRemoteSourceRequest
   context: TableRuntimeRecord
 }): TableQueryDefinition<TableRuntimeSourceResult> {
-  return options.source.query({ ...options.request, context: options.context })
+  return options.source.mode === 'remote'
+    ? options.source.query(options.sourceRequest, options.context)
+    : options.source.query({ ...options.request, context: options.context })
 }
 
 function createCursorQueryDefinition(options: {
   source: TableSchemaView['source']
   request: TableSourceRequestContext
+  sourceRequest: TableRemoteSourceRequest
   context: TableRuntimeRecord
   revision: number
 }): TableInfiniteQueryDefinition<TableRuntimeSourceResult> {
@@ -830,6 +845,15 @@ function createCursorQueryDefinition(options: {
         ...options,
         request: {
           ...options.request,
+          pagination: {
+            count: pagination.count,
+            cursor: queryContext.pageParam,
+            mode: 'cursor',
+            pageSize: pagination.pageSize,
+          },
+        },
+        sourceRequest: {
+          ...options.sourceRequest,
           pagination: {
             count: pagination.count,
             cursor: queryContext.pageParam,

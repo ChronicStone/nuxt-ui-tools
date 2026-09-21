@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { defineFormSchema } from '#ui-tools/form'
 
@@ -60,5 +60,28 @@ describe('form harness', () => {
     await harness.flush()
     expect(harness.wrapper.find('[data-form-field="company"]').exists()).toBeTruthy()
     harness.unmount()
+  })
+
+  it('keeps an unmasked email field native without initializing Maska', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'email',
+            label: 'E-mail',
+            props: { inputType: 'email' },
+            type: 'text',
+          },
+        ],
+        formKey: 'native-email',
+      }),
+    })
+
+    expect(harness.control('email').attributes('type')).toBe('email')
+    expect(warn.mock.calls.some(([message]) => String(message).startsWith('Maska:'))).toBeFalsy()
+
+    harness.unmount()
+    warn.mockRestore()
   })
 })

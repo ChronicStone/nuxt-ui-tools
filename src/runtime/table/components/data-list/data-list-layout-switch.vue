@@ -59,7 +59,7 @@ function buttonProps(active: boolean) {
 }
 
 function setLayout(layout: TableLayout) {
-  internals.controls.setTableLayout(layout)
+  internals.tableApi.layout.set(layout)
 }
 </script>
 

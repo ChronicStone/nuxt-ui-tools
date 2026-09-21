@@ -212,12 +212,17 @@ const schema = defineTableSchema({
     query: (request) => ({
       queryFn: async () => {
         const prepared = executeClientQuery({
-          request: { ...request, pagination: { mode: 'none' } },
+          request: {
+            ...request,
+            context: {},
+            filters: { type: 'group', combinator: 'and', children: request.filters },
+            pagination: { mode: 'none' },
+          },
           rows: documents,
         })
         const { pagination } = request
-        const cursor = pagination.mode === 'cursor' ? Number(pagination.cursor ?? 0) : 0
-        const pageSize = pagination.mode === 'cursor' ? pagination.pageSize : prepared.rows.length
+        const cursor = pagination?.mode === 'cursor' ? Number(pagination.cursor ?? 0) : 0
+        const pageSize = pagination?.mode === 'cursor' ? pagination.pageSize : prepared.rows.length
         const rows = prepared.rows.slice(cursor, cursor + pageSize)
         const nextOffset = cursor + rows.length
 

@@ -77,11 +77,8 @@ const CHIP_ACTIVE =
         class="nut-dl-skeleton inline-block h-2.5 w-4 rounded"
         aria-hidden="true"
       />
-      <small
-        v-else-if="showCounts && entry.count != null"
-        class="nut-dl-chip__count text-[11px] text-dimmed tabular-nums"
-      >
-        {{ entry.count }}
+      <small v-else-if="showCounts" class="nut-dl-chip__count text-[11px] text-dimmed tabular-nums">
+        {{ entry.count ?? 0 }}
       </small>
     </button>
   </div>

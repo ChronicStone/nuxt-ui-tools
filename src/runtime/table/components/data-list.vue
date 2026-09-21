@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import type { ComputedRef } from 'vue'
-
 import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 
-import type { TableInternals } from '../composables/use-table-internals'
-import type { DataListControlSize, DataListDensity, DataListUiConfig } from '../types'
+import type {
+  DataListControlSize,
+  DataListDensity,
+  DataListTable,
+  DataListUiConfig,
+} from '../types'
 import DataListDefault from './data-list/data-list-default.vue'
 import DataListRoot from './data-list/data-list-root.vue'
-
-interface DataListTable {
-  schema: ComputedRef<{ tableKey: string }>
-  __internals: TableInternals
-}
 
 defineProps<{
   table: DataListTable

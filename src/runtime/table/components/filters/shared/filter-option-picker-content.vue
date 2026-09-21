@@ -86,7 +86,7 @@ function handleSelect(options: {
         :items="props.state.treeRadioItems.value"
         :multiple="props.state.filterUi.value.selection.mode === 'multiple'"
         :count-loading="
-          props.state.filterUi.value.row.showCounts && props.state.optionSource.isCountLoading.value
+          props.state.optionSource.showCounts.value && props.state.optionSource.isCountLoading.value
         "
         :selected-icon="props.state.filterUi.value.row.selectedIcon"
         :size="props.size"
@@ -108,7 +108,7 @@ function handleSelect(options: {
         :sections="
           props.sections ?? [{ key: 'default', entries: props.state.displayEntries.value }]
         "
-        :show-counts="props.state.filterUi.value.row.showCounts"
+        :show-counts="props.state.optionSource.showCounts.value"
         :count-loading="props.state.optionSource.isCountLoading.value"
         :selected-icon="props.state.filterUi.value.row.selectedIcon"
         :truncate="props.state.filterUi.value.row.truncate"
@@ -130,7 +130,7 @@ function handleSelect(options: {
         v-model="flatRadioValue"
         :items="props.state.flatRadioItems.value"
         :count-loading="
-          props.state.filterUi.value.row.showCounts && props.state.optionSource.isCountLoading.value
+          props.state.optionSource.showCounts.value && props.state.optionSource.isCountLoading.value
         "
         :size="props.size"
         :ui="props.ui"

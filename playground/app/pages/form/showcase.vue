@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ULink from '@nuxt/ui/components/Link.vue'
+import { email, minLength, sameAs, withMessage } from '@regle/rules'
 import { queryOptions } from '@tanstack/vue-query'
 import { h, ref } from 'vue'
 
@@ -49,18 +50,14 @@ const addressOptionForm = defineFormSchema({
       },
       placeholder: 'Paris office',
       type: 'text',
-      validation: {
-        required: true,
-      },
+      required: true,
     },
     {
       key: 'city',
       label: 'City',
       placeholder: 'Paris',
       type: 'text',
-      validation: {
-        required: true,
-      },
+      required: true,
     },
     {
       key: 'country',
@@ -117,18 +114,14 @@ const showcaseForm = defineFormSchema({
       label: 'First name',
       placeholder: 'Ada',
       type: 'text',
-      validation: {
-        required: true,
-      },
+      required: true,
     },
     {
       key: 'profile.lastName',
       label: 'Last name',
       placeholder: 'Lovelace',
       type: 'text',
-      validation: {
-        required: true,
-      },
+      required: true,
     },
     {
       key: 'profile.email',
@@ -141,23 +134,9 @@ const showcaseForm = defineFormSchema({
         output: (value) => value?.trim().toLowerCase() ?? '',
       },
       type: 'text',
-      validation: {
-        required: true,
-        rules: [
-          {
-            name: 'email',
-            validate: ({ api }) => {
-              const value = api.value.get()
-              if (!value) {
-                return true
-              }
-              if (!isString(value)) {
-                return 'Enter a valid email address.'
-              }
-              return value.includes('@') || 'Enter a valid email address.'
-            },
-          },
-        ],
+      required: true,
+      validators: {
+        email: withMessage(email, 'Enter a valid email address.'),
       },
     },
     {
@@ -165,22 +144,11 @@ const showcaseForm = defineFormSchema({
       label: 'Phone number',
       props: { clearable: true, defaultCountryCode: 'FR' },
       type: 'phone-number',
-      validation: {
-        rules: [
-          {
-            name: 'phone',
-            validate: ({ api }) => {
-              const value = api.value.get()
-              if (!value) {
-                return true
-              }
-              return (
-                (isString(value) && value.startsWith('+')) ||
-                'Enter a valid international phone number.'
-              )
-            },
-          },
-        ],
+      validators: {
+        phone: withMessage(
+          (value) => !value || (typeof value === 'string' && value.startsWith('+')),
+          'Enter a valid international phone number.',
+        ),
       },
     },
     {
@@ -860,39 +828,33 @@ const showcaseForm = defineFormSchema({
       placeholder: '0',
       props: { inputType: 'number', length: 6 },
       type: 'one-time-code',
-      validation: {
-        rules: [
-          {
-            name: 'otp-length',
-            validate: ({ api }) => {
-              const value = api.value.get()
-              if (!value) {
-                return true
-              }
-              return (isString(value) && value.length === 6) || 'Enter the 6 digit code.'
-            },
-          },
-        ],
+      validators: {
+        length: withMessage(
+          (value) => !value || (typeof value === 'string' && value.length === 6),
+          'Enter the 6 digit code.',
+        ),
       },
     },
     {
       key: 'security.password',
       label: 'Password',
       type: 'password',
-      validation: {
-        rules: [
+      props: {
+        requirements: [
           {
-            name: 'password-length',
-            validate: ({ api }) => {
-              const value = api.value.get()
-              if (!value) {
-                return true
-              }
-              if (!isString(value)) {
-                return 'Password must be at least 8 characters.'
-              }
-              return value.length >= 8 || 'Password must be at least 8 characters.'
-            },
+            key: 'length',
+            label: 'At least 8 characters',
+            validate: (value: string) => value.length >= 8,
+          },
+          {
+            key: 'uppercase',
+            label: 'At least one uppercase letter',
+            validate: (value: string) => /[A-Z]/u.test(value),
+          },
+          {
+            key: 'number',
+            label: 'At least one number',
+            validate: (value: string) => /\d/u.test(value),
           },
         ],
       },
@@ -905,21 +867,9 @@ const showcaseForm = defineFormSchema({
         omit: true,
       },
       type: 'password',
-      validation: {
-        rules: [
-          {
-            name: 'password-confirmation',
-            validate: ({ api, deps }) => {
-              const value = api.value.get()
-              if (!value) {
-                return true
-              }
-              const password = 'password' in deps ? deps.password : null
-              return value === password || 'Passwords do not match.'
-            },
-          },
-        ],
-      },
+      validators: ({ deps }) => ({
+        sameAs: withMessage(sameAs(deps.password), 'Passwords do not match.'),
+      }),
     },
     {
       default: 'draft_showcase_001',

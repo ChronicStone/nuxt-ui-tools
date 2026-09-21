@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest'
 
 import { executeQueryPrefetchPlan } from '#ui-tools/query-prefetch/utils/plan'
 import { defineTableSchema, tableSource } from '#ui-tools/table'
-import type { TableSourceRequestContext } from '#ui-tools/table/types'
+import type { TableRemoteSourceRequest } from '#ui-tools/table/types'
 import { createTableCursorQueryKey, prefetchTable } from '#ui-tools/table/utils'
 
 describe('table query prefetch', () => {
   it('prefetches context, route-derived source state, facets, options, and page context in order', async () => {
-    let sourceRequest: TableSourceRequestContext | undefined
+    let sourceRequest: TableRemoteSourceRequest | undefined
     let pageContextRows = 0
     let pageContextAccount: unknown
     let optionQueryCalls = 0
@@ -98,7 +98,6 @@ describe('table query prefetch', () => {
     await executeQueryPrefetchPlan(plan, { queryClient })
 
     expect([
-      sourceRequest?.context,
       sourceRequest?.pagination,
       sourceRequest?.sorting,
       sourceRequest?.search,
@@ -108,7 +107,6 @@ describe('table query prefetch', () => {
       pageContextRows,
       pageContextAccount,
     ]).toStrictEqual([
-      { account: { id: 'account-1' } },
       {
         count: 'exact',
         mode: 'offset',
@@ -117,11 +115,13 @@ describe('table query prefetch', () => {
       },
       [{ dir: 'desc', key: 'name' }],
       { fields: ['name'], value: 'ada' },
-      {
-        children: [{ key: 'status', operator: 'isAnyOf', type: 'condition', value: ['active'] }],
-        combinator: 'and',
-        type: 'group',
-      },
+      [
+        {
+          children: [{ key: 'status', operator: 'isAnyOf', type: 'condition', value: ['active'] }],
+          combinator: 'and',
+          type: 'group',
+        },
+      ],
       1,
       1,
       1,
@@ -174,9 +174,8 @@ describe('table query prefetch', () => {
     await executeQueryPrefetchPlan(plan, { queryClient })
 
     const request = {
-      context: {},
       facets: undefined,
-      filters: { children: [], combinator: 'and', type: 'group' },
+      filters: [],
       pagination: { count: 'exact', cursor: null, mode: 'cursor', pageSize: 20 },
       search: { fields: [], value: '' },
       sorting: [],

@@ -189,178 +189,180 @@ function toggle() {
 </script>
 
 <template>
-  <UPopover
-    :open="isOpen"
-    mode="click"
-    :content="{
-      side: 'bottom',
-      align: 'start',
-      sideOffset: 8,
-      onFocusOutside: handleFocusOutside,
-    }"
-    :ui="{
-      content: resolveDataListPopoverContentClass(
-        'fit',
-        mergeDataListUiClass(
-          `${sizeClasses.editor} overflow-hidden p-0`,
-          undefined,
-          ui?.popoverContent,
-        ),
-      ),
-    }"
-    @update:open="handleOpenChange"
-  >
-    <slot
-      v-if="$slots.trigger"
-      name="trigger"
-      :open="open"
-      :close="close"
-      :toggle="toggle"
-      :open-state="isOpen"
-      :stage="stage"
-      :definition="selectedDefinition"
-      :trigger-props="{
-        type: 'button',
-        'aria-expanded': isOpen,
+  <div class="contents">
+    <UPopover
+      :open="isOpen"
+      mode="click"
+      :content="{
+        side: 'bottom',
+        align: 'start',
+        sideOffset: 8,
+        onFocusOutside: handleFocusOutside,
       }"
-    />
-    <UButton
-      v-else
-      v-bind="triggerProps"
-      :icon="
-        selectedDefinition
-          ? dataListUi.ui.value.filterTags?.props?.icon === false
-            ? undefined
-            : resolveFilterTriggerIcon(selectedDefinition)
-          : 'i-lucide-plus'
-      "
-      :label="
-        selectedDefinition
-          ? getLabel(selectedDefinition)
-          : (triggerProps.label ?? t('table.controls.addFilter'))
-      "
       :ui="{
-        base: mergeDataListUiClass(
-          `nut-dl-tag nut-dl-tag--add shrink-0 ${selectedDefinition ? '' : 'border border-dashed border-[var(--ui-border-accented)] text-muted hover:text-default hover:border-[var(--ui-text-dimmed)]'}`,
-          undefined,
-          ui?.trigger,
+        content: resolveDataListPopoverContentClass(
+          'fit',
+          mergeDataListUiClass(
+            `${sizeClasses.editor} overflow-hidden p-0`,
+            undefined,
+            ui?.popoverContent,
+          ),
         ),
-        leadingIcon: 'size-[13px]',
       }"
-    />
+      @update:open="handleOpenChange"
+    >
+      <slot
+        v-if="$slots.trigger"
+        name="trigger"
+        :open="open"
+        :close="close"
+        :toggle="toggle"
+        :open-state="isOpen"
+        :stage="stage"
+        :definition="selectedDefinition"
+        :trigger-props="{
+          type: 'button',
+          'aria-expanded': isOpen,
+        }"
+      />
+      <UButton
+        v-else
+        v-bind="triggerProps"
+        :icon="
+          selectedDefinition
+            ? dataListUi.ui.value.filterTags?.props?.icon === false
+              ? undefined
+              : resolveFilterTriggerIcon(selectedDefinition)
+            : 'i-lucide-plus'
+        "
+        :label="
+          selectedDefinition
+            ? getLabel(selectedDefinition)
+            : (triggerProps.label ?? t('table.controls.addFilter'))
+        "
+        :ui="{
+          base: mergeDataListUiClass(
+            `nut-dl-tag nut-dl-tag--add shrink-0 ${selectedDefinition ? '' : 'border border-dashed border-[var(--ui-border-accented)] text-muted hover:text-default hover:border-[var(--ui-text-dimmed)]'}`,
+            undefined,
+            ui?.trigger,
+          ),
+          leadingIcon: 'size-[13px]',
+        }"
+      />
 
-    <template #content>
-      <FilterStageTransition
-        :stage-key="`${stage}:${selectedKey ?? ''}:${pendingOperator ?? ''}`"
-        :direction="stageDirection"
-        @settled="stageTransitioning = false"
-      >
-        <div
-          v-if="stage === 'picker'"
-          :class="mergeDataListUiClass(sizeClasses.editor, undefined, ui?.panel)"
+      <template #content>
+        <FilterStageTransition
+          :stage-key="`${stage}:${selectedKey ?? ''}:${pendingOperator ?? ''}`"
+          :direction="stageDirection"
+          @settled="stageTransitioning = false"
         >
           <div
-            v-if="pickerProps?.title !== false"
-            :class="
-              mergeDataListUiClass(
-                'nut-dl-picker__title px-2.5 pt-2 pb-0.5 text-[11.5px] font-semibold text-muted',
-                undefined,
-                ui?.title,
-              )
-            "
+            v-if="stage === 'picker'"
+            :class="mergeDataListUiClass(sizeClasses.editor, undefined, ui?.panel)"
           >
-            {{ t('table.controls.addFilter') }}
-          </div>
-          <FilterSearchablePanel
-            v-model:search-query="searchQuery"
-            :searchable="searchable"
-            :autofocus="searchable"
-            :search-placeholder="t('table.controls.searchFilters')"
-            :show-empty="!filteredDefinitions.length"
-            :empty-label="t('table.controls.noMatchingFilters')"
-            max-height-class="max-h-72"
-            :size="size"
-            :ui="ui"
-          >
-            <button
-              v-for="definition in filteredDefinitions"
-              :key="definition.key"
-              type="button"
+            <div
+              v-if="pickerProps?.title !== false"
               :class="
                 mergeDataListUiClass(
-                  `flex min-w-0 items-center rounded-md text-left outline-none transition-colors hover:bg-elevated/70 focus-visible:ring-2 focus-visible:ring-primary/40 ${sizeClasses.option}`,
+                  'nut-dl-picker__title px-2.5 pt-2 pb-0.5 text-[11.5px] font-semibold text-muted',
                   undefined,
-                  ui?.option,
+                  ui?.title,
                 )
               "
-              @click="handleSelect(definition.key)"
             >
-              <UIcon
-                :name="
-                  pickerProps?.icon === 'kind'
-                    ? resolveFilterTriggerIcon(definition)
-                    : 'i-lucide-plus'
-                "
+              {{ t('table.controls.addFilter') }}
+            </div>
+            <FilterSearchablePanel
+              v-model:search-query="searchQuery"
+              :searchable="searchable"
+              :autofocus="searchable"
+              :search-placeholder="t('table.controls.searchFilters')"
+              :show-empty="!filteredDefinitions.length"
+              :empty-label="t('table.controls.noMatchingFilters')"
+              max-height-class="max-h-72"
+              :size="size"
+              :ui="ui"
+            >
+              <button
+                v-for="definition in filteredDefinitions"
+                :key="definition.key"
+                type="button"
                 :class="
                   mergeDataListUiClass(
-                    `${sizeClasses.optionIcon} shrink-0 text-muted`,
+                    `flex min-w-0 items-center rounded-md text-left outline-none transition-colors hover:bg-elevated/70 focus-visible:ring-2 focus-visible:ring-primary/40 ${sizeClasses.option}`,
                     undefined,
-                    ui?.optionIcon,
+                    ui?.option,
                   )
                 "
-              />
-              <span
-                :class="
-                  mergeDataListUiClass(
-                    `min-w-0 flex-1 truncate text-default ${sizeClasses.optionLabel}`,
-                    undefined,
-                    ui?.optionLabel,
-                  )
-                "
+                @click="handleSelect(definition.key)"
               >
-                {{ getLabel(definition) }}
-              </span>
-              <span
-                :class="
-                  mergeDataListUiClass(
-                    'inline-flex shrink-0 items-center text-dimmed',
-                    undefined,
-                    ui?.optionTrailingIcon,
-                  )
-                "
-              >
-                <UIcon name="i-lucide-chevron-right" :class="geometry.icon" />
-              </span>
-            </button>
-          </FilterSearchablePanel>
-        </div>
+                <UIcon
+                  :name="
+                    pickerProps?.icon === 'kind'
+                      ? resolveFilterTriggerIcon(definition)
+                      : 'i-lucide-plus'
+                  "
+                  :class="
+                    mergeDataListUiClass(
+                      `${sizeClasses.optionIcon} shrink-0 text-muted`,
+                      undefined,
+                      ui?.optionIcon,
+                    )
+                  "
+                />
+                <span
+                  :class="
+                    mergeDataListUiClass(
+                      `min-w-0 flex-1 truncate text-default ${sizeClasses.optionLabel}`,
+                      undefined,
+                      ui?.optionLabel,
+                    )
+                  "
+                >
+                  {{ getLabel(definition) }}
+                </span>
+                <span
+                  :class="
+                    mergeDataListUiClass(
+                      'inline-flex shrink-0 items-center text-dimmed',
+                      undefined,
+                      ui?.optionTrailingIcon,
+                    )
+                  "
+                >
+                  <UIcon name="i-lucide-chevron-right" :class="geometry.icon" />
+                </span>
+              </button>
+            </FilterSearchablePanel>
+          </div>
 
-        <div
-          v-else-if="stage === 'match-mode'"
-          :class="mergeDataListUiClass(sizeClasses.editor, undefined, ui?.panel)"
-        >
-          <FilterMatchModePanel
-            :items="operatorItems"
-            :selected="pendingOperator"
-            :size="size"
-            :ui="ui"
-            @select="openEditor"
+          <div
+            v-else-if="stage === 'match-mode'"
+            :class="mergeDataListUiClass(sizeClasses.editor, undefined, ui?.panel)"
+          >
+            <FilterMatchModePanel
+              :items="operatorItems"
+              :selected="pendingOperator"
+              :size="size"
+              :ui="ui"
+              @select="openEditor"
+            />
+          </div>
+
+          <component
+            :is="resolveFilterTagComponent(sessionDefinition)"
+            v-else-if="stage === 'editor' && sessionDefinition"
+            :definition="sessionDefinition"
+            dynamic
+            session
+            embedded
+            :initial-operator="pendingOperator"
+            @dismiss="handleSessionClosed"
+            @session-closed="handleSessionClosed"
+            @back="goBack"
           />
-        </div>
-
-        <component
-          :is="resolveFilterTagComponent(sessionDefinition)"
-          v-else-if="stage === 'editor' && sessionDefinition"
-          :definition="sessionDefinition"
-          dynamic
-          session
-          embedded
-          :initial-operator="pendingOperator"
-          @dismiss="handleSessionClosed"
-          @session-closed="handleSessionClosed"
-          @back="goBack"
-        />
-      </FilterStageTransition>
-    </template>
-  </UPopover>
+        </FilterStageTransition>
+      </template>
+    </UPopover>
+  </div>
 </template>

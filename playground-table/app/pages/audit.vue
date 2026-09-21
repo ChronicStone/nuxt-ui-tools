@@ -142,21 +142,21 @@ const schema = defineTableSchema({
       queryFn: async () => {
         await new Promise((resolve) => setTimeout(resolve, 450))
         const filtered = filterClientRows({
-          filters: request.filters,
+          filters: { type: 'group', combinator: 'and', children: request.filters },
           rows: events,
           search: request.search,
         })
         const sorted = sortClientRows({ rows: filtered, sorting: request.sorting })
         const { pagination } = request
-        const size = pagination.mode === 'cursor' ? pagination.pageSize || PAGE : PAGE
+        const size = pagination?.mode === 'cursor' ? pagination.pageSize || PAGE : PAGE
         const start =
-          pagination.mode === 'cursor' && pagination.cursor ? Number(pagination.cursor) : 0
+          pagination?.mode === 'cursor' && pagination.cursor ? Number(pagination.cursor) : 0
         const rows = sorted.slice(start, start + size)
         const next = start + size
         return {
           pageInfo: {
-            count: 'exact',
-            mode: 'cursor',
+            count: 'exact' as const,
+            mode: 'cursor' as const,
             nextCursor: next < sorted.length ? String(next) : null,
             pageSize: size,
             rowCount: sorted.length,

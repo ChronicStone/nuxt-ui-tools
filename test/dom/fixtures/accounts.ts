@@ -46,20 +46,25 @@ export interface AccountsSchemaOptions {
   actions?: boolean
   rowActions?: boolean
   selection?: { mode?: boolean | 'auto'; scope?: 'page' | 'all' }
+  selectionClear?: 'trigger' | 'success' | 'never'
   grid?: boolean
   tableEnabled?: boolean | string
   summaries?: boolean
   summariesResolve?: TableSummariesSchema['resolve']
   panelFilters?: boolean
   statusDefault?: AccountStatus[]
-  fail?: boolean
+  fail?: boolean | (() => boolean)
   controls?: TableControlsSchema
+  embeddedFacets?: boolean
 }
 
 export const bulkActionCalls: string[] = []
+export const bulkActionSelections: string[][] = []
 
 export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
   const rows = options.rows ?? createAccounts(60)
+  const shouldFail = () =>
+    typeof options.fail === 'function' ? options.fail() : Boolean(options.fail)
   return defineTableSchema({
     controls: options.controls,
     defaultLayout: 'table',
@@ -96,7 +101,9 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
           label: 'Pays',
           source: {
             facet: 'exclude-self',
-            options: COUNTRIES.map((value) => ({ label: value, value })),
+            ...(options.embeddedFacets
+              ? {}
+              : { options: COUNTRIES.map((value) => ({ label: value, value })) }),
           },
         }),
         filter.boolean('edofSync', {
@@ -151,22 +158,74 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       mode: options.selection?.mode ?? 'auto',
       scope: options.selection?.scope ?? 'all',
     },
-    source: tableSource({
-      mode: 'client',
-      query: (context) => ({
-        queryFn: async () => {
-          options.onQuery?.(context)
-          if (options.delay) {
-            await new Promise((resolve) => setTimeout(resolve, options.delay))
-          }
-          if (options.fail) {
-            throw new Error('boom')
-          }
-          return rows
-        },
-        queryKey: ['accounts', rows.length, options.fail ? 'fail' : 'ok'],
-      }),
-    }),
+    source: options.embeddedFacets
+      ? tableSource({
+          facets: true,
+          mode: 'remote',
+          query: (context) => ({
+            queryFn: async () => {
+              options.onQuery?.(context)
+              if (options.delay) {
+                await new Promise((resolve) => setTimeout(resolve, options.delay))
+              }
+              if (shouldFail()) {
+                throw new Error('boom')
+              }
+
+              const search = context.search.value.trim().toLocaleLowerCase()
+              const resolvedRows = search
+                ? rows.filter(
+                    (row) =>
+                      row.name.toLocaleLowerCase().includes(search) ||
+                      row.legalEntity.toLocaleLowerCase().includes(search),
+                  )
+                : rows
+
+              return {
+                ...(context.facets
+                  ? {
+                      facets: [
+                        {
+                          key: 'country',
+                          options: [
+                            { count: 20, value: 'FR' },
+                            { count: 20, value: 'DE' },
+                            { count: 20, value: 'ES' },
+                          ],
+                        },
+                      ],
+                    }
+                  : {}),
+                pageInfo: {
+                  count: 'exact' as const,
+                  hasNextPage: false,
+                  mode: 'offset' as const,
+                  pageIndex: 1,
+                  pageSize: resolvedRows.length,
+                  rowCount: resolvedRows.length,
+                },
+                rows: resolvedRows,
+              }
+            },
+            queryKey: ['accounts', 'remote', JSON.stringify(context)],
+          }),
+        })
+      : tableSource({
+          mode: 'client',
+          query: (context) => ({
+            queryFn: async () => {
+              options.onQuery?.(context)
+              if (options.delay) {
+                await new Promise((resolve) => setTimeout(resolve, options.delay))
+              }
+              if (shouldFail()) {
+                throw new Error('boom')
+              }
+              return rows
+            },
+            queryKey: ['accounts', rows.length, shouldFail() ? 'fail' : 'ok'],
+          }),
+        }),
     table: {
       defaultSorting: { dir: 'asc', key: 'name' },
       enabled: options.tableEnabled ?? true,
@@ -231,10 +290,16 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
       : {
           actions: [
             {
-              action: () => bulkActionCalls.push('export'),
+              action: (context) => {
+                bulkActionCalls.push('export')
+                bulkActionSelections.push(
+                  context.selectedRows.map((row) => String((row as AccountRow).id)),
+                )
+              },
               icon: 'i-lucide-download',
               key: 'export',
               label: 'Exporter',
+              selectionClear: options.selectionClear,
             },
             {
               action: () => bulkActionCalls.push('sync'),
@@ -312,7 +377,7 @@ export function createAuditSchema(
       mode: 'remote',
       query: (context) => ({
         queryFn: async () => {
-          const cursor = context.pagination.mode === 'cursor' ? context.pagination.cursor : null
+          const cursor = context.pagination?.mode === 'cursor' ? context.pagination.cursor : null
           options.onPage?.(cursor)
           if (options.delay) {
             await new Promise((resolve) => setTimeout(resolve, options.delay))
@@ -333,7 +398,7 @@ export function createAuditSchema(
         },
         queryKey: [
           'audit',
-          context.pagination.mode === 'cursor' ? context.pagination.cursor : null,
+          context.pagination?.mode === 'cursor' ? context.pagination.cursor : null,
           context.search.value,
         ],
       }),

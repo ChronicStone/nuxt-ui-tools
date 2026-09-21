@@ -1,3 +1,4 @@
+import { sameAs, withAsync, withMessage } from '@regle/rules'
 import { describe, expect, it } from 'vitest'
 import { nextTick, reactive } from 'vue'
 
@@ -134,21 +135,18 @@ describe('Regle-owned form validation', () => {
     await expect(validation.validateFields(schema.fields, [])).resolves.toBeFalsy()
   })
 
-  it('runs required and callback rules through the Regle tree', async () => {
+  it('runs required and native validators through the Regle tree', async () => {
     const schema = defineFormSchema({
       fields: [
         {
           key: 'email',
           type: 'text',
-          validation: {
-            required: true,
-            rules: [
-              {
-                name: 'domain',
-                validate: ({ api }) =>
-                  api.value.get() === 'ada@example.com' || 'Use the Ada example address.',
-              },
-            ],
+          required: true,
+          validators: {
+            domain: withMessage(
+              (value) => value === 'ada@example.com',
+              'Use the Ada example address.',
+            ),
           },
         },
       ],
@@ -174,6 +172,38 @@ describe('Regle-owned form validation', () => {
     state.email = 'ada@example.com'
     await expect(validation.validate()).resolves.toBeTruthy()
     expect(validation.getFieldError(['email'])).toBeUndefined()
+  })
+
+  it('can run native validators without the required layer', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          key: 'username',
+          required: true,
+          type: 'text',
+          validators: {
+            available: withMessage(
+              (value) => value !== 'reserved',
+              'This username is unavailable.',
+            ),
+          },
+        },
+      ],
+    })
+    const state = reactive<FormObject>({ username: '' })
+    const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => 'validators',
+      schema: () => schema,
+      state,
+    })
+
+    await expect(validation.validate()).resolves.toBeTruthy()
+
+    state.username = 'reserved'
+    await expect(validation.validate()).resolves.toBeFalsy()
+    expect(validation.getFieldError(['username'])).toBe('This username is unavailable.')
   })
 
   it('maps dotted field keys onto nested Regle state paths', async () => {
@@ -300,32 +330,22 @@ describe('Regle-owned form validation', () => {
           dependencies: [['email', 'email']],
           key: 'emailConfirmation',
           type: 'text',
-          validation: {
-            rules: [
-              {
-                name: 'matches-email',
-                validate: ({ api, deps }) =>
-                  api.value.get() === Object.getOwnPropertyDescriptor(deps, 'email')?.value ||
-                  'Email addresses do not match.',
-              },
-            ],
-          },
+          validators: ({ deps }) => ({
+            matchesEmail: withMessage(sameAs(deps.email), 'Email addresses do not match.'),
+          }),
         },
         {
           key: 'handle',
           type: 'text',
-          validation: {
-            rules: [
-              {
-                message: 'This handle is already registered.',
-                name: 'available-handle',
-                validate: async () => {
-                  await new Promise<void>((resolve) => setTimeout(resolve, 10))
-                  availabilityCheckResolved = true
-                  return false
-                },
-              },
-            ],
+          validators: {
+            availableHandle: withMessage(
+              withAsync(async () => {
+                await new Promise<void>((resolve) => setTimeout(resolve, 10))
+                availabilityCheckResolved = true
+                return false
+              }),
+              'This handle is already registered.',
+            ),
           },
         },
       ],
@@ -363,17 +383,14 @@ describe('Regle-owned form validation', () => {
             {
               key: 'email',
               type: 'text',
-              validation: {
-                rules: [
-                  {
-                    message: 'This email is already registered.',
-                    name: 'available-email',
-                    validate: async () => {
-                      await availability
-                      return false
-                    },
-                  },
-                ],
+              validators: {
+                availableEmail: withMessage(
+                  withAsync(async () => {
+                    await availability
+                    return false
+                  }),
+                  'This email is already registered.',
+                ),
               },
             },
           ],
@@ -412,18 +429,13 @@ describe('Regle-owned form validation', () => {
         {
           key: 'handle',
           type: 'text',
-          validation: {
-            rules: [
-              {
-                name: 'available-handle',
-                validate: async () => {
-                  const gate = gates[runIndex]
-                  runIndex += 1
-                  await gate.promise
-                  return true
-                },
-              },
-            ],
+          validators: {
+            availableHandle: withAsync(async () => {
+              const gate = gates[runIndex]
+              runIndex += 1
+              await gate.promise
+              return true
+            }),
           },
         },
       ],

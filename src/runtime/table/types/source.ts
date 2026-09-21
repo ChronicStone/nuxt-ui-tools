@@ -132,6 +132,17 @@ export interface TableSourceRequestContext<
   facets?: TableGlobalFacetDescriptor<TableKnownFieldPath<TRow> | string>[]
 }
 
+export interface TableRemoteSourceRequest<
+  TRow extends GenericObject = GenericObject,
+  TSortKey extends string = TableSortKey<TRow>,
+> {
+  pagination?: Exclude<TablePaginationState, { mode: 'none' }>
+  sorting: TableSortingRule<TSortKey>[]
+  filters: TableResolvedFilterGroup<TableKnownFieldPath<TRow> | string>[]
+  search: TableSourceSearchRequest<TRow>
+  facets?: TableGlobalFacetDescriptor<TableKnownFieldPath<TRow> | string>[]
+}
+
 export interface TableFacetsContext<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
@@ -171,7 +182,10 @@ export interface TableRemoteSource<
     | TableCursorPageResult<TRow, TableKnownFieldPath<TRow> | string>,
 > {
   mode: 'remote'
-  query: (ctx: TableSourceRequestContext<TRow, TContext>) => TableQueryDefinition<TResult>
+  query: (
+    request: TableRemoteSourceRequest<TRow>,
+    context: TContext,
+  ) => TableQueryDefinition<TResult>
   facets?: TableRemoteFacetSource<TRow, TContext>
 }
 

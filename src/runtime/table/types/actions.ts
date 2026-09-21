@@ -1,6 +1,6 @@
 import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 
-import type { TableSourceRequestContext } from './source'
+import type { TableRemoteSourceRequest } from './source'
 import type { TableApi } from './table-api'
 import type {
   GenericObject,
@@ -22,7 +22,7 @@ export interface TableActionContext<
   matchingCount: number | null
   context: TContext
   pageContext: TPageContext
-  request: TableSourceRequestContext<TRow, TContext>
+  request: TableRemoteSourceRequest<TRow>
 }
 
 export interface TableToolbarAction<
@@ -44,6 +44,7 @@ export interface TableBulkAction<
   TPageContext extends GenericObject = GenericObject,
 > extends TableToolbarAction<TRow, TContext, TPageContext> {
   requiresSelection?: boolean
+  selectionClear?: 'trigger' | 'success' | 'never'
 }
 
 /** Runtime state exposed for a configured toolbar or bulk action. */

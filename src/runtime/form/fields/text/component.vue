@@ -3,6 +3,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import { vMaska } from 'maska/vue'
 import { computed } from 'vue'
+import type { Directive } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
@@ -30,6 +31,16 @@ const model = computed<string | undefined>({
   set: (value) => form.setValue(props.path, normalize(value)),
 })
 const maskOptions = computed(() => maskDirectiveOptions(fieldProps.value.mask))
+const vOptionalMaska: Directive<HTMLElement, ReturnType<typeof maskDirectiveOptions>> = (
+  element,
+  binding,
+  vnode,
+  previousVnode,
+) => {
+  if (binding.value !== undefined && typeof vMaska === 'function') {
+    vMaska(element, binding, vnode, previousVnode)
+  }
+}
 const prefix = computed(() => resolveFormText(fieldProps.value.prefix))
 const suffix = computed(() => resolveFormText(fieldProps.value.suffix))
 const showClear = computed(
@@ -75,7 +86,7 @@ function clear() {
   <UInput
     v-if="bare"
     v-model="model"
-    v-maska="maskOptions"
+    v-optional-maska="maskOptions"
     v-bind="controlProps"
     :class="controlClass"
     :type="fieldProps.inputType ?? 'text'"
@@ -109,7 +120,7 @@ function clear() {
   <FormFieldShell v-else :field="field" :path="path">
     <UInput
       v-model="model"
-      v-maska="maskOptions"
+      v-optional-maska="maskOptions"
       v-bind="controlProps"
       :class="controlClass"
       :type="fieldProps.inputType ?? 'text'"

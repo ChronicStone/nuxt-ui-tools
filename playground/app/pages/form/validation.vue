@@ -3,13 +3,12 @@ import UAlert from '@nuxt/ui/components/Alert.vue'
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import { email, minLength, sameAs, withAsync, withMessage } from '@regle/rules'
 import { queryOptions } from '@tanstack/vue-query'
 import { computed, ref } from 'vue'
 
 import { defineFormSchema, useForm } from '#ui-tools/form'
 import type { FormContextData } from '#ui-tools/form'
-
-import { isString } from '../../../../src/runtime/shared/utils/predicate'
 
 function sleep(duration: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, duration))
@@ -63,9 +62,7 @@ const validationSchema = defineFormSchema({
           label: 'Full name',
           placeholder: 'Ada Lovelace',
           type: 'text',
-          validation: {
-            required: true,
-          },
+          required: true,
         },
         {
           key: 'email',
@@ -73,21 +70,8 @@ const validationSchema = defineFormSchema({
           placeholder: 'ada@example.com',
           props: { inputType: 'email' },
           type: 'text',
-          validation: {
-            required: true,
-            rules: [
-              {
-                name: 'email-format',
-                validate: ({ api }) => {
-                  const value = api.value.get()
-                  if (!value) {
-                    return true
-                  }
-                  return (isString(value) && value.includes('@')) || 'Use a valid email.'
-                },
-              },
-            ],
-          },
+          required: true,
+          validators: { email: withMessage(email, 'Use a valid email.') },
         },
         {
           description: 'Try “taken” or “admin” to see the async rule fail.',
@@ -95,29 +79,26 @@ const validationSchema = defineFormSchema({
           label: 'Workspace handle',
           placeholder: 'ada-lovelace',
           type: 'text',
-          validation: {
-            required: true,
-            rules: [
-              {
-                name: 'handle-availability',
-                validate: async ({ api }) => {
-                  const value = api.value.get()
-                  if (!value) {
-                    handleValidationState.value = 'idle'
-                    return true
-                  }
+          required: true,
+          validators: {
+            availability: withMessage(
+              withAsync(async (value) => {
+                if (!value) {
+                  handleValidationState.value = 'idle'
+                  return true
+                }
 
-                  handleValidationState.value = 'pending'
-                  await sleep(950)
-                  const handle = isString(value) ? value.trim().toLowerCase() : ''
-                  const available = !['taken', 'admin'].includes(handle)
-                  handleValidationState.value = available ? 'available' : 'taken'
-                  return available || 'That handle is reserved.'
-                },
-              },
-            ],
-            trigger: 'input',
+                handleValidationState.value = 'pending'
+                await sleep(950)
+                const handle = typeof value === 'string' ? value.trim().toLowerCase() : ''
+                const available = !['taken', 'admin'].includes(handle)
+                handleValidationState.value = available ? 'available' : 'taken'
+                return available
+              }),
+              'That handle is reserved.',
+            ),
           },
+          validation: { trigger: 'input' },
         },
       ],
       key: 'identity',
@@ -130,20 +111,9 @@ const validationSchema = defineFormSchema({
           key: 'password',
           label: 'Password',
           type: 'password',
-          validation: {
-            required: true,
-            rules: [
-              {
-                name: 'password-length',
-                validate: ({ api }) => {
-                  const value = api.value.get()
-                  if (!value) {
-                    return true
-                  }
-                  return (isString(value) && value.length >= 8) || 'Use at least 8 characters.'
-                },
-              },
-            ],
+          required: true,
+          validators: {
+            minLength: withMessage(minLength(8), 'Use at least 8 characters.'),
           },
         },
         {
@@ -151,22 +121,10 @@ const validationSchema = defineFormSchema({
           key: 'confirmPassword',
           label: 'Confirm password',
           type: 'password',
-          validation: {
-            required: true,
-            rules: [
-              {
-                name: 'password-match',
-                validate: ({ api, deps }) => {
-                  const value = api.value.get()
-                  if (!value) {
-                    return true
-                  }
-                  const password = 'password' in deps ? deps.password : null
-                  return value === password || 'Passwords must match.'
-                },
-              },
-            ],
-          },
+          required: true,
+          validators: ({ deps }) => ({
+            sameAs: withMessage(sameAs(deps.password), 'Passwords must match.'),
+          }),
         },
         {
           key: 'team',
@@ -178,9 +136,7 @@ const validationSchema = defineFormSchema({
           },
           props: { searchable: true },
           type: 'select',
-          validation: {
-            required: true,
-          },
+          required: true,
         },
       ],
       key: 'security',

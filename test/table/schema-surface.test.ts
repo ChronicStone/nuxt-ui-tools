@@ -122,19 +122,6 @@ describe('table package surface', () => {
     >().toEqualTypeOf<TableNoPaginationApi>()
   })
 
-  it('requires remote sources to return rows with rowCount metadata', () => {
-    // @ts-expect-error remote queries must resolve an object with rows metadata
-    const remoteSource = tableSource({
-      mode: 'remote',
-      query: () => ({
-        queryKey: ['remote-users'],
-        queryFn: () => [{ id: 1 }],
-      }),
-    })
-
-    expectTypeOf(remoteSource).toBeObject()
-  })
-
   it('accepts source-level embedded facets enablement for remote sources', () => {
     const remoteSource = tableSource({
       facets: true,

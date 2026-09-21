@@ -32,17 +32,17 @@ export function executeClientQuery<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
 >(params: TableClientQueryParams<TRow, TContext>): TableSourceExecutionResult<TRow> {
-  const filteredRows = filterClientRows({
+  const filteredRows = filterClientRows<TRow>({
     filters: params.request.filters,
     rows: params.rows,
     search: params.request.search,
   })
-  const sortedRows = sortClientRows({
+  const sortedRows = sortClientRows<TRow>({
     rows: filteredRows,
     sorting: params.request.sorting,
   })
 
-  return paginateClientRows({
+  return paginateClientRows<TRow>({
     pagination: params.request.pagination,
     rows: sortedRows,
   })
@@ -75,10 +75,10 @@ export function executeClientFacets<
 export function filterClientRows<TRow extends GenericObject>(params: {
   rows: Iterable<TRow>
   filters: TableResolvedFilterGroup<string>
-  search: TableSourceRequestContext<TRow>['search']
+  search: TableSourceRequestContext['search']
 }) {
   return [
-    ...lazyFilterRows(params.rows, {
+    ...lazyFilterRows<TRow>(params.rows, {
       filters: params.filters,
       search: params.search,
     }),
@@ -103,7 +103,7 @@ function* lazyFilterRows<TRow extends GenericObject>(
   rows: Iterable<TRow>,
   params: {
     filters: TableResolvedFilterGroup<string>
-    search: TableSourceRequestContext<TRow>['search']
+    search: TableSourceRequestContext['search']
   },
 ): Generator<TRow> {
   for (const row of rows) {
@@ -154,7 +154,7 @@ function resolveClientFacet<
 
 function matchesSearch<TRow extends GenericObject>(
   row: TRow,
-  search: TableSourceRequestContext<TRow>['search'],
+  search: TableSourceRequestContext['search'],
 ): boolean {
   if (!search.value.trim().length || !search.fields.length) {
     return true

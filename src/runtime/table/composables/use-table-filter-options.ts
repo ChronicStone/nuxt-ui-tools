@@ -254,7 +254,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     resolveFilterOptionEntries({
       definition: options.definition,
       deriveCounts: false,
-      facetCounts: shouldResolveCounts.value ? resolvedFacetCounts.value : [],
+      facetCounts: resolvedFacetCounts.value,
       missingCountFallback: shouldResolveCounts.value && usesFacetCounts.value ? 0 : undefined,
       options: hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value,
       rows: [],
@@ -336,6 +336,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     isStaleLoading,
     refresh: () => Promise.all([optionQuery.refetch(), perFilterFacetQuery.refetch()]),
     searchExpandedIds: computed(() => filteredTreeState.value.expandedIds),
+    showCounts: computed(() => shouldDeriveCounts.value && usesFacetCounts.value),
     sourceEntries: selectableSourceEntries,
     sourceTreeEntries: resolvedSourceTreeEntries,
   }
