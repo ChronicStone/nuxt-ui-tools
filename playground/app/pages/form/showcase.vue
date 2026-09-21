@@ -839,8 +839,24 @@ const showcaseForm = defineFormSchema({
       key: 'security.password',
       label: 'Password',
       type: 'password',
-      validators: {
-        minLength: withMessage(minLength(8), 'Password must be at least 8 characters.'),
+      props: {
+        requirements: [
+          {
+            key: 'length',
+            label: 'At least 8 characters',
+            validate: (value: string) => value.length >= 8,
+          },
+          {
+            key: 'uppercase',
+            label: 'At least one uppercase letter',
+            validate: (value: string) => /[A-Z]/u.test(value),
+          },
+          {
+            key: 'number',
+            label: 'At least one number',
+            validate: (value: string) => /\d/u.test(value),
+          },
+        ],
       },
     },
     {

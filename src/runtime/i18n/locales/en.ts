@@ -62,6 +62,7 @@ export default defineUiToolsLocale<Messages>({
         },
         password: {
           hide: 'Hide password',
+          requirements: 'Password requirements',
           show: 'Show password',
         },
         phone: {

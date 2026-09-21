@@ -317,6 +317,7 @@ export interface UiToolsFormMessages {
     password: {
       show: string
       hide: string
+      requirements: string
     }
     options: {
       refresh: string

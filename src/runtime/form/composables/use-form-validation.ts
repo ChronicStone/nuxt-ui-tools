@@ -6,6 +6,7 @@ import type { Ref } from 'vue'
 
 import { calendarSeedFromValue, isDateFamilyRange } from '../fields/date-family/utils'
 import type { FormDateFamilyType, FormDateSeedValue } from '../fields/date-family/utils'
+import type { FormPasswordRequirement } from '../fields/password/types'
 import type {
   FormValue,
   FormErrorOptions,
@@ -35,7 +36,7 @@ import {
   resolveRequiredMessage,
   shouldRenderField,
 } from '../utils/state'
-import { resolveFormBoundaryText } from '../utils/text'
+import { resolveFormBoundaryText, resolveFormText } from '../utils/text'
 import type { FormFieldApiFactory } from './use-form-state'
 
 type RegleRule = (value: FormValue) => boolean | Promise<boolean>
@@ -632,6 +633,7 @@ function buildLeafRules(params: {
   }
 
   applyDateBoundsRules(output, params)
+  applyPasswordRequirementRules(output, params)
 
   const authoredValidators: FormValidatorsConfig | undefined =
     'validators' in params.field ? params.field.validators : undefined
@@ -651,6 +653,30 @@ function buildLeafRules(params: {
   }
 
   return output
+}
+
+function applyPasswordRequirementRules(
+  output: RegleRuleTree,
+  params: Parameters<typeof buildLeafRules>[0],
+) {
+  if (params.field.type !== 'password') {
+    return
+  }
+
+  const authoredProps = Object.getOwnPropertyDescriptor(params.field, 'props')?.value
+  const resolvedProps = isFunction(authoredProps)
+    ? authoredProps(params.callbackParams)
+    : authoredProps
+  if (!isObject(resolvedProps) || !Array.isArray(resolvedProps.requirements)) {
+    return
+  }
+
+  for (const requirement of resolvedProps.requirements as readonly FormPasswordRequirement[]) {
+    output[`requirement:${requirement.key}`] = withMessage(
+      (value: FormValue) => isEmptyValue(value) || (isString(value) && requirement.validate(value)),
+      resolveFormText(requirement.label) ?? requirement.key,
+    )
+  }
 }
 
 function isValidatorMap(value: FormValidatorsConfig | undefined): value is FormValidators {
