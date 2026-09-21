@@ -2,6 +2,7 @@
 import { isNullish } from '../../../../shared/utils/predicate'
 import type { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
+import FilterOptionListEnd from './filter-option-list-end.vue'
 import FilterOptionLoadingList from './filter-option-loading-list.vue'
 import FilterOptionMultipleList from './filter-option-multiple-list.vue'
 import FilterOptionSingleList from './filter-option-single-list.vue'
@@ -136,5 +137,20 @@ function handleSelect(options: {
         :ui="props.ui"
       />
     </template>
+
+    <FilterOptionListEnd
+      v-if="
+        props.state.optionSource.remote.enabled.value && !props.state.optionSource.isLoading.value
+      "
+      :remote="props.state.optionSource.remote"
+      :indicator="
+        props.state.filterUi.value.selection.mode === 'multiple' ||
+        props.state.filterUi.value.presentation === 'tree'
+          ? 'checkbox'
+          : 'radio'
+      "
+      :size="props.size"
+      :ui="props.ui"
+    />
   </FilterSearchablePanel>
 </template>

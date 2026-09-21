@@ -359,6 +359,8 @@ export default defineUiToolsLocale<Messages>({
         },
         options: {
           empty: 'No matching options.',
+          loadError: 'Options could not be loaded.',
+          retry: 'Retry',
         },
         panel: {
           apply: 'Apply',

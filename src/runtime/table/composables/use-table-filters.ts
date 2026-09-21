@@ -25,6 +25,7 @@ import {
 } from '../utils'
 import type { FilterPreviewOptionEntry } from '../utils/filters/preview'
 import type { UseTableDataReturn } from './use-table-data'
+import { useTableFilterSelectedOptions } from './use-table-filter-selected-options'
 import { useTableSearch } from './use-table-search'
 import type { useTableState } from './use-table-state'
 
@@ -57,6 +58,10 @@ export function useTableFilters(params: UseTableFiltersParams) {
     }),
   )
   const hasActiveUiFilters = computed(() => activeUiFilters.value.length > 0)
+  const selectedOptions = useTableFilterSelectedOptions({
+    definitions,
+    rules: effectiveUiFilters,
+  })
 
   function getDefinition(input: { key: string }) {
     return definitions.value.find(
@@ -130,7 +135,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
 
     const preview = buildFilterPreview({
       definition,
-      optionEntries: input.entries,
+      optionEntries: withSelectedOptions(input.key, input.entries),
       rule: getFilterState({ key: input.key }),
     })
 
@@ -142,6 +147,25 @@ export function useTableFilters(params: UseTableFiltersParams) {
       active: !isNullish(rule) && hasValue,
       dirty: !isNullish(getActiveFilterState({ key: input.key })),
     }
+  }
+
+  /** Adds the known options of remote filters' committed values to the entries a preview reads. */
+  function withSelectedOptions(key: string, entries: FilterPreviewOptionEntry[] = []) {
+    const listed = new Set(entries.map((entry) => String(entry.value)))
+    const missing = selectedOptions
+      .getSelectedOptions(key)
+      .filter((entry) => !listed.has(String(entry.value)))
+    return missing.length
+      ? [
+          ...entries,
+          ...missing.map((entry) => ({
+            color: entry.color,
+            icon: entry.icon,
+            label: getFilterLabelText({ label: entry.label }),
+            value: entry.value,
+          })),
+        ]
+      : entries
   }
 
   function getFilterOperator(input: { key: string }) {
@@ -352,6 +376,7 @@ export function useTableFilters(params: UseTableFiltersParams) {
     replaceFilters,
     searchPlaceholder: search.searchPlaceholder,
     searchQuery: search.searchQuery,
+    selectedOptions,
     setFilterOperator,
     setOptionFilterValues,
     setScalarFilterValue,

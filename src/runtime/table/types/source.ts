@@ -95,6 +95,11 @@ export interface TableFacetRequestDescriptor<TKey extends string = string> {
   search?: string
   limit?: number
   cursor?: string | null
+  /**
+   * Values to count, and only these. Filters loading options page by page (`source.remote`) send
+   * the values of one loaded page, since no single request can know every value.
+   */
+  values?: readonly (string | number | boolean)[]
 }
 
 export interface TableFacetOptionResult<TValue = unknown> {

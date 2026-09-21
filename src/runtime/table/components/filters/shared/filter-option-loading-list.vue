@@ -10,9 +10,11 @@ const props = withDefaults(
   defineProps<{
     size?: DataListControlSize
     indicator?: 'checkbox' | 'radio'
+    /** Placeholder rows. */
+    count?: number
     ui?: DataListFilterEditorUi
   }>(),
-  { indicator: 'radio' },
+  { count: 5, indicator: 'radio' },
 )
 
 const dataListUi = useDataListUi()
@@ -25,7 +27,7 @@ const sizeClasses = computed(() => resolveFilterEditorSizeClasses(resolvedSize.v
 <template>
   <div :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
     <div
-      v-for="index in 5"
+      v-for="index in props.count"
       :key="index"
       :class="
         mergeDataListUiClass(

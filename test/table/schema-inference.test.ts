@@ -261,4 +261,42 @@ describe('defineTableSchema inference', () => {
 
     expectTypeOf<ExternalRow['scope']>().toEqualTypeOf<'admin' | 'client'>()
   })
+
+  it('infers remote option values from the page loader into resolveSelected', () => {
+    defineTableSchema({
+      filters: {
+        ui: (filter) => [
+          filter.option('organisation.status', {
+            label: 'Status',
+            source: {
+              remote: {
+                load: ({ page, search }) => {
+                  expectTypeOf(page.index).toEqualTypeOf<number>()
+                  expectTypeOf(page.cursor).toEqualTypeOf<string | null>()
+                  return {
+                    queryFn: async () => ({
+                      hasMore: false,
+                      options: [{ label: 'Active', value: 'active' as const }],
+                    }),
+                    queryKey: ['statuses', search, page.index],
+                  }
+                },
+                pagination: { size: 20, type: 'page' },
+                resolveSelected: ({ values }) => {
+                  expectTypeOf(values).toEqualTypeOf<readonly 'active'[]>()
+                  return { queryFn: async () => [], queryKey: ['statuses', 'selected', values] }
+                },
+              },
+            },
+          }),
+        ],
+      },
+      rowKey: 'id',
+      source: tableSource({
+        query: () => ({ queryFn: getDemoEmployeeList, queryKey: ['demo-users'] }),
+      }),
+      table: { columns: (column) => [column.field('email', { label: 'Email' })] },
+      tableKey: 'remote-status',
+    })
+  })
 })

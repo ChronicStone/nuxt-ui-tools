@@ -100,7 +100,11 @@ export function prefetchTable<const TSchema extends { source: object }>(params: 
         schema,
       })
 
-      return resolveTableQueries({ request, schema })
+      return resolveTableQueries({
+        request,
+        rules: resolveFilterState(params.route, schema).ui,
+        schema,
+      })
     })
     .stage((stageContext) => {
       const rows = resolvePrefetchedRows(stageContext.source)
@@ -147,6 +151,8 @@ function resolveContextData(
 function resolveTableQueries(options: {
   schema: TableSchemaView
   request: TableSourceRequestContext<GenericObject, TablePrefetchContext, string>
+  /** Committed UI filter rules of the destination route, defaults included. */
+  rules: TableFilterState<string>['ui']
 }): QueryPrefetchQueries {
   const entries: (readonly [string, QueryPrefetchOption])[] = [
     [
@@ -174,6 +180,15 @@ function resolveTableQueries(options: {
   }
 
   for (const definition of definitions) {
+    // Options of values restored from the URL, so tags render labels on first paint.
+    const selectedOptions = resolveRemoteSelectedQuery(definition, options.rules)
+    if (selectedOptions) {
+      entries.push([
+        `filter-selected-options:${definition.key}`,
+        withQueryDefaults(selectedOptions, QUERY_DEFAULTS.staleTime.filterOptions),
+      ])
+    }
+
     if (definition.kind === 'option' && isOptionQueryResolver(definition.source?.query)) {
       entries.push([
         `filter-options:${definition.key}`,
@@ -216,6 +231,24 @@ function resolveTableQueries(options: {
   }
 
   return Object.fromEntries(entries)
+}
+
+/** `resolveSelected` query of a remote option filter for its committed values, as the table issues it. */
+function resolveRemoteSelectedQuery(
+  definition: TableUiFilterDefinition,
+  rules: TableFilterState<string>['ui'],
+) {
+  const resolve =
+    definition.kind === 'option' ? definition.source?.remote?.resolveSelected : undefined
+  if (!resolve) return
+  const rule = rules.find((entry) => entry.key === definition.key)
+  const values = (
+    Array.isArray(rule?.value) ? rule.value : isNullish(rule?.value) ? [] : [rule.value]
+  ).filter(
+    (value): value is string | number | boolean =>
+      isString(value) || isNumber(value) || isBoolean(value),
+  )
+  return values.length ? resolve({ values }) : undefined
 }
 
 function resolveSourcePrefetchQuery(options: {

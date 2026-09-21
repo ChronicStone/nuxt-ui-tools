@@ -129,6 +129,62 @@ describe('table query prefetch', () => {
     ])
   })
 
+  it('prefetches the options of URL-restored remote filter values, never their pages', async () => {
+    let pageCalls = 0
+    const resolved: (readonly (string | number | boolean)[])[] = []
+    const tasks: { id: string; ownerId: string }[] = []
+    const schema = defineTableSchema({
+      filters: {
+        ui: (filter) => [
+          filter.option('ownerId', {
+            label: 'Owner',
+            source: {
+              remote: {
+                load: ({ page, search }) => ({
+                  queryFn: () => {
+                    pageCalls += 1
+                    return { hasMore: false, options: [] }
+                  },
+                  queryKey: ['owners', search, page.index],
+                }),
+                resolveSelected: ({ values }) => ({
+                  queryFn: () => {
+                    resolved.push(values)
+                    return values.map((value) => ({ label: `Owner ${value}`, value }))
+                  },
+                  queryKey: ['owners', 'selected', values],
+                }),
+              },
+            },
+          }),
+        ],
+      },
+      rowKey: 'id',
+      source: tableSource({
+        mode: 'remote',
+        query: (request) => ({
+          queryFn: () => ({ rowCount: 0, rows: tasks }),
+          queryKey: ['tasks', request],
+        }),
+      }),
+      table: { columns: (column) => [column.field('ownerId', { label: 'Owner' })] },
+      tableKey: 'tasks',
+    })
+    const queryClient = new QueryClient()
+
+    await executeQueryPrefetchPlan(
+      prefetchTable({ route: { query: { 'f.ui.ownerId': 'u2,u5' } }, schema }),
+      { queryClient },
+    )
+
+    // The runtime resolves the same values under the same key, so its first render reuses this.
+    expect([resolved, pageCalls]).toStrictEqual([[['u2', 'u5']], 0])
+    expect(queryClient.getQueryData(['owners', 'selected', ['u2', 'u5']])).toStrictEqual([
+      { label: 'Owner u2', value: 'u2' },
+      { label: 'Owner u5', value: 'u5' },
+    ])
+  })
+
   it('prefetches cursor sources into the runtime infinite-query cache shape', async () => {
     let pageContextRows = 0
     const schema = defineTableSchema({

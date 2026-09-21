@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/vue-query'
-import { computed, unref } from 'vue'
+import { useQueries, useQuery } from '@tanstack/vue-query'
+import type { QueryFunctionContext } from '@tanstack/vue-query'
+import { computed, unref, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 
 import {
@@ -35,6 +36,13 @@ import {
 } from '../utils'
 import type { UseTableDataReturn } from './use-table-data'
 import type { useTableFilters } from './use-table-filters'
+import { useTableRemoteFilterOptions } from './use-table-remote-filter-options'
+
+/** Counts of one page of remote options, with the values that were asked for. */
+interface PageFacetCounts {
+  result: TableFacetExecutionResult
+  values: readonly (string | number | boolean)[]
+}
 
 export interface UseTableFilterOptionsParams {
   definition: TableOptionFilterDefinition | TableBooleanFilterDefinition
@@ -85,9 +93,17 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     () => shouldDeriveCounts.value && isActive.value && isReady.value,
   )
   const isRemoteTable = computed(() => options.schema.value.source.mode === 'remote')
+  const remoteConfig = computed(() => optionDefinition.value?.source?.remote)
+  /** Options load page by page from `source.remote`, which wins over `options` and `query`. */
+  const hasRemotePages = computed(() => Boolean(remoteConfig.value))
   const hasRemoteOptionQuery = computed(
-    () => options.definition.kind === 'option' && isFunction(options.definition.source?.query),
+    () =>
+      !hasRemotePages.value &&
+      options.definition.kind === 'option' &&
+      isFunction(options.definition.source?.query),
   )
+  /** The server filters options by the search term. */
+  const hasServerOptions = computed(() => hasRemotePages.value || hasRemoteOptionQuery.value)
   const facetSpec = computed(() => options.definition.source?.facet)
   const facetConfig = computed<TableFilterFacetConfig | null>(() =>
     isFacetConfig(facetSpec.value) ? facetSpec.value : null,
@@ -98,11 +114,16 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       Boolean(facetSpec.value) &&
       (options.schema.value.source.mode === 'client' ||
         hasPerFilterFacetQuery.value ||
-        (isRemoteTable.value && Boolean(remoteSource.value?.facets))),
+        // The main request cannot count options it never lists: paged options need `facet.query`.
+        (isRemoteTable.value && Boolean(remoteSource.value?.facets) && !hasRemotePages.value)),
+  )
+  /** Paged options on a remote table count through the filter's facet query, page by page. */
+  const countsPagesRemotely = computed(
+    () => hasRemotePages.value && isRemoteTable.value && hasPerFilterFacetQuery.value,
   )
   const resolvedTreeSearchMode = computed(() => {
     if (optionUi.value?.presentation !== 'tree') {
-      return hasRemoteOptionQuery.value ? 'remote' : 'local'
+      return hasServerOptions.value ? 'remote' : 'local'
     }
 
     const configured = optionUi.value.tree.searchMode
@@ -110,10 +131,10 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     if (configured === 'local' || configured === 'remote') {
       return configured
     }
-    return hasRemoteOptionQuery.value ? 'remote' : 'local'
+    return hasServerOptions.value ? 'remote' : 'local'
   })
   const querySearch = computed(() => {
-    if (!hasRemoteOptionQuery.value) {
+    if (!hasServerOptions.value) {
       return
     }
     if (resolvedTreeSearchMode.value === 'local') {
@@ -137,6 +158,35 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       key: options.definition.key,
     }),
   )
+
+  const remotePages = useTableRemoteFilterOptions({
+    config: remoteConfig,
+    enabled: computed(() => isActive.value && isReady.value),
+    search: computed(() => querySearch.value ?? ''),
+  })
+  // Options of picked values stay known after the pages that listed them are gone.
+  watch(
+    [remotePages.entries, selectedValues],
+    ([entries, values]) => {
+      if (!hasRemotePages.value || !values.length) return
+      const picked = new Set(values.map(String))
+      options.filters.selectedOptions.remember(
+        options.definition.key,
+        flattenRawOptionEntries(entries).filter((entry) => picked.has(String(entry.value))),
+      )
+    },
+    { immediate: true },
+  )
+  /** Loaded pages, led by the committed values the pages do not list (with their resolved labels). */
+  const remotePageEntries = computed<TableFilterOptionEntry[]>(() => {
+    const listed = new Set(
+      flattenRawOptionEntries(remotePages.entries.value).map((entry) => String(entry.value)),
+    )
+    const selected = options.filters.selectedOptions
+      .getSelectedOptions(options.definition.key)
+      .filter((entry) => !listed.has(String(entry.value)))
+    return [...selected, ...remotePages.entries.value]
+  })
 
   const optionQuery = useQuery<TableFilterOptionEntry[] | TableFilterOptionQueryResult>(
     computed(() => {
@@ -181,7 +231,12 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
 
   const perFilterFacetQuery = useQuery<TableFacetExecutionResult>(
     computed(() => {
-      if (!isRemoteTable.value || !usesFacetCounts.value || !facetConfig.value?.query) {
+      if (
+        !isRemoteTable.value ||
+        !usesFacetCounts.value ||
+        !facetConfig.value?.query ||
+        countsPagesRemotely.value
+      ) {
         return {
           enabled: false,
           queryFn: async (): Promise<TableFacetExecutionResult> => ({ facets: [] }),
@@ -230,9 +285,73 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     return result?.options ? [...result.options] : []
   })
 
+  /**
+   * Values each page facet request counts: the committed values the pages do not list, then each
+   * loaded page. A new page adds one request instead of re-counting the earlier ones.
+   */
+  const pageFacetRequests = computed<(string | number | boolean)[][]>(() => {
+    if (!countsPagesRemotely.value || !shouldResolveCounts.value) return []
+    const paged = remotePages.pageValues.value
+    const listed = new Set(paged.flat().map(String))
+    const outside = options.filters.selectedOptions
+      .getSelectedOptions(options.definition.key)
+      .map((entry) => entry.value)
+      .filter((value) => !listed.has(String(value)))
+    return [outside, ...paged].filter((values) => values.length > 0)
+  })
+  const pageFacetQueries = useQueries({
+    queries: computed(() => {
+      const config = facetConfig.value
+      const query = config?.query
+      if (!query) return []
+      return pageFacetRequests.value.map((values) => {
+        const definition = unref(
+          query({
+            facets: [{ key: options.definition.key, mode: resolveTableFacetMode(config), values }],
+            table: options.queryContent.facetsBaseContext.value,
+          }),
+        )
+        return {
+          // The table's own cache entry: it keeps the requested values next to their counts.
+          queryFn: async (context: QueryFunctionContext): Promise<PageFacetCounts> => {
+            if (!definition.queryFn) {
+              throw new Error('facet.query must return a query definition with a queryFn.')
+            }
+            const result = await definition.queryFn({
+              ...context,
+              direction: 'forward',
+              pageParam: null,
+              queryKey: definition.queryKey,
+            })
+            return { result, values }
+          },
+          queryKey: ['table-filter-page-facets', ...definition.queryKey],
+          refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+          staleTime: QUERY_DEFAULTS.staleTime.filterOptions,
+        }
+      })
+    }),
+  })
+  /** Counts of every requested page value; values the server left out count 0. */
+  const pageFacetCounts = computed<TableFacetOptionResult[]>(() =>
+    pageFacetQueries.value.flatMap((query) => {
+      if (!query.data) return []
+      const counted = new Map(
+        query.data.result.facets
+          .filter((facet) => facet.key === options.definition.key)
+          .flatMap((facet) => facet.options)
+          .map((option) => [String(option.value), option.count] as const),
+      )
+      return query.data.values.map((value) => ({ count: counted.get(String(value)) ?? 0, value }))
+    }),
+  )
+
   const facetCounts = computed<TableFacetOptionResult[]>(() => {
     if (!usesFacetCounts.value) {
       return []
+    }
+    if (countsPagesRemotely.value) {
+      return pageFacetCounts.value
     }
 
     const facets =
@@ -255,8 +374,17 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       definition: options.definition,
       deriveCounts: false,
       facetCounts: resolvedFacetCounts.value,
-      missingCountFallback: shouldResolveCounts.value && usesFacetCounts.value ? 0 : undefined,
-      options: hasRemoteOptionQuery.value ? remoteEntries.value : staticEntries.value,
+      // Paged options without counts yet stay unknown (a placeholder) until their page is counted.
+      missingCountFallback:
+        shouldResolveCounts.value && usesFacetCounts.value && !countsPagesRemotely.value
+          ? 0
+          : undefined,
+      options: hasRemotePages.value
+        ? remotePageEntries.value
+        : hasRemoteOptionQuery.value
+          ? remoteEntries.value
+          : staticEntries.value,
+      authoritative: hasRemotePages.value,
       rows: [],
       selectedValues: selectedValues.value,
     }),
@@ -308,7 +436,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       )
     }
 
-    if (!normalizedSearch.value.length || hasRemoteOptionQuery.value) {
+    if (!normalizedSearch.value.length || hasServerOptions.value) {
       return selectableSourceEntries.value
     }
 
@@ -317,29 +445,70 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     )
   })
 
-  const isInitialLoading = computed(
-    () => optionQuery.isLoading.value && !optionQuery.isPlaceholderData.value,
+  const isInitialLoading = computed(() =>
+    hasRemotePages.value
+      ? remotePages.isLoading.value
+      : optionQuery.isLoading.value && !optionQuery.isPlaceholderData.value,
   )
-  const isStaleLoading = computed(() => !isInitialLoading.value && optionQuery.isFetching.value)
+  const isStaleLoading = computed(() =>
+    hasRemotePages.value
+      ? remotePages.isRefreshing.value
+      : !isInitialLoading.value && optionQuery.isFetching.value,
+  )
   const isCountLoading = computed(
-    () => isRemoteTable.value && shouldResolveCounts.value && perFilterFacetQuery.isFetching.value,
+    () =>
+      isRemoteTable.value &&
+      shouldResolveCounts.value &&
+      !countsPagesRemotely.value &&
+      perFilterFacetQuery.isFetching.value,
   )
 
   return {
-    error: computed(() => optionQuery.error.value ?? perFilterFacetQuery.error.value),
+    error: computed(
+      () =>
+        (hasRemotePages.value ? remotePages.error.value : optionQuery.error.value) ??
+        perFilterFacetQuery.error.value,
+    ),
     facetCounts,
     filteredEntries,
     filteredTreeEntries: computed(() => filteredTreeState.value.entries),
     isCountLoading,
-    isError: computed(() => optionQuery.isError.value || perFilterFacetQuery.isError.value),
+    isError: computed(
+      () =>
+        (hasRemotePages.value ? remotePages.failed.value : optionQuery.isError.value) ||
+        perFilterFacetQuery.isError.value,
+    ),
     isLoading: isInitialLoading,
     isStaleLoading,
-    refresh: () => Promise.all([optionQuery.refetch(), perFilterFacetQuery.refetch()]),
+    refresh: () =>
+      Promise.all([
+        hasRemotePages.value ? remotePages.retry() : optionQuery.refetch(),
+        perFilterFacetQuery.refetch(),
+      ]),
+    /** Paging of `source.remote`: the editor list loads the next page ahead of the scroll. */
+    remote: {
+      enabled: hasRemotePages,
+      failed: remotePages.failed,
+      hasMore: remotePages.hasMore,
+      loadMore: remotePages.loadMore,
+      loadingMore: remotePages.loadingMore,
+      prefetchDistance: remotePages.prefetchDistance,
+      retry: remotePages.retry,
+    },
     searchExpandedIds: computed(() => filteredTreeState.value.expandedIds),
     showCounts: computed(() => shouldDeriveCounts.value && usesFacetCounts.value),
     sourceEntries: selectableSourceEntries,
     sourceTreeEntries: resolvedSourceTreeEntries,
   }
+}
+
+function flattenRawOptionEntries(
+  entries: readonly TableFilterOptionEntry[],
+): TableFilterOptionEntry[] {
+  return entries.flatMap((entry) => [
+    ...(isNullish(entry.value) ? [] : [entry]),
+    ...flattenRawOptionEntries(entry.children ?? []),
+  ])
 }
 
 function isFacetConfig(value: TableFilterFacetSpec | undefined): value is TableFilterFacetConfig {

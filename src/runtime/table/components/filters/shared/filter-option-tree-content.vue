@@ -18,6 +18,8 @@ interface TreeEntry {
   label: string
   value?: string | number | boolean
   count?: number
+  /** Counts are shown but this option's is not known yet. */
+  countPending?: boolean
   icon?: string
   depth: number
   expandable: boolean
@@ -36,6 +38,7 @@ const props = defineProps<{
     label: string
     value: string
     count?: number
+    countPending?: boolean
     icon?: string
     truncate?: boolean
     depth: number
@@ -177,7 +180,7 @@ function activateTreeEntry(entry: TreeEntry) {
       </button>
 
       <USkeleton
-        v-if="countLoading"
+        v-if="countLoading || entry.countPending"
         :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
       />
       <span
@@ -249,7 +252,7 @@ function activateTreeEntry(entry: TreeEntry) {
           {{ item.label }}
         </span>
         <USkeleton
-          v-if="countLoading"
+          v-if="countLoading || item.countPending"
           :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
         />
         <span v-else-if="item.count != null" class="shrink-0 text-muted">

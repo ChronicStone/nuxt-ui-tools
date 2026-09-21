@@ -22,6 +22,8 @@ export function resolveFilterOptionEntries(options: {
   deriveCounts?: boolean
   facetCounts?: { value: string | number | boolean; count: number }[]
   missingCountFallback?: number
+  /** `options` is the complete answer (remote pages): an empty list stays empty instead of listing facet values. */
+  authoritative?: boolean
 }) {
   if (options.definition.kind === 'boolean') {
     return createBooleanEntries({
@@ -39,13 +41,14 @@ export function resolveFilterOptionEntries(options: {
   }
 
   const configuredOptions = options.options ?? options.definition.source?.options ?? []
-  const sourceOptions = configuredOptions.length
-    ? configuredOptions
-    : (options.facetCounts ?? []).map((entry) => ({
-        count: entry.count,
-        label: String(entry.value),
-        value: entry.value,
-      }))
+  const sourceOptions =
+    configuredOptions.length || options.authoritative
+      ? configuredOptions
+      : (options.facetCounts ?? []).map((entry) => ({
+          count: entry.count,
+          label: String(entry.value),
+          value: entry.value,
+        }))
   const countByValue = new Map(
     (options.facetCounts ?? []).map((entry) => [String(entry.value), entry.count] as const),
   )

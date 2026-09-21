@@ -1,4 +1,10 @@
 import type {
+  RemoteOptionsPageRequest,
+  RemoteOptionsPagination,
+  RemoteOptionsResult,
+  RemoteOptionsSearch,
+} from '../../shared/types/remote-options'
+import type {
   TableFilterOperator,
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
@@ -637,6 +643,53 @@ export interface TableFilterOptionQueryContext {
 export type TableFilterOptionQueryResult<TValue = TableFilterPrimitiveValue> =
   TableFilterOptionQueryResultForPresentation<TValue, TableOptionFilterPresentation>
 
+/** Page requested from a remote option filter source. */
+export interface TableFilterRemoteOptionsRequest {
+  /** Current debounced search term. Empty when the editor lists unfiltered options. */
+  search: string
+  /** Requested page: `index` (1-based) for page pagination, `cursor` for cursor pagination. */
+  page: RemoteOptionsPageRequest
+}
+
+/** Selected values a remote option filter needs options for. */
+export interface TableFilterRemoteSelectedRequest<TValue = TableFilterPrimitiveValue> {
+  /** Committed filter values that the options loaded so far do not contain. */
+  values: readonly TValue[]
+}
+
+/**
+ * Remote option source loaded page by page, following the form engine's remote options:
+ * server-side search, page or cursor pagination loaded ahead of the scroll, and options for
+ * selected values the loaded pages do not contain (for example values restored from the URL).
+ */
+export interface TableFilterRemoteOptions<
+  TValue = TableFilterPrimitiveValue,
+  TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
+> {
+  /** Query definition of one page of options for the current search term. */
+  load: (
+    request: TableFilterRemoteOptionsRequest,
+  ) => TableQueryDefinition<
+    RemoteOptionsResult<TableOptionEntryForPresentation<TValue, TPresentation>>
+  >
+  /**
+   * Query definition resolving the options of selected values the loaded pages do not contain, so
+   * tags and editors show their labels. Without it, such values show as their raw value.
+   */
+  resolveSelected?: {
+    bivarianceHack(
+      request: TableFilterRemoteSelectedRequest<TValue>,
+    ): TableQueryDefinition<readonly TableOptionEntryForPresentation<TValue, TPresentation>[]>
+  }['bivarianceHack']
+  /**
+   * Page size, and how far before the list end the next page loads. Defaults to
+   * `{ type: 'page', size: 25 }` with the next page requested three viewport heights ahead.
+   */
+  pagination?: RemoteOptionsPagination
+  /** Search debounce (default 250 ms) and minimum term length (default 0). */
+  search?: RemoteOptionsSearch
+}
+
 export type TableFilterFacetMode = boolean | 'exclude-self' | 'include-self'
 
 export interface TableFilterFacetQueryContext<
@@ -756,12 +809,18 @@ export interface TableOptionFilterDefinition<
   kind: 'option'
   source?: {
     options?: readonly TableOptionEntryForPresentation<TValue, TPresentation>[]
+    /** Loads the whole option list in one query. For large lists, prefer `remote`. */
     query?: (
       context: TableFilterOptionQueryContext,
     ) => TableQueryDefinition<
       | TableOptionEntryForPresentation<TValue, TPresentation>[]
       | TableFilterOptionQueryResultForPresentation<TValue, TPresentation>
     >
+    /**
+     * Loads options page by page with server-side search, as the editor scrolls. Takes precedence
+     * over `options` and `query`.
+     */
+    remote?: TableFilterRemoteOptions<TValue, TPresentation>
     facet?: TableFilterFacetSpec<TRow, TContext, TKey>
     sort?: 'alpha' | 'count'
   }

@@ -125,7 +125,7 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
         </button>
 
         <USkeleton
-          v-if="props.showCounts && props.countLoading"
+          v-if="props.showCounts && (props.countLoading || entry.count == null)"
           :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
         />
         <span
