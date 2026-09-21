@@ -82,7 +82,9 @@ const isFirstLoad = computed(
     (!rowsMounted.value && rows.value.length > 0),
 )
 const refreshing = computed(
-  () => rows.value.length > 0 && (status.value.isFetching || status.value.isRefreshing),
+  () =>
+    rows.value.length > 0 &&
+    (status.value.isFetching || status.value.isRefreshing || status.value.isRevalidating),
 )
 const error = computed(() => (rows.value.length === 0 ? internals.queryContent.error.value : null))
 const empty = computed(() => !isFirstLoad.value && !error.value && rows.value.length === 0)
@@ -711,7 +713,11 @@ defineExpose({ resetColumnSizing })
               </th>
             </template>
           </tr>
-          <tr v-if="refreshing" class="nut-dl-progress" aria-hidden="true">
+          <tr
+            class="nut-dl-progress"
+            :data-active="refreshing"
+            aria-hidden="true"
+          >
             <th
               :colspan="leafColumns.length"
               class="sticky top-[var(--nut-dl-head-h)] z-[3] h-0 p-0"
@@ -1191,12 +1197,19 @@ tbody .nut-dl-table__spacer {
 }
 .nut-dl-progress th span {
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--nut-dl-accent), transparent);
   background-size: 40% 100%;
-  animation: nut-dl-progress 1s ease-in-out infinite;
+  opacity: 0;
+  animation: nut-dl-progress 1s ease-in-out infinite paused;
+  transition: opacity 120ms ease-out;
+}
+.nut-dl-progress[data-active='true'] th span {
+  opacity: 1;
+  animation-play-state: running;
 }
 @keyframes nut-dl-progress {
   from {

@@ -95,6 +95,22 @@ describe('TableRenderer skeleton and tokens', () => {
 })
 
 describe('TableRenderer structure', () => {
+  it('shows the header progress line while existing rows revalidate', async () => {
+    harness = await mountTable({ schema: createAccountsSchema({ delay: 80 }) })
+    const progress = harness.wrapper.find('.nut-dl-progress')
+
+    expect(progress.attributes('data-active')).toBe('false')
+    expect(harness.wrapper.findAll('tbody tr.nut-dl-row').length).toBeGreaterThan(0)
+
+    const refresh = harness.internals.queryContent.refreshData()()
+    await harness.until(() => progress.attributes('data-active') === 'true')
+
+    expect(harness.wrapper.findAll('tbody tr.nut-dl-row').length).toBeGreaterThan(0)
+
+    await refresh
+    await harness.until(() => progress.attributes('data-active') === 'false')
+  })
+
   it('keeps the table header visible and renders the retry state inside the body on failure', async () => {
     harness = await mountDataList({
       render: () => h(TableRenderer, { fill: true }),
