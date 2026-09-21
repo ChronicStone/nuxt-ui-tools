@@ -4,6 +4,11 @@ import { refDebounced } from '@vueuse/core'
 import { computed, markRaw, shallowRef } from 'vue'
 
 import type { RemoteOptionsResult } from '../../shared/types/remote-options'
+import {
+  REMOTE_OPTIONS_FIRST_PAGE,
+  resolveRemoteOptionsNextPage,
+} from '../../shared/utils/remote-options'
+import type { RemoteOptionsPageParam } from '../../shared/utils/remote-options'
 import { DASHBOARD_REMOTE_OPTIONS_DEFAULTS } from '../constants/query'
 import type {
   DashboardOption,
@@ -11,12 +16,7 @@ import type {
   DashboardOptionsMenuBindings,
   DashboardRemoteOptionsConfig,
 } from '../types'
-import {
-  mergeDashboardOptions,
-  resolveDashboardOptionValues,
-  resolveDashboardRemoteNextPage,
-} from '../utils/options'
-import type { DashboardRemotePageParam } from '../utils/options'
+import { mergeDashboardOptions, resolveDashboardOptionValues } from '../utils/options'
 
 type RemotePage = RemoteOptionsResult<DashboardOption<string>>
 
@@ -44,18 +44,18 @@ export function useDashboardRemoteOptions(params: {
   const pages = useInfiniteQuery<
     RemotePage,
     Error,
-    InfiniteData<RemotePage, DashboardRemotePageParam>,
+    InfiniteData<RemotePage, RemoteOptionsPageParam>,
     QueryKey,
-    DashboardRemotePageParam
+    RemoteOptionsPageParam
   >(
     computed(() => ({
       enabled:
         (open.value || searchInput.value !== '') &&
         (search.value.length === 0 || search.value.length >= minLength),
       getNextPageParam: (lastPage: RemotePage, allPages: RemotePage[]) =>
-        resolveDashboardRemoteNextPage(lastPage, allPages.length),
-      initialPageParam: { cursor: null, index: 1 },
-      queryFn: ({ pageParam }: { pageParam: DashboardRemotePageParam }) =>
+        resolveRemoteOptionsNextPage(lastPage, allPages.length),
+      initialPageParam: REMOTE_OPTIONS_FIRST_PAGE,
+      queryFn: ({ pageParam }: { pageParam: RemoteOptionsPageParam }) =>
         config.load({ page: { ...pageParam, size: pageSize }, search: search.value }),
       queryKey: [...queryKey, 'options', search.value],
       staleTime: DASHBOARD_REMOTE_OPTIONS_DEFAULTS.staleTime,
