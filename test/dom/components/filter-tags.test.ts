@@ -25,6 +25,7 @@ describe('filter tags bar', () => {
   it('renders dormant tags dashed and the add-filter trigger', async () => {
     harness = await mountTags()
     const w = harness.wrapper
+    expect(w.find('.nut-dl-tags').classes()).toContain('contents')
     const dormant = w.find('.nut-dl-tag--dormant')
     expect(dormant.exists()).toBeTruthy()
     expect(dormant.text()).toBe('Statut')
