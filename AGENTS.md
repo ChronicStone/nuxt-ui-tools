@@ -231,6 +231,22 @@ Does not belong here:
 - broad renderer components that also own layout shell, provider lifecycle, actions, and cleanup
 - shortcuts that work in the playground but weaken long-term form-engine structure
 
+### `src/runtime/dashboard`
+
+Purpose:
+
+- schema-driven dashboard runtime: typed URL-synced params, staged queries, derived resources, views
+- generic block library (stats, unovis charts, lists, bars, funnel, custom widgets) with automatic states
+
+Philosophy:
+
+- blocks bind resource objects (`:source`), never string keys; typing flows from the query result
+- the facade exposes getters over owned refs, no `.value`; composables own behaviour, `useDashboardApi` only projects
+- controls stay in the app; the engine owns values, codecs, URL keys, and option lists
+- only `components/charts/unovis/*` may import unovis
+
+Read `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md` before changing it.
+
 ### Future Core Areas
 
 The target core repository shape is not just table.
@@ -239,6 +255,7 @@ Think in terms of a growing core around:
 - shared
 - table
 - form
+- dashboard
 - excel-import
 
 Do not over-optimize around table as if it will remain the only serious runtime domain.
