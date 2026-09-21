@@ -54,6 +54,14 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'document',
             path: '/dashboard/sales',
           },
+          {
+            description:
+              'Stat trends and goals, alerts, activity feed, sortable table, drill-down, card menus.',
+            id: 'dashboard-operations',
+            label: 'Operations',
+            mode: 'document',
+            path: '/dashboard/operations',
+          },
         ],
         id: 'dashboard-examples',
         label: 'Examples',
