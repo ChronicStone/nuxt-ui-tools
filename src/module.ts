@@ -59,6 +59,7 @@ const viewportDefaults = {
 } as const
 
 const publicRuntimeDomains = [
+  'dashboard',
   'form',
   'i18n',
   'query-prefetch',
