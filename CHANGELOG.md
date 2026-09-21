@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.2.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.1.0...v1.2.0)
+
+Version 1.2.0 lets table option filters load their options page by page from the server, the way the form engine's remote options already do, and fixes two layout issues found while reviewing the dashboard playground.
+
+### Migration notes
+
+- **Additive release:** no existing public API changes behaviour. `source.query` keeps loading the whole option list in one request.
+- **Scrollbars:** the module's global scrollbar styles now use the standard `scrollbar-width` / `scrollbar-color` properties where the browser supports them. Platforms with overlay scrollbars (macOS) draw them over the content again instead of reserving an 11px gutter in every scroll container, so layouts that compensated for that gutter can drop the compensation.
+
+### 🚀 Enhancements
+
+#### Table filters
+
+- Add `source.remote` on option filters: `load({ search, page })` returns a query definition for one page (`{ options, hasMore }` or `{ options, nextCursor }`, the shared `RemoteOptionsResult` contract), with server-side search (`search.debounce`, `search.minLength`) and page or cursor `pagination`. It takes precedence over `options` and `query`.
+- Load the next page ahead of the scroll (three viewport heights by default, `pagination.prefetchDistance` in pixels to tune), with inline loading rows and an inline retry instead of a load-more button.
+- Add `resolveSelected({ values })` for committed values the loaded pages do not contain: a table-level registry labels them in tags, panel chips, and the mobile filter sheet, and `prefetchTable` warms the query for values in the URL. Picked values stay listed at the top of the editor, even when the current search does not return them.
+- Count paged options through the filter's own `source.facet.query`, once per loaded page, with that page's values in the new facet descriptor field `values`. Remote tables no longer take these counts from the main request, which cannot count options it never lists; rows show a placeholder until their page is counted.
+
+#### Shared and playgrounds
+
+- Move the page/cursor next-page helper to `shared/utils/remote-options.ts`; the dashboard's remote params use it.
+- Page the default playground's remote company filter over 64 demo companies, with local endpoints for paged options, selected labels, and per-page counts.
+- Redesign the custom playground dashboard controls: a pinned filter bar of uniform "Name value" pills with a reset, page actions in the title row (icon buttons on phones), view tabs that scroll instead of wrapping, and dense filter menus.
+
+### 🩹 Fixes
+
+- **shared:** Draw scrollbars over the content instead of reserving a gutter (see migration notes).
+- **dashboard:** Frame feed events evenly on hover: rows pad 8px above and below, the timeline rail runs through the padding, and the skeleton matches.
+
+### ❤️ Contributors
+
+- THAO-Cyprien
+
 ## v1.1.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.0.1...v1.1.0)
