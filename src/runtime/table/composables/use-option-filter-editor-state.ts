@@ -129,6 +129,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       if (!entry.branchSelectable) {
         return {
           ...entry,
+          countPending: optionSource.showCounts.value && isNullish(entry.count),
           expanded: effectiveExpandedIds.value.has(entry.id),
           indeterminate: false,
         }
@@ -147,6 +148,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
       return {
         ...entry,
+        countPending: optionSource.showCounts.value && isNullish(entry.count),
         expanded: effectiveExpandedIds.value.has(entry.id),
         indeterminate: selectedCount > 0 && selectedCount < descendantValues.length,
         selected: descendantValues.length > 0 && selectedCount === descendantValues.length,
@@ -157,7 +159,8 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const flatRadioItems = computed(() =>
     displayEntries.value.map((entry) => ({
       color: entry.color,
-      count: optionSource.showCounts.value ? (entry.count ?? 0) : undefined,
+      count: optionSource.showCounts.value ? entry.count : undefined,
+      countPending: optionSource.showCounts.value && isNullish(entry.count),
       icon: entry.icon,
       label: entry.label,
       truncate: filterUi.value.row.truncate,
@@ -187,7 +190,8 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const treeRadioItems = computed(() =>
     visibleTreeEntries.value.map((entry) => ({
       color: entry.color,
-      count: optionSource.showCounts.value ? (entry.count ?? 0) : undefined,
+      count: optionSource.showCounts.value ? entry.count : undefined,
+      countPending: optionSource.showCounts.value && isNullish(entry.count),
       depth: entry.depth,
       disabled: !entry.selectable,
       expandable: entry.expandable,

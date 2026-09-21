@@ -199,14 +199,15 @@ source: {
 Available source responsibilities:
 
 - static options with `options`
-- remote option loading with `query`
+- remote option loading in one request with `query`
+- remote options loaded page by page with `remote` (takes precedence over `options` and `query`)
 - facet counts with `facet`
 - option ordering with `sort`
 
 Important rule:
 
 - option loading and facet counts are separate concerns
-- `source.query` loads available options
+- `source.query` and `source.remote` load available options
 - `source.facet` enables counts
 
 If you want counts in either client or remote mode, opt in with `source.facet`.
@@ -324,7 +325,7 @@ filter.option('department.company.country', {
 })
 ```
 
-Remote option query example:
+Remote option query example (the whole list in one request):
 
 ```ts
 filter.option('departmentId', {
@@ -354,6 +355,50 @@ filter.option('departmentId', {
   },
 })
 ```
+
+### Remote Paginated Options
+
+Use `source.remote` when a list is too long to load at once (users, companies, projects). It follows the form engine's remote options and the shared `RemoteOptionsResult` contract:
+
+```ts
+filter.option('ownerId', {
+  label: 'Owner',
+  editor: { searchable: true, selection: { mode: 'multiple' }, row: { showCounts: true } },
+  source: {
+    remote: {
+      // One page for a search term: `page.index` (1-based) or `page.cursor`, plus `page.size`.
+      load: ({ search, page }) => ({
+        queryKey: ['owners', search, page.index, page.size],
+        queryFn: () => api.owners.search({ search, page: page.index, size: page.size }),
+        // → { options, hasMore } for page pagination, { options, nextCursor } for cursor pagination
+      }),
+      // Options of selected values the loaded pages do not contain (e.g. restored from the URL).
+      resolveSelected: ({ values }) => ({
+        queryKey: ['owners', 'selected', values],
+        queryFn: () => api.owners.byIds(values),
+      }),
+      pagination: { type: 'page', size: 25 }, // default; `prefetchDistance` tunes loading ahead
+      search: { debounce: 250, minLength: 0 }, // defaults
+    },
+    // Counts come from the filter's own facet query, one request per loaded page.
+    facet: {
+      mode: 'exclude-self',
+      query: ({ facets, table }) => ({
+        queryKey: ['owner-counts', facets, table.filters, table.search],
+        queryFn: () => api.owners.counts({ values: facets[0]?.values ?? [], table }),
+      }),
+    },
+  },
+})
+```
+
+Behavior:
+
+- nothing loads until an editor shows the list; each search term keeps its own cached pages
+- the search runs on the server, debounced; the previous results stay on screen while the next term loads
+- the next page loads ahead of the scroll (three viewport heights by default, set `pagination.prefetchDistance` in pixels to change it); there is no "load more" button, and a failed page offers an inline retry
+- tags, panel chips, and the mobile sheet show labels for committed values through `resolveSelected` (and `prefetchTable` warms that query for values in the URL); without it such values show as their raw value
+- picked values stay listed at the top of the editor, even when the current search does not return them
 
 ## Boolean Filters
 
@@ -492,8 +537,15 @@ Remote mode:
 
 This means these two concerns stay independent:
 
-- `source.query`: where options come from
+- `source.query` / `source.remote`: where options come from
 - `source.facet`: whether counts are requested
+
+Paginated options (`source.remote`) on a remote table:
+
+- the main request cannot count options it never lists, so these filters never take counts from `source.facets(...)`
+- give the filter its own `source.facet.query`: the table calls it once per loaded page, with that page's values in `facets[0].values`, and once for committed values the pages do not list
+- values the response leaves out count `0`; a row shows a placeholder until its page is counted
+- in client mode, counts still come from the in-memory rows
 
 ## URL Examples
 

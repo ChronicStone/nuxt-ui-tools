@@ -79,6 +79,9 @@ export interface UiToolsTableMessages {
     }
     options: {
       empty: string
+      /** Remote option pages failed to load. */
+      loadError: string
+      retry: string
     }
     booleans: {
       true: string

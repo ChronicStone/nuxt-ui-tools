@@ -1,7 +1,12 @@
 import { h } from 'vue'
 
 import { defineTableSchema, tableSource } from '#ui-tools/table'
-import type { TableControlsSchema, TableSummariesSchema } from '#ui-tools/table/types'
+import type {
+  TableControlsSchema,
+  TableFilterFacetConfig,
+  TableFilterRemoteOptions,
+  TableSummariesSchema,
+} from '#ui-tools/table/types'
 
 import { must } from '../../helpers/must'
 
@@ -56,6 +61,10 @@ export interface AccountsSchemaOptions {
   fail?: boolean | (() => boolean)
   controls?: TableControlsSchema
   embeddedFacets?: boolean
+  /** Loads the country options page by page instead of listing them. */
+  remoteCountry?: TableFilterRemoteOptions
+  /** Counts the remote country options through the filter's own facet query. */
+  remoteCountryFacet?: TableFilterFacetConfig
 }
 
 export const bulkActionCalls: string[] = []
@@ -99,12 +108,17 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
             : { location: 'tag-dynamic', order: 2 },
           editor: { selection: { mode: 'multiple' } },
           label: 'Pays',
-          source: {
-            facet: 'exclude-self',
-            ...(options.embeddedFacets
-              ? {}
-              : { options: COUNTRIES.map((value) => ({ label: value, value })) }),
-          },
+          source: options.remoteCountry
+            ? {
+                remote: options.remoteCountry,
+                ...(options.remoteCountryFacet ? { facet: options.remoteCountryFacet } : {}),
+              }
+            : {
+                facet: 'exclude-self',
+                ...(options.embeddedFacets
+                  ? {}
+                  : { options: COUNTRIES.map((value) => ({ label: value, value })) }),
+              },
         }),
         filter.boolean('edofSync', {
           display: { location: 'tag-dynamic', order: 3 },

@@ -63,6 +63,7 @@ const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size))
     </div>
 
     <UScrollArea
+      data-filter-option-scroll
       type="hover"
       :class="
         mergeDataListUiClass(

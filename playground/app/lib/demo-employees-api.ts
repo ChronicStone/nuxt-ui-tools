@@ -1,5 +1,9 @@
 import type { TableCursorPageResult, TableOffsetPageResult } from '#ui-tools/table'
-import type { GenericObject, TableRemoteSourceRequest } from '#ui-tools/table/types'
+import type {
+  GenericObject,
+  TableFacetExecutionResult,
+  TableRemoteSourceRequest,
+} from '#ui-tools/table/types'
 
 export interface DemoCompany {
   id: string
@@ -62,14 +66,39 @@ export interface FilterOptionsResponse {
 
 export type DemoEmployeeFilterOptionsResource = 'companies' | 'departments' | 'skills'
 
+export interface DemoCompanyOption {
+  label: string
+  value: string
+}
+
 export const demoEmployeesClient = {
-  filterOptions: {
-    companies(options: { request: FilterOptionsRequest }) {
-      return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/companies', {
-        body: options.request,
-        method: 'POST',
-      })
+  /** Remote company filter: paged options, labels of selected values, and page-scoped counts. */
+  companyOptions: {
+    page(request: { search: string; page: { index: number; size: number } }) {
+      return $fetch<{ options: DemoCompanyOption[]; hasMore: boolean }>(
+        '/api/table/demo-employees/filter-options/companies',
+        { body: request, method: 'POST' },
+      )
     },
+    selected(values: readonly string[]) {
+      return $fetch<DemoCompanyOption[]>(
+        '/api/table/demo-employees/filter-options/companies-selected',
+        { body: { values }, method: 'POST' },
+      )
+    },
+    counts(request: {
+      values: readonly string[]
+      mode?: 'exclude-self' | 'include-self'
+      filters: DemoEmployeesTableRequest['filters']
+      search: DemoEmployeesTableRequest['search']
+    }) {
+      return $fetch<TableFacetExecutionResult<'department.company.id'>>(
+        '/api/table/demo-employees/filter-options/companies-facets',
+        { body: request, method: 'POST' },
+      )
+    },
+  },
+  filterOptions: {
     departments(options: { request: FilterOptionsRequest }) {
       return $fetch<FilterOptionsResponse>('/api/table/demo-employees/filter-options/departments', {
         body: options.request,

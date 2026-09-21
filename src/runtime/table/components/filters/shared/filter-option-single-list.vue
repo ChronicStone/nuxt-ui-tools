@@ -17,6 +17,8 @@ const props = defineProps<{
     label: string
     value: string
     count?: number
+    /** Counts are shown but this option's is not known yet. */
+    countPending?: boolean
     icon?: string
     truncate?: boolean
   }[]
@@ -82,7 +84,7 @@ const modelValue = defineModel<string | undefined>({
           {{ item.label }}
         </span>
         <USkeleton
-          v-if="countLoading"
+          v-if="countLoading || item.countPending"
           :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
         />
         <span v-else-if="item.count != null" class="shrink-0 text-muted">

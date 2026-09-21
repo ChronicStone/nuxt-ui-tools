@@ -365,6 +365,8 @@ export default defineUiToolsLocale<Messages>({
         },
         options: {
           empty: 'Aucune option correspondante.',
+          loadError: 'Impossible de charger les options.',
+          retry: 'Réessayer',
         },
         panel: {
           apply: 'Appliquer',
