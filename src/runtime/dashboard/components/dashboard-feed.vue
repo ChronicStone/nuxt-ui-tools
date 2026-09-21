@@ -95,7 +95,7 @@ const classes = computed(() =>
     {
       description: 'mt-0.5 block text-xs text-muted',
       group: 'pt-1 pb-2.5 text-[11px] font-semibold tracking-wide text-dimmed uppercase',
-      item: 'flex min-w-0 gap-3',
+      item: 'flex min-w-0 gap-3 py-2',
       label: 'min-w-0 flex-1 text-[13px] text-default',
       marker: 'relative z-[1] grid size-7 shrink-0 place-items-center overflow-hidden rounded-full',
       time: 'shrink-0 text-[11.5px] text-dimmed tabular-nums',
@@ -188,11 +188,12 @@ function tabulate(): DashboardDataTable {
 
     <template #default="{ expanded }">
       <div class="flex flex-col">
-        <section v-for="group in groups(expanded)" :key="group.key">
+        <section v-for="group in groups(expanded)" :key="group.key" class="not-first:mt-3.5">
           <h3 v-if="group.time !== undefined" :class="classes.group">
             {{ clock.day(group.time) }}
           </h3>
-          <ol class="flex flex-col">
+          <!-- Rows pad evenly so the hover box frames them; the list cancels the outer padding -->
+          <ol class="-my-2 flex flex-col">
             <li
               v-for="(entry, position) in group.entries"
               :key="entry.key"
@@ -203,7 +204,7 @@ function tabulate(): DashboardDataTable {
                 entry.selected && DASHBOARD_SELECTED_ROW,
               ]"
             >
-              <!-- Rail: the marker, then a line down to the next event of the group -->
+              <!-- Rail: the marker, then a line through the row padding to the next marker -->
               <div class="relative flex w-7 shrink-0 flex-col items-center">
                 <span v-if="entry.avatar" :class="classes.marker" class="bg-elevated">
                   <img :src="entry.avatar" alt="" class="size-full object-cover" />
@@ -224,10 +225,10 @@ function tabulate(): DashboardDataTable {
                 <span
                   v-if="position < group.entries.length - 1"
                   aria-hidden="true"
-                  class="w-px flex-1 bg-[var(--nut-dash-grid)]"
+                  class="-mb-4 w-px flex-1 bg-[var(--nut-dash-grid)]"
                 />
               </div>
-              <div class="flex min-w-0 flex-1 items-baseline gap-3 pt-[5px] pb-3.5">
+              <div class="flex min-w-0 flex-1 items-baseline gap-3 pt-[5px]">
                 <div :class="classes.label">
                   {{ entry.label }}
                   <small v-if="entry.description" :class="classes.description">
