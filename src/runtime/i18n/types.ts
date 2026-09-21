@@ -366,7 +366,23 @@ export interface UiToolsFormMessages {
   }
 }
 
+export interface UiToolsDashboardMessages {
+  states: {
+    loading: string
+    refreshing: string
+    empty: string
+    error: string
+    errorDescription: string
+    retry: string
+  }
+  funnel: {
+    base: string
+    fromPrevious: string
+  }
+}
+
 export interface Messages {
+  dashboard: UiToolsDashboardMessages
   form: UiToolsFormMessages
   table: UiToolsTableMessages
   spreadsheet: UiToolsSpreadsheetMessages

@@ -16,6 +16,7 @@ import typescript from 'typescript'
 import { setupComponents } from './components'
 import { setupImports } from './imports'
 import { transformQueryPrefetchMacro } from './internals/query-prefetch-transform'
+import type { DashboardUiConfig } from './runtime/dashboard/types'
 import type { FormUiConfig } from './runtime/form/types'
 import type { DataListUiConfig } from './runtime/table/types'
 import { setupTailwindCss } from './tailwindcss'
@@ -27,6 +28,7 @@ declare module '@nuxt/schema' {
 
   interface AppConfigInput {
     nuxtUiTools?: {
+      dashboard?: DashboardUiConfig
       dataList?: DataListUiConfig
       form?: FormUiConfig
     }
@@ -34,6 +36,7 @@ declare module '@nuxt/schema' {
 
   interface AppConfig {
     nuxtUiTools?: {
+      dashboard?: DashboardUiConfig
       dataList?: DataListUiConfig
       form?: FormUiConfig
     }

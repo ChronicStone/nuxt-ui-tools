@@ -4,6 +4,21 @@ import type { Messages } from '#ui-tools/i18n/types'
 export default defineUiToolsLocale<Messages>({
   code: 'fr',
   messages: {
+    dashboard: {
+      funnel: {
+        base: 'base 100 %',
+        fromPrevious: '{value} de l’étape précédente',
+      },
+      states: {
+        empty: 'Aucune donnée sur la période',
+        error: 'Impossible de charger ces données',
+        errorDescription:
+          'Le reste du tableau de bord n’est pas affecté. Réessayez dans un instant.',
+        loading: 'Chargement…',
+        refreshing: 'Actualisation…',
+        retry: 'Réessayer',
+      },
+    },
     form: {
       actions: {
         cancelButton: 'Annuler',
