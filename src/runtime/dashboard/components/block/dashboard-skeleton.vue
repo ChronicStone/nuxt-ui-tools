@@ -104,11 +104,14 @@ const funnelWidths = computed(() =>
   </div>
 
   <!-- Feed: a rail of markers, two lines per event, and a time -->
-  <div v-else-if="kind === 'feed'" class="flex flex-col">
-    <div v-for="(width, index) in widths" :key="index" class="flex gap-3 pb-3.5">
+  <div v-else-if="kind === 'feed'" class="-my-2 flex flex-col">
+    <div v-for="(width, index) in widths" :key="index" class="flex gap-3 py-2">
       <div class="flex w-7 shrink-0 flex-col items-center">
         <div class="nut-dash-ghost size-7 rounded-full" />
-        <div v-if="index < widths.length - 1" class="mt-1 w-px flex-1 bg-[var(--nut-dash-grid)]" />
+        <div
+          v-if="index < widths.length - 1"
+          class="mt-1 -mb-4 w-px flex-1 bg-[var(--nut-dash-grid)]"
+        />
       </div>
       <div class="flex min-w-0 flex-1 flex-col gap-1.5 pt-1">
         <div class="flex items-center gap-3">

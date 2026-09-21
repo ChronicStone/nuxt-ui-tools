@@ -6,7 +6,12 @@
   --nut-scrollbar-thumb-active: color-mix(in srgb, var(--ui-text, #1f1d1a) 44%, transparent);
 }
 
-@supports not selector(::-webkit-scrollbar) {
+/*
+ * The standard properties keep the platform's overlay scrollbars, drawn over the content. Styling
+ * `::-webkit-scrollbar` switches those off and reserves a gutter in every scroll container, so the
+ * pseudo-elements below only style browsers without the standard properties.
+ */
+@supports (scrollbar-width: thin) {
   * {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
@@ -18,7 +23,7 @@
   }
 }
 
-@supports selector(::-webkit-scrollbar) {
+@supports not (scrollbar-width: thin) {
   *::-webkit-scrollbar {
     width: var(--nut-scrollbar-size);
     height: var(--nut-scrollbar-size);

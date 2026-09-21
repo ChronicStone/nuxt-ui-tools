@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useNow, useScroll } from '@vueuse/core'
+import { useMediaQuery, useNow, useScroll } from '@vueuse/core'
 
 import { useDashboard } from '#ui-tools/dashboard'
 import type {
@@ -12,7 +12,11 @@ import type {
   DashboardTableSort,
 } from '#ui-tools/dashboard'
 
-import { analyticsDashboard, OPERATIONS_SORT_KEYS } from '../dashboards/analytics'
+import {
+  ANALYTICS_DEFAULTS,
+  analyticsDashboard,
+  OPERATIONS_SORT_KEYS,
+} from '../dashboards/analytics'
 import type { OperationsSortKey } from '../dashboards/analytics'
 import {
   CERT_ROWS,
@@ -74,12 +78,77 @@ const initials = (name: string) =>
 const year = computed(() => dashboard.params.year)
 const previousYear = computed(() => String(dashboard.params.year - 1))
 
-// --- Header ---------------------------------------------------------------------------------
+// --- Header, tabs, and filter bar -----------------------------------------------------------
 
-// The header and tabs stay pinned on desktop; a shadow appears once content scrolls under them.
+// The title scrolls away; the tabs and the filter bar stay pinned, with a shadow once content
+// scrolls under them.
 const scroller = useTemplateRef<HTMLElement>('scroller')
+const head = useTemplateRef<HTMLElement>('head')
 const { y: scrollY } = useScroll(scroller)
-const stuck = computed(() => scrollY.value > 0)
+const stuck = computed(() => scrollY.value > 0 && scrollY.value >= (head.value?.offsetHeight ?? 0))
+
+// Page actions keep their label from the small breakpoint up; phones get icon buttons.
+const wide = useMediaQuery('(min-width: 640px)')
+const pageAction = computed(() =>
+  dashboard.view.current === 'consumption' ? 'Exporter' : 'Rapport de certification',
+)
+
+// The tabs scroll sideways on narrow screens: keep the open one in view. Only the strip scrolls;
+// `scrollIntoView` would also move the page and any parent frame.
+const tabs = useTemplateRef<HTMLElement>('tabs')
+function revealTab(behavior: ScrollBehavior) {
+  const strip = tabs.value
+  const tab = strip?.querySelector('[aria-current="page"]')
+  if (!strip || !tab) return
+  const edge = 16
+  const bounds = strip.getBoundingClientRect()
+  const box = tab.getBoundingClientRect()
+  const overflow =
+    box.left < bounds.left + edge
+      ? box.left - bounds.left - edge
+      : Math.max(0, box.right - bounds.right + edge)
+  if (overflow) strip.scrollBy({ behavior, left: overflow })
+}
+onMounted(() => revealTab('instant'))
+watch(
+  () => dashboard.view.current,
+  () => revealTab('smooth'),
+  { flush: 'post' },
+)
+
+// A view is filtered once one of its filters leaves its default; "Réinitialiser" restores them.
+const filtered = computed(() => {
+  if (dashboard.params.year !== ANALYTICS_DEFAULTS.year) return true
+  switch (dashboard.view.current) {
+    case 'consumption':
+      return (
+        conso.params.currency !== ANALYTICS_DEFAULTS.currency ||
+        conso.params.compare !== ANALYTICS_DEFAULTS.compare ||
+        Boolean(conso.params.account)
+      )
+    case 'candidates':
+      return cand.params.months.length > 0 || cand.params.accounts.length > 0
+    default:
+      return ops.params.compare !== ANALYTICS_DEFAULTS.comparison || Boolean(ops.params.day)
+  }
+})
+function resetFilters() {
+  dashboard.params.year = ANALYTICS_DEFAULTS.year
+  switch (dashboard.view.current) {
+    case 'consumption':
+      conso.params.currency = ANALYTICS_DEFAULTS.currency
+      conso.params.compare = ANALYTICS_DEFAULTS.compare
+      conso.params.account = undefined
+      break
+    case 'candidates':
+      cand.params.months = []
+      cand.params.accounts = []
+      break
+    default:
+      ops.params.compare = ANALYTICS_DEFAULTS.comparison
+      ops.params.day = undefined
+  }
+}
 
 const now = useNow({ interval: 60_000 })
 const today = computed(() => {
@@ -92,20 +161,22 @@ const today = computed(() => {
   return text.charAt(0).toUpperCase() + text.slice(1)
 })
 
-// Consumption: one remote account.
+// Consumption: one remote account, and a comparison with the previous year.
 const accountOptions = conso.options.account
 const accountLabel = computed(
-  () => accountOptions.selected[0]?.label ?? (conso.params.account ? '…' : 'Tous les comptes'),
+  () => accountOptions.selected[0]?.label ?? (conso.params.account ? '…' : 'Tous'),
 )
 function pickAccount(value: string | undefined) {
   conso.params.account = value
   accountOptions.open = false
 }
+const COMPARE_CHOICES = [true, false] as const
+const compareLabel = (compare: boolean) => (compare ? previousYear.value : 'Aucune')
 
 // Candidates: months and accounts, both multiple.
 const monthsLabel = computed(() => {
   const { months } = cand.params
-  if (!months.length) return 'Tous les mois'
+  if (!months.length) return 'Tous'
   return months.length === 1 ? MONTHS[months[0] ?? 0] : `${months.length} mois`
 })
 function toggleMonth(month: MonthIndex) {
@@ -121,7 +192,7 @@ const certAccounts = computed(() => {
 })
 const accountsLabel = computed(() => {
   const { accounts } = cand.params
-  if (!accounts.length) return 'Tous les comptes'
+  if (!accounts.length) return 'Tous'
   if (accounts.length > 1) return `${accounts.length} comptes`
   return CERT_ROWS.find((row) => row.id === accounts[0])?.name ?? '1 compte'
 })
@@ -306,7 +377,9 @@ const pickedDay = computed(() => {
 // Comparison period: a view param with localized options; the chart adds its faded bars.
 const COMPARISONS: readonly DashboardComparison[] = ['previous', 'year', 'none']
 const comparisonLabel = (value: DashboardComparison) =>
-  ops.options.compare.items.find((item) => item.value === value)?.label ?? value
+  value === 'none'
+    ? 'Aucune'
+    : (ops.options.compare.items.find((item) => item.value === value)?.label ?? value)
 const comparedTo = computed(() =>
   ops.params.compare === 'year' ? 'l’an dernier' : 'la période précédente',
 )
@@ -445,174 +518,38 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
 
 <template>
   <div ref="scroller" class="ex-dash">
-    <div class="ex-dash-top" :data-stuck="stuck || undefined">
-      <header class="ex-ph ex-ph--dash">
-        <div class="min-w-0">
-          <h1>Tableau de bord</h1>
-          <p>
-            {{ today }} ·
-            <template v-if="dashboard.updatedAt">
-              mis à jour <NutDashboardRelativeTime :value="dashboard.updatedAt" />
-            </template>
-            <template v-else>chargement…</template>
-          </p>
-        </div>
+    <header ref="head" class="ex-ph ex-ph--dash">
+      <h1>Tableau de bord</h1>
+      <div class="dash-acts">
+        <NutDashboardRefresh
+          v-if="dashboard.view.current === 'operations'"
+          :dashboard
+          :updated="false"
+          :label="wide"
+          size="md"
+        />
+        <button
+          v-else
+          type="button"
+          class="dash-btn"
+          :class="{ 'dash-btn--icon': !wide }"
+          :aria-label="wide ? undefined : pageAction"
+        >
+          <UIcon name="i-lucide-download" class="size-[15px]" />
+          <template v-if="wide">{{ pageAction }}</template>
+        </button>
+      </div>
+      <p>
+        {{ today }} ·
+        <template v-if="dashboard.updatedAt">
+          mis à jour <NutDashboardRelativeTime :value="dashboard.updatedAt" />
+        </template>
+        <template v-else>chargement…</template>
+      </p>
+    </header>
 
-        <div class="dash-ctl">
-          <div class="dash-ctl-l">
-            <template v-if="dashboard.view.current === 'consumption'">
-              <DashSeg v-model="conso.params.currency" :items="CURRENCIES" label="Devise" />
-              <DashSeg v-model="dashboard.params.year" :items="YEARS" label="Année" />
-              <DashPicker
-                v-model:open="accountOptions.open"
-                v-model:search="accountOptions.search"
-                icon="i-lucide-building-2"
-                title="Compte"
-                searchable
-                :label="accountLabel"
-                :active="Boolean(conso.params.account)"
-                @clear="conso.params.account = undefined"
-                @more="accountOptions.hasMore && accountOptions.loadMore()"
-              >
-                <button
-                  type="button"
-                  class="dash-it"
-                  :class="{ on: !conso.params.account }"
-                  @click="pickAccount(undefined)"
-                >
-                  <UIcon name="i-lucide-users" class="dash-it-ic" />
-                  <span>Tous les comptes</span>
-                </button>
-                <button
-                  v-for="option in accountOptions.items"
-                  :key="option.value"
-                  type="button"
-                  class="dash-it"
-                  :class="{ on: conso.params.account === option.value }"
-                  @click="pickAccount(option.value)"
-                >
-                  <span class="dash-it-av">{{ initials(option.label) }}</span>
-                  <span>{{ option.label }}</span>
-                </button>
-                <div v-if="accountOptions.loading || accountOptions.loadingMore" class="dash-more">
-                  Chargement…
-                </div>
-              </DashPicker>
-              <button
-                type="button"
-                class="dash-chip"
-                :class="{ on: conso.params.compare }"
-                :aria-pressed="conso.params.compare"
-                @click="conso.params.compare = !conso.params.compare"
-              >
-                <UIcon name="i-lucide-check" class="size-3" />
-                Comparer à {{ previousYear }}
-              </button>
-            </template>
-
-            <template v-else-if="dashboard.view.current === 'operations'">
-              <DashSeg v-model="dashboard.params.year" :items="YEARS" label="Année" />
-              <DashSeg
-                v-model="ops.params.compare"
-                :items="COMPARISONS"
-                :format="comparisonLabel"
-                label="Comparer à"
-              />
-              <button
-                v-if="pickedDay"
-                type="button"
-                class="dash-chip on"
-                :aria-label="`Retirer le filtre du ${pickedDay}`"
-                @click="ops.params.day = undefined"
-              >
-                <UIcon name="i-lucide-calendar" class="size-3" />
-                Journée du {{ pickedDay }}
-                <UIcon name="i-lucide-x" class="size-3" />
-              </button>
-            </template>
-
-            <template v-else>
-              <DashSeg v-model="dashboard.params.year" :items="YEARS" label="Année" />
-              <DashPicker
-                icon="i-lucide-calendar"
-                title="Mois"
-                :label="monthsLabel"
-                :active="cand.params.months.length > 0"
-                @clear="cand.params.months = []"
-              >
-                <div class="dash-grid3">
-                  <button
-                    v-for="month in MONTH_INDEXES"
-                    :key="month"
-                    type="button"
-                    class="dash-it"
-                    :class="{ on: cand.params.months.includes(month) }"
-                    @click="toggleMonth(month)"
-                  >
-                    <span class="dash-chk" :class="{ on: cand.params.months.includes(month) }">
-                      <UIcon name="i-lucide-check" class="size-3" />
-                    </span>
-                    {{ MONTHS[month] }}
-                  </button>
-                </div>
-                <template v-if="cand.params.months.length">
-                  <div class="dash-hr" />
-                  <button type="button" class="dash-it" @click="cand.params.months = []">
-                    <UIcon name="i-lucide-x" class="dash-it-ic" />
-                    <span>Effacer la sélection</span>
-                  </button>
-                </template>
-              </DashPicker>
-              <DashPicker
-                v-model:search="certSearch"
-                icon="i-lucide-building-2"
-                title="Comptes"
-                searchable
-                :label="accountsLabel"
-                :active="cand.params.accounts.length > 0"
-                @clear="cand.params.accounts = []"
-              >
-                <button
-                  v-for="row in certAccounts"
-                  :key="row.id"
-                  type="button"
-                  class="dash-it"
-                  :class="{ on: cand.params.accounts.includes(row.id) }"
-                  @click="toggleCertAccount(row.id)"
-                >
-                  <span class="dash-chk" :class="{ on: cand.params.accounts.includes(row.id) }">
-                    <UIcon name="i-lucide-check" class="size-3" />
-                  </span>
-                  <span>{{ row.name }}</span>
-                </button>
-                <template v-if="cand.params.accounts.length">
-                  <div class="dash-hr" />
-                  <button type="button" class="dash-it" @click="cand.params.accounts = []">
-                    <UIcon name="i-lucide-x" class="dash-it-ic" />
-                    <span>Effacer la sélection</span>
-                  </button>
-                </template>
-              </DashPicker>
-            </template>
-          </div>
-          <div class="dash-ctl-r">
-            <NutDashboardRefresh
-              v-if="dashboard.view.current === 'operations'"
-              :dashboard
-              :updated="false"
-              size="md"
-            />
-            <button v-else type="button" class="dash-btn">
-              <UIcon name="i-lucide-download" class="size-[15px]" />
-              {{
-                dashboard.view.current === 'consumption' ? 'Exporter' : 'Rapport de certification'
-              }}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <nav class="ex-dtabs" aria-label="Vues du tableau de bord">
+    <div class="ex-dash-bar" :data-stuck="stuck || undefined">
+      <nav ref="tabs" class="ex-dtabs" aria-label="Vues du tableau de bord">
         <button
           v-for="item in dashboard.view.items"
           :key="item.value"
@@ -624,6 +561,156 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           {{ item.label }}
         </button>
       </nav>
+
+      <div class="dash-filters" role="toolbar" aria-label="Filtres">
+        <DashSelect
+          v-model="dashboard.params.year"
+          name="Année"
+          :items="YEARS"
+          :default-value="ANALYTICS_DEFAULTS.year"
+        />
+
+        <template v-if="dashboard.view.current === 'consumption'">
+          <DashSelect
+            v-model="conso.params.currency"
+            name="Devise"
+            :items="CURRENCIES"
+            :default-value="ANALYTICS_DEFAULTS.currency"
+          />
+          <DashPicker
+            v-model:open="accountOptions.open"
+            v-model:search="accountOptions.search"
+            name="Compte"
+            searchable
+            :label="accountLabel"
+            :active="Boolean(conso.params.account)"
+            @clear="conso.params.account = undefined"
+            @more="accountOptions.hasMore && accountOptions.loadMore()"
+          >
+            <button
+              type="button"
+              class="dash-it"
+              :class="{ on: !conso.params.account }"
+              @click="pickAccount(undefined)"
+            >
+              <UIcon name="i-lucide-users" class="dash-it-ic" />
+              <span>Tous les comptes</span>
+            </button>
+            <button
+              v-for="option in accountOptions.items"
+              :key="option.value"
+              type="button"
+              class="dash-it"
+              :class="{ on: conso.params.account === option.value }"
+              @click="pickAccount(option.value)"
+            >
+              <span class="dash-it-av">{{ initials(option.label) }}</span>
+              <span>{{ option.label }}</span>
+            </button>
+            <div v-if="accountOptions.loading || accountOptions.loadingMore" class="dash-more">
+              Chargement…
+            </div>
+          </DashPicker>
+          <DashSelect
+            v-model="conso.params.compare"
+            name="Comparer à"
+            :items="COMPARE_CHOICES"
+            :format="compareLabel"
+            :default-value="ANALYTICS_DEFAULTS.compare"
+          />
+        </template>
+
+        <template v-else-if="dashboard.view.current === 'operations'">
+          <DashSelect
+            v-model="ops.params.compare"
+            name="Comparer à"
+            :items="COMPARISONS"
+            :format="comparisonLabel"
+            :default-value="ANALYTICS_DEFAULTS.comparison"
+          />
+          <!-- Set from the sessions chart: shown as a filter, cleared from here or the chart -->
+          <span v-if="pickedDay" class="dash-filter on">
+            <span class="dash-filter-trigger">
+              <span class="dash-filter-name">Journée</span>
+              <span class="dash-filter-value">{{ pickedDay }}</span>
+            </span>
+            <button
+              type="button"
+              class="dash-filter-x"
+              :aria-label="`Retirer le filtre du ${pickedDay}`"
+              @click="ops.params.day = undefined"
+            >
+              <UIcon name="i-lucide-x" class="size-3" />
+            </button>
+          </span>
+        </template>
+
+        <template v-else>
+          <DashPicker
+            name="Mois"
+            :label="monthsLabel"
+            :active="cand.params.months.length > 0"
+            @clear="cand.params.months = []"
+          >
+            <div class="dash-grid3">
+              <button
+                v-for="month in MONTH_INDEXES"
+                :key="month"
+                type="button"
+                class="dash-it"
+                :class="{ on: cand.params.months.includes(month) }"
+                @click="toggleMonth(month)"
+              >
+                <span class="dash-chk" :class="{ on: cand.params.months.includes(month) }">
+                  <UIcon name="i-lucide-check" class="size-3" />
+                </span>
+                {{ MONTHS[month] }}
+              </button>
+            </div>
+            <template v-if="cand.params.months.length">
+              <div class="dash-hr" />
+              <button type="button" class="dash-it" @click="cand.params.months = []">
+                <UIcon name="i-lucide-x" class="dash-it-ic" />
+                <span>Effacer la sélection</span>
+              </button>
+            </template>
+          </DashPicker>
+          <DashPicker
+            v-model:search="certSearch"
+            name="Comptes"
+            searchable
+            :label="accountsLabel"
+            :active="cand.params.accounts.length > 0"
+            @clear="cand.params.accounts = []"
+          >
+            <button
+              v-for="row in certAccounts"
+              :key="row.id"
+              type="button"
+              class="dash-it"
+              :class="{ on: cand.params.accounts.includes(row.id) }"
+              @click="toggleCertAccount(row.id)"
+            >
+              <span class="dash-chk" :class="{ on: cand.params.accounts.includes(row.id) }">
+                <UIcon name="i-lucide-check" class="size-3" />
+              </span>
+              <span>{{ row.name }}</span>
+            </button>
+            <template v-if="cand.params.accounts.length">
+              <div class="dash-hr" />
+              <button type="button" class="dash-it" @click="cand.params.accounts = []">
+                <UIcon name="i-lucide-x" class="dash-it-ic" />
+                <span>Effacer la sélection</span>
+              </button>
+            </template>
+          </DashPicker>
+        </template>
+
+        <button v-if="filtered" type="button" class="dash-reset" @click="resetFilters">
+          <UIcon name="i-lucide-rotate-ccw" class="size-3.5" />
+          Réinitialiser
+        </button>
+      </div>
     </div>
 
     <!-- Consommation -->
@@ -1346,89 +1433,58 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
   min-height: 0;
   overflow: auto;
 }
-.ex-dash-top {
-  position: relative;
-  z-index: 20;
-  transition: box-shadow 0.18s ease;
-}
-@media (min-width: 1024px) {
-  .ex-dash-top {
-    position: sticky;
-    top: 0;
-  }
-  .ex-dash-top[data-stuck] {
-    box-shadow: 0 10px 24px -18px rgb(31 29 26 / 0.35);
-  }
-}
+/* Title and page actions on one row, the date line beneath across the full width. */
 .ex-ph--dash {
-  align-items: flex-start;
-  padding: 22px 28px 20px;
-}
-.dash-ctl {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px 12px;
-  padding-top: 4px;
+  gap: 0 16px;
+  padding: 22px 28px 18px;
 }
-.dash-ctl-l {
+.ex-ph--dash p {
+  grid-column: 1 / -1;
+}
+/* As tall as the refresh group, so switching views never shifts the title row. */
+.dash-acts {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-height: 34px;
 }
-.dash-ctl-r {
-  display: flex;
-  align-items: center;
-  margin-left: 6px;
-  padding-left: 12px;
-  border-left: 1px solid var(--ui-border);
+.dash-btn--icon {
+  width: 32px;
+  padding: 0;
 }
-.dash-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--ui-border);
-  border-radius: 999px;
-  background: var(--ex-surface);
-  color: var(--ex-ink-soft);
-  font-size: 12.5px;
-  font-weight: 500;
-  transition:
-    background 0.12s,
-    border-color 0.12s,
-    color 0.12s;
+/* Tabs and filters stay pinned while the title scrolls away. */
+.ex-dash-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--ex-page);
+  transition: box-shadow 0.18s ease;
 }
-.dash-chip :deep(svg) {
-  opacity: 0;
-}
-.dash-chip.on {
-  border-color: var(--ex-accent-line);
-  background: var(--ex-selection);
-  color: var(--ui-text);
-}
-.dash-chip.on :deep(svg) {
-  opacity: 1;
-  color: var(--nut-dl-accent-ink);
+.ex-dash-bar[data-stuck] {
+  box-shadow: 0 10px 24px -18px rgb(31 29 26 / 0.35);
 }
 .ex-dtabs {
   display: flex;
   gap: 2px;
+  overflow-x: auto;
   padding: 0 28px;
   background: var(--ex-surface);
   border-bottom: 1px solid var(--ui-border);
+  scrollbar-width: none;
 }
 .ex-dtabs button {
   position: relative;
   display: inline-flex;
+  flex: none;
   align-items: center;
-  height: 38px;
+  height: 40px;
   padding: 0 12px;
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
   color: var(--ex-ink-soft);
 }
 .ex-dtabs button:hover,
@@ -1444,11 +1500,34 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
   height: 2px;
   background: var(--ui-primary);
 }
+.dash-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 28px;
+}
+.dash-reset {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 7px;
+  color: var(--ex-ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.dash-reset:hover {
+  color: var(--ui-text);
+}
 .ex-dash-content {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 24px 28px 60px;
+  padding: 4px 28px 60px;
 }
 .dash-link {
   display: inline-flex;
@@ -1493,18 +1572,20 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
 }
 @media (max-width: 1023px) {
   .ex-ph--dash {
-    padding: 16px 16px 12px;
-  }
-  .dash-ctl {
-    justify-content: flex-start;
+    padding: 16px 16px 14px;
   }
   .ex-dtabs {
+    padding: 0 8px;
+  }
+  /* One row of pills that scrolls sideways instead of wrapping into a block. */
+  .dash-filters {
+    flex-wrap: nowrap;
     overflow-x: auto;
-    padding: 0 16px;
+    padding: 12px 16px;
     scrollbar-width: none;
   }
   .ex-dash-content {
-    padding: 16px 16px 48px;
+    padding: 4px 16px 48px;
     gap: 16px;
   }
 }
