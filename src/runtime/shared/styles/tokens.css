@@ -8,14 +8,19 @@
 
 /* Dashboard: palette, semantic colors, and chart theme, mapped onto Nuxt UI tokens so charts follow
  * the app theme and dark mode without re-rendering. Zero specificity (`:where`), so any app rule
- * overrides them regardless of stylesheet order. */
+ * overrides them regardless of stylesheet order.
+ *
+ * The palette only uses theme colors that differ in stock Nuxt UI (primary and success are both
+ * green, secondary and info both blue): primary, neutral, secondary, a primary tint, warning, and a
+ * secondary tint. Tints mix into the page background rather than reading a fixed shade, so they stay
+ * apart from their base color even when an app pins the whole primary scale to one ink. */
 :where(:root) {
   --nut-dash-s1: var(--ui-primary);
   --nut-dash-s2: var(--ui-color-neutral-400);
-  --nut-dash-s3: var(--ui-color-success-500);
-  --nut-dash-s4: var(--ui-color-primary-200);
-  --nut-dash-s5: var(--ui-color-warning-500);
-  --nut-dash-s6: var(--ui-color-info-500);
+  --nut-dash-s3: var(--ui-secondary);
+  --nut-dash-s4: color-mix(in oklab, var(--ui-primary) 20%, var(--ui-bg));
+  --nut-dash-s5: var(--ui-warning);
+  --nut-dash-s6: color-mix(in oklab, var(--ui-secondary) 35%, var(--ui-bg));
   /* Positive change text, its ▲ mark, and negative change text / ▼ mark. */
   --nut-dash-up: var(--ui-success);
   --nut-dash-up-mark: var(--nut-dash-up);
@@ -34,7 +39,22 @@
 
 :where(.dark) {
   --nut-dash-s2: var(--ui-color-neutral-500);
-  --nut-dash-s4: var(--ui-color-primary-800);
+  --nut-dash-s4: color-mix(in oklab, var(--ui-primary) 30%, var(--ui-bg));
+  --nut-dash-s6: color-mix(in oklab, var(--ui-secondary) 40%, var(--ui-bg));
+}
+
+/* Where relative colors are supported, tints get a fixed lightness (and a softened chroma of their
+ * base hue), so a pale primary tint reads the same whether the primary is black, green, or yellow. */
+@supports (color: oklch(from red l c h)) {
+  :where(:root) {
+    --nut-dash-s4: oklch(from var(--ui-primary) 0.88 calc(c * 0.45) h);
+    --nut-dash-s6: oklch(from var(--ui-secondary) 0.8 calc(c * 0.55) h);
+  }
+
+  :where(.dark) {
+    --nut-dash-s4: oklch(from var(--ui-primary) 0.42 calc(c * 0.6) h);
+    --nut-dash-s6: oklch(from var(--ui-secondary) 0.45 calc(c * 0.65) h);
+  }
 }
 
 .nut-dash-chart {
