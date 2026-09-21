@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.0.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.0.0...v1.0.1)
+
+### Enhancements
+
+- **form:** Add live, localized password requirement feedback without replacing native Regle validation ownership.
+
+### Fixes
+
+- **form:** Use native Regle validators as the single validation contract and skip masking for native inputs that do not configure a mask.
+- **table:** Keep runtime context out of remote transport payloads while preserving row inference for inline and external query functions.
+- **table:** Resolve facet-backed options once, hide unavailable facet counts, restore layout-specific sorting, and render row scope through Vue slots.
+- **table:** Preserve responsive controls, selection context, independently wrapped filter tags, and list chrome when replacement queries fail.
+- **table:** Keep the background progress line visible beneath populated table headers and let refresh icons complete their current rotation when loading finishes.
+
+### Contributors
+
+- THAO-Cyprien
+
 ## v1.0.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v0.1.3...v1.0.0)
