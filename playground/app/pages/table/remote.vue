@@ -81,7 +81,7 @@ const remoteSchema = defineTableSchema({
           options: countryTreeOptions,
         },
       }),
-      filter.option('department.company.name', {
+      filter.option('department.company.id', {
         behavior: {
           defaultOperator: 'isAnyOf',
         },
@@ -93,6 +93,9 @@ const remoteSchema = defineTableSchema({
           labels: {
             searchPlaceholder: () => t('playground.tableRemote.filters.selectCompanies'),
           },
+          row: {
+            showCounts: true,
+          },
           searchable: true,
           selection: {
             mode: 'multiple',
@@ -100,7 +103,32 @@ const remoteSchema = defineTableSchema({
         },
         label: () => t('playground.tableCommon.cards.company'),
         source: {
-          facet: 'exclude-self',
+          // Too many companies for one request: the server counts each loaded page on its own.
+          facet: {
+            mode: 'exclude-self',
+            query: ({ facets, table }) => ({
+              queryFn: () =>
+                demoEmployeesClient.companyOptions.counts({
+                  filters: [table.filters],
+                  mode: facets[0]?.mode,
+                  search: table.search,
+                  values: (facets[0]?.values ?? []).map(String),
+                }),
+              queryKey: ['demo-employees', 'company-counts', facets, table.filters, table.search],
+            }),
+          },
+          // Companies load page by page as the list scrolls, searched on the server.
+          remote: {
+            load: ({ page, search }) => ({
+              queryFn: () => demoEmployeesClient.companyOptions.page({ page, search }),
+              queryKey: ['demo-employees', 'companies', search, page.index, page.size],
+            }),
+            pagination: { size: 20, type: 'page' },
+            resolveSelected: ({ values }) => ({
+              queryFn: () => demoEmployeesClient.companyOptions.selected(values),
+              queryKey: ['demo-employees', 'companies', 'selected', values],
+            }),
+          },
         },
       }),
       filter.option('employeeSkills.skill.label', {

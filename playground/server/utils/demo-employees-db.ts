@@ -162,6 +162,7 @@ export const employeesResource = engine.defineResource('employees', {
     facets: {
       allowed: [
         'department.company.country',
+        'department.company.id',
         'department.company.name',
         'department.name',
         'employeeSkills.skill.label',
@@ -201,6 +202,8 @@ function seedDemoEmployees(client: Database.Database) {
     ['company-06', 'Atlas Studio', 'France'],
     ['company-07', 'Helio Security', 'Germany'],
     ['company-08', 'Monarch Data', 'United States'],
+    // Enough companies for the remote company filter to page through its options.
+    ...generatedCompanies(),
   ]
   const departmentNames = [
     'Engineering',
@@ -293,8 +296,8 @@ function seedDemoEmployees(client: Database.Database) {
     insertDepartment.run(
       `department-${String(index + 1).padStart(2, '0')}`,
       id,
-      departmentNames[index] ?? 'Engineering',
-      700_000 + index * 125_000,
+      departmentNames[index % departmentNames.length] ?? 'Engineering',
+      700_000 + (index % 8) * 125_000,
     )
   }
 
@@ -306,7 +309,7 @@ function seedDemoEmployees(client: Database.Database) {
     const firstName = firstNames[index % firstNames.length] ?? 'Alex'
     const lastName = lastNames[(index * 5) % lastNames.length] ?? 'Taylor'
     const employeeId = `employee-${String(index + 1).padStart(3, '0')}`
-    const departmentIndex = index % departmentNames.length
+    const departmentIndex = index % companySeed.length
     const hiredYear = 2019 + (index % 7)
     const hiredMonth = ((index * 3) % 12) + 1
     const hiredDay = ((index * 7) % 27) + 1
@@ -336,4 +339,21 @@ function seedDemoEmployees(client: Database.Database) {
       insertEmployeeSkill.run(employeeId, `skill-${String(skillIndex + 1).padStart(2, '0')}`)
     }
   }
+}
+
+/** 56 more companies (two employees each) behind the eight named ones, spread over the same countries. */
+function generatedCompanies() {
+  const prefixes = ['Aurora', 'Beacon', 'Cedar', 'Delta', 'Ember', 'Fjord', 'Granite', 'Harbor']
+  const trades = ['Analytics', 'Robotics', 'Health', 'Energy', 'Logistics', 'Media', 'Foods']
+  const countries = ['France', 'Germany', 'Japan', 'United Kingdom', 'United States']
+  return prefixes.flatMap((prefix, prefixIndex) =>
+    trades.map((trade, tradeIndex) => {
+      const index = 9 + prefixIndex * trades.length + tradeIndex
+      return [
+        `company-${String(index).padStart(2, '0')}`,
+        `${prefix} ${trade}`,
+        countries[(prefixIndex + tradeIndex) % countries.length] ?? 'France',
+      ]
+    }),
+  )
 }
