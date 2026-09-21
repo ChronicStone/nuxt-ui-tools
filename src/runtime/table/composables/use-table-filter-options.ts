@@ -336,6 +336,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     isStaleLoading,
     refresh: () => Promise.all([optionQuery.refetch(), perFilterFacetQuery.refetch()]),
     searchExpandedIds: computed(() => filteredTreeState.value.expandedIds),
+    showCounts: computed(() => shouldDeriveCounts.value && usesFacetCounts.value),
     sourceEntries: selectableSourceEntries,
     sourceTreeEntries: resolvedSourceTreeEntries,
   }

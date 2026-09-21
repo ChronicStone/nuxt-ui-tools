@@ -174,7 +174,7 @@ function isPrimitiveValue<TValue>(value: TValue): value is TValue & (string | nu
       :entries="chipEntries"
       :loading="state.optionSource.isLoading.value"
       :count-loading="state.optionSource.isCountLoading.value"
-      :show-counts="state.filterUi.value.row.showCounts"
+      :show-counts="state.optionSource.showCounts.value"
       :ui="ui"
       @toggle="state.toggleValue"
     />

@@ -157,7 +157,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const flatRadioItems = computed(() =>
     displayEntries.value.map((entry) => ({
       color: entry.color,
-      count: filterUi.value.row.showCounts ? (entry.count ?? 0) : undefined,
+      count: optionSource.showCounts.value ? (entry.count ?? 0) : undefined,
       icon: entry.icon,
       label: entry.label,
       truncate: filterUi.value.row.truncate,
@@ -187,7 +187,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   const treeRadioItems = computed(() =>
     visibleTreeEntries.value.map((entry) => ({
       color: entry.color,
-      count: filterUi.value.row.showCounts ? (entry.count ?? 0) : undefined,
+      count: optionSource.showCounts.value ? (entry.count ?? 0) : undefined,
       depth: entry.depth,
       disabled: !entry.selectable,
       expandable: entry.expandable,
