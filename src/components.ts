@@ -66,6 +66,10 @@ function getPublicComponents(
       'PairedBars',
       'Funnel',
       'StackBar',
+      'BarChart',
+      'LineChart',
+      'ComboChart',
+      'DonutChart',
       'Legend',
       'Total',
     ].map((part) => ({
