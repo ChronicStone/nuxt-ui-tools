@@ -1,3 +1,4 @@
+import { queryOptions } from '@tanstack/vue-query'
 import { describe, expectTypeOf, it } from 'vitest'
 
 import { defineTableSchema, tableSource } from '#ui-tools/table'
@@ -222,5 +223,42 @@ describe('defineTableSchema inference', () => {
 
     expectTypeOf<InterfaceRow['email']>().toEqualTypeOf<string>()
     expectTypeOf<InterfaceRow['organisation']['status']>().toMatchTypeOf<'active' | 'inactive'>()
+  })
+
+  it('infers rows from external query options and route unions', () => {
+    const adminQuery = queryOptions({
+      queryFn: () => ({ rows: [{ id: 'admin-1', scope: 'admin' as const }] }),
+      queryKey: ['admin-accounts'],
+    })
+    const clientQuery = queryOptions({
+      queryFn: () => ({ rows: [{ id: 'client-1', scope: 'client' as const }] }),
+      queryKey: ['client-accounts'],
+    })
+    const useClientRoute = true
+    const externalSchema = defineTableSchema({
+      rowKey: 'id',
+      source: tableSource({
+        mode: 'remote',
+        query: () => (useClientRoute ? clientQuery : adminQuery),
+      }),
+      table: {
+        columns: (column) => [
+          column.field('scope', {
+            label: 'Scope',
+            render: ({ row, value }) => {
+              expectTypeOf(row.id).toEqualTypeOf<string>()
+              expectTypeOf(value).toEqualTypeOf<'admin' | 'client'>()
+
+              return value
+            },
+          }),
+        ],
+      },
+      tableKey: 'external-accounts',
+    })
+
+    type ExternalRow = ExtractTableRow<typeof externalSchema>
+
+    expectTypeOf<ExternalRow['scope']>().toEqualTypeOf<'admin' | 'client'>()
   })
 })

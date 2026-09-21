@@ -7,7 +7,6 @@ import type {
   TableGlobalFacetDescriptor,
   TableOffsetPageResult,
   TablePaginationState,
-  TableQueryDefinition,
   TableRemoteSource,
   TableRemoteSourceRequest,
   TableResolvedFilterGroup,
@@ -15,12 +14,6 @@ import type {
   TableSourceExecutionResult,
   TableSortingRule,
 } from '../../types'
-
-interface TableSourceRowsResult {
-  rows: readonly GenericObject[]
-}
-
-type TableSourceResult = readonly GenericObject[] | TableSourceRowsResult
 
 type TableSourceRow<TResult> =
   TableRowsFromSourceResult<Awaited<TResult>> extends infer TRow
@@ -57,14 +50,17 @@ interface TableSourceQueryDefinition {
   queryKey: QueryKey
 }
 
-type TableSourceQueryResult<TQuery> = TQuery extends UseQueryOptions<
-  infer TResult,
-  any,
-  any,
-  any
->
+type TableSourceQueryResult<TQuery> = TQuery extends {
+  queryFn: (...args: never[]) => infer TResult
+}
   ? Awaited<TResult>
-  : TQuery extends { queryFn?: (...args: never[]) => infer TResult }
+  : TQuery extends UseQueryOptions<
+        infer _TQueryFnData,
+        infer _TError,
+        infer TResult,
+        infer _TQueryData,
+        infer _TQueryKey
+      >
     ? Awaited<TResult>
     : never
 
@@ -84,7 +80,7 @@ interface RemoteTableSourceInput<TQuery extends TableSourceQueryDefinition> {
 
 interface TableSourceInput {
   mode?: 'client' | 'remote'
-  query: (...args: any[]) => TableSourceQueryDefinition
+  query: (...args: never[]) => TableSourceQueryDefinition
   facets?: TableRemoteSource['facets']
 }
 
