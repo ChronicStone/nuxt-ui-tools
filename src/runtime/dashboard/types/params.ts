@@ -83,12 +83,21 @@ export type DashboardParamPresets<TValue> =
   | readonly DashboardParamPreset<TValue>[]
   | (() => readonly DashboardParamPreset<TValue>[])
 
+/**
+ * A default value, or a getter reading it from data. A getter may return `undefined` while its data
+ * loads; the param type then keeps `undefined` (a list param falls back to `[]`).
+ */
+export type DashboardParamDefault<TValue> = TValue | (() => TValue | undefined)
+
 /** Options shared by every `p.*` builder. `TValue` is the param value. */
 export interface DashboardParamOptions<TDefault, TValue = unknown> {
   /**
    * Value used when the param is unset (missing or unparsable URL key, nullish external value).
    * A non-`undefined` default narrows the param type: `p.string()` is `string | undefined`,
    * `p.string({ defaultValue: '' })` is `string`. Values equal to the default never reach the URL.
+   *
+   * A getter makes the default follow data, e.g. the top three products of a loaded list: the
+   * param reads it while unset, and a value equal to it keeps following it.
    */
   defaultValue?: TDefault
   /** Where the value lives. Defaults to `'url'`. */
@@ -178,6 +187,11 @@ export type DashboardParamItems = readonly DashboardOption[] | (() => readonly D
 export interface DashboardRuntimeParam extends DashboardParamLike {
   /** Erased codec, in the shape `useQueryStates` accepts for heterogeneous schemas. */
   readonly codec: StaticQueryStateOptions['codec']
+  /**
+   * The current default: the declared value, or what the default getter returns now.
+   * `defaultValue` holds the unset form (the static default, or `undefined` / `[]` for a getter).
+   */
+  readonly resolveDefault: () => unknown
   readonly sync?: DashboardParamSync<unknown>
   readonly urlKey?: string
   readonly omitDefault?: boolean

@@ -31,7 +31,7 @@ Every builder accepts:
 
 - `defaultValue` — narrows away `undefined` (`p.enum(['EUR', 'USD'], { defaultValue: 'EUR' })` is
   `'EUR' | 'USD'`). Values equal to the default never reach the URL. `multiple` params default to
-  `[]`.
+  `[]`. A getter reads the default from data (see Defaults From Data).
 - `label` — the filter name ("Year"), text or `() => t('…')`. Defaults to the param key.
 - `placeholder` — the text of an empty selection ("All accounts"). Defaults to the localized "All".
 - `headless` — state only: the filter bar skips it, `filtered` and `resetFilters()` ignore it.
@@ -225,6 +225,23 @@ queries: ({ essential }) => {
 ```
 
 Such items are read reactively; their values are strings.
+
+## Defaults From Data
+
+A getter default follows data, e.g. the three best-selling products once the list loads:
+
+```ts
+tracked: (p) =>
+  p.options(() => toOptions(products.data), {
+    multiple: true,
+    defaultValue: () => topProductIds(products.data, 3),
+  }),
+```
+
+The param reads the getter while it is unset, so the default changes with the data. Picking exactly
+the default keeps the URL clean and the param keeps following it; `reset()` restores the current
+default. A single-value getter that may return `undefined` (data not loaded yet) keeps `undefined`
+in the param type; a list param falls back to `[]`.
 
 ## Presets
 

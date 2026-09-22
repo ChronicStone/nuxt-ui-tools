@@ -66,6 +66,9 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   param, and the external ref or getter of store-synced ones (a getter is read-only, so its param is
   headless). It builds the get/set values facade and one filter handle per param, and owns
   `changed()` / `reset()` over its non-headless handles. No params → nothing allocated.
+  Defaults go through `definition.resolveDefault()`: a getter default is read while the value is
+  unset, and writing a value equal to the current default stores it unset, so it stays out of the
+  URL and keeps following the getter.
   `mergeDashboardParamScopes` exposes root + view scopes as one (builders' `params`, view handles).
 - `useDashboardFilter` builds one handle: label / placeholder / display text, `changed` (codec
   serialization compared with the default's), `toggle` (multiple values kept in item order, capped
@@ -178,6 +181,11 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   `DashboardScopeGuard`, which works because the root generics are not nested.
 - `defaultValue` is its own unconstrained generic; checking it against `TQuery` inside the argument
   fixes `TQuery` too early when `defaultValue` precedes `query`.
+- `p.*` builders infer the whole options object (`const TOptions extends <union of shapes>`) and
+  derive the value from it (`ParamValue`), with a separate no-options signature. Overloads per
+  shape (multiple / single / defaulted) broke getter options: a getter's result is contextually
+  typed once, by the first overload tried, so `defaultValue: () => 2026` widened to `number`. The
+  shape union is discriminated by `multiple`, which keeps `format` and getters typed.
 - `DashboardSchemaLike` is a structural interface, not an instantiation (`keyof TViews` would make
   the variance check reject real schemas).
 - Params inputs are `DashboardParamEntries<TParams>` (a homomorphic mapped type: each entry is the
@@ -200,9 +208,10 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
 
 - `test/dashboard/schema-inference.test.ts` — params, defaults, `requires`, derive, views, guards.
 - `test/dashboard/definitions-inference.test.ts` — standalone filters / groups / views, shared
-  params on view handles, `select` data, `sync` typing, shared-param guard, `useDashboardView`.
+  params on view handles, `select` data, `sync` typing, getter defaults and presets, shared-param
+  guard, `useDashboardView`.
 - `test/dom/dashboard/filters.test.ts` — handles (display, toggle order, `max`, reset), sync modes,
-  headless, factories and the params context, data-driven items, remote definitions.
+  headless, factories and the params context, data-driven items and defaults, remote definitions.
 - `test/dom/dashboard/composition.test.ts` — `select` sharing one request, dependent `requires`
   states, merged view params, `filtered` / `resetFilters`, injection, shared-param runtime check.
 - `test/dom/dashboard/controls.test.ts` + `fixtures/controls-*` — the bar, pills (single, multiple

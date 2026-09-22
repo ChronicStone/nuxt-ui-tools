@@ -35,13 +35,15 @@ export function useDashboardFilter(params: {
   const { code, t } = useUiToolsLocale()
   const options = useDashboardOptions({ definition, queryKey: params.queryKey, value: get })
   const listed = definition.items !== undefined || definition.remote !== undefined
-  const defaultKey = definition.codec.serialize(definition.defaultValue)
 
   const label = computed(() => resolveTextValue(definition.label, params.key))
   const placeholder = computed(() =>
     resolveTextValue(definition.placeholder, t('dashboard.filters.all')),
   )
-  const changed = computed<boolean>(() => definition.codec.serialize(get()) !== defaultKey)
+  const changed = computed<boolean>(
+    () =>
+      definition.codec.serialize(get()) !== definition.codec.serialize(definition.resolveDefault()),
+  )
   /** Option values of the current value, in value order. */
   const values = computed<DashboardOptionValue[]>(() => {
     const value = get()
@@ -120,7 +122,7 @@ export function useDashboardFilter(params: {
       return definition.columns
     },
     get defaultValue() {
-      return definition.defaultValue
+      return definition.resolveDefault()
     },
     get display() {
       return display.value
@@ -166,7 +168,7 @@ export function useDashboardFilter(params: {
       return presets.value
     },
     refresh: options.refresh,
-    reset: () => set(definition.defaultValue),
+    reset: () => set(definition.resolveDefault()),
     get search() {
       return options.search.value
     },

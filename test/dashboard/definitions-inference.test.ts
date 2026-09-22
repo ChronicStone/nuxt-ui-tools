@@ -22,6 +22,10 @@ interface Overview {
   products: { id: string; name: string }[]
 }
 
+/** Data the getter defaults read, as a loaded query would expose it. */
+declare const latest: { year: 2025 | 2026; ids: string[] }
+declare const loaded: { products?: { id: string }[] }
+
 declare const api: {
   overview: (input: { year: number; account?: string }) => Promise<Overview>
   usage: (ids: string[]) => Promise<{ month: number; units: Record<string, number> }[]>
@@ -148,6 +152,48 @@ describe('standalone dashboard definitions', () => {
     expectTypeOf<ReturnType<typeof mountView>>().toEqualTypeOf<Consumption>()
     const mountDashboard = () => useDashboard(adminDashboard)
     expectTypeOf<ReturnType<typeof mountDashboard>>().toEqualTypeOf<Admin>()
+  })
+
+  it('types default getters like static defaults', () => {
+    const dashboard = defineDashboardSchema({
+      key: 'getter-defaults',
+      params: (p) => ({
+        year: p.enum([2025, 2026], { defaultValue: () => latest.year }),
+        latestYear: p.enum([2025, 2026], { defaultValue: () => 2026 }),
+        ids: p.string({ defaultValue: () => latest.ids, multiple: true }),
+        languages: p.enum(['en', 'fr'], { defaultValue: () => ['en'], multiple: true }),
+        // Read from data that may not be loaded yet: `undefined` stays in the type.
+        first: p.options(() => [], { defaultValue: () => loaded.products?.[0]?.id }),
+        compare: p.comparison({ defaultValue: () => 'year' }),
+        // @ts-expect-error the default getter returns a value outside the list
+        month: p.enum([1, 2, 3], { defaultValue: () => latest.year }),
+        // @ts-expect-error a single param cannot default to a list
+        language: p.enum(['en', 'fr'], { defaultValue: () => ['en'] }),
+      }),
+    })
+    type Getters = InferDashboard<typeof dashboard>['params']
+    expectTypeOf<Getters['year']>().toEqualTypeOf<2025 | 2026>()
+    expectTypeOf<Getters['latestYear']>().toEqualTypeOf<2025 | 2026>()
+    expectTypeOf<Getters['ids']>().toEqualTypeOf<string[]>()
+    expectTypeOf<Getters['languages']>().toEqualTypeOf<('en' | 'fr')[]>()
+    expectTypeOf<Getters['first']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<Getters['compare']>().toEqualTypeOf<'previous' | 'year' | 'none'>()
+  })
+
+  it('types presets getters on single and list params', () => {
+    const dashboard = defineDashboardSchema({
+      key: 'preset-getters',
+      params: (p) => ({
+        language: p.enum(['en', 'fr'], { presets: () => [{ label: 'English', value: 'en' }] }),
+        languages: p.enum(['en', 'fr'], {
+          multiple: true,
+          presets: () => [{ label: 'Both', value: ['en', 'fr'] }],
+        }),
+      }),
+    })
+    type Presets = InferDashboard<typeof dashboard>['params']
+    expectTypeOf<Presets['language']>().toEqualTypeOf<'en' | 'fr' | undefined>()
+    expectTypeOf<Presets['languages']>().toEqualTypeOf<('en' | 'fr')[]>()
   })
 
   it('types sync sources against the param value', () => {

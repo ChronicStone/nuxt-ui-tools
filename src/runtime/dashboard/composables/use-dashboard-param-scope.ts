@@ -4,7 +4,7 @@ import { computed, isRef, markRaw, shallowRef } from 'vue'
 import { useQueryStates } from '../../query-state'
 import type { QueryStatesSchema } from '../../query-state'
 import type { GenericObject } from '../../shared/types/utils'
-import { hasProperty } from '../../shared/utils/predicate'
+import { hasProperty, isNullish } from '../../shared/utils/predicate'
 import type { DashboardFilterHandle, DashboardParamLike, DashboardRuntimeParam } from '../types'
 import { useDashboardFilter } from './use-dashboard-filter'
 
@@ -91,23 +91,35 @@ export function useDashboardParamScope(params: {
       const cell = shallowRef<unknown>(defaultValue)
       return { get: () => cell.value, set: (value) => (cell.value = value) }
     }
-    if (isRef(sync)) {
-      return { get: () => sync.value ?? defaultValue, set: (value) => (sync.value = value) }
-    }
+    if (isRef(sync)) return { get: () => sync.value, set: (value) => (sync.value = value) }
     // A getter is a read-only source: writes are ignored.
-    return { get: () => sync() ?? defaultValue, set() {} }
+    return { get: () => sync(), set() {} }
   }
 
   const values = {}
   const filters: Record<string, DashboardFilterHandle> = {}
   for (const [key, definition] of entries) {
     const accessor = createAccessor(key, definition)
-    /** Writing `null` / `undefined` (e.g. a cleared picker) restores the default value. */
-    const set = (value: unknown) => accessor.set(value ?? definition.defaultValue)
-    Object.defineProperty(values, key, { enumerable: true, get: accessor.get, set })
+    const { codec, multiple } = definition
+    /** An unset value (nullish, or an empty list) reads as the current default. */
+    const get = () => {
+      const value = accessor.get()
+      const unset = isNullish(value) || (multiple && Array.isArray(value) && value.length === 0)
+      return unset ? definition.resolveDefault() : value
+    }
+    /**
+     * Writing `null` / `undefined` (e.g. a cleared picker) restores the default. A value equal to
+     * the current default is stored unset, so it stays out of the URL and follows a default getter.
+     */
+    const set = (value: unknown) => {
+      const next = value ?? definition.resolveDefault()
+      const isDefault = codec.serialize(next) === codec.serialize(definition.resolveDefault())
+      accessor.set(isDefault ? definition.defaultValue : next)
+    }
+    Object.defineProperty(values, key, { enumerable: true, get, set })
     filters[key] = useDashboardFilter({
       definition,
-      get: accessor.get,
+      get,
       key,
       queryKey: [...params.queryKey, key],
       set,

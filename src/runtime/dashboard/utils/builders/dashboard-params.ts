@@ -1,9 +1,11 @@
 import type { QueryCodec, StaticQueryStateOptions } from '../../../query-state'
+import { isFunction } from '../../../shared/utils/predicate'
 import type {
   DashboardComparison,
   DashboardDateRange,
   DashboardOption,
   DashboardOptionValue,
+  DashboardParamDefault,
   DashboardParamDefinition,
   DashboardParamFormatOptions,
   DashboardParamItems,
@@ -28,29 +30,47 @@ import {
   optionalStringCodec,
 } from '../params/codecs'
 
-type ResolveParamValue<TValue, TDefault> = undefined extends TDefault ? TValue | undefined : TValue
-
 /** Options of a single-value param whose values carry no label of their own. */
-type SingleOptions<TDefault, TValue> = DashboardParamOptions<TDefault, TValue> &
+type SingleOptions<TValue> = DashboardParamOptions<DashboardParamDefault<TValue>, TValue> &
   DashboardParamFormatOptions<TValue> & { multiple?: false }
 
 /** Options of a `multiple` param: the value is an always-defined array. */
-type MultipleOptions<TItem> = DashboardParamOptions<readonly TItem[], TItem[]> &
+type MultipleOptions<TItem> = DashboardParamOptions<
+  DashboardParamDefault<readonly TItem[]>,
+  TItem[]
+> &
   DashboardParamMultipleOptions & { multiple: true }
 
-/** Options of a single-value param picked from a list. */
-type SingleListOptions<TDefault, TValue> = SingleOptions<TDefault, TValue> &
-  DashboardParamListOptions
+/** Options of a param holding one value, or a list with `multiple: true`. */
+type ParamOptions<TItem> =
+  | SingleOptions<TItem>
+  | (MultipleOptions<TItem> & DashboardParamFormatOptions<TItem>)
 
-/** Options of a `multiple` param picked from a list. */
-type MultipleListOptions<TItem> = MultipleOptions<TItem> &
-  DashboardParamFormatOptions<TItem> &
-  DashboardParamListOptions
+/** The same, for params picked from a list. */
+type ListParamOptions<TItem> = ParamOptions<TItem> & DashboardParamListOptions
 
 /** Options of params whose items carry their own labels (`p.options`, `p.remote`). */
-type LabeledSingleOptions<TDefault, TValue> = DashboardParamOptions<TDefault, TValue> &
-  DashboardParamListOptions & { multiple?: false }
-type LabeledMultipleOptions<TItem> = MultipleOptions<TItem> & DashboardParamListOptions
+type LabeledParamOptions<TItem> = (
+  | (DashboardParamOptions<DashboardParamDefault<TItem>, TItem> & { multiple?: false })
+  | MultipleOptions<TItem>
+) &
+  DashboardParamListOptions
+
+/**
+ * Value of a param declared with `TOptions`: an array with `multiple: true`; otherwise defined once
+ * a default is declared (a value, or a getter that never returns `undefined`).
+ *
+ * Builders infer the whole options object rather than overloading on its shape: every overload
+ * would contextually type a default or presets getter on its own, and the first one tried fixes
+ * the getter's result (widening `() => 2026` to `() => number`).
+ */
+type ParamValue<TItem, TOptions> = TOptions extends { multiple: true }
+  ? TItem[]
+  : TOptions extends { defaultValue: infer TDefault }
+    ? undefined extends (TDefault extends () => infer TResult ? TResult : TDefault)
+      ? TItem | undefined
+      : TItem
+    : TItem | undefined
 
 type AnyParamOptions = DashboardParamOptions<unknown> &
   DashboardParamListOptions &
@@ -68,11 +88,12 @@ function defineParam(
   } = {},
 ): DashboardRuntimeParam {
   const multiple = options.multiple === true
-  const { items, presets } = options
+  const { defaultValue, items, presets } = options
+  const unset = multiple ? [] : undefined
   return {
     codec: multiple ? createListCodec(codec) : codec,
     columns: options.columns,
-    defaultValue: options.defaultValue ?? (multiple ? [] : undefined),
+    defaultValue: isFunction(defaultValue) ? unset : (defaultValue ?? unset),
     format: options.format,
     headless: options.headless === true,
     historyMode: options.historyMode,
@@ -86,6 +107,9 @@ function defineParam(
     placeholder: options.placeholder,
     presets: presets === undefined || isPresetsGetter(presets) ? presets : () => presets,
     remote: options.remote,
+    resolveDefault: isFunction(defaultValue)
+      ? () => defaultValue() ?? unset
+      : () => defaultValue ?? unset,
     searchable: options.searchable,
     sync: options.sync,
     urlKey: options.urlKey,
@@ -102,22 +126,18 @@ function isPresetsGetter(
   return !Array.isArray(presets)
 }
 
-function stringParam(
-  options: MultipleOptions<string> & DashboardParamFormatOptions<string>,
-): DashboardParamDefinition<string[]> & { readonly kind: 'string' }
-function stringParam<const TDefault extends string | undefined = undefined>(
-  options?: SingleOptions<TDefault, string>,
-): DashboardParamDefinition<ResolveParamValue<string, TDefault>> & { readonly kind: 'string' }
+function stringParam(): DashboardParamDefinition<string | undefined> & { readonly kind: 'string' }
+function stringParam<const TOptions extends ParamOptions<string>>(
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<string, TOptions>> & { readonly kind: 'string' }
 function stringParam(options?: AnyParamOptions): DashboardParamLike {
   return defineParam('string', optionalStringCodec, options)
 }
 
-function numberParam(
-  options: MultipleOptions<number> & DashboardParamFormatOptions<number>,
-): DashboardParamDefinition<number[]> & { readonly kind: 'number' }
-function numberParam<const TDefault extends number | undefined = undefined>(
-  options?: SingleOptions<TDefault, number>,
-): DashboardParamDefinition<ResolveParamValue<number, TDefault>> & { readonly kind: 'number' }
+function numberParam(): DashboardParamDefinition<number | undefined> & { readonly kind: 'number' }
+function numberParam<const TOptions extends ParamOptions<number>>(
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<number, TOptions>> & { readonly kind: 'number' }
 function numberParam(options?: AnyParamOptions): DashboardParamLike {
   return defineParam('number', optionalNumberCodec, options)
 }
@@ -128,23 +148,30 @@ const BOOLEAN_ITEMS: readonly DashboardOption<boolean>[] = [
   { label: 'false', value: false },
 ]
 
-function booleanParam<const TDefault extends boolean | undefined = undefined>(
-  options?: SingleOptions<TDefault, boolean>,
-): DashboardParamDefinition<ResolveParamValue<boolean, TDefault>> & { readonly kind: 'boolean' }
+function booleanParam(): DashboardParamDefinition<boolean | undefined> & {
+  readonly kind: 'boolean'
+}
+function booleanParam<const TOptions extends SingleOptions<boolean>>(
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<boolean, TOptions>> & { readonly kind: 'boolean' }
 function booleanParam(options?: AnyParamOptions): DashboardParamLike {
   return defineParam('boolean', optionalBooleanCodec, { ...options, items: BOOLEAN_ITEMS })
 }
 
-function dateParam<const TDefault extends Date | undefined = undefined>(
-  options?: SingleOptions<TDefault, Date>,
-): DashboardParamDefinition<ResolveParamValue<Date, TDefault>> & { readonly kind: 'date' }
+function dateParam(): DashboardParamDefinition<Date | undefined> & { readonly kind: 'date' }
+function dateParam<const TOptions extends SingleOptions<Date>>(
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<Date, TOptions>> & { readonly kind: 'date' }
 function dateParam(options?: AnyParamOptions): DashboardParamLike {
   return defineParam('date', localDateCodec, options)
 }
 
-function dateRangeParam<const TDefault extends DashboardDateRange | undefined = undefined>(
-  options?: SingleOptions<TDefault, DashboardDateRange>,
-): DashboardParamDefinition<ResolveParamValue<DashboardDateRange, TDefault>> & {
+function dateRangeParam(): DashboardParamDefinition<DashboardDateRange | undefined> & {
+  readonly kind: 'dateRange'
+}
+function dateRangeParam<const TOptions extends SingleOptions<DashboardDateRange>>(
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<DashboardDateRange, TOptions>> & {
   readonly kind: 'dateRange'
 }
 function dateRangeParam(options?: AnyParamOptions): DashboardParamLike {
@@ -153,17 +180,14 @@ function dateRangeParam(options?: AnyParamOptions): DashboardParamLike {
 
 function enumParam<const TValues extends readonly DashboardOptionValue[]>(
   values: TValues,
-  options: MultipleListOptions<TValues[number]>,
-): DashboardParamDefinition<TValues[number][]> & { readonly kind: 'enum' }
+): DashboardParamDefinition<TValues[number] | undefined> & { readonly kind: 'enum' }
 function enumParam<
   const TValues extends readonly DashboardOptionValue[],
-  const TDefault extends TValues[number] | undefined = undefined,
+  const TOptions extends ListParamOptions<TValues[number]>,
 >(
   values: TValues,
-  options?: SingleListOptions<TDefault, TValues[number]>,
-): DashboardParamDefinition<ResolveParamValue<TValues[number], TDefault>> & {
-  readonly kind: 'enum'
-}
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<TValues[number], TOptions>> & { readonly kind: 'enum' }
 function enumParam(
   values: readonly DashboardOptionValue[],
   options?: AnyParamOptions,
@@ -174,25 +198,23 @@ function enumParam(
 
 function optionsParam<const TItems extends readonly DashboardOption[]>(
   items: TItems,
-  options: LabeledMultipleOptions<TItems[number]['value']>,
-): DashboardParamDefinition<TItems[number]['value'][]> & { readonly kind: 'options' }
+): DashboardParamDefinition<TItems[number]['value'] | undefined> & { readonly kind: 'options' }
 function optionsParam<
   const TItems extends readonly DashboardOption[],
-  const TDefault extends TItems[number]['value'] | undefined = undefined,
+  const TOptions extends LabeledParamOptions<TItems[number]['value']>,
 >(
   items: TItems,
-  options?: LabeledSingleOptions<TDefault, TItems[number]['value']>,
-): DashboardParamDefinition<ResolveParamValue<TItems[number]['value'], TDefault>> & {
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<TItems[number]['value'], TOptions>> & {
   readonly kind: 'options'
 }
 function optionsParam(
   items: () => readonly DashboardOption<string>[],
-  options: LabeledMultipleOptions<string>,
-): DashboardParamDefinition<string[]> & { readonly kind: 'options' }
-function optionsParam<const TDefault extends string | undefined = undefined>(
+): DashboardParamDefinition<string | undefined> & { readonly kind: 'options' }
+function optionsParam<const TOptions extends LabeledParamOptions<string>>(
   items: () => readonly DashboardOption<string>[],
-  options?: LabeledSingleOptions<TDefault, string>,
-): DashboardParamDefinition<ResolveParamValue<string, TDefault>> & { readonly kind: 'options' }
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<string, TOptions>> & { readonly kind: 'options' }
 function optionsParam(items: DashboardParamItems, options?: AnyParamOptions): DashboardParamLike {
   // Items read from data are only known once it loads: their values are ids kept as strings.
   const codec = isItemsGetter(items)
@@ -203,20 +225,13 @@ function optionsParam(items: DashboardParamItems, options?: AnyParamOptions): Da
 
 type RemoteSource = DashboardRemoteOptionsConfig
 
-function remoteParam(
-  config: RemoteSource & LabeledMultipleOptions<string>,
-): DashboardParamDefinition<string[]> & { readonly kind: 'remote' }
-function remoteParam(
+function remoteParam<const TConfig extends RemoteSource & LabeledParamOptions<string>>(
+  config: TConfig,
+): DashboardParamDefinition<ParamValue<string, TConfig>> & { readonly kind: 'remote' }
+function remoteParam<const TOptions extends LabeledParamOptions<string>>(
   source: RemoteSource,
-  options: LabeledMultipleOptions<string>,
-): DashboardParamDefinition<string[]> & { readonly kind: 'remote' }
-function remoteParam<const TDefault extends string | undefined = undefined>(
-  source: RemoteSource,
-  options?: LabeledSingleOptions<TDefault, string>,
-): DashboardParamDefinition<ResolveParamValue<string, TDefault>> & { readonly kind: 'remote' }
-function remoteParam<const TDefault extends string | undefined = undefined>(
-  config: RemoteSource & LabeledSingleOptions<TDefault, string>,
-): DashboardParamDefinition<ResolveParamValue<string, TDefault>> & { readonly kind: 'remote' }
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<string, TOptions>> & { readonly kind: 'remote' }
 function remoteParam(
   config: RemoteSource & AnyParamOptions,
   extra?: AnyParamOptions,
@@ -238,9 +253,17 @@ export const DASHBOARD_COMPARISONS = [
   'none',
 ] as const satisfies readonly DashboardComparison[]
 
-function comparisonParam<const TDefault extends DashboardComparison | undefined = undefined>(
-  options?: DashboardParamOptions<TDefault, DashboardComparison>,
-): DashboardParamDefinition<ResolveParamValue<DashboardComparison, TDefault>> & {
+function comparisonParam(): DashboardParamDefinition<DashboardComparison | undefined> & {
+  readonly kind: 'comparison'
+}
+function comparisonParam<
+  const TOptions extends DashboardParamOptions<
+    DashboardParamDefault<DashboardComparison>,
+    DashboardComparison
+  >,
+>(
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<DashboardComparison, TOptions>> & {
   readonly kind: 'comparison'
 }
 function comparisonParam(options?: AnyParamOptions): DashboardParamLike {
@@ -252,10 +275,13 @@ function comparisonParam(options?: AnyParamOptions): DashboardParamLike {
   })
 }
 
-function customParam<TValue, const TDefault extends TValue | undefined = undefined>(
+function customParam<TValue>(
   codec: QueryCodec<TValue>,
-  options?: SingleOptions<TDefault, TValue>,
-): DashboardParamDefinition<ResolveParamValue<TValue, TDefault>> & { readonly kind: 'custom' }
+): DashboardParamDefinition<TValue | undefined> & { readonly kind: 'custom' }
+function customParam<TValue, const TOptions extends SingleOptions<TValue>>(
+  codec: QueryCodec<TValue>,
+  options: TOptions,
+): DashboardParamDefinition<ParamValue<TValue, TOptions>> & { readonly kind: 'custom' }
 function customParam(
   codec: StaticQueryStateOptions['codec'],
   options?: AnyParamOptions,
@@ -267,10 +293,11 @@ function customParam(
  * The `p` builder handed to every `params` callback and filter factory. Each method declares one
  * typed param; its filter handle (`dashboard.filters.<key>`) drives it from any control.
  *
- * Every param accepts `defaultValue` (narrows away `undefined`), `sync` (URL, memory, or an
- * external store), `urlKey`, `omitDefault`, `historyMode`, and the filter presentation: `label`,
- * `placeholder`, `headless`. Params picked from a list also accept `columns` and `searchable`;
- * `multiple: true` turns the value into an always-defined array, capped by `max`.
+ * Every param accepts `defaultValue` (a value or a getter; it narrows away `undefined`), `sync`
+ * (URL, memory, or an external store), `urlKey`, `omitDefault`, `historyMode`, `presets`, and the
+ * filter presentation: `label`, `placeholder`, `headless`. Params picked from a list also accept
+ * `columns` and `searchable`; `multiple: true` turns the value into an always-defined array, capped
+ * by `max`.
  */
 export const dashboardParamBuilder = {
   /** `true` / `false`. Its filter lists both, labeled by `format` or the localized Yes / No. */

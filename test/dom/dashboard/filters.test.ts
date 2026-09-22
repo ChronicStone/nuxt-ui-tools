@@ -115,6 +115,64 @@ describe('dashboard filter handles', () => {
     expect(dashboard.filtered).toBe(false)
   })
 
+  it('follows a default read from data and keeps it out of the URL', async () => {
+    const products = deferredSource<{ id: string; units: number }[]>()
+    const schema = defineDashboardSchema({
+      key: 'dynamic-default',
+      queries: ({ essential }) => {
+        const catalog = essential.query({
+          defaultValue: [],
+          query: () => ({ queryFn: products.fn, queryKey: ['catalog'] }),
+        })
+        return {
+          catalog,
+          usage: essential.query({
+            defaultValue: [],
+            params: {
+              tracked: (p) =>
+                p.options(
+                  () => catalog.data.map((product) => ({ label: product.id, value: product.id })),
+                  {
+                    defaultValue: () => catalog.data.slice(0, 2).map((product) => product.id),
+                    multiple: true,
+                  },
+                ),
+            },
+            query: ({ params }) => ({
+              queryFn: () => Promise.resolve(params.tracked),
+              queryKey: ['usage', params.tracked],
+            }),
+          }),
+        }
+      },
+    })
+
+    const { dashboard, flush, query, until } = await mountDashboard({ schema })
+    const { tracked } = dashboard.usage.filters
+    await until(() => products.calls.length > 0)
+    products.calls[0]?.resolve([
+      { id: 'p1', units: 9 },
+      { id: 'p2', units: 7 },
+      { id: 'p3', units: 5 },
+    ])
+    await flush()
+    expect(dashboard.usage.params.tracked).toEqual(['p1', 'p2'])
+    expect(tracked.isSelected('p2')).toBe(true)
+    expect(tracked.changed).toBe(false)
+
+    tracked.toggle('p3')
+    await flush()
+    expect(dashboard.usage.params.tracked).toEqual(['p1', 'p2', 'p3'])
+    expect(query()).toEqual({ 'usage.tracked': 'p1,p2,p3' })
+    expect(tracked.changed).toBe(true)
+
+    tracked.toggle('p3')
+    await flush()
+    // Back to the default: it leaves the URL and follows the data again.
+    expect(query()).toEqual({})
+    expect(tracked.changed).toBe(false)
+  })
+
   it('offers presets that set the whole value and know when they are active', async () => {
     const schema = defineDashboardSchema({
       key: 'presets',
