@@ -8,7 +8,6 @@ import type {
   DashboardSelected,
   DashboardSeries,
   DashboardSeriesColor,
-  DashboardValueFormat,
 } from '../types'
 
 export const DASHBOARD_PALETTE_SIZE = 6
@@ -191,42 +190,6 @@ function resolveDivergingAxis(
     domain: [min, max],
     ticks: Array.from({ length: count + 1 }, (_, index) => min + step * index),
   }
-}
-
-/** Default formatters of one locale: numbers, signed changes, and shares (both in percent). */
-export interface DashboardFormats {
-  /** Locale number, compact from 10 000 (`12,6 k`). */
-  number: DashboardValueFormat
-  /** Signed percent change: `12.4` → `+12,4 %`. */
-  delta: DashboardValueFormat
-  /** Percent share: `57` → `57 %`. */
-  percent: DashboardValueFormat
-}
-
-const formatsByLocale = new Map<string, DashboardFormats>()
-
-/**
- * Formatters of one locale. `Intl.NumberFormat` instances are costly to build and stateless, so they
- * are created once per locale and shared by every block.
- */
-export function resolveDashboardFormats(locale: string): DashboardFormats {
-  const cached = formatsByLocale.get(locale)
-  if (cached) return cached
-  const plain = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 })
-  const compact = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, notation: 'compact' })
-  const delta = new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 1,
-    signDisplay: 'exceptZero',
-    style: 'percent',
-  })
-  const percent = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, style: 'percent' })
-  const formats: DashboardFormats = {
-    delta: (value) => delta.format(value / 100),
-    number: (value) => (Math.abs(value) >= 10_000 ? compact.format(value) : plain.format(value)),
-    percent: (value) => percent.format(value / 100),
-  }
-  formatsByLocale.set(locale, formats)
-  return formats
 }
 
 /** Escapes text interpolated into chart tooltip HTML. */

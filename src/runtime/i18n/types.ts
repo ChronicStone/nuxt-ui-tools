@@ -423,6 +423,35 @@ export interface UiToolsDashboardMessages {
     auto: string
     off: string
   }
+  filters: {
+    /** Accessible name of a filter bar. */
+    label: string
+    /** Accessible name of the view tabs. */
+    views: string
+    /** Text of an empty selection. */
+    all: string
+    /** Items of a boolean filter. */
+    yes: string
+    no: string
+    /** Pill text of several selected values: "{label} +{count}". */
+    more: string
+    search: string
+    empty: string
+    loading: string
+    loadError: string
+    retry: string
+    clearSelection: string
+    /** Heading of the presets under a filter's options. */
+    presets: string
+    /** Accessible name of a pill's clear button: "Clear {label}". */
+    clear: string
+    reset: string
+  }
+  format: {
+    /** Signed difference of two percentages, `Intl.PluralRules` "one" form: "{value} pt". */
+    pointsOne: string
+    pointsOther: string
+  }
   /** Accessible name of a row's `⋮` menu. */
   rowActions: string
   alerts: {

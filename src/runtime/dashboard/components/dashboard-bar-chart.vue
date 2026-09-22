@@ -11,6 +11,7 @@ import {
 import type {
   DashboardAxisOptions,
   DashboardBlockBaseProps,
+  DashboardChartTotals,
   DashboardHighlight,
   DashboardReferenceLine,
   DashboardSelected,
@@ -22,6 +23,7 @@ import type {
 import DashboardSkeleton from './block/dashboard-skeleton.vue'
 import { dashboardChartRenderer } from './charts/renderer'
 import DashboardCard from './dashboard-card.vue'
+import DashboardTotal from './dashboard-total.vue'
 
 const {
   source,
@@ -43,6 +45,7 @@ const {
   highlight,
   selected,
   labels = false,
+  totals,
   onSelect,
   ...block
 } = defineProps<
@@ -73,6 +76,11 @@ const {
     selected?: DashboardSelected<TRow>
     /** Prints each group's value above its bars (the stack total when `stacked`). */
     labels?: boolean
+    /**
+     * Footer totals of the solid series, formatted like their axis: `true` / `'sum'` adds each
+     * series up, `'average'` averages it. Footer slot content follows them.
+     */
+    totals?: DashboardChartTotals
     /** A click on the chart selects the x position under the pointer. */
     onSelect?: (event: DashboardSelectEvent<TRow>) => void
   }
@@ -94,6 +102,7 @@ const seed = computed(() => allSeries.value.map((entry) => entry.key).join('|'))
 const skeletonSeries = computed(() => series.length)
 const skeletonPoints = computed(() => source.data?.length || points)
 const chart = useDashboardChart<TRow>({
+  totals: () => totals,
   defaultType: 'bar',
   format: () => format,
   highlight: () => highlight,
@@ -137,7 +146,13 @@ const chart = useDashboardChart<TRow>({
     <template v-if="$slots.toolbar" #toolbar>
       <slot name="toolbar" />
     </template>
-    <template v-if="$slots.footer" #footer>
+    <template v-if="$slots.footer || chart.totals.value.length" #footer>
+      <DashboardTotal
+        v-for="total in chart.totals.value"
+        :key="total.key"
+        :label="total.label"
+        :value="total.text"
+      />
       <slot name="footer" />
     </template>
 

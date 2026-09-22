@@ -10,7 +10,7 @@ import type {
 import { dashboardParamBuilder } from '../utils/builders/dashboard-params'
 import { createDashboardResourceFacade } from '../utils/resource'
 import type { DashboardResourceSlot } from '../utils/resource'
-import { assertDashboardMemberKey } from '../utils/schema'
+import { assertDashboardMemberKey, resolveDashboardParams } from '../utils/schema'
 import {
   combineDashboardStates,
   refreshDashboardSources,
@@ -19,7 +19,7 @@ import {
 import { createDashboardTrackedData } from '../utils/tracker'
 import type { DashboardReadTracker } from '../utils/tracker'
 import { useDashboardDerived } from './use-dashboard-derived'
-import { mergeDashboardParamValues, useDashboardParamScope } from './use-dashboard-param-scope'
+import { mergeDashboardParamScopes, useDashboardParamScope } from './use-dashboard-param-scope'
 import { useDashboardResource } from './use-dashboard-resource'
 
 interface DashboardDeclaration {
@@ -50,12 +50,19 @@ export function useDashboardScope(params: {
 }) {
   const { input, scopeKey } = params
   const queryKey = [params.schemaKey, scopeKey || '$root']
-  const paramScope = useDashboardParamScope({
-    definitions: input.params?.(dashboardParamBuilder) ?? {},
-    prefix: params.prefix,
-    queryKey,
+  const scopeLabel = scopeKey ? `view "${scopeKey}"` : 'the dashboard root'
+  const definitions = resolveDashboardParams({
+    builder: dashboardParamBuilder,
+    input: input.params,
+    shared: params.shared?.values ?? {},
   })
-  const visibleParams = mergeDashboardParamValues(
+  for (const key of Object.keys(definitions)) {
+    if (params.shared?.keys.includes(key))
+      throw new Error(`[dashboard] Param "${key}" of ${scopeLabel} is already a root param.`)
+  }
+  const paramScope = useDashboardParamScope({ definitions, prefix: params.prefix, queryKey })
+  /** Params visible to this scope's builders and handle: the root ones, then its own. */
+  const visible = mergeDashboardParamScopes(
     params.shared ? [params.shared, paramScope] : [paramScope],
   )
 
@@ -75,7 +82,12 @@ export function useDashboardScope(params: {
       query(definition) {
         const query = typeof definition === 'function' ? { query: definition } : definition
         const slot: DashboardResourceSlot = shallowRef(null)
-        const facade = createDashboardResourceFacade(stage, slot, query.defaultValue)
+        const facade = createDashboardResourceFacade({
+          defaultValue: query.defaultValue,
+          slot,
+          stage,
+          tracker: params.tracker,
+        })
         declarations.set(facade, { input: query, slot, stage })
         return facade
       },
@@ -86,10 +98,9 @@ export function useDashboardScope(params: {
     background: createStage('background'),
     deferred: createStage('deferred'),
     essential: createStage('essential'),
-    params: visibleParams,
+    params: visible.values,
   })
 
-  const scopeLabel = scopeKey ? `view "${scopeKey}"` : 'the dashboard root'
   const taken = new Set<string>(params.rootSources?.keys())
   const members = new Map<string, DashboardSourceLike>()
 
@@ -106,6 +117,7 @@ export function useDashboardScope(params: {
         settled,
       },
       stage: declaration.stage,
+      tracker: params.tracker,
     })
     declaration.slot.value = resource
     resources.push(resource)
@@ -129,7 +141,7 @@ export function useDashboardScope(params: {
     new Map([...(params.rootSources ?? []), ...members]),
     params.tracker,
   )
-  const derived = input.derive?.({ data, params: visibleParams }) ?? {}
+  const derived = input.derive?.({ data, params: visible.values }) ?? {}
   for (const [key, evaluate] of Object.entries(derived)) {
     assertDashboardMemberKey(key, taken, scopeLabel)
     taken.add(key)
@@ -168,6 +180,7 @@ export function useDashboardScope(params: {
     label: input.label,
     members,
     paramScope,
+    visible,
     refresh,
     refreshing,
     resources,

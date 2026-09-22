@@ -10,16 +10,18 @@ import {
 } from '../utils/state'
 import { createDashboardReadTracker } from '../utils/tracker'
 import { useDashboardApi } from './use-dashboard-api'
+import { provideDashboardInstances } from './use-dashboard-context'
 import { useDashboardScope } from './use-dashboard-scope'
 import { useDashboardViews } from './use-dashboard-views'
 
 /**
  * Instantiates a dashboard schema. Call it once in `<script setup>`; every query and URL binding is
- * created synchronously here, so hook order is stable.
+ * created synchronously here, so hook order is stable. Descendant components get the same
+ * dashboard with `injectDashboard(schema)`, and a view handle with `useDashboardView(view)`.
  *
  * The returned object has no refs: `dashboard.params.year`, `dashboard.revenue.data`,
- * `dashboard.state` are plain reads, params are `v-model` targets, and every query / derived value
- * can be bound to a block with `:source="dashboard.revenue"`.
+ * `dashboard.state` are plain reads, params are `v-model` targets, filters drive controls, and every
+ * query / derived value can be bound to a block with `:source="dashboard.revenue"`.
  *
  * @example
  * ```vue
@@ -28,7 +30,7 @@ import { useDashboardViews } from './use-dashboard-views'
  * </script>
  *
  * <template>
- *   <USelect v-model="dashboard.params.period" v-bind="dashboard.options.period.menu" />
+ *   <UiDashboardFilters :dashboard />
  *   <UiDashboardGrid>
  *     <UiDashboardStat :source="dashboard.summary" label="Revenue" :value="(d) => d.revenue" />
  *   </UiDashboardGrid>
@@ -68,7 +70,8 @@ export function useDashboard<const TSchema extends DashboardSchemaLike>(
     runtime.views.length > 0
       ? useDashboardViews({ refetchInterval, root, schema: runtime, tracker })
       : null
-  const api = useDashboardApi({ autoRefresh, root, schema, views })
+  const { api, handles } = useDashboardApi({ autoRefresh, root, schema, views })
+  provideDashboardInstances([[schema, api], ...handles])
 
   // SAFETY: the facade is assembled from this schema by the same runtime that the schema types
   // describe; `DashboardApi<TSchema>` is the precise view of those runtime members.

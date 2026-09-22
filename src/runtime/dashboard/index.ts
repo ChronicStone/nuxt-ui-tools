@@ -1,4 +1,11 @@
 export { useDashboard } from './composables/use-dashboard'
-export { defineDashboardSchema } from './schema'
+export { injectDashboard, useDashboardView } from './composables/use-dashboard-context'
+export { useDashboardFormat } from './composables/use-dashboard-format'
+export {
+  defineDashboardFilter,
+  defineDashboardFilters,
+  defineDashboardSchema,
+  defineDashboardView,
+} from './schema'
 export { resolveDashboardComparisonRange } from './utils/comparison'
 export type * from './types'

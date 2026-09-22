@@ -40,6 +40,12 @@ export function useDashboardViews(params: {
   const rootSources = new Map<string, DashboardSourceLike>(params.root.members)
 
   const views = schema.views.map(([key, input]) => {
+    for (const shared of Object.keys(input.shared ?? {})) {
+      if (!params.root.paramScope.keys.includes(shared))
+        throw new Error(
+          `[dashboard] View "${key}" of "${schema.key}" reads the shared param "${shared}", which the root params do not declare.`,
+        )
+    }
     const opened = shallowRef<boolean>(false)
     watch(
       () => current.value === key,
@@ -60,7 +66,7 @@ export function useDashboardViews(params: {
       tracker: params.tracker,
     })
     const label = () => resolveTextValue(input.label, key)
-    return { key, label, opened, scope }
+    return { input, key, label, opened, scope }
   })
 
   return { current, keys, views }

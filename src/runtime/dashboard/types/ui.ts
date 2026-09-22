@@ -183,6 +183,53 @@ export interface DashboardStateUi {
   description?: string
 }
 
+/** Classes of `UiDashboardFilter`: the pill, its menu, and the `button` variant. */
+export interface DashboardFilterUi {
+  /** Pill around the trigger and the clear button. Carries `data-active` once the filter filters. */
+  root?: string
+  trigger?: string
+  /** Filter name, before the value. */
+  label?: string
+  value?: string
+  chevron?: string
+  /** Clear button of an active pill. */
+  clear?: string
+  /** Trigger of `variant="button"`. */
+  button?: string
+  /** Popover panel. */
+  content?: string
+  /** Heading of the panel (`variant="button"`). */
+  title?: string
+  search?: string
+  list?: string
+  item?: string
+  /** Checkbox of multiple filters. */
+  check?: string
+  /** Check mark of the selected item of single filters. */
+  tick?: string
+  /** Initials tile of items with an `avatar`. */
+  avatar?: string
+  /** Trailing text of items with a `hint`. */
+  hint?: string
+  separator?: string
+  /** "No results", loading, and error rows. */
+  note?: string
+}
+
+/** Classes of `UiDashboardFilters`. */
+export interface DashboardFiltersUi {
+  /** The bar: a row that scrolls sideways on narrow screens and wraps on large ones. */
+  root?: string
+  reset?: string
+}
+
+/** Classes of `UiDashboardViewTabs`. */
+export interface DashboardViewTabsUi {
+  /** The strip: it scrolls sideways when the tabs overflow. */
+  root?: string
+  tab?: string
+}
+
 /**
  * App-wide dashboard theming, read from `appConfig.nuxtUiTools.dashboard`.
  *
@@ -216,4 +263,7 @@ export interface DashboardUiConfig {
   feed?: DashboardFeedUi
   table?: DashboardTableUi
   state?: DashboardStateUi
+  filter?: DashboardFilterUi
+  filters?: DashboardFiltersUi
+  viewTabs?: DashboardViewTabsUi
 }

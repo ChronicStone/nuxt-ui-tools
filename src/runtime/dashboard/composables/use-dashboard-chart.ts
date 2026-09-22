@@ -7,6 +7,7 @@ import { resolveTextValue } from '../../shared/utils/render'
 import type {
   DashboardAxisOptions,
   DashboardChartFrame,
+  DashboardChartTotals,
   DashboardHighlight,
   DashboardReferenceLine,
   DashboardSelected,
@@ -53,6 +54,8 @@ export function useDashboardChart<TRow>(params: {
   selected?: () => DashboardSelected<TRow> | undefined
   /** Bar charts: prints each group's value above its bars. */
   labels?: () => boolean
+  /** Footer totals of the solid series: their sum, or their average. */
+  totals?: () => DashboardChartTotals | undefined
 }) {
   const { t } = useUiToolsLocale()
   const formats = useDashboardFormat()
@@ -103,7 +106,7 @@ export function useDashboardChart<TRow>(params: {
           : data.flatMap((datum) => indexes.map((index) => datum.values[index]))
       return [...values, ...references.filter((ref) => ref.axis === axis).map((ref) => ref.value)]
     }
-    const format = params.format() ?? formats.number.value
+    const format = formats.resolve(params.format())
     const yAxis = params.yAxis()
     const y2Axis = params.y2Axis?.()
     const hasRight = resolved.some((entry) => entry.axis === 'right')
@@ -119,7 +122,7 @@ export function useDashboardChart<TRow>(params: {
     const emphasis = hasBars
       ? resolveDashboardEmphasis(rows, barTotals, params.highlight?.(), selected)
       : null
-    const leftFormat = yAxis?.format ?? format
+    const leftFormat = yAxis?.format ? formats.resolve(yAxis.format) : format
 
     return {
       data,
@@ -133,7 +136,7 @@ export function useDashboardChart<TRow>(params: {
       right: hasRight
         ? {
             ...resolveDashboardAxis(axisValues('right'), y2Axis, headroom),
-            format: y2Axis?.format ?? format,
+            format: y2Axis?.format ? formats.resolve(y2Axis.format) : format,
           }
         : null,
       series: resolved.map(({ axis, color, dashed, key, label, type }, index) => ({
@@ -162,6 +165,21 @@ export function useDashboardChart<TRow>(params: {
     }
   })
 
+  const totals = computed(() => {
+    const mode = params.totals?.()
+    if (!mode) return []
+    const { data, left, right, series: entries } = frame.value
+    return entries
+      .filter((entry) => !entry.dashed && !entry.key.endsWith(':compare'))
+      .map((entry) => {
+        const values = data.flatMap((datum) => datum.values[entry.index] ?? [])
+        const sum = values.reduce((total, value) => total + value, 0)
+        const value = mode === 'average' ? (values.length ? sum / values.length : 0) : sum
+        const format = (entry.axis === 'right' ? right?.format : undefined) ?? left.format
+        return { key: entry.key, label: entry.label, text: format(value) }
+      })
+  })
+
   const tabulate = () =>
     tabulateDashboardFrame(
       frame.value,
@@ -173,5 +191,5 @@ export function useDashboardChart<TRow>(params: {
     if (row !== undefined) params.onSelect()?.({ index, row })
   }
 
-  return { frame, legend, select, selectable, tabulate }
+  return { frame, legend, select, selectable, tabulate, totals }
 }

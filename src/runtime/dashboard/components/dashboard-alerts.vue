@@ -138,7 +138,7 @@ const entries = computed(() => {
         raw === null || raw === undefined
           ? ''
           : isNumber(raw)
-            ? (format ?? formats.number.value)(raw)
+            ? formats.resolve(format)(raw)
             : resolveTextValue(raw),
     }
   })

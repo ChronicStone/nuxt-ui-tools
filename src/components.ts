@@ -59,6 +59,9 @@ function getPublicComponents(
     ...[
       'Grid',
       'Card',
+      'Filter',
+      'Filters',
+      'ViewTabs',
       'Stat',
       'Stats',
       'Gauge',

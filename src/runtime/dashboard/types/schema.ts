@@ -1,9 +1,12 @@
 import type { LazyTextValue, Prettify } from '../../shared/types/utils'
-import type { DashboardOptionsHandles } from './options'
+import type { DashboardFilterHandles } from './filters'
 import type {
   DashboardEmptyMap,
   DashboardParamBuilder,
+  DashboardParamEntries,
+  DashboardParamEntry,
   DashboardParamMap,
+  DashboardParamsInput,
   DashboardParamValues,
 } from './params'
 import type {
@@ -57,8 +60,11 @@ export interface DashboardScopeInput<
   TQueries extends DashboardSourceMap,
   TDerive extends DashboardDeriveMap,
 > {
-  /** Typed, URL-synced params owned by this scope. */
-  params?: (p: DashboardParamBuilder) => TParams
+  /**
+   * Params owned by this scope: a map of params and filter factories (`{ year: yearFilter }`), or
+   * a callback receiving the `p` builder and the shared params.
+   */
+  params?: DashboardParamsInput<TParams, TShared>
   /** Staged queries owned by this scope. Declared once, when `useDashboard()` runs. */
   queries?: (context: DashboardQueriesContext<TShared & TParams>) => TQueries
   /** Derived values computed from query data, exposed as resources with automatic state. */
@@ -70,6 +76,9 @@ export interface DashboardScopeInput<
 /** Names owned by the runtime on the dashboard root and on every view handle. */
 export type DashboardReservedKey =
   | 'params'
+  | 'filters'
+  | 'filtered'
+  | 'resetFilters'
   | 'options'
   | 'state'
   | 'refreshing'
@@ -102,22 +111,38 @@ export type DashboardScopeGuard<TQueries, TDerive, TTaken = never> = Guard<
     `Derived key "${Extract<keyof TDerive, DashboardReservedKey | TTaken | keyof TQueries> & string}" is reserved or already used.`
   >
 
-/** A view declared through the `view(...)` builder. */
+/**
+ * A view: its tab label, its own params, queries and derived values, and (for views declared with
+ * `defineDashboardView`) the root params it reads.
+ */
 export interface DashboardView<
   TParams extends DashboardParamMap,
   TQueries extends DashboardSourceMap,
   TDerive extends DashboardDeriveMap,
+  TShared extends DashboardParamMap = DashboardEmptyMap,
 > {
   /** Tab label. The lazy form keeps it translation-friendly. */
   readonly label?: LazyTextValue
-  readonly params?: (p: DashboardParamBuilder) => TParams
+  /** Root params the view reads, checked against the schema's root params. */
+  readonly shared?: DashboardParamEntries<TShared>
+  readonly params?: DashboardStoredParams<TParams>
   readonly queries?: (context: never) => TQueries
   readonly derive?: (context: never) => TDerive
 }
 
+/** A params input as stored on a declared schema or view. */
+type DashboardStoredParams<TParams> =
+  | DashboardParamEntries<TParams>
+  | ((p: DashboardParamBuilder, context: never) => DashboardParamEntries<TParams>)
+
+/** Loosest params input, for structural constraints. */
+type DashboardParamsLike =
+  | Record<string, DashboardParamEntry>
+  | ((p: DashboardParamBuilder, context: never) => Record<string, DashboardParamEntry>)
+
 export type DashboardViewMap = Record<
   string,
-  DashboardView<DashboardParamMap, DashboardSourceMap, DashboardDeriveMap>
+  DashboardView<DashboardParamMap, DashboardSourceMap, DashboardDeriveMap, DashboardParamMap>
 >
 
 type DashboardViewResult<
@@ -134,8 +159,8 @@ type DashboardViewResult<
   : DashboardKeyError<`View member "${Extract<keyof TQueries | keyof TDerive, DashboardReservedKey | keyof TRootSources> & string}" is reserved or collides with a root query or derived value.`>
 
 /**
- * Declares one view. Its queries see the shared params plus its own, and its `derive` can read root
- * queries and derived values as well as its own queries.
+ * Declares one view inline. Its queries see the shared params plus its own, and its `derive` can
+ * read root queries and derived values as well as its own queries.
  *
  * The result is `NoInfer`: otherwise the contextual `DashboardViewMap` would become an inference
  * candidate, and a view without queries would infer `TQueries` as the open constraint.
@@ -154,6 +179,9 @@ export type DashboardViewBuilder<TShared extends DashboardParamMap, TRootSources
   >,
 ) => DashboardViewResult<NoInfer<TParams>, NoInfer<TQueries>, NoInfer<TDerive>, TRootSources>
 
+/** Views of a schema: the `view(...)` builder callback, or a map of `defineDashboardView` views. */
+export type DashboardViewsInput<TViews, TBuilder> = TViews | ((view: TBuilder) => TViews)
+
 /** Resolved dashboard schema returned by `defineDashboardSchema`. */
 export interface DashboardSchema<
   TParams extends DashboardParamMap = DashboardEmptyMap,
@@ -167,10 +195,10 @@ export interface DashboardSchema<
   readonly urlPrefix?: string
   /** Default auto-refresh interval in seconds (`0`: off). */
   readonly autoRefresh?: number
-  readonly params?: (p: DashboardParamBuilder) => TParams
+  readonly params?: DashboardStoredParams<TParams>
   readonly queries?: (context: never) => TQueries
   readonly derive?: (context: never) => TDerive
-  readonly views?: (view: never) => TViews
+  readonly views?: DashboardViewsInput<TViews, never>
   readonly defaultView?: keyof TViews & string
 }
 
@@ -179,21 +207,50 @@ export interface DashboardSchemaLike {
   readonly key: string
   readonly urlPrefix?: string
   readonly autoRefresh?: number
-  readonly params?: (p: DashboardParamBuilder) => DashboardParamMap
+  readonly params?: DashboardParamsLike
   readonly queries?: (context: never) => DashboardSourceMap
   readonly derive?: (context: never) => DashboardDeriveMap
-  readonly views?: (view: never) => DashboardViewMap
+  readonly views?: DashboardViewsInput<DashboardViewMap, never>
   readonly defaultView?: string
+}
+
+/** Structural constraint every view (`defineDashboardView` or the `view(...)` builder) satisfies. */
+export interface DashboardViewLike {
+  readonly label?: LazyTextValue
+  readonly shared?: Record<string, DashboardParamEntry>
+  readonly params?: DashboardParamsLike
+  readonly queries?: (context: never) => DashboardSourceMap
+  readonly derive?: (context: never) => DashboardDeriveMap
 }
 
 // ---------------------------------------------------------------------------
 // Inferred facade
 // ---------------------------------------------------------------------------
 
-type InferParams<T> = T extends { params?: (p: never) => infer TParams }
-  ? TParams extends DashboardParamMap
-    ? TParams
-    : DashboardEmptyMap
+/** Output of a builder property: what its callback returns, or the value itself. */
+type ResolveBuilderOutput<TInput, TConstraint, TFallback> = [TInput] extends [never]
+  ? TFallback
+  : TInput extends (...args: never) => infer TOutput
+    ? TOutput extends TConstraint
+      ? TOutput
+      : TFallback
+    : TInput extends TConstraint
+      ? TInput
+      : TFallback
+
+type InferParams<T> = T extends { params?: infer TInput }
+  ? ResolveBuilderOutput<
+      Exclude<TInput, undefined>,
+      Record<string, DashboardParamEntry>,
+      DashboardEmptyMap
+    >
+  : DashboardEmptyMap
+type InferShared<T> = T extends { shared?: infer TShared }
+  ? [Exclude<TShared, undefined>] extends [never]
+    ? DashboardEmptyMap
+    : Exclude<TShared, undefined> extends Record<string, DashboardParamEntry>
+      ? Exclude<TShared, undefined>
+      : DashboardEmptyMap
   : DashboardEmptyMap
 type InferQueries<T> = T extends { queries?: (context: never) => infer TQueries }
   ? TQueries extends DashboardSourceMap
@@ -205,18 +262,28 @@ type InferDerive<T> = T extends { derive?: (context: never) => infer TDerive }
     ? TDerive
     : DashboardEmptyMap
   : DashboardEmptyMap
-type InferViews<T> = T extends { views?: (view: never) => infer TViews }
-  ? TViews extends DashboardViewMap
-    ? TViews
-    : DashboardEmptyMap
+type InferViews<T> = T extends { views?: infer TInput }
+  ? ResolveBuilderOutput<Exclude<TInput, undefined>, DashboardViewMap, DashboardEmptyMap>
   : DashboardEmptyMap
 
 /** Runtime members shared by the dashboard root and every view handle. */
 export interface DashboardScopeMembers<TParams> {
-  /** Params owned by this scope. Writable, URL-synced, `v-model`-ready. */
+  /** Params of this scope (a view also sees the root params). Writable, `v-model`-ready. */
   readonly params: DashboardParamValues<TParams>
-  /** Option handles of this scope's option-backed params. */
-  readonly options: DashboardOptionsHandles<TParams>
+  /**
+   * Filter handles of the same params: value, label, display text, option list, and the
+   * `toggle` / `reset` actions. Bind them to `UiDashboardFilter` or any control.
+   */
+  readonly filters: DashboardFilterHandles<TParams>
+  /** @deprecated Use `filters`. */
+  readonly options: DashboardFilterHandles<TParams>
+  /**
+   * A filter on screen differs from its default: the root and the current view for the dashboard,
+   * the root and the view for a view handle. Headless params are ignored.
+   */
+  readonly filtered: boolean
+  /** Restores the default of every filter `filtered` considers. */
+  resetFilters(): void
   /**
    * `idle` while the scope has never been active, `error` if an active essential query failed,
    * `loading` while essentials load, `ready` once they all succeeded.
@@ -249,14 +316,22 @@ export interface DashboardViewController<TKey extends string> {
   readonly items: readonly { value: TKey; label: string }[]
 }
 
-export type DashboardViewHandle<TView, TKey extends string> = Prettify<
+/**
+ * Handle of one view: its queries and derived values, and its params and filters merged with the
+ * shared ones (`consumption.params.year`).
+ */
+export type DashboardViewHandle<
+  TView,
+  TKey extends string,
+  TShared = InferShared<TView>,
+> = Prettify<
   InferQueries<TView> &
     DashboardDerivedResources<InferDerive<TView>> &
-    DashboardScopeMembers<InferParams<TView>> & { readonly view: DashboardViewMeta<TKey> }
+    DashboardScopeMembers<TShared & InferParams<TView>> & { readonly view: DashboardViewMeta<TKey> }
 >
 
-type DashboardViewHandles<TViews> = {
-  readonly [K in keyof TViews]: DashboardViewHandle<TViews[K], K & string>
+type DashboardViewHandles<TViews, TShared> = {
+  readonly [K in keyof TViews]: DashboardViewHandle<TViews[K], K & string, TShared>
 }
 
 /** Runtime members of the dashboard root only. */
@@ -277,8 +352,20 @@ type DashboardRootViewMembers<TViews> = [keyof TViews] extends [never]
 export type DashboardApi<TSchema> = Prettify<
   InferQueries<TSchema> &
     DashboardDerivedResources<InferDerive<TSchema>> &
-    DashboardViewHandles<InferViews<TSchema>> &
+    DashboardViewHandles<InferViews<TSchema>, InferParams<TSchema>> &
     DashboardScopeMembers<InferParams<TSchema>> &
     DashboardRootMembers &
     DashboardRootViewMembers<InferViews<TSchema>> & { readonly schema: TSchema }
 >
+
+/**
+ * Type of the dashboard `useDashboard(schema)` returns, for props and helpers:
+ * `InferDashboard<typeof salesDashboard>`.
+ */
+export type InferDashboard<TSchema> = DashboardApi<TSchema>
+
+/**
+ * Type of the handle `useDashboardView(view)` returns for a view declared with
+ * `defineDashboardView`: `InferDashboardView<typeof consumptionView>`.
+ */
+export type InferDashboardView<TView> = DashboardViewHandle<TView, string>

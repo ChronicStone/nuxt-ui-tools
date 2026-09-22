@@ -1,9 +1,10 @@
 import type { QueryKey } from '@tanstack/vue-query'
 
-import type { DashboardOptionsHandles } from './options'
+import type { DashboardFilterHandles } from './filters'
 import type {
   DashboardEmptyMap,
   DashboardParamBuilder,
+  DashboardParamEntries,
   DashboardParamMap,
   DashboardParamValues,
 } from './params'
@@ -55,8 +56,10 @@ export interface DashboardResource<
   readonly active: boolean
   /** Widget-scoped params, URL-synced under this resource's key. */
   readonly params: DashboardParamValues<TParams>
-  /** Option handles for option-backed widget params. */
-  readonly options: DashboardOptionsHandles<TParams>
+  /** Filter handles of the widget params: bind them to `UiDashboardFilter` or any control. */
+  readonly filters: DashboardFilterHandles<TParams>
+  /** @deprecated Use `filters`. */
+  readonly options: DashboardFilterHandles<TParams>
 }
 
 /** A value declared in `derive`, exposed as a resource whose state follows the data it reads. */
@@ -98,19 +101,34 @@ export interface DashboardQueryInput<
   TQuery extends DashboardQueryLike,
   TParams extends DashboardParamMap,
   TRequired,
+  TSelected,
 > {
-  /** Widget-scoped params, URL-synced under `<scope>.<queryKey>.<param>`. */
-  params?: (p: DashboardParamBuilder) => TParams
   /**
-   * Gate and narrow. While it returns `null` or `undefined`, the resource stays `idle` and never
-   * fetches; once set, `scope.required` is the non-nullish value. Reading another resource's
-   * `data` here expresses a dependent query.
+   * Widget-scoped params, URL-synced under `<scope>.<queryKey>.<param>`: a map of params and
+   * filter factories, or a callback receiving the `p` builder.
+   */
+  params?:
+    | DashboardParamEntries<TParams>
+    | ((p: DashboardParamBuilder) => DashboardParamEntries<TParams>)
+  /**
+   * Gate and narrow. While it returns `null` or `undefined` the query does not fetch; once set,
+   * `scope.required` is the non-nullish value. Reading another resource's `data` here expresses a
+   * dependent query: the resource is `loading` while the resources it read load, and once they
+   * are ready without satisfying it, `ready` with its `defaultValue` (`idle` without one).
    */
   requires?: () => TRequired
   /** Extra boolean gate, combined with `requires` and with stage activation. */
   enabled?: () => boolean
-  /** Reactive query factory returning a TanStack query definition. */
+  /**
+   * Reactive query factory returning a TanStack query definition. Several resources may share one
+   * factory: they share its request and cache entry, and each `select`s its own part.
+   */
   query: (scope: DashboardQueryScope<NoInfer<TParams>, NoInfer<TRequired>>) => TQuery
+  /**
+   * Picks or reshapes the part of the query result this resource exposes. The cached result stays
+   * whole, so resources selecting from the same query never refetch it.
+   */
+  select?: (data: DashboardQueryData<TQuery>) => TSelected
   /** Keep previous data while a new key loads. Defaults to `true`. */
   keepPreviousData?: boolean
   staleTime?: number
@@ -125,28 +143,33 @@ export interface DashboardQueryStage<TStage extends DashboardStage> {
     factory: () => TQuery,
   ): DashboardResource<DashboardQueryData<TQuery> | undefined, DashboardEmptyMap, TStage>
 
-  /** Configured query without a default. `data` is `T | undefined`. */
+  /** Configured query without a default. `data` is `T | undefined` (`T`: the `select` result). */
   query<
     TQuery extends DashboardQueryLike,
     const TParams extends DashboardParamMap = DashboardEmptyMap,
     TRequired = undefined,
+    TSelected = DashboardQueryData<TQuery>,
   >(
-    input: DashboardQueryInput<TQuery, TParams, TRequired> & { defaultValue?: undefined },
-  ): DashboardResource<DashboardQueryData<TQuery> | undefined, TParams, TStage>
+    input: DashboardQueryInput<TQuery, TParams, TRequired, TSelected> & {
+      defaultValue?: undefined
+    },
+  ): DashboardResource<NoInfer<TSelected> | undefined, TParams, TStage>
 
   /**
    * Configured query with a default. `data` is always defined. The default is inferred on its own
-   * (so property order inside the object does not matter) and checked against the query result: a
-   * mismatching default turns the resource into a `DashboardKeyError`, rejected by `queries`.
+   * (so property order inside the object does not matter) and checked against the query result (or
+   * the `select` result): a mismatching default turns the resource into a `DashboardKeyError`,
+   * rejected by `queries`.
    */
   query<
     TQuery extends DashboardQueryLike,
     const TParams extends DashboardParamMap = DashboardEmptyMap,
     TRequired = undefined,
+    TSelected = DashboardQueryData<TQuery>,
     TDefault = never,
   >(
-    input: DashboardQueryInput<TQuery, TParams, TRequired> & { defaultValue: TDefault },
-  ): [TDefault] extends [DashboardQueryData<TQuery>]
-    ? DashboardResource<DashboardQueryData<TQuery>, TParams, TStage>
+    input: DashboardQueryInput<TQuery, TParams, TRequired, TSelected> & { defaultValue: TDefault },
+  ): [TDefault] extends [NoInfer<TSelected>]
+    ? DashboardResource<NoInfer<TSelected>, TParams, TStage>
     : DashboardKeyError<'defaultValue is not assignable to the query data type.'>
 }

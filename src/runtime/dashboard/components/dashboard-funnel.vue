@@ -93,11 +93,11 @@ const steps = computed(() => {
         previous === undefined
           ? t('dashboard.funnel.base')
           : t('dashboard.funnel.fromPrevious', {
-              value: ratio === null ? '—' : formats.percent.value(ratio),
+              value: ratio === null ? '—' : formats.percent(ratio),
             }),
       ratio,
       row,
-      value: (format ?? formats.number.value)(amount),
+      value: formats.resolve(format)(amount),
       width: first > 0 ? `${(amount / first) * 100}%` : '0%',
     }
   })
@@ -115,7 +115,7 @@ function tabulate(): DashboardDataTable {
       toDashboardCell(step.amount, step.value),
       toDashboardCell(
         step.ratio === null ? null : Math.round(step.ratio * 10) / 10,
-        step.ratio === null ? '' : formats.percent.value(step.ratio),
+        step.ratio === null ? '' : formats.percent(step.ratio),
       ),
     ]),
   }

@@ -125,7 +125,7 @@ const segments = computed(() => {
       selected: picked[index] ?? false,
       share,
       swatch: base,
-      text: text ? resolveTextValue(text(row, share)) : formats.percent.value(share),
+      text: text ? resolveTextValue(text(row, share)) : formats.percent(share),
       value: amount,
     }
   })
@@ -134,7 +134,7 @@ const padAngle = computed(() => gap / Math.max(1, (diameter - thickness) / 2))
 const centerText = computed(() => {
   if (!center) return ''
   const resolved = center(rows.value)
-  return isNumber(resolved) ? formats.number.value(resolved) : resolveTextValue(resolved)
+  return isNumber(resolved) ? formats.number(resolved) : resolveTextValue(resolved)
 })
 
 function select(index: number) {
@@ -151,8 +151,8 @@ function tabulate(): DashboardDataTable {
     ],
     rows: segments.value.map((segment) => [
       toDashboardCell(segment.label),
-      toDashboardCell(segment.value, formats.number.value(segment.value)),
-      toDashboardCell(Math.round(segment.share * 10) / 10, formats.percent.value(segment.share)),
+      toDashboardCell(segment.value, formats.number(segment.value)),
+      toDashboardCell(Math.round(segment.share * 10) / 10, formats.percent(segment.share)),
     ]),
   }
 }

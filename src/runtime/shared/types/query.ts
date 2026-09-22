@@ -9,3 +9,12 @@ export type QueryDefinition<TData = unknown> = Omit<UseQueryOptions<TData>, 'que
   queryKey: QueryKey
   queryFn?: QueryFunction<TData, QueryKey, string | null>
 }
+
+/**
+ * The smallest query definition: a key and the function that fetches it. Covariant in its data, so
+ * a definition of specific options fits wherever a broader option type is expected.
+ */
+export interface QueryFnDefinition<TData = unknown> {
+  queryKey: QueryKey
+  queryFn: QueryFunction<TData, QueryKey, string | null>
+}

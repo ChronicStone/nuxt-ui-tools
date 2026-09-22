@@ -114,7 +114,7 @@ const entries = computed(() =>
       index,
       key: rowKey?.(row, index) ?? index,
       label: resolveTextValue(label(row)),
-      meta: meta ? resolveTextValue(meta(row)) : (format ?? formats.number.value)(amount),
+      meta: meta ? resolveTextValue(meta(row)) : formats.resolve(format)(amount),
       row,
       selected: selected?.(row, index) ?? false,
       tag: tag ? resolveTextValue(tag(row)) : '',
@@ -147,7 +147,7 @@ function tabulate(): DashboardDataTable {
     ],
     rows: entries.value.map((entry) => [
       toDashboardCell(entry.tag ? `${entry.label} ${entry.tag}` : entry.label),
-      toDashboardCell(entry.amount, (format ?? formats.number.value)(entry.amount)),
+      toDashboardCell(entry.amount, formats.resolve(format)(entry.amount)),
     ]),
   }
 }

@@ -2,6 +2,7 @@ import { describe, expectTypeOf, it } from 'vitest'
 
 import { defineDashboardSchema, useDashboard } from '#ui-tools/dashboard'
 import type {
+  DashboardOption,
   DashboardReadyData,
   DashboardSourceLike,
   DashboardSourceRow,
@@ -180,9 +181,19 @@ describe('dashboard schema inference', () => {
     expectTypeOf<typeof dashboard.consumption.ytd>().toExtend<DashboardSourceLike<number>>()
   })
 
-  it('exposes option handles only for option-backed params', () => {
-    expectTypeOf<keyof typeof dashboard.consumption.options>().toEqualTypeOf<
-      'currency' | 'account'
+  it('exposes a filter handle per param, root params included on view handles', () => {
+    expectTypeOf<keyof typeof dashboard.consumption.filters>().toEqualTypeOf<
+      'year' | 'currency' | 'account' | 'compare'
+    >()
+    expectTypeOf<typeof dashboard.consumption.params.year>().toEqualTypeOf<2024 | 2025 | 2026>()
+    expectTypeOf<typeof dashboard.consumption.filters.account.value>().toEqualTypeOf<
+      string | undefined
+    >()
+    expectTypeOf<typeof dashboard.consumption.filters.currency.items>().toEqualTypeOf<
+      readonly DashboardOption<'EUR' | 'USD'>[]
+    >()
+    expectTypeOf<typeof dashboard.candidates.filters.months.toggle>().toEqualTypeOf<
+      (value: 1 | 2 | 3) => void
     >()
   })
 
@@ -203,13 +214,13 @@ describe('dashboard schema inference', () => {
       key: 'label-only',
       views: (view) => ({
         overview: view({ label: 'Overview' }),
-        filtered: view({ params: (p) => ({ search: p.string() }) }),
+        search: view({ params: (p) => ({ term: p.string() }) }),
       }),
     })
     const mountLabelOnly = () => useDashboard(labelOnly)
     type LabelOnly = ReturnType<typeof mountLabelOnly>
-    expectTypeOf<LabelOnly['view']['current']>().toEqualTypeOf<'overview' | 'filtered'>()
-    expectTypeOf<LabelOnly['filtered']['params']['search']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<LabelOnly['view']['current']>().toEqualTypeOf<'overview' | 'search'>()
+    expectTypeOf<LabelOnly['search']['params']['term']>().toEqualTypeOf<string | undefined>()
   })
 
   it('derives ready data and rows for blocks', () => {

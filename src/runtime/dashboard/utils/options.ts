@@ -23,3 +23,17 @@ export function mergeDashboardOptions(
   }
   return merged
 }
+
+/** Lowercase text without diacritics, so "ecole" finds "École". */
+function normalizeDashboardSearch(value: string) {
+  return value
+    .normalize('NFD')
+    .replaceAll(/[̀-ͯ]/gu, '')
+    .toLowerCase()
+    .trim()
+}
+
+/** The label contains the search term, ignoring case and diacritics. */
+export function matchesDashboardSearch(label: string, term: string) {
+  return normalizeDashboardSearch(label).includes(normalizeDashboardSearch(term))
+}

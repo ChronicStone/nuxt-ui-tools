@@ -129,7 +129,7 @@ const entries = computed(() =>
     const share = percent?.(row)
     return {
       actions: rowActions?.(row, index) ?? [],
-      change: isNumber(change) ? { good: change >= 0, label: formats.delta.value(change) } : null,
+      change: isNumber(change) ? { good: change >= 0, label: formats.delta(change) } : null,
       color: resolveDashboardColor(color?.(row, index), index),
       delta: change,
       description: description ? resolveTextValue(description(row)) : '',
@@ -143,8 +143,8 @@ const entries = computed(() =>
       raw,
       row,
       selected: selected?.(row, index) ?? false,
-      share: isNumber(share) ? formats.percent.value(share) : '',
-      value: isNumber(raw) ? (format ?? formats.number.value)(raw) : resolveTextValue(raw),
+      share: isNumber(share) ? formats.percent(share) : '',
+      value: isNumber(raw) ? formats.resolve(format)(raw) : resolveTextValue(raw),
     }
   }),
 )

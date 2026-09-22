@@ -1,4 +1,4 @@
-import type { DashboardValueFormat } from './blocks'
+import type { DashboardValueFormatter } from './blocks'
 
 /** Normalized chart row: series values in series order. */
 export interface DashboardChartDatum {
@@ -21,7 +21,7 @@ export interface DashboardChartFrameAxis {
   domain: [number, number]
   /** Tick values, evenly spaced on round numbers. */
   ticks: number[]
-  format: DashboardValueFormat
+  format: DashboardValueFormatter
 }
 
 export interface DashboardChartFrameReference {

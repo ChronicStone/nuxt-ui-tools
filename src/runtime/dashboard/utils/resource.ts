@@ -3,28 +3,35 @@ import type { ShallowRef } from 'vue'
 
 import type { useDashboardResource } from '../composables/use-dashboard-resource'
 import type { DashboardResourceState, DashboardSourceLike, DashboardStage } from '../types'
+import type { DashboardReadTracker } from './tracker'
 
 export type DashboardResourceSlot = ShallowRef<ReturnType<typeof useDashboardResource> | null>
 
 const emptyFacade = markRaw({})
 
-/**
- * Public resource object returned by `stage.query(...)`. It exists before its key is known (keys
- * come from the object the `queries` builder returns), so it reads the resource runtime through a
- * slot. Reads before instantiation track the slot, which keeps dependent gates reactive.
- */
-export function createDashboardResourceFacade(
-  stage: DashboardStage,
-  slot: DashboardResourceSlot,
-  defaultValue: unknown,
-): DashboardSourceLike & {
+type DashboardResourceFacade = DashboardSourceLike & {
   kind: 'query'
   stage: DashboardStage
   active: boolean
   params: object
+  filters: object
   options: object
-} {
-  return markRaw({
+}
+
+/**
+ * Public resource object returned by `stage.query(...)`. It exists before its key is known (keys
+ * come from the object the `queries` builder returns), so it reads the resource runtime through a
+ * slot. Reads before instantiation track the slot, which keeps dependent gates reactive, and every
+ * `data` read is recorded by the tracker, so `requires` and `derive` know what they depend on.
+ */
+export function createDashboardResourceFacade(params: {
+  stage: DashboardStage
+  slot: DashboardResourceSlot
+  defaultValue: unknown
+  tracker: DashboardReadTracker
+}): DashboardResourceFacade {
+  const { slot, stage, tracker } = params
+  const facade: DashboardResourceFacade = markRaw({
     activate() {
       slot.value?.activate()
     },
@@ -32,17 +39,21 @@ export function createDashboardResourceFacade(
       return slot.value?.active.value ?? false
     },
     get data() {
-      return slot.value ? slot.value.data.value : defaultValue
+      tracker.record(facade)
+      return slot.value ? slot.value.data.value : params.defaultValue
     },
     get error() {
-      return slot.value?.error.value ?? undefined
+      return slot.value?.error.value
+    },
+    get filters() {
+      return slot.value?.widget.filters ?? emptyFacade
     },
     get id() {
       return slot.value?.id ?? ''
     },
-    kind: 'query',
+    kind: 'query' as const,
     get options() {
-      return slot.value?.widget.options ?? emptyFacade
+      return slot.value?.widget.filters ?? emptyFacade
     },
     get params() {
       return slot.value?.widget.values ?? emptyFacade
@@ -59,4 +70,5 @@ export function createDashboardResourceFacade(
       return slot.value?.updatedAt.value
     },
   })
+  return facade
 }

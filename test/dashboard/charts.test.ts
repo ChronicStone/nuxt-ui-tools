@@ -9,9 +9,9 @@ import {
   resolveDashboardAxis,
   resolveDashboardColor,
   resolveDashboardEmphasis,
-  resolveDashboardFormats,
   resolveDashboardSeries,
 } from '#ui-tools/dashboard/utils/charts'
+import { formatDashboardMonth, resolveDashboardFormats } from '#ui-tools/dashboard/utils/format'
 import { resolveDashboardClasses } from '#ui-tools/dashboard/utils/ui'
 
 describe('dashboard axes', () => {
@@ -75,6 +75,15 @@ describe('dashboard formats', () => {
     expect(formats.delta(12.4)).toBe('+12.4%')
     expect(formats.delta(-3)).toBe('-3%')
     expect(formats.percent(57)).toBe('57%')
+    expect(formats.ratio(0.575)).toBe('57.5%')
+    expect(formats.integer(12_345.6)).toBe('12,346')
+    expect(formats.signed(3)).toBe('+3')
+  })
+
+  it('never lets grouped digits collapse, and capitalizes month labels', () => {
+    expect(resolveDashboardFormats('fr').integer(12_345)).toBe('12\u00A0345')
+    expect(formatDashboardMonth('fr', 3)).toBe('Mars')
+    expect(formatDashboardMonth('en', new Date(2026, 0, 5), 'long')).toBe('January')
   })
 })
 
