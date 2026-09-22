@@ -1,4 +1,6 @@
-import type { QueryDefinition, QueryFnDefinition } from '../../shared/types/query'
+import type { QueryKey } from '@tanstack/vue-query'
+
+import type { QueryFnDefinition } from '../../shared/types/query'
 import type {
   RemoteOptionsPageRequest,
   RemoteOptionsPagination,
@@ -11,6 +13,8 @@ import type {
   TableOffsetPageResult,
   TableRemoteSourceRequest,
   TableSourceExecutionResult,
+  TableSourceQueryResult,
+  TableSourceRow,
 } from './source'
 import type { GenericObject, TableKnownFieldPath, TableSortingRule, TableSortKey } from './utils'
 
@@ -26,21 +30,29 @@ export interface RemoteTableOption {
   label: string
 }
 
+/** A TanStack query definition: its key, and a `queryFn` or the options that carry one. */
+export interface RemoteTableQueryDefinition {
+  queryKey: QueryKey
+}
+
 /**
  * Query definition of one table request, typically the endpoint a remote table already uses:
  * `(request) => $api.accounts.query.queryOptions({ body: request })`. The row type is read from
- * its result.
+ * its result, as `tableSource` does.
  */
-export type RemoteTableQuery<TRow extends GenericObject> = (
-  request: TableRemoteSourceRequest,
-) => QueryDefinition<RemoteTableResult<TRow>>
+export type RemoteTableQuery<
+  TQuery extends RemoteTableQueryDefinition = RemoteTableQueryDefinition,
+> = (request: TableRemoteSourceRequest) => TQuery
+
+/** Row type of the table response a `RemoteTableQuery` resolves to. */
+export type RemoteTableQueryRow<TQuery> = TableSourceRow<TableSourceQueryResult<TQuery>>
 
 export interface RemoteTableOptionsConfig<
   TRow extends GenericObject,
   TOption extends RemoteTableOption,
 > {
-  /** Option of one row. */
-  option: (row: TRow) => TOption
+  /** Option of one row. A method, so the typed callback fits the builder's erased signature. */
+  option(row: TRow): TOption
   /**
    * Fields the search term looks in, or those fields with the debounce (default 250 ms) and
    * minimum term length (default 0).

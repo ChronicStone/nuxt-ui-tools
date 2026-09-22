@@ -1,14 +1,19 @@
-import type { QueryDefinition, QueryFnDefinition } from '../../shared/types/query'
+import type { QueryFunctionContext, QueryKey } from '@tanstack/vue-query'
+
+import type { QueryFnDefinition } from '../../shared/types/query'
 import type {
   RemoteOptionsPageRequest,
   RemoteOptionsSearch,
 } from '../../shared/types/remote-options'
+import { isArray, isFunction, isObject } from '../../shared/utils/predicate'
 import type {
   GenericObject,
   RemoteTableOption,
   RemoteTableOptions,
   RemoteTableOptionsConfig,
   RemoteTableQuery,
+  RemoteTableQueryDefinition,
+  RemoteTableQueryRow,
   RemoteTableResult,
   TableRemoteSourceRequest,
   TableSortingRule,
@@ -41,12 +46,16 @@ const DEFAULT_PAGINATION = { size: 25, type: 'cursor' } as const
  * ```
  */
 export function remoteTableOptions<
-  TRow extends GenericObject,
+  TQuery extends RemoteTableQueryDefinition,
   const TOption extends RemoteTableOption,
 >(
-  query: RemoteTableQuery<TRow>,
-  config: RemoteTableOptionsConfig<TRow, TOption>,
-): RemoteTableOptions<TOption> {
+  query: RemoteTableQuery<TQuery>,
+  config: RemoteTableOptionsConfig<RemoteTableQueryRow<TQuery>, TOption>,
+): RemoteTableOptions<TOption>
+export function remoteTableOptions(
+  query: RemoteTableQuery,
+  config: RemoteTableOptionsConfig<GenericObject, RemoteTableOption>,
+): RemoteTableOptions<RemoteTableOption> {
   const pagination = config.pagination ?? DEFAULT_PAGINATION
   const { fields, search } = resolveSearch(config.search)
   const sorting = resolveSorting(config.sort)
@@ -104,23 +113,38 @@ export function remoteTableOptions<
 }
 
 /** Runs a table query and maps its response, under a key of its own (the response shape differs). */
-function mapQuery<TRow extends GenericObject, TResult>(
-  definition: QueryDefinition<RemoteTableResult<TRow>>,
-  map: (result: RemoteTableResult<TRow>) => TResult,
+function mapQuery<TResult>(
+  definition: RemoteTableQueryDefinition,
+  map: (result: RemoteTableResult<GenericObject>) => TResult,
 ): QueryFnDefinition<TResult> {
-  const { queryFn, queryKey } = definition
+  const { queryKey } = definition
+  const queryFn = 'queryFn' in definition ? definition.queryFn : undefined
   return {
     async queryFn(context) {
-      if (!queryFn)
+      if (!isQueryFn(queryFn))
         throw new Error('[remoteTableOptions] `query` must return a query with a queryFn.')
-      return map(await queryFn({ ...context, queryKey }))
+      const result: unknown = await queryFn({ ...context, queryKey })
+      if (!isTableResult(result))
+        throw new Error('[remoteTableOptions] the query must resolve to a table response (`rows`).')
+      return map(result)
     },
     queryKey: [...queryKey, 'remote-options'],
   }
 }
 
-function resolvePage<TRow extends GenericObject>(
-  result: RemoteTableResult<TRow>,
+/** A `queryFn` ready to call: not `skipToken`, not a ref (Vue Query options may carry either). */
+function isQueryFn(
+  value: unknown,
+): value is (context: QueryFunctionContext<QueryKey, string | null>) => unknown {
+  return isFunction(value)
+}
+
+function isTableResult(value: unknown): value is RemoteTableResult<GenericObject> {
+  return isObject(value) && isArray(value.rows)
+}
+
+function resolvePage(
+  result: RemoteTableResult<GenericObject>,
 ): { hasMore: boolean } | { nextCursor: string | null } {
   if (!('pageInfo' in result)) return { hasMore: false }
   return result.pageInfo.mode === 'cursor'

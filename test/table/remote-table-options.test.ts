@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/vue-query'
+import { QueryClient, queryOptions as vueQueryOptions, skipToken } from '@tanstack/vue-query'
 import type { QueryFunctionContext, QueryKey } from '@tanstack/vue-query'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
@@ -127,6 +127,27 @@ describe('remoteTableOptions', () => {
       pageIndex: 2,
       pageSize: 10,
     })
+  })
+
+  it('reads rows from Vue Query options, as generated clients return them', async () => {
+    const page: TableCursorPageResult<Account> = {
+      pageInfo: { count: 'none', mode: 'cursor', nextCursor: null, pageSize: 2, rowCount: null },
+      rows: ACCOUNTS.slice(0, 1),
+    }
+    // Like Tuyau's `queryOptions()`: Vue Query options whose `queryFn` may also be `skipToken`.
+    const accounts = remoteTableOptions(
+      (request) =>
+        vueQueryOptions({
+          queryFn: request.search.value === '-' ? skipToken : () => Promise.resolve(page),
+          queryKey: ['accounts', request],
+        }),
+      { option: (account) => ({ label: account.name, value: account.id }), search: ['name'] },
+    )
+
+    expectTypeOf(accounts).toExtend<TableFilterRemoteOptions<string>>()
+    await expect(
+      run(accounts.load({ page: { cursor: null, index: 1, size: 2 }, search: '' })),
+    ).resolves.toEqual({ nextCursor: null, options: [{ label: 'Acme', value: 'a1' }] })
   })
 
   it('fits dashboard filters, table option filters, and form remote options', () => {

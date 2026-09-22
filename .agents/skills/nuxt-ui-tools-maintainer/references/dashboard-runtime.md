@@ -5,7 +5,11 @@ controls, staged queries, derived resources, views, and a generic block library.
 entrypoints: `defineDashboardSchema`, `defineDashboardFilter(s)`, `defineDashboardView`,
 `useDashboard`, `useDashboardView`, `injectDashboard`, `useDashboardFormat`, and the `Dashboard*`
 components registered in `src/components.ts`. `remoteTableOptions` lives in the table domain
-(`table/utils/remote-table-options.ts`) and feeds dashboard, table, and form remote options.
+(`table/utils/remote-table-options.ts`) and feeds dashboard, table, and form remote options. Like
+`tableSource`, it infers the whole query definition and reads rows through `TableSourceQueryResult`
+/ `TableSourceRow` (`table/types/source.ts`): generated clients (Tuyau `queryOptions()`) type
+`queryFn` as `MaybeRefDeep<QueryFunction | skipToken>`, which a strict `QueryDefinition` rejects.
+Its runtime checks the `queryFn` is callable and the response has `rows`.
 
 ## Layout
 
@@ -217,8 +221,8 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   states, merged view params, `filtered` / `resetFilters`, injection, shared-param runtime check.
 - `test/dom/dashboard/controls.test.ts` + `fixtures/controls-*` — the bar, pills (single, multiple
   grid, remote), view tabs, slots, the button variant; `controls-host.vue` pins `only` typing.
-- `test/table/remote-table-options.test.ts` — requests, page mapping, selected resolution, fit with
-  dashboard, table, and form remote options.
+- `test/table/remote-table-options.test.ts` — requests, page mapping, selected resolution, Vue Query
+  options with `skipToken`, fit with dashboard, table, and form remote options.
 - `test/dom/dashboard/engine.test.ts` — staging, views, URL keys, derive state, refresh, options,
   auto-refresh (URL, schema default, `refetchInterval`), comparison params.
 - `test/dashboard/charts.test.ts` — axis bounds and ticks, colors, series axes, per-locale
