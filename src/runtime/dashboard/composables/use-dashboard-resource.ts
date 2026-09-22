@@ -86,17 +86,8 @@ export function useDashboardResource(params: {
       refetchOnWindowFocus: DASHBOARD_QUERY_DEFAULTS.refetchOnWindowFocus,
       staleTime: input.staleTime ?? DASHBOARD_QUERY_DEFAULTS.staleTime[stage],
       ...definition,
-      ...resolveSelect(definition),
       enabled: !(hasProperty(definition, 'enabled') && definition.enabled === false),
     }
-  }
-
-  /** The resource's `select` runs on top of the definition's own, if any. */
-  function resolveSelect(definition: QueryDefinition) {
-    const { select } = input
-    if (!select) return {}
-    const own: unknown = Reflect.get(definition, 'select')
-    return { select: isSelector(own) ? (data: unknown) => select(own(data)) : select }
   }
 
   const state = computed<DashboardResourceState>(() => {
@@ -108,9 +99,12 @@ export function useDashboardResource(params: {
     if (query.isError.value) return 'error'
     return query.data.value === undefined ? 'loading' : 'ready'
   })
-  const data = computed<unknown>(() =>
-    enabled.value && query.data.value !== undefined ? query.data.value : input.defaultValue,
-  )
+  // The resource's `select` runs here, on top of the definition's own, rather than in TanStack: what
+  // it reads (a param such as the currency, another resource) is tracked and re-selects on change.
+  const data = computed<unknown>(() => {
+    if (!enabled.value || query.data.value === undefined) return input.defaultValue
+    return input.select ? input.select(query.data.value) : query.data.value
+  })
   const error = computed<unknown>(() =>
     enabled.value
       ? (query.error.value ?? undefined)
@@ -155,10 +149,6 @@ type DashboardResolvedQueryDefinition = QueryDefinition & {
   refetchInterval?: number | false
   refetchOnWindowFocus?: boolean
   staleTime?: number
-}
-
-function isSelector(value: unknown): value is (data: unknown) => unknown {
-  return typeof value === 'function'
 }
 
 function idleDefinition(id: string): DashboardResolvedQueryDefinition {

@@ -59,8 +59,9 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   loading); deferred → `activate()`. `requires` runs through the tracker (resource and derived
   facades record their `data` reads): while it is nullish the resource follows the sources it
   read (loading / error / idle), then `ready` on its `defaultValue` (`idle` without one); `refresh`
-  refetches those sources. `select` composes on top of the definition's own `select`; resources on
-  one factory share the TanStack cache entry.
+  refetches those sources. `select` runs in the resource's `data` computed, on top of the
+  definition's own TanStack `select`, so what it reads (a param, another resource) is tracked and
+  re-selects without a refetch; resources on one factory share the TanStack cache entry.
 - `useDashboardParamScope` owns where values live: one `useQueryStates` for the URL-synced params of
   a scope (root: no prefix, view `<view>`, widget `<scope>.<query>`), a `shallowRef` per memory
   param, and the external ref or getter of store-synced ones (a getter is read-only, so its param is

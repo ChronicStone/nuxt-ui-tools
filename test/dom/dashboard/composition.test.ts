@@ -95,6 +95,30 @@ describe('dashboard composition', () => {
     expect(usage.calls[0]?.args).toEqual([['p1']])
   })
 
+  it('selects again when a param the selector reads changes, without refetching', async () => {
+    const revenue = deferredSource<{ EUR: number; USD: number }>()
+    const schema = defineDashboardSchema({
+      key: 'revenue',
+      params: (p) => ({ currency: p.enum(['EUR', 'USD'], { defaultValue: 'EUR' }) }),
+      queries: ({ essential, params }) => ({
+        revenue: essential.query({
+          query: () => ({ queryFn: () => revenue.fn(), queryKey: ['revenue'] }),
+          select: (data) => data[params.currency],
+        }),
+      }),
+    })
+    const { dashboard, flush } = await mountDashboard({ schema })
+
+    revenue.calls[0]?.resolve({ EUR: 10, USD: 12 })
+    await flush()
+    expect(dashboard.revenue.data).toBe(10)
+
+    dashboard.params.currency = 'USD'
+    await flush()
+    expect(dashboard.revenue.data).toBe(12)
+    expect(revenue.calls).toHaveLength(1)
+  })
+
   it('passes an upstream error on to its dependent query', async () => {
     const overview = deferredSource<Overview>()
     const { schema } = createAdminSchema(overview)

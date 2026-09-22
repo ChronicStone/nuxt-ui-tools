@@ -64,6 +64,9 @@ An endpoint that returns a whole tab (`{ summary, months, products }`) feeds one
 with `select`. Resources built from the same factory share its request and cache entry: the
 response is fetched once, and each resource keeps its own state for its blocks.
 
+A selector may read params and other resources: `select: (data) => data.revenue[params.currency]`
+selects again when the currency changes, without refetching (keep such params out of the query).
+
 ```ts
 queries: ({ essential, params }) => {
   const overview = () => api.consumption.queryOptions({ year: params.year })
