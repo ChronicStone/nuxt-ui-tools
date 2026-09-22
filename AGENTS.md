@@ -242,7 +242,8 @@ Philosophy:
 
 - blocks bind resource objects (`:source`), never string keys; typing flows from the query result
 - the facade exposes getters over owned refs, no `.value`; composables own behaviour, `useDashboardApi` only projects
-- controls stay in the app; the engine owns values, codecs, URL keys, and option lists
+- consumers write business logic only: standalone definitions (`defineDashboardFilter(s)`, `defineDashboardView`), typed injection (`useDashboardView`, `injectDashboard`), `select`, format presets, and the shipped controls exist so apps never hand-write defaults, resets, transport requests, formatters, or prop-drilled instances; a consumer workaround signals a missing engine primitive
+- the engine ships the filter controls (`UiDashboardFilters`, `UiDashboardFilter`, `UiDashboardViewTabs`) on top of filter handles; presentation is declared on params (`label`, `placeholder`, `format`, `columns`), every part is slot-overridable, and every handle stays bindable to any component
 - only `components/charts/unovis/*` may import unovis
 
 Read `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md` before changing it.

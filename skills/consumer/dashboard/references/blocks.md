@@ -69,6 +69,36 @@ sit above the row's select button, so both stay clickable; the table gives them 
 />
 ```
 
+## Number Formats
+
+Every `format` prop (stats, charts and their axes, lists, bars, tables, totals…) takes:
+
+- a preset, in the dashboard locale: `'number'` (the default: grouped, one decimal at most, compact
+  from 10,000), `'integer'`, `'decimal'`, `'compact'`, `'percent'` (a share out of 100: `57` →
+  `57%`), `'ratio'` (a share out of 1), `'delta'` (signed percent change), `'points'` (signed
+  difference of percentages: `+2.1 pts`), `'signed'` (`+3`)
+- `Intl.NumberFormat` options: `{ style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }`
+- a function `(value: number) => string`
+
+```vue
+<UiDashboardStat :source="summary" label="Units" :value="(s) => s.units" format="integer" />
+<UiDashboardBarChart ... :format="{ style: 'currency', currency, maximumFractionDigits: 0 }" />
+```
+
+`useDashboardFormat()` (auto-imported) returns the same formatters for your own text, so captions
+and labels read like the blocks: `number`, `integer`, `decimal`, `compact`, `percent`, `ratio`,
+`delta`, `points`, `signed`, `currency(value, code, options?)` (rounded to units unless `options`
+say otherwise), `month(1–12 | Date, 'short' | 'long')` (capitalized: "Mar"), and
+`resolve(format)` (any `format` value → a function).
+
+```ts
+const format = useDashboardFormat()
+const caption = (s: Summary) => `${format.integer(s.previous)} in ${year - 1}`
+```
+
+Formatters follow the ui-tools locale (Nuxt UI's by default) and are built once per locale. Digit
+groups use no-break spaces, so values never wrap and never lose their spacing in bold fonts.
+
 ## Card Menu, Freshness, And Expand
 
 `menu` adds a `…` button to the card header:
@@ -217,6 +247,8 @@ Variants, all optional:
 - `compare: (data) => number | null` — the same measure over the comparison period. It gives the
   default `delta` (the change from it) and caption ("vs 1,204 previous period"); `compareLabel`
   replaces that caption, as text or `(previous) => text` from the formatted previous value.
+  `compareMode="difference"` compares by difference instead of relative change: `+12` accounts, or
+  `+2.1 pts` when `format` is `'percent'` / `'ratio'` (`deltaFormat` still wins).
 
 Slots `#value`, `#caption`. `ui` parts: `label`, `value`, `meta`, `delta`, `mark`, `caption`,
 `status`, `trend`, `progress`, `goal`.
@@ -236,6 +268,9 @@ whose bounds and ticks stay round, with `0` always a tick.
 - A series' `compare: (row, index) => number | null` adds the same measure over the comparison
   period, right after it: a faded bar (a dashed line for line and area series), in the legend,
   tooltip, table view, and CSV. `compareLabel` names it (default "<label> (previous period)").
+- `totals` (bar, line, and combo charts) — footer totals of the solid series, formatted like their
+  axis: `true` / `'sum'` adds each series up, `'average'` averages it. Footer slot content follows
+  them.
 
 `UiDashboardLineChart` — same as bars (without `highlight` and `labels`), plus `area` (fill under
 every series; comparison areas are fainter). Solid series get point markers; `dashed: true` (or
@@ -375,7 +410,19 @@ custom cards; pass `source` to get its states, `isEmpty` to flag emptiness, `tab
 table and CSV actions, `expandable` / `viewAsTable` to turn those actions off.
 
 `UiDashboardLegend` (`items: { key, label, color, dashed? }[]`) and `UiDashboardTotal`
-(`label`, `value`) are the header and footer pieces used by the blocks.
+(`label`, `value`, `format`: numbers are formatted, text shows as is) are the header and footer
+pieces used by the blocks:
+
+```vue
+<template #footer>
+  <UiDashboardTotal
+    label="Billed"
+    :value="summary.billed"
+    :format="{ style: 'currency', currency }"
+  />
+</template>
+```
+
 `UiDashboardRelativeTime` (`value: Date | number | string | null`) renders a `<time>` relative to
 now, kept current, with the full date as its title.
 
@@ -433,7 +480,7 @@ export default defineAppConfig({
 
 Sections: `card` (also `menu` and `freshness` parts), `grid`, `stat`, `legend`, `total`, `list`,
 `bars`, `pairedBars`, `funnel`, `stackBar`, `donut`, `alerts`, `feed`, `table`, `state` (empty /
-error content).
+error content), `filter`, `filters`, `viewTabs` (see filters.md).
 
 ## Motion And Performance
 

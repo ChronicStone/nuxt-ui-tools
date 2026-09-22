@@ -1,32 +1,46 @@
 # Dashboard Runtime
 
-`src/runtime/dashboard/` — typed URL params, staged queries, derived resources, views, and a
-generic block library. Public entrypoints: `defineDashboardSchema`, `useDashboard`, and the
-`Dashboard*` components registered in `src/components.ts`.
+`src/runtime/dashboard/` — typed params (URL, memory, or store-synced) with filter handles and
+controls, staged queries, derived resources, views, and a generic block library. Public
+entrypoints: `defineDashboardSchema`, `defineDashboardFilter(s)`, `defineDashboardView`,
+`useDashboard`, `useDashboardView`, `injectDashboard`, `useDashboardFormat`, and the `Dashboard*`
+components registered in `src/components.ts`. `remoteTableOptions` lives in the table domain
+(`table/utils/remote-table-options.ts`) and feeds dashboard, table, and form remote options.
 
 ## Layout
 
 ```
-types/        params, options, resource, schema (+ inferred DashboardApi), blocks, charts, ui;
-              runtime.ts (erased shapes) is internal and not re-exported from types/index.ts
-schema/       defineDashboardSchema (identity + compile-time key guards)
+types/        params (param options, sync, entries), filters (filter handles, bar target),
+              options (deprecated aliases), resource, schema (+ inferred DashboardApi,
+              InferDashboard, InferDashboardView), blocks (formats), charts, ui;
+              runtime.ts (erased shapes, the option-list contract) is internal and not re-exported
+schema/       defineDashboardSchema (identity + compile-time key and shared-param guards),
+              defineDashboardFilter(s), defineDashboardView (identities)
 utils/        builders/dashboard-params.ts (the `p` builder; DashboardParamBuilder = typeof it)
-              params/codecs.ts, schema.ts (erase generics once), resource.ts (slot-backed facade),
-              tracker.ts (derive read tracking), state.ts (state combine, refresh, URL prefixes),
-              options.ts, charts.ts (palette, series, nice max / tick count, axis, per-locale
-              formatters), chart-frame.ts (tooltip HTML, chart → data table), ui.ts
+              params/codecs.ts, schema.ts (erase generics once, resolve params inputs and filter
+              factories), resource.ts (slot-backed facade), tracker.ts (read tracking for derive
+              and requires), state.ts (state combine, refresh, URL prefixes), options.ts,
+              filters.ts (listed kinds, pill classes, headless rule, value text), format.ts
+              (per-locale presets and Intl caches, month names), remote.ts (settles a remote
+              result: promise or query definition), charts.ts (palette, series, nice max / tick
+              count, axis), chart-frame.ts (tooltip HTML, chart → data table), ui.ts
               (resolveDashboardClasses, app config reader, table and selectable-row classes),
               visibility.ts (one shared IntersectionObserver), export.ts (data cells, CSV, file
               download), time.ts (relative time, day headings), sparkline.ts (stat trend paths
               and mini bars), comparison.ts (resolveDashboardComparisonRange, exported)
-composables/  use-dashboard (entry) → use-dashboard-scope (root + one per view)
-              → use-dashboard-param-scope (one useQueryStates per scope) → use-dashboard-options
-              / use-dashboard-remote-options; use-dashboard-resource (one useQuery);
+composables/  use-dashboard (entry, provides the instance) → use-dashboard-scope (root + one per
+              view) → use-dashboard-param-scope (storage per sync mode, values facade)
+              → use-dashboard-filter (one handle) → use-dashboard-options (static list, or
+              use-dashboard-remote-options); use-dashboard-resource (one useQuery);
               use-dashboard-derived; use-dashboard-views; use-dashboard-api (facade only);
-              use-dashboard-block, use-dashboard-chart, use-dashboard-format, use-dashboard-time
-              (one shared clock), use-dashboard-ui (app config + grid context) (blocks)
+              use-dashboard-context (provide / inject by declaration object);
+              use-dashboard-block, use-dashboard-chart, use-dashboard-format (public formatters +
+              `resolve`), use-dashboard-time (one shared clock), use-dashboard-ui (app config +
+              grid context) (blocks)
 components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table view, expand
-              dialog, freshness), blocks, dashboard-tabs.vue / dashboard-refresh.vue (controls),
+              dialog, freshness), blocks, controls: dashboard-filters.vue (bar),
+              dashboard-filter.vue (pill / button) + filter/dashboard-filter-menu.vue (list),
+              dashboard-view-tabs.vue, dashboard-tabs.vue, dashboard-refresh.vue,
               block/ (state, skeleton, data-table, ring, row-actions),
               charts/renderer.ts (the only seam allowed to import unovis) + charts/unovis/*
               (xy-layers.ts resolves one axis into unovis inputs; dashboard-xy-marks.vue draws
@@ -42,9 +56,28 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
 - `useDashboardResource` owns exactly one `useQuery`, the deferred `activated` latch, and widget
   params. Gating rewrites `enabled` on a stable definition; a gated resource never evaluates its
   factory. Stage gates: essential → scope active; background → scope `settled` (no essential
-  loading); deferred → `activate()`.
-- `useDashboardParamScope` owns one `useQueryStates` per scope (root: no prefix, view `<view>`, widget
-  `<scope>.<query>`), a get/set values facade, and option handles. No params → nothing allocated.
+  loading); deferred → `activate()`. `requires` runs through the tracker (resource and derived
+  facades record their `data` reads): while it is nullish the resource follows the sources it
+  read (loading / error / idle), then `ready` on its `defaultValue` (`idle` without one); `refresh`
+  refetches those sources. `select` composes on top of the definition's own `select`; resources on
+  one factory share the TanStack cache entry.
+- `useDashboardParamScope` owns where values live: one `useQueryStates` for the URL-synced params of
+  a scope (root: no prefix, view `<view>`, widget `<scope>.<query>`), a `shallowRef` per memory
+  param, and the external ref or getter of store-synced ones (a getter is read-only, so its param is
+  headless). It builds the get/set values facade and one filter handle per param, and owns
+  `changed()` / `reset()` over its non-headless handles. No params → nothing allocated.
+  `mergeDashboardParamScopes` exposes root + view scopes as one (builders' `params`, view handles).
+- `useDashboardFilter` builds one handle: label / placeholder / display text, `changed` (codec
+  serialization compared with the default's), `toggle` (multiple values kept in item order, capped
+  by `max`), `reset`, and the option list from `useDashboardOptions`. Static and remote lists return
+  the same `DashboardRuntimeOptionList` shape; fixed items are normalized to getters by the builders,
+  so the list reads data-driven items (`p.options(() => …)`) the same way.
+- Params inputs resolve once per scope (`resolveDashboardParams`): the callback form receives the
+  builder and the shared values; map entries that are factories (`defineDashboardFilter`) run with
+  the builder, in setup. A view param reusing a root key throws.
+- `use-dashboard-context.ts` (`provideDashboardInstances`) maps each declaration object (the schema, and
+  each view's declared object) to its facade / handle; `useDashboardView` and `injectDashboard`
+  inject by identity, so builder-form views are reached through `injectDashboard(schema).<view>`.
 - `useDashboardDerived` is one computed that evaluates and records reads through the shared tracker;
   state = combined state of the recorded sources.
 - `useDashboardViews` owns the `view` query state (push history) and a warm `opened` latch per view,
@@ -70,8 +103,14 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   only register when their source can wait for activation: a `deferred` query, or a derived value.
 - The shimmer is one `::after` overlay per skeleton animated with `transform`; never animate
   `background-position` on individual ghosts (it repaints every shape every frame).
-- Formatters come from `resolveDashboardFormats(locale)`, cached per locale; do not build
-  `Intl.NumberFormat` instances inside blocks.
+- Blocks format through `useDashboardFormat().resolve(format, fallbackPreset)`: presets and
+  `Intl.NumberFormat` options resolve to formatters cached per locale (`utils/format.ts`); do not
+  build `Intl.NumberFormat` instances inside blocks. U+202F is normalized to U+00A0.
+- Controls: the pill menu is `filter/dashboard-filter-menu.vue`, rendered once through
+  `createReusableTemplate` by either trigger. `UiDashboardFilters` reads the current view's handle
+  (`dashboard[dashboard.view.current]`, which merges root filters) and renders filters of listed
+  kinds always, free ones only while `changed`. Remote pages load ahead of the scroll (three list
+  heights). Menus stay dense (28px rows, 13px text; taller only on coarse pointers).
 - Class resolution: `resolveDashboardClasses(defaults, appUi.<section>, props.ui)` (tailwind-merge,
   later wins). Block `ui` props are `DashboardBlockUi & <Block>Ui`; part names must not collide with
   the card's (`root`, `header`, `title`, `subtitle`, `actions`, `body`, `footer`). The card root is
@@ -141,15 +180,35 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   fixes `TQuery` too early when `defaultValue` precedes `query`.
 - `DashboardSchemaLike` is a structural interface, not an instantiation (`keyof TViews` would make
   the variance check reject real schemas).
+- Params inputs are `DashboardParamEntries<TParams>` (a homomorphic mapped type: each entry is the
+  param or a factory returning it). Reverse-mapped inference types `p` in inline map factories
+  and keeps `TParams` the resolved map; a naked `TParams | factory` union would leave `p` untyped.
+  `DashboardParamOf` unwraps entries wherever values or handles are derived from stored inputs.
+- `select` results are `NoInfer<TSelected>` in the stage return types: otherwise the contextual
+  `DashboardSourceLike` of `queries` becomes a return-type inference candidate and `data` widens to
+  `unknown`.
+- The shared-param check of views maps (`DashboardSharedGuard`) sits in the parameter intersection
+  of `defineDashboardSchema`, like the other root guards.
 - Blocks are `<script setup generic="TData">` / `generic="TRow"` with
   `source: DashboardSourceLike<readonly TRow[] | undefined>`; ready data is `TData & ({} | null)`,
   which is what `!== undefined` narrowing produces, so no casts are needed.
-- The only casts are `resolveDashboardRuntimeSchema` (schema → erased runtime) and the facade
-  return in `useDashboard`, both with `SAFETY:` comments.
+- The only casts are `resolveDashboardRuntimeSchema` (schema → erased runtime), the facade return
+  in `useDashboard`, and the two injection returns in `use-dashboard-context.ts`, all with `SAFETY:`
+  comments.
 
 ## Tests
 
 - `test/dashboard/schema-inference.test.ts` — params, defaults, `requires`, derive, views, guards.
+- `test/dashboard/definitions-inference.test.ts` — standalone filters / groups / views, shared
+  params on view handles, `select` data, `sync` typing, shared-param guard, `useDashboardView`.
+- `test/dom/dashboard/filters.test.ts` — handles (display, toggle order, `max`, reset), sync modes,
+  headless, factories and the params context, data-driven items, remote definitions.
+- `test/dom/dashboard/composition.test.ts` — `select` sharing one request, dependent `requires`
+  states, merged view params, `filtered` / `resetFilters`, injection, shared-param runtime check.
+- `test/dom/dashboard/controls.test.ts` + `fixtures/controls-*` — the bar, pills (single, multiple
+  grid, remote), view tabs, slots, the button variant; `controls-host.vue` pins `only` typing.
+- `test/table/remote-table-options.test.ts` — requests, page mapping, selected resolution, fit with
+  dashboard, table, and form remote options.
 - `test/dom/dashboard/engine.test.ts` — staging, views, URL keys, derive state, refresh, options,
   auto-refresh (URL, schema default, `refetchInterval`), comparison params.
 - `test/dashboard/charts.test.ts` — axis bounds and ticks, colors, series axes, per-locale
@@ -197,5 +256,7 @@ fallback covers browsers without relative colors. Nuxt UI has no `--ui-neutral`,
 ## Keep In Sync
 
 `src/imports.ts`, `src/components.ts`, `publicRuntimeDomains` in `src/module.ts`, the package.json
-`imports` / `exports` / `typesVersions` triple, `UiToolsDashboardMessages` in both locales, the
-`--nut-dash-*` tokens in `shared/styles/tokens.css`, and `skills/consumer/dashboard/`.
+`imports` / `exports` / `typesVersions` triple, `UiToolsDashboardMessages` in both locales
+(`dashboard.filters.*`, `dashboard.format.*`), the `--nut-dash-*` tokens in
+`shared/styles/tokens.css` (including `--nut-dash-filter-*` and `--nut-dash-row-hover`), and
+`skills/consumer/dashboard/` (SKILL.md, schema, params, filters, blocks).
