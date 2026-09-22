@@ -27,6 +27,19 @@ export default defineAppConfig({
         value: 'text-[22px] font-light tracking-[-0.04em] text-default',
       },
       total: { label: 'text-[#6b655d]', value: 'text-default' },
+      // Filter pills and view tabs on the warm surface, with the soft control ink.
+      filter: {
+        button: 'bg-[var(--ex-surface)] hover:bg-[var(--ex-row-hover)]',
+        check: 'data-[checked]:text-[#1f1d1a]',
+        content: 'bg-[var(--ex-surface)]',
+        label: 'text-[var(--ex-ink-soft)]',
+        root: 'bg-[var(--ex-surface)] hover:bg-[var(--ex-row-hover)]',
+      },
+      filters: { reset: 'text-[var(--ex-ink-soft)]' },
+      viewTabs: {
+        root: 'bg-[var(--ex-surface)]',
+        tab: 'text-[var(--ex-ink-soft)]',
+      },
     },
   },
   ui: {

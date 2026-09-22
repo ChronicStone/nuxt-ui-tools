@@ -9,6 +9,16 @@ import type { DashboardComparison } from '#ui-tools/dashboard'
 import { useAccountsData } from '../composables/use-accounts-data'
 import { wait } from '../utils/wait'
 
+/** Two initials of a name, for avatar tiles. */
+export function initials(name: string) {
+  return name
+    .split(' ')
+    .map((word) => word.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
 export const MONTHS = [
   'Jan',
   'Fév',
@@ -452,6 +462,7 @@ export const dashboardApi = {
         return {
           hasMore: start + input.page.size < matches.length,
           options: matches.slice(start, start + input.page.size).map((account) => ({
+            avatar: { text: initials(account.name) },
             label: account.name,
             value: account.id,
           })),
@@ -461,7 +472,11 @@ export const dashboardApi = {
       respond(`acc-ids-${ids.join()}`, () =>
         useAccountsData()
           .accounts.filter((account) => ids.includes(account.id))
-          .map((account) => ({ label: account.name, value: account.id })),
+          .map((account) => ({
+            avatar: { text: initials(account.name) },
+            label: account.name,
+            value: account.id,
+          })),
       ),
   },
 

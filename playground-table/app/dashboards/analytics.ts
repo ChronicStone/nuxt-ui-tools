@@ -5,8 +5,10 @@ import {
   CURRENCIES,
   dashboardApi as api,
   MONTH_INDEXES,
+  MONTHS,
   OPERATIONS_SEGMENTS,
-  PRODUCT_IDS,
+  PRODUCT_PRESETS,
+  PRODUCTS,
   YEARS,
 } from '../data/dashboard'
 
@@ -14,13 +16,13 @@ import {
 export const OPERATIONS_SORT_KEYS = ['name', 'sessions', 'success', 'change', 'delay'] as const
 export type OperationsSortKey = (typeof OPERATIONS_SORT_KEYS)[number]
 
-/** Values of an unfiltered dashboard: the filter bar flags and resets anything else. */
-export const ANALYTICS_DEFAULTS = {
-  compare: true,
-  comparison: 'previous',
-  currency: 'EUR',
-  year: 2026,
-} as const
+const dayFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' })
+
+/** `YYYY-MM-DD` → "12 mars": the picked day, on its pill. */
+function formatDay(iso: string) {
+  const [year, month, day] = iso.split('-').map(Number)
+  return year && month && day ? dayFormat.format(new Date(year, month - 1, day)) : iso
+}
 
 function sum(values: readonly (number | null)[]) {
   return values.reduce<number>((total, value) => total + (value ?? 0), 0)
@@ -39,20 +41,27 @@ function cumulate(values: readonly (number | null)[]) {
 export const analyticsDashboard = defineDashboardSchema({
   key: 'analytics',
   params: (p) => ({
-    year: p.enum(YEARS, { defaultValue: ANALYTICS_DEFAULTS.year }),
+    year: p.enum(YEARS, { defaultValue: 2026, label: 'Année' }),
   }),
   views: (view) => ({
     consumption: view({
       label: 'Consommation',
-      params: (p) => ({
-        account: p.remote({
-          load: api.accounts.search,
-          pagination: { size: 20, type: 'page' },
-          resolveSelected: ({ values }) => api.accounts.byIds(values),
-          search: { debounce: 200 },
+      params: (p, { params }) => ({
+        currency: p.enum(CURRENCIES, { defaultValue: 'EUR', label: 'Devise' }),
+        account: p.remote(
+          {
+            load: api.accounts.search,
+            pagination: { size: 20, type: 'page' },
+            resolveSelected: ({ values }) => api.accounts.byIds(values),
+            search: { debounce: 200 },
+          },
+          { label: 'Compte', placeholder: 'Tous les comptes' },
+        ),
+        compare: p.boolean({
+          defaultValue: true,
+          format: (on) => (on ? String(params.year - 1) : 'Aucune'),
+          label: 'Comparer à',
         }),
-        compare: p.boolean({ defaultValue: ANALYTICS_DEFAULTS.compare }),
-        currency: p.enum(CURRENCIES, { defaultValue: ANALYTICS_DEFAULTS.currency }),
       }),
       queries: ({ background, deferred, essential, params }) => ({
         summary: essential.query(() => ({
@@ -104,7 +113,23 @@ export const analyticsDashboard = defineDashboardSchema({
         productLines: deferred.query({
           defaultValue: [],
           params: (p) => ({
-            tracked: p.enum(PRODUCT_IDS, { defaultValue: ['en-gen', 'en-biz'], multiple: true }),
+            tracked: p.options(
+              PRODUCTS.map((product) => ({
+                hint: product.version,
+                label: product.label,
+                value: product.id,
+              })),
+              {
+                defaultValue: ['en-gen', 'en-biz'],
+                label: 'Produits suivis',
+                multiple: true,
+                presets: PRODUCT_PRESETS.map((preset) => ({
+                  hint: `${preset.products.length} produits`,
+                  label: preset.label,
+                  value: preset.products,
+                })),
+              },
+            ),
           }),
           query: ({ params: widget }) => ({
             queryFn: () =>
@@ -151,11 +176,16 @@ export const analyticsDashboard = defineDashboardSchema({
     candidates: view({
       label: 'Candidats et certifications',
       params: (p) => ({
+        months: p.enum(MONTH_INDEXES, {
+          columns: 3,
+          format: (month) => MONTHS[month],
+          label: 'Mois',
+          multiple: true,
+        }),
         accounts: p.options(
           CERT_ROWS.map((row) => ({ label: row.name, value: row.id })),
-          { multiple: true },
+          { label: 'Comptes', multiple: true, searchable: true },
         ),
-        months: p.enum(MONTH_INDEXES, { multiple: true }),
       }),
       queries: ({ background, deferred, essential, params }) => ({
         summary: essential.query(() => ({
@@ -223,10 +253,13 @@ export const analyticsDashboard = defineDashboardSchema({
     operations: view({
       label: 'Opérations',
       params: (p) => ({
-        /** Day picked on the sessions chart (`YYYY-MM-DD`); narrows the accounts table. */
-        day: p.string(),
         /** Period the KPIs and the daily chart compare against. */
-        compare: p.comparison({ defaultValue: ANALYTICS_DEFAULTS.comparison }),
+        compare: p.comparison({ defaultValue: 'previous', label: 'Comparer à' }),
+        /**
+         * Day picked on the sessions chart (`YYYY-MM-DD`); narrows the accounts table. The filter
+         * bar shows it as a removable pill while it is set.
+         */
+        day: p.string({ format: formatDay, label: 'Journée' }),
       }),
       queries: ({ background, deferred, essential, params }) => ({
         kpis: essential.query(() => ({

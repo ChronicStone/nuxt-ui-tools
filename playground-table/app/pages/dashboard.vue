@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useMediaQuery, useNow, useScroll } from '@vueuse/core'
 
-import { useDashboard } from '#ui-tools/dashboard'
+import { useDashboard, useDashboardFormat } from '#ui-tools/dashboard'
 import type {
-  DashboardComparison,
   DashboardMenuContext,
   DashboardRowAction,
   DashboardSelectEvent,
@@ -12,21 +11,9 @@ import type {
   DashboardTableSort,
 } from '#ui-tools/dashboard'
 
-import {
-  ANALYTICS_DEFAULTS,
-  analyticsDashboard,
-  OPERATIONS_SORT_KEYS,
-} from '../dashboards/analytics'
+import { analyticsDashboard, OPERATIONS_SORT_KEYS } from '../dashboards/analytics'
 import type { OperationsSortKey } from '../dashboards/analytics'
-import {
-  CERT_ROWS,
-  CURRENCIES,
-  MONTH_INDEXES,
-  MONTHS,
-  PRODUCT_PRESETS,
-  PRODUCTS,
-  YEARS,
-} from '../data/dashboard'
+import { initials, MONTHS } from '../data/dashboard'
 import type {
   MonthIndex,
   OperationsAccount,
@@ -34,7 +21,6 @@ import type {
   OperationsDay,
   OperationsEvent,
   OperationsEventKind,
-  ProductId,
   ProductLineMonth,
 } from '../data/dashboard'
 
@@ -42,24 +28,21 @@ const dashboard = useDashboard(analyticsDashboard)
 const conso = dashboard.consumption
 const cand = dashboard.candidates
 const ops = dashboard.operations
+const format = useDashboardFormat()
+const toast = useToast()
 
-// --- Formatting (fr-FR, as in the artifact) -------------------------------------------------
+// --- Formats (fr-FR, from the dashboard locale) ---------------------------------------------
 
-const nf = (value: number) => Math.round(value).toLocaleString('fr-FR')
-const fmt1 = (value: number) => value.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
-const pf = (ratio: number) => `${fmt1(ratio * 100)} %`
-const sign = (value: number) => (value >= 0 ? '+' : '−')
-const dl = (value: number) => `${sign(value)}${fmt1(Math.abs(value))} %`
-const pts = (value: number) =>
-  `${sign(value)}${fmt1(Math.abs(value))} ${Math.abs(value) >= 2 ? 'pts' : 'pt'}`
-const symbol = computed(() => (conso.params.currency === 'EUR' ? '€' : '$'))
-const money = (value: number) => `${nf(value)} ${symbol.value}`
-const kmoney = (value: number) =>
-  `${value >= 1000 ? `${Math.round(value / 1000).toLocaleString('fr-FR')} k` : nf(value)}${symbol.value}`
-const kunits = (value: number) => (value >= 1000 ? `${Math.round(value / 1000)} k` : nf(value))
-const percent = (value: number) => `${value} %`
-const change = (current: number, previous: number) =>
-  previous ? ((current - previous) / previous) * 100 : null
+const money = computed<Intl.NumberFormatOptions>(() => ({
+  currency: conso.params.currency,
+  maximumFractionDigits: 0,
+  style: 'currency',
+}))
+const compactMoney = computed<Intl.NumberFormatOptions>(() => ({
+  ...money.value,
+  notation: 'compact',
+}))
+const days = (value: number) => `${format.decimal(value)} j`
 const monthLabel = (row: { month: MonthIndex }) => MONTHS[row.month]
 const shortLabel = (value: string | number | Date) => {
   const text = String(value)
@@ -67,18 +50,11 @@ const shortLabel = (value: string | number | Date) => {
 }
 const sum = (values: readonly (number | null | undefined)[]) =>
   values.reduce<number>((total, value) => total + (value ?? 0), 0)
-const initials = (name: string) =>
-  name
-    .split(' ')
-    .map((word) => word.charAt(0))
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
 
 const year = computed(() => dashboard.params.year)
 const previousYear = computed(() => String(dashboard.params.year - 1))
 
-// --- Header, tabs, and filter bar -----------------------------------------------------------
+// --- Header ----------------------------------------------------------------------------------
 
 // The title scrolls away; the tabs and the filter bar stay pinned, with a shadow once content
 // scrolls under them.
@@ -93,63 +69,6 @@ const pageAction = computed(() =>
   dashboard.view.current === 'consumption' ? 'Exporter' : 'Rapport de certification',
 )
 
-// The tabs scroll sideways on narrow screens: keep the open one in view. Only the strip scrolls;
-// `scrollIntoView` would also move the page and any parent frame.
-const tabs = useTemplateRef<HTMLElement>('tabs')
-function revealTab(behavior: ScrollBehavior) {
-  const strip = tabs.value
-  const tab = strip?.querySelector('[aria-current="page"]')
-  if (!strip || !tab) return
-  const edge = 16
-  const bounds = strip.getBoundingClientRect()
-  const box = tab.getBoundingClientRect()
-  const overflow =
-    box.left < bounds.left + edge
-      ? box.left - bounds.left - edge
-      : Math.max(0, box.right - bounds.right + edge)
-  if (overflow) strip.scrollBy({ behavior, left: overflow })
-}
-onMounted(() => revealTab('instant'))
-watch(
-  () => dashboard.view.current,
-  () => revealTab('smooth'),
-  { flush: 'post' },
-)
-
-// A view is filtered once one of its filters leaves its default; "Réinitialiser" restores them.
-const filtered = computed(() => {
-  if (dashboard.params.year !== ANALYTICS_DEFAULTS.year) return true
-  switch (dashboard.view.current) {
-    case 'consumption':
-      return (
-        conso.params.currency !== ANALYTICS_DEFAULTS.currency ||
-        conso.params.compare !== ANALYTICS_DEFAULTS.compare ||
-        Boolean(conso.params.account)
-      )
-    case 'candidates':
-      return cand.params.months.length > 0 || cand.params.accounts.length > 0
-    default:
-      return ops.params.compare !== ANALYTICS_DEFAULTS.comparison || Boolean(ops.params.day)
-  }
-})
-function resetFilters() {
-  dashboard.params.year = ANALYTICS_DEFAULTS.year
-  switch (dashboard.view.current) {
-    case 'consumption':
-      conso.params.currency = ANALYTICS_DEFAULTS.currency
-      conso.params.compare = ANALYTICS_DEFAULTS.compare
-      conso.params.account = undefined
-      break
-    case 'candidates':
-      cand.params.months = []
-      cand.params.accounts = []
-      break
-    default:
-      ops.params.compare = ANALYTICS_DEFAULTS.comparison
-      ops.params.day = undefined
-  }
-}
-
 const now = useNow({ interval: 60_000 })
 const today = computed(() => {
   const text = new Intl.DateTimeFormat('fr-FR', {
@@ -160,48 +79,6 @@ const today = computed(() => {
   }).format(now.value)
   return text.charAt(0).toUpperCase() + text.slice(1)
 })
-
-// Consumption: one remote account, and a comparison with the previous year.
-const accountOptions = conso.options.account
-const accountLabel = computed(
-  () => accountOptions.selected[0]?.label ?? (conso.params.account ? '…' : 'Tous'),
-)
-function pickAccount(value: string | undefined) {
-  conso.params.account = value
-  accountOptions.open = false
-}
-const COMPARE_CHOICES = [true, false] as const
-const compareLabel = (compare: boolean) => (compare ? previousYear.value : 'Aucune')
-
-// Candidates: months and accounts, both multiple.
-const monthsLabel = computed(() => {
-  const { months } = cand.params
-  if (!months.length) return 'Tous'
-  return months.length === 1 ? MONTHS[months[0] ?? 0] : `${months.length} mois`
-})
-function toggleMonth(month: MonthIndex) {
-  const { months } = cand.params
-  cand.params.months = months.includes(month)
-    ? months.filter((entry) => entry !== month)
-    : [...months, month].toSorted((a, b) => a - b)
-}
-const certSearch = ref('')
-const certAccounts = computed(() => {
-  const term = certSearch.value.trim().toLowerCase()
-  return CERT_ROWS.filter((row) => row.name.toLowerCase().includes(term))
-})
-const accountsLabel = computed(() => {
-  const { accounts } = cand.params
-  if (!accounts.length) return 'Tous'
-  if (accounts.length > 1) return `${accounts.length} comptes`
-  return CERT_ROWS.find((row) => row.id === accounts[0])?.name ?? '1 compte'
-})
-function toggleCertAccount(id: string) {
-  const { accounts } = cand.params
-  cand.params.accounts = accounts.includes(id)
-    ? accounts.filter((entry) => entry !== id)
-    : [...accounts, id]
-}
 
 // --- Consumption blocks ---------------------------------------------------------------------
 
@@ -258,36 +135,17 @@ const cumulativeComparison = computed(() => ({
   value: (row: CumulativeRow) => row.previous,
 }))
 
-// Tracked product lines: widget-scoped param, URL-synced under the query.
+// Tracked product lines: a widget param with its presets; its handle feeds the picker and chips.
 const lines = conso.productLines
+const tracked = lines.filters.tracked
 const trackedSeries = computed(() =>
-  lines.params.tracked.map((id, index) => ({
+  tracked.selected.map((product, index) => ({
     color: `series-${(index % 6) + 1}`,
-    key: id,
-    label: productLabel(id),
-    value: (row: ProductLineMonth) => row[id] ?? null,
+    key: product.value,
+    label: product.label,
+    value: (row: ProductLineMonth) => row[product.value] ?? null,
   })),
 )
-const productsOpen = ref(false)
-const presetsOpen = ref(false)
-function productLabel(id: ProductId) {
-  return PRODUCTS.find((product) => product.id === id)?.label ?? id
-}
-function toggleProduct(id: ProductId) {
-  const { tracked } = lines.params
-  lines.params.tracked = tracked.includes(id)
-    ? tracked.filter((entry) => entry !== id)
-    : [...tracked, id]
-}
-function applyPreset(products: readonly ProductId[]) {
-  lines.params.tracked = [...products]
-  presetsOpen.value = false
-}
-const toast = useToast()
-function savePreset() {
-  presetsOpen.value = false
-  toast.add({ color: 'neutral', title: 'Enregistrer la sélection courante comme préréglage' })
-}
 
 type MarginRow = (typeof conso.margin.data)[number]
 const marginSeries = computed(() => [
@@ -357,9 +215,7 @@ const cefrSeries = [
 
 // --- Operations blocks ----------------------------------------------------------------------
 
-const dayFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' })
 const weekdayFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', weekday: 'short' })
-const days = (value: number) => `${fmt1(value)} j`
 
 /** `YYYY-MM-DD` of a local midnight: the URL form of the picked day. */
 function isoDay(time: number) {
@@ -367,19 +223,8 @@ function isoDay(time: number) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   return `${date.getFullYear()}-${month}-${String(date.getDate()).padStart(2, '0')}`
 }
-const pickedDay = computed(() => {
-  const [dayYear, dayMonth, dayOfMonth] = (ops.params.day ?? '').split('-').map(Number)
-  return dayYear && dayMonth && dayOfMonth
-    ? dayFormat.format(new Date(dayYear, dayMonth - 1, dayOfMonth))
-    : ''
-})
 
 // Comparison period: a view param with localized options; the chart adds its faded bars.
-const COMPARISONS: readonly DashboardComparison[] = ['previous', 'year', 'none']
-const comparisonLabel = (value: DashboardComparison) =>
-  value === 'none'
-    ? 'Aucune'
-    : (ops.options.compare.items.find((item) => item.value === value)?.label ?? value)
 const comparedTo = computed(() =>
   ops.params.compare === 'year' ? 'l’an dernier' : 'la période précédente',
 )
@@ -445,7 +290,7 @@ function isSortKey(key: string): key is OperationsSortKey {
 function openAccount({ row }: DashboardSelectEvent<OperationsAccount>) {
   toast.add({
     color: 'neutral',
-    description: `${nf(row.sessions)} sessions · ${fmt1(row.success)} % de réussite`,
+    description: `${format.integer(row.sessions)} sessions · ${format.percent(row.success)} de réussite`,
     title: `Ouvrir ${row.name}`,
   })
 }
@@ -549,168 +394,8 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
     </header>
 
     <div class="ex-dash-bar" :data-stuck="stuck || undefined">
-      <nav ref="tabs" class="ex-dtabs" aria-label="Vues du tableau de bord">
-        <button
-          v-for="item in dashboard.view.items"
-          :key="item.value"
-          type="button"
-          :class="{ on: dashboard.view.current === item.value }"
-          :aria-current="dashboard.view.current === item.value ? 'page' : undefined"
-          @click="dashboard.view.current = item.value"
-        >
-          {{ item.label }}
-        </button>
-      </nav>
-
-      <div class="dash-filters" role="toolbar" aria-label="Filtres">
-        <DashSelect
-          v-model="dashboard.params.year"
-          name="Année"
-          :items="YEARS"
-          :default-value="ANALYTICS_DEFAULTS.year"
-        />
-
-        <template v-if="dashboard.view.current === 'consumption'">
-          <DashSelect
-            v-model="conso.params.currency"
-            name="Devise"
-            :items="CURRENCIES"
-            :default-value="ANALYTICS_DEFAULTS.currency"
-          />
-          <DashPicker
-            v-model:open="accountOptions.open"
-            v-model:search="accountOptions.search"
-            name="Compte"
-            searchable
-            :label="accountLabel"
-            :active="Boolean(conso.params.account)"
-            @clear="conso.params.account = undefined"
-            @more="accountOptions.hasMore && accountOptions.loadMore()"
-          >
-            <button
-              type="button"
-              class="dash-it"
-              :class="{ on: !conso.params.account }"
-              @click="pickAccount(undefined)"
-            >
-              <UIcon name="i-lucide-users" class="dash-it-ic" />
-              <span>Tous les comptes</span>
-            </button>
-            <button
-              v-for="option in accountOptions.items"
-              :key="option.value"
-              type="button"
-              class="dash-it"
-              :class="{ on: conso.params.account === option.value }"
-              @click="pickAccount(option.value)"
-            >
-              <span class="dash-it-av">{{ initials(option.label) }}</span>
-              <span>{{ option.label }}</span>
-            </button>
-            <div v-if="accountOptions.loading || accountOptions.loadingMore" class="dash-more">
-              Chargement…
-            </div>
-          </DashPicker>
-          <DashSelect
-            v-model="conso.params.compare"
-            name="Comparer à"
-            :items="COMPARE_CHOICES"
-            :format="compareLabel"
-            :default-value="ANALYTICS_DEFAULTS.compare"
-          />
-        </template>
-
-        <template v-else-if="dashboard.view.current === 'operations'">
-          <DashSelect
-            v-model="ops.params.compare"
-            name="Comparer à"
-            :items="COMPARISONS"
-            :format="comparisonLabel"
-            :default-value="ANALYTICS_DEFAULTS.comparison"
-          />
-          <!-- Set from the sessions chart: shown as a filter, cleared from here or the chart -->
-          <span v-if="pickedDay" class="dash-filter on">
-            <span class="dash-filter-trigger">
-              <span class="dash-filter-name">Journée</span>
-              <span class="dash-filter-value">{{ pickedDay }}</span>
-            </span>
-            <button
-              type="button"
-              class="dash-filter-x"
-              :aria-label="`Retirer le filtre du ${pickedDay}`"
-              @click="ops.params.day = undefined"
-            >
-              <UIcon name="i-lucide-x" class="size-3" />
-            </button>
-          </span>
-        </template>
-
-        <template v-else>
-          <DashPicker
-            name="Mois"
-            :label="monthsLabel"
-            :active="cand.params.months.length > 0"
-            @clear="cand.params.months = []"
-          >
-            <div class="dash-grid3">
-              <button
-                v-for="month in MONTH_INDEXES"
-                :key="month"
-                type="button"
-                class="dash-it"
-                :class="{ on: cand.params.months.includes(month) }"
-                @click="toggleMonth(month)"
-              >
-                <span class="dash-chk" :class="{ on: cand.params.months.includes(month) }">
-                  <UIcon name="i-lucide-check" class="size-3" />
-                </span>
-                {{ MONTHS[month] }}
-              </button>
-            </div>
-            <template v-if="cand.params.months.length">
-              <div class="dash-hr" />
-              <button type="button" class="dash-it" @click="cand.params.months = []">
-                <UIcon name="i-lucide-x" class="dash-it-ic" />
-                <span>Effacer la sélection</span>
-              </button>
-            </template>
-          </DashPicker>
-          <DashPicker
-            v-model:search="certSearch"
-            name="Comptes"
-            searchable
-            :label="accountsLabel"
-            :active="cand.params.accounts.length > 0"
-            @clear="cand.params.accounts = []"
-          >
-            <button
-              v-for="row in certAccounts"
-              :key="row.id"
-              type="button"
-              class="dash-it"
-              :class="{ on: cand.params.accounts.includes(row.id) }"
-              @click="toggleCertAccount(row.id)"
-            >
-              <span class="dash-chk" :class="{ on: cand.params.accounts.includes(row.id) }">
-                <UIcon name="i-lucide-check" class="size-3" />
-              </span>
-              <span>{{ row.name }}</span>
-            </button>
-            <template v-if="cand.params.accounts.length">
-              <div class="dash-hr" />
-              <button type="button" class="dash-it" @click="cand.params.accounts = []">
-                <UIcon name="i-lucide-x" class="dash-it-ic" />
-                <span>Effacer la sélection</span>
-              </button>
-            </template>
-          </DashPicker>
-        </template>
-
-        <button v-if="filtered" type="button" class="dash-reset" @click="resetFilters">
-          <UIcon name="i-lucide-rotate-ccw" class="size-3.5" />
-          Réinitialiser
-        </button>
-      </div>
+      <NutDashboardViewTabs :dashboard class="px-2 lg:px-7" />
+      <NutDashboardFilters :dashboard class="px-4 py-3 lg:px-7 lg:py-4" />
     </div>
 
     <!-- Consommation -->
@@ -720,50 +405,50 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           size="1"
           :source="conso.summary"
           label="Tests consommés"
-          :value="(d) => nf(d.units)"
-          :delta="(d) => change(d.units, d.unitsPrevious)"
-          :delta-format="dl"
-          :caption="(d) => `${nf(d.unitsPrevious)} sur la même période ${previousYear}`"
+          :value="(d) => d.units"
+          :compare="(d) => d.unitsPrevious"
+          :compare-label="(value) => `${value} sur la même période ${previousYear}`"
+          format="integer"
         />
         <NutDashboardStat
           size="1"
           :source="conso.summary"
           label="Tests facturés"
-          :value="(d) => money(d.billed)"
-          :delta="(d) => change(d.billed, d.billedPrevious)"
-          :delta-format="dl"
-          :caption="(d) => `${nf(d.billedUnits)} unités facturées`"
+          :value="(d) => d.billed"
+          :compare="(d) => d.billedPrevious"
+          :format="money"
+          :caption="(d) => `${format.integer(d.billedUnits)} unités facturées`"
         />
         <NutDashboardStat
           size="1"
           :source="conso.summary"
           label="Prix moyen par test"
-          :value="(d) => money(d.units ? d.billed / d.units : 0)"
-          :delta="
-            (d) =>
-              d.units && d.unitsPrevious
-                ? change(d.billed / d.units, d.billedPrevious / d.unitsPrevious)
-                : null
-          "
-          :delta-format="dl"
+          :value="(d) => (d.units ? d.billed / d.units : 0)"
+          :compare="(d) => (d.unitsPrevious ? d.billedPrevious / d.unitsPrevious : null)"
+          :format="money"
           caption="facturé HT, toutes versions"
         />
         <NutDashboardStat
           size="1"
           :source="conso.summary"
           label="Marge nette"
-          :value="(d) => `${fmt1(d.margin)} %`"
-          :delta="(d) => (d.marginPrevious ? d.margin - d.marginPrevious : null)"
-          :delta-format="(value) => `${sign(value)}${fmt1(Math.abs(value))} pts`"
-          :caption="(d) => `${kmoney((d.billed * d.margin) / 100)} sur la période`"
+          :value="(d) => d.margin"
+          :compare="(d) => d.marginPrevious || null"
+          compare-mode="difference"
+          format="percent"
+          :caption="
+            (d) =>
+              `${format.currency((d.billed * d.margin) / 100, conso.params.currency, { notation: 'compact' })} sur la période`
+          "
         />
         <NutDashboardStat
           size="2 md:2 xl:1"
           :source="conso.summary"
           label="Comptes consommateurs"
-          :value="(d) => nf(d.accounts)"
+          :value="(d) => d.accounts"
           :delta="(d) => d.accountsChange"
-          :delta-format="(value) => `+${value}`"
+          delta-format="signed"
+          format="integer"
           :caption="conso.params.account ? 'compte filtré' : 'au moins un test sur la période'"
         />
       </NutDashboardGrid>
@@ -777,12 +462,12 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :x="monthLabel"
           :series="consumptionSeries"
           :comparison="consumptionComparison"
-          :format="nf"
+          format="integer"
         >
           <template #footer>
             <NutDashboardTotal
               label="Total"
-              :value="`${nf(sum(conso.months.data.map((row) => row.used)))} unités`"
+              :value="`${format.integer(sum(conso.months.data.map((row) => row.used)))} unités`"
             />
           </template>
         </NutDashboardBarChart>
@@ -794,9 +479,9 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           layout="stacked"
           :label="(row: ModeRow) => row.label"
           :value="(row: ModeRow) => row.share"
-          :text="(row: ModeRow) => percent(row.share)"
+          :text="(row: ModeRow) => format.percent(row.share)"
           :color="donutColor"
-          :center="(rows) => nf(sum(rows.map((row) => row.units)))"
+          :center="(rows) => format.integer(sum(rows.map((row) => row.units)))"
           center-label="unités"
         />
       </NutDashboardGrid>
@@ -809,15 +494,16 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :subtitle="`montants HT en ${conso.params.currency} · marge nette en %`"
           :x="monthLabel"
           :series="billingSeries"
-          :y-axis="{ format: kmoney }"
-          :y2-axis="{ format: percent, max: 50 }"
+          :y-axis="{ format: compactMoney }"
+          :y2-axis="{ format: 'percent', max: 50 }"
         >
           <template #footer>
             <NutDashboardTotal
               label="Total facturé"
-              :value="money(sum(conso.billing.data.map((row) => row.billed)))"
+              :value="sum(conso.billing.data.map((row) => row.billed))"
+              :format="money"
             />
-            <NutDashboardTotal label="Marge moyenne" :value="`${fmt1(billingAverage)} %`" />
+            <NutDashboardTotal label="Marge moyenne" :value="billingAverage" format="percent" />
           </template>
         </NutDashboardComboChart>
         <NutDashboardLineChart
@@ -828,13 +514,13 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :x="monthLabel"
           :series="cumulativeSeries"
           :comparison="cumulativeComparison"
-          :format="kunits"
+          format="compact"
           area
         >
           <template #footer>
             <NutDashboardTotal
               :label="`Projection fin ${year}`"
-              :value="`${nf(conso.projection.data ?? 0)} unités`"
+              :value="`${format.integer(conso.projection.data ?? 0)} unités`"
             />
           </template>
         </NutDashboardLineChart>
@@ -849,7 +535,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :label="(row) => row.label"
           :tag="(row) => row.version"
           :value="(row) => row.share"
-          :meta="(row) => `${row.share} % · ${nf(row.units)}`"
+          :meta="(row) => `${format.percent(row.share)} · ${format.integer(row.units)}`"
           emphasis="first"
         >
           <template #header-right>
@@ -868,7 +554,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :label="(row) => row.name"
           :percent="(row) => row.share"
           :value="(row) => row.units"
-          :format="nf"
+          format="integer"
         />
         <NutDashboardList
           size="12 md:12 xl:4"
@@ -880,7 +566,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :description="(row) => row.type"
           :delta="(row) => row.change"
           :value="(row) => row.units"
-          :format="nf"
+          format="integer"
         >
           <template #header-right>
             <NuxtLink to="/accounts" class="dash-link">
@@ -897,7 +583,8 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           subtitle="unités mensuelles des produits suivis"
           :x="monthLabel"
           :series="trackedSeries"
-          :format="nf"
+          format="integer"
+          totals
           :height="280"
           :legend="false"
           :empty="{
@@ -908,74 +595,38 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
         >
           <template #header-right>
             <div class="flex items-center gap-1.5">
-              <DashPicker
-                v-model:open="productsOpen"
+              <NutDashboardFilter
+                :filter="tracked"
                 variant="button"
                 icon="i-lucide-plus"
                 label="Ajouter un produit"
-                title="Produits suivis"
-              >
-                <button
-                  v-for="product in PRODUCTS"
-                  :key="product.id"
-                  type="button"
-                  class="dash-it"
-                  :class="{ on: lines.params.tracked.includes(product.id) }"
-                  @click="toggleProduct(product.id)"
-                >
-                  <span class="dash-chk" :class="{ on: lines.params.tracked.includes(product.id) }">
-                    <UIcon name="i-lucide-check" class="size-3" />
-                  </span>
-                  <span>{{ product.label }}</span>
-                  <small class="font-mono">{{ product.version }}</small>
-                </button>
-              </DashPicker>
-              <DashPicker
-                v-model:open="presetsOpen"
+                list="options"
+              />
+              <NutDashboardFilter
+                :filter="tracked"
                 variant="button"
                 icon="i-lucide-layers"
                 label="Préréglages"
-                title="Préréglages"
-              >
-                <button
-                  v-for="preset in PRODUCT_PRESETS"
-                  :key="preset.label"
-                  type="button"
-                  class="dash-it"
-                  @click="applyPreset(preset.products)"
-                >
-                  <UIcon name="i-lucide-layers" class="dash-it-ic" />
-                  <span>{{ preset.label }}</span>
-                  <small>{{ preset.products.length }} produits</small>
-                </button>
-                <div class="dash-hr" />
-                <button type="button" class="dash-it" @click="savePreset">
-                  <UIcon name="i-lucide-plus" class="dash-it-ic" />
-                  <span>Enregistrer la sélection courante</span>
-                </button>
-              </DashPicker>
+                list="presets"
+              />
             </div>
           </template>
-          <template v-if="lines.params.tracked.length" #toolbar>
-            <span v-for="(id, index) in lines.params.tracked" :key="id" class="dash-chip-tag">
+          <template v-if="tracked.selected.length" #toolbar>
+            <span
+              v-for="(product, index) in tracked.selected"
+              :key="product.value"
+              class="dash-chip-tag"
+            >
               <i :style="{ background: `var(--nut-dash-s${(index % 6) + 1})` }" />
-              {{ productLabel(id) }}
+              {{ product.label }}
               <button
                 type="button"
-                :aria-label="`Retirer ${productLabel(id)}`"
-                @click="toggleProduct(id)"
+                :aria-label="`Retirer ${product.label}`"
+                @click="tracked.toggle(product.value)"
               >
                 <UIcon name="i-lucide-x" class="size-2.5" />
               </button>
             </span>
-          </template>
-          <template v-if="trackedSeries.length" #footer>
-            <NutDashboardTotal
-              v-for="series in trackedSeries"
-              :key="series.key"
-              :label="series.label"
-              :value="`${nf(sum(lines.data.map((row) => row[series.key])))} unités`"
-            />
           </template>
         </NutDashboardLineChart>
       </NutDashboardGrid>
@@ -988,7 +639,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           subtitle="part des unités"
           :label="(row) => row.label"
           :value="(row) => row.share"
-          :text="(row) => percent(row.share)"
+          :text="(row) => format.percent(row.share)"
         />
         <NutDashboardLineChart
           size="12 xl:6"
@@ -998,7 +649,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :x="monthLabel"
           :series="marginSeries"
           :comparison="marginComparison"
-          :y-axis="{ format: percent, max: 50 }"
+          :y-axis="{ format: 'percent', max: 50 }"
           :reference="{ value: 30 }"
           :height="200"
           :legend="false"
@@ -1013,25 +664,28 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           size="1"
           :source="cand.summary"
           label="Inscrits"
-          :value="(d) => nf(d.registered)"
-          :caption="(d) => `${nf(d.delivered)} certificats délivrés`"
+          :value="(d) => d.registered"
+          format="integer"
+          :caption="(d) => `${format.integer(d.delivered)} certificats délivrés`"
         />
         <NutDashboardStat
           size="1"
           :source="cand.summary"
           label="Taux de complétion"
-          :value="(d) => pf(d.completion)"
+          :value="(d) => d.completion"
+          format="ratio"
           :delta="() => 2.4"
-          :delta-format="pts"
-          :caption="(d) => `à 3 mois : ${pf(d.completion3)}`"
+          delta-format="points"
+          :caption="(d) => `à 3 mois : ${format.ratio(d.completion3)}`"
         />
         <NutDashboardStat
           size="1"
           :source="cand.summary"
           label="Taux compromis"
-          :value="(d) => pf(d.compromised)"
+          :value="(d) => d.compromised"
+          format="ratio"
           :delta="() => -0.8"
-          :delta-format="pts"
+          delta-format="points"
           invert-delta
           caption="sessions invalidées par la surveillance"
         />
@@ -1039,24 +693,27 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           size="1"
           :source="cand.summary"
           label="Succès global"
-          :value="(d) => pf(d.success)"
+          :value="(d) => d.success"
+          format="ratio"
           :delta="() => 1.1"
-          :delta-format="pts"
-          :caption="(d) => `niveau > A1 : ${pf(d.aboveA1)}`"
+          delta-format="points"
+          :caption="(d) => `niveau > A1 : ${format.ratio(d.aboveA1)}`"
         />
         <NutDashboardStat
           size="1"
           :source="cand.summary"
           label="Passages sur site"
-          :value="(d) => nf(d.onsite)"
-          :caption="(d) => `${pf(d.onsiteShare)} des passages`"
+          :value="(d) => d.onsite"
+          format="integer"
+          :caption="(d) => `${format.ratio(d.onsiteShare)} des passages`"
         />
         <NutDashboardStat
           size="1"
           :source="cand.summary"
           label="Passages en ligne"
-          :value="(d) => nf(d.online)"
-          :caption="(d) => `${pf(d.onlineShare)} des passages`"
+          :value="(d) => d.online"
+          format="integer"
+          :caption="(d) => `${format.ratio(d.onlineShare)} des passages`"
         />
       </NutDashboardGrid>
 
@@ -1069,13 +726,13 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :x="monthLabel"
           :series="registrationSeries"
           :comparison="registrationComparison"
-          :format="nf"
+          format="integer"
           area
         >
           <template #footer>
             <NutDashboardTotal
               label="Total"
-              :value="`${nf(sum(cand.registrations.data.map((row) => row.current)))} dossiers`"
+              :value="`${format.integer(sum(cand.registrations.data.map((row) => row.current)))} dossiers`"
             />
           </template>
         </NutDashboardLineChart>
@@ -1086,7 +743,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           subtitle="de l’inscription au certificat délivré"
           :label="(row) => row.label"
           :value="(row) => row.count"
-          :format="nf"
+          format="integer"
           :colors="['series-2', 'series-3', 'series-1', 'series-1']"
         />
       </NutDashboardGrid>
@@ -1102,7 +759,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :value="(row) => row.delivered"
           total-label="Inscrits"
           value-label="Délivrés"
-          :format="nf"
+          format="integer"
           :colors="['series-4', 'series-1']"
           :row-key="(row) => row.id"
         />
@@ -1114,9 +771,9 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           layout="stacked"
           :label="(row) => row.label"
           :value="(row) => row.count"
-          :text="(row) => nf(row.count)"
+          :text="(row) => format.integer(row.count)"
           :color="donutColor"
-          :center="(rows) => nf(sum(rows.map((row) => row.count)))"
+          :center="(rows) => format.integer(sum(rows.map((row) => row.count)))"
           center-label="passages"
         />
       </NutDashboardGrid>
@@ -1129,7 +786,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :x="(row) => row.name"
           :x-format="shortLabel"
           :series="performanceSeries"
-          :y-axis="{ format: percent, max: 100, ticks: 5 }"
+          :y-axis="{ format: 'percent', max: 100, ticks: 5 }"
           :reference="{ label: 'Objectif 80 %', position: 'start', value: 80 }"
           :height="300"
           :points="10"
@@ -1145,7 +802,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :label="(row) => row.label"
           :value="(row) => row.share"
           :color="(row) => row.color"
-          :text="(row) => `${row.share} % · ${nf(row.count)}`"
+          :text="(row) => `${format.percent(row.share)} · ${format.integer(row.count)}`"
           :legend-columns="1"
         />
         <NutDashboardBarChart
@@ -1155,7 +812,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           subtitle="part des examens réussis"
           :x="(row) => row.level"
           :series="cefrSeries"
-          :y-axis="{ format: percent, max: 40 }"
+          :y-axis="{ format: 'percent', max: 40 }"
           :height="190"
           :legend="false"
           :points="6"
@@ -1167,7 +824,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           subtitle="entre réussite et certificat"
           :label="(row) => row.label"
           :value="(row) => row.share"
-          :meta="(row) => `${row.share} % · ${nf(row.count)}`"
+          :meta="(row) => `${format.percent(row.share)} · ${format.integer(row.count)}`"
           emphasis="first"
         >
           <template #footer>
@@ -1185,10 +842,9 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :source="ops.kpis"
           label="Sessions sur 14 jours"
           :value="(d) => d.sessionsPeriod"
-          :format="nf"
+          format="integer"
           :compare="(d) => d.sessionsPeriodPrevious"
           :compare-label="compareCaption"
-          :delta-format="dl"
           :trend="(d) => d.sessionsTrend"
           trend-type="bars"
         />
@@ -1196,22 +852,12 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           size="1"
           :source="ops.kpis"
           label="Taux de réussite"
-          :value="(d) => d.successRate * 100"
-          :format="(value) => `${fmt1(value)} %`"
-          :delta="
-            (d) =>
-              d.successPeriodPrevious === null
-                ? null
-                : (d.successRate - d.successPeriodPrevious) * 100
-          "
-          :delta-format="pts"
-          :caption="
-            (d) =>
-              d.successPeriodPrevious === null
-                ? undefined
-                : compareCaption(pf(d.successPeriodPrevious))
-          "
-          :goal="(d) => d.successGoal * 100"
+          :value="(d) => d.successRate"
+          format="ratio"
+          :compare="(d) => d.successPeriodPrevious"
+          compare-mode="difference"
+          :compare-label="compareCaption"
+          :goal="(d) => d.successGoal"
           :status="
             (d) =>
               d.successRate < d.successGoal
@@ -1225,8 +871,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           label="Délai de correction"
           :value="(d) => d.correctionDelay"
           :format="days"
-          :delta="(d) => change(d.correctionDelay, d.correctionPrevious)"
-          :delta-format="dl"
+          :compare="(d) => d.correctionPrevious"
           invert-delta
           caption="entre passage et résultat"
           :trend="(d) => d.correctionTrend"
@@ -1244,7 +889,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :source="ops.kpis"
           label="Certificats délivrés"
           :value="(d) => d.certificates"
-          :format="nf"
+          format="integer"
           caption="ce mois-ci"
           :goal="(d) => d.certificatesGoal"
         />
@@ -1278,7 +923,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
               label: 'Sessions passées',
               icon: 'i-lucide-monitor-play',
               value: (d) => d.sessionsPeriod,
-              format: nf,
+              format: 'integer',
               progress: (d) => (d.sessionsPeriod / 1_600) * 100,
             },
             {
@@ -1287,7 +932,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
               icon: 'i-lucide-circle-check',
               color: 'success',
               value: (d) => d.passedPeriod,
-              format: nf,
+              format: 'integer',
               progress: (d) => (d.passedPeriod / d.sessionsPeriod) * 100,
             },
             {
@@ -1296,7 +941,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
               icon: 'i-lucide-rotate-ccw',
               color: 'warning',
               value: (d) => d.retakesPeriod,
-              format: nf,
+              format: 'integer',
               status: () => ({ color: 'warning', label: 'À suivre' }),
             },
           ]"
@@ -1327,7 +972,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :value="(d) => d.certificates"
           :max="(d) => d.certificatesGoal * 1.1"
           :target="(d) => d.certificatesGoal"
-          :format="nf"
+          format="integer"
           caption="certificats"
           :color="(_, share) => (share >= 1 / 1.1 ? 'success' : 'series-1')"
           :actions="[{ icon: 'i-lucide-target', label: 'Modifier', variant: 'ghost' }]"
@@ -1339,7 +984,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           :subtitle="`par mois · ${year}`"
           :x="(row) => MONTHS[row.month] ?? ''"
           :series="[{ key: 'value', label: 'Certificats', value: (row) => row.value }]"
-          :format="nf"
+          format="integer"
           highlight="last"
           labels
           :legend="false"
@@ -1354,7 +999,7 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
           size="12"
           :source="ops.accounts"
           title="Performance par compte"
-          :subtitle="pickedDay ? `journée du ${pickedDay}` : '14 derniers jours'"
+          :subtitle="ops.params.day ? `journée du ${ops.filters.day.display}` : '14 derniers jours'"
           :columns="accountColumns"
           :limit="8"
           :menu="accountsMenu"
@@ -1372,13 +1017,13 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
         >
           <template #toolbar>
             <NutDashboardTabs v-model="ops.accounts.params.segment" :items="segmentTabs" />
-            <span v-if="pickedDay" class="dash-chip-tag">
+            <span v-if="ops.params.day" class="dash-chip-tag">
               <UIcon name="i-lucide-calendar" class="size-3 text-(--ui-text-dimmed)" />
-              Journée du {{ pickedDay }}
+              Journée du {{ ops.filters.day.display }}
               <button
                 type="button"
-                :aria-label="`Retirer le filtre du ${pickedDay}`"
-                @click="ops.params.day = undefined"
+                :aria-label="`Retirer le filtre du ${ops.filters.day.display}`"
+                @click="ops.filters.day.reset()"
               >
                 <UIcon name="i-lucide-x" class="size-2.5" />
               </button>
@@ -1451,9 +1096,42 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
   gap: 8px;
   min-height: 34px;
 }
+/* Header action: a 32px outlined button on the panel surface; phones get the icon alone. */
+.dash-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  background: var(--ex-surface);
+  color: var(--ui-text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.dash-btn:hover {
+  background: var(--ex-row-hover);
+}
 .dash-btn--icon {
   width: 32px;
   padding: 0;
+}
+/* Initials tile of an account, in the accounts table. */
+.dash-it-av {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 4px;
+  background: var(--ui-bg-muted);
+  color: var(--ex-ink-soft);
+  font-size: 8.5px;
+  font-weight: 600;
 }
 /* Tabs and filters stay pinned while the title scrolls away. */
 .ex-dash-bar {
@@ -1465,63 +1143,6 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
 }
 .ex-dash-bar[data-stuck] {
   box-shadow: 0 10px 24px -18px rgb(31 29 26 / 0.35);
-}
-.ex-dtabs {
-  display: flex;
-  gap: 2px;
-  overflow-x: auto;
-  padding: 0 28px;
-  background: var(--ex-surface);
-  border-bottom: 1px solid var(--ui-border);
-  scrollbar-width: none;
-}
-.ex-dtabs button {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  height: 40px;
-  padding: 0 12px;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  color: var(--ex-ink-soft);
-}
-.ex-dtabs button:hover,
-.ex-dtabs button.on {
-  color: var(--ui-text);
-}
-.ex-dtabs button.on::after {
-  content: '';
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: -1px;
-  height: 2px;
-  background: var(--ui-primary);
-}
-.dash-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 28px;
-}
-.dash-reset {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 8px;
-  border-radius: 7px;
-  color: var(--ex-ink-soft);
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.dash-reset:hover {
-  color: var(--ui-text);
 }
 .ex-dash-content {
   display: flex;
@@ -1573,16 +1194,6 @@ function alertActions(alert: OperationsAlert): DashboardRowAction[] {
 @media (max-width: 1023px) {
   .ex-ph--dash {
     padding: 16px 16px 14px;
-  }
-  .ex-dtabs {
-    padding: 0 8px;
-  }
-  /* One row of pills that scrolls sideways instead of wrapping into a block. */
-  .dash-filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 12px 16px;
-    scrollbar-width: none;
   }
   .ex-dash-content {
     padding: 4px 16px 48px;

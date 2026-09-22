@@ -67,6 +67,10 @@
   --nut-dash-ref: #a39c93;
   --nut-dash-ref-label: #6b655d;
   --nut-dash-ghost: #f3eee7;
+  /* Filter pills: an active pill takes the selection tint and line (the ink is --nut-dl-accent-ink). */
+  --nut-dash-filter-active: var(--ex-selection);
+  --nut-dash-filter-active-line: var(--ex-accent-line);
+  --nut-dash-row-hover: var(--ex-row-hover);
 }
 
 .dark {

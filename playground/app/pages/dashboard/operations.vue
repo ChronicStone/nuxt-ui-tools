@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineDashboardSchema, useDashboard } from '#ui-tools/dashboard'
+import { defineDashboardSchema, useDashboard, useDashboardFormat } from '#ui-tools/dashboard'
 import type {
   DashboardComparison,
   DashboardMenuContext,
@@ -68,6 +68,12 @@ function lastDays(count: number) {
   )
 }
 const wave = (index: number, seed: number) => 0.8 + ((index * 37 + seed * 11) % 41) / 100
+const dayLabel = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' })
+/** `YYYY-MM-DD` → "Mar 12". */
+function formatDay(iso: string) {
+  const [year, month, day] = iso.split('-').map(Number)
+  return year && month && day ? dayLabel.format(new Date(year, month - 1, day)) : iso
+}
 // The previous period ran a little lower; last year, lower still.
 const previousRatio = (compare: DashboardComparison) => (compare === 'year' ? 0.74 : 0.9)
 
@@ -181,9 +187,12 @@ const api = {
 const operations = defineDashboardSchema({
   key: 'operations',
   params: (p) => ({
-    compare: p.comparison({ defaultValue: 'previous' }),
-    /** Day picked on the sessions chart (`YYYY-MM-DD`); narrows the accounts table. */
-    day: p.string(),
+    compare: p.comparison({ defaultValue: 'previous', label: 'Compare with' }),
+    /**
+     * Day picked on the sessions chart (`YYYY-MM-DD`); narrows the accounts table. The filter bar
+     * shows it as a removable pill while it is set.
+     */
+    day: p.string({ format: formatDay, label: 'Day' }),
   }),
   queries: ({ background, deferred, essential, params }) => ({
     kpis: essential.query(() => ({
@@ -223,18 +232,13 @@ const operations = defineDashboardSchema({
 
 const dashboard = useDashboard(operations)
 const toast = useToast()
-const nf = new Intl.NumberFormat('en').format
-const dayLabel = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' })
+const format = useDashboardFormat()
 const weekday = new Intl.DateTimeFormat('en', { day: 'numeric', weekday: 'short' })
 
 function isoDay(time: number) {
   const date = new Date(time)
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
-const picked = computed(() => {
-  const [year, month, day] = (dashboard.params.day ?? '').split('-').map(Number)
-  return year && month && day ? dayLabel.format(new Date(year, month - 1, day)) : ''
-})
 function pickDay({ row }: DashboardSelectEvent<Day>) {
   const day = isoDay(row.day)
   dashboard.params.day = dashboard.params.day === day ? undefined : day
@@ -296,7 +300,8 @@ function accountActions(row: Account) {
       icon: 'i-lucide-eye',
       inline: true,
       label: 'Preview',
-      onSelect: () => toast.add({ description: `${nf(row.sessions)} sessions`, title: row.name }),
+      onSelect: () =>
+        toast.add({ description: `${format.integer(row.sessions)} sessions`, title: row.name }),
     },
     { icon: 'i-lucide-external-link', label: 'Open account', to: '/dashboard/analytics' },
     { icon: 'i-lucide-download', label: 'Export sessions' },
@@ -333,22 +338,7 @@ function copyAsTsv(context: DashboardMenuContext) {
       <header class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-semibold tracking-tight text-highlighted">Operations</h1>
         <div class="flex flex-wrap items-center gap-2">
-          <UButton
-            v-if="picked"
-            color="neutral"
-            variant="subtle"
-            size="sm"
-            trailing-icon="i-lucide-x"
-            :label="`Day: ${picked}`"
-            @click="dashboard.params.day = undefined"
-          />
-          <USelect
-            v-model="dashboard.params.compare"
-            v-bind="dashboard.options.compare.menu"
-            size="sm"
-            icon="i-lucide-git-compare"
-            class="w-44"
-          />
+          <NutDashboardFilters :dashboard />
           <NutDashboardRefresh :dashboard />
         </div>
       </header>
@@ -469,7 +459,7 @@ function copyAsTsv(context: DashboardMenuContext) {
           size="12 lg:7"
           :source="dashboard.accounts"
           title="Accounts"
-          :subtitle="picked ? `on ${picked}` : 'last 14 days'"
+          :subtitle="dashboard.params.day ? `on ${dashboard.filters.day.display}` : 'last 14 days'"
           :columns
           :limit="6"
           :menu="copyAsTsv"

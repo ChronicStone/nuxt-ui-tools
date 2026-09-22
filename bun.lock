@@ -45,6 +45,8 @@
       "peerDependencies": {
         "@nuxt/ui": ">=4.10.0",
         "@tanstack/vue-query": ">=5.101.4",
+        "@unovis/ts": ">=1.6.0",
+        "@unovis/vue": ">=1.6.0",
         "nuxt": ">=4.5.2",
         "tailwindcss": ">=4.3.3",
         "typescript": ">=5.9.0",
@@ -52,6 +54,10 @@
         "vue-draggable-plus": ">=0.6.1",
         "vue-router": ">=4.6.4",
       },
+      "optionalPeers": [
+        "@unovis/ts",
+        "@unovis/vue",
+      ],
     },
     "playground": {
       "name": "nuxt-ui-tools-playground",
