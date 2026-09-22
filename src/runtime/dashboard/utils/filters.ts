@@ -44,14 +44,15 @@ export const DASHBOARD_FILTER_CLASSES = {
   label: 'text-muted',
   list: 'max-h-[300px] overflow-y-auto overscroll-contain',
   note: 'flex items-center justify-center px-2 py-1.5 text-xs text-dimmed',
-  root: 'group/filter inline-flex h-8 max-w-full flex-none items-center rounded-[7px] border border-default bg-default text-[13px] whitespace-nowrap transition-[background-color,border-color] duration-150 hover:bg-elevated/60 data-[active]:border-[var(--nut-dash-filter-active-line)] data-[active]:bg-[var(--nut-dash-filter-active)] data-[active]:hover:bg-[var(--nut-dash-filter-active)]',
+  // The trigger's keyboard focus rings the whole pill, clear button included.
+  root: 'group/filter inline-flex h-8 max-w-full flex-none items-center rounded-[7px] border border-default bg-default text-[13px] whitespace-nowrap transition-[background-color,border-color] duration-150 hover:bg-elevated/60 has-[[data-dashboard-filter-trigger]:focus-visible]:ring-2 has-[[data-dashboard-filter-trigger]:focus-visible]:ring-primary data-[active]:border-[var(--nut-dash-filter-active-line)] data-[active]:bg-[var(--nut-dash-filter-active)] data-[active]:hover:bg-[var(--nut-dash-filter-active)]',
   search:
     'mb-1 flex h-7 items-center gap-1.5 rounded-md border border-default px-2 focus-within:border-primary',
   separator: 'my-1 h-px bg-[var(--ui-border-muted)]',
   tick: 'ms-auto size-3.5 flex-none text-[var(--nut-dash-filter-ink)]',
   title: 'px-2 pt-1 pb-1 text-[11.5px] font-medium text-muted',
   trigger:
-    'inline-flex h-full min-w-0 items-center gap-1.5 rounded-[6px] ps-[11px] pe-[9px] outline-none focus-visible:ring-2 focus-visible:ring-primary group-data-[active]/filter:pe-1',
+    'inline-flex h-full min-w-0 items-center gap-1.5 rounded-[6px] ps-[11px] pe-[9px] outline-none group-data-[active]/filter:pe-1',
   value:
     'max-w-[200px] min-w-0 truncate font-medium text-default group-data-[active]/filter:text-[var(--nut-dash-filter-ink)]',
 } satisfies Required<DashboardFilterUi>

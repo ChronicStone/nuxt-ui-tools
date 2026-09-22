@@ -157,7 +157,7 @@ function close() {
   >
     <UPopover v-if="listed" v-model:open="open" :content :ui="{ content: classes.content }">
       <slot name="trigger" :filter :active :display="filter.display">
-        <button type="button" :class="classes.trigger">
+        <button type="button" :class="classes.trigger" data-dashboard-filter-trigger>
           <UIcon v-if="icon" :name="icon" class="size-3.5 flex-none text-muted" />
           <slot name="label" :filter :display="filter.display">
             <span :class="classes.label">{{ name }}</span>
