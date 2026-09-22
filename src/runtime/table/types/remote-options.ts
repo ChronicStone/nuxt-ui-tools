@@ -26,15 +26,19 @@ export interface RemoteTableOption {
   label: string
 }
 
+/**
+ * Query definition of one table request, typically the endpoint a remote table already uses:
+ * `(request) => $api.accounts.query.queryOptions({ body: request })`. The row type is read from
+ * its result.
+ */
+export type RemoteTableQuery<TRow extends GenericObject> = (
+  request: TableRemoteSourceRequest,
+) => QueryDefinition<RemoteTableResult<TRow>>
+
 export interface RemoteTableOptionsConfig<
   TRow extends GenericObject,
   TOption extends RemoteTableOption,
 > {
-  /**
-   * Query definition of one table request, typically the endpoint a remote table already uses:
-   * `(request) => $api.accounts.query.queryOptions({ body: request })`.
-   */
-  query: (request: TableRemoteSourceRequest<TRow>) => QueryDefinition<RemoteTableResult<TRow>>
   /** Option of one row. */
   option: (row: TRow) => TOption
   /**

@@ -296,7 +296,7 @@ export const dashboardParamBuilder = {
   options: optionsParam,
   /**
    * Id(s) picked from a remote, searchable, paginated option source:
-   * `p.remote(remoteTableOptions({ ... }), { label: 'Account' })`.
+   * `p.remote(remoteTableOptions(query, { ... }), { label: 'Account' })`.
    */
   remote: remoteParam,
   /** String, or `string[]` with `multiple: true`. */

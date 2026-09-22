@@ -399,8 +399,7 @@ sort, and cursor or offset pages, rows mapped to options, and selected values re
 
 ```ts
 source: {
-  remote: remoteTableOptions({
-    query: (request) => $api.users.query.queryOptions({ body: request }),
+  remote: remoteTableOptions((request) => $api.users.query.queryOptions({ body: request }), {
     search: ['name', 'email'],
     sort: 'name',
     option: (user) => ({ label: user.name, value: user.id }),

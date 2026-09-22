@@ -24,10 +24,12 @@ const ACCOUNTS: Account[] = [
   { active: false, id: 'a3', name: 'Initech' },
 ]
 
+/** A generated client, like Tuyau's: the request body in, a query definition out. */
 function createEndpoint() {
-  const requests: TableRemoteSourceRequest<Account>[] = []
-  const query = (request: TableRemoteSourceRequest<Account>) => ({
+  const requests: TableRemoteSourceRequest[] = []
+  const queryOptions = (options: { body: TableRemoteSourceRequest }) => ({
     queryFn: (): Promise<TableCursorPageResult<Account>> => {
+      const request = options.body
       requests.push(request)
       const ids = request.filters.flatMap((group) =>
         group.children.flatMap((node) =>
@@ -48,9 +50,9 @@ function createEndpoint() {
         rows,
       })
     },
-    queryKey: ['accounts', request] as const,
+    queryKey: ['accounts', options.body] as const,
   })
-  return { query, requests }
+  return { queryOptions, requests }
 }
 
 function run<TData>(definition: QueryFnDefinition<TData>) {
@@ -69,9 +71,9 @@ function run<TData>(definition: QueryFnDefinition<TData>) {
 describe('remoteTableOptions', () => {
   it('builds table requests and maps rows to option pages', async () => {
     const endpoint = createEndpoint()
-    const accounts = remoteTableOptions({
+    // Written inline, options first: the row type still comes from the query.
+    const accounts = remoteTableOptions((request) => endpoint.queryOptions({ body: request }), {
       option: (account) => ({ label: account.name, value: account.id }),
-      query: endpoint.query,
       search: { debounce: 100, fields: ['name'] },
       sort: 'name',
     })
@@ -114,10 +116,9 @@ describe('remoteTableOptions', () => {
 
   it('pages by offset when asked to', () => {
     const endpoint = createEndpoint()
-    const accounts = remoteTableOptions({
+    const accounts = remoteTableOptions((request) => endpoint.queryOptions({ body: request }), {
       option: (account) => ({ label: account.name, value: account.id }),
       pagination: { size: 10, type: 'page' },
-      query: endpoint.query,
     })
     void run(accounts.load({ page: { cursor: null, index: 3, size: 10 }, search: '' }))
     expect(endpoint.requests[0]?.pagination).toEqual({
@@ -130,9 +131,8 @@ describe('remoteTableOptions', () => {
 
   it('fits dashboard filters, table option filters, and form remote options', () => {
     const endpoint = createEndpoint()
-    const accounts = remoteTableOptions({
+    const accounts = remoteTableOptions((request) => endpoint.queryOptions({ body: request }), {
       option: (account) => ({ label: account.name, value: account.id }),
-      query: endpoint.query,
       search: ['name'],
     })
     defineDashboardFilter((p) => p.remote(accounts, { multiple: true }))
@@ -143,9 +143,8 @@ describe('remoteTableOptions', () => {
       resolveSelected: accounts.resolveSelected,
       source: accounts.load,
     }).toExtend<FormRemoteOptionConfig<{ label: string; value: string }>>()
-    remoteTableOptions({
+    remoteTableOptions((request) => endpoint.queryOptions({ body: request }), {
       option: (account) => ({ label: account.name, value: account.id }),
-      query: endpoint.query,
       // @ts-expect-error `email` is not a field of the rows
       search: ['email'],
     })

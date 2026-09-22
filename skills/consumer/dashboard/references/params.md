@@ -181,14 +181,17 @@ For an endpoint that speaks the table request protocol (the one a remote `UiData
 `remoteTableOptions` builds the whole source:
 
 ```ts
-const accounts = remoteTableOptions({
-  query: (request) => $api.accounts.query.queryOptions({ body: request }),
-  search: ['name'], // or { fields: ['name'], debounce: 200 }
-  sort: 'name', // or [{ key: 'name', dir: 'asc' }]
-  option: (account) => ({ label: account.name, value: account.id }),
-  valueKey: 'id', // default; matched with `isAnyOf` to resolve selected ids
-  pagination: { type: 'cursor', size: 25 }, // default; match what the endpoint pages by
-})
+const accounts = remoteTableOptions(
+  // The query comes first: the row type is read from its result.
+  (request) => $api.accounts.query.queryOptions({ body: request }),
+  {
+    search: ['name'], // or { fields: ['name'], debounce: 200 }
+    sort: 'name', // or [{ key: 'name', dir: 'asc' }]
+    option: (account) => ({ label: account.name, value: account.id }),
+    valueKey: 'id', // default; matched with `isAnyOf` to resolve selected ids
+    pagination: { type: 'cursor', size: 25 }, // default; match what the endpoint pages by
+  },
+)
 p.remote(accounts, { multiple: true, label: 'Accounts' })
 ```
 

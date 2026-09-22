@@ -132,8 +132,7 @@ export function defineDashboardSchema<
  * export const accountFilter = defineDashboardFilter((p) => {
  *   const { $api } = useNuxtApp()
  *   return p.remote(
- *     remoteTableOptions({
- *       query: (request) => $api.accounts.query.queryOptions({ body: request }),
+ *     remoteTableOptions((request) => $api.accounts.query.queryOptions({ body: request }), {
  *       search: ['name'],
  *       option: (account) => ({ label: account.name, value: account.id }),
  *     }),

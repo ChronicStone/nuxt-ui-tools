@@ -8,6 +8,7 @@ import type {
   RemoteTableOption,
   RemoteTableOptions,
   RemoteTableOptionsConfig,
+  RemoteTableQuery,
   RemoteTableResult,
   TableRemoteSourceRequest,
   TableSortingRule,
@@ -24,20 +25,28 @@ const DEFAULT_PAGINATION = { size: 25, type: 'cursor' } as const
  * Each page is its own query, keyed after the endpoint's key, so pages are cached and shared by
  * every picker using the same source.
  *
+ * The query comes first: the row type is read from its result, so `option` and `search` are typed
+ * whatever order the options are written in.
+ *
  * @example
  * ```ts
- * const accounts = remoteTableOptions({
- *   query: (request) => $api.accounts.query.queryOptions({ body: request }),
- *   search: ['name'],
- *   sort: 'name',
- *   option: (account) => ({ label: account.name, value: account.id }),
- * })
+ * const accounts = remoteTableOptions(
+ *   (request) => $api.accounts.query.queryOptions({ body: request }),
+ *   {
+ *     search: ['name'],
+ *     sort: 'name',
+ *     option: (account) => ({ label: account.name, value: account.id }),
+ *   },
+ * )
  * ```
  */
 export function remoteTableOptions<
   TRow extends GenericObject,
   const TOption extends RemoteTableOption,
->(config: RemoteTableOptionsConfig<TRow, TOption>): RemoteTableOptions<TOption> {
+>(
+  query: RemoteTableQuery<TRow>,
+  config: RemoteTableOptionsConfig<TRow, TOption>,
+): RemoteTableOptions<TOption> {
   const pagination = config.pagination ?? DEFAULT_PAGINATION
   const { fields, search } = resolveSearch(config.search)
   const sorting = resolveSorting(config.sort)
@@ -45,8 +54,8 @@ export function remoteTableOptions<
   function request(params: {
     page: RemoteOptionsPageRequest
     search: string
-    filters?: TableRemoteSourceRequest<TRow>['filters']
-  }): TableRemoteSourceRequest<TRow> {
+    filters?: TableRemoteSourceRequest['filters']
+  }): TableRemoteSourceRequest {
     const { page } = params
     return {
       filters: [...(config.filters ?? []), ...(params.filters ?? [])],
@@ -61,14 +70,14 @@ export function remoteTableOptions<
 
   return {
     load: ({ page, search: term }) =>
-      mapQuery(config.query(request({ page, search: term })), (result) => ({
+      mapQuery(query(request({ page, search: term })), (result) => ({
         ...resolvePage(result),
         options: result.rows.map(config.option),
       })),
     pagination,
     resolveSelected: ({ values }) =>
       mapQuery(
-        config.query(
+        query(
           request({
             filters: [
               {
