@@ -42,7 +42,7 @@ consumption: essential.query({
     tracked: (p) => p.enum(PRODUCTS, { multiple: true, defaultValue: ['en'] }),
   },
   requires: () => params.account,         // gate + narrow (see below)
-  enabled: () => params.compare,          // extra boolean gate
+  enabled: () => params.compare,          // part of the dashboard right now (see Conditions)
   keepPreviousData: true,                 // default: stale data stays while a new key loads
   staleTime: 60_000,
   query: ({ params: widget, required }) => ({
@@ -105,6 +105,56 @@ While `requires` is not satisfied, the resource follows the resources it read: `
 load, `error` if one failed (its retry refetches them), and once they are ready without satisfying
 it, `ready` with its `defaultValue` — its block shows the empty state instead of waiting forever.
 Without a `defaultValue` it stays `idle`.
+
+## Conditions: What A User Can See
+
+One schema can serve several audiences (an administrator, a manager, a client) when each part says
+when it exists. Views, queries, and params take `enabled`, a boolean or a reactive getter:
+
+```ts
+// The audience is context, not a filter: a headless param synced from the session.
+const context = defineDashboardFilters({
+  workspace: (p) => {
+    const { workspace } = useApiContext()
+    return p.enum(WORKSPACES, { sync: () => workspace.value }) // a getter: read-only, headless
+  },
+})
+
+export const certificationsView = defineDashboardView({
+  shared: context,
+  enabled: ({ params }) => params.workspace !== 'MANAGER', // no tab for managers
+  queries: ({ essential }) => ({ ... }),
+})
+
+export const consumptionView = defineDashboardView({
+  shared: context,
+  params: (p, { params }) => ({
+    // A client's account is fixed by its workspace: no filter, never sent.
+    account: p.remote(accounts, { enabled: () => params.workspace !== 'CLIENT' }),
+  }),
+  queries: ({ essential, params }) => ({
+    margin: essential.query({
+      enabled: () => params.workspace === 'ADMIN',
+      query: () => api.margin.queryOptions({ year: params.year }),
+    }),
+  }),
+})
+```
+
+- **A disabled query** never fetches, its state is `disabled`, its data its `defaultValue`. Blocks
+  bound to it render nothing, and so do blocks bound to a derived value reading only disabled
+  sources. Scope and dashboard states leave it out, and background queries do not wait for it.
+- **A disabled view** has no tab (`dashboard.view.items`), is never `dashboard.view.current` (a URL
+  naming it reads as the default view, else the first enabled one; writing it is ignored), and its
+  queries are `disabled`. `dashboard.<view>.view.enabled` reports it. A view's condition reads the
+  root params it can see: `shared` ones for `defineDashboardView`, the root ones inline.
+- **A disabled param** leaves every filter bar, reads its default whatever the URL or store holds
+  (so queries never send it), ignores writes, and counts in neither `filtered` nor
+  `resetFilters()`. Its handle reports `enabled`.
+
+Grids close up around hidden blocks (see blocks.md), so a page never lays out holes for what a user
+cannot see. Keep `enabled` for availability and `requires` for waiting on data: a query that waits
+for another shows its loading state; a disabled one is simply not there.
 
 ## Derive
 
@@ -211,11 +261,12 @@ dashboard.consumption.params.currency // view params, the shared ones included
 dashboard.consumption.filters.account
 dashboard.consumption.productLines.params.tracked // widget params
 dashboard.consumption.productLines.filters.tracked
-dashboard.consumption.view // { key, label, active, opened }
+dashboard.consumption.view // { key, label, active, enabled, opened }
 dashboard.view.current // only when views exist
 ```
 
-Resource members: `data`, `state` (`idle | loading | ready | error`), `error`, `refreshing`,
+Resource members: `data`, `state` (`idle | loading | ready | error | disabled`), `error`, `refreshing`
+(a refetch while `ready`), `fetching` (any request in flight, including a retry in `error`),
 `updatedAt` (last successful fetch, epoch ms; a derived value reports its oldest input), `active`,
 `stage`, `params`, `filters`, `activate()`, `refresh()`. View handles expose `state`, `refreshing`,
 `updatedAt`, `refresh()`, `filtered`, and `resetFilters()` too.

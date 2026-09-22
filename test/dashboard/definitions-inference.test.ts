@@ -196,6 +196,29 @@ describe('standalone dashboard definitions', () => {
     expectTypeOf<Presets['languages']>().toEqualTypeOf<('en' | 'fr')[]>()
   })
 
+  it('types view conditions with the params the view can see', () => {
+    const context = defineDashboardFilters({
+      workspace: (p) => p.enum(['ADMIN', 'CLIENT'], { defaultValue: 'ADMIN', headless: true }),
+    })
+    const certifications = defineDashboardView({
+      shared: context,
+      enabled: ({ params }) => {
+        expectTypeOf(params.workspace).toEqualTypeOf<'ADMIN' | 'CLIENT'>()
+        return params.workspace === 'ADMIN'
+      },
+    })
+    defineDashboardSchema({
+      key: 'conditions',
+      params: context,
+      views: (view) => ({
+        // @ts-expect-error `account` is not a param the view can see
+        consumption: view({ enabled: ({ params }) => params.account !== undefined }),
+        certifications: view({ enabled: ({ params }) => params.workspace !== 'CLIENT' }),
+      }),
+    })
+    void certifications
+  })
+
   it('types sync sources against the param value', () => {
     const tenant = ref<string | undefined>()
     defineDashboardFilter((p) => p.string({ sync: tenant }))

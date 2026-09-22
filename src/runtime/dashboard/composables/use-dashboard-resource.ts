@@ -14,6 +14,7 @@ import {
   combineDashboardStates,
   joinDashboardUrlKey,
   refreshDashboardSources,
+  resolveDashboardCondition,
 } from '../utils/state'
 import type { DashboardReadTracker } from '../utils/tracker'
 import { useDashboardParamScope } from './use-dashboard-param-scope'
@@ -35,6 +36,8 @@ export function useDashboardResource(params: {
   scope: {
     active: ComputedRef<boolean>
     settled: ComputedRef<boolean>
+    /** The scope's own availability: a disabled view disables every query it declares. */
+    enabled: ComputedRef<boolean>
     prefix: string
     queryKey: QueryKey
     /** Dashboard auto-refresh interval in milliseconds, `0` when off. */
@@ -55,10 +58,14 @@ export function useDashboardResource(params: {
   })
 
   const active = computed<boolean>(() => scope.active.value && activated.value)
+  /** The query is part of the dashboard: its scope and its own `enabled` condition hold. */
+  const available = computed<boolean>(
+    () => scope.enabled.value && resolveDashboardCondition(input.enabled),
+  )
   const gate = computed<boolean>(() => {
-    if (!active.value) return false
+    if (!active.value || !available.value) return false
     if (stage === 'background' && !scope.settled.value) return false
-    return input.enabled?.() ?? true
+    return true
   })
   const requirement = computed(() => {
     const sources = new Set<DashboardSourceLike>()
@@ -91,6 +98,7 @@ export function useDashboardResource(params: {
   }
 
   const state = computed<DashboardResourceState>(() => {
+    if (!available.value) return 'disabled'
     if (!gate.value) return 'idle'
     if (!enabled.value) {
       if (upstream.value !== 'ready') return upstream.value
@@ -111,6 +119,15 @@ export function useDashboardResource(params: {
       : requirement.value.sources.find((source) => source.state === 'error')?.error,
   )
   const refreshing = computed<boolean>(() => state.value === 'ready' && query.isFetching.value)
+  /**
+   * A request for this resource is in flight, whatever its state. While `requires` holds it back,
+   * that is a request of a source it read (a retry of the upstream query it follows).
+   */
+  const fetching = computed<boolean>(() => {
+    if (!available.value) return false
+    if (enabled.value) return query.isFetching.value
+    return requirement.value.sources.some((source) => source.fetching ?? source.refreshing)
+  })
   // Placeholder data (the previous key's result) has no fetch time of its own: `0` until it lands.
   const updatedAt = computed<number | undefined>(() =>
     state.value === 'ready' && query.dataUpdatedAt.value > 0
@@ -123,6 +140,7 @@ export function useDashboardResource(params: {
   }
 
   async function refresh() {
+    if (!available.value) return
     if (!activated.value) return activate()
     if (!enabled.value) return refreshDashboardSources(requirement.value.sources)
     await query.refetch({ throwOnError: true })
@@ -135,6 +153,7 @@ export function useDashboardResource(params: {
     error,
     id: params.id,
     refresh,
+    fetching,
     refreshing,
     stage,
     state,

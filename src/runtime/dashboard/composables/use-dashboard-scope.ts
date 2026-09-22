@@ -40,6 +40,8 @@ export function useDashboardScope(params: {
   input: DashboardRuntimeScopeInput
   prefix: string
   active: ComputedRef<boolean>
+  /** The scope is part of the dashboard: always for the root, a view's `enabled` otherwise. */
+  enabled?: ComputedRef<boolean>
   /** Dashboard auto-refresh interval in milliseconds, `0` when off. */
   refetchInterval: ComputedRef<number>
   /** Root params, visible inside a view's builders. */
@@ -49,6 +51,7 @@ export function useDashboardScope(params: {
   tracker: DashboardReadTracker
 }) {
   const { input, scopeKey } = params
+  const enabled = params.enabled ?? computed<boolean>(() => true)
   const queryKey = [params.schemaKey, scopeKey || '$root']
   const scopeLabel = scopeKey ? `view "${scopeKey}"` : 'the dashboard root'
   const definitions = resolveDashboardParams({
@@ -111,6 +114,7 @@ export function useDashboardScope(params: {
       key,
       scope: {
         active: params.active,
+        enabled,
         prefix: params.prefix,
         queryKey,
         refetchInterval: params.refetchInterval,
@@ -151,9 +155,11 @@ export function useDashboardScope(params: {
 
   const essentials = resources.filter((resource) => resource.stage === 'essential')
   const state = computed<DashboardResourceState>(() => {
+    if (!enabled.value) return 'disabled'
     if (!params.active.value) return 'idle'
     const combined = combineDashboardStates(essentials.map((resource) => resource.state.value))
-    return combined === 'idle' ? 'ready' : combined
+    // Nothing left to wait for: idle essentials were never requested, disabled ones never will be.
+    return combined === 'idle' || combined === 'disabled' ? 'ready' : combined
   })
 
   const updatedAt = computed<number | undefined>(() =>
@@ -167,7 +173,7 @@ export function useDashboardScope(params: {
 
   function refresh(): Promise<void> {
     pending ??= refreshDashboardSources(
-      resources.filter((resource) => resource.active.value),
+      resources.filter((resource) => resource.active.value && resource.state.value !== 'disabled'),
     ).finally(() => {
       pending = null
       refreshing.value = false
@@ -177,6 +183,7 @@ export function useDashboardScope(params: {
   }
 
   return {
+    enabled,
     label: input.label,
     members,
     paramScope,

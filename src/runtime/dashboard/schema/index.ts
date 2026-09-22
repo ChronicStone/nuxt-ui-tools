@@ -16,6 +16,7 @@ import type {
   DashboardSourceMap,
   DashboardView,
   DashboardViewBuilder,
+  DashboardViewCondition,
   DashboardViewMap,
   DashboardViewsInput,
 } from '../types'
@@ -200,6 +201,11 @@ export function defineDashboardView<
     label?: LazyTextValue
     /** Root params this view reads (a filter group, or a map of filters). */
     shared?: DashboardParamEntries<TShared>
+    /**
+     * Availability of the view, from its shared params: a disabled view has no tab, is never the
+     * current view (the URL falls back to an enabled one), and its queries report `disabled`.
+     */
+    enabled?: DashboardViewCondition<TShared>
   } & DashboardScopeInput<TShared, DashboardEmptyMap, TParams, TQueries, TDerive> &
     DashboardScopeGuard<TQueries, TDerive>,
 ): DashboardView<TParams, TQueries, TDerive, TShared> {

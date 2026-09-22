@@ -1,17 +1,32 @@
-import type { DashboardResourceState } from '../types'
+import { isFunction } from '../../shared/utils/predicate'
+import type { DashboardCondition, DashboardResourceState } from '../types'
 
 /**
  * Combines the states of several sources the way a dependent value experiences them: any error
  * wins, then any pending source. Idle sources were not requested (gated by `requires`, or a
  * deferred query nobody activated), so they do not hold the value back unless all are idle.
+ * Disabled sources are not part of the dashboard: they are left out, and only when every source is
+ * disabled is the combination disabled too.
  */
 export function combineDashboardStates(
   states: readonly DashboardResourceState[],
 ): DashboardResourceState {
-  if (states.includes('error')) return 'error'
-  if (states.includes('loading')) return 'loading'
-  if (states.length > 0 && states.every((state) => state === 'idle')) return 'idle'
+  const live = states.filter((state) => state !== 'disabled')
+  if (live.length === 0) return states.length > 0 ? 'disabled' : 'ready'
+  if (live.includes('error')) return 'error'
+  if (live.includes('loading')) return 'loading'
+  if (live.every((state) => state === 'idle')) return 'idle'
   return 'ready'
+}
+
+/** Whether an `enabled` condition holds: a boolean, a getter, or no condition at all. */
+export function resolveDashboardCondition(condition: DashboardCondition | undefined): boolean {
+  if (condition === undefined) return true
+  return isConditionGetter(condition) ? condition() : condition
+}
+
+function isConditionGetter(condition: DashboardCondition): condition is () => boolean {
+  return isFunction(condition)
 }
 
 /** Oldest defined timestamp of a set of sources: they are all at least this fresh. */

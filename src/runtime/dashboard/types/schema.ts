@@ -112,6 +112,14 @@ export type DashboardScopeGuard<TQueries, TDerive, TTaken = never> = Guard<
   >
 
 /**
+ * Whether a view is part of the dashboard, read from the root params it can see (for example a
+ * headless param synced from the session's workspace): a fixed boolean, or a reactive getter.
+ */
+export type DashboardViewCondition<TShared extends DashboardParamMap> =
+  | boolean
+  | ((context: { params: Readonly<DashboardParamValues<TShared>> }) => boolean)
+
+/**
  * A view: its tab label, its own params, queries and derived values, and (for views declared with
  * `defineDashboardView`) the root params it reads.
  */
@@ -125,6 +133,8 @@ export interface DashboardView<
   readonly label?: LazyTextValue
   /** Root params the view reads, checked against the schema's root params. */
   readonly shared?: DashboardParamEntries<TShared>
+  /** Availability of the view (see `DashboardViewCondition`); the context type is erased here. */
+  readonly enabled?: boolean | ((context: never) => boolean)
   readonly params?: DashboardStoredParams<TParams>
   readonly queries?: (context: never) => TQueries
   readonly derive?: (context: never) => TDerive
@@ -170,13 +180,14 @@ export type DashboardViewBuilder<TShared extends DashboardParamMap, TRootSources
   const TQueries extends DashboardSourceMap = DashboardEmptyMap,
   const TDerive extends DashboardDeriveMap = DashboardEmptyMap,
 >(
-  view: { label?: LazyTextValue } & DashboardScopeInput<
-    TShared,
-    TRootSources,
-    TParams,
-    TQueries,
-    TDerive
-  >,
+  view: {
+    label?: LazyTextValue
+    /**
+     * Availability of the view, from the root params: a disabled view has no tab, is never the
+     * current view (the URL falls back to an enabled one), and its queries report `disabled`.
+     */
+    enabled?: DashboardViewCondition<TShared>
+  } & DashboardScopeInput<TShared, TRootSources, TParams, TQueries, TDerive>,
 ) => DashboardViewResult<NoInfer<TParams>, NoInfer<TQueries>, NoInfer<TDerive>, TRootSources>
 
 /** Views of a schema: the `view(...)` builder callback, or a map of `defineDashboardView` views. */
@@ -218,6 +229,7 @@ export interface DashboardSchemaLike {
 export interface DashboardViewLike {
   readonly label?: LazyTextValue
   readonly shared?: Record<string, DashboardParamEntry>
+  readonly enabled?: boolean | ((context: never) => boolean)
   readonly params?: DashboardParamsLike
   readonly queries?: (context: never) => DashboardSourceMap
   readonly derive?: (context: never) => DashboardDeriveMap
@@ -305,14 +317,20 @@ export interface DashboardViewMeta<TKey extends string> {
   readonly label: string
   /** The view is the current one. */
   readonly active: boolean
+  /** The view's `enabled` condition holds. A disabled view has no tab and cannot be current. */
+  readonly enabled: boolean
   /** The view has been opened at least once; its queries stay warm afterwards. */
   readonly opened: boolean
 }
 
 export interface DashboardViewController<TKey extends string> {
-  /** Current view. Writable and URL-synced under `view`. */
+  /**
+   * Current view. Writable and URL-synced under `view`. Always an enabled view: a URL naming a
+   * disabled one reads as the default view (or the first enabled), and writing a disabled view is
+   * ignored.
+   */
   current: TKey
-  /** Ordered view descriptors, ready for `UTabs` items. */
+  /** Enabled views in declaration order, ready for `UTabs` items. */
   readonly items: readonly { value: TKey; label: string }[]
 }
 

@@ -11,6 +11,7 @@ import type {
 } from '../../shared/types/remote-options'
 import type { LazyTextValue } from '../../shared/types/utils'
 import type { dashboardParamBuilder } from '../utils/builders/dashboard-params'
+import type { DashboardCondition } from './resource'
 
 export type DashboardParamKind =
   | 'string'
@@ -117,6 +118,12 @@ export interface DashboardParamOptions<TDefault, TValue = unknown> {
    * it. Use it for values driven by the app (a store, a chart drill-down you render yourself).
    */
   headless?: boolean
+  /**
+   * Whether the param exists for the current dashboard state, e.g. an account filter that a
+   * client workspace, whose account is fixed, must not show. While it is `false` its filter leaves
+   * every bar, its value reads as the default (queries never send it), and writes are ignored.
+   */
+  enabled?: DashboardCondition
   /** Shortcuts the filter menu offers under its options; picking one sets the whole value. */
   presets?: DashboardParamPresets<TValue>
 }
@@ -199,6 +206,7 @@ export interface DashboardRuntimeParam extends DashboardParamLike {
   readonly label?: LazyTextValue
   readonly placeholder?: LazyTextValue
   readonly headless?: boolean
+  readonly enabled?: DashboardCondition
   /** Text of one value. A method, so builders' typed `format` callbacks fit the erased shape. */
   format?(value: unknown): string
   readonly columns?: number

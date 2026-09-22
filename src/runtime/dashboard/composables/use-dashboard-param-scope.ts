@@ -6,6 +6,7 @@ import type { QueryStatesSchema } from '../../query-state'
 import type { GenericObject } from '../../shared/types/utils'
 import { hasProperty, isNullish } from '../../shared/utils/predicate'
 import type { DashboardFilterHandle, DashboardParamLike, DashboardRuntimeParam } from '../types'
+import { resolveDashboardCondition } from '../utils/state'
 import { useDashboardFilter } from './use-dashboard-filter'
 
 const emptyFacade = markRaw({})
@@ -23,9 +24,9 @@ export interface DashboardParamScope {
   urlKeys: readonly string[]
   /** Writable facade: one getter / setter per param. */
   values: object
-  /** A filter that is not headless differs from its default. */
+  /** A filter that is enabled and not headless differs from its default. */
   changed: () => boolean
-  /** Restores the default of every filter that is not headless. */
+  /** Restores the default of every filter that is enabled and not headless. */
   reset: () => void
 }
 
@@ -101,8 +102,13 @@ export function useDashboardParamScope(params: {
   for (const [key, definition] of entries) {
     const accessor = createAccessor(key, definition)
     const { codec, multiple } = definition
-    /** An unset value (nullish, or an empty list) reads as the current default. */
+    const enabled = () => resolveDashboardCondition(definition.enabled)
+    /**
+     * An unset value (nullish, or an empty list) reads as the current default, and so does the
+     * value of a disabled param, whatever its store holds.
+     */
     const get = () => {
+      if (!enabled()) return definition.resolveDefault()
       const value = accessor.get()
       const unset = isNullish(value) || (multiple && Array.isArray(value) && value.length === 0)
       return unset ? definition.resolveDefault() : value
@@ -112,6 +118,7 @@ export function useDashboardParamScope(params: {
      * the current default is stored unset, so it stays out of the URL and follows a default getter.
      */
     const set = (value: unknown) => {
+      if (!enabled()) return
       const next = value ?? definition.resolveDefault()
       const isDefault = codec.serialize(next) === codec.serialize(definition.resolveDefault())
       accessor.set(isDefault ? definition.defaultValue : next)
@@ -127,14 +134,16 @@ export function useDashboardParamScope(params: {
   }
 
   const visible = Object.values(filters).filter((filter) => !filter.headless)
-  const changed = computed<boolean>(() => visible.some((filter) => filter.changed))
+  const changed = computed<boolean>(() =>
+    visible.some((filter) => filter.enabled && filter.changed),
+  )
 
   return {
     changed: () => changed.value,
     filters: markRaw(filters),
     keys: entries.map(([key]) => key),
     reset() {
-      for (const filter of visible) filter.reset()
+      for (const filter of visible) if (filter.enabled) filter.reset()
     },
     urlKeys: urlEntries.map(([key, definition]) => definition.urlKey ?? key),
     values: markRaw(values),

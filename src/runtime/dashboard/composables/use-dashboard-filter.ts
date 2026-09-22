@@ -17,6 +17,7 @@ import {
   isDashboardOptionValue,
   isDashboardParamHeadless,
 } from '../utils/filters'
+import { resolveDashboardCondition } from '../utils/state'
 import { useDashboardOptions } from './use-dashboard-options'
 
 /**
@@ -132,6 +133,9 @@ export function useDashboardFilter(params: {
     },
     get hasMore() {
       return options.hasMore.value
+    },
+    get enabled() {
+      return resolveDashboardCondition(definition.enabled)
     },
     headless: isDashboardParamHeadless(definition),
     isSelected: (value: DashboardOptionValue) => keys.value.has(String(value)),

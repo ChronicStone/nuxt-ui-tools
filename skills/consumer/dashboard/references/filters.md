@@ -19,7 +19,7 @@ Presentation comes from the params themselves (`label`, `placeholder`, `format`,
 
 `UiDashboardFilters` renders one pill per filter on screen: the root filters, then the current
 view's (pass a view handle, `:dashboard="dashboard.consumption"`, to show that view's). It follows
-declaration order, skips headless params, and shows filters without a menu (no options and no
+declaration order, skips headless and disabled params (`enabled`), and shows filters without a menu (no options and no
 presets: dates, free text, a drill-down day) only while they are set, as a removable pill. "Reset"
 appears once a filter differs from its default and restores them all.
 

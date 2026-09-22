@@ -88,8 +88,18 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   inject by identity, so builder-form views are reached through `injectDashboard(schema).<view>`.
 - `useDashboardDerived` is one computed that evaluates and records reads through the shared tracker;
   state = combined state of the recorded sources.
+- Conditions: `enabled` (boolean or getter, `resolveDashboardCondition`) on queries, params, and views
+  (views get `{ params }`). A resource is `available` when its scope and its own condition hold;
+  otherwise its state is `disabled`, its data the default, and `refresh` a no-op.
+  `combineDashboardStates` leaves `disabled` out and is `disabled` only when every input is, so
+  derived values, dependents, and scope states never wait on a disabled source. A disabled param's
+  getter returns the resolved default and its setter does nothing; handles expose `enabled`, and
+  `changed` / `reset` and the filter bar skip disabled handles.
 - `useDashboardViews` owns the `view` query state (push history) and a warm `opened` latch per view,
-  and rejects a root param whose URL key would shadow `view`. URL keys are always readable names
+  and rejects a root param whose URL key would shadow `view`. Each view's `enabled` is a computed
+  over the root params; `current` is a computed over the stored key that resolves a disabled view
+  to the default (else first enabled) view and ignores writes of disabled ones, and a disabled
+  view's scope is inactive with `enabled` false, so its resources report `disabled`. URL keys are always readable names
   (`year`, `view`, `consumption.currency`); `urlPrefix` namespaces them. Do not abbreviate.
 - `useDashboardApi` is a facade: plain objects with getters over owned refs, `markRaw`, no refs
   exposed. It must not own behaviour.
@@ -125,7 +135,13 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   merged separately so panel cells can drop border/radius after the app's `card.root`.
 - `DashboardGrid` provides a context (`provideDashboardGrid`): `panels` switches cards to panel
   chrome; `menu` and `freshness` are defaults for blocks that do not set their own (nested grids
-  inherit from their parent).
+  inherit from their parent); `columns`, `gap`, and `fill` are the geometry cells read.
+- Grids are wrapping flex rows, not CSS grids: `resolveDashboardCellStyle` gives each cell (block
+  or nested grid, read from the parent context before providing its own) the basis of its span's
+  track run minus a hair, and `flex-grow` equal to its span when `fill` is on, so a short row shares
+  its free width by span. A block whose source is `disabled` renders nothing (`v-if` on the card
+  root; the component stays mounted), and `empty:hidden` collapses a grid left with only comment
+  nodes. Row spans do not exist in this model: `rows` is deprecated and ignored.
 - Boolean props are cast to `false` when absent. Blocks spread `...block` into the card, so each
   block destructures `card = true`, `menu = undefined`, `freshness = undefined` and forwards them;
   otherwise `card` arrives as `false` and `menu` / `freshness` can no longer inherit from the grid.

@@ -101,7 +101,7 @@ const filters = computed<DashboardFilterHandle[]>(() => {
   const keys = only ?? Object.keys(all)
   return keys.flatMap((key) => {
     const filter = all[key]
-    if (!filter || filter.headless || exclude?.includes(key)) return []
+    if (!filter || filter.headless || !filter.enabled || exclude?.includes(key)) return []
     return hasDashboardFilterMenu(filter) || filter.changed ? [filter] : []
   })
 })

@@ -20,7 +20,19 @@ import type { DashboardKeyError } from './schema'
  */
 export type DashboardStage = 'essential' | 'background' | 'deferred'
 
-export type DashboardResourceState = 'idle' | 'loading' | 'ready' | 'error'
+/**
+ * - `idle`: not requested yet (a deferred query nobody activated, an unopened view).
+ * - `loading` / `ready` / `error`: the fetch lifecycle.
+ * - `disabled`: an `enabled` condition does not hold (its own, or its view's). The resource never
+ *   fetches and holds its `defaultValue`; blocks bound to it render nothing.
+ */
+export type DashboardResourceState = 'idle' | 'loading' | 'ready' | 'error' | 'disabled'
+
+/**
+ * Whether a view, query, or param is part of the dashboard right now: a fixed boolean, or a getter
+ * read reactively (the workspace, a permission, another param).
+ */
+export type DashboardCondition = boolean | (() => boolean)
 
 /**
  * Contract every block binds to through `:source`. Query resources and derived resources both
@@ -34,6 +46,13 @@ export interface DashboardSourceLike<TData = unknown> {
   readonly error: unknown
   /** A background refetch is running while `state` is still `'ready'`. */
   readonly refreshing: boolean
+  /**
+   * A request for this source is in flight, whatever its state: the first load, a refetch of shown
+   * data, or a retry after an error (TanStack keeps an errored query in `error` while it refetches).
+   * Blocks draw their progress bar from it. Optional so hand-written sources keep fitting; blocks
+   * fall back to `refreshing`.
+   */
+  readonly fetching?: boolean
   /**
    * When the data was last fetched successfully (epoch milliseconds). `undefined` until the first
    * success. A derived value reports its oldest input.
@@ -51,6 +70,7 @@ export interface DashboardResource<
   TStage extends DashboardStage = DashboardStage,
 > extends DashboardSourceLike<TData> {
   readonly kind: 'query'
+  readonly fetching: boolean
   readonly stage: TStage
   /** `false` while the owning view has never been opened or a `deferred` query was not activated. */
   readonly active: boolean
@@ -65,6 +85,7 @@ export interface DashboardResource<
 /** A value declared in `derive`, exposed as a resource whose state follows the data it reads. */
 export interface DashboardDerived<TData> extends DashboardSourceLike<TData> {
   readonly kind: 'derived'
+  readonly fetching: boolean
 }
 
 export type DashboardSourceMap = Record<string, DashboardSourceLike>
@@ -117,8 +138,13 @@ export interface DashboardQueryInput<
    * are ready without satisfying it, `ready` with its `defaultValue` (`idle` without one).
    */
   requires?: () => TRequired
-  /** Extra boolean gate, combined with `requires` and with stage activation. */
-  enabled?: () => boolean
+  /**
+   * Whether the query exists for the current dashboard state, e.g. a section this workspace may
+   * not see. While it is `false` the query never fetches, its state is `disabled` and its data its
+   * `defaultValue`, and every block bound to it renders nothing (grids close the gap). To wait for
+   * data instead, use `requires`.
+   */
+  enabled?: DashboardCondition
   /**
    * Reactive query factory returning a TanStack query definition. Several resources may share one
    * factory: they share its request and cache entry, and each `select`s its own part.

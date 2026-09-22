@@ -94,6 +94,7 @@ function defineParam(
     codec: multiple ? createListCodec(codec) : codec,
     columns: options.columns,
     defaultValue: isFunction(defaultValue) ? unset : (defaultValue ?? unset),
+    enabled: options.enabled,
     format: options.format,
     headless: options.headless === true,
     historyMode: options.historyMode,

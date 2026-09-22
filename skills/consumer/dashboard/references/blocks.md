@@ -10,7 +10,7 @@ module prefix (`Ui` by default).
 | ------------------- | ------------------------------------------------------------------- | -------------------------------------------------------- |
 | `title`, `subtitle` | `LazyTextValue`                                                     | card header                                              |
 | `size`              | responsive string                                                   | grid span: `"12 md:6 xl:4"`; defaults to the full row    |
-| `rows`              | responsive string                                                   | grid row span                                            |
+| `rows`              | responsive string                                                   | deprecated, ignored (nest a grid)                        |
 | `card`              | `boolean`                                                           | `false` removes border, padding, background              |
 | `activation`        | `'visible' \| 'mount' \| 'manual'`                                  | when a deferred source is activated; default `'visible'` |
 | `empty`             | `{ icon?, title?, description? }`                                   | empty state content; defaults to a localized message     |
@@ -167,10 +167,14 @@ Shared slots:
 
 States are automatic:
 
+- nothing at all while the source is `disabled` (its `enabled` condition does not hold, see
+  schema.md): the block leaves the grid, which closes up around it
 - skeleton while `idle` / `loading`, shaped like the block (bars, lines, ring, rows, funnel…); one
   highlight sweeps across it, animated on the compositor, and real values are not in the DOM
 - a retryable error scoped to the block, and an empty state (`empty` prop)
-- a thin progress bar while stale data refetches; values stay readable
+- a thin progress bar at the top whenever a request is in flight, whatever the block shows: a
+  refetch of its data (values stay readable), a retry after an error (the retry button spins until
+  it settles), or the first load
 - content fades in once when it replaces a skeleton
 
 ## Layout
@@ -187,7 +191,13 @@ States are automatic:
 
 `variant="cards"` (default) lays out separate cards with `gap` (any CSS length, default `1rem`).
 `variant="panels"` draws one bordered surface whose cells are separated by 1px rules; blocks inside
-drop their own border and radius. Keep panel rows full, or the empty cell shows the rule color.
+drop their own border and radius.
+
+Rows close up. A cell takes the width its `size` spans, and rows break where the columns say; a row
+that is not full (a short last row, or a block hidden because its source is `disabled`) shares the
+free width between its cells in proportion to their span. A five-tile KPI strip that loses one tile
+shows four equal tiles; an `8 + 4` row that loses the `4` gives the `8` the whole row. A grid whose
+blocks all render nothing collapses. `fill: false` keeps every cell at its span instead.
 
 `columns` and `size` use the responsive string syntax (`"a md:b xl:c"`), resolved through
 `nuxt-viewport` breakpoints.

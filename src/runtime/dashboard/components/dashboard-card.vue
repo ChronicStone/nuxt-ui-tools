@@ -80,7 +80,6 @@ const block = useDashboardBlock({
   activation: () => props.activation,
   empty: () => props.isEmpty,
   root,
-  rows: () => props.rows,
   size: () => props.size,
   source: () => props.source,
 })
@@ -127,7 +126,7 @@ const title = computed(() => resolveTextValue(props.title))
 const subtitle = computed(() => resolveTextValue(props.subtitle))
 const phase = computed(() => block.phase.value)
 const pending = computed(() => phase.value === 'loading' || phase.value === 'idle')
-const busy = computed(() => phase.value === 'loading' || block.refreshing.value)
+const busy = computed(() => phase.value === 'loading' || block.fetching.value)
 
 const builtInActions: readonly DashboardMenuAction[] = ['table', 'csv', 'expand']
 const tableView = shallowRef<boolean>(false)
@@ -247,6 +246,7 @@ const hasHeader = computed(() =>
 
 <template>
   <section
+    v-if="!block.hidden.value"
     ref="root"
     :style="block.style.value"
     :data-phase="phase"
@@ -255,8 +255,9 @@ const hasHeader = computed(() =>
     :class="classes.root"
   >
     <div
-      v-if="block.refreshing.value"
+      v-if="block.fetching.value"
       aria-hidden="true"
+      data-progress
       class="pointer-events-none absolute inset-x-0 top-0 h-0.5 overflow-hidden"
     >
       <div class="nut-dash-progress h-full w-1/3 rounded-full bg-primary" />
@@ -321,6 +322,7 @@ const hasHeader = computed(() =>
         v-else-if="phase === 'error' || phase === 'empty'"
         :kind="phase"
         :empty
+        :retrying="block.fetching.value"
         @retry="block.retry"
       />
       <div v-else aria-hidden="true" :class="phase === 'loading' && 'nut-dash-shimmer'">

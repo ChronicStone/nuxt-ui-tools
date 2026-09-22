@@ -58,6 +58,9 @@ export function createDashboardResourceFacade(params: {
     get params() {
       return slot.value?.widget.values ?? emptyFacade
     },
+    get fetching() {
+      return slot.value?.fetching.value ?? false
+    },
     refresh: () => slot.value?.refresh() ?? Promise.resolve(),
     get refreshing() {
       return slot.value?.refreshing.value ?? false

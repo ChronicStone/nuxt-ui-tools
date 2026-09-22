@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools-dashboard
-description: Use this skill when building analytics dashboards with nuxt-ui-tools as a package consumer. Covers defineDashboardSchema, useDashboard, standalone filters and views (defineDashboardFilter, defineDashboardFilters, defineDashboardView) with typed injection (useDashboardView, injectDashboard, InferDashboard), typed params synced with the URL, memory, or an external store, headless params, filter handles and the shipped controls (UiDashboardFilters, UiDashboardFilter, UiDashboardViewTabs) with slot overrides, remote paginated pickers and remoteTableOptions, staged queries (essential / background / deferred) with select and dependent requires, derived values, views (tabs), widget-scoped params, number formats (presets, Intl options, useDashboardFormat), and the dashboard blocks (stats with trends, goals, and comparisons, stat groups, gauges, unovis charts with highlights, value labels, and totals, lists with progress rings, bars, funnel, alerts, activity feeds, sortable tables, custom widgets) with their automatic loading, error, empty, and refresh states, card menus, header and footer actions, row actions, drill-down and selected state, card tabs, split cards, comparison periods, auto-refresh, and data freshness.
+description: Use this skill when building analytics dashboards with nuxt-ui-tools as a package consumer. Covers defineDashboardSchema, useDashboard, standalone filters and views (defineDashboardFilter, defineDashboardFilters, defineDashboardView) with typed injection (useDashboardView, injectDashboard, InferDashboard), typed params synced with the URL, memory, or an external store, headless params, filter handles and the shipped controls (UiDashboardFilters, UiDashboardFilter, UiDashboardViewTabs) with slot overrides, remote paginated pickers and remoteTableOptions, staged queries (essential / background / deferred) with select and dependent requires, enabled conditions on views, queries, and filters (one schema for several audiences, blocks of disabled queries hidden, grids closing up), derived values, views (tabs), widget-scoped params, number formats (presets, Intl options, useDashboardFormat), and the dashboard blocks (stats with trends, goals, and comparisons, stat groups, gauges, unovis charts with highlights, value labels, and totals, lists with progress rings, bars, funnel, alerts, activity feeds, sortable tables, custom widgets) with their automatic loading, error, empty, and refresh states, card menus, header and footer actions, row actions, drill-down and selected state, card tabs, split cards, comparison periods, auto-refresh, and data freshness.
 ---
 
 # nuxt-ui-tools Dashboard
@@ -15,6 +15,7 @@ Use this skill for package-consumer tasks involving:
 - filter handles (`dashboard.filters.x`) and the controls `UiDashboardFilters`, `UiDashboardFilter`,
   `UiDashboardViewTabs`
 - staged queries, `select`, dependent queries (`requires`), and `derive`
+- conditions: `enabled` on views, queries, and params, for one schema serving several audiences
 - remote pickers and `remoteTableOptions`
 - number formats (`format="integer"`, `Intl.NumberFormat` options, `useDashboardFormat()`)
 - `UiDashboardGrid`, `UiDashboardStat`, `UiDashboardWidget`, chart and list blocks, and the rest of
@@ -22,8 +23,8 @@ Use this skill for package-consumer tasks involving:
 
 Focused references:
 
-- `skills/consumer/dashboard/references/schema.md` — schema, stages, `select`, views, derive,
-  splitting a dashboard across files, the facade
+- `skills/consumer/dashboard/references/schema.md` — schema, stages, `select`, conditions
+  (`enabled`), views, derive, splitting a dashboard across files, the facade
 - `skills/consumer/dashboard/references/params.md` — param kinds and options, sync, URL keys, filter
   handles, remote pickers
 - `skills/consumer/dashboard/references/filters.md` — the filter bar, pills, view tabs, slots,
@@ -106,7 +107,7 @@ What you get without writing it:
 - `?period=7` in the URL (defaults never reach the URL)
 - `summary` fetches first; `daily` fetches once `summary` settles
 - each block shows a skeleton while its source loads, a retryable error scoped to that block, an
-  empty state, and a thin refresh bar while stale data refetches
+  empty state, and a thin progress bar whenever a request is in flight (refetch or retry)
 - the stat's delta and "vs €12,400 previous period" caption, in the current locale
 - every accessor (`summary.revenue`, `day.date`) typed from the query result
 
@@ -189,6 +190,9 @@ const consumption = useDashboardView(consumptionView)
 - Declare presentation on the param (`label`, `placeholder`, `format`, `columns`) and render
   `UiDashboardFilters`; slot or bind a handle yourself only where a filter needs a custom control.
 - Split one response per block with `select` instead of reshaping it in `derive`.
+- Serve every audience from one schema: put the audience in a headless param synced from the
+  session, and give views, queries, and filters an `enabled` condition. Blocks bound to a disabled
+  query render nothing and grids close up, so templates never branch on permissions.
 - Use `useDashboardView(view)` / `injectDashboard(schema)` in child components; never prop-drill the
   dashboard or restate its type (`InferDashboard<typeof schema>` names it when you need to).
 - Format with presets or `useDashboardFormat()`; do not build `Intl.NumberFormat` in the app.

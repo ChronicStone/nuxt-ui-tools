@@ -13,6 +13,8 @@ import { resolveDashboardClasses } from '../../utils/ui'
 const props = defineProps<{
   kind: 'error' | 'empty'
   empty?: DashboardEmptyContent
+  /** A retry is in flight: the button spins and waits for it. */
+  retrying?: boolean
 }>()
 const emit = defineEmits<{ retry: [] }>()
 const { t } = useUiToolsLocale()
@@ -60,6 +62,8 @@ const classes = computed(() =>
       size="xs"
       icon="i-lucide-rotate-cw"
       :label="t('dashboard.states.retry')"
+      :loading="retrying"
+      data-retry
       @click="emit('retry')"
     />
   </div>

@@ -35,6 +35,10 @@ Every builder accepts:
 - `label` — the filter name ("Year"), text or `() => t('…')`. Defaults to the param key.
 - `placeholder` — the text of an empty selection ("All accounts"). Defaults to the localized "All".
 - `headless` — state only: the filter bar skips it, `filtered` and `resetFilters()` ignore it.
+- `enabled` — whether the param exists right now (a boolean or a getter): while `false` it leaves
+  the bar, reads its default whatever the URL holds, and ignores writes. Use it for filters some
+  audiences must not use, e.g. an account filter where the workspace fixes the account (see
+  schema.md, Conditions).
 - `presets` — shortcut values the filter menu lists under its options (`{ label, value, icon?,
 hint? }[]`, or a getter to read them from data): picking one sets the whole value.
 - `sync` — where the value lives (below).
@@ -133,7 +137,7 @@ Every param has a handle on the sibling `filters` object; view handles list the 
 dashboard.filters.year
 dashboard.consumption.filters.account
 // {
-//   key, kind, multiple, headless,
+//   key, kind, multiple, headless, enabled,
 //   label, placeholder,                 // resolved text
 //   value,                              // writable (same as params.x)
 //   defaultValue, changed,              // `changed`: the value differs from the default

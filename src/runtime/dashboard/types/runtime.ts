@@ -4,7 +4,7 @@ import type { QueryDefinition } from '../../shared/types/query'
 import type { LazyTextValue } from '../../shared/types/utils'
 import type { DashboardOptionsMenuBindings } from './filters'
 import type { DashboardOption, DashboardParamBuilder, DashboardParamEntry } from './params'
-import type { DashboardSourceLike, DashboardStage } from './resource'
+import type { DashboardCondition, DashboardSourceLike, DashboardStage } from './resource'
 
 /**
  * Runtime (type-erased) view of the schema. The public schema types carry precise generics; the
@@ -17,7 +17,7 @@ export type DashboardRuntimeParamsInput =
 export interface DashboardRuntimeQueryInput {
   params?: DashboardRuntimeParamsInput
   requires?: () => unknown
-  enabled?: () => boolean
+  enabled?: DashboardCondition
   query: (scope: { params: object; required: unknown }) => QueryDefinition
   select?: (data: unknown) => unknown
   defaultValue?: unknown
@@ -44,6 +44,8 @@ export interface DashboardRuntimeScopeInput {
   label?: LazyTextValue
   /** Root params a standalone view reads. */
   shared?: Record<string, DashboardParamEntry>
+  /** Availability of a view, read with the root params. */
+  enabled?: boolean | ((context: { params: object }) => boolean)
   params?: DashboardRuntimeParamsInput
   queries?: (context: DashboardRuntimeQueriesContext) => Record<string, DashboardSourceLike>
   derive?: (context: DashboardRuntimeDeriveContext) => Record<string, () => unknown>

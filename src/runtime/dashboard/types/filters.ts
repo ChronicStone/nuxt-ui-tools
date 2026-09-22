@@ -52,6 +52,11 @@ export interface DashboardFilterHandle<
   readonly multiple: boolean
   /** Not rendered by `UiDashboardFilters`; ignored by `filtered` and `resetFilters()`. */
   readonly headless: boolean
+  /**
+   * The param's `enabled` condition holds. A disabled filter is out of every bar, reads its
+   * default, and ignores writes.
+   */
+  readonly enabled: boolean
   /** Filter name. */
   readonly label: string
   /** Text of an empty selection ("All"). */

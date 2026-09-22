@@ -38,6 +38,9 @@ export function useDashboardApi(params: {
           get active() {
             return views?.current.value === view.key
           },
+          get enabled() {
+            return view.enabled.value
+          },
           key: view.key,
           get label() {
             return view.label()
@@ -110,7 +113,9 @@ export function useDashboardApi(params: {
           views.current.value = next
         },
         get items() {
-          return views.views.map((view) => ({ label: view.label(), value: view.key }))
+          return views.views.flatMap((view) =>
+            view.enabled.value ? [{ label: view.label(), value: view.key }] : [],
+          )
         },
       }),
     })

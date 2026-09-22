@@ -50,6 +50,9 @@ export function useDashboardDerived(params: {
         evaluation.value.sources.find((source) => source.state === 'error')?.error
       )
     },
+    get fetching() {
+      return evaluation.value.sources.some((source) => source.fetching ?? source.refreshing)
+    },
     id: params.id,
     kind: 'derived',
     refresh: () => refreshDashboardSources(evaluation.value.sources),
