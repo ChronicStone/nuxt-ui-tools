@@ -281,11 +281,6 @@ export interface DashboardBlockBaseProps {
   subtitle?: LazyTextValue
   /** Grid span, responsive: `"12 md:6 xl:4"`. Defaults to the full row. */
   size?: string
-  /**
-   * @deprecated Grids lay rows out as wrapping lines that close up around hidden blocks, so a
-   * block no longer spans rows. Stack blocks in a nested `UiDashboardGrid` instead. Ignored.
-   */
-  rows?: string
   /** Render without card chrome (no border, padding, or background). Defaults to `true`. */
   card?: boolean
   activation?: DashboardBlockActivation

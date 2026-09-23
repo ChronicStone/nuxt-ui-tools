@@ -300,18 +300,5 @@ export type DashboardParamsInput<TParams, TShared = DashboardEmptyMap> =
       context: DashboardParamsContext<TShared>,
     ) => DashboardParamEntries<TParams>)
 
-/**
- * Keys of params that carry option items (`p.enum`, `p.options`, `p.remote`, `p.comparison`).
- *
- * @deprecated Every param has a filter handle now; use `keyof` the params map.
- */
-export type DashboardOptionParamKeys<TParams> = {
-  [K in keyof TParams]: DashboardParamOf<TParams[K]> extends {
-    readonly kind: 'enum' | 'options' | 'remote' | 'comparison'
-  }
-    ? K
-    : never
-}[keyof TParams]
-
 /** The `p` builder handed to every `params` callback and filter factory. */
 export type DashboardParamBuilder = typeof dashboardParamBuilder

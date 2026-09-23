@@ -281,7 +281,7 @@ describe('dashboard schema inference', () => {
     expectTypeOf<Compared['params']['optional']>().toEqualTypeOf<
       'previous' | 'year' | 'none' | undefined
     >()
-    expectTypeOf<keyof Compared['options']>().toEqualTypeOf<'compare' | 'optional'>()
+    expectTypeOf<keyof Compared['filters']>().toEqualTypeOf<'compare' | 'optional'>()
     expectTypeOf<Compared['autoRefresh']>().toEqualTypeOf<number>()
   })
 })

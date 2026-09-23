@@ -78,8 +78,6 @@ export interface DashboardResource<
   readonly params: DashboardParamValues<TParams>
   /** Filter handles of the widget params: bind them to `UiDashboardFilter` or any control. */
   readonly filters: DashboardFilterHandles<TParams>
-  /** @deprecated Use `filters`. */
-  readonly options: DashboardFilterHandles<TParams>
 }
 
 /** A value declared in `derive`, exposed as a resource whose state follows the data it reads. */

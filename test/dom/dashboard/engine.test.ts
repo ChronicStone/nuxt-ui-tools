@@ -328,7 +328,7 @@ describe('dashboard comparison param', () => {
     const { dashboard, flush, query } = await mountDashboard({ schema })
 
     expect(dashboard.params.compare).toBe('previous')
-    expect(dashboard.options.compare.items.map((item) => [item.value, item.label])).toEqual([
+    expect(dashboard.filters.compare.items.map((item) => [item.value, item.label])).toEqual([
       ['previous', 'Période précédente'],
       ['year', 'Année précédente'],
       ['none', 'Sans comparaison'],
@@ -336,7 +336,7 @@ describe('dashboard comparison param', () => {
     dashboard.params.compare = 'none'
     await flush()
     expect(query()).toEqual({ compare: 'none' })
-    expect(dashboard.options.compare.selected.map((item) => item.label)).toEqual([
+    expect(dashboard.filters.compare.selected.map((item) => item.label)).toEqual([
       'Sans comparaison',
     ])
   })
@@ -358,11 +358,11 @@ describe('dashboard option handles', () => {
     })
     const { dashboard, flush } = await mountDashboard({ schema })
 
-    expect(dashboard.options.currency.items.map((item) => item.value)).toEqual(['EUR', 'USD'])
-    expect(dashboard.options.currency.selected.map((item) => item.label)).toEqual(['Euro'])
+    expect(dashboard.filters.currency.items.map((item) => item.value)).toEqual(['EUR', 'USD'])
+    expect(dashboard.filters.currency.selected.map((item) => item.label)).toEqual(['Euro'])
     dashboard.params.currency = 'USD'
     await flush()
-    expect(dashboard.options.currency.selected.map((item) => item.label)).toEqual(['Dollar'])
+    expect(dashboard.filters.currency.selected.map((item) => item.label)).toEqual(['Dollar'])
   })
 
   it('loads remote options on open and hydrates selected values from the URL', async () => {
@@ -394,26 +394,26 @@ describe('dashboard option handles', () => {
       { label: 'Globex', value: 'globex' },
     ])
     await flush()
-    expect(dashboard.options.accounts.selected.map((option) => option.label)).toEqual([
+    expect(dashboard.filters.accounts.selected.map((option) => option.label)).toEqual([
       'Acme',
       'Globex',
     ])
 
-    dashboard.options.accounts.open = true
+    dashboard.filters.accounts.open = true
     await flush()
     expect(pages.calls[0]?.args).toEqual([
       { page: { cursor: null, index: 1, size: 2 }, search: '' },
     ])
     pages.calls[0]?.resolve({ hasMore: true, options: [{ label: 'Initech', value: 'initech' }] })
     await flush()
-    expect(dashboard.options.accounts.hasMore).toBe(true)
-    expect(dashboard.options.accounts.items.map((option) => option.value)).toEqual([
+    expect(dashboard.filters.accounts.hasMore).toBe(true)
+    expect(dashboard.filters.accounts.items.map((option) => option.value)).toEqual([
       'initech',
       'acme',
       'globex',
     ])
 
-    dashboard.options.accounts.loadMore()
+    dashboard.filters.accounts.loadMore()
     await flush()
     expect(pages.calls[1]?.args).toEqual([
       { page: { cursor: null, index: 2, size: 2 }, search: '' },

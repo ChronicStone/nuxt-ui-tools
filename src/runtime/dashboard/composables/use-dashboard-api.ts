@@ -129,7 +129,6 @@ function scopeMembers(scope: ReturnType<typeof useDashboardScope>): PropertyDesc
   return {
     filtered: { enumerable: true, get: () => visible.changed() },
     filters: { enumerable: true, value: visible.filters },
-    options: { enumerable: true, value: visible.filters },
     params: { enumerable: true, value: visible.values },
     refresh: { enumerable: true, value: scope.refresh },
     refreshing: { enumerable: true, get: () => scope.refreshing.value },

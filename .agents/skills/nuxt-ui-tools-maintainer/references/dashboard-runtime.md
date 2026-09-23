@@ -15,8 +15,8 @@ Its runtime checks the `queryFn` is callable and the response has `rows`.
 
 ```
 types/        params (param options, sync, entries), filters (filter handles, bar target),
-              options (deprecated aliases), resource, schema (+ inferred DashboardApi,
-              InferDashboard, InferDashboardView), blocks (formats), charts, ui;
+              resource, schema (+ inferred DashboardApi, InferDashboard, InferDashboardView),
+              blocks (formats), charts, ui;
               runtime.ts (erased shapes, the option-list contract) is internal and not re-exported
 schema/       defineDashboardSchema (identity + compile-time key and shared-param guards),
               defineDashboardFilter(s), defineDashboardView (identities)
@@ -141,7 +141,7 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   track run minus a hair, and `flex-grow` equal to its span when `fill` is on, so a short row shares
   its free width by span. A block whose source is `disabled` renders nothing (`v-if` on the card
   root; the component stays mounted), and `empty:hidden` collapses a grid left with only comment
-  nodes. Row spans do not exist in this model: `rows` is deprecated and ignored.
+  nodes. Row spans do not exist in this model: stack blocks in a nested grid instead.
 - Boolean props are cast to `false` when absent. Blocks spread `...block` into the card, so each
   block destructures `card = true`, `menu = undefined`, `freshness = undefined` and forwards them;
   otherwise `card` arrives as `false` and `menu` / `freshness` can no longer inherit from the grid.

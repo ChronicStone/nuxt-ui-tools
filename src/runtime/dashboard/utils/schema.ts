@@ -29,7 +29,6 @@ const reservedKeys: ReadonlySet<string> = new Set<DashboardReservedKey>([
   'autoRefresh',
   'filtered',
   'filters',
-  'options',
   'params',
   'refresh',
   'refreshing',

@@ -79,7 +79,6 @@ export type DashboardReservedKey =
   | 'filters'
   | 'filtered'
   | 'resetFilters'
-  | 'options'
   | 'state'
   | 'refreshing'
   | 'refresh'
@@ -287,8 +286,6 @@ export interface DashboardScopeMembers<TParams> {
    * `toggle` / `reset` actions. Bind them to `UiDashboardFilter` or any control.
    */
   readonly filters: DashboardFilterHandles<TParams>
-  /** @deprecated Use `filters`. */
-  readonly options: DashboardFilterHandles<TParams>
   /**
    * A filter on screen differs from its default: the root and the current view for the dashboard,
    * the root and the view for a view handle. Headless params are ignored.

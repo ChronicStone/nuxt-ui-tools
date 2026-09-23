@@ -10,7 +10,6 @@ module prefix (`Ui` by default).
 | ------------------- | ------------------------------------------------------------------- | -------------------------------------------------------- |
 | `title`, `subtitle` | `LazyTextValue`                                                     | card header                                              |
 | `size`              | responsive string                                                   | grid span: `"12 md:6 xl:4"`; defaults to the full row    |
-| `rows`              | responsive string                                                   | deprecated, ignored (nest a grid)                        |
 | `card`              | `boolean`                                                           | `false` removes border, padding, background              |
 | `activation`        | `'visible' \| 'mount' \| 'manual'`                                  | when a deferred source is activated; default `'visible'` |
 | `empty`             | `{ icon?, title?, description? }`                                   | empty state content; defaults to a localized message     |

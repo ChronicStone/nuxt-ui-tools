@@ -15,7 +15,6 @@ type DashboardResourceFacade = DashboardSourceLike & {
   active: boolean
   params: object
   filters: object
-  options: object
 }
 
 /**
@@ -52,9 +51,6 @@ export function createDashboardResourceFacade(params: {
       return slot.value?.id ?? ''
     },
     kind: 'query' as const,
-    get options() {
-      return slot.value?.widget.filters ?? emptyFacade
-    },
     get params() {
       return slot.value?.widget.values ?? emptyFacade
     },
