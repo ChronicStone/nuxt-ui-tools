@@ -710,6 +710,12 @@ Prefer:
 - `bun run test`
 - `bun run dev`
 
+`bun run test` runs three Vitest projects: `unit` (Node), `dom` (happy-dom, no layout), and
+`browser` (`test/browser/**`, real Chromium, Firefox, and WebKit through Playwright, with the
+Tailwind classes the components ship). Layout behaviour (widths, wrapping, collapse) can only be
+asserted in `browser`. It needs the Playwright browsers once per machine:
+`bunx playwright install chromium firefox webkit`; run it alone with `bunx vitest run --project browser`.
+
 Validation rules:
 
 - run the narrowest relevant checks first

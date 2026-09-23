@@ -1,5 +1,7 @@
+import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 const root = new URL('./', import.meta.url).pathname
@@ -180,7 +182,7 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          exclude: ['test/fixtures/**', 'test/dom/**'],
+          exclude: ['test/fixtures/**', 'test/dom/**', 'test/browser/**'],
           include: ['test/**/*.test.ts'],
           name: 'unit',
         },
@@ -192,6 +194,24 @@ export default defineConfig({
           include: ['test/dom/**/*.test.ts'],
           name: 'dom',
           setupFiles: ['test/dom/setup.ts'],
+        },
+      },
+      {
+        // Layout needs a real engine: Chromium, with the Tailwind classes the components ship.
+        extends: true,
+        plugins: [tailwindcss()],
+        test: {
+          browser: {
+            enabled: true,
+            headless: true,
+            instances: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }],
+            provider: playwright(),
+            screenshotFailures: false,
+            viewport: { height: 1080, width: 1920 },
+          },
+          include: ['test/browser/**/*.test.ts'],
+          name: 'browser',
+          setupFiles: ['test/browser/setup.ts'],
         },
       },
     ],

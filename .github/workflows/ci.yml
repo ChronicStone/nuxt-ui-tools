@@ -38,5 +38,8 @@ jobs:
       - name: Typecheck
         run: bun run typecheck && bun run typecheck:playgrounds
 
+      - name: Install test browsers
+        run: bunx playwright install --with-deps chromium firefox webkit
+
       - name: Test
         run: bun run test

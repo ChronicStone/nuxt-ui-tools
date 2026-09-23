@@ -239,8 +239,17 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   grid, remote), view tabs, slots, the button variant; `controls-host.vue` pins `only` typing.
 - `test/table/remote-table-options.test.ts` — requests, page mapping, selected resolution, Vue Query
   options with `skipToken`, fit with dashboard, table, and form remote options.
-- `test/dom/dashboard/engine.test.ts` — staging, views, URL keys, derive state, refresh, options,
-  auto-refresh (URL, schema default, `refetchInterval`), comparison params.
+- `test/dom/dashboard/engine.test.ts` — staging, views, URL keys, derive state, refresh, filter
+  handles, auto-refresh (URL, schema default, `refetchInterval`), comparison params.
+- `test/dom/dashboard/conditions.test.ts` — `enabled` on queries, views, and params, the tab strip
+  of a single enabled view, blocks of disabled sources rendering nothing.
+- `test/browser/dashboard/grid-layout.test.ts` (Chromium, Firefox, WebKit) — the grid measured in a
+  real engine: span widths against the CSS-grid model, row breaks, proportional fill when blocks
+  hide (and back), `fill: false`, short rows, responsive columns and spans, full-row fallbacks, no
+  rounding wrap across a sweep of widths, gaps and panel rules between cells and rows, equal row
+  heights, wide content, collapse of emptied and nested grids, and a query condition end to end.
+  `layout.ts` holds the helpers (`testSource` drives a block's state; `spanWidth` / `filledWidths`
+  give the expected widths).
 - `test/dashboard/charts.test.ts` — axis bounds and ticks, colors, series axes, per-locale
   formatters, class layering, XY layer resolution.
 - `test/dashboard/data.test.ts` — CSV per locale, chart tables, relative times and day headings,
