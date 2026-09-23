@@ -167,6 +167,31 @@ describe('dashboard grid layout', () => {
     expectPacked(cells('row'))
   })
 
+  it('lays out a block left out with v-if like a hidden one', async () => {
+    const [wide, first, second, alone] = sources(4)
+    const shown = ref(true)
+    await layout(() =>
+      h('div', { style: 'display: flex; flex-direction: column; gap: 16px' }, [
+        grid('above', {}, () => [
+          block({ size: '6', source: must(wide) }),
+          block({ size: '3', source: must(first) }),
+          shown.value ? block({ size: '3', source: must(second) }) : null,
+        ]),
+        grid('middle', {}, () => [shown.value ? block({ source: must(alone) }) : null]),
+        grid('below', {}, () => [block({ source: must(first) })]),
+      ]),
+    )
+    expect(cells('above')).toHaveLength(3)
+
+    shown.value = false
+    await settle()
+    // The row closes up by span, and the emptied grid collapses with the gap it sat in.
+    expectWidths(cells('above'), filledWidths({ spans: [6, 3], width: WIDTH }))
+    expectPacked(cells('above'))
+    expect(getComputedStyle(gridElement('middle')).display).toBe('none')
+    expect(spacing()).toBeCloseTo(16, 0)
+  })
+
   it('keeps the width of a block that loads, fails, or has nothing to show', async () => {
     const [wide, narrow] = sources(2)
     await layout(() =>
