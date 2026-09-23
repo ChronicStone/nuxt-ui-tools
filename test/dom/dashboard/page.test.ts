@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { defineComponent, h, ref } from 'vue'
 import type { Ref } from 'vue'
 
-import { defineDashboardSchema, defineDashboardView, useDashboardView } from '#ui-tools/dashboard'
+import {
+  defineDashboardSchema,
+  defineDashboardView,
+  useDashboard,
+  useDashboardView,
+} from '#ui-tools/dashboard'
 import DashboardPage from '#ui-tools/dashboard/components/dashboard-page.vue'
 
 import { mountDashboard } from './harness'
@@ -160,6 +165,39 @@ describe('dashboard page', () => {
     dashboard.view.current = 'margin'
     await flush()
     expect(margin).toBe(dashboard.margin)
+  })
+
+  it('lets a schema error thrown in setup be the only one reported', async () => {
+    // Two views declare `status` differently: one key names one filter, so the dashboard throws.
+    const conflicting = () =>
+      defineDashboardSchema({
+        key: 'conflicting',
+        views: {
+          open: defineDashboardView({
+            filters: (f) => ({ status: f.enum(['open', 'closed'], { defaultValue: 'open' }) }),
+          }),
+          search: defineDashboardView({ filters: (f) => ({ status: f.string() }) }),
+        },
+      })
+    // Like a compiled page: the render function is not setup's, so it still runs after setup threw.
+    const Page = defineComponent({
+      render() {
+        return h(DashboardPage, { dashboard: this.dashboard, title: 'Conflicting' })
+      },
+      setup() {
+        return { dashboard: useDashboard(conflicting) }
+      },
+    })
+    const errors: unknown[] = []
+    await expect(
+      mountDashboard({
+        onError: (error) => errors.push(error),
+        render: () => h(Page),
+        schema: defineDashboardSchema({ key: 'host' }),
+      }),
+    ).rejects.toThrow(/share the URL key "status"/u)
+    // The page renders nothing without its dashboard, so no second error hides the first.
+    expect(errors).toHaveLength(1)
   })
 
   it('shows a fixed description instead of the date line', async () => {

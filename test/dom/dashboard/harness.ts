@@ -32,6 +32,8 @@ export async function mountDashboard<
   query?: Record<string, string>
   breakpoint?: BreakpointKey
   render?: (dashboard: InferDashboard<TSchema>) => VNodeChild
+  /** App error handler, as Nuxt installs one: errors are collected instead of thrown. */
+  onError?: (error: unknown) => void
 }): Promise<DashboardHarness<TSchema>> {
   setBreakpoint(options.breakpoint ?? 'xl')
   setAppConfig({})
@@ -57,7 +59,10 @@ export async function mountDashboard<
   })
   const wrapper = mount(Host, {
     attachTo: document.body,
-    global: { plugins: [router, [VueQueryPlugin, { queryClient }]] },
+    global: {
+      config: options.onError ? { errorHandler: options.onError } : {},
+      plugins: [router, [VueQueryPlugin, { queryClient }]],
+    },
   })
 
   async function until(predicate: () => boolean, timeout = 2000) {

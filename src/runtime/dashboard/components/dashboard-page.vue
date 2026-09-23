@@ -168,7 +168,8 @@ function actionUi(action: ButtonProps) {
 </script>
 
 <template>
-  <div :class="classes.root" data-dashboard-page>
+  <!-- Without a dashboard (its schema threw during setup), render nothing: that error stays the one reported. -->
+  <div v-if="dashboard" :class="classes.root" data-dashboard-page>
     <header :class="classes.header">
       <h1 :class="classes.title">
         <slot name="title">{{ title === undefined ? '' : resolveTextValue(title) }}</slot>
