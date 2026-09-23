@@ -32,7 +32,7 @@ export async function focusFormFieldElement(fieldElement: HTMLElement | null) {
   fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
   await waitForFocusSettle()
 
-  return document.activeElement === focusableElement
+  return focusableElement.ownerDocument.activeElement === focusableElement
 }
 
 export async function focusFirstInvalidFormField(errors: readonly FormValidationError[]) {
