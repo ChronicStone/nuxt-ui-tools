@@ -111,6 +111,30 @@ When adding form features, bias toward:
   field nodes collapse through `display: contents`. Matrix and array-table own their semantic
   table slots and center or contain nested controls instead of leaking cell layout into field kinds.
 
+- `use-form-root.ts` owns a rendered form's root: it creates the runtime and binds it to the
+  controller, provides the runtime and the UI config, guards dirty navigation (not for hash-only
+  navigations, nor for navigations made while a submit is pending), autofocuses, and owns submit,
+  cancel, and the context loading states. `components/root/form.vue` and
+  `components/page/form-page.vue` both render from it; do not re-grow that logic in a component.
+- `utils/controls.ts` reads schema `controls` and `ui`; reuse it instead of re-reading the schema.
+- `use-form-actions.ts` resolves the action list (the default `slot` comes from the caller) and
+  `use-form-action-buttons.ts` turns actions into buttons: visibility, disabled and loading states,
+  links, and what a click runs. The form footer and `FormPageActions` both render from them.
+- A successful submit rebaselines the state in the runtime, so dirty tracking restarts from the
+  saved values.
+- Form pages: `schema/page.ts` generates one `card` field per section and keeps `sections` on the
+  schema, so the runtime, validation, dependencies, and output inference see a normal schema.
+  `utils/page.ts` pairs sections with their cards and resolves each section's state (status,
+  missing, optional, dirty paths) from the runtime. `use-form-page.ts` shares the page state and
+  actions through provide/inject, and `use-form-page-scroll.ts` owns the scrollspy, scrolling to a
+  section, and the URL hash. `components/page/` holds the root and its public parts;
+  `form-page-section.vue` scopes the section grid by providing a runtime copy whose
+  `currentLayout` is the section layout, the way a step scopes it.
+- `fields/choice-card/` is the presentation `radio-card` and `checkbox-card` share: the grid
+  (`--nut-choice-columns`), the corner check, and the icon tile, with `ui.tile` and `ui.check` for
+  the parts the engine renders. `checkbox-card` strips option icons from the items it hands to
+  `UCheckboxGroup`, because a checkbox `icon` is its check mark.
+
 When adding a field, update the local type/config/component, assembled union, registry, renderer,
 value/output inference, recursive state ownership where relevant, tests, playground, and consumer
 skill as one maintenance surface.
