@@ -6,6 +6,8 @@ import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRadioField } from '../../types'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
+import { mergeFormUiClass } from '../../utils/ui'
+import { CARD_SELECTED_RING } from '../card-selection'
 
 const props = defineProps<{
   field: FormRadioField
@@ -27,6 +29,13 @@ const model = computed<string | number | boolean | undefined>({
   set: (value) => form.setValue(props.path, value),
 })
 const items = computed(() => [...options.items.value])
+const groupUi = computed(() => ({
+  ...controlProps.value.ui,
+  item: mergeFormUiClass(
+    fieldProps.value.variant === 'card' ? CARD_SELECTED_RING : undefined,
+    controlProps.value.ui?.item,
+  ),
+}))
 </script>
 
 <template>
@@ -38,6 +47,7 @@ const items = computed(() => [...options.items.value])
       label-key="label"
       description-key="description"
       :items="items"
+      :ui="groupUi"
       :variant="fieldProps.variant === 'table' ? 'list' : (fieldProps.variant ?? 'list')"
       :orientation="fieldProps.orientation"
       :indicator="fieldProps.indicator"

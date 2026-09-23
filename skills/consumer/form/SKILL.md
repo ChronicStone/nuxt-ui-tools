@@ -300,6 +300,10 @@ Use `fields` for package-wide defaults on any registered field kind. Its `size`,
 underlying Nuxt UI `ui` slots merge after the shared `control` defaults, while the authored
 field's `props` still wins for one-off exceptions.
 
+Radio and checkbox card fields, including group fields with `variant: 'card'`, show a
+selected outer ring through the Nuxt UI `item` slot. The ring does not change card dimensions;
+override `ui.item` in the field's `props` to customize it.
+
 ```ts
 const form = defineFormSchema({
   ui: {
