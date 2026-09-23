@@ -202,6 +202,46 @@ export interface FormOverlayUi {
   content?: FormUiClass
 }
 
+/**
+ * Slots of a form page and its parts. Data attributes carry the live state, so a slot can
+ * restyle one state: `data-active` on the current navigation entry, `data-state`
+ * (`complete`, `invalid`, `pending`) on entries and indicators, `data-dirty` on modified
+ * sections and entries.
+ */
+export interface FormPageUi {
+  /** The `<form>` element, which scrolls on its own and is the container of the page queries. */
+  root?: FormUiClass
+  /** Grid holding the navigation and the sections. */
+  body?: FormUiClass
+  header?: FormUiClass
+  headerContent?: FormUiClass
+  heading?: FormUiClass
+  eyebrow?: FormUiClass
+  title?: FormUiClass
+  /** Line under the title: the description and the unsaved-changes badge. */
+  meta?: FormUiClass
+  unsaved?: FormUiClass
+  actions?: FormUiClass
+  navigation?: FormUiClass
+  navigationTitle?: FormUiClass
+  navigationList?: FormUiClass
+  navigationItem?: FormUiClass
+  navigationIndicator?: FormUiClass
+  navigationLabel?: FormUiClass
+  navigationOptional?: FormUiClass
+  navigationDirty?: FormUiClass
+  navigationFooter?: FormUiClass
+  sections?: FormUiClass
+  section?: FormUiClass
+  sectionHeader?: FormUiClass
+  sectionTitle?: FormUiClass
+  sectionDescription?: FormUiClass
+  sectionOptional?: FormUiClass
+  sectionActions?: FormUiClass
+  sectionReset?: FormUiClass
+  sectionBody?: FormUiClass
+}
+
 export interface FormUiPartConfig<TUi> {
   ui?: TUi
 }
@@ -236,4 +276,6 @@ export interface FormUiConfig {
   modal?: FormUiPartConfig<FormOverlayUi>
   drawer?: FormUiPartConfig<FormOverlayUi>
   fullscreen?: FormUiPartConfig<FormOverlayUi>
+  /** Form page rendered by `FormPage` and its parts. */
+  page?: FormUiPartConfig<FormPageUi>
 }

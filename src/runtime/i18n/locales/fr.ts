@@ -104,6 +104,24 @@ export default defineUiToolsLocale<Messages>({
         resetButton: 'Réinitialiser',
         submitButton: 'Soumettre',
       },
+      page: {
+        complete: 'Tout est prêt.',
+        modifiedOne: '{count} modifiée.',
+        modifiedOther: '{count} modifiées.',
+        navigation: 'Sections du formulaire',
+        optional: 'optionnel',
+        remaining: '{count} à compléter.',
+        resetSection: 'Réinitialiser',
+        sectionsOne: '{count} section',
+        sectionsOther: '{count} sections',
+        status: {
+          complete: 'Complète',
+          invalid: 'Contient des erreurs',
+          pending: 'À compléter',
+        },
+        unmodified: 'Aucune modification en cours.',
+        unsavedChanges: 'Modifications non enregistrées',
+      },
       fields: {
         array: {
           addItem: 'Ajouter un élément',

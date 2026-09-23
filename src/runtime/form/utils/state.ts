@@ -736,7 +736,8 @@ function isFormField(value: FormValue): value is FormField {
   return isString(value.key) && isString(type) && isRegisteredFormFieldType(type)
 }
 
-function getChildFields(field: FormField) {
+/** Child fields of a container, with the fields of every tab for tabs. */
+export function getChildFields(field: FormField) {
   const tabs = Object.getOwnPropertyDescriptor(field, 'tabs')?.value
   if (Array.isArray(tabs)) {
     return tabs.flatMap((tab) => {

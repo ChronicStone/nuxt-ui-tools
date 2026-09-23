@@ -52,6 +52,7 @@ function mergeFormUiPair(current: FormUiConfig, next: FormUiConfig | undefined):
     group: mergePart(current.group, next.group),
     matrix: mergePart(current.matrix, next.matrix),
     modal: mergePart(current.modal, next.modal),
+    page: mergePart(current.page, next.page),
     root: mergePart(current.root, next.root),
     tree: mergePart(current.tree, next.tree),
     treeSelect: mergePart(current.treeSelect, next.treeSelect),
