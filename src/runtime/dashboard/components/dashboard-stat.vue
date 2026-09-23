@@ -8,7 +8,7 @@ import type { LazyTextValue } from '#ui-tools/shared/types/utils'
 import { isNumber, isString } from '#ui-tools/shared/utils/predicate'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
-import { useDashboardFormat } from '../composables/use-dashboard-format'
+import { DASHBOARD_MISSING_VALUE, useDashboardFormat } from '../composables/use-dashboard-format'
 import { useDashboardUi } from '../composables/use-dashboard-ui'
 import type {
   DashboardBlockBaseProps,
@@ -54,8 +54,11 @@ const {
     source: DashboardSourceLike<TData>
     /** KPI label, shown above the value. */
     label: LazyTextValue
-    /** Main value. Numbers go through `format` (locale number format by default). */
-    value: (data: TData & ({} | null)) => LazyTextValue
+    /**
+     * Main value. Numbers go through `format` (locale number format by default); `null` /
+     * `undefined` (an average without units, a rate without a base) show "—".
+     */
+    value: (data: TData & ({} | null)) => LazyTextValue | null | undefined
     format?: DashboardValueFormat
     /**
      * Change indicator, in percent by default. `null` hides it. Defaults to the change from
@@ -119,10 +122,10 @@ const ready = computed(() => {
 const resolved = computed(() => (ready.value ? value(ready.value.data) : undefined))
 const formatValue = computed(() => formats.resolve(format))
 const display = computed(() => {
-  if (resolved.value === undefined) return ''
-  return isNumber(resolved.value)
-    ? formatValue.value(resolved.value)
-    : resolveTextValue(resolved.value)
+  if (!ready.value) return ''
+  const shown = resolved.value
+  if (shown === null || shown === undefined) return DASHBOARD_MISSING_VALUE
+  return isNumber(shown) ? formatValue.value(shown) : resolveTextValue(shown)
 })
 const previous = computed(() => {
   if (!ready.value || !compare) return null

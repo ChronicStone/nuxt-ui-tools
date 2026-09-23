@@ -19,19 +19,33 @@ export function normalizeDashboardSpaces(text: string) {
   return text.replaceAll(' ', ' ')
 }
 
-/** One cached `Intl.NumberFormat` per locale and option set: building them is costly. */
+/**
+ * One cached `Intl.NumberFormat` per locale and option set: building them is costly. A `currency`
+ * without a `style` is the currency shorthand: whole amounts in that currency (`{ currency: 'EUR' }`
+ * → `12 345 €`), unless the options set their own fraction digits.
+ */
 export function resolveDashboardNumberFormat(
   locale: string,
   options: Intl.NumberFormatOptions,
 ): DashboardValueFormatter {
-  const key = `${locale}|${JSON.stringify(options)}`
+  const resolvedOptions = withCurrencyShorthand(options)
+  const key = `${locale}|${JSON.stringify(resolvedOptions)}`
   let format = numberFormats.get(key)
   if (!format) {
-    format = new Intl.NumberFormat(locale, options)
+    format = new Intl.NumberFormat(locale, resolvedOptions)
     numberFormats.set(key, format)
   }
   const resolved = format
   return (value) => normalizeDashboardSpaces(resolved.format(value))
+}
+
+function withCurrencyShorthand(options: Intl.NumberFormatOptions): Intl.NumberFormatOptions {
+  if (options.currency === undefined || options.style !== undefined) return options
+  const digits =
+    options.minimumFractionDigits === undefined && options.maximumFractionDigits === undefined
+      ? { maximumFractionDigits: 0 }
+      : {}
+  return { ...digits, ...options, style: 'currency' }
 }
 
 /**

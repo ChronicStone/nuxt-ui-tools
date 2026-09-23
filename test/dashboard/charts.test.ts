@@ -11,7 +11,11 @@ import {
   resolveDashboardEmphasis,
   resolveDashboardSeries,
 } from '#ui-tools/dashboard/utils/charts'
-import { formatDashboardMonth, resolveDashboardFormats } from '#ui-tools/dashboard/utils/format'
+import {
+  formatDashboardMonth,
+  resolveDashboardFormats,
+  resolveDashboardNumberFormat,
+} from '#ui-tools/dashboard/utils/format'
 import { resolveDashboardClasses } from '#ui-tools/dashboard/utils/ui'
 
 describe('dashboard axes', () => {
@@ -94,6 +98,21 @@ describe('dashboard series', () => {
 })
 
 describe('dashboard formats', () => {
+  it('reads a currency without a style as whole amounts in that currency', () => {
+    expect(resolveDashboardNumberFormat('fr', { currency: 'EUR' })(12_345.6)).toBe('12\u00A0346\u00A0€')
+    expect(resolveDashboardNumberFormat('en', { currency: 'USD' })(12_345.6)).toBe('$12,346')
+    expect(
+      resolveDashboardNumberFormat('en', { currency: 'EUR', notation: 'compact' })(250_000),
+    ).toBe('€250K')
+    // Own fraction digits, or an explicit style, are kept.
+    expect(
+      resolveDashboardNumberFormat('en', { currency: 'EUR', minimumFractionDigits: 2 })(3),
+    ).toBe('€3.00')
+    expect(resolveDashboardNumberFormat('en', { currency: 'EUR', style: 'decimal' })(3.25)).toBe(
+      '3.25',
+    )
+  })
+
   it('formats numbers, changes, and shares for a locale, once per locale', () => {
     const formats = resolveDashboardFormats('en')
     expect(resolveDashboardFormats('en')).toBe(formats)

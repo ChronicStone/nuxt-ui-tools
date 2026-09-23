@@ -34,8 +34,9 @@ export type DashboardFormatPreset =
   | 'signed'
 
 /**
- * How a block formats numbers: a preset (`'integer'`), `Intl.NumberFormat` options
- * (`{ style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }`), or a function.
+ * How a block formats numbers: a preset (`'integer'`), `Intl.NumberFormat` options, or a function.
+ * Options with a `currency` and no `style` format whole amounts in that currency: `{ currency: 'EUR' }`,
+ * or `{ currency: 'EUR', notation: 'compact' }` for an axis.
  */
 export type DashboardValueFormat =
   | DashboardFormatPreset
