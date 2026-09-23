@@ -1,5 +1,110 @@
 # Changelog
 
+## v1.3.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.2.0...v1.3.0)
+
+Version 1.3.0 lets dashboard code declare business logic only. A dashboard is composed from plain functions that take what it is about (an id, the audience) and return a schema or a view, with filters declared inline; `useDashboard` rebuilds it when that input changes. The engine ships the page, the filter bar and pills, the view tabs, and the controls charts and blocks render. One schema can serve several audiences: views, queries, and filters take lazy `enabled` conditions, and grids close up around whatever an audience cannot see.
+
+### Migration notes
+
+- **Breaking release:** each removal below has a direct replacement.
+- **Params are filters.** Rename the `params` key of schemas, views, and queries to `filters`, the `params` of the `queries` and `derive` contexts and of a query's scope to `filters`, and `dashboard.params` to `dashboard.filters`. `DashboardParam*` types become `DashboardFilter*`.
+- **Option handles are controls.** `options` on the dashboard, view handles, and resources becomes `controls`, and `DashboardOptionsHandle` and `DashboardOptionsHandles` become `DashboardFilterControl` and `DashboardFilterControls`. `DashboardOptionParamKeys` is removed: every filter has a control, so `keyof` the filter map names them.
+- **Views are a map.** Replace the `views: (view) => ({ … })` builder with `views: { consumption: consumptionView() }`, each view declared with `defineDashboardView`. A view reads its own filters: declare the ones it reads (a `year` declared by the root and by a view is one filter), and pass context as params of the function that builds it.
+- **URL keys:** view filters are no longer prefixed with the view key (`?currency=USD`, not `?consumption.currency=USD`), so links saved with the old keys open on the defaults. Query filters keep `<query>.<filter>`.
+- **Reserved keys:** a query, derived value, or view can no longer be named `filters`, `controls`, `filtered`, or `resetFilters`; `params` and `options` are free.
+- **Grids are wrapping flex rows:** spans keep the widths a CSS grid gives them, and the responsive `columns` / `size` syntax (`"2 md:3 xl:5"`) is unchanged. A row that is not full, because a block is hidden or the last row is short, now stretches its cells in proportion to their spans. Set `fill={false}` on `UiDashboardGrid` to keep every cell at its span.
+- **`rows` is removed** from blocks: a flex row has no row spans. Stack blocks in a nested `UiDashboardGrid` instead.
+- **The form's `FormRemote*` aliases are removed:** use `RemoteOptionsPage`, `RemoteCursorOptionsPage`, `RemoteOptionsResult`, `RemoteOptionsPagination`, and `RemoteOptionsSearch` from the shared types.
+- **Visual changes:**
+  - Cards draw their progress bar whenever a request is in flight, including while an errored block retries.
+  - Missing numbers print "—" in formatters, totals, and stat values.
+  - Chart axes over whole-number data use whole-number ticks.
+  - `UiDashboardViewTabs` renders nothing while fewer than two views are enabled.
+  - Inline forms no longer draw a divider or add top padding between their fields and their actions; overlay footers keep their border.
+  - Selected radio and checkbox cards show a ring in a light tint of the primary color.
+- **Contributors:** `bun run test` now includes a `browser` project that runs in Chromium, Firefox, and WebKit. Install the browsers once with `bunx playwright install chromium firefox webkit`.
+
+### 🚀 Enhancements
+
+#### Schemas and views as functions
+
+- Add `defineDashboardView`: one view (tab) with its label, `enabled` condition, filters, queries, and derived values. `defineDashboardSchema` takes a map of views.
+- Compose a dashboard from plain functions that take its context as typed params, the way form schemas compose fields: `accountSchema({ accountId })` returns a schema built from `activityView(params)` and `invoicesView(params)`.
+- `useDashboard` takes a schema or a function returning one. The function runs in setup, and again when what it reads changes: the dashboard rebuilds behind the same objects (the dashboard, view handles, and every descendant's handle), filters keep their values, queries whose key changed load, and the previous build stops. It keeps the locale of the component that created it, including in the formats the function creates with `useDashboardFormat()`.
+- Add `useDashboardView(view)` and `injectDashboard(schema)`: typed handles in any descendant, without props. `UiDashboardPage` scopes each view slot, so a component finds the view it renders in. `InferDashboard` and `InferDashboardView` name the types.
+
+#### Filters and controls
+
+- Declare filters inline with the `f` builder in the schema, a view, or a query. A filter key names one state across the dashboard: two views declaring `year` share its value, so it survives a tab change, and declaring it two different ways fails with an error naming both.
+- Filter definitions expose their current `value`, so a sibling's lazy options can read it: `format: (on) => (on ? String(year.value - 1) : 'None')`.
+- Give every filter a control: a writable `value`, `label`, `display` ("All", a label, "3 selected"), `items`, `selected`, `isSelected()`, `toggle()`, `reset()`, `changed`, `enabled`, the state of a remote list (`search`, `loading`, `hasMore`, `loadMore()`), and `menu` bindings for `USelectMenu`. The dashboard and view handles expose `filtered` and `resetFilters()`.
+- Add filter options:
+  - presentation: `label`, `placeholder`, `format`, `columns` (menu grid), `max` (multiple cap), and `presets` (shortcuts that set the whole value);
+  - behaviour: `headless` (state only), `enabled`, and `sync` to the URL (default), memory, a ref, or a read-only getter.
+- Add list filters (`f.string({ multiple: true })`, `f.number({ multiple: true })`), getter defaults that follow data (such as the top three products of a loaded list), and `f.remote(source, options)` for reusable remote sources.
+- Add `remoteTableOptions(query, { option, search, sort, valueKey })`, which builds table-protocol requests (search fields, cursor pages, selected values) for dashboard filters, table filters, and form remote options, and accepts generated client query options such as Tuyau's `queryOptions()`.
+
+#### Page and controls
+
+- Add `UiDashboardPage`, the whole page: the title over today's date and the update time, page actions and the refresh control, the tabs and the filter bar pinned while the page scrolls, and the current view from the slot named after it. A page only instantiates the dashboard and binds it.
+- Add `UiDashboardFilters` (the bar, in declaration order, with a reset while any filter differs from its default, `only` / `exclude`, and slots per filter), `UiDashboardFilter` (one pill: dense menus, a multiple-choice grid, presets, searchable remote lists that load ahead of the scroll, a clear button, and a `button` variant), and `UiDashboardViewTabs` (underline tabs that scroll sideways and keep the current tab in view).
+- A bar or line chart takes a multiple filter's control as its `series`: one series per picked option (`series-value`), with the picker (add, presets) and removable chips in the series colors.
+- A block's `filters` lists the drill-down filters narrowing it as removable chips.
+- A header action with a `to` reads as a text link with a chevron. `UiDashboardList` rows take `to`.
+
+#### Queries and conditions
+
+- Add `select` on queries: several typed resources over one shared request, one per block. The selector runs again when a filter it reads changes.
+- `requires` follows the resources it reads: `loading` while they load, then `ready` with the `defaultValue` when the requirement stays empty.
+- Add `enabled` on views, queries, and filters, a lazy callback (`enabled: () => can('margin')`):
+  - **A disabled query** never fetches and reports `disabled`, and every block bound to it renders nothing; dashboard states and background stages leave it out.
+  - **A disabled view** has no tab and is never the current view; a URL naming it falls back to an enabled one.
+  - **A disabled filter** leaves every filter bar, reads its default, and ignores writes, so queries never send it.
+
+#### Blocks, grid, and formats
+
+- Grids lay cells out as wrapping flex rows: each cell starts at its span's width and a short row shares its free width by span (`fill`, on by default), so rows close up around hidden blocks, including blocks left out with `v-if`. A grid whose blocks all render nothing collapses.
+- Add the `fetching` flag on sources: cards draw their progress bar while any request is in flight, and the retry button spins until the request settles.
+- Add chart `totals` (`true`, `'sum'`, or `'average'`): footer totals per series in the chart's format. `UiDashboardTotal` accepts numbers and a `format`.
+- Add `DashboardValueFormat` everywhere a block takes a `format`: a preset (`number`, `integer`, `decimal`, `compact`, `percent`, `ratio`, `month`), `Intl.NumberFormatOptions`, `{ currency }` for whole amounts in a currency, or a function. The locale-bound formatters are public through `useDashboardFormat()`, and print "—" for missing numbers.
+- Add the stat `compare-mode="difference"` (absolute deltas, in points for percentages) and delta presets.
+
+### 🩹 Fixes
+
+- **dashboard:** Collapse emptied grids. The grid's inline `display: flex` overrode `empty:hidden`, so an emptied panels grid kept its border as a 2px strip.
+- **dashboard:** Keep whole-number data on whole-number axis ticks. An axis over zeros printed `0, 0, 1, 1, 1`.
+- **dashboard:** Run a query's `select` again when a filter it reads changes.
+- **dashboard:** Report a schema error thrown in setup once: `UiDashboardPage` renders nothing without a dashboard instead of failing again on it.
+- **dashboard:** Keep header links to the height of the title beside them.
+- **dashboard:** Ring the whole filter pill on keyboard focus.
+- **table:** Accept generated client query options in `remoteTableOptions`.
+- **form:** Drop the divider and top padding between inline fields and their actions. Overlay footers keep their border.
+- **form:** Ring selected radio and checkbox cards, including the card variants of radio and checkbox groups, with a 4px tint of the primary color. The ring is a shadow, so selecting a card never moves it; `ui.item` classes override it.
+- **form:** Read a field's focus from its own document, so a focus check that settles after its document is gone no longer throws.
+
+### 🧪 Tests
+
+- Add a `browser` Vitest project. It mounts real grids with the shipped Tailwind classes in Chromium, Firefox, and WebKit (Playwright) and measures:
+  - span widths, row breaks, and proportional fill as blocks hide and show;
+  - `fill: false`, short rows, and responsive columns and spans;
+  - a phone layout, and a sweep of widths, gaps, and column counts for rounding wraps;
+  - panel rules, equal row heights, and the collapse of emptied and nested grids.
+- Cover schema functions (rebuilds behind the same objects, the previous build stopped, the locale kept), shared filter keys and their conflicts, conditions, controls, injection, and the page shell in DOM tests, and the inference of functions, filters, and handles in type tests.
+- CI and the release workflow install the browsers.
+- Give the WebKit grid sweep, which forces about 28,000 layouts, a 60 s timeout.
+
+### 📖 Documentation
+
+- Document schema and view functions, inline filters and their controls, injection, the page, presets, remote pickers, formats, conditions, and the grid model in the consumer dashboard skill. The maintainer references cover the runtime and its tests.
+- Compose both playgrounds' dashboards from view functions with inline filters; each page only instantiates a dashboard and binds `UiDashboardPage`.
+- Document the form keyboard contract: Enter submits from a single-line field through the form lifecycle, and Tab moves through every focusable control, including checkboxes.
+
+### ❤️ Contributors
+
+- THAO-Cyprien
+
 ## v1.2.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.1.0...v1.2.0)
