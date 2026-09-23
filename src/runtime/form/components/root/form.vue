@@ -23,6 +23,7 @@ import type {
   FormUiConfig,
   FormValidationMode,
 } from '../../types'
+import { focusNextFormField } from '../../utils/focus'
 import { getFormHeader } from '../../utils/overlay'
 import { isRecord } from '../../utils/path'
 import {
@@ -127,6 +128,7 @@ const removeRouteGuard = router.beforeEach(() => {
 onBeforeUnmount(removeRouteGuard)
 
 const viewportRef = ref<HTMLElement | null>(null)
+const formElement = ref<HTMLFormElement | null>(null)
 const viewportShadow = useScrollShadow(viewportRef, { size: 20 })
 const displayedStepIndex = ref<number>(runtime.currentStepIndex.value)
 const stepTransitionDirection = ref<'forward' | 'backward'>('forward')
@@ -243,6 +245,46 @@ async function submit() {
   if (result.success) {
     emit('submit', runtime.output.value, result)
   }
+}
+
+async function handleEnterNavigation(event: KeyboardEvent) {
+  if (
+    event.key !== 'Enter' ||
+    event.defaultPrevented ||
+    event.isComposing ||
+    event.repeat ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey
+  ) {
+    return
+  }
+
+  const target = event.target
+  if (
+    !(target instanceof HTMLInputElement) ||
+    !['text', 'email', 'password', 'tel', 'url', 'search', 'number'].includes(target.type) ||
+    target.getAttribute('role') === 'combobox' ||
+    target.hasAttribute('aria-haspopup')
+  ) {
+    return
+  }
+
+  const currentField = target.closest<HTMLElement>('[data-form-field]')
+  if (!formElement.value || !currentField || !formElement.value.contains(currentField)) {
+    return
+  }
+
+  event.preventDefault()
+  if (await focusNextFormField(formElement.value, currentField)) {
+    return
+  }
+  if (runtime.isStepped.value && !runtime.isLastStep.value) {
+    await runtime.nextStep()
+    return
+  }
+  await submit()
 }
 
 async function refreshContext() {
@@ -409,7 +451,13 @@ async function focusFirstRenderedField() {
 </script>
 
 <template>
-  <form novalidate :class="rootClass" @submit.prevent="submit">
+  <form
+    ref="formElement"
+    novalidate
+    :class="rootClass"
+    @keydown="handleEnterNavigation"
+    @submit.prevent="submit"
+  >
     <header v-if="showHeading || runtime.isStepped.value || isOverlayShell" :class="headerClass">
       <div
         v-if="showHeading || isOverlayShell"

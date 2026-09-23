@@ -129,9 +129,10 @@ Built-in text, number, select, autocomplete, tree, switch, and button controls p
 their Nuxt UI loading chrome; synchronous rules never flash a loader. Errors from an async run are
 revealed after the promise settles, not while it is pending.
 
-The renderer uses a native form submit event. Pressing Enter from a focused single-line control
-runs the same validation and submit lifecycle as the built-in submit action, while Enter in a
-textarea keeps its normal newline behavior.
+Pressing Enter in a single-line text input focuses the next enabled form field. At the end of a
+step it runs the built-in Next lifecycle; at the end of the form it runs the normal validation
+and submit lifecycle. Enter in a textarea keeps its newline behavior, and controls such as
+autocomplete menus keep their own Enter behavior.
 
 `validate` accepts `true`, `false`, `'required'`, or `'validators'`. `syncInput` accepts `true` or a
 list of paths; when omitted, later input changes do not replace local edits.

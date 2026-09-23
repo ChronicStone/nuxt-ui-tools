@@ -35,6 +35,26 @@ export async function focusFormFieldElement(fieldElement: HTMLElement | null) {
   return document.activeElement === focusableElement
 }
 
+export async function focusNextFormField(formElement: HTMLFormElement, currentField: HTMLElement) {
+  const fields = [...formElement.querySelectorAll<HTMLElement>('[data-form-field]')]
+  const currentIndex = fields.indexOf(currentField)
+  if (currentIndex === -1) {
+    return false
+  }
+
+  for (const fieldElement of fields.slice(currentIndex + 1)) {
+    const control = findFocusableElement(fieldElement)
+    if (control?.closest('[data-form-field]') !== fieldElement) {
+      continue
+    }
+    if (await focusFormFieldElement(control)) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export async function focusFirstInvalidFormField(errors: readonly FormValidationError[]) {
   for (const error of errors) {
     const focused = await focusFormField(error.path)
