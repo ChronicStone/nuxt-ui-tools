@@ -13,8 +13,8 @@ type DashboardResourceFacade = DashboardSourceLike & {
   kind: 'query'
   stage: DashboardStage
   active: boolean
-  params: object
   filters: object
+  controls: object
 }
 
 /**
@@ -44,16 +44,16 @@ export function createDashboardResourceFacade(params: {
     get error() {
       return slot.value?.error.value
     },
+    get controls() {
+      return slot.value?.filters.controls ?? emptyFacade
+    },
     get filters() {
-      return slot.value?.widget.filters ?? emptyFacade
+      return slot.value?.filters.values ?? emptyFacade
     },
     get id() {
       return slot.value?.id ?? ''
     },
     kind: 'query' as const,
-    get params() {
-      return slot.value?.widget.values ?? emptyFacade
-    },
     get fetching() {
       return slot.value?.fetching.value ?? false
     },

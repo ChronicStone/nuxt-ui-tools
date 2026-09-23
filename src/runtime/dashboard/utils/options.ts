@@ -1,7 +1,7 @@
 import { isNullish } from '../../shared/utils/predicate'
 import type { DashboardOption } from '../types'
 
-/** Normalizes a single or multiple param value to its string keys, in value order. */
+/** Normalizes a single or multiple filter value to its string keys, in value order. */
 export function resolveDashboardOptionValues(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((entry) => !isNullish(entry)).map(String)
   return isNullish(value) ? [] : [String(value)]

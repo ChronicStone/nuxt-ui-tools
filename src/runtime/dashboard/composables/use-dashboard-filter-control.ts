@@ -1,40 +1,46 @@
 import type { QueryKey } from '@tanstack/vue-query'
 import { computed, markRaw } from 'vue'
 
-import { useUiToolsLocale } from '../../i18n/use-locale'
 import { isNullish } from '../../shared/utils/predicate'
 import { resolveTextValue } from '../../shared/utils/render'
 import type {
-  DashboardFilterHandle,
-  DashboardFilterPreset,
+  DashboardFilterControl,
+  DashboardControlPreset,
   DashboardOption,
   DashboardOptionsMenuBindings,
   DashboardOptionValue,
-  DashboardRuntimeParam,
+  DashboardRuntimeFilter,
 } from '../types'
+import type { DashboardLocale } from '../utils/environment'
 import {
-  formatDashboardParamValue,
+  formatDashboardFilterValue,
   isDashboardOptionValue,
-  isDashboardParamHeadless,
+  isDashboardFilterHeadless,
 } from '../utils/filters'
 import { resolveDashboardCondition } from '../utils/state'
 import { useDashboardOptions } from './use-dashboard-options'
 
 /**
- * Filter handle of one param: its value and presentation (label, display text, option list) plus
- * the actions pickers perform (`toggle`, `reset`). It owns no state of its own besides the option
- * list; the value lives wherever the param syncs it.
+ * Control of one filter: its value and presentation (label, display text, option list) plus the
+ * actions pickers perform (`toggle`, `reset`). It owns no state of its own besides the option list;
+ * the value lives wherever the filter syncs it.
  */
-export function useDashboardFilter(params: {
+export function useDashboardFilterControl(params: {
   key: string
-  definition: DashboardRuntimeParam
+  definition: DashboardRuntimeFilter
   queryKey: QueryKey
+  locale: DashboardLocale
   get: () => unknown
   set: (value: unknown) => void
-}): DashboardFilterHandle {
+}): DashboardFilterControl {
   const { definition, get, set } = params
-  const { code, t } = useUiToolsLocale()
-  const options = useDashboardOptions({ definition, queryKey: params.queryKey, value: get })
+  const { code, t } = params.locale
+  const options = useDashboardOptions({
+    definition,
+    locale: params.locale,
+    queryKey: params.queryKey,
+    value: get,
+  })
   const listed = definition.items !== undefined || definition.remote !== undefined
 
   const label = computed(() => resolveTextValue(definition.label, params.key))
@@ -77,10 +83,10 @@ export function useDashboardFilter(params: {
   function describe(value: unknown) {
     return definition.format
       ? definition.format(value)
-      : formatDashboardParamValue(value, code.value)
+      : formatDashboardFilterValue(value, code.value)
   }
 
-  const presets = computed<readonly DashboardFilterPreset[]>(() => {
+  const presets = computed<readonly DashboardControlPreset[]>(() => {
     const current = definition.codec.serialize(get())
     return (definition.presets?.() ?? []).map((preset) => ({
       active: definition.codec.serialize(preset.value) === current,
@@ -137,7 +143,7 @@ export function useDashboardFilter(params: {
     get enabled() {
       return resolveDashboardCondition(definition.enabled)
     },
-    headless: isDashboardParamHeadless(definition),
+    headless: isDashboardFilterHeadless(definition),
     isSelected: (value: DashboardOptionValue) => keys.value.has(String(value)),
     get items() {
       return listed ? options.items.value : []

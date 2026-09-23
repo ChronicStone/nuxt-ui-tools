@@ -7,10 +7,11 @@ import type {
   DashboardRuntimeScopeInput,
   DashboardRuntimeStage,
 } from '../types/runtime'
-import { dashboardParamBuilder } from '../utils/builders/dashboard-params'
+import { dashboardFilterBuilder } from '../utils/builders/dashboard-filters'
+import type { DashboardEnvironment } from '../utils/environment'
 import { createDashboardResourceFacade } from '../utils/resource'
 import type { DashboardResourceSlot } from '../utils/resource'
-import { assertDashboardMemberKey, resolveDashboardParams } from '../utils/schema'
+import { assertDashboardMemberKey, resolveDashboardFilters } from '../utils/schema'
 import {
   combineDashboardStates,
   refreshDashboardSources,
@@ -19,7 +20,7 @@ import {
 import { createDashboardTrackedData } from '../utils/tracker'
 import type { DashboardReadTracker } from '../utils/tracker'
 import { useDashboardDerived } from './use-dashboard-derived'
-import { mergeDashboardParamScopes, useDashboardParamScope } from './use-dashboard-param-scope'
+import { useDashboardFilterScope } from './use-dashboard-filter-scope'
 import { useDashboardResource } from './use-dashboard-resource'
 
 interface DashboardDeclaration {
@@ -29,7 +30,7 @@ interface DashboardDeclaration {
 }
 
 /**
- * One scope of a dashboard: the root, or one view. It owns the scope params, declares its queries
+ * One scope of a dashboard: the root, or one view. It owns the scope filters, declares its queries
  * in a single synchronous pass, instantiates them once their keys are known, and derives the scope
  * state from its essential queries.
  */
@@ -44,30 +45,22 @@ export function useDashboardScope(params: {
   enabled?: ComputedRef<boolean>
   /** Dashboard auto-refresh interval in milliseconds, `0` when off. */
   refetchInterval: ComputedRef<number>
-  /** Root params, visible inside a view's builders. */
-  shared?: ReturnType<typeof useDashboardParamScope>
   /** Root queries and derived values, readable from a view's `derive`. */
   rootSources?: ReadonlyMap<string, DashboardSourceLike>
   tracker: DashboardReadTracker
+  environment: DashboardEnvironment
 }) {
   const { input, scopeKey } = params
   const enabled = params.enabled ?? computed<boolean>(() => true)
   const queryKey = [params.schemaKey, scopeKey || '$root']
   const scopeLabel = scopeKey ? `view "${scopeKey}"` : 'the dashboard root'
-  const definitions = resolveDashboardParams({
-    builder: dashboardParamBuilder,
-    input: input.params,
-    shared: params.shared?.values ?? {},
+  const filterScope = useDashboardFilterScope({
+    definitions: resolveDashboardFilters({ builder: dashboardFilterBuilder, input: input.filters }),
+    environment: params.environment,
+    owner: scopeLabel,
+    prefix: params.prefix,
+    queryKey,
   })
-  for (const key of Object.keys(definitions)) {
-    if (params.shared?.keys.includes(key))
-      throw new Error(`[dashboard] Param "${key}" of ${scopeLabel} is already a root param.`)
-  }
-  const paramScope = useDashboardParamScope({ definitions, prefix: params.prefix, queryKey })
-  /** Params visible to this scope's builders and handle: the root ones, then its own. */
-  const visible = mergeDashboardParamScopes(
-    params.shared ? [params.shared, paramScope] : [paramScope],
-  )
 
   const declared = shallowRef<boolean>(false)
   const declarations = new Map<DashboardSourceLike, DashboardDeclaration>()
@@ -101,7 +94,7 @@ export function useDashboardScope(params: {
     background: createStage('background'),
     deferred: createStage('deferred'),
     essential: createStage('essential'),
-    params: visible.values,
+    filters: filterScope.values,
   })
 
   const taken = new Set<string>(params.rootSources?.keys())
@@ -109,6 +102,7 @@ export function useDashboardScope(params: {
 
   function instantiate(key: string, declaration: DashboardDeclaration) {
     const resource = useDashboardResource({
+      environment: params.environment,
       id: scopeKey ? `${scopeKey}.${key}` : key,
       input: declaration.input,
       key,
@@ -145,7 +139,7 @@ export function useDashboardScope(params: {
     new Map([...(params.rootSources ?? []), ...members]),
     params.tracker,
   )
-  const derived = input.derive?.({ data, params: visible.values }) ?? {}
+  const derived = input.derive?.({ data, filters: filterScope.values }) ?? {}
   for (const [key, evaluate] of Object.entries(derived)) {
     assertDashboardMemberKey(key, taken, scopeLabel)
     taken.add(key)
@@ -184,10 +178,9 @@ export function useDashboardScope(params: {
 
   return {
     enabled,
+    filterScope,
     label: input.label,
     members,
-    paramScope,
-    visible,
     refresh,
     refreshing,
     resources,

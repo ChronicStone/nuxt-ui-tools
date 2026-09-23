@@ -7,13 +7,13 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import type { Router } from 'vue-router'
 
 import { useDashboard } from '#ui-tools/dashboard'
-import type { DashboardApi, DashboardSchemaLike } from '#ui-tools/dashboard'
+import type { DashboardSchemaLike, InferDashboard } from '#ui-tools/dashboard'
 
 import { setAppConfig, setBreakpoint } from '../nuxt-state'
 import type { BreakpointKey } from '../nuxt-state'
 
 export interface DashboardHarness<TSchema> {
-  dashboard: DashboardApi<TSchema>
+  dashboard: InferDashboard<TSchema>
   wrapper: VueWrapper
   router: Router
   queryClient: QueryClient
@@ -24,11 +24,14 @@ export interface DashboardHarness<TSchema> {
   fetchedKeys: () => string[]
 }
 
-export async function mountDashboard<const TSchema extends DashboardSchemaLike>(options: {
+export async function mountDashboard<
+  const TSchema extends DashboardSchemaLike | (() => DashboardSchemaLike),
+>(options: {
+  /** A schema, or a function returning one (run again when what it reads changes). */
   schema: TSchema
   query?: Record<string, string>
   breakpoint?: BreakpointKey
-  render?: (dashboard: DashboardApi<TSchema>) => VNodeChild
+  render?: (dashboard: InferDashboard<TSchema>) => VNodeChild
 }): Promise<DashboardHarness<TSchema>> {
   setBreakpoint(options.breakpoint ?? 'xl')
   setAppConfig({})
@@ -42,11 +45,13 @@ export async function mountDashboard<const TSchema extends DashboardSchemaLike>(
     defaultOptions: { queries: { gcTime: 0, retry: false } },
   })
 
-  let dashboard!: DashboardApi<TSchema>
+  let dashboard!: InferDashboard<TSchema>
   const Host = defineComponent({
     name: 'DashboardHost',
     setup() {
-      dashboard = useDashboard(options.schema)
+      // SAFETY: `useDashboard` returns `DashboardApi<DashboardSchemaOf<TSchema>>`, which is what
+      // `InferDashboard<TSchema>` names; TypeScript cannot relate the two through the generic.
+      dashboard = useDashboard(options.schema) as InferDashboard<TSchema>
       return () => h('div', { 'data-host': '' }, options.render?.(dashboard) ?? [])
     },
   })

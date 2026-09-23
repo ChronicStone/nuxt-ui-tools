@@ -2,7 +2,7 @@ import { QueryClient, queryOptions as vueQueryOptions, skipToken } from '@tansta
 import type { QueryFunctionContext, QueryKey } from '@tanstack/vue-query'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
-import { defineDashboardFilter } from '#ui-tools/dashboard'
+import { defineDashboardSchema } from '#ui-tools/dashboard'
 import type { FormRemoteOptionConfig } from '#ui-tools/form'
 import type { QueryFnDefinition } from '#ui-tools/shared/types/query'
 import { remoteTableOptions } from '#ui-tools/table'
@@ -156,7 +156,10 @@ describe('remoteTableOptions', () => {
       option: (account) => ({ label: account.name, value: account.id }),
       search: ['name'],
     })
-    defineDashboardFilter((p) => p.remote(accounts, { multiple: true }))
+    defineDashboardSchema({
+      filters: (f) => ({ accounts: f.remote(accounts, { multiple: true }) }),
+      key: 'remote',
+    })
     expectTypeOf(accounts).toExtend<TableFilterRemoteOptions<string>>()
     expectTypeOf({
       mode: 'remote' as const,

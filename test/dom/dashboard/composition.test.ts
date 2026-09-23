@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { defineComponent, h } from 'vue'
 
 import {
-  defineDashboardFilter,
-  defineDashboardFilters,
   defineDashboardSchema,
   defineDashboardView,
   injectDashboard,
@@ -19,19 +17,22 @@ interface Overview {
   products: { id: string }[]
 }
 
-function createAdminSchema(overview: ReturnType<typeof deferredSource<Overview>>) {
-  const periodFilters = defineDashboardFilters({
-    year: defineDashboardFilter((p) => p.enum([2025, 2026], { defaultValue: 2026 })),
-  })
-  const usage = deferredSource<number[]>()
-  const consumptionView = defineDashboardView({
+interface AdminSources {
+  overview: ReturnType<typeof deferredSource<Overview>>
+  usage: ReturnType<typeof deferredSource<number[]>>
+}
+
+function consumptionView(params: AdminSources) {
+  return defineDashboardView({
     label: 'Consumption',
-    shared: periodFilters,
-    params: { account: (p) => p.string({ label: 'Account' }) },
-    queries: ({ background, essential, params }) => {
+    filters: (f) => ({
+      year: f.enum([2025, 2026], { defaultValue: 2026 }),
+      account: f.string({ label: 'Account' }),
+    }),
+    queries: ({ background, essential, filters }) => {
       const query = () => ({
-        queryFn: () => overview.fn(params.year, params.account),
-        queryKey: ['overview', params.year, params.account],
+        queryFn: () => params.overview.fn(filters.year, filters.account),
+        queryKey: ['overview', filters.year, filters.account],
       })
       const products = essential.query({ query, select: (data) => data.products })
       return {
@@ -42,7 +43,7 @@ function createAdminSchema(overview: ReturnType<typeof deferredSource<Overview>>
           defaultValue: [],
           requires: () => (products.data?.length ? products.data : null),
           query: ({ required }) => ({
-            queryFn: () => usage.fn(required.map((product) => product.id)),
+            queryFn: () => params.usage.fn(required.map((product) => product.id)),
             queryKey: ['usage', required.map((product) => product.id)],
           }),
         }),
@@ -50,13 +51,25 @@ function createAdminSchema(overview: ReturnType<typeof deferredSource<Overview>>
     },
     derive: ({ data }) => ({ total: () => data.months.reduce((sum, row) => sum + row.units, 0) }),
   })
-  const certificationsView = defineDashboardView({ label: 'Certifications', shared: periodFilters })
-  const schema = defineDashboardSchema({
-    key: 'admin',
-    params: periodFilters,
-    views: { consumption: consumptionView, certifications: certificationsView },
+}
+
+function certificationsView() {
+  return defineDashboardView({
+    label: 'Certifications',
+    filters: (f) => ({ year: f.enum([2025, 2026], { defaultValue: 2026 }) }),
   })
-  return { certificationsView, consumptionView, schema, usage }
+}
+
+function adminSchema(params: AdminSources) {
+  return defineDashboardSchema({
+    key: 'admin',
+    views: { consumption: consumptionView(params), certifications: certificationsView() },
+  })
+}
+
+function createAdminSchema(overview: AdminSources['overview']) {
+  const usage = deferredSource<number[]>()
+  return { schema: adminSchema({ overview, usage }), usage }
 }
 
 describe('dashboard composition', () => {
@@ -84,7 +97,7 @@ describe('dashboard composition', () => {
     expect(view.usage.data).toEqual([])
     expect(usage.calls).toHaveLength(0)
 
-    view.params.account = 'acme'
+    view.filters.account = 'acme'
     await flush()
     // The previous result stays on screen while the new key loads.
     expect(view.products.state).toBe('ready')
@@ -95,15 +108,15 @@ describe('dashboard composition', () => {
     expect(usage.calls[0]?.args).toEqual([['p1']])
   })
 
-  it('selects again when a param the selector reads changes, without refetching', async () => {
+  it('selects again when a filter the selector reads changes, without refetching', async () => {
     const revenue = deferredSource<{ EUR: number; USD: number }>()
     const schema = defineDashboardSchema({
       key: 'revenue',
-      params: (p) => ({ currency: p.enum(['EUR', 'USD'], { defaultValue: 'EUR' }) }),
-      queries: ({ essential, params }) => ({
+      filters: (f) => ({ currency: f.enum(['EUR', 'USD'], { defaultValue: 'EUR' }) }),
+      queries: ({ essential, filters }) => ({
         revenue: essential.query({
           query: () => ({ queryFn: () => revenue.fn(), queryKey: ['revenue'] }),
-          select: (data) => data[params.currency],
+          select: (data) => data[filters.currency],
         }),
       }),
     })
@@ -113,7 +126,7 @@ describe('dashboard composition', () => {
     await flush()
     expect(dashboard.revenue.data).toBe(10)
 
-    dashboard.params.currency = 'USD'
+    dashboard.filters.currency = 'USD'
     await flush()
     expect(dashboard.revenue.data).toBe(12)
     expect(revenue.calls).toHaveLength(1)
@@ -133,38 +146,40 @@ describe('dashboard composition', () => {
     expect(view.usage.error).toBeInstanceOf(Error)
   })
 
-  it('merges shared params into view handles and resets what is on screen', async () => {
+  it('shares a filter key across views and resets what is on screen', async () => {
     const overview = deferredSource<Overview>()
     const { schema } = createAdminSchema(overview)
     const { dashboard, flush, query } = await mountDashboard({ schema })
 
-    expect(Object.keys(dashboard.consumption.params)).toEqual(['year', 'account'])
-    dashboard.consumption.params.year = 2025
-    dashboard.consumption.params.account = 'acme'
+    expect(Object.keys(dashboard.consumption.filters)).toEqual(['year', 'account'])
+    dashboard.consumption.filters.year = 2025
+    dashboard.consumption.filters.account = 'acme'
     await flush()
-    expect(dashboard.params.year).toBe(2025)
-    expect(query()).toEqual({ 'consumption.account': 'acme', year: '2025' })
+    expect(dashboard.certifications.filters.year).toBe(2025)
+    expect(query()).toEqual({ account: 'acme', year: '2025' })
     expect(dashboard.filtered).toBe(true)
 
     dashboard.view.current = 'certifications'
     await flush()
-    // The certifications view shows only the shared year.
+    // The certifications view shows only the year, which it shares with consumption.
     expect(dashboard.filtered).toBe(true)
     dashboard.resetFilters()
     await flush()
-    expect(dashboard.params.year).toBe(2026)
-    expect(dashboard.consumption.params.account).toBe('acme')
+    expect(dashboard.certifications.filters.year).toBe(2026)
+    expect(dashboard.consumption.filters.year).toBe(2026)
+    expect(dashboard.consumption.filters.account).toBe('acme')
   })
 
   it('injects the dashboard and typed view handles into descendants', async () => {
     const overview = deferredSource<Overview>()
-    const { consumptionView, schema } = createAdminSchema(overview)
+    const { schema } = createAdminSchema(overview)
     let injected: InferDashboardView<typeof consumptionView> | undefined
     let year: number | undefined
     const Tab = defineComponent({
       setup() {
+        // Outside a view slot, a view function reads the view on screen.
         injected = useDashboardView(consumptionView)
-        year = injectDashboard(schema).params.year
+        year = injectDashboard(adminSchema).consumption.filters.year
         return () => h('span')
       },
     })
@@ -174,15 +189,25 @@ describe('dashboard composition', () => {
     expect(year).toBe(2026)
   })
 
-  it('rejects a view reading shared params the root does not declare', async () => {
-    const orphan = defineDashboardView({
-      shared: { region: (p) => p.string() },
+  it('finds a view object by identity, wherever the component renders', async () => {
+    const view = defineDashboardView({
+      label: 'Second',
+      filters: (f) => ({ region: f.string() }),
     })
     const schema = defineDashboardSchema({
-      key: 'orphan',
-      // @ts-expect-error the root does not declare `region`
-      views: { orphan },
+      key: 'identity',
+      views: { first: defineDashboardView({ label: 'First' }), second: view },
     })
-    await expect(mountDashboard({ schema })).rejects.toThrow('shared param "region"')
+    let found: InferDashboardView<typeof view> | undefined
+    const Probe = defineComponent({
+      setup() {
+        found = useDashboardView(view)
+        return () => h('span')
+      },
+    })
+
+    const { dashboard } = await mountDashboard({ render: () => h(Probe), schema })
+    expect(dashboard.view.current).toBe('first')
+    expect(found).toBe(dashboard.second)
   })
 })

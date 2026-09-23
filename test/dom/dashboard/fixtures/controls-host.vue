@@ -30,14 +30,14 @@ const { dashboard, scenario } = defineProps<{
 
   <template v-else-if="scenario === 'pair'">
     <DashboardFilter
-      :filter="dashboard.usage.filters.months"
+      :filter="dashboard.usage.controls.months"
       variant="button"
       label="Add"
       list="options"
       data-pair="options"
     />
     <DashboardFilter
-      :filter="dashboard.usage.filters.months"
+      :filter="dashboard.usage.controls.months"
       variant="button"
       label="Presets"
       list="presets"
@@ -47,7 +47,7 @@ const { dashboard, scenario } = defineProps<{
 
   <DashboardFilter
     v-else-if="scenario === 'presets'"
-    :filter="dashboard.usage.filters.months"
+    :filter="dashboard.usage.controls.months"
     variant="button"
     list="presets"
     label="Presets"
@@ -55,13 +55,13 @@ const { dashboard, scenario } = defineProps<{
 
   <DashboardFilter
     v-else
-    :filter="dashboard.usage.filters.months"
+    :filter="dashboard.usage.controls.months"
     variant="button"
     icon="i-lucide-plus"
     label="Add"
   >
     <template #footer>
-      <button type="button" data-preset @click="dashboard.usage.params.months = [1, 2, 3]">
+      <button type="button" data-preset @click="dashboard.usage.filters.months = [1, 2, 3]">
         Q1
       </button>
     </template>

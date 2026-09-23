@@ -6,8 +6,8 @@ import { computed, nextTick, useTemplateRef, watch } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import type {
-  DashboardFilterHandle,
-  DashboardFilterPreset,
+  DashboardFilterControl,
+  DashboardControlPreset,
   DashboardFilterUi,
   DashboardOption,
   DashboardOptionValue,
@@ -27,7 +27,7 @@ const {
   title,
   list = 'all',
 } = defineProps<{
-  filter: DashboardFilterHandle<TValue, TItem>
+  filter: DashboardFilterControl<TValue, TItem>
   classes: Required<DashboardFilterUi>
   /** Heading above the list. */
   title?: string
@@ -45,11 +45,11 @@ defineSlots<{
     item: DashboardOption<TItem>
     selected: boolean
     disabled: boolean
-    filter: DashboardFilterHandle<TValue, TItem>
+    filter: DashboardFilterControl<TValue, TItem>
   }) => unknown
-  header?: (props: { filter: DashboardFilterHandle<TValue, TItem> }) => unknown
-  footer?: (props: { filter: DashboardFilterHandle<TValue, TItem> }) => unknown
-  empty?: (props: { filter: DashboardFilterHandle<TValue, TItem> }) => unknown
+  header?: (props: { filter: DashboardFilterControl<TValue, TItem> }) => unknown
+  footer?: (props: { filter: DashboardFilterControl<TValue, TItem> }) => unknown
+  empty?: (props: { filter: DashboardFilterControl<TValue, TItem> }) => unknown
 }>()
 
 const { t } = useUiToolsLocale()
@@ -80,7 +80,7 @@ function clear() {
   if (!filter.multiple) emit('picked')
 }
 
-function apply(preset: DashboardFilterPreset<TValue>) {
+function apply(preset: DashboardControlPreset<TValue>) {
   preset.apply()
   emit('picked')
 }

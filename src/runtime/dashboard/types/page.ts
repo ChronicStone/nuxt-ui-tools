@@ -1,4 +1,4 @@
-import type { DashboardFiltersTarget } from './filters'
+import type { DashboardFiltersTarget } from './controls'
 import type { DashboardViewController } from './schema'
 
 /** What `UiDashboardPage` renders: the dashboard object returned by `useDashboard`. */

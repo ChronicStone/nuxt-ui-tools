@@ -2,11 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { h, ref } from 'vue'
 import type { VNodeChild } from 'vue'
 
-import {
-  defineDashboardFilters,
-  defineDashboardSchema,
-  defineDashboardView,
-} from '#ui-tools/dashboard'
+import { defineDashboardSchema, defineDashboardView } from '#ui-tools/dashboard'
 import DashboardGrid from '#ui-tools/dashboard/components/dashboard-grid.vue'
 import DashboardStat from '#ui-tools/dashboard/components/dashboard-stat.vue'
 import type { DashboardResourceState } from '#ui-tools/dashboard/types'
@@ -530,24 +526,20 @@ describe('dashboard grid layout', () => {
 
   it('hides the blocks of a query whose condition fails, and lays the row out again', async () => {
     const workspace = ref<'ADMIN' | 'CLIENT'>('CLIENT')
-    const context = defineDashboardFilters({
-      workspace: (p) => p.enum(['ADMIN', 'CLIENT'], { defaultValue: 'ADMIN', sync: workspace }),
-    })
     const consumption = defineDashboardView({
       label: 'Consumption',
-      shared: context,
-      queries: ({ essential, params }) => ({
+      queries: ({ essential }) => ({
         summary: essential.query(() => ({
           queryFn: () => Promise.resolve({ units: 12 }),
           queryKey: ['summary'],
         })),
         margin: essential.query({
-          enabled: () => params.workspace === 'ADMIN',
+          enabled: () => workspace.value === 'ADMIN',
           query: () => ({ queryFn: () => Promise.resolve({ rate: 0.4 }), queryKey: ['margin'] }),
         }),
       }),
     })
-    const schema = defineDashboardSchema({ key: 'layout', params: context, views: { consumption } })
+    const schema = defineDashboardSchema({ key: 'layout', views: { consumption } })
     const { flush, wrapper } = await mountDashboard({
       render: (dashboard) =>
         h('div', { style: `width: ${WIDTH}px` }, [

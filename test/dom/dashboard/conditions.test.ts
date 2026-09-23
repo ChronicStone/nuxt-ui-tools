@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { h, ref } from 'vue'
+import type { Ref } from 'vue'
 
-import {
-  defineDashboardFilters,
-  defineDashboardSchema,
-  defineDashboardView,
-} from '#ui-tools/dashboard'
+import { defineDashboardSchema, defineDashboardView } from '#ui-tools/dashboard'
 import DashboardFilters from '#ui-tools/dashboard/components/dashboard-filters.vue'
 import DashboardGrid from '#ui-tools/dashboard/components/dashboard-grid.vue'
 import DashboardStat from '#ui-tools/dashboard/components/dashboard-stat.vue'
@@ -15,55 +12,62 @@ import { deferredSource, mountDashboard } from './harness'
 
 type Workspace = 'ADMIN' | 'CLIENT' | 'MANAGER'
 
-/**
- * One dashboard served to three workspaces: the workspace is a headless param synced from the
- * session, and every condition reads it.
- */
-function createWorkspaceSchema(initial: Workspace) {
-  const workspace = ref<Workspace>(initial)
-  const summary = deferredSource<{ units: number }>()
-  const margin = deferredSource<{ rate: number }>()
-  const cohort = deferredSource<{ registered: number }>()
-  const context = defineDashboardFilters({
-    workspace: (p) =>
-      p.enum(['ADMIN', 'CLIENT', 'MANAGER'], {
-        defaultValue: 'ADMIN',
-        headless: true,
-        sync: workspace,
-      }),
-  })
-  const consumption = defineDashboardView({
+/** One dashboard served to three workspaces: every condition reads the workspace it is given. */
+interface WorkspaceParams {
+  workspace: Ref<Workspace>
+  summary: ReturnType<typeof deferredSource<{ units: number }>>
+  margin: ReturnType<typeof deferredSource<{ rate: number }>>
+  cohort: ReturnType<typeof deferredSource<{ registered: number }>>
+}
+
+function consumptionView(params: WorkspaceParams) {
+  return defineDashboardView({
     label: 'Consumption',
-    shared: context,
-    params: (p, { params }) => ({
-      account: p.string({ enabled: () => params.workspace !== 'CLIENT', label: 'Account' }),
+    filters: (f) => ({
+      account: f.string({ enabled: () => params.workspace.value !== 'CLIENT', label: 'Account' }),
     }),
-    queries: ({ essential, params }) => ({
+    queries: ({ essential, filters }) => ({
       summary: essential.query(() => ({
-        queryFn: () => summary.fn(params.account),
-        queryKey: ['summary', params.account],
+        queryFn: () => params.summary.fn(filters.account),
+        queryKey: ['summary', filters.account],
       })),
       margin: essential.query({
-        enabled: () => params.workspace === 'ADMIN',
-        query: () => ({ queryFn: () => margin.fn(), queryKey: ['margin'] }),
+        enabled: () => params.workspace.value === 'ADMIN',
+        query: () => ({ queryFn: () => params.margin.fn(), queryKey: ['margin'] }),
       }),
     }),
     derive: ({ data }) => ({ marginRate: () => data.margin?.rate ?? null }),
   })
-  const certifications = defineDashboardView({
+}
+
+function certificationsView(params: WorkspaceParams) {
+  return defineDashboardView({
     label: 'Certifications',
-    shared: context,
-    enabled: ({ params }) => params.workspace !== 'MANAGER',
+    enabled: () => params.workspace.value !== 'MANAGER',
     queries: ({ essential }) => ({
-      overview: essential.query(() => ({ queryFn: () => cohort.fn(), queryKey: ['cohort'] })),
+      overview: essential.query(() => ({
+        queryFn: () => params.cohort.fn(),
+        queryKey: ['cohort'],
+      })),
     }),
   })
-  const schema = defineDashboardSchema({
+}
+
+function workspaceSchema(params: WorkspaceParams) {
+  return defineDashboardSchema({
     key: 'workspaces',
-    params: context,
-    views: { consumption, certifications },
+    views: { consumption: consumptionView(params), certifications: certificationsView(params) },
   })
-  return { cohort, margin, schema, summary, workspace }
+}
+
+function createWorkspaceSchema(initial: Workspace) {
+  const params: WorkspaceParams = {
+    cohort: deferredSource<{ registered: number }>(),
+    margin: deferredSource<{ rate: number }>(),
+    summary: deferredSource<{ units: number }>(),
+    workspace: ref<Workspace>(initial),
+  }
+  return { ...params, schema: workspaceSchema(params) }
 }
 
 describe('dashboard conditions', () => {
@@ -126,28 +130,28 @@ describe('dashboard conditions', () => {
     expect(tabs.map((tab) => tab.text())).toEqual(['Consumption', 'Certifications'])
   })
 
-  it('keeps disabled params out of the bar and out of queries', async () => {
+  it('keeps disabled filters out of the bar and out of queries', async () => {
     const { schema, summary, workspace } = createWorkspaceSchema('CLIENT')
     const { dashboard, flush, wrapper } = await mountDashboard({
-      query: { 'consumption.account': 'acme' },
+      query: { account: 'acme' },
       render: (api) => h(DashboardFilters, { dashboard: api }),
       schema,
     })
     const view = dashboard.consumption
 
-    expect(view.params.account).toBeUndefined()
-    expect(view.filters.account.enabled).toBe(false)
+    expect(view.filters.account).toBeUndefined()
+    expect(view.controls.account.enabled).toBe(false)
     expect(view.filtered).toBe(false)
     expect(summary.calls.map((call) => call.args)).toEqual([[undefined]])
     expect(wrapper.find('[data-dashboard-filter="account"]').exists()).toBe(false)
 
-    view.params.account = 'globex'
+    view.filters.account = 'globex'
     await flush()
-    expect(view.params.account).toBeUndefined()
+    expect(view.filters.account).toBeUndefined()
 
     workspace.value = 'ADMIN'
     await flush()
-    expect(view.params.account).toBe('acme')
+    expect(view.filters.account).toBe('acme')
     expect(summary.calls.at(-1)?.args).toEqual(['acme'])
     expect(wrapper.find('[data-dashboard-filter="account"]').exists()).toBe(true)
   })

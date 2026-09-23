@@ -1,6 +1,6 @@
-import type { QueryCodec } from '../../../query-state'
-import { isNullish } from '../../../shared/utils/predicate'
-import type { DashboardDateRange, DashboardOptionValue } from '../../types'
+import type { QueryCodec } from '../../query-state'
+import { isNullish } from '../../shared/utils/predicate'
+import type { DashboardDateRange, DashboardOptionValue } from '../types'
 
 export const optionalStringCodec: QueryCodec<string | undefined> = {
   parse: (raw) => (raw === '' ? undefined : raw),

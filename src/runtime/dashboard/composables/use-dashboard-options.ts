@@ -1,9 +1,9 @@
 import type { QueryKey } from '@tanstack/vue-query'
 import { computed, shallowRef } from 'vue'
 
-import { useUiToolsLocale } from '../../i18n/use-locale'
-import type { DashboardOption, DashboardRuntimeParam } from '../types'
+import type { DashboardOption, DashboardRuntimeFilter } from '../types'
 import type { DashboardRuntimeOptionList } from '../types/runtime'
+import type { DashboardLocale } from '../utils/environment'
 import { matchesDashboardSearch } from '../utils/options'
 import { useDashboardRemoteOptions } from './use-dashboard-remote-options'
 
@@ -12,13 +12,14 @@ const noError = computed<unknown>(() => undefined)
 const off = computed<boolean>(() => false)
 
 /**
- * Option list of one param: static items (fixed, or read from data), or a remote source. Items of
+ * Option list of one filter: static items (fixed, or read from data), or a remote source. Items of
  * values without labels of their own (`enum`, `boolean`) take their text from `format`, and
  * booleans and comparison periods fall back to localized labels.
  */
 export function useDashboardOptions(params: {
-  definition: DashboardRuntimeParam
+  definition: DashboardRuntimeFilter
   queryKey: QueryKey
+  locale: DashboardLocale
   value: () => unknown
 }): DashboardRuntimeOptionList {
   const { definition } = params
@@ -29,7 +30,7 @@ export function useDashboardOptions(params: {
       value: params.value,
     })
 
-  const { t } = useUiToolsLocale()
+  const { t } = params.locale
   const search = shallowRef<string>('')
   const open = shallowRef<boolean>(false)
 

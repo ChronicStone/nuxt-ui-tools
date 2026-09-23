@@ -2,17 +2,17 @@ import { isRef } from 'vue'
 
 import { isBoolean, isDate, isNumber, isObject, isString } from '../../shared/utils/predicate'
 import type {
-  DashboardFilterHandle,
+  DashboardFilterControl,
   DashboardFilterUi,
   DashboardOptionValue,
-  DashboardParamKind,
-  DashboardRuntimeParam,
+  DashboardFilterKind,
+  DashboardRuntimeFilter,
   DashboardSeries,
 } from '../types'
 import { DASHBOARD_PALETTE_SIZE } from './charts'
 
-/** Params whose filter picks from a list, in a menu. The others show their value only. */
-const DASHBOARD_LISTED_KINDS: ReadonlySet<DashboardParamKind> = new Set([
+/** Filters picked from a list, in a menu. The others show their value only. */
+const DASHBOARD_LISTED_KINDS: ReadonlySet<DashboardFilterKind> = new Set([
   'boolean',
   'comparison',
   'enum',
@@ -25,7 +25,7 @@ const DASHBOARD_LISTED_KINDS: ReadonlySet<DashboardParamKind> = new Set([
  * colored by position in the palette (as the picker chips are), valued by `value(row, option)`.
  */
 export function resolveDashboardFilterSeries<TRow, TItem extends DashboardOptionValue>(
-  filter: DashboardFilterHandle<unknown, TItem>,
+  filter: DashboardFilterControl<unknown, TItem>,
   value: ((row: TRow, item: TItem) => number | null | undefined) | undefined,
 ): DashboardSeries<TRow>[] {
   return filter.selected.map((option, index) => ({
@@ -37,7 +37,7 @@ export function resolveDashboardFilterSeries<TRow, TItem extends DashboardOption
 }
 
 /** The filter has a menu: options to pick from, or presets. */
-export function hasDashboardFilterMenu(filter: Pick<DashboardFilterHandle, 'kind' | 'presets'>) {
+export function hasDashboardFilterMenu(filter: Pick<DashboardFilterControl, 'kind' | 'presets'>) {
   return DASHBOARD_LISTED_KINDS.has(filter.kind) || filter.presets.length > 0
 }
 
@@ -76,10 +76,10 @@ export const DASHBOARD_FILTER_CLASSES = {
 } satisfies Required<DashboardFilterUi>
 
 /**
- * The param is state only: declared `headless`, or read from a getter (a read-only source no filter
+ * The filter is state only: declared `headless`, or read from a getter (a read-only source no control
  * can drive).
  */
-export function isDashboardParamHeadless(definition: DashboardRuntimeParam) {
+export function isDashboardFilterHeadless(definition: DashboardRuntimeFilter) {
   const { sync } = definition
   if (definition.headless === true) return true
   return sync !== undefined && sync !== 'url' && sync !== 'memory' && !isRef(sync)
@@ -91,12 +91,12 @@ export function isDashboardOptionValue(value: unknown): value is DashboardOption
 }
 
 /**
- * Default text of a param value without an option label: dates and ranges in the locale's medium
+ * Default text of a filter value without an option label: dates and ranges in the locale's medium
  * style, numbers with its grouping, lists joined.
  */
-export function formatDashboardParamValue(value: unknown, locale: string): string {
+export function formatDashboardFilterValue(value: unknown, locale: string): string {
   if (Array.isArray(value))
-    return value.map((entry) => formatDashboardParamValue(entry, locale)).join(', ')
+    return value.map((entry) => formatDashboardFilterValue(entry, locale)).join(', ')
   if (isDate(value)) return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(value)
   if (isNumber(value)) return new Intl.NumberFormat(locale).format(value)
   if (isObject(value) && isDate(value.start) && isDate(value.end))

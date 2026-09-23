@@ -35,7 +35,7 @@ function text(value: string) {
 }
 
 describe('dashboard controls', () => {
-  it('renders the root and current view filters, skipping headless and unset free values', async () => {
+  it('renders the current view filters, skipping headless and unset free values', async () => {
     const { dashboard, flush, parts, pill, wrapper } = await mountControls({ scenario: 'bar' })
     const keys = wrapper
       .findAll('[data-dashboard-filter]')
@@ -47,7 +47,7 @@ describe('dashboard controls', () => {
     expect(parts('compare')).toEqual(['Compare', 'Oui'])
     expect(wrapper.find('[data-dashboard-filters-reset]').exists()).toBe(false)
 
-    dashboard.usage.params.day = '2026-03-12'
+    dashboard.usage.filters.day = '2026-03-12'
     await flush()
     expect(parts('day')).toEqual(['Day', '2026-03-12'])
     expect(pill('day').find('[data-ui-trigger]').exists()).toBe(false)
@@ -61,23 +61,23 @@ describe('dashboard controls', () => {
     expect(rows('year').map((row) => row.text())).toEqual(['2025', '2026'])
     await rows('year')[0]?.trigger('click')
     await flush()
-    expect(dashboard.params.year).toBe(2025)
+    expect(dashboard.usage.filters.year).toBe(2025)
     expect(pill('year').find('[data-ui-content]').exists()).toBe(false)
     expect(pill('year').attributes('data-active')).toBeDefined()
 
     await pill('year').find('[data-dashboard-filter-clear]').trigger('click')
     await flush()
-    expect(dashboard.params.year).toBe(2026)
+    expect(dashboard.usage.filters.year).toBe(2026)
 
     await open('compare')
     await rows('compare')[1]?.trigger('click')
     await flush()
-    expect(dashboard.usage.params.compare).toBe(false)
+    expect(dashboard.usage.filters.compare).toBe(false)
     const reset = wrapper.find('[data-dashboard-filters-reset]')
     expect(text(reset.text())).toBe('Réinitialiser')
     await reset.trigger('click')
     await flush()
-    expect(dashboard.usage.params.compare).toBe(true)
+    expect(dashboard.usage.filters.compare).toBe(true)
     expect(wrapper.find('[data-dashboard-filters-reset]').exists()).toBe(false)
   })
 
@@ -92,25 +92,25 @@ describe('dashboard controls', () => {
     await rows('months')[3]?.trigger('click')
     await rows('months')[1]?.trigger('click')
     await flush()
-    expect(dashboard.usage.params.months).toEqual([2, 4])
-    expect(query()).toMatchObject({ 'usage.months': '2,4' })
+    expect(dashboard.usage.filters.months).toEqual([2, 4])
+    expect(query()).toMatchObject({ months: '2,4' })
     // The menu stays open, with checked boxes.
     expect(pill('months').findAll('[data-checked]')).toHaveLength(2)
     expect(parts('months')).toEqual(['Months', 'M2, M4'])
 
     await pill('months').find('[data-filter-clear-selection]').trigger('click')
     await flush()
-    expect(dashboard.usage.params.months).toEqual([])
+    expect(dashboard.usage.filters.months).toEqual([])
 
     // Presets follow the options, under their own heading, and close the menu once applied.
     expect(pill('months').text()).toContain('Préréglages')
     await pill('months').find('[data-filter-preset]').trigger('click')
     await flush()
-    expect(dashboard.usage.params.months).toEqual([1, 2, 3])
+    expect(dashboard.usage.filters.months).toEqual([1, 2, 3])
     expect(pill('months').find('[data-ui-content]').exists()).toBe(false)
   })
 
-  it('opens each control of a shared handle on its own', async () => {
+  it('opens each picker of one control on its own', async () => {
     const { flush, wrapper } = await mountControls({ scenario: 'pair' })
     const [options, presets] = wrapper.findAll('[data-ui="UPopover"]')
     await options?.find('[data-ui-trigger]').trigger('click')
@@ -129,7 +129,7 @@ describe('dashboard controls', () => {
     expect(content.text()).toContain('Préréglages')
     await content.find('[data-filter-preset]').trigger('click')
     await flush()
-    expect(dashboard.usage.params.months).toEqual([1, 2, 3])
+    expect(dashboard.usage.filters.months).toEqual([1, 2, 3])
   })
 
   it('searches and picks from a remote list', async () => {
@@ -150,8 +150,29 @@ describe('dashboard controls', () => {
     ])
     await rows('account')[2]?.trigger('click')
     await flush()
-    expect(dashboard.usage.params.account).toBe('a2')
+    expect(dashboard.usage.filters.account).toBe('a2')
     expect(parts('account')).toEqual(['Account', 'Globex'])
+  })
+
+  it('keeps a filter both views declare when the tab changes', async () => {
+    const { dashboard, flush, open, query, rows, wrapper } = await mountControls({
+      scenario: 'bar',
+    })
+    await open('year')
+    await rows('year')[0]?.trigger('click')
+    await flush()
+    expect(query()).toMatchObject({ view: 'usage', year: '2025' })
+
+    await wrapper.findAll('[data-dashboard-view-tabs] button')[0]?.trigger('click')
+    await flush()
+    expect(dashboard.view.current).toBe('funnel')
+    expect(dashboard.funnel.filters.year).toBe(2025)
+    expect(query()).toEqual({ year: '2025' })
+
+    // The funnel's own control drives the same value.
+    dashboard.funnel.controls.year.reset()
+    await flush()
+    expect(dashboard.usage.filters.year).toBe(2026)
   })
 
   it('switches views from the tabs and shows only their filters', async () => {
@@ -198,6 +219,6 @@ describe('dashboard controls', () => {
     expect(wrapper.find('[data-ui-content]').text()).toContain('Months')
     await wrapper.find('[data-preset]').trigger('click')
     await flush()
-    expect(dashboard.usage.params.months).toEqual([1, 2, 3])
+    expect(dashboard.usage.filters.months).toEqual([1, 2, 3])
   })
 })

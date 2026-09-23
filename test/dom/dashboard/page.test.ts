@@ -1,27 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { h, ref } from 'vue'
+import { defineComponent, h, ref } from 'vue'
+import type { Ref } from 'vue'
 
-import {
-  defineDashboardFilters,
-  defineDashboardSchema,
-  defineDashboardView,
-} from '#ui-tools/dashboard'
+import { defineDashboardSchema, defineDashboardView, useDashboardView } from '#ui-tools/dashboard'
 import DashboardPage from '#ui-tools/dashboard/components/dashboard-page.vue'
 
 import { mountDashboard } from './harness'
 
 type Workspace = 'ADMIN' | 'MANAGER'
 
-/** Two views, the second one for administrators only. */
-function createSchema(initial: Workspace = 'ADMIN') {
-  const workspace = ref<Workspace>(initial)
-  const context = defineDashboardFilters({
-    workspace: (p) => p.enum(['ADMIN', 'MANAGER'], { defaultValue: 'ADMIN', sync: workspace }),
-    year: (p) => p.enum([2025, 2026], { defaultValue: 2026, label: 'Year' }),
-  })
-  const sales = defineDashboardView({
+function salesView() {
+  return defineDashboardView({
     label: 'Sales',
-    shared: context,
+    filters: (f) => ({ year: f.enum([2025, 2026], { defaultValue: 2026, label: 'Year' }) }),
     queries: ({ essential }) => ({
       total: essential.query(() => ({
         queryFn: () => Promise.resolve({ amount: 3 }),
@@ -29,17 +20,27 @@ function createSchema(initial: Workspace = 'ADMIN') {
       })),
     }),
   })
-  const margin = defineDashboardView({
+}
+
+function marginView(params: { workspace: Ref<Workspace> }) {
+  return defineDashboardView({
     label: 'Margin',
-    shared: context,
-    enabled: ({ params }) => params.workspace === 'ADMIN',
+    enabled: () => params.workspace.value === 'ADMIN',
+    filters: (f) => ({ year: f.enum([2025, 2026], { defaultValue: 2026, label: 'Year' }) }),
   })
-  const schema = defineDashboardSchema({
+}
+
+/** Two views, the second one for administrators only. */
+function pageSchema(params: { workspace: Ref<Workspace> }) {
+  return defineDashboardSchema({
     key: 'page',
-    params: context,
-    views: { margin, sales },
+    views: { margin: marginView(params), sales: salesView() },
   })
-  return { schema, workspace }
+}
+
+function createSchema(initial: Workspace = 'ADMIN') {
+  const workspace = ref<Workspace>(initial)
+  return { schema: pageSchema({ workspace }), workspace }
 }
 
 describe('dashboard page', () => {
@@ -126,6 +127,39 @@ describe('dashboard page', () => {
     expect(wrapper.find('[data-dashboard-view-tabs]').exists()).toBe(false)
     expect(wrapper.find('[data-custom-filters]').exists()).toBe(true)
     expect(wrapper.find('[data-dashboard-filter="year"]').exists()).toBe(false)
+  })
+
+  it('hands each view slot its view, so a view function finds it', async () => {
+    const { schema } = createSchema()
+    let sales: object | undefined
+    let margin: object | undefined
+    const SalesTab = defineComponent({
+      setup() {
+        sales = useDashboardView(salesView)
+        return () => h('p', { 'data-view': 'sales' })
+      },
+    })
+    const MarginTab = defineComponent({
+      setup() {
+        margin = useDashboardView(marginView)
+        return () => h('p', { 'data-view': 'margin' })
+      },
+    })
+    const { dashboard, flush } = await mountDashboard({
+      query: { view: 'sales' },
+      render: (api) =>
+        h(
+          DashboardPage,
+          { dashboard: api },
+          { margin: () => h(MarginTab), sales: () => h(SalesTab) },
+        ),
+      schema,
+    })
+
+    expect(sales).toBe(dashboard.sales)
+    dashboard.view.current = 'margin'
+    await flush()
+    expect(margin).toBe(dashboard.margin)
   })
 
   it('shows a fixed description instead of the date line', async () => {

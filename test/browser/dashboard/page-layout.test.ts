@@ -18,7 +18,7 @@ afterEach(() => {
 
 const schema = defineDashboardSchema({
   key: 'page-layout',
-  params: (p) => ({ year: p.enum([2025, 2026], { defaultValue: 2026, label: 'Year' }) }),
+  filters: (f) => ({ year: f.enum([2025, 2026], { defaultValue: 2026, label: 'Year' }) }),
 })
 
 async function mountPage() {

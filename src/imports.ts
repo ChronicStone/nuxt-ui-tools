@@ -67,8 +67,6 @@ export function setupImports(runtimeDir: string) {
 
     // Dashboard
     ...withRuntime(runtimeDir, [
-      { from: 'dashboard', name: 'defineDashboardFilter' },
-      { from: 'dashboard', name: 'defineDashboardFilters' },
       { from: 'dashboard', name: 'defineDashboardSchema' },
       { from: 'dashboard', name: 'defineDashboardView' },
       { from: 'dashboard', name: 'injectDashboard' },

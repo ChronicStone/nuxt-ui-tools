@@ -1,4 +1,3 @@
-import { isFunction } from '../../shared/utils/predicate'
 import type { DashboardCondition, DashboardResourceState } from '../types'
 
 /**
@@ -19,14 +18,9 @@ export function combineDashboardStates(
   return 'ready'
 }
 
-/** Whether an `enabled` condition holds: a boolean, a getter, or no condition at all. */
+/** Whether an `enabled` condition holds. No condition always holds. */
 export function resolveDashboardCondition(condition: DashboardCondition | undefined): boolean {
-  if (condition === undefined) return true
-  return isConditionGetter(condition) ? condition() : condition
-}
-
-function isConditionGetter(condition: DashboardCondition): condition is () => boolean {
-  return isFunction(condition)
+  return condition === undefined || condition()
 }
 
 /** Oldest defined timestamp of a set of sources: they are all at least this fresh. */
@@ -47,10 +41,10 @@ export async function refreshDashboardSources(
   if (errors.length > 0) throw new AggregateError(errors, 'Dashboard refresh failed')
 }
 
-/** URL segment of the current view. A root param cannot use it while the dashboard has views. */
+/** URL segment of the current view. No filter can use it while the dashboard has views. */
 export const DASHBOARD_VIEW_URL_KEY = 'view'
 
-/** URL segment of the auto-refresh interval. A root param cannot use it. */
+/** URL segment of the auto-refresh interval. No filter can use it. */
 export const DASHBOARD_REFRESH_URL_KEY = 'refresh'
 
 /** URL key of the auto-refresh interval: `refresh`, or `<urlPrefix>.refresh`. */
@@ -64,11 +58,12 @@ export function joinDashboardUrlKey(...segments: readonly (string | undefined)[]
 }
 
 /**
- * URL key prefix of one scope, named after what it holds: none for the root (`year`), the view
- * key for a view (`consumption.currency`). `urlPrefix` namespaces both when set.
+ * URL key prefix of a dashboard's filters: none (`year`, `currency`), or `urlPrefix` when two
+ * dashboards share a page. Views add no segment: a filter key names the same state in every scope,
+ * so `year` declared by two views keeps its value across tabs.
  */
-export function resolveDashboardScopePrefix(urlPrefix: string | undefined, viewKey?: string) {
-  return joinDashboardUrlKey(urlPrefix, viewKey)
+export function resolveDashboardScopePrefix(urlPrefix: string | undefined) {
+  return joinDashboardUrlKey(urlPrefix)
 }
 
 /** URL key of the current view: `view`, or `<urlPrefix>.view`. */

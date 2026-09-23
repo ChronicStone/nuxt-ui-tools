@@ -2,23 +2,23 @@ import type { ComputedRef, Ref } from 'vue'
 
 import type { QueryDefinition } from '../../shared/types/query'
 import type { LazyTextValue } from '../../shared/types/utils'
-import type { DashboardOptionsMenuBindings } from './filters'
-import type { DashboardOption, DashboardParamBuilder, DashboardParamEntry } from './params'
+import type { DashboardOptionsMenuBindings } from './controls'
+import type { DashboardFilterBuilder, DashboardFilterLike, DashboardOption } from './filters'
 import type { DashboardCondition, DashboardSourceLike, DashboardStage } from './resource'
 
 /**
  * Runtime (type-erased) view of the schema. The public schema types carry precise generics; the
  * runtime reads the same objects through these shapes after one normalization step.
  */
-export type DashboardRuntimeParamsInput =
-  | Record<string, DashboardParamEntry>
-  | ((p: DashboardParamBuilder, context: { params: object }) => Record<string, DashboardParamEntry>)
+export type DashboardRuntimeFiltersInput = (
+  f: DashboardFilterBuilder,
+) => Record<string, DashboardFilterLike>
 
 export interface DashboardRuntimeQueryInput {
-  params?: DashboardRuntimeParamsInput
+  filters?: DashboardRuntimeFiltersInput
   requires?: () => unknown
   enabled?: DashboardCondition
-  query: (scope: { params: object; required: unknown }) => QueryDefinition
+  query: (scope: { filters: object; required: unknown }) => QueryDefinition
   select?: (data: unknown) => unknown
   defaultValue?: unknown
   keepPreviousData?: boolean
@@ -32,21 +32,19 @@ export interface DashboardRuntimeStage {
 export type DashboardRuntimeStages = Record<DashboardStage, DashboardRuntimeStage>
 
 export interface DashboardRuntimeQueriesContext extends DashboardRuntimeStages {
-  params: object
+  filters: object
 }
 
 export interface DashboardRuntimeDeriveContext {
   data: object
-  params: object
+  filters: object
 }
 
 export interface DashboardRuntimeScopeInput {
   label?: LazyTextValue
-  /** Root params a standalone view reads. */
-  shared?: Record<string, DashboardParamEntry>
-  /** Availability of a view, read with the root params. */
-  enabled?: boolean | ((context: { params: object }) => boolean)
-  params?: DashboardRuntimeParamsInput
+  /** Availability of a view. */
+  enabled?: DashboardCondition
+  filters?: DashboardRuntimeFiltersInput
   queries?: (context: DashboardRuntimeQueriesContext) => Record<string, DashboardSourceLike>
   derive?: (context: DashboardRuntimeDeriveContext) => Record<string, () => unknown>
 }
@@ -56,13 +54,13 @@ export interface DashboardRuntimeSchema extends DashboardRuntimeScopeInput {
   urlPrefix?: string
   autoRefresh?: number
   defaultView?: string
-  /** Views in declaration order. Each input is the object the schema declared (its identity). */
+  /** Views in declaration order. Each input is the object the schema declared. */
   views: [key: string, view: DashboardRuntimeScopeInput][]
 }
 
 /**
- * Option list behind one filter handle, static or remote. Both option composables return this
- * shape so the filter handle composes either without branching.
+ * Option list behind one filter control, static or remote. Both option composables return this
+ * shape so the control composes either without branching.
  */
 export interface DashboardRuntimeOptionList {
   /** Options matching the current search. */

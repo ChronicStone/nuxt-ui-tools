@@ -8,8 +8,9 @@ import { hasProperty, isNullish } from '../../shared/utils/predicate'
 import { DASHBOARD_QUERY_DEFAULTS } from '../constants/query'
 import type { DashboardResourceState, DashboardSourceLike, DashboardStage } from '../types'
 import type { DashboardRuntimeQueryInput } from '../types/runtime'
-import { dashboardParamBuilder } from '../utils/builders/dashboard-params'
-import { resolveDashboardParams } from '../utils/schema'
+import { dashboardFilterBuilder } from '../utils/builders/dashboard-filters'
+import type { DashboardEnvironment } from '../utils/environment'
+import { resolveDashboardFilters } from '../utils/schema'
 import {
   combineDashboardStates,
   joinDashboardUrlKey,
@@ -17,12 +18,12 @@ import {
   resolveDashboardCondition,
 } from '../utils/state'
 import type { DashboardReadTracker } from '../utils/tracker'
-import { useDashboardParamScope } from './use-dashboard-param-scope'
+import { useDashboardFilterScope } from './use-dashboard-filter-scope'
 
 /**
- * Owns one declared query: exactly one `useQuery`, its widget params, and the deferred activation
+ * Owns one declared query: exactly one `useQuery`, its own filters, and the deferred activation
  * latch. Gating rewrites `enabled` on a stable definition, so hook order never changes, and a gated
- * resource never evaluates its factory (it does not subscribe to params it cannot use yet).
+ * resource never evaluates its factory (it does not subscribe to filters it cannot use yet).
  *
  * `requires` runs through the read tracker: while it returns nothing, the resource follows the
  * resources it read (loading while they load), then settles on its default value once they are
@@ -44,17 +45,16 @@ export function useDashboardResource(params: {
     refetchInterval: ComputedRef<number>
   }
   tracker: DashboardReadTracker
+  environment: DashboardEnvironment
 }) {
   const { input, stage, scope } = params
   const activated = shallowRef<boolean>(stage !== 'deferred')
-  const widget = useDashboardParamScope({
-    definitions: resolveDashboardParams({
-      builder: dashboardParamBuilder,
-      input: input.params,
-      shared: {},
-    }),
+  const filters = useDashboardFilterScope({
+    definitions: resolveDashboardFilters({ builder: dashboardFilterBuilder, input: input.filters }),
+    environment: params.environment,
+    owner: `query "${params.id}"`,
     prefix: joinDashboardUrlKey(scope.prefix, params.key),
-    queryKey: [...scope.queryKey, params.id, 'params'],
+    queryKey: [...scope.queryKey, params.id, 'filters'],
   })
 
   const active = computed<boolean>(() => scope.active.value && activated.value)
@@ -84,7 +84,7 @@ export function useDashboardResource(params: {
   )
 
   function resolveDefinition(): DashboardResolvedQueryDefinition {
-    const definition = input.query({ params: widget.values, required: requirement.value.value })
+    const definition = input.query({ filters: filters.values, required: requirement.value.value })
     const interval = scope.refetchInterval.value
     return {
       placeholderData: input.keepPreviousData === false ? undefined : keepPreviousData,
@@ -108,7 +108,7 @@ export function useDashboardResource(params: {
     return query.data.value === undefined ? 'loading' : 'ready'
   })
   // The resource's `select` runs here, on top of the definition's own, rather than in TanStack: what
-  // it reads (a param such as the currency, another resource) is tracked and re-selects on change.
+  // it reads (a filter such as the currency, another resource) is tracked and re-selects on change.
   const data = computed<unknown>(() => {
     if (!enabled.value || query.data.value === undefined) return input.defaultValue
     return input.select ? input.select(query.data.value) : query.data.value
@@ -158,7 +158,7 @@ export function useDashboardResource(params: {
     stage,
     state,
     updatedAt,
-    widget,
+    filters,
   }
 }
 

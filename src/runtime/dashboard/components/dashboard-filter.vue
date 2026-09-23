@@ -8,7 +8,7 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useDashboardUi } from '../composables/use-dashboard-ui'
 import type {
-  DashboardFilterHandle,
+  DashboardFilterControl,
   DashboardFilterUi,
   DashboardOption,
   DashboardOptionValue,
@@ -18,7 +18,7 @@ import { resolveDashboardClasses } from '../utils/ui'
 import DashboardFilterMenu from './filter/dashboard-filter-menu.vue'
 
 /**
- * Control of one filter handle. The `pill` variant reads "Name value ⌄" in a filter bar, turns
+ * Control of one filter. The `pill` variant reads "Name value ⌄" in a filter bar, turns
  * accent once the filter differs from its default, and offers a clear button; the `button` variant
  * is a small action (a card header "+ Add"). Its menu lists the options densely: checkboxes for
  * multiple filters, search and infinite loading for remote lists. Filters without options (dates,
@@ -29,8 +29,8 @@ import DashboardFilterMenu from './filter/dashboard-filter-menu.vue'
  *
  * @example
  * ```vue
- * <UiDashboardFilter :filter="dashboard.filters.account" />
- * <UiDashboardFilter :filter="usage.filters.tracked" variant="button" icon="i-lucide-plus" label="Add" />
+ * <UiDashboardFilter :filter="dashboard.controls.account" />
+ * <UiDashboardFilter :filter="usage.controls.tracked" variant="button" icon="i-lucide-plus" label="Add" />
  * ```
  */
 const {
@@ -43,7 +43,7 @@ const {
   list = 'all',
   ui,
 } = defineProps<{
-  filter: DashboardFilterHandle<TValue, TItem>
+  filter: DashboardFilterControl<TValue, TItem>
   variant?: 'pill' | 'button'
   /** Name on the pill, or the text of the button. Defaults to the filter label. */
   label?: string
@@ -64,25 +64,25 @@ const {
 defineSlots<{
   /** Replaces the whole trigger. The menu still opens from it. */
   trigger?: (props: {
-    filter: DashboardFilterHandle<TValue, TItem>
+    filter: DashboardFilterControl<TValue, TItem>
     active: boolean
     display: string
   }) => unknown
   /** Replaces the name and value inside the pill. */
-  label?: (props: { filter: DashboardFilterHandle<TValue, TItem>; display: string }) => unknown
+  label?: (props: { filter: DashboardFilterControl<TValue, TItem>; display: string }) => unknown
   /** Replaces the content of each menu row. */
   item?: (props: {
     item: DashboardOption<TItem>
     selected: boolean
     disabled: boolean
-    filter: DashboardFilterHandle<TValue, TItem>
+    filter: DashboardFilterControl<TValue, TItem>
   }) => unknown
   /** Content above the option list. */
-  header?: (props: { filter: DashboardFilterHandle<TValue, TItem> }) => unknown
+  header?: (props: { filter: DashboardFilterControl<TValue, TItem> }) => unknown
   /** Content below the option list (presets, actions). */
-  footer?: (props: { filter: DashboardFilterHandle<TValue, TItem> }) => unknown
+  footer?: (props: { filter: DashboardFilterControl<TValue, TItem> }) => unknown
   /** Replaces "No results". */
-  empty?: (props: { filter: DashboardFilterHandle<TValue, TItem> }) => unknown
+  empty?: (props: { filter: DashboardFilterControl<TValue, TItem> }) => unknown
 }>()
 
 const { t } = useUiToolsLocale()
@@ -102,7 +102,7 @@ const content = computed(() => ({
   sideOffset: 6,
 }))
 
-// Each control owns its menu, so two controls on one handle (an "Add" button and a "Presets"
+// Each picker owns its menu, so two pickers on one control (an "Add" button and a "Presets"
 // button) open independently; the handle hears about it to start loading a remote list.
 const open = shallowRef<boolean>(false)
 watch(open, (value) => {

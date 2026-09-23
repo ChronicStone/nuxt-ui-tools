@@ -67,7 +67,7 @@ const {
 
 /**
  * Sort state. Header clicks cycle a column through its natural direction (numbers descending, text
- * ascending), the opposite one, then source order. Bind it to keep the sort in a param.
+ * ascending), the opposite one, then source order. Bind it to keep the sort in a filter.
  */
 const sort = defineModel<DashboardTableSort | null | undefined>('sort')
 

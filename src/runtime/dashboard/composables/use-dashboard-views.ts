@@ -2,12 +2,13 @@ import { computed, shallowRef, watch } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import { createEnumCodec, useQueryState } from '../../query-state'
-import { isFunction } from '../../shared/utils/predicate'
 import { resolveTextValue } from '../../shared/utils/render'
 import type { DashboardSourceLike } from '../types'
-import type { DashboardRuntimeSchema, DashboardRuntimeScopeInput } from '../types/runtime'
+import type { DashboardRuntimeSchema } from '../types/runtime'
+import type { DashboardEnvironment } from '../utils/environment'
 import {
   DASHBOARD_VIEW_URL_KEY,
+  resolveDashboardCondition,
   resolveDashboardScopePrefix,
   resolveDashboardViewKey,
 } from '../utils/state'
@@ -28,13 +29,10 @@ export function useDashboardViews(params: {
   root: ReturnType<typeof useDashboardScope>
   refetchInterval: ComputedRef<number>
   tracker: DashboardReadTracker
+  environment: DashboardEnvironment
 }) {
   const { schema } = params
-  if (params.root.paramScope.urlKeys.includes(DASHBOARD_VIEW_URL_KEY)) {
-    throw new Error(
-      `[dashboard] Root param URL key "${DASHBOARD_VIEW_URL_KEY}" is reserved for the current view of "${schema.key}". Rename the param or set its \`urlKey\`.`,
-    )
-  }
+  assertDashboardViewUrlKeys('', params.root.filterScope.urlKeys)
   const keys = schema.views.map(([key]) => key)
   const stored = useQueryState({
     codec: createEnumCodec(keys),
@@ -42,11 +40,10 @@ export function useDashboardViews(params: {
     historyMode: 'push',
     key: resolveDashboardViewKey(schema.urlPrefix),
   })
-  const rootParams = params.root.visible.values
   const conditions = new Map(
     schema.views.map(([key, input]) => [
       key,
-      computed<boolean>(() => resolveViewCondition(input.enabled, { params: rootParams })),
+      computed<boolean>(() => resolveDashboardCondition(input.enabled)),
     ]),
   )
   const isEnabled = (key: string) => conditions.get(key)?.value ?? false
@@ -64,12 +61,6 @@ export function useDashboardViews(params: {
   const rootSources = new Map<string, DashboardSourceLike>(params.root.members)
 
   const views = schema.views.map(([key, input]) => {
-    for (const shared of Object.keys(input.shared ?? {})) {
-      if (!params.root.paramScope.keys.includes(shared))
-        throw new Error(
-          `[dashboard] View "${key}" of "${schema.key}" reads the shared param "${shared}", which the root params do not declare.`,
-        )
-    }
     const enabled = conditions.get(key) ?? computed<boolean>(() => true)
     const opened = shallowRef<boolean>(false)
     watch(
@@ -82,15 +73,16 @@ export function useDashboardViews(params: {
     const scope = useDashboardScope({
       active: computed<boolean>(() => opened.value && enabled.value),
       enabled,
+      environment: params.environment,
       input,
-      prefix: resolveDashboardScopePrefix(schema.urlPrefix, key),
+      prefix: resolveDashboardScopePrefix(schema.urlPrefix),
       refetchInterval: params.refetchInterval,
       rootSources,
       schemaKey: schema.key,
       scopeKey: key,
-      shared: params.root.paramScope,
       tracker: params.tracker,
     })
+    assertDashboardViewUrlKeys(key, scope.filterScope.urlKeys)
     const label = () => resolveTextValue(input.label, key)
     return { enabled, input, key, label, opened, scope }
   })
@@ -98,16 +90,10 @@ export function useDashboardViews(params: {
   return { current, keys, views }
 }
 
-function resolveViewCondition(
-  condition: DashboardRuntimeScopeInput['enabled'],
-  context: { params: object },
-): boolean {
-  if (condition === undefined) return true
-  return isViewConditionGetter(condition) ? condition(context) : condition
-}
-
-function isViewConditionGetter(
-  condition: boolean | ((context: { params: object }) => boolean),
-): condition is (context: { params: object }) => boolean {
-  return isFunction(condition)
+/** No filter may take the URL key of the current view. */
+export function assertDashboardViewUrlKeys(owner: string, urlKeys: readonly string[]) {
+  if (urlKeys.includes(DASHBOARD_VIEW_URL_KEY))
+    throw new Error(
+      `[dashboard] A filter of ${owner ? `view "${owner}"` : 'the dashboard root'} uses the URL key "${DASHBOARD_VIEW_URL_KEY}", which holds the current view. Rename the filter or set its \`urlKey\`.`,
+    )
 }

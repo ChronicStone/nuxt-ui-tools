@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import type { DashboardFilterHandle } from '../../types'
+import type { DashboardFilterControl } from '../../types'
 import DashboardFilter from '../dashboard-filter.vue'
 
 /** Header controls of a chart whose series a filter picks: add from the options, pick a preset. */
-defineProps<{ filter: DashboardFilterHandle }>()
+defineProps<{ filter: DashboardFilterControl }>()
 
 const { t } = useUiToolsLocale()
 </script>

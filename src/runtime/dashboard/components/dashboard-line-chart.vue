@@ -13,7 +13,7 @@ import type {
   DashboardAxisOptions,
   DashboardBlockBaseProps,
   DashboardChartTotals,
-  DashboardFilterHandle,
+  DashboardFilterControl,
   DashboardOptionValue,
   DashboardReferenceLine,
   DashboardSelected,
@@ -62,7 +62,7 @@ const {
      * The series, or a multiple filter whose picks become the series (one per option, in pick
      * order): the chart then draws the picker and one removable chip per series.
      */
-    series: readonly DashboardSeries<TRow>[] | DashboardFilterHandle<unknown, TItem>
+    series: readonly DashboardSeries<TRow>[] | DashboardFilterControl<unknown, TItem>
     /** With `series` bound to a filter: the value of one picked option's series in a row. */
     seriesValue?: (row: TRow, item: TItem) => number | null | undefined
     /** Dashed line, e.g. the previous period. */

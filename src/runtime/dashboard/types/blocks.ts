@@ -3,7 +3,7 @@ import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 import type { RouteLocationRaw } from 'vue-router'
 
 import type { LazyTextValue } from '../../shared/types/utils'
-import type { DashboardFilterHandle } from './filters'
+import type { DashboardFilterControl } from './controls'
 import type { DashboardBlockUi } from './ui'
 
 /** Formats a numeric value for axes, tooltips, legends, and totals. */
@@ -87,7 +87,7 @@ export type DashboardHighlight<TRow> =
   | ((row: TRow, index: number) => boolean)
 
 /**
- * Rows shown as selected, typically the value a `select` handler stored in a param (drill-down,
+ * Rows shown as selected, typically the value a `select` handler stored in a filter (drill-down,
  * cross-filter). Selected rows are marked; in charts the other bars, points, and segments recede.
  */
 export type DashboardSelected<TRow> = (row: TRow, index: number) => boolean
@@ -296,7 +296,7 @@ export interface DashboardBlockBaseProps {
    * Filters narrowing this block, such as a drill-down value picked on another block: each one
    * shows as a removable chip in the toolbar while it differs from its default.
    */
-  filters?: readonly DashboardFilterHandle[]
+  filters?: readonly DashboardFilterControl[]
   /**
    * Shows when the data was last fetched ("Updated 3 min ago") under the content. Inherits the
    * enclosing grid's `freshness` when omitted.

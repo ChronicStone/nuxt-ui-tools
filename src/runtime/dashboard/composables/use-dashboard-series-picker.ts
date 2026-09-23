@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
-import type { DashboardFilterHandle, DashboardOptionValue, DashboardSeries } from '../types'
+import type { DashboardFilterControl, DashboardOptionValue, DashboardSeries } from '../types'
 import { DASHBOARD_PALETTE_SIZE, resolveDashboardColor } from '../utils/charts'
 import { resolveDashboardFilterSeries } from '../utils/filters'
 
@@ -11,7 +11,7 @@ import { resolveDashboardFilterSeries } from '../utils/filters'
  * the series' own color, in place of the legend.
  */
 export function useDashboardSeriesPicker<TRow, TItem extends DashboardOptionValue>(params: {
-  series: () => readonly DashboardSeries<TRow>[] | DashboardFilterHandle<unknown, TItem>
+  series: () => readonly DashboardSeries<TRow>[] | DashboardFilterControl<unknown, TItem>
   value: () => ((row: TRow, item: TItem) => number | null | undefined) | undefined
 }) {
   const { t } = useUiToolsLocale()
@@ -40,7 +40,7 @@ export function useDashboardSeriesPicker<TRow, TItem extends DashboardOptionValu
 }
 
 function isSeriesList<TRow, TItem extends DashboardOptionValue>(
-  value: readonly DashboardSeries<TRow>[] | DashboardFilterHandle<unknown, TItem>,
+  value: readonly DashboardSeries<TRow>[] | DashboardFilterControl<unknown, TItem>,
 ): value is readonly DashboardSeries<TRow>[] {
   return Array.isArray(value)
 }

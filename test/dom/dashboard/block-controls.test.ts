@@ -21,9 +21,9 @@ const USAGE: UsageRow[] = [
 function createSchema() {
   return defineDashboardSchema({
     key: 'controls',
-    params: (p) => ({
-      day: p.string({ label: 'Day' }),
-      tracked: p.options(
+    filters: (f) => ({
+      day: f.string({ label: 'Day' }),
+      tracked: f.options(
         [
           { label: 'Alpha', value: 'a' },
           { label: 'Beta', value: 'b' },
@@ -54,7 +54,7 @@ describe('dashboard block controls', () => {
     const { dashboard, flush, wrapper } = await mountDashboard({
       render: (api) =>
         h(DashboardLineChart<UsageRow, string>, {
-          series: api.filters.tracked,
+          series: api.controls.tracked,
           seriesValue: (row: UsageRow, product: string) => row.units[product],
           source: api.usage,
           title: 'Usage',
@@ -62,7 +62,7 @@ describe('dashboard block controls', () => {
         }),
       schema: createSchema(),
     })
-    dashboard.params.tracked = ['a', 'b']
+    dashboard.filters.tracked = ['a', 'b']
     await flush()
 
     // One chip per picked option, in the palette order of the series; the chips replace the legend.
@@ -79,10 +79,10 @@ describe('dashboard block controls', () => {
 
     await chips[1]?.find('button').trigger('click')
     await flush()
-    expect(dashboard.params.tracked).toEqual(['a'])
+    expect(dashboard.filters.tracked).toEqual(['a'])
     expect(wrapper.findAll('[data-dashboard-chip]').map((chip) => chip.text())).toEqual(['Alpha'])
 
-    dashboard.params.tracked = []
+    dashboard.filters.tracked = []
     await flush()
     expect(wrapper.findAll('[data-dashboard-chip]')).toHaveLength(0)
     expect(wrapper.find('section').attributes('data-phase')).toBe('empty')
@@ -93,7 +93,7 @@ describe('dashboard block controls', () => {
       render: (api) =>
         h(
           DashboardWidget,
-          { filters: [api.filters.day], source: api.usage, title: 'Detail' },
+          { filters: [api.controls.day], source: api.usage, title: 'Detail' },
           { default: () => h('p', 'content') },
         ),
       schema: createSchema(),
@@ -101,7 +101,7 @@ describe('dashboard block controls', () => {
     await flush()
     expect(wrapper.find('[data-dashboard-chip]').exists()).toBe(false)
 
-    dashboard.params.day = '2026-09-12'
+    dashboard.filters.day = '2026-09-12'
     await flush()
     const chip = wrapper.find('[data-dashboard-chip]')
     expect(chip.text()).toBe('Day2026-09-12')
@@ -109,7 +109,7 @@ describe('dashboard block controls', () => {
 
     await chip.find('button').trigger('click')
     await flush()
-    expect(dashboard.params.day).toBeUndefined()
+    expect(dashboard.filters.day).toBeUndefined()
     expect(wrapper.find('[data-dashboard-chip]').exists()).toBe(false)
   })
 

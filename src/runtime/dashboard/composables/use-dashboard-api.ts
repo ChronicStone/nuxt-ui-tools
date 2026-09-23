@@ -14,8 +14,7 @@ import type { useDashboardViews } from './use-dashboard-views'
  * Facade only: projects the owning scopes into the public dashboard object. Every runtime member is
  * a getter over a ref owned elsewhere, so templates read plain values and `v-model` writes through.
  *
- * Returns the facade and the view handles by the object each view was declared with, which is how
- * `useDashboardView(view)` finds them.
+ * Returns the facade and the view handles by view key.
  */
 export function useDashboardApi(params: {
   schema: DashboardSchemaLike
@@ -26,7 +25,7 @@ export function useDashboardApi(params: {
 }) {
   const { root, views } = params
   const api: Record<string, unknown> = Object.fromEntries(root.members)
-  const handles = new Map<object, object>()
+  const handles = new Map<string, object>()
 
   for (const view of views?.views ?? []) {
     const handle: Record<string, unknown> = Object.fromEntries(view.scope.members)
@@ -53,7 +52,7 @@ export function useDashboardApi(params: {
     })
     const facade = markRaw(handle)
     api[view.key] = facade
-    handles.set(view.input, facade)
+    handles.set(view.key, facade)
   }
 
   const openedScopes = () => [
@@ -66,6 +65,7 @@ export function useDashboardApi(params: {
     const current = currentView()
     return current ? [root, current.scope] : [root]
   }
+  const visibleFilters = () => visibleScopes().map((scope) => scope.filterScope)
 
   Object.defineProperties(api, {
     ...scopeMembers(root),
@@ -76,10 +76,9 @@ export function useDashboardApi(params: {
         params.autoRefresh.value = Number.isFinite(seconds) ? Math.max(0, Math.round(seconds)) : 0
       },
     },
-    // The current view's handle already merges the root filters with its own.
     filtered: {
       enumerable: true,
-      get: () => (currentView()?.scope.visible ?? root.visible).changed(),
+      get: () => visibleFilters().some((filters) => filters.changed()),
     },
     refresh: { enumerable: true, value: () => refreshDashboardSources(openedScopes()) },
     refreshing: {
@@ -88,7 +87,9 @@ export function useDashboardApi(params: {
     },
     resetFilters: {
       enumerable: true,
-      value: () => (currentView()?.scope.visible ?? root.visible).reset(),
+      value: () => {
+        for (const filters of visibleFilters()) filters.reset()
+      },
     },
     schema: { enumerable: true, value: params.schema },
     state: {
@@ -125,14 +126,14 @@ export function useDashboardApi(params: {
 }
 
 function scopeMembers(scope: ReturnType<typeof useDashboardScope>): PropertyDescriptorMap {
-  const { visible } = scope
+  const { filterScope } = scope
   return {
-    filtered: { enumerable: true, get: () => visible.changed() },
-    filters: { enumerable: true, value: visible.filters },
-    params: { enumerable: true, value: visible.values },
+    controls: { enumerable: true, value: filterScope.controls },
+    filtered: { enumerable: true, get: () => filterScope.changed() },
+    filters: { enumerable: true, value: filterScope.values },
     refresh: { enumerable: true, value: scope.refresh },
     refreshing: { enumerable: true, get: () => scope.refreshing.value },
-    resetFilters: { enumerable: true, value: () => visible.reset() },
+    resetFilters: { enumerable: true, value: () => filterScope.reset() },
     state: { enumerable: true, get: () => scope.state.value },
     updatedAt: { enumerable: true, get: () => scope.updatedAt.value },
   }

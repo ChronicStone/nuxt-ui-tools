@@ -18,6 +18,7 @@ import type {
   DashboardViewKeysOf,
 } from '../types'
 import { resolveDashboardClasses } from '../utils/ui'
+import DashboardViewScope from './block/dashboard-view-scope.vue'
 import DashboardFilters from './dashboard-filters.vue'
 import DashboardRefresh from './dashboard-refresh.vue'
 import DashboardRelativeTime from './dashboard-relative-time.vue'
@@ -31,7 +32,7 @@ import DashboardViewTabs from './dashboard-view-tabs.vue'
  *
  * @example
  * ```vue
- * <!-- const dashboard = useDashboard(salesDashboard) -->
+ * <!-- const dashboard = useDashboard(salesSchema) -->
  * <UiDashboardPage :dashboard title="Sales">
  *   <template #overview><SalesOverview /></template>
  *   <template #accounts><SalesAccounts /></template>
@@ -212,7 +213,10 @@ function actionUi(action: ButtonProps) {
     </div>
 
     <div :class="classes.body">
-      <slot v-if="current && $slots[current]" :name="current" />
+      <DashboardViewScope v-if="current" :key="current" :dashboard :view="current">
+        <slot v-if="$slots[current]" :name="current" />
+        <slot v-else :view="current" />
+      </DashboardViewScope>
       <slot v-else :view="current" />
     </div>
   </div>
