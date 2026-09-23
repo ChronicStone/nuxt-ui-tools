@@ -170,7 +170,11 @@ describe('dashboard conditions', () => {
     expect(cells('row')).toHaveLength(1)
     expect(cells('row')[0]?.attributes('style')).toContain('flex-grow: 8')
     expect(cells('margin')).toHaveLength(0)
-    expect(wrapper.find('[data-grid="margin"]').classes()).toContain('empty:hidden')
+    // The display is a class, so `empty:hidden` is not overridden by an inline `display`.
+    expect(wrapper.find('[data-grid="margin"]').classes()).toEqual(
+      expect.arrayContaining(['flex', 'empty:hidden']),
+    )
+    expect(wrapper.find('[data-grid="margin"]').attributes('style')).not.toContain('display')
 
     workspace.value = 'ADMIN'
     await flush()

@@ -66,8 +66,6 @@ const appUi = useDashboardUi()
 const span = useResponsiveValue(() => props.size ?? '', 'integer')
 const style = computed(() =>
   [
-    'display: flex',
-    'flex-wrap: wrap',
     `gap: ${gap.value}`,
     parent &&
       resolveDashboardCellStyle({
@@ -81,9 +79,10 @@ const style = computed(() =>
     .join('; '),
 )
 // A grid whose blocks all render nothing (disabled sources) collapses instead of leaving a frame.
+// The display lives in classes, not in the style, so `empty:hidden` can override it.
 const classes = computed(() =>
   twMerge(
-    'min-w-0 empty:hidden',
+    'flex min-w-0 flex-wrap empty:hidden',
     props.variant === 'panels' && [
       'overflow-hidden rounded-lg border border-default bg-(--ui-border)',
       appUi.value.grid?.panels,
