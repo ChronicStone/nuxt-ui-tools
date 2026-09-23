@@ -63,6 +63,9 @@ describe('dashboard page layout', () => {
     await scrollTo(page, 0)
     expect(toolbar.hasAttribute('data-stuck')).toBe(false)
     const header = must(page.querySelector('header'))
-    expect(toolbar.getBoundingClientRect().top).toBeCloseTo(header.getBoundingClientRect().bottom, 0)
+    expect(toolbar.getBoundingClientRect().top).toBeCloseTo(
+      header.getBoundingClientRect().bottom,
+      0,
+    )
   })
 })

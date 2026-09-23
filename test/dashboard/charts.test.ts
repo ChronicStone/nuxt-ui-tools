@@ -99,7 +99,9 @@ describe('dashboard series', () => {
 
 describe('dashboard formats', () => {
   it('reads a currency without a style as whole amounts in that currency', () => {
-    expect(resolveDashboardNumberFormat('fr', { currency: 'EUR' })(12_345.6)).toBe('12\u00A0346\u00A0€')
+    expect(resolveDashboardNumberFormat('fr', { currency: 'EUR' })(12_345.6)).toBe(
+      '12\u00A0346\u00A0€',
+    )
     expect(resolveDashboardNumberFormat('en', { currency: 'USD' })(12_345.6)).toBe('$12,346')
     expect(
       resolveDashboardNumberFormat('en', { currency: 'EUR', notation: 'compact' })(250_000),

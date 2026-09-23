@@ -50,7 +50,11 @@ describe('dashboard page', () => {
       render: (api) =>
         h(
           DashboardPage,
-          { actions: [{ icon: 'i-lucide-download', label: 'Export' }], dashboard: api, title: 'Board' },
+          {
+            actions: [{ icon: 'i-lucide-download', label: 'Export' }],
+            dashboard: api,
+            title: 'Board',
+          },
           {
             margin: () => h('p', { 'data-view': 'margin' }, 'margin view'),
             sales: () => h('p', { 'data-view': 'sales' }, 'sales view'),
@@ -90,7 +94,9 @@ describe('dashboard page', () => {
         h(
           DashboardPage,
           { dashboard: api, title: 'Board' },
-          { default: ({ view }: { view: string | undefined }) => h('p', { 'data-fallback': view }) },
+          {
+            default: ({ view }: { view: string | undefined }) => h('p', { 'data-fallback': view }),
+          },
         ),
       schema,
     })
