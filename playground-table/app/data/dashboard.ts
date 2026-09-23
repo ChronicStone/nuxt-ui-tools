@@ -183,7 +183,8 @@ const DELIVERY_DELAY = [
   { label: '> 30 j', share: 11 },
 ]
 
-function sum(values: readonly (number | null | undefined)[]) {
+/** Sum of the defined values. */
+export function sum(values: readonly (number | null | undefined)[]) {
   return values.reduce<number>((total, value) => total + (value ?? 0), 0)
 }
 

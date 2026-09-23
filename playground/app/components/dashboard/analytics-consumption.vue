@@ -2,34 +2,15 @@
 import { useDashboardFormat, useDashboardView } from '#ui-tools/dashboard'
 
 import { consumptionView } from '../../lib/dashboards/analytics/consumption'
-import { DASHBOARD_PRODUCT_PRESETS, monthLabel } from '../../lib/demo-dashboard-api'
-import type { ProductLineMonth } from '../../lib/demo-dashboard-api'
+import { monthLabel } from '../../lib/demo-dashboard-api'
 
 // The tab reads its view from the dashboard the page created: no props, fully typed.
 const consumption = useDashboardView(consumptionView)
 const format = useDashboardFormat()
 
-const year = computed(() => consumption.params.year)
-const previousYear = computed(() => String(consumption.params.year - 1))
-const money = computed<Intl.NumberFormatOptions>(() => ({
-  currency: consumption.params.currency,
-  maximumFractionDigits: 0,
-  style: 'currency',
-}))
-const compactMoney = computed<Intl.NumberFormatOptions>(() => ({
-  ...money.value,
-  notation: 'compact',
-}))
+const year = computed(() => consumption.filters.year)
+const previousYear = computed(() => String(consumption.filters.year - 1))
 const month = (row: { month: number }) => monthLabel(row.month)
-
-const tracked = consumption.productLines.filters.tracked
-const trackedSeries = computed(() =>
-  tracked.selected.map((product) => ({
-    key: product.value,
-    label: product.label,
-    value: (row: ProductLineMonth) => row[product.value] ?? null,
-  })),
-)
 </script>
 
 <template>
@@ -50,7 +31,7 @@ const trackedSeries = computed(() =>
         label="Tests billed"
         :value="(d) => d.billed"
         :compare="(d) => d.billedPrevious"
-        :format="money"
+        :format="{ currency: consumption.filters.currency }"
         :caption="(d) => `${format.integer(d.units * 0.965)} units billed`"
       />
       <NutDashboardStat
@@ -59,7 +40,7 @@ const trackedSeries = computed(() =>
         label="Average price per test"
         :value="(d) => d.billed / d.units"
         :compare="(d) => d.billedPrevious / d.unitsPrevious"
-        :format="money"
+        :format="{ currency: consumption.filters.currency }"
         caption="billed excl. tax, all versions"
       />
       <NutDashboardStat
@@ -72,7 +53,7 @@ const trackedSeries = computed(() =>
         format="percent"
         :caption="
           (d) =>
-            `${format.currency((d.billed * d.margin) / 100, consumption.params.currency, { notation: 'compact' })} over the period`
+            `${format.currency((d.billed * d.margin) / 100, consumption.filters.currency, { notation: 'compact' })} over the period`
         "
       />
       <NutDashboardStat
@@ -80,10 +61,10 @@ const trackedSeries = computed(() =>
         :source="consumption.summary"
         label="Consuming accounts"
         :value="(d) => d.accounts"
-        :delta="() => (consumption.params.account ? null : 6.1)"
+        :delta="() => (consumption.filters.account ? null : 6.1)"
         format="integer"
         :caption="
-          consumption.params.account ? 'filtered account' : 'at least one test over the period'
+          consumption.filters.account ? 'filtered account' : 'at least one test over the period'
         "
       />
     </NutDashboardGrid>
@@ -99,7 +80,7 @@ const trackedSeries = computed(() =>
         { key: 'billed', label: 'Billed', value: (row) => row.billed, color: 'series-4' },
       ]"
       :comparison="
-        consumption.params.compare
+        consumption.filters.compare
           ? { key: 'previous', label: previousYear, value: (row) => row.previous }
           : undefined
       "
@@ -124,7 +105,7 @@ const trackedSeries = computed(() =>
       size="12 xl:8"
       :source="consumption.billing"
       title="Billing and margin"
-      :subtitle="`amounts excl. tax in ${consumption.params.currency} · net margin in %`"
+      :subtitle="`amounts excl. tax in ${consumption.filters.currency} · net margin in %`"
       :x="month"
       :series="[
         { key: 'billed', label: 'Billed', value: (row) => row.billed },
@@ -137,14 +118,14 @@ const trackedSeries = computed(() =>
           color: 'series-3',
         },
       ]"
-      :y-axis="{ format: compactMoney }"
+      :y-axis="{ format: { currency: consumption.filters.currency, notation: 'compact' } }"
       :y2-axis="{ format: 'percent', max: 50 }"
     >
       <template #footer>
         <NutDashboardTotal
           label="Total billed"
           :value="consumption.billedTotal.data"
-          :format="money"
+          :format="{ currency: consumption.filters.currency }"
         />
         <NutDashboardTotal
           label="Average margin"
@@ -183,11 +164,8 @@ const trackedSeries = computed(() =>
       :tag="(row) => row.version"
       :value="(row) => row.share"
       :meta="(row) => format.percent(row.share)"
-    >
-      <template #header-right>
-        <ULink to="#" class="text-xs font-medium text-muted hover:text-default">Catalogue</ULink>
-      </template>
-    </NutDashboardBars>
+      :actions="[{ label: 'Catalogue', to: '#' }]"
+    />
 
     <NutDashboardList
       size="12 md:6 xl:4"
@@ -221,8 +199,8 @@ const trackedSeries = computed(() =>
       title="Consumption per product"
       subtitle="monthly units of tracked products"
       :x="month"
-      :series="trackedSeries"
-      :legend="false"
+      :series="consumption.productLines.controls.tracked"
+      :series-value="(row, product) => row[product] ?? null"
       :height="280"
       format="integer"
       totals
@@ -231,56 +209,7 @@ const trackedSeries = computed(() =>
         title: 'No tracked product',
         description: 'Add one or load a preset.',
       }"
-    >
-      <template #header-right>
-        <NutDashboardFilter
-          :filter="tracked"
-          variant="button"
-          icon="i-lucide-plus"
-          label="Products"
-        >
-          <template #footer>
-            <div class="my-1 h-px bg-(--ui-border-muted)" />
-            <UButton
-              v-for="preset in DASHBOARD_PRODUCT_PRESETS"
-              :key="preset.label"
-              :label="preset.label"
-              icon="i-lucide-layers"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              block
-              class="justify-start"
-              @click="tracked.value = [...preset.products].slice(0, tracked.max)"
-            />
-          </template>
-        </NutDashboardFilter>
-      </template>
-      <template v-if="tracked.selected.length" #toolbar>
-        <UBadge
-          v-for="(product, index) in tracked.selected"
-          :key="product.value"
-          color="neutral"
-          variant="outline"
-          class="gap-1.5"
-        >
-          <span
-            class="size-2 rounded-[2px]"
-            :style="{ background: `var(--nut-dash-s${(index % 6) + 1})` }"
-          />
-          {{ product.label }}
-          <UButton
-            icon="i-lucide-x"
-            size="xs"
-            variant="link"
-            color="neutral"
-            class="-me-1 p-0"
-            :aria-label="`Stop tracking ${product.label}`"
-            @click="tracked.toggle(product.value)"
-          />
-        </UBadge>
-      </template>
-    </NutDashboardLineChart>
+    />
 
     <NutDashboardStackBar
       size="12 lg:6"

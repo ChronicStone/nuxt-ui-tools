@@ -5,29 +5,29 @@ import { DASHBOARD_YEARS, demoDashboardApi } from '../../lib/demo-dashboard-api'
 
 const api = demoDashboardApi.consumption
 
-// A small dashboard fits in one file: params, queries, and derived values, typed end to end.
-const salesDashboard = defineDashboardSchema({
+// A small dashboard fits in one file: filters, queries, and derived values, typed end to end.
+const salesSchema = defineDashboardSchema({
   key: 'sales',
-  params: (p) => ({
-    year: p.enum(DASHBOARD_YEARS, { defaultValue: 2026, label: 'Year' }),
+  filters: (f) => ({
+    year: f.enum(DASHBOARD_YEARS, { defaultValue: 2026, label: 'Year' }),
   }),
-  queries: ({ background, essential, params }) => ({
+  queries: ({ background, essential, filters }) => ({
     summary: essential.query(() => ({
-      queryFn: () => api.summary({ currency: 'EUR', year: params.year }),
-      queryKey: ['sales', 'summary', params.year],
+      queryFn: () => api.summary({ currency: 'EUR', year: filters.year }),
+      queryKey: ['sales', 'summary', filters.year],
     })),
     months: essential.query({
       defaultValue: [],
       query: () => ({
-        queryFn: () => api.months({ year: params.year }),
-        queryKey: ['sales', 'months', params.year],
+        queryFn: () => api.months({ year: filters.year }),
+        queryKey: ['sales', 'months', filters.year],
       }),
     }),
     accounts: background.query({
       defaultValue: [],
       query: () => ({
-        queryFn: () => api.topAccounts({ year: params.year }),
-        queryKey: ['sales', 'accounts', params.year],
+        queryFn: () => api.topAccounts({ year: filters.year }),
+        queryKey: ['sales', 'accounts', filters.year],
       }),
     }),
   }),
@@ -36,18 +36,13 @@ const salesDashboard = defineDashboardSchema({
   }),
 })
 
-const dashboard = useDashboard(salesDashboard)
+const dashboard = useDashboard(salesSchema)
 const format = useDashboardFormat()
 </script>
 
 <template>
-  <PlaygroundContent mode="document">
-    <div class="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
-      <header class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold tracking-tight text-highlighted">Sales</h1>
-        <NutDashboardFilters :dashboard />
-      </header>
-
+  <PlaygroundContent mode="fixed">
+    <NutDashboardPage :dashboard title="Sales">
       <NutDashboardGrid>
         <NutDashboardStat
           size="12 md:4"
@@ -92,6 +87,6 @@ const format = useDashboardFormat()
           format="integer"
         />
       </NutDashboardGrid>
-    </div>
+    </NutDashboardPage>
   </PlaygroundContent>
 </template>

@@ -7,8 +7,8 @@ import { monthLabel } from '../../lib/demo-dashboard-api'
 const candidates = useDashboardView(candidatesView)
 const format = useDashboardFormat()
 
-const year = computed(() => candidates.params.year)
-const previousYear = computed(() => String(candidates.params.year - 1))
+const year = computed(() => candidates.filters.year)
+const previousYear = computed(() => String(candidates.filters.year - 1))
 const month = (row: { month: number }) => monthLabel(row.month)
 </script>
 

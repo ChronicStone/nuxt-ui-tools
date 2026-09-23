@@ -1,7 +1,9 @@
+import type { DashboardRemoteOptionsConfig } from '#ui-tools/dashboard'
+
 /**
  * Deterministic mock analytics API for the dashboard playground. Every call resolves after a short
  * random delay so staging, skeletons, and refresh indicators are visible; values only depend on the
- * request, so switching params back and forth returns identical numbers.
+ * request, so switching filters back and forth returns identical numbers.
  */
 
 export type DashboardYear = 2024 | 2025 | 2026
@@ -462,6 +464,17 @@ export const demoDashboardApi = {
     },
   },
 }
+
+/**
+ * Remote option source of the demo accounts: searchable, paginated, and able to label ids restored
+ * from the URL. `remoteTableOptions()` builds the same shape for a real endpoint.
+ */
+export const DASHBOARD_ACCOUNT_OPTIONS = {
+  load: demoDashboardApi.accounts.search,
+  pagination: { size: 12, type: 'page' },
+  resolveSelected: ({ values }) => demoDashboardApi.accounts.byIds(values),
+  search: { debounce: 200 },
+} satisfies DashboardRemoteOptionsConfig
 
 function scaleFor(input: {
   year: DashboardYear

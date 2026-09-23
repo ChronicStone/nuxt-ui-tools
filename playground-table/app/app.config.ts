@@ -2,6 +2,17 @@ export default defineAppConfig({
   nuxtUiTools: {
     // Atelier: flat white panels joined by 1px rules, light numerals, warm grey secondary text.
     dashboard: {
+      // The page on the warm canvas: header and tabs on the surface, the pinned band on the page.
+      page: {
+        description: 'text-[#6b655d] dark:text-muted',
+        header: 'bg-[var(--ex-surface)]',
+        root: 'min-h-0 flex-1 bg-[var(--ex-page)]',
+        tabs: 'bg-[var(--ex-surface)]',
+        toolbar: 'bg-[var(--ex-page)]',
+      },
+      chips: {
+        chip: 'bg-[var(--ex-chip)] text-[var(--ex-ink)]',
+      },
       card: {
         root: 'rounded-[9px] px-6 py-[22px]',
         subtitle: 'text-xs font-light text-[#6b655d]',
