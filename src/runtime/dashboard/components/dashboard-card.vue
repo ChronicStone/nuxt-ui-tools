@@ -32,9 +32,9 @@ import DashboardDataTableView from './block/dashboard-data-table.vue'
 import DashboardSkeleton from './block/dashboard-skeleton.vue'
 import DashboardLegend from './dashboard-legend.vue'
 
-// No vertical padding: a text link is no taller than the title line it sits next to.
+// No height or padding of its own: a text link is no taller than the title it sits next to.
 const HEADER_LINK: ButtonProps = {
-  class: 'p-0 font-medium',
+  class: 'h-auto p-0 font-medium',
   color: 'neutral',
   trailingIcon: 'i-lucide-chevron-right',
   variant: 'link',
