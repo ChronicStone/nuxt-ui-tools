@@ -6,11 +6,7 @@ import type {
   FormOptionValue,
   FormOptionsSource,
 } from '../../types/options'
-
-export interface FormCheckboxCardProps {
-  orientation?: 'horizontal' | 'vertical'
-  indicator?: 'start' | 'end' | 'hidden'
-}
+import type { FormChoiceCardProps } from '../choice-card/types'
 
 export interface FormCheckboxCardField<
   TContext = NonNullable<unknown>,
@@ -22,7 +18,7 @@ export interface FormCheckboxCardField<
   readonly TValue[] | null,
   TContext,
   TDeps,
-  FormCheckboxCardProps
+  FormChoiceCardProps
 > {
   options:
     | FormOptionConfig<TOption, TContext, TDeps, readonly TValue[] | null>

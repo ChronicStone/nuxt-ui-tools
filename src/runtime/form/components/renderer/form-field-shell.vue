@@ -12,8 +12,8 @@ import { useFormFieldBare } from '../../composables/use-form-field-chrome'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormField } from '../../types'
+import { getSchemaDirtyCheck } from '../../utils/controls'
 import { createFormFieldInstance } from '../../utils/field-instance'
-import { isRecord } from '../../utils/path'
 import { isFunction, isNumber, isString } from '../../utils/predicate'
 import { resolveRequired } from '../../utils/state'
 import { resolveFieldDescription, resolveFormText } from '../../utils/text'
@@ -102,23 +102,19 @@ const shellHelp = computed(() => (props.inlineLabel ? undefined : help.value))
 const dirty = computed(
   () =>
     'dirtyCheck' in props.field &&
-    (props.field.dirtyCheck === true || schemaDirtyCheck()) &&
+    (props.field.dirtyCheck === true || getSchemaDirtyCheck(form.schema.value)) &&
     form.dirtyPaths.value.includes(props.path.join('.')),
 )
-
-function schemaDirtyCheck() {
-  const schema = form.schema.value
-  if (!isRecord(schema) || !isRecord(schema.controls)) {
-    return false
-  }
-  return schema.controls.dirtyCheck === true
-}
 const open = ref<boolean>(!('collapsed' in props.field && props.field.collapsed === true))
 const collapsible = computed(() => 'collapsible' in props.field && props.field.collapsible === true)
 const fieldUi = computed(() => formUi.ui.value.field?.ui)
+// A top label and its control stack with a gap, a little wider than the Nuxt UI `mt-1` margin.
+const stacked = computed(
+  () => orientation.value === 'vertical' && Boolean(shellLabel.value || shellDescription.value),
+)
 const nuxtFieldUi = computed(() => ({
   container: mergeFormUiClass(
-    orientation.value === 'horizontal' ? 'min-w-0 flex-1' : undefined,
+    orientation.value === 'horizontal' ? 'min-w-0 flex-1' : stacked.value ? 'mt-0' : undefined,
     fieldUi.value?.container,
   ),
   description: fieldUi.value?.description,
@@ -132,7 +128,7 @@ const nuxtFieldUi = computed(() => ({
       : undefined,
     fieldUi.value?.labelWrapper,
   ),
-  root: fieldUi.value?.root,
+  root: mergeFormUiClass(stacked.value ? 'flex flex-col gap-1.5' : undefined, fieldUi.value?.root),
   wrapper: fieldUi.value?.wrapper,
 }))
 
