@@ -1,6 +1,8 @@
 <script setup lang="ts" generic="TRow">
+import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
+import type { RouteLocationRaw } from 'vue-router'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 import type { LazyTextValue } from '#ui-tools/shared/types/utils'
@@ -52,6 +54,7 @@ const {
   limit,
   rowKey,
   selected,
+  to,
   rowActions,
   onSelect,
   ui,
@@ -83,6 +86,8 @@ const {
     rowKey?: (row: TRow, index: number) => PropertyKey
     /** Rows shown as selected (the value a `select` handler stored). */
     selected?: DashboardSelected<TRow>
+    /** Makes each row a link to what this returns (rows returning `undefined` stay plain). */
+    to?: (row: TRow, index: number) => RouteLocationRaw | undefined
     /** Actions of each row: inline icon buttons and a `⋮` menu at the end of the row. */
     rowActions?: DashboardRowActions<TRow>
     /** Makes each row a button. */
@@ -143,6 +148,7 @@ const entries = computed(() =>
       raw,
       row,
       selected: selected?.(row, index) ?? false,
+      target: to?.(row, index),
       share: isNumber(share) ? formats.percent(share) : '',
       value: isNumber(raw) ? formats.resolve(format)(raw) : resolveTextValue(raw),
     }
@@ -218,7 +224,7 @@ function initials(text: string) {
           :data-selected="entry.selected || undefined"
           :class="[
             classes.row,
-            onSelect && DASHBOARD_SELECTABLE_ROW,
+            (onSelect || entry.target !== undefined) && DASHBOARD_SELECTABLE_ROW,
             entry.selected && DASHBOARD_SELECTED_ROW,
           ]"
         >
@@ -265,6 +271,14 @@ function initials(text: string) {
             :aria-label="entry.label"
             :aria-pressed="selected ? entry.selected : undefined"
             @click="onSelect({ index: entry.index, row: entry.row })"
+          />
+          <UButton
+            v-else-if="entry.target !== undefined"
+            :to="entry.target"
+            variant="link"
+            :aria-label="entry.label"
+            :class="DASHBOARD_ROW_BUTTON"
+            data-row-link
           />
           <DashboardRowActionsMenu
             v-if="entry.actions.length"

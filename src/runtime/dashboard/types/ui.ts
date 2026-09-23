@@ -223,6 +223,37 @@ export interface DashboardFiltersUi {
   reset?: string
 }
 
+/**
+ * Classes of the chips a block draws in its toolbar: the series a filter picks on a chart, and the
+ * drill-down filters (`filters`) a block is narrowed by.
+ */
+export interface DashboardChipsUi {
+  chip?: string
+  /** Color square of a series chip. */
+  swatch?: string
+  /** Filter name, before its value, on a filter chip. */
+  label?: string
+  remove?: string
+}
+
+/** Classes of `UiDashboardPage`. */
+export interface DashboardPageUi {
+  /** The page, and its scroll container: the tabs and filters stick to its top. */
+  root?: string
+  header?: string
+  title?: string
+  /** Today's date and when the data was fetched, under the title. */
+  description?: string
+  /** Page actions and the refresh control. */
+  actions?: string
+  /** Pinned band of the tabs and the filter bar. Carries `data-stuck` once content scrolls under it. */
+  toolbar?: string
+  tabs?: string
+  filters?: string
+  /** Around the current view: its padding and the space between its grids. */
+  body?: string
+}
+
 /** Classes of `UiDashboardViewTabs`. */
 export interface DashboardViewTabsUi {
   /** The strip: it scrolls sideways when the tabs overflow. */
@@ -266,4 +297,6 @@ export interface DashboardUiConfig {
   filter?: DashboardFilterUi
   filters?: DashboardFiltersUi
   viewTabs?: DashboardViewTabsUi
+  page?: DashboardPageUi
+  chips?: DashboardChipsUi
 }

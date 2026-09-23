@@ -1,4 +1,5 @@
 export type * from './filters'
+export type * from './page'
 export type * from './params'
 export type * from './resource'
 export type * from './schema'

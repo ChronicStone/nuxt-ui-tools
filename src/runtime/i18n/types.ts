@@ -423,6 +423,18 @@ export interface UiToolsDashboardMessages {
     auto: string
     off: string
   }
+  page: {
+    /** Before the time the data on screen was fetched, after the date: "updated" 3 min ago. */
+    updated: string
+    /** While the first data loads, after the date. */
+    loading: string
+  }
+  series: {
+    /** Button of a chart whose series a filter picks, listing the options. */
+    add: string
+    /** Accessible name of a series chip's remove button: "Remove {label}". */
+    remove: string
+  }
   filters: {
     /** Accessible name of a filter bar. */
     label: string

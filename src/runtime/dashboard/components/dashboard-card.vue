@@ -27,9 +27,18 @@ import type {
 import { downloadDashboardFile, resolveDashboardFileName, toDashboardCsv } from '../utils/export'
 import { resolveDashboardClasses } from '../utils/ui'
 import DashboardBlockState from './block/dashboard-block-state.vue'
+import DashboardChips from './block/dashboard-chips.vue'
 import DashboardDataTableView from './block/dashboard-data-table.vue'
 import DashboardSkeleton from './block/dashboard-skeleton.vue'
 import DashboardLegend from './dashboard-legend.vue'
+
+// No vertical padding: a text link is no taller than the title line it sits next to.
+const HEADER_LINK: ButtonProps = {
+  class: 'p-0 font-medium',
+  color: 'neutral',
+  trailingIcon: 'i-lucide-chevron-right',
+  variant: 'link',
+}
 
 const props = withDefaults(
   defineProps<
@@ -156,16 +165,26 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   return entries.flatMap((entry) => (isMenuAction(entry) ? builtInItem(entry) : [entry]))
 })
 
-// `placement` is ours; the rest are Nuxt UI button props.
+// `placement` is ours; the rest are Nuxt UI button props. A header link without its own look reads
+// as a text link with a chevron ("All ›").
 const actionButtons = computed(() => {
   const header: ButtonProps[] = []
   const footer: ButtonProps[] = []
   for (const { placement, ...button } of props.actions ?? []) {
     if (placement === 'footer') footer.push(button)
-    else header.push(button)
+    else header.push(isPlainLink(button) ? { ...HEADER_LINK, ...button } : button)
   }
   return { footer, header }
 })
+
+function isPlainLink(button: ButtonProps) {
+  return (
+    button.to !== undefined &&
+    button.variant === undefined &&
+    button.icon === undefined &&
+    button.trailingIcon === undefined
+  )
+}
 const showTable = computed<boolean>(
   () =>
     tableView.value &&
@@ -231,6 +250,19 @@ const updatedAt = computed(() => {
   const freshness = props.freshness ?? grid?.freshness.value ?? false
   return freshness && phase.value === 'content' ? props.source?.updatedAt : undefined
 })
+
+/** The drill-down filters narrowing the block, while set: one removable chip each. */
+const filterChips = computed(() =>
+  (props.filters ?? [])
+    .filter((filter) => filter.enabled && filter.changed)
+    .map((filter) => ({
+      key: filter.key,
+      label: filter.display,
+      prefix: filter.label,
+      remove: () => filter.reset(),
+      removeLabel: t('dashboard.filters.clear', { label: filter.label }),
+    })),
+)
 
 const hasHeader = computed(() =>
   Boolean(
@@ -307,7 +339,8 @@ const hasHeader = computed(() =>
       </UDropdownMenu>
     </header>
 
-    <div v-if="$slots.toolbar" :class="classes.toolbar">
+    <div v-if="$slots.toolbar || filterChips.length" :class="classes.toolbar">
+      <DashboardChips v-if="filterChips.length" :chips="filterChips" />
       <slot name="toolbar" />
     </div>
 

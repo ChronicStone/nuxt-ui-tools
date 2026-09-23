@@ -3,6 +3,7 @@ import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 import type { RouteLocationRaw } from 'vue-router'
 
 import type { LazyTextValue } from '../../shared/types/utils'
+import type { DashboardFilterHandle } from './filters'
 import type { DashboardBlockUi } from './ui'
 
 /** Formats a numeric value for axes, tooltips, legends, and totals. */
@@ -290,6 +291,11 @@ export interface DashboardBlockBaseProps {
   menu?: DashboardMenu
   /** Buttons in the header, next to the menu, or full width under the content (`placement`). */
   actions?: readonly DashboardAction[]
+  /**
+   * Filters narrowing this block, such as a drill-down value picked on another block: each one
+   * shows as a removable chip in the toolbar while it differs from its default.
+   */
+  filters?: readonly DashboardFilterHandle[]
   /**
    * Shows when the data was last fetched ("Updated 3 min ago") under the content. Inherits the
    * enclosing grid's `freshness` when omitted.

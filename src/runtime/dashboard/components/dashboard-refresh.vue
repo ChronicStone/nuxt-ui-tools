@@ -38,7 +38,7 @@ const {
   intervals?: readonly number[]
   /** Shows when the data on screen was last fetched. */
   updated?: boolean
-  /** Shows the "Refresh" label next to the icon. */
+  /** Shows the "Refresh" label next to the icon, from the `sm` breakpoint up (phones get the icon). */
   label?: boolean
   size?: 'xs' | 'sm' | 'md'
 }>()
@@ -95,6 +95,7 @@ function refresh() {
         icon="i-lucide-refresh-cw"
         :label="label ? t('dashboard.refresh.label') : undefined"
         :aria-label="label ? undefined : t('dashboard.refresh.label')"
+        :ui="{ label: 'max-sm:sr-only' }"
         :loading="dashboard.refreshing"
         @click="refresh"
       />

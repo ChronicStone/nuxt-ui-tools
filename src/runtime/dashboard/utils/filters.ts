@@ -7,7 +7,9 @@ import type {
   DashboardOptionValue,
   DashboardParamKind,
   DashboardRuntimeParam,
+  DashboardSeries,
 } from '../types'
+import { DASHBOARD_PALETTE_SIZE } from './charts'
 
 /** Params whose filter picks from a list, in a menu. The others show their value only. */
 const DASHBOARD_LISTED_KINDS: ReadonlySet<DashboardParamKind> = new Set([
@@ -17,6 +19,22 @@ const DASHBOARD_LISTED_KINDS: ReadonlySet<DashboardParamKind> = new Set([
   'options',
   'remote',
 ])
+
+/**
+ * One chart series per option a filter picks, in pick order: keyed and labelled by the option,
+ * colored by position in the palette (as the picker chips are), valued by `value(row, option)`.
+ */
+export function resolveDashboardFilterSeries<TRow, TItem extends DashboardOptionValue>(
+  filter: DashboardFilterHandle<unknown, TItem>,
+  value: ((row: TRow, item: TItem) => number | null | undefined) | undefined,
+): DashboardSeries<TRow>[] {
+  return filter.selected.map((option, index) => ({
+    color: `series-${(index % DASHBOARD_PALETTE_SIZE) + 1}`,
+    key: String(option.value),
+    label: option.label,
+    value: (row: TRow) => value?.(row, option.value) ?? null,
+  }))
+}
 
 /** The filter has a menu: options to pick from, or presets. */
 export function hasDashboardFilterMenu(filter: Pick<DashboardFilterHandle, 'kind' | 'presets'>) {

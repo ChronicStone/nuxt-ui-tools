@@ -62,6 +62,14 @@ export default defineUiToolsLocale<Messages>({
         label: 'Refresh',
         off: 'Off',
       },
+      page: {
+        loading: 'loading…',
+        updated: 'updated',
+      },
+      series: {
+        add: 'Add',
+        remove: 'Remove {label}',
+      },
       rowActions: 'Actions for {label}',
       stat: {
         goal: 'Goal {value}',

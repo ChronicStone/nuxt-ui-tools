@@ -6,6 +6,7 @@ import {
   formatDashboardDateTime,
   formatDashboardDay,
   formatDashboardRelativeTime,
+  formatDashboardToday,
   toDashboardTime,
 } from '../utils/time'
 
@@ -52,5 +53,7 @@ export function useDashboardTime() {
     /** `3 min ago`, `yesterday`, then the date. */
     relative: (value: DashboardTimeValue) =>
       formatDashboardRelativeTime(toDashboardTime(value), clock.value, code.value),
+    /** Today's date, following the clock across midnight. */
+    today: () => formatDashboardToday(clock.value, code.value),
   }
 }

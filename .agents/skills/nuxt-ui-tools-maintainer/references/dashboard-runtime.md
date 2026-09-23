@@ -38,14 +38,18 @@ composables/  use-dashboard (entry, provides the instance) → use-dashboard-sco
               use-dashboard-remote-options); use-dashboard-resource (one useQuery);
               use-dashboard-derived; use-dashboard-views; use-dashboard-api (facade only);
               use-dashboard-context (provide / inject by declaration object);
-              use-dashboard-block, use-dashboard-chart, use-dashboard-format (public formatters +
-              `resolve`), use-dashboard-time (one shared clock), use-dashboard-ui (app config +
-              grid context) (blocks)
-components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table view, expand
-              dialog, freshness), blocks, controls: dashboard-filters.vue (bar),
-              dashboard-filter.vue (pill / button) + filter/dashboard-filter-menu.vue (list),
-              dashboard-view-tabs.vue, dashboard-tabs.vue, dashboard-refresh.vue,
-              block/ (state, skeleton, data-table, ring, row-actions),
+              use-dashboard-block, use-dashboard-chart, use-dashboard-series-picker (series from a
+              filter + its chips), use-dashboard-format (public formatters + `resolve`),
+              use-dashboard-time (one shared clock), use-dashboard-ui (app config + grid context)
+              (blocks)
+components/   dashboard-page.vue (the page: header, date line, actions + refresh, the pinned
+              band of tabs and filters with its stuck marker, the current view's slot),
+              dashboard-card.vue (block shell: chrome, phases, menu, actions with the header link
+              default, drill-down filter chips, table view, expand dialog, freshness), blocks,
+              controls: dashboard-filters.vue (bar), dashboard-filter.vue (pill / button) +
+              filter/dashboard-filter-menu.vue (list), dashboard-view-tabs.vue,
+              dashboard-tabs.vue, dashboard-refresh.vue,
+              block/ (state, skeleton, data-table, ring, row-actions, chips, series-picker),
               charts/renderer.ts (the only seam allowed to import unovis) + charts/unovis/*
               (xy-layers.ts resolves one axis into unovis inputs; dashboard-xy-marks.vue draws
               an axis' areas, lines, markers, and references)
@@ -243,6 +247,13 @@ components/   dashboard-card.vue (shell: chrome, phases, menu, actions, table vi
   handles, auto-refresh (URL, schema default, `refetchInterval`), comparison params.
 - `test/dom/dashboard/conditions.test.ts` — `enabled` on queries, views, and params, the tab strip
   of a single enabled view, blocks of disabled sources rendering nothing.
+- `test/dom/dashboard/page.test.ts` — the page: header, date line, actions, refresh, tabs only for
+  two views or more, the filter bar, the current view's slot and the default slot, opt-outs.
+- `test/dom/dashboard/block-controls.test.ts` — chart series picked by a filter (chips in series
+  colors, picker buttons, removal, empty state), drill-down filter chips, header link defaults, and
+  list row links.
+- `test/browser/dashboard/page-layout.test.ts` (three engines) — the page scrolls on its own, pins
+  the band, and flips `data-stuck` both ways.
 - `test/browser/dashboard/grid-layout.test.ts` (Chromium, Firefox, WebKit) — the grid measured in a
   real engine: span widths against the CSS-grid model, row breaks, proportional fill when blocks
   hide (and back), `fill: false`, short rows, responsive columns and spans, full-row fallbacks, no
