@@ -8,7 +8,7 @@ import { resolveTextValue } from '#ui-tools/shared/utils/render'
 import type { DashboardTab } from '../types'
 
 /**
- * Tab strip for dashboard cards, bound with `v-model`. Bind it to a widget param to switch what a
+ * Tab strip for dashboard cards, bound with `v-model`. Bind it to a query filter to switch what a
  * block fetches (the tab lands in the URL, and the block refreshes in place), or to a local ref to
  * switch between blocks: render only the active one, so the others' deferred queries stay idle.
  */

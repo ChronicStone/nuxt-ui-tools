@@ -27,9 +27,18 @@ import type {
 import { downloadDashboardFile, resolveDashboardFileName, toDashboardCsv } from '../utils/export'
 import { resolveDashboardClasses } from '../utils/ui'
 import DashboardBlockState from './block/dashboard-block-state.vue'
+import DashboardChips from './block/dashboard-chips.vue'
 import DashboardDataTableView from './block/dashboard-data-table.vue'
 import DashboardSkeleton from './block/dashboard-skeleton.vue'
 import DashboardLegend from './dashboard-legend.vue'
+
+// No height or padding of its own: a text link is no taller than the title it sits next to.
+const HEADER_LINK: ButtonProps = {
+  class: 'h-auto p-0 font-medium',
+  color: 'neutral',
+  trailingIcon: 'i-lucide-chevron-right',
+  variant: 'link',
+}
 
 const props = withDefaults(
   defineProps<
@@ -80,7 +89,6 @@ const block = useDashboardBlock({
   activation: () => props.activation,
   empty: () => props.isEmpty,
   root,
-  rows: () => props.rows,
   size: () => props.size,
   source: () => props.source,
 })
@@ -127,7 +135,7 @@ const title = computed(() => resolveTextValue(props.title))
 const subtitle = computed(() => resolveTextValue(props.subtitle))
 const phase = computed(() => block.phase.value)
 const pending = computed(() => phase.value === 'loading' || phase.value === 'idle')
-const busy = computed(() => phase.value === 'loading' || block.refreshing.value)
+const busy = computed(() => phase.value === 'loading' || block.fetching.value)
 
 const builtInActions: readonly DashboardMenuAction[] = ['table', 'csv', 'expand']
 const tableView = shallowRef<boolean>(false)
@@ -157,16 +165,26 @@ const menuItems = computed<DropdownMenuItem[]>(() => {
   return entries.flatMap((entry) => (isMenuAction(entry) ? builtInItem(entry) : [entry]))
 })
 
-// `placement` is ours; the rest are Nuxt UI button props.
+// `placement` is ours; the rest are Nuxt UI button props. A header link without its own look reads
+// as a text link with a chevron ("All ›").
 const actionButtons = computed(() => {
   const header: ButtonProps[] = []
   const footer: ButtonProps[] = []
   for (const { placement, ...button } of props.actions ?? []) {
     if (placement === 'footer') footer.push(button)
-    else header.push(button)
+    else header.push(isPlainLink(button) ? { ...HEADER_LINK, ...button } : button)
   }
   return { footer, header }
 })
+
+function isPlainLink(button: ButtonProps) {
+  return (
+    button.to !== undefined &&
+    button.variant === undefined &&
+    button.icon === undefined &&
+    button.trailingIcon === undefined
+  )
+}
 const showTable = computed<boolean>(
   () =>
     tableView.value &&
@@ -233,6 +251,19 @@ const updatedAt = computed(() => {
   return freshness && phase.value === 'content' ? props.source?.updatedAt : undefined
 })
 
+/** The drill-down filters narrowing the block, while set: one removable chip each. */
+const filterChips = computed(() =>
+  (props.filters ?? [])
+    .filter((filter) => filter.enabled && filter.changed)
+    .map((filter) => ({
+      key: filter.key,
+      label: filter.display,
+      prefix: filter.label,
+      remove: () => filter.reset(),
+      removeLabel: t('dashboard.filters.clear', { label: filter.label }),
+    })),
+)
+
 const hasHeader = computed(() =>
   Boolean(
     title.value ||
@@ -247,6 +278,7 @@ const hasHeader = computed(() =>
 
 <template>
   <section
+    v-if="!block.hidden.value"
     ref="root"
     :style="block.style.value"
     :data-phase="phase"
@@ -255,8 +287,9 @@ const hasHeader = computed(() =>
     :class="classes.root"
   >
     <div
-      v-if="block.refreshing.value"
+      v-if="block.fetching.value"
       aria-hidden="true"
+      data-progress
       class="pointer-events-none absolute inset-x-0 top-0 h-0.5 overflow-hidden"
     >
       <div class="nut-dash-progress h-full w-1/3 rounded-full bg-primary" />
@@ -306,7 +339,8 @@ const hasHeader = computed(() =>
       </UDropdownMenu>
     </header>
 
-    <div v-if="$slots.toolbar" :class="classes.toolbar">
+    <div v-if="$slots.toolbar || filterChips.length" :class="classes.toolbar">
+      <DashboardChips v-if="filterChips.length" :chips="filterChips" />
       <slot name="toolbar" />
     </div>
 
@@ -321,6 +355,7 @@ const hasHeader = computed(() =>
         v-else-if="phase === 'error' || phase === 'empty'"
         :kind="phase"
         :empty
+        :retrying="block.fetching.value"
         @retry="block.retry"
       />
       <div v-else aria-hidden="true" :class="phase === 'loading' && 'nut-dash-shimmer'">

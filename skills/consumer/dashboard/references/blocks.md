@@ -4,20 +4,58 @@ Every block takes `:source` (a query or derived resource) and infers its data ty
 accessors like `(row) => row.used` are typed without annotations. Components are registered with the
 module prefix (`Ui` by default).
 
+## The Page
+
+`UiDashboardPage` is a whole dashboard page, and the only thing a page template needs:
+
+```vue
+<UiDashboardPage
+  :dashboard
+  :title="t('Dashboard')"
+  :actions="[{ label: 'Export', icon: 'i-lucide-download', onClick: exportAll }]"
+>
+  <template #consumption><ConsumptionTab /></template>
+  <template #certifications><CertificationsTab /></template>
+</UiDashboardPage>
+```
+
+- **Header:** the title; under it, today's date and when the data on screen was fetched
+  (`description` replaces the line, `false` removes it); `actions` (Nuxt UI buttons, icon only on
+  phones when they have one) and the refresh control (`refresh: false` removes it).
+- **Pinned band:** the view tabs (while two views or more are enabled) and the filter bar. They stay
+  pinned while the page scrolls and draw a shadow once content passes under them (`data-stuck`);
+  `sticky: false`, `tabs: false`, and `filters: false` opt out.
+- **Body:** the current view, from the slot named after it (`#consumption`), or the default slot
+  (`{ view }`) for a dashboard without views or a view without its own slot. The body owns the
+  padding and the space between grids, so views are just grids of blocks.
+- **Scrolling:** the page is its own scroll container, so give it a height (`h-full` inside a layout
+  that sizes its main area).
+- **Slots:** `#title`, `#description`, `#actions`, `#tabs`, `#filters` replace their part (for
+  example a `UiDashboardFilters` with a custom pill).
+- **Theming:** `ui` parts `root`, `header`, `title`, `description`, `actions`, `toolbar`, `tabs`,
+  `filters`, `body`, also `appConfig.nuxtUiTools.dashboard.page`.
+
 ## Shared Props
 
 | Prop                | Type                                                                | Notes                                                    |
 | ------------------- | ------------------------------------------------------------------- | -------------------------------------------------------- |
 | `title`, `subtitle` | `LazyTextValue`                                                     | card header                                              |
 | `size`              | responsive string                                                   | grid span: `"12 md:6 xl:4"`; defaults to the full row    |
-| `rows`              | responsive string                                                   | grid row span                                            |
 | `card`              | `boolean`                                                           | `false` removes border, padding, background              |
 | `activation`        | `'visible' \| 'mount' \| 'manual'`                                  | when a deferred source is activated; default `'visible'` |
 | `empty`             | `{ icon?, title?, description? }`                                   | empty state content; defaults to a localized message     |
 | `menu`              | `boolean \| entries[] \| (context) => entries[]`                    | card menu (see below); inherits the grid's `menu`        |
 | `actions`           | `(ButtonProps & { placement?: 'header' \| 'footer' })[]`            | header buttons, or full-width buttons under the content  |
+| `filters`           | filter controls                                                     | drill-down filters narrowing the block, as chips         |
 | `freshness`         | `boolean`                                                           | "Updated 3 min ago" under the content; inherits the grid |
 | `ui`                | `{ root, header, title, subtitle, actions, toolbar, body, footer }` | class overrides, plus the block's own parts (see below)  |
+
+A header action with a `to` and no look of its own (`variant`, `icon`, `trailingIcon`) reads as a
+text link with a chevron: `:actions="[{ label: 'All', to: '/accounts' }]"` draws "All ›".
+
+`filters` lists the filters narrowing a block, such as a drill-down value picked on another block.
+While one differs from its default, the toolbar shows it as a chip ("Day 12 Sep ✕") whose button
+resets it: `:filters="[dashboard.controls.day]"`.
 
 Row and chart blocks also emit `select` with `{ row, index }` (index in the source data):
 
@@ -25,7 +63,7 @@ Row and chart blocks also emit `select` with `{ row, index }` (index in the sour
 <UiDashboardBarChart
   :source="dashboard.daily"
   ...
-  @select="({ row }) => (dashboard.params.day = row.day)"
+  @select="({ row }) => (dashboard.filters.day = row.day)"
 />
 <UiDashboardTable
   :source="dashboard.accounts"
@@ -45,8 +83,8 @@ other bars, line charts draw a band behind the picked x, donuts fade the other s
 ```vue
 <UiDashboardBarChart
   :source="dashboard.daily"
-  :selected="(row) => row.day === dashboard.params.day"
-  @select="({ row }) => (dashboard.params.day = row.day)"
+  :selected="(row) => row.day === dashboard.filters.day"
+  @select="({ row }) => (dashboard.filters.day = row.day)"
   ...
 />
 ```
@@ -68,6 +106,39 @@ sit above the row's select button, so both stay clickable; the table gives them 
   ...
 />
 ```
+
+## Number Formats
+
+Every `format` prop (stats, charts and their axes, lists, bars, tables, totals…) takes:
+
+- a preset, in the dashboard locale: `'number'` (the default: grouped, one decimal at most, compact
+  from 10,000), `'integer'`, `'decimal'`, `'compact'`, `'percent'` (a share out of 100: `57` →
+  `57%`), `'ratio'` (a share out of 1), `'delta'` (signed percent change), `'points'` (signed
+  difference of percentages: `+2.1 pts`), `'signed'` (`+3`)
+- `Intl.NumberFormat` options; a `currency` without a `style` formats whole amounts in that
+  currency: `{ currency: 'EUR' }` → `12 345 €`, `{ currency, notation: 'compact' }` for an axis
+- a function `(value: number) => string`
+
+```vue
+<UiDashboardStat :source="summary" label="Units" :value="(s) => s.units" format="integer" />
+<UiDashboardBarChart ... :format="{ currency: consumption.filters.currency }" />
+```
+
+`useDashboardFormat()` (auto-imported) returns the same formatters for your own text, so captions
+and labels read like the blocks: `number`, `integer`, `decimal`, `compact`, `percent`, `ratio`,
+`delta`, `points`, `signed`, `currency(value, code, options?)` (rounded to units unless `options`
+say otherwise), `month(1–12 | Date, 'short' | 'long')` (capitalized: "Mar"), and
+`resolve(format)` (any `format` value → a function). Number formatters print "—" for `null`,
+`undefined`, and `NaN`, like `UiDashboardTotal` does for a missing `value`, so templates need no
+fallback: `format.ratio(summary.rates.completion)`.
+
+```ts
+const format = useDashboardFormat()
+const caption = (s: Summary) => `${format.integer(s.previous)} in ${year - 1}`
+```
+
+Formatters follow the ui-tools locale (Nuxt UI's by default) and are built once per locale. Digit
+groups use no-break spaces, so values never wrap and never lose their spacing in bold fonts.
 
 ## Card Menu, Freshness, And Expand
 
@@ -137,10 +208,14 @@ Shared slots:
 
 States are automatic:
 
+- nothing at all while the source is `disabled` (its `enabled` condition does not hold, see
+  schema.md): the block leaves the grid, which closes up around it
 - skeleton while `idle` / `loading`, shaped like the block (bars, lines, ring, rows, funnel…); one
   highlight sweeps across it, animated on the compositor, and real values are not in the DOM
 - a retryable error scoped to the block, and an empty state (`empty` prop)
-- a thin progress bar while stale data refetches; values stay readable
+- a thin progress bar at the top whenever a request is in flight, whatever the block shows: a
+  refetch of its data (values stay readable), a retry after an error (the retry button spins until
+  it settles), or the first load
 - content fades in once when it replaces a skeleton
 
 ## Layout
@@ -157,7 +232,13 @@ States are automatic:
 
 `variant="cards"` (default) lays out separate cards with `gap` (any CSS length, default `1rem`).
 `variant="panels"` draws one bordered surface whose cells are separated by 1px rules; blocks inside
-drop their own border and radius. Keep panel rows full, or the empty cell shows the rule color.
+drop their own border and radius.
+
+Rows close up. A cell takes the width its `size` spans, and rows break where the columns say; a row
+that is not full (a short last row, or a block hidden because its source is `disabled`) shares the
+free width between its cells in proportion to their span. A five-tile KPI strip that loses one tile
+shows four equal tiles; an `8 + 4` row that loses the `4` gives the `8` the whole row. A grid whose
+blocks all render nothing collapses. `fill: false` keeps every cell at its span instead.
 
 `columns` and `size` use the responsive string syntax (`"a md:b xl:c"`), resolved through
 `nuxt-viewport` breakpoints.
@@ -184,7 +265,7 @@ others' deferred queries stay idle.
 <UiDashboardTable :source="dashboard.accounts" ...>
   <template #toolbar>
     <UiDashboardTabs
-      v-model="dashboard.accounts.params.segment"
+      v-model="dashboard.accounts.filters.segment"
       :items="[
         { value: 'all', label: 'All' },
         { value: 'company', label: 'Companies', count: companies },
@@ -217,6 +298,8 @@ Variants, all optional:
 - `compare: (data) => number | null` — the same measure over the comparison period. It gives the
   default `delta` (the change from it) and caption ("vs 1,204 previous period"); `compareLabel`
   replaces that caption, as text or `(previous) => text` from the formatted previous value.
+  `compareMode="difference"` compares by difference instead of relative change: `+12` accounts, or
+  `+2.1 pts` when `format` is `'percent'` / `'ratio'` (`deltaFormat` still wins).
 
 Slots `#value`, `#caption`. `ui` parts: `label`, `value`, `meta`, `delta`, `mark`, `caption`,
 `status`, `trend`, `progress`, `goal`.
@@ -236,6 +319,26 @@ whose bounds and ticks stay round, with `0` always a tick.
 - A series' `compare: (row, index) => number | null` adds the same measure over the comparison
   period, right after it: a faded bar (a dashed line for line and area series), in the legend,
   tooltip, table view, and CSV. `compareLabel` names it (default "<label> (previous period)").
+- `totals` (bar, line, and combo charts) — footer totals of the solid series, formatted like their
+  axis: `true` / `'sum'` adds each series up, `'average'` averages it. Footer slot content follows
+  them.
+
+**Series picked by a filter.** On bar and line charts, `series` also takes the control of a
+multiple filter: each option it picks becomes a series (keyed and labelled by the option, colored in pick
+order), valued by `seriesValue(row, option)`. The chart then draws the picker in its header ("+ Add"
+lists the options, "Presets" applies the filter's presets) and one removable chip per series, in the
+series' color, in place of the legend. Removing every pick shows the empty state.
+
+```vue
+<UiDashboardLineChart
+  :source="usage"
+  title="Tracked products"
+  :x="(row) => format.month(row.month)"
+  :series="usage.controls.tracked"
+  :series-value="(row, product) => row.units[product]"
+  format="integer"
+/>
+```
 
 `UiDashboardLineChart` — same as bars (without `highlight` and `labels`), plus `area` (fill under
 every series; comparison areas are fainter). Solid series get point markers; `dashed: true` (or
@@ -252,7 +355,9 @@ share in percent by default), `center: (rows) => value`, `centerLabel`, `layout:
 `selected` (the other segments and legend entries fade).
 
 `UiDashboardList` — ranked rows: `label`, `description`, `value` + `format`, `percent`, `delta`,
-`leading: 'avatar' | 'code' | 'ring'` with `leadingText`, `icon`, `limit`, `rowKey`. `ring` draws a
+`leading: 'avatar' | 'code' | 'ring'` with `leadingText`, `icon`, `limit`, `rowKey`, and
+`to: (row, index) => RouteLocationRaw` (each row is a link: it navigates, and opens in a new tab with
+the usual keys). `ring` draws a
 progress ring filled to `percent`, the share inside it, colored by `color: (row, index) => color`
 (palette order by default). Slots `#item`, `#trailing`. `ui` parts: `row`, `avatar`, `code`, `ring`,
 `label`, `description`, `share`, `delta`, `value`.
@@ -306,7 +411,7 @@ good decreases), `percent`, `bar` (the number with an inline bar scaled to the c
 `max`, colored by `color`). Also `format`, `align`, `width`, `sortable` (default `true`), `class`.
 Header clicks cycle a column through its natural direction (numbers descending, text ascending),
 the opposite one, then source order; `v-model:sort` (`{ key, direction } | null`) keeps it in
-your state — bind it to widget params to put it in the URL. Sorting happens before `limit`; nulls
+your state — bind it to query filters to put it in the URL. Sorting happens before `limit`; nulls
 sort last. `maxHeight` (px) scrolls the rows under a sticky header. The menu offers `csv` and
 `expand` (the table is already a table). `ui` parts: `wrapper`, `table`, `head`, `th`, `row`, `td`,
 `bar` (the card's "view as table" uses the same `table` classes).
@@ -375,14 +480,23 @@ custom cards; pass `source` to get its states, `isEmpty` to flag emptiness, `tab
 table and CSV actions, `expandable` / `viewAsTable` to turn those actions off.
 
 `UiDashboardLegend` (`items: { key, label, color, dashed? }[]`) and `UiDashboardTotal`
-(`label`, `value`) are the header and footer pieces used by the blocks.
+(`label`, `value`, `format`: numbers are formatted, text shows as is) are the header and footer
+pieces used by the blocks:
+
+```vue
+<template #footer>
+  <UiDashboardTotal label="Billed" :value="summary.billed" :format="{ currency }" />
+</template>
+```
+
 `UiDashboardRelativeTime` (`value: Date | number | string | null`) renders a `<time>` relative to
 now, kept current, with the full date as its title.
 
 `UiDashboardRefresh` — the refresh control of a dashboard header: `:dashboard` (the object from
 `useDashboard`), a refresh button, an auto-refresh menu (`intervals` in seconds, default
 `[0, 30, 60, 300, 900]`; it writes `dashboard.autoRefresh`, kept in the URL), and "Updated 3 min ago"
-(`updated`, default `true`). `label` shows the button text, `size` sizes both buttons.
+(`updated`, default `true`). `label` shows the button text from the `sm` breakpoint up, `size` sizes
+both buttons. `UiDashboardPage` renders it for you.
 
 Chart blocks take `xLabel` for the category column of the table view and CSV (default: "Category").
 
@@ -433,7 +547,7 @@ export default defineAppConfig({
 
 Sections: `card` (also `menu` and `freshness` parts), `grid`, `stat`, `legend`, `total`, `list`,
 `bars`, `pairedBars`, `funnel`, `stackBar`, `donut`, `alerts`, `feed`, `table`, `state` (empty /
-error content).
+error content), `filter`, `filters`, `viewTabs` (see filters.md).
 
 ## Motion And Performance
 

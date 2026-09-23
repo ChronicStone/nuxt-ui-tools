@@ -45,7 +45,9 @@ describe('dashboard blocks', () => {
     const card = wrapper.find('[data-phase]')
     expect(card.attributes('data-phase')).toBe('loading')
     expect(card.attributes('aria-busy')).toBe('true')
-    expect(card.attributes('style')).toContain('grid-column: span 2 / span 2')
+    // A 2-column cell of a 4-column grid: it grows by its span when its row is not full.
+    expect(card.attributes('style')).toContain('flex-grow: 2')
+    expect(card.attributes('style')).toContain('flex-basis: calc((100% - 3 * 1rem) / 4 * 2')
     expect(wrapper.text()).toContain('Revenue')
     expect(wrapper.text()).not.toContain('€')
 
@@ -64,13 +66,41 @@ describe('dashboard blocks', () => {
     await flush()
     expect(wrapper.find('[data-state="error"]').exists()).toBe(true)
 
+    expect(wrapper.find('[data-progress]').exists()).toBe(false)
     await wrapper.find('[data-state="error"] button').trigger('click')
     await flush()
     expect(sources.summary.calls).toHaveLength(2)
+    // Never loaded: the retry starts over, with the skeleton and the progress bar.
+    expect(wrapper.find('[data-phase]').attributes('data-phase')).toBe('loading')
+    expect(wrapper.find('[data-progress]').exists()).toBe(true)
     sources.summary.calls[1]?.resolve({ previous: 1, revenue: 42 })
     await flush()
     expect(wrapper.find('[data-state="error"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('42')
+  })
+
+  it('shows a retry in flight when the error came after data', async () => {
+    const { dashboard, flush, sources, wrapper } = await mountScenario('stat')
+    sources.summary.calls[0]?.resolve({ previous: 1, revenue: 42 })
+    await flush()
+    void dashboard.refresh().catch(() => undefined)
+    await flush()
+    sources.summary.calls[1]?.reject(new Error('boom'))
+    await flush()
+    expect(wrapper.find('[data-state="error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-retry]').trigger('click')
+    await flush()
+    // TanStack keeps a query that has data in `error` while it refetches: without the bar and the
+    // busy button, the click would look like it did nothing.
+    expect(wrapper.find('[data-state="error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-progress]').exists()).toBe(true)
+    expect(wrapper.find('[data-retry]').attributes('data-loading')).toBe('true')
+
+    sources.summary.calls[2]?.resolve({ previous: 1, revenue: 43 })
+    await flush()
+    expect(wrapper.find('[data-progress]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('43')
   })
 
   it('renders ranked list rows', async () => {
@@ -122,7 +152,7 @@ describe('dashboard blocks', () => {
     const { wrapper } = await mountScenario('panels')
 
     const [panel, standalone] = wrapper.findAll('section[data-phase]')
-    expect(wrapper.find('[data-variant="panels"]').classes()).toContain('gap-px')
+    expect(wrapper.find('[data-variant="panels"]').attributes('style')).toContain('gap: 1px')
     expect(panel?.attributes('data-panel')).toBe('true')
     expect(panel?.classes()).toEqual(expect.arrayContaining(['rounded-none', 'border-0', 'px-6']))
     // Blocks forward `card`; an absent boolean prop must not turn the chrome off.

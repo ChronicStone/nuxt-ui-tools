@@ -1,6 +1,4 @@
 import type {
-  RemoteCursorOptionsPage,
-  RemoteOptionsPage,
   RemoteOptionsPageRequest,
   RemoteOptionsPagination,
   RemoteOptionsResult,
@@ -125,15 +123,6 @@ export interface FormOptionConfig<
   disableOnLoading?: boolean
 }
 
-/** @deprecated Use `RemoteOptionsPage` from `#ui-tools/shared`. Kept for public type compatibility. */
-export type FormRemoteOptionsPage<TOption> = RemoteOptionsPage<TOption>
-
-/** @deprecated Use `RemoteCursorOptionsPage` from `#ui-tools/shared`. Kept for public type compatibility. */
-export type FormRemoteCursorOptionsPage<TOption> = RemoteCursorOptionsPage<TOption>
-
-/** @deprecated Use `RemoteOptionsResult` from `#ui-tools/shared`. Kept for public type compatibility. */
-export type FormRemoteOptionsResult<TOption> = RemoteOptionsResult<TOption>
-
 export interface FormRemoteOptionsRequest<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
@@ -159,12 +148,6 @@ export interface FormRemoteSelectedRequest<
 }
 
 export type FormRemoteSource<TResult> = FormQueryOptions<TResult> | Promise<TResult>
-
-/** @deprecated Use `RemoteOptionsPagination` from `#ui-tools/shared`. Kept for public type compatibility. */
-export type FormRemotePagination = RemoteOptionsPagination
-
-/** @deprecated Use `RemoteOptionsSearch` from `#ui-tools/shared`. Kept for public type compatibility. */
-export type FormRemoteSearch = RemoteOptionsSearch
 
 /**
  * Remote option configuration: server-side search, pagination, and selected-value hydration.

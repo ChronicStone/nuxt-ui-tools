@@ -21,6 +21,27 @@ export default defineUiToolsLocale<Messages>({
         series: '{label} (previous period)',
         year: 'Previous year',
       },
+      filters: {
+        all: 'All',
+        clear: 'Clear {label}',
+        clearSelection: 'Clear selection',
+        empty: 'No results',
+        label: 'Filters',
+        loadError: 'Options could not be loaded',
+        loading: 'Loading…',
+        more: '{label} +{count}',
+        no: 'No',
+        presets: 'Presets',
+        reset: 'Reset',
+        retry: 'Retry',
+        search: 'Search…',
+        views: 'Views',
+        yes: 'Yes',
+      },
+      format: {
+        pointsOne: '{value} pt',
+        pointsOther: '{value} pts',
+      },
       freshness: {
         prefix: 'Updated',
         updated: 'Updated {time}',
@@ -40,6 +61,14 @@ export default defineUiToolsLocale<Messages>({
         auto: 'Auto-refresh',
         label: 'Refresh',
         off: 'Off',
+      },
+      page: {
+        loading: 'loading…',
+        updated: 'updated',
+      },
+      series: {
+        add: 'Add',
+        remove: 'Remove {label}',
       },
       rowActions: 'Actions for {label}',
       stat: {

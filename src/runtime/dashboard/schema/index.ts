@@ -1,15 +1,16 @@
+import type { LazyTextValue } from '../../shared/types/utils'
 import type {
+  DashboardCondition,
   DashboardDeriveMap,
-  DashboardDerivedResources,
   DashboardEmptyMap,
+  DashboardFilterMap,
   DashboardKeyError,
-  DashboardParamMap,
   DashboardReservedKey,
   DashboardSchema,
   DashboardScopeGuard,
   DashboardScopeInput,
   DashboardSourceMap,
-  DashboardViewBuilder,
+  DashboardView,
   DashboardViewMap,
 } from '../types'
 
@@ -22,39 +23,32 @@ type DashboardViewsGuard<TQueries, TDerive, TViews> = [
     }
 
 /**
- * Declares a dashboard: typed URL-synced params, staged queries, derived values, and optional
- * views (tabs). Nothing runs here — `useDashboard(schema)` instantiates it.
+ * Declares a dashboard: its filters, staged queries and derived values, and its views (tabs).
+ * Nothing runs here — `useDashboard()` instantiates it.
+ *
+ * Wrap it in a function taking what the dashboard is about (an account, the workspace): the page
+ * passes it, and the function hands it on to its views. Filters are the state the user controls;
+ * they are declared inline, with the `f` builder.
  *
  * Keys are checked at compile time: a query, derived value, or view named after a runtime member
- * (`params`, `options`, `state`, `refreshing`, `refresh`, `updatedAt`, `autoRefresh`, `view`,
- * `schema`) or after a sibling is a type error.
+ * (`filters`, `controls`, `filtered`, `resetFilters`, `state`, `refreshing`, `refresh`, `updatedAt`,
+ * `autoRefresh`, `view`, `schema`) or after a sibling is a type error.
  *
  * @example
  * ```ts
- * const schema = defineDashboardSchema({
- *   key: 'sales',
- *   params: (p) => ({ period: p.enum([7, 30, 90], { defaultValue: 30 }) }),
- *   queries: ({ essential, background, params }) => ({
- *     summary: essential.query(() => ({
- *       queryKey: ['sales', 'summary', params.period],
- *       queryFn: () => api.sales.summary({ days: params.period }),
- *     })),
- *     channels: background.query({
- *       defaultValue: [],
- *       query: () => ({
- *         queryKey: ['sales', 'channels', params.period],
- *         queryFn: () => api.sales.channels({ days: params.period }),
- *       }),
- *     }),
- *   }),
- *   derive: ({ data }) => ({
- *     channelCount: () => data.channels.length,
- *   }),
- * })
+ * export function accountSchema(params: { accountId: string }) {
+ *   return defineDashboardSchema({
+ *     key: 'account',
+ *     views: {
+ *       activity: accountActivityView(params),
+ *       invoices: accountInvoicesView(params),
+ *     },
+ *   })
+ * }
  * ```
  */
 export function defineDashboardSchema<
-  const TParams extends DashboardParamMap = DashboardEmptyMap,
+  const TFilters extends DashboardFilterMap = DashboardEmptyMap,
   const TQueries extends DashboardSourceMap = DashboardEmptyMap,
   const TDerive extends DashboardDeriveMap = DashboardEmptyMap,
   const TViews extends DashboardViewMap = DashboardEmptyMap,
@@ -70,17 +64,66 @@ export function defineDashboardSchema<
      */
     autoRefresh?: number
     /**
-     * Views (tabs). Each view owns params and queries; queries of a view never fetch until the
-     * view is opened once, then stay warm.
+     * Views (tabs), each declared with `defineDashboardView`. A view's queries never fetch until
+     * the view is opened once, then stay warm.
      */
-    views?: (
-      view: DashboardViewBuilder<TParams, TQueries & DashboardDerivedResources<TDerive>>,
-    ) => TViews
+    views?: TViews
     /** View shown when the URL does not select one. Defaults to the first declared view. */
     defaultView?: NoInfer<keyof TViews & string>
-  } & DashboardScopeInput<DashboardEmptyMap, DashboardEmptyMap, TParams, TQueries, TDerive> &
+  } & DashboardScopeInput<TFilters, TQueries, TDerive> &
     DashboardScopeGuard<TQueries, TDerive> &
     DashboardViewsGuard<TQueries, TDerive, TViews>,
-): DashboardSchema<TParams, TQueries, TDerive, TViews> {
+): DashboardSchema<NoInfer<TFilters>, NoInfer<TQueries>, NoInfer<TDerive>, NoInfer<TViews>> {
   return schema
+}
+
+/**
+ * Declares one view (tab), self-contained: its label, its filters, its queries and derived values.
+ * Wrap it in a function taking what it needs from the dashboard's input, and give it its own file.
+ *
+ * A filter key names one state across the dashboard: two views declaring `year` share its value,
+ * so it survives a tab change. Components under the dashboard get the typed view handle with
+ * `useDashboardView(consumptionView)`.
+ *
+ * @example
+ * ```ts
+ * export function consumptionView(params: { workspace: Workspace }) {
+ *   const { $api, $i18n } = useNuxtApp()
+ *   return defineDashboardView({
+ *     label: () => $i18n.t('dashboard.tabs.consumption'),
+ *     enabled: () => canRead(params.workspace, 'consumption'),
+ *     filters: (f) => ({
+ *       year: f.enum([2025, 2026], { defaultValue: 2026, label: () => $i18n.t('filters.year') }),
+ *     }),
+ *     queries: ({ essential, filters }) => {
+ *       const overview = () => $api.consumption.queryOptions({ query: { year: filters.year } })
+ *       return {
+ *         summary: essential.query({ query: overview, select: (data) => data.summary }),
+ *         months: essential.query({ query: overview, select: (data) => data.months }),
+ *       }
+ *     },
+ *   })
+ * }
+ * ```
+ */
+export function defineDashboardView<
+  const TFilters extends DashboardFilterMap = DashboardEmptyMap,
+  const TQueries extends DashboardSourceMap = DashboardEmptyMap,
+  const TDerive extends DashboardDeriveMap = DashboardEmptyMap,
+>(
+  view: {
+    /** Tab label. The lazy form keeps it translation-friendly. */
+    label?: LazyTextValue
+    /**
+     * Availability of the view, read lazily: a disabled view has no tab, is never the current view
+     * (the URL falls back to an enabled one), and its queries report `disabled`.
+     */
+    enabled?: DashboardCondition
+  } & DashboardScopeInput<TFilters, TQueries, TDerive> &
+    DashboardScopeGuard<TQueries, TDerive>,
+): DashboardView<NoInfer<TFilters>, NoInfer<TQueries>, NoInfer<TDerive>> {
+  // The result is `NoInfer`: declared inline in a schema's `views`, the view would otherwise take
+  // the contextual `DashboardViewMap` as an inference candidate, and a view without queries would
+  // infer the open map instead of an empty one.
+  return view
 }

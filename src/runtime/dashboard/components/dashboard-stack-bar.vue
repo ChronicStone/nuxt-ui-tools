@@ -95,7 +95,7 @@ const parts = computed(() => {
       label: resolveTextValue(label(row)),
       row,
       share,
-      text: text ? resolveTextValue(text(row, share)) : formats.percent.value(share),
+      text: text ? resolveTextValue(text(row, share)) : formats.percent(share),
       width: `${share}%`,
     }
   })
@@ -110,8 +110,8 @@ function tabulate(): DashboardDataTable {
     ],
     rows: parts.value.map((part) => [
       toDashboardCell(part.label),
-      toDashboardCell(part.amount, formats.number.value(part.amount)),
-      toDashboardCell(Math.round(part.share * 10) / 10, formats.percent.value(part.share)),
+      toDashboardCell(part.amount, formats.number(part.amount)),
+      toDashboardCell(Math.round(part.share * 10) / 10, formats.percent(part.share)),
     ]),
   }
 }

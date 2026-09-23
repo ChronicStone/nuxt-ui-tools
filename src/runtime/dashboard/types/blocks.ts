@@ -3,10 +3,45 @@ import type { DropdownMenuItem } from '@nuxt/ui/components/DropdownMenu.vue'
 import type { RouteLocationRaw } from 'vue-router'
 
 import type { LazyTextValue } from '../../shared/types/utils'
+import type { DashboardFilterControl } from './controls'
 import type { DashboardBlockUi } from './ui'
 
 /** Formats a numeric value for axes, tooltips, legends, and totals. */
-export type DashboardValueFormat = (value: number) => string
+export type DashboardValueFormatter = (value: number) => string
+
+/**
+ * Named number formats, in the dashboard locale:
+ *
+ * - `number`: grouped, one decimal at most, compact from 10,000 (`12.6K`). The block default.
+ * - `integer`: grouped, no decimals (`12,345`).
+ * - `decimal`: one decimal at most (`3.5`).
+ * - `compact`: short form (`12K`, `1.2M`).
+ * - `percent`: a share out of 100 (`57` → `57%`).
+ * - `ratio`: a share out of 1 (`0.57` → `57%`).
+ * - `delta`: a signed percent change (`12.4` → `+12.4%`).
+ * - `points`: a signed difference of percentages (`2.1` → `+2.1 pts`).
+ * - `signed`: a signed number (`3` → `+3`).
+ */
+export type DashboardFormatPreset =
+  | 'number'
+  | 'integer'
+  | 'decimal'
+  | 'compact'
+  | 'percent'
+  | 'ratio'
+  | 'delta'
+  | 'points'
+  | 'signed'
+
+/**
+ * How a block formats numbers: a preset (`'integer'`), `Intl.NumberFormat` options, or a function.
+ * Options with a `currency` and no `style` format whole amounts in that currency: `{ currency: 'EUR' }`,
+ * or `{ currency: 'EUR', notation: 'compact' }` for an axis.
+ */
+export type DashboardValueFormat =
+  | DashboardFormatPreset
+  | Intl.NumberFormatOptions
+  | DashboardValueFormatter
 
 /**
  * Series color: a palette slot (`'series-1'` … `'series-6'`), a Nuxt UI color (`'primary'`,
@@ -52,10 +87,13 @@ export type DashboardHighlight<TRow> =
   | ((row: TRow, index: number) => boolean)
 
 /**
- * Rows shown as selected, typically the value a `select` handler stored in a param (drill-down,
+ * Rows shown as selected, typically the value a `select` handler stored in a filter (drill-down,
  * cross-filter). Selected rows are marked; in charts the other bars, points, and segments recede.
  */
 export type DashboardSelected<TRow> = (row: TRow, index: number) => boolean
+
+/** Footer totals of a chart, one per solid series: `true` or `'sum'` adds them up, `'average'` averages them. */
+export type DashboardChartTotals = boolean | 'sum' | 'average'
 
 export interface DashboardAxisOptions {
   format?: DashboardValueFormat
@@ -245,8 +283,6 @@ export interface DashboardBlockBaseProps {
   subtitle?: LazyTextValue
   /** Grid span, responsive: `"12 md:6 xl:4"`. Defaults to the full row. */
   size?: string
-  /** Grid row span, responsive. */
-  rows?: string
   /** Render without card chrome (no border, padding, or background). Defaults to `true`. */
   card?: boolean
   activation?: DashboardBlockActivation
@@ -256,6 +292,11 @@ export interface DashboardBlockBaseProps {
   menu?: DashboardMenu
   /** Buttons in the header, next to the menu, or full width under the content (`placement`). */
   actions?: readonly DashboardAction[]
+  /**
+   * Filters narrowing this block, such as a drill-down value picked on another block: each one
+   * shows as a removable chip in the toolbar while it differs from its default.
+   */
+  filters?: readonly DashboardFilterControl[]
   /**
    * Shows when the data was last fetched ("Updated 3 min ago") under the content. Inherits the
    * enclosing grid's `freshness` when omitted.

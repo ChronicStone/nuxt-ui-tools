@@ -32,7 +32,7 @@ export interface PlaygroundAbstraction {
 
 const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
   {
-    description: 'Typed params, staged queries, derived values, and state-aware chart blocks.',
+    description: 'Typed filters, staged queries, derived values, and state-aware chart blocks.',
     icon: 'i-lucide-layout-dashboard',
     id: 'dashboard',
     label: 'Dashboards',
@@ -41,17 +41,17 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
         children: [
           {
             description:
-              'Two views sharing a year: remote account picker, widget params, all block kinds.',
+              'Two views sharing a year: remote account picker, query filters, all block kinds.',
             id: 'dashboard-analytics',
             label: 'Analytics',
-            mode: 'document',
+            mode: 'fixed',
             path: '/dashboard/analytics',
           },
           {
-            description: 'A flat single-view schema: one param, staged queries, derived totals.',
+            description: 'A flat single-view schema: one filter, staged queries, derived totals.',
             id: 'dashboard-sales',
             label: 'Single view',
-            mode: 'document',
+            mode: 'fixed',
             path: '/dashboard/sales',
           },
           {
@@ -59,7 +59,7 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
               'Stat trends and goals, alerts, activity feed, sortable table, drill-down, card menus.',
             id: 'dashboard-operations',
             label: 'Operations',
-            mode: 'document',
+            mode: 'fixed',
             path: '/dashboard/operations',
           },
         ],

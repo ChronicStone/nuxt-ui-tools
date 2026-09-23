@@ -1,7 +1,8 @@
 import { describe, expectTypeOf, it } from 'vitest'
 
-import { defineDashboardSchema, useDashboard } from '#ui-tools/dashboard'
+import { defineDashboardSchema, defineDashboardView, useDashboard } from '#ui-tools/dashboard'
 import type {
+  DashboardOption,
   DashboardReadyData,
   DashboardSourceLike,
   DashboardSourceRow,
@@ -31,110 +32,118 @@ declare const api: {
 
 const PRODUCTS = ['en-gen', 'en-biz', 'fr-gen'] as const
 
-const analytics = defineDashboardSchema({
-  key: 'analytics',
-  params: (p) => ({
-    year: p.enum([2024, 2025, 2026], { defaultValue: 2026 }),
-  }),
-  queries: ({ essential, params }) => {
-    expectTypeOf(params.year).toEqualTypeOf<2024 | 2025 | 2026>()
-    return {
-      summary: essential.query(() => ({
-        queryKey: ['summary', params.year],
-        queryFn: () => api.summary(params.year),
-      })),
-    }
-  },
-  derive: ({ data }) => ({
-    revenue: () => data.summary?.revenue ?? 0,
-  }),
-  views: (view) => ({
-    consumption: view({
-      label: 'Consommation',
-      params: (p) => ({
-        currency: p.enum(['EUR', 'USD'], { defaultValue: 'EUR' }),
-        account: p.remote({
-          load: async () => ({ hasMore: false, options: [] }),
-        }),
-        compare: p.boolean({ defaultValue: true }),
+function consumptionView(params: { region: string }) {
+  return defineDashboardView({
+    label: 'Consommation',
+    filters: (f) => ({
+      year: f.enum([2024, 2025, 2026], { defaultValue: 2026 }),
+      currency: f.enum(['EUR', 'USD'], { defaultValue: 'EUR' }),
+      account: f.remote({
+        load: async () => ({ hasMore: false, options: [] }),
       }),
-      queries: ({ essential, background, deferred, params }) => {
-        expectTypeOf(params.year).toEqualTypeOf<2024 | 2025 | 2026>()
-        expectTypeOf(params.currency).toEqualTypeOf<'EUR' | 'USD'>()
-        expectTypeOf(params.account).toEqualTypeOf<string | undefined>()
-
-        const accounts = essential.query(() => ({
-          queryKey: ['accounts', params.year],
-          queryFn: () => api.accounts(params.year),
-        }))
-
-        return {
-          accounts,
-          productLines: essential.query({
-            params: (p) => ({
-              tracked: p.enum(PRODUCTS, { defaultValue: ['en-gen'], multiple: true }),
-            }),
-            defaultValue: [],
-            query: ({ params: widget }) => {
-              expectTypeOf(widget.tracked).toEqualTypeOf<('en-gen' | 'en-biz' | 'fr-gen')[]>()
-              return {
-                queryKey: ['lines', params.year, widget.tracked],
-                queryFn: () => api.consumption({ products: widget.tracked, year: params.year }),
-              }
-            },
-          }),
-          accountDetail: background.query({
-            requires: () => params.account,
-            query: ({ required }) => {
-              expectTypeOf(required).toEqualTypeOf<string>()
-              return {
-                queryKey: ['account', required],
-                queryFn: () => api.accountDetail(required),
-              }
-            },
-          }),
-          ranking: deferred.query({
-            requires: () => accounts.data,
-            defaultValue: [],
-            query: ({ required }) => {
-              expectTypeOf(required).toEqualTypeOf<Account[]>()
-              return {
-                queryKey: ['ranking', required.length],
-                queryFn: () => api.accounts(required.length),
-              }
-            },
-          }),
-        }
-      },
-      derive: ({ data }) => ({
-        ytd: () => data.productLines.reduce((sum, point) => sum + point.used, 0),
-        headline: () => data.summary?.orders,
-      }),
+      compare: f.boolean({ defaultValue: true }),
     }),
-    candidates: view({
-      params: (p) => ({ months: p.enum([1, 2, 3], { multiple: true }) }),
-      queries: ({ deferred, params }) => ({
-        funnel: deferred.query({
+    queries: ({ essential, background, deferred, filters }) => {
+      expectTypeOf(filters.year).toEqualTypeOf<2024 | 2025 | 2026>()
+      expectTypeOf(filters.currency).toEqualTypeOf<'EUR' | 'USD'>()
+      expectTypeOf(filters.account).toEqualTypeOf<string | undefined>()
+
+      const accounts = essential.query(() => ({
+        queryKey: ['accounts', params.region, filters.year],
+        queryFn: () => api.accounts(filters.year),
+      }))
+
+      return {
+        accounts,
+        productLines: essential.query({
+          filters: (f) => ({
+            tracked: f.enum(PRODUCTS, { defaultValue: ['en-gen'], multiple: true }),
+          }),
           defaultValue: [],
-          query: () => ({
-            queryKey: ['funnel', params.months],
-            queryFn: () => api.funnel(params.months),
-          }),
+          query: ({ filters: own }) => {
+            expectTypeOf(own.tracked).toEqualTypeOf<('en-gen' | 'en-biz' | 'fr-gen')[]>()
+            return {
+              queryKey: ['lines', filters.year, own.tracked],
+              queryFn: () => api.consumption({ products: own.tracked, year: filters.year }),
+            }
+          },
+        }),
+        accountDetail: background.query({
+          requires: () => filters.account,
+          query: ({ required }) => {
+            expectTypeOf(required).toEqualTypeOf<string>()
+            return {
+              queryKey: ['account', required],
+              queryFn: () => api.accountDetail(required),
+            }
+          },
+        }),
+        ranking: deferred.query({
+          requires: () => accounts.data,
+          defaultValue: [],
+          query: ({ required }) => {
+            expectTypeOf(required).toEqualTypeOf<Account[]>()
+            return {
+              queryKey: ['ranking', required.length],
+              queryFn: () => api.accounts(required.length),
+            }
+          },
+        }),
+      }
+    },
+    derive: ({ data }) => ({
+      ytd: () => data.productLines.reduce((sum, point) => sum + point.used, 0),
+      firstAccount: () => data.accounts?.[0]?.name,
+    }),
+  })
+}
+
+function candidatesView() {
+  return defineDashboardView({
+    filters: (f) => ({ months: f.enum([1, 2, 3], { multiple: true }) }),
+    queries: ({ deferred, filters }) => ({
+      funnel: deferred.query({
+        defaultValue: [],
+        query: () => ({
+          queryKey: ['funnel', filters.months],
+          queryFn: () => api.funnel(filters.months),
         }),
       }),
     }),
-  }),
-})
+  })
+}
 
-const mountAnalytics = () => useDashboard(analytics)
+function analyticsSchema(params: { region: string }) {
+  return defineDashboardSchema({
+    key: 'analytics',
+    filters: (f) => ({
+      year: f.enum([2024, 2025, 2026], { defaultValue: 2026 }),
+    }),
+    queries: ({ essential, filters }) => {
+      expectTypeOf(filters.year).toEqualTypeOf<2024 | 2025 | 2026>()
+      return {
+        summary: essential.query(() => ({
+          queryKey: ['summary', filters.year],
+          queryFn: () => api.summary(filters.year),
+        })),
+      }
+    },
+    derive: ({ data }) => ({
+      revenue: () => data.summary?.revenue ?? 0,
+    }),
+    views: { consumption: consumptionView(params), candidates: candidatesView() },
+  })
+}
+
+const mountAnalytics = () => useDashboard(() => analyticsSchema({ region: 'eu' }))
 declare const dashboard: ReturnType<typeof mountAnalytics>
 
 const single = defineDashboardSchema({
   key: 'sales',
-  params: (p) => ({
-    period: p.enum([7, 30, 90], { defaultValue: 30 }),
-    search: p.string(),
-    range: p.dateRange(),
+  filters: (f) => ({
+    period: f.enum([7, 30, 90], { defaultValue: 30 }),
+    search: f.string(),
+    range: f.dateRange(),
   }),
   queries: ({ essential }) => ({
     summary: essential.query(() => ({
@@ -148,16 +157,19 @@ const mountSales = () => useDashboard(single)
 declare const sales: ReturnType<typeof mountSales>
 
 describe('dashboard schema inference', () => {
-  it('infers shared, view, and widget params', () => {
-    expectTypeOf<typeof dashboard.params.year>().toEqualTypeOf<2024 | 2025 | 2026>()
-    expectTypeOf<typeof dashboard.consumption.params.currency>().toEqualTypeOf<'EUR' | 'USD'>()
-    expectTypeOf<typeof dashboard.consumption.params.account>().toEqualTypeOf<string | undefined>()
-    expectTypeOf<typeof dashboard.consumption.params.compare>().toEqualTypeOf<boolean>()
-    expectTypeOf<typeof dashboard.consumption.productLines.params.tracked>().toEqualTypeOf<
+  it('infers the filters of the root, of each view, and of single queries', () => {
+    expectTypeOf<typeof dashboard.filters.year>().toEqualTypeOf<2024 | 2025 | 2026>()
+    expectTypeOf<typeof dashboard.consumption.filters.year>().toEqualTypeOf<2024 | 2025 | 2026>()
+    expectTypeOf<typeof dashboard.consumption.filters.currency>().toEqualTypeOf<'EUR' | 'USD'>()
+    expectTypeOf<typeof dashboard.consumption.filters.account>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<typeof dashboard.consumption.filters.compare>().toEqualTypeOf<boolean>()
+    expectTypeOf<typeof dashboard.consumption.productLines.filters.tracked>().toEqualTypeOf<
       ('en-gen' | 'en-biz' | 'fr-gen')[]
     >()
-    expectTypeOf<typeof dashboard.candidates.params.months>().toEqualTypeOf<(1 | 2 | 3)[]>()
-    expectTypeOf<keyof typeof dashboard.params>().toEqualTypeOf<'year'>()
+    expectTypeOf<typeof dashboard.candidates.filters.months>().toEqualTypeOf<(1 | 2 | 3)[]>()
+    expectTypeOf<keyof typeof dashboard.filters>().toEqualTypeOf<'year'>()
+    // A view only sees the filters it declares.
+    expectTypeOf<keyof typeof dashboard.candidates.filters>().toEqualTypeOf<'months'>()
   })
 
   it('infers resource data with and without defaults', () => {
@@ -176,14 +188,28 @@ describe('dashboard schema inference', () => {
   it('exposes derived values as resources', () => {
     expectTypeOf<typeof dashboard.revenue.data>().toEqualTypeOf<number>()
     expectTypeOf<typeof dashboard.consumption.ytd.data>().toEqualTypeOf<number>()
-    expectTypeOf<typeof dashboard.consumption.headline.data>().toEqualTypeOf<number | undefined>()
+    expectTypeOf<typeof dashboard.consumption.firstAccount.data>().toEqualTypeOf<
+      string | undefined
+    >()
     expectTypeOf<typeof dashboard.consumption.ytd>().toExtend<DashboardSourceLike<number>>()
   })
 
-  it('exposes option handles only for option-backed params', () => {
-    expectTypeOf<keyof typeof dashboard.consumption.options>().toEqualTypeOf<
-      'currency' | 'account'
+  it('exposes a control per filter', () => {
+    expectTypeOf<keyof typeof dashboard.consumption.controls>().toEqualTypeOf<
+      'year' | 'currency' | 'account' | 'compare'
     >()
+    expectTypeOf<typeof dashboard.consumption.controls.account.value>().toEqualTypeOf<
+      string | undefined
+    >()
+    expectTypeOf<typeof dashboard.consumption.controls.currency.items>().toEqualTypeOf<
+      readonly DashboardOption<'EUR' | 'USD'>[]
+    >()
+    expectTypeOf<typeof dashboard.candidates.controls.months.toggle>().toEqualTypeOf<
+      (value: 1 | 2 | 3) => void
+    >()
+    expectTypeOf<
+      keyof typeof dashboard.consumption.productLines.controls
+    >().toEqualTypeOf<'tracked'>()
   })
 
   it('types the view controller', () => {
@@ -191,9 +217,9 @@ describe('dashboard schema inference', () => {
     expectTypeOf<typeof dashboard.consumption.view.key>().toEqualTypeOf<'consumption'>()
   })
 
-  it('supports single-view dashboards', () => {
-    expectTypeOf<typeof sales.params.period>().toEqualTypeOf<7 | 30 | 90>()
-    expectTypeOf<typeof sales.params.search>().toEqualTypeOf<string | undefined>()
+  it('supports single-view dashboards declared as objects', () => {
+    expectTypeOf<typeof sales.filters.period>().toEqualTypeOf<7 | 30 | 90>()
+    expectTypeOf<typeof sales.filters.search>().toEqualTypeOf<string | undefined>()
     expectTypeOf<typeof sales.summary.data>().toEqualTypeOf<Summary | undefined>()
     expectTypeOf<typeof sales>().not.toHaveProperty('view')
   })
@@ -201,15 +227,15 @@ describe('dashboard schema inference', () => {
   it('accepts views without queries or derived values', () => {
     const labelOnly = defineDashboardSchema({
       key: 'label-only',
-      views: (view) => ({
-        overview: view({ label: 'Overview' }),
-        filtered: view({ params: (p) => ({ search: p.string() }) }),
-      }),
+      views: {
+        overview: defineDashboardView({ label: 'Overview' }),
+        search: defineDashboardView({ filters: (f) => ({ term: f.string() }) }),
+      },
     })
     const mountLabelOnly = () => useDashboard(labelOnly)
     type LabelOnly = ReturnType<typeof mountLabelOnly>
-    expectTypeOf<LabelOnly['view']['current']>().toEqualTypeOf<'overview' | 'filtered'>()
-    expectTypeOf<LabelOnly['filtered']['params']['search']>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<LabelOnly['view']['current']>().toEqualTypeOf<'overview' | 'search'>()
+    expectTypeOf<LabelOnly['search']['filters']['term']>().toEqualTypeOf<string | undefined>()
   })
 
   it('derives ready data and rows for blocks', () => {
@@ -222,10 +248,16 @@ describe('dashboard schema inference', () => {
   it('rejects reserved and colliding keys', () => {
     defineDashboardSchema({
       key: 'reserved',
-      // @ts-expect-error `params` is a runtime member of the facade
+      // @ts-expect-error `filters` is a runtime member of the facade
       queries: ({ essential }) => ({
-        params: essential.query(() => ({ queryKey: ['x'], queryFn: () => api.summary(1) })),
+        filters: essential.query(() => ({ queryKey: ['x'], queryFn: () => api.summary(1) })),
       }),
+    })
+
+    defineDashboardSchema({
+      key: 'reserved-controls',
+      // @ts-expect-error `controls` is a runtime member of the facade
+      derive: () => ({ controls: () => 1 }),
     })
 
     defineDashboardSchema({
@@ -234,18 +266,13 @@ describe('dashboard schema inference', () => {
         summary: essential.query(() => ({ queryKey: ['x'], queryFn: () => api.summary(1) })),
       }),
       // @ts-expect-error a view cannot reuse a root query key
-      views: (view) => ({ summary: view({}) }),
+      views: { summary: defineDashboardView({}) },
     })
 
-    defineDashboardSchema({
-      key: 'view-member',
+    defineDashboardView({
       // @ts-expect-error a view query cannot use a reserved facade member
-      views: (view) => ({
-        main: view({
-          queries: ({ essential }) => ({
-            refresh: essential.query(() => ({ queryKey: ['x'], queryFn: () => api.summary(1) })),
-          }),
-        }),
+      queries: ({ essential }) => ({
+        refresh: essential.query(() => ({ queryKey: ['x'], queryFn: () => api.summary(1) })),
       }),
     })
 
@@ -256,21 +283,21 @@ describe('dashboard schema inference', () => {
     })
   })
 
-  it('types comparison params and the writable auto-refresh interval', () => {
+  it('types comparison filters and the writable auto-refresh interval', () => {
     const compared = defineDashboardSchema({
       key: 'compared',
-      params: (p) => ({
-        compare: p.comparison({ defaultValue: 'previous' }),
-        optional: p.comparison(),
+      filters: (f) => ({
+        compare: f.comparison({ defaultValue: 'previous' }),
+        optional: f.comparison(),
       }),
     })
     const mountCompared = () => useDashboard(compared)
     type Compared = ReturnType<typeof mountCompared>
-    expectTypeOf<Compared['params']['compare']>().toEqualTypeOf<'previous' | 'year' | 'none'>()
-    expectTypeOf<Compared['params']['optional']>().toEqualTypeOf<
+    expectTypeOf<Compared['filters']['compare']>().toEqualTypeOf<'previous' | 'year' | 'none'>()
+    expectTypeOf<Compared['filters']['optional']>().toEqualTypeOf<
       'previous' | 'year' | 'none' | undefined
     >()
-    expectTypeOf<keyof Compared['options']>().toEqualTypeOf<'compare' | 'optional'>()
+    expectTypeOf<keyof Compared['controls']>().toEqualTypeOf<'compare' | 'optional'>()
     expectTypeOf<Compared['autoRefresh']>().toEqualTypeOf<number>()
   })
 })

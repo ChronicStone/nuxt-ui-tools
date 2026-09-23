@@ -392,6 +392,27 @@ filter.option('ownerId', {
 })
 ```
 
+When the options come from an endpoint that speaks the table request protocol (a remote table's
+own endpoint), `remoteTableOptions` builds the whole source: requests with the search fields, the
+sort, and cursor or offset pages, rows mapped to options, and selected values resolved by an
+`isAnyOf` filter on `valueKey`:
+
+```ts
+source: {
+  remote: remoteTableOptions((request) => $api.users.query.queryOptions({ body: request }), {
+    search: ['name', 'email'],
+    sort: 'name',
+    option: (user) => ({ label: user.name, value: user.id }),
+    valueKey: 'id', // default
+    pagination: { type: 'cursor', size: 25 }, // default; match what the endpoint pages by
+  }),
+},
+```
+
+The same source fits dashboard remote params (`p.remote(source)`) and form remote options
+(`{ mode: 'remote', source: options.load, resolveSelected: options.resolveSelected, pagination:
+options.pagination }`).
+
 Behavior:
 
 - nothing loads until an editor shows the list; each search term keeps its own cached pages

@@ -1,17 +1,26 @@
-import type { DashboardResourceState } from '../types'
+import type { DashboardCondition, DashboardResourceState } from '../types'
 
 /**
  * Combines the states of several sources the way a dependent value experiences them: any error
  * wins, then any pending source. Idle sources were not requested (gated by `requires`, or a
  * deferred query nobody activated), so they do not hold the value back unless all are idle.
+ * Disabled sources are not part of the dashboard: they are left out, and only when every source is
+ * disabled is the combination disabled too.
  */
 export function combineDashboardStates(
   states: readonly DashboardResourceState[],
 ): DashboardResourceState {
-  if (states.includes('error')) return 'error'
-  if (states.includes('loading')) return 'loading'
-  if (states.length > 0 && states.every((state) => state === 'idle')) return 'idle'
+  const live = states.filter((state) => state !== 'disabled')
+  if (live.length === 0) return states.length > 0 ? 'disabled' : 'ready'
+  if (live.includes('error')) return 'error'
+  if (live.includes('loading')) return 'loading'
+  if (live.every((state) => state === 'idle')) return 'idle'
   return 'ready'
+}
+
+/** Whether an `enabled` condition holds. No condition always holds. */
+export function resolveDashboardCondition(condition: DashboardCondition | undefined): boolean {
+  return condition === undefined || condition()
 }
 
 /** Oldest defined timestamp of a set of sources: they are all at least this fresh. */
@@ -32,10 +41,10 @@ export async function refreshDashboardSources(
   if (errors.length > 0) throw new AggregateError(errors, 'Dashboard refresh failed')
 }
 
-/** URL segment of the current view. A root param cannot use it while the dashboard has views. */
+/** URL segment of the current view. No filter can use it while the dashboard has views. */
 export const DASHBOARD_VIEW_URL_KEY = 'view'
 
-/** URL segment of the auto-refresh interval. A root param cannot use it. */
+/** URL segment of the auto-refresh interval. No filter can use it. */
 export const DASHBOARD_REFRESH_URL_KEY = 'refresh'
 
 /** URL key of the auto-refresh interval: `refresh`, or `<urlPrefix>.refresh`. */
@@ -49,11 +58,12 @@ export function joinDashboardUrlKey(...segments: readonly (string | undefined)[]
 }
 
 /**
- * URL key prefix of one scope, named after what it holds: none for the root (`year`), the view
- * key for a view (`consumption.currency`). `urlPrefix` namespaces both when set.
+ * URL key prefix of a dashboard's filters: none (`year`, `currency`), or `urlPrefix` when two
+ * dashboards share a page. Views add no segment: a filter key names the same state in every scope,
+ * so `year` declared by two views keeps its value across tabs.
  */
-export function resolveDashboardScopePrefix(urlPrefix: string | undefined, viewKey?: string) {
-  return joinDashboardUrlKey(urlPrefix, viewKey)
+export function resolveDashboardScopePrefix(urlPrefix: string | undefined) {
+  return joinDashboardUrlKey(urlPrefix)
 }
 
 /** URL key of the current view: `view`, or `<urlPrefix>.view`. */

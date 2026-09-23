@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { defineDashboardSchema } from '#ui-tools/dashboard'
+import { defineDashboardSchema, defineDashboardView } from '#ui-tools/dashboard'
 
 import { deferredSource, mountDashboard } from './harness'
 
@@ -51,14 +51,14 @@ describe('dashboard staging', () => {
     const detail = deferredSource<{ spend: number }>()
     const schema = defineDashboardSchema({
       key: 'requires',
-      params: (p) => ({ account: p.string() }),
-      queries: ({ essential, params }) => ({
+      filters: (f) => ({ account: f.string() }),
+      queries: ({ essential, filters }) => ({
         detail: essential.query({
           query: ({ required }) => ({
             queryFn: () => detail.fn(required),
             queryKey: ['detail', required],
           }),
-          requires: () => params.account,
+          requires: () => filters.account,
         }),
       }),
     })
@@ -68,7 +68,7 @@ describe('dashboard staging', () => {
     expect(dashboard.state).toBe('ready')
     expect(detail.calls).toHaveLength(0)
 
-    dashboard.params.account = 'acme'
+    dashboard.filters.account = 'acme'
     await flush()
     expect(query()).toEqual({ account: 'acme' })
     expect(detail.calls).toHaveLength(1)
@@ -81,40 +81,48 @@ type ViewSources = {
   funnel: ReturnType<typeof deferredSource<number[]>>
 }
 
-function createViewsSchema(sources: ViewSources) {
-  return defineDashboardSchema({
-    key: 'views',
-    params: (p) => ({ year: p.enum([2025, 2026], { defaultValue: 2026 }) }),
-    views: (view) => ({
-      usage: view({
-        label: 'Usage',
-        params: (p) => ({ currency: p.enum(['EUR', 'USD'], { defaultValue: 'EUR' }) }),
-        queries: ({ essential, params }) => ({
-          lines: essential.query({
-            defaultValue: [],
-            params: (p) => ({
-              tracked: p.enum(['a', 'b', 'c'], { defaultValue: ['a'], multiple: true }),
-            }),
-            query: ({ params: widget }) => ({
-              queryFn: () => sources.usage.fn(params.year, params.currency, widget.tracked),
-              queryKey: ['usage', params.year, params.currency, widget.tracked],
-            }),
-          }),
+function usageView(sources: ViewSources) {
+  return defineDashboardView({
+    label: 'Usage',
+    filters: (f) => ({
+      year: f.enum([2025, 2026], { defaultValue: 2026 }),
+      currency: f.enum(['EUR', 'USD'], { defaultValue: 'EUR' }),
+    }),
+    queries: ({ essential, filters }) => ({
+      lines: essential.query({
+        defaultValue: [],
+        filters: (f) => ({
+          tracked: f.enum(['a', 'b', 'c'], { defaultValue: ['a'], multiple: true }),
         }),
-        derive: ({ data }) => ({
-          total: () => data.lines.reduce((sum, value) => sum + value, 0),
-        }),
-      }),
-      funnel: view({
-        label: () => 'Funnel',
-        queries: ({ essential, params }) => ({
-          steps: essential.query(() => ({
-            queryFn: () => sources.funnel.fn(params.year),
-            queryKey: ['funnel', params.year],
-          })),
+        query: ({ filters: own }) => ({
+          queryFn: () => sources.usage.fn(filters.year, filters.currency, own.tracked),
+          queryKey: ['usage', filters.year, filters.currency, own.tracked],
         }),
       }),
     }),
+    derive: ({ data }) => ({
+      total: () => data.lines.reduce((sum, value) => sum + value, 0),
+    }),
+  })
+}
+
+function funnelView(sources: ViewSources) {
+  return defineDashboardView({
+    label: () => 'Funnel',
+    filters: (f) => ({ year: f.enum([2025, 2026], { defaultValue: 2026 }) }),
+    queries: ({ essential, filters }) => ({
+      steps: essential.query(() => ({
+        queryFn: () => sources.funnel.fn(filters.year),
+        queryKey: ['funnel', filters.year],
+      })),
+    }),
+  })
+}
+
+function createViewsSchema(sources: ViewSources) {
+  return defineDashboardSchema({
+    key: 'views',
+    views: { usage: usageView(sources), funnel: funnelView(sources) },
   })
 }
 
@@ -148,53 +156,67 @@ describe('dashboard views', () => {
     expect(dashboard.usage.view.opened).toBe(true)
   })
 
-  it('opens the view selected in the URL and restores scoped params', async () => {
+  it('opens the view selected in the URL and restores its filters', async () => {
     const usage = deferredSource<number[]>()
     const funnel = deferredSource<number[]>()
     const { dashboard } = await mountDashboard({
-      query: {
-        'usage.currency': 'USD',
-        'usage.lines.tracked': 'b,c',
-        view: 'funnel',
-        year: '2025',
-      },
+      query: { currency: 'USD', 'lines.tracked': 'b,c', view: 'funnel', year: '2025' },
       schema: createViewsSchema({ funnel, usage }),
     })
 
     expect(usage.calls).toHaveLength(0)
     expect(funnel.calls).toHaveLength(1)
     expect(funnel.calls[0]?.args).toEqual([2025])
-    expect(dashboard.params.year).toBe(2025)
-    expect(dashboard.usage.params.currency).toBe('USD')
-    expect(dashboard.usage.lines.params.tracked).toEqual(['b', 'c'])
+    expect(dashboard.funnel.filters.year).toBe(2025)
+    expect(dashboard.usage.filters.year).toBe(2025)
+    expect(dashboard.usage.filters.currency).toBe('USD')
+    expect(dashboard.usage.lines.filters.tracked).toEqual(['b', 'c'])
   })
 
-  it('rejects a root param that would shadow the current-view URL key', async () => {
+  it('rejects a filter that would shadow the current-view URL key', async () => {
     const schema = defineDashboardSchema({
       key: 'shadowed',
-      params: (p) => ({ view: p.string() }),
-      views: (view) => ({ main: view({ label: 'Main' }) }),
+      views: {
+        main: defineDashboardView({ label: 'Main', filters: (f) => ({ view: f.string() }) }),
+      },
     })
-    await expect(mountDashboard({ schema })).rejects.toThrow(/URL key "view" is reserved/u)
+    await expect(mountDashboard({ schema })).rejects.toThrow(/view "main" uses the URL key "view"/u)
   })
 
-  it('writes shared, view, and widget params under their scope keys and omits defaults', async () => {
+  it('writes filters under their own keys, one value per key across views, and omits defaults', async () => {
     const usage = deferredSource<number[]>()
     const funnel = deferredSource<number[]>()
     const { dashboard, flush, query } = await mountDashboard({
       schema: createViewsSchema({ funnel, usage }),
     })
 
-    dashboard.usage.params.currency = 'USD'
-    dashboard.usage.lines.params.tracked = ['a', 'c']
+    dashboard.usage.filters.currency = 'USD'
+    dashboard.usage.lines.filters.tracked = ['a', 'c']
     await flush()
-    expect(query()).toEqual({ 'usage.currency': 'USD', 'usage.lines.tracked': 'a,c' })
+    expect(query()).toEqual({ currency: 'USD', 'lines.tracked': 'a,c' })
     expect(usage.calls.at(-1)?.args).toEqual([2026, 'USD', ['a', 'c']])
 
-    dashboard.usage.params.currency = 'EUR'
-    dashboard.params.year = 2025
+    dashboard.usage.filters.currency = 'EUR'
+    dashboard.usage.filters.year = 2025
     await flush()
-    expect(query()).toEqual({ 'usage.lines.tracked': 'a,c', year: '2025' })
+    expect(query()).toEqual({ 'lines.tracked': 'a,c', year: '2025' })
+    // Both views declare `year`: it is one filter.
+    expect(dashboard.funnel.filters.year).toBe(2025)
+  })
+
+  it('rejects two views declaring one filter key differently', async () => {
+    const schema = defineDashboardSchema({
+      key: 'mismatch',
+      views: {
+        first: defineDashboardView({
+          filters: (f) => ({ status: f.enum(['open', 'closed'], { defaultValue: 'open' }) }),
+        }),
+        second: defineDashboardView({ filters: (f) => ({ status: f.string() }) }),
+      },
+    })
+    await expect(mountDashboard({ schema })).rejects.toThrow(
+      /share the URL key "status", so they share one value, but they are declared differently/u,
+    )
   })
 
   it('derives values whose state follows the queries they read', async () => {
@@ -210,7 +232,7 @@ describe('dashboard views', () => {
     expect(dashboard.usage.total.state).toBe('ready')
     expect(dashboard.usage.total.data).toBe(5)
 
-    dashboard.usage.params.currency = 'USD'
+    dashboard.usage.filters.currency = 'USD'
     await flush()
     expect(dashboard.usage.lines.state).toBe('ready')
     expect(dashboard.usage.lines.refreshing).toBe(true)
@@ -310,44 +332,44 @@ describe('dashboard auto-refresh', () => {
     expect(interval()).toBe(60_000)
   })
 
-  it('rejects a root param that would shadow the auto-refresh URL key', async () => {
+  it('rejects a filter that would shadow the auto-refresh URL key', async () => {
     const schema = defineDashboardSchema({
       key: 'shadowed-refresh',
-      params: (p) => ({ refresh: p.boolean() }),
+      filters: (f) => ({ refresh: f.boolean() }),
     })
-    await expect(mountDashboard({ schema })).rejects.toThrow(/URL key "refresh" is reserved/u)
+    await expect(mountDashboard({ schema })).rejects.toThrow(/uses the URL key "refresh"/u)
   })
 })
 
-describe('dashboard comparison param', () => {
+describe('dashboard comparison filter', () => {
   it('offers localized comparison modes, typed and URL-synced', async () => {
     const schema = defineDashboardSchema({
       key: 'compare',
-      params: (p) => ({ compare: p.comparison({ defaultValue: 'previous' }) }),
+      filters: (f) => ({ compare: f.comparison({ defaultValue: 'previous' }) }),
     })
     const { dashboard, flush, query } = await mountDashboard({ schema })
 
-    expect(dashboard.params.compare).toBe('previous')
-    expect(dashboard.options.compare.items.map((item) => [item.value, item.label])).toEqual([
+    expect(dashboard.filters.compare).toBe('previous')
+    expect(dashboard.controls.compare.items.map((item) => [item.value, item.label])).toEqual([
       ['previous', 'Période précédente'],
       ['year', 'Année précédente'],
       ['none', 'Sans comparaison'],
     ])
-    dashboard.params.compare = 'none'
+    dashboard.filters.compare = 'none'
     await flush()
     expect(query()).toEqual({ compare: 'none' })
-    expect(dashboard.options.compare.selected.map((item) => item.label)).toEqual([
+    expect(dashboard.controls.compare.selected.map((item) => item.label)).toEqual([
       'Sans comparaison',
     ])
   })
 })
 
-describe('dashboard option handles', () => {
+describe('dashboard option controls', () => {
   it('exposes static option items and the selected option', async () => {
     const schema = defineDashboardSchema({
       key: 'static-options',
-      params: (p) => ({
-        currency: p.options(
+      filters: (f) => ({
+        currency: f.options(
           [
             { icon: 'i-lucide-euro', label: 'Euro', value: 'EUR' },
             { icon: 'i-lucide-dollar-sign', label: 'Dollar', value: 'USD' },
@@ -358,11 +380,11 @@ describe('dashboard option handles', () => {
     })
     const { dashboard, flush } = await mountDashboard({ schema })
 
-    expect(dashboard.options.currency.items.map((item) => item.value)).toEqual(['EUR', 'USD'])
-    expect(dashboard.options.currency.selected.map((item) => item.label)).toEqual(['Euro'])
-    dashboard.params.currency = 'USD'
+    expect(dashboard.controls.currency.items.map((item) => item.value)).toEqual(['EUR', 'USD'])
+    expect(dashboard.controls.currency.selected.map((item) => item.label)).toEqual(['Euro'])
+    dashboard.filters.currency = 'USD'
     await flush()
-    expect(dashboard.options.currency.selected.map((item) => item.label)).toEqual(['Dollar'])
+    expect(dashboard.controls.currency.selected.map((item) => item.label)).toEqual(['Dollar'])
   })
 
   it('loads remote options on open and hydrates selected values from the URL', async () => {
@@ -373,8 +395,8 @@ describe('dashboard option handles', () => {
     const selected = deferredSource<{ value: string; label: string }[]>()
     const schema = defineDashboardSchema({
       key: 'remote-options',
-      params: (p) => ({
-        accounts: p.remote({
+      filters: (f) => ({
+        accounts: f.remote({
           load: (request) => pages.fn(request),
           multiple: true,
           pagination: { size: 2, type: 'page' },
@@ -394,26 +416,26 @@ describe('dashboard option handles', () => {
       { label: 'Globex', value: 'globex' },
     ])
     await flush()
-    expect(dashboard.options.accounts.selected.map((option) => option.label)).toEqual([
+    expect(dashboard.controls.accounts.selected.map((option) => option.label)).toEqual([
       'Acme',
       'Globex',
     ])
 
-    dashboard.options.accounts.open = true
+    dashboard.controls.accounts.open = true
     await flush()
     expect(pages.calls[0]?.args).toEqual([
       { page: { cursor: null, index: 1, size: 2 }, search: '' },
     ])
     pages.calls[0]?.resolve({ hasMore: true, options: [{ label: 'Initech', value: 'initech' }] })
     await flush()
-    expect(dashboard.options.accounts.hasMore).toBe(true)
-    expect(dashboard.options.accounts.items.map((option) => option.value)).toEqual([
+    expect(dashboard.controls.accounts.hasMore).toBe(true)
+    expect(dashboard.controls.accounts.items.map((option) => option.value)).toEqual([
       'initech',
       'acme',
       'globex',
     ])
 
-    dashboard.options.accounts.loadMore()
+    dashboard.controls.accounts.loadMore()
     await flush()
     expect(pages.calls[1]?.args).toEqual([
       { page: { cursor: null, index: 2, size: 2 }, search: '' },

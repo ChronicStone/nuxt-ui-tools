@@ -35,6 +35,9 @@ jobs:
       - name: Prepare module and playground
         run: bun run dev:prepare
 
+      - name: Install test browsers
+        run: bunx playwright install --with-deps chromium firefox webkit
+
       - name: Verify release
         run: bun run check && bun run build
 

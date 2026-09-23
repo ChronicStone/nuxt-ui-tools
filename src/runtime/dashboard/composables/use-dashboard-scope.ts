@@ -7,10 +7,11 @@ import type {
   DashboardRuntimeScopeInput,
   DashboardRuntimeStage,
 } from '../types/runtime'
-import { dashboardParamBuilder } from '../utils/builders/dashboard-params'
+import { dashboardFilterBuilder } from '../utils/builders/dashboard-filters'
+import type { DashboardEnvironment } from '../utils/environment'
 import { createDashboardResourceFacade } from '../utils/resource'
 import type { DashboardResourceSlot } from '../utils/resource'
-import { assertDashboardMemberKey } from '../utils/schema'
+import { assertDashboardMemberKey, resolveDashboardFilters } from '../utils/schema'
 import {
   combineDashboardStates,
   refreshDashboardSources,
@@ -19,7 +20,7 @@ import {
 import { createDashboardTrackedData } from '../utils/tracker'
 import type { DashboardReadTracker } from '../utils/tracker'
 import { useDashboardDerived } from './use-dashboard-derived'
-import { mergeDashboardParamValues, useDashboardParamScope } from './use-dashboard-param-scope'
+import { useDashboardFilterScope } from './use-dashboard-filter-scope'
 import { useDashboardResource } from './use-dashboard-resource'
 
 interface DashboardDeclaration {
@@ -29,7 +30,7 @@ interface DashboardDeclaration {
 }
 
 /**
- * One scope of a dashboard: the root, or one view. It owns the scope params, declares its queries
+ * One scope of a dashboard: the root, or one view. It owns the scope filters, declares its queries
  * in a single synchronous pass, instantiates them once their keys are known, and derives the scope
  * state from its essential queries.
  */
@@ -40,24 +41,26 @@ export function useDashboardScope(params: {
   input: DashboardRuntimeScopeInput
   prefix: string
   active: ComputedRef<boolean>
+  /** The scope is part of the dashboard: always for the root, a view's `enabled` otherwise. */
+  enabled?: ComputedRef<boolean>
   /** Dashboard auto-refresh interval in milliseconds, `0` when off. */
   refetchInterval: ComputedRef<number>
-  /** Root params, visible inside a view's builders. */
-  shared?: ReturnType<typeof useDashboardParamScope>
   /** Root queries and derived values, readable from a view's `derive`. */
   rootSources?: ReadonlyMap<string, DashboardSourceLike>
   tracker: DashboardReadTracker
+  environment: DashboardEnvironment
 }) {
   const { input, scopeKey } = params
+  const enabled = params.enabled ?? computed<boolean>(() => true)
   const queryKey = [params.schemaKey, scopeKey || '$root']
-  const paramScope = useDashboardParamScope({
-    definitions: input.params?.(dashboardParamBuilder) ?? {},
+  const scopeLabel = scopeKey ? `view "${scopeKey}"` : 'the dashboard root'
+  const filterScope = useDashboardFilterScope({
+    definitions: resolveDashboardFilters({ builder: dashboardFilterBuilder, input: input.filters }),
+    environment: params.environment,
+    owner: scopeLabel,
     prefix: params.prefix,
     queryKey,
   })
-  const visibleParams = mergeDashboardParamValues(
-    params.shared ? [params.shared, paramScope] : [paramScope],
-  )
 
   const declared = shallowRef<boolean>(false)
   const declarations = new Map<DashboardSourceLike, DashboardDeclaration>()
@@ -75,7 +78,12 @@ export function useDashboardScope(params: {
       query(definition) {
         const query = typeof definition === 'function' ? { query: definition } : definition
         const slot: DashboardResourceSlot = shallowRef(null)
-        const facade = createDashboardResourceFacade(stage, slot, query.defaultValue)
+        const facade = createDashboardResourceFacade({
+          defaultValue: query.defaultValue,
+          slot,
+          stage,
+          tracker: params.tracker,
+        })
         declarations.set(facade, { input: query, slot, stage })
         return facade
       },
@@ -86,26 +94,28 @@ export function useDashboardScope(params: {
     background: createStage('background'),
     deferred: createStage('deferred'),
     essential: createStage('essential'),
-    params: visibleParams,
+    filters: filterScope.values,
   })
 
-  const scopeLabel = scopeKey ? `view "${scopeKey}"` : 'the dashboard root'
   const taken = new Set<string>(params.rootSources?.keys())
   const members = new Map<string, DashboardSourceLike>()
 
   function instantiate(key: string, declaration: DashboardDeclaration) {
     const resource = useDashboardResource({
+      environment: params.environment,
       id: scopeKey ? `${scopeKey}.${key}` : key,
       input: declaration.input,
       key,
       scope: {
         active: params.active,
+        enabled,
         prefix: params.prefix,
         queryKey,
         refetchInterval: params.refetchInterval,
         settled,
       },
       stage: declaration.stage,
+      tracker: params.tracker,
     })
     declaration.slot.value = resource
     resources.push(resource)
@@ -129,7 +139,7 @@ export function useDashboardScope(params: {
     new Map([...(params.rootSources ?? []), ...members]),
     params.tracker,
   )
-  const derived = input.derive?.({ data, params: visibleParams }) ?? {}
+  const derived = input.derive?.({ data, filters: filterScope.values }) ?? {}
   for (const [key, evaluate] of Object.entries(derived)) {
     assertDashboardMemberKey(key, taken, scopeLabel)
     taken.add(key)
@@ -139,9 +149,11 @@ export function useDashboardScope(params: {
 
   const essentials = resources.filter((resource) => resource.stage === 'essential')
   const state = computed<DashboardResourceState>(() => {
+    if (!enabled.value) return 'disabled'
     if (!params.active.value) return 'idle'
     const combined = combineDashboardStates(essentials.map((resource) => resource.state.value))
-    return combined === 'idle' ? 'ready' : combined
+    // Nothing left to wait for: idle essentials were never requested, disabled ones never will be.
+    return combined === 'idle' || combined === 'disabled' ? 'ready' : combined
   })
 
   const updatedAt = computed<number | undefined>(() =>
@@ -155,7 +167,7 @@ export function useDashboardScope(params: {
 
   function refresh(): Promise<void> {
     pending ??= refreshDashboardSources(
-      resources.filter((resource) => resource.active.value),
+      resources.filter((resource) => resource.active.value && resource.state.value !== 'disabled'),
     ).finally(() => {
       pending = null
       refreshing.value = false
@@ -165,9 +177,10 @@ export function useDashboardScope(params: {
   }
 
   return {
+    enabled,
+    filterScope,
     label: input.label,
     members,
-    paramScope,
     refresh,
     refreshing,
     resources,

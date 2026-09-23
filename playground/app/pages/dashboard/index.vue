@@ -10,7 +10,7 @@ const groups = computed(() => currentAbstraction.value?.navigation ?? [])
         <p class="text-xs font-medium uppercase tracking-[0.12em] text-dimmed">Dashboards</p>
         <h1 class="text-2xl font-semibold tracking-tight text-highlighted">Dashboard playground</h1>
         <p class="text-sm leading-6 text-muted">
-          Schemas declare typed URL params and staged queries once; blocks bind to query and derived
+          Schemas declare typed filters and staged queries once; blocks bind to query and derived
           resources and get loading, error, empty, and refresh states for free.
         </p>
       </header>

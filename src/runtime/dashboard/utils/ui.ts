@@ -35,7 +35,7 @@ export const DASHBOARD_TABLE_CLASSES = {
  * reaching 8px past both edges, behind the content (`isolate` keeps it inside the row).
  */
 export const DASHBOARD_SELECTABLE_ROW =
-  'relative isolate before:pointer-events-none before:absolute before:inset-y-0 before:-inset-x-2 before:-z-10 before:rounded-md before:transition-colors has-[>button:hover]:before:bg-elevated/60 has-[>button:focus-visible]:before:bg-elevated/60'
+  'relative isolate before:pointer-events-none before:absolute before:inset-y-0 before:-inset-x-2 before:-z-10 before:rounded-md before:transition-colors has-[>:is(button,a):hover]:before:bg-elevated/60 has-[>:is(button,a):focus-visible]:before:bg-elevated/60'
 
 /**
  * A row shown as selected (`selected` prop): the same tint as the hover, stronger, and an accent

@@ -118,7 +118,7 @@ const entries = computed(() => {
       color: resolveDashboardColor(item.color, index),
       delta:
         isNumber(amount) && Number.isFinite(amount)
-          ? { good, label: formats.delta.value(amount), up: amount >= 0 }
+          ? { good, label: formats.delta(amount), up: amount >= 0 }
           : null,
       icon: item.icon,
       key: item.key,
@@ -132,7 +132,7 @@ const entries = computed(() => {
         raw === null || raw === undefined
           ? '–'
           : isNumber(raw)
-            ? (item.format ?? formats.number.value)(raw)
+            ? formats.resolve(item.format)(raw)
             : resolveTextValue(raw),
     }
   })

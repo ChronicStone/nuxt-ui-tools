@@ -8,7 +8,6 @@ import type {
   DashboardSelected,
   DashboardSeries,
   DashboardSeriesColor,
-  DashboardValueFormat,
 } from '../types'
 
 export const DASHBOARD_PALETTE_SIZE = 6
@@ -152,6 +151,9 @@ export function niceDashboardTickCount(max: number): number {
 /**
  * Value domain and tick values covering every value: `0` included, the top rounded to a readable
  * bound with some headroom, and evenly spaced ticks that land on round numbers.
+ *
+ * When every value is a whole number (counts, units, or nothing but zeros), so are the top and the
+ * step: a quarter tick would print as a repeated label once formatted as an integer.
  */
 export function resolveDashboardAxis(
   values: readonly (number | null | undefined)[],
@@ -159,31 +161,56 @@ export function resolveDashboardAxis(
   headroom = 1.05,
 ): Pick<DashboardChartFrameAxis, 'domain' | 'ticks'> {
   const finite = values.filter((value): value is number => Number.isFinite(value))
+  const integral = finite.every((value) => Number.isInteger(value))
   const lowest = Math.min(0, ...finite)
   if (lowest < 0 && axis?.min === undefined && axis?.max === undefined)
-    return resolveDivergingAxis(lowest, Math.max(0, ...finite), headroom, axis?.ticks)
+    return resolveDivergingAxis({
+      headroom,
+      highest: Math.max(0, ...finite),
+      integral,
+      lowest,
+      ticks: axis?.ticks,
+    })
   const min = axis?.min ?? lowest
-  const max = axis?.max ?? niceDashboardMax(Math.max(0, ...finite) * headroom)
-  const count = Math.max(1, Math.round(axis?.ticks ?? niceDashboardTickCount(max - min)))
+  const top = niceDashboardMax(Math.max(0, ...finite) * headroom)
+  const max = axis?.max ?? (integral ? Math.ceil(top) : top)
+  const nice = Math.max(1, Math.round(axis?.ticks ?? niceDashboardTickCount(max - min)))
+  const count =
+    integral && axis?.ticks === undefined && Number.isInteger(max - min)
+      ? wholeStepCount(max - min, nice)
+      : nice
   const ticks = Array.from({ length: count + 1 }, (_, index) => min + ((max - min) * index) / count)
   return { domain: [min, max], ticks }
 }
 
+/** The largest interval count, up to `count`, that splits `range` into whole steps. */
+function wholeStepCount(range: number, count: number) {
+  for (let candidate = count; candidate > 1; candidate -= 1) {
+    if (Number.isInteger(range / candidate)) return candidate
+  }
+  return 1
+}
+
 /**
  * Axis for values below zero: one round step (1, 2, 2.5, 5 × 10ⁿ) sized for about `ticks`
- * intervals, both bounds on a multiple of it, so `0` is always a tick.
+ * intervals, both bounds on a multiple of it, so `0` is always a tick. Whole-number values get a
+ * whole step (at least 1, never 2.5).
  */
-function resolveDivergingAxis(
-  lowest: number,
-  highest: number,
-  headroom: number,
-  ticks = 4,
-): Pick<DashboardChartFrameAxis, 'domain' | 'ticks'> {
-  const bottom = -lowest * headroom
-  const top = highest * headroom
-  const rough = (top + bottom) / Math.max(1, ticks)
+function resolveDivergingAxis(params: {
+  lowest: number
+  highest: number
+  headroom: number
+  integral: boolean
+  ticks: number | undefined
+}): Pick<DashboardChartFrameAxis, 'domain' | 'ticks'> {
+  const { headroom, integral } = params
+  const bottom = -params.lowest * headroom
+  const top = params.highest * headroom
+  const rough = (top + bottom) / Math.max(1, params.ticks ?? 4)
   const power = 10 ** Math.floor(Math.log10(rough))
-  const step = ([1, 2, 2.5, 5, 10].find((candidate) => rough / power <= candidate) ?? 10) * power
+  const mantissas = integral && power <= 1 ? [1, 2, 5, 10] : [1, 2, 2.5, 5, 10]
+  const nice = (mantissas.find((candidate) => rough / power <= candidate) ?? 10) * power
+  const step = integral ? Math.max(1, nice) : nice
   const min = -Math.ceil(bottom / step) * step
   const max = Math.ceil(top / step) * step
   const count = Math.max(1, Math.round((max - min) / step))
@@ -191,42 +218,6 @@ function resolveDivergingAxis(
     domain: [min, max],
     ticks: Array.from({ length: count + 1 }, (_, index) => min + step * index),
   }
-}
-
-/** Default formatters of one locale: numbers, signed changes, and shares (both in percent). */
-export interface DashboardFormats {
-  /** Locale number, compact from 10 000 (`12,6 k`). */
-  number: DashboardValueFormat
-  /** Signed percent change: `12.4` → `+12,4 %`. */
-  delta: DashboardValueFormat
-  /** Percent share: `57` → `57 %`. */
-  percent: DashboardValueFormat
-}
-
-const formatsByLocale = new Map<string, DashboardFormats>()
-
-/**
- * Formatters of one locale. `Intl.NumberFormat` instances are costly to build and stateless, so they
- * are created once per locale and shared by every block.
- */
-export function resolveDashboardFormats(locale: string): DashboardFormats {
-  const cached = formatsByLocale.get(locale)
-  if (cached) return cached
-  const plain = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 })
-  const compact = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, notation: 'compact' })
-  const delta = new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 1,
-    signDisplay: 'exceptZero',
-    style: 'percent',
-  })
-  const percent = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, style: 'percent' })
-  const formats: DashboardFormats = {
-    delta: (value) => delta.format(value / 100),
-    number: (value) => (Math.abs(value) >= 10_000 ? compact.format(value) : plain.format(value)),
-    percent: (value) => percent.format(value / 100),
-  }
-  formatsByLocale.set(locale, formats)
-  return formats
 }
 
 /** Escapes text interpolated into chart tooltip HTML. */

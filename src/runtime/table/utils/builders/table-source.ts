@@ -1,4 +1,4 @@
-import type { QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type { QueryKey } from '@tanstack/vue-query'
 
 import type {
   GenericObject,
@@ -10,17 +10,11 @@ import type {
   TableRemoteSource,
   TableRemoteSourceRequest,
   TableResolvedFilterGroup,
-  TableRowsFromSourceResult,
   TableSourceExecutionResult,
+  TableSourceQueryResult,
+  TableSourceRow,
   TableSortingRule,
 } from '../../types'
-
-type TableSourceRow<TResult> =
-  TableRowsFromSourceResult<Awaited<TResult>> extends infer TRow
-    ? TRow extends GenericObject
-      ? TRow
-      : GenericObject
-    : GenericObject
 
 type ClientTableSourceResult<TResult> = TResult extends readonly GenericObject[]
   ? TableSourceRow<TResult>[]
@@ -49,20 +43,6 @@ interface TableSourceInferenceContext {
 interface TableSourceQueryDefinition {
   queryKey: QueryKey
 }
-
-type TableSourceQueryResult<TQuery> = TQuery extends {
-  queryFn: (...args: never[]) => infer TResult
-}
-  ? Awaited<TResult>
-  : TQuery extends UseQueryOptions<
-        infer _TQueryFnData,
-        infer _TError,
-        infer TResult,
-        infer _TQueryData,
-        infer _TQueryKey
-      >
-    ? Awaited<TResult>
-    : never
 
 interface ClientTableSourceInput<TQuery extends TableSourceQueryDefinition> {
   mode?: 'client'

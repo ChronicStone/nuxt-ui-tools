@@ -36,11 +36,12 @@ export function useDashboardDerived(params: {
     return evaluation.value.error === undefined ? 'ready' : 'error'
   })
 
-  return markRaw({
+  const derived: DashboardDerived<unknown> = markRaw({
     activate() {
       for (const source of evaluation.value.sources) source.activate()
     },
     get data() {
+      params.tracker.record(derived)
       return evaluation.value.value
     },
     get error() {
@@ -48,6 +49,9 @@ export function useDashboardDerived(params: {
         evaluation.value.error ??
         evaluation.value.sources.find((source) => source.state === 'error')?.error
       )
+    },
+    get fetching() {
+      return evaluation.value.sources.some((source) => source.fetching ?? source.refreshing)
     },
     id: params.id,
     kind: 'derived',
@@ -62,4 +66,5 @@ export function useDashboardDerived(params: {
       return resolveDashboardUpdatedAt(evaluation.value.sources.map((source) => source.updatedAt))
     },
   })
+  return derived
 }

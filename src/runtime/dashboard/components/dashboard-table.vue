@@ -67,7 +67,7 @@ const {
 
 /**
  * Sort state. Header clicks cycle a column through its natural direction (numbers descending, text
- * ascending), the opposite one, then source order. Bind it to keep the sort in a param.
+ * ascending), the opposite one, then source order. Bind it to keep the sort in a filter.
  */
 const sort = defineModel<DashboardTableSort | null | undefined>('sort')
 
@@ -133,10 +133,9 @@ const entries = computed(() => {
       const { column, type } = resolved
       if (type === 'delta') {
         const good = column.invert ? value <= 0 : value >= 0
-        return { good, text: (column.format ?? formats.delta.value)(value), value }
+        return { good, text: formats.resolve(column.format, 'delta')(value), value }
       }
-      const format =
-        column.format ?? (type === 'percent' ? formats.percent.value : formats.number.value)
+      const format = formats.resolve(column.format, type === 'percent' ? 'percent' : 'number')
       const max = maxima[position] ?? 0
       const width =
         type === 'bar' && max > 0

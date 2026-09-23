@@ -17,6 +17,7 @@ interface DashboardTimeFormats {
   date: Intl.DateTimeFormat
   dateWithYear: Intl.DateTimeFormat
   full: Intl.DateTimeFormat
+  today: Intl.DateTimeFormat
 }
 
 const formatsByLocale = new Map<string, DashboardTimeFormats>()
@@ -33,6 +34,12 @@ function resolveTimeFormats(locale: string): DashboardTimeFormats {
     }),
     full: new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short' }),
     relative: new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' }),
+    today: new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'long',
+      weekday: 'long',
+      year: 'numeric',
+    }),
   }
   formatsByLocale.set(locale, formats)
   return formats
@@ -76,6 +83,12 @@ export function formatDashboardDay(time: number, now: number, locale: string): s
     days < 2
       ? formats.relative.format(-days, 'day')
       : (sameYear ? formats.date : formats.dateWithYear).format(time)
+  return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1)
+}
+
+/** The date of a page header: `Wednesday, September 23, 2026`. Capitalized, since it starts a line. */
+export function formatDashboardToday(now: number, locale: string): string {
+  const text = resolveTimeFormats(locale).today.format(now)
   return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1)
 }
 

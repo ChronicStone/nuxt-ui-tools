@@ -59,6 +59,9 @@ function getPublicComponents(
     ...[
       'Grid',
       'Card',
+      'Filter',
+      'Filters',
+      'ViewTabs',
       'Stat',
       'Stats',
       'Gauge',
@@ -80,6 +83,7 @@ function getPublicComponents(
       'Legend',
       'Total',
       'RelativeTime',
+      'Page',
     ].map((part) => ({
       filePath: `${runtimeDir}/dashboard/components/dashboard-${toKebabCase(part)}.vue`,
       global: options.global,

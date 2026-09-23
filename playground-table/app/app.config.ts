@@ -2,6 +2,17 @@ export default defineAppConfig({
   nuxtUiTools: {
     // Atelier: flat white panels joined by 1px rules, light numerals, warm grey secondary text.
     dashboard: {
+      // The page on the warm canvas: header and tabs on the surface, the pinned band on the page.
+      page: {
+        description: 'text-[#6b655d] dark:text-muted',
+        header: 'bg-[var(--ex-surface)]',
+        root: 'min-h-0 flex-1 bg-[var(--ex-page)]',
+        tabs: 'bg-[var(--ex-surface)]',
+        toolbar: 'bg-[var(--ex-page)]',
+      },
+      chips: {
+        chip: 'bg-[var(--ex-chip)] text-[var(--ex-ink)]',
+      },
       card: {
         root: 'rounded-[9px] px-6 py-[22px]',
         subtitle: 'text-xs font-light text-[#6b655d]',
@@ -27,6 +38,19 @@ export default defineAppConfig({
         value: 'text-[22px] font-light tracking-[-0.04em] text-default',
       },
       total: { label: 'text-[#6b655d]', value: 'text-default' },
+      // Filter pills and view tabs on the warm surface, with the soft control ink.
+      filter: {
+        button: 'bg-[var(--ex-surface)] hover:bg-[var(--ex-row-hover)]',
+        check: 'data-[checked]:text-[#1f1d1a]',
+        content: 'bg-[var(--ex-surface)]',
+        label: 'text-[var(--ex-ink-soft)]',
+        root: 'bg-[var(--ex-surface)] hover:bg-[var(--ex-row-hover)]',
+      },
+      filters: { reset: 'text-[var(--ex-ink-soft)]' },
+      viewTabs: {
+        root: 'bg-[var(--ex-surface)]',
+        tab: 'text-[var(--ex-ink-soft)]',
+      },
     },
   },
   ui: {

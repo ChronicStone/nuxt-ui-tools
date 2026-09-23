@@ -107,7 +107,7 @@ const gauge = computed(() => {
   const span = high - low
   const share = span > 0 ? (amount - low) / span : 0
   const goal = target?.(data)
-  const formatValue = format ?? formats.number.value
+  const formatValue = formats.resolve(format)
   const text =
     caption === undefined || isString(caption) || isNumber(caption) ? caption : caption(data)
   return {

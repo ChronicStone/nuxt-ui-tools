@@ -60,6 +60,7 @@ export function setupImports(runtimeDir: string) {
       { from: 'table', name: 'createTableFilterBuilder' },
       { from: 'table', name: 'defineTableSchema' },
       { from: 'table', name: 'prefetchTable' },
+      { from: 'table', name: 'remoteTableOptions' },
       { from: 'table', name: 'tableSource' },
       { from: 'table', name: 'useTable' },
     ]),
@@ -67,7 +68,11 @@ export function setupImports(runtimeDir: string) {
     // Dashboard
     ...withRuntime(runtimeDir, [
       { from: 'dashboard', name: 'defineDashboardSchema' },
+      { from: 'dashboard', name: 'defineDashboardView' },
+      { from: 'dashboard', name: 'injectDashboard' },
       { from: 'dashboard', name: 'useDashboard' },
+      { from: 'dashboard', name: 'useDashboardFormat' },
+      { from: 'dashboard', name: 'useDashboardView' },
       { from: 'dashboard', name: 'resolveDashboardComparisonRange' },
     ]),
 

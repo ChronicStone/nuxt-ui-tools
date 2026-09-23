@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="TRow">
+<script setup lang="ts" generic="TRow, TItem extends DashboardOptionValue = DashboardOptionValue">
 import { useMounted } from '@vueuse/core'
 import { computed } from 'vue'
 
@@ -8,9 +8,13 @@ import {
   resolveDashboardExpandedHeight,
   useDashboardChart,
 } from '../composables/use-dashboard-chart'
+import { useDashboardSeriesPicker } from '../composables/use-dashboard-series-picker'
 import type {
   DashboardAxisOptions,
   DashboardBlockBaseProps,
+  DashboardChartTotals,
+  DashboardFilterControl,
+  DashboardOptionValue,
   DashboardHighlight,
   DashboardReferenceLine,
   DashboardSelected,
@@ -19,9 +23,12 @@ import type {
   DashboardSourceLike,
   DashboardValueFormat,
 } from '../types'
+import DashboardChips from './block/dashboard-chips.vue'
+import DashboardSeriesPicker from './block/dashboard-series-picker.vue'
 import DashboardSkeleton from './block/dashboard-skeleton.vue'
 import { dashboardChartRenderer } from './charts/renderer'
 import DashboardCard from './dashboard-card.vue'
+import DashboardTotal from './dashboard-total.vue'
 
 const {
   source,
@@ -32,6 +39,7 @@ const {
   xFormat,
   xLabel,
   series,
+  seriesValue,
   comparison,
   stacked = false,
   yAxis,
@@ -43,6 +51,7 @@ const {
   highlight,
   selected,
   labels = false,
+  totals,
   onSelect,
   ...block
 } = defineProps<
@@ -53,7 +62,13 @@ const {
     xFormat?: (value: string | number | Date) => string
     /** Header of the category column in the table view and CSV export. */
     xLabel?: LazyTextValue
-    series: readonly DashboardSeries<TRow>[]
+    /**
+     * The series, or a multiple filter whose picks become the series (one per option, in pick
+     * order): the chart then draws the picker and one removable chip per series.
+     */
+    series: readonly DashboardSeries<TRow>[] | DashboardFilterControl<unknown, TItem>
+    /** With `series` bound to a filter: the value of one picked option's series in a row. */
+    seriesValue?: (row: TRow, item: TItem) => number | null | undefined
     /** Dashed line drawn over the bars, e.g. the previous period. */
     comparison?: DashboardSeries<TRow>
     stacked?: boolean
@@ -73,6 +88,11 @@ const {
     selected?: DashboardSelected<TRow>
     /** Prints each group's value above its bars (the stack total when `stacked`). */
     labels?: boolean
+    /**
+     * Footer totals of the solid series, formatted like their axis: `true` / `'sum'` adds each
+     * series up, `'average'` averages it. Footer slot content follows them.
+     */
+    totals?: DashboardChartTotals
     /** A click on the chart selects the x position under the pointer. */
     onSelect?: (event: DashboardSelectEvent<TRow>) => void
   }
@@ -85,15 +105,20 @@ defineSlots<{
 }>()
 
 const mounted = useMounted()
+const picked = useDashboardSeriesPicker<TRow, TItem>({
+  series: () => series,
+  value: () => seriesValue,
+})
 const allSeries = computed<readonly DashboardSeries<TRow>[]>(() =>
   comparison
-    ? [...series, { color: 'series-2', ...comparison, dashed: true, type: 'line' }]
-    : series,
+    ? [...picked.series.value, { color: 'series-2', ...comparison, dashed: true, type: 'line' }]
+    : picked.series.value,
 )
 const seed = computed(() => allSeries.value.map((entry) => entry.key).join('|'))
-const skeletonSeries = computed(() => series.length)
+const skeletonSeries = computed(() => picked.series.value.length || 1)
 const skeletonPoints = computed(() => source.data?.length || points)
 const chart = useDashboardChart<TRow>({
+  totals: () => totals,
   defaultType: 'bar',
   format: () => format,
   highlight: () => highlight,
@@ -118,7 +143,7 @@ const chart = useDashboardChart<TRow>({
     :menu
     :freshness
     :source
-    :legend="legend ? chart.legend.value : undefined"
+    :legend="legend && !picked.picker.value ? chart.legend.value : undefined"
     :is-empty="chart.frame.value.data.length === 0 || chart.frame.value.series.length === 0"
     :tabulate="chart.tabulate"
   >
@@ -131,13 +156,21 @@ const chart = useDashboardChart<TRow>({
         :seed
       />
     </template>
-    <template v-if="$slots['header-right']" #header-right>
+    <template v-if="$slots['header-right'] || picked.picker.value" #header-right>
+      <DashboardSeriesPicker v-if="picked.picker.value" :filter="picked.picker.value" />
       <slot name="header-right" />
     </template>
-    <template v-if="$slots.toolbar" #toolbar>
+    <template v-if="$slots.toolbar || picked.chips.value.length" #toolbar>
+      <DashboardChips v-if="picked.chips.value.length" :chips="picked.chips.value" />
       <slot name="toolbar" />
     </template>
-    <template v-if="$slots.footer" #footer>
+    <template v-if="$slots.footer || chart.totals.value.length" #footer>
+      <DashboardTotal
+        v-for="total in chart.totals.value"
+        :key="total.key"
+        :label="total.label"
+        :value="total.text"
+      />
       <slot name="footer" />
     </template>
 

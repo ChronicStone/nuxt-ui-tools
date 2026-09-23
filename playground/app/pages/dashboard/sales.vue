@@ -1,32 +1,33 @@
 <script setup lang="ts">
-import { defineDashboardSchema, useDashboard } from '#ui-tools/dashboard'
+import { defineDashboardSchema, useDashboard, useDashboardFormat } from '#ui-tools/dashboard'
 
-import { demoDashboardApi, monthLabel } from '../../lib/demo-dashboard-api'
+import { DASHBOARD_YEARS, demoDashboardApi } from '../../lib/demo-dashboard-api'
 
 const api = demoDashboardApi.consumption
 
-const salesDashboard = defineDashboardSchema({
+// A small dashboard fits in one file: filters, queries, and derived values, typed end to end.
+const salesSchema = defineDashboardSchema({
   key: 'sales',
-  params: (p) => ({
-    year: p.enum([2024, 2025, 2026], { defaultValue: 2026 }),
+  filters: (f) => ({
+    year: f.enum(DASHBOARD_YEARS, { defaultValue: 2026, label: 'Year' }),
   }),
-  queries: ({ background, essential, params }) => ({
+  queries: ({ background, essential, filters }) => ({
     summary: essential.query(() => ({
-      queryFn: () => api.summary({ currency: 'EUR', year: params.year }),
-      queryKey: ['sales', 'summary', params.year],
+      queryFn: () => api.summary({ currency: 'EUR', year: filters.year }),
+      queryKey: ['sales', 'summary', filters.year],
     })),
     months: essential.query({
       defaultValue: [],
       query: () => ({
-        queryFn: () => api.months({ year: params.year }),
-        queryKey: ['sales', 'months', params.year],
+        queryFn: () => api.months({ year: filters.year }),
+        queryKey: ['sales', 'months', filters.year],
       }),
     }),
     accounts: background.query({
       defaultValue: [],
       query: () => ({
-        queryFn: () => api.topAccounts({ year: params.year }),
-        queryKey: ['sales', 'accounts', params.year],
+        queryFn: () => api.topAccounts({ year: filters.year }),
+        queryKey: ['sales', 'accounts', filters.year],
       }),
     }),
   }),
@@ -35,37 +36,28 @@ const salesDashboard = defineDashboardSchema({
   }),
 })
 
-const dashboard = useDashboard(salesDashboard)
-const nf = new Intl.NumberFormat('en').format
+const dashboard = useDashboard(salesSchema)
+const format = useDashboardFormat()
 </script>
 
 <template>
-  <PlaygroundContent mode="document">
-    <div class="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
-      <header class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold tracking-tight text-highlighted">Sales</h1>
-        <USelect
-          v-model="dashboard.params.year"
-          v-bind="dashboard.options.year.menu"
-          class="w-28"
-        />
-      </header>
-
+  <PlaygroundContent mode="fixed">
+    <NutDashboardPage :dashboard title="Sales">
       <NutDashboardGrid>
         <NutDashboardStat
           size="12 md:4"
           :source="dashboard.summary"
           label="Units"
           :value="(summary) => summary.units"
-          :delta="
-            (summary) => ((summary.units - summary.unitsPrevious) / summary.unitsPrevious) * 100
-          "
+          :compare="(summary) => summary.unitsPrevious"
+          format="integer"
         />
         <NutDashboardStat
           size="12 md:4"
           :source="dashboard.best"
           label="Best month"
           :value="(best) => best"
+          format="integer"
           caption="units in a single month"
         />
         <NutDashboardStat
@@ -73,14 +65,17 @@ const nf = new Intl.NumberFormat('en').format
           :source="dashboard.summary"
           label="Accounts"
           :value="(summary) => summary.accounts"
+          format="integer"
         />
         <NutDashboardBarChart
           size="12 lg:8"
           :source="dashboard.months"
           title="Units per month"
-          :x="(row) => monthLabel(row.month)"
+          :x="(row) => format.month(row.month + 1)"
           :series="[{ key: 'used', label: 'Units', value: (row) => row.used }]"
           :legend="false"
+          format="integer"
+          totals
         />
         <NutDashboardList
           size="12 lg:4"
@@ -88,9 +83,10 @@ const nf = new Intl.NumberFormat('en').format
           title="Top accounts"
           leading="avatar"
           :label="(row) => row.name"
-          :value="(row) => nf(row.units)"
+          :value="(row) => row.units"
+          format="integer"
         />
       </NutDashboardGrid>
-    </div>
+    </NutDashboardPage>
   </PlaygroundContent>
 </template>

@@ -35,6 +35,12 @@
   /* Skeleton ghost shapes and the moving highlight of their shimmer. */
   --nut-dash-ghost: var(--ui-bg-accented);
   --nut-dash-ghost-shine: color-mix(in oklab, var(--ui-bg) 70%, transparent);
+  /* Filter pills that filter the view: their tint, their outline, and the ink of their value (the
+   * data list accent ink when an app sets one). Menu rows hover with the row hover tint. */
+  --nut-dash-filter-active: color-mix(in oklab, var(--ui-primary) 9%, var(--ui-bg));
+  --nut-dash-filter-active-line: color-mix(in oklab, var(--ui-primary) 35%, var(--ui-border));
+  --nut-dash-filter-ink: var(--nut-dl-accent-ink, var(--ui-primary));
+  --nut-dash-row-hover: var(--ui-bg-elevated);
 }
 
 :where(.dark) {

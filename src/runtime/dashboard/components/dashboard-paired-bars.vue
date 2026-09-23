@@ -99,7 +99,7 @@ const legend = computed(() =>
       ]
     : undefined,
 )
-const formatValue = computed(() => format ?? formats.number.value)
+const formatValue = computed(() => formats.resolve(format))
 const entries = computed(() =>
   (source.data ?? []).map((row, index) => {
     const outer = total(row)
@@ -111,7 +111,7 @@ const entries = computed(() =>
       key: rowKey?.(row, index) ?? index,
       label: resolveTextValue(label(row)),
       outer,
-      ratio: outer > 0 ? formats.percent.value(Math.round((inner / outer) * 100)) : '',
+      ratio: outer > 0 ? formats.percent(Math.round((inner / outer) * 100)) : '',
       row,
     }
   }),

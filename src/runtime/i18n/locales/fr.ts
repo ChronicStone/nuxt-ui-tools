@@ -21,6 +21,27 @@ export default defineUiToolsLocale<Messages>({
         series: '{label} (période précédente)',
         year: 'Année précédente',
       },
+      filters: {
+        all: 'Tous',
+        clear: 'Effacer le filtre {label}',
+        clearSelection: 'Effacer la sélection',
+        empty: 'Aucun résultat',
+        label: 'Filtres',
+        loadError: 'Impossible de charger les options',
+        loading: 'Chargement…',
+        more: '{label} +{count}',
+        no: 'Non',
+        presets: 'Préréglages',
+        reset: 'Réinitialiser',
+        retry: 'Réessayer',
+        search: 'Rechercher…',
+        views: 'Vues',
+        yes: 'Oui',
+      },
+      format: {
+        pointsOne: '{value} pt',
+        pointsOther: '{value} pts',
+      },
       freshness: {
         prefix: 'Mis à jour',
         updated: 'Mis à jour {time}',
@@ -40,6 +61,14 @@ export default defineUiToolsLocale<Messages>({
         auto: 'Actualisation automatique',
         label: 'Actualiser',
         off: 'Désactivée',
+      },
+      page: {
+        loading: 'chargement…',
+        updated: 'mis à jour',
+      },
+      series: {
+        add: 'Ajouter',
+        remove: 'Retirer {label}',
       },
       rowActions: 'Actions pour {label}',
       stat: {

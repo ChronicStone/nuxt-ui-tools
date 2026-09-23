@@ -235,14 +235,15 @@ Does not belong here:
 
 Purpose:
 
-- schema-driven dashboard runtime: typed URL-synced params, staged queries, derived resources, views
+- schema-driven dashboard runtime: schema and view functions taking their context as params, typed filters (URL-synced by default) with their controls, staged queries, derived resources, views
 - generic block library (stats, unovis charts, lists, bars, funnel, custom widgets) with automatic states
 
 Philosophy:
 
 - blocks bind resource objects (`:source`), never string keys; typing flows from the query result
 - the facade exposes getters over owned refs, no `.value`; composables own behaviour, `useDashboardApi` only projects
-- controls stay in the app; the engine owns values, codecs, URL keys, and option lists
+- consumers write business logic only: schema and view functions composed like form schemas (context passed as params, filters declared inline), `useDashboard(() => schema(params))` rebuilding on input change, typed injection (`useDashboardView`, `injectDashboard`), `select`, format presets, and the shipped UI exist so apps never hand-write defaults, resets, transport requests, formatters, or prop-drilled instances; a consumer workaround signals a missing engine primitive
+- the engine ships the page and filter UI (`UiDashboardPage`, `UiDashboardFilters`, `UiDashboardFilter`, `UiDashboardViewTabs`) on top of filter controls; presentation is declared on filters (`label`, `placeholder`, `format`, `columns`), every part is slot-overridable, and every control stays bindable to any component
 - only `components/charts/unovis/*` may import unovis
 
 Read `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md` before changing it.
@@ -708,6 +709,12 @@ Prefer:
 - `bun run typecheck`
 - `bun run test`
 - `bun run dev`
+
+`bun run test` runs three Vitest projects: `unit` (Node), `dom` (happy-dom, no layout), and
+`browser` (`test/browser/**`, real Chromium, Firefox, and WebKit through Playwright, with the
+Tailwind classes the components ship). Layout behaviour (widths, wrapping, collapse) can only be
+asserted in `browser`. It needs the Playwright browsers once per machine:
+`bunx playwright install chromium firefox webkit`; run it alone with `bunx vitest run --project browser`.
 
 Validation rules:
 

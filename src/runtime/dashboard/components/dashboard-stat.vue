@@ -8,11 +8,12 @@ import type { LazyTextValue } from '#ui-tools/shared/types/utils'
 import { isNumber, isString } from '#ui-tools/shared/utils/predicate'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
-import { useDashboardFormat } from '../composables/use-dashboard-format'
+import { DASHBOARD_MISSING_VALUE, useDashboardFormat } from '../composables/use-dashboard-format'
 import { useDashboardUi } from '../composables/use-dashboard-ui'
 import type {
   DashboardBlockBaseProps,
   DashboardBlockUi,
+  DashboardFormatPreset,
   DashboardSeriesColor,
   DashboardSourceLike,
   DashboardStatUi,
@@ -42,6 +43,7 @@ const {
   trendType = 'area',
   trendColor = 'series-1',
   compare,
+  compareMode = 'change',
   compareLabel,
   goal,
   status,
@@ -52,14 +54,21 @@ const {
     source: DashboardSourceLike<TData>
     /** KPI label, shown above the value. */
     label: LazyTextValue
-    /** Main value. Numbers go through `format` (locale number format by default). */
-    value: (data: TData & ({} | null)) => LazyTextValue
+    /**
+     * Main value. Numbers go through `format` (locale number format by default); `null` /
+     * `undefined` (an average without units, a rate without a base) show "—".
+     */
+    value: (data: TData & ({} | null)) => LazyTextValue | null | undefined
     format?: DashboardValueFormat
     /**
      * Change indicator, in percent by default. `null` hides it. Defaults to the change from
      * `compare` when that is set.
      */
     delta?: (data: TData & ({} | null)) => number | null | undefined
+    /**
+     * Format of the delta. Defaults to a signed percent (`delta`), or with `compare-mode="difference"`
+     * to `points` for `percent` / `ratio` values and a signed number otherwise.
+     */
     deltaFormat?: DashboardValueFormat
     /** A decrease is good news (e.g. a failure rate): colors the delta accordingly. */
     invertDelta?: boolean
@@ -76,6 +85,11 @@ const {
      * default `delta`, and the default caption ("vs 1,204 previous period").
      */
     compare?: (data: TData & ({} | null)) => number | null | undefined
+    /**
+     * How the default delta compares `value` with `compare`: the relative change in percent
+     * (`change`, default), or the difference (`difference`: `+12` accounts, `+2.1 pts` of margin).
+     */
+    compareMode?: 'change' | 'difference'
     /**
      * Caption shown with `compare`, as text or built from the formatted previous value. Defaults to
      * "vs <value> previous period".
@@ -106,28 +120,44 @@ const ready = computed(() => {
   return data === undefined ? null : { data }
 })
 const resolved = computed(() => (ready.value ? value(ready.value.data) : undefined))
-const formatValue = computed(() => format ?? formats.number.value)
+const formatValue = computed(() => formats.resolve(format))
 const display = computed(() => {
-  if (resolved.value === undefined) return ''
-  return isNumber(resolved.value)
-    ? formatValue.value(resolved.value)
-    : resolveTextValue(resolved.value)
+  if (!ready.value) return ''
+  const shown = resolved.value
+  if (shown === null || shown === undefined) return DASHBOARD_MISSING_VALUE
+  return isNumber(shown) ? formatValue.value(shown) : resolveTextValue(shown)
 })
 const previous = computed(() => {
   if (!ready.value || !compare) return null
   const amount = compare(ready.value.data)
   return isNumber(amount) && Number.isFinite(amount) ? amount : null
 })
+/** A share out of 1 reads as points out of 100. */
+const scale = computed(() => (compareMode === 'difference' && format === 'ratio' ? 100 : 1))
+const deltaFallback = computed<DashboardFormatPreset>(() => {
+  if (compareMode !== 'difference') return 'delta'
+  return format === 'percent' || format === 'ratio' ? 'points' : 'signed'
+})
 const change = computed(() => {
   if (!ready.value) return null
-  const amount = delta
-    ? delta(ready.value.data)
-    : previous.value !== null && previous.value !== 0 && isNumber(resolved.value)
-      ? ((resolved.value - previous.value) / Math.abs(previous.value)) * 100
-      : null
+  const current = resolved.value
+  const before = previous.value
+  let amount: number | null | undefined = null
+  if (delta) amount = delta(ready.value.data)
+  else if (before !== null && isNumber(current))
+    amount =
+      compareMode === 'difference'
+        ? (current - before) * scale.value
+        : before === 0
+          ? null
+          : ((current - before) / Math.abs(before)) * 100
   if (amount === null || amount === undefined || !Number.isFinite(amount)) return null
   const good = invertDelta ? amount <= 0 : amount >= 0
-  return { good, label: (deltaFormat ?? formats.delta.value)(amount), up: amount >= 0 }
+  return {
+    good,
+    label: formats.resolve(deltaFormat, deltaFallback.value)(amount),
+    up: amount >= 0,
+  }
 })
 const captionText = computed(() => {
   if (!ready.value) return ''
@@ -155,7 +185,7 @@ const progress = computed(() => {
   const completion = (resolved.value / target) * 100
   const filled = Math.round(Math.max(0, Math.min(100, completion)))
   return {
-    completion: formats.percent.value(completion),
+    completion: formats.percent(completion),
     filled,
     goal: t('dashboard.stat.goal', { value: formatValue.value(target) }),
     reached: completion >= 100,

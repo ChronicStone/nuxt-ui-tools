@@ -1,4 +1,4 @@
-import type { InfiniteData, QueryFunction, QueryKey } from '@tanstack/vue-query'
+import type { InfiniteData, QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
 
 import type { QueryDefinition } from '../../shared/types/query'
 import type { TableResolvedFilterGroup } from './filters'
@@ -13,6 +13,32 @@ import type {
 
 /** Table name of the shared `QueryDefinition`, kept for public type compatibility. */
 export type TableQueryDefinition<TData = unknown> = QueryDefinition<TData>
+
+/**
+ * Result of a query definition: what its `queryFn` resolves to, or the data type of TanStack
+ * options whose `queryFn` may be a ref or `skipToken` (Tuyau's `queryOptions()`).
+ */
+export type TableSourceQueryResult<TQuery> = TQuery extends {
+  queryFn: (...args: never[]) => infer TResult
+}
+  ? Awaited<TResult>
+  : TQuery extends UseQueryOptions<
+        infer _TQueryFnData,
+        infer _TError,
+        infer TResult,
+        infer _TQueryData,
+        infer _TQueryKey
+      >
+    ? Awaited<TResult>
+    : never
+
+/** Row of a table query result: an array of rows, or a page (`{ rows }`). */
+export type TableSourceRow<TResult> =
+  TableRowsFromSourceResult<Awaited<TResult>> extends infer TRow
+    ? TRow extends GenericObject
+      ? TRow
+      : GenericObject
+    : GenericObject
 
 export interface TableInfiniteQueryDefinition<TData = unknown> {
   queryKey: QueryKey
