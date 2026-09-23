@@ -35,6 +35,33 @@ describe('dashboard axes', () => {
     })
   })
 
+  it('keeps whole-number data on whole-number ticks, so integer labels never repeat', () => {
+    // Nothing but zeros (an account with no activity yet), or nothing at all.
+    expect(resolveDashboardAxis([0, 0, 0, null], undefined)).toEqual({
+      domain: [0, 1],
+      ticks: [0, 1],
+    })
+    expect(resolveDashboardAxis([null, undefined], undefined)).toEqual({
+      domain: [0, 1],
+      ticks: [0, 1],
+    })
+    // Small counts: whole steps, not quarters.
+    expect(resolveDashboardAxis([1, 0], undefined)).toEqual({ domain: [0, 2], ticks: [0, 1, 2] })
+    expect(resolveDashboardAxis([3, 1], undefined)).toEqual({
+      domain: [0, 4],
+      ticks: [0, 1, 2, 3, 4],
+    })
+    expect(resolveDashboardAxis([5], undefined)).toEqual({ domain: [0, 6], ticks: [0, 2, 4, 6] })
+    expect(resolveDashboardAxis([-1, 1], undefined).ticks.every(Number.isInteger)).toBe(true)
+    expect(resolveDashboardAxis([-1, 0], undefined).ticks.every(Number.isInteger)).toBe(true)
+    // Fractional data keeps its fine steps.
+    const fractional = resolveDashboardAxis([0.3], undefined)
+    expect(fractional.domain).toEqual([0, 0.4])
+    expect(fractional.ticks.map((tick) => Number(tick.toFixed(6)))).toEqual([0, 0.1, 0.2, 0.3, 0.4])
+    // Explicit tick counts win.
+    expect(resolveDashboardAxis([0], { ticks: 4 }).ticks).toEqual([0, 0.25, 0.5, 0.75, 1])
+  })
+
   it('honours fixed bounds and tick counts, and never divides by zero', () => {
     expect(resolveDashboardAxis([30], { max: 100, ticks: 5 }).ticks).toEqual([
       0, 20, 40, 60, 80, 100,
