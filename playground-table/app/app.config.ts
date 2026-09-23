@@ -1,5 +1,29 @@
 export default defineAppConfig({
   nuxtUiTools: {
+    // Form pages on the warm canvas: header and cards on the surface, primary checks in ink.
+    form: {
+      fields: {
+        // Type cards: a selected card takes the selection tint, its icon and check the accent ink.
+        'radio-card': {
+          ui: {
+            check: 'text-[#1f1d1a]',
+            description: 'text-xs leading-[1.4] text-[#6b655d] dark:text-muted',
+            item: 'has-data-[state=checked]:bg-[var(--ex-selection)] hover:border-[var(--ui-border-accented)]',
+            label: 'text-[13.5px]',
+            tile: 'data-[selected]:bg-[var(--ex-surface)] data-[selected]:text-[var(--nut-dl-accent-ink)]',
+          },
+        },
+      },
+      page: {
+        ui: {
+          header: 'bg-[var(--ex-surface)]',
+          navigationIndicator:
+            'group-data-[active]:data-[state=complete]:text-[#1f1d1a] dark:group-data-[active]:data-[state=complete]:text-[#1f1d1a]',
+          root: 'min-h-0 flex-1 bg-[var(--ex-page)]',
+          section: 'bg-[var(--ex-surface)]',
+        },
+      },
+    },
     // Atelier: flat white panels joined by 1px rules, light numerals, warm grey secondary text.
     dashboard: {
       // The page on the warm canvas: header and tabs on the surface, the pinned band on the page.

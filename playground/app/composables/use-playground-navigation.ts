@@ -114,6 +114,14 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'document',
             path: '/form/settings',
           },
+          {
+            description:
+              'Sections with a scrollspy navigation, dirty rings, card grids, translated labels.',
+            id: 'form-page',
+            label: 'Page',
+            mode: 'fixed',
+            path: '/form/page',
+          },
         ],
         id: 'form-workflows',
         label: 'Workflows',

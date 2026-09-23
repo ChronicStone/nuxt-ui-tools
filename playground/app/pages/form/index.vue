@@ -21,6 +21,12 @@ const examples = [
     label: 'Settings',
     to: '/form/settings',
   },
+  {
+    description:
+      'Sections with a scrollspy navigation, dirty rings, card grids, translated labels.',
+    label: 'Page',
+    to: '/form/page',
+  },
 ] as const
 </script>
 

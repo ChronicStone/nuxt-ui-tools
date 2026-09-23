@@ -4,7 +4,7 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import { defineTableSchema, tableSource, useTable } from '#ui-tools/table'
 import UiRowActions from '#ui-tools/table/components/actions/row-actions.vue'
 
-import { ACCOUNT_STATUS, ACCOUNT_TYPE, COUNTRY, GROUPS, MANAGER_LOCATIONS } from '../data/enums'
+import { ACCOUNT_STATUS, ACCOUNT_TYPE, COUNTRY, GROUPS, MANAGER_LOCATIONS } from '../../data/enums'
 
 const route = useRoute()
 const {
@@ -256,7 +256,12 @@ const schema = defineTableSchema({
   },
   rowActions: ({ row }) => [
     { action: () => {}, icon: 'i-lucide-arrow-right', key: 'view', label: 'Voir la fiche' },
-    { action: () => {}, icon: 'i-lucide-pencil', key: 'edit', label: 'Modifier' },
+    {
+      action: () => navigateTo(`/accounts/${row.id}/edit`),
+      icon: 'i-lucide-pencil',
+      key: 'edit',
+      label: 'Modifier',
+    },
     ...(row.status === 'pending'
       ? [
           {
@@ -470,7 +475,7 @@ const table = useTable(schema)
         icon="i-lucide-award"
         label="Exporter les candidats"
       />
-      <UButton color="primary" icon="i-lucide-plus" label="Créer un compte" />
+      <UButton color="primary" icon="i-lucide-plus" label="Créer un compte" to="/accounts/new" />
     </template>
   </AppDataList>
 </template>

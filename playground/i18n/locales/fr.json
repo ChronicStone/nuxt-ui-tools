@@ -427,6 +427,60 @@
       "description": "Utilisez le laboratoire pour essayer vite des interactions sans les rattacher tout de suite à une surface dédiée.",
       "note": "Utilisez le popover de réglages pour éditer en direct la palette, la densité et la langue pendant vos tests ici.",
       "cta": "Retour à la vue d'ensemble"
+    },
+    "formPage": {
+      "eyebrow": "Paramètres",
+      "title": "Espace de travail",
+      "description": "Chaque texte de cette page est traduit : changez de langue pour le voir suivre.",
+      "navigation": "Paramètres",
+      "saved": "Paramètres enregistrés",
+      "sections": {
+        "workspace": {
+          "label": "Espace de travail",
+          "description": "nom, offre et région des données"
+        },
+        "notifications": {
+          "label": "Notifications",
+          "description": "ce qui arrive dans votre boîte"
+        },
+        "security": {
+          "label": "Sécurité",
+          "description": "comment les membres se connectent"
+        }
+      },
+      "fields": {
+        "name": "Nom de l’espace",
+        "plan": "Offre",
+        "region": "Région des données",
+        "digest": "Fréquence du résumé",
+        "mentions": "M’envoyer un e-mail quand on me mentionne",
+        "ssoDomain": "Domaine SSO",
+        "ssoDomainHelp": "Requis pour l’offre Entreprise, choisie dans la section Espace de travail.",
+        "twoFactor": "Exiger la double authentification"
+      },
+      "plans": {
+        "starter": {
+          "label": "Démarrage",
+          "description": "Une équipe qui se lance."
+        },
+        "team": {
+          "label": "Équipe",
+          "description": "Projets partagés, rôles et relectures."
+        },
+        "enterprise": {
+          "label": "Entreprise",
+          "description": "Authentification unique, journal d’audit et support."
+        }
+      },
+      "regions": {
+        "eu": "Europe",
+        "us": "États-Unis"
+      },
+      "digests": {
+        "daily": "Quotidien",
+        "weekly": "Hebdomadaire",
+        "never": "Jamais"
+      }
     }
   }
 }

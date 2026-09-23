@@ -1,8 +1,8 @@
-import { defineFormSchema } from '#ui-tools/form'
+import { defineFormPageSchema, defineFormPageSection } from '#ui-tools/form'
 import type { FormValue } from '#ui-tools/form'
 import { isString } from '#ui-tools/shared/utils/predicate'
 
-import type { Contact } from '../data/accounts'
+import type { Account, Contact } from '../data/accounts'
 import { COUNTRY, CURRENCY, GROUPS, MANAGER_LOCATIONS } from '../data/enums'
 import { contactOptions } from './pickers'
 
@@ -56,26 +56,23 @@ function isTestCenterType(value: FormValue) {
   return isString(value) && TEST_CENTER_TYPES.has(value)
 }
 
-export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'edit' = 'edit') {
-  const isNew = mode === 'new'
-  return defineFormSchema({
-    actions: [
-      { key: 'cancel', label: 'Annuler' },
-      {
-        icon: 'i-lucide-check',
-        key: 'submit',
-        label: isNew ? 'Créer le compte' : 'Enregistrer',
-      },
-    ],
+/** Type of the account: it conditions the fields of the other sections. */
+function accountTypeSection() {
+  return defineFormPageSection({
+    description: 'le type conditionne les champs, colonnes et synchronisations',
     fields: [
-      { key: 'typeSection', label: 'Type de compte', type: 'section' },
       {
         default: 'customer',
         key: 'accountType',
-        label: 'Type de compte',
         layout: { span: 'full' },
         options: TYPE_OPTIONS,
-        props: { orientation: 'horizontal' },
+        // The section title names the choice: the cards only need an accessible name.
+        props: {
+          'aria-label': 'Type de compte',
+          columns: '2 xl:3',
+          icon: 'tile',
+          indicator: 'corner',
+        },
         required: true,
         type: 'radio-card',
       },
@@ -120,7 +117,16 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         label: 'Synchronisation EDOF',
         type: 'checkbox',
       },
-      { key: 'identitySection', label: 'Identité', type: 'section' },
+    ],
+    key: 'type',
+    label: 'Type de compte',
+  })
+}
+
+function identitySection() {
+  return defineFormPageSection({
+    description: 'nom affiché, entité légale et identifiants officiels',
+    fields: [
       {
         key: 'name',
         label: 'Nom du compte',
@@ -157,7 +163,16 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         props: { accept: 'image/png,image/svg+xml', dropzoneLabel: 'Déposer une image' },
         type: 'file',
       },
-      { key: 'contactsSection', label: 'Contacts', type: 'section' },
+    ],
+    key: 'identity',
+    label: 'Identité',
+  })
+}
+
+function contactsSection(contacts: readonly Contact[]) {
+  return defineFormPageSection({
+    description: 'référents obligatoires dès qu’un contrat est actif',
+    fields: [
       {
         key: 'businessManagerId',
         label: 'Business Manager',
@@ -192,7 +207,17 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         props: { multiple: true },
         type: 'select',
       },
-      { key: 'addressSection', label: 'Adresse', type: 'section' },
+    ],
+    key: 'contacts',
+    label: 'Contacts',
+    layout: { columns: 3, fieldSpan: '3 md:1' },
+  })
+}
+
+function addressSection() {
+  return defineFormPageSection({
+    description: 'siège légal utilisé sur les contrats et factures',
+    fields: [
       {
         key: 'address',
         label: 'Adresse',
@@ -217,11 +242,17 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         required: true,
         type: 'select',
       },
-      {
-        key: 'billingSection',
-        label: 'Facturation & synchronisation',
-        type: 'section',
-      },
+    ],
+    key: 'address',
+    label: 'Adresse',
+  })
+}
+
+/** Nothing to do here at creation: the currency has a default and the rest comes later. */
+function billingSection(params: { optional: boolean }) {
+  return defineFormPageSection({
+    description: 'devise, prélèvement et identifiants externes',
+    fields: [
       {
         default: 'EUR',
         key: 'preferredCurrency',
@@ -245,13 +276,26 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         type: 'text',
       },
       {
-        help: 'Requis dès qu’un contrat est actif',
+        // The type is chosen in another section: a page is one form, so the rule reads it.
+        dependencies: ['accountType'],
+        help: 'Requis pour les centres de test, synchronisés avec VTest',
         key: 'vtestId',
         label: 'VTEST ID',
         props: { icon: 'i-lucide-target', mono: true },
+        required: ({ deps }) => isTestCenterType('accountType' in deps ? deps.accountType : null),
         type: 'text',
       },
-      { key: 'docsSection', label: 'Documents', type: 'section' },
+    ],
+    key: 'billing',
+    label: 'Facturation & synchronisation',
+    optional: params.optional,
+  })
+}
+
+function documentsSection() {
+  return defineFormPageSection({
+    description: 'pièces légales visibles par le client',
+    fields: [
       {
         key: 'kbis',
         label: 'Fichier d’enregistrement officiel (KBIS)',
@@ -265,13 +309,47 @@ export function accountFormSchema(contacts: readonly Contact[], mode: 'new' | 'e
         type: 'file',
       },
     ],
+    key: 'documents',
+    label: 'Documents',
+  })
+}
+
+/**
+ * The account form: a page of sections, created from scratch or edited from `account`. An edit
+ * starts on the identity, rings what changed, and warns before leaving unsaved changes.
+ */
+export function accountFormSchema(params: { contacts: readonly Contact[]; account?: Account }) {
+  const { account, contacts } = params
+  const type = accountTypeSection()
+  const identity = identitySection()
+  const rest = [
+    contactsSection(contacts),
+    addressSection(),
+    billingSection({ optional: !account }),
+    documentsSection(),
+  ] as const
+  return defineFormPageSchema({
+    actions: [
+      { key: 'cancel', label: 'Annuler' },
+      {
+        icon: 'i-lucide-check',
+        key: 'submit',
+        label: account ? 'Enregistrer' : 'Créer le compte',
+      },
+    ],
+    controls: {
+      confirmNavOnDirty: { message: 'Quitter sans enregistrer les modifications ?' },
+      dirtyCheck: Boolean(account),
+    },
     header: {
-      description: isNew
-        ? 'Le type conditionne les champs, colonnes et synchronisations.'
-        : 'Identité, contacts, adresse, facturation et documents légaux.',
+      description: account
+        ? account.name
+        : 'Le type conditionne les champs, colonnes et synchronisations.',
       eyebrow: 'Comptes',
-      title: isNew ? 'Nouveau compte' : 'Modifier le compte',
+      title: account ? 'Modifier le compte' : 'Nouveau compte',
     },
     modal: { size: 'lg' },
+    navigation: { title: account ? 'Sections' : 'Création' },
+    sections: account ? [identity, type, ...rest] : [type, identity, ...rest],
   })
 }
