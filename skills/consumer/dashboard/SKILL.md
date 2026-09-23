@@ -12,8 +12,9 @@ Use this skill for package-consumer tasks involving:
 - typed injection: `useDashboardView(view)`, `injectDashboard(schema)`, `InferDashboard`,
   `InferDashboardView`
 - typed params, where they live (`sync`: URL, memory, a store), headless params
+- `UiDashboardPage`: the whole page (header, refresh, pinned tabs and filters, the current view)
 - filter handles (`dashboard.filters.x`) and the controls `UiDashboardFilters`, `UiDashboardFilter`,
-  `UiDashboardViewTabs`
+  `UiDashboardViewTabs`, a chart's series picked by a filter, a block's drill-down filter chips
 - staged queries, `select`, dependent queries (`requires`), and `derive`
 - conditions: `enabled` on views, queries, and params, for one schema serving several audiences
 - remote pickers and `remoteTableOptions`
@@ -29,7 +30,8 @@ Focused references:
   handles, remote pickers
 - `skills/consumer/dashboard/references/filters.md` — the filter bar, pills, view tabs, slots,
   binding a handle to your own control
-- `skills/consumer/dashboard/references/blocks.md` — every block, formats, grid sizing, theming
+- `skills/consumer/dashboard/references/blocks.md` — the page, every block, formats, grid sizing,
+  theming
 
 ## Setup
 
@@ -77,32 +79,34 @@ const dashboard = useDashboard(schema)
 </script>
 
 <template>
-  <UiDashboardFilters :dashboard />
-
-  <UiDashboardGrid>
-    <UiDashboardStat
-      size="12 md:4"
-      :source="dashboard.summary"
-      label="Revenue"
-      :value="(summary) => summary.revenue"
-      :compare="(summary) => summary.previousRevenue"
-      :format="{ style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }"
-    />
-    <UiDashboardBarChart
-      size="12 lg:8"
-      :source="dashboard.daily"
-      title="Orders per day"
-      :x="(day) => day.date"
-      :series="[{ key: 'orders', label: 'Orders', value: (day) => day.orders }]"
-      format="integer"
-      totals
-    />
-  </UiDashboardGrid>
+  <UiDashboardPage :dashboard title="Sales">
+    <UiDashboardGrid>
+      <UiDashboardStat
+        size="12 md:4"
+        :source="dashboard.summary"
+        label="Revenue"
+        :value="(summary) => summary.revenue"
+        :compare="(summary) => summary.previousRevenue"
+        :format="{ currency: 'EUR' }"
+      />
+      <UiDashboardBarChart
+        size="12 lg:8"
+        :source="dashboard.daily"
+        title="Orders per day"
+        :x="(day) => day.date"
+        :series="[{ key: 'orders', label: 'Orders', value: (day) => day.orders }]"
+        format="integer"
+        totals
+      />
+    </UiDashboardGrid>
+  </UiDashboardPage>
 </template>
 ```
 
 What you get without writing it:
 
+- the page: title, today's date and when the data was fetched, the refresh control, and the filter
+  bar pinned while the page scrolls
 - a "Period 30 days ⌄" pill that picks the period, turns accent when changed, and resets
 - `?period=7` in the URL (defaults never reach the URL)
 - `summary` fetches first; `daily` fetches once `summary` settles
@@ -157,32 +161,40 @@ export const adminDashboard = defineDashboardSchema({
 ```
 
 ```vue
-<!-- page -->
+<!-- page: instantiate, then bind. The page renders the tabs, the filters, and the current view. -->
 <script setup lang="ts">
 const dashboard = useDashboard(adminDashboard)
 </script>
 <template>
-  <UiDashboardViewTabs :dashboard />
-  <UiDashboardFilters :dashboard />
-  <ConsumptionTab v-if="dashboard.view.current === 'consumption'" />
+  <UiDashboardPage :dashboard :title="t('Dashboard')">
+    <template #consumption><ConsumptionTab /></template>
+    <template #certifications><CertificationsTab /></template>
+  </UiDashboardPage>
 </template>
 
-<!-- ConsumptionTab.vue: no props, fully typed -->
+<!-- ConsumptionTab.vue: no props, fully typed, blocks only -->
 <script setup lang="ts">
 const consumption = useDashboardView(consumptionView)
 </script>
 <template>
-  <UiDashboardStat
-    :source="consumption.summary"
-    label="Units"
-    :value="(s) => s.units"
-    format="integer"
-  />
+  <UiDashboardGrid variant="panels" columns="2 md:4">
+    <UiDashboardStat
+      size="1"
+      :source="consumption.summary"
+      label="Units"
+      :value="(s) => s.units"
+      format="integer"
+    />
+  </UiDashboardGrid>
 </template>
 ```
 
 ## Rules Of Thumb
 
+- A page instantiates the dashboard and binds components: `useDashboard(schema)` in the script,
+  `UiDashboardPage` in the template, one slot per view. Never wire a header, a date line, sticky
+  tabs, a scroll shadow, or a `v-if` on `dashboard.view.current` by hand; view components contain
+  blocks only.
 - There is no `.value` anywhere: `dashboard.params.year`, `dashboard.summary.data`,
   `dashboard.refreshing` are plain reads, and params are `v-model` targets.
 - Bind blocks to resources, not strings: `:source="dashboard.summary"`.
@@ -195,7 +207,11 @@ const consumption = useDashboardView(consumptionView)
   query render nothing and grids close up, so templates never branch on permissions.
 - Use `useDashboardView(view)` / `injectDashboard(schema)` in child components; never prop-drill the
   dashboard or restate its type (`InferDashboard<typeof schema>` names it when you need to).
-- Format with presets or `useDashboardFormat()`; do not build `Intl.NumberFormat` in the app.
+- Format with presets, `{ currency }`, or `useDashboardFormat()`; do not build
+  `Intl.NumberFormat` options in `computed`s.
+- Let the engine render filter controls: a chart whose series the user picks binds the filter as its
+  `series`; a block narrowed by a drill-down value lists it in `filters`; a header link is an action
+  `{ label, to }`; rows that open a page take `to`.
 - Drill down by writing a param from `@select`; show it back with `selected`.
 - Compare periods with `p.comparison()` and `resolveDashboardComparisonRange`, then pass `compare`
   accessors to stats and chart series: deltas, captions, and legends follow.

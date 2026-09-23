@@ -3,9 +3,14 @@
 The dashboard ships its controls, all built on filter handles (see params.md). Use them at three
 levels:
 
-1. the whole bar: `<UiDashboardFilters :dashboard />`
+1. the whole bar: `<UiDashboardFilters :dashboard />` (`UiDashboardPage` renders it, pinned under
+   the header, with the view tabs)
 2. one filter where you want it: `<UiDashboardFilter :filter="dashboard.filters.account" />`
 3. your own component, bound to a handle: `<USelectMenu v-model="…" v-bind="filter.menu" />`
+
+Blocks render two more for you (see blocks.md): a chart binds a multiple filter as its `series` and
+draws the picker and removable chips, and a block lists the drill-down filters narrowing it in
+`filters`, as chips.
 
 Presentation comes from the params themselves (`label`, `placeholder`, `format`, `columns`,
 `searchable`, `max`, `headless`), so pages rarely configure a control.
