@@ -145,8 +145,9 @@ A handle binds to any component:
 
 `UiDashboardViewTabs :dashboard` renders the views as underlined tabs bound to
 `dashboard.view.current` (URL key `view`, pushed to history). The strip scrolls sideways when the
-tabs overflow and keeps the current one in view. Slot `#tab` `{ item, active }`; `ui` parts `root`
-and `tab` (the current tab carries `data-active`).
+tabs overflow and keeps the current one in view. It renders nothing while fewer than two views are
+enabled (see `enabled` in schema.md), so an audience that sees a single view gets no tab strip.
+Slot `#tab` `{ item, active }`; `ui` parts `root` and `tab` (the current tab carries `data-active`).
 
 ## Theming
 

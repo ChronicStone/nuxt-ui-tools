@@ -9,7 +9,8 @@ import { resolveDashboardClasses } from '../utils/ui'
 
 /**
  * Tabs of a dashboard's views, bound to `dashboard.view` (the URL follows). Underlined tabs in a
- * strip that scrolls sideways when they overflow, keeping the current one in view.
+ * strip that scrolls sideways when they overflow, keeping the current one in view. Renders nothing
+ * while fewer than two views are enabled: there is nothing to switch to.
  *
  * @example
  * ```vue
@@ -69,6 +70,7 @@ watch(
 
 <template>
   <nav
+    v-if="dashboard.view.items.length > 1"
     ref="strip"
     :class="classes.root"
     :aria-label="t('dashboard.filters.views')"

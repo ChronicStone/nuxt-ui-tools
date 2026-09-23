@@ -9,6 +9,7 @@ import {
 import DashboardFilters from '#ui-tools/dashboard/components/dashboard-filters.vue'
 import DashboardGrid from '#ui-tools/dashboard/components/dashboard-grid.vue'
 import DashboardStat from '#ui-tools/dashboard/components/dashboard-stat.vue'
+import DashboardViewTabs from '#ui-tools/dashboard/components/dashboard-view-tabs.vue'
 
 import { deferredSource, mountDashboard } from './harness'
 
@@ -110,11 +111,26 @@ describe('dashboard conditions', () => {
     expect(cohort.calls).toHaveLength(1)
   })
 
+  it('renders no tab strip while a single view is enabled', async () => {
+    const { schema, workspace } = createWorkspaceSchema('MANAGER')
+    const { flush, wrapper } = await mountDashboard({
+      render: (dashboard) => h(DashboardViewTabs, { dashboard }),
+      schema,
+    })
+
+    expect(wrapper.find('[data-dashboard-view-tabs]').exists()).toBe(false)
+
+    workspace.value = 'CLIENT'
+    await flush()
+    const tabs = wrapper.findAll('[data-dashboard-view-tabs] button')
+    expect(tabs.map((tab) => tab.text())).toEqual(['Consumption', 'Certifications'])
+  })
+
   it('keeps disabled params out of the bar and out of queries', async () => {
     const { schema, summary, workspace } = createWorkspaceSchema('CLIENT')
     const { dashboard, flush, wrapper } = await mountDashboard({
       query: { 'consumption.account': 'acme' },
-      render: (dashboard) => h(DashboardFilters, { dashboard }),
+      render: (api) => h(DashboardFilters, { dashboard: api }),
       schema,
     })
     const view = dashboard.consumption
