@@ -6,6 +6,7 @@ import {
   defineDashboardSchema,
   defineDashboardView,
   injectDashboard,
+  useDashboardFormat,
   useDashboardView,
 } from '#ui-tools/dashboard'
 import type { InferDashboard, InferDashboardView } from '#ui-tools/dashboard'
@@ -21,11 +22,16 @@ interface AccountParams {
 function profileView(params: AccountParams) {
   // App-level composables keep working when the schema function runs again, outside setup.
   const router = useRouter()
+  const format = useDashboardFormat()
   return defineDashboardView({
     label: () => `Profile of ${params.accountId}`,
     filters: (f) => ({
       year: f.enum([2025, 2026], { defaultValue: 2026, label: 'Year' }),
-      months: f.enum([1, 2, 3], { label: 'Months', multiple: true }),
+      months: f.enum([1, 2, 3], {
+        format: (month) => format.month(month),
+        label: 'Months',
+        multiple: true,
+      }),
     }),
     queries: ({ essential, filters }) => ({
       detail: essential.query(() => ({
@@ -101,11 +107,15 @@ describe('dashboard schema functions', () => {
 
   it('keeps the locale of the component that created the dashboard', async () => {
     const { accountId, dashboard, flush } = await mountAccount()
+    const labels = () => dashboard.profile.controls.months.items.map((item) => item.label)
     expect(dashboard.profile.controls.months.display).toBe('Tous')
+    expect(labels()).toEqual(['Janv.', 'Févr.', 'Mars'])
 
+    // The function runs again outside setup: the formats it built still read the page locale.
     accountId.value = 'a2'
     await flush()
     expect(dashboard.profile.controls.months.display).toBe('Tous')
+    expect(labels()).toEqual(['Janv.', 'Févr.', 'Mars'])
   })
 
   it('hands descendants handles that follow the rebuilds', async () => {

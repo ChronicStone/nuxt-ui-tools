@@ -3,6 +3,7 @@ import { computed, markRaw } from 'vue'
 import { useUiToolsLocale } from '../../i18n/use-locale'
 import { isNumber } from '../../shared/utils/predicate'
 import type { DashboardFormatPreset, DashboardValueFormat, DashboardValueFormatter } from '../types'
+import { currentDashboardLocale } from '../utils/environment'
 import {
   formatDashboardMonth,
   resolveDashboardFormats,
@@ -29,7 +30,9 @@ import {
  * or an empty period needs no fallback in the template.
  */
 export function useDashboardFormat() {
-  const { code, t } = useUiToolsLocale()
+  // In a schema function, the locale of the component that created the dashboard: the function
+  // also runs outside setup, when its input changes.
+  const { code, t } = currentDashboardLocale() ?? useUiToolsLocale()
   const formats = computed(() => resolveDashboardFormats(code.value))
   const plurals = computed(() => new Intl.PluralRules(code.value))
 

@@ -59,8 +59,9 @@ The getter runs in setup, and again when what it reads changes. The dashboard th
 new input behind the same objects: `account`, view handles, and every descendant's handle keep
 working; filters keep their values (they live in the URL); queries whose key changed load, with
 their blocks' loading state; the previous build stops. Because it runs again outside setup, the
-function (and the views it calls) may use app-level composables, not `useI18n()` or lifecycle
-hooks. Read only the context in the getter: whatever it reads rebuilds the dashboard.
+function (and the views it calls) may use app-level composables and `useDashboardFormat()` (its
+formats keep the page locale), not `useI18n()` or lifecycle hooks. Read only the context in the
+getter: whatever it reads rebuilds the dashboard.
 
 ## Queries And Stages
 

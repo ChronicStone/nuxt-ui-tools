@@ -12,6 +12,7 @@ import type { EffectScope } from 'vue'
 import { useUiToolsLocale } from '../../i18n/use-locale'
 import { numberCodec, useQueryState } from '../../query-state'
 import type { DashboardApi, DashboardSchemaLike, DashboardSchemaOf } from '../types'
+import { withDashboardLocale } from '../utils/environment'
 import type { DashboardEnvironment, DashboardLocale } from '../utils/environment'
 import { resolveDashboardRuntimeSchema } from '../utils/schema'
 import {
@@ -36,7 +37,8 @@ import { useDashboardViews } from './use-dashboard-views'
  * Descendant components get it with `injectDashboard(schema)`, and a view with `useDashboardView`.
  *
  * A schema function runs again outside component setup: call app-level composables in it
- * (`useNuxtApp()`, a store, `useRoute()`), not `useI18n()` or lifecycle hooks.
+ * (`useNuxtApp()`, a store, `useRoute()`) and `useDashboardFormat()`, not `useI18n()` or lifecycle
+ * hooks.
  *
  * @example
  * ```vue
@@ -71,9 +73,11 @@ export function useDashboard(source: DashboardSchemaLike | (() => DashboardSchem
   }
 
   // Rebuilds run from the watcher, outside setup: the app context keeps `inject()` working in the
-  // schema function and in the queries (the router, the query client).
+  // schema function and in the queries (the router, the query client), and the locale of this
+  // component keeps the formats they create in the page's language.
   const app = getCurrentInstance()?.appContext.app
-  const withContext = <TResult>(run: () => TResult) => (app ? app.runWithContext(run) : run())
+  const withContext = <TResult>(run: () => TResult) =>
+    withDashboardLocale(locale, () => (app ? app.runWithContext(run) : run()))
   const schema = computed(() => withContext(source))
   let scope: EffectScope = effectScope(true)
   const current = shallowRef(build(scope, schema.value))

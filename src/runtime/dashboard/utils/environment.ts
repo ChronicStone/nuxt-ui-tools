@@ -3,6 +3,28 @@ import type { DashboardRuntimeFilter } from '../types'
 
 export type DashboardLocale = ReturnType<typeof useUiToolsLocale>
 
+let buildingLocale: DashboardLocale | undefined
+
+/**
+ * Runs `build` with `locale` as the locale of the dashboard being built. A schema function runs
+ * again outside setup when its input changes; the formats it creates (`useDashboardFormat()`) keep
+ * the locale of the component that created the dashboard.
+ */
+export function withDashboardLocale<TResult>(locale: DashboardLocale, build: () => TResult) {
+  const previous = buildingLocale
+  buildingLocale = locale
+  try {
+    return build()
+  } finally {
+    buildingLocale = previous
+  }
+}
+
+/** Locale of the dashboard being built, while one builds. */
+export function currentDashboardLocale() {
+  return buildingLocale
+}
+
 /** URL-synced filters of one dashboard, by full URL key. */
 export type DashboardFilterRegistry = Map<string, { owner: string; signature: string }>
 

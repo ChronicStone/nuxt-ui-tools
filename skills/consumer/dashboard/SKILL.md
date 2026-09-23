@@ -220,8 +220,8 @@ values (they live in the URL), and blocks show their loading state for the new d
 - Declare filters inline in the schema or view that reads them. A key shared by two views is one
   filter: `year` keeps its value across tabs.
 - Schema, view, and query builders may call app-level composables (`useNuxtApp()` for `$i18n` and
-  `$api`, a store, `useRoute()`) at the top. A schema function runs again outside setup, so it
-  cannot call `useI18n()` or lifecycle hooks.
+  `$api`, a store, `useRoute()`) and `useDashboardFormat()` at the top. A schema function runs
+  again outside setup, so it cannot call `useI18n()` or lifecycle hooks.
 - Write conditions as lazy callbacks: `enabled: () => can('margin')`. Blocks bound to a disabled
   query render nothing and grids close up, so templates never branch on permissions.
 - There is no `.value` anywhere: `dashboard.filters.year`, `dashboard.summary.data`,
