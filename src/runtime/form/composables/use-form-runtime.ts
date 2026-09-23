@@ -11,6 +11,7 @@ import type {
   FormObject,
   FormRuntime,
   FormRuntimeStep,
+  FormSubmitHandler,
   FormValidationOptions,
   UseFormRuntimeParams,
 } from '../types'
@@ -182,7 +183,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     return valid
   }
 
-  const submit = useFormSubmission({
+  const submission = useFormSubmission({
     beforeNext: () => (isStepped.value ? runBeforeNext() : Promise.resolve(true)),
     focusFirstInvalid: focus.focusFirstInvalid,
     getApi: () => createPublicFormApi(runtime),
@@ -191,6 +192,15 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     getSchema: () => params.schema.value,
     validate,
   })
+
+  /** A successful submit saves the values: they become the baseline dirty state compares with. */
+  async function submitHandler(externalSubmitHandler?: FormSubmitHandler<FormObject>) {
+    const result = await submission.submitHandler(externalSubmitHandler)
+    if (result.success) {
+      state.rebaseline()
+    }
+    return result
+  }
 
   let hasInitializedInput = !isUndefined(params.input?.value)
   state.initialize(params.input?.value)
@@ -274,7 +284,9 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const isLastStep = computed(() => currentStepIndex.value >= steps.value.length - 1)
   const canGoPrevious = computed(() => isStepped.value && !isFirstStep.value)
   const canGoNext = computed(() => isStepped.value && !isLastStep.value)
-  const actionPending = computed(() => navigationActionPending.value ?? submit.actionPending.value)
+  const actionPending = computed(
+    () => navigationActionPending.value ?? submission.actionPending.value,
+  )
 
   async function runBeforeNext() {
     const handler = getSchemaLifecycleHandler(params.schema.value, 'onBeforeNext')
@@ -511,10 +523,10 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     state: state.state,
     steps,
     submit: async () => {
-      const result = await submit.submitHandler()
+      const result = await submitHandler()
       return result.success
     },
-    submitHandler: submit.submitHandler,
+    submitHandler,
     trackEffect: effects.track,
     validate,
     validateCurrentStep,

@@ -15,6 +15,8 @@ export function resolveFormLayoutConfig(
     columns: override?.columns ?? base?.columns ?? FORM_LAYOUT_DEFAULTS.columns,
     fieldSpan: override?.fieldSpan ?? base?.fieldSpan ?? FORM_LAYOUT_DEFAULTS.fieldSpan,
     gap: override?.gap ?? base?.gap ?? FORM_LAYOUT_DEFAULTS.gap,
+    labelPosition: override?.labelPosition ?? base?.labelPosition,
+    labelWidth: override?.labelWidth ?? base?.labelWidth,
   }
 }
 
