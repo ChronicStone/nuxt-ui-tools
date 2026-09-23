@@ -203,7 +203,7 @@ const footerClass = computed(() =>
   mergeFormUiClass(
     isOverlayShell.value
       ? 'flex shrink-0 items-center justify-between gap-3 border-t border-default bg-default px-[22px] pt-3.5 pb-[18px]'
-      : 'flex items-center justify-between gap-3 border-t border-default pt-4',
+      : 'flex items-center justify-between gap-3',
     formUi.ui.value.root?.ui?.footer,
   ),
 )
