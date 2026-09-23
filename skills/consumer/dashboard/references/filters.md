@@ -1,172 +1,309 @@
-# Dashboard Filters And Tabs
+# Dashboard Filters
 
-The dashboard ships its controls, all built on filter handles (see params.md). Use them at three
-levels:
+Filters are the typed state the user controls: a year, a currency, the accounts to compare. Each
+schema, view, or query declares its own, inline, with the `f` builder. Their values are plain reads
+and `v-model` targets (`dashboard.filters.year = 2025`), and each has a control
+(`dashboard.controls.<key>`) that drives it from the shipped UI or from any component you choose
+(see controls.md).
 
-1. the whole bar: `<UiDashboardFilters :dashboard />` (`UiDashboardPage` renders it, pinned under
-   the header, with the view tabs)
-2. one filter where you want it: `<UiDashboardFilter :filter="dashboard.filters.account" />`
-3. your own component, bound to a handle: `<USelectMenu v-model="…" v-bind="filter.menu" />`
+What a dashboard is about (an account id, the workspace) is not a filter: it is a param of the
+function wrapping the schema (see schema.md).
 
-Blocks render two more for you (see blocks.md): a chart binds a multiple filter as its `series` and
-draws the picker and removable chips, and a block lists the drill-down filters narrowing it in
-`filters`, as chips.
+## Kinds
 
-Presentation comes from the params themselves (`label`, `placeholder`, `format`, `columns`,
-`searchable`, `max`, `headless`), so pages rarely configure a control.
+| Builder                                | Value type                                    | URL form                  |
+| -------------------------------------- | --------------------------------------------- | ------------------------- |
+| `f.string()`                           | `string \| undefined`                         | `abc`                     |
+| `f.string({ multiple: true })`         | `string[]`                                    | `a,b`                     |
+| `f.number()`                           | `number \| undefined`                         | `42`                      |
+| `f.number({ multiple: true })`         | `number[]`                                    | `1,2`                     |
+| `f.boolean()`                          | `boolean \| undefined`                        | `true` / `false`          |
+| `f.date()`                             | `Date \| undefined`                           | `2026-03-01` (local date) |
+| `f.dateRange()`                        | `{ start: Date; end: Date } \| undefined`     | `2026-03-01..2026-03-31`  |
+| `f.enum([2024, 2025])`                 | `2024 \| 2025 \| undefined`                   | `2025`                    |
+| `f.enum(values, { multiple: true })`   | `Value[]` (never undefined)                   | `a,b`                     |
+| `f.options(items)`                     | item value union                              | value                     |
+| `f.options(() => items)`               | `string \| undefined` (items read from data)  | value                     |
+| `f.options(items, { multiple: true })` | item value array                              | `a,b`                     |
+| `f.remote(source)`                     | `string \| undefined`                         | id                        |
+| `f.remote(source, { multiple: true })` | `string[]`                                    | `id1,id2`                 |
+| `f.comparison()`                       | `'previous' \| 'year' \| 'none' \| undefined` | `year`                    |
+| `f.custom(codec)`                      | codec value                                   | codec output              |
 
-## The Filter Bar
+## Options
 
-```vue
-<UiDashboardViewTabs :dashboard />
-<UiDashboardFilters :dashboard />
+Every builder accepts:
+
+- `defaultValue` — narrows away `undefined` (`f.enum(['EUR', 'USD'], { defaultValue: 'EUR' })` is
+  `'EUR' | 'USD'`). Values equal to the default never reach the URL. `multiple` filters default to
+  `[]`. A getter reads the default from data (see Defaults From Data).
+- `label` — the filter name ("Year"), text or `() => $i18n.t('…')`. Defaults to the filter key.
+- `placeholder` — the text of an empty selection ("All accounts"). Defaults to the localized "All".
+- `headless` — state only: the filter bar skips it, `filtered` and `resetFilters()` ignore it.
+- `enabled` — a lazy callback: whether the filter exists right now. While it returns `false` the
+  filter leaves the bar, reads its default whatever the URL holds, and ignores writes. Use it for
+  filters some audiences must not use, e.g. an account filter where the workspace fixes the account
+  (see schema.md, Conditions).
+- `presets` — shortcut values the filter menu lists under its options (`{ label, value, icon?,
+hint? }[]`, or a getter to read them from data): picking one sets the whole value.
+- `sync` — where the value lives (below).
+- `urlKey`, `omitDefault` (set `false` to keep defaults in the URL), `historyMode` (filters default
+  to `'replace'`).
+
+Filters picked from a list (`enum`, `options`, `remote`, `boolean`, `comparison`) also take:
+
+- `columns` — lays the menu out in a grid (`3` for twelve months).
+- `searchable` — a search field in the menu (remote lists always search, on the server).
+- `max` — with `multiple: true`, the most values a filter picks; other items disable once reached.
+
+Filters whose values have no label of their own (`enum`, `boolean`, `string`, `number`, dates,
+`custom`) take `format: (value) => string`, used in menus and on pills. It runs reactively, so it
+may read other state.
+
+Unknown or invalid URL values fall back to the default. Writing `null` or `undefined` (a cleared
+picker) restores the default.
+
+## One Filter Reading Another
+
+A definition reads its current value through `.value` once the dashboard runs (its default
+before), so a lazy option can depend on another filter of the same scope, typed:
+
+```ts
+filters: (f) => {
+  const year = f.enum(years(), { defaultValue: currentYear(), label: 'Year' })
+  return {
+    year,
+    compare: f.boolean({
+      defaultValue: true,
+      label: 'Compare with',
+      format: (on) => (on ? String(year.value - 1) : 'None'),
+    }),
+  }
+},
 ```
 
-`UiDashboardFilters` renders one pill per filter on screen: the root filters, then the current
-view's (pass a view handle, `:dashboard="dashboard.consumption"`, to show that view's). It follows
-declaration order, skips headless and disabled params (`enabled`), and shows filters without a menu (no options and no
-presets: dates, free text, a drill-down day) only while they are set, as a removable pill. "Reset"
-appears once a filter differs from its default and restores them all.
+## Where Values Live
 
-The bar is a row that scrolls sideways on narrow screens and wraps from `lg` up; pills open their
-menus in a portal, so scrolling never clips them.
-
-Props:
-
-- `only` / `exclude` — filter keys to show (in that order) or hide; typed from the dashboard.
-- `reset` — `false` hides the Reset button.
-- `ui` — `{ root, reset }` classes.
-
-Slots:
-
-| Slot                       | Props                                  | Replaces                           |
-| -------------------------- | -------------------------------------- | ---------------------------------- |
-| `#<key>` (e.g. `#account`) | `{ filter }`                           | one filter                         |
-| `#filter`                  | `{ filter }`                           | every filter without its own slot  |
-| `#item`                    | `{ item, selected, disabled, filter }` | the menu rows of every pill        |
-| `#reset`                   | `{ filtered, reset }`                  | the Reset button                   |
-| `#leading`, `#trailing`    | —                                      | content before / after the filters |
-
-```vue
-<UiDashboardFilters :dashboard :exclude="['compare']">
-  <template #account="{ filter }">
-    <UiDashboardFilter :filter icon="i-lucide-building-2" />
-  </template>
-  <template #trailing>
-    <UButton label="Export" icon="i-lucide-download" variant="ghost" />
-  </template>
-</UiDashboardFilters>
+```ts
+filters: (f) => ({
+  year: f.enum(YEARS, { defaultValue: 2026 }), // URL (default)
+  draft: f.string({ sync: 'memory' }), // component state
+  organisation: f.string({ sync: storeToRefs(org).current }), // a store, both ways
+  role: f.string({ sync: () => session.role }), // read-only source: headless
+})
 ```
 
-## One Filter
+A nullish store value reads as the default. A getter is read-only (writes are ignored), so its
+filter is headless.
 
-`UiDashboardFilter :filter` is the pill the bar renders: "Name value ⌄". Once the filter differs
-from its default it turns accent and shows a clear button (`clearable`, default `true`) that
-restores the default. Its menu is dense (28px rows, 13px text):
+## URL Keys
 
-- single filters: a check mark on the current value; picking closes the menu; an optional filter
-  (no default) starts with a row for its placeholder ("All accounts") that clears it
-- multiple filters: checkboxes, values kept in item order, "Clear selection" at the bottom; items
-  disable once `max` is reached
-- `columns` lays items out in a grid; `searchable` adds a search field
-- remote lists search on the server and load the next page ahead of the scroll; labels of selected
-  ids resolve on their own; a failed page offers a retry
-- items show their `icon` or `avatar` (initials or an image) and a trailing `hint`; arrow keys, Home,
-  and End move between rows
-- presets (see params.md) follow the options under a "Presets" heading; picking one sets the value
-  and closes the menu
+| Filter of               | Key                 |
+| ----------------------- | ------------------- |
+| the root or a view      | `<filter>`          |
+| a query                 | `<query>.<filter>`  |
+| (the current view)      | `view`              |
+| (auto-refresh interval) | `refresh` (seconds) |
 
-`variant="button"` renders a small button instead of a pill (a card-header "+ Add"), with the
-filter name as the menu title:
+A filter key names one state across the dashboard: the root and every view declaring `year` read
+and write `?year=`, so the year survives a tab change and shows once in the bar. Declarations
+sharing a key must agree on the kind, single or multiple values, and the default; otherwise the
+dashboard fails with an error naming both. Give a filter another key (or `urlKey`) to keep it
+apart.
 
-```vue
-<UiDashboardFilter
-  :filter="consumption.usage.filters.tracked"
-  variant="button"
-  icon="i-lucide-plus"
-  label="Add a product"
->
-  <template #footer>
-    <UButton label="Top 3" variant="ghost" block @click="consumption.usage.params.tracked = topThree" />
-  </template>
-</UiDashboardFilter>
+With `urlPrefix: 'stats'`, every key is prefixed: `stats.year`, `stats.view`, … Use it when two
+dashboards share a page, or when bare filter names could collide with other URL state.
+
+No filter can use the URL key `view` while the dashboard has views (it would shadow the current
+view), nor `refresh` (the auto-refresh interval): rename it or set its `urlKey`. Both are checked
+when the dashboard is created.
+
+Example: `?year=2025&view=consumption&currency=USD&productLines.tracked=en,fr`
+
+## Controls
+
+Every filter has a control on the sibling `controls` object:
+
+```ts
+dashboard.controls.year
+dashboard.consumption.controls.account
+// {
+//   key, kind, multiple, headless, enabled,
+//   label, placeholder,                 // resolved text
+//   value,                              // writable (same as filters.x)
+//   defaultValue, changed,              // `changed`: the value differs from the default
+//   display,                            // "2026", "Acme", "Mar, Apr", "Mar +2", or the placeholder
+//   items, selected,                    // DashboardOption[] ({ value, label, icon?, avatar?, hint?, description? })
+//   isSelected(value), toggle(value),   // multiple: add/remove in item order, up to `max`; single: set
+//   reset(),                            // restore the default
+//   presets,                            // [{ label, value, icon?, hint?, active, apply() }]
+//   columns, searchable, max,
+//   loading, loadingMore, hasMore, error,
+//   search, open,                       // writable; opening a remote list starts loading it
+//   loadMore(), refresh(),
+//   menu,                               // props to spread on USelectMenu / USelect
+// }
+dashboard.filtered // a filter on screen differs from its default (headless ones excluded)
+dashboard.resetFilters() // restore them
 ```
 
-Props: `filter`, `variant` (`'pill' | 'button'`), `label` (pill name / button text; defaults to the
-filter label), `icon`, `clearable`, `align` (`'start' | 'center' | 'end'`), `list` (`'all'` by
-default, `'options'`, or `'presets'`: what the menu lists), `ui`.
+## Remote Filters
 
-Two buttons on one handle, "+ Add" and "Presets":
+`f.remote(source, options)` takes a remote option source, the contract shared with table filters
+and form fields:
 
-```vue
-<UiDashboardFilter
-  :filter="tracked"
-  variant="button"
-  icon="i-lucide-plus"
-  label="Add"
-  list="options"
-/>
-<UiDashboardFilter
-  :filter="tracked"
-  variant="button"
-  icon="i-lucide-layers"
-  label="Presets"
-  list="presets"
-/>
+```ts
+account: f.remote(
+  {
+    // One page for a search term: a query definition (e.g. `queryOptions()`), or a promise.
+    load: ({ search, page }) => ({
+      queryKey: ['accounts', search, page.index],
+      queryFn: () => api.accounts.search({ q: search, page: page.index, size: page.size }),
+      // → { options, hasMore } for page pagination, { options, nextCursor } for cursor pagination
+    }),
+    // Labels of ids restored from the URL that the loaded pages do not contain.
+    resolveSelected: ({ values }) => api.accounts.byIds(values),
+    pagination: { type: 'page', size: 20 }, // default { type: 'page', size: 25 }
+    search: { debounce: 250, minLength: 0 },
+  },
+  { label: 'Account', placeholder: 'All accounts' },
+),
 ```
 
-Slots: `#trigger` `{ filter, active, display }` (the whole trigger; the menu still opens from it),
-`#label` `{ filter, display }` (name and value inside the pill), `#item`, `#header`, `#footer`
-(`{ filter }`), `#empty`.
+For an endpoint that speaks the table request protocol (the one a remote `UiDataList` uses),
+`remoteTableOptions` builds the whole source:
 
-`ui` parts: `root`, `trigger`, `label`, `value`, `chevron`, `clear`, `button`, `content`, `title`,
-`search`, `list`, `item`, `check`, `tick`, `avatar`, `hint`, `separator`, `note`. The pill root
-carries `data-active` while the filter differs from its default.
-
-## Your Own Control
-
-A handle binds to any component:
-
-```vue
-<USelectMenu
-  v-model="dashboard.filters.account.value"
-  v-bind="dashboard.filters.account.menu"
-  :placeholder="dashboard.filters.account.placeholder"
-/>
-
-<UCheckbox
-  v-for="item in dashboard.filters.months.items"
-  :key="item.value"
-  :model-value="dashboard.filters.months.isSelected(item.value)"
-  :label="item.label"
-  @update:model-value="dashboard.filters.months.toggle(item.value)"
-/>
+```ts
+account: f.remote(
+  remoteTableOptions(
+    // The query comes first: the row type is read from its result.
+    (request) => $api.accounts.query.queryOptions({ body: request }),
+    {
+      search: ['name'], // or { fields: ['name'], debounce: 200 }
+      sort: 'name', // or [{ key: 'name', dir: 'asc' }]
+      option: (account) => ({ label: account.name, value: account.id }),
+      valueKey: 'id', // default; matched with `isAnyOf` to resolve selected ids
+      pagination: { type: 'cursor', size: 25 }, // default; match what the endpoint pages by
+    },
+  ),
+  { multiple: true, label: 'Accounts' },
+),
 ```
 
-`menu` carries `items`, `valueKey`, `labelKey`, `multiple`, and for remote lists `searchTerm`,
-`ignoreFilter`, `loading`, and the `onUpdate:searchTerm` / `onUpdate:open` listeners.
+- Nothing loads until the picker opens (`open`) or a search term is typed.
+- Pages are cached per search term; the previous term's options stay while the next one loads.
+- Selected ids missing from the loaded pages are hydrated through `resolveSelected`; the control's
+  `display` shows `…` until they resolve.
 
-## View Tabs
+## Items From Data
 
-`UiDashboardViewTabs :dashboard` renders the views as underlined tabs bound to
-`dashboard.view.current` (URL key `view`, pushed to history). The strip scrolls sideways when the
-tabs overflow and keeps the current one in view. It renders nothing while fewer than two views are
-enabled (see `enabled` in schema.md), so an audience that sees a single view gets no tab strip.
-Slot `#tab` `{ item, active }`; `ui` parts `root` and `tab` (the current tab carries `data-active`).
+A query filter can offer items read from another query:
 
-## Theming
-
-Pills use Nuxt UI tokens plus three dashboard tokens for the active state; set them in your CSS:
-
-```css
-:root {
-  --nut-dash-filter-active: #fff6e8; /* tint of an active pill */
-  --nut-dash-filter-active-line: #f5c98a; /* its border */
-  --nut-dash-filter-ink: #b85e00; /* its value, clear button, and menu check marks */
-  --nut-dash-row-hover: #faf7f2; /* menu row hover */
+```ts
+queries: ({ essential }) => {
+  const products = essential.query({ query: overview, select: (data) => data.products })
+  return {
+    products,
+    usage: essential.query({
+      defaultValue: [],
+      filters: (f) => ({
+        tracked: f.options(
+          () => (products.data ?? []).map((product) => ({ label: product.name, value: product.id })),
+          { multiple: true, max: 6 },
+        ),
+      }),
+      query: ({ filters: own }) => ({ … }),
+    }),
+  }
 }
 ```
 
-`--nut-dash-filter-ink` follows `--nut-dl-accent-ink` when the app sets it for data lists. App-wide
-class overrides go in `app.config.ts` under `nuxtUiTools.dashboard.filter`, `.filters`, and
-`.viewTabs`.
+Such items are read reactively; their values are strings.
+
+## Defaults From Data
+
+A getter default follows data, e.g. the three best-selling products once the list loads:
+
+```ts
+tracked: f.options(() => toOptions(products.data), {
+  multiple: true,
+  defaultValue: () => topProductIds(products.data, 3),
+}),
+```
+
+The filter reads the getter while it is unset, so the default changes with the data. Picking
+exactly the default keeps the URL clean and the filter keeps following it; `reset()` restores the
+current default. A single-value getter that may return `undefined` (data not loaded yet) keeps
+`undefined` in the filter type; a list filter falls back to `[]`.
+
+## Presets
+
+```ts
+tracked: f.options(PRODUCTS, {
+  multiple: true,
+  max: 6,
+  label: 'Tracked products',
+  presets: () =>
+    PRODUCT_LINES.map((line) => ({ label: line.name, value: line.products, hint: `${line.products.length} products` })),
+}),
+```
+
+Presets work on every kind, including those without options (a date range with "Last 30 days"),
+which then get a menu of their presets.
+
+## Comparison Period
+
+`f.comparison({ defaultValue: 'previous' })` declares the period a dashboard compares against:
+`'previous'` (the same number of days right before the range), `'year'` (the same dates a year
+earlier), or `'none'`. Its control carries localized labels ("Previous period", "Previous year",
+"No comparison").
+
+`resolveDashboardComparisonRange(range, mode)` (auto-imported) returns the range to fetch, or
+`undefined` for `'none'`. It counts calendar days, so it never drifts across daylight-saving
+changes; Feb 29 falls back to Feb 28 a year earlier.
+
+```ts
+filters: (f) => ({
+  range: f.dateRange({ defaultValue: lastThirtyDays() }),
+  compare: f.comparison({ defaultValue: 'previous', label: 'Compare with' }),
+}),
+queries: ({ essential, filters }) => ({
+  revenue: essential.query(() => ({
+    queryKey: ['revenue', filters.range, filters.compare],
+    queryFn: () =>
+      api.revenue({
+        range: filters.range,
+        previous: resolveDashboardComparisonRange(filters.range, filters.compare),
+      }),
+  })),
+}),
+```
+
+Blocks then show the comparison: a stat's `compare` accessor (default delta and caption), a chart
+series' `compare` accessor (faded bars or a dashed line). See blocks.md.
+
+## Query Filters
+
+State owned by one card (tracked series, a top-N limit) is declared on its query, and has a control
+on the resource:
+
+```ts
+productLines: deferred.query({
+  defaultValue: [],
+  filters: (f) => ({
+    tracked: f.enum(PRODUCT_KEYS, { multiple: true, defaultValue: ['en-gen'], label: 'Products' }),
+  }),
+  query: ({ filters: own }) => ({
+    queryKey: ['lines', filters.year, own.tracked],
+    queryFn: () => api.lines({ year: filters.year, products: own.tracked }),
+  }),
+}),
+```
+
+```vue
+<UiDashboardLineChart
+  :source="consumption.productLines"
+  :series="consumption.productLines.controls.tracked"
+  :series-value="(row, product) => row.units[product]"
+/>
+```

@@ -46,7 +46,7 @@ module prefix (`Ui` by default).
 | `empty`             | `{ icon?, title?, description? }`                                   | empty state content; defaults to a localized message     |
 | `menu`              | `boolean \| entries[] \| (context) => entries[]`                    | card menu (see below); inherits the grid's `menu`        |
 | `actions`           | `(ButtonProps & { placement?: 'header' \| 'footer' })[]`            | header buttons, or full-width buttons under the content  |
-| `filters`           | filter handles                                                      | drill-down filters narrowing the block, as chips         |
+| `filters`           | filter controls                                                     | drill-down filters narrowing the block, as chips         |
 | `freshness`         | `boolean`                                                           | "Updated 3 min ago" under the content; inherits the grid |
 | `ui`                | `{ root, header, title, subtitle, actions, toolbar, body, footer }` | class overrides, plus the block's own parts (see below)  |
 
@@ -55,7 +55,7 @@ text link with a chevron: `:actions="[{ label: 'All', to: '/accounts' }]"` draws
 
 `filters` lists the filters narrowing a block, such as a drill-down value picked on another block.
 While one differs from its default, the toolbar shows it as a chip ("Day 12 Sep ✕") whose button
-resets it: `:filters="[dashboard.filters.day]"`.
+resets it: `:filters="[dashboard.controls.day]"`.
 
 Row and chart blocks also emit `select` with `{ row, index }` (index in the source data):
 
@@ -63,7 +63,7 @@ Row and chart blocks also emit `select` with `{ row, index }` (index in the sour
 <UiDashboardBarChart
   :source="dashboard.daily"
   ...
-  @select="({ row }) => (dashboard.params.day = row.day)"
+  @select="({ row }) => (dashboard.filters.day = row.day)"
 />
 <UiDashboardTable
   :source="dashboard.accounts"
@@ -83,8 +83,8 @@ other bars, line charts draw a band behind the picked x, donuts fade the other s
 ```vue
 <UiDashboardBarChart
   :source="dashboard.daily"
-  :selected="(row) => row.day === dashboard.params.day"
-  @select="({ row }) => (dashboard.params.day = row.day)"
+  :selected="(row) => row.day === dashboard.filters.day"
+  @select="({ row }) => (dashboard.filters.day = row.day)"
   ...
 />
 ```
@@ -121,7 +121,7 @@ Every `format` prop (stats, charts and their axes, lists, bars, tables, totals�
 
 ```vue
 <UiDashboardStat :source="summary" label="Units" :value="(s) => s.units" format="integer" />
-<UiDashboardBarChart ... :format="{ currency: params.currency }" />
+<UiDashboardBarChart ... :format="{ currency: consumption.filters.currency }" />
 ```
 
 `useDashboardFormat()` (auto-imported) returns the same formatters for your own text, so captions
@@ -265,7 +265,7 @@ others' deferred queries stay idle.
 <UiDashboardTable :source="dashboard.accounts" ...>
   <template #toolbar>
     <UiDashboardTabs
-      v-model="dashboard.accounts.params.segment"
+      v-model="dashboard.accounts.filters.segment"
       :items="[
         { value: 'all', label: 'All' },
         { value: 'company', label: 'Companies', count: companies },
@@ -323,8 +323,8 @@ whose bounds and ticks stay round, with `0` always a tick.
   axis: `true` / `'sum'` adds each series up, `'average'` averages it. Footer slot content follows
   them.
 
-**Series picked by a filter.** On bar and line charts, `series` also takes a multiple filter
-handle: each option it picks becomes a series (keyed and labelled by the option, colored in pick
+**Series picked by a filter.** On bar and line charts, `series` also takes the control of a
+multiple filter: each option it picks becomes a series (keyed and labelled by the option, colored in pick
 order), valued by `seriesValue(row, option)`. The chart then draws the picker in its header ("+ Add"
 lists the options, "Presets" applies the filter's presets) and one removable chip per series, in the
 series' color, in place of the legend. Removing every pick shows the empty state.
@@ -334,7 +334,7 @@ series' color, in place of the legend. Removing every pick shows the empty state
   :source="usage"
   title="Tracked products"
   :x="(row) => format.month(row.month)"
-  :series="usage.filters.tracked"
+  :series="usage.controls.tracked"
   :series-value="(row, product) => row.units[product]"
   format="integer"
 />
@@ -411,7 +411,7 @@ good decreases), `percent`, `bar` (the number with an inline bar scaled to the c
 `max`, colored by `color`). Also `format`, `align`, `width`, `sortable` (default `true`), `class`.
 Header clicks cycle a column through its natural direction (numbers descending, text ascending),
 the opposite one, then source order; `v-model:sort` (`{ key, direction } | null`) keeps it in
-your state — bind it to widget params to put it in the URL. Sorting happens before `limit`; nulls
+your state — bind it to query filters to put it in the URL. Sorting happens before `limit`; nulls
 sort last. `maxHeight` (px) scrolls the rows under a sticky header. The menu offers `csv` and
 `expand` (the table is already a table). `ui` parts: `wrapper`, `table`, `head`, `th`, `row`, `td`,
 `bar` (the card's "view as table" uses the same `table` classes).

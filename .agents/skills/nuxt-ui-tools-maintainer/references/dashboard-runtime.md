@@ -1,55 +1,66 @@
 # Dashboard Runtime
 
-`src/runtime/dashboard/` — typed params (URL, memory, or store-synced) with filter handles and
-controls, staged queries, derived resources, views, and a generic block library. Public
-entrypoints: `defineDashboardSchema`, `defineDashboardFilter(s)`, `defineDashboardView`,
-`useDashboard`, `useDashboardView`, `injectDashboard`, `useDashboardFormat`, and the `Dashboard*`
-components registered in `src/components.ts`. `remoteTableOptions` lives in the table domain
+`src/runtime/dashboard/` — schemas and views built by consumer functions that take their context as
+params, filters declared inline (URL, memory, or store-synced) with their controls, staged queries,
+derived resources, views, and a generic block library. Public entrypoints:
+`defineDashboardSchema`, `defineDashboardView`, `useDashboard`, `useDashboardView`,
+`injectDashboard`, `useDashboardFormat`, and the `Dashboard*` components registered in
+`src/components.ts`. `remoteTableOptions` lives in the table domain
 (`table/utils/remote-table-options.ts`) and feeds dashboard, table, and form remote options. Like
 `tableSource`, it infers the whole query definition and reads rows through `TableSourceQueryResult`
 / `TableSourceRow` (`table/types/source.ts`): generated clients (Tuyau `queryOptions()`) type
 `queryFn` as `MaybeRefDeep<QueryFunction | skipToken>`, which a strict `QueryDefinition` rejects.
 Its runtime checks the `queryFn` is callable and the response has `rows`.
 
+Vocabulary: **filters** are the state the user controls, read as values
+(`dashboard.filters.year`); **controls** drive them (`dashboard.controls.year`: label, items,
+toggle, reset, menu bindings); **params** are the arguments of the consumer's schema and view
+functions (what the dashboard is about). The engine never syncs context into filters.
+
 ## Layout
 
 ```
-types/        params (param options, sync, entries), filters (filter handles, bar target),
-              resource, schema (+ inferred DashboardApi, InferDashboard, InferDashboardView),
-              blocks (formats), charts, ui;
+types/        filters (filter kinds, options, sync, definitions, the `f` builder type), controls
+              (filter controls, bar target), resource, schema (+ inferred DashboardApi,
+              InferDashboard, InferDashboardView, schema / view inputs that may be functions),
+              blocks (formats), charts, ui, page;
               runtime.ts (erased shapes, the option-list contract) is internal and not re-exported
-schema/       defineDashboardSchema (identity + compile-time key and shared-param guards),
-              defineDashboardFilter(s), defineDashboardView (identities)
-utils/        builders/dashboard-params.ts (the `p` builder; DashboardParamBuilder = typeof it)
-              params/codecs.ts, schema.ts (erase generics once, resolve params inputs and filter
-              factories), resource.ts (slot-backed facade), tracker.ts (read tracking for derive
-              and requires), state.ts (state combine, refresh, URL prefixes), options.ts,
-              filters.ts (listed kinds, pill classes, headless rule, value text), format.ts
-              (per-locale presets and Intl caches, month names), remote.ts (settles a remote
-              result: promise or query definition), charts.ts (palette, series, nice max / tick
-              count, axis), chart-frame.ts (tooltip HTML, chart → data table), ui.ts
-              (resolveDashboardClasses, app config reader, table and selectable-row classes),
-              visibility.ts (one shared IntersectionObserver), export.ts (data cells, CSV, file
-              download), time.ts (relative time, day headings), sparkline.ts (stat trend paths
-              and mini bars), comparison.ts (resolveDashboardComparisonRange, exported)
-composables/  use-dashboard (entry, provides the instance) → use-dashboard-scope (root + one per
-              view) → use-dashboard-param-scope (storage per sync mode, values facade)
-              → use-dashboard-filter (one handle) → use-dashboard-options (static list, or
-              use-dashboard-remote-options); use-dashboard-resource (one useQuery);
-              use-dashboard-derived; use-dashboard-views; use-dashboard-api (facade only);
-              use-dashboard-context (provide / inject by declaration object);
+schema/       defineDashboardSchema, defineDashboardView (identities + compile-time key guards;
+              results are `NoInfer` so inline views do not infer the contextual map)
+utils/        builders/dashboard-filters.ts (the `f` builder; definitions carry a `value` getter
+              bound to their state), codecs.ts, environment.ts (what a dashboard captures in setup:
+              the locale; the per-build URL-key registry), schema.ts (erase generics once, run
+              `filters` callbacks), resource.ts (slot-backed facade), tracker.ts (read tracking
+              for derive and requires), state.ts (state combine, conditions, refresh, URL
+              prefixes), options.ts, filters.ts (listed kinds, pill classes, headless rule, value
+              text), format.ts (per-locale presets and Intl caches, month names), remote.ts
+              (settles a remote result: promise or query definition), charts.ts (palette, series,
+              nice max / tick count, axis), chart-frame.ts (tooltip HTML, chart → data table),
+              ui.ts (resolveDashboardClasses, app config reader, table and selectable-row
+              classes), visibility.ts (one shared IntersectionObserver), export.ts (data cells,
+              CSV, file download), time.ts (relative time, day headings), sparkline.ts (stat trend
+              paths and mini bars), comparison.ts (resolveDashboardComparisonRange, exported)
+composables/  use-dashboard (entry: a schema, or a getter rebuilt on change; provides the
+              dashboard) → use-dashboard-scope (root + one per view) → use-dashboard-filter-scope
+              (storage per sync mode, values facade, URL-key registry) → use-dashboard-filter-control
+              (one control) → use-dashboard-options (static list, or use-dashboard-remote-options);
+              use-dashboard-resource (one useQuery); use-dashboard-derived; use-dashboard-views;
+              use-dashboard-api (facade only); use-dashboard-context (dashboards provided by
+              ancestors, the view a page slot renders);
               use-dashboard-block, use-dashboard-chart, use-dashboard-series-picker (series from a
-              filter + its chips), use-dashboard-format (public formatters + `resolve`),
+              control + its chips), use-dashboard-format (public formatters + `resolve`),
               use-dashboard-time (one shared clock), use-dashboard-ui (app config + grid context)
               (blocks)
 components/   dashboard-page.vue (the page: header, date line, actions + refresh, the pinned
-              band of tabs and filters with its stuck marker, the current view's slot),
-              dashboard-card.vue (block shell: chrome, phases, menu, actions with the header link
-              default, drill-down filter chips, table view, expand dialog, freshness), blocks,
+              band of tabs and filters with its stuck marker, the current view's slot wrapped in
+              block/dashboard-view-scope.vue), dashboard-card.vue (block shell: chrome, phases,
+              menu, actions with the header link default, drill-down filter chips, table view,
+              expand dialog, freshness), blocks,
               controls: dashboard-filters.vue (bar), dashboard-filter.vue (pill / button) +
               filter/dashboard-filter-menu.vue (list), dashboard-view-tabs.vue,
               dashboard-tabs.vue, dashboard-refresh.vue,
-              block/ (state, skeleton, data-table, ring, row-actions, chips, series-picker),
+              block/ (state, skeleton, data-table, ring, row-actions, chips, series-picker,
+              view-scope),
               charts/renderer.ts (the only seam allowed to import unovis) + charts/unovis/*
               (xy-layers.ts resolves one axis into unovis inputs; dashboard-xy-marks.vue draws
               an axis' areas, lines, markers, and references)
@@ -57,61 +68,73 @@ components/   dashboard-page.vue (the page: header, date line, actions + refresh
 
 ## Ownership
 
+- `useDashboard` accepts a schema or a getter. A schema builds once in the component's setup. A
+  getter is read through a `computed` (first run in setup, so composables at the top of the
+  consumer's functions work), and every later change rebuilds the whole dashboard inside a fresh
+  detached `effectScope`, run with `app.runWithContext` so `inject()` (router, query client) keeps
+  working; the previous scope stops after the next one runs, so shared cache entries never drop.
+  The returned object and each view handle are stable proxies (`createStableFacade`) over the
+  current build; reads track the current build, so templates follow a rebuild. The locale is read
+  once in setup and handed to every control through `DashboardEnvironment`: `useUiToolsLocale()`
+  outside a component falls back to English.
 - `useDashboardScope` owns declaration: it calls `queries(ctx)` once, synchronously. Stage
   `.query()` returns a facade immediately (keys are unknown until the builder returns), then the scope
   instantiates each resource in returned-object order and assigns the facade's `slot`. Facade reads
   before instantiation track the slot shallowRef, so dependent `requires` gates stay reactive.
-- `useDashboardResource` owns exactly one `useQuery`, the deferred `activated` latch, and widget
-  params. Gating rewrites `enabled` on a stable definition; a gated resource never evaluates its
+- `useDashboardResource` owns exactly one `useQuery`, the deferred `activated` latch, and the query's
+  own filters. Gating rewrites `enabled` on a stable definition; a gated resource never evaluates its
   factory. Stage gates: essential → scope active; background → scope `settled` (no essential
   loading); deferred → `activate()`. `requires` runs through the tracker (resource and derived
   facades record their `data` reads): while it is nullish the resource follows the sources it
   read (loading / error / idle), then `ready` on its `defaultValue` (`idle` without one); `refresh`
   refetches those sources. `select` runs in the resource's `data` computed, on top of the
-  definition's own TanStack `select`, so what it reads (a param, another resource) is tracked and
+  definition's own TanStack `select`, so what it reads (a filter, another resource) is tracked and
   re-selects without a refetch; resources on one factory share the TanStack cache entry.
-- `useDashboardParamScope` owns where values live: one `useQueryStates` for the URL-synced params of
-  a scope (root: no prefix, view `<view>`, widget `<scope>.<query>`), a `shallowRef` per memory
-  param, and the external ref or getter of store-synced ones (a getter is read-only, so its param is
-  headless). It builds the get/set values facade and one filter handle per param, and owns
-  `changed()` / `reset()` over its non-headless handles. No params → nothing allocated.
-  Defaults go through `definition.resolveDefault()`: a getter default is read while the value is
-  unset, and writing a value equal to the current default stores it unset, so it stays out of the
-  URL and keeps following the getter.
-  `mergeDashboardParamScopes` exposes root + view scopes as one (builders' `params`, view handles).
-- `useDashboardFilter` builds one handle: label / placeholder / display text, `changed` (codec
-  serialization compared with the default's), `toggle` (multiple values kept in item order, capped
-  by `max`), `reset`, and the option list from `useDashboardOptions`. Static and remote lists return
-  the same `DashboardRuntimeOptionList` shape; fixed items are normalized to getters by the builders,
-  so the list reads data-driven items (`p.options(() => …)`) the same way.
-- Params inputs resolve once per scope (`resolveDashboardParams`): the callback form receives the
-  builder and the shared values; map entries that are factories (`defineDashboardFilter`) run with
-  the builder, in setup. A view param reusing a root key throws.
-- `use-dashboard-context.ts` (`provideDashboardInstances`) maps each declaration object (the schema, and
-  each view's declared object) to its facade / handle; `useDashboardView` and `injectDashboard`
-  inject by identity, so builder-form views are reached through `injectDashboard(schema).<view>`.
+- `useDashboardFilterScope` owns where values live: one `useQueryStates` for the URL-synced filters
+  of a scope (root and views: no prefix, so a key is one state across scopes; query filters
+  `<query>.<filter>`), a `shallowRef` per memory filter, and the external ref or getter of
+  store-synced ones (a getter is read-only, so its filter is headless). It registers every URL key
+  in the build's registry, which throws when two scopes declare one key differently (kind, single
+  or multiple, default). It builds the get/set values facade, binds each definition's `value` to
+  its getter, creates one control per filter, and owns `changed()` / `reset()` over its
+  non-headless controls. No filters → nothing allocated. Defaults go through
+  `definition.resolveDefault()`: a getter default is read while the value is unset, and writing a
+  value equal to the current default stores it unset, so it stays out of the URL and keeps
+  following the getter.
+- `useDashboardFilterControl` builds one control: label / placeholder / display text, `changed`
+  (codec serialization compared with the default's), `toggle` (multiple values kept in item order,
+  capped by `max`), `reset`, and the option list from `useDashboardOptions`. Static and remote lists
+  return the same `DashboardRuntimeOptionList` shape; fixed items are normalized to getters by the
+  builders, so the list reads data-driven items (`f.options(() => …)`) the same way.
+- `use-dashboard-context.ts` provides the ancestors' dashboards (source, current schema, stable api,
+  view lookup) and, under `UiDashboardPage`, the view whose slot renders the component
+  (`provideDashboardView`, from `block/dashboard-view-scope.vue`). `useDashboardView(viewFunction)`
+  resolves to that view, else the view on screen; a view object resolves by identity.
+  `injectDashboard(schemaFunction)` returns the nearest dashboard; a schema object resolves by
+  identity.
 - `useDashboardDerived` is one computed that evaluates and records reads through the shared tracker;
   state = combined state of the recorded sources.
-- Conditions: `enabled` (boolean or getter, `resolveDashboardCondition`) on queries, params, and views
-  (views get `{ params }`). A resource is `available` when its scope and its own condition hold;
-  otherwise its state is `disabled`, its data the default, and `refresh` a no-op.
-  `combineDashboardStates` leaves `disabled` out and is `disabled` only when every input is, so
-  derived values, dependents, and scope states never wait on a disabled source. A disabled param's
-  getter returns the resolved default and its setter does nothing; handles expose `enabled`, and
-  `changed` / `reset` and the filter bar skip disabled handles.
+- Conditions: `enabled` is always a lazy callback (`resolveDashboardCondition`) on queries, filters,
+  and views. A resource is `available` when its scope and its own condition hold; otherwise its
+  state is `disabled`, its data the default, and `refresh` a no-op. `combineDashboardStates` leaves
+  `disabled` out and is `disabled` only when every input is, so derived values, dependents, and
+  scope states never wait on a disabled source. A disabled filter's getter returns the resolved
+  default and its setter does nothing; controls expose `enabled`, and `changed` / `reset` and the
+  filter bar skip disabled controls.
 - `useDashboardViews` owns the `view` query state (push history) and a warm `opened` latch per view,
-  and rejects a root param whose URL key would shadow `view`. Each view's `enabled` is a computed
-  over the root params; `current` is a computed over the stored key that resolves a disabled view
-  to the default (else first enabled) view and ignores writes of disabled ones, and a disabled
-  view's scope is inactive with `enabled` false, so its resources report `disabled`. URL keys are always readable names
-  (`year`, `view`, `consumption.currency`); `urlPrefix` namespaces them. Do not abbreviate.
+  and rejects a filter whose URL key would shadow `view`. Each view's `enabled` is a computed over
+  its callback; `current` is a computed over the stored key that resolves a disabled view to the
+  default (else first enabled) view and ignores writes of disabled ones, and a disabled view's scope
+  is inactive with `enabled` false, so its resources report `disabled`. URL keys are always readable
+  names (`year`, `view`, `productLines.tracked`); `urlPrefix` namespaces them. Do not abbreviate.
 - `useDashboardApi` is a facade: plain objects with getters over owned refs, `markRaw`, no refs
-  exposed. It must not own behaviour.
-- `useDashboard` owns the auto-refresh interval: one `useQueryState` (URL key `refresh`, seconds,
-  default `schema.autoRefresh`), turned into a `refetchInterval` computed (ms, `0` off) that every
-  scope hands to its resources. Resources put it before the query's own options, so a query's
-  `refetchInterval` wins. A root param using the URL key `refresh` throws, like `view`.
-- `p.comparison()` is an option param of kind `comparison` (values `previous | year | none`).
+  exposed. It must not own behaviour. The dashboard's `filtered` / `resetFilters()` cover the root
+  and the current view; a view handle's cover its own filters.
+- The auto-refresh interval is one `useQueryState` per build (URL key `refresh`, seconds, default
+  `schema.autoRefresh`), turned into a `refetchInterval` computed (ms, `0` off) that every scope
+  hands to its resources. Resources put it before the query's own options, so a query's
+  `refetchInterval` wins. A filter using the URL key `refresh` throws, like `view`.
+- `f.comparison()` is an option filter of kind `comparison` (values `previous | year | none`).
   `useDashboardOptions` localizes its item labels through the library messages
   (`dashboard.compare.*`), so they follow the locale; the codec and URL form are an enum's.
 
@@ -129,9 +152,9 @@ components/   dashboard-page.vue (the page: header, date line, actions + refresh
   `Intl.NumberFormat` options resolve to formatters cached per locale (`utils/format.ts`); do not
   build `Intl.NumberFormat` instances inside blocks. U+202F is normalized to U+00A0.
 - Controls: the pill menu is `filter/dashboard-filter-menu.vue`, rendered once through
-  `createReusableTemplate` by either trigger. `UiDashboardFilters` reads the current view's handle
-  (`dashboard[dashboard.view.current]`, which merges root filters) and renders filters of listed
-  kinds always, free ones only while `changed`. Remote pages load ahead of the scroll (three list
+  `createReusableTemplate` by either trigger. `UiDashboardFilters` reads the target's controls, then
+  the current view's (`dashboard[dashboard.view.current].controls`), keeping the first control of a
+  key, and renders filters of listed kinds always, free ones only while `changed`. Remote pages load ahead of the scroll (three list
   heights). Menus stay dense (28px rows, 13px text; taller only on coarse pointers).
 - Class resolution: `resolveDashboardClasses(defaults, appUi.<section>, props.ui)` (tailwind-merge,
   later wins). Block `ui` props are `DashboardBlockUi & <Block>Ui`; part names must not collide with
@@ -199,56 +222,66 @@ components/   dashboard-page.vue (the page: header, date line, actions + refresh
 
 ## Typing Rules Specific To This Domain
 
-- Inference order matters: `params` → `queries` → `derive` → `views` (intra-expression inference).
-- Inline `views: { … }` cannot infer per-view generics; views go through the `view(...)` builder.
+- Inference order matters: `filters` → `queries` → `derive` (intra-expression inference).
+- `defineDashboardSchema` and `defineDashboardView` return `NoInfer<…>` generics: a view declared
+  inline in `views: { … }` would otherwise take the contextual `DashboardViewMap` as a return-type
+  inference candidate, and a view without queries would infer the open map instead of an empty one.
+- A filter reading another filter goes through the definition's `value` (bound at runtime), not
+  through a context argument of the `filters` callback: that argument would be typed by the map the
+  same callback returns, which TypeScript cannot infer.
 - Guards that reference inferred generics in _parameter_ positions break inference. Key collision
   and default-value checks live in _return_ types (`DashboardKeyError`), except the root
   `DashboardScopeGuard`, which works because the root generics are not nested.
 - `defaultValue` is its own unconstrained generic; checking it against `TQuery` inside the argument
   fixes `TQuery` too early when `defaultValue` precedes `query`.
-- `p.*` builders infer the whole options object (`const TOptions extends <union of shapes>`) and
-  derive the value from it (`ParamValue`), with a separate no-options signature. Overloads per
+- `f.*` builders infer the whole options object (`const TOptions extends <union of shapes>`) and
+  derive the value from it (`FilterValue`), with a separate no-options signature. Overloads per
   shape (multiple / single / defaulted) broke getter options: a getter's result is contextually
   typed once, by the first overload tried, so `defaultValue: () => 2026` widened to `number`. The
   shape union is discriminated by `multiple`, which keeps `format` and getters typed.
 - `DashboardSchemaLike` is a structural interface, not an instantiation (`keyof TViews` would make
   the variance check reject real schemas).
-- Params inputs are `DashboardParamEntries<TParams>` (a homomorphic mapped type: each entry is the
-  param or a factory returning it). Reverse-mapped inference types `p` in inline map factories
-  and keeps `TParams` the resolved map; a naked `TParams | factory` union would leave `p` untyped.
-  `DashboardParamOf` unwraps entries wherever values or handles are derived from stored inputs.
 - `select` results are `NoInfer<TSelected>` in the stage return types: otherwise the contextual
   `DashboardSourceLike` of `queries` becomes a return-type inference candidate and `data` widens to
   `unknown`.
-- The shared-param check of views maps (`DashboardSharedGuard`) sits in the parameter intersection
-  of `defineDashboardSchema`, like the other root guards.
 - Blocks are `<script setup generic="TData">` / `generic="TRow"` with
   `source: DashboardSourceLike<readonly TRow[] | undefined>`; ready data is `TData & ({} | null)`,
   which is what `!== undefined` narrowing produces, so no casts are needed.
-- The only casts are `resolveDashboardRuntimeSchema` (schema → erased runtime), the facade return
-  in `useDashboard`, and the two injection returns in `use-dashboard-context.ts`, all with `SAFETY:`
-  comments.
+- `DashboardSchemaInput` / `DashboardViewInput` accept an object or a function returning one;
+  `DashboardSchemaOf` / `DashboardViewOf` unwrap them, so `InferDashboard<typeof accountSchema>`
+  and `useDashboardView(consumptionView)` type from the function's return.
+- The only casts are `resolveDashboardRuntimeSchema` (schema → erased runtime) and the two injection
+  returns in `use-dashboard-context.ts`, all with `SAFETY:` comments.
 
 ## Tests
 
-- `test/dashboard/schema-inference.test.ts` — params, defaults, `requires`, derive, views, guards.
-- `test/dashboard/definitions-inference.test.ts` — standalone filters / groups / views, shared
-  params on view handles, `select` data, `sync` typing, getter defaults and presets, shared-param
-  guard, `useDashboardView`.
-- `test/dom/dashboard/filters.test.ts` — handles (display, toggle order, `max`, reset), sync modes,
-  headless, factories and the params context, data-driven items and defaults, remote definitions.
+- `test/dashboard/schema-inference.test.ts` — filters of the root, views and queries, defaults,
+  `requires`, derive, views, controls, guards.
+- `test/dashboard/definitions-inference.test.ts` — schema and view functions, `InferDashboard` /
+  `InferDashboardView` from functions, `useDashboard` / `injectDashboard` / `useDashboardView`
+  return types, lazy-only conditions, a filter reading another's `value`, `select` data, `sync`
+  typing, getter defaults and presets.
+- `test/dom/dashboard/functions.test.ts` — a getter rebuilding on change behind stable objects,
+  filters kept across rebuilds, the previous build stopped, the locale kept, descendants' handles
+  following rebuilds under `UiDashboardPage`.
+- `test/dom/dashboard/filters.test.ts` — controls (display, toggle order, `max`, reset), sync modes,
+  headless, a filter reading another's `value`, data-driven items and defaults, remote definitions.
 - `test/dom/dashboard/composition.test.ts` — `select` sharing one request, dependent `requires`
-  states, merged view params, `filtered` / `resetFilters`, injection, shared-param runtime check.
+  states, a key shared across views, `filtered` / `resetFilters`, injection of view functions and
+  view objects.
 - `test/dom/dashboard/controls.test.ts` + `fixtures/controls-*` — the bar, pills (single, multiple
-  grid, remote), view tabs, slots, the button variant; `controls-host.vue` pins `only` typing.
+  grid, remote), view tabs, a filter kept across tabs, slots, the button variant;
+  `controls-host.vue` pins `only` typing.
 - `test/table/remote-table-options.test.ts` — requests, page mapping, selected resolution, Vue Query
   options with `skipToken`, fit with dashboard, table, and form remote options.
-- `test/dom/dashboard/engine.test.ts` — staging, views, URL keys, derive state, refresh, filter
-  handles, auto-refresh (URL, schema default, `refetchInterval`), comparison params.
-- `test/dom/dashboard/conditions.test.ts` — `enabled` on queries, views, and params, the tab strip
+- `test/dom/dashboard/engine.test.ts` — staging, views, URL keys (one per filter key, reserved
+  keys, conflicting declarations), derive state, refresh, controls, auto-refresh (URL, schema
+  default, `refetchInterval`), comparison filters.
+- `test/dom/dashboard/conditions.test.ts` — `enabled` on queries, views, and filters, the tab strip
   of a single enabled view, blocks of disabled sources rendering nothing.
 - `test/dom/dashboard/page.test.ts` — the page: header, date line, actions, refresh, tabs only for
-  two views or more, the filter bar, the current view's slot and the default slot, opt-outs.
+  two views or more, the filter bar, the current view's slot and the default slot, opt-outs, view
+  functions resolved from their slot.
 - `test/dom/dashboard/block-controls.test.ts` — chart series picked by a filter (chips in series
   colors, picker buttons, removal, empty state), drill-down filter chips, header link defaults, and
   list row links.
@@ -278,8 +311,8 @@ components/   dashboard-page.vue (the page: header, date line, actions + refresh
 
 `playground-table/app/pages/dashboard.vue` is the acceptance page: both identity4 tabs in the
 Atelier theme, plus an "Opérations" tab showing every operational block and card feature (stat
-trends / goals / status, alerts, feed, sortable table with its sort in widget params, chart
-drill-down into a view param, grid-level `menu` and `freshness`, `dashboard.updatedAt` in the
+trends / goals / status, alerts, feed, sortable table with its sort in query filters, chart
+drill-down into a view filter, grid-level `menu` and `freshness`, `dashboard.updatedAt` in the
 header, comparison period, auto-refresh control, split pane with a stat group, gauge, labeled
 chart, segment tabs, row actions, selection mirrored between the table and a ring list). Schema in
 `app/dashboards/analytics.ts`, mock data in `app/data/dashboard.ts`, header
@@ -309,4 +342,4 @@ fallback covers browsers without relative colors. Nuxt UI has no `--ui-neutral`,
 `imports` / `exports` / `typesVersions` triple, `UiToolsDashboardMessages` in both locales
 (`dashboard.filters.*`, `dashboard.format.*`), the `--nut-dash-*` tokens in
 `shared/styles/tokens.css` (including `--nut-dash-filter-*` and `--nut-dash-row-hover`), and
-`skills/consumer/dashboard/` (SKILL.md, schema, params, filters, blocks).
+`skills/consumer/dashboard/` (SKILL.md, schema, filters, controls, blocks).

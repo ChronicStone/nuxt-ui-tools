@@ -1,22 +1,23 @@
 ---
 name: nuxt-ui-tools-dashboard
-description: Use this skill when building analytics dashboards with nuxt-ui-tools as a package consumer. Covers defineDashboardSchema, useDashboard, standalone filters and views (defineDashboardFilter, defineDashboardFilters, defineDashboardView) with typed injection (useDashboardView, injectDashboard, InferDashboard), typed params synced with the URL, memory, or an external store, headless params, filter handles and the shipped controls (UiDashboardFilters, UiDashboardFilter, UiDashboardViewTabs) with slot overrides, remote paginated pickers and remoteTableOptions, staged queries (essential / background / deferred) with select and dependent requires, enabled conditions on views, queries, and filters (one schema for several audiences, blocks of disabled queries hidden, grids closing up), derived values, views (tabs), widget-scoped params, number formats (presets, Intl options, useDashboardFormat), and the dashboard blocks (stats with trends, goals, and comparisons, stat groups, gauges, unovis charts with highlights, value labels, and totals, lists with progress rings, bars, funnel, alerts, activity feeds, sortable tables, custom widgets) with their automatic loading, error, empty, and refresh states, card menus, header and footer actions, row actions, drill-down and selected state, card tabs, split cards, comparison periods, auto-refresh, and data freshness.
+description: Use this skill when building analytics dashboards with nuxt-ui-tools as a package consumer. Covers schema and view functions (defineDashboardSchema, defineDashboardView) that take their context as typed params, useDashboard with a getter that rebuilds on input change, typed injection (useDashboardView, injectDashboard, InferDashboard, InferDashboardView), filters declared inline with the f builder and synced with the URL, memory, or an external store (one value per key across views), headless filters, filter controls and the shipped UI (UiDashboardPage, UiDashboardFilters, UiDashboardFilter, UiDashboardViewTabs) with slot overrides, remote paginated pickers and remoteTableOptions, staged queries (essential / background / deferred) with select and dependent requires, lazy enabled conditions on views, queries, and filters (blocks of disabled queries hidden, grids closing up), derived values, views (tabs), query-scoped filters, number formats (presets, Intl options, useDashboardFormat), and the dashboard blocks (stats with trends, goals, and comparisons, stat groups, gauges, unovis charts with highlights, value labels, and totals, lists with progress rings, bars, funnel, alerts, activity feeds, sortable tables, custom widgets) with their automatic loading, error, empty, and refresh states, card menus, header and footer actions, row actions, drill-down and selected state, card tabs, split cards, comparison periods, auto-refresh, and data freshness.
 ---
 
 # nuxt-ui-tools Dashboard
 
 Use this skill for package-consumer tasks involving:
 
-- `defineDashboardSchema(...)` and `useDashboard(...)`
-- standalone definitions: `defineDashboardFilter`, `defineDashboardFilters`, `defineDashboardView`
-- typed injection: `useDashboardView(view)`, `injectDashboard(schema)`, `InferDashboard`,
-  `InferDashboardView`
-- typed params, where they live (`sync`: URL, memory, a store), headless params
+- `defineDashboardSchema(...)`, `defineDashboardView(...)`, and the functions that wrap them
+- `useDashboard(schema)` and `useDashboard(() => accountSchema({ accountId }))`
+- typed injection: `useDashboardView(consumptionView)`, `injectDashboard(accountSchema)`,
+  `InferDashboard`, `InferDashboardView`
+- filters: declared inline with `f`, where they live (`sync`: URL, memory, a store), headless
+  filters, one value per key across views
 - `UiDashboardPage`: the whole page (header, refresh, pinned tabs and filters, the current view)
-- filter handles (`dashboard.filters.x`) and the controls `UiDashboardFilters`, `UiDashboardFilter`,
+- controls (`dashboard.controls.x`) and the shipped UI `UiDashboardFilters`, `UiDashboardFilter`,
   `UiDashboardViewTabs`, a chart's series picked by a filter, a block's drill-down filter chips
 - staged queries, `select`, dependent queries (`requires`), and `derive`
-- conditions: `enabled` on views, queries, and params, for one schema serving several audiences
+- lazy `enabled` conditions on views, queries, and filters
 - remote pickers and `remoteTableOptions`
 - number formats (`format="integer"`, `Intl.NumberFormat` options, `useDashboardFormat()`)
 - `UiDashboardGrid`, `UiDashboardStat`, `UiDashboardWidget`, chart and list blocks, and the rest of
@@ -24,12 +25,12 @@ Use this skill for package-consumer tasks involving:
 
 Focused references:
 
-- `skills/consumer/dashboard/references/schema.md` — schema, stages, `select`, conditions
-  (`enabled`), views, derive, splitting a dashboard across files, the facade
-- `skills/consumer/dashboard/references/params.md` — param kinds and options, sync, URL keys, filter
-  handles, remote pickers
-- `skills/consumer/dashboard/references/filters.md` — the filter bar, pills, view tabs, slots,
-  binding a handle to your own control
+- `skills/consumer/dashboard/references/schema.md` — schema and view functions, stages, `select`,
+  conditions, views, derive, the facade, rebuilds
+- `skills/consumer/dashboard/references/filters.md` — filter kinds and options, sync, URL keys,
+  controls, remote pickers
+- `skills/consumer/dashboard/references/controls.md` — the filter bar, pills, view tabs, slots,
+  binding a control to your own component
 - `skills/consumer/dashboard/references/blocks.md` — the page, every block, formats, grid sizing,
   theming
 
@@ -53,23 +54,23 @@ A single file is enough for a small dashboard:
 <script setup lang="ts">
 const schema = defineDashboardSchema({
   key: 'sales',
-  params: (p) => ({
-    period: p.enum([7, 30, 90], {
+  filters: (f) => ({
+    period: f.enum([7, 30, 90], {
       defaultValue: 30,
       label: 'Period',
       format: (days) => `${days} days`,
     }),
   }),
-  queries: ({ essential, background, params }) => ({
+  queries: ({ essential, background, filters }) => ({
     summary: essential.query(() => ({
-      queryKey: ['sales', 'summary', params.period],
-      queryFn: () => api.sales.summary({ days: params.period }),
+      queryKey: ['sales', 'summary', filters.period],
+      queryFn: () => api.sales.summary({ days: filters.period }),
     })),
     daily: background.query({
       defaultValue: [],
       query: () => ({
-        queryKey: ['sales', 'daily', params.period],
-        queryFn: () => api.sales.daily({ days: params.period }),
+        queryKey: ['sales', 'daily', filters.period],
+        queryFn: () => api.sales.daily({ days: filters.period }),
       }),
     }),
   }),
@@ -115,72 +116,87 @@ What you get without writing it:
 - the stat's delta and "vs €12,400 previous period" caption, in the current locale
 - every accessor (`summary.revenue`, `day.date`) typed from the query result
 
-## Split A Dashboard Across Files
+## Compose A Dashboard From Functions
 
-Larger dashboards put each piece where it belongs; nothing is passed around by hand:
+A dashboard is about something: an account, the workspace a user works in. That context is the
+params of a function wrapping the schema, passed by the page and handed on to the views. Filters are
+the state the user controls; each view declares its own, inline. Each view is a self-contained
+schema in its own file:
 
 ```ts
-// filters.ts: reusable, typed filters (factories run in setup, so composables work)
-export const yearFilter = defineDashboardFilter((p) =>
-  p.enum(years(), { defaultValue: currentYear(), label: () => t('Year') }),
-)
-export const accountFilter = defineDashboardFilter((p) => {
-  const { $api } = useNuxtApp()
-  return p.remote(
-    remoteTableOptions((request) => $api.accounts.query.queryOptions({ body: request }), {
-      search: ['name'],
-      sort: 'name',
-      option: (account) => ({ label: account.name, value: account.id }),
+// entities/account/dashboard/activity.ts — one tab
+export function accountActivityView(params: { accountId: string; workspace: Workspace }) {
+  const { $api, $i18n } = useNuxtApp()
+  const year = new Date().getFullYear()
+
+  return defineDashboardView({
+    label: () => $i18n.t('account.tabs.activity'),
+    enabled: () => params.workspace !== 'client',
+    filters: (f) => ({
+      year: f.enum(years(), { defaultValue: year, label: () => $i18n.t('filters.year') }),
+      product: f.remote(
+        remoteTableOptions(
+          (request) =>
+            $api.accounts.products.queryOptions({
+              params: { id: params.accountId },
+              body: request,
+            }),
+          { search: ['name'], option: (product) => ({ label: product.name, value: product.id }) },
+        ),
+        { label: () => $i18n.t('filters.product') },
+      ),
     }),
-    { label: () => t('Account'), placeholder: () => t('All accounts') },
-  )
-})
-export const periodFilters = defineDashboardFilters({ year: yearFilter })
+    queries: ({ essential, filters }) => {
+      const usage = () =>
+        $api.accounts.usage.queryOptions({
+          params: { id: params.accountId },
+          query: { year: filters.year, product: filters.product },
+        })
+      return {
+        summary: essential.query({ query: usage, select: (data) => data.summary }),
+        months: essential.query({ defaultValue: [], query: usage, select: (data) => data.months }),
+      }
+    },
+  })
+}
 
-// consumption.ts: one tab
-export const consumptionView = defineDashboardView({
-  label: () => t('Consumption'),
-  shared: periodFilters, // root params this view reads
-  params: { account: accountFilter },
-  queries: ({ essential, params }) => {
-    const overview = () =>
-      api.consumption.queryOptions({ year: params.year, account: params.account })
-    return {
-      summary: essential.query({ query: overview, select: (data) => data.summary }),
-      months: essential.query({ defaultValue: [], query: overview, select: (data) => data.months }),
-    }
-  },
-})
-
-// schema.ts
-export const adminDashboard = defineDashboardSchema({
-  key: 'admin',
-  params: periodFilters,
-  views: { consumption: consumptionView, certifications: certificationsView },
-})
+// entities/account/dashboard/schema.ts
+export function accountSchema(params: { accountId: string; workspace: Workspace }) {
+  return defineDashboardSchema({
+    key: 'account',
+    views: {
+      activity: accountActivityView(params),
+      invoices: accountInvoicesView(params),
+    },
+  })
+}
 ```
 
 ```vue
-<!-- page: instantiate, then bind. The page renders the tabs, the filters, and the current view. -->
+<!-- pages/accounts/[id].vue: instantiate, then bind -->
 <script setup lang="ts">
-const dashboard = useDashboard(adminDashboard)
+const route = useRoute()
+const { workspace } = useApiContext()
+const account = useDashboard(() =>
+  accountSchema({ accountId: String(route.params.id), workspace: workspace.value }),
+)
 </script>
 <template>
-  <UiDashboardPage :dashboard :title="t('Dashboard')">
-    <template #consumption><ConsumptionTab /></template>
-    <template #certifications><CertificationsTab /></template>
+  <UiDashboardPage :dashboard="account" :title="t('Account')">
+    <template #activity><AccountActivity /></template>
+    <template #invoices><AccountInvoices /></template>
   </UiDashboardPage>
 </template>
 
-<!-- ConsumptionTab.vue: no props, fully typed, blocks only -->
+<!-- AccountActivity.vue: no props, fully typed, blocks only -->
 <script setup lang="ts">
-const consumption = useDashboardView(consumptionView)
+const activity = useDashboardView(accountActivityView)
 </script>
 <template>
   <UiDashboardGrid variant="panels" columns="2 md:4">
     <UiDashboardStat
       size="1"
-      :source="consumption.summary"
+      :source="activity.summary"
       label="Units"
       :value="(s) => s.units"
       format="integer"
@@ -189,30 +205,40 @@ const consumption = useDashboardView(consumptionView)
 </template>
 ```
 
+The getter runs in setup, and again when what it reads changes (another account, another
+workspace): the dashboard rebuilds for the new input behind the same objects, filters keep their
+values (they live in the URL), and blocks show their loading state for the new data.
+
 ## Rules Of Thumb
 
-- A page instantiates the dashboard and binds components: `useDashboard(schema)` in the script,
+- A page instantiates the dashboard and binds components: `useDashboard(...)` in the script,
   `UiDashboardPage` in the template, one slot per view. Never wire a header, a date line, sticky
   tabs, a scroll shadow, or a `v-if` on `dashboard.view.current` by hand; view components contain
   blocks only.
-- There is no `.value` anywhere: `dashboard.params.year`, `dashboard.summary.data`,
-  `dashboard.refreshing` are plain reads, and params are `v-model` targets.
+- Pass what the dashboard is about (an id, the audience) as params of the schema function; never
+  as a filter synced from the route or a store. Filters are what the user changes.
+- Declare filters inline in the schema or view that reads them. A key shared by two views is one
+  filter: `year` keeps its value across tabs.
+- Schema, view, and query builders may call app-level composables (`useNuxtApp()` for `$i18n` and
+  `$api`, a store, `useRoute()`) at the top. A schema function runs again outside setup, so it
+  cannot call `useI18n()` or lifecycle hooks.
+- Write conditions as lazy callbacks: `enabled: () => can('margin')`. Blocks bound to a disabled
+  query render nothing and grids close up, so templates never branch on permissions.
+- There is no `.value` anywhere: `dashboard.filters.year`, `dashboard.summary.data`,
+  `dashboard.refreshing` are plain reads, and filters are `v-model` targets.
 - Bind blocks to resources, not strings: `:source="dashboard.summary"`.
 - Put shared calculations in `derive`, not in page `computed`s, so blocks get their state for free.
-- Declare presentation on the param (`label`, `placeholder`, `format`, `columns`) and render
-  `UiDashboardFilters`; slot or bind a handle yourself only where a filter needs a custom control.
+- Declare presentation on the filter (`label`, `placeholder`, `format`, `columns`) and let the page
+  render the bar; slot or bind a control yourself only where a filter needs a custom look.
 - Split one response per block with `select` instead of reshaping it in `derive`.
-- Serve every audience from one schema: put the audience in a headless param synced from the
-  session, and give views, queries, and filters an `enabled` condition. Blocks bound to a disabled
-  query render nothing and grids close up, so templates never branch on permissions.
 - Use `useDashboardView(view)` / `injectDashboard(schema)` in child components; never prop-drill the
-  dashboard or restate its type (`InferDashboard<typeof schema>` names it when you need to).
+  dashboard or restate its type (`InferDashboard<typeof accountSchema>` names it when you need to).
 - Format with presets, `{ currency }`, or `useDashboardFormat()`; do not build
   `Intl.NumberFormat` options in `computed`s.
-- Let the engine render filter controls: a chart whose series the user picks binds the filter as its
-  `series`; a block narrowed by a drill-down value lists it in `filters`; a header link is an action
-  `{ label, to }`; rows that open a page take `to`.
-- Drill down by writing a param from `@select`; show it back with `selected`.
-- Compare periods with `p.comparison()` and `resolveDashboardComparisonRange`, then pass `compare`
+- Let the engine render filter controls: a chart whose series the user picks binds the control as
+  its `series`; a block narrowed by a drill-down value lists its control in `filters`; a header
+  link is an action `{ label, to }`; rows that open a page take `to`.
+- Drill down by writing a filter from `@select`; show it back with `selected`.
+- Compare periods with `f.comparison()` and `resolveDashboardComparisonRange`, then pass `compare`
   accessors to stats and chart series: deltas, captions, and legends follow.
 - Call `useDashboard` once in `<script setup>`; all queries and URL bindings are created there.
