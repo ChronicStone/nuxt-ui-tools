@@ -352,58 +352,63 @@ describe('dashboard grid layout', () => {
     expectWidths(cells('row'), [WIDTH, WIDTH, WIDTH])
   })
 
-  it('never wraps a full row, whatever the width, gap, and column count', async () => {
-    const layouts = [
-      { columns: '12', spans: [4, 4, 4] },
-      { columns: '12', spans: Array<number>(12).fill(1) },
-      { columns: '12', spans: [5, 7] },
-      { columns: '12', spans: [2, 3, 7] },
-      { columns: '5', spans: [1, 1, 1, 1, 1] },
-      { columns: '7', spans: Array<number>(7).fill(1) },
-      { columns: '3', spans: [1, 2] },
-      { columns: '24', spans: [6, 18] },
-    ]
-    const variants: { borders: number; gap: number; props: GridProps }[] = [
-      { borders: 0, gap: 16, props: {} },
-      { borders: 0, gap: 24, props: { gap: '24px' } },
-      { borders: 2, gap: 1, props: { variant: 'panels' } },
-    ]
-    const failures: string[] = []
+  // About 28,000 forced layouts: WebKit on a CI runner needs more than the default 15 s.
+  it(
+    'never wraps a full row, whatever the width, gap, and column count',
+    { timeout: 60_000 },
+    async () => {
+      const layouts = [
+        { columns: '12', spans: [4, 4, 4] },
+        { columns: '12', spans: Array<number>(12).fill(1) },
+        { columns: '12', spans: [5, 7] },
+        { columns: '12', spans: [2, 3, 7] },
+        { columns: '5', spans: [1, 1, 1, 1, 1] },
+        { columns: '7', spans: Array<number>(7).fill(1) },
+        { columns: '3', spans: [1, 2] },
+        { columns: '24', spans: [6, 18] },
+      ]
+      const variants: { borders: number; gap: number; props: GridProps }[] = [
+        { borders: 0, gap: 16, props: {} },
+        { borders: 0, gap: 24, props: { gap: '24px' } },
+        { borders: 2, gap: 1, props: { variant: 'panels' } },
+      ]
+      const failures: string[] = []
 
-    for (const { columns, spans } of layouts) {
-      for (const { borders, gap, props } of variants) {
-        const list = sources(spans.length)
-        const mounted = await mountLayout(() =>
-          grid('row', { columns, ...props }, () =>
-            list.map((source, index) => block({ size: String(spans[index]), source })),
-          ),
-        )
-        try {
-          // One grid, resized in steps of 1.37px so every fraction of a pixel comes up.
-          for (let width = 320; width <= 1920; width += 1.37) {
-            // A card is never narrower than its own padding: tracks that thin wrap by necessity.
-            const narrowest = spanWidth({
-              columns: Number(columns),
-              gap,
-              span: Math.min(...spans),
-              width: width - borders,
-            })
-            if (narrowest < 64) continue
-            mounted.host.style.width = `${width}px`
-            const line = cells('row')
-            const context = `${spans.join('+')} of ${columns}, gap ${gap}, at ${width.toFixed(2)}px`
-            if (rows('row').length !== 1) failures.push(`${context}: wrapped`)
-            else if (Math.abs(total(line, gap) - innerWidth('row')) > 0.5)
-              failures.push(`${context}: ${total(line, gap)} of ${innerWidth('row')}`)
+      for (const { columns, spans } of layouts) {
+        for (const { borders, gap, props } of variants) {
+          const list = sources(spans.length)
+          const mounted = await mountLayout(() =>
+            grid('row', { columns, ...props }, () =>
+              list.map((source, index) => block({ size: String(spans[index]), source })),
+            ),
+          )
+          try {
+            // One grid, resized in steps of 1.37px so every fraction of a pixel comes up.
+            for (let width = 320; width <= 1920; width += 1.37) {
+              // A card is never narrower than its own padding: tracks that thin wrap by necessity.
+              const narrowest = spanWidth({
+                columns: Number(columns),
+                gap,
+                span: Math.min(...spans),
+                width: width - borders,
+              })
+              if (narrowest < 64) continue
+              mounted.host.style.width = `${width}px`
+              const line = cells('row')
+              const context = `${spans.join('+')} of ${columns}, gap ${gap}, at ${width.toFixed(2)}px`
+              if (rows('row').length !== 1) failures.push(`${context}: wrapped`)
+              else if (Math.abs(total(line, gap) - innerWidth('row')) > 0.5)
+                failures.push(`${context}: ${total(line, gap)} of ${innerWidth('row')}`)
+            }
+          } finally {
+            mounted.unmount()
           }
-        } finally {
-          mounted.unmount()
         }
       }
-    }
 
-    expect(failures).toEqual([])
-  })
+      expect(failures).toEqual([])
+    },
+  )
 
   it('separates panels by a 1px rule inside the border, between cells and rows', async () => {
     const [wide, narrow, below] = sources(3)
