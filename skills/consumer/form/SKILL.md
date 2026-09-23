@@ -131,7 +131,8 @@ revealed after the promise settles, not while it is pending.
 
 The renderer uses a native form submit event. Pressing Enter from a focused single-line control
 runs the same validation and submit lifecycle as the built-in submit action, while Enter in a
-textarea keeps its normal newline behavior.
+textarea keeps its normal newline behavior. Use Tab to move through the form's focusable controls,
+including checkboxes.
 
 `validate` accepts `true`, `false`, `'required'`, or `'validators'`. `syncInput` accepts `true` or a
 list of paths; when omitted, later input changes do not replace local edits.
@@ -298,6 +299,10 @@ underlying Nuxt UI control.
 Use `fields` for package-wide defaults on any registered field kind. Its `size`, `class`, and
 underlying Nuxt UI `ui` slots merge after the shared `control` defaults, while the authored
 field's `props` still wins for one-off exceptions.
+
+Radio and checkbox card fields, including group fields with `variant: 'card'`, show a
+selected outer ring through the Nuxt UI `item` slot. The ring does not change card dimensions;
+override `ui.item` in the field's `props` to customize it.
 
 ```ts
 const form = defineFormSchema({

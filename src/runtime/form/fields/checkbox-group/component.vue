@@ -8,6 +8,7 @@ import type { FormValue, FormCheckboxGroupField, FormOptionValue } from '../../t
 import { formOptionKey } from '../../utils/options'
 import { isBoolean, isNumber, isString, isUndefined } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
+import { CARD_SELECTED_RING } from '../card-selection'
 
 const props = defineProps<{
   field: FormCheckboxGroupField
@@ -43,6 +44,10 @@ const groupUi = computed(() => ({
   fieldset: mergeFormUiClass(
     controlProps.value.ui?.fieldset,
     fieldProps.value.orientation === 'horizontal' ? 'flex-wrap' : undefined,
+  ),
+  item: mergeFormUiClass(
+    fieldProps.value.variant === 'card' ? CARD_SELECTED_RING : undefined,
+    controlProps.value.ui?.item,
   ),
 }))
 
