@@ -53,7 +53,7 @@ function createCountryServer() {
 async function mountRemoteTags(server: ReturnType<typeof createCountryServer>, breakpoint = 'xl') {
   return mountLoaded({
     breakpoint: breakpoint === 'sm' ? 'sm' : 'xl',
-    render: () => h(DataListFilterTags, { showAdd: true, showClear: true }),
+    render: () => h(DataListFilterTags, { mobile: 'sheet', showAdd: true, showClear: true }),
     schema: createAccountsSchema({ remoteCountry: server.remote }),
   })
 }

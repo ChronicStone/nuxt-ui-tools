@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
 import DataListFilterTags from '#ui-tools/table/components/data-list/data-list-filter-tags.vue'
+import DataListFilterPanel from '#ui-tools/table/components/data-list/data-list-filter-panel.vue'
 
 import { must } from '../../helpers/must'
 import { createAccountsSchema, STATUS_COLOR } from '../fixtures/accounts'
@@ -202,10 +203,11 @@ describe('filter tags bar', () => {
 })
 
 describe('mobile filter sheet', () => {
-  it('replaces the tags with a bottom sheet listing every filter', async () => {
+  it('offers an opt-in bottom sheet listing every filter', async () => {
     harness = await mountTags({
       breakpoint: 'sm',
       schema: createAccountsSchema({ statusDefault: ['active'] }),
+      tagProps: { mobile: 'sheet' },
     })
     const w = harness.wrapper
     expect(w.find('.nut-dl-tag--dormant').exists()).toBeFalsy()
@@ -248,7 +250,7 @@ describe('mobile filter sheet', () => {
   })
 
   it('shows the active count and clears everything from the footer', async () => {
-    harness = await mountTags({ breakpoint: 'sm' })
+    harness = await mountTags({ breakpoint: 'sm', tagProps: { mobile: 'sheet' } })
     harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['FR'] })
     harness.internals.filters.searchQuery.value = 'x'
     await harness.flush()
@@ -262,9 +264,15 @@ describe('mobile filter sheet', () => {
     expect(harness.internals.filters.searchQuery.value).toBe('')
   })
 
-  it('keeps inline tags on mobile when asked', async () => {
-    harness = await mountTags({ breakpoint: 'sm', tagProps: { mobile: 'tags' } })
+  it('keeps the persistent tag inline with one panel filter trigger on mobile', async () => {
+    harness = await mountLoaded({
+      breakpoint: 'sm',
+      render: () =>
+        h('div', { class: 'flex flex-wrap' }, [h(DataListFilterTags), h(DataListFilterPanel)]),
+      schema: createAccountsSchema({ panelFilters: true, statusDefault: ['active'] }),
+    })
     expect(harness.wrapper.find('.nut-dl-sheet-trigger').exists()).toBeFalsy()
-    expect(harness.wrapper.find('.nut-dl-tag--dormant').exists()).toBeTruthy()
+    expect(harness.wrapper.find('.nut-dl-tag--active').text()).toContain('Statut')
+    expect(harness.wrapper.findAll('.nut-dl-fpanel-trigger')).toHaveLength(1)
   })
 })

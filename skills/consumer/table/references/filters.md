@@ -182,6 +182,8 @@ Responsive values use the shared responsive string syntax:
 
 Location affects presentation, not query state. If a filter moves from panel to tag at a breakpoint, its applied value stays intact.
 
+`<UiDataListFilterTags />` keeps tags inline on mobile by default, so a `tag` filter remains visible and can wrap with the toolbar. Use `location: 'panel md:tag'` for filters that should move into `<UiDataListFilterPanel />` on mobile; this leaves one panel filter trigger. Set `mobile="sheet"` on `<UiDataListFilterTags />` only when you want all filters in a separate mobile bottom sheet instead.
+
 ### `source`
 
 `source` is where option/facet data lives. It is only relevant for option and boolean filters.

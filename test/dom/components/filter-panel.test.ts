@@ -49,6 +49,16 @@ describe('filter slideover trigger', () => {
     expect(harness.wrapper.find('.nut-dl-fpanel-trigger__count').attributes('data-label')).toBe('1')
   })
 
+  it('uses a labelled icon trigger on mobile', async () => {
+    harness = await mountPanel({ breakpoint: 'sm', open: false })
+    const trigger = harness.wrapper.find('.nut-dl-fpanel-trigger')
+    expect([trigger.text(), trigger.attributes('aria-label'), trigger.attributes('data-square')]).toStrictEqual([
+      '',
+      'Filtres',
+      'true',
+    ])
+  })
+
   it('is not rendered without panel filters', async () => {
     harness = await mountLoaded({
       render: () => h(DataListFilterPanel),

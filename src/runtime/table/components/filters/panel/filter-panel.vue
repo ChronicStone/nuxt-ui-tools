@@ -8,6 +8,7 @@ import type { VNodeChild } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { isNullish } from '../../../../shared/utils/predicate'
+import { useDataListBreakpoint } from '../../../composables/use-data-list-breakpoint'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -35,6 +36,7 @@ const props = withDefaults(
 )
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
+const { isMobile } = useDataListBreakpoint()
 const { locale, t } = useUiToolsLocale()
 const config = computed(() => dataListUi.ui.value.filterPanel)
 const resolvedUi = computed<DataListFilterPanelUi>(() => ({ ...config.value?.ui, ...props.ui }))
@@ -245,6 +247,8 @@ onMounted(() => {
       <UButton
         v-bind="triggerBind"
         :aria-expanded="open"
+        :aria-label="triggerLabel"
+        :square="triggerProps.square ?? (isMobile && (!countProps || activeCount === 0))"
         :ui="{
           base: mergeDataListUiClass(
             'nut-dl-fpanel-trigger shrink-0',
@@ -258,7 +262,7 @@ onMounted(() => {
             mergeDataListUiClass('flex items-center gap-2', undefined, resolvedUi.triggerContent)
           "
         >
-          <span>{{ triggerLabel }}</span>
+          <span v-if="!isMobile">{{ triggerLabel }}</span>
           <UBadge
             v-if="countProps && activeCount > 0"
             v-bind="countProps"
