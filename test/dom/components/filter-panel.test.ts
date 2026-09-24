@@ -52,11 +52,11 @@ describe('filter slideover trigger', () => {
   it('uses a labelled icon trigger on mobile', async () => {
     harness = await mountPanel({ breakpoint: 'sm', open: false })
     const trigger = harness.wrapper.find('.nut-dl-fpanel-trigger')
-    expect([trigger.text(), trigger.attributes('aria-label'), trigger.attributes('data-square')]).toStrictEqual([
-      '',
-      'Filtres',
-      'true',
-    ])
+    expect([
+      trigger.text(),
+      trigger.attributes('aria-label'),
+      trigger.attributes('data-square'),
+    ]).toStrictEqual(['', 'Filtres', 'true'])
     expect(trigger.find('.nut-dl-fpanel-trigger__content').exists()).toBeFalsy()
   })
 

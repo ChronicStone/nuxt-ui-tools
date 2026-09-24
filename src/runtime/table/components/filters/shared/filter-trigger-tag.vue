@@ -82,7 +82,13 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
 
 <template>
   <div
-    :class="mergeDataListUiClass('nut-dl-tag-wrap inline-flex min-w-0 max-w-full align-top', undefined, ui?.root)"
+    :class="
+      mergeDataListUiClass(
+        'nut-dl-tag-wrap inline-flex min-w-0 max-w-full align-top',
+        undefined,
+        ui?.root,
+      )
+    "
   >
     <template v-if="showOperatorPickerFirst">
       <UButton
