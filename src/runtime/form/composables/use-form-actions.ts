@@ -1,14 +1,17 @@
 import { computed } from 'vue'
-import type { ComputedRef } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
-import type { FormValue, FormAction, FormActionKey, FormRenderShell, FormRuntime } from '../types'
+import type { FormValue, FormAction, FormActionKey, FormActionSlot, FormRuntime } from '../types'
 import { isRecord } from '../utils/path'
 
-export function useFormActions(params: {
+interface UseFormActionsParams {
   runtime: FormRuntime
-  shell: ComputedRef<FormRenderShell>
-}) {
+  /** Slot the built-in actions take unless an authored action sets its own. */
+  slot: () => FormActionSlot
+}
+
+/** Resolves the actions of the current schema or step, completing built-in actions. */
+export function useFormActions(params: UseFormActionsParams) {
   const { t } = useUiToolsLocale()
 
   return computed<readonly FormAction[]>(() => {
@@ -32,10 +35,7 @@ export function useFormActions(params: {
 
 function normalizeFormAction(
   action: FormAction,
-  params: {
-    runtime: FormRuntime
-    shell: ComputedRef<FormRenderShell>
-  },
+  params: UseFormActionsParams,
   t: (key: string) => string,
 ): FormAction {
   if (!isBaseFormAction(action)) {
@@ -49,13 +49,10 @@ function normalizeFormAction(
 
 function getBaseFormAction(
   key: FormActionKey,
-  params: {
-    runtime: FormRuntime
-    shell: ComputedRef<FormRenderShell>
-  },
+  params: UseFormActionsParams,
   t: (key: string) => string,
 ): FormAction {
-  const slot = params.shell.value === 'inline' ? 'left' : 'right'
+  const slot = params.slot()
   if (key === 'submit') {
     return {
       condition: (context) => (context.isMultiStep ? context.isLastStep : true),

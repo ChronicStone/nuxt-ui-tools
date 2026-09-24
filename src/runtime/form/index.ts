@@ -1,4 +1,10 @@
-export { defineFormField, defineFormFields, defineFormSchema } from './schema'
+export {
+  defineFormField,
+  defineFormFields,
+  defineFormPageSchema,
+  defineFormPageSection,
+  defineFormSchema,
+} from './schema'
 export { useForm } from './composables/use-form'
 export { useFormUi } from './composables/use-form-ui'
 export { provideFormApi, useFormApi } from './composables/use-form-api'

@@ -101,6 +101,11 @@ function getPublicComponents(
       global: options.global,
       name: `${prefix}FormProvider`,
     },
+    ...['', 'Header', 'Navigation', 'Sections', 'Actions'].map((part) => ({
+      filePath: `${runtimeDir}/form/components/page/form-page${part ? `-${toKebabCase(part)}` : ''}.vue`,
+      global: options.global,
+      name: `${prefix}FormPage${part}`,
+    })),
   ]
 }
 

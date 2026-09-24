@@ -7,8 +7,8 @@ import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormCheckboxCardField, FormOptionValue } from '../../types'
 import { formOptionKey } from '../../utils/options'
 import { isBoolean, isNumber, isString, isUndefined } from '../../utils/predicate'
-import { mergeFormUiClass } from '../../utils/ui'
-import { CARD_SELECTED_RING } from '../card-selection'
+import ChoiceCardLabel from '../choice-card/choice-card-label.vue'
+import { CHOICE_CARD_PROPS, useChoiceCard } from '../choice-card/use-choice-card'
 
 const props = defineProps<{
   field: FormCheckboxCardField
@@ -18,9 +18,11 @@ const props = defineProps<{
 const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFieldControl(
   () => props.field,
   () => props.path,
+  { omit: CHOICE_CARD_PROPS },
 )
-const valueByKey = computed<Map<string, FormOptionValue>>(
-  () => new Map(options.items.value.map((item) => [formOptionKey(item.value), item.value])),
+const cards = useChoiceCard({ props: () => fieldProps.value, ui: () => controlProps.value.ui })
+const optionByKey = computed(
+  () => new Map(options.items.value.map((item) => [formOptionKey(item.value), item])),
 )
 const model = computed<string[]>({
   get: () => {
@@ -31,22 +33,19 @@ const model = computed<string[]>({
     form.setValue(
       props.path,
       value.flatMap((key) => {
-        const optionValue = valueByKey.value.get(key)
+        const optionValue = optionByKey.value.get(key)?.value
         return isUndefined(optionValue) ? [] : [optionValue]
       }),
     ),
 })
+// Each item becomes a Nuxt UI checkbox, whose `icon` is its check mark: the option icon is
+// rendered by the card content instead.
 const items = computed(() =>
-  options.items.value.map((item) => ({ ...item, value: formOptionKey(item.value) })),
+  options.items.value.map(({ icon: _icon, ...item }) => ({
+    ...item,
+    value: formOptionKey(item.value),
+  })),
 )
-const groupUi = computed(() => ({
-  ...controlProps.value.ui,
-  fieldset: mergeFormUiClass(
-    controlProps.value.ui?.fieldset,
-    fieldProps.value.orientation === 'horizontal' ? 'flex-wrap' : undefined,
-  ),
-  item: mergeFormUiClass(CARD_SELECTED_RING, controlProps.value.ui?.item),
-}))
 
 function isOptionValue(value: FormValue): value is FormOptionValue {
   return isString(value) || isNumber(value) || isBoolean(value)
@@ -62,12 +61,24 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       value-key="value"
       label-key="label"
       description-key="description"
-      :orientation="fieldProps.orientation"
-      :ui="groupUi"
       variant="card"
-      :indicator="fieldProps.indicator"
+      :orientation="cards.orientation.value"
+      :indicator="cards.indicator.value"
+      :ui="cards.ui.value"
+      :style="cards.style.value"
       :disabled="disabled"
       @blur="handleBlur"
-    />
+    >
+      <template #label="{ item }">
+        <ChoiceCardLabel
+          :label="optionByKey.get(item.value)?.label ?? item.label"
+          :icon="optionByKey.get(item.value)?.icon"
+          :tile="cards.tile.value"
+          :corner="cards.corner.value"
+          :selected="model.includes(item.value)"
+          :ui="cards.ui.value"
+        />
+      </template>
+    </UCheckboxGroup>
   </FormFieldShell>
 </template>

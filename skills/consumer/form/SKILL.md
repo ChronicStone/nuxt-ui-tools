@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools-form
-description: Use this skill when working with the nuxt-ui-tools form runtime as a package consumer. It covers schema-driven forms, the provider-backed form API, inline rendering, overlay rendering, and typed submit results.
+description: Use this skill when working with the nuxt-ui-tools form runtime as a package consumer. It covers schema-driven forms, the provider-backed form API, inline rendering, overlay rendering, form pages with a section navigation, choice cards, and typed submit results.
 ---
 
 # nuxt-ui-tools Form
@@ -13,6 +13,7 @@ The V1 form runtime is schema-driven and fully typed:
 - render inline forms with `<NutForm>`
 - wrap app or route content with `<NutFormProvider>` when using `useFormApi`
 - open provider-owned overlays with `formApi.createForm(schema, options)`
+- lay a form out as a page of sections with `defineFormPageSchema` and `<NutFormPage>`
 
 Alpha select is intentionally not part of this package; use `select` or `tree-select` instead.
 
@@ -138,7 +139,8 @@ including checkboxes.
 list of paths; when omitted, later input changes do not replace local edits.
 
 Schema `controls` can set `dirtyCheck`, `autoFocus`, `confirmNavOnDirty`, `syncInput`, and
-`validate`. Stateful fields can define `watch`, `onDependencyChange`, `onRendered`,
+`validate`. A successful submit makes the submitted values the new baseline, so `isDirty` turns
+false and `confirmNavOnDirty` stops asking; a navigation made by `onSubmit` itself never asks. Stateful fields can define `watch`, `onDependencyChange`, `onRendered`,
 `stateEffect`, `ignore`, `dirtyCheck`, and collapsible behavior.
 
 Use `labelExtra` for rich content beside a field label, such as a password-recovery link. It
@@ -342,6 +344,234 @@ formApi.getController('account-create')
 ```
 
 `closeForm` and `submitForm` use the mounted overlay lifecycle when the form is rendered, so close transitions and submit pending state stay aligned with the visible UI.
+
+## Form Pages
+
+A form page is one form laid out as a page of sections: a card per section, a navigation that
+follows the section in view, and a header with the title and the actions. Define it with
+`defineFormPageSchema` and render it with `<NutFormPage :form />`.
+
+Write each section as a plain typed function with `defineFormPageSection`, so sections can live in
+their own files and take the context they need as params. Every text accepts a function, so it can
+be translated:
+
+```ts
+import { regex, withMessage } from '@regle/rules'
+
+export function identitySection() {
+  const { t } = useI18n()
+  return defineFormPageSection({
+    key: 'identity',
+    label: () => t('account.sections.identity'),
+    description: () => t('account.sections.identityHint'),
+    fields: [
+      { key: 'name', type: 'text', label: () => t('account.name'), required: true },
+      {
+        key: 'siren',
+        type: 'text',
+        label: 'SIREN',
+        // `country` belongs to the address section: a page is one form, one state.
+        dependencies: ['country'],
+        validators: ({ deps }) =>
+          deps.country === 'FR' ? { siren: withMessage(regex(/^\d{9}$/), '9 digits') } : {},
+      },
+    ],
+  })
+}
+
+export function accountFormSchema({ account }: { account?: Account } = {}) {
+  return defineFormPageSchema({
+    header: { title: account ? 'Edit account' : 'New account', description: account?.name },
+    controls: { dirtyCheck: Boolean(account), confirmNavOnDirty: true },
+    actions: [
+      { key: 'cancel', label: 'Cancel' },
+      { key: 'submit', icon: 'i-lucide-check', label: account ? 'Save' : 'Create account' },
+    ],
+    navigation: { title: account ? 'Sections' : 'Creation' },
+    sections: account
+      ? [identitySection(), accountTypeSection(), addressSection()]
+      : [accountTypeSection(), identitySection(), addressSection()],
+  })
+}
+```
+
+```vue
+<script setup lang="ts">
+const form = useForm({
+  schema: accountFormSchema({ account }),
+  input: account,
+  onSubmit: ({ formData }) => updateAccount(account.id, formData),
+})
+</script>
+
+<template>
+  <NutFormPage :form @cancel="navigateTo('/accounts')" />
+</template>
+```
+
+`defineFormPageSchema` returns a normal form schema: its `fields` are card fields generated from
+the sections. A card adds no path segment, so `formData` stays flat (`{ name, siren, country }`),
+fields of different sections can depend on and validate against each other, and the same schema
+opens with `formApi.createForm(...)` as a stack of cards.
+
+A section takes:
+
+- `key`: the navigation entry, the scroll target, the URL hash (`#identity`), and the section
+  element `id`, so keep it unique on the page. It does not prefix field keys.
+- `label` and `description`: text or a function returning text.
+- `layout`: the grid of its fields (`columns`, `fieldSpan`, `gap`, label placement), merged over
+  the schema `layout`.
+- `condition` with `dependencies`: hides the section, its navigation entry, and its fields.
+- `optional`: marks the section optional, for sections whose required fields are all filled by
+  defaults. A section without a required field is optional already.
+
+### What the navigation shows
+
+Each entry has a status:
+
+- **complete** (a check): every required field has a value and no field shows an error. An optional
+  section also needs a value the user entered or the form `input` provided; defaults alone do not
+  count.
+- **invalid** (a `!`): a field of the section shows an error, for example after a failed submit.
+- **pending** (an empty circle): anything else.
+
+Optional sections read "optional" and are not counted in the summary under the entries ("3 sections
+left to complete", then "Everything is ready").
+
+With `controls.dirtyCheck: true` (typically on edit pages), a modified section gets a ring and a
+**Reset** button that puts its values back, its entry gets a dot, the header shows an "Unsaved
+changes" badge, and the summary counts the modified sections. A successful submit saves the values
+as the new baseline, so the rings clear. `confirmNavOnDirty` asks before leaving unsaved changes, but
+not for navigations your `onSubmit` makes after saving.
+
+### Scrolling and layout
+
+The page scrolls on its own: give it a height, such as `h-full` or `flex-1 min-h-0` in a layout that
+sizes its main area. Clicking an entry scrolls its section to just below the pinned header, moves
+focus to the section title, and replaces the URL hash (`#billing`) without a new history entry.
+Opening the page with a hash lands on that section. Set `:hash="false"` to leave the URL alone.
+
+The current entry follows the scroll position, except when a field takes focus: its section becomes
+current and stays so through the scroll the focus causes. When a failed submit focuses the first
+invalid field, the navigation points at that field's section, even while the section above still
+covers the top of the page. The next scroll hands the navigation back to the scroll position.
+
+From 768px of page width, the navigation is a pinned column beside the sections (200px, 230px from
+1024px) and the header stays pinned. Below, the navigation is one row of chips that scrolls sideways
+and keeps the current section in view.
+
+### Composing the page
+
+`NutFormPage` owns the form and renders a default layout from public parts: `NutFormPageHeader`
+(which holds `NutFormPageActions`), `NutFormPageNavigation`, and `NutFormPageSections`. Put parts
+in its default slot to compose another layout; they read the page they render in:
+
+```vue
+<NutFormPage :form>
+  <MyPageHeader>
+    <template #actions><NutFormPageActions /></template>
+  </MyPageHeader>
+  <div class="grid grid-cols-[minmax(0,1fr)_240px] gap-6 p-6">
+    <NutFormPageSections />
+    <NutFormPageNavigation />
+  </div>
+</NutFormPage>
+```
+
+To change one part of the default layout, use the slots `NutFormPage` forwards:
+`header-leading`, `header-eyebrow`, `header-title`, `header-description`, `header-actions`,
+`navigation-title`, `navigation-item` (`{ section, active, select }`), `navigation-footer`
+(`{ sections, remaining, modified }`), and `section-actions` (`{ section }`):
+
+```vue
+<NutFormPage :form>
+  <template #navigation-footer>
+    <AccountSummary :account />
+  </template>
+</NutFormPage>
+```
+
+Style the page like the rest of the form engine, through the `page` part of the form UI config:
+app config first, then the schema `ui`, then the `ui` prop of `NutFormPage`. Every element the page
+renders has a slot:
+
+- page: `root`, `body`
+- header: `header`, `headerContent`, `heading`, `eyebrow`, `title`, `meta`, `unsaved`, `actions`
+- navigation: `navigation`, `navigationGroup`, `navigationTitle`, `navigationList`,
+  `navigationEntry`, `navigationItem`, `navigationIndicator`, `navigationIndicatorIcon`,
+  `navigationIndicatorMarker`, `navigationLabel`, `navigationOptional`, `navigationDirty`,
+  `navigationFooter`, `navigationSummary`, `navigationSummaryCount`
+- sections: `sections`, `sectionSkeleton`, `section`, `sectionHeader`, `sectionTitle`,
+  `sectionDescription`, `sectionOptional`, `sectionActions`, `sectionReset`, `sectionBody`
+
+The action buttons take the `actions` part (`ui.actions.ui.button`) and each action's `class`, as in
+any form. Entries carry `data-active` and `data-state` (`complete`, `invalid`, `pending`), and
+modified sections and entries carry `data-dirty`:
+
+```ts
+export default defineAppConfig({
+  nuxtUiTools: {
+    form: {
+      page: {
+        ui: {
+          root: 'min-h-0 flex-1 bg-(--app-canvas)',
+          section: 'rounded-lg',
+          navigationItem: 'data-[active]:font-bold',
+        },
+      },
+    },
+  },
+})
+```
+
+Sections land, and the navigation pins, below `--nut-form-page-header` plus `--nut-form-page-gap`.
+The page sets the first to the height of its pinned `NutFormPageHeader`; the second is `24px`. To
+change the gap, set it on the root, for example with `ui.page.ui.root: '[--nut-form-page-gap:32px]'`.
+When your own pinned header replaces `NutFormPageHeader`, set `--nut-form-page-header` to its height
+on an element around the navigation and the sections.
+
+## Choice Cards
+
+`radio-card` and `checkbox-card` share these props:
+
+- `columns`: a fixed grid of equal columns, with breakpoints: `3`, `'2 xl:3'`, or `'1 md:2 lg:3'`.
+  The unprefixed value covers every width below the first breakpoint you name, so start prefixes
+  at `md`. Without `columns`, cards flow along `orientation`.
+- `indicator`: `start` (default), `end`, `hidden`, or `corner`, a check in the top corner of
+  selected cards only.
+- `icon`: where an option `icon` shows, `inline` before its label (default) or `tile`, in a square
+  above it that takes the selection color.
+
+```ts
+{
+  key: 'plan',
+  type: 'radio-card',
+  options: [
+    { value: 'starter', label: 'Starter', description: 'One team getting started.', icon: 'i-lucide-sprout' },
+    { value: 'team', label: 'Team', description: 'Shared projects and roles.', icon: 'i-lucide-users' },
+  ],
+  props: { columns: '1 md:3', icon: 'tile', indicator: 'corner' },
+}
+```
+
+Style the parts the engine renders through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`, and
+`ui.checkIcon`, next to the Nuxt UI slots of the group (`fieldset`, `item`, `label`, `description`,
+and so on). Set them for one field in its `props.ui`, or for every card of a kind in the app config:
+
+```ts
+nuxtUiTools: {
+  form: {
+    fields: {
+      'radio-card': {
+        ui: {
+          item: 'has-data-[state=checked]:bg-primary/10',
+          tile: 'data-[selected]:bg-default',
+        },
+      },
+    },
+  },
+}
+```
 
 ## Layout Defaults
 

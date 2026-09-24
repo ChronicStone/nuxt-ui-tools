@@ -205,6 +205,7 @@ Does not belong here:
 Purpose:
 
 - form runtime area
+- form pages: sectioned schemas (`defineFormPageSchema`) rendered by `FormPage` and its parts, with a scrollspy navigation and per-section status
 
 Philosophy:
 

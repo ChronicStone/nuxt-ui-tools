@@ -103,6 +103,24 @@ export default defineUiToolsLocale<Messages>({
         resetButton: 'Reset',
         submitButton: 'Submit',
       },
+      page: {
+        complete: 'Everything is ready.',
+        modifiedOne: '{count} modified.',
+        modifiedOther: '{count} modified.',
+        navigation: 'Form sections',
+        optional: 'optional',
+        remaining: '{count} left to complete.',
+        resetSection: 'Reset',
+        sectionsOne: '{count} section',
+        sectionsOther: '{count} sections',
+        status: {
+          complete: 'Complete',
+          invalid: 'Has errors',
+          pending: 'To complete',
+        },
+        unmodified: 'No unsaved changes.',
+        unsavedChanges: 'Unsaved changes',
+      },
       fields: {
         array: {
           addItem: 'Add item',

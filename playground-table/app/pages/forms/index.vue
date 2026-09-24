@@ -69,14 +69,14 @@ const entries: FormEntry[] = [
     'accountNew',
     'Nouveau compte',
     'Type, identité, contacts, adresse, facturation et documents.',
-    accountFormSchema(contacts, 'new'),
+    accountFormSchema({ contacts }),
     { accountType: 'customer' },
   ),
   register(
     'account',
     'Modifier le compte',
     'Type, identité, contacts, adresse, facturation et documents.',
-    accountFormSchema(contacts, 'edit'),
+    accountFormSchema({ account: accounts[2], contacts }),
     { ...accounts[2] },
   ),
   register(

@@ -80,6 +80,8 @@ export function setupImports(runtimeDir: string) {
     ...withRuntime(runtimeDir, [
       { from: 'form', name: 'defineFormField' },
       { from: 'form', name: 'defineFormFields' },
+      { from: 'form', name: 'defineFormPageSchema' },
+      { from: 'form', name: 'defineFormPageSection' },
       { from: 'form', name: 'defineFormSchema' },
       { from: 'form', name: 'useForm' },
       { from: 'form', name: 'useFormApi' },

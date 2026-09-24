@@ -427,6 +427,60 @@
       "description": "Use the lab when you want to try interactions quickly without committing them to a dedicated package page yet.",
       "note": "Use the controls popover to live edit palette, density, and locale while testing one-off interactions here.",
       "cta": "Back to Overview"
+    },
+    "formPage": {
+      "eyebrow": "Settings",
+      "title": "Workspace",
+      "description": "Every text on this page is translated: switch the language to see it follow.",
+      "navigation": "Settings",
+      "saved": "Settings saved",
+      "sections": {
+        "workspace": {
+          "label": "Workspace",
+          "description": "name, plan and data region"
+        },
+        "notifications": {
+          "label": "Notifications",
+          "description": "what reaches your inbox"
+        },
+        "security": {
+          "label": "Security",
+          "description": "how members sign in"
+        }
+      },
+      "fields": {
+        "name": "Workspace name",
+        "plan": "Plan",
+        "region": "Data region",
+        "digest": "Digest frequency",
+        "mentions": "Email me when I am mentioned",
+        "ssoDomain": "SSO domain",
+        "ssoDomainHelp": "Required on the Enterprise plan, chosen in the Workspace section.",
+        "twoFactor": "Require two-factor authentication"
+      },
+      "plans": {
+        "starter": {
+          "label": "Starter",
+          "description": "One team getting started."
+        },
+        "team": {
+          "label": "Team",
+          "description": "Shared projects, roles and reviews."
+        },
+        "enterprise": {
+          "label": "Enterprise",
+          "description": "Single sign-on, audit logs and support."
+        }
+      },
+      "regions": {
+        "eu": "Europe",
+        "us": "United States"
+      },
+      "digests": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "never": "Never"
+      }
     }
   }
 }

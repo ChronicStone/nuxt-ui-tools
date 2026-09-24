@@ -13,8 +13,8 @@ import type {
   FormValidationOptions,
   FormValidationMode,
 } from '../types'
-import { isRecord } from '../utils/path'
-import { isBoolean, isUndefined, stringArray } from '../utils/predicate'
+import { getSchemaSyncInput, getSchemaValidationMode } from '../utils/controls'
+import { isUndefined } from '../utils/predicate'
 
 export function useForm<const TSchema, TSubmitData = FormValue>(
   params: UseFormParams<TSchema, TSubmitData>,
@@ -186,27 +186,4 @@ export function useForm(params: RuntimeUseFormParams) {
     validation,
     validationMode,
   }
-}
-
-function getSchemaSyncInput(schema: FormValue): boolean | readonly string[] {
-  const controls = getSchemaControls(schema)
-  const value = controls ? Object.getOwnPropertyDescriptor(controls, 'syncInput')?.value : undefined
-  if (isBoolean(value)) {
-    return value
-  }
-  return stringArray(value)
-}
-
-function getSchemaValidationMode(schema: FormValue): FormValidationMode {
-  const controls = getSchemaControls(schema)
-  const value = controls ? Object.getOwnPropertyDescriptor(controls, 'validate')?.value : undefined
-  return value === false || value === 'required' || value === 'validators' ? value : true
-}
-
-function getSchemaControls(schema: FormValue) {
-  if (!isRecord(schema)) {
-    return
-  }
-  const controls = Object.getOwnPropertyDescriptor(schema, 'controls')?.value
-  return isRecord(controls) ? controls : undefined
 }

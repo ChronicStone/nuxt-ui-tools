@@ -278,6 +278,35 @@ export interface UiToolsFormMessages {
     cancelButton: string
     resetButton: string
   }
+  /** Form page chrome. Counts use `Intl.PluralRules`: `One` for "one", `Other` otherwise. */
+  page: {
+    /** Accessible name of the section navigation when the schema gives it no title. */
+    navigation: string
+    /** Marks an optional section, in the navigation and on its card. */
+    optional: string
+    /** Badge under the page title and name of a section's dirty marker. */
+    unsavedChanges: string
+    /** Button of a modified section that puts its values back. */
+    resetSection: string
+    /** Bold count inserted in `remaining` and `modified`: "{count} sections". */
+    sectionsOne: string
+    sectionsOther: string
+    /** Navigation summary while required sections are incomplete: "{count} to complete." */
+    remaining: string
+    /** Navigation summary once every required section is complete. */
+    complete: string
+    /** Navigation summary of a form with dirty checking: "{count} modified." */
+    modifiedOne: string
+    modifiedOther: string
+    /** Navigation summary of a form with dirty checking and no change. */
+    unmodified: string
+    /** Accessible status of a navigation entry. */
+    status: {
+      complete: string
+      pending: string
+      invalid: string
+    }
+  }
   states: {
     contextError: {
       title: string
