@@ -22,7 +22,10 @@ interface ScrollToOptions {
  * ancestor), scrolling to a section, and the URL hash that records and restores it.
  *
  * A section counts as reached once its top passes the line its `scroll-margin-top` defines, the
- * same offset `scrollIntoView` honors, so the pinned header and the scrollspy agree.
+ * same offset `scrollIntoView` honors, so the pinned header and the scrollspy agree. The section
+ * of an entry clicked in the navigation, and the one holding the field that takes focus (such as
+ * the first invalid field on submit), stay current through the scroll they cause, until the page
+ * is scrolled again.
  */
 export function useFormPageScroll(params: {
   sections: ComputedRef<readonly FormPageSectionState[]>
@@ -33,9 +36,12 @@ export function useFormPageScroll(params: {
   const elements = new Map<string, HTMLElement>()
   const active = ref<string | undefined>()
   let scroller: HTMLElement | Window | undefined
+  let focusRoot: HTMLElement | null = null
+  /** Section held current until the scroll it caused ends. */
   let target: string | undefined
   let pendingHash: string | undefined
   let settleTimer: ReturnType<typeof setTimeout> | undefined
+  let holdFrame = 0
   let frame = 0
 
   function register(key: string, element: HTMLElement) {
@@ -59,8 +65,7 @@ export function useFormPageScroll(params: {
     if (!element) {
       return false
     }
-    target = key
-    active.value = key
+    hold(key)
     element.scrollIntoView?.({
       behavior: options.behavior ?? (prefersReducedMotion() ? 'instant' : 'smooth'),
       block: 'start',
@@ -73,25 +78,50 @@ export function useFormPageScroll(params: {
     if (options.hash ?? params.hash()) {
       writeHash(key)
     }
-    settleSoon()
     return true
   }
 
+  /** Makes a section current, and keeps it current through the scroll that follows. */
+  function hold(key: string) {
+    target = key
+    active.value = key
+    clearTimeout(settleTimer)
+    // The scroll this causes is dispatched with the next frames: count the quiet time from there,
+    // so a slow frame cannot release the hold before its first scroll event lands.
+    cancelAnimationFrame(holdFrame)
+    holdFrame = requestAnimationFrame(() => {
+      holdFrame = requestAnimationFrame(() => {
+        holdFrame = 0
+        settleSoon()
+      })
+    })
+  }
+
+  // Once the scroll a hold caused ends, the next scroll is the reader's: the scrollspy resumes.
   function settleSoon() {
     clearTimeout(settleTimer)
     settleTimer = setTimeout(() => {
       target = undefined
-      update()
     }, SCROLL_SETTLE_MS)
   }
 
   function onScroll() {
-    // While a programmatic scroll runs, the entry clicked stays active until it settles.
     if (target) {
       settleSoon()
       return
     }
     schedule()
+  }
+
+  function onFocusIn(event: FocusEvent) {
+    const section =
+      event.target instanceof Element
+        ? event.target.closest<HTMLElement>('[data-form-page-section]')
+        : null
+    const key = section?.dataset.formPageSection
+    if (key && elements.get(key) === section) {
+      hold(key)
+    }
   }
 
   // Only reached from mounted hooks and DOM events, so always on the client.
@@ -157,7 +187,9 @@ export function useFormPageScroll(params: {
   }
 
   onMounted(() => {
-    scroller = findScroller(params.root())
+    focusRoot = params.root()
+    focusRoot?.addEventListener('focusin', onFocusIn)
+    scroller = findScroller(focusRoot)
     scroller.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('hashchange', onHashChange)
     const key = params.hash() ? readHash() : undefined
@@ -170,9 +202,11 @@ export function useFormPageScroll(params: {
   })
 
   onBeforeUnmount(() => {
+    focusRoot?.removeEventListener('focusin', onFocusIn)
     scroller?.removeEventListener('scroll', onScroll)
     window.removeEventListener('hashchange', onHashChange)
     clearTimeout(settleTimer)
+    cancelAnimationFrame(holdFrame)
     if (frame) {
       cancelAnimationFrame(frame)
     }

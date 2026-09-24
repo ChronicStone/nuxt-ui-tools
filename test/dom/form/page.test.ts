@@ -177,6 +177,22 @@ describe('form page', () => {
     expect(harness.entry('billing').dataset.state).not.toBe('invalid')
   })
 
+  it('makes the section of the field that takes focus the current one', async () => {
+    const harness = await mountPage({ input: { accountType: 'customer' }, schema: accountSchema() })
+
+    // Submit focuses the first invalid field: the name, in the identity section.
+    await harness.wrapper.find('form').trigger('submit')
+    await harness.flush()
+
+    expect(harness.section('identity').contains(document.activeElement)).toBe(true)
+    expect(harness.entry('identity').getAttribute('aria-current')).toBe('location')
+
+    harness.section('billing').querySelector('input')?.focus()
+    await harness.flush()
+
+    expect(harness.entry('billing').getAttribute('aria-current')).toBe('location')
+  })
+
   it('rings modified sections, marks them in the navigation, and resets one section', async () => {
     const harness = await mountPage({
       input: { accountType: 'customer', erpId: 'EV-1', name: 'DemandQA', siren: '123' },

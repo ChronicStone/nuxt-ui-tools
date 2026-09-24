@@ -111,6 +111,23 @@ describe('form page layout', () => {
     expect(entry('billing').getAttribute('aria-current')).toBe('location')
   })
 
+  it('makes the section of a focused field current, even while the one above covers the top', async () => {
+    const { entry, page } = await mountSized(1200)
+    const input = must(page.querySelector<HTMLInputElement>('[data-form-field="address0"] input'))
+
+    input.focus()
+    await settle()
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await settle()
+
+    expect(page.scrollTop).toBeGreaterThan(0)
+    expect(entry('address').getAttribute('aria-current')).toBe('location')
+
+    // Scrolling again hands the navigation back to the scrollspy.
+    await scrollPage(page, 0)
+    expect(entry('type').getAttribute('aria-current')).toBe('location')
+  })
+
   it('scrolls a section to just below the pinned header from the navigation', async () => {
     const { entry, page, section } = await mountSized(1200)
 

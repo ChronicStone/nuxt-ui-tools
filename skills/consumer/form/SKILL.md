@@ -451,6 +451,11 @@ sizes its main area. Clicking an entry scrolls its section to just below the pin
 focus to the section title, and replaces the URL hash (`#billing`) without a new history entry.
 Opening the page with a hash lands on that section. Set `:hash="false"` to leave the URL alone.
 
+The current entry follows the scroll position, except when a field takes focus: its section becomes
+current and stays so through the scroll the focus causes. When a failed submit focuses the first
+invalid field, the navigation points at that field's section, even while the section above still
+covers the top of the page. The next scroll hands the navigation back to the scroll position.
+
 From 768px of page width, the navigation is a pinned column beside the sections (200px, 230px from
 1024px) and the header stays pinned. Below, the navigation is one row of chips that scrolls sideways
 and keeps the current section in view.
