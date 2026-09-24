@@ -34,7 +34,6 @@ export function useDashboardRemoteOptions(params: {
   value: () => unknown
 }): DashboardRuntimeOptionList {
   const { config } = params
-  const queryKey = config.queryKey ?? params.queryKey
   const pageSize = Math.max(
     1,
     config.pagination?.size ?? DASHBOARD_REMOTE_OPTIONS_DEFAULTS.pageSize,
@@ -46,6 +45,17 @@ export function useDashboardRemoteOptions(params: {
     computed(() => search.value.trim()),
     config.search?.debounce ?? DASHBOARD_REMOTE_OPTIONS_DEFAULTS.searchDebounce,
   )
+
+  function queryKeyFor(term: string): QueryKey {
+    return (
+      config.queryKeyFor?.({
+        page: { ...REMOTE_OPTIONS_FIRST_PAGE, size: pageSize },
+        search: term,
+      }) ??
+      config.queryKey ??
+      params.queryKey
+    )
+  }
 
   const pages = useInfiniteQuery<
     RemotePage,
@@ -69,7 +79,9 @@ export function useDashboardRemoteOptions(params: {
           config.load({ page: { ...context.pageParam, size: pageSize }, search: term.value }),
           context,
         ),
-      queryKey: [...queryKey, 'options', term.value],
+      queryKey: config.queryKeyFor
+        ? [...queryKeyFor(term.value), { remoteOptionPages: pageSize }]
+        : [...queryKeyFor(term.value), 'options', term.value],
       staleTime: DASHBOARD_REMOTE_OPTIONS_DEFAULTS.staleTime,
     })),
   )
@@ -96,7 +108,7 @@ export function useDashboardRemoteOptions(params: {
         config.resolveSelected
           ? runDashboardRemoteResult(config.resolveSelected({ values: missing.value }), context)
           : Promise.resolve([]),
-      queryKey: [...queryKey, 'selected', missing.value],
+      queryKey: [...queryKeyFor(''), 'selected', missing.value],
       // Hydrated labels stay while the next set of missing values resolves.
       placeholderData: (previous: readonly DashboardOption<string>[] | undefined) => previous,
       staleTime: DASHBOARD_REMOTE_OPTIONS_DEFAULTS.selectedStaleTime,

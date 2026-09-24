@@ -249,8 +249,8 @@ function remoteFilter(
   config: RemoteSource & AnyFilterOptions,
   extra?: AnyFilterOptions,
 ): DashboardFilterLike {
-  const { load, pagination, queryKey, resolveSelected, search, ...options } = config
-  const remote = { load, pagination, queryKey, resolveSelected, search }
+  const { load, pagination, queryKey, queryKeyFor, resolveSelected, search, ...options } = config
+  const remote = { load, pagination, queryKey, queryKeyFor, resolveSelected, search }
   return defineFilter('remote', optionalStringCodec, {
     searchable: true,
     ...options,

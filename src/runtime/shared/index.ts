@@ -1,5 +1,6 @@
 export * from './composables/use-responsive-value'
 export * from './composables/use-range-select'
+export { defineRemoteOptions } from './utils/define-remote-options'
 export * from './types/responsive'
 export * from './types/utils'
 export * from './utils/object'

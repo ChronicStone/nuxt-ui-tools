@@ -1,7 +1,9 @@
+import { queryOptions } from '@tanstack/vue-query'
 import { describe, expect, it } from 'vitest'
 import { ref } from 'vue'
 
 import { defineDashboardSchema } from '#ui-tools/dashboard'
+import { defineRemoteOptions } from '#ui-tools/shared'
 
 import { deferredSource, mountDashboard } from './harness'
 
@@ -13,6 +15,52 @@ function readRole() {
 }
 
 describe('dashboard filter controls', () => {
+  it('uses a reusable loader endpoint key when its scope changes', async () => {
+    const workspace = ref('first')
+    const users = defineRemoteOptions(
+      {
+        load: ({ search, page }) => {
+          const scope = workspace.value
+          return queryOptions({
+            queryFn: () =>
+              Promise.resolve({ rows: [{ id: scope, name: scope }], nextCursor: null }),
+            queryKey: ['users', scope, search, page.cursor],
+          })
+        },
+        resolveSelected: ({ values }) =>
+          queryOptions({
+            queryFn: () =>
+              Promise.resolve({
+                rows: values.map((value) => ({ id: String(value), name: String(value) })),
+              }),
+            queryKey: ['users', workspace.value, 'selected', values],
+          }),
+      },
+      {
+        key: 'users',
+        mapPage: ({ nextCursor, rows }) => ({
+          nextCursor,
+          options: rows.map((user) => ({ label: user.name, value: user.id })),
+        }),
+        mapSelected: ({ rows }) => rows.map((user) => ({ label: user.name, value: user.id })),
+        pagination: { size: 2, type: 'cursor' },
+      },
+    )
+    const schema = defineDashboardSchema({
+      filters: (f) => ({ owner: f.remote(users, { label: 'Owner' }) }),
+      key: 'scoped-users',
+    })
+    const { dashboard, fetchedKeys, until, wrapper } = await mountDashboard({ schema })
+    dashboard.controls.owner.open = true
+    await until(() => dashboard.controls.owner.items[0]?.value === 'first')
+    expect(fetchedKeys().some((key) => key.includes('"users","first"'))).toBe(true)
+
+    workspace.value = 'second'
+    await until(() => dashboard.controls.owner.items[0]?.value === 'second')
+    expect(fetchedKeys().some((key) => key.includes('"users","second"'))).toBe(true)
+    wrapper.unmount()
+  })
+
   it('drives values, display text, and reset from the controls', async () => {
     const schema = defineDashboardSchema({
       key: 'handles',

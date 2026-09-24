@@ -1,11 +1,9 @@
-import type { QueryFunctionContext, QueryKey } from '@tanstack/vue-query'
-
-import type { QueryFnDefinition } from '../../shared/types/query'
 import type {
   RemoteOptionsPageRequest,
   RemoteOptionsSearch,
 } from '../../shared/types/remote-options'
-import { isArray, isFunction, isObject } from '../../shared/utils/predicate'
+import { isArray, isObject } from '../../shared/utils/predicate'
+import { mapRemoteOptionsQuery } from '../../shared/utils/remote-options-query'
 import type {
   GenericObject,
   RemoteTableOption,
@@ -116,27 +114,16 @@ export function remoteTableOptions(
 function mapQuery<TResult>(
   definition: RemoteTableQueryDefinition,
   map: (result: RemoteTableResult<GenericObject>) => TResult,
-): QueryFnDefinition<TResult> {
-  const { queryKey } = definition
-  const queryFn = 'queryFn' in definition ? definition.queryFn : undefined
-  return {
-    async queryFn(context) {
-      if (!isQueryFn(queryFn))
-        throw new Error('[remoteTableOptions] `query` must return a query with a queryFn.')
-      const result: unknown = await queryFn({ ...context, queryKey })
+) {
+  return mapRemoteOptionsQuery(
+    definition,
+    (result: unknown) => {
       if (!isTableResult(result))
         throw new Error('[remoteTableOptions] the query must resolve to a table response (`rows`).')
       return map(result)
     },
-    queryKey: [...queryKey, 'remote-options'],
-  }
-}
-
-/** A `queryFn` ready to call: not `skipToken`, not a ref (Vue Query options may carry either). */
-function isQueryFn(
-  value: unknown,
-): value is (context: QueryFunctionContext<QueryKey, string | null>) => unknown {
-  return isFunction(value)
+    ['remote-options'],
+  )
 }
 
 function isTableResult(value: unknown): value is RemoteTableResult<GenericObject> {

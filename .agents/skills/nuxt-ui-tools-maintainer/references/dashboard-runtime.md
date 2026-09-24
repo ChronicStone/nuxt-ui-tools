@@ -5,12 +5,14 @@ params, filters declared inline (URL, memory, or store-synced) with their contro
 derived resources, views, and a generic block library. Public entrypoints:
 `defineDashboardSchema`, `defineDashboardView`, `useDashboard`, `useDashboardView`,
 `injectDashboard`, `useDashboardFormat`, and the `Dashboard*` components registered in
-`src/components.ts`. `remoteTableOptions` lives in the table domain
-(`table/utils/remote-table-options.ts`) and feeds dashboard, table, and form remote options. Like
-`tableSource`, it infers the whole query definition and reads rows through `TableSourceQueryResult`
-/ `TableSourceRow` (`table/types/source.ts`): generated clients (Tuyau `queryOptions()`) type
-`queryFn` as `MaybeRefDeep<QueryFunction | skipToken>`, which a strict `QueryDefinition` rejects.
-Its runtime checks the `queryFn` is callable and the response has `rows`.
+`src/components.ts`. `defineRemoteOptions` lives in shared runtime and maps arbitrary endpoint
+query definitions into one reusable option loader. `remoteTableOptions` remains the table-protocol
+builder for that same loader contract; it infers rows through `TableSourceQueryResult` /
+`TableSourceRow` (`table/types/source.ts`). Generated clients (Tuyau `queryOptions()`) may type
+`queryFn` as `MaybeRefDeep<QueryFunction | skipToken>`, so the shared query mapper checks that the
+runtime value is callable. The table builder also checks that responses contain `rows`. A reusable
+loader supplies a query-key function based on its endpoint's first-page request, so dashboard
+option caches follow changes in search and external scope.
 
 Vocabulary: **filters** are the state the user controls, read as values
 (`dashboard.filters.year`); **controls** drive them (`dashboard.controls.year`: label, items,
@@ -274,6 +276,8 @@ components/   dashboard-page.vue (the page: header, date line, actions + refresh
   `controls-host.vue` pins `only` typing.
 - `test/table/remote-table-options.test.ts` — requests, page mapping, selected resolution, Vue Query
   options with `skipToken`, fit with dashboard, table, and form remote options.
+- `test/table/remote-option-loaders.test.ts` — generic endpoint mapping, selected labels, query
+  identity, and structural fit with dashboard and table filters.
 - `test/dom/dashboard/engine.test.ts` — staging, views, URL keys (one per filter key, reserved
   keys, conflicting declarations), derive state, refresh, controls, auto-refresh (URL, schema
   default, `refetchInterval`), comparison filters.

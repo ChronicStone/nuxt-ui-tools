@@ -1,4 +1,4 @@
-import type { QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type { QueryFunction, QueryKey, QueryOptions, UseQueryOptions } from '@tanstack/vue-query'
 
 /**
  * TanStack query definition accepted by runtime domains that own the `useQuery` call themselves
@@ -18,3 +18,26 @@ export interface QueryFnDefinition<TData = unknown> {
   queryKey: QueryKey
   queryFn: QueryFunction<TData, QueryKey, string | null>
 }
+
+/** Data returned by a query function, including generated options whose function may be a ref. */
+export type QueryFunctionResult<TQuery> = TQuery extends {
+  queryFn: (...args: never[]) => infer TResult
+}
+  ? Awaited<TResult>
+  : TQuery extends QueryOptions<
+        infer TQueryFnData,
+        infer _TError,
+        infer _TData,
+        infer _TQueryData,
+        infer _TQueryKey
+      >
+    ? Awaited<TQueryFnData>
+    : TQuery extends UseQueryOptions<
+          infer _TQueryFnData,
+          infer _TError,
+          infer TData,
+          infer _TQueryData,
+          infer _TQueryKey
+        >
+      ? Awaited<TData>
+      : never
