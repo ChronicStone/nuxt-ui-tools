@@ -1,4 +1,5 @@
 import type {
+  RemoteOptionsLoader,
   RemoteOptionsPageRequest,
   RemoteOptionsPagination,
   RemoteOptionsResult,
@@ -181,6 +182,23 @@ export interface FormRemoteOptionConfig<
   disableOnLoading?: boolean
 }
 
+/** Reuses one remote loader while keeping field-specific refresh and creation behavior local. */
+export interface FormRemoteLoaderOptionConfig<
+  TOption,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+> extends Omit<
+  FormRemoteOptionConfig<TOption, TContext, TDeps, TValue>,
+  'source' | 'resolveSelected' | 'pagination' | 'search'
+> {
+  loader: RemoteOptionsLoader<TOption>
+  source?: never
+  resolveSelected?: never
+  pagination?: never
+  search?: never
+}
+
 export type FormAnyOptionConfig<
   TOption,
   TContext = NonNullable<unknown>,
@@ -189,4 +207,5 @@ export type FormAnyOptionConfig<
 > =
   | FormOptionConfig<TOption, TContext, TDeps, TValue>
   | FormRemoteOptionConfig<TOption, TContext, TDeps, TValue>
+  | FormRemoteLoaderOptionConfig<TOption, TContext, TDeps, TValue>
   | FormOptionsSource<TOption, TContext, TDeps, TValue>

@@ -3,7 +3,7 @@ import type { QueryFunctionContext, QueryKey } from '@tanstack/vue-query'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { defineDashboardSchema } from '#ui-tools/dashboard'
-import type { FormRemoteOptionConfig } from '#ui-tools/form'
+import type { FormRemoteLoaderOptionConfig, FormRemoteOptionConfig } from '#ui-tools/form'
 import type { QueryFnDefinition } from '#ui-tools/shared/types/query'
 import { remoteTableOptions } from '#ui-tools/table'
 import type {
@@ -167,6 +167,9 @@ describe('remoteTableOptions', () => {
       resolveSelected: accounts.resolveSelected,
       source: accounts.load,
     }).toExtend<FormRemoteOptionConfig<{ label: string; value: string }>>()
+    expectTypeOf({ loader: accounts, mode: 'remote' as const }).toExtend<
+      FormRemoteLoaderOptionConfig<{ label: string; value: string }>
+    >()
     remoteTableOptions((request) => endpoint.queryOptions({ body: request }), {
       option: (account) => ({ label: account.name, value: account.id }),
       // @ts-expect-error `email` is not a field of the rows

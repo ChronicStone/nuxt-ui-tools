@@ -1,9 +1,14 @@
-# Shared Responsive Overview
+# Shared Runtime Overview
 
 This shared runtime surface lets you express primitive values per breakpoint and resolve them from the current `nuxt-viewport` breakpoint.
 
+It also exports `defineRemoteOptions(...)` for a query-backed option loader that can be reused by
+dashboard filters, table filters, and form fields. See [Reusable Remote Options](remote-options.md)
+for a full example; inline remote sources remain available in every domain.
+
 Current main APIs:
 
+- `defineRemoteOptions(...)`
 - `parseResponsiveValue(...)`
 - `resolveResponsiveValueAtBreakpoint(...)`
 - `getResponsiveValue(...)`

@@ -10,6 +10,7 @@ Today the main usable package surfaces are:
 - form runtime
 - query-state runtime
 - shared responsive helpers
+- reusable remote option loaders
 - i18n runtime
 
 ## Nuxt Module Auto-Imports
@@ -22,6 +23,7 @@ That includes the primary entrypoints for:
 - form schema and form runtime
 - query-state
 - shared responsive helpers
+- remote option loaders
 - i18n
 
 The module also auto-registers the main public components:

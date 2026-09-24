@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import { defineFormSchema } from '#ui-tools/form'
 import type { FormObject, FormOptionValue } from '#ui-tools/form'
+import { defineRemoteOptions } from '#ui-tools/shared'
 
 import { deferred, mountForm, scrollToEnd } from './harness'
 import type { FormHarness } from './harness'
@@ -84,6 +85,43 @@ async function loadMore(harness: FormHarness, path: string) {
 }
 
 describe('remote field options', () => {
+  it('accepts a reusable loader without copying its pagination and source into the field', async () => {
+    const requests = requestMap<{ rows: readonly Option[]; hasMore: boolean }>()
+    const users = defineRemoteOptions(
+      {
+        load: ({ page, search }) =>
+          queryOptions({
+            queryFn: () => requests.get(`${search}:${page.index}`).promise,
+            queryKey: ['form-users', search, page.index],
+          }),
+        resolveSelected: ({ values }) =>
+          queryOptions({
+            queryFn: () => Promise.resolve({ rows: [{ label: 'Ada', value: String(values[0]) }] }),
+            queryKey: ['form-users', 'selected', values],
+          }),
+      },
+      {
+        key: 'form-users',
+        mapPage: ({ hasMore, rows }) => ({ hasMore, options: rows }),
+        mapSelected: ({ rows }) => rows,
+        pagination: { size: 2, type: 'page' },
+        search: { debounce: 0 },
+      },
+    )
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [{ key: 'owner', options: { loader: users, mode: 'remote' }, type: 'select' }],
+    })
+    const harness = await mountForm({ schema })
+
+    await openMenu(harness, 'owner')
+    await harness.until(() => requests.has(':1'))
+    requests.get(':1').resolve({ hasMore: false, rows: [{ label: 'Ada', value: 'u1' }] })
+    await harness.until(() => itemValues(harness, 'owner').length === 1)
+    expect(itemValues(harness, 'owner')).toStrictEqual(['u1'])
+    harness.unmount()
+  })
+
   it('waits for the menu to open, loads the first page, and appends a deduplicated next page', async () => {
     const requests = requestMap<Page>()
     const source = pagedSource(requests, 'remote-page')

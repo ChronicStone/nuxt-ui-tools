@@ -152,6 +152,11 @@ dashboard.resetFilters() // restore them
 `f.remote(source, options)` takes a remote option source, the contract shared with table filters
 and form fields:
 
+For a source reused across several places, use `defineRemoteOptions` from `#ui-tools/shared` and
+pass the loader directly to `f.remote`. The endpoint query key, including scope and search, drives
+that loader's cache identity. [Reusable Remote Options](../../shared/references/remote-options.md)
+shows the definition and all three uses. A dashboard-specific inline source remains valid:
+
 ```ts
 account: f.remote(
   {
