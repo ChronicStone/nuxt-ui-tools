@@ -1,21 +1,12 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { ComputedRef } from 'vue'
 
-import type { FormPageSectionState } from '../types'
+import type { FormPageScrollOptions, FormPageSectionState } from '../types'
 
 /** Quiet time after the last scroll event before a programmatic scroll counts as finished. */
 const SCROLL_SETTLE_MS = 120
 /** Pixels a section top may sit below the activation line and still count as reached. */
 const ACTIVATION_SLACK = 8
-
-interface ScrollToOptions {
-  /** Defaults to `smooth`, or `instant` when the user prefers reduced motion. */
-  behavior?: ScrollBehavior
-  /** Records the section in the URL hash. Defaults to the page `hash` option. */
-  hash?: boolean
-  /** Moves focus to the section title, for keyboard and screen reader users. */
-  focus?: boolean
-}
 
 /**
  * Scroll behavior of a form page: which section is in view (a scrollspy on the nearest scrolling
@@ -60,7 +51,7 @@ export function useFormPageScroll(params: {
     }
   }
 
-  function scrollTo(key: string, options: ScrollToOptions = {}) {
+  function scrollTo(key: string, options: FormPageScrollOptions = {}) {
     const element = elements.get(key)
     if (!element) {
       return false
