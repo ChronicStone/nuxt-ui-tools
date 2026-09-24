@@ -8,6 +8,8 @@
 - generic predicates
 - generic object/render helpers
 - shared composables that do not smuggle in domain assumptions
+- `defineRemoteOptions` and its query mapper: paged options and selected labels shared by dashboard,
+  table, and form without bringing filter state or form dependencies into shared runtime
 
 ## Bad Fits
 

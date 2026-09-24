@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools
-description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview, shows which surfaces are usable today, and routes you to the right package area for table, form, dashboard, query-state, shared responsive helpers, or i18n usage.
+description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview and routes to table, form, dashboard, query-state, shared responsive helpers, remote option loaders, and i18n usage.
 ---
 
 # nuxt-ui-tools
@@ -19,7 +19,7 @@ The current serious package surfaces are:
 - form runtime
 - dashboard runtime
 - query-state runtime
-- shared responsive helpers
+- shared responsive helpers and remote option loaders
 
 ## Routing
 
@@ -39,7 +39,7 @@ If the task is about typed URL state, query params, codecs, or reusable URL-back
 
 - `skills/consumer/query-state/SKILL.md`
 
-If the task is about breakpoint-aware values driven by the current viewport, use:
+If the task is about breakpoint-aware values or reusable remote option loaders, use:
 
 - `skills/consumer/shared/SKILL.md`
 

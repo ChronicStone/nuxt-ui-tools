@@ -46,8 +46,9 @@ export function setupImports(runtimeDir: string) {
       { from: 'i18n', name: 'useUiToolsLocale' },
     ]),
 
-    // Shared responsive helpers
+    // Shared runtime
     ...withRuntime(runtimeDir, [
+      { from: 'shared', name: 'defineRemoteOptions' },
       { from: 'shared', name: 'getResponsiveValue' },
       { from: 'shared', name: 'parseResponsiveValue' },
       { from: 'shared', name: 'resolveResponsiveValueAtBreakpoint' },

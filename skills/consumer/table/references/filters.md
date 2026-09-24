@@ -409,9 +409,11 @@ source: {
 },
 ```
 
-The same source fits dashboard remote params (`p.remote(source)`) and form remote options
-(`{ mode: 'remote', source: options.load, resolveSelected: options.resolveSelected, pagination:
-options.pagination }`).
+The same source fits dashboard remote filters (`f.remote(source)`) and, through
+`{ mode: 'remote', loader: source }`, form fields. For endpoints with another response shape,
+`defineRemoteOptions` builds the same reusable source from query options and mapping callbacks;
+see [Reusable Remote Options](../../shared/references/remote-options.md). The inline `remote: { ... }`
+above remains valid for a filter-specific source.
 
 Behavior:
 

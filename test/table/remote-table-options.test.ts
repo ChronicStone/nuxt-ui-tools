@@ -3,7 +3,7 @@ import type { QueryFunctionContext, QueryKey } from '@tanstack/vue-query'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { defineDashboardSchema } from '#ui-tools/dashboard'
-import type { FormRemoteOptionConfig } from '#ui-tools/form'
+import type { FormRemoteLoaderOptionConfig, FormRemoteOptionConfig } from '#ui-tools/form'
 import type { QueryFnDefinition } from '#ui-tools/shared/types/query'
 import { remoteTableOptions } from '#ui-tools/table'
 import type {
@@ -83,6 +83,9 @@ describe('remoteTableOptions', () => {
 
     const page = accounts.load({ page: { cursor: 'c1', index: 2, size: 2 }, search: 'ac' })
     expect(page.queryKey.at(-1)).toBe('remote-options')
+    expect(
+      accounts.queryKeyFor?.({ page: { cursor: 'c1', index: 2, size: 2 }, search: 'ac' }),
+    ).toEqual(page.queryKey)
     await expect(run(page)).resolves.toEqual({
       nextCursor: 'next',
       options: [
@@ -100,6 +103,9 @@ describe('remoteTableOptions', () => {
     await expect(run(accounts.resolveSelected({ values: ['a3'] }))).resolves.toEqual([
       { label: 'Initech', value: 'a3' },
     ])
+    expect(accounts.selectedQueryKeyFor?.({ values: ['a3'] })).toEqual(
+      accounts.resolveSelected({ values: ['a3'] }).queryKey,
+    )
     expect(endpoint.requests[1]).toEqual({
       filters: [
         {
@@ -167,6 +173,9 @@ describe('remoteTableOptions', () => {
       resolveSelected: accounts.resolveSelected,
       source: accounts.load,
     }).toExtend<FormRemoteOptionConfig<{ label: string; value: string }>>()
+    expectTypeOf({ loader: accounts, mode: 'remote' as const }).toExtend<
+      FormRemoteLoaderOptionConfig<{ label: string; value: string }>
+    >()
     remoteTableOptions((request) => endpoint.queryOptions({ body: request }), {
       option: (account) => ({ label: account.name, value: account.id }),
       // @ts-expect-error `email` is not a field of the rows

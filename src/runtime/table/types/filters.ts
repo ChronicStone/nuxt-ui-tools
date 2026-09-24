@@ -1,3 +1,5 @@
+import type { QueryKey } from '@tanstack/vue-query'
+
 import type {
   RemoteOptionsPageRequest,
   RemoteOptionsPagination,
@@ -680,6 +682,10 @@ export interface TableFilterRemoteOptions<
     bivarianceHack(
       request: TableFilterRemoteSelectedRequest<TValue>,
     ): TableQueryDefinition<readonly TableOptionEntryForPresentation<TValue, TPresentation>[]>
+  }['bivarianceHack']
+  /** Identity of a selected lookup for reusable loaders with changing external scope. */
+  selectedQueryKeyFor?: {
+    bivarianceHack(request: { values: readonly TValue[] }): QueryKey
   }['bivarianceHack']
   /**
    * Page size, and how far before the list end the next page loads. Defaults to

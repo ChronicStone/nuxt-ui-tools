@@ -415,7 +415,7 @@ describe('TableRenderer empty state', () => {
     harness.internals.filters.searchQuery.value = 'no matching account'
     await harness.until(() => must(harness).wrapper.find('.nut-dl-empty').exists())
 
-    harness.internals.filters.searchQuery.value = ''
+    harness.internals.filters.searchQuery.value = 'Compte 001'
     await harness.until(
       () => must(harness).wrapper.find('.nut-dl-table').attributes('data-loading') === 'true',
     )

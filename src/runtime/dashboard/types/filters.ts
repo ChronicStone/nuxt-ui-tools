@@ -186,8 +186,12 @@ export interface DashboardRemoteOptionsConfig {
   /** Defaults to `{ type: 'page', size: 25 }`. */
   pagination?: RemoteOptionsPagination
   search?: RemoteOptionsSearch
-  /** Cache identity of the option source. Defaults to a key derived from the filter location. */
+  /** Cache identity of an inline source. Defaults to a key derived from the filter location. */
   queryKey?: QueryKey
+  /** Cache identity of a reusable loader, derived from its endpoint request and current search. */
+  queryKeyFor?: (request: DashboardRemoteOptionsRequest) => QueryKey
+  /** Cache identity of a selected lookup, including scope absent from the page endpoint. */
+  selectedQueryKeyFor?: (request: { values: readonly string[] }) => QueryKey
 }
 
 /** Option items of a filter: fixed, or read reactively (e.g. from another query's data). */

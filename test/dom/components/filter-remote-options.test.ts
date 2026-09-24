@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { h } from 'vue'
+import { h, ref } from 'vue'
 
 import { isArray, isObject, isString } from '#ui-tools/shared/utils/predicate'
 import DataListFilterTags from '#ui-tools/table/components/data-list/data-list-filter-tags.vue'
@@ -82,6 +82,40 @@ async function scrollList(current: Harness, scrollTop: number) {
 }
 
 describe('remote option filters', () => {
+  it('updates selected labels when the selected endpoint scope changes', async () => {
+    const language = ref('en')
+    const server = createCountryServer()
+    server.remote.selectedQueryKeyFor = ({ values }) => [
+      'countries',
+      'selected',
+      language.value,
+      values,
+    ]
+    server.remote.resolveSelected = ({ values }) => {
+      const locale = language.value
+      return {
+        queryFn: () =>
+          Promise.resolve(
+            COUNTRIES.filter((country) => values.includes(country.value)).map((country) => ({
+              label: `${locale}-${country.label}`,
+              value: country.value,
+            })),
+          ),
+        queryKey: ['countries', 'selected', locale, values],
+      }
+    }
+    harness = await mountRemoteTags(server)
+    harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['C42'] })
+    await harness.until(() =>
+      texts(must(harness).wrapper, '.nut-dl-tag__text').includes('en-Pays 42'),
+    )
+
+    language.value = 'fr'
+    await harness.until(() =>
+      texts(must(harness).wrapper, '.nut-dl-tag__text').includes('fr-Pays 42'),
+    )
+  })
+
   it('labels committed values through resolveSelected without loading any page', async () => {
     const server = createCountryServer()
     harness = await mountRemoteTags(server)

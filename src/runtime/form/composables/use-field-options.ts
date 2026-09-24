@@ -11,6 +11,7 @@ import type {
   FormFieldCallbackParams,
   FormOptionConfig,
   FormOptionValue,
+  FormRemoteLoaderOptionConfig,
   FormRemoteOptionConfig,
   FormRuntime,
   FormRuntimeQueryOptions,
@@ -404,7 +405,31 @@ function resolveRemoteOptionConfig(field: FormField): FormRemoteOptionConfig<For
     return null
   }
   const options = Object.getOwnPropertyDescriptor(field, 'options')?.value
+  if (isRemoteLoaderOptionConfig(options)) {
+    const { loader, ...fieldOptions } = options
+    return {
+      ...fieldOptions,
+      pagination: loader.pagination,
+      queryKeyFor: loader.queryKeyFor,
+      resolveSelected: loader.resolveSelected,
+      search: loader.search,
+      selectedQueryKeyFor: loader.selectedQueryKeyFor,
+      source: loader.load,
+    }
+  }
   return isRemoteOptionConfig(options) ? options : null
+}
+
+function isRemoteLoaderOptionConfig(
+  value: FormValue,
+): value is FormRemoteLoaderOptionConfig<FormValue> {
+  if (!isRecord(value) || value.mode !== 'remote' || !isRecord(value.loader)) {
+    return false
+  }
+  const { loader } = value
+  return (
+    isFunction(loader.load) && isFunction(loader.resolveSelected) && isRecord(loader.pagination)
+  )
 }
 
 function isRemoteOptionConfig(value: FormValue): value is FormRemoteOptionConfig<FormValue> {

@@ -55,6 +55,13 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             path: '/dashboard/sales',
           },
           {
+            description: 'One remote users loader shared by dashboard, table, and form controls.',
+            id: 'dashboard-remote-options',
+            label: 'Shared remote options',
+            mode: 'document',
+            path: '/dashboard/remote-options',
+          },
+          {
             description:
               'Stat trends and goals, alerts, activity feed, sortable table, drill-down, card menus.',
             id: 'dashboard-operations',

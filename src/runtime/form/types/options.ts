@@ -1,4 +1,7 @@
+import type { QueryKey } from '@tanstack/vue-query'
+
 import type {
+  RemoteOptionsLoader,
   RemoteOptionsPageRequest,
   RemoteOptionsPagination,
   RemoteOptionsResult,
@@ -169,6 +172,10 @@ export interface FormRemoteOptionConfig<
   ) => FormRemoteSource<readonly TOption[]>
   pagination: RemoteOptionsPagination
   search?: RemoteOptionsSearch
+  /** Identity of the first page, so reusable loaders follow external scope changes. */
+  queryKeyFor?: (request: { search: string; page: RemoteOptionsPageRequest }) => QueryKey
+  /** Identity of selected labels, including scope absent from the page endpoint. */
+  selectedQueryKeyFor?: (request: { values: readonly FormOptionValue[] }) => QueryKey
   /** Dependency aliases whose changes reset the loaded pages and re-run selected hydration. */
   refreshOn?: readonly string[]
   /** Clears selected values the latest successful selected hydration did not return. Defaults to `false`. */
@@ -181,6 +188,25 @@ export interface FormRemoteOptionConfig<
   disableOnLoading?: boolean
 }
 
+/** Reuses one remote loader while keeping field-specific refresh and creation behavior local. */
+export interface FormRemoteLoaderOptionConfig<
+  TOption,
+  TContext = NonNullable<unknown>,
+  TDeps = NonNullable<unknown>,
+  TValue = FormValue,
+> extends Omit<
+  FormRemoteOptionConfig<TOption, TContext, TDeps, TValue>,
+  'source' | 'resolveSelected' | 'pagination' | 'search' | 'queryKeyFor' | 'selectedQueryKeyFor'
+> {
+  loader: RemoteOptionsLoader<TOption>
+  source?: never
+  resolveSelected?: never
+  pagination?: never
+  search?: never
+  queryKeyFor?: never
+  selectedQueryKeyFor?: never
+}
+
 export type FormAnyOptionConfig<
   TOption,
   TContext = NonNullable<unknown>,
@@ -189,4 +215,5 @@ export type FormAnyOptionConfig<
 > =
   | FormOptionConfig<TOption, TContext, TDeps, TValue>
   | FormRemoteOptionConfig<TOption, TContext, TDeps, TValue>
+  | FormRemoteLoaderOptionConfig<TOption, TContext, TDeps, TValue>
   | FormOptionsSource<TOption, TContext, TDeps, TValue>

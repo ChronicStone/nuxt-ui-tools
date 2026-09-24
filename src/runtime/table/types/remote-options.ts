@@ -1,10 +1,8 @@
 import type { QueryKey } from '@tanstack/vue-query'
 
-import type { QueryFnDefinition } from '../../shared/types/query'
 import type {
-  RemoteOptionsPageRequest,
+  RemoteOptionsLoader,
   RemoteOptionsPagination,
-  RemoteOptionsResult,
   RemoteOptionsSearch,
 } from '../../shared/types/remote-options'
 import type { TableResolvedFilterGroup } from './filters'
@@ -75,18 +73,6 @@ export interface RemoteTableOptionsConfig<
 
 /**
  * Remote option source built by `remoteTableOptions()`. It fits dashboard `p.remote()`, table
- * option filters (`source.remote`), and form remote options (`source: options.load`).
+ * option filters (`source.remote`), and form remote options (`loader: options`).
  */
-export interface RemoteTableOptions<TOption> {
-  /** Query definition of one page of options for a search term. */
-  load: (request: {
-    search: string
-    page: RemoteOptionsPageRequest
-  }) => QueryFnDefinition<RemoteOptionsResult<TOption>>
-  /** Query definition of the options of selected values. */
-  resolveSelected: (request: {
-    values: readonly (string | number | boolean)[]
-  }) => QueryFnDefinition<readonly TOption[]>
-  pagination: RemoteOptionsPagination
-  search?: RemoteOptionsSearch
-}
+export type RemoteTableOptions<TOption> = RemoteOptionsLoader<TOption>

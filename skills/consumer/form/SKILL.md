@@ -237,8 +237,23 @@ TanStack `queryOptions(...)` objects can be used directly for context or field o
 observer retains the full query configuration, including `select`, retry/cache settings, meta,
 initial/placeholder data, and query-function cancellation signals.
 
-Option fields accept arrays, synchronous callbacks, promises, and TanStack query options. Use an
-option config when options can refresh or be created:
+Option fields accept arrays, synchronous callbacks, promises, and TanStack query options.
+
+When several fields or other package surfaces pick from the same remote list, use a
+`defineRemoteOptions` loader from `#ui-tools/shared` instead of copying its paging and selected
+lookup into each field:
+
+```ts
+{ key: 'ownerId', type: 'select', options: { mode: 'remote', loader: users } }
+```
+
+The loader carries search, pagination, and selected-value hydration. Field-specific settings such
+as `refreshOn`, `create`, and `clearOnInvalid` stay alongside `loader`. See
+[Reusable Remote Options](../shared/references/remote-options.md) for a complete definition.
+Inline `{ mode: 'remote', source, pagination, resolveSelected }` remains valid, including remote
+tree sources that load a selected parent's children.
+
+Use a local option config for refreshable or creatable options:
 
 ```ts
 {
