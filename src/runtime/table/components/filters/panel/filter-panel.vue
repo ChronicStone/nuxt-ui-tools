@@ -258,8 +258,9 @@ onMounted(() => {
         }"
       >
         <span
+          v-if="!isMobile || (countProps && activeCount > 0)"
           :class="
-            mergeDataListUiClass('flex items-center gap-2', undefined, resolvedUi.triggerContent)
+            mergeDataListUiClass('nut-dl-fpanel-trigger__content flex items-center gap-2', undefined, resolvedUi.triggerContent)
           "
         >
           <span v-if="!isMobile">{{ triggerLabel }}</span>

@@ -57,6 +57,7 @@ describe('filter slideover trigger', () => {
       'Filtres',
       'true',
     ])
+    expect(trigger.find('.nut-dl-fpanel-trigger__content').exists()).toBeFalsy()
   })
 
   it('is not rendered without panel filters', async () => {
