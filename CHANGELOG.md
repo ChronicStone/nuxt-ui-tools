@@ -1,5 +1,58 @@
 # Changelog
 
+## v1.4.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.3.0...v1.4.0)
+
+Version 1.4.0 adds form pages: one form laid out as a page of sections, with a navigation that follows the section in view and shows where each section stands, and a ring around every section an edit changed. A page is declared like any form schema, from plain section functions, and renders from public parts you can recompose and restyle. Radio and checkbox cards gain a fixed grid, icon tiles, and a check in the corner.
+
+### Migration notes
+
+- No public API is removed.
+- **A successful submit saves the baseline:** dirty state (`isDirty`, `dirtyPaths`, the field reset buttons) clears after a successful submit instead of comparing with the values the form opened with. `reset()` still goes back to the form input.
+- **Navigation guard:** `confirmNavOnDirty` no longer asks on a navigation that only changes the hash, nor on one made while a submit is pending, such as an `onSubmit` that navigates after saving.
+- **Schema label placement:** `layout.labelPosition` and `layout.labelWidth` set on a schema or a step now reach its fields; they were dropped before.
+- **Autofocus:** `controls.autoFocus: true` focuses the first field that renders, including one inside a container.
+- **Visual changes:**
+  - Fields leave 6px between a top label and its control (was 4px), with a gap instead of a margin.
+  - Radio and checkbox cards sit 10px apart and use the default border color.
+
+### 🚀 Enhancements
+
+#### Form pages
+
+- Add `defineFormPageSchema` and `defineFormPageSection`. A page schema takes `sections` (each a key, a label, an optional description, a layout, a condition, and fields) and returns a normal form schema whose fields are cards generated from the sections: `useForm`, validation, dependencies across sections, and the typed `formData` work as for any schema, and the same schema opens in a modal or drawer as a stack of cards. Every text accepts a function, so it can be translated.
+- Add `UiFormPage` and its parts `UiFormPageHeader`, `UiFormPageNavigation`, `UiFormPageSections`, and `UiFormPageActions`. The page renders a default layout from the parts; put parts in its default slot to compose another layout, or change one part through the slots it forwards (`navigation-footer`, `header-actions`, `section-actions`, and more).
+- The navigation shows each section as complete, invalid, or pending, marks optional sections, and sums up the sections left to complete. It follows the section in view, and the section of a field that takes focus, such as the first invalid field on submit. A click scrolls the section under the pinned header, focuses its title, and records it in the URL hash, which also opens the page on that section.
+- With `controls.dirtyCheck`, modified sections get a ring, a reset button, and a dot in the navigation, and the header shows an unsaved-changes badge.
+- From 768px of page width, the navigation is a pinned column (200px, 230px from 1024px) beside the sections; below, it is a row of chips that scrolls sideways.
+- Style every part through `ui.page.ui` (app config, schema `ui`, or the `ui` prop), with `data-active`, `data-state`, and `data-dirty` for states, and `--nut-form-page-header` and `--nut-form-page-gap` for the pinned offset.
+- Add English and French messages for the page chrome.
+
+#### Choice cards
+
+- `radio-card` and `checkbox-card` take `columns` (a fixed grid with breakpoints, such as `'2 xl:3'`), `indicator: 'corner'` (a check in the corner of the selected cards), and `icon: 'tile'` (the option icon in a tile above the label). `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`, and `ui.checkIcon` style the parts the engine renders.
+
+### 🩹 Fixes
+
+- **form:** Keep schema-level `labelPosition` and `labelWidth` in the resolved layout.
+- **form:** Stop checkbox cards from rendering option icons as their check mark.
+- **form:** Clear dirty state after a successful submit, and let `onSubmit` navigate without the unsaved-changes prompt.
+
+### 🧪 Tests
+
+- Cover page schema inference, section states, conditions across sections, invalid marking, dirty rings and resets, the saved baseline, section grids, scrolling and the hash, the section of a focused field, and custom compositions in unit and DOM tests, along with choice card grids, tiles, and checks.
+- Measure the page in Chromium, Firefox, and WebKit: the two-column layout, the pinned header offset, the scrollspy, a navigation click, the section of a focused field, the mid-width column, and the row of chips.
+
+### 📖 Documentation
+
+- Document form pages and choice cards in the consumer form skill, and the form root, the page runtime, and the choice card family in the maintainer reference.
+- The table playground gets account create and edit pages built from section functions; the main playground adds `/form/page`, whose texts are all translated through lazy callbacks.
+
+### ❤️ Contributors
+
+- THAO-Cyprien
+
 ## v1.3.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.2.0...v1.3.0)
