@@ -145,6 +145,16 @@ export interface FormPageSectionEntry {
   card: FormField
 }
 
+/** How a form page scrolls to a section. */
+export interface FormPageScrollOptions {
+  /** Defaults to `smooth`, or `instant` when the user prefers reduced motion. */
+  behavior?: ScrollBehavior
+  /** Records the section in the URL hash. Defaults to the page `hash` option. */
+  hash?: boolean
+  /** Moves focus to the section title, for keyboard and screen reader users. */
+  focus?: boolean
+}
+
 /**
  * Where a section stands:
  *
