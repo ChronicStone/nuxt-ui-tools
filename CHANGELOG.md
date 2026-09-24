@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.5.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.4.0...v1.5.0)
+
+Version 1.5.0 lets one typed remote options loader serve dashboard filters, table filters, and form fields. Mobile table filters also keep persistent tags visible beside a single panel filter control, with the tag wrapping below the toolbar controls when space runs out.
+
+### Migration notes
+
+- No public loader API is removed. Inline dashboard, table, and form remote definitions remain valid, and a field can still define its own loader.
+- `<UiDataListFilterTags />` now renders tag filters inline on mobile by default. Set `mobile="sheet"` to keep the previous bottom sheet. To show optional filters in the panel on mobile and as tags on desktop, set their location to `panel md:tag`.
+
+### Enhancements
+
+- Add `defineRemoteOptions(queries, config)` from `#ui-tools/shared`. Define `load` and optional `resolveSelected` endpoint query options once, map their responses to options, then pass the loader to dashboard `f.remote(users, ...)`, table `source: { remote: users }`, or form `options: { mode: 'remote', loader: users }`.
+- Keep `remoteTableOptions(query, config)` for endpoints using the table request protocol. It returns the same reusable loader contract and exposes page and selected lookup query keys.
+- Let page and selected lookup keys follow their own reactive inputs. Restored dashboard, table, and form selections update their labels when lookup-only scope changes, and a searched form selection retains its label after the list reloads.
+- Keep persistent mobile tags in the toolbar while search, the icon-only panel trigger, sort, and refresh stay together on the first row. The panel trigger keeps a visible label when its configured icon is empty. Every option row accepts clicks across its full width.
+
+### Tests and examples
+
+- Add `/dashboard/remote-options` to the playground. One users loader is used by a dashboard filter, table filter, and form select; a second table-protocol loader demonstrates workspace-scoped dashboard search.
+- Cover loader keys, selected hydration, search, pagination, form selection retention, mobile filter presentation, and full-width option row clicks in unit and DOM tests. Verify the mobile layout and option row click target manually in Chromium.
+
+### Contributors
+
+- THAO-Cyprien
+
 ## v1.4.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.3.0...v1.4.0)
