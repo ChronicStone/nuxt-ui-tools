@@ -21,7 +21,7 @@ Version 1.5.0 lets one typed remote options loader serve dashboard filters, tabl
 ### Tests and examples
 
 - Add `/dashboard/remote-options` to the playground. One users loader is used by a dashboard filter, table filter, and form select; a second table-protocol loader demonstrates workspace-scoped dashboard search.
-- Cover loader keys, selected hydration, search, pagination, form selection retention, mobile filter presentation, and full-width option row clicks in unit, DOM, and browser tests.
+- Cover loader keys, selected hydration, search, pagination, form selection retention, mobile filter presentation, and full-width option row clicks in unit and DOM tests. Verify the mobile layout and option row click target manually in Chromium.
 
 ### Contributors
 
