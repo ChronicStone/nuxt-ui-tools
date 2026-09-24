@@ -52,7 +52,7 @@ const modelValue = defineModel<string | undefined>({
       root: 'w-full',
       fieldset: mergeDataListUiClass('grid gap-0.5', undefined, ui?.list),
       item: mergeDataListUiClass(
-        `flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
+        `relative flex cursor-pointer items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
         undefined,
         ui?.option,
       ),
@@ -60,7 +60,7 @@ const modelValue = defineModel<string | undefined>({
       base: 'cursor-pointer',
       wrapper: 'min-w-0 flex-1',
       label: mergeDataListUiClass(
-        `w-full cursor-pointer text-default ${sizeClasses.optionLabel}`,
+        `w-full cursor-pointer text-default before:absolute before:inset-0 ${sizeClasses.optionLabel}`,
         undefined,
         ui?.optionLabel,
       ),

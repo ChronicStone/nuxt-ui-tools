@@ -66,6 +66,25 @@ describe('filter tags bar', () => {
     expect(w.find('.nut-dl-tag--clear').exists()).toBeFalsy()
   })
 
+  it('selects an option when clicking the row outside its text and checkbox', async () => {
+    harness = await mountTags({
+      schema: createAccountsSchema({ statusDefault: ['active'] }),
+    })
+    const trigger = must(
+      harness.wrapper.find('.nut-dl-tag--active .nut-dl-tag__text').element.closest('button'),
+    )
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await harness.until(() => harness?.wrapper.findAll('.nut-dl-option').length === 3)
+
+    const row = must(harness.wrapper.findAll('.nut-dl-option')[1])
+    await row.trigger('click')
+    await harness.flush()
+    expect(harness.internals.filters.getFilterState({ key: 'status' })?.value).toStrictEqual([
+      'active',
+      'pending',
+    ])
+  })
+
   it('promotes dynamic filters into removable tags and offers a reset', async () => {
     harness = await mountTags()
     harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['FR', 'DE'] })
