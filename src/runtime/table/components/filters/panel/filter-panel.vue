@@ -57,6 +57,7 @@ const triggerBind = computed(() => {
   return rest
 })
 const triggerLabel = computed(() => triggerProps.value.label ?? t('table.filters.panel.trigger'))
+const hasTriggerIcon = computed(() => Boolean(triggerProps.value.icon))
 const countProps = computed(() =>
   controlProps.value.count === false
     ? null
@@ -248,7 +249,9 @@ onMounted(() => {
         v-bind="triggerBind"
         :aria-expanded="open"
         :aria-label="triggerLabel"
-        :square="triggerProps.square ?? (isMobile && (!countProps || activeCount === 0))"
+        :square="
+          triggerProps.square ?? (isMobile && hasTriggerIcon && (!countProps || activeCount === 0))
+        "
         :ui="{
           base: mergeDataListUiClass(
             'nut-dl-fpanel-trigger shrink-0',
@@ -258,7 +261,7 @@ onMounted(() => {
         }"
       >
         <span
-          v-if="!isMobile || (countProps && activeCount > 0)"
+          v-if="!isMobile || !hasTriggerIcon || (countProps && activeCount > 0)"
           :class="
             mergeDataListUiClass(
               'nut-dl-fpanel-trigger__content flex items-center gap-2',
@@ -267,7 +270,7 @@ onMounted(() => {
             )
           "
         >
-          <span v-if="!isMobile">{{ triggerLabel }}</span>
+          <span v-if="!isMobile || !hasTriggerIcon">{{ triggerLabel }}</span>
           <UBadge
             v-if="countProps && activeCount > 0"
             v-bind="countProps"

@@ -60,6 +60,20 @@ describe('filter slideover trigger', () => {
     expect(trigger.find('.nut-dl-fpanel-trigger__content').exists()).toBeFalsy()
   })
 
+  it('keeps a label-only trigger visible on mobile', async () => {
+    harness = await mountPanel({
+      breakpoint: 'sm',
+      open: false,
+      panelProps: { props: { count: false, trigger: { icon: '', label: 'Affiner' } } },
+    })
+    const trigger = harness.wrapper.find('.nut-dl-fpanel-trigger')
+    expect([
+      trigger.text(),
+      trigger.attributes('data-square'),
+      trigger.attributes('aria-label'),
+    ]).toStrictEqual(['Affiner', undefined, 'Affiner'])
+  })
+
   it('is not rendered without panel filters', async () => {
     harness = await mountLoaded({
       render: () => h(DataListFilterPanel),
