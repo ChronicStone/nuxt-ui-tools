@@ -73,11 +73,12 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
         :key="entry.value == null ? entry.label : String(entry.value)"
         :class="
           mergeDataListUiClass(
-            `nut-dl-option flex items-center rounded-md text-left outline-none transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
+            `nut-dl-option flex cursor-pointer items-center rounded-md text-left outline-none transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
             undefined,
             ui?.option,
           )
         "
+        @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
       >
         <UCheckbox
           :model-value="entry.selected ?? false"
@@ -92,7 +93,6 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
         <button
           type="button"
           :class="['flex min-w-0 flex-1 items-center text-left', geometry.toolbarGap]"
-          @click="emit('select', { event: $event, entry, index, sectionKey: section.key })"
         >
           <span
             v-if="entry.color"

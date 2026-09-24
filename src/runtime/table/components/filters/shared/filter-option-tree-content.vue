@@ -103,12 +103,13 @@ function activateTreeEntry(entry: TreeEntry) {
       :key="entry.id"
       :class="
         mergeDataListUiClass(
-          `flex items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
+          `flex cursor-pointer items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
           undefined,
           ui?.option,
         )
       "
       :style="getTreeIndentStyle(entry.depth)"
+      @click="activateTreeEntry(entry)"
     >
       <button
         v-if="entry.expandable"
@@ -153,7 +154,6 @@ function activateTreeEntry(entry: TreeEntry) {
         type="button"
         class="flex min-w-0 flex-1 items-center text-left"
         :class="geometry.toolbarGap"
-        @click="activateTreeEntry(entry)"
       >
         <UIcon
           v-if="entry.icon"
@@ -203,7 +203,7 @@ function activateTreeEntry(entry: TreeEntry) {
       root: 'w-full',
       fieldset: mergeDataListUiClass('grid gap-0.5', undefined, ui?.list),
       item: mergeDataListUiClass(
-        `flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
+        `relative flex cursor-pointer items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
         undefined,
         ui?.option,
       ),
@@ -211,7 +211,7 @@ function activateTreeEntry(entry: TreeEntry) {
       base: 'cursor-pointer',
       wrapper: 'min-w-0 flex-1',
       label: mergeDataListUiClass(
-        `w-full cursor-pointer text-default ${sizeClasses.optionLabel}`,
+        `w-full cursor-pointer text-default before:absolute before:inset-0 ${sizeClasses.optionLabel}`,
         undefined,
         ui?.optionLabel,
       ),
@@ -229,7 +229,7 @@ function activateTreeEntry(entry: TreeEntry) {
           :aria-label="item.expanded ? `Collapse ${item.label}` : `Expand ${item.label}`"
           :aria-expanded="item.expanded"
           :class="[
-            'flex shrink-0 items-center justify-center rounded-sm text-muted transition-transform hover:bg-accented',
+            'relative z-10 flex shrink-0 items-center justify-center rounded-sm text-muted transition-transform hover:bg-accented',
             sizeClasses.optionIcon,
             item.expanded ? 'rotate-90' : '',
           ]"

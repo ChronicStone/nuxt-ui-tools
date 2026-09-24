@@ -13,13 +13,13 @@ const props = withDefaults(
   defineProps<{
     showAdd?: boolean
     showClear?: boolean
-    /** `sheet` collapses the tags into a bottom sheet on mobile; `tags` keeps inline tags everywhere. */
+    /** `tags` keeps inline tags on mobile (default); `sheet` moves all filters into a bottom sheet. */
     mobile?: 'sheet' | 'tags'
     size?: DataListControlSize
     ui?: DataListFilterTagsUi
   }>(),
   {
-    mobile: 'sheet',
+    mobile: 'tags',
     showAdd: false,
     showClear: false,
   },

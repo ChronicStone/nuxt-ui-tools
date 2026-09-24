@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { h } from 'vue'
 
+import DataListFilterPanel from '#ui-tools/table/components/data-list/data-list-filter-panel.vue'
 import DataListFilterTags from '#ui-tools/table/components/data-list/data-list-filter-tags.vue'
 
 import { must } from '../../helpers/must'
@@ -63,6 +64,25 @@ describe('filter tags bar', () => {
       'Statut',
     ])
     expect(w.find('.nut-dl-tag--clear').exists()).toBeFalsy()
+  })
+
+  it('selects an option when clicking the row outside its text and checkbox', async () => {
+    harness = await mountTags({
+      schema: createAccountsSchema({ statusDefault: ['active'] }),
+    })
+    const trigger = must(
+      harness.wrapper.find('.nut-dl-tag--active .nut-dl-tag__text').element.closest('button'),
+    )
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await harness.until(() => harness?.wrapper.findAll('.nut-dl-option').length === 3)
+
+    const row = must(harness.wrapper.findAll('.nut-dl-option')[1])
+    await row.trigger('click')
+    await harness.flush()
+    expect(harness.internals.filters.getFilterState({ key: 'status' })?.value).toStrictEqual([
+      'active',
+      'pending',
+    ])
   })
 
   it('promotes dynamic filters into removable tags and offers a reset', async () => {
@@ -202,10 +222,11 @@ describe('filter tags bar', () => {
 })
 
 describe('mobile filter sheet', () => {
-  it('replaces the tags with a bottom sheet listing every filter', async () => {
+  it('offers an opt-in bottom sheet listing every filter', async () => {
     harness = await mountTags({
       breakpoint: 'sm',
       schema: createAccountsSchema({ statusDefault: ['active'] }),
+      tagProps: { mobile: 'sheet' },
     })
     const w = harness.wrapper
     expect(w.find('.nut-dl-tag--dormant').exists()).toBeFalsy()
@@ -248,7 +269,7 @@ describe('mobile filter sheet', () => {
   })
 
   it('shows the active count and clears everything from the footer', async () => {
-    harness = await mountTags({ breakpoint: 'sm' })
+    harness = await mountTags({ breakpoint: 'sm', tagProps: { mobile: 'sheet' } })
     harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['FR'] })
     harness.internals.filters.searchQuery.value = 'x'
     await harness.flush()
@@ -262,9 +283,15 @@ describe('mobile filter sheet', () => {
     expect(harness.internals.filters.searchQuery.value).toBe('')
   })
 
-  it('keeps inline tags on mobile when asked', async () => {
-    harness = await mountTags({ breakpoint: 'sm', tagProps: { mobile: 'tags' } })
+  it('keeps the persistent tag inline with one panel filter trigger on mobile', async () => {
+    harness = await mountLoaded({
+      breakpoint: 'sm',
+      render: () =>
+        h('div', { class: 'flex flex-wrap' }, [h(DataListFilterTags), h(DataListFilterPanel)]),
+      schema: createAccountsSchema({ panelFilters: true, statusDefault: ['active'] }),
+    })
     expect(harness.wrapper.find('.nut-dl-sheet-trigger').exists()).toBeFalsy()
-    expect(harness.wrapper.find('.nut-dl-tag--dormant').exists()).toBeTruthy()
+    expect(harness.wrapper.find('.nut-dl-tag--active').text()).toContain('Statut')
+    expect(harness.wrapper.findAll('.nut-dl-fpanel-trigger')).toHaveLength(1)
   })
 })
