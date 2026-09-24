@@ -112,13 +112,13 @@ function select(event: MouseEvent, key: string) {
     :aria-label="page.navigationTitle.value || $slots.title ? undefined : t('form.page.navigation')"
     :class="
       mergeFormUiClass(
-        'flex min-w-0 flex-col gap-3.5 @3xl/form-page:sticky @3xl/form-page:top-(--nut-form-page-offset)',
+        'flex min-w-0 flex-col gap-3.5 @3xl/form-page:sticky @3xl/form-page:top-[calc(var(--nut-form-page-header,0px)+var(--nut-form-page-gap,24px))]',
         pageUi?.navigation,
       )
     "
     data-form-page-navigation
   >
-    <div class="flex min-w-0 flex-col gap-2">
+    <div :class="mergeFormUiClass('flex min-w-0 flex-col gap-2', pageUi?.navigationGroup)">
       <p
         v-if="page.navigationTitle.value || $slots.title"
         :id="titleId"
@@ -145,7 +145,7 @@ function select(event: MouseEvent, key: string) {
           v-for="section in page.sections.value"
           :key="section.key"
           :data-form-page-entry="section.key"
-          class="shrink-0 @3xl/form-page:shrink"
+          :class="mergeFormUiClass('shrink-0 @3xl/form-page:shrink', pageUi?.navigationEntry)"
         >
           <slot
             name="item"
@@ -180,12 +180,17 @@ function select(event: MouseEvent, key: string) {
                 <UIcon
                   v-if="section.status === 'complete'"
                   name="i-lucide-check"
-                  class="size-2.5"
+                  :class="mergeFormUiClass('size-2.5', pageUi?.navigationIndicatorIcon)"
                 />
                 <template v-else-if="section.status === 'invalid'">!</template>
                 <span
                   v-else
-                  class="hidden size-1.5 rounded-full bg-primary group-data-[active]:block"
+                  :class="
+                    mergeFormUiClass(
+                      'hidden size-1.5 rounded-full bg-primary group-data-[active]:block',
+                      pageUi?.navigationIndicatorMarker,
+                    )
+                  "
                 />
               </span>
               <span
@@ -226,12 +231,12 @@ function select(event: MouseEvent, key: string) {
         </li>
       </ul>
     </div>
-    <div class="hidden px-2.5 @3xl/form-page:block">
+    <div :class="mergeFormUiClass('hidden px-2.5 @3xl/form-page:block', pageUi?.navigationFooter)">
       <div
         :class="
           mergeFormUiClass(
             'border-t border-muted pt-3.5 text-[12.5px] leading-normal text-muted',
-            pageUi?.navigationFooter,
+            pageUi?.navigationSummary,
           )
         "
         data-form-page-summary
@@ -243,7 +248,12 @@ function select(event: MouseEvent, key: string) {
           :modified="page.modified.value"
         >
           <template v-if="'phrase' in summary">
-            {{ summary.before }}<b class="font-semibold text-highlighted">{{ summary.phrase }}</b
+            {{ summary.before
+            }}<b
+              :class="
+                mergeFormUiClass('font-semibold text-highlighted', pageUi?.navigationSummaryCount)
+              "
+              >{{ summary.phrase }}</b
             >{{ summary.after }}
           </template>
           <template v-else>{{ summary.text }}</template>

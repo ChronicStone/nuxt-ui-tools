@@ -61,7 +61,7 @@ const { contextError, contextLoading, contextPending, refreshContext } = page.ro
         :class="
           mergeFormUiClass(
             'grid gap-4 rounded-xl border border-default bg-default px-6 pt-[22px] pb-6',
-            pageUi?.section,
+            pageUi?.sectionSkeleton,
           )
         "
         data-form-skeleton

@@ -57,7 +57,7 @@ onBeforeUnmount(() => unregister?.())
     :data-dirty="dirty || undefined"
     :class="
       mergeFormUiClass(
-        'flex min-w-0 scroll-mt-(--nut-form-page-offset) flex-col gap-[18px] rounded-xl border border-default bg-default px-5 pt-5 pb-6 transition-[border-color,box-shadow] duration-200 @3xl/form-page:px-6 @3xl/form-page:pt-[22px] data-[dirty]:border-primary data-[dirty]:ring-4 data-[dirty]:ring-primary/20',
+        'flex min-w-0 scroll-mt-[calc(var(--nut-form-page-header,0px)+var(--nut-form-page-gap,24px))] flex-col gap-[18px] rounded-xl border border-default bg-default px-5 pt-5 pb-6 transition-[border-color,box-shadow] duration-200 @3xl/form-page:px-6 @3xl/form-page:pt-[22px] data-[dirty]:border-primary data-[dirty]:ring-4 data-[dirty]:ring-primary/20',
         pageUi?.section,
       )
     "

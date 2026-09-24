@@ -129,7 +129,10 @@ When adding form features, bias toward:
   actions through provide/inject, and `use-form-page-scroll.ts` owns the scrollspy, scrolling to a
   section, and the URL hash. `components/page/` holds the root and its public parts;
   `form-page-section.vue` scopes the section grid by providing a runtime copy whose
-  `currentLayout` is the section layout, the way a step scopes it.
+  `currentLayout` is the section layout, the way a step scopes it. Every element a page part
+  renders takes a `FormPageUi` slot; keep it that way when adding one. Sections and the pinned
+  navigation read `--nut-form-page-header` (set by `FormPage` from the measured header) plus
+  `--nut-form-page-gap`, resolved where they are used so a wrapper can override either.
 - `fields/choice-card/` is the presentation `radio-card` and `checkbox-card` share: the grid
   (`--nut-choice-columns`), the corner check, and the icon tile, with `ui.tile` and `ui.check` for
   the parts the engine renders. `checkbox-card` strips option icons from the items it hands to

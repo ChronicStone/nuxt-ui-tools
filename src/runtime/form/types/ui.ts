@@ -207,6 +207,10 @@ export interface FormOverlayUi {
  * restyle one state: `data-active` on the current navigation entry, `data-state`
  * (`complete`, `invalid`, `pending`) on entries and indicators, `data-dirty` on modified
  * sections and entries.
+ *
+ * Two CSS variables place sections under the pinned header: `--nut-form-page-header` (its
+ * measured height, set by the page) and `--nut-form-page-gap` (the room below it, `24px` by
+ * default). Set them on an element around the navigation and sections, such as the root.
  */
 export interface FormPageUi {
   /** The `<form>` element, which scrolls on its own and is the container of the page queries. */
@@ -223,15 +227,30 @@ export interface FormPageUi {
   unsaved?: FormUiClass
   actions?: FormUiClass
   navigation?: FormUiClass
+  /** Holds the navigation title and the entries. */
+  navigationGroup?: FormUiClass
   navigationTitle?: FormUiClass
   navigationList?: FormUiClass
+  /** List item around each entry. */
+  navigationEntry?: FormUiClass
   navigationItem?: FormUiClass
   navigationIndicator?: FormUiClass
+  /** Check of a complete section in the indicator. */
+  navigationIndicatorIcon?: FormUiClass
+  /** Dot in the indicator of the current section while it is pending. */
+  navigationIndicatorMarker?: FormUiClass
   navigationLabel?: FormUiClass
   navigationOptional?: FormUiClass
   navigationDirty?: FormUiClass
+  /** Wrapper under the entries, whose padding insets the summary. */
   navigationFooter?: FormUiClass
+  /** The summary, with its top border: "3 sections left to complete". */
+  navigationSummary?: FormUiClass
+  /** The bold "3 sections" of the summary. */
+  navigationSummaryCount?: FormUiClass
   sections?: FormUiClass
+  /** Placeholder card shown while the schema context loads. */
+  sectionSkeleton?: FormUiClass
   section?: FormUiClass
   sectionHeader?: FormUiClass
   sectionTitle?: FormUiClass

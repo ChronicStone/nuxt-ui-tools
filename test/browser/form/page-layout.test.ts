@@ -42,8 +42,10 @@ async function mountSized(width: number) {
   }
 }
 
+/** Distance under the page top where sections land: the pinned header plus the gap. */
 function offsetOf(page: HTMLElement) {
-  return Number.parseFloat(getComputedStyle(page).getPropertyValue('--nut-form-page-offset'))
+  const section = must(page.querySelector<HTMLElement>('[data-form-page-section]'))
+  return Number.parseFloat(getComputedStyle(section).scrollMarginTop)
 }
 
 /** Scroll position that brings `section` to the line under the pinned header. */

@@ -82,9 +82,6 @@ defineSlots<{
   'section-actions'?: (props: { section: FormPageSectionState }) => unknown
 }>()
 
-/** Room between the pinned header and a section it scrolls to. */
-const SECTION_GAP = 24
-
 const element = useTemplateRef<HTMLFormElement>('element')
 const root = useFormRoot({
   form: () => form,
@@ -107,7 +104,7 @@ const pageUi = computed(() => root.formUi.ui.value.page?.ui)
     :class="
       mergeFormUiClass('@container/form-page h-full min-w-0 overflow-y-auto bg-muted', pageUi?.root)
     "
-    :style="{ '--nut-form-page-offset': `${page.stickyOffset.value + SECTION_GAP}px` }"
+    :style="{ '--nut-form-page-header': `${page.stickyOffset.value}px` }"
     data-form-page
     @submit.prevent="root.submit"
   >

@@ -491,11 +491,22 @@ To change one part of the default layout, use the slots `NutFormPage` forwards:
 </NutFormPage>
 ```
 
-Style the page through the `page` part of the form UI config (app config, schema `ui`, or the `ui`
-prop): `root`, `body`, `header`, `title`, `meta`, `navigation`, `navigationItem`,
-`navigationIndicator`, `section`, `sectionTitle`, `sectionBody`, and more. Entries carry
-`data-active` and `data-state` (`complete`, `invalid`, `pending`), and modified sections and entries
-carry `data-dirty`:
+Style the page like the rest of the form engine, through the `page` part of the form UI config:
+app config first, then the schema `ui`, then the `ui` prop of `NutFormPage`. Every element the page
+renders has a slot:
+
+- page: `root`, `body`
+- header: `header`, `headerContent`, `heading`, `eyebrow`, `title`, `meta`, `unsaved`, `actions`
+- navigation: `navigation`, `navigationGroup`, `navigationTitle`, `navigationList`,
+  `navigationEntry`, `navigationItem`, `navigationIndicator`, `navigationIndicatorIcon`,
+  `navigationIndicatorMarker`, `navigationLabel`, `navigationOptional`, `navigationDirty`,
+  `navigationFooter`, `navigationSummary`, `navigationSummaryCount`
+- sections: `sections`, `sectionSkeleton`, `section`, `sectionHeader`, `sectionTitle`,
+  `sectionDescription`, `sectionOptional`, `sectionActions`, `sectionReset`, `sectionBody`
+
+The action buttons take the `actions` part (`ui.actions.ui.button`) and each action's `class`, as in
+any form. Entries carry `data-active` and `data-state` (`complete`, `invalid`, `pending`), and
+modified sections and entries carry `data-dirty`:
 
 ```ts
 export default defineAppConfig({
@@ -513,8 +524,11 @@ export default defineAppConfig({
 })
 ```
 
-When you place your own pinned header above the page content, set `--nut-form-page-offset` on an
-ancestor to its height plus the gap, so sections scroll to just below it.
+Sections land, and the navigation pins, below `--nut-form-page-header` plus `--nut-form-page-gap`.
+The page sets the first to the height of its pinned `NutFormPageHeader`; the second is `24px`. To
+change the gap, set it on the root, for example with `ui.page.ui.root: '[--nut-form-page-gap:32px]'`.
+When your own pinned header replaces `NutFormPageHeader`, set `--nut-form-page-header` to its height
+on an element around the navigation and the sections.
 
 ## Choice Cards
 
@@ -540,8 +554,9 @@ ancestor to its height plus the gap, so sections scroll to just below it.
 }
 ```
 
-Style the parts the engine renders through `ui.tile` and `ui.check`, next to the Nuxt UI slots of
-the group (`item`, `label`, `description`, and so on). For every radio card of an app:
+Style the parts the engine renders through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`, and
+`ui.checkIcon`, next to the Nuxt UI slots of the group (`fieldset`, `item`, `label`, `description`,
+and so on). Set them for one field in its `props.ui`, or for every card of a kind in the app config:
 
 ```ts
 nuxtUiTools: {

@@ -6,7 +6,8 @@ import { mergeFormUiClass } from '../../utils/ui'
 
 /**
  * Content of a card's label: the option icon, inline or in a tile above the label, and the check
- * a selected card shows in its corner. The tile and the check read `ui.tile` and `ui.check`.
+ * a selected card shows in its corner. Styled through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`,
+ * `ui.check`, and `ui.checkIcon`.
  */
 defineProps<{
   label?: string
@@ -30,10 +31,14 @@ defineProps<{
     "
     data-choice-tile
   >
-    <UIcon :name="icon" class="size-4" aria-hidden="true" />
+    <UIcon :name="icon" :class="mergeFormUiClass('size-4', ui?.tileIcon)" aria-hidden="true" />
   </span>
   <span v-if="!tile && icon" class="inline-flex items-center gap-2">
-    <UIcon :name="icon" class="size-4 shrink-0" aria-hidden="true" />
+    <UIcon
+      :name="icon"
+      :class="mergeFormUiClass('size-4 shrink-0', ui?.optionIcon)"
+      aria-hidden="true"
+    />
     <span>{{ label }}</span>
   </span>
   <span v-else class="block">{{ label }}</span>
@@ -48,6 +53,6 @@ defineProps<{
     "
     data-choice-check
   >
-    <UIcon name="i-lucide-check" class="size-2.5" />
+    <UIcon name="i-lucide-check" :class="mergeFormUiClass('size-2.5', ui?.checkIcon)" />
   </span>
 </template>

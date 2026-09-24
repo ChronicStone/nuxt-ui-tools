@@ -23,7 +23,9 @@ export interface FormChoiceCardProps {
   indicator?: 'start' | 'end' | 'hidden' | 'corner'
   /**
    * Where an option's `icon` shows: before its label (`inline`, the default), or in a tile above
-   * it (`tile`) that takes the selection color.
+   * it (`tile`) that takes the selection color. Style the parts the engine renders with the
+   * `ui` slots `tile`, `tileIcon`, `optionIcon`, `check`, and `checkIcon`, next to the Nuxt UI
+   * slots of the group.
    */
   icon?: 'inline' | 'tile'
 }
