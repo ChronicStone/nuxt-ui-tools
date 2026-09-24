@@ -77,6 +77,9 @@ describe('shared remote option loaders', () => {
     await expect(run(users.resolveSelected({ values: ['u2'] }))).resolves.toEqual([
       { label: 'Grace', value: 'u2' },
     ])
+    expect(users.selectedQueryKeyFor?.({ values: ['u2'] })).toEqual(
+      users.resolveSelected({ values: ['u2'] }).queryKey,
+    )
     expect(users.pagination).toEqual({ size: 25, type: 'cursor' })
     expect(users.search).toEqual({ debounce: 100 })
 

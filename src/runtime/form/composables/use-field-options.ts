@@ -410,8 +410,10 @@ function resolveRemoteOptionConfig(field: FormField): FormRemoteOptionConfig<For
     return {
       ...fieldOptions,
       pagination: loader.pagination,
+      queryKeyFor: loader.queryKeyFor,
       resolveSelected: loader.resolveSelected,
       search: loader.search,
+      selectedQueryKeyFor: loader.selectedQueryKeyFor,
       source: loader.load,
     }
   }

@@ -75,6 +75,27 @@ export function remoteTableOptions(
     }
   }
 
+  function selectedRequest(values: readonly (string | number | boolean)[]) {
+    return request({
+      filters: [
+        {
+          children: [
+            {
+              key: config.valueKey ?? 'id',
+              operator: 'isAnyOf',
+              type: 'condition',
+              value: [...values],
+            },
+          ],
+          combinator: 'and',
+          type: 'group',
+        },
+      ],
+      page: { cursor: null, index: 1, size: Math.max(1, values.length) },
+      search: '',
+    })
+  }
+
   return {
     load: ({ page, search: term }) =>
       mapQuery(query(request({ page, search: term })), (result) => ({
@@ -82,31 +103,17 @@ export function remoteTableOptions(
         options: result.rows.map(config.option),
       })),
     pagination,
+    queryKeyFor: ({ page, search: term }) => [
+      ...query(request({ page, search: term })).queryKey,
+      'remote-options',
+    ],
     resolveSelected: ({ values }) =>
-      mapQuery(
-        query(
-          request({
-            filters: [
-              {
-                children: [
-                  {
-                    key: config.valueKey ?? 'id',
-                    operator: 'isAnyOf',
-                    type: 'condition',
-                    value: [...values],
-                  },
-                ],
-                combinator: 'and',
-                type: 'group',
-              },
-            ],
-            page: { cursor: null, index: 1, size: Math.max(1, values.length) },
-            search: '',
-          }),
-        ),
-        (result) => result.rows.map(config.option),
-      ),
+      mapQuery(query(selectedRequest(values)), (result) => result.rows.map(config.option)),
     search,
+    selectedQueryKeyFor: ({ values }) => [
+      ...query(selectedRequest(values)).queryKey,
+      'remote-options',
+    ],
   }
 }
 

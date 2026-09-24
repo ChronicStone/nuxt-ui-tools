@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/vue-query'
+import { hashKey, useQueryClient } from '@tanstack/vue-query'
 import type { QueryClient } from '@tanstack/vue-query'
 import { debounceFilter, watchWithFilter } from '@vueuse/core'
 import { computed, ref, shallowRef, watch } from 'vue'
@@ -446,7 +446,7 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
         selectedError.value = null
         return
       }
-      retainSelected([])
+      retainSelected(loaded.value)
       if (missingSelected.value.length) {
         void hydrateSelected({ reconcile: false })
       }
@@ -473,6 +473,29 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
     },
     { deep: true },
   )
+
+  const pageIdentity = computed(() => {
+    const config = params.config.value
+    return config?.queryKeyFor
+      ? hashKey(
+          config.queryKeyFor({
+            page: { cursor: null, index: 1, size: pageSize.value },
+            search: '',
+          }),
+        )
+      : null
+  })
+  const selectedIdentity = computed(() => {
+    const config = params.config.value
+    return config?.selectedQueryKeyFor ? hashKey(config.selectedQueryKeyFor({ values: [] })) : null
+  })
+
+  watch([pageIdentity, selectedIdentity], ([page, selected], [previousPage, previousSelected]) => {
+    if (page === previousPage && selected === previousSelected) return
+    selectionGeneration.value += 1
+    if (page !== previousPage) void reload({ clearSearch: false })
+    if (selectedValues.value.length) void hydrateSelected({ reconcile: true })
+  })
 
   return {
     activate,

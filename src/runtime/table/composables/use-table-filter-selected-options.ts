@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { hashKey, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, shallowRef, watch } from 'vue'
 import type { ComputedRef } from 'vue'
 
@@ -43,6 +43,25 @@ export function useTableFilterSelectedOptions(params: UseTableFilterSelectedOpti
       return remote ? [{ key: definition.key, remote }] : []
     }),
   )
+
+  const selectedScopes = computed(() =>
+    remoteDefinitions.value.map(({ key, remote }) => ({
+      identity: remote.selectedQueryKeyFor
+        ? hashKey(remote.selectedQueryKeyFor({ values: [] }))
+        : null,
+      key,
+    })),
+  )
+
+  watch(selectedScopes, (current, previous) => {
+    const earlier = new Map(previous.map((entry) => [entry.key, entry.identity]))
+    const next = new Map(known.value)
+    for (const entry of current) {
+      if (earlier.has(entry.key) && earlier.get(entry.key) !== entry.identity)
+        next.delete(entry.key)
+    }
+    if (next.size !== known.value.size) known.value = next
+  })
 
   function selectedValues(key: string): TableFilterPrimitiveValue[] {
     const rule = params.rules.value.find((entry) => entry.key === key)

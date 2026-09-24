@@ -108,7 +108,9 @@ export function useDashboardRemoteOptions(params: {
         config.resolveSelected
           ? runDashboardRemoteResult(config.resolveSelected({ values: missing.value }), context)
           : Promise.resolve([]),
-      queryKey: [...queryKeyFor(''), 'selected', missing.value],
+      queryKey: config.selectedQueryKeyFor
+        ? config.selectedQueryKeyFor({ values: missing.value })
+        : [...queryKeyFor(''), 'selected', missing.value],
       // Hydrated labels stay while the next set of missing values resolves.
       placeholderData: (previous: readonly DashboardOption<string>[] | undefined) => previous,
       staleTime: DASHBOARD_REMOTE_OPTIONS_DEFAULTS.selectedStaleTime,

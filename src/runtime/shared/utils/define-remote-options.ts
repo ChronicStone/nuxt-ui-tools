@@ -54,6 +54,11 @@ export function defineRemoteOptions<
         config.mapSelected,
         [...suffix, 'selected'],
       ),
+    selectedQueryKeyFor: (request) => [
+      ...queries.resolveSelected(request).queryKey,
+      ...suffix,
+      'selected',
+    ],
     search: config.search,
   }
 }

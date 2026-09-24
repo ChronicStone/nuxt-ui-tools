@@ -68,6 +68,8 @@ export interface RemoteOptionsLoader<TOption> {
   search?: RemoteOptionsSearch
   /** Identity of a page query, used by pickers that cache an infinite list as one query. */
   queryKeyFor?: (request: { search: string; page: RemoteOptionsPageRequest }) => QueryKey
+  /** Identity of a selected-value lookup, including any scope used only by that endpoint. */
+  selectedQueryKeyFor?: (request: { values: readonly RemoteOptionValue[] }) => QueryKey
 }
 
 /** Query options returned by an endpoint or generated client. */

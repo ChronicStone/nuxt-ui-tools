@@ -12,7 +12,9 @@ builder for that same loader contract; it infers rows through `TableSourceQueryR
 `queryFn` as `MaybeRefDeep<QueryFunction | skipToken>`, so the shared query mapper checks that the
 runtime value is callable. The table builder also checks that responses contain `rows`. A reusable
 loader supplies a query-key function based on its endpoint's first-page request, so dashboard
-option caches follow changes in search and external scope.
+option caches follow changes in search and external scope. The selected lookup has its own
+`selectedQueryKeyFor` because its endpoint may depend on locale or permission scope absent from the
+page endpoint; dashboard, table, and form use that identity to refresh retained labels.
 
 Vocabulary: **filters** are the state the user controls, read as values
 (`dashboard.filters.year`); **controls** drive them (`dashboard.controls.year`: label, items,

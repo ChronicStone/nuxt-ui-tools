@@ -190,6 +190,8 @@ export interface DashboardRemoteOptionsConfig {
   queryKey?: QueryKey
   /** Cache identity of a reusable loader, derived from its endpoint request and current search. */
   queryKeyFor?: (request: DashboardRemoteOptionsRequest) => QueryKey
+  /** Cache identity of a selected lookup, including scope absent from the page endpoint. */
+  selectedQueryKeyFor?: (request: { values: readonly string[] }) => QueryKey
 }
 
 /** Option items of a filter: fixed, or read reactively (e.g. from another query's data). */

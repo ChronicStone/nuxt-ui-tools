@@ -83,6 +83,9 @@ describe('remoteTableOptions', () => {
 
     const page = accounts.load({ page: { cursor: 'c1', index: 2, size: 2 }, search: 'ac' })
     expect(page.queryKey.at(-1)).toBe('remote-options')
+    expect(
+      accounts.queryKeyFor?.({ page: { cursor: 'c1', index: 2, size: 2 }, search: 'ac' }),
+    ).toEqual(page.queryKey)
     await expect(run(page)).resolves.toEqual({
       nextCursor: 'next',
       options: [
@@ -100,6 +103,9 @@ describe('remoteTableOptions', () => {
     await expect(run(accounts.resolveSelected({ values: ['a3'] }))).resolves.toEqual([
       { label: 'Initech', value: 'a3' },
     ])
+    expect(accounts.selectedQueryKeyFor?.({ values: ['a3'] })).toEqual(
+      accounts.resolveSelected({ values: ['a3'] }).queryKey,
+    )
     expect(endpoint.requests[1]).toEqual({
       filters: [
         {

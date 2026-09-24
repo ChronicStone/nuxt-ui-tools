@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/vue-query'
 import { describe, expect, it } from 'vitest'
+import { ref } from 'vue'
 
 import { defineFormSchema } from '#ui-tools/form'
 import type { FormObject, FormOptionValue } from '#ui-tools/form'
@@ -85,6 +86,96 @@ async function loadMore(harness: FormHarness, path: string) {
 }
 
 describe('remote field options', () => {
+  it('keeps the label of a selected search result after the list reloads', async () => {
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [
+        {
+          key: 'owner',
+          options: {
+            mode: 'remote',
+            pagination: { size: 2, type: 'page' },
+            search: { debounce: 0 },
+            source: ({ search }) =>
+              queryOptions({
+                queryFn: () =>
+                  Promise.resolve({
+                    hasMore: false,
+                    options: [
+                      search
+                        ? { label: 'User 48', value: 'u48' }
+                        : { label: 'User 01', value: 'u1' },
+                    ],
+                  }),
+                queryKey: ['form-search-selection', search],
+              }),
+          },
+          type: 'select',
+        },
+      ],
+    })
+    const harness = await mountForm({ schema })
+    await openMenu(harness, 'owner')
+    await harness.until(() => itemValues(harness, 'owner').includes('u1'))
+    await typeSearch(harness, 'owner', '48')
+    await harness.until(() => itemValues(harness, 'owner').includes('u48'))
+
+    harness.form.state.set('owner', 'u48')
+    await harness.until(() => triggerText(harness, 'owner') === 'User 48')
+    await typeSearch(harness, 'owner', '')
+    await harness.until(() => itemValues(harness, 'owner').includes('u1'))
+    expect(triggerText(harness, 'owner')).toBe('User 48')
+    harness.unmount()
+  })
+
+  it('updates a reusable loader when its selected endpoint scope changes', async () => {
+    const language = ref('en')
+    const users = defineRemoteOptions(
+      {
+        load: ({ page, search }) =>
+          queryOptions({
+            queryFn: () =>
+              Promise.resolve({
+                hasMore: false,
+                rows: [{ label: 'User', value: 'u1' }].filter(() => false),
+              }),
+            queryKey: ['form-users', 'page', search, page.index],
+          }),
+        resolveSelected: ({ values }) => {
+          const locale = language.value
+          return queryOptions({
+            queryFn: () =>
+              Promise.resolve({
+                rows: values.map((value) => ({
+                  label: `${locale}-${value}`,
+                  value: String(value),
+                })),
+              }),
+            queryKey: ['form-users', 'selected', locale, values],
+          })
+        },
+      },
+      {
+        key: 'localized-users',
+        mapPage: ({ hasMore, rows }) => ({ hasMore, options: rows }),
+        mapSelected: ({ rows }) => rows,
+        pagination: { size: 2, type: 'page' },
+      },
+    )
+    const harness = await mountForm({
+      input: { owner: 'u37' },
+      schema: defineFormSchema({
+        actions: [],
+        fields: [{ key: 'owner', options: { loader: users, mode: 'remote' }, type: 'select' }],
+      }),
+    })
+    await harness.until(() => triggerText(harness, 'owner') === 'en-u37')
+
+    language.value = 'fr'
+    await harness.until(() => triggerText(harness, 'owner') === 'fr-u37')
+    harness.unmount()
+  })
+
   it('accepts a reusable loader without copying its pagination and source into the field', async () => {
     const requests = requestMap<{ rows: readonly Option[]; hasMore: boolean }>()
     const users = defineRemoteOptions(

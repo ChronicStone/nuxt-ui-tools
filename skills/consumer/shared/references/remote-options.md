@@ -47,6 +47,9 @@ filter.option('ownerId', { source: { remote: users } })
 
 Use a stable `key` for each option mapping. The endpoint query keys must include every request
 input, including workspace or tenant scope; the package adds the loader key to keep mapped option
-data apart from the endpoint's raw response. The form's `refreshOn` remains available when a field
-depends on another field. Parent-specific remote tree loading continues to use the inline form
-source, which receives `parent` in its request.
+data apart from the endpoint's raw response. The loader exposes `queryKeyFor` from `load` and
+`selectedQueryKeyFor` from `resolveSelected`, so an external workspace change reloads open pages
+and a locale used only by the selected lookup refreshes restored labels. Form fields follow these
+loader keys automatically; `refreshOn` remains available when a field depends on another field.
+Parent-specific remote tree loading continues to use the inline form source, which receives
+`parent` in its request.

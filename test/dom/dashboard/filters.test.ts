@@ -4,6 +4,7 @@ import { ref } from 'vue'
 
 import { defineDashboardSchema } from '#ui-tools/dashboard'
 import { defineRemoteOptions } from '#ui-tools/shared'
+import { remoteTableOptions } from '#ui-tools/table'
 
 import { deferredSource, mountDashboard } from './harness'
 
@@ -15,6 +16,91 @@ function readRole() {
 }
 
 describe('dashboard filter controls', () => {
+  it('refreshes selected labels when only the selected endpoint scope changes', async () => {
+    const locale = ref('en')
+    const users = defineRemoteOptions(
+      {
+        load: ({ page, search }) =>
+          queryOptions({
+            queryFn: () =>
+              Promise.resolve({
+                nextCursor: null,
+                rows: [{ id: 'u1', name: 'User' }].filter(() => false),
+              }),
+            queryKey: ['users', 'list', search, page.cursor],
+          }),
+        resolveSelected: ({ values }) => {
+          const currentLocale = locale.value
+          return queryOptions({
+            queryFn: () =>
+              Promise.resolve({
+                rows: values.map((id) => ({ id: String(id), name: `${currentLocale}-${id}` })),
+              }),
+            queryKey: ['users', 'selected', currentLocale, values],
+          })
+        },
+      },
+      {
+        key: 'localized-users',
+        mapPage: ({ nextCursor, rows }) => ({
+          nextCursor,
+          options: rows.map((user) => ({ label: user.name, value: user.id })),
+        }),
+        mapSelected: ({ rows }) => rows.map((user) => ({ label: user.name, value: user.id })),
+        pagination: { size: 2, type: 'cursor' },
+      },
+    )
+    const schema = defineDashboardSchema({
+      filters: (f) => ({ owner: f.remote(users, { label: 'Owner' }) }),
+      key: 'localized-users',
+    })
+    const { dashboard, fetchedKeys, until, wrapper } = await mountDashboard({
+      query: { owner: 'u1' },
+      schema,
+    })
+    await until(() => dashboard.controls.owner.display === 'en-u1')
+
+    locale.value = 'fr'
+    await until(() => dashboard.controls.owner.display === 'fr-u1')
+    expect(fetchedKeys().some((key) => key.includes('"selected","fr"'))).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('updates table-backed options when an external workspace changes', async () => {
+    const workspace = ref('first')
+    const users = remoteTableOptions(
+      (request) => {
+        const scope = workspace.value
+        return queryOptions({
+          queryFn: () =>
+            Promise.resolve({
+              pageInfo: {
+                count: 'none' as const,
+                mode: 'cursor' as const,
+                nextCursor: null,
+                pageSize: request.pagination?.pageSize ?? 25,
+                rowCount: null,
+              },
+              rows: [{ id: scope, name: scope }],
+            }),
+          queryKey: ['users', scope, request],
+        })
+      },
+      { option: (user) => ({ label: user.name, value: user.id }) },
+    )
+    const schema = defineDashboardSchema({
+      filters: (f) => ({ owner: f.remote(users, { label: 'Owner' }) }),
+      key: 'table-backed-users',
+    })
+    const { dashboard, until, wrapper } = await mountDashboard({ schema })
+    dashboard.controls.owner.open = true
+    await until(() => dashboard.controls.owner.items[0]?.value === 'first')
+
+    workspace.value = 'second'
+    await until(() => dashboard.controls.owner.items[0]?.value === 'second')
+    wrapper.unmount()
+  })
+
   it('uses a reusable loader endpoint key when its scope changes', async () => {
     const workspace = ref('first')
     const users = defineRemoteOptions(
