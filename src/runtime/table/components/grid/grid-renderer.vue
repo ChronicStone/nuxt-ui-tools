@@ -2,7 +2,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { useVirtualizer } from '@tanstack/vue-virtual'
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, useTemplateRef, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
@@ -12,6 +12,8 @@ import { useTableInternals } from '../../composables/use-table-internals'
 import { GRID_DEFAULTS } from '../../constants/grid'
 import type { DataListControlSize, DataListGridUi } from '../../types'
 import { mergeDataListUiClass, resolveTableRowId } from '../../utils'
+import DataListErrorState from '../data-list/data-list-error-state.vue'
+import ProgressLine from '../layout/progress-line.vue'
 import TableEmptyState from '../table/table-empty-state.vue'
 import GridCard from './grid-card.vue'
 import GridSkeleton from './grid-skeleton.vue'
@@ -31,52 +33,10 @@ const resolvedSize = computed(
 )
 const gap = computed(() => dataListUi.ui.value.grid?.gap ?? 16)
 const viewportRef = useTemplateRef<HTMLElement>('viewportRef')
-const animationsReady = ref<boolean>(false)
 
 const isContained = computed(() => internals.grid.mode.value === 'contained')
 const rowChunks = computed(() => internals.grid.rowChunks.value)
 const tableRows = computed(() => internals.grid.rows.value)
-const flipPositions = new Map<string, { left: number; top: number }>()
-watch(
-  tableRows,
-  () => {
-    flipPositions.clear()
-    if (!isContained.value) {
-      return
-    }
-    const items =
-      viewportRef.value?.querySelectorAll<HTMLElement>('.nut-dl-grid__item[data-row-id]') ?? []
-    for (const item of items) {
-      const rect = item.getBoundingClientRect()
-      flipPositions.set(item.dataset.rowId ?? '', { left: rect.left, top: rect.top })
-    }
-  },
-  { flush: 'pre' },
-)
-watch(tableRows, () => nextTick().then(flipCards), { flush: 'post' })
-function flipCards() {
-  if (!flipPositions.size) {
-    return
-  }
-  const items =
-    viewportRef.value?.querySelectorAll<HTMLElement>('.nut-dl-grid__item[data-row-id]') ?? []
-  for (const item of items) {
-    const previous = flipPositions.get(item.dataset.rowId ?? '')
-    if (!previous) {
-      continue
-    }
-    const rect = item.getBoundingClientRect()
-    const dx = previous.left - rect.left
-    const dy = previous.top - rect.top
-    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-      item.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], {
-        duration: 240,
-        easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
-      })
-    }
-  }
-  flipPositions.clear()
-}
 const status = computed(() => internals.queryContent.status.value)
 const gridTemplateColumns = computed(
   () => `repeat(${internals.grid.columnCount.value}, minmax(0, 1fr))`,
@@ -93,6 +53,7 @@ const showRefreshing = computed(
     tableRows.value.length > 0 &&
     (status.value.isFetching || status.value.isRefreshing || status.value.isRevalidating),
 )
+const replacing = computed(() => tableRows.value.length > 0 && status.value.isReplacing)
 const showError = computed(() => Boolean(internals.queryContent.error.value))
 const showEmpty = computed(
   () => !showInitialLoading.value && !showError.value && tableRows.value.length === 0,
@@ -115,16 +76,6 @@ const rowVirtualizer = useVirtualizer(
 const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize())
 
-onMounted(() => {
-  nextTick().then(() => {
-    animationsReady.value = true
-  })
-})
-
-watch(
-  () => internals.pagination.currentPage.value,
-  () => scrollToTop(),
-)
 watch(
   () => internals.controls.tableLayout.value,
   (layout) => {
@@ -171,6 +122,29 @@ const loadingMore = computed(
   () => cursorMode.value && internals.pagination.state.value.isLoadingMore,
 )
 const hasNextPage = computed(() => cursorMode.value && internals.pagination.state.value.hasNextPage)
+let scrollResetPending = false
+watch(
+  () => [
+    internals.pagination.currentPage.value,
+    internals.pagination.pageSize.value,
+    JSON.stringify(internals.tableColumns.sortingState.value),
+    JSON.stringify(internals.queryState.filters.value),
+    internals.filters.searchQuery.value,
+  ],
+  () => {
+    if (!cursorMode.value) scrollResetPending = true
+  },
+)
+function resetScroll() {
+  if (!scrollResetPending) return
+  scrollResetPending = false
+  scrollToTop()
+}
+watch(tableRows, resetScroll)
+watch(
+  () => status.value.isFetching,
+  (fetching) => !fetching && resetScroll(),
+)
 watch(
   () =>
     [
@@ -217,7 +191,7 @@ function refreshData() {
     "
     :style="{ '--nut-dl-grid-gap': `${gap}px`, height: !fill && height ? height : undefined }"
     :data-loading="showInitialLoading"
-    :data-animated="animationsReady"
+    :data-replacing="replacing"
   >
     <div
       ref="viewportRef"
@@ -249,48 +223,20 @@ function refreshData() {
         v-else-if="showError"
         :class="
           mergeDataListUiClass(
-            'nut-dl-grid__state flex items-center justify-center px-4 py-10',
+            'nut-dl-grid__state flex h-full flex-col items-stretch justify-center',
             undefined,
             ui?.error,
           )
         "
       >
-        <div
-          :class="
-            mergeDataListUiClass(
-              'grid max-w-md justify-items-center gap-3 rounded-lg border border-default bg-default px-6 py-8 text-center',
-              undefined,
-              ui?.errorCard,
-            )
-          "
-        >
-          <UIcon
-            name="i-lucide-cloud-alert"
-            :class="mergeDataListUiClass('size-5 text-error', undefined, ui?.errorIcon)"
-          />
-          <div :class="mergeDataListUiClass('grid gap-1', undefined, ui?.errorCopy)">
-            <div
-              :class="
-                mergeDataListUiClass('font-medium text-highlighted', undefined, ui?.errorTitle)
-              "
-            >
-              {{ t('table.states.gridError.title') }}
-            </div>
-            <p :class="mergeDataListUiClass('text-sm text-muted', undefined, ui?.errorDescription)">
-              {{ t('table.states.gridError.description') }}
-            </p>
-          </div>
-          <UButton
-            color="neutral"
-            variant="outline"
+        <slot name="error" :error="internals.queryContent.error.value" :retry="refreshData">
+          <DataListErrorState
+            :min-height="fill ? undefined : '16rem'"
             :size="resolvedSize"
-            icon="i-lucide-refresh-cw"
-            :ui="{ base: ui?.retry }"
-            @click="refreshData"
-          >
-            {{ t('table.states.gridError.action') }}
-          </UButton>
-        </div>
+            class="flex-1"
+            @retry="refreshData"
+          />
+        </slot>
       </div>
 
       <div
@@ -304,7 +250,7 @@ function refreshData() {
         "
       >
         <slot name="empty">
-          <TableEmptyState min-height="24rem" :size="resolvedSize" />
+          <TableEmptyState :min-height="fill ? undefined : '24rem'" :size="resolvedSize" />
         </slot>
       </div>
 
@@ -344,16 +290,10 @@ function refreshData() {
         </div>
       </div>
 
-      <TransitionGroup
+      <div
         v-else
-        tag="div"
         :class="mergeDataListUiClass('nut-dl-grid__flow grid', undefined, ui?.flow)"
         :style="{ gridTemplateColumns, gap: `${gap}px` }"
-        move-class="nut-dl-grid__item--moving"
-        enter-active-class="nut-dl-grid__item--entering"
-        enter-from-class="nut-dl-grid__item--from"
-        leave-active-class="nut-dl-grid__item--leaving"
-        leave-to-class="nut-dl-grid__item--from"
       >
         <div
           v-for="(row, index) in tableRows"
@@ -363,7 +303,7 @@ function refreshData() {
         >
           <GridCard :row-index="index" />
         </div>
-      </TransitionGroup>
+      </div>
     </div>
 
     <div
@@ -377,101 +317,52 @@ function refreshData() {
       <span>{{ t('table.controls.loadingMore') }}</span>
     </div>
 
-    <Transition name="nut-dl-grid-progress">
-      <div
-        v-if="showRefreshing"
-        :class="
-          mergeDataListUiClass(
-            'nut-dl-grid__progress pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden',
-            undefined,
-            ui?.refreshing,
-          )
-        "
-        aria-hidden="true"
-      >
-        <span
-          :class="
-            mergeDataListUiClass(
-              'nut-dl-grid__progress-bar block h-full w-full',
-              undefined,
-              ui?.refreshingLine,
-            )
-          "
-        />
-      </div>
-    </Transition>
+    <ProgressLine
+      :active="showRefreshing"
+      :restart-key="internals.queryContent.refreshes.value"
+      :class="
+        mergeDataListUiClass(
+          'nut-dl-grid__progress absolute inset-x-0 top-0 z-10',
+          undefined,
+          ui?.refreshing,
+        )
+      "
+      :bar-class="mergeDataListUiClass('nut-dl-grid__progress-bar', undefined, ui?.refreshingLine)"
+    />
   </div>
 </template>
 
 <style>
 .nut-dl-grid__skeleton {
-  animation: nut-dl-grid-in 0.2s ease both;
-  animation-delay: calc(var(--nut-dl-i, 0) * 30ms);
+  animation: nut-dl-grid-in 0.18s ease 0.12s both;
 }
 .nut-dl-grid__viewport {
   scrollbar-width: thin;
   overflow-anchor: none;
 }
-.nut-dl-grid[data-animated='true'] .nut-dl-grid__item {
-  animation: nut-dl-grid-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+.nut-dl-grid__flow,
+.nut-dl-grid__canvas {
+  transition: opacity 0.16s ease-out;
 }
-.nut-dl-grid__item--moving {
-  transition: transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-.nut-dl-grid__item--entering {
-  transition:
-    opacity 0.18s ease,
-    transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-.nut-dl-grid__item--leaving {
-  position: absolute;
-  transition:
-    opacity 0.14s ease,
-    transform 0.14s ease;
-}
-.nut-dl-grid__item--from {
-  opacity: 0;
-  transform: translateY(6px);
+.nut-dl-grid[data-replacing='true'] .nut-dl-grid__flow,
+.nut-dl-grid[data-replacing='true'] .nut-dl-grid__canvas {
+  opacity: 0.55;
+  transition: opacity 0.2s ease-in 0.18s;
 }
 @keyframes nut-dl-grid-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
-}
-.nut-dl-grid__progress-bar {
-  background: linear-gradient(90deg, transparent, var(--ui-primary), transparent);
-  background-size: 40% 100%;
-  animation: nut-dl-grid-progress 1s ease-in-out infinite;
-}
-@keyframes nut-dl-grid-progress {
-  from {
-    background-position: -40% 0;
-  }
-  to {
-    background-position: 140% 0;
-  }
-}
-.nut-dl-grid-progress-enter-active,
-.nut-dl-grid-progress-leave-active {
-  transition: opacity 0.16s ease;
-}
-.nut-dl-grid-progress-enter-from,
-.nut-dl-grid-progress-leave-to {
-  opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .nut-dl-grid[data-animated='true'] .nut-dl-grid__item,
-  .nut-dl-grid__progress-bar {
+  .nut-dl-grid__skeleton {
     animation: none;
   }
-  .nut-dl-grid__item--moving,
-  .nut-dl-grid__item--entering,
-  .nut-dl-grid__item--leaving {
+  .nut-dl-grid__flow,
+  .nut-dl-grid__canvas {
     transition: none;
   }
 }

@@ -158,6 +158,64 @@ describe('filter tags bar', () => {
     expect(harness.internals.filterPresentation.dynamicSessionDefinition.value).toBeUndefined()
   })
 
+  it('commits typed text after a pause and on Enter', async () => {
+    harness = await mountTags({ schema: createAccountsSchema({ textTag: true }) })
+    const w = harness.wrapper
+    const state = () => must(harness).internals.filters.getActiveFilterState({ key: 'legalEntity' })
+
+    await w.find('.nut-dl-tag--add').trigger('click')
+    await harness.flush()
+    await must(
+      w
+        .findAll('[data-filter-stage-content] button.rounded-md')
+        .find((row) => row.text() === 'Entité légale'),
+    ).trigger('click')
+    await harness.flush()
+    await must(w.findAll('[data-filter-stage-content] button')[0]).trigger('click')
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-editor__head').exists())
+    expect(w.find('.nut-dl-editor__head').text()).toContain('Entité légale')
+    expect(texts(w, '[data-ui="UButton"]')).not.toContain('Appliquer')
+
+    const input = w.find('.nut-dl-editor__input input')
+    await input.setValue('Acme')
+    expect(state()).toBeUndefined()
+    await harness.until(() => state()?.value === 'Acme', 2000)
+    expect(harness.query()['f.ui.legalEntity']).toBe('Acme')
+
+    await input.setValue('Acme Corp')
+    await input.trigger('keydown', { key: 'Enter' })
+    await harness.flush()
+    expect(state()?.value).toBe('Acme Corp')
+  })
+
+  it('keeps text typed right before the add-filter picker is dismissed', async () => {
+    harness = await mountTags({ schema: createAccountsSchema({ textTag: true }) })
+    const w = harness.wrapper
+    const state = () => must(harness).internals.filters.getActiveFilterState({ key: 'legalEntity' })
+
+    await w.find('.nut-dl-tag--add').trigger('click')
+    await harness.flush()
+    await must(
+      w
+        .findAll('[data-filter-stage-content] button.rounded-md')
+        .find((row) => row.text() === 'Entité légale'),
+    ).trigger('click')
+    await harness.flush()
+    await must(w.findAll('[data-filter-stage-content] button')[0]).trigger('click')
+    await harness.until(() => must(harness).wrapper.find('.nut-dl-editor__input input').exists())
+
+    await w.find('.nut-dl-editor__input input').setValue('Acme')
+    expect(state()).toBeUndefined()
+    must(
+      w
+        .findAllComponents({ name: 'UPopover' })
+        .find((popover) => popover.find('.nut-dl-editor__input').exists()),
+    ).vm.$emit('update:open', false)
+    await harness.flush()
+
+    expect([state()?.value, harness.query()['f.ui.legalEntity']]).toStrictEqual(['Acme', 'Acme'])
+  })
+
   it('offers facet-only remote values in the dynamic filter editor', async () => {
     harness = await mountTags({ schema: createAccountsSchema({ embeddedFacets: true }) })
     const w = harness.wrapper

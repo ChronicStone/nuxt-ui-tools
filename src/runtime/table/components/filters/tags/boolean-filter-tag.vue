@@ -18,16 +18,22 @@ import {
   resolveFilterEditorSizeClasses,
   resolveFilterTriggerIcon,
 } from '../../../utils'
+import FilterEditorHeader from '../shared/filter-editor-header.vue'
 import FilterPopoverShell from '../shared/filter-popover-shell.vue'
 import TableFilterTrigger from '../shared/filter-trigger-tag.vue'
 
-const props = defineProps<{
-  definition: TableBooleanFilterDefinition
-  dynamic?: boolean
-  session?: boolean
-  embedded?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    definition: TableBooleanFilterDefinition
+    dynamic?: boolean
+    session?: boolean
+    embedded?: boolean
+    header?: boolean
+  }>(),
+  { header: true },
+)
 const emit = defineEmits<{
+  back: []
   dismiss: []
   sessionClosed: []
 }>()
@@ -38,6 +44,9 @@ const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 const geometry = computed(() => resolveDataListControlGeometry(size.value))
+const showHeader = computed(
+  () => props.header && dataListUi.ui.value.filterTags?.props?.editorHeader !== false,
+)
 const searchQuery = ref<string>('')
 const isSessionOpen = ref<boolean>(false)
 const isContentReady = ref<boolean>(false)
@@ -214,6 +223,15 @@ function clearFilter() {
         "
         @vue:mounted="handleContentMounted"
       >
+        <FilterEditorHeader
+          v-if="showHeader"
+          :label="internals.filters.getFilterLabelText({ label: definition.label })"
+          :active="preview.active"
+          :embedded="embedded"
+          :ui="dataListFilterUi"
+          @back="emit('back')"
+          @clear="clearFilter"
+        />
         <div
           :class="mergeDataListUiClass(sizeClasses.scrollArea, undefined, dataListFilterUi?.list)"
         >
@@ -227,7 +245,7 @@ function clearFilter() {
               root: 'w-full',
               fieldset: 'grid gap-0.5',
               item: mergeDataListUiClass(
-                `flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
+                `relative flex items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
                 undefined,
                 dataListFilterUi?.option,
               ),
@@ -235,7 +253,7 @@ function clearFilter() {
               base: 'cursor-pointer',
               wrapper: 'min-w-0 flex-1',
               label: mergeDataListUiClass(
-                `w-full cursor-pointer text-default ${sizeClasses.optionLabel}`,
+                `w-full cursor-pointer text-default before:absolute before:inset-0 ${sizeClasses.optionLabel}`,
                 undefined,
                 dataListFilterUi?.optionLabel,
               ),
@@ -277,7 +295,7 @@ function clearFilter() {
         </div>
 
         <div
-          v-if="filterUi.commitMode === 'manual'"
+          v-if="filterUi.commitMode !== 'auto'"
           :class="
             mergeDataListUiClass(
               `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,

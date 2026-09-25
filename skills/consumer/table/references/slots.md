@@ -166,3 +166,23 @@ The same `nuxtUiTools.dataList` object can be provided through Nuxt app config. 
 DataList controls keep using Nuxt UI primitives. An application-level `app.config.ui.input`, `button`, `dropdownMenu`, `popover`, or `slideover` theme is therefore applied normally, and DataList `ui` slots merge on top of that primitive theme. Replacing a trigger through its slot intentionally transfers rendering ownership to the custom child.
 
 `UiDataListContent` uses `fit="content"`, `fit="height"`, or `fit="fill"`, and the granular root has no implicit fixed height.
+
+## Error State
+
+Table and grid renderers render `<UiDataListErrorState>` when a request fails and expose it through the `error` slot with `error` and `retry`. Keep the shared layout and pass application copy through its props:
+
+```vue
+<UiDataListContent fit="fill">
+  <template #error="{ error, retry }">
+    <UiDataListErrorState
+      class="min-h-0 flex-1"
+      :title="describe(error).title"
+      :description="describe(error).detail"
+      :reference="describe(error).requestId"
+      @retry="retry"
+    />
+  </template>
+</UiDataListContent>
+```
+
+`reference` renders a selectable monospace token under the description, for a request identifier. The `actions` slot adds buttons next to the retry button. In `fill` mode the state centers itself in the body below the header.

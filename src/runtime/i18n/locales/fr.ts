@@ -381,6 +381,7 @@ export default defineUiToolsLocale<Messages>({
         loadMore: 'Charger plus',
         loadingMore: 'Chargement…',
         noMatchingFilters: 'Aucun filtre correspondant.',
+        clearSearch: 'Effacer la recherche',
         resetColumns: 'Par défaut',
         resetFilters: 'Réinitialiser',
         searchColumns: 'Rechercher des colonnes...',
@@ -435,6 +436,24 @@ export default defineUiToolsLocale<Messages>({
           order: 'Ordre',
           sortBy: 'Trier par',
         },
+        date: {
+          custom: 'Période personnalisée',
+          end: 'Fin',
+          presets: {
+            last30Days: '30 derniers jours',
+            last7Days: '7 derniers jours',
+            lastMonth: 'Le mois dernier',
+            sevenDaysAgo: 'Il y a 7 jours',
+            startOfMonth: 'Début du mois',
+            startOfYear: "Début de l'année",
+            thisMonth: 'Ce mois-ci',
+            today: "Aujourd'hui",
+            yearToDate: "Depuis le début de l'année",
+            yesterday: 'Hier',
+          },
+          range: 'Période',
+          start: 'Début',
+        },
       },
       footer: {
         firstPage: 'Première page',
@@ -477,9 +496,8 @@ export default defineUiToolsLocale<Messages>({
         },
         gridError: {
           action: 'Réessayer',
-          description:
-            'La dernière requête a échoué. Réessayez une fois la source de données disponible.',
-          title: 'Impossible de charger cette grille',
+          description: 'La dernière requête a échoué. Réessayez dans un instant.',
+          title: 'Impossible de charger cette liste',
         },
         loaded: '{count} chargés',
         loadingMore: 'Chargement en cours…',
@@ -487,6 +505,8 @@ export default defineUiToolsLocale<Messages>({
       summaries: {
         filtered: 'Filtrés',
         page: 'Page',
+        rowOne: 'ligne',
+        rowOther: 'lignes',
         selection: 'Sélection',
         total: 'Total',
       },

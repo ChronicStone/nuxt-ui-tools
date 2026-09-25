@@ -127,7 +127,13 @@ watch(
       :error="error"
       :retry="refresh"
     >
-      <DataListErrorState min-height="16rem" :size="resolvedSize" :ui="ui" @retry="refresh" />
+      <DataListErrorState
+        :min-height="fit === 'content' ? '16rem' : undefined"
+        :class="fit === 'content' ? '' : 'min-h-0 flex-1'"
+        :size="resolvedSize"
+        :ui="ui"
+        @retry="refresh"
+      />
     </slot>
     <slot
       v-else-if="empty && $slots.empty"

@@ -24,15 +24,18 @@ interface FilterOptionMultipleListSection {
   dividerBefore?: boolean
 }
 
-const props = defineProps<{
-  sections: FilterOptionMultipleListSection[]
-  showCounts: boolean
-  countLoading: boolean
-  selectedIcon?: string
-  truncate?: boolean
-  size?: DataListControlSize
-  ui?: DataListFilterEditorUi
-}>()
+const props = withDefaults(
+  defineProps<{
+    sections: FilterOptionMultipleListSection[]
+    showCounts: boolean
+    countLoading: boolean
+    selectedIcon?: string
+    truncate?: boolean
+    size?: DataListControlSize
+    ui?: DataListFilterEditorUi
+  }>(),
+  { truncate: true },
+)
 
 const emit = defineEmits<{
   select: [
@@ -61,7 +64,7 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
 </script>
 
 <template>
-  <div :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
+  <div :class="mergeDataListUiClass('grid grid-cols-1 gap-0.5', undefined, ui?.list)">
     <template v-for="section in props.sections" :key="section.key">
       <div
         v-if="section.dividerBefore && section.entries.length"
@@ -73,7 +76,7 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
         :key="entry.value == null ? entry.label : String(entry.value)"
         :class="
           mergeDataListUiClass(
-            `nut-dl-option flex cursor-pointer items-center rounded-md text-left outline-none transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
+            `nut-dl-option flex min-w-0 cursor-pointer items-center rounded-md text-left outline-none transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'text-highlighted' : 'text-default'}`,
             undefined,
             ui?.option,
           )
@@ -114,11 +117,12 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
           <span
             :class="
               mergeDataListUiClass(
-                `min-w-0 flex-1 ${sizeClasses.optionLabel} ${(props.truncate ?? true) ? 'truncate' : ''}`,
+                `min-w-0 flex-1 ${sizeClasses.optionLabel} ${props.truncate ? 'truncate' : ''}`,
                 undefined,
                 ui?.optionLabel,
               )
             "
+            :title="entry.label"
           >
             {{ entry.label }}
           </span>

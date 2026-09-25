@@ -57,6 +57,8 @@ export interface AccountsSchemaOptions {
   summaries?: boolean
   summariesResolve?: TableSummariesSchema['resolve']
   panelFilters?: boolean
+  /** Adds the legal entity text filter as a dynamic tag. */
+  textTag?: boolean
   statusDefault?: AccountStatus[]
   fail?: boolean | (() => boolean)
   controls?: TableControlsSchema
@@ -124,6 +126,15 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
           display: { location: 'tag-dynamic', order: 3 },
           label: 'Synchronisation EDOF',
         }),
+        ...(options.textTag
+          ? [
+              filter.text('legalEntity', {
+                behavior: { operators: ['contains', 'is'] },
+                display: { location: 'tag-dynamic', order: 4 },
+                label: 'Entité légale',
+              }),
+            ]
+          : []),
         ...(options.panelFilters
           ? [
               filter.text('legalEntity', {
@@ -425,5 +436,43 @@ export function createAuditSchema(
       ],
     },
     tableKey: 'audit',
+  })
+}
+
+export function createWideSchema(options: { columns?: number; rows?: number } = {}) {
+  const columnCount = options.columns ?? 20
+  const keys = Array.from({ length: columnCount }, (_, index) => `m${index + 1}`)
+  const rows: Record<string, string | number>[] = Array.from(
+    { length: options.rows ?? 40 },
+    (_, index) => ({
+      id: `row-${index + 1}`,
+      name: `Ligne ${index + 1}`,
+      ...Object.fromEntries(keys.map((key, column) => [key, (index + 1) * (column + 1)])),
+    }),
+  )
+  return defineTableSchema({
+    rowKey: 'id',
+    source: tableSource({
+      mode: 'client',
+      query: () => ({
+        queryFn: async () => rows,
+        queryKey: ['wide', columnCount, rows.length],
+      }),
+    }),
+    table: {
+      columns: (column) => [
+        column.field('name', { label: 'Nom', pinned: 'left', width: 180 }),
+        ...keys.map((key, index) =>
+          column.field(key, {
+            align: 'right',
+            label: `Mesure ${index + 1}`,
+            summary: 'sum',
+            width: 120,
+          }),
+        ),
+      ],
+      summaries: { scope: 'filtered' },
+    },
+    tableKey: 'wide',
   })
 }

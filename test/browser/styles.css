@@ -1,3 +1,4 @@
 @import 'tailwindcss' source(none);
 @source '../../src/runtime/dashboard';
 @source '../../src/runtime/form';
+@source '../../src/runtime/table';

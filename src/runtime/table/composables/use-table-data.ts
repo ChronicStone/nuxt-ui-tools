@@ -1,7 +1,7 @@
 import { keepPreviousData, useInfiniteQuery, useQueries, useQuery } from '@tanstack/vue-query'
 import type { InfiniteData, QueryKey } from '@tanstack/vue-query'
-import { computed, shallowRef, watch } from 'vue'
-import type { ComputedRef } from 'vue'
+import { computed, readonly, ref, shallowRef, watch } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 
 import { isArray, isFunction, isNumber, isObject, isString } from '../../shared/utils/predicate'
 import { QUERY_DEFAULTS } from '../constants/query-state'
@@ -74,6 +74,8 @@ export interface UseTableDataReturn {
     isFetching: boolean
     isRefreshing: boolean
     isRevalidating: boolean
+    /** Rows of the previous request stay on screen while a new page, sort, filter or search loads. */
+    isReplacing: boolean
     isContextPending: boolean
     isContextFetching: boolean
     isDataPending: boolean
@@ -85,6 +87,8 @@ export interface UseTableDataReturn {
   refreshData: () => (
     ...args: Parameters<ReturnType<typeof useQuery>['refetch']>
   ) => Promise<TableRefreshResult>
+  /** Counts refresh requests, including ones issued while a request is already running. */
+  refreshes: Readonly<Ref<number>>
   refreshPageContext: () => Promise<TableRefreshResult[]>
   updateRows: (rows: GenericObject[]) => void
 }
@@ -176,14 +180,24 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const usesEmbeddedRemoteFacets = computed(() => remoteSource.value?.facets === true)
   const facetsContextKey = computed(() => JSON.stringify(facetsBaseContext.value))
   const lastResolvedEmbeddedFacetsKey = shallowRef<string | null>(null)
-  const requestContext = computed<TableSourceRequestContext>(() => ({
-    context: contextData.value,
-    facets:
+  const facetsCarrierKey = shallowRef<string | null>(null)
+  const dataRequestKey = computed(() =>
+    JSON.stringify({
+      ...facetsBaseContext.value,
+      pagination: requestPagination.value,
+      sorting: requestSorting.value,
+    }),
+  )
+  const requestsEmbeddedFacets = computed(
+    () =>
       usesEmbeddedRemoteFacets.value &&
       globalFacetDescriptors.value.length > 0 &&
-      facetsContextKey.value !== lastResolvedEmbeddedFacetsKey.value
-        ? globalFacetDescriptors.value
-        : undefined,
+      (facetsContextKey.value !== lastResolvedEmbeddedFacetsKey.value ||
+        dataRequestKey.value === facetsCarrierKey.value),
+  )
+  const requestContext = computed<TableSourceRequestContext>(() => ({
+    context: contextData.value,
+    facets: requestsEmbeddedFacets.value ? globalFacetDescriptors.value : undefined,
     filters: requestFilters.value,
     pagination: requestPagination.value,
     search: requestSearch.value,
@@ -498,6 +512,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         isPageContextPending: false,
         isPending: true,
         isRefreshing: false,
+        isReplacing: false,
         isRevalidating: false,
         phase: params.startup.phase.value,
       }
@@ -525,6 +540,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         (!isActiveDataSuccess.value && isDataPending) ||
         (!initialized.value && isPageContextPending.value),
       isRefreshing,
+      isReplacing:
+        !isCursorPagination.value &&
+        query.isPlaceholderData.value &&
+        isDataFetching &&
+        rawData.value.rows.length > 0,
       isRevalidating: isActiveDataRefetching.value && rawData.value.rows.length > 0,
       phase: params.startup.phase.value,
     }
@@ -551,6 +571,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
       embeddedFacetsState.value = embeddedFacets
       lastResolvedEmbeddedFacetsKey.value = facetsContextKey.value
+      facetsCarrierKey.value = dataRequestKey.value
     },
     { immediate: true },
   )
@@ -570,6 +591,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
         embeddedFacetsState.value = embeddedFacets
         lastResolvedEmbeddedFacetsKey.value = facetsContextKey.value
+        facetsCarrierKey.value = dataRequestKey.value
         return
       }
     },
@@ -585,8 +607,11 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     return Promise.all(contextResults.value.map((item) => item.refetch()))
   }
 
+  const refreshes = ref(0)
+
   function refreshData() {
     return (...args: Parameters<typeof query.refetch>) => {
+      refreshes.value += 1
       params.startup.start()
       if (isCursorPagination.value) {
         cursorRowOverrides.value = new Map()
@@ -648,6 +673,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     rawData,
     refreshContext,
     refreshData,
+    refreshes: readonly(refreshes),
     refreshPageContext,
     requestContext,
     sourceRequest,

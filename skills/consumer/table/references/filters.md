@@ -120,10 +120,15 @@ behavior: {
   operators: ['is', 'isAnyOf', 'isNot'],
   defaultOperator: 'isAnyOf',
   defaultValue: ['active'],
-  commitMode: 'manual',
   clearOnOperatorChange: true,
 }
 ```
+
+Tag editors commit on their own (`commitMode: 'auto'`, the default): option and boolean rows apply
+on click, date presets and calendar picks apply and close, and typed values (text, number, typed
+dates) apply after a short pause, on Enter, or when the popover closes. Every editor opens with the
+same header: the filter label and a `Clear` action. Set `commitMode: 'manual'` on a filter to stage
+its edits behind a `Clear all / Apply` footer instead.
 
 `defaultValue` defines the effective baseline state. It applies when the URL has no override and stays
 omitted from the URL while unchanged, but it does not count as an active filter in tags, panel badges,
@@ -138,7 +143,7 @@ instead of leaving defaulted filters empty.
 Important rule:
 
 - drawer panels default to staged apply; granular panels choose `live` or `submit` with `commit-mode`
-- `behavior.commitMode` matters for direct surfaces such as tag and tag-dynamic editors
+- `behavior.commitMode` matters for direct surfaces such as tag and tag-dynamic editors, which apply on their own unless set to `manual`
 
 ## Granular Raw Filter Panel
 

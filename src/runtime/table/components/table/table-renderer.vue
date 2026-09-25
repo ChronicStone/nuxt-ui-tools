@@ -1,23 +1,12 @@
 <script setup lang="ts">
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import type { Virtualizer } from '@tanstack/vue-virtual'
-import {
-  computed,
-  h,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  shallowRef,
-  TransitionGroup,
-  useTemplateRef,
-  watch,
-} from 'vue'
+import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
-import { isDefined, isFunction, isNumber, isObject } from '../../../shared/utils/predicate'
+import { isFunction, isNumber, isObject } from '../../../shared/utils/predicate'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import { useTanstackTable } from '../../composables/use-tanstack-table'
@@ -36,17 +25,22 @@ import {
   SELECT_COLUMN_WIDTH,
 } from '../../utils/columns/types'
 import DataListErrorState from '../data-list/data-list-error-state.vue'
+import ProgressLine from '../layout/progress-line.vue'
 import TableCell from './table-cell'
 import TableColumnHeader from './table-column-header.vue'
 import TableEmptyState from './table-empty-state.vue'
+import { columnCellLayout, tableRowCells } from './table-layout'
+import type { TableColumnSlot } from './table-layout'
 import TableOverlayScrollbars from './table-overlay-scrollbars.vue'
+import TableRow from './table-row.vue'
+import TableSkeletonCell from './table-skeleton-cell'
 
 const LOAD_MORE_THRESHOLD = 6
 const PREFETCH_VIEWPORTS = 3
 const VIRTUALIZE_ROW_THRESHOLD = 40
 const VIRTUALIZE_CELL_THRESHOLD = 240
-const VIRTUALIZE_COLUMN_THRESHOLD = 32
-const ANIMATION_WINDOW = 600
+const VIRTUALIZE_COLUMN_THRESHOLD = 12
+const APPEND_WINDOW = 400
 const SKELETON_MIN_ROWS = 6
 
 const SIZE_TOKENS = {
@@ -78,14 +72,14 @@ let rowMountFrame = 0
 const isFirstLoad = computed(
   () =>
     status.value.isBooting ||
-    ((status.value.isPending || status.value.isFetching) && rows.value.length === 0) ||
-    (!rowsMounted.value && rows.value.length > 0),
+    ((status.value.isPending || status.value.isFetching) && rows.value.length === 0),
 )
 const refreshing = computed(
   () =>
     rows.value.length > 0 &&
     (status.value.isFetching || status.value.isRefreshing || status.value.isRevalidating),
 )
+const replacing = computed(() => rows.value.length > 0 && status.value.isReplacing)
 const error = computed(() => (rows.value.length === 0 ? internals.queryContent.error.value : null))
 const empty = computed(() => !isFirstLoad.value && !error.value && rows.value.length === 0)
 
@@ -155,13 +149,23 @@ const virtualized = computed(
 
 const scrollRef = useTemplateRef<HTMLElement>('scrollRef')
 const rowHeights = new Map<string, number>()
-function measureRowHeight(element: Element) {
+/**
+ * Row heights come from the resize observer entries the virtualizer already receives, so mounting
+ * a row never forces a synchronous layout. Until an entry arrives, a row keeps its last known
+ * height or the density estimate, which is exact for every single-line row.
+ */
+function measureRowHeight(element: Element, entry: ResizeObserverEntry | undefined) {
   const key = element instanceof HTMLElement ? element.dataset.rowId : undefined
-  const { height } = element.getBoundingClientRect()
+  const known = key === undefined ? undefined : rowHeights.get(key)
+  const box = entry?.borderBoxSize?.[0]
+  if (!box) {
+    return known ?? rowHeight.value
+  }
+  const height = box.blockSize
   if (key === undefined) {
     return height
   }
-  const next = Math.max(rowHeights.get(key) ?? 0, height)
+  const next = Math.max(known ?? 0, height)
   rowHeights.set(key, next)
   return next
 }
@@ -172,23 +176,19 @@ const rowVirtualizer = useVirtualizer(
     getItemKey: (index: number) =>
       renderRows.value[index] ? getRowId(renderRows.value[index]!, index) : index,
     getScrollElement: () => scrollRef.value ?? null,
-    measureElement: (element: Element) => measureRowHeight(element),
-    overscan: 8,
+    measureElement: (element: Element, entry: ResizeObserverEntry | undefined) =>
+      measureRowHeight(element, entry),
+    overscan: 16,
   })),
 )
 const virtualRows = computed(() =>
   virtualized.value ? rowVirtualizer.value.getVirtualItems() : [],
 )
-const materializedRows = computed(() =>
-  virtualized.value
-    ? virtualRows.value.map((item) => renderRows.value[item.index]).filter(isDefined)
-    : renderRows.value,
-)
 
 const { table, resetColumnSizing } = useTanstackTable({
   columnSizing,
   columns: columnDefs,
-  data: materializedRows,
+  data: renderRows,
   getRowId,
   pinned,
 })
@@ -225,9 +225,22 @@ const columnVirtualizer = useVirtualizer(
 )
 const virtualColumns = computed(() => columnVirtualizer.value.getVirtualItems())
 
-type ColumnSlot =
-  | { kind: 'column'; columnId: string; key: string }
-  | { kind: 'spacer'; colSpan: number; key: string }
+type ColumnSlot = TableColumnSlot
+
+const filled = computed(
+  () => !columnsOverflow.value && bodyWidth.value > 0 && table.getTotalSize() < bodyWidth.value,
+)
+const tableCols = computed(() => {
+  const cols: { key: string; width?: string }[] = leafColumns.value.map((leaf) => ({
+    key: leaf.id,
+    width: `${leaf.getSize()}px`,
+  }))
+  if (filled.value) {
+    cols.splice(cols.length - table.getEndVisibleLeafColumns().length, 0, { key: 'fill' })
+  }
+  return cols
+})
+const columnCount = computed(() => tableCols.value.length)
 
 const columnSlots = computed<ColumnSlot[]>(() => {
   function asSlot(column: { id: string }): ColumnSlot {
@@ -239,7 +252,11 @@ const columnSlots = computed<ColumnSlot[]>(() => {
   }
   const slots: ColumnSlot[] = table.getStartVisibleLeafColumns().map(asSlot)
   if (!columnsOverflow.value) {
-    slots.push(...centerColumns.value.map(asSlot), ...table.getEndVisibleLeafColumns().map(asSlot))
+    slots.push(...centerColumns.value.map(asSlot))
+    if (filled.value) {
+      slots.push({ key: 'fill', kind: 'fill' })
+    }
+    slots.push(...table.getEndVisibleLeafColumns().map(asSlot))
     return slots
   }
   const first = virtualColumns.value[0]
@@ -261,29 +278,39 @@ const columnSlots = computed<ColumnSlot[]>(() => {
   return slots
 })
 
-type TableRow = (typeof tableRows.value)[number]
-type CellSlot =
-  | { kind: 'cell'; cell: ReturnType<TableRow['getVisibleCells']>[number]; key: string }
-  | Extract<ColumnSlot, { kind: 'spacer' }>
-
-function rowColumnSlots(row: TableRow): CellSlot[] {
-  const cells = new Map(row.getVisibleCells().map((cell) => [cell.column.id, cell]))
-  const slots: CellSlot[] = []
-  for (const slot of columnSlots.value) {
-    if (slot.kind === 'spacer') {
-      slots.push(slot)
-      continue
-    }
-    const cell = cells.get(slot.columnId)
-    if (cell) {
-      slots.push({ cell, key: cell.id, kind: 'cell' })
-    }
-  }
-  return slots
-}
-
 const headers = computed(() => table.getHeaderGroups()[0]?.headers ?? [])
 const headerByColumnId = computed(() => new Map(headers.value.map((h) => [h.column.id, h])))
+/**
+ * Header props built once per state change: calling the menu and resize factories in the template
+ * handed every header fresh arrays and functions on each render, so scrolling re-rendered all
+ * headers and their menus.
+ */
+const headerCellProps = computed(
+  () =>
+    new Map(
+      headers.value.map((header) => {
+        const { column } = header
+        const meta = column.columnDef.meta
+        return [
+          column.id,
+          {
+            align: meta?.align,
+            icon: meta?.icon,
+            items: internals.tableColumns.getMenuItems({ columnId: column.id }),
+            label: meta?.label ?? '',
+            pinned: Boolean(internals.tableColumns.getPinnedState({ columnId: column.id })),
+            resetSize: () => column.resetSize(),
+            resizable: column.getCanResize(),
+            resize: header.getResizeHandler(),
+            resizing: column.getIsResizing(),
+            sortState: internals.tableColumns.getSortState({ columnId: column.id }),
+            sortable: meta?.sortable,
+          },
+        ]
+      }),
+    ),
+)
+const HEADER_ROW = {}
 
 const virtualPaddingTop = computed(() => virtualRows.value[0]?.start ?? 0)
 const virtualPaddingBottom = computed(() => {
@@ -292,29 +319,38 @@ const virtualPaddingBottom = computed(() => {
   }
   return rowVirtualizer.value.getTotalSize() - (virtualRows.value.at(-1)?.end ?? 0)
 })
-const virtualRowByKey = computed(() => {
-  const byKey = new Map<string, { index: number; key: string }>()
-  for (const item of virtualRows.value) {
-    const row = renderRows.value[item.index]
-    if (row) {
-      byKey.set(getRowId(row, item.index), { index: item.index, key: String(item.key) })
-    }
-  }
-  return byKey
-})
 const renderedRows = computed(() => {
   if (!virtualized.value) {
     return tableRows.value.map((row, index) => ({ row, virtual: { index, key: String(row.id) } }))
   }
-  return tableRows.value
-    .map((row) => {
-      const virtual = virtualRowByKey.value.get(String(row.id))
-      return virtual ? { row, virtual } : undefined
-    })
-    .filter(isDefined)
+  return virtualRows.value.flatMap((item) => {
+    const row = tableRows.value[item.index]
+    return row ? [{ row, virtual: { index: item.index, key: String(item.key) } }] : []
+  })
 })
 
-function measureRow(element: Element | ComponentPublicInstance | null) {
+const rowCells = computed(() =>
+  tableRowCells({
+    layouts: new Map(
+      leafColumns.value.map((column) => [
+        column.id,
+        columnCellLayout({
+          firstEnd: isFirstEnd(column),
+          lastStart: isLastStart(column),
+          meta: column.columnDef.meta,
+          offset: pinnedOffset(column),
+          pinned: column.getIsPinned(),
+          tdClass: mergeDataListUiClass(undefined, undefined, props.ui?.td),
+        }),
+      ]),
+    ),
+    slots: columnSlots.value,
+  }),
+)
+const rowClass = computed(() => mergeDataListUiClass(undefined, undefined, props.ui?.tr))
+
+function measureRow(target: Element | ComponentPublicInstance | null) {
+  const element = target instanceof Element ? target : target?.$el
   if (!(element instanceof HTMLElement)) {
     return
   }
@@ -401,8 +437,13 @@ const summaryLabel = computed(() => {
   if (label) {
     return isFunction(label) ? String(label()) : String(label)
   }
-  return t('table.summaries.total')
+  return summaries.scope.value === 'filtered'
+    ? t('table.summaries.total')
+    : t(`table.summaries.${summaries.scope.value}`)
 })
+const summaryUnit = computed(() =>
+  t(summaries.count.value === 1 ? 'table.summaries.rowOne' : 'table.summaries.rowOther'),
+)
 function formatNumber(value: TableSummaryValue) {
   return isNumber(value)
     ? new Intl.NumberFormat(locale.value.code).format(value).replaceAll(' ', '\u00A0')
@@ -425,54 +466,9 @@ function renderSummary(columnId: string) {
   return () => h('span', formatNumber(value))
 }
 
-const animateEpoch = ref(false)
-const enterFrom = ref(Number.POSITIVE_INFINITY)
-const previousIds = shallowRef<Set<string>>(new Set())
-const flipPositions = new Map<string, number>()
-watch(
-  rows,
-  () => {
-    previousIds.value = new Set(rows.value.map((row, index) => getRowId(row, index)))
-    flipPositions.clear()
-    const elements =
-      scrollRef.value?.querySelectorAll<HTMLElement>('tr.nut-dl-row[data-row-id]') ?? []
-    for (const element of elements) {
-      flipPositions.set(element.dataset.rowId ?? '', element.getBoundingClientRect().top)
-    }
-  },
-  { flush: 'pre' },
-)
-watch(rows, () => nextTick().then(flipRows), { flush: 'post' })
-function flipRows() {
-  if (!flipPositions.size) {
-    return
-  }
-  const elements =
-    scrollRef.value?.querySelectorAll<HTMLElement>('tr.nut-dl-row[data-row-id]') ?? []
-  for (const element of elements) {
-    const previous = flipPositions.get(element.dataset.rowId ?? '')
-    if (previous === undefined) {
-      continue
-    }
-    const delta = previous - element.getBoundingClientRect().top
-    if (Math.abs(delta) > 1) {
-      element.animate([{ transform: `translateY(${delta}px)` }, { transform: 'none' }], {
-        duration: 240,
-        easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)',
-      })
-    }
-  }
-  flipPositions.clear()
-}
-let animateTimer = 0
-function armAnimation(from = Number.POSITIVE_INFINITY) {
-  enterFrom.value = from
-  animateEpoch.value = true
-  window.clearTimeout(animateTimer)
-  animateTimer = window.setTimeout(() => {
-    animateEpoch.value = false
-  }, ANIMATION_WINDOW)
-}
+const appendedFrom = ref<number>(Number.POSITIVE_INFINITY)
+const scrollResetPending = ref<boolean>(false)
+let appendTimer = 0
 watch(
   () => [
     internals.pagination.currentPage.value,
@@ -482,76 +478,38 @@ watch(
     internals.filters.searchQuery.value,
   ],
   () => {
-    if (!rowsMounted.value || cursorMode.value) {
-      return
-    }
+    if (!rowsMounted.value || cursorMode.value) return
     rowHeights.clear()
-    armAnimation()
-    scrollRef.value?.scrollTo({ top: 0 })
+    scrollResetPending.value = true
   },
 )
-const SKELETON_WIDTHS = [62, 44, 78, 54, 70, 38, 66, 48]
-function skeletonWidth(seed: number) {
-  return SKELETON_WIDTHS[seed % SKELETON_WIDTHS.length]!
+function resetScroll() {
+  if (!scrollResetPending.value) return
+  scrollResetPending.value = false
+  scrollRef.value?.scrollTo({ top: 0 })
 }
-function renderSkeletonCell(columnId: string, rowIndex: number) {
-  const meta = headerByColumnId.value.get(columnId)?.column.columnDef.meta
-  const kind =
-    meta?.internal === 'selection' ? 'check' : meta?.internal ? 'none' : (meta?.skeleton ?? 'text')
-  const seed = rowIndex * 7 + columnId.length
-  function line(width: number, extra = '') {
-    return h('span', {
-      class: `nut-dl-skeleton block h-3 rounded ${extra}`,
-      style: { width: `${width}%` },
-    })
-  }
-  return () => {
-    if (kind === 'none') {
-      return null
-    }
-    if (kind === 'check') {
-      return h('span', { class: 'nut-dl-skeleton block size-4 rounded-[4px]' })
-    }
-    if (kind === 'dot') {
-      return h('span', { class: 'flex items-center gap-2' }, [
-        h('span', { class: 'nut-dl-skeleton size-[7px] rounded-full' }),
-        line(skeletonWidth(seed) - 10),
-      ])
-    }
-    if (kind === 'avatar') {
-      return h('span', { class: 'flex items-center gap-2.5' }, [
-        h('span', { class: 'nut-dl-skeleton size-7 shrink-0 rounded-md' }),
-        h('span', { class: 'grid flex-1 gap-1.5' }, [
-          line(skeletonWidth(seed)),
-          line(skeletonWidth(seed + 3) - 20, 'h-2.5'),
-        ]),
-      ])
-    }
-    if (kind === 'badge') {
-      return h('span', { class: 'nut-dl-skeleton inline-block h-5 w-16 rounded-full' })
-    }
-    if (kind === 'number') {
-      return h('span', {
-        class: 'nut-dl-skeleton ml-auto block h-3 rounded',
-        style: { width: '36%' },
-      })
-    }
-    return line(skeletonWidth(seed))
-  }
-}
-watch(isFirstLoad, (loading, was) => {
-  if (was && !loading) {
-    armAnimation()
-  }
-})
+watch(rows, resetScroll)
+watch(
+  () => status.value.isFetching,
+  (fetching) => !fetching && resetScroll(),
+)
 watch(
   () => rows.value.length,
   (next, previous) => {
-    if (cursorMode.value && previous > 0 && next > previous) {
-      armAnimation(previous)
-    }
+    if (!cursorMode.value || previous === 0 || next <= previous) return
+    appendedFrom.value = previous
+    window.clearTimeout(appendTimer)
+    appendTimer = window.setTimeout(() => {
+      appendedFrom.value = Number.POSITIVE_INFINITY
+    }, APPEND_WINDOW)
   },
 )
+function skeletonColumn(columnId: string) {
+  const meta = headerByColumnId.value.get(columnId)?.column.columnDef.meta
+  if (meta?.internal === 'selection') return { align: meta.align, skeleton: 'check' as const }
+  if (meta?.internal) return { align: meta.align, skeleton: 'none' as const }
+  return { align: meta?.align, skeleton: meta?.skeleton }
+}
 
 const cursorMode = computed(() => internals.pagination.mode.value === 'cursor')
 const loadingMore = computed(
@@ -617,7 +575,7 @@ defineExpose({ resetColumnSizing })
       ref="scrollRef"
       class="nut-dl-table__scroll relative min-h-0 overflow-auto overscroll-x-contain bg-[var(--nut-dl-surface)]"
       :class="[
-        fill || height ? 'flex-1' : '',
+        fill || height ? 'flex flex-1 flex-col' : '',
         mergeDataListUiClass(undefined, undefined, ui?.root),
       ]"
       @scroll.passive="onScrollLoadMore"
@@ -629,16 +587,21 @@ defineExpose({ resetColumnSizing })
       >
         <colgroup>
           <col
-            v-for="leaf in leafColumns"
-            :key="leaf.id"
-            :style="{ width: `${leaf.getSize()}px` }"
+            v-for="col in tableCols"
+            :key="col.key"
+            :style="col.width ? { width: col.width } : undefined"
           />
         </colgroup>
         <thead :class="mergeDataListUiClass('nut-dl-table__head', undefined, ui?.thead)">
           <tr class="nut-dl-table__head-row">
             <template v-for="slot in columnSlots" :key="slot.key">
               <th
-                v-if="slot.kind === 'spacer'"
+                v-if="slot.kind === 'fill'"
+                class="nut-dl-table__fill sticky top-0 z-[3] p-0"
+                aria-hidden="true"
+              />
+              <th
+                v-else-if="slot.kind === 'spacer'"
                 :colspan="slot.colSpan"
                 class="nut-dl-table__spacer sticky top-0 z-[3] p-0"
                 aria-hidden="true"
@@ -683,55 +646,27 @@ defineExpose({ resetColumnSizing })
                         headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.renderHeader
                       "
                       :render="
-                        () =>
-                          headerByColumnId.get(slot.columnId)!.column.columnDef.meta!
-                            .renderHeader!()
+                        headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.renderHeader!
                       "
-                      :row="{}"
+                      :row="HEADER_ROW"
                       :index="-1"
                     />
                   </div>
                 </template>
                 <TableColumnHeader
                   v-else
+                  v-bind="headerCellProps.get(slot.columnId)!"
                   :open="openMenuId === slot.columnId"
-                  :label="headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.label"
-                  :icon="headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.icon"
-                  :align="headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.align"
-                  :sortable="headerByColumnId.get(slot.columnId)!.column.columnDef.meta!.sortable"
-                  :sort-state="internals.tableColumns.getSortState({ columnId: slot.columnId })"
-                  :pinned="
-                    Boolean(internals.tableColumns.getPinnedState({ columnId: slot.columnId }))
-                  "
-                  :items="internals.tableColumns.getMenuItems({ columnId: slot.columnId })"
-                  :resizable="headerByColumnId.get(slot.columnId)!.column.getCanResize()"
-                  :resizing="headerByColumnId.get(slot.columnId)!.column.getIsResizing()"
-                  :reset-size="() => headerByColumnId.get(slot.columnId)!.column.resetSize()"
-                  :resize="headerByColumnId.get(slot.columnId)!.getResizeHandler()"
                   @update:open="openMenuId = $event ? slot.columnId : null"
                 />
               </th>
             </template>
           </tr>
-          <tr class="nut-dl-progress" :data-active="refreshing" aria-hidden="true">
-            <th
-              :colspan="leafColumns.length"
-              class="sticky top-[var(--nut-dl-head-h)] z-[3] h-0 p-0"
-            >
-              <span />
-            </th>
-          </tr>
         </thead>
 
-        <component
-          :is="virtualized ? 'tbody' : TransitionGroup"
-          :key="virtualized ? 'virtual' : 'rows'"
-          :tag="virtualized ? undefined : 'tbody'"
+        <tbody
           :class="mergeDataListUiClass('nut-dl-table__body', undefined, ui?.tbody)"
-          :move-class="virtualized ? undefined : 'nut-dl-row--moving'"
-          :enter-active-class="virtualized ? undefined : 'nut-dl-row--settling'"
-          :enter-from-class="virtualized ? undefined : 'nut-dl-row--from'"
-          :leave-active-class="virtualized ? undefined : 'hidden'"
+          :data-replacing="replacing"
         >
           <tr
             v-if="virtualPaddingTop"
@@ -739,92 +674,21 @@ defineExpose({ resetColumnSizing })
             :style="{ height: `${virtualPaddingTop}px` }"
             aria-hidden="true"
           >
-            <td :colspan="leafColumns.length" class="p-0" />
+            <td :colspan="columnCount" class="p-0" />
           </tr>
 
-          <tr
+          <TableRow
             v-for="{ row, virtual } in renderedRows"
             :key="virtual.key"
             :ref="measureRow"
-            class="nut-dl-row group/row"
-            :class="[
-              internals.selection.isRowSelected({ rowId: String(row.id) })
-                ? 'nut-dl-row--selected'
-                : '',
-              mergeDataListUiClass(undefined, undefined, ui?.tr),
-            ]"
-            :data-index="virtual.index"
-            :data-row-id="row.id"
-            :style="
-              virtualized &&
-              animateEpoch &&
-              (virtual.index >= enterFrom || !previousIds.has(String(row.id)))
-                ? {
-                    '--nut-dl-i': Math.min(
-                      virtual.index - Math.max(enterFrom, virtualRows[0]?.index ?? 0),
-                      24,
-                    ),
-                  }
-                : undefined
-            "
-          >
-            <template v-for="slot in rowColumnSlots(row)" :key="slot.key">
-              <td
-                v-if="slot.kind === 'spacer'"
-                :colspan="slot.colSpan"
-                class="nut-dl-table__spacer p-0"
-                aria-hidden="true"
-              />
-              <td
-                v-else
-                class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle"
-                :class="[
-                  slot.cell.column.getIsPinned() === 'start'
-                    ? 'nut-dl-pin nut-dl-pin--start z-[2]'
-                    : '',
-                  slot.cell.column.getIsPinned() === 'end'
-                    ? 'nut-dl-pin nut-dl-pin--end z-[2]'
-                    : '',
-                  isLastStart(slot.cell.column) ? 'nut-dl-pin--last-start' : '',
-                  isFirstEnd(slot.cell.column) ? 'nut-dl-pin--first-end' : '',
-                  slot.cell.column.columnDef.meta?.align === 'right'
-                    ? 'text-right'
-                    : slot.cell.column.columnDef.meta?.align === 'center'
-                      ? 'text-center'
-                      : '',
-                  slot.cell.column.columnDef.meta?.internal
-                    ? `nut-dl-td--${slot.cell.column.columnDef.meta.internal}`
-                    : '',
-                  slot.cell.column.columnDef.meta?.ellipsis ? 'nut-dl-td--ellipsis' : '',
-                  mergeDataListUiClass(undefined, undefined, ui?.td),
-                ]"
-                :data-col="slot.cell.column.id"
-                :style="[
-                  pinnedOffset(slot.cell.column),
-                  slot.cell.column.columnDef.meta?.lines
-                    ? { '--nut-dl-lines': slot.cell.column.columnDef.meta.lines }
-                    : undefined,
-                ]"
-              >
-                <div
-                  class="nut-dl-td__inner min-w-0"
-                  :class="
-                    slot.cell.column.columnDef.meta?.align === 'right'
-                      ? 'justify-end'
-                      : slot.cell.column.columnDef.meta?.align === 'center'
-                        ? 'justify-center'
-                        : ''
-                  "
-                >
-                  <TableCell
-                    :index="virtual.index"
-                    :render="slot.cell.column.columnDef.meta!.render"
-                    :row="row.original"
-                  />
-                </div>
-              </td>
-            </template>
-          </tr>
+            :row-id="String(row.id)"
+            :original="row.original"
+            :index="virtual.index"
+            :cells="rowCells"
+            :selected="internals.selection.isRowSelected({ rowId: String(row.id) })"
+            :appended="virtual.index >= appendedFrom"
+            :row-class="rowClass"
+          />
 
           <tr
             v-if="virtualPaddingBottom"
@@ -832,7 +696,7 @@ defineExpose({ resetColumnSizing })
             :style="{ height: `${virtualPaddingBottom}px` }"
             aria-hidden="true"
           >
-            <td :colspan="leafColumns.length" class="p-0" />
+            <td :colspan="columnCount" class="p-0" />
           </tr>
           <tr
             v-if="loadingMore"
@@ -840,10 +704,7 @@ defineExpose({ resetColumnSizing })
             class="nut-dl-row nut-dl-row--loading-more"
             aria-hidden="true"
           >
-            <td
-              :colspan="leafColumns.length"
-              class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle"
-            >
+            <td :colspan="columnCount" class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle">
               <div
                 class="nut-dl-loading-more flex items-center gap-2.5 px-[var(--nut-dl-gutter)] text-[12.5px] text-muted"
               >
@@ -859,11 +720,11 @@ defineExpose({ resetColumnSizing })
             v-for="placeholder in isFirstLoad ? skeletonRows : 0"
             :key="`skeleton-${placeholder}`"
             class="nut-dl-row nut-dl-row--skeleton"
-            :style="{ '--nut-dl-i': placeholder }"
             aria-hidden="true"
           >
             <template v-for="slot in columnSlots" :key="slot.key">
-              <td v-if="slot.kind === 'spacer'" :colspan="slot.colSpan" class="p-0" />
+              <td v-if="slot.kind === 'fill'" class="nut-dl-table__fill p-0" />
+              <td v-else-if="slot.kind === 'spacer'" :colspan="slot.colSpan" class="p-0" />
               <td
                 v-else
                 class="nut-dl-td h-[var(--nut-dl-row-h)] py-0 align-middle"
@@ -884,11 +745,14 @@ defineExpose({ resetColumnSizing })
                     : undefined
                 "
               >
-                <component :is="renderSkeletonCell(slot.columnId, placeholder)" />
+                <TableSkeletonCell
+                  v-bind="skeletonColumn(slot.columnId)"
+                  :seed="placeholder * 7 + slot.columnId.length"
+                />
               </td>
             </template>
           </tr>
-        </component>
+        </tbody>
 
         <tfoot
           v-if="summaries.enabled.value && !isFirstLoad && !empty"
@@ -897,7 +761,12 @@ defineExpose({ resetColumnSizing })
           <tr class="nut-dl-table__foot-row">
             <template v-for="slot in columnSlots" :key="`foot-${slot.key}`">
               <td
-                v-if="slot.kind === 'spacer'"
+                v-if="slot.kind === 'fill'"
+                class="nut-dl-table__fill nut-dl-tf sticky bottom-0 z-[3] p-0"
+                aria-hidden="true"
+              />
+              <td
+                v-else-if="slot.kind === 'spacer'"
                 :colspan="slot.colSpan"
                 class="nut-dl-table__spacer nut-dl-tf sticky bottom-0 z-[3] p-0"
                 aria-hidden="true"
@@ -942,6 +811,9 @@ defineExpose({ resetColumnSizing })
                   <span class="nut-dl-tf__count tabular-nums">{{
                     formatNumber(summaries.count.value)
                   }}</span>
+                  <span class="nut-dl-tf__unit -ml-1 font-normal text-muted">{{
+                    summaryUnit
+                  }}</span>
                 </div>
                 <template v-else-if="summaryColumnIds.has(slot.columnId)">
                   <span
@@ -967,26 +839,37 @@ defineExpose({ resetColumnSizing })
 
       <div
         v-if="error"
-        class="nut-dl-table__error sticky left-0 w-full"
-        :style="{ height: fill ? 'calc(100% - var(--nut-dl-head-h))' : undefined }"
+        class="nut-dl-table__error sticky left-0 flex w-full flex-col"
+        :class="fill || height ? 'min-h-0 flex-1' : ''"
       >
         <slot name="error" :error="error" :retry="refresh">
           <DataListErrorState
-            :min-height="fill ? '100%' : '16rem'"
+            :min-height="fill || height ? undefined : '16rem'"
             :size="resolvedSize"
+            class="flex-1"
             @retry="refresh"
           />
         </slot>
       </div>
-      <div v-else-if="empty" class="nut-dl-table__empty sticky left-0 w-full">
+      <div
+        v-else-if="empty"
+        class="nut-dl-table__empty sticky left-0 flex w-full flex-col"
+        :class="fill || height ? 'min-h-0 flex-1' : ''"
+      >
         <slot name="empty">
           <TableEmptyState
-            :min-height="fill ? 'calc(100% - var(--nut-dl-head-h))' : '16rem'"
+            :min-height="fill || height ? undefined : '16rem'"
             :size="resolvedSize"
+            class="flex-1"
           />
         </slot>
       </div>
     </div>
+    <ProgressLine
+      :active="refreshing"
+      :restart-key="internals.queryContent.refreshes.value"
+      class="absolute inset-x-0 top-[calc(var(--nut-dl-head-h)-1px)] z-[6]"
+    />
     <TableOverlayScrollbars ref="scrollbarsRef" :target="scrollRef" />
   </div>
 </template>
@@ -1019,7 +902,6 @@ defineExpose({ resetColumnSizing })
   display: none;
 }
 .nut-dl-th {
-  border-top: 1px solid var(--nut-dl-line);
   background: var(--nut-dl-head-bg);
   color: var(--nut-dl-head-fg);
   font-size: var(--nut-dl-head-font);
@@ -1030,9 +912,9 @@ defineExpose({ resetColumnSizing })
   white-space: nowrap;
   user-select: none;
 }
-.nut-dl-table__spacer {
+.nut-dl-table__spacer,
+.nut-dl-table__fill {
   background: var(--nut-dl-head-bg);
-  border-top: 1px solid var(--nut-dl-line);
   border-bottom: 1px solid var(--nut-dl-line);
 }
 .nut-dl-tf {
@@ -1042,7 +924,8 @@ defineExpose({ resetColumnSizing })
   border-top: 1px solid var(--nut-dl-line);
   white-space: nowrap;
 }
-tfoot .nut-dl-table__spacer {
+tfoot .nut-dl-table__spacer,
+tfoot .nut-dl-table__fill {
   border-bottom: 0;
   border-top: 1px solid var(--nut-dl-line);
 }
@@ -1056,6 +939,10 @@ tfoot .nut-dl-table__spacer {
 }
 tbody .nut-dl-table__spacer {
   background: var(--nut-dl-surface);
+  border-bottom: 1px solid var(--nut-dl-line-soft);
+}
+tbody .nut-dl-table__fill {
+  background: inherit;
   border-bottom: 1px solid var(--nut-dl-line-soft);
 }
 .nut-dl-th__btn--open {
@@ -1097,21 +984,26 @@ tbody .nut-dl-table__spacer {
   background: var(--nut-dl-row-selected);
 }
 .nut-dl-td,
+.nut-dl-tf[data-col],
 .nut-dl-th__btn,
 .nut-dl-th__static {
   padding-left: var(--nut-dl-cell-l, var(--nut-dl-cell-x));
   padding-right: var(--nut-dl-cell-r, var(--nut-dl-cell-x));
 }
 .nut-dl-row > .nut-dl-td:first-child,
+.nut-dl-table__foot-row > .nut-dl-tf:first-child,
 .nut-dl-table__head-row > .nut-dl-th:first-child {
   --nut-dl-cell-l: var(--nut-dl-gutter);
 }
 .nut-dl-row > .nut-dl-td:last-child,
+.nut-dl-table__foot-row > .nut-dl-tf:last-child,
 .nut-dl-table__head-row > .nut-dl-th:last-child {
   --nut-dl-cell-r: var(--nut-dl-gutter);
 }
 .nut-dl-td--actions,
+.nut-dl-tf--actions,
 .nut-dl-row > .nut-dl-td--actions:last-child,
+.nut-dl-table__foot-row > .nut-dl-tf--actions:last-child,
 .nut-dl-table__head-row > .nut-dl-th--actions:last-child {
   --nut-dl-cell-l: var(--nut-dl-cell-x);
   --nut-dl-cell-r: var(--nut-dl-cell-x);
@@ -1128,6 +1020,9 @@ tbody .nut-dl-table__spacer {
   overflow-wrap: anywhere;
   padding-block: var(--nut-dl-cell-y, 6px);
   box-sizing: border-box;
+}
+.nut-dl-td {
+  contain: paint;
 }
 .nut-dl-td__inner {
   display: -webkit-box;
@@ -1188,33 +1083,6 @@ tbody .nut-dl-table__spacer {
 .nut-dl-th--actions.nut-dl-pin--first-end::before {
   display: none;
 }
-.nut-dl-progress th {
-  overflow: hidden;
-}
-.nut-dl-progress th span {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--nut-dl-accent), transparent);
-  background-size: 40% 100%;
-  opacity: 0;
-  animation: nut-dl-progress 1s ease-in-out infinite paused;
-  transition: opacity 120ms ease-out;
-}
-.nut-dl-progress[data-active='true'] th span {
-  opacity: 1;
-  animation-play-state: running;
-}
-@keyframes nut-dl-progress {
-  from {
-    background-position: -40% 0;
-  }
-  to {
-    background-position: 140% 0;
-  }
-}
 .nut-dl-skeleton {
   background: linear-gradient(
     90deg,
@@ -1227,8 +1095,17 @@ tbody .nut-dl-table__spacer {
   animation-delay: calc(var(--nut-dl-i, 0) * -90ms);
 }
 .nut-dl-row--skeleton {
+  animation: nut-dl-fade-in 0.18s ease 0.12s both;
+}
+.nut-dl-row--appended {
   animation: nut-dl-fade-in 0.2s ease both;
-  animation-delay: calc(var(--nut-dl-i, 0) * 18ms);
+}
+.nut-dl-table__body {
+  transition: opacity 0.16s ease-out;
+}
+.nut-dl-table__body[data-replacing='true'] {
+  opacity: 0.55;
+  transition: opacity 0.2s ease-in 0.18s;
 }
 @keyframes nut-dl-fade-in {
   from {
@@ -1246,41 +1123,14 @@ tbody .nut-dl-table__spacer {
     background-position: -100% 0;
   }
 }
-.nut-dl-table[data-virtualized='true'] .nut-dl-row[style*='--nut-dl-i'] {
-  animation: nut-dl-row-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1) both;
-  animation-delay: calc(var(--nut-dl-i) * 10ms);
-}
-@keyframes nut-dl-row-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.nut-dl-row--moving {
-  transition: transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-.nut-dl-row--settling {
-  transition:
-    opacity 0.18s ease,
-    transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-.nut-dl-row--from {
-  opacity: 0;
-  transform: translateY(4px);
-}
 @media (prefers-reduced-motion: reduce) {
-  .nut-dl-row--moving,
-  .nut-dl-row--settling,
-  .nut-dl-row {
+  .nut-dl-row,
+  .nut-dl-table__body {
     transition: none;
   }
   .nut-dl-skeleton,
-  .nut-dl-progress th span,
-  .nut-dl-table[data-virtualized='true'] .nut-dl-row[style*='--nut-dl-i'] {
+  .nut-dl-row--skeleton,
+  .nut-dl-row--appended {
     animation: none;
   }
 }

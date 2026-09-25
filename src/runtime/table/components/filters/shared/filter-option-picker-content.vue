@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
+
 import { isNullish } from '../../../../shared/utils/predicate'
 import type { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
@@ -23,6 +25,7 @@ const props = defineProps<{
 }>()
 
 const searchQuery = defineModel<string>('searchQuery', { default: '' })
+const finePointer = useMediaQuery('(pointer: fine)')
 const flatRadioValue = defineModel<string | undefined>('flatRadioValue', { default: undefined })
 const treeRadioValue = defineModel<string | undefined>('treeRadioValue', { default: undefined })
 
@@ -62,12 +65,14 @@ function handleSelect(options: {
   <FilterSearchablePanel
     v-model:search-query="searchQuery"
     :searchable="props.state.filterUi.value.searchable"
+    :autofocus="props.state.filterUi.value.searchable && finePointer"
     :search-placeholder="props.state.filterUi.value.labels.searchPlaceholder"
     :search-loading="props.state.optionSource.isStaleLoading.value"
     :show-empty="
       !props.state.optionSource.isLoading.value &&
-      !props.state.displayEntries.value.length &&
-      !props.state.visibleTreeEntries.value.length
+      (props.state.filterUi.value.presentation === 'tree'
+        ? !props.state.visibleTreeEntries.value.length
+        : !props.state.displayEntries.value.length)
     "
     :empty-label="props.state.filterUi.value.labels.empty"
     :size="props.size"

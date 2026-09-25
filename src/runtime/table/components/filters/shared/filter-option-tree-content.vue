@@ -97,7 +97,10 @@ function activateTreeEntry(entry: TreeEntry) {
 </script>
 
 <template>
-  <div v-if="multiple" :class="mergeDataListUiClass('grid gap-0.5', undefined, ui?.list)">
+  <div
+    v-if="multiple"
+    :class="mergeDataListUiClass('grid grid-cols-1 gap-0.5', undefined, ui?.list)"
+  >
     <div
       v-for="entry in entries"
       :key="entry.id"
@@ -174,6 +177,7 @@ function activateTreeEntry(entry: TreeEntry) {
               ui?.optionLabel,
             )
           "
+          :title="entry.label"
         >
           {{ entry.label }}
         </span>
@@ -201,7 +205,7 @@ function activateTreeEntry(entry: TreeEntry) {
     :size="size"
     :ui="{
       root: 'w-full',
-      fieldset: mergeDataListUiClass('grid gap-0.5', undefined, ui?.list),
+      fieldset: mergeDataListUiClass('grid grid-cols-1 gap-0.5', undefined, ui?.list),
       item: mergeDataListUiClass(
         `relative flex cursor-pointer items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
         undefined,
@@ -248,7 +252,7 @@ function activateTreeEntry(entry: TreeEntry) {
           :class="[sizeClasses.optionIcon, 'shrink-0 text-muted']"
         />
 
-        <span class="min-w-0 flex-1" :class="item.truncate ? 'truncate' : ''">
+        <span class="min-w-0 flex-1" :class="item.truncate ? 'truncate' : ''" :title="item.label">
           {{ item.label }}
         </span>
         <USkeleton

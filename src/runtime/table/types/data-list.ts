@@ -44,6 +44,7 @@ export interface DataListSearchUi {
   [slot: string]: DataListUiClass | undefined
   root?: DataListUiClass
   base?: DataListUiClass
+  clear?: DataListUiClass
   leading?: DataListUiClass
   leadingIcon?: DataListUiClass
   leadingAvatar?: DataListUiClass

@@ -103,7 +103,7 @@ export function createColumnDefs(options: {
         sortableKey: runtimeColumn.sortableKey,
       },
       minSize: min,
-      size: Math.max(authored ?? DEFAULT_COLUMN_SIZE, Math.min(floor, 260), min),
+      size: Math.max(authored ?? Math.max(DEFAULT_COLUMN_SIZE, Math.min(floor, 260)), min),
     })
   }
 

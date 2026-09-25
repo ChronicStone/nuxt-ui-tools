@@ -128,7 +128,7 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
       :size="size"
       :class="
         mergeDataListUiClass(
-          'nut-dl-tag nut-dl-tag--active min-w-0 max-w-full rounded-md bg-elevated ring ring-inset ring-default',
+          'nut-dl-tag nut-dl-tag--active min-w-0 max-w-full rounded-md ring ring-inset ring-default',
           undefined,
           ui?.activeRoot,
         )
@@ -245,3 +245,15 @@ const labelClass = computed(() => `flex min-w-0 items-center ${geometry.value.to
     </UFieldGroup>
   </div>
 </template>
+
+<style>
+.nut-dl-tag--active {
+  --nut-dl-tag-bg: var(--ui-bg-elevated);
+  background-color: var(--nut-dl-tag-bg);
+  transition: background-color 0.12s ease;
+}
+.nut-dl-tag--active:hover {
+  --tw-ring-color: var(--ui-border-accented);
+  background-color: color-mix(in srgb, var(--nut-dl-tag-bg), var(--ui-text-highlighted) 6%);
+}
+</style>

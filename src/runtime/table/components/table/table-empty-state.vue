@@ -11,7 +11,7 @@ import type { DataListControlSize } from '../../types'
 import { mergeDataListUiClass } from '../../utils'
 
 const props = defineProps<{
-  minHeight: string
+  minHeight?: string
   size?: DataListControlSize
 }>()
 const { t } = useUiToolsLocale()
