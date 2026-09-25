@@ -158,6 +158,23 @@ describe('filter tags bar', () => {
     expect(harness.internals.filterPresentation.dynamicSessionDefinition.value).toBeUndefined()
   })
 
+  it('keeps the picker mounted while editing the only dynamic filter', async () => {
+    const schema = createAccountsSchema()
+    must(schema.filters).ui = must(must(schema.filters).ui).filter(
+      (definition) => definition.key === 'edofSync',
+    )
+    harness = await mountTags({ schema })
+    const w = harness.wrapper
+
+    await w.find('.nut-dl-tag--add').trigger('click')
+    await harness.flush()
+    await w.find('[data-filter-stage-content] button.rounded-md').trigger('click')
+    await harness.until(() => w.find('.nut-dl-editor__head').exists())
+
+    expect(w.find('.nut-dl-tags').exists()).toBe(true)
+    expect(w.find('.nut-dl-editor__head').text()).toContain('Synchronisation EDOF')
+  })
+
   it('commits typed text after a pause and on Enter', async () => {
     harness = await mountTags({ schema: createAccountsSchema({ textTag: true }) })
     const w = harness.wrapper

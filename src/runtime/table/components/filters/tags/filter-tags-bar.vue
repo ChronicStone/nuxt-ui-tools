@@ -42,6 +42,7 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
     v-if="
       visibleDefinitions.length ||
       internals.filterPresentation.dormantDynamicDefinitions.value.length ||
+      dynamicSessionDefinition ||
       internals.filters.hasActiveUiFilters.value
     "
     tag="div"

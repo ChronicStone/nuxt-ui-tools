@@ -144,9 +144,13 @@ describe('TableRenderer structure', () => {
   })
 
   it('keeps the table header visible and renders the retry state inside the body on failure', async () => {
+    const schema = createAccountsSchema({ fail: true })
+    const name = schema.table?.columns?.find((entry) => entry.key === 'name')
+    if (!name) throw new Error('Expected name column')
+    name.summary = [{ render: () => 'Filtered total' }]
     harness = await mountDataList({
       render: () => h(TableRenderer, { fill: true }),
-      schema: createAccountsSchema({ fail: true }),
+      schema,
     })
     await harness.until(() => Boolean(harness?.internals.queryContent.error.value))
     await harness.flush()
@@ -160,6 +164,7 @@ describe('TableRenderer structure', () => {
     expect(error.find('button').text()).toBe('Réessayer')
     expect(table.find('.nut-dl-table__empty').exists()).toBeFalsy()
     expect(table.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')).toHaveLength(0)
+    expect(table.find('tfoot.nut-dl-table__foot').exists()).toBe(false)
   })
 
   it('renders headers, pinned seams, internal columns and body rows', async () => {
@@ -417,6 +422,8 @@ describe('TableRenderer summaries', () => {
     const w = harness.wrapper
     const foot = w.find('tfoot.nut-dl-table__foot')
     expect(foot.exists()).toBeTruthy()
+    expect(w.find('.nut-dl-table__table').classes()).toContain('h-full')
+    expect(w.find('tbody .nut-dl-table__body-spacer').exists()).toBe(true)
     expect([
       foot.find('td[data-col="name"] .nut-dl-tf__caption').text(),
       foot.find('td[data-col="name"] .nut-dl-tf__count').text(),

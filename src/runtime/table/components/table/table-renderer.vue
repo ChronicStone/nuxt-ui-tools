@@ -651,7 +651,10 @@ defineExpose({ resetColumnSizing })
     >
       <table
         class="nut-dl-table__table w-full table-fixed border-separate border-spacing-0 text-[length:var(--nut-dl-font)]"
-        :class="mergeDataListUiClass(undefined, undefined, ui?.base)"
+        :class="[
+          (fill || height) && !error && rows.length > 0 && footerRows.length > 0 ? 'h-full' : '',
+          mergeDataListUiClass(undefined, undefined, ui?.base),
+        ]"
         :style="{ minWidth: `${totalWidth}px` }"
       >
         <colgroup>
@@ -821,10 +824,20 @@ defineExpose({ resetColumnSizing })
               </td>
             </template>
           </tr>
+
+          <tr
+            v-if="(fill || height) && !error && rows.length > 0 && footerRows.length > 0"
+            class="nut-dl-table__body-spacer"
+            aria-hidden="true"
+          >
+            <td :colspan="columnCount" class="p-0" />
+          </tr>
         </tbody>
 
         <tfoot
-          v-if="footerRows.length > 0 && !isFirstLoad && (hasDeclarativeSummaries || !empty)"
+          v-if="
+            footerRows.length > 0 && !isFirstLoad && !error && (hasDeclarativeSummaries || !empty)
+          "
           :class="mergeDataListUiClass('nut-dl-table__foot', undefined, ui?.tfoot)"
         >
           <tr v-for="summaryRow in footerRows" :key="summaryRow" class="nut-dl-table__foot-row">
@@ -917,7 +930,7 @@ defineExpose({ resetColumnSizing })
           </tr>
         </tfoot>
         <tfoot
-          v-else-if="$slots.footer"
+          v-else-if="$slots.footer && !error"
           :class="mergeDataListUiClass('nut-dl-table__foot', undefined, ui?.tfoot)"
         >
           <slot name="footer" :column-slots="columnSlots" :leaf-columns="leafColumns" />
@@ -1107,6 +1120,9 @@ tbody .nut-dl-table__fill {
   overflow-wrap: anywhere;
   padding-block: var(--nut-dl-cell-y, 6px);
   box-sizing: border-box;
+}
+.nut-dl-table__table tbody:has(+ tfoot) > .nut-dl-row:last-child > .nut-dl-td {
+  border-bottom: 0;
 }
 .nut-dl-td {
   contain: paint;
