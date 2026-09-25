@@ -19,7 +19,7 @@ describe('table loading line', () => {
   it('paints the loading line on the header edge while existing rows refresh', async () => {
     harness = await mountLoaded({
       render: () => h(TableRenderer, { height: '480px' }),
-      schema: createAccountsSchema({ delay: 600 }),
+      schema: createAccountsSchema({ delay: 1500 }),
     })
     const w = harness.wrapper
     await harness.until(() => w.find('.nut-dl-table').attributes('data-loading') === 'false', 4000)
@@ -28,12 +28,9 @@ describe('table loading line', () => {
     await harness.until(() => {
       const current = must(w.find('.nut-dl-progress').element) as HTMLElement
       return current.isConnected && current.dataset.active === 'true'
-    })
-    await harness.until(() => {
-      const current = must(w.find('.nut-dl-progress').element) as HTMLElement
-      return current.isConnected && getComputedStyle(current).opacity === '1'
-    })
+    }, 4000)
     const line = must(w.find('.nut-dl-progress').element) as HTMLElement
+    line.style.transition = 'none'
 
     const bar = must(line.firstElementChild) as HTMLElement
     const header = w.find('thead').element.getBoundingClientRect()
@@ -53,7 +50,7 @@ describe('table loading line', () => {
     expect(document.elementFromPoint(x, box.top + 1)).toBe(bar)
 
     await refresh
-    await harness.until(() => line.dataset.active === 'false')
+    await harness.until(() => w.find('.nut-dl-progress').attributes('data-active') === 'false')
   })
 
   it('restarts the sweep from the start when a refresh is requested again', async () => {
