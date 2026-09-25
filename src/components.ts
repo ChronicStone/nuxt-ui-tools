@@ -45,6 +45,7 @@ function getPublicComponents(
       'SortMenu',
       'LayoutSwitch',
       'Content',
+      'ErrorState',
       'Table',
       'Grid',
       'Pagination',
