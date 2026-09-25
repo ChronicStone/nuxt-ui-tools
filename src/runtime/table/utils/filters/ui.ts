@@ -63,7 +63,7 @@ export function resolveTextFilterUi(
     actions: resolveActions({ common: definition.actions }),
     autocomplete: definition.editor?.autocomplete ?? 'off',
     clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    commitMode: definition.behavior?.commitMode ?? 'manual',
+    commitMode: definition.behavior?.commitMode ?? 'auto',
     input: {
       autofocus: definition.editor?.input?.autofocus ?? false,
       fixed: definition.editor?.input?.fixed ?? false,
@@ -115,7 +115,7 @@ export function resolveOptionFilterUi(
     }),
     clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
     closeOnSelect: definition.editor?.closeOnSelect ?? false,
-    commitMode: definition.behavior?.commitMode ?? 'manual',
+    commitMode: definition.behavior?.commitMode ?? 'auto',
     labels: {
       empty: getFilterTextValue({
         fallback: t('table.filters.options.empty'),
@@ -180,7 +180,7 @@ export function resolveBooleanFilterUi(
       local: labels,
     }),
     clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    commitMode: definition.behavior?.commitMode ?? 'manual',
+    commitMode: definition.behavior?.commitMode ?? 'auto',
     icons: {
       false: icons.false,
       true: icons.true,
@@ -228,7 +228,7 @@ export function resolveNumberFilterUi(
   return {
     actions: resolveActions({ common: definition.actions }),
     clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    commitMode: definition.behavior?.commitMode ?? 'manual',
+    commitMode: definition.behavior?.commitMode ?? 'auto',
     formatOptions: definition.editor?.formatOptions,
     max: definition.editor?.max,
     min: definition.editor?.min,
@@ -304,7 +304,7 @@ export function resolveDateFilterUi(
   return {
     actions: resolveActions({ common: definition.actions }),
     clearOnOperatorChange: definition.behavior?.clearOnOperatorChange ?? true,
-    commitMode: definition.behavior?.commitMode ?? 'manual',
+    commitMode: definition.behavior?.commitMode ?? 'auto',
     preview: resolveDatePreview({
       base: definition.preview,
       empty: t('table.filters.preview.empty'),
