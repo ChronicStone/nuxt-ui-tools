@@ -40,7 +40,16 @@ export function useTableSummaries(params: UseTableSummariesParams) {
         ? ['filtered', 'page', 'selection']
         : ['filtered', 'page']),
   )
-  const scope: Ref<TableSummaryScope> = ref(config.value?.scope ?? 'filtered')
+  const defaultScope = computed(() => config.value?.scope ?? 'filtered')
+  const scope: Ref<TableSummaryScope> = ref(defaultScope.value)
+  watch(
+    () => params.selection.selectedRows.value.length > 0,
+    (selected) => {
+      if (scopes.value.includes('selection')) {
+        scope.value = selected ? 'selection' : defaultScope.value
+      }
+    },
+  )
   const rows = computed<GenericObject[]>(() => {
     if (scope.value === 'selection') {
       return params.selection.selectedRows.value
