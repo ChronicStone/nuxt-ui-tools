@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.2
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.1...v1.6.2)
+
+Columns can declare `summary: [{ render, condition? }]` to render typed, multi-row footers from the raw query response, page rows, locally available rows, selection, and current request context. The existing summary API remains available. Declared cells remain visible when the current page is empty, including when the response summarizes a larger filtered set.
+
 ## v1.6.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.0...v1.6.1)
