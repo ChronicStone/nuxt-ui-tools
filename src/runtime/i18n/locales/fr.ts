@@ -5,6 +5,10 @@ export default defineUiToolsLocale<Messages>({
   code: 'fr',
   messages: {
     dashboard: {
+      details: {
+        copied: 'Copié',
+        copy: 'Copier',
+      },
       alerts: {
         empty: 'Rien à signaler',
         severity: {

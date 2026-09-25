@@ -65,6 +65,7 @@ function getPublicComponents(
       'ViewTabs',
       'Stat',
       'Stats',
+      'Details',
       'Gauge',
       'Tabs',
       'Refresh',

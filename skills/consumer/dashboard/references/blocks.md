@@ -32,8 +32,26 @@ module prefix (`Ui` by default).
   that sizes its main area).
 - **Slots:** `#title`, `#description`, `#actions`, `#tabs`, `#filters` replace their part (for
   example a `UiDashboardFilters` with a custom pill).
-- **Theming:** `ui` parts `root`, `header`, `title`, `description`, `actions`, `toolbar`, `tabs`,
-  `filters`, `body`, also `appConfig.nuxtUiTools.dashboard.page`.
+- **Entity pages:** a page about one record adds `#eyebrow` (breadcrumbs above the title),
+  `#leading` (a logo or avatar beside the title and its line), `#details` (a full-width row of key
+  facts closing the header), and `#banner` (a note or notice between the header and the pinned
+  tabs). Pass `:filters="false"` and `:refresh="false"` when the page has neither, and use
+  `#description` for the record's status line.
+- **Theming:** `ui` parts `root`, `header`, `eyebrow`, `leading`, `title`, `description`,
+  `actions`, `details`, `banner`, `toolbar`, `tabs`, `filters`, `body`, also
+  `appConfig.nuxtUiTools.dashboard.page`.
+
+```vue
+<UiDashboardPage :dashboard="account" :filters="false" :refresh="false">
+  <template #eyebrow><AppBreadcrumbs /></template>
+  <template #leading><UAvatar :src="account.profile.data?.logo" size="xl" /></template>
+  <template #title>{{ account.profile.data?.name }}</template>
+  <template #actions><UButton label="Edit" to="edit" /></template>
+  <template #details><UiDashboardDetails :source="account.profile" :card="false" :items /></template>
+  <template #banner><AccountNote /></template>
+  <template #overview><AccountOverview /></template>
+</UiDashboardPage>
+```
 
 ## Shared Props
 
@@ -450,6 +468,29 @@ Item fields: `key`, `label`, `value` + `format`, `delta` + `invertDelta`, `capti
 small screens), `variant: 'plain' | 'divided' | 'tiles'`. The menu's table lists label, value,
 change. `ui` parts: `grid`, `item`, `icon`, `label`, `value`, `meta`, `delta`, `caption`, `progress`,
 `status`.
+
+`UiDashboardDetails` — the fields of one record as a description list: a label over each value
+in a responsive grid (`columns`, default `"1 sm:2"`), or beside it with `layout="inline"`.
+`items: [{ key, label, value, format?, hint?, placeholder?, mono?, copy?, to?, span?, hidden? }]`:
+empty values (`null`, `undefined`, `''`) read as a muted dash or `placeholder`, numbers go through
+`format`, `mono` sets identifiers in monospace, `copy` adds a copy button, `to` makes the value a
+link, `span` (a count or `'full'`) widens a field, and `hidden: (data) => boolean` leaves a field
+out. `#item-<key>` renders one value yourself (`{ data, item, value }`). Empty items carry
+`data-empty`. `ui` parts: `grid`, `item`, `label`, `value`, `placeholder`, `hint`, `link`, `copy`.
+
+```vue
+<UiDashboardDetails
+  :source="account.profile"
+  title="Identity"
+  :items="[
+    { key: 'name', label: 'Name', value: (a) => a.name },
+    { key: 'vat', label: 'VAT', value: (a) => a.vatNumber, mono: true, copy: true },
+    { key: 'address', label: 'Address', value: (a) => a.address, span: 'full' },
+  ]"
+>
+  <template #item-status="{ data }"><StatusTag :status="data.status" /></template>
+</UiDashboardDetails>
+```
 
 `UiDashboardGauge` — one value on a scale: `value`, `min` / `max` (numbers or `(data) => number`;
 default `0`–`100`), `target: (data) => number` (a tick across the ring, and "Goal …" under it),
