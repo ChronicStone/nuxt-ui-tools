@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
-import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref } from 'vue'
-
-import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useRangeSelect } from '../../../../shared'
 import { isBoolean, isNumber, isString, isNullish } from '../../../../shared/utils/predicate'
@@ -21,6 +18,7 @@ import {
   resolveFilterEditorSizeClasses,
   resolveFilterTriggerIcon,
 } from '../../../utils'
+import FilterEditorHeader from '../shared/filter-editor-header.vue'
 import FilterMatchModePanel from '../shared/filter-match-mode-panel.vue'
 import FilterOptionPickerContent from '../shared/filter-option-picker-content.vue'
 import FilterPopoverShell from '../shared/filter-popover-shell.vue'
@@ -46,7 +44,6 @@ const emit = defineEmits<{
 
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
-const { t } = useUiToolsLocale()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
@@ -355,37 +352,15 @@ function handleContentMounted() {
           "
           @vue:mounted="handleContentMounted"
         >
-          <div
+          <FilterEditorHeader
             v-if="header !== false && dataListUi.ui.value.filterTags?.props?.editorHeader !== false"
-            :class="
-              mergeDataListUiClass(
-                'nut-dl-editor__head flex items-center gap-2 border-b border-default py-2 pr-3',
-                embedded ? 'pl-1.5' : 'pl-3',
-                dataListFilterUi?.editorHeader,
-              )
-            "
-          >
-            <button
-              v-if="embedded"
-              type="button"
-              class="nut-dl-editor__back flex size-6 items-center justify-center rounded-md text-muted hover:bg-elevated hover:text-default"
-              :aria-label="t('table.filters.sheet.back')"
-              @click="emit('back')"
-            >
-              <UIcon name="i-lucide-arrow-left" class="size-4" />
-            </button>
-            <span class="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-highlighted">
-              {{ internals.filters.getFilterLabelText({ label: definition.label }) }}
-            </span>
-            <button
-              type="button"
-              class="rounded text-[12.5px] font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40"
-              :disabled="!preview.active"
-              @click="clearFilter"
-            >
-              {{ t('table.filters.editor.clear') }}
-            </button>
-          </div>
+            :label="internals.filters.getFilterLabelText({ label: definition.label })"
+            :active="preview.active"
+            :embedded="embedded"
+            :ui="dataListFilterUi"
+            @back="emit('back')"
+            @clear="clearFilter"
+          />
           <FilterOptionPickerContent
             v-model:search-query="searchQuery"
             :flat-radio-value="state.flatRadioValue.value"
@@ -402,7 +377,7 @@ function handleContentMounted() {
           />
 
           <div
-            v-if="state.filterUi.value.commitMode === 'manual'"
+            v-if="state.filterUi.value.commitMode !== 'auto'"
             :class="
               mergeDataListUiClass(
                 `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
