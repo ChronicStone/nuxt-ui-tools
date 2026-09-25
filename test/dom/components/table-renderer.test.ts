@@ -45,15 +45,11 @@ describe('TableRenderer skeleton and tokens', () => {
     expect(root.attributes('data-loading')).toBe('true')
     const skeletons = harness.wrapper.findAll('tr.nut-dl-row--skeleton')
     expect(skeletons.length).toBeGreaterThanOrEqual(6)
-    const first = must(skeletons[0])
-    expect(first.attributes('style')).toContain('--nut-dl-i')
-    expect(first.find('td:nth-child(1) .nut-dl-skeleton.size-4').exists()).toBeTruthy()
-    expect(first.find('td[class*="nut-dl-td"]:nth-child(2) .size-7').exists()).toBeTruthy()
-    const cells = first.findAll('td')
-    expect(must(cells[2]).find('.rounded-full.size-\\[7px\\]').exists()).toBeTruthy()
-    expect(must(cells[4]).find('.nut-dl-skeleton.size-4.rounded-\\[4px\\]').exists()).toBeTruthy()
-    expect(must(cells[5]).find('.ml-auto').exists()).toBeTruthy()
-    expect(must(cells.at(-1)).text()).toBe('')
+    const cells = must(skeletons[0]).findAll('td')
+    expect(
+      cells.map((cell) => cell.find('[data-skeleton]').attributes('data-skeleton') ?? null),
+    ).toStrictEqual(['check', 'avatar', 'dot', 'text', 'check', 'number', 'number'])
+    expect(must(cells[5]).find('[data-skeleton]').classes()).toContain('justify-end')
     expect(harness.wrapper.find('tfoot').exists()).toBeFalsy()
     expect(harness.wrapper.find('tr.nut-dl-row:not(.nut-dl-row--skeleton)').exists()).toBeFalsy()
   })
@@ -111,6 +107,42 @@ describe('TableRenderer structure', () => {
     await harness.until(() => progress.attributes('data-active') === 'false')
   })
 
+  it('keeps the progress line up long enough to notice a fast refresh', async () => {
+    harness = await mountTable({ schema: createAccountsSchema({ delay: 20 }) })
+    const progress = harness.wrapper.find('.nut-dl-progress')
+
+    const refresh = harness.internals.queryContent.refreshData()()
+    await harness.until(() => progress.attributes('data-active') === 'true')
+    const shown = Date.now()
+    await refresh
+    await harness.flush()
+    expect(progress.attributes('data-active')).toBe('true')
+
+    await harness.until(() => progress.attributes('data-active') === 'false')
+    expect(Date.now() - shown).toBeGreaterThanOrEqual(500)
+  })
+
+  it('dims stale rows only while a new request replaces them', async () => {
+    harness = await mountTable({
+      schema: createAccountsSchema({ delay: 80, embeddedFacets: true }),
+    })
+    const w = harness.wrapper
+    const replacing = () => w.find('tbody.nut-dl-table__body').attributes('data-replacing')
+    const active = () => w.find('.nut-dl-progress').attributes('data-active')
+
+    const refresh = harness.internals.queryContent.refreshData()()
+    await harness.until(() => active() === 'true')
+    expect(replacing()).toBe('false')
+    await refresh
+    await harness.until(() => active() === 'false')
+
+    await must(w.find('th[data-col="status"]').findAll('[data-ui-item]')[1]).trigger('click')
+    await harness.until(() => replacing() === 'true')
+    expect(active()).toBe('true')
+    await harness.until(() => replacing() === 'false')
+    await harness.until(() => active() === 'false')
+  })
+
   it('keeps the table header visible and renders the retry state inside the body on failure', async () => {
     harness = await mountDataList({
       render: () => h(TableRenderer, { fill: true }),
@@ -122,8 +154,9 @@ describe('TableRenderer structure', () => {
 
     expect(texts(table, '.nut-dl-th__label')).toContain('Nom')
     const error = table.find('.nut-dl-table__error')
-    expect(error.attributes('style')).toContain('height: calc(100% - var(--nut-dl-head-h))')
-    expect(error.find('[style]').attributes('style')).toContain('min-height: 100%')
+    expect(error.classes()).toEqual(expect.arrayContaining(['flex-1', 'min-h-0']))
+    expect(error.find('.nut-dl-error').classes()).toContain('flex-1')
+    expect(error.find('.nut-dl-error').attributes('style')).toBeUndefined()
     expect(error.find('button').text()).toBe('Réessayer')
     expect(table.find('.nut-dl-table__empty').exists()).toBeFalsy()
     expect(table.findAll('tr.nut-dl-row:not(.nut-dl-row--skeleton)')).toHaveLength(0)
@@ -350,6 +383,33 @@ describe('TableRenderer summaries', () => {
     expect(harness.wrapper.find('tfoot td[data-col="consumption"] .nut-dl-tf__value').text()).toBe(
       '1 234 567',
     )
+  })
+
+  it('totals the checked rows while a selection exists, then returns to its scope', async () => {
+    harness = await mountTable({ schema: createAccountsSchema({ rows: rows60 }) })
+    const w = harness.wrapper
+    const rows = w.findAll('tbody tr.nut-dl-row').slice(0, 2)
+    const checked = rows60.filter((row) =>
+      rows.some((element) => element.attributes('data-row-id') === row.id),
+    )
+    for (const row of rows) {
+      await row.find('td[data-col="__select"] input[type="checkbox"]').trigger('click')
+    }
+    await harness.until(() => w.find('tfoot .nut-dl-tf__caption').text() === 'Sélection')
+    expect([
+      w.find('tfoot .nut-dl-tf__count').text(),
+      w.find('tfoot .nut-dl-tf__unit').text(),
+      w.find('tfoot td[data-col="contracts"] .nut-dl-tf__value').text(),
+    ]).toStrictEqual(['2', 'lignes', String(checked.reduce((t, r) => t + r.contracts, 0))])
+
+    for (const row of rows) {
+      await row.find('td[data-col="__select"] input[type="checkbox"]').trigger('click')
+    }
+    await harness.until(() => w.find('tfoot .nut-dl-tf__caption').text() === 'Total')
+    expect([
+      w.find('tfoot .nut-dl-tf__count').text(),
+      w.find('tfoot td[data-col="contracts"] .nut-dl-tf__value').text(),
+    ]).toStrictEqual(['60', String(sum('contracts'))])
   })
 
   it('uses a custom label and render function', async () => {
