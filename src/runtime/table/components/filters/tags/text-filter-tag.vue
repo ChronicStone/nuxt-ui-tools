@@ -5,6 +5,7 @@ import { computed, ref } from 'vue'
 
 import { isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
+import { useDeferredCommit } from '../../../composables/use-deferred-commit'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -18,19 +19,25 @@ import {
   resolveFilterTriggerIcon,
   resolveTextFilterUi,
 } from '../../../utils'
+import FilterEditorHeader from '../shared/filter-editor-header.vue'
 import FilterMatchModePanel from '../shared/filter-match-mode-panel.vue'
 import FilterPopoverShell from '../shared/filter-popover-shell.vue'
 import FilterStageTransition from '../shared/filter-stage-transition.vue'
 import TableFilterTrigger from '../shared/filter-trigger-tag.vue'
 
-const props = defineProps<{
-  definition: TableTextFilterDefinition
-  dynamic?: boolean
-  session?: boolean
-  embedded?: boolean
-  initialOperator?: TableFilterOperator
-}>()
+const props = withDefaults(
+  defineProps<{
+    definition: TableTextFilterDefinition
+    dynamic?: boolean
+    session?: boolean
+    embedded?: boolean
+    header?: boolean
+    initialOperator?: TableFilterOperator
+  }>(),
+  { header: true },
+)
 const emit = defineEmits<{
+  back: []
   dismiss: []
   sessionClosed: []
 }>()
@@ -40,6 +47,9 @@ const dataListUi = useDataListUi()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
+const showHeader = computed(
+  () => props.header && dataListUi.ui.value.filterTags?.props?.editorHeader !== false,
+)
 const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
 const localValue = ref<string>('')
 const stage = ref<'editor' | 'match-mode'>('editor')
@@ -77,6 +87,8 @@ const operatorItems = computed(() =>
   }),
 )
 const filterUi = computed(() => resolveTextFilterUi(props.definition, operator.value))
+const autoCommit = computed(() => filterUi.value.commitMode === 'auto')
+const deferred = useDeferredCommit({ commit: commitValue, flushOnDispose: props.embedded })
 
 function initLocalState() {
   const value = internals.filters.getFilterState({
@@ -91,6 +103,11 @@ const session = useFilterTagSession({
   hasCommittedState: () =>
     !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   onClose: () => {
+    if (autoCommit.value) {
+      deferred.flush()
+    } else {
+      deferred.cancel()
+    }
     pendingOperator.value = undefined
   },
   onDismiss: () => emit('dismiss'),
@@ -113,24 +130,30 @@ function handleRequestMatchMode() {
   session.open()
 }
 
-function applyFilter() {
-  const op = pendingOperator.value
-  pendingOperator.value = undefined
-
+function commitValue() {
   internals.filters.setScalarFilterValue({
     key: props.definition.key,
-    operator: op,
+    operator: pendingOperator.value,
     value: localValue.value.trim() || undefined,
   })
+}
+
+function applyFilter() {
+  deferred.cancel()
+  commitValue()
+  pendingOperator.value = undefined
   session.close()
 }
 
 function clearFilter() {
+  deferred.cancel()
   internals.filters.clearFilter({ key: props.definition.key })
+  localValue.value = ''
   session.close()
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
+  deferred.cancel()
   localValue.value = ''
   pendingOperator.value = op
   stageDirection.value = 'forward'
@@ -141,12 +164,8 @@ function handleOperatorChange(op: TableFilterOperator) {
 function handleValueUpdate(value: string | number | undefined) {
   localValue.value = isNullish(value) ? '' : String(value)
 
-  if (filterUi.value.commitMode === 'auto') {
-    internals.filters.setScalarFilterValue({
-      key: props.definition.key,
-      operator: pendingOperator.value,
-      value: localValue.value.trim() || undefined,
-    })
+  if (autoCommit.value) {
+    deferred.schedule()
   }
 }
 </script>
@@ -215,10 +234,19 @@ function handleValueUpdate(value: string | number | undefined) {
             )
           "
         >
+          <FilterEditorHeader
+            v-if="showHeader"
+            :label="internals.filters.getFilterLabelText({ label: definition.label })"
+            :active="preview.active"
+            :embedded="embedded"
+            :ui="dataListFilterUi"
+            @back="emit('back')"
+            @clear="clearFilter"
+          />
           <div
             :class="
               mergeDataListUiClass(
-                `border-b border-default ${sizeClasses.searchHeader}`,
+                `nut-dl-editor__input ${sizeClasses.searchHeader} ${autoCommit ? '' : 'border-b border-default'}`,
                 undefined,
                 dataListFilterUi?.inputs,
               )
@@ -234,10 +262,11 @@ function handleValueUpdate(value: string | number | undefined) {
               :highlight="filterUi.input.highlight"
               :fixed="filterUi.input.fixed"
               :size="size"
+              variant="none"
               class="w-full min-w-0 max-w-full"
               :ui="{
                 root: dataListFilterUi?.search,
-                base: dataListFilterUi?.searchInput,
+                base: mergeDataListUiClass('h-8', undefined, dataListFilterUi?.searchInput),
               }"
               @update:model-value="handleValueUpdate"
               @keydown.enter.prevent="applyFilter"
@@ -245,7 +274,7 @@ function handleValueUpdate(value: string | number | undefined) {
           </div>
 
           <div
-            v-if="filterUi.commitMode === 'manual'"
+            v-if="!autoCommit"
             :class="
               mergeDataListUiClass(
                 `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
