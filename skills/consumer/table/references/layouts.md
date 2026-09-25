@@ -76,3 +76,18 @@ const schema = defineTableSchema({
 ```
 
 When the active layout changes, the table runtime keeps using the same table instance and updates URL-backed layout state through the `l` query param.
+
+## Responsive Layouts
+
+`table.enabled` and `grid.enabled` accept responsive values. Disabling the table below a breakpoint switches phones to the grid while desktop keeps the table and the layout toggle:
+
+```ts
+table: {
+  enabled: 'false md:true',
+  columns: (column) => [/* ... */],
+},
+grid: {
+  gridSize: '1 md:2 xl:3',
+  renderItem: ({ row }) => h(EmployeeCard, { employee: row }),
+},
+```
