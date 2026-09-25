@@ -835,9 +835,7 @@ defineExpose({ resetColumnSizing })
         </tbody>
 
         <tfoot
-          v-if="
-            footerRows.length > 0 && !isFirstLoad && !error && (hasDeclarativeSummaries || !empty)
-          "
+          v-if="footerRows.length > 0 && rows.length > 0 && !isFirstLoad && !error"
           :class="mergeDataListUiClass('nut-dl-table__foot', undefined, ui?.tfoot)"
         >
           <tr v-for="summaryRow in footerRows" :key="summaryRow" class="nut-dl-table__foot-row">

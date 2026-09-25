@@ -366,16 +366,14 @@ describe('TableRenderer summaries', () => {
     )
   })
 
-  it('renders a declared summary when the current page has no rows', async () => {
+  it('hides a declared summary when the current page has no rows', async () => {
     const schema = createAccountsSchema({ rows: [], summaries: false })
     const name = schema.table?.columns?.find((entry) => entry.key === 'name')
     if (!name) throw new Error('Expected name column')
     name.summary = [{ render: ({ rows }) => `Total from query, page ${rows.length}` }]
     harness = await mountTable({ schema })
     expect(harness.wrapper.find('.nut-dl-empty').exists()).toBe(true)
-    expect(harness.wrapper.find('tfoot td[data-col="name"]').text()).toBe(
-      'Total from query, page 0',
-    )
+    expect(harness.wrapper.find('tfoot.nut-dl-table__foot').exists()).toBe(false)
   })
 
   it('renders conditional multi-row summaries from table data and selection', async () => {
@@ -550,7 +548,7 @@ describe('TableRenderer empty state', () => {
 
   it('shows loading rows instead of a false empty state while remote results recover', async () => {
     harness = await mountTable({
-      schema: createAccountsSchema({ delay: 40, embeddedFacets: true }),
+      schema: createAccountsSchema({ delay: 200, embeddedFacets: true }),
     })
     harness.internals.filters.searchQuery.value = 'no matching account'
     await harness.until(() => must(harness).wrapper.find('.nut-dl-empty').exists())
