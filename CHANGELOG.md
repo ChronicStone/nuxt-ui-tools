@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.0...v1.6.1)
+
+Table summary resolvers now receive the typed table request context, so remote filtered totals can reuse the same filters and search as the list query.
+
 ## v1.6.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.5.0...v1.6.0)
