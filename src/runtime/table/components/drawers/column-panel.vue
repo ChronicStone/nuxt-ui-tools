@@ -159,6 +159,17 @@ function toggleColumn(columnId: string) {
   internals.tableColumns.setVisibility({ columnId, visible: !isVisible })
 }
 
+/** Toggles from the row surface itself; the checkbox, label, and handle keep their own handlers. */
+function toggleRow(event: MouseEvent, column: { id: string; required?: boolean }) {
+  if (event.target instanceof Element && event.target.closest('button, input, [role="checkbox"]')) {
+    return
+  }
+  if (isRequired(column)) {
+    return
+  }
+  toggleColumn(column.id)
+}
+
 function open() {
   internals.controls.columnsPanelOpen.value = true
 }
@@ -263,7 +274,7 @@ function toggle() {
         <div
           :class="
             mergeDataListUiClass(
-              'nut-dl-colpanel__list grid max-h-80 gap-px overflow-y-auto px-2 py-1',
+              'nut-dl-colpanel__list grid max-h-80 grid-cols-1 gap-px overflow-y-auto px-2 py-1',
               undefined,
               ui.list,
             )
@@ -275,11 +286,12 @@ function toggle() {
               :key="column.id"
               :class="
                 mergeDataListUiClass(
-                  'nut-dl-colpanel__row group/col flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
+                  'nut-dl-colpanel__row group/col flex h-8 cursor-pointer items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
                   undefined,
                   ui.row,
                 )
               "
+              @click="toggleRow($event, column)"
             >
               <UCheckbox
                 v-bind="checkboxProps"
@@ -315,18 +327,19 @@ function toggle() {
               ghost-class="column-panel-row-ghost"
               chosen-class="column-panel-row-chosen"
               drag-class="column-panel-row-dragging"
-              :class="mergeDataListUiClass('grid gap-px', undefined, ui.section)"
+              :class="mergeDataListUiClass('grid grid-cols-1 gap-px', undefined, ui.section)"
             >
               <div
                 v-for="column in draggableColumns"
                 :key="column.id"
                 :class="
                   mergeDataListUiClass(
-                    'nut-dl-colpanel__row group/col flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
+                    'nut-dl-colpanel__row group/col flex h-8 cursor-pointer items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
                     undefined,
                     ui.row,
                   )
                 "
+                @click="toggleRow($event, column)"
               >
                 <UCheckbox
                   v-bind="checkboxProps"
@@ -365,11 +378,12 @@ function toggle() {
               :key="column.id"
               :class="
                 mergeDataListUiClass(
-                  'nut-dl-colpanel__row group/col flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
+                  'nut-dl-colpanel__row group/col flex h-8 cursor-pointer items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
                   undefined,
                   ui.row,
                 )
               "
+              @click="toggleRow($event, column)"
             >
               <UCheckbox
                 v-bind="checkboxProps"
@@ -402,11 +416,12 @@ function toggle() {
               :key="column.id"
               :class="
                 mergeDataListUiClass(
-                  'nut-dl-colpanel__row flex h-8 items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
+                  'nut-dl-colpanel__row flex h-8 cursor-pointer items-center gap-2.5 rounded-md px-2 hover:bg-elevated',
                   undefined,
                   ui.row,
                 )
               "
+              @click="toggleRow($event, column)"
             >
               <UCheckbox
                 v-bind="checkboxProps"
