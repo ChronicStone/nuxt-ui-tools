@@ -1,6 +1,7 @@
 export * from './common'
 export * from './date'
 export * from './editor-size'
+export * from './number'
 export * from './options'
 export * from './presentation'
 export * from './preview'

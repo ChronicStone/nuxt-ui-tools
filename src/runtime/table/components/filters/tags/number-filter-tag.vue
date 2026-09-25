@@ -4,8 +4,11 @@ import UInputNumber from '@nuxt/ui/components/InputNumber.vue'
 import USlider from '@nuxt/ui/components/Slider.vue'
 import { computed, ref, watch } from 'vue'
 
+import { useUiToolsLocale } from '#ui-tools/i18n'
+
 import { isArray, isDate, isNumber, isObject, isNullish } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
+import { useDeferredCommit } from '../../../composables/use-deferred-commit'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type {
@@ -15,34 +18,45 @@ import type {
 } from '../../../types'
 import {
   mergeDataListUiClass,
+  parseTypedNumber,
   resolveDataListControlGeometry,
   resolveFilterEditorSizeClasses,
   resolveFilterTriggerIcon,
   resolveNumberFilterUi,
 } from '../../../utils'
+import FilterEditorHeader from '../shared/filter-editor-header.vue'
 import FilterMatchModePanel from '../shared/filter-match-mode-panel.vue'
 import FilterPopoverShell from '../shared/filter-popover-shell.vue'
 import FilterStageTransition from '../shared/filter-stage-transition.vue'
 import TableFilterTrigger from '../shared/filter-trigger-tag.vue'
 
-const props = defineProps<{
-  definition: TableNumberFilterDefinition
-  dynamic?: boolean
-  session?: boolean
-  embedded?: boolean
-  initialOperator?: TableFilterOperator
-}>()
+const props = withDefaults(
+  defineProps<{
+    definition: TableNumberFilterDefinition
+    dynamic?: boolean
+    session?: boolean
+    embedded?: boolean
+    header?: boolean
+    initialOperator?: TableFilterOperator
+  }>(),
+  { header: true },
+)
 const emit = defineEmits<{
+  back: []
   dismiss: []
   sessionClosed: []
 }>()
 
 const internals = useTableInternals()
 const dataListUi = useDataListUi()
+const { locale } = useUiToolsLocale()
 const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 const geometry = computed(() => resolveDataListControlGeometry(size.value))
+const showHeader = computed(
+  () => props.header && dataListUi.ui.value.filterTags?.props?.editorHeader !== false,
+)
 const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
 const localValue = ref<string>('')
 const rangeValue = ref<{ from: string; to: string }>({ from: '', to: '' })
@@ -89,6 +103,8 @@ const operatorItems = computed(() =>
 )
 
 const filterUi = computed(() => resolveNumberFilterUi(props.definition, operator.value))
+const autoCommit = computed(() => filterUi.value.commitMode === 'auto')
+const deferred = useDeferredCommit({ commit: commitValue, flushOnDispose: props.embedded })
 
 const scalarValue = computed<number | undefined>({
   get() {
@@ -115,6 +131,11 @@ const session = useFilterTagSession({
   hasCommittedState: () =>
     !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   onClose: () => {
+    if (autoCommit.value) {
+      deferred.flush()
+    } else {
+      deferred.cancel()
+    }
     pendingOperator.value = undefined
   },
   onDismiss: () => emit('dismiss'),
@@ -170,6 +191,7 @@ function handleRequestMatchMode() {
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
+  deferred.cancel()
   localValue.value = ''
   rangeValue.value = { from: '', to: '' }
 
@@ -179,20 +201,17 @@ function handleOperatorChange(op: TableFilterOperator) {
   stage.value = 'editor'
 }
 
-function commitIfAuto() {
-  if (filterUi.value.commitMode === 'auto') {
-    applyFilter()
+function scheduleCommit() {
+  if (autoCommit.value) {
+    deferred.schedule()
   }
 }
 
-function applyFilter() {
-  const nextOperator = pendingOperator.value
-  pendingOperator.value = undefined
-
+function commitValue() {
   if (operator.value === 'between') {
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
-      operator: nextOperator,
+      operator: pendingOperator.value,
       value:
         rangeValue.value.from === '' && rangeValue.value.to === ''
           ? undefined
@@ -203,26 +222,55 @@ function applyFilter() {
               ].filter((entry): entry is [string, number] => entry !== undefined),
             ),
     })
-    session.close()
     return
   }
 
   internals.filters.setScalarFilterValue({
     key: props.definition.key,
-    operator: nextOperator,
+    operator: pendingOperator.value,
     value: scalarValue.value,
   })
+}
+
+function applyFilter() {
+  deferred.cancel()
+  commitValue()
+  pendingOperator.value = undefined
   session.close()
 }
 
 function clearFilter() {
+  deferred.cancel()
   internals.filters.clearFilter({ key: props.definition.key })
+  localValue.value = ''
+  rangeValue.value = { from: '', to: '' }
   session.close()
 }
 
 function updateScalarValue(value: number | undefined) {
   scalarValue.value = value
-  commitIfAuto()
+  scheduleCommit()
+}
+
+function typedNumber(event: Event) {
+  const value =
+    event.target instanceof HTMLInputElement
+      ? parseTypedNumber({ locale: locale.value.code, text: event.target.value })
+      : undefined
+  const digits = filterUi.value.formatOptions?.maximumFractionDigits
+  return isNullish(value) || isNullish(digits) ? value : Number(value.toFixed(digits))
+}
+
+function typeScalarValue(event: Event) {
+  updateScalarValue(typedNumber(event))
+}
+
+function typeRangeFrom(event: Event) {
+  updateRangeFrom(typedNumber(event))
+}
+
+function typeRangeTo(event: Event) {
+  updateRangeTo(typedNumber(event))
 }
 
 function updateRangeFrom(value: number | undefined) {
@@ -230,7 +278,7 @@ function updateRangeFrom(value: number | undefined) {
     ...rangeValue.value,
     from: isNullish(value) ? '' : String(value),
   }
-  commitIfAuto()
+  scheduleCommit()
 }
 
 function updateRangeTo(value: number | undefined) {
@@ -238,7 +286,7 @@ function updateRangeTo(value: number | undefined) {
     ...rangeValue.value,
     to: isNullish(value) ? '' : String(value),
   }
-  commitIfAuto()
+  scheduleCommit()
 }
 
 function updateSliderScalarValue<TValue>(value: TValue) {
@@ -246,7 +294,7 @@ function updateSliderScalarValue<TValue>(value: TValue) {
     return
   }
   scalarValue.value = value
-  commitIfAuto()
+  scheduleCommit()
 }
 
 function updateSliderRangeValue<TValue>(value: TValue) {
@@ -263,7 +311,7 @@ function updateSliderRangeValue<TValue>(value: TValue) {
     from: String(from),
     to: String(to),
   }
-  commitIfAuto()
+  scheduleCommit()
 }
 
 function resolveIncrementConfig(hideStepper: boolean) {
@@ -335,11 +383,20 @@ function resolveIncrementConfig(hideStepper: boolean) {
             )
           "
         >
+          <FilterEditorHeader
+            v-if="showHeader"
+            :label="internals.filters.getFilterLabelText({ label: definition.label })"
+            :active="preview.active"
+            :embedded="embedded"
+            :ui="dataListFilterUi"
+            @back="emit('back')"
+            @clear="clearFilter"
+          />
           <div
             v-if="operator === 'between'"
             :class="
               mergeDataListUiClass(
-                `grid border-b border-default ${geometry.toolbarGap} ${sizeClasses.searchHeader}`,
+                `nut-dl-editor__input grid ${geometry.toolbarGap} ${sizeClasses.searchHeader} ${autoCommit ? '' : 'border-b border-default'}`,
                 undefined,
                 dataListFilterUi?.inputs,
               )
@@ -363,6 +420,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
                 :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
                 :size="size"
                 @update:model-value="updateRangeFrom"
+                @input="typeRangeFrom"
                 @keydown.enter.prevent="applyFilter"
               />
 
@@ -378,6 +436,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
                 :decrement="resolveIncrementConfig(filterUi.range.inputs.hideStepper)"
                 :size="size"
                 @update:model-value="updateRangeTo"
+                @input="typeRangeTo"
                 @keydown.enter.prevent="applyFilter"
               />
             </div>
@@ -401,7 +460,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
             v-else
             :class="
               mergeDataListUiClass(
-                `grid border-b border-default ${geometry.toolbarGap} ${sizeClasses.searchHeader}`,
+                `nut-dl-editor__input grid ${geometry.toolbarGap} ${sizeClasses.searchHeader} ${autoCommit ? '' : 'border-b border-default'}`,
                 undefined,
                 dataListFilterUi?.inputs,
               )
@@ -422,6 +481,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
               :decrement="resolveIncrementConfig(filterUi.scalar.input.hideStepper)"
               :size="size"
               @update:model-value="updateScalarValue"
+              @input="typeScalarValue"
               @keydown.enter.prevent="applyFilter"
             />
 
@@ -440,7 +500,7 @@ function resolveIncrementConfig(hideStepper: boolean) {
           </div>
 
           <div
-            v-if="filterUi.commitMode === 'manual'"
+            v-if="!autoCommit"
             :class="
               mergeDataListUiClass(
                 `flex items-center justify-between border-t border-default ${sizeClasses.footer}`,
