@@ -31,7 +31,11 @@ export interface TableSummaryCell {
 
 export function useTableSummaries(params: UseTableSummariesParams) {
   const config = computed(() => params.schema.value.table?.summaries)
-  const columns = computed(() => params.runtimeColumns.value.filter((column) => column.summary))
+  const columns = computed(() =>
+    params.runtimeColumns.value.filter(
+      (column) => column.summary && !Array.isArray(column.summary),
+    ),
+  )
   const enabled = computed(() => columns.value.length > 0 || Boolean(config.value?.resolve))
   const scopes = computed<TableSummaryScope[]>(
     () =>
@@ -111,7 +115,7 @@ export function useTableSummaries(params: UseTableSummariesParams) {
 
     for (const column of columns.value) {
       const { summary } = column
-      if (!summary) {
+      if (!summary || Array.isArray(summary)) {
         continue
       }
       const context = createContext(column.id)

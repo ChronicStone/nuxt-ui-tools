@@ -16,6 +16,7 @@ import type {
   GenericObject,
   TableColumnSummary,
   TableColumnSummaryConfig,
+  TableSummaryCellDefinition,
   TableSummaryValue,
 } from '../../types'
 import { mergeDataListUiClass } from '../../utils'
@@ -236,7 +237,9 @@ const tableCols = computed(() => {
     width: `${leaf.getSize()}px`,
   }))
   if (filled.value) {
-    cols.splice(cols.length - table.getEndVisibleLeafColumns().length, 0, { key: 'fill' })
+    cols.splice(cols.length - table.getEndVisibleLeafColumns().length, 0, {
+      key: 'fill',
+    })
   }
   return cols
 })
@@ -303,7 +306,9 @@ const headerCellProps = computed(
             resizable: column.getCanResize(),
             resize: header.getResizeHandler(),
             resizing: column.getIsResizing(),
-            sortState: internals.tableColumns.getSortState({ columnId: column.id }),
+            sortState: internals.tableColumns.getSortState({
+              columnId: column.id,
+            }),
             sortable: meta?.sortable,
           },
         ]
@@ -321,7 +326,10 @@ const virtualPaddingBottom = computed(() => {
 })
 const renderedRows = computed(() => {
   if (!virtualized.value) {
-    return tableRows.value.map((row, index) => ({ row, virtual: { index, key: String(row.id) } }))
+    return tableRows.value.map((row, index) => ({
+      row,
+      virtual: { index, key: String(row.id) },
+    }))
   }
   return virtualRows.value.flatMap((item) => {
     const row = tableRows.value[item.index]
@@ -425,6 +433,59 @@ function isFirstEnd(column: { id: string }) {
 }
 
 const { summaries } = internals
+function isDeclarativeSummary(
+  summary: TableColumnSummary | undefined,
+): summary is TableSummaryCellDefinition[] {
+  return Array.isArray(summary)
+}
+const declarativeSummaryColumns = computed(
+  () =>
+    new Map<string, TableSummaryCellDefinition[]>(
+      internals.tableColumns.runtimeColumns.value.flatMap(
+        (column): [string, TableSummaryCellDefinition[]][] =>
+          isDeclarativeSummary(column.summary) ? [[column.id, column.summary]] : [],
+      ),
+    ),
+)
+const hasDeclarativeSummaries = computed(() => declarativeSummaryColumns.value.size > 0)
+const summaryCellContext = computed(() => ({
+  data: internals.queryContent.sourceData.value,
+  rows: internals.queryContent.data.value.rows,
+  allRows: internals.queryContent.allRows.value,
+  filteredRows: internals.queryContent.filteredRows.value,
+  selectedRows: internals.selection.selectedRows.value,
+  request: {
+    ...internals.queryContent.requestContext.value,
+    context: internals.queryContent.contextData.value,
+  },
+  context: internals.queryContent.contextData.value,
+  pageContext: internals.queryContent.pageContextData.value,
+}))
+function declarativeSummaryCell(columnId: string, rowIndex: number) {
+  const summary = declarativeSummaryColumns.value.get(columnId)
+  const cell = summary?.[rowIndex]
+  return cell && (!cell.condition || cell.condition(summaryCellContext.value)) ? cell : undefined
+}
+const declarativeSummaryRows = computed(() => {
+  const columns = leafColumns.value.filter((column) => !column.columnDef.meta?.internal)
+  const length = Math.max(
+    0,
+    ...columns.map((column) => {
+      const summary = declarativeSummaryColumns.value.get(column.id)
+      return summary?.length ?? 0
+    }),
+  )
+  return Array.from({ length }, (_, index) => index).filter((index) =>
+    columns.some((column) => declarativeSummaryCell(column.id, index)),
+  )
+})
+const footerRows = computed(() =>
+  hasDeclarativeSummaries.value ? declarativeSummaryRows.value : summaries.enabled.value ? [0] : [],
+)
+function renderDeclarativeSummary(columnId: string, rowIndex: number) {
+  const cell = declarativeSummaryCell(columnId, rowIndex)
+  return cell ? () => cell.render(summaryCellContext.value) : () => null
+}
 const summaryColumnIds = computed(() => new Set(summaries.columns.value.map((column) => column.id)))
 const summaryLabelColumnId = computed(
   () =>
@@ -460,7 +521,12 @@ function renderSummary(columnId: string) {
   const summary = column?.summary
   const render = isSummaryConfig(summary) ? summary.render : undefined
   if (render) {
-    return () => render({ loading: cell.loading, scope: summaries.scope.value, value: cell.value })
+    return () =>
+      render({
+        loading: cell.loading,
+        scope: summaries.scope.value,
+        value: cell.value,
+      })
   }
   const value = summaries.format(columnId)
   return () => h('span', formatNumber(value))
@@ -755,10 +821,10 @@ defineExpose({ resetColumnSizing })
         </tbody>
 
         <tfoot
-          v-if="summaries.enabled.value && !isFirstLoad && !empty"
+          v-if="footerRows.length > 0 && !isFirstLoad && (hasDeclarativeSummaries || !empty)"
           :class="mergeDataListUiClass('nut-dl-table__foot', undefined, ui?.tfoot)"
         >
-          <tr class="nut-dl-table__foot-row">
+          <tr v-for="summaryRow in footerRows" :key="summaryRow" class="nut-dl-table__foot-row">
             <template v-for="slot in columnSlots" :key="`foot-${slot.key}`">
               <td
                 v-if="slot.kind === 'fill'"
@@ -799,8 +865,16 @@ defineExpose({ resetColumnSizing })
                 :data-col="slot.columnId"
                 :style="pinnedOffset(headerByColumnId.get(slot.columnId)!.column)"
               >
+                <template v-if="hasDeclarativeSummaries">
+                  <span
+                    v-if="declarativeSummaryCell(slot.columnId, summaryRow)"
+                    class="nut-dl-tf__value"
+                  >
+                    <component :is="renderDeclarativeSummary(slot.columnId, summaryRow)" />
+                  </span>
+                </template>
                 <div
-                  v-if="slot.columnId === summaryLabelColumnId"
+                  v-else-if="slot.columnId === summaryLabelColumnId"
                   class="nut-dl-tf__label flex items-center gap-2 whitespace-nowrap"
                 >
                   <span

@@ -11,7 +11,6 @@ import type {
   TableSchemaView,
   TableRuntimeRecord,
   TableColumnSkeleton,
-  TableColumnSummary,
 } from '../../types'
 
 export const SELECT_COLUMN_ID = '__select'
@@ -36,7 +35,7 @@ export interface TableRuntimeColumn {
   defaultVisible: boolean
   configurable?: boolean
   pinned?: TableColumnPinned
-  summary?: TableColumnSummary
+  summary?: SchemaTableColumn['summary']
   ellipsis?: boolean
   skeleton?: TableColumnSkeleton
   lines?: number

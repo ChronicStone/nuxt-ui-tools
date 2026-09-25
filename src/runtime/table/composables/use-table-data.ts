@@ -63,6 +63,9 @@ export interface UseTableDataReturn {
   infiniteQuery: ReturnType<typeof useInfiniteQuery>
   rawData: ComputedRef<TableExternalState>
   data: ComputedRef<TableExternalState>
+  sourceData: ComputedRef<unknown>
+  allRows: ComputedRef<GenericObject[] | undefined>
+  filteredRows: ComputedRef<GenericObject[] | undefined>
   selectableRows: ComputedRef<GenericObject[]>
   facets: ComputedRef<TableFacetExecutionResult<string>>
   error: ComputedRef<unknown>
@@ -320,6 +323,9 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
   const rawData = computed<TableExternalState>(() =>
     isCursorPagination.value ? cursorRawData.value : rawDataState.value,
   )
+  const sourceData = computed<unknown>(() =>
+    isCursorPagination.value ? infiniteQuery.data.value?.pages.at(-1) : query.data.value,
+  )
   const clientFilteredRows = computed(() => {
     if (!params.startup.isActive.value) {
       return []
@@ -370,6 +376,12 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         ? clientSortedRows.value
         : data.value.rows
       : [],
+  )
+  const allRows = computed<GenericObject[] | undefined>(() =>
+    params.schema.value.source.mode === 'client' ? rawData.value.rows : undefined,
+  )
+  const filteredRows = computed<GenericObject[] | undefined>(() =>
+    params.schema.value.source.mode === 'client' ? clientSortedRows.value : undefined,
   )
   const clientFacetDescriptors = computed<TableFacetRequestDescriptor<string>[]>(() =>
     globalFacetDescriptors.value.map((facet) => ({
@@ -663,6 +675,9 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     context,
     contextData,
     data,
+    sourceData,
+    allRows,
+    filteredRows,
     error,
     facets,
     facetsBaseContext,
