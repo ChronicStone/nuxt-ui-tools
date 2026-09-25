@@ -29,13 +29,14 @@ export function resolveDateFilterScalarPresets(options: {
   definition: TableDateFilterDefinition
   operator: TableScalarDateFilterOperator
   now?: Date
+  translate?: DatePresetTranslator
 }): ResolvedTableDateFilterScalarPreset[] {
   const presetDefinitions = getScalarPresetDefinitions(options)
   const now = options.now ?? new Date()
 
   return presetDefinitions.map((preset) => {
     const resolved: ResolvedTableDateFilterScalarPreset = {
-      label: resolveTextValue(preset.label),
+      label: presetLabel(preset, options.translate),
       value: resolveScalarPresetValue({ now, preset }),
     }
     if (preset.description) {
@@ -48,13 +49,14 @@ export function resolveDateFilterScalarPresets(options: {
 export function resolveDateFilterRangePresets(options: {
   definition: TableDateFilterDefinition
   now?: Date
+  translate?: DatePresetTranslator
 }): ResolvedTableDateFilterRangePreset[] {
   const presetDefinitions = getRangePresetDefinitions(options.definition)
   const now = options.now ?? new Date()
 
   return presetDefinitions.map((preset) => {
     const resolved: ResolvedTableDateFilterRangePreset = {
-      label: resolveTextValue(preset.label),
+      label: presetLabel(preset, options.translate),
       value: resolveRangePresetValue({ now, preset }),
     }
     if (preset.description) {
@@ -208,20 +210,52 @@ function startOfYear(value: Date): Date {
   return new Date(value.getFullYear(), 0, 1)
 }
 
+type DefaultDatePresetKey =
+  | 'today'
+  | 'yesterday'
+  | 'sevenDaysAgo'
+  | 'startOfMonth'
+  | 'startOfYear'
+  | 'last7Days'
+  | 'last30Days'
+  | 'thisMonth'
+  | 'lastMonth'
+  | 'yearToDate'
+
+type DefaultScalarDatePreset = TableDateFilterScalarPreset & { key: DefaultDatePresetKey }
+type DefaultRangeDatePreset = TableDateFilterRangePreset & { key: DefaultDatePresetKey }
+
+/** Translates a default preset label; authored presets keep their own text. */
+export type DatePresetTranslator = (key: DefaultDatePresetKey) => string
+
+function presetLabel(
+  preset: TableDateFilterScalarPreset | TableDateFilterRangePreset,
+  translate: DatePresetTranslator | undefined,
+) {
+  if (translate && 'key' in preset && typeof preset.key === 'string') {
+    // SAFETY: only the default presets below carry a `key`, and each key is a DefaultDatePresetKey.
+    return translate(preset.key as DefaultDatePresetKey)
+  }
+  return resolveTextValue(preset.label)
+}
+
 const DEFAULT_SCALAR_PRESETS = {
   after: [
     {
       description: 'Everything after today.',
+      key: 'today',
       label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
       description: 'Everything after the last 7 days.',
+      key: 'sevenDaysAgo',
       label: '7 days ago',
       value: ({ now }) => startOfDay(addDays(now, -7)),
     },
     {
       description: 'Everything after the first day of this year.',
+      key: 'startOfYear',
       label: 'Start of year',
       value: ({ now }) => startOfYear(now),
     },
@@ -229,16 +263,19 @@ const DEFAULT_SCALAR_PRESETS = {
   before: [
     {
       description: 'Everything earlier than today.',
+      key: 'today',
       label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
       description: 'Everything earlier than the last 7 days.',
+      key: 'sevenDaysAgo',
       label: '7 days ago',
       value: ({ now }) => startOfDay(addDays(now, -7)),
     },
     {
       description: 'Everything before this month.',
+      key: 'startOfMonth',
       label: 'Start of month',
       value: ({ now }) => startOfMonth(now),
     },
@@ -246,16 +283,19 @@ const DEFAULT_SCALAR_PRESETS = {
   is: [
     {
       description: 'Use the current day.',
+      key: 'today',
       label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
       description: 'Use the previous day.',
+      key: 'yesterday',
       label: 'Yesterday',
       value: ({ now }) => startOfDay(addDays(now, -1)),
     },
     {
       description: 'Jump to the first day of this month.',
+      key: 'startOfMonth',
       label: 'Start of month',
       value: ({ now }) => startOfMonth(now),
     },
@@ -263,25 +303,29 @@ const DEFAULT_SCALAR_PRESETS = {
   isNot: [
     {
       description: 'Exclude the current day.',
+      key: 'today',
       label: 'Today',
       value: ({ now }) => startOfDay(now),
     },
     {
       description: 'Exclude the previous day.',
+      key: 'yesterday',
       label: 'Yesterday',
       value: ({ now }) => startOfDay(addDays(now, -1)),
     },
     {
       description: 'Exclude the first day of this month.',
+      key: 'startOfMonth',
       label: 'Start of month',
       value: ({ now }) => startOfMonth(now),
     },
   ],
-} satisfies Record<TableScalarDateFilterOperator, TableDateFilterScalarPreset[]>
+} satisfies Record<TableScalarDateFilterOperator, DefaultScalarDatePreset[]>
 
-const DEFAULT_RANGE_PRESETS: TableDateFilterRangePreset[] = [
+const DEFAULT_RANGE_PRESETS: DefaultRangeDatePreset[] = [
   {
     description: 'Only the current day.',
+    key: 'today',
     label: 'Today',
     value: ({ now }) => ({
       from: startOfDay(now),
@@ -290,6 +334,7 @@ const DEFAULT_RANGE_PRESETS: TableDateFilterRangePreset[] = [
   },
   {
     description: 'The previous 7 calendar days.',
+    key: 'last7Days',
     label: 'Last 7 days',
     value: ({ now }) => ({
       from: startOfDay(addDays(now, -6)),
@@ -298,6 +343,7 @@ const DEFAULT_RANGE_PRESETS: TableDateFilterRangePreset[] = [
   },
   {
     description: 'The previous 30 calendar days.',
+    key: 'last30Days',
     label: 'Last 30 days',
     value: ({ now }) => ({
       from: startOfDay(addDays(now, -29)),
@@ -306,6 +352,7 @@ const DEFAULT_RANGE_PRESETS: TableDateFilterRangePreset[] = [
   },
   {
     description: 'From the first day of this month until today.',
+    key: 'thisMonth',
     label: 'This month',
     value: ({ now }) => ({
       from: startOfMonth(now),
@@ -314,6 +361,7 @@ const DEFAULT_RANGE_PRESETS: TableDateFilterRangePreset[] = [
   },
   {
     description: 'The full previous month.',
+    key: 'lastMonth',
     label: 'Last month',
     value: ({ now }) => {
       const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -326,6 +374,7 @@ const DEFAULT_RANGE_PRESETS: TableDateFilterRangePreset[] = [
   },
   {
     description: 'From the first day of the year until today.',
+    key: 'yearToDate',
     label: 'Year to date',
     value: ({ now }) => ({
       from: startOfYear(now),

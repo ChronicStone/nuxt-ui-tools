@@ -17,6 +17,7 @@ import {
   isNullish,
 } from '../../../../shared/utils/predicate'
 import { useDataListUi } from '../../../composables/use-data-list-ui'
+import { useDeferredCommit } from '../../../composables/use-deferred-commit'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useTableInternals } from '../../../composables/use-table-internals'
 import type { TableDateFilterOperator, TableFilterOperator } from '../../../types'
@@ -33,23 +34,29 @@ import {
   resolveDateFilterScalarPresets,
   resolveDateFilterUi,
 } from '../../../utils'
+import FilterEditorHeader from '../shared/filter-editor-header.vue'
 import FilterMatchModePanel from '../shared/filter-match-mode-panel.vue'
 import FilterPopoverShell from '../shared/filter-popover-shell.vue'
 import FilterStageTransition from '../shared/filter-stage-transition.vue'
 import TableFilterTrigger from '../shared/filter-trigger-tag.vue'
 
-const props = defineProps<{
-  definition: TableDateFilterDefinition
-  dynamic?: boolean
-  session?: boolean
-  embedded?: boolean
-  initialOperator?: TableFilterOperator
-}>()
+const props = withDefaults(
+  defineProps<{
+    definition: TableDateFilterDefinition
+    dynamic?: boolean
+    session?: boolean
+    embedded?: boolean
+    header?: boolean
+    initialOperator?: TableFilterOperator
+  }>(),
+  { header: true },
+)
 interface PendingDateRange {
   from?: Date
   to?: Date
 }
 const emit = defineEmits<{
+  back: []
   dismiss: []
   sessionClosed: []
 }>()
@@ -60,6 +67,9 @@ const dataListFilterUi = computed(() => dataListUi.ui.value.filterTags?.ui)
 const size = computed(() => dataListUi.ui.value.filterTags?.size ?? dataListUi.controlSize.value)
 const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size.value))
 const geometry = computed(() => resolveDataListControlGeometry(size.value))
+const showHeader = computed(
+  () => props.header && dataListUi.ui.value.filterTags?.props?.editorHeader !== false,
+)
 const { t } = useUiToolsLocale()
 const isMobile = useMediaQuery('(max-width: 639px)')
 const pendingOperator = ref<TableFilterOperator | undefined>(props.initialOperator)
@@ -89,6 +99,8 @@ const operator = computed<TableDateFilterOperator>(() => {
 })
 
 const filterUi = computed(() => resolveDateFilterUi(props.definition, operator.value))
+const autoCommit = computed(() => filterUi.value.commitMode === 'auto')
+const deferred = useDeferredCommit({ commit: commitValue, flushOnDispose: props.embedded })
 
 const operatorLabel = computed(
   () =>
@@ -112,12 +124,14 @@ const scalarPresets = computed(() =>
       operator.value === 'before' || operator.value === 'after' || operator.value === 'isNot'
         ? operator.value
         : 'is',
+    translate: (key) => t(`table.filters.date.presets.${key}`),
   }),
 )
 
 const rangePresets = computed(() =>
   resolveDateFilterRangePresets({
     definition: props.definition,
+    translate: (key) => t(`table.filters.date.presets.${key}`),
   }),
 )
 
@@ -189,6 +203,11 @@ const session = useFilterTagSession({
   hasCommittedState: () =>
     !isNullish(internals.filters.getActiveFilterState({ key: props.definition.key })),
   onClose: () => {
+    if (autoCommit.value) {
+      deferred.flush()
+    } else {
+      deferred.cancel()
+    }
     pendingOperator.value = undefined
   },
   onDismiss: () => emit('dismiss'),
@@ -246,12 +265,8 @@ function initLocalState() {
   localRangeEnd.value = undefined
 }
 
-function applyFilter() {
-  const currentOperator = operator.value
-  const nextOperator = pendingOperator.value
-  pendingOperator.value = undefined
-
-  if (currentOperator === 'between') {
+function commitValue() {
+  if (operator.value === 'between') {
     const from = localRangeStart.value ? toJsDate(localRangeStart.value) : undefined
     const to = localRangeEnd.value ? toJsDate(localRangeEnd.value) : undefined
     const value: PendingDateRange = {}
@@ -264,22 +279,34 @@ function applyFilter() {
 
     internals.filters.setScalarFilterValue({
       key: props.definition.key,
-      operator: nextOperator,
+      operator: pendingOperator.value,
       value: from || to ? value : undefined,
     })
-    session.close()
     return
   }
 
   internals.filters.setScalarFilterValue({
     key: props.definition.key,
-    operator: nextOperator,
+    operator: pendingOperator.value,
     value: localDate.value ? toJsDate(localDate.value) : undefined,
   })
+}
+
+function applyFilter() {
+  deferred.cancel()
+  commitValue()
+  pendingOperator.value = undefined
   session.close()
 }
 
+function scheduleCommit() {
+  if (autoCommit.value) {
+    deferred.schedule()
+  }
+}
+
 function clearFilter() {
+  deferred.cancel()
   internals.filters.clearFilter({ key: props.definition.key })
   localDate.value = undefined
   localRangeStart.value = undefined
@@ -288,6 +315,7 @@ function clearFilter() {
 }
 
 function handleOperatorChange(op: TableFilterOperator) {
+  deferred.cancel()
   localDate.value = undefined
   localRangeStart.value = undefined
   localRangeEnd.value = undefined
@@ -300,7 +328,7 @@ function handleOperatorChange(op: TableFilterOperator) {
 
 function applyScalarPreset(value: Date) {
   localDate.value = toCalendarDate(value)
-  if (filterUi.value.commitMode === 'auto') {
+  if (autoCommit.value) {
     applyFilter()
   }
 }
@@ -308,7 +336,7 @@ function applyScalarPreset(value: Date) {
 function applyRangePreset(value: { from?: Date; to?: Date }) {
   localRangeStart.value = value.from ? toCalendarDate(value.from) : undefined
   localRangeEnd.value = value.to ? toCalendarDate(value.to) : undefined
-  if (filterUi.value.commitMode === 'auto') {
+  if (autoCommit.value) {
     applyFilter()
   }
 }
@@ -319,25 +347,26 @@ function isRangePresetActive(value: { from?: Date; to?: Date }) {
   return fromMatches && toMatches
 }
 
-function setSingleDate<TValue>(value: TValue) {
+function pickSingleDate<TValue>(value: TValue) {
   localDate.value = coerceCalendarDate(value)
-  if (filterUi.value.commitMode === 'auto') {
+  if (autoCommit.value) {
     applyFilter()
   }
+}
+
+function typeSingleDate<TValue>(value: TValue) {
+  localDate.value = coerceCalendarDate(value)
+  scheduleCommit()
 }
 
 function setRangeStart<TValue>(value: TValue) {
   localRangeStart.value = coerceCalendarDate(value)
-  if (filterUi.value.commitMode === 'auto' && filterUi.value.range.display === 'inputs') {
-    applyFilter()
-  }
+  scheduleCommit()
 }
 
 function setRangeEnd<TValue>(value: TValue) {
   localRangeEnd.value = coerceCalendarDate(value)
-  if (filterUi.value.commitMode === 'auto' && filterUi.value.range.display === 'inputs') {
-    applyFilter()
-  }
+  scheduleCommit()
 }
 
 function setCalendarRange<TValue>(value: TValue) {
@@ -350,7 +379,7 @@ function setCalendarRange<TValue>(value: TValue) {
   localRangeStart.value = 'start' in value ? coerceCalendarDate(value.start) : undefined
   localRangeEnd.value = 'end' in value ? coerceCalendarDate(value.end) : undefined
 
-  if (filterUi.value.commitMode === 'auto' && filterUi.value.range.display === 'calendar') {
+  if (autoCommit.value && localRangeStart.value && localRangeEnd.value) {
     applyFilter()
   }
 }
@@ -467,6 +496,15 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
             )
           "
         >
+          <FilterEditorHeader
+            v-if="showHeader"
+            :label="internals.filters.getFilterLabelText({ label: definition.label })"
+            :active="preview.active"
+            :embedded="embedded"
+            :ui="dataListFilterUi"
+            @back="emit('back')"
+            @clear="clearFilter"
+          />
           <div v-if="operator === 'between'">
             <div
               class="grid gap-0"
@@ -487,7 +525,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 <div
                   :class="[geometry.caption, 'font-medium uppercase tracking-[0.14em] text-muted']"
                 >
-                  Date range
+                  {{ t('table.filters.date.range') }}
                 </div>
 
                 <div
@@ -559,7 +597,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 <div
                   :class="[geometry.caption, 'font-medium uppercase tracking-[0.14em] text-muted']"
                 >
-                  Custom range
+                  {{ t('table.filters.date.custom') }}
                 </div>
                 <div :class="[geometry.caption, 'truncate text-muted']">
                   {{ rangeSummary }}
@@ -568,7 +606,9 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
 
               <div :class="['mt-2 grid sm:grid-cols-2', geometry.toolbarGap]">
                 <div class="space-y-1">
-                  <span :class="[geometry.caption, 'px-1 text-muted']">Start</span>
+                  <span :class="[geometry.caption, 'px-1 text-muted']">{{
+                    t('table.filters.date.start')
+                  }}</span>
                   <UInputDate
                     :model-value="localRangeStart"
                     leading
@@ -585,7 +625,9 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 </div>
 
                 <div class="space-y-1">
-                  <span :class="[geometry.caption, 'px-1 text-muted']">End</span>
+                  <span :class="[geometry.caption, 'px-1 text-muted']">{{
+                    t('table.filters.date.end')
+                  }}</span>
                   <UInputDate
                     :model-value="localRangeEnd"
                     leading
@@ -650,7 +692,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               leading-icon="i-lucide-calendar-days"
               :size="size"
               class="w-full"
-              @update:model-value="setSingleDate"
+              @update:model-value="typeSingleDate"
             />
 
             <UCalendar
@@ -669,12 +711,12 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 ),
                 cellTrigger: 'rounded-md',
               }"
-              @update:model-value="setSingleDate"
+              @update:model-value="pickSingleDate"
             />
           </div>
 
           <div
-            v-if="filterUi.commitMode === 'manual'"
+            v-if="!autoCommit"
             :class="
               mergeDataListUiClass(
                 `flex items-center border-t border-default ${sizeClasses.footer} ${operator === 'between' ? 'justify-between' : 'justify-end'}`,
