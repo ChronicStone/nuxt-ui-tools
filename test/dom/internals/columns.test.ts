@@ -52,7 +52,7 @@ describe('table columns', () => {
     ]).toStrictEqual(['sum', 'left', 'right'])
   })
 
-  it('creates TanStack column defs with internal columns and header floors', async () => {
+  it('creates TanStack column defs with internal columns and authored widths', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     const defs = harness.internals.tableColumns.columnDefs.value
     expect([defs[0], defs[0]?.meta.internal, defs.at(-1), defs.at(-1)?.meta]).toStrictEqual([
@@ -87,7 +87,7 @@ describe('table columns', () => {
       expect.objectContaining({ skeleton: 'check', sortable: true }),
     ])
     expect(byId(ROW_ACTIONS_COLUMN_ID).meta.sortable).toBeFalsy()
-    expect(byId('status').size).toBeGreaterThanOrEqual(110)
+    expect(byId('status').size).toBe(110)
     expect(byId('status').meta.render).toBeTypeOf('function')
     expect(byId('name').meta.renderHeader).toBeUndefined()
     expect(defs[0]?.meta.renderHeader).toBeTypeOf('function')
