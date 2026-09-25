@@ -51,7 +51,7 @@ describe('grid renderer part', () => {
       (root.element as HTMLElement).style.getPropertyValue('--nut-dl-grid-gap'),
       root.attributes('data-loading'),
     ]).toStrictEqual(['12px', 'false'])
-    await harness.until(() => w.find('.nut-dl-grid').attributes('data-animated') === 'true')
+    await harness.until(() => w.findAll('.nut-dl-grid__item').length === 12)
     expect(w.find('.nut-dl-grid__viewport').classes()).toContain('vp-x')
     const flow = w.find('.nut-dl-grid__flow')
     expect(flow.attributes('style')).toContain('gap: 12px')
@@ -99,7 +99,7 @@ describe('grid renderer part', () => {
     })
     await harness.until(() => must(harness).wrapper.find('.nut-dl-grid__state').exists())
     const state = harness.wrapper.find('.nut-dl-grid__state')
-    expect(state.text()).toContain('Impossible de charger cette grille')
+    expect(state.text()).toContain('Impossible de charger cette liste')
     const retry = state.find('[data-ui="UButton"]')
     expect(retry.attributes('data-icon')).toBe('i-lucide-refresh-cw')
     expect(retry.text()).toContain('Réessayer')
@@ -119,7 +119,7 @@ describe('grid renderer part', () => {
     await harness.until(() => Boolean(must(harness).internals.queryContent.error.value))
 
     expect(harness.wrapper.find('.nut-dl-grid__state').text()).toContain(
-      'Impossible de charger cette grille',
+      'Impossible de charger cette liste',
     )
     expect(harness.wrapper.findAll('.nut-dl-grid__item')).toHaveLength(0)
     expect(harness.internals.queryContent.data.value.rowCount).toBe(60)
