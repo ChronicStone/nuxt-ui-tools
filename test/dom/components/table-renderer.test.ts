@@ -548,7 +548,7 @@ describe('TableRenderer empty state', () => {
 
   it('shows loading rows instead of a false empty state while remote results recover', async () => {
     harness = await mountTable({
-      schema: createAccountsSchema({ delay: 40, embeddedFacets: true }),
+      schema: createAccountsSchema({ delay: 200, embeddedFacets: true }),
     })
     harness.internals.filters.searchQuery.value = 'no matching account'
     await harness.until(() => must(harness).wrapper.find('.nut-dl-empty').exists())
