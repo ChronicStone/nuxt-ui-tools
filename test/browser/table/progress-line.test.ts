@@ -25,9 +25,15 @@ describe('table loading line', () => {
     await harness.until(() => w.find('.nut-dl-table').attributes('data-loading') === 'false', 4000)
 
     const refresh = harness.internals.queryContent.refreshData()()
+    await harness.until(() => {
+      const current = must(w.find('.nut-dl-progress').element) as HTMLElement
+      return current.isConnected && current.dataset.active === 'true'
+    })
+    await harness.until(() => {
+      const current = must(w.find('.nut-dl-progress').element) as HTMLElement
+      return current.isConnected && getComputedStyle(current).opacity === '1'
+    })
     const line = must(w.find('.nut-dl-progress').element) as HTMLElement
-    await harness.until(() => line.dataset.active === 'true')
-    await harness.until(() => getComputedStyle(line).opacity === '1')
 
     const bar = must(line.firstElementChild) as HTMLElement
     const header = w.find('thead').element.getBoundingClientRect()
