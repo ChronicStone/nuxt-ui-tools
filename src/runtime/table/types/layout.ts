@@ -107,6 +107,6 @@ export interface TableSummariesSchema<TRow extends GenericObject = GenericObject
   resolve?: (context: {
     scope: TableSummaryScope
     rows: TRow[]
-    request: TableSummaryRequest
+    request: TableSummaryRequest<TRow>
   }) => Record<string, TableSummaryValue> | Promise<Record<string, TableSummaryValue>>
 }

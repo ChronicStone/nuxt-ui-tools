@@ -121,6 +121,14 @@ const schema = defineTableSchema({
     }),
   }),
   table: {
+    summaries: {
+      resolve: ({ request }) => {
+        expectTypeOf(request.search.value).toEqualTypeOf<string>()
+        expectTypeOf(request.filters.children).toBeArray()
+        expectTypeOf(request.sorting).toBeArray()
+        return {}
+      },
+    },
     columns: (column) => [
       column.field('name', {
         label: 'Name',

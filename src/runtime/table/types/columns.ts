@@ -1,3 +1,4 @@
+import type { TableSourceRequestContext } from './source'
 import type {
   GenericObject,
   RenderableType,
@@ -42,13 +43,14 @@ export type TableSummaryKind = 'sum' | 'avg' | 'count' | 'min' | 'max'
 export type TableSummaryScope = 'page' | 'filtered' | 'selection'
 export type TableSummaryValue = string | number | boolean | Date | null | undefined
 
-export type TableSummaryRequest = object | null | undefined
+export type TableSummaryRequest<TRow extends GenericObject = GenericObject> =
+  TableSourceRequestContext<TRow>
 
 export interface TableSummaryContext<TRow extends GenericObject = GenericObject> {
   rows: TRow[]
   scope: TableSummaryScope
   columnKey: string
-  request: TableSummaryRequest
+  request: TableSummaryRequest<TRow>
 }
 
 export interface TableColumnSummaryConfig<TRow extends GenericObject = GenericObject> {

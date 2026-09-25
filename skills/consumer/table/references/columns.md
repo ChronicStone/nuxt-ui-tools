@@ -108,6 +108,8 @@ table: {
 
 `scope` is `filtered` (the whole query; remote sources resolve it through `summaries.resolve`), `page`, or `selection`. The first column without a summary shows the scope and the row count, for example "Page 50 rows". When `selection` is one of the `scopes`, selecting rows switches the totals to the selection until it is cleared. Totals use the same cell padding as the body, so they align with the values above them.
 
+For a remote filtered total, `summaries.resolve` receives the current typed table request. Convert it with `toTableRemoteSourceRequest(request)` before sending it to a server summary endpoint; this keeps the footer's filters and search aligned with the rows. Return a record keyed by column ID. The resolver runs once for the summary row, so one server request can supply several totals.
+
 ## Wide Tables
 
 Tables with more than 12 unpinned visible columns virtualize columns as well as rows: only the columns in view and a small overscan are mounted, and spacer cells keep the header, body, and summary row aligned. Pinned columns always render. Query a cell after scrolling its column into view.
