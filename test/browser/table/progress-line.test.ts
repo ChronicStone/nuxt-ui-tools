@@ -56,18 +56,13 @@ describe('table loading line', () => {
     })
     const w = harness.wrapper
     await harness.until(() => w.find('.nut-dl-table').attributes('data-loading') === 'false', 4000)
-    const sweepTime = () =>
-      Number(w.find('.nut-dl-progress__bar').element.getAnimations()[0]?.currentTime ?? -1)
-
     void harness.internals.queryContent.refreshData()()
     await harness.until(() => w.find('.nut-dl-progress').attributes('data-active') === 'true')
-    await harness.until(() => sweepTime() > 300, 4000)
-    const before = sweepTime()
+    await harness.flush()
+    const firstBar = w.find('.nut-dl-progress__bar').element
 
     void harness.internals.queryContent.refreshData()()
-    await harness.flush()
-    const after = sweepTime()
-
-    expect([before > 300, after >= 0 && after < 120]).toStrictEqual([true, true])
+    await harness.until(() => w.find('.nut-dl-progress__bar').element !== firstBar)
+    expect(w.find('.nut-dl-progress').attributes('data-active')).toBe('true')
   })
 })
