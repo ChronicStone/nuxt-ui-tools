@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## v1.6.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.5.0...v1.6.0)
 
 Tables keep the widths you declare, draw placeholders shaped like their cells, and refresh without moving rows around.
 
