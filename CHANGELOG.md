@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.3
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.2...v1.6.3)
+
+Table summary rows stay at the bottom of a filled table and disappear when its query fails. The last data row and summary footer share one separator. A dynamic filter remains open when it is the only available filter.
+
 ## v1.6.2
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.1...v1.6.2)
