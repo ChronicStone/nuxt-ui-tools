@@ -57,6 +57,7 @@ function createTableApiStub() {
     isPageContextPending: false,
     isPending: false,
     isRefreshing: false,
+    isReplacing: false,
     isRevalidating: false,
     phase: 'active' as const,
   }))

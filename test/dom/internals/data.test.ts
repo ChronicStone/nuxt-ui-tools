@@ -110,6 +110,31 @@ describe('table data lifecycle', () => {
     ])
   })
 
+  it('loads rows and embedded facets with one request per query', async () => {
+    const requests: { facets: boolean; search: string }[] = []
+    harness = await mountLoaded({
+      schema: createAccountsSchema({
+        embeddedFacets: true,
+        onQuery: (context) => {
+          const request = context as { facets?: unknown[]; search: { value: string } }
+          requests.push({ facets: Boolean(request.facets), search: request.search.value })
+        },
+      }),
+    })
+    await harness.until(() => !harness?.internals.queryContent.status.value.isFetching)
+    await harness.flush()
+    expect(requests).toStrictEqual([{ facets: true, search: '' }])
+
+    harness.internals.filters.searchQuery.value = 'compte 01'
+    await harness.until(() => requests.length === 2)
+    await harness.until(() => !harness?.internals.queryContent.status.value.isFetching)
+    await harness.flush()
+    expect(requests).toStrictEqual([
+      { facets: true, search: '' },
+      { facets: true, search: 'compte 01' },
+    ])
+  })
+
   it('updates rows in place through the public API', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema() })
     harness.table.updateRow({ ...must(harness.table.data.rows.value[0]), name: 'Zed' })
