@@ -158,6 +158,47 @@ const schema = defineTableSchema({
   tableKey: 'users',
 })
 
+defineTableSchema({
+  rowKey: 'id',
+  source: tableSource({
+    mode: 'remote',
+    query: () => ({
+      queryKey: ['summary-inference'],
+      queryFn: async () => ({
+        rows: [{ id: 'invoice-1', total: '10' }],
+        pageInfo: {
+          mode: 'offset' as const,
+          pageIndex: 1,
+          pageSize: 25,
+          hasNextPage: false,
+          count: 'exact' as const,
+          rowCount: 1,
+        },
+        summary: { total: '10' },
+      }),
+    }),
+  }),
+  table: {
+    columns: (column) => [
+      column.field('total', {
+        summary: [
+          {
+            condition: ({ data, rows, allRows, request }) => {
+              expectTypeOf(data?.summary.total).toEqualTypeOf<string | undefined>()
+              expectTypeOf(rows).toEqualTypeOf<{ id: string; total: string }[]>()
+              expectTypeOf(allRows).toEqualTypeOf<{ id: string; total: string }[] | undefined>()
+              expectTypeOf(request.search.value).toEqualTypeOf<string>()
+              return true
+            },
+            render: ({ data }) => data?.summary.total ?? '',
+          },
+        ],
+      }),
+    ],
+  },
+  tableKey: 'summary-inference',
+})
+
 type ContextData = ExtractTableContextData<typeof schema>
 type PageContextData = ExtractTablePageContextData<typeof schema>
 type Row = ExtractTableRow<typeof schema>

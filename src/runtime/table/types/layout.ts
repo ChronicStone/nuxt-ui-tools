@@ -86,9 +86,10 @@ export interface TableTableSchema<
   TContext extends GenericObject = GenericObject,
   TPageContext extends GenericObject = GenericObject,
   TSortKey extends string = TableSortKey<TRow>,
+  TData = unknown,
 > {
   enabled?: boolean | string | (() => boolean | string)
-  columns?: TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey>
+  columns?: TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey, TData>
   treeMode?: boolean
   childrenKey?: TableSortKey<TRow>
   defaultSorting?: TableDefaultSort<TSortKey>

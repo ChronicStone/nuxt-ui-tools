@@ -92,23 +92,36 @@ column.field('total', { align: 'right', skeleton: { kind: 'number', lines: 2 } }
 
 Kinds: `text`, `avatar` (28px leading avatar), `icon` (18px leading icon or logo, for link cells), `dot`, `check`, `badge`, `number`, `progress`, and `none`. `lines: 2` adds a caption line, `avatar: 'circle'` rounds avatars and icons, `width` is a fixed share or a `[min, max]` range varied per row, and `count` sets the number of badges. Right-aligned columns default to `number`.
 
-## Summary Row
+## Summary Rows
 
-Give a column a `summary` to add a sticky totals row under the table. Use a kind (`sum`, `avg`, `count`, `min`, `max`) or a config with `resolve`, `format`, and `render` for derived or dual-currency values, and choose the rows it covers with `table.summaries`:
+Each column can render its own footer cells. The `summary` array places one cell in each footer row; a row is shown when at least one visible column's cell passes its optional `condition`. The render context includes the typed raw query `data`, current page `rows`, `allRows` and `filteredRows` for client sources, `selectedRows`, the current `request`, `context`, and `pageContext`.
 
 ```ts
 table: {
-  summaries: { scope: 'page', scopes: ['page', 'selection'] },
   columns: (column) => [
-    column.field('invoiceNumber', { label: 'Invoice' }),
-    column.field('total', { align: 'right', summary: 'sum' }),
+    column.field('invoiceNumber', {
+      summary: [
+        { render: () => 'Filtered total' },
+        { condition: ({ selectedRows }) => selectedRows.length > 0, render: () => 'Selected' },
+      ],
+    }),
+    column.field('total', {
+      align: 'right',
+      summary: [
+        { render: ({ data }) => data?.summary?.total ?? '—' },
+        {
+          condition: ({ selectedRows }) => selectedRows.length > 0,
+          render: ({ selectedRows }) => selectedRows.reduce((total, row) => total + row.total, 0),
+        },
+      ],
+    }),
   ],
 }
 ```
 
-`scope` is `filtered` (the whole query; remote sources resolve it through `summaries.resolve`), `page`, or `selection`. The first column without a summary shows the scope and the row count, for example "Page 50 rows". When `selection` is one of the `scopes`, selecting rows switches the totals to the selection until it is cleared. Totals use the same cell padding as the body, so they align with the values above them.
+The source query determines whether `data.summary` exists and what it means. For a `drizzle-resource` query with `summary: true`, it aggregates every row matching the scope, filters, and search, independently of pagination. The table does not start an extra request for a summary cell. Footer cells retain the column's alignment and pinned position.
 
-For a remote filtered total, `summaries.resolve` receives the current typed table request. Convert it with `toTableRemoteSourceRequest(request)` before sending it to a server summary endpoint; this keeps the footer's filters and search aligned with the rows. Return a record keyed by column ID. The resolver runs once for the summary row, so one server request can supply several totals.
+The earlier `summary: 'sum'` and `table.summaries` contracts remain available for existing tables. Use the array form when cells need typed query data or multiple rows.
 
 ## Wide Tables
 

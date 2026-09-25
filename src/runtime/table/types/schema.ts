@@ -11,6 +11,7 @@ import type {
 } from './layout'
 import type {
   InferTableSourceRow,
+  ExtractTableSourceResult,
   NormalizeTableSource,
   TableCursorPageResult,
   TableSource,
@@ -102,9 +103,16 @@ export type BuildTableSchema<
   TSortKey extends string = TableKnownFieldPath<InferTableSourceRow<TSource>>,
 > = Omit<
   TableSchema<InferTableSourceRow<TSource>, TContextItems, TPageContextItems, TFilterKey, TSortKey>,
-  'source'
+  'source' | 'table'
 > & {
   source: ValidateTableSource<TSource, TableContextDataFromItems<TContextItems>>
+  table?: TableTableSchema<
+    InferTableSourceRow<TSource>,
+    TableContextDataFromItems<TContextItems>,
+    TableContextDataFromItems<TPageContextItems>,
+    TSortKey,
+    ExtractTableSourceResult<TSource>
+  >
 }
 
 type ValidateTableSource<TSource, TContext extends GenericObject> =

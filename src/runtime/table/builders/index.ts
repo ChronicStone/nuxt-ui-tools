@@ -24,11 +24,12 @@ export function createTableColumnBuilder<
   TContext extends GenericObject,
   TPageContext extends GenericObject,
   TSortKey extends string = TableSortKey<TRow>,
->(): TableColumnBuilder<TRow, TContext, TPageContext, TSortKey> {
+  TData = unknown,
+>(): TableColumnBuilder<TRow, TContext, TPageContext, TSortKey, TData> {
   return {
     composite<TKey extends string>(
       key: TKey,
-      options: TableCompositeColumnOptions<TRow, TContext, TPageContext, TKey, TSortKey>,
+      options: TableCompositeColumnOptions<TRow, TContext, TPageContext, TKey, TSortKey, TData>,
     ) {
       return {
         key,
@@ -38,7 +39,7 @@ export function createTableColumnBuilder<
     },
     display<TKey extends string>(
       key: TKey,
-      options: TableDisplayColumnOptions<TRow, TContext, TPageContext, TKey>,
+      options: TableDisplayColumnOptions<TRow, TContext, TPageContext, TKey, TData>,
     ) {
       return {
         key,
@@ -48,7 +49,7 @@ export function createTableColumnBuilder<
     },
     field<TField extends TableKnownFieldPath<TRow> & string>(
       field: TField,
-      options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField> = {},
+      options: TableFieldColumnOptions<TRow, TContext, TPageContext, TField, TData> = {},
     ) {
       return {
         field,
@@ -145,14 +146,17 @@ export function resolveColumns<
   TContext extends GenericObject,
   TPageContext extends GenericObject,
   TSortKey extends string = TableSortKey<TRow>,
+  TData = unknown,
   TColumns extends
-    | TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey>
-    | undefined = TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey> | undefined,
+    | TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey, TData>
+    | undefined =
+    | TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey, TData>
+    | undefined,
 >(columns: TColumns): TColumns extends (...args: never[]) => infer TResult ? TResult : TColumns {
   // SAFETY: resolveCollection returns the exact conditional TResult selected by TColumns.
   return resolveCollection(
     columns,
-    createTableColumnBuilder<TRow, TContext, TPageContext, TSortKey>(),
+    createTableColumnBuilder<TRow, TContext, TPageContext, TSortKey, TData>(),
   ) as TColumns extends (...args: never[]) => infer TResult ? TResult : TColumns
 }
 

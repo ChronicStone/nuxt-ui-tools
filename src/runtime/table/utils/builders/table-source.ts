@@ -23,10 +23,16 @@ type ClientTableSourceResult<TResult> = TResult extends readonly GenericObject[]
 type RemoteTableSourceResult<TResult> = TResult extends {
   pageInfo: { nextCursor: string | null }
 }
-  ? TableCursorPageResult<TableSourceRow<TResult>>
+  ? TableCursorPageResult<TableSourceRow<TResult>> & SummaryFromResult<TResult>
   : TResult extends { pageInfo: { pageIndex: number } }
-    ? TableOffsetPageResult<TableSourceRow<TResult>>
-    : TableSourceExecutionResult<TableSourceRow<TResult>>
+    ? TableOffsetPageResult<TableSourceRow<TResult>> & SummaryFromResult<TResult>
+    : TableSourceExecutionResult<TableSourceRow<TResult>> & SummaryFromResult<TResult>
+
+type SummaryFromResult<TResult> = TResult extends { summary: infer TSummary }
+  ? { summary: TSummary }
+  : TResult extends { summary?: infer TSummary }
+    ? { summary?: TSummary }
+    : object
 
 interface TableSourceInferenceContext {
   pagination: TablePaginationState

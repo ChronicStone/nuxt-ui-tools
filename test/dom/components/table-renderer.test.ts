@@ -17,7 +17,9 @@ function sum(key: 'contracts' | 'consumption') {
 }
 
 async function mountTable(
-  options: Parameters<typeof mountDataList>[0] & { tableProps?: Record<string, unknown> },
+  options: Parameters<typeof mountDataList>[0] & {
+    tableProps?: Record<string, unknown>
+  },
 ) {
   const mounted = await mountLoaded({
     ...options,
@@ -254,7 +256,10 @@ describe('TableRenderer structure', () => {
     expect(w.find('tfoot').classes()).toContain('tfoot-x')
     expect(w.find('td[data-col="legalEntity"]').exists()).toBeFalsy()
 
-    harness.internals.tableColumns.setVisibility({ columnId: 'legalEntity', visible: true })
+    harness.internals.tableColumns.setVisibility({
+      columnId: 'legalEntity',
+      visible: true,
+    })
     await harness.flush()
     expect(w.find('td[data-col="legalEntity"]').classes()).toContain('nut-dl-td--ellipsis')
     expect(texts(w, '.nut-dl-th__label')).toContain('Entité légale')
@@ -331,7 +336,10 @@ describe('TableRenderer structure', () => {
   })
 
   it('virtualizes long pages', async () => {
-    harness = await mountTable({ query: { 'p.size': '50' }, schema: createAccountsSchema() })
+    harness = await mountTable({
+      query: { 'p.size': '50' },
+      schema: createAccountsSchema(),
+    })
     const root = harness.wrapper.find('.nut-dl-table')
     expect(root.attributes('data-virtualized')).toBe('true')
     expect(
@@ -341,8 +349,59 @@ describe('TableRenderer structure', () => {
 })
 
 describe('TableRenderer summaries', () => {
+  it('renders a declared summary when the current page has no rows', async () => {
+    const schema = createAccountsSchema({ rows: [], summaries: false })
+    const name = schema.table?.columns?.find((entry) => entry.key === 'name')
+    if (!name) throw new Error('Expected name column')
+    name.summary = [{ render: ({ rows }) => `Total from query, page ${rows.length}` }]
+    harness = await mountTable({ schema })
+    expect(harness.wrapper.find('.nut-dl-empty').exists()).toBe(true)
+    expect(harness.wrapper.find('tfoot td[data-col="name"]').text()).toBe(
+      'Total from query, page 0',
+    )
+  })
+
+  it('renders conditional multi-row summaries from table data and selection', async () => {
+    const schema = createAccountsSchema({ rows: rows60, summaries: false })
+    const name = schema.table?.columns?.find((entry) => entry.key === 'name')
+    const contracts = schema.table?.columns?.find((entry) => entry.key === 'contracts')
+    if (!name || !contracts) throw new Error('Expected summary columns')
+    name.summary = [
+      {
+        render: ({ rows, allRows }) => `Page ${rows.length} of ${allRows?.length}`,
+      },
+      {
+        condition: ({ selectedRows }) => selectedRows.length > 0,
+        render: ({ selectedRows }) => `Selected ${selectedRows.length}`,
+      },
+    ]
+    contracts.summary = [
+      {
+        render: ({ data, rows }) => `${Array.isArray(data) ? data.length : 0}:${rows.length}`,
+      },
+      {
+        condition: ({ selectedRows }) => selectedRows.length > 0,
+        render: ({ selectedRows }) => String(selectedRows.length),
+      },
+    ]
+    harness = await mountTable({ schema })
+    const foot = harness.wrapper.find('tfoot')
+    expect(foot.findAll('tr.nut-dl-table__foot-row')).toHaveLength(1)
+    expect(foot.find('td[data-col="name"]').text()).toBe('Page 20 of 60')
+    expect(foot.find('td[data-col="contracts"]').text()).toBe('60:20')
+
+    const firstRow = must(harness.wrapper.findAll('tbody tr.nut-dl-row')[0])
+    await firstRow.find('td[data-col="__select"] input[type="checkbox"]').trigger('click')
+    await harness.until(() => foot.findAll('tr.nut-dl-table__foot-row').length === 2)
+    expect(foot.findAll('tr.nut-dl-table__foot-row')[1]?.find('td[data-col="name"]').text()).toBe(
+      'Selected 1',
+    )
+  })
+
   it('renders the sticky summary row with label, count, derived and async cells', async () => {
-    harness = await mountTable({ schema: createAccountsSchema({ rows: rows60 }) })
+    harness = await mountTable({
+      schema: createAccountsSchema({ rows: rows60 }),
+    })
     const w = harness.wrapper
     const foot = w.find('tfoot.nut-dl-table__foot')
     expect(foot.exists()).toBeTruthy()
@@ -368,7 +427,9 @@ describe('TableRenderer summaries', () => {
     const column = schema.table?.columns?.find((entry) => entry.key === 'consumption')
     let release: (value: number) => void = () => {}
     if (column) {
-      column.summary = { resolve: () => new Promise<number>((resolve) => (release = resolve)) }
+      column.summary = {
+        resolve: () => new Promise<number>((resolve) => (release = resolve)),
+      }
     }
     harness = await mountTable({ schema })
     expect(
@@ -384,7 +445,9 @@ describe('TableRenderer summaries', () => {
   })
 
   it('totals the checked rows while a selection exists, then returns to its scope', async () => {
-    harness = await mountTable({ schema: createAccountsSchema({ rows: rows60 }) })
+    harness = await mountTable({
+      schema: createAccountsSchema({ rows: rows60 }),
+    })
     const w = harness.wrapper
     const rows = w.findAll('tbody tr.nut-dl-row').slice(0, 2)
     const checked = rows60.filter((row) =>
@@ -488,7 +551,13 @@ describe('TableRenderer empty state', () => {
       schema: createAccountsSchema({ rows: [] }),
       ui: {
         table: {
-          props: { empty: { description: false, icon: 'i-lucide-ghost', title: 'Vide' } },
+          props: {
+            empty: {
+              description: false,
+              icon: 'i-lucide-ghost',
+              title: 'Vide',
+            },
+          },
           ui: { empty: 'empty-x' },
         },
       },
@@ -518,7 +587,9 @@ describe('TableRenderer cursor mode', () => {
 
 describe('TableRenderer internal columns', () => {
   it('hides the selection column when no bulk action is configured', async () => {
-    harness = await mountTable({ schema: createAccountsSchema({ actions: false }) })
+    harness = await mountTable({
+      schema: createAccountsSchema({ actions: false }),
+    })
     expect(harness.wrapper.find('th[data-col="__select"]').exists()).toBeFalsy()
     expect(harness.wrapper.find('td[data-col="__select"]').exists()).toBeFalsy()
     expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBeTruthy()
@@ -526,7 +597,10 @@ describe('TableRenderer internal columns', () => {
 
   it('keeps the selection column when selection is forced without actions', async () => {
     harness = await mountTable({
-      schema: createAccountsSchema({ actions: false, selection: { mode: true } }),
+      schema: createAccountsSchema({
+        actions: false,
+        selection: { mode: true },
+      }),
     })
     expect(harness.wrapper.find('th[data-col="__select"]').exists()).toBeTruthy()
   })
@@ -547,7 +621,9 @@ describe('TableRenderer internal columns', () => {
     expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBeFalsy()
     harness.unmount()
 
-    harness = await mountTable({ schema: createAccountsSchema({ rowActions: false }) })
+    harness = await mountTable({
+      schema: createAccountsSchema({ rowActions: false }),
+    })
     expect(harness.wrapper.find('th[data-col="__row-actions"]').exists()).toBeFalsy()
   })
 
