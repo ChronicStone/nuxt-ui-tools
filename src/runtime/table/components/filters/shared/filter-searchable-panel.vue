@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import UScrollArea from '@nuxt/ui/components/ScrollArea.vue'
 import { computed } from 'vue'
@@ -82,15 +83,22 @@ const sizeClasses = computed(() => resolveFilterEditorSizeClasses(size))
       <div
         v-if="showEmpty"
         :class="
-          mergeDataListUiClass(`${sizeClasses.empty} text-center text-muted`, undefined, ui?.empty)
+          mergeDataListUiClass(
+            `nut-dl-editor__empty ${sizeClasses.empty} text-center text-muted`,
+            undefined,
+            ui?.empty,
+          )
         "
       >
         <slot name="empty">
-          <div class="grid justify-items-center gap-2">
-            <span class="flex size-8 items-center justify-center rounded-full bg-elevated">
-              <span class="i-lucide-search-x size-4" aria-hidden="true" />
-            </span>
-            <span>{{ emptyLabel }}</span>
+          <div class="grid justify-items-center gap-1.5">
+            <UIcon name="i-lucide-search-x" class="size-4 text-dimmed" aria-hidden="true" />
+            <span class="text-[12.5px] leading-[18px]">{{ emptyLabel }}</span>
+            <span
+              v-if="searchQuery.trim()"
+              class="max-w-full truncate text-[12px] leading-[16px] text-dimmed"
+              >« {{ searchQuery.trim() }} »</span
+            >
           </div>
         </slot>
       </div>
