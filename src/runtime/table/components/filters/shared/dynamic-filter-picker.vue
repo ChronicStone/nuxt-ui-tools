@@ -242,7 +242,7 @@ function toggle() {
         "
         :ui="{
           base: mergeDataListUiClass(
-            `nut-dl-tag nut-dl-tag--add shrink-0 ${selectedDefinition ? '' : 'border border-dashed border-[var(--ui-border-accented)] text-muted hover:text-default hover:border-[var(--ui-text-dimmed)]'}`,
+            'nut-dl-tag nut-dl-tag--add shrink-0 border border-dashed border-[var(--ui-border-accented)] text-muted hover:text-default hover:border-[var(--ui-text-dimmed)]',
             undefined,
             ui?.trigger,
           ),
