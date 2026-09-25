@@ -58,6 +58,10 @@ describe('choice cards', () => {
     expect(group.attributes('indicator')).toBe('hidden')
     expect(group.attributes('columns')).toBeUndefined()
     expect(group.attributes('icon')).toBeUndefined()
+    // The card label draws the option icon (here as a tile): Nuxt UI's own icon stays hidden and
+    // the tile layout stays aligned to the start.
+    expect(group.attributes('data-slot-icon')).toContain('hidden')
+    expect(group.attributes('data-slot-wrapper')).toContain('items-start')
     expect(group.attributes('data-slot-item')).toContain('relative')
     expect(group.attributes('data-slot-wrapper')).toContain('text-start')
     harness.unmount()
