@@ -50,9 +50,9 @@ const modelValue = defineModel<string | undefined>({
     :size="size"
     :ui="{
       root: 'w-full',
-      fieldset: mergeDataListUiClass('grid gap-0.5', undefined, ui?.list),
+      fieldset: mergeDataListUiClass('grid grid-cols-1 gap-0.5', undefined, ui?.list),
       item: mergeDataListUiClass(
-        `relative flex cursor-pointer items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
+        `relative flex min-w-0 cursor-pointer items-center rounded-md transition-colors hover:bg-elevated data-[state=checked]:bg-elevated ${sizeClasses.option}`,
         undefined,
         ui?.option,
       ),
@@ -80,7 +80,7 @@ const modelValue = defineModel<string | undefined>({
           "
         />
 
-        <span class="min-w-0 flex-1 truncate">
+        <span class="min-w-0 flex-1 truncate" :title="item.label">
           {{ item.label }}
         </span>
         <USkeleton
