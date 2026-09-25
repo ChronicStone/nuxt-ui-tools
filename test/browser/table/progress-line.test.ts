@@ -46,6 +46,8 @@ describe('table loading line', () => {
 
     line.style.pointerEvents = 'auto'
     bar.style.pointerEvents = 'auto'
+    bar.style.animation = 'none'
+    bar.style.transform = 'translateX(0)'
     const barBox = bar.getBoundingClientRect()
     const x = Math.min(Math.max(barBox.left + barBox.width / 2, box.left + 1), box.right - 1)
     expect(document.elementFromPoint(x, box.top + 1)).toBe(bar)
