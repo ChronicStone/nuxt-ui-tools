@@ -27,7 +27,7 @@ describe('table loading line', () => {
     const refresh = harness.internals.queryContent.refreshData()()
     const line = must(w.find('.nut-dl-progress').element) as HTMLElement
     await harness.until(() => line.dataset.active === 'true')
-    await settle(250)
+    await harness.until(() => getComputedStyle(line).opacity === '1')
 
     const bar = must(line.firstElementChild) as HTMLElement
     const header = w.find('thead').element.getBoundingClientRect()
