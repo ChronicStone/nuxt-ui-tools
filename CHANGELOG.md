@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased
+
+Tables keep the widths you declare, draw placeholders shaped like their cells, and refresh without moving rows around.
+
+### Migration notes
+
+- A column's authored `width` now wins over the header-label floor. Columns that relied on the floor to widen past their `width` render at that width; widen the `width` where a label must stay fully visible.
+- Spare horizontal space goes to a trailing filler column instead of stretching every column proportionally.
+- Active filter tags no longer honor a `bg-*` utility in `filterTags.ui.activeRoot`; set `[--nut-dl-tag-bg:<color>]` instead.
+- Filter tag editors now default to `commitMode: 'auto'`: option and boolean rows apply on click, date picks apply and close, and typed text, number, and date values apply after a short pause, on Enter, or when the popover closes. Set `behavior.commitMode: 'manual'` on a filter to keep the `Clear all / Apply` footer.
+- Every filter tag editor opens with the same header (filter label plus `Clear`); text, number, date, and boolean editors accept the `header` prop and emit `back` like the option editor already did.
+- Tables virtualize columns once more than 12 unpinned columns are visible (previously 32). Off-screen cells are no longer in the DOM; scroll the column into view before querying its cells.
+
+### Enhancements
+
+- Register `<UiDataListErrorState>` as a public part and give it `title`, `description`, `reference`, and `icon` props plus an `actions` slot, so applications render their own error copy and support reference inside the shared layout. Table and grid renderers now share this one error state and expose it through the `error` slot with `error` and `retry`.
+- Center the empty and error states in the remaining body height when a table or grid fills its container, instead of parking them under the header.
+- Give active filter tags a slight hover (a 6% ink tint and an accented ring). The background reads `--nut-dl-tag-bg`, which applications override through `filterTags.ui.activeRoot`, for example `[--nut-dl-tag-bg:var(--ui-bg-muted)]`.
+- Accept a `skeleton` config (`{ kind, lines, avatar, width, count }`) besides the kind string, and add the `icon` and `progress` kinds, so first loads mirror the cells they replace: caption lines, round or square avatars, per-row width ranges, and badge counts.
+- Show a loading line along the bottom edge of the header whenever rows are already on screen and a new page, sort, filter, or refresh is pending.
+- Keep existing rows in place while a replacement query runs, dimming them only when the wait is noticeable, instead of animating rows in and out on every search, sort, or page change.
+
+- Add a clear button to the search input; it appears once a term is typed and `Escape` clears too. Style it through `search.ui.clear`.
+- Render each body row as a keyed component, so rows already on screen do not re-render while the virtual window slides. The previous `v-memo` on the row loop cached by list position and missed on every slide. Column headers receive props built once per sorting, pinning, or sizing change instead of fresh menu arrays and resize handlers on each render, and row heights come from resize observer entries instead of forced layouts.
+- Label the summary row with its scope (`Page`, `Selection`, or `Total`) and a row count, and switch the totals to the selected rows while a selection exists when `selection` is one of the configured `scopes`.
+- Keep the loading line visible for at least 600 ms once it appears, so a refresh that completes in a few milliseconds still registers. Its sweep now takes 0.8 s and restarts from the start on every activation and every refresh request, which the table data exposes as `refreshes`.
+- Open filter popovers without focusing the header's `Clear` button: searchable option editors focus their search field on devices with a fine pointer, and other editors focus the popover itself so `Tab` enters it.
+- Localize the date editor captions (`table.filters.date.*`), the search clear label (`table.controls.clearSearch`), and the summary row unit (`table.summaries.rowOne`, `table.summaries.rowOther`).
+
+### Fixes
+
+- Remove the doubled border above the table header.
+- Show the option editor's empty state again when a search matches nothing; it names the term that found no option.
+- Keep the sort menu's direction control inside the popover and give it an explicit focus ring.
+- Toggle a column from anywhere on its row in the column panel, not only from the checkbox or label.
+- Make boolean filter rows selectable across their whole width.
+- Request embedded facets once per filter context, instead of repeating them on the next page or sort request.
+- Align summary totals and the summary label with the cells above them; footer cells now share the body cell padding.
+- Apply a number typed in a number filter after a pause, on Enter, and when the editor closes. The number field only commits its value on blur, so Enter and closing used to drop it; the editor now reads the typed text with the locale's separators and respects `maximumFractionDigits`.
+- Keep a value typed in an editor embedded in the add-filter picker or the mobile filter sheet when the picker or sheet closes before the pause ends.
+- Keep option rows within the editor width, so long labels end with an ellipsis and show in full on hover; the multiple-choice list's `truncate` prop now defaults to `true` as intended instead of being cast to `false` when omitted.
+- Keep the add-filter trigger dashed, like a dormant tag, while a filter is selected and its value is being chosen, instead of rendering its label as bare text.
+
 ## v1.5.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.4.0...v1.5.0)
