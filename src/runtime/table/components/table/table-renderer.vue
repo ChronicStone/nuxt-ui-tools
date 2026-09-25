@@ -1121,6 +1121,9 @@ tbody .nut-dl-table__fill {
   padding-block: var(--nut-dl-cell-y, 6px);
   box-sizing: border-box;
 }
+.nut-dl-table__table tbody:has(+ tfoot) > .nut-dl-row:last-child > .nut-dl-td {
+  border-bottom: 0;
+}
 .nut-dl-td {
   contain: paint;
 }
