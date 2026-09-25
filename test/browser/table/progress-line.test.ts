@@ -11,10 +11,6 @@ import { must } from '../../helpers/must'
 let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
-function settle(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 describe('table loading line', () => {
   it('paints the loading line on the header edge while existing rows refresh', async () => {
     harness = await mountLoaded({
@@ -65,7 +61,7 @@ describe('table loading line', () => {
 
     void harness.internals.queryContent.refreshData()()
     await harness.until(() => w.find('.nut-dl-progress').attributes('data-active') === 'true')
-    await settle(400)
+    await harness.until(() => sweepTime() > 300, 4000)
     const before = sweepTime()
 
     void harness.internals.queryContent.refreshData()()
