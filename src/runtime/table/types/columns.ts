@@ -11,7 +11,32 @@ import type {
   TableRuntimeRecord,
 } from './utils'
 
-export type TableColumnSkeleton = 'text' | 'avatar' | 'dot' | 'check' | 'badge' | 'number' | 'none'
+/** Placeholder shape drawn in a column while its first page loads. */
+export type TableColumnSkeletonKind =
+  | 'text'
+  | 'avatar'
+  | 'icon'
+  | 'dot'
+  | 'check'
+  | 'badge'
+  | 'number'
+  | 'progress'
+  | 'none'
+
+/** Tunes a placeholder shape so it mirrors the content the column renders. */
+export interface TableColumnSkeletonConfig {
+  kind: TableColumnSkeletonKind
+  /** Adds a shorter caption line under the main one. Avatars default to two lines. */
+  lines?: 1 | 2
+  /** Draws the avatar or icon as a circle instead of a rounded square. */
+  avatar?: 'circle' | 'square'
+  /** Share of the cell taken by the main line: a fixed fraction, or a `[min, max]` range varied per row. */
+  width?: number | readonly [number, number]
+  /** Number of badges drawn side by side. */
+  count?: number
+}
+
+export type TableColumnSkeleton = TableColumnSkeletonKind | TableColumnSkeletonConfig
 
 export type TableSummaryKind = 'sum' | 'avg' | 'count' | 'min' | 'max'
 export type TableSummaryScope = 'page' | 'filtered' | 'selection'
