@@ -349,6 +349,18 @@ describe('TableRenderer structure', () => {
 })
 
 describe('TableRenderer summaries', () => {
+  it('keeps legacy summary cells while columns migrate to declared cells', async () => {
+    const schema = createAccountsSchema({ rows: rows60 })
+    const name = schema.table?.columns?.find((entry) => entry.key === 'name')
+    if (!name) throw new Error('Expected name column')
+    name.summary = [{ render: () => 'Filtered total' }]
+    harness = await mountTable({ schema })
+    expect(harness.wrapper.find('tfoot td[data-col="name"]').text()).toBe('Filtered total')
+    expect(harness.wrapper.find('tfoot td[data-col="contracts"] .nut-dl-tf__value').text()).toBe(
+      String(sum('contracts')),
+    )
+  })
+
   it('renders a declared summary when the current page has no rows', async () => {
     const schema = createAccountsSchema({ rows: [], summaries: false })
     const name = schema.table?.columns?.find((entry) => entry.key === 'name')

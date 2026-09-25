@@ -479,9 +479,12 @@ const declarativeSummaryRows = computed(() => {
     columns.some((column) => declarativeSummaryCell(column.id, index)),
   )
 })
-const footerRows = computed(() =>
-  hasDeclarativeSummaries.value ? declarativeSummaryRows.value : summaries.enabled.value ? [0] : [],
-)
+const footerRows = computed(() => {
+  if (!hasDeclarativeSummaries.value) return summaries.enabled.value ? [0] : []
+  return [
+    ...new Set([...declarativeSummaryRows.value, ...(summaries.enabled.value ? [0] : [])]),
+  ].sort((left, right) => left - right)
+})
 function renderDeclarativeSummary(columnId: string, rowIndex: number) {
   const cell = declarativeSummaryCell(columnId, rowIndex)
   return cell ? () => cell.render(summaryCellContext.value) : () => null
@@ -865,16 +868,19 @@ defineExpose({ resetColumnSizing })
                 :data-col="slot.columnId"
                 :style="pinnedOffset(headerByColumnId.get(slot.columnId)!.column)"
               >
-                <template v-if="hasDeclarativeSummaries">
-                  <span
-                    v-if="declarativeSummaryCell(slot.columnId, summaryRow)"
-                    class="nut-dl-tf__value"
-                  >
-                    <component :is="renderDeclarativeSummary(slot.columnId, summaryRow)" />
-                  </span>
-                </template>
+                <span
+                  v-if="declarativeSummaryCell(slot.columnId, summaryRow)"
+                  class="nut-dl-tf__value"
+                >
+                  <component :is="renderDeclarativeSummary(slot.columnId, summaryRow)" />
+                </span>
                 <div
-                  v-else-if="slot.columnId === summaryLabelColumnId"
+                  v-else-if="
+                    summaryRow === 0 &&
+                    !empty &&
+                    summaries.enabled.value &&
+                    slot.columnId === summaryLabelColumnId
+                  "
                   class="nut-dl-tf__label flex items-center gap-2 whitespace-nowrap"
                 >
                   <span
@@ -889,7 +895,14 @@ defineExpose({ resetColumnSizing })
                     summaryUnit
                   }}</span>
                 </div>
-                <template v-else-if="summaryColumnIds.has(slot.columnId)">
+                <template
+                  v-else-if="
+                    summaryRow === 0 &&
+                    !empty &&
+                    summaries.enabled.value &&
+                    summaryColumnIds.has(slot.columnId)
+                  "
+                >
                   <span
                     v-if="summaries.cell(slot.columnId).loading"
                     class="nut-dl-skeleton nut-dl-tf__skeleton inline-block h-3 w-12 rounded-full align-middle"
