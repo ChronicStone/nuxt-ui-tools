@@ -209,4 +209,61 @@ describe('dashboard page', () => {
 
     expect(wrapper.find('header p').text()).toBe('Quarterly review')
   })
+
+  it('lays out an entity header and counts what waits in each view from the root data', async () => {
+    const schema = defineDashboardSchema({
+      key: 'entity',
+      queries: ({ essential }) => ({
+        account: essential.query(() => ({
+          queryFn: () => Promise.resolve({ name: 'Acme', openInvoices: 3 }),
+          queryKey: ['account'],
+        })),
+      }),
+      views: {
+        overview: defineDashboardView({ label: 'Overview' }),
+        billing: defineDashboardView({ label: 'Billing' }),
+        access: defineDashboardView({ label: 'Access' }),
+      },
+      badges: ({ data }) => ({ access: 0, billing: data.account?.openInvoices }),
+    })
+    const { flush, wrapper } = await mountDashboard({
+      render: (api) =>
+        h(
+          DashboardPage,
+          { dashboard: api, filters: false, refresh: false },
+          {
+            banner: () => h('aside', { 'data-banner': '' }, 'Internal note'),
+            details: () => h('dl', { 'data-details': '' }, 'Facts'),
+            eyebrow: () => h('nav', { 'data-eyebrow': '' }, 'Accounts'),
+            leading: () => h('img', { alt: 'logo', 'data-leading-slot': '' }),
+            overview: () => h('p', 'overview'),
+            title: () => api.account.data?.name ?? '',
+          },
+        ),
+      schema,
+    })
+    await flush()
+
+    const header = wrapper.find('header')
+    expect(header.attributes('data-leading')).toBe('')
+    expect(header.find('[data-eyebrow]').exists()).toBe(true)
+    expect(header.find('[data-leading-slot]').exists()).toBe(true)
+    expect(header.find('[data-details]').exists()).toBe(true)
+    expect(wrapper.find('h1').text()).toBe('Acme')
+    expect(wrapper.find('[data-dashboard-refresh]').exists()).toBe(false)
+
+    // The banner sits between the header and the pinned tabs.
+    const banner = wrapper.find('[data-banner]').element
+    const tabs = wrapper.find('[data-dashboard-view-tabs]').element
+    expect(banner.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    const badges = wrapper
+      .findAll('[data-dashboard-view-tabs] button')
+      .map((tab) => [tab.text(), tab.find('[data-dashboard-view-badge]').exists()])
+    expect(badges).toEqual([
+      ['Overview', false],
+      ['Billing 3', true],
+      ['Access', false],
+    ])
+  })
 })

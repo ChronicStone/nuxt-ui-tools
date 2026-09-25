@@ -175,6 +175,25 @@ Wrap the consumer app, layout, or route once:
 </template>
 ```
 
+In a Nuxt app the module creates one form API for the whole app: components read it with
+`useFormApi()`, and code that runs outside setup — an entity action called from a click handler, a
+store — reads it with `useNuxtApp().$formApi`. `<NutFormProvider>` renders the forms either one
+opens.
+
+```ts
+export async function inviteUser(account: { id: string }) {
+  const { $api, $formApi } = useNuxtApp()
+  const result = await $formApi.createForm(invitationForm(), {
+    mode: 'drawer md:modal',
+    onSubmit: async ({ formData }) => ({
+      success: true,
+      data: await $api.invite(account.id, formData),
+    }),
+  })
+  return result.isCompleted
+}
+```
+
 Then open a form from anywhere under that provider:
 
 ```ts

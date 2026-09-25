@@ -44,6 +44,9 @@ export function useDashboardApi(params: {
           get label() {
             return view.label()
           },
+          get badge() {
+            return view.badge()
+          },
           get opened() {
             return view.opened.value
           },
@@ -115,7 +118,9 @@ export function useDashboardApi(params: {
         },
         get items() {
           return views.views.flatMap((view) =>
-            view.enabled.value ? [{ label: view.label(), value: view.key }] : [],
+            view.enabled.value
+              ? [{ badge: view.badge(), label: view.label(), value: view.key }]
+              : [],
           )
         },
       }),

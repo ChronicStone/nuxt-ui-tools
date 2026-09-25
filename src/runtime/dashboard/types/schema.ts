@@ -147,6 +147,7 @@ export interface DashboardSchema<
   readonly derive?: (context: never) => TDerive
   readonly views?: TViews
   readonly defaultView?: keyof TViews & string
+  readonly badges?: (context: never) => DashboardViewBadges<keyof TViews & string>
 }
 
 /** Structural constraint every schema returned by `defineDashboardSchema` satisfies. */
@@ -159,6 +160,7 @@ export interface DashboardSchemaLike {
   readonly derive?: (context: never) => DashboardDeriveMap
   readonly views?: DashboardViewMap
   readonly defaultView?: string
+  readonly badges?: (context: never) => DashboardViewBadges<string>
 }
 
 /** Structural constraint every view returned by `defineDashboardView` satisfies. */
@@ -246,9 +248,31 @@ export interface DashboardScopeMembers<TFilters> {
   refresh(): Promise<void>
 }
 
+/** What a view's `badge` returns: a count or a short text; empty values show nothing. */
+export type DashboardViewBadge = number | string | null | undefined
+
+/** Badges of a dashboard's views, by view key; a view left out shows none. */
+export type DashboardViewBadges<TKey extends string> = { readonly [K in TKey]?: DashboardViewBadge }
+
+/** Context received by a schema's `badges`: the data of its root queries and derived values. */
+export interface DashboardBadgesContext<TFilters, TSources> {
+  data: DashboardSourceData<TSources>
+  filters: Readonly<DashboardFilterValues<TFilters>>
+}
+
+/** One tab of a dashboard's views. */
+export interface DashboardViewItem<TKey extends string> {
+  value: TKey
+  label: string
+  /** The view's badge (see the schema's `badges`), when it shows something. */
+  badge?: number | string
+}
+
 export interface DashboardViewMeta<TKey extends string> {
   readonly key: TKey
   readonly label: string
+  /** The view's badge (see the schema's `badges`), when it shows something. */
+  readonly badge: number | string | undefined
   /** The view is the current one. */
   readonly active: boolean
   /** The view's `enabled` condition holds. A disabled view has no tab and cannot be current. */
@@ -265,7 +289,7 @@ export interface DashboardViewController<TKey extends string> {
    */
   current: TKey
   /** Enabled views in declaration order, ready for `UTabs` items. */
-  readonly items: readonly { value: TKey; label: string }[]
+  readonly items: readonly DashboardViewItem<TKey>[]
 }
 
 /** Handle of one view: its queries, derived values and filters (`consumption.filters.year`). */

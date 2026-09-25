@@ -516,6 +516,12 @@ export interface UiToolsDashboardMessages {
   }
   /** Accessible name of a row's `⋮` menu. */
   rowActions: string
+  details: {
+    /** Accessible name of an item's copy button. */
+    copy: string
+    /** Announced once the value is on the clipboard. */
+    copied: string
+  }
   alerts: {
     empty: string
     severity: {

@@ -136,6 +136,7 @@ export default defineNuxtModule<ModuleOptions>({
     setupImports(resolve('./runtime'))
     setupComponents(resolve('./runtime'), options)
     addPlugin(resolve('./runtime/query-prefetch/plugins/link-prefetch.client'))
+    addPlugin(resolve('./runtime/form/plugins/form-api'))
     addVitePlugin({
       enforce: 'pre',
       name: 'nuxt-ui-tools:query-prefetch-macro',

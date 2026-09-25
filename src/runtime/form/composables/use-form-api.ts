@@ -19,23 +19,28 @@ import type {
 import { isRecord } from '../utils/path'
 import { isFunction, isString } from '../utils/predicate'
 
-const formApiKey: InjectionKey<FormApiController> = Symbol('nuxt-ui-tools-form-api')
+export const formApiKey: InjectionKey<FormApiController> = Symbol('nuxt-ui-tools-form-api')
 
+/**
+ * Provides the form API to a subtree. Inside a Nuxt app it reuses the app-wide instance the module
+ * plugin exposes as `useNuxtApp().$formApi`, so forms opened from actions outside setup render in
+ * this `<NutFormProvider>`.
+ */
 export function provideFormApi() {
-  const api = createFormApi()
+  const api = inject(formApiKey, null) ?? createFormApi()
   provide(formApiKey, api)
   return api
 }
 
 export function useFormApi() {
-  const api = inject(formApiKey)
+  const api = inject(formApiKey, null)
   if (!api) {
     throw new Error('Form API is not provided. Wrap your app with <NutFormProvider>.')
   }
   return api
 }
 
-function createFormApi(): FormApiController {
+export function createFormApi(): FormApiController {
   const formInstances = ref<readonly FormApiRuntimeInstance[]>([])
   const controllers = new Map<string, FormController<FormValue, FormValue>>()
   const runtimeControls = new Map<string, FormApiRuntimeControls>()

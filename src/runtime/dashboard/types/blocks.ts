@@ -128,6 +128,7 @@ export type DashboardSkeletonKind =
   | 'table'
   | 'stats'
   | 'gauge'
+  | 'details'
 
 /**
  * Built-in card menu actions: `table` switches the content to a data table, `csv` downloads that
@@ -327,6 +328,33 @@ export interface DashboardStatsItem<TData> {
   progress?: (data: TData) => number | null | undefined
   /** Badge next to the value ("Good", "At risk"). `null` hides it. */
   status?: (data: TData) => DashboardStatus | null | undefined
+}
+
+/** One field of `UiDashboardDetails`: a label over its value, read from the source data. */
+export interface DashboardDetailsItem<TData> {
+  /** Stable identity, and the name of its slot: `#item-vatNumber`. */
+  key: string
+  label: LazyTextValue
+  /**
+   * Numbers go through `format`. `null`, `undefined`, and `''` read as empty: a muted dash, or
+   * `placeholder`.
+   */
+  value: (data: TData) => LazyTextValue | number | null | undefined
+  format?: DashboardValueFormat
+  /** Text under the value (a date of change, a unit, a source). */
+  hint?: (data: TData) => LazyTextValue | null | undefined
+  /** Shown when the value is empty. Defaults to a dash. */
+  placeholder?: LazyTextValue
+  /** Monospace value, for identifiers and codes. */
+  mono?: boolean
+  /** A copy button after a non-empty value, for identifiers people paste elsewhere. */
+  copy?: boolean
+  /** Makes the value a link. */
+  to?: (data: TData) => RouteLocationRaw | null | undefined
+  /** Columns the field spans: a number, or `'full'` for the whole row. */
+  span?: number | 'full'
+  /** Leaves the field out, e.g. a field that only applies to some records. */
+  hidden?: (data: TData) => boolean
 }
 
 /** One tab of `UiDashboardTabs`. */

@@ -5,6 +5,7 @@ import type { LazyTextValue } from '../../shared/types/utils'
 import type { DashboardOptionsMenuBindings } from './controls'
 import type { DashboardFilterBuilder, DashboardFilterLike, DashboardOption } from './filters'
 import type { DashboardCondition, DashboardSourceLike, DashboardStage } from './resource'
+import type { DashboardViewBadge } from './schema'
 
 /**
  * Runtime (type-erased) view of the schema. The public schema types carry precise generics; the
@@ -56,6 +57,8 @@ export interface DashboardRuntimeSchema extends DashboardRuntimeScopeInput {
   defaultView?: string
   /** Views in declaration order. Each input is the object the schema declared. */
   views: [key: string, view: DashboardRuntimeScopeInput][]
+  /** Badges of the view tabs, read from the root data. */
+  badges?: (context: DashboardRuntimeDeriveContext) => Record<string, DashboardViewBadge>
 }
 
 /**

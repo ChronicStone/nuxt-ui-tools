@@ -49,6 +49,9 @@ export function useChoiceCard(params: {
         corner.value ? 'relative' : undefined,
         current?.item,
       ),
+      // The card label renders the option icon itself (inline or as a tile): Nuxt UI's own copy
+      // would show it twice.
+      icon: mergeFormUiClass('hidden', current?.icon),
       // A tile stacks above the title, and the description below it, with gaps.
       label: mergeFormUiClass(
         tile.value ? 'flex flex-col items-start gap-2.5 font-semibold' : undefined,
@@ -56,7 +59,7 @@ export function useChoiceCard(params: {
       ),
       // A hidden indicator centers the text: keep it aligned, and clear of an inline corner check.
       wrapper: mergeFormUiClass(
-        tile.value ? 'flex flex-col gap-1.5' : undefined,
+        tile.value ? 'flex flex-col items-start gap-1.5' : undefined,
         [
           indicator.value === 'hidden' ? 'ms-0 text-start' : '',
           corner.value && !tile.value ? 'pe-7' : '',

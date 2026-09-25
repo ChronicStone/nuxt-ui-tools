@@ -50,6 +50,22 @@ export interface DashboardStatUi {
   goal?: string
 }
 
+export interface DashboardDetailsUi {
+  /** The description list: a grid of fields. */
+  grid?: string
+  /** One field; carries `data-empty` while its value is empty. */
+  item?: string
+  label?: string
+  value?: string
+  /** Dash or `placeholder` of an empty value. */
+  placeholder?: string
+  hint?: string
+  /** Link of an item with `to`. */
+  link?: string
+  /** Copy button of an item with `copy`. */
+  copy?: string
+}
+
 export interface DashboardStatsUi {
   /** Grid of the figures. */
   grid?: string
@@ -240,12 +256,21 @@ export interface DashboardChipsUi {
 export interface DashboardPageUi {
   /** The page, and its scroll container: the tabs and filters stick to its top. */
   root?: string
+  /** Carries `data-leading` while the `#leading` slot is filled. */
   header?: string
+  /** Around the `#eyebrow` slot, above the title. */
+  eyebrow?: string
+  /** Around the `#leading` slot (an avatar or a logo), beside the title and its line. */
+  leading?: string
   title?: string
   /** Today's date and when the data was fetched, under the title. */
   description?: string
   /** Page actions and the refresh control. */
   actions?: string
+  /** Around the `#banner` slot, between the header and the pinned band. */
+  banner?: string
+  /** Around the `#details` slot: a full-width row closing the header (key facts of an entity). */
+  details?: string
   /** Pinned band of the tabs and the filter bar. Carries `data-stuck` once content scrolls under it. */
   toolbar?: string
   tabs?: string
@@ -259,6 +284,8 @@ export interface DashboardViewTabsUi {
   /** The strip: it scrolls sideways when the tabs overflow. */
   root?: string
   tab?: string
+  /** Count or text of a view's `badge`, after the tab label. */
+  badge?: string
 }
 
 /**
@@ -281,6 +308,7 @@ export interface DashboardUiConfig {
   grid?: DashboardGridUi
   stat?: DashboardStatUi
   stats?: DashboardStatsUi
+  details?: DashboardDetailsUi
   gauge?: DashboardGaugeUi
   legend?: DashboardLegendUi
   total?: DashboardTotalUi

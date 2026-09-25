@@ -227,6 +227,18 @@ const funnelWidths = computed(() =>
     </div>
   </div>
 
+  <!-- Details: labels over values in a grid -->
+  <div
+    v-else-if="kind === 'details'"
+    class="grid gap-x-8 gap-y-4"
+    :style="{ gridTemplateColumns: `repeat(${Math.max(1, columns)}, minmax(0, 1fr))` }"
+  >
+    <div v-for="(width, index) in widths" :key="index" class="flex flex-col gap-2">
+      <div class="nut-dash-ghost h-2.5 w-[32%] rounded-sm opacity-70" />
+      <div class="nut-dash-ghost h-3.5 rounded-sm" :style="{ width: `${width + 12}%` }" />
+    </div>
+  </div>
+
   <!-- Gauge: an open arc and its scale -->
   <div v-else-if="kind === 'gauge'" class="flex flex-col items-center gap-3 pt-1">
     <div
