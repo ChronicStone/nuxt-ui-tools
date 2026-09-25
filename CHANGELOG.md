@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.5...v1.7.0)
+
+Dashboard pages can describe one record. `UiDashboardPage` takes breadcrumbs, a logo, a facts row, and a banner through its `#eyebrow`, `#leading`, `#details`, and `#banner` slots, and a schema's `badges` count what waits in each view from the root data before the view is opened. The new `UiDashboardDetails` block lists a record's fields with placeholders, formats, copyable identifiers, links, and per-field slots. The module exposes one form API as `useNuxtApp().$formApi`, so actions outside setup open forms that `<NutFormProvider>` renders. Choice cards draw their option icon once and keep tile content aligned.
+
 ## v1.6.4
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.3...v1.6.4)
