@@ -78,6 +78,14 @@ defineSlots<
     default?: (props: { view: DashboardViewKeysOf<TDashboard> | undefined }) => unknown
     title?: () => unknown
     description?: () => unknown
+    /** Above the title, across the header: breadcrumbs or a back link. */
+    eyebrow?: () => unknown
+    /** Before the title and its line: an avatar or a logo, for a page about one entity. */
+    leading?: () => unknown
+    /** A full-width row closing the header: key facts of the entity the page is about. */
+    details?: () => unknown
+    /** Between the header and the pinned tabs: a note or a notice about the whole page. */
+    banner?: () => unknown
     /** Replaces the page actions and the refresh control. */
     actions?: () => unknown
     /** Replaces the view tabs. */
@@ -95,10 +103,15 @@ const classes = computed(() =>
     {
       actions: 'flex min-h-[34px] items-center gap-2',
       body: 'flex flex-col gap-4 px-4 pt-1 pb-12 lg:gap-6 lg:px-7 lg:pb-15',
-      description: 'col-span-full mt-1 text-[12.5px] font-light text-muted md:text-[13.5px]',
+      description:
+        'col-span-full mt-1 text-[12.5px] font-light text-muted in-data-[leading]:col-start-2 md:text-[13.5px]',
+      banner: 'px-4 pt-4 lg:px-7 lg:pt-6',
+      details: 'col-span-full mt-4 lg:mt-5',
+      eyebrow: 'col-span-full mb-2 min-w-0',
       filters: 'px-4 py-3 lg:px-7 lg:py-4',
       header:
-        'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 bg-default px-4 pt-4 pb-3.5 lg:px-7 lg:pt-[22px] lg:pb-[18px]',
+        'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 bg-default px-4 pt-4 pb-3.5 data-[leading]:grid-cols-[auto_minmax(0,1fr)_auto] lg:px-7 lg:pt-[22px] lg:pb-[18px]',
+      leading: 'row-span-2 flex items-center self-center',
       root: 'h-full overflow-auto bg-muted',
       tabs: 'bg-default px-2 lg:px-7',
       title:
@@ -170,7 +183,13 @@ function actionUi(action: ButtonProps) {
 <template>
   <!-- Without a dashboard (its schema threw during setup), render nothing: that error stays the one reported. -->
   <div v-if="dashboard" :class="classes.root" data-dashboard-page>
-    <header :class="classes.header">
+    <header :class="classes.header" :data-leading="$slots.leading ? '' : undefined">
+      <div v-if="$slots.eyebrow" :class="classes.eyebrow">
+        <slot name="eyebrow" />
+      </div>
+      <div v-if="$slots.leading" :class="classes.leading">
+        <slot name="leading" />
+      </div>
       <h1 :class="classes.title">
         <slot name="title">{{ title === undefined ? '' : resolveTextValue(title) }}</slot>
       </h1>
@@ -201,7 +220,14 @@ function actionUi(action: ButtonProps) {
           </template>
         </slot>
       </p>
+      <div v-if="$slots.details" :class="classes.details">
+        <slot name="details" />
+      </div>
     </header>
+
+    <div v-if="$slots.banner" :class="classes.banner">
+      <slot name="banner" />
+    </div>
 
     <div ref="marker" aria-hidden="true" />
     <div :class="classes.toolbar" :data-stuck="stuck || undefined">

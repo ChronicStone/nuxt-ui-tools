@@ -3,7 +3,7 @@ import type { ComputedRef } from 'vue'
 
 import { createEnumCodec, useQueryState } from '../../query-state'
 import { resolveTextValue } from '../../shared/utils/render'
-import type { DashboardSourceLike } from '../types'
+import type { DashboardSourceLike, DashboardViewBadge } from '../types'
 import type { DashboardRuntimeSchema } from '../types/runtime'
 import type { DashboardEnvironment } from '../utils/environment'
 import {
@@ -59,6 +59,15 @@ export function useDashboardViews(params: {
     },
   })
   const rootSources = new Map<string, DashboardSourceLike>(params.root.members)
+  const rootData = Object.defineProperties(
+    {},
+    Object.fromEntries(
+      [...rootSources].map(([key, source]) => [key, { enumerable: true, get: () => source.data }]),
+    ),
+  )
+  const badges = computed(
+    () => schema.badges?.({ data: rootData, filters: params.root.filterScope.values }) ?? {},
+  )
 
   const views = schema.views.map(([key, input]) => {
     const enabled = conditions.get(key) ?? computed<boolean>(() => true)
@@ -84,10 +93,17 @@ export function useDashboardViews(params: {
     })
     assertDashboardViewUrlKeys(key, scope.filterScope.urlKeys)
     const label = () => resolveTextValue(input.label, key)
-    return { enabled, input, key, label, opened, scope }
+    const badge = () => resolveDashboardViewBadge(badges.value[key])
+    return { badge, enabled, input, key, label, opened, scope }
   })
 
   return { current, keys, views }
+}
+
+/** A badge worth showing: a non-zero finite number or a non-empty text. */
+export function resolveDashboardViewBadge(value: DashboardViewBadge) {
+  if (typeof value === 'number') return Number.isFinite(value) && value !== 0 ? value : undefined
+  return value ? value : undefined
 }
 
 /** No filter may take the URL key of the current view. */

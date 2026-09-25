@@ -11,6 +11,9 @@ import type {
   DashboardScopeInput,
   DashboardSourceMap,
   DashboardView,
+  DashboardBadgesContext,
+  DashboardDerivedResources,
+  DashboardViewBadges,
   DashboardViewMap,
 } from '../types'
 
@@ -70,6 +73,22 @@ export function defineDashboardSchema<
     views?: TViews
     /** View shown when the URL does not select one. Defaults to the first declared view. */
     defaultView?: NoInfer<keyof TViews & string>
+    /**
+     * Counts or short texts shown after the view tabs' labels, read from the root queries and
+     * derived values, so a tab can count what waits in it before it is opened. Read lazily: badges
+     * follow the data. `null`, `undefined`, `0`, and `''` show nothing.
+     *
+     * @example
+     * ```ts
+     * badges: ({ data }) => ({
+     *   invoices: data.account?.unpaidInvoices,
+     *   access: data.account?.pendingInvitations,
+     * })
+     * ```
+     */
+    badges?: (
+      context: DashboardBadgesContext<TFilters, TQueries & DashboardDerivedResources<TDerive>>,
+    ) => DashboardViewBadges<NoInfer<keyof TViews & string>>
   } & DashboardScopeInput<TFilters, TQueries, TDerive> &
     DashboardScopeGuard<TQueries, TDerive> &
     DashboardViewsGuard<TQueries, TDerive, TViews>,

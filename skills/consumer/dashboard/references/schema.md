@@ -154,6 +154,26 @@ load, `error` if one failed (its retry refetches them), and once they are ready 
 it, `ready` with its `defaultValue` — its block shows the empty state instead of waiting forever.
 Without a `defaultValue` it stays `idle`.
 
+## Tab Badges
+
+`badges` on the schema counts what waits in each view, read from the root queries and derived
+values, so a tab shows its count before it is ever opened. It is typed against the root data and
+the view keys, and it follows the data: `null`, `undefined`, `0`, and `''` show nothing.
+
+```ts
+defineDashboardSchema({
+  key: 'account',
+  queries: ({ essential }) => ({ account: essential.query({ query: accountQuery }) }),
+  views: { overview: overviewView(params), invoices: invoicesView(params) },
+  badges: ({ data }) => ({
+    invoices: data.account?.invoices.filter((invoice) => invoice.status !== 'PAID').length,
+  }),
+})
+```
+
+The tabs render it after the label (`data-dashboard-view-badge`), `dashboard.view.items` carries it
+as `badge`, and a view handle reads it as `view.badge`.
+
 ## Conditions: What A User Can See
 
 One schema can serve several audiences (an administrator, a manager, a client) when each part says

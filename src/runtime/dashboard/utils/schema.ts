@@ -16,6 +16,7 @@ interface DashboardRuntimeSchemaInput extends DashboardRuntimeScopeInput {
   autoRefresh?: number
   defaultView?: string
   views?: Record<string, DashboardRuntimeScopeInput>
+  badges?: DashboardRuntimeSchema['badges']
 }
 
 const reservedKeys: ReadonlySet<string> = new Set<DashboardReservedKey>([
@@ -44,6 +45,7 @@ export function resolveDashboardRuntimeSchema(schema: DashboardSchemaLike): Dash
 
   return {
     autoRefresh: input.autoRefresh,
+    badges: input.badges,
     defaultView: input.defaultView ?? views[0]?.[0],
     derive: input.derive,
     filters: input.filters,

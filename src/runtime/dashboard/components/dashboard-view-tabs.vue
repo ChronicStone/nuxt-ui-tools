@@ -4,7 +4,7 @@ import { computed, nextTick, onMounted, useTemplateRef, watch } from 'vue'
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useDashboardUi } from '../composables/use-dashboard-ui'
-import type { DashboardViewController, DashboardViewTabsUi } from '../types'
+import type { DashboardViewController, DashboardViewItem, DashboardViewTabsUi } from '../types'
 import { resolveDashboardClasses } from '../utils/ui'
 
 /**
@@ -24,7 +24,7 @@ const { dashboard, ui } = defineProps<{
 
 defineSlots<{
   /** Content of one tab. */
-  tab?: (props: { item: { value: TKey; label: string }; active: boolean }) => unknown
+  tab?: (props: { item: DashboardViewItem<TKey>; active: boolean }) => unknown
 }>()
 
 /** Room kept between a revealed tab and the strip edge, in pixels. */
@@ -36,8 +36,10 @@ const strip = useTemplateRef<HTMLElement>('strip')
 const classes = computed(() =>
   resolveDashboardClasses(
     {
+      badge:
+        'ms-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-elevated px-1.5 text-[11px] leading-none font-semibold text-muted tabular-nums group-data-[active]/tab:bg-primary/12 group-data-[active]/tab:text-primary',
       root: 'flex min-w-0 gap-0.5 overflow-x-auto border-b border-default [scrollbar-width:none]',
-      tab: 'relative inline-flex h-10 flex-none items-center px-3 text-sm font-medium whitespace-nowrap text-muted transition-colors outline-none hover:text-default focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset data-[active]:text-highlighted data-[active]:after:absolute data-[active]:after:inset-x-2 data-[active]:after:-bottom-px data-[active]:after:h-0.5 data-[active]:after:rounded-full data-[active]:after:bg-primary',
+      tab: 'group/tab relative inline-flex h-10 flex-none items-center px-3 text-sm font-medium whitespace-nowrap text-muted transition-colors outline-none hover:text-default focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset data-[active]:text-highlighted data-[active]:after:absolute data-[active]:after:inset-x-2 data-[active]:after:-bottom-px data-[active]:after:h-0.5 data-[active]:after:rounded-full data-[active]:after:bg-primary',
     },
     appUi.value.viewTabs,
     ui,
@@ -87,6 +89,9 @@ watch(
     >
       <slot name="tab" :item :active="dashboard.view.current === item.value">
         {{ item.label }}
+        <span v-if="item.badge !== undefined" :class="classes.badge" data-dashboard-view-badge>
+          {{ item.badge }}
+        </span>
       </slot>
     </button>
   </nav>
