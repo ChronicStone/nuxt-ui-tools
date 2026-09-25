@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.4
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.3...v1.6.4)
+
+The filter reset action appears only when table filters are active. Search text keeps its own clear control and remains in place when filters are reset.
+
 ## v1.6.3
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.2...v1.6.3)
