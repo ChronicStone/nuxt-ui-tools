@@ -113,10 +113,14 @@ describe('filter tags bar', () => {
 
     harness.internals.filters.searchQuery.value = 'abc'
     await harness.flush()
-    expect(w.find('.nut-dl-tag--clear').exists()).toBeTruthy()
+    expect(w.find('.nut-dl-tag--clear').exists()).toBeFalsy()
+
+    harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['FR'] })
+    await harness.flush()
     await w.find('.nut-dl-tag--clear').trigger('click')
     await harness.flush()
-    expect(harness.internals.filters.searchQuery.value).toBe('')
+    expect(harness.internals.filters.getFilterState({ key: 'country' })).toBeUndefined()
+    expect(harness.internals.filters.searchQuery.value).toBe('abc')
   })
 
   it('walks the add-filter picker through match mode into an embedded editor', async () => {

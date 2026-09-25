@@ -29,7 +29,6 @@ const dynamicSessionDefinition = computed(
 
 function clearAll() {
   internals.filters.clearAllFilters()
-  internals.filters.searchQuery.value = ''
 }
 
 function getFilterLabel(definition: TableUiFilterDefinition) {
@@ -108,10 +107,7 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
     </DynamicFilterPicker>
 
     <UButton
-      v-if="
-        props.showClear &&
-        (internals.filters.hasActiveUiFilters.value || internals.filters.searchQuery.value)
-      "
+      v-if="props.showClear && internals.filters.hasActiveUiFilters.value"
       key="__clear"
       v-bind="
         mergeDataListProps<DataListButtonProps>(
