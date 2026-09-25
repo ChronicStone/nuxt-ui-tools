@@ -22,6 +22,7 @@ export interface UiToolsTableMessages {
   }
   controls: {
     addFilter: string
+    clearSearch: string
     resetFilters: string
     columnsCount: string
     close: string
@@ -47,6 +48,8 @@ export interface UiToolsTableMessages {
     page: string
     filtered: string
     selection: string
+    rowOne: string
+    rowOther: string
   }
   columnsMenu: {
     sortAsc: string
@@ -66,6 +69,24 @@ export interface UiToolsTableMessages {
       back: string
       sortBy: string
       order: string
+    }
+    date: {
+      range: string
+      custom: string
+      start: string
+      end: string
+      presets: {
+        today: string
+        yesterday: string
+        sevenDaysAgo: string
+        startOfMonth: string
+        startOfYear: string
+        last7Days: string
+        last30Days: string
+        thisMonth: string
+        lastMonth: string
+        yearToDate: string
+      }
     }
     panel: {
       trigger: string
