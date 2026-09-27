@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.7.0...v1.8.0)
+
+Any file opens in a preview. `useFilePreview()` and `useNuxtApp().$filePreview.open()` show one file or a gallery in a modal, a drawer, or a fullscreen overlay rendered by `<UiFilePreviewProvider>`, with a renderer made for each kind: zoomable images, video and audio with custom controls, PDFs, text and JSON, CSV tables, Markdown through an app-provided sanitizer, and a download card for Office files and archives. Sources can be URLs, `File` or `Blob` objects, or functions that return a short-lived link on demand; renditions preview formats browsers cannot display, and `defineFilePreviewRenderer` adds custom kinds. Upload fields resolve stored values through `upload.resolve` so saved files show their name, size, and thumbnail, open them through `upload.open`, cancel uploads through an `AbortSignal`, cap files with `max`, and preview their files as a gallery when a provider is mounted.
+
 ## v1.7.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.5...v1.7.0)
