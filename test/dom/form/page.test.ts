@@ -176,6 +176,39 @@ describe('form page', () => {
     expect(harness.summary()).toBe('Tout est prêt.')
   })
 
+  it('keeps an array section required when it declares optional: false', async () => {
+    const harness = await mountPage({
+      input: { name: 'DemandQA', versions: [{ label: '' }] },
+      schema: defineFormPageSchema({
+        actions: [{ key: 'submit', label: 'Créer' }],
+        sections: [
+          identitySection(),
+          defineFormPageSection({
+            fields: [
+              {
+                fields: [{ key: 'label', label: 'Libellé', required: true, type: 'text' }],
+                key: 'versions',
+                type: 'array-table',
+              },
+            ],
+            key: 'versions',
+            label: 'Versions',
+            optional: false,
+          }),
+        ],
+      }),
+    })
+
+    expect(harness.entry('versions').dataset.state).toBe('pending')
+    expect(harness.entry('versions').textContent).not.toContain('optionnel')
+    expect(harness.summary()).toBe('1 section à compléter.')
+
+    harness.form.state.set('versions', [{ label: 'Standard' }])
+    await harness.flush()
+    expect(harness.entry('versions').dataset.state).toBe('complete')
+    expect(harness.summary()).toBe('Tout est prêt.')
+  })
+
   it('counts values the input provides as filled in', async () => {
     const harness = await mountPage({
       input: { accountType: 'customer', erpId: 'EV-1', kbis: 'kbis.pdf', name: 'DemandQA' },
