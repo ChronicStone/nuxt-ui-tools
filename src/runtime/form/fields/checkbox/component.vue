@@ -32,6 +32,7 @@ const model = computed<boolean>({
   >
     <UCheckbox
       v-model="model"
+      :aria-label="bare ? undefined : label"
       v-bind="controlProps"
       :label="bare ? undefined : label"
       :description="bare ? undefined : description"
