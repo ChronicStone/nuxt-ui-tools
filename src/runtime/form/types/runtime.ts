@@ -53,8 +53,29 @@ export interface FormRuntimeStep {
  * registration, touched-state, option registry, and callback factories that should not be
  * exposed as top-level consumer API without deliberate design.
  */
+/**
+ * Spreads the render of a large form over frames. See `createFormRenderScheduler`.
+ */
+export interface FormRenderScheduler {
+  /** True once the form has painted its first frame. */
+  painted: Readonly<Ref<boolean>>
+  /**
+   * A render slot: true at once within the frame weight of an idle scheduler, later otherwise.
+   * `top` gives the top edge of the slot's placeholder on screen, or `undefined` while it has
+   * none, so a slot on screen renders before the first paint.
+   */
+  claim: (weight?: number, top?: () => number | undefined) => Ref<boolean>
+  /** Grants every pending slot now, and the slots they claim in this frame. */
+  flush: () => void
+  /** Runs `task` once the form has painted, in the caller's effect scope. */
+  afterPaint: (task: () => void) => void
+  /** Called when the form mounts; the first paint follows. */
+  start: () => void
+}
+
 export interface FormRuntime {
   schema: ComputedRef<FormValue>
+  render: FormRenderScheduler
   state: FormObject
   output: ComputedRef<FormObject>
   dirtyPaths: ComputedRef<readonly string[]>
@@ -95,7 +116,8 @@ export interface FormRuntime {
   registerFieldElement: (path: string | readonly string[], element: HTMLElement) => () => void
   focusField: (path: string | readonly string[]) => Promise<boolean>
   focusFirstInvalid: () => Promise<boolean>
-  clearErrors: () => void
+  /** Clears every error, or only those of these dotted paths and what they contain, at once. */
+  clearErrors: (paths?: readonly string[]) => void
   submitHandler: (submitHandler?: FormSubmitHandler<FormObject>) => Promise<FormSubmitHandlerResult>
   submit: () => Promise<boolean>
   reset: () => Promise<void>

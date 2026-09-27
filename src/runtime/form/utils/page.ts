@@ -24,7 +24,7 @@ import {
 } from './state'
 import { resolveFormText } from './text'
 
-interface FormPageLeaf {
+export interface FormPageLeaf {
   field: FormField
   path: readonly string[]
   /** True for a field of an array item, which never makes its section required. */
@@ -58,6 +58,15 @@ export function isFormPageSectionVisible(entry: FormPageSectionEntry, runtime: F
 }
 
 /**
+ * Stateful fields of a section that render now. They change with the form's structure (items,
+ * conditions) rather than with its values, so a page keeps them apart from the section state.
+ */
+export function collectFormPageLeaves(entry: FormPageSectionEntry, runtime: FormRuntime) {
+  const leaves = collectVisibleLeaves(entry.section.fields, [], runtime)
+  return { leaves, paths: new Set(leaves.map((leaf) => leaf.path.join('.'))) }
+}
+
+/**
  * Live state of one visible section: what it still misses, whether it shows errors, and what
  * changed since the baseline.
  */
@@ -65,24 +74,25 @@ export function resolveFormPageSectionState(params: {
   entry: FormPageSectionEntry
   index: number
   runtime: FormRuntime
+  /** The section's leaves, from `collectFormPageLeaves`. */
+  leaves: ReturnType<typeof collectFormPageLeaves>
   /** Input the form was opened with: a value it provides counts as filled in. */
   input: FormObject | undefined
   /** False when the validation mode does not enforce required fields. */
   requiredEnforced: boolean
 }): FormPageSectionState {
   const { entry, runtime } = params
-  const leaves = collectVisibleLeaves(entry.section.fields, [], runtime)
-  const paths = leaves.map((leaf) => leaf.path.join('.'))
-  const contains = (candidate: string) => paths.some((path) => isPathWithin(candidate, path))
-  const dirtyPaths = runtime.dirtyPaths.value.filter(contains)
-  const invalid = runtime.errors.value.some((error) => contains(error.path))
+  const { leaves, paths } = params.leaves
+  const dirtyPaths = runtime.dirtyPaths.value.filter((path) => isWithinAny(path, paths))
+  const invalid = runtime.errors.value.some((error) => isWithinAny(error.path, paths))
   const required = params.requiredEnforced
     ? leaves.filter((leaf) => isRequiredLeaf(leaf, runtime))
     : []
   const missing = required.filter((leaf) => isEmptyValue(runtime.getValue(leaf.path))).length
   const optional = entry.section.optional ?? required.every((leaf) => leaf.item)
+  const modified = new Set(dirtyPaths.flatMap(pathPrefixes))
   const filled =
-    !optional || leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
+    !optional || leaves.some((leaf) => isProvided(leaf, runtime, modified, params.input))
 
   return {
     description: resolveFormText(entry.section.description),
@@ -164,29 +174,35 @@ function isRequiredLeaf(leaf: FormPageLeaf, runtime: FormRuntime) {
   return resolveRequired(leaf.field, runtime.getFieldCallbackParams(leaf.path, leaf.field)) === true
 }
 
-/** A value the user entered, or one the form input brought: defaults alone do not count. */
+/**
+ * A value the user entered, or one the form input brought: defaults alone do not count.
+ * `modified` holds every modified path and the paths around it.
+ */
 function isProvided(
   leaf: FormPageLeaf,
   runtime: FormRuntime,
-  dirtyPaths: readonly string[],
+  modified: ReadonlySet<string>,
   input: FormObject | undefined,
 ) {
   if (isEmptyValue(runtime.getValue(leaf.path))) {
     return false
   }
-  const path = leaf.path.join('.')
-  return (
-    dirtyPaths.some((dirtyPath) => isPathWithin(dirtyPath, path)) ||
-    !isEmptyValue(getPathValue(input ?? {}, leaf.path))
-  )
+  return modified.has(leaf.path.join('.')) || !isEmptyValue(getPathValue(input ?? {}, leaf.path))
 }
 
 function hasCondition(field: FormField) {
   return isFunction(Object.getOwnPropertyDescriptor(field, 'condition')?.value)
 }
 
-function isPathWithin(path: string, scope: string) {
-  return path === scope || path.startsWith(`${scope}.`)
+/** True when `path` is one of `scopes` or inside one, checking its prefixes rather than each scope. */
+function isWithinAny(path: string, scopes: ReadonlySet<string>) {
+  return pathPrefixes(path).some((prefix) => scopes.has(prefix))
+}
+
+/** `a.b.c`, `a.b`, and `a`. */
+function pathPrefixes(path: string) {
+  const segments = path.split('.')
+  return segments.map((_, index) => segments.slice(0, segments.length - index).join('.'))
 }
 
 function isFormPageSection(value: FormValue): value is FormPageSection {

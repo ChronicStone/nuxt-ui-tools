@@ -69,6 +69,33 @@ describe('array table mutation', () => {
     harness.unmount()
   })
 
+  it('keeps its rows mounted when their values are replaced in place, as a reset does', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          fields: [{ key: 'label', label: 'Label', type: 'text' }],
+          key: 'rows',
+          type: 'array-table',
+        },
+      ],
+    })
+    const harness = await mountForm({
+      input: { rows: [{ label: 'First' }, { label: 'Second' }] },
+      schema,
+    })
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 2)
+    const before = harness.wrapper.findAll('tbody tr').map((row) => row.element)
+
+    harness.form.state.set('rows', [{ label: 'First again' }, { label: 'Second' }])
+    await harness.until(
+      () =>
+        harness.wrapper.find<HTMLInputElement>('tbody tr input').element.value === 'First again',
+    )
+
+    expect(harness.wrapper.findAll('tbody tr').map((row) => row.element)).toStrictEqual(before)
+    harness.unmount()
+  })
+
   it('highlights an invalid cell and moves its message to a tooltip', async () => {
     const schema = defineFormSchema({
       fields: [

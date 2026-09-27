@@ -36,6 +36,7 @@ import {
 import { getSchemaContext, useFormContextResources } from './use-form-context-resources'
 import { useFormFocus } from './use-form-focus'
 import { useFormOptionRegistry } from './use-form-option-registry'
+import { createFormRenderScheduler } from './use-form-render-scheduler'
 import { useFormState } from './use-form-state'
 import { useFormSubmission } from './use-form-submission'
 import { useFormUploadRegistry } from './use-form-upload-registry'
@@ -64,6 +65,11 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const currentStepIndex = ref<number>(0)
   const navigationActionPending = ref<'next' | 'previous' | 'reset' | null>(null)
   const effects = createEffectLifecycle()
+  const render = createFormRenderScheduler({
+    defer: import.meta.client === true,
+    viewport: () => window.innerHeight,
+    watchInput: watchUserInput,
+  })
   const { t } = useUiToolsLocale()
 
   setContext(getSchemaContext(params.schema.value))
@@ -104,29 +110,58 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     setValue: (target: readonly string[], value: FormValue) => void
     state: () => FormObject
   }) {
-    return (path: readonly string[], field?: FormField) =>
-      createFieldApi({
-        clearExternalError: () => validation.clearError(path),
-        ctx: context,
-        field,
-        focusField: () => focus.focusField(path),
-        form: createFormNamespace(path, read),
-        getInitialValue: read.getInitialValue,
-        getValue: read.getValue,
-        optionRegistry,
-        path,
-        pendingField: () => validation.isPending(path),
-        resetValue: state.resetValue,
-        setExternalError: (message, options) => validation.setError(path, message, options),
-        setValue: read.setValue,
-        state: read.state(),
-        uploadRegistry,
-        validateField: () =>
-          field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
-      })
+    return (path: readonly string[], field?: FormField) => buildFieldApi(read, { field, path })
   }
 
-  const apiFactory = createApiFactory({
+  const apiCache = new WeakMap<FormField, Map<string, FormFieldApi>>()
+  const unboundApiCache = new Map<string, FormFieldApi>()
+
+  /** Field APIs only close over their path and field, so one instance serves every caller. */
+  function cachedApiFactory(read: Parameters<typeof createApiFactory>[0]) {
+    return (path: readonly string[], field?: FormField) => {
+      const key = path.join('\u0000')
+      let bucket = unboundApiCache
+      if (field) {
+        bucket = apiCache.get(field) ?? new Map<string, FormFieldApi>()
+        apiCache.set(field, bucket)
+      }
+      const cached = bucket.get(key)
+      if (cached) {
+        return cached
+      }
+      const api = buildFieldApi(read, { field, path })
+      bucket.set(key, api)
+      return api
+    }
+  }
+
+  function buildFieldApi(
+    read: Parameters<typeof createApiFactory>[0],
+    target: { path: readonly string[]; field?: FormField },
+  ) {
+    const { field, path } = target
+    return createFieldApi({
+      clearExternalError: () => validation.clearError(path),
+      ctx: context,
+      field,
+      focusField: () => focus.focusField(path),
+      form: createFormNamespace(path, read),
+      getInitialValue: read.getInitialValue,
+      getValue: read.getValue,
+      optionRegistry,
+      path,
+      pendingField: () => validation.isPending(path),
+      resetValue: state.resetValue,
+      setExternalError: (message, options) => validation.setError(path, message, options),
+      setValue: read.setValue,
+      state: read.state(),
+      uploadRegistry,
+      validateField: () =>
+        field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
+    })
+  }
+
+  const apiFactory = cachedApiFactory({
     getInitialValue: (target) => state.getInitialValue(target),
     getValue: (target) => state.getValue(target),
     setValue: (target, value) => state.setValue(target, value),
@@ -151,6 +186,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const validation = useFormValidation({
     apiFactory,
     context,
+    deferItemRules: render.painted.value === false,
     getDateMaxMessage: (max: string) => t('form.validation.dateMax', { max }),
     getDateMinMessage: (min: string) => t('form.validation.dateMin', { min }),
     getRequiredMessage: () => t('form.validation.required'),
@@ -160,7 +196,10 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     state: state.state,
   })
 
+  render.afterPaint(() => void validation.completeRules())
+
   const focus = useFormFocus({
+    beforeFocus: () => render.flush(),
     getErrors: () => validation.validationErrors.value,
   })
 
@@ -378,11 +417,12 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   }
 
   const runtime: FormRuntime = {
+    render,
     actionPending,
     canGoNext,
     canGoPrevious,
     clearError: (path) => validation.clearError(path ? pathSegments(path) : undefined),
-    clearErrors: () => validation.clearError(),
+    clearErrors: (paths) => (paths ? validation.clearPaths(paths) : validation.clearError()),
     context,
     currentFields,
     currentLayout,
@@ -761,5 +801,19 @@ function fieldCallbackParams(params: {
     api: params.api,
     ctx: params.ctx,
     deps: resolveFieldDependencies(params),
+  }
+}
+
+const USER_INPUT_EVENTS = ['keydown', 'pointerdown', 'scroll', 'touchstart', 'wheel'] as const
+
+/** Listens for user input anywhere on the page, including scrolls inside scrolling elements. */
+function watchUserInput(notify: () => void) {
+  for (const type of USER_INPUT_EVENTS) {
+    window.addEventListener(type, notify, { capture: true, passive: true })
+  }
+  return () => {
+    for (const type of USER_INPUT_EVENTS) {
+      window.removeEventListener(type, notify, { capture: true })
+    }
   }
 }

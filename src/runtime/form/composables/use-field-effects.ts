@@ -9,16 +9,31 @@ import { useFormRuntimeContext } from './use-form-runtime'
 
 const UNSET: FormValue = Symbol('unset')
 
+/**
+ * Runs a field's `watch`, `onDependencyChange`, and `onRendered` effects. A field without effects
+ * sets up nothing, and the watchers of the others start once the form has painted, so a large form
+ * does not pay for them before its first frame. A value that changed before they start still runs
+ * its effect once.
+ */
 export function useFieldEffects(field: () => FormField, path: () => readonly string[]) {
   const form = useFormRuntimeContext()
+  const valueEffect = Object.getOwnPropertyDescriptor(field(), 'watch')?.value
+  const dependencyEffect = Object.getOwnPropertyDescriptor(field(), 'onDependencyChange')?.value
+  const renderedEffect = Object.getOwnPropertyDescriptor(field(), 'onRendered')?.value
+  if (!isFunction(valueEffect) && !isFunction(dependencyEffect) && !isFunction(renderedEffect)) {
+    return
+  }
+
   const api = computed(() => form.getFieldApi(path(), field()))
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
 
-  let lastValue: FormValue = UNSET
-  let lastDeps: FormValue = UNSET
-  watchWithFilter(
-    () => form.getValue(path()),
-    (value) => {
+  if (isFunction(valueEffect)) {
+    const watchOptions = resolveWatchOptions(field())
+    let lastValue: FormValue = watchOptions.immediate
+      ? UNSET
+      : cloneFormValue(form.getValue(path()))
+
+    function runValueEffect(value: FormValue) {
       if (lastValue !== UNSET && isEqualFormValue(value, lastValue)) {
         return
       }
@@ -27,17 +42,24 @@ export function useFieldEffects(field: () => FormField, path: () => readonly str
       if (isFunction(effect)) {
         form.trackEffect(effect({ api: api.value, value }))
       }
-    },
-    {
-      ...resolveWatchOptions(field()),
-      eventFilter: resolveEffectFilter(field()),
-    },
-  )
+    }
 
-  watchWithFilter(
-    () => params.value.deps,
-    (deps) => {
-      if (lastDeps !== UNSET && isEqualFormValue(deps, lastDeps)) {
+    form.render.afterPaint(() => {
+      if (!watchOptions.immediate) {
+        runValueEffect(form.getValue(path()))
+      }
+      watchWithFilter(() => form.getValue(path()), runValueEffect, {
+        ...watchOptions,
+        eventFilter: resolveEffectFilter(field()),
+      })
+    })
+  }
+
+  if (isFunction(dependencyEffect)) {
+    let lastDeps: FormValue = cloneFormValue(params.value.deps)
+
+    function runDependencyEffect(deps: FormValue) {
+      if (isEqualFormValue(deps, lastDeps)) {
         return
       }
       lastDeps = cloneFormValue(deps)
@@ -45,22 +67,33 @@ export function useFieldEffects(field: () => FormField, path: () => readonly str
       if (isFunction(effect)) {
         form.trackEffect(effect(params.value))
       }
-    },
-    { deep: true, eventFilter: resolveEffectFilter(field()) },
-  )
-
-  onMounted(() => {
-    const effect = Object.getOwnPropertyDescriptor(field(), 'onRendered')?.value
-    if (isFunction(effect)) {
-      form.trackEffect(effect(params.value))
     }
-  })
+
+    form.render.afterPaint(() => {
+      runDependencyEffect(params.value.deps)
+      watchWithFilter(() => params.value.deps, runDependencyEffect, {
+        deep: true,
+        eventFilter: resolveEffectFilter(field()),
+      })
+    })
+  }
+
+  if (isFunction(renderedEffect)) {
+    onMounted(() => {
+      form.render.afterPaint(() => {
+        const effect = Object.getOwnPropertyDescriptor(field(), 'onRendered')?.value
+        if (isFunction(effect)) {
+          form.trackEffect(effect(params.value))
+        }
+      })
+    })
+  }
 }
 
 function resolveWatchOptions(field: FormField) {
   const options = Object.getOwnPropertyDescriptor(field, 'watchOptions')?.value
   if (!isObject(options) || options === null || Array.isArray(options)) {
-    return {}
+    return { deep: false, immediate: false }
   }
   return {
     deep: options.deep === true,

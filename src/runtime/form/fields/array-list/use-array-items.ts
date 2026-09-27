@@ -49,6 +49,31 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     const value = form.getValue(path())
     return Array.isArray(value) ? value.filter(isFormObject) : []
   })
+  let previousItems: readonly FormObject[] = []
+  let previousKeys: readonly string[] = []
+  /**
+   * One key per row. A row keeps its key while its object moves, and an object that replaces
+   * another at the same position (a reset, a synchronized input) inherits that row's key, so the
+   * row patches in place instead of remounting every cell.
+   */
+  const rowKeys = computed<readonly string[]>(() => {
+    const current = items.value
+    const present = new Set(current)
+    const keys = current.map((item, index) => {
+      const existing = itemKeys.get(item)
+      if (existing) {
+        return existing
+      }
+      const replaced = previousItems[index]
+      const inherited = replaced && !present.has(replaced) ? previousKeys[index] : undefined
+      const key = inherited ?? nextKey()
+      itemKeys.set(item, key)
+      return key
+    })
+    previousItems = current
+    previousKeys = keys
+    return keys
+  })
   const title = computed(() => resolveFormText(field().label))
   const description = computed(() => resolveFormText(field().description))
   const addItemLabel = computed(() =>
@@ -237,8 +262,32 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     }
   }
 
-  function itemPath(index: number) {
-    return [...path(), String(index)]
+  let pathBase = ''
+  let itemPaths: (readonly string[])[] = []
+
+  /**
+   * Path of a row, the same array instance while the row keeps its position, so re-rendering the
+   * list does not hand every row a new `itemPath` prop and re-render all of its cells.
+   */
+  function itemPath(index: number): readonly string[] {
+    const base = path()
+    const baseKey = base.join('\u0000')
+    if (baseKey !== pathBase) {
+      pathBase = baseKey
+      itemPaths = []
+    }
+    const cached = itemPaths[index]
+    if (cached) {
+      return cached
+    }
+    const created = [...base, String(index)]
+    itemPaths[index] = created
+    return created
+  }
+
+  function nextKey() {
+    nextItemKey += 1
+    return `array-item-${nextItemKey}`
   }
 
   function itemKey(item: FormObject) {
@@ -246,14 +295,14 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     if (existing) {
       return existing
     }
-    nextItemKey += 1
-    const key = `array-item-${nextItemKey}`
+    const key = nextKey()
     itemKeys.set(item, key)
     return key
   }
 
   function itemRenderKey(item: FormObject, index: number) {
-    return `${itemKey(item)}:${index}`
+    const key = rowKeys.value[index] ?? itemKey(item)
+    return `${key}:${index}`
   }
 
   function itemHasError(index: number) {

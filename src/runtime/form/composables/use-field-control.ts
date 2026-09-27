@@ -148,31 +148,34 @@ export function useFieldControl<TField extends FormField>(
   })
 
   let lastValue = cloneFormValue(form.getValue(path()))
-  watchWithFilter(
-    () => form.getValue(path()),
-    async (value) => {
-      if (isEqualFormValue(value, lastValue)) {
-        return
-      }
-      lastValue = cloneFormValue(value)
-      api.value.validation.clearError()
-      if (!createFormFieldInstance(field()).capability.has('validation')) {
-        return
-      }
-      const trigger = getValidationTrigger(field())
-      if (trigger === 'submit') {
-        return
-      }
-      if (trigger === 'blur' && !form.isFieldTouched(path())) {
-        return
-      }
+  // Nobody edits a field before the form paints, so live validation starts after that.
+  form.render.afterPaint(() =>
+    watchWithFilter(
+      () => form.getValue(path()),
+      async (value) => {
+        if (isEqualFormValue(value, lastValue)) {
+          return
+        }
+        lastValue = cloneFormValue(value)
+        api.value.validation.clearError()
+        if (!createFormFieldInstance(field()).capability.has('validation')) {
+          return
+        }
+        const trigger = getValidationTrigger(field())
+        if (trigger === 'submit') {
+          return
+        }
+        if (trigger === 'blur' && !form.isFieldTouched(path())) {
+          return
+        }
 
-      if (trigger === 'input') {
-        form.markFieldTouched(path())
-      }
-      await api.value.validation.validate()
-    },
-    { deep: true },
+        if (trigger === 'input') {
+          form.markFieldTouched(path())
+        }
+        await api.value.validation.validate()
+      },
+      { deep: true },
+    ),
   )
 
   let blurBoundaryListening = false

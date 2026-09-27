@@ -83,6 +83,7 @@ export function useFormRoot(params: UseFormRootParams) {
   onBeforeUnmount(() => params.form()?.unbind(runtime))
 
   onMounted(async () => {
+    runtime.render.start()
     await nextTick()
     const target = getSchemaAutoFocus(schema.value)
     if (isString(target)) {

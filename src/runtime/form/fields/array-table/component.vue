@@ -3,7 +3,8 @@ import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { useScrollShadow } from '@nuxt/ui/composables/useScrollShadow'
 import { useElementSize } from '@vueuse/core'
-import { computed, defineAsyncComponent, ref } from 'vue'
+import { computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue'
+import type { Ref } from 'vue'
 
 import { useResolvedFieldProps } from '../../composables/use-field-control'
 import type { FormField, FormObject } from '../../types'
@@ -11,8 +12,9 @@ import { isRecord } from '../../utils/path'
 import { isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
+import type { FormArrayCustomAction } from '../array-list/types'
 import { useFormArrayItems } from '../array-list/use-array-items'
-import ArrayTableCell from './array-table-cell.vue'
+import ArrayTableRow from './array-table-row.vue'
 import type { FormArrayTableField } from './types'
 
 const DEFAULT_COLUMN_MIN_WIDTH = '140px'
@@ -36,6 +38,7 @@ const VueDraggable = defineAsyncComponent(async () => {
 
 const {
   addItem,
+  form,
   addItemLabel,
   canAdd,
   canDelete,
@@ -57,6 +60,69 @@ const {
   () => props.field,
   () => props.path,
 )
+const DEFAULT_ROW_HEIGHT = 45
+
+/**
+ * Rows claim render slots from the form scheduler in order, so a long table paints the rows on
+ * screen at once and fills in the rest over the next frames while a spacer holds its height. A
+ * pending row sits in the spacer, one estimated row height after the previous one. A draggable
+ * table renders every row, since sorting reads the whole list from the DOM.
+ */
+const rowSlots = shallowRef<readonly Ref<boolean>[]>([])
+const rowHeight = ref<number>(DEFAULT_ROW_HEIGHT)
+const spacer = ref<HTMLElement | null>(null)
+
+function pendingRowTop(index: number) {
+  const node = spacer.value
+  if (!node || node.getClientRects().length === 0) {
+    return undefined
+  }
+  return node.getBoundingClientRect().top + (index - readyRows.value) * rowHeight.value
+}
+
+watch(
+  () => items.value.length,
+  (length) => {
+    const current = rowSlots.value
+    if (length <= current.length) {
+      rowSlots.value = current.slice(0, length)
+      return
+    }
+    const weight = Math.max(1, props.field.fields.length)
+    const added = Array.from({ length: length - current.length }, (_, offset) =>
+      isDraggable.value
+        ? ref<boolean>(true)
+        : form.render.claim(weight, () => pendingRowTop(current.length + offset)),
+    )
+    rowSlots.value = [...current, ...added]
+  },
+  { immediate: true },
+)
+
+const readyRows = computed(() => {
+  const index = rowSlots.value.findIndex((slot) => !slot.value)
+  return index === -1 ? items.value.length : index
+})
+const renderedItems = computed(() => items.value.slice(0, readyRows.value))
+const pendingRows = computed(() => items.value.length - readyRows.value)
+
+watch(readyRows, (count, previous) => {
+  if (previous || !count) {
+    return
+  }
+  requestAnimationFrame(() => {
+    const row = viewportRef.value?.querySelector<HTMLElement>('tbody > tr')
+    if (row && row.offsetHeight > 0) {
+      rowHeight.value = row.offsetHeight
+    }
+  })
+})
+
+const NO_CUSTOM_ACTIONS: readonly FormArrayCustomAction[] = []
+const customActions = computed(() => props.field.actions?.custom ?? NO_CUSTOM_ACTIONS)
+const dragLabel = computed(() => t('form.fields.array.dragItem'))
+const removeLabel = computed(() => t('form.fields.array.removeItem'))
+
 const viewportRef = ref<HTMLElement | null>(null)
 const viewportShadow = useScrollShadow(viewportRef, { orientation: 'horizontal', size: 20 })
 const { width: viewportWidth } = useElementSize(viewportRef)
@@ -176,70 +242,29 @@ function fieldLabel(field: FormField) {
             handle=".array-table-drag-handle"
             :animation="150"
           >
-            <tr
-              v-for="(item, index) in items"
+            <ArrayTableRow
+              v-for="(item, index) in renderedItems"
               :key="itemRenderKey(item, index)"
-              :class="
-                mergeFormUiClass(
-                  'align-middle transition-colors hover:bg-elevated/35 [&>*]:border-b [&>*]:border-default [&:last-child>*]:border-b-0',
-                  ui?.row,
-                )
-              "
-            >
+              :index="index"
+              :item-path="itemPath(index)"
+              :columns="columns"
+              :actions="showActionsColumn"
+              :draggable="isDraggable"
+              :can-delete="canDelete"
+              :custom-actions="customActions"
+              :custom-visible="customActionVisible"
+              :ui="ui"
+              :drag-label="dragLabel"
+              :remove-label="removeLabel"
+              @remove="removeItem"
+              @custom="runCustomAction"
+            />
+            <tr v-if="pendingRows > 0" ref="spacer" aria-hidden="true" data-form-array-pending="">
               <td
-                v-for="column in columns"
-                :key="column.key"
-                :class="mergeFormUiClass('border-r border-default p-1.5 last:border-r-0', ui?.cell)"
-              >
-                <ArrayTableCell :field="column" :item-path="itemPath(index)" />
-              </td>
-              <td
-                v-if="showActionsColumn"
-                :class="
-                  mergeFormUiClass(
-                    'sticky right-0 whitespace-nowrap border-l border-default bg-default px-1.5 py-1.5 text-right shadow-[-8px_0_12px_-10px_rgba(0,0,0,0.45)]',
-                    ui?.actionsCell,
-                  )
-                "
-              >
-                <UButton
-                  v-if="isDraggable"
-                  icon="i-lucide-grip-vertical"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  :class="
-                    mergeFormUiClass(
-                      'array-table-drag-handle cursor-grab active:cursor-grabbing',
-                      ui?.action,
-                    )
-                  "
-                  :aria-label="t('form.fields.array.dragItem')"
-                />
-                <UButton
-                  v-if="canDelete(index)"
-                  icon="i-lucide-trash-2"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  :class="ui?.action"
-                  :aria-label="t('form.fields.array.removeItem')"
-                  @click="removeItem(index)"
-                />
-                <UButton
-                  v-for="(action, actionIndex) in field.actions?.custom ?? []"
-                  v-show="customActionVisible(index, actionIndex)"
-                  :key="actionIndex"
-                  :icon="action.icon"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  :class="ui?.action"
-                  @click="runCustomAction(index, actionIndex)"
-                >
-                  {{ resolveFormText(action.label) }}
-                </UButton>
-              </td>
+                :colspan="columns.length + (showActionsColumn ? 1 : 0)"
+                class="p-0"
+                :style="{ height: `${pendingRows * rowHeight}px` }"
+              />
             </tr>
             <tr v-if="items.length === 0">
               <td :colspan="columns.length + (showActionsColumn ? 1 : 0)" class="p-0">
