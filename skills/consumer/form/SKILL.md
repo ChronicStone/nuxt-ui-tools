@@ -470,7 +470,12 @@ Each entry has a status:
 - **pending** (an empty circle): anything else.
 
 Optional sections read "optional" and are not counted in the summary under the entries ("3 sections
-left to complete", then "Everything is ready").
+left to complete", then "Everything is ready"), unless the user started one and left it incomplete or
+invalid, since that blocks the submit.
+
+Required fields inside array items count too: a row added to an `array-table` with an empty required
+cell leaves its section pending. They never make a section required; only the section's own fields
+decide whether it reads "optional".
 
 With `controls.dirtyCheck: true` (typically on edit pages), a modified section gets a ring and a
 **Reset** button that puts its values back, its entry gets a dot, the header shows an "Unsaved
@@ -606,6 +611,77 @@ nuxtUiTools: {
   },
 }
 ```
+
+## Array Tables
+
+`array-table` renders one row per item and one column per child field. Column `layout.width`
+sets a column's width (`number` in pixels or any CSS length), and `props.minWidth` sets the table's
+minimum width before it scrolls horizontally.
+
+Cells keep their row compact when a value is invalid: the control takes the error color and
+`aria-invalid`, and the message opens in a tooltip on hover, staying open while the cell has
+focus. Style that tooltip through `ui.arrayTable.ui.error`.
+
+The actions column takes the width of the buttons its rows show (drag handle, delete, custom
+actions), so a `table-fixed` layout never clips them. When the table is wider than its frame, the
+empty state and the add button stay pinned to the visible part while the rows scroll sideways.
+
+## Upload Fields
+
+An `upload` field uploads each selected file through your `upload.handler` as soon as it is picked,
+and stores what the handler returns. Set `output: 'url'` when the handler returns a string and
+`output: 'object'` when it returns an object. With `props.multiple`, the value is an array and the
+handler still runs once per file, so every file gets its own progress, cancel, and retry.
+
+```ts
+{
+  key: 'agreement',
+  label: 'Signed agreement',
+  type: 'upload',
+  output: 'object',
+  props: { accept: 'application/pdf' },
+  upload: {
+    // Runs once per file. `signal` aborts when the user cancels or removes the file.
+    handler: async ({ files, onProgress, signal }) => {
+      const staged = await stageUpload(files[0], { onProgress, signal })
+      return { token: staged.token, name: files[0].name, size: files[0].size, type: files[0].type }
+    },
+    // Turns a value that is already set into display data for the list.
+    resolve: async ({ value }) => {
+      const file = await api.contractFiles.show(value.id)
+      return { name: file.label, size: file.size, type: 'application/pdf' }
+    },
+    // Opens a stored file, for example through a short-lived download link.
+    open: async ({ value }) => window.open(await api.contractFiles.downloadUrl(value.id)),
+  },
+}
+```
+
+What you get:
+
+- Stored values render as a file row with their name, type, size, and an open action. Without
+  `resolve`, a string value uses its last URL segment as the name and opens itself; an object value
+  reads its `name`, `size`, `type`, `url`, and `thumbnail` keys. `resolve` may be async: the row shows
+  a placeholder until it settles, and falls back to the default display if it throws.
+- Without an `open` hook, opening a file previews the field's files as a gallery when a
+  `<UiFilePreviewProvider>` is mounted (see the file preview skill), and opens the resolved `url` in
+  a new tab otherwise. Files uploaded in the current session preview from the browser's copy, even
+  before they have a URL. Return `openable: false` from `resolve` for values that cannot be opened
+  yet, such as files uploaded to staging but not saved.
+- A file uploaded in the current session keeps its local preview, name, size, and type once it is
+  stored, so `resolve` only needs to describe values it knows more about. Image thumbnails fit
+  inside their box on a white ground, which suits logos.
+- Single fields show a replace action on the stored file. A successful replacement calls
+  `upload.onDelete` with the previous value; removing a file calls it too.
+- `props.autoUpload: false` queues selected files until the user starts them from the row.
+- `props.max` caps stored plus pending files for `multiple` fields.
+- `props.variant: 'button'` renders a compact picker and rows that fit in a table cell.
+- Submitting waits for uploads that are running. If a file is still queued or failed, the submit
+  is blocked and the field shows an error until the file is uploaded or removed.
+
+When a stored value is an object your API understands, such as a saved file id, and a new upload
+returns a different shape, such as a staged-upload token, both can live in the same field: `resolve`
+only runs for values that are already set, and the handler decides what a new upload stores.
 
 ## Layout Defaults
 

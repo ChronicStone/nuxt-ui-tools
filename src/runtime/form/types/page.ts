@@ -177,9 +177,9 @@ export interface FormPageSectionState {
   label: string
   /** Resolved supporting copy. */
   description?: string
-  /** True when the section is declared optional or has no required field. */
+  /** True when the section is declared optional or has no required field outside array items. */
   optional: boolean
-  /** Number of required fields without a value. */
+  /** Number of required fields without a value, the fields of array items included. */
   missing: number
   /** Summary of the section's requirements, see `FormPageSectionStatus`. */
   status: FormPageSectionStatus

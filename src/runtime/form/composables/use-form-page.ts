@@ -52,10 +52,17 @@ export function useFormPage(params: {
   /** Rings modified sections and marks them in the navigation, from `controls.dirtyCheck`. */
   const dirtyCheck = computed(() => getSchemaDirtyCheck(root.schema.value))
   const navigationTitle = computed(() => getFormPageNavigationTitle(root.schema.value))
-  /** Sections that still need something before the form can be submitted. */
+  /**
+   * Sections that still need something before the form can be submitted: a required section that
+   * is not complete, or an optional one the user started and left incomplete or invalid.
+   */
   const remaining = computed(
     () =>
-      sections.value.filter((section) => !section.optional && section.status !== 'complete').length,
+      sections.value.filter((section) =>
+        section.optional
+          ? section.missing > 0 || section.status === 'invalid'
+          : section.status !== 'complete',
+      ).length,
   )
   const modified = computed(() => sections.value.filter((section) => section.dirty).length)
   /** Height of the pinned header, which sections scroll under. */

@@ -10,7 +10,15 @@ describe('public package surface', () => {
   it('exports every release-ready runtime domain except spreadsheet', () => {
     const packageManifest = readRepositoryFile('package.json')
 
-    for (const domain of ['form', 'i18n', 'query-prefetch', 'query-state', 'shared', 'table']) {
+    for (const domain of [
+      'file-preview',
+      'form',
+      'i18n',
+      'query-prefetch',
+      'query-state',
+      'shared',
+      'table',
+    ]) {
       expect(packageManifest).toContain(`"./${domain}"`)
     }
 

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyDateManualMask,
   calendarValueFromCanonical,
+  dateManualPlaceholder,
   defaultDateManualFormat,
   formatDateManualValue,
   parseDateManualValue,
@@ -18,6 +19,15 @@ describe('date-family manual input', () => {
     expect(defaultDateManualFormat('datetime', 'fr-FR')).toBe('dd/MM/yyyy HH:mm')
     expect(defaultDateManualFormat('monthrange', 'fr-FR')).toBe('MM/yyyy')
     expect(defaultDateManualFormat('year', 'fr-FR')).toBe('yyyy')
+  })
+
+  it('localizes placeholder tokens without changing the parse format', () => {
+    const fr = { day: 'jj', hour: 'hh', minute: 'mm', month: 'mm', year: 'aaaa' }
+    expect(dateManualPlaceholder('dd/MM/yyyy', false, fr)).toBe('jj/mm/aaaa')
+    expect(dateManualPlaceholder('dd/MM/yyyy HH:mm', true, fr)).toBe(
+      'jj/mm/aaaa hh:mm – jj/mm/aaaa hh:mm',
+    )
+    expect(dateManualPlaceholder('MM/dd/yyyy', false)).toBe('mm/dd/yyyy')
   })
 
   it('masks and parses a single date without changing its canonical value', () => {

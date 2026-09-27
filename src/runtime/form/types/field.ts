@@ -120,7 +120,16 @@ export type { FormTagField } from '../fields/tag/types'
 export type { FormTextField } from '../fields/text/types'
 export type { FormTextareaField } from '../fields/textarea/types'
 export type { FormTimeField } from '../fields/time/types'
-export type { FormUploadField } from '../fields/upload/types'
+export type {
+  FormUploadCallbackParams,
+  FormUploadDeleteParams,
+  FormUploadField,
+  FormUploadHandler,
+  FormUploadOpenParams,
+  FormUploadResolvedFile,
+  FormUploadValue,
+  FormUploadValueParams,
+} from '../fields/upload/types'
 
 /**
  * Union of authored form fields.

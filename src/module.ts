@@ -63,6 +63,7 @@ const viewportDefaults = {
 
 const publicRuntimeDomains = [
   'dashboard',
+  'file-preview',
   'form',
   'i18n',
   'query-prefetch',
@@ -137,6 +138,7 @@ export default defineNuxtModule<ModuleOptions>({
     setupComponents(resolve('./runtime'), options)
     addPlugin(resolve('./runtime/query-prefetch/plugins/link-prefetch.client'))
     addPlugin(resolve('./runtime/form/plugins/form-api'))
+    addPlugin(resolve('./runtime/file-preview/plugins/file-preview-api'))
     addVitePlugin({
       enforce: 'pre',
       name: 'nuxt-ui-tools:query-prefetch-macro',

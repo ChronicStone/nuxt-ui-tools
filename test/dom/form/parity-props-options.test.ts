@@ -61,7 +61,6 @@ describe('option and file parity props', () => {
     Object.defineProperty(input.element, 'files', { value: [file] })
     await input.trigger('change')
     await harness.flush()
-    await harness.button('Téléverser').trigger('click')
     await harness.until(() => report !== undefined)
 
     report?.(40)

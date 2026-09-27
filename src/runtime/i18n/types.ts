@@ -395,6 +395,13 @@ export interface UiToolsFormMessages {
       end: string
       clear: string
       confirm: string
+      tokens: {
+        day: string
+        month: string
+        year: string
+        hour: string
+        minute: string
+      }
     }
     time: {
       format: string
@@ -410,6 +417,13 @@ export interface UiToolsFormMessages {
       upload: string
       remove: string
       failed: string
+      open: string
+      cancel: string
+      retry: string
+      replace: string
+      uploading: string
+      queued: string
+      pending: string
     }
     phone: {
       country: string
@@ -533,8 +547,116 @@ export interface UiToolsDashboardMessages {
   }
 }
 
+export interface UiToolsFilePreviewMessages {
+  /** Name shown for a file that has none, such as a pasted image. */
+  untitled: string
+  close: string
+  expand: string
+  restore: string
+  previous: string
+  next: string
+  /** Gallery position in the header: "{current} / {total}". */
+  counter: string
+  /** Announced on navigation: "{current} of {total}: {name}". */
+  position: string
+  details: string
+  download: string
+  openInNewTab: string
+  moreActions: string
+  retry: string
+  kinds: {
+    image: string
+    video: string
+    audio: string
+    pdf: string
+    text: string
+    csv: string
+    markdown: string
+    office: string
+    archive: string
+    other: string
+  }
+  fields: {
+    name: string
+    type: string
+    size: string
+    modified: string
+    dimensions: string
+    duration: string
+    lines: string
+    rows: string
+    columns: string
+  }
+  converted: {
+    title: string
+    /** "The original is a {kind} file." */
+    description: string
+    download: string
+  }
+  errors: {
+    sourceTitle: string
+    sourceDescription: string
+    /** "This browser can't display {extension} files". */
+    decodeTitle: string
+    decodeDescription: string
+    pdfTitle: string
+    pdfDescription: string
+    open: string
+  }
+  fallback: {
+    title: string
+    /** "{extension} files can't be shown here. Download it to open it in another app." */
+    description: string
+    descriptionUnnamed: string
+  }
+  /** "Showing the first {size} of {total}." */
+  truncated: string
+  image: {
+    zoomIn: string
+    zoomOut: string
+    fit: string
+    rotate: string
+  }
+  media: {
+    play: string
+    pause: string
+    mute: string
+    unmute: string
+    volume: string
+    speed: string
+    captions: string
+    pictureInPicture: string
+    fullscreen: string
+    exitFullscreen: string
+    seek: string
+  }
+  text: {
+    wrap: string
+    copy: string
+    copied: string
+    /** "{count} lines" */
+    lines: string
+    formatted: string
+  }
+  csv: {
+    /** "{count} rows" */
+    rows: string
+    /** "{count} columns" */
+    columns: string
+    /** "Delimiter “{value}”" */
+    delimiter: string
+    tab: string
+    bom: string
+  }
+  markdown: {
+    preview: string
+    source: string
+  }
+}
+
 export interface Messages {
   dashboard: UiToolsDashboardMessages
+  filePreview: UiToolsFilePreviewMessages
   form: UiToolsFormMessages
   table: UiToolsTableMessages
   spreadsheet: UiToolsSpreadsheetMessages

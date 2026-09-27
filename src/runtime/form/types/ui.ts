@@ -190,7 +190,9 @@ export interface FormArrayTableUi {
   cell?: FormUiClass
   control?: FormUiClass
   actionsCell?: FormUiClass
+  /** Tooltip that shows the message of an invalid cell on hover and focus. */
   error?: FormUiClass
+  /** Empty state, kept in view when the table scrolls sideways. */
   empty?: FormUiClass
   addCell?: FormUiClass
   add?: FormUiClass

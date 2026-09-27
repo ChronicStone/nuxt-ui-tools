@@ -6,6 +6,8 @@ import type { Ref } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { Router } from 'vue-router'
 
+import { filePreviewApiKey } from '#ui-tools/file-preview/composables/use-file-preview-api'
+import type { FilePreviewApi } from '#ui-tools/file-preview/types'
 import FormProvider from '#ui-tools/form/components/provider/form-provider.vue'
 import FormRoot from '#ui-tools/form/components/root/form.vue'
 import { useForm } from '#ui-tools/form/composables/use-form'
@@ -36,6 +38,8 @@ export interface MountFormOptions {
   appConfig?: FormObject
   onSubmit?: FormSubmitHandler<FormObject, FormValue>
   settle?: boolean
+  /** App-wide file preview API, as the module plugin provides it. */
+  filePreview?: FilePreviewApi
 }
 
 export interface FormHarness {
@@ -82,6 +86,8 @@ export async function mountForm(options: MountFormOptions): Promise<FormHarness>
     attachTo: document.body,
     global: {
       plugins: [router, [VueQueryPlugin, { queryClient }]],
+      // SAFETY: an InjectionKey is a symbol at runtime; TypeScript only rejects its interface type as a key.
+      provide: options.filePreview ? { [filePreviewApiKey as symbol]: options.filePreview } : {},
       stubs: { Transition: true, TransitionGroup: true },
     },
   })

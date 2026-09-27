@@ -690,9 +690,17 @@ function isAsyncValidator(rule: RegleRuleRaw) {
   return isFunction(rule) && Object.getPrototypeOf(rule)?.constructor?.name === 'AsyncFunction'
 }
 
+/**
+ * Messages of one field. A field that holds an array, such as a multiple select, can be validated
+ * as a collection, whose own rules report under `$self`.
+ */
 function resolveRegleStatusErrors(status: FormValue) {
   const errors = readReactiveProperty(status, '$errors')
-  return Array.isArray(errors) ? errors.map(String) : []
+  if (Array.isArray(errors)) {
+    return errors.map(String)
+  }
+  const own = isRecord(errors) ? errors.$self : undefined
+  return Array.isArray(own) ? own.map(String) : []
 }
 
 function toReglePath(path: string, state: FormObject) {

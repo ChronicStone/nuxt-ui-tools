@@ -198,3 +198,187 @@
     animation-duration: 3s;
   }
 }
+
+/* File preview: overlay veil, stage surfaces, and the few rules Tailwind utilities cannot express.
+ * Zero specificity (`:where`), so any app rule overrides them. */
+:where(:root) {
+  --nut-fp-veil: rgba(31, 29, 26, 0.4);
+  --nut-fp-stage: var(--ui-bg-muted);
+  --nut-fp-document: #525659;
+  --nut-fp-checker-a: #ffffff;
+  --nut-fp-checker-b: #ebe7e2;
+  --nut-fp-token-key: var(--ui-primary);
+  --nut-fp-token-string: var(--ui-success);
+  --nut-fp-token-number: var(--ui-info);
+  --nut-fp-token-literal: var(--ui-error);
+}
+
+:where(.dark) {
+  --nut-fp-veil: rgba(0, 0, 0, 0.62);
+  --nut-fp-stage: var(--ui-bg);
+  --nut-fp-checker-a: #e9e4dd;
+  --nut-fp-checker-b: #d8d1c7;
+}
+
+.nut-fp-checker {
+  background-color: var(--nut-fp-checker-a);
+  background-image: conic-gradient(
+    var(--nut-fp-checker-b) 25%,
+    transparent 0 50%,
+    var(--nut-fp-checker-b) 0 75%,
+    transparent 0
+  );
+  background-size: 18px 18px;
+}
+
+.nut-fp-code [data-token='key'] {
+  color: var(--nut-fp-token-key);
+}
+
+.nut-fp-code [data-token='string'] {
+  color: var(--nut-fp-token-string);
+}
+
+.nut-fp-code [data-token='number'] {
+  color: var(--nut-fp-token-number);
+}
+
+.nut-fp-code [data-token='literal'] {
+  color: var(--nut-fp-token-literal);
+}
+
+[data-file-preview-bottom][data-single]:has([data-file-preview-tools]:empty) {
+  display: none;
+}
+
+@keyframes nut-fp-progress {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(300%);
+  }
+}
+
+.nut-fp-progress {
+  animation: nut-fp-progress 1s ease-in-out infinite;
+}
+
+@keyframes nut-fp-equalizer {
+  to {
+    transform: scaleY(0.45);
+  }
+}
+
+.nut-fp-equalizer {
+  animation: nut-fp-equalizer 0.9s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nut-fp-progress {
+    animation-duration: 2.4s;
+  }
+
+  .nut-fp-equalizer {
+    animation: none;
+  }
+}
+
+.nut-fp-prose {
+  color: var(--ui-text);
+  font-size: 0.925rem;
+  line-height: 1.7;
+}
+
+.nut-fp-prose > :first-child {
+  margin-top: 0;
+}
+
+.nut-fp-prose :where(h1, h2, h3, h4) {
+  color: var(--ui-text-highlighted);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 1.75em 0 0.6em;
+}
+
+.nut-fp-prose h1 {
+  font-size: 1.6em;
+}
+
+.nut-fp-prose h2 {
+  font-size: 1.25em;
+}
+
+.nut-fp-prose h3 {
+  font-size: 1.05em;
+}
+
+.nut-fp-prose :where(p, ul, ol, pre, table, blockquote) {
+  margin: 0 0 1em;
+}
+
+.nut-fp-prose :where(ul, ol) {
+  padding-inline-start: 1.4em;
+}
+
+.nut-fp-prose ul {
+  list-style: disc;
+}
+
+.nut-fp-prose ol {
+  list-style: decimal;
+}
+
+.nut-fp-prose a {
+  color: var(--ui-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nut-fp-prose :not(pre) > code {
+  background: var(--ui-bg-elevated);
+  border: 1px solid var(--ui-border-muted);
+  border-radius: 4px;
+  font-size: 0.86em;
+  padding: 0.1em 0.35em;
+}
+
+.nut-fp-prose pre {
+  background: var(--ui-bg-elevated);
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  font-size: 0.85em;
+  overflow-x: auto;
+  padding: 0.9em 1.1em;
+}
+
+.nut-fp-prose table {
+  border-collapse: collapse;
+  display: block;
+  font-size: 0.9em;
+  overflow-x: auto;
+}
+
+.nut-fp-prose :where(th, td) {
+  border: 1px solid var(--ui-border);
+  padding: 0.4em 0.75em;
+  text-align: start;
+}
+
+.nut-fp-prose th {
+  background: var(--ui-bg-elevated);
+  font-weight: 600;
+}
+
+.nut-fp-prose blockquote {
+  border-inline-start: 3px solid var(--ui-primary);
+  color: var(--ui-text-toned);
+  padding-inline-start: 1em;
+}
+
+.nut-fp-prose img {
+  border-radius: 6px;
+  max-width: 100%;
+}

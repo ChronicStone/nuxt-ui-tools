@@ -64,8 +64,31 @@ export function defaultDateManualFormat(type: FormDateFamilyType, locale: string
   return hasDateFamilyTime(type) ? `${dateFormat} HH:mm` : dateFormat
 }
 
-export function dateManualPlaceholder(format: string, range: boolean) {
-  const placeholder = format.toLowerCase()
+export interface DateManualPlaceholderTokens {
+  day: string
+  month: string
+  year: string
+  hour: string
+  minute: string
+}
+
+const DATE_PLACEHOLDER_TOKEN = /yyyy|MM|dd|HH|mm/gu
+
+export function dateManualPlaceholder(
+  format: string,
+  range: boolean,
+  tokens?: DateManualPlaceholderTokens,
+) {
+  const names: Record<string, string | undefined> = {
+    HH: tokens?.hour,
+    MM: tokens?.month,
+    dd: tokens?.day,
+    mm: tokens?.minute,
+    yyyy: tokens?.year,
+  }
+  const placeholder = format
+    .replaceAll(DATE_PLACEHOLDER_TOKEN, (token) => names[token] ?? token.toLowerCase())
+    .toLowerCase()
   return range ? `${placeholder} – ${placeholder}` : placeholder
 }
 
