@@ -137,6 +137,23 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
     path: '/form',
   },
   {
+    description: 'One call previews images, video, audio, PDFs, text, CSV, and Markdown.',
+    icon: 'i-lucide-file-search',
+    id: 'file-preview',
+    label: 'File preview',
+    navigation: [
+      {
+        description:
+          'Every renderer, galleries, containers, source functions, renditions, and uploads.',
+        id: 'file-preview-gallery',
+        label: 'Renderers',
+        mode: 'document',
+        path: '/file-preview',
+      },
+    ],
+    path: '/file-preview',
+  },
+  {
     description: 'Client, remote, and composable data-list runtime examples.',
     icon: 'i-lucide-table-2',
     id: 'table',

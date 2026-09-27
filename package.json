@@ -23,6 +23,9 @@
       "dashboard": [
         "./dist/runtime/dashboard/index.d.ts"
       ],
+      "file-preview": [
+        "./dist/runtime/file-preview/index.d.ts"
+      ],
       "form": [
         "./dist/runtime/form/index.d.ts"
       ],
@@ -51,6 +54,14 @@
     "#ui-tools/dashboard/*": {
       "types": "./dist/runtime/dashboard/*.d.ts",
       "default": "./dist/runtime/dashboard/*.js"
+    },
+    "#ui-tools/file-preview": {
+      "types": "./dist/runtime/file-preview/index.d.ts",
+      "default": "./dist/runtime/file-preview/index.js"
+    },
+    "#ui-tools/file-preview/*": {
+      "types": "./dist/runtime/file-preview/*.d.ts",
+      "default": "./dist/runtime/file-preview/*.js"
     },
     "#ui-tools/form": {
       "types": "./dist/runtime/form/index.d.ts",
@@ -109,6 +120,10 @@
     "./dashboard": {
       "types": "./dist/runtime/dashboard/index.d.ts",
       "import": "./dist/runtime/dashboard/index.js"
+    },
+    "./file-preview": {
+      "types": "./dist/runtime/file-preview/index.d.ts",
+      "import": "./dist/runtime/file-preview/index.js"
     },
     "./form": {
       "types": "./dist/runtime/form/index.d.ts",

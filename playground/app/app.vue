@@ -3,6 +3,8 @@ import * as locales from '@nuxt/ui/locale'
 
 import * as uiToolsLocales from '#ui-tools/i18n/locales'
 
+import { renderPlaygroundMarkdown } from './lib/playground-markdown'
+
 const { locale } = useI18n()
 
 // eslint-disable-next-line import/namespace
@@ -30,9 +32,11 @@ useHead({
   <UApp :locale="locales[locale]">
     <NutToolsProvider :locale="uiToolsLocales[locale]">
       <NutFormProvider>
-        <NuxtLayout>
-          <NuxtPage />
-        </NuxtLayout>
+        <NutFilePreviewProvider :markdown="renderPlaygroundMarkdown">
+          <NuxtLayout>
+            <NuxtPage />
+          </NuxtLayout>
+        </NutFilePreviewProvider>
       </NutFormProvider>
     </NutToolsProvider>
   </UApp>

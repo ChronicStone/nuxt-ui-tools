@@ -92,6 +92,18 @@ function getPublicComponents(
       name: `${prefix}Dashboard${part}`,
     })),
 
+    // File preview
+    {
+      filePath: `${runtimeDir}/file-preview/components/provider/file-preview-provider.vue`,
+      global: options.global,
+      name: `${prefix}FilePreviewProvider`,
+    },
+    {
+      filePath: `${runtimeDir}/file-preview/components/shell/file-preview-tools.vue`,
+      global: options.global,
+      name: `${prefix}FilePreviewTools`,
+    },
+
     // Form
     {
       filePath: `${runtimeDir}/form/components/root/form.vue`,

@@ -77,6 +77,12 @@ export function setupImports(runtimeDir: string) {
       { from: 'dashboard', name: 'resolveDashboardComparisonRange' },
     ]),
 
+    // File preview
+    ...withRuntime(runtimeDir, [
+      { from: 'file-preview', name: 'defineFilePreviewRenderer' },
+      { from: 'file-preview', name: 'useFilePreview' },
+    ]),
+
     // Form
     ...withRuntime(runtimeDir, [
       { from: 'form', name: 'defineFormField' },

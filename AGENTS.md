@@ -249,6 +249,20 @@ Philosophy:
 
 Read `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md` before changing it.
 
+### `src/runtime/file-preview`
+
+Purpose:
+
+- `$filePreview.open()` / `useFilePreview()`: one file or a gallery in a modal, drawer, or fullscreen overlay
+- registry of renderers (image, video, audio, PDF, text, CSV, Markdown, fallbacks), loaded on first use
+
+Philosophy:
+
+- native elements first; heavy engines plug in through `register()`, never ship in the core
+- detection and container choice happen once per preview; renderers only render
+
+Read `.agents/skills/nuxt-ui-tools-maintainer/references/file-preview-runtime.md` before changing it.
+
 ### Future Core Areas
 
 The target core repository shape is not just table.
@@ -258,6 +272,7 @@ Think in terms of a growing core around:
 - table
 - form
 - dashboard
+- file-preview
 - excel-import
 
 Do not over-optimize around table as if it will remain the only serious runtime domain.
