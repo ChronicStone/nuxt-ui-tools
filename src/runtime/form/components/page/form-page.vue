@@ -104,7 +104,6 @@ const pageUi = computed(() => root.formUi.ui.value.page?.ui)
     :class="
       mergeFormUiClass('@container/form-page h-full min-w-0 overflow-y-auto bg-muted', pageUi?.root)
     "
-    :style="{ '--nut-form-page-header': `${page.stickyOffset.value}px` }"
     data-form-page
     @submit.prevent="root.submit"
   >

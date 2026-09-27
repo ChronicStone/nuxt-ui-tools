@@ -28,6 +28,11 @@ const { t } = useUiToolsLocale()
 const { runtime } = page.root
 const pageUi = computed(() => formUi.ui.value.page?.ui)
 const titleId = useId()
+/**
+ * Modified under `controls.dirtyCheck`. The reset button keeps its place while the section is
+ * unmodified, hidden, and the ring is inset, so a section that becomes modified neither grows nor
+ * reflows; on narrow pages the description moves under the title row, which holds the button.
+ */
 const dirty = computed(() => page.dirtyCheck.value && props.section.dirty)
 
 // The section scopes the grid its fields lay out in, the way a step does.
@@ -55,9 +60,12 @@ onBeforeUnmount(() => unregister?.())
     :data-form-page-section="section.key"
     :data-state="section.status"
     :data-dirty="dirty || undefined"
+    :style="{
+      scrollMarginTop: `calc(${page.stickyOffset.value}px + var(--nut-form-page-gap, 24px))`,
+    }"
     :class="
       mergeFormUiClass(
-        'flex min-w-0 scroll-mt-[calc(var(--nut-form-page-header,0px)+var(--nut-form-page-gap,24px))] flex-col gap-[18px] rounded-xl border border-default bg-default px-5 pt-5 pb-6 transition-[border-color,box-shadow] duration-200 @3xl/form-page:px-6 @3xl/form-page:pt-[22px] data-[dirty]:border-primary data-[dirty]:ring-4 data-[dirty]:ring-primary/20',
+        'flex min-w-0 flex-col gap-[18px] rounded-xl border border-default bg-default px-5 pt-5 pb-6 transition-[border-color,box-shadow] duration-200 @3xl/form-page:px-6 @3xl/form-page:pt-[22px] data-[dirty]:border-primary data-[dirty]:ring-4 data-[dirty]:ring-primary/20 data-[dirty]:ring-inset',
         pageUi?.section,
       )
     "
@@ -82,7 +90,12 @@ onBeforeUnmount(() => unregister?.())
       </h2>
       <p
         v-if="section.description"
-        :class="mergeFormUiClass('m-0 text-[13px] text-muted', pageUi?.sectionDescription)"
+        :class="
+          mergeFormUiClass(
+            'order-last m-0 basis-full text-[13px] text-muted @3xl/form-page:order-none @3xl/form-page:basis-auto',
+            pageUi?.sectionDescription,
+          )
+        "
       >
         {{ section.description }}
       </p>
@@ -94,20 +107,20 @@ onBeforeUnmount(() => unregister?.())
         :class="mergeFormUiClass('capitalize', pageUi?.sectionOptional)"
       />
       <div
-        v-if="dirty || $slots.actions"
-        :class="mergeFormUiClass('ms-auto flex items-center gap-2', pageUi?.sectionActions)"
+        v-if="page.dirtyCheck.value || $slots.actions"
+        :class="mergeFormUiClass('ms-auto -my-1.5 flex items-center gap-2', pageUi?.sectionActions)"
       >
         <slot name="actions" :section />
         <UButton
-          v-if="dirty"
+          v-if="page.dirtyCheck.value"
           type="button"
           color="neutral"
           variant="ghost"
           size="sm"
           icon="i-lucide-rotate-ccw"
           :label="t('form.page.resetSection')"
-          :class="pageUi?.sectionReset"
-          data-form-page-reset
+          :class="mergeFormUiClass(dirty ? undefined : 'invisible', pageUi?.sectionReset)"
+          :data-form-page-reset="dirty ? '' : undefined"
           @click="page.resetSection(section.key)"
         />
       </div>

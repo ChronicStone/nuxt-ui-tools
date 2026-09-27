@@ -16,7 +16,9 @@ import FormPageActions from './form-page-actions.vue'
 /**
  * Header of a form page: the schema `header` (eyebrow, title, description), an unsaved-changes
  * badge while a form with `controls.dirtyCheck` is modified, and the page actions. It stays
- * pinned while the page scrolls on wide layouts, and sections scroll to just below it.
+ * pinned while the page scrolls on wide layouts, and sections scroll to just below it. The badge
+ * keeps its place while the form is unmodified, hidden, and does not grow its line, so the first
+ * edit neither shifts the page nor resizes the pinned header.
  */
 defineSlots<{
   /** Before the heading, e.g. an avatar of the record. */
@@ -92,7 +94,7 @@ function headerText(config: FormValue, key: string) {
           <slot name="title">{{ title }}</slot>
         </h1>
         <div
-          v-if="description || unsaved || $slots.description"
+          v-if="description || page.dirtyCheck.value || $slots.description"
           :class="
             mergeFormUiClass(
               'flex flex-wrap items-center gap-2.5 text-[13.5px] text-muted',
@@ -104,12 +106,12 @@ function headerText(config: FormValue, key: string) {
             <span v-if="description">{{ description }}</span>
           </slot>
           <UBadge
-            v-if="unsaved"
+            v-if="page.dirtyCheck.value"
             color="warning"
             variant="soft"
             :label="t('form.page.unsavedChanges')"
-            :class="pageUi?.unsaved"
-            data-form-page-unsaved
+            :class="mergeFormUiClass(unsaved ? '-my-1' : '-my-1 invisible', pageUi?.unsaved)"
+            :data-form-page-unsaved="unsaved ? '' : undefined"
           />
         </div>
       </div>

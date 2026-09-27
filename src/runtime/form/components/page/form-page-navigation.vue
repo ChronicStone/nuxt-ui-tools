@@ -110,6 +110,7 @@ function select(event: MouseEvent, key: string) {
   <nav
     :aria-labelledby="page.navigationTitle.value || $slots.title ? titleId : undefined"
     :aria-label="page.navigationTitle.value || $slots.title ? undefined : t('form.page.navigation')"
+    :style="{ '--nut-form-page-header': `${page.stickyOffset.value}px` }"
     :class="
       mergeFormUiClass(
         'flex min-w-0 flex-col gap-3.5 @3xl/form-page:sticky @3xl/form-page:top-[calc(var(--nut-form-page-header,0px)+var(--nut-form-page-gap,24px))]',
