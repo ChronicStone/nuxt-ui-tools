@@ -2,10 +2,9 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { useScrollShadow } from '@nuxt/ui/composables/useScrollShadow'
+import { useElementSize } from '@vueuse/core'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
-import FormFieldError from '../../components/renderer/form-field-error.vue'
-import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import { useResolvedFieldProps } from '../../composables/use-field-control'
 import type { FormField, FormObject } from '../../types'
 import { isRecord } from '../../utils/path'
@@ -13,9 +12,12 @@ import { isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 import { useFormArrayItems } from '../array-list/use-array-items'
+import ArrayTableCell from './array-table-cell.vue'
 import type { FormArrayTableField } from './types'
 
 const DEFAULT_COLUMN_MIN_WIDTH = '140px'
+const ACTION_BUTTON_WIDTH = 24
+const ACTIONS_CELL_INSET = 14
 
 const props = defineProps<{
   field: FormArrayTableField
@@ -57,6 +59,7 @@ const {
 )
 const viewportRef = ref<HTMLElement | null>(null)
 const viewportShadow = useScrollShadow(viewportRef, { orientation: 'horizontal', size: 20 })
+const { width: viewportWidth } = useElementSize(viewportRef)
 const ui = computed(() => formUi.ui.value.arrayTable?.ui)
 const columns = computed(() =>
   props.field.fields.filter((field) => field.type !== 'hidden' && field.ignore !== true),
@@ -75,6 +78,22 @@ const showActionsColumn = computed<boolean>(() =>
     (_item, index) => isDraggable.value || canDelete(index) || hasCustomActions(index),
   ),
 )
+/** Keeps the empty state and the add button in view when the table is wider than its frame. */
+const pinnedStyle = computed(() =>
+  viewportWidth.value > 0 ? { width: `${viewportWidth.value}px` } : undefined,
+)
+/** Room for the most buttons a row shows, so a fixed table layout never clips them. */
+const actionsStyle = computed(() => {
+  const buttons = Math.max(0, ...items.value.map((_item, index) => rowActionCount(index)))
+  return buttons ? { width: `${buttons * ACTION_BUTTON_WIDTH + ACTIONS_CELL_INSET}px` } : undefined
+})
+
+function rowActionCount(index: number) {
+  const custom = (props.field.actions?.custom ?? []).filter((_action, actionIndex) =>
+    customActionVisible(index, actionIndex),
+  )
+  return Number(isDraggable.value) + Number(canDelete(index)) + custom.length
+}
 
 function columnStyle(field: FormField) {
   const layout = Object.getOwnPropertyDescriptor(field, 'layout')?.value
@@ -139,6 +158,7 @@ function fieldLabel(field: FormField) {
               <th
                 v-if="showActionsColumn"
                 scope="col"
+                :style="actionsStyle"
                 :class="
                   mergeFormUiClass(
                     'sticky right-0 w-px border-b border-l border-default bg-elevated px-1.5 py-2 shadow-[-8px_0_12px_-10px_rgba(0,0,0,0.45)]',
@@ -171,15 +191,7 @@ function fieldLabel(field: FormField) {
                 :key="column.key"
                 :class="mergeFormUiClass('border-r border-default p-1.5 last:border-r-0', ui?.cell)"
               >
-                <div
-                  :class="mergeFormUiClass('flex w-full items-center [&>*]:w-full', ui?.control)"
-                >
-                  <FormFieldRenderer :field="column" :parent-path="itemPath(index)" bare />
-                </div>
-                <FormFieldError
-                  :path="[...itemPath(index), column.key]"
-                  :class="mergeFormUiClass('mt-1 px-2.5 text-xs text-error', ui?.error)"
-                />
+                <ArrayTableCell :field="column" :item-path="itemPath(index)" />
               </td>
               <td
                 v-if="showActionsColumn"
@@ -230,11 +242,16 @@ function fieldLabel(field: FormField) {
               </td>
             </tr>
             <tr v-if="items.length === 0">
-              <td
-                :colspan="columns.length + (showActionsColumn ? 1 : 0)"
-                :class="mergeFormUiClass('px-3 py-10 text-center text-muted', ui?.empty)"
-              >
-                {{ emptyLabel }}
+              <td :colspan="columns.length + (showActionsColumn ? 1 : 0)" class="p-0">
+                <div
+                  :class="
+                    mergeFormUiClass('sticky left-0 px-3 py-10 text-center text-muted', ui?.empty)
+                  "
+                  :style="pinnedStyle"
+                  data-form-array-empty=""
+                >
+                  {{ emptyLabel }}
+                </div>
               </td>
             </tr>
           </component>
@@ -242,22 +259,24 @@ function fieldLabel(field: FormField) {
             <tr>
               <td
                 :colspan="columns.length + (showActionsColumn ? 1 : 0)"
-                :class="mergeFormUiClass('border-t border-default p-1.5', ui?.addCell)"
+                :class="mergeFormUiClass('border-t border-default p-0', ui?.addCell)"
               >
-                <button
-                  type="button"
-                  :class="
-                    mergeFormUiClass(
-                      'flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-default px-3 py-2 text-sm text-muted transition-colors hover:border-inverted/40 hover:bg-elevated/50 hover:text-default focus-visible:outline-2 focus-visible:outline-primary',
-                      ui?.add,
-                    )
-                  "
-                  :data-form-array-add="path.join('.')"
-                  @click="addItem()"
-                >
-                  <UIcon name="i-lucide-plus" class="size-4" aria-hidden="true" />
-                  <span>{{ addItemLabel }}</span>
-                </button>
+                <div class="sticky left-0 p-1.5" :style="pinnedStyle">
+                  <button
+                    type="button"
+                    :class="
+                      mergeFormUiClass(
+                        'flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-default px-3 py-2 text-sm text-muted transition-colors hover:border-inverted/40 hover:bg-elevated/50 hover:text-default focus-visible:outline-2 focus-visible:outline-primary',
+                        ui?.add,
+                      )
+                    "
+                    :data-form-array-add="path.join('.')"
+                    @click="addItem()"
+                  >
+                    <UIcon name="i-lucide-plus" class="size-4" aria-hidden="true" />
+                    <span>{{ addItemLabel }}</span>
+                  </button>
+                </div>
               </td>
             </tr>
           </tfoot>

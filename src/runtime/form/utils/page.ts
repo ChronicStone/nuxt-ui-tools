@@ -13,8 +13,10 @@ import { getPathValue, isRecord } from './path'
 import { isBoolean, isFunction, isNumber, isString } from './predicate'
 import {
   fieldPath,
+  getArrayItemFields,
   getChildFields,
   getSchemaFields,
+  isArrayField,
   isEmptyValue,
   isFlatPassthroughField,
   isObjectContainerField,
@@ -25,6 +27,8 @@ import { resolveFormText } from './text'
 interface FormPageLeaf {
   field: FormField
   path: readonly string[]
+  /** True for a field of an array item, which never makes its section required. */
+  item: boolean
 }
 
 /** Pairs each section of a page schema with the card `defineFormPageSchema` generated for it. */
@@ -76,7 +80,7 @@ export function resolveFormPageSectionState(params: {
     ? leaves.filter((leaf) => isRequiredLeaf(leaf, runtime))
     : []
   const missing = required.filter((leaf) => isEmptyValue(runtime.getValue(leaf.path))).length
-  const optional = entry.section.optional === true || required.length === 0
+  const optional = entry.section.optional === true || required.every((leaf) => leaf.item)
   const filled =
     !optional || leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
 
@@ -93,11 +97,15 @@ export function resolveFormPageSectionState(params: {
   }
 }
 
-/** Stateful fields of a section that render now, with containers flattened. */
+/**
+ * Stateful fields of a section that render now, with containers flattened. An array counts as a
+ * field, and the fields of each of its items follow it.
+ */
 function collectVisibleLeaves(
   fields: readonly FormField[],
   parentPath: readonly string[],
   runtime: FormRuntime,
+  item = false,
 ): readonly FormPageLeaf[] {
   return fields.flatMap((field) => {
     if (field.ignore === true) {
@@ -111,13 +119,37 @@ function collectVisibleLeaves(
       return []
     }
     if (isFlatPassthroughField(field)) {
-      return collectVisibleLeaves(getChildFields(field), parentPath, runtime)
+      return collectVisibleLeaves(getChildFields(field), parentPath, runtime, item)
     }
     if (isObjectContainerField(field)) {
-      return collectVisibleLeaves(getChildFields(field), path, runtime)
+      return collectVisibleLeaves(getChildFields(field), path, runtime, item)
     }
-    return [{ field, path }]
+    if (isArrayField(field)) {
+      return [{ field, item, path }, ...collectArrayItemLeaves(field, path, runtime)]
+    }
+    return [{ field, item, path }]
   })
+}
+
+function collectArrayItemLeaves(
+  field: FormField,
+  path: readonly string[],
+  runtime: FormRuntime,
+): readonly FormPageLeaf[] {
+  const items = runtime.getValue(path)
+  if (!Array.isArray(items)) {
+    return []
+  }
+  return items.flatMap((value: FormValue, index) =>
+    isRecord(value)
+      ? collectVisibleLeaves(
+          getArrayItemFields(field, value),
+          [...path, String(index)],
+          runtime,
+          true,
+        )
+      : [],
+  )
 }
 
 function isRequiredLeaf(leaf: FormPageLeaf, runtime: FormRuntime) {

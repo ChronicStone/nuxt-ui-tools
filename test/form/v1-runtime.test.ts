@@ -204,6 +204,10 @@ describe('form V1 nested runtime', () => {
       retry: async () => {
         calls.push('retry')
       },
+      settle: async () => {
+        calls.push('settle')
+      },
+      pending: () => false,
       start: async () => {
         calls.push('start')
       },
@@ -213,7 +217,9 @@ describe('form V1 nested runtime', () => {
     await registry.get(['identityDocument'])?.cancel()
     await registry.get(['identityDocument'])?.retry()
     await registry.get(['identityDocument'])?.remove()
-    expect(calls).toStrictEqual(['start', 'cancel', 'retry', 'remove'])
+    await registry.settle()
+    expect(registry.pendingPaths()).toStrictEqual([])
+    expect(calls).toStrictEqual(['start', 'cancel', 'retry', 'remove', 'settle'])
 
     unregister()
     expect(registry.get(['identityDocument'])).toBeUndefined()

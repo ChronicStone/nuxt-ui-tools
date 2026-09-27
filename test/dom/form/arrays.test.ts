@@ -69,7 +69,7 @@ describe('array table mutation', () => {
     harness.unmount()
   })
 
-  it('shows a required error inside the row that fails validation', async () => {
+  it('highlights an invalid cell and moves its message to a tooltip', async () => {
     const schema = defineFormSchema({
       fields: [
         {
@@ -83,9 +83,61 @@ describe('array table mutation', () => {
     await harness.submit()
     await harness.until(() => harness.form.errors.value.length === 1)
     expect(harness.form.errors.value[0]?.path).toBe('rows.0.label')
-    expect(harness.wrapper.find('[data-form-cell-error="rows.0.label"]').text()).toBe(
-      'Ce champ est requis',
-    )
+
+    const cell = harness.wrapper.find('[data-form-cell-invalid="rows.0.label"]')
+    expect(cell.exists()).toBeTruthy()
+    expect(cell.classes()).toContain('relative')
+    expect(cell.find('[data-ui-error]').classes()).toContain('sr-only')
+    expect(harness.wrapper.find('[data-ui-tooltip-content]').text()).toBe('Ce champ est requis')
+    expect(harness.wrapper.find('[data-ui="UTooltip"]').attributes('data-open')).toBeUndefined()
+
+    await cell.find('input').trigger('focusin')
+    await harness.flush()
+    expect(harness.wrapper.find('[data-ui="UTooltip"]').attributes('data-open')).toBe('')
+    harness.unmount()
+  })
+
+  it('sizes the actions column to the buttons a row shows', async () => {
+    const rows = (draggable: boolean) =>
+      defineFormSchema({
+        fields: [
+          {
+            fields: [{ key: 'label', label: 'Label', type: 'text' }],
+            key: 'rows',
+            props: { draggable },
+            type: 'array-table',
+          },
+        ],
+      })
+    const actionsWidth = async (draggable: boolean) => {
+      const harness = await mountForm({
+        input: { rows: [{ label: 'A' }] },
+        schema: rows(draggable),
+      })
+      const header = harness.wrapper.findAll('thead th').at(-1)
+      const width = header?.attributes('style')
+      harness.unmount()
+      return width
+    }
+
+    expect(await actionsWidth(false)).toContain('width: 38px')
+    expect(await actionsWidth(true)).toContain('width: 62px')
+  })
+
+  it('mounts a cell tooltip only while the cell is invalid', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          fields: [{ key: 'label', label: 'Label', required: true, type: 'text' }],
+          key: 'rows',
+          type: 'array-table',
+        },
+      ],
+    })
+    const harness = await mountForm({ input: { rows: [{ label: 'A' }, { label: 'B' }] }, schema })
+    await harness.submit()
+    await harness.flush()
+    expect(harness.wrapper.findAll('[data-ui="UTooltip"]')).toHaveLength(0)
     harness.unmount()
   })
 })

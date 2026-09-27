@@ -193,8 +193,14 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     validate,
   })
 
-  /** A successful submit saves the values: they become the baseline dirty state compares with. */
+  /**
+   * Waits for running uploads, then blocks the submit on files that are still not stored.
+   * A successful submit saves the values: they become the baseline dirty state compares with.
+   */
   async function submitHandler(externalSubmitHandler?: FormSubmitHandler<FormObject>) {
+    await uploadRegistry.settle()
+    for (const path of uploadRegistry.pendingPaths())
+      validation.setError(path, t('form.fields.upload.pending'), { blocking: true })
     const result = await submission.submitHandler(externalSubmitHandler)
     if (result.success) {
       state.rebaseline()

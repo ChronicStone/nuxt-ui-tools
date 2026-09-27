@@ -47,6 +47,31 @@ describe('form submission', () => {
     harness.unmount()
   })
 
+  it('shows the required message of an empty multiple select next to fields with dependencies', async () => {
+    const onSubmit = vi.fn<() => boolean>(() => true)
+    const schema = defineFormSchema({
+      fields: [
+        { default: 'EUR', key: 'currency', options: ['EUR', 'USD'], type: 'select' },
+        {
+          default: [],
+          key: 'lines',
+          label: 'Lines',
+          options: ['A', 'B'],
+          props: { multiple: true },
+          required: true,
+          type: 'select',
+        },
+        { default: null, dependencies: ['currency'], key: 'preset', options: [], type: 'select' },
+      ],
+    })
+    const harness = await mountForm({ onSubmit, schema })
+
+    await harness.submit()
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(errorOf(harness, 'lines')).toBe('Ce champ est requis')
+    harness.unmount()
+  })
+
   it('disables the rendered form while a pre-submit check is pending', async () => {
     const check = deferred<boolean>()
     const onBeforeSubmit = vi.fn<() => Promise<boolean>>(() => check.promise)

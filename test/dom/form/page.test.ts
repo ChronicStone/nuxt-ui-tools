@@ -109,6 +109,8 @@ describe('form page', () => {
     expect(harness.section('type').querySelector('h2')?.textContent?.trim()).toBe('Type de compte')
     expect(harness.section('type').textContent).toContain('le type conditionne les champs')
     expect(harness.entry('identity').textContent).toContain('Identité')
+    // The visually hidden status stays inside its entry, which scrolls sideways on phones.
+    expect(harness.entry('identity').classList).toContain('relative')
     expect(harness.wrapper.find('[data-form-page-actions]').text()).toContain('Créer le compte')
   })
 
@@ -135,6 +137,43 @@ describe('form page', () => {
     await harness.setValue('erpId', 'EV-1')
     expect(harness.entry('billing').dataset.state).toBe('complete')
     expect(harness.entry('billing').textContent).not.toContain('optionnel')
+  })
+
+  it('counts the required cells of array rows without making their section required', async () => {
+    const harness = await mountPage({
+      input: { name: 'DemandQA' },
+      schema: defineFormPageSchema({
+        actions: [{ key: 'submit', label: 'Créer' }],
+        sections: [
+          identitySection(),
+          defineFormPageSection({
+            fields: [
+              {
+                fields: [{ key: 'label', label: 'Libellé', required: true, type: 'text' }],
+                key: 'targets',
+                type: 'array-table',
+              },
+            ],
+            key: 'targets',
+            label: 'Engagements',
+          }),
+        ],
+      }),
+    })
+
+    expect(harness.entry('targets').textContent).toContain('optionnel')
+    expect(harness.summary()).toBe('Tout est prêt.')
+
+    harness.form.state.set('targets', [{ label: '' }])
+    await harness.flush()
+    expect(harness.entry('targets').dataset.state).toBe('pending')
+    expect(harness.entry('targets').textContent).toContain('optionnel')
+    expect(harness.summary()).toBe('1 section à compléter.')
+
+    harness.form.state.set('targets', [{ label: 'Année 1' }])
+    await harness.flush()
+    expect(harness.entry('targets').dataset.state).toBe('complete')
+    expect(harness.summary()).toBe('Tout est prêt.')
   })
 
   it('counts values the input provides as filled in', async () => {

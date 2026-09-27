@@ -880,8 +880,38 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'File',
   },
   {
-    description: 'Manual and automatic upload states, progress actions, retry, and deletion.',
+    description:
+      'Uploads on selection, per-file progress, cancel, retry, stored-file resolution, and deletion.',
     fields: [
+      {
+        default: { fileId: 'agreement-2026' },
+        help: 'Stored value resolved into a name, size, and open action.',
+        key: 'agreement',
+        label: 'Stored file',
+        output: 'object',
+        props: { accept: 'application/pdf' },
+        type: 'upload',
+        upload: {
+          handler: async ({ files, onProgress, signal }) => {
+            for (const percent of [25, 50, 75, 100]) {
+              // oxlint-disable-next-line no-await-in-loop -- simulated progress steps
+              await sleep(150)
+              if (signal.aborted) return null
+              onProgress(percent)
+            }
+            return { fileId: files[0]?.name ?? 'upload' }
+          },
+          resolve: async () => {
+            await sleep(350)
+            return {
+              name: 'Signed agreement 2026.pdf',
+              size: 184_320,
+              type: 'application/pdf',
+              url: 'https://example.test/files/signed-agreement-2026.pdf',
+            }
+          },
+        },
+      },
       {
         key: 'document',
         label: 'Manual upload',
@@ -901,15 +931,33 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         key: 'images',
         label: 'Automatic multiple upload',
         output: 'object',
-        props: { accept: 'image/*', autoUpload: true, multiple: true },
+        props: { accept: 'image/*', max: 4, multiple: true },
         type: 'upload',
         upload: {
           handler: async ({ files }) => {
             await sleep(450)
-            return files.map((file) => ({
-              name: file.name,
-              url: `https://example.test/uploads/${encodeURIComponent(file.name)}`,
-            }))
+            const file = files[0]
+            return file
+              ? {
+                  name: file.name,
+                  size: file.size,
+                  type: file.type,
+                  url: `https://example.test/uploads/${encodeURIComponent(file.name)}`,
+                }
+              : null
+          },
+        },
+      },
+      {
+        key: 'receipt',
+        label: 'Compact button',
+        output: 'url',
+        props: { accept: 'application/pdf', variant: 'button' },
+        type: 'upload',
+        upload: {
+          handler: async ({ files }) => {
+            await sleep(450)
+            return `https://example.test/uploads/${encodeURIComponent(files[0]?.name ?? 'receipt')}`
           },
         },
       },

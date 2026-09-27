@@ -123,7 +123,16 @@ const placeholder = computed(() => {
   if (explicitlyConfigured !== undefined) {
     return fieldPlaceholder.value
   }
-  return manualInput.value.placeholder ?? dateManualPlaceholder(manualFormat.value, isRange.value)
+  return (
+    manualInput.value.placeholder ??
+    dateManualPlaceholder(manualFormat.value, isRange.value, {
+      day: t('form.fields.date.tokens.day'),
+      hour: t('form.fields.date.tokens.hour'),
+      minute: t('form.fields.date.tokens.minute'),
+      month: t('form.fields.date.tokens.month'),
+      year: t('form.fields.date.tokens.year'),
+    })
+  )
 })
 const previewValue = computed(() => {
   if (!isRange.value) {
