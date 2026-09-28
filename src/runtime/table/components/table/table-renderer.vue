@@ -228,13 +228,36 @@ const virtualColumns = computed(() => columnVirtualizer.value.getVirtualItems())
 
 type ColumnSlot = TableColumnSlot
 
-const filled = computed(
-  () => !columnsOverflow.value && bodyWidth.value > 0 && table.getTotalSize() < bodyWidth.value,
+const spareWidth = computed(() =>
+  columnsOverflow.value || bodyWidth.value <= 0
+    ? 0
+    : Math.max(0, bodyWidth.value - table.getTotalSize()),
 )
+const growableColumns = computed(() =>
+  centerColumns.value.filter((column) => !column.columnDef.meta?.internal),
+)
+const columnWidths = computed(() => {
+  const widths = new Map(leafColumns.value.map((leaf) => [leaf.id, leaf.getSize()]))
+  const spare = spareWidth.value
+  const growable = growableColumns.value
+  const base = growable.reduce((sum, column) => sum + column.getSize(), 0)
+  if (spare === 0 || base === 0) {
+    return widths
+  }
+  let remaining = spare
+  growable.forEach((column, index) => {
+    const share =
+      index === growable.length - 1 ? remaining : Math.floor((spare * column.getSize()) / base)
+    widths.set(column.id, column.getSize() + share)
+    remaining -= share
+  })
+  return widths
+})
+const filled = computed(() => spareWidth.value > 0 && growableColumns.value.length === 0)
 const tableCols = computed(() => {
   const cols: { key: string; width?: string }[] = leafColumns.value.map((leaf) => ({
     key: leaf.id,
-    width: `${leaf.getSize()}px`,
+    width: `${columnWidths.value.get(leaf.id) ?? leaf.getSize()}px`,
   }))
   if (filled.value) {
     cols.splice(cols.length - table.getEndVisibleLeafColumns().length, 0, {
