@@ -180,7 +180,7 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
     sourceFetching.value = true
     try {
       const result = await resolveRemoteResult(
-        config.source({
+        config.load({
           ...params.callbackParams.value,
           page: { cursor: page.cursor, index: page.index, size: pageSize.value },
           search: search.value,
@@ -368,7 +368,7 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
   ) {
     try {
       const result = await resolveRemoteResult(
-        config.source({
+        config.load({
           ...params.callbackParams.value,
           page: { cursor: null, index: 1, size: pageSize.value },
           parent: rawOptions.get(key) ?? option,

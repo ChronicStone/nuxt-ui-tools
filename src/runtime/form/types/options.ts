@@ -166,8 +166,11 @@ export interface FormRemoteOptionConfig<
   TValue = FormValue,
 > {
   mode: 'remote'
-  /** Loads one page of options for the current search, page, and optional parent. */
-  source: (
+  /**
+   * Loads one page of options for the current search, page, and optional parent. Named apart from
+   * a local config's `source` so an object-form local source keeps typed callback parameters.
+   */
+  load: (
     request: FormRemoteOptionsRequest<TContext, TDeps, TValue, TOption>,
   ) => FormRemoteSource<RemoteOptionsResult<TOption>>
   /** Hydrates selected values that the loaded pages do not contain. */
@@ -200,10 +203,10 @@ export interface FormRemoteLoaderOptionConfig<
   TValue = FormValue,
 > extends Omit<
   FormRemoteOptionConfig<TOption, TContext, TDeps, TValue>,
-  'source' | 'resolveSelected' | 'pagination' | 'search' | 'queryKeyFor' | 'selectedQueryKeyFor'
+  'load' | 'resolveSelected' | 'pagination' | 'search' | 'queryKeyFor' | 'selectedQueryKeyFor'
 > {
   loader: RemoteOptionsLoader<TOption>
-  source?: never
+  load?: never
   resolveSelected?: never
   pagination?: never
   search?: never

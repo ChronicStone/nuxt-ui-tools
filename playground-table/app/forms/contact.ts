@@ -62,7 +62,7 @@ export function contactFormSchema(accounts: readonly Account[]) {
             return accounts.filter((account) => values.includes(account.id)).map(toOption)
           },
           search: { debounce: 200, minLength: 0 },
-          source: async ({ search, page }) => {
+          load: async ({ search, page }) => {
             await wait(350)
             const term = search.toLowerCase()
             const filtered = accounts.filter((account) => account.name.toLowerCase().includes(term))

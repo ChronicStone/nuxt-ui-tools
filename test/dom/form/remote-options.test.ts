@@ -96,7 +96,7 @@ describe('remote field options', () => {
             mode: 'remote',
             pagination: { size: 2, type: 'page' },
             search: { debounce: 0 },
-            source: ({ search }) =>
+            load: ({ search }) =>
               queryOptions({
                 queryFn: () =>
                   Promise.resolve({
@@ -176,7 +176,7 @@ describe('remote field options', () => {
     harness.unmount()
   })
 
-  it('accepts a reusable loader without copying its pagination and source into the field', async () => {
+  it('accepts a reusable loader without copying its pagination and load into the field', async () => {
     const requests = requestMap<{ rows: readonly Option[]; hasMore: boolean }>()
     const users = defineRemoteOptions(
       {
@@ -225,7 +225,7 @@ describe('remote field options', () => {
             mode: 'remote',
             pagination: { size: 2, type: 'page' },
             search: { debounce: 0, minLength: 1 },
-            source,
+            load: source,
           },
           type: 'select',
         },
@@ -272,7 +272,7 @@ describe('remote field options', () => {
             mode: 'remote',
             pagination: { size: 25, type: 'page' },
             search: { debounce: 20, minLength: 2 },
-            source,
+            load: source,
           },
           type: 'select',
         },
@@ -312,7 +312,7 @@ describe('remote field options', () => {
           options: {
             mode: 'remote',
             pagination: { size: 1, type: 'page' },
-            source,
+            load: source,
           },
           type: 'select',
         },
@@ -353,7 +353,7 @@ describe('remote field options', () => {
       fields: [
         {
           key: 'category',
-          options: { mode: 'remote', pagination: { size: 2, type: 'cursor' }, source },
+          options: { mode: 'remote', pagination: { size: 2, type: 'cursor' }, load: source },
           type: 'select',
         },
       ],
@@ -414,7 +414,7 @@ describe('remote field options', () => {
             pagination: { size: 25, type: 'page' },
             resolveSelected,
             search: { debounce: 0, minLength: 1 },
-            source,
+            load: source,
           },
           type: 'select',
         },
@@ -462,7 +462,7 @@ describe('remote field options', () => {
             pagination: { size: 25, type: 'page' },
             refreshOn: ['category'],
             resolveSelected,
-            source: () => Promise.resolve({ hasMore: false, options: [] }),
+            load: () => Promise.resolve({ hasMore: false, options: [] }),
           },
           type: 'select',
         },
@@ -503,7 +503,7 @@ describe('remote field options', () => {
             pagination: { size: 25, type: 'page' },
             refreshOn: ['category'],
             resolveSelected,
-            source: () => Promise.resolve({ hasMore: false, options: [] }),
+            load: () => Promise.resolve({ hasMore: false, options: [] }),
           },
           type: 'select',
         },
@@ -541,7 +541,7 @@ describe('remote field options', () => {
             mode: 'remote',
             pagination: { size: 25, type: 'page' },
             resolveSelected,
-            source: () => Promise.resolve({ hasMore: false, options: [] }),
+            load: () => Promise.resolve({ hasMore: false, options: [] }),
           },
           props: { multiple: true },
           type: 'select',
