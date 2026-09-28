@@ -94,8 +94,7 @@ const SHAPES: Record<
     h('span', { class: 'nut-dl-skeleton size-[7px] shrink-0 rounded-full' }),
     lines({ ...options, lines: options.config.lines ?? 1, range: [0.3, 0.6] }),
   ],
-  number: (options) =>
-    lines({ ...options, align: 'right', lines: options.config.lines ?? 1, range: NUMBER_RANGE }),
+  number: (options) => lines({ ...options, lines: options.config.lines ?? 1, range: NUMBER_RANGE }),
   progress: () => [
     h('span', { class: 'nut-dl-skeleton block h-1.5 min-w-0 flex-1 rounded-full' }),
     h('span', { class: 'nut-dl-skeleton block h-[0.66em] w-[2.4em] shrink-0 rounded-full' }),
@@ -117,7 +116,7 @@ interface TableSkeletonCellProps {
 const TableSkeletonCell: FunctionalComponent<TableSkeletonCellProps> = (props) => {
   const config = resolve(props.skeleton)
   if (config.kind === 'none') return null
-  const align = config.kind === 'number' ? 'right' : props.align
+  const { align } = props
 
   return h(
     'span',
