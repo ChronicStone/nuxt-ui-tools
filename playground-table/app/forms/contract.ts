@@ -130,7 +130,7 @@ export function contractFormSchema(accounts: readonly Account[]) {
         type: 'checkbox',
       },
       {
-        condition: ({ deps }) => 'hasAgent' in deps && deps.hasAgent === true,
+        condition: ({ deps }) => deps.get('hasAgent') === true,
         dependencies: ['hasAgent'],
         key: 'agent',
         label: 'Agent',
@@ -138,7 +138,7 @@ export function contractFormSchema(accounts: readonly Account[]) {
         type: 'select',
       },
       {
-        condition: ({ deps }) => 'hasAgent' in deps && deps.hasAgent === true,
+        condition: ({ deps }) => deps.get('hasAgent') === true,
         dependencies: ['hasAgent'],
         key: 'agentRate',
         label: 'Taux de commission',

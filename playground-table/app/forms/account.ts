@@ -97,7 +97,7 @@ function accountTypeSection() {
         type: 'select',
       },
       {
-        condition: ({ deps }) => isTestCenterType('accountType' in deps ? deps.accountType : null),
+        condition: ({ deps }) => isTestCenterType(deps.get('accountType')),
         dependencies: ['accountType'],
         help: 'Requis pour les types Centre de test',
         key: 'testCenter',
@@ -107,7 +107,7 @@ function accountTypeSection() {
         type: 'text',
       },
       {
-        condition: ({ deps }) => !isTestCenterType('accountType' in deps ? deps.accountType : null),
+        condition: ({ deps }) => !isTestCenterType(deps.get('accountType')),
         dependencies: ['accountType'],
         disabled: () => true,
         help: 'Défini par la synchronisation VTest',
@@ -294,7 +294,7 @@ function billingSection(params: { optional: boolean }) {
         key: 'vtestId',
         label: 'VTEST ID',
         props: { icon: 'i-lucide-target', mono: true },
-        required: ({ deps }) => isTestCenterType('accountType' in deps ? deps.accountType : null),
+        required: ({ deps }) => isTestCenterType(deps.get('accountType')),
         type: 'text',
       },
     ],

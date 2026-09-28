@@ -23,7 +23,7 @@ describe('grid renderer part', () => {
     harness = await mountDataList({
       query: { l: 'grid' },
       render: () => h(GridRenderer, { height: '400px' }),
-      schema: flowSchema({ delay: 80 }),
+      schema: flowSchema({ gate: new Promise(() => {}) }),
       settle: false,
     })
     await harness.flush(1)

@@ -180,7 +180,7 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
     sourceFetching.value = true
     try {
       const result = await resolveRemoteResult(
-        config.source({
+        config.load({
           ...params.callbackParams.value,
           page: { cursor: page.cursor, index: page.index, size: pageSize.value },
           search: search.value,
@@ -368,7 +368,7 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
   ) {
     try {
       const result = await resolveRemoteResult(
-        config.source({
+        config.load({
           ...params.callbackParams.value,
           page: { cursor: null, index: 1, size: pageSize.value },
           parent: rawOptions.get(key) ?? option,
@@ -458,10 +458,10 @@ export function useRemoteFieldOptions(params: UseRemoteFieldOptionsParams) {
     () => {
       const config = params.config.value
       const { deps } = params.callbackParams.value
-      if (!config?.refreshOn?.length || !isRecord(deps)) {
+      if (!config?.refreshOn?.length) {
         return []
       }
-      return config.refreshOn.map((alias) => deps[alias])
+      return config.refreshOn.map((alias) => deps.get(alias))
     },
     (next, previous) => {
       if (isUndefined(previous) || sameValues(next, previous)) {

@@ -73,7 +73,7 @@ function createSchema(requests: ReturnType<typeof requestMap>) {
           mode: 'remote',
           pagination: { size: 2, type: 'page' },
           search: { debounce: 0 },
-          source: (request) => requests.get(requestKey(request)).promise,
+          load: (request) => requests.get(requestKey(request)).promise,
         },
         type: 'tree-select',
       },
@@ -173,7 +173,7 @@ describe('remote tree options', () => {
           options: {
             mode: 'remote',
             pagination: { size: 10, type: 'page' },
-            source: (request) => requests.get(requestKey(request)).promise,
+            load: (request) => requests.get(requestKey(request)).promise,
           },
           props: { multiple: true },
           type: 'tree-select',

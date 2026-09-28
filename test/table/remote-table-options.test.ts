@@ -171,7 +171,7 @@ describe('remoteTableOptions', () => {
       mode: 'remote' as const,
       pagination: accounts.pagination,
       resolveSelected: accounts.resolveSelected,
-      source: accounts.load,
+      load: accounts.load,
     }).toExtend<FormRemoteOptionConfig<{ label: string; value: string }>>()
     expectTypeOf({ loader: accounts, mode: 'remote' as const }).toExtend<
       FormRemoteLoaderOptionConfig<{ label: string; value: string }>

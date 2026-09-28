@@ -34,7 +34,7 @@ describe('form dependency state', () => {
           key: 'resolved',
           onDependencyChange({ api, deps }) {
             dependencyChange()
-            api.value.set(`resolved:${text('source' in deps ? deps.source : '')}`)
+            api.value.set(`resolved:${text(deps.get('source'))}`)
           },
           type: 'hidden',
         },
@@ -65,7 +65,7 @@ describe('form dependency state', () => {
           dependencies: [['meta.type', 'type']],
           key: 'meta.name',
           onDependencyChange({ api, deps }) {
-            const type = 'type' in deps ? deps.type : null
+            const type = deps.get('type')
             if (api.value.get() || !type) {
               return
             }
@@ -99,11 +99,11 @@ describe('form dependency state', () => {
       fields: [
         { key: 'mode', placeholder: 'Mode', type: 'text' },
         {
-          condition: ({ deps }) => ('mode' in deps ? deps.mode : null) !== 'hidden',
+          condition: ({ deps }) => deps.get('mode') !== 'hidden',
           dependencies: ['mode'],
-          disabled: ({ deps }) => ('mode' in deps ? deps.mode : null) === 'locked',
+          disabled: ({ deps }) => deps.get('mode') === 'locked',
           key: 'details',
-          placeholder: ({ deps }) => `Mode ${text('mode' in deps ? deps.mode : '')}`,
+          placeholder: ({ deps }) => `Mode ${text(deps.get('mode'))}`,
           type: 'text',
         },
       ],
@@ -139,9 +139,9 @@ describe('form dependency state', () => {
           ],
           key: 'geoCode.formattedAddress',
           onDependencyChange({ api, deps }) {
-            const number = 'number' in deps ? deps.number : null
-            const street = 'street' in deps ? deps.street : null
-            const city = 'city' in deps ? deps.city : null
+            const number = deps.get('number')
+            const street = deps.get('street')
+            const city = deps.get('city')
             if (!number || !street || !city) {
               return
             }
@@ -189,14 +189,14 @@ describe('form dependency reset', () => {
           dependencies: ['source'],
           key: 'intermediate',
           onDependencyChange: ({ api, deps }) =>
-            api.value.set(`intermediate:${text('source' in deps ? deps.source : '')}`),
+            api.value.set(`intermediate:${text(deps.get('source'))}`),
           type: 'hidden',
         },
         {
           dependencies: ['intermediate'],
           key: 'resolved',
           onDependencyChange: ({ api, deps }) =>
-            api.value.set(`resolved:${text('intermediate' in deps ? deps.intermediate : '')}`),
+            api.value.set(`resolved:${text(deps.get('intermediate'))}`),
           type: 'hidden',
         },
       ],
@@ -233,7 +233,7 @@ describe('form dependency reset', () => {
           dependencies: ['source'],
           key: 'summary',
           onDependencyChange({ api, deps }) {
-            const source = text('source' in deps ? deps.source : '')
+            const source = text(deps.get('source'))
             api.value.set(`summary:${source}`)
             api.form.set('meta.first', `first:${source}`)
             api.form.set('meta.second', `second:${source}`)
@@ -278,7 +278,7 @@ describe('form dependency reset', () => {
           dependencies: ['source'],
           key: 'resolved',
           async onDependencyChange({ api, deps }) {
-            const request = text('source' in deps ? deps.source : '')
+            const request = text(deps.get('source'))
             latestRequest = request
             await wait(request)
             if (latestRequest === request) {
@@ -324,7 +324,7 @@ describe('form dependency reset', () => {
           dependencies: ['source'],
           key: 'intermediate',
           async onDependencyChange({ api, deps }) {
-            const source = text('source' in deps ? deps.source : '')
+            const source = text(deps.get('source'))
             await intermediate.wait(source)
             api.value.set(`intermediate:${source}`)
           },
@@ -334,7 +334,7 @@ describe('form dependency reset', () => {
           dependencies: ['intermediate'],
           key: 'resolved',
           async onDependencyChange({ api, deps }) {
-            const value = text('intermediate' in deps ? deps.intermediate : '')
+            const value = text(deps.get('intermediate'))
             await resolved.wait(value)
             api.value.set(`resolved:${value}`)
           },
@@ -397,7 +397,7 @@ describe('form dependency reset', () => {
           dependencies: ['category'],
           key: 'categoryLabel',
           onDependencyChange({ api, deps }) {
-            const category = 'category' in deps ? deps.category : null
+            const category = deps.get('category')
             const options = api.form.get('category') === null ? [] : api.options.get()
             const selected = options.find((option) => isRecord(option) && option.value === category)
             api.value.set(isRecord(selected) ? text(selected.label) : '')
@@ -432,7 +432,7 @@ describe('form dependency reset', () => {
               fields: [{ key: 'label', type: 'text' }],
               key: 'lines',
               onDependencyChange: ({ api, deps }) =>
-                api.value.set([{ label: `line:${text('mode' in deps ? deps.mode : '')}` }]),
+                api.value.set([{ label: `line:${text(deps.get('mode'))}` }]),
               type: 'array-table',
             },
           ],

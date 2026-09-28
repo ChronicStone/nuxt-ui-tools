@@ -2,7 +2,7 @@ import type { RegleRuleRaw } from '@regle/core'
 
 import type { FormValue } from './'
 import type { FormFieldCallback } from './callbacks'
-import type { FormObject, FormText } from './utils'
+import type { FormText } from './utils'
 
 /**
  * Controls when a field starts running validation while the user edits it.
@@ -66,4 +66,4 @@ export type FormValidators = Record<string, RegleRuleRaw>
 /** Static or dependency-aware native Regle rules for one field. */
 export type FormValidatorsConfig<TContext = NonNullable<unknown>> =
   | FormValidators
-  | FormFieldCallback<FormValidators, TContext, FormObject>
+  | FormFieldCallback<FormValidators, TContext>

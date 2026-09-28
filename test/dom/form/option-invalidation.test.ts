@@ -27,7 +27,7 @@ describe('option invalidation', () => {
         {
           dependencies: ['lines'],
           key: 'featured',
-          options: ({ deps }) => inLines(deps.lines),
+          options: ({ deps }) => inLines(deps.get('lines')),
           type: 'select',
         },
         {
@@ -39,7 +39,7 @@ describe('option invalidation', () => {
                 queryOptions({
                   queryFn: async () => PRODUCTS,
                   queryKey: ['option-invalidation-products'],
-                  select: () => inLines(deps.lines),
+                  select: () => inLines(deps.get('lines')),
                 }),
               type: 'select',
             },
@@ -85,10 +85,11 @@ describe('option invalidation', () => {
           dependencies: ['lines'],
           key: 'featured',
           options: ({ deps }) => {
-            if (Array.isArray(deps.lines) && deps.lines.includes('retired')) {
+            const lines = deps.get('lines')
+            if (Array.isArray(lines) && lines.includes('retired')) {
               throw new Error('Retired lines have no catalog')
             }
-            return inLines(deps.lines)
+            return inLines(lines)
           },
           type: 'select',
         },

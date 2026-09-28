@@ -123,7 +123,7 @@ const validationSchema = defineFormSchema({
           type: 'password',
           required: true,
           validators: ({ deps }) => ({
-            sameAs: withMessage(sameAs(deps.password), 'Passwords must match.'),
+            sameAs: withMessage(sameAs(deps.get('password')), 'Passwords must match.'),
           }),
         },
         {

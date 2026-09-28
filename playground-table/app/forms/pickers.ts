@@ -24,7 +24,7 @@ function remoteSource(
         .map((item) => ({ description: item.description, label: item.label, value: item.id }))
     },
     search: { debounce: 200, minLength: 0 },
-    source: async ({ search, page }) => {
+    load: async ({ search, page }) => {
       await wait(300)
       const term = search.toLowerCase()
       const filtered = items.filter((item) => item.label.toLowerCase().includes(term))

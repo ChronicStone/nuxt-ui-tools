@@ -53,7 +53,7 @@ import type { FormTextField } from '../fields/text/types'
 import type { FormTextareaField } from '../fields/textarea/types'
 import type { FormTimeField } from '../fields/time/types'
 import type { FormUploadField } from '../fields/upload/types'
-import type { FormDependencyValues } from './callbacks'
+import type { FormDependencies } from './callbacks'
 
 export type {
   FormContainerFieldBase,
@@ -138,7 +138,7 @@ export type {
  * Individual field schema contracts live beside their field implementation in
  * `src/runtime/form/fields/<kind>/types.ts`; this file only assembles the public union.
  */
-export type FormField<TContext = NonNullable<unknown>, TDeps = FormDependencyValues> =
+export type FormField<TContext = NonNullable<unknown>, TDeps = FormDependencies> =
   | FormTextField<TContext, TDeps>
   | FormPasswordField<TContext, TDeps>
   | FormTextareaField<TContext, TDeps>

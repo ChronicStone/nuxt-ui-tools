@@ -416,7 +416,7 @@ function resolveRemoteOptionConfig(field: FormField): FormRemoteOptionConfig<For
       resolveSelected: loader.resolveSelected,
       search: loader.search,
       selectedQueryKeyFor: loader.selectedQueryKeyFor,
-      source: loader.load,
+      load: loader.load,
     }
   }
   return isRemoteOptionConfig(options) ? options : null
@@ -438,7 +438,7 @@ function isRemoteOptionConfig(value: FormValue): value is FormRemoteOptionConfig
   return (
     isRecord(value) &&
     value.mode === 'remote' &&
-    isFunction(Object.getOwnPropertyDescriptor(value, 'source')?.value) &&
+    isFunction(Object.getOwnPropertyDescriptor(value, 'load')?.value) &&
     isRecord(value.pagination)
   )
 }

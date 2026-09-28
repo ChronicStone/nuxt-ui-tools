@@ -1,24 +1,37 @@
 import type { FormValue } from './'
 import type { FormFieldApi } from './api'
-import type { FormObject } from './utils'
 
 /**
- * Dependency values a field callback reads: each declared dependency under its target name, typed
- * `FormValue` until the callback narrows it, since a reusable field can be mounted anywhere.
+ * The dependencies a field callback reads, each under the target name its `dependencies` entry
+ * declares.
+ *
+ * @example
+ * ```ts
+ * dependencies: ['year', ['profile.country', 'country']],
+ * options: ({ deps }) => ratesFor(deps.get<number | null>('year'), deps.get<string>('country')),
+ * ```
  */
-export type FormDependencyValues = Readonly<FormObject>
+export interface FormDependencies {
+  /**
+   * Reads the dependency declared under `key`, typed as the caller states. The engine does not
+   * check the type, since a reusable field can be mounted anywhere; a key the field did not declare
+   * reads as `undefined`.
+   */
+  get: <TValue = FormValue>(key: string) => TValue
+}
+
 /**
  * Parameters passed to field-level callbacks.
  */
 export interface FormFieldCallbackParams<
   TContext = NonNullable<unknown>,
-  TDeps = FormDependencyValues,
+  TDeps = FormDependencies,
   TValue = FormValue,
   TOption = FormValue,
 > {
   /** Fully typed form-scoped context declared on the schema. */
   ctx: TContext
-  /** Values read from the field's dependency list. */
+  /** The field's declared dependencies, read with `deps.get(key)`. */
   deps: TDeps
   /** Field-level API for values, options, upload work, and validation. */
   api: FormFieldApi<TValue, TOption, TContext>
@@ -30,7 +43,7 @@ export interface FormFieldCallbackParams<
 export type FormFieldCallback<
   TResult,
   TContext = NonNullable<unknown>,
-  TDeps = FormDependencyValues,
+  TDeps = FormDependencies,
   TValue = FormValue,
   TOption = FormValue,
 > = (params: FormFieldCallbackParams<TContext, TDeps, TValue, TOption>) => TResult

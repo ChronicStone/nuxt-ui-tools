@@ -93,7 +93,7 @@ export function sendDemandFormSchema(accounts: readonly Account[]) {
         type: 'radio',
       },
       {
-        condition: ({ deps }) => 'mode' in deps && deps.mode === 'accounts',
+        condition: ({ deps }) => deps.get('mode') === 'accounts',
         dependencies: ['mode'],
         key: 'accounts',
         label: 'Comptes',
@@ -104,7 +104,7 @@ export function sendDemandFormSchema(accounts: readonly Account[]) {
         type: 'select',
       },
       {
-        condition: ({ deps }) => 'mode' in deps && deps.mode === 'type',
+        condition: ({ deps }) => deps.get('mode') === 'type',
         dependencies: ['mode'],
         key: 'accountTypes',
         label: 'Types de compte',
@@ -113,7 +113,7 @@ export function sendDemandFormSchema(accounts: readonly Account[]) {
         type: 'select',
       },
       {
-        condition: ({ deps }) => 'mode' in deps && deps.mode === 'type',
+        condition: ({ deps }) => deps.get('mode') === 'type',
         default: 'active',
         dependencies: ['mode'],
         key: 'accountStatus',

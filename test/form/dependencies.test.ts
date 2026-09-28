@@ -1,7 +1,11 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 import { defineFormField, defineFormSchema } from '#ui-tools/form'
-import type { ExtractFormFieldDependencies, ExtractFormInternalValue } from '#ui-tools/form'
+import type {
+  ExtractFormFieldDependencies,
+  ExtractFormInternalValue,
+  FormDependencies,
+} from '#ui-tools/form'
 
 import { resolveFieldDependencies } from '../../src/runtime/form/utils/dependencies'
 
@@ -62,18 +66,40 @@ describe('form field dependencies', () => {
       },
     }
 
+    const deps = resolveFieldDependencies({ field, parentPath: ['account', 'address'], state })
+
     expect(
-      resolveFieldDependencies({
-        field,
-        parentPath: ['account', 'address'],
-        state,
-      }),
-    ).toStrictEqual({
-      'account.name': 'Ada',
-      country: 'FR',
-      parentRegion: 'eu-west',
-      root: state,
-      siblingCity: 'Paris',
+      ['account.name', 'country', 'siblingCity', 'parentRegion', 'root', 'undeclared'].map((key) =>
+        deps.get(key),
+      ),
+    ).toStrictEqual(['Ada', 'FR', 'Paris', 'eu-west', state, undefined])
+  })
+
+  it('types the deps of object-form option sources like shorthand ones', () => {
+    const catalog = defineFormSchema({
+      actions: [],
+      fields: [
+        { key: 'lines', options: ['adults', 'schools'], props: { multiple: true }, type: 'select' },
+        {
+          dependencies: ['lines'],
+          key: 'product',
+          options: {
+            create: {
+              handler: async ({ deps }) => {
+                expectTypeOf(deps).toEqualTypeOf<FormDependencies>()
+                return null
+              },
+            },
+            source: ({ deps }) => {
+              expectTypeOf(deps).toEqualTypeOf<FormDependencies>()
+              return [deps.get<string>('lines')]
+            },
+          },
+          type: 'select',
+        },
+      ],
     })
+
+    expectTypeOf(catalog.fields).not.toBeAny()
   })
 })
