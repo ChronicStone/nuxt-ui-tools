@@ -57,3 +57,5 @@ export type AccountStatus = keyof typeof ACCOUNT_STATUS
 export type AccountType = keyof typeof ACCOUNT_TYPE
 export type CountryCode = keyof typeof COUNTRY
 export type Currency = (typeof CURRENCY)[number]
+export type ManagerLocation = (typeof MANAGER_LOCATIONS)[number]
+export type AccountGroup = (typeof GROUPS)[number]

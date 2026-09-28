@@ -1,6 +1,6 @@
 import type { FormValue } from './'
 import type { FormFieldApi } from './api'
-import type { FormFieldCallback } from './callbacks'
+import type { FormDependencyValues, FormFieldCallback } from './callbacks'
 import type { FormField } from './field'
 import type { FormContainerLayout, FormItemLayout } from './layout'
 import type { FormTransformConfig } from './transform'
@@ -77,14 +77,14 @@ export interface FormFieldDescription {
 export type FormFieldProps<
   TProps = FormObject,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
 > = FormDynamic<TProps & FormObject, { ctx: TContext; deps: TDeps }>
 
 export interface FormStatefulFieldBase<
   TType extends FormFieldType,
   TValue,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TProps = FormObject,
 > {
   /** Raw path used to read/write the field value in form state. */
@@ -156,7 +156,7 @@ export interface FormStatefulFieldBase<
 export interface FormStatelessFieldBase<
   TType extends FormFieldType,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TProps = FormObject,
 > {
   /** Stable key for renderer identity. Stateless fields do not write form state. */
@@ -179,7 +179,7 @@ export interface FormStatelessFieldBase<
 export interface FormContainerFieldBase<
   TType extends FormFieldType,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TProps = FormObject,
 > {
   /** Stable renderer key. */

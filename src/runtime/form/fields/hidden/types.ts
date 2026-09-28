@@ -20,4 +20,14 @@ export type FormHiddenField<TContext = NonNullable<unknown>, TDeps = NonNullable
   | 'stateEffect'
 >
 
-export type HiddenFieldOutput<TField> = FallbackNever<FieldDefaultValue<TField>, FormValue>
+type TransformInputResult<TField> = TField extends {
+  transform: { input: (...params: never[]) => infer TResult }
+}
+  ? TResult
+  : never
+
+/** A hidden field holds its default, or what its `transform.input` makes of the input. */
+export type HiddenFieldOutput<TField> = FallbackNever<
+  FieldDefaultValue<TField>,
+  FallbackNever<TransformInputResult<TField>, FormValue>
+>

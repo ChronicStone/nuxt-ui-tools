@@ -43,6 +43,18 @@ const TYPE_OPTIONS = [
     value: 'testCenter',
   },
   {
+    description: 'Centre autorisé rattaché à l’Éducation nationale.',
+    icon: 'i-lucide-graduation-cap',
+    label: 'Centre autorisé éducation FR',
+    value: 'authorizedTestCenterFrEducation',
+  },
+  {
+    description: 'Centre dont l’autorisation est en cours.',
+    icon: 'i-lucide-hourglass',
+    label: 'Centre en attente',
+    value: 'pendingCenter',
+  },
+  {
     description: 'Établissement scolaire ou universitaire.',
     icon: 'i-lucide-badge-check',
     label: 'Éducation',

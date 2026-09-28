@@ -8,7 +8,7 @@ import type {
   RemoteOptionsSearch,
 } from '../../shared/types/remote-options'
 import type { FormValue } from './'
-import type { FormFieldCallback, FormFieldCallbackParams } from './callbacks'
+import type { FormDependencyValues, FormFieldCallback, FormFieldCallbackParams } from './callbacks'
 import type { FormQueryOptions } from './context'
 import type { FormMaybePromise, FormText } from './utils'
 
@@ -44,7 +44,7 @@ export type FormOptionItem<TValue extends FormOptionValue = FormOptionValue> =
 export type FormOptionsSource<
   TOption,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
 > =
   | readonly TOption[]
@@ -62,7 +62,7 @@ export type FormOptionsSource<
  */
 export interface FormCreateOptionParams<
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
   TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
@@ -73,7 +73,7 @@ export interface FormCreateOptionParams<
 export interface FormCreateOption<
   TOption,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
 > {
   /** Label shown by the create affordance. */
@@ -90,7 +90,7 @@ export interface FormCreateOption<
 
 export interface FormOptionsChangeParams<
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
   TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
@@ -104,7 +104,7 @@ export interface FormOptionsChangeParams<
 export interface FormOptionConfig<
   TOption,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
 > {
   /** Local option configs never declare a mode; `mode: 'remote'` selects the remote config. */
@@ -128,7 +128,7 @@ export interface FormOptionConfig<
 
 export interface FormRemoteOptionsRequest<
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
   TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
@@ -142,7 +142,7 @@ export interface FormRemoteOptionsRequest<
 
 export interface FormRemoteSelectedRequest<
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
   TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
@@ -158,7 +158,7 @@ export type FormRemoteSource<TResult> = FormQueryOptions<TResult> | Promise<TRes
 export interface FormRemoteOptionConfig<
   TOption,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
 > {
   mode: 'remote'
@@ -192,7 +192,7 @@ export interface FormRemoteOptionConfig<
 export interface FormRemoteLoaderOptionConfig<
   TOption,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
 > extends Omit<
   FormRemoteOptionConfig<TOption, TContext, TDeps, TValue>,
@@ -210,7 +210,7 @@ export interface FormRemoteLoaderOptionConfig<
 export type FormAnyOptionConfig<
   TOption,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
 > =
   | FormOptionConfig<TOption, TContext, TDeps, TValue>

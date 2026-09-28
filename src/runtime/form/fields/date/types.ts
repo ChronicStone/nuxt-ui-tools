@@ -20,4 +20,7 @@ export type FormDateField<
   TDeps = NonNullable<unknown>,
 > = FormStatefulFieldBase<'date', Date | string | null, TContext, TDeps, FormDateProps>
 
-export type DateFieldOutput = Date | string | NullableValue
+/** A date field submits its canonical `YYYY-MM-DD` value, or a `Date` with `outputFormat: 'date'`. */
+export type DateFieldOutput<TField> = TField extends { props: { outputFormat: 'date' } }
+  ? Date | NullableValue
+  : string | NullableValue

@@ -1,7 +1,8 @@
+import type { RemoteOptionsLoader } from '../../shared/types/remote-options'
 import type { DataTag, QueryKey } from './context'
 import type { FormOptionValue } from './options'
 
-export type FormStateMode = 'internal' | 'output'
+export type FormStateMode = 'internal' | 'output' | 'input'
 export type NullableValue = null
 
 export type FieldProps<TField> = TField extends { readonly props: infer TProps }
@@ -38,10 +39,16 @@ export type QueryOptionsValue<TValue> = [TValue] extends [{ queryKey: infer TQue
     : QuerySelectedValue<TValue>
   : TValue
 
+/** Options a remote loader resolves, so a remote select is typed by the values it offers. */
+type RemoteLoaderOptions<TLoader> =
+  TLoader extends RemoteOptionsLoader<infer TOption> ? readonly TOption[] : never
+
 export type OptionSource<TField> = TField extends { options: infer TOptions }
-  ? TOptions extends { source: infer TSource }
-    ? TSource
-    : TOptions
+  ? TOptions extends { loader: infer TLoader }
+    ? RemoteLoaderOptions<TLoader>
+    : TOptions extends { source: infer TSource }
+      ? TSource
+      : TOptions
   : never
 
 export type OptionSourceValue<TSource> = TSource extends (
@@ -77,4 +84,11 @@ export type TransformOutputValue<TField, TFallback> = TField extends {
   transform: { output: infer TOutput }
 }
   ? FallbackNever<AwaitedValue<FunctionReturn<TOutput>>, TFallback>
+  : TFallback
+
+/** Value a field accepts as input: what its `transform.input` takes, or its own value. */
+export type TransformInputValue<TField, TFallback> = TField extends {
+  transform: { input: (value: infer TInput, ...params: infer _TParams) => unknown }
+}
+  ? FallbackNever<TInput, TFallback>
   : TFallback
