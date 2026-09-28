@@ -297,6 +297,29 @@ describe('form page', () => {
     expect(harness.summary()).toBe('1 section modifiée.')
   })
 
+  it('clears the errors of a reset section and keeps those of the others', async () => {
+    const harness = await mountPage({
+      input: { name: 'DemandQA' },
+      schema: accountSchema({ dirtyCheck: true }),
+    })
+
+    await harness.setValue('name', '')
+    await harness.wrapper.find('form').trigger('submit')
+    await harness.flush()
+
+    expect(harness.section('identity').dataset.state).toBe('invalid')
+    expect(harness.section('type').dataset.state).toBe('invalid')
+
+    await harness.wrapper
+      .find('[data-form-page-section="identity"] [data-form-page-reset]')
+      .trigger('click')
+    await harness.flush()
+
+    expect(harness.form.state.get('name')).toBe('DemandQA')
+    expect(harness.section('identity').dataset.state).not.toBe('invalid')
+    expect(harness.section('type').dataset.state).toBe('invalid')
+  })
+
   it('saves the values on a successful submit, so nothing reads as modified after it', async () => {
     const harness = await mountPage({
       input: { accountType: 'customer', name: 'DemandQA' },

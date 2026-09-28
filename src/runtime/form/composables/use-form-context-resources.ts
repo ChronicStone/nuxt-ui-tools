@@ -12,11 +12,19 @@ import type {
 } from '../types'
 import { isRecord } from '../utils/path'
 import { isFunction, isPromise, isUndefined } from '../utils/predicate'
+import { isServerRendering } from '../utils/ssr'
 
 type RuntimeResource = FormSyncResource<FormValue> | FormAsyncResource<FormValue>
+
+/**
+ * Resources the schema declares in `context`. A promise or query resource loads in the browser:
+ * while the server renders, it stays pending unless the query cache already holds its data, so
+ * the hydrating page renders it the same way.
+ */
 export function useFormContextResources() {
   const context = reactive<FormRuntimeContext>({})
   const queryClient = useQueryClient()
+  const serverRendering = isServerRendering()
 
   function setContext(definition: GenericObject | undefined) {
     for (const key of Object.keys(context)) {
@@ -29,7 +37,7 @@ export function useFormContextResources() {
 
     for (const key of Object.keys(definition)) {
       const source = Object.getOwnPropertyDescriptor(definition, key)?.value
-      context[key] = createResource(source, queryClient)
+      context[key] = createResource(source, { queryClient, serverRendering })
     }
   }
 
@@ -47,7 +55,11 @@ export function getSchemaContext(schema: FormValue) {
   return isRecord(context) ? context : undefined
 }
 
-function createResource(source: FormValue, queryClient: QueryClient): RuntimeResource {
+function createResource(
+  source: FormValue,
+  options: { queryClient: QueryClient; serverRendering: boolean },
+): RuntimeResource {
+  const { queryClient, serverRendering } = options
   const raw = resolveResourceSource(source)
 
   if (isPromise(raw)) {
@@ -77,7 +89,9 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
       }
     }
 
-    void resource.refresh()
+    if (!serverRendering) {
+      void resource.refresh()
+    }
     return resource
   }
 
@@ -96,7 +110,7 @@ function createResource(source: FormValue, queryClient: QueryClient): RuntimeRes
         }
       }
 
-      return nextSource
+      return serverRendering ? { ...nextSource, enabled: false } : nextSource
     })
 
     const resource: FormAsyncResource<FormValue> = {

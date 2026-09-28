@@ -53,8 +53,27 @@ export interface FormRuntimeStep {
  * registration, touched-state, option registry, and callback factories that should not be
  * exposed as top-level consumer API without deliberate design.
  */
+/**
+ * Holds work that does not change what the form shows until it has painted. See
+ * `createFormPaintGate`.
+ */
+export interface FormPaintGate {
+  /** True once the form has painted its first frame. */
+  painted: Readonly<Ref<boolean>>
+  /** Runs `task` once the form has painted, in the caller's effect scope. */
+  afterPaint: (task: () => void) => void
+  /** Called when the form mounts; the first paint follows. */
+  start: () => void
+  /**
+   * True while the render of the current frame has run for less than its budget, so a large render
+   * builds live controls up to the budget and renders what follows inert. Always true on the server.
+   */
+  allowsLive: () => boolean
+}
+
 export interface FormRuntime {
   schema: ComputedRef<FormValue>
+  paint: FormPaintGate
   state: FormObject
   output: ComputedRef<FormObject>
   dirtyPaths: ComputedRef<readonly string[]>
@@ -94,8 +113,16 @@ export interface FormRuntime {
   focusRequest: Ref<FormFocusRequest | null>
   registerFieldElement: (path: string | readonly string[], element: HTMLElement) => () => void
   focusField: (path: string | readonly string[]) => Promise<boolean>
+  /**
+   * Registers how to render the live controls of an inert array row, under the row's item path,
+   * so focusing one of its fields renders them first. Returns the unregistration.
+   */
+  registerRowActivator: (itemPath: string, activate: () => void) => () => void
+  /** Renders the live controls of the inert row at `path`, or holding the field at `path`. */
+  activateField: (path: string) => void
   focusFirstInvalid: () => Promise<boolean>
-  clearErrors: () => void
+  /** Clears every error, or only those of these dotted paths and what they contain, at once. */
+  clearErrors: (paths?: readonly string[]) => void
   submitHandler: (submitHandler?: FormSubmitHandler<FormObject>) => Promise<FormSubmitHandlerResult>
   submit: () => Promise<boolean>
   reset: () => Promise<void>

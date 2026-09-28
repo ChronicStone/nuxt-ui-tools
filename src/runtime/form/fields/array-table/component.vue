@@ -1,18 +1,27 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import { useLocale } from '@nuxt/ui/composables/useLocale'
 import { useScrollShadow } from '@nuxt/ui/composables/useScrollShadow'
 import { useElementSize } from '@vueuse/core'
+import { useAppConfig } from 'nuxt/app'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { useResolvedFieldProps } from '../../composables/use-field-control'
 import type { FormField, FormObject } from '../../types'
 import { isRecord } from '../../utils/path'
 import { isNumber, isString } from '../../utils/predicate'
+import { isServerRendering } from '../../utils/ssr'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
+import type { FormArrayCustomAction } from '../array-list/types'
 import { useFormArrayItems } from '../array-list/use-array-items'
-import ArrayTableCell from './array-table-cell.vue'
+import ArrayTableRow from './array-table-row'
+import type { InertEnvironment } from './inert/cells'
+import { createInertIcons } from './inert/icon'
+import { createInertOptions } from './inert/options'
+import { createInertTheme } from './inert/theme'
 import type { FormArrayTableField } from './types'
 
 const DEFAULT_COLUMN_MIN_WIDTH = '140px'
@@ -36,6 +45,7 @@ const VueDraggable = defineAsyncComponent(async () => {
 
 const {
   addItem,
+  form,
   addItemLabel,
   canAdd,
   canDelete,
@@ -57,7 +67,25 @@ const {
   () => props.field,
   () => props.path,
 )
+const NO_CUSTOM_ACTIONS: readonly FormArrayCustomAction[] = []
+const customActions = computed(() => props.field.actions?.custom ?? NO_CUSTOM_ACTIONS)
+const dragLabel = computed(() => t('form.fields.array.dragItem'))
+const removeLabel = computed(() => t('form.fields.array.removeItem'))
+
+const inertMode = fieldProps.value.inert ?? 'auto'
+const inertEnvironment = rendersInert() ? createInertEnvironment() : null
+
 const viewportRef = ref<HTMLElement | null>(null)
+
+form.paint.afterPaint(() => {
+  const hovered = viewportRef.value?.querySelector<HTMLElement>(
+    'tbody > tr[data-form-array-row-inert]:hover',
+  )
+  const key = hovered?.dataset.formArrayRow
+  if (key) {
+    form.activateField(key)
+  }
+})
 const viewportShadow = useScrollShadow(viewportRef, { orientation: 'horizontal', size: 20 })
 const { width: viewportWidth } = useElementSize(viewportRef)
 const ui = computed(() => formUi.ui.value.arrayTable?.ui)
@@ -105,6 +133,52 @@ function columnStyle(field: FormField) {
     resolved = width
   }
   return { minWidth: resolved ?? DEFAULT_COLUMN_MIN_WIDTH, width: resolved }
+}
+
+/**
+ * Whether rows may render inert, which only happens in the browser: always with `true`, and with
+ * `'auto'` in the client build of the app. The server renders every row live.
+ */
+function rendersInert() {
+  if (inertMode === false || isServerRendering()) {
+    return false
+  }
+  return inertMode === true || import.meta.client === true
+}
+
+/** Resolvers inert rows share: theme slots, icons, options, and the texts live controls show. */
+function createInertEnvironment(): InertEnvironment {
+  const appConfig = useAppConfig()
+  const { code, t: toolsText } = useUiToolsLocale()
+  const { t: uiText } = useLocale()
+  const icons: FormObject =
+    isRecord(appConfig.ui) && isRecord(appConfig.ui.icons) ? appConfig.ui.icons : {}
+  const fallbackIcons = {
+    check: 'i-lucide-check',
+    chevronDown: 'i-lucide-chevron-down',
+    loading: 'i-lucide-loader-circle',
+    minus: 'i-lucide-minus',
+    plus: 'i-lucide-plus',
+  }
+  return {
+    form,
+    formUi,
+    mode: inertMode === true ? 'always' : 'auto',
+    icon: (name) => {
+      const value = icons[name]
+      return isString(value) ? value : fallbackIcons[name]
+    },
+    icons: createInertIcons(),
+    locale: () => code.value,
+    options: createInertOptions(),
+    text: (key) => {
+      if (key === 'placeholder') {
+        return toolsText('form.fields.text.defaultPlaceholder')
+      }
+      return uiText(key === 'increment' ? 'inputNumber.increment' : 'inputNumber.decrement')
+    },
+    theme: createInertTheme(),
+  }
 }
 
 function fieldLabel(field: FormField) {
@@ -176,71 +250,24 @@ function fieldLabel(field: FormField) {
             handle=".array-table-drag-handle"
             :animation="150"
           >
-            <tr
+            <ArrayTableRow
               v-for="(item, index) in items"
               :key="itemRenderKey(item, index)"
-              :class="
-                mergeFormUiClass(
-                  'align-middle transition-colors hover:bg-elevated/35 [&>*]:border-b [&>*]:border-default [&:last-child>*]:border-b-0',
-                  ui?.row,
-                )
-              "
-            >
-              <td
-                v-for="column in columns"
-                :key="column.key"
-                :class="mergeFormUiClass('border-r border-default p-1.5 last:border-r-0', ui?.cell)"
-              >
-                <ArrayTableCell :field="column" :item-path="itemPath(index)" />
-              </td>
-              <td
-                v-if="showActionsColumn"
-                :class="
-                  mergeFormUiClass(
-                    'sticky right-0 whitespace-nowrap border-l border-default bg-default px-1.5 py-1.5 text-right shadow-[-8px_0_12px_-10px_rgba(0,0,0,0.45)]',
-                    ui?.actionsCell,
-                  )
-                "
-              >
-                <UButton
-                  v-if="isDraggable"
-                  icon="i-lucide-grip-vertical"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  :class="
-                    mergeFormUiClass(
-                      'array-table-drag-handle cursor-grab active:cursor-grabbing',
-                      ui?.action,
-                    )
-                  "
-                  :aria-label="t('form.fields.array.dragItem')"
-                />
-                <UButton
-                  v-if="canDelete(index)"
-                  icon="i-lucide-trash-2"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  :class="ui?.action"
-                  :aria-label="t('form.fields.array.removeItem')"
-                  @click="removeItem(index)"
-                />
-                <UButton
-                  v-for="(action, actionIndex) in field.actions?.custom ?? []"
-                  v-show="customActionVisible(index, actionIndex)"
-                  :key="actionIndex"
-                  :icon="action.icon"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  :class="ui?.action"
-                  @click="runCustomAction(index, actionIndex)"
-                >
-                  {{ resolveFormText(action.label) }}
-                </UButton>
-              </td>
-            </tr>
+              :index="index"
+              :item-path="itemPath(index)"
+              :columns="columns"
+              :actions="showActionsColumn"
+              :draggable="isDraggable"
+              :can-delete="canDelete"
+              :custom-actions="customActions"
+              :custom-visible="customActionVisible"
+              :ui="ui"
+              :drag-label="dragLabel"
+              :remove-label="removeLabel"
+              :inert="inertEnvironment"
+              @remove="removeItem"
+              @custom="runCustomAction"
+            />
             <tr v-if="items.length === 0">
               <td :colspan="columns.length + (showActionsColumn ? 1 : 0)" class="p-0">
                 <div

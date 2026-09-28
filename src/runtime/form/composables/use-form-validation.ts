@@ -66,7 +66,13 @@ export function useFormValidation(params: {
   getUniqueMessage?: () => string
   getDateMinMessage?: (bound: string) => string
   getDateMaxMessage?: (bound: string) => string
+  /**
+   * Leaves the rules of array items out until `completeRules`, so the validation tree of a large
+   * array is not built before the form's first paint.
+   */
+  deferItemRules?: boolean
 }) {
+  const itemRules = ref<boolean>(params.deferItemRules !== true)
   const customErrors = ref<readonly FormValidationError[]>([])
   const touchedPaths = ref<readonly string[]>([])
   const pendingPaths = ref<ReadonlyMap<string, ReadonlySet<string>>>(new Map())
@@ -84,6 +90,7 @@ export function useFormValidation(params: {
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: true,
+        items: itemRules.value,
         mode: params.getValidationMode(),
         schema: params.schema(),
         state: params.state,
@@ -101,6 +108,7 @@ export function useFormValidation(params: {
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: false,
+        items: itemRules.value,
         mode: params.getValidationMode(),
         schema: params.schema(),
         state: params.state,
@@ -191,17 +199,32 @@ export function useFormValidation(params: {
     itemsSyncRegle.r$.$reset()
   }
 
-  const validationErrors = computed<readonly FormValidationError[]>(() =>
-    collectFormFieldsPathsForSchema(params.schema(), params.state).flatMap((path: string) => {
-      if (!touchedPaths.value.includes(path)) {
-        return []
-      }
-      return resolveFieldErrors(path).map((message) => ({ message, path }))
-    }),
-  )
+  /**
+   * Messages of touched fields, in schema order. The schema is walked only while a touched field
+   * has a message, so edits and resets of a valid form do not walk every field of every item.
+   */
+  const validationErrors = computed<readonly FormValidationError[]>(() => {
+    const touched = new Set(touchedPaths.value)
+    if (![...touched].some((path) => resolveFieldErrors(path).length > 0)) {
+      return []
+    }
+    return collectFormFieldsPathsForSchema(params.schema(), params.state).flatMap((path: string) =>
+      touched.has(path) ? resolveFieldErrors(path).map((message) => ({ message, path })) : [],
+    )
+  })
   const errors = computed(() => [...validationErrors.value, ...customErrors.value])
 
+  /** Adds the deferred rules of array items, before anything validates or once the form paints. */
+  async function completeRules() {
+    if (itemRules.value) {
+      return
+    }
+    itemRules.value = true
+    await nextTick()
+  }
+
   async function validate() {
+    await completeRules()
     const run = nextValidationRun(validationRuns, '$form')
     if (params.getValidationMode() === false) {
       resetRegleRoots()
@@ -255,6 +278,7 @@ export function useFormValidation(params: {
   }
 
   async function validateFields(fields: readonly FormField[], parentPath: readonly string[]) {
+    await completeRules()
     const paths: readonly string[] = collectFormFieldsPathsForFields(
       fields,
       params.state,
@@ -349,18 +373,29 @@ export function useFormValidation(params: {
       return
     }
 
-    const key = path.join('.')
-    customErrors.value = customErrors.value.filter(
-      (error) => error.path !== key && !error.path.startsWith(`${key}.`),
-    )
-    touchedPaths.value = touchedPaths.value.filter(
-      (touchedPath) => touchedPath !== key && !touchedPath.startsWith(`${key}.`),
-    )
-    validatedMessages.value = new Map(
-      [...validatedMessages.value.entries()].filter(
-        ([messagePath]) => messagePath !== key && !messagePath.startsWith(`${key}.`),
-      ),
-    )
+    clearPaths([path.join('.')])
+  }
+
+  /**
+   * Clears the errors, touched state, and messages of these paths and what they contain in one
+   * update, and writes only what changes, since every field reads them.
+   */
+  function clearPaths(keys: readonly string[]) {
+    function kept(path: string) {
+      return !keys.some((key) => path === key || path.startsWith(`${key}.`))
+    }
+    const custom = customErrors.value.filter((error) => kept(error.path))
+    if (custom.length !== customErrors.value.length) {
+      customErrors.value = custom
+    }
+    const touched = touchedPaths.value.filter(kept)
+    if (touched.length !== touchedPaths.value.length) {
+      touchedPaths.value = touched
+    }
+    const messages = [...validatedMessages.value.entries()].filter(([path]) => kept(path))
+    if (messages.length !== validatedMessages.value.size) {
+      validatedMessages.value = new Map(messages)
+    }
   }
 
   function clearValidationState() {
@@ -422,6 +457,8 @@ export function useFormValidation(params: {
 
   return {
     clearError,
+    clearPaths,
+    completeRules,
     clearValidationState,
     errors,
     getFieldError,
@@ -436,6 +473,8 @@ export function useFormValidation(params: {
 }
 
 function buildRegleRules(params: {
+  /** False while the rules of array items are deferred. */
+  items?: boolean
   schema: FormValue
   state: FormObject
   context: FormRuntimeContext
@@ -473,6 +512,7 @@ function buildRegleRules(params: {
 }
 
 function buildFieldRules(params: {
+  items?: boolean
   fields: readonly FormField[]
   parentPath: readonly string[]
   state: FormObject
@@ -552,6 +592,9 @@ function buildFieldRules(params: {
     }
 
     if (isArrayField(field)) {
+      if (params.items === false) {
+        continue
+      }
       setRegleRuleNode(rules, field.key, {
         $each: (item: { value: FormValue }, index: number) => {
           const itemValue = isRecord(item.value) ? item.value : {}

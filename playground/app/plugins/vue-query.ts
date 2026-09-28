@@ -1,4 +1,5 @@
-import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { QueryClient, VueQueryPlugin, dehydrate, hydrate } from '@tanstack/vue-query'
+import type { DehydratedState } from '@tanstack/vue-query'
 
 declare global {
   interface Window {
@@ -7,6 +8,7 @@ declare global {
 }
 
 export default defineNuxtPlugin((nuxtApp) => {
+  const queryState = useState<DehydratedState | null>('vue-query', () => null)
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -16,13 +18,21 @@ export default defineNuxtPlugin((nuxtApp) => {
     },
   })
 
-  // This code is only for TypeScript
-
-  // This code is for all users
-  window.__TANSTACK_QUERY_CLIENT__ = queryClient
-
   nuxtApp.vueApp.use(VueQueryPlugin, {
     enableDevtoolsV6Plugin: false,
     queryClient,
   })
+
+  if (import.meta.server) {
+    nuxtApp.hooks.hook('app:rendered', () => {
+      queryState.value = dehydrate(queryClient)
+    })
+  }
+
+  if (import.meta.client) {
+    if (queryState.value) {
+      hydrate(queryClient, queryState.value)
+    }
+    window.__TANSTACK_QUERY_CLIENT__ = queryClient
+  }
 })

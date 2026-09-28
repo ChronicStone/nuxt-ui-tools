@@ -10,6 +10,7 @@ import type {
   FormFieldApi,
   FormFieldCallbackParams,
   FormOptionConfig,
+  FormOptionRuntimeState,
   FormOptionValue,
   FormRemoteLoaderOptionConfig,
   FormRemoteOptionConfig,
@@ -35,6 +36,7 @@ import {
   isString,
   isUndefined,
 } from '../utils/predicate'
+import { isServerRendering } from '../utils/ssr'
 import { resolveFormText } from '../utils/text'
 import { useRemoteFieldOptions } from './use-remote-field-options'
 
@@ -46,6 +48,7 @@ export function useFieldOptions(params: {
   register: FormRuntime['registerFieldOptions']
   refreshFieldOptions: FormRuntime['refreshFieldOptions']
 }) {
+  const serverRendering = isServerRendering()
   const promiseOptions = shallowRef<readonly FormValue[]>([])
   const createdOptions = shallowRef<readonly FormValue[]>([])
   const promisePending = ref<boolean>(false)
@@ -107,10 +110,9 @@ export function useFieldOptions(params: {
         }
       }
 
-      return {
-        placeholderData: keepPreviousData,
-        ...source,
-      }
+      return serverRendering
+        ? { ...source, enabled: false }
+        : { placeholderData: keepPreviousData, ...source }
     }),
   )
 
@@ -140,6 +142,10 @@ export function useFieldOptions(params: {
         return
       }
 
+      if (serverRendering) {
+        promisePending.value = true
+        return
+      }
       const resolution = resolvePromiseOptions(source)
       promiseResolution.value = resolution
       await resolution
@@ -226,7 +232,7 @@ export function useFieldOptions(params: {
     () => optionConfig.value?.create?.selectOnCreation !== false,
   )
 
-  const state = {
+  const state: FormOptionRuntimeState = {
     activate: remote.activate,
     add,
     creatable,
@@ -400,7 +406,9 @@ export function useFieldOptions(params: {
   return state
 }
 
-function resolveRemoteOptionConfig(field: FormField): FormRemoteOptionConfig<FormValue> | null {
+export function resolveRemoteOptionConfig(
+  field: FormField,
+): FormRemoteOptionConfig<FormValue> | null {
   if (!createFormFieldInstance(field).capability.has('options')) {
     return null
   }
@@ -441,7 +449,7 @@ function isRemoteOptionConfig(value: FormValue): value is FormRemoteOptionConfig
   )
 }
 
-function resolveOptionConfig(field: FormField): FormOptionConfig<FormValue> | undefined {
+export function resolveOptionConfig(field: FormField): FormOptionConfig<FormValue> | undefined {
   if (!createFormFieldInstance(field).capability.has('options')) {
     return undefined
   }
@@ -469,7 +477,7 @@ function emptyTrackedOptionSource(): TrackedOptionSource {
   return { contextKeys: [], error: null, source: [] }
 }
 
-function resolveTrackedOptionSource(
+export function resolveTrackedOptionSource(
   field: FormField,
   params: FormFieldCallbackParams,
 ): TrackedOptionSource {
@@ -490,7 +498,7 @@ function resolveTrackedOptionSource(
   }
 }
 
-function resolveOptionKeys(field: FormField): FormOptionKeys {
+export function resolveOptionKeys(field: FormField): FormOptionKeys {
   if (!createFormFieldInstance(field).type.isAny(['tree', 'tree-select', 'cascader'])) {
     return {}
   }
@@ -520,7 +528,7 @@ function trackContextAccess(ctx: FormFieldCallbackParams['ctx'], contextKeys: Se
   })
 }
 
-function isRuntimeQueryOptions(value: FormValue): value is FormRuntimeQueryOptions {
+export function isRuntimeQueryOptions(value: FormValue): value is FormRuntimeQueryOptions {
   if (!isRecord(value)) {
     return false
   }
@@ -528,7 +536,7 @@ function isRuntimeQueryOptions(value: FormValue): value is FormRuntimeQueryOptio
   return Array.isArray(queryKey)
 }
 
-function isAsyncResource(value: FormValue): value is FormAsyncResource<FormValue> {
+export function isAsyncResource(value: FormValue): value is FormAsyncResource<FormValue> {
   if (!isRecord(value)) {
     return false
   }
@@ -558,7 +566,7 @@ function resolveRevalidatePaths(path: readonly string[], revalidatePaths: readon
   })
 }
 
-function hasSelectionChanged(current: FormValue, next: FormValue) {
+export function hasSelectionChanged(current: FormValue, next: FormValue) {
   if (!Array.isArray(current) || !Array.isArray(next)) {
     return current !== next
   }
@@ -568,6 +576,44 @@ function hasSelectionChanged(current: FormValue, next: FormValue) {
   return current.some((value, index) => value !== next[index])
 }
 
-function isOptionValue(value: FormValue): value is FormOptionValue {
+export function isOptionValue(value: FormValue): value is FormOptionValue {
   return isString(value) || isNumber(value) || isBoolean(value)
+}
+
+let staticOptions: FormOptionRuntimeState | undefined
+
+/**
+ * Option state of a field that has no options: empty, settled, and shared by every such field,
+ * so a text or number control does not set up an options query and its watchers.
+ */
+export function staticFieldOptions(): FormOptionRuntimeState {
+  staticOptions ??= {
+    activate: () => {},
+    add: () => {},
+    creatable: computed(() => false),
+    create: async () => null,
+    createLabel: computed(() => undefined),
+    creating: computed(() => false),
+    disableOnLoading: computed(() => false),
+    error: computed(() => null),
+    fetching: computed(() => false),
+    hasMore: computed(() => false),
+    items: computed(() => []),
+    loadChildren: async () => {},
+    loadMore: async () => {},
+    loading: computed(() => false),
+    loadingMore: computed(() => false),
+    pending: computed(() => false),
+    prefetchDistance: computed(() => 0),
+    refresh: async () => {},
+    refreshable: computed(() => false),
+    remote: computed(() => false),
+    retry: async () => {},
+    retryable: computed(() => false),
+    search: computed(() => ''),
+    selectCreatedOption: computed(() => false),
+    selectedItems: computed(() => []),
+    setSearch: () => {},
+  }
+  return staticOptions
 }

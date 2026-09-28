@@ -2,22 +2,20 @@ import { watchWithFilter } from '@vueuse/core'
 import { computed, onScopeDispose } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
-import type {
-  FormValue,
-  FormControlSize,
-  FormControlUi,
-  FormField,
-  FormObject,
-  FormUiClass,
-  FormValidationTrigger,
-} from '../types'
+import type { FormField, FormObject, FormRuntime, FormValue } from '../types'
 import { isEqualFormValue } from '../utils/compare'
+import {
+  getValidationTrigger,
+  isDisabledByField,
+  resolveControlPlaceholder,
+  resolveControlProps,
+  resolveControlSize,
+  resolveFieldProps,
+} from '../utils/field-control'
 import { createFormFieldInstance } from '../utils/field-instance'
 import { cloneFormValue } from '../utils/path'
-import { isFunction, isNumber, isObject, isString } from '../utils/predicate'
-import { mergeFormUiClass } from '../utils/ui'
-import { useFieldOptions } from './use-field-options'
-import { useFormFieldControlAttrs } from './use-form-field-chrome'
+import { staticFieldOptions, useFieldOptions } from './use-field-options'
+import { useFormFieldControlAttrs, useFormFieldWatchOwner } from './use-form-field-chrome'
 import { useFormRuntimeContext } from './use-form-runtime'
 import { useFormUi } from './use-form-ui'
 
@@ -41,12 +39,7 @@ export function useResolvedFieldProps<TField extends FormField>(
   const form = useFormRuntimeContext()
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
   return computed(() => {
-    const current = field()
-    const value =
-      'props' in current ? Object.getOwnPropertyDescriptor(current, 'props')?.value : undefined
-    const result = isFunction(value) ? value(params.value) : value
-    const resolved: FormObject =
-      isObject(result) && result !== null && !Array.isArray(result) ? result : {}
+    const resolved = resolveFieldProps(field(), params.value)
     // SAFETY: resolved is the authored `props` of TField after dynamic resolution; the schema type is the only contract the runtime has for it.
     return resolved as ResolvedFieldProps<TField>
   })
@@ -61,119 +54,59 @@ export function useFieldControl<TField extends FormField>(
   const formUi = useFormUi()
   const { t } = useUiToolsLocale()
   const fieldControlAttrs = useFormFieldControlAttrs()
+  const watchOwner = useFormFieldWatchOwner()
   const api = computed(() => form.getFieldApi(path(), field()))
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
-  const options = useFieldOptions({
-    api,
-    callbackParams: params,
-    field,
-    path,
-    refreshFieldOptions: form.refreshFieldOptions,
-    register: form.registerFieldOptions,
-  })
+  const options = createFormFieldInstance(field()).capability.has('options')
+    ? useFieldOptions({
+        api,
+        callbackParams: params,
+        field,
+        path,
+        refreshFieldOptions: form.refreshFieldOptions,
+        register: form.registerFieldOptions,
+      })
+    : staticFieldOptions()
   const validationPending = computed<boolean>(() => api.value.validation.pending())
   const interactionOwner = computed<string>(() => path().join('.'))
   const interactionOwnerClass = computed<string>(
     () => `nut-form-field-owner:${encodeURIComponent(interactionOwner.value)}`,
   )
 
-  type FormControlProps = FormObject & {
-    size?: FormControlSize
-    class?: FormUiClass
-    ui?: FormControlUi
-    loading?: boolean
-    trailing?: boolean
-  }
   const fieldProps = useResolvedFieldProps(field, path)
-  const resolvedProps = computed<FormObject>(() => {
-    // SAFETY: the resolved props are a plain record; the typed view only narrows known keys.
-    const record = fieldProps.value as FormObject
-    return record
-  })
-  const controlProps = computed<FormControlProps>(() => {
-    const current = field()
-    const fieldUi = formUi.ui.value.fields?.[current.type]
-    const bareClass = isString(fieldControlAttrs.value.class)
-      ? fieldControlAttrs.value.class
-      : undefined
-    const defaults = {
-      ...fieldControlAttrs.value,
-      class: mergeFormUiClass(bareClass, fieldUi?.class),
-      size: fieldUi?.size ?? formUi.controlSize.value,
-      ui: mergeControlUi(fieldControlAttrs.value.ui, formUi.ui.value.control?.ui, fieldUi?.ui),
-    }
-    const resolved: FormControlProps = {}
-    for (const [key, value] of Object.entries(resolvedProps.value)) {
-      if (!controlOptions.omit?.includes(key)) {
-        resolved[key] = value
-      }
-    }
-    return {
-      ...defaults,
-      ...resolved,
-      class: mergeControlClass(fieldUi?.class, resolved.class),
-      ui: mergeControlUi(formUi.ui.value.control?.ui, fieldUi?.ui, resolved.ui),
-    }
-  })
-  const controlSize = computed<FormControlSize>(() => {
-    const value = controlProps.value.size
-    return isFormControlSize(value) ? value : formUi.controlSize.value
-  })
-
-  const disabled = computed(() => {
-    const current = field()
-    const value = Object.getOwnPropertyDescriptor(current, 'disabled')?.value
-    const disabledByCallback = isFunction(value) ? value(params.value) === true : false
-    return (
-      disabledByCallback ||
-      form.actionPending.value !== null ||
-      (options.disableOnLoading.value && options.loading.value)
-    )
-  })
-
-  const placeholder = computed(() => {
-    const current = field()
-    const value = Object.getOwnPropertyDescriptor(current, 'placeholder')?.value
-    if (isFunction(value)) {
-      const resolved = value(params.value)
-      return isString(resolved) || isNumber(resolved)
-        ? String(resolved)
-        : t('form.fields.text.defaultPlaceholder')
-    }
-    if (isString(value) || isNumber(value)) {
-      return String(value)
-    }
-
-    return t('form.fields.text.defaultPlaceholder')
-  })
-
-  let lastValue = cloneFormValue(form.getValue(path()))
-  watchWithFilter(
-    () => form.getValue(path()),
-    async (value) => {
-      if (isEqualFormValue(value, lastValue)) {
-        return
-      }
-      lastValue = cloneFormValue(value)
-      api.value.validation.clearError()
-      if (!createFormFieldInstance(field()).capability.has('validation')) {
-        return
-      }
-      const trigger = getValidationTrigger(field())
-      if (trigger === 'submit') {
-        return
-      }
-      if (trigger === 'blur' && !form.isFieldTouched(path())) {
-        return
-      }
-
-      if (trigger === 'input') {
-        form.markFieldTouched(path())
-      }
-      await api.value.validation.validate()
-    },
-    { deep: true },
+  const controlProps = computed(() =>
+    resolveControlProps({
+      attrs: fieldControlAttrs.value,
+      field: field(),
+      // SAFETY: the resolved props are a plain record; the typed view only narrows known keys.
+      fieldProps: fieldProps.value as FormObject,
+      omit: controlOptions.omit,
+      size: formUi.controlSize.value,
+      ui: formUi.ui.value,
+    }),
   )
+  const controlSize = computed(() =>
+    resolveControlSize(controlProps.value.size, formUi.controlSize.value),
+  )
+
+  const disabled = computed(
+    () =>
+      isDisabledByField(field(), params.value) ||
+      form.actionPending.value !== null ||
+      (options.disableOnLoading.value && options.loading.value),
+  )
+
+  const placeholder = computed(() =>
+    resolveControlPlaceholder({
+      fallback: t('form.fields.text.defaultPlaceholder'),
+      field: field(),
+      params: params.value,
+    }),
+  )
+
+  if (!watchOwner(path())) {
+    useFieldValidationWatch(field, path)
+  }
 
   let blurBoundaryListening = false
   onScopeDispose(stopBlurBoundaryWatch)
@@ -312,38 +245,47 @@ export function useFieldControl<TField extends FormField>(
   }
 }
 
-function mergeControlUi(...configs: readonly FormValue[]): FormControlUi {
-  const merged: FormControlUi = {}
-  for (const config of configs) {
-    if (!isObject(config) || config === null || Array.isArray(config)) {
-      continue
+/**
+ * Reacts to a new value of a field: clears its error, then validates it again when it validates
+ * on input, or on blur once touched. Nothing happens while the value equals the last one seen.
+ */
+export function createFieldValueValidation(
+  form: FormRuntime,
+  target: { field: () => FormField; path: () => readonly string[] },
+) {
+  let lastValue = cloneFormValue(form.getValue(target.path()))
+  return async (value: FormValue) => {
+    if (isEqualFormValue(value, lastValue)) {
+      return
     }
-    for (const [slot, value] of Object.entries(config)) {
-      if (isString(value)) {
-        merged[slot] = value
-      }
+    lastValue = cloneFormValue(value)
+    const field = target.field()
+    const path = target.path()
+    const api = form.getFieldApi(path, field)
+    api.validation.clearError()
+    if (!createFormFieldInstance(field).capability.has('validation')) {
+      return
     }
+    const trigger = getValidationTrigger(field)
+    if (trigger === 'submit') {
+      return
+    }
+    if (trigger === 'blur' && !form.isFieldTouched(path)) {
+      return
+    }
+    if (trigger === 'input') {
+      form.markFieldTouched(path)
+    }
+    await api.validation.validate()
   }
-  return merged
 }
 
-function mergeControlClass(defaults: string | undefined, local: FormValue) {
-  return isString(local) ? mergeFormUiClass(defaults, local) : defaults
-}
-
-function isFormControlSize(value: FormValue): value is FormControlSize {
-  return value === 'xs' || value === 'sm' || value === 'md' || value === 'lg' || value === 'xl'
-}
-
-function getValidationTrigger(field: FormField): FormValidationTrigger {
-  if (!createFormFieldInstance(field).capability.has('validation')) {
-    return 'blur'
-  }
-  const validation = Object.getOwnPropertyDescriptor(field, 'validation')?.value
-  if (!isObject(validation) || validation === null || Array.isArray(validation)) {
-    return 'blur'
-  }
-
-  const trigger = Object.getOwnPropertyDescriptor(validation, 'trigger')?.value
-  return trigger === 'input' || trigger === 'submit' ? trigger : 'blur'
+/**
+ * Validates a field when its value changes, once the form has painted: nobody edits a field
+ * before that. Array-table rows run this for their cells, live or not, instead of each control.
+ */
+export function useFieldValidationWatch(field: () => FormField, path: () => readonly string[]) {
+  const form = useFormRuntimeContext()
+  const onValue = createFieldValueValidation(form, { field, path })
+  form.paint.afterPaint(() => watchWithFilter(() => form.getValue(path()), onValue, { deep: true }))
 }

@@ -188,6 +188,7 @@
     "nuxt-viewport": "2.6.1"
   },
   "devDependencies": {
+    "@iconify/vue": "5.0.3",
     "@internationalized/date": "3.12.4",
     "@nuxt/module-builder": "1.0.3",
     "@nuxt/schema": "4.5.2",
@@ -220,6 +221,7 @@
     "xlsx": "0.18.5"
   },
   "peerDependencies": {
+    "@iconify/vue": ">=5.0.0",
     "@internationalized/date": ">=3.12.4",
     "@nuxt/ui": ">=4.10.0",
     "@tanstack/vue-query": ">=5.101.4",

@@ -172,6 +172,8 @@ export default defineConfig({
         find: /^@nuxt\/ui\/components\/Tree\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/tree.ts`,
       },
+      { find: /^#build\/ui\/.+$/u, replacement: `${root}test/dom/stubs/nuxt-ui-theme.ts` },
+      { find: /^@nuxt\/ui\/utils\/tv$/u, replacement: `${root}test/dom/stubs/nuxt-ui-tv.ts` },
       { find: /^vue-draggable-plus$/u, replacement: `${root}test/dom/stubs/vue-draggable-plus.ts` },
       { find: /^@unovis\/vue\/.+$/u, replacement: `${root}test/dom/stubs/unovis-vue.ts` },
       { find: /^@unovis\/ts$/u, replacement: `${root}test/dom/stubs/unovis-ts.ts` },

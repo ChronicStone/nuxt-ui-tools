@@ -8,7 +8,11 @@ import {
   normalizeFormFocusPath,
 } from '../utils/focus'
 
-export function useFormFocus(params: { getErrors: () => readonly FormValidationError[] }) {
+export function useFormFocus(params: {
+  getErrors: () => readonly FormValidationError[]
+  /** Renders the live control of a field that has not rendered one yet, such as an inert row. */
+  beforeFocus?: (path: string) => void
+}) {
   const fieldElements = new Map<string, HTMLElement>()
   const request = ref<FormFocusRequest | null>(null)
   let sequence = 0
@@ -25,8 +29,11 @@ export function useFormFocus(params: { getErrors: () => readonly FormValidationE
   }
 
   async function focusField(path: string | readonly string[]) {
-    await nextTick()
     const key = normalizeFormFocusPath(path)
+    if (!fieldElements.has(key)) {
+      params.beforeFocus?.(key)
+    }
+    await nextTick()
     sequence += 1
     request.value = { path: key, sequence }
     await nextTick()

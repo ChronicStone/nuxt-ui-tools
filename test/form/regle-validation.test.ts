@@ -294,6 +294,31 @@ describe('Regle-owned form validation', () => {
     expect(validation.getFieldError(['contacts', '0', 'email'])).toBeUndefined()
   })
 
+  it('validates array items whose rules were deferred until the first paint', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          fields: [{ key: 'email', type: 'text', validation: { required: true } }],
+          key: 'contacts',
+          type: 'array-list',
+        },
+      ],
+    })
+    const state = reactive<FormObject>({ contacts: [{ email: 'ada@example.com' }, {}] })
+    const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      deferItemRules: true,
+      getValidationMode: () => true,
+      schema: () => schema,
+      state,
+    })
+
+    await expect(validation.validate()).resolves.toBeFalsy()
+    expect(validation.getFieldError(['contacts', '1', 'email'])).toBe('This field is required.')
+    expect(validation.getFieldError(['contacts', '0', 'email'])).toBeUndefined()
+  })
+
   it('keeps step validation scoped when a later step is invalid', async () => {
     const schema = defineFormSchema({
       steps: [
