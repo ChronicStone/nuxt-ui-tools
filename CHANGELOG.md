@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.10.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.9.0...v1.10.0)
+
+Field callbacks read their dependencies through `deps.get(key)`. `deps.get<number | null>('year')` returns the dependency declared under `year`, typed as the callback states, and a key the field did not declare reads as `undefined`. The same reader reaches option sources and `create`, conditions, props, placeholders, validators, transforms, dependency effects, and array templates. This replaces reading `deps` as an object of values: change `deps.year` to `deps.get('year')`, and `'year' in deps` checks to a check on the value. `FormDependencyValues` is replaced by `FormDependencies`.
+
+An object-form local option source is typed like a shorthand one, so `options: { source: ({ deps }) => …, create }` no longer leaves `deps` untyped. For that, a remote option config now loads its pages with `load` instead of `source`, the name `RemoteOptionsLoader` already uses; configs built from a `loader` are unchanged.
+
 ## v1.9.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.8.1...v1.9.0)
