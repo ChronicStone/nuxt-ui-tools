@@ -91,6 +91,11 @@ export function useFieldOptions(params: {
     () => contextResources.value.find((resource) => resource.error !== null)?.error ?? null,
   )
   const optionConfig = computed(() => resolveOptionConfig(params.field()))
+  const declaresOptions = computed(
+    () =>
+      createFormFieldInstance(params.field()).capability.has('options') &&
+      !isUndefined(Object.getOwnPropertyDescriptor(params.field(), 'options')?.value),
+  )
   const querySource = computed(() => {
     const source = resolvedSource.value
     return isRuntimeQueryOptions(source) ? source : null
@@ -352,13 +357,10 @@ export function useFieldOptions(params: {
   }
 
   function clearInvalidValue(options: readonly ResolvedFormOption[]) {
-    if (!optionConfig.value || remoteConfig.value) {
+    if (remoteConfig.value || pending.value || error.value !== null) {
       return
     }
-    if (pending.value) {
-      return
-    }
-    if (optionConfig.value?.clearOnInvalid === false) {
+    if (!declaresOptions.value || optionConfig.value?.clearOnInvalid === false) {
       return
     }
 

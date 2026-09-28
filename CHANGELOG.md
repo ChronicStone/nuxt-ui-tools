@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.9.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.8.1...v1.9.0)
+
+Dashboard figures count toward their new values instead of jumping. A stat and each figure of a stats block count up or down over 700 ms on the first load, a filter change, or a refresh, through the block's own format, and whole numbers count through whole numbers. Figures change at once when the user prefers reduced motion, and exports keep the exact values.
+
+A select whose options come from an array, a function, a promise, or query options now clears a value its options no longer offer, as `clearOnInvalid` already did for object option configs: narrowing what a dependent select offers empties it instead of leaving the raw value. Values are kept while the source loads or fails, and fields without an options source are never touched.
+
 ## v1.8.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.8.0...v1.8.1)

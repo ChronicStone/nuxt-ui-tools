@@ -38,6 +38,20 @@ export const viewport = {
 
 export const appConfig = ref<Record<string, unknown>>({})
 
+const reducedMotion = ref(false)
+
+/** Answers `(prefers-reduced-motion: reduce)`. Set it before mounting: media queries are read once. */
+export function setReducedMotion(value: boolean) {
+  reducedMotion.value = value
+}
+
+export function matchesMedia(query: string) {
+  return (
+    query === currentMediaQuery() ||
+    (reducedMotion.value && query === '(prefers-reduced-motion: reduce)')
+  )
+}
+
 export function setBreakpoint(key: BreakpointKey) {
   breakpoint.value = key
 }

@@ -1,6 +1,6 @@
 import { config } from '@vue/test-utils'
 
-import { currentMediaQuery } from './nuxt-state'
+import { matchesMedia } from './nuxt-state'
 import { localeCode } from './stubs/nuxt-ui-locale'
 
 localeCode.value = 'fr'
@@ -19,7 +19,7 @@ if (!('ResizeObserver' in globalThis)) {
 window.matchMedia = (query: string) =>
   ({
     addEventListener() {},
-    matches: query === currentMediaQuery(),
+    matches: matchesMedia(query),
     media: query,
     removeEventListener() {},
   }) as unknown as MediaQueryList

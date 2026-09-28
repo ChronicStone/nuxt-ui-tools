@@ -10,12 +10,13 @@ import type { Account, BlockScenario } from './fixtures/blocks-schema'
 import TemplateInference from './fixtures/template-inference.vue'
 import { mountDashboard } from './harness'
 
-async function mountScenario(scenario: BlockScenario) {
+async function mountScenario(scenario: BlockScenario, options: { animate?: boolean } = {}) {
   const sources = createBlockSources()
   const selections: DashboardSelectEvent<Account>[] = []
   const events: string[] = []
   const contexts: DashboardMenuContext[] = []
   const harness = await mountDashboard({
+    animate: options.animate,
     render: (dashboard) => h(BlocksHost, { contexts, dashboard, events, scenario, selections }),
     schema: createBlocksSchema(sources),
   })
@@ -57,6 +58,28 @@ describe('dashboard blocks', () => {
     expect(wrapper.text()).toContain('125 €')
     expect(wrapper.text()).toContain('+25')
     expect(wrapper.text()).toContain('vs 100')
+  })
+
+  it('counts the stat toward each new value through whole numbers', async () => {
+    const { dashboard, flush, sources, until, wrapper } = await mountScenario('stat', {
+      animate: true,
+    })
+    const figure = () => wrapper.find('[data-stat-value]').text()
+
+    sources.summary.calls[0]?.resolve({ previous: 100, revenue: 1250 })
+    await flush()
+    const counting = figure()
+    await until(() => figure() === '1250 €')
+    void dashboard.refresh()
+    await flush()
+    sources.summary.calls[1]?.resolve({ previous: 100, revenue: 1000 })
+    await flush()
+    const countingDown = figure()
+    await until(() => figure() === '1000 €')
+
+    expect([counting, countingDown]).not.toContain('1250 €')
+    expect(countingDown).not.toBe('1000 €')
+    expect([counting, countingDown].every((text) => /^\d+ €$/u.test(text))).toBe(true)
   })
 
   it('shows a retryable error scoped to the failing block', async () => {

@@ -115,7 +115,11 @@ export interface FormOptionConfig<
   create?: FormCreateOption<TOption, TContext, TDeps, TValue>
   /** Enables the field-level refresh affordance. Matches shared-ui `allowOptionsRefresh`. */
   allowOptionsRefresh?: boolean
-  /** Clears current values that no longer exist in resolved options. Defaults to `true`. */
+  /**
+   * Clears current values that no longer exist in resolved options. Defaults to `true`, which
+   * shorthand sources (arrays, functions, promises, query options) always use. Values are kept
+   * while the source is pending or failed.
+   */
   clearOnInvalid?: boolean
   /** Runs when resolved source options change, excluding locally-created options. */
   onOptionsChange?: (

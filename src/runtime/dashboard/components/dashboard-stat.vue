@@ -9,6 +9,7 @@ import { isNumber, isString } from '#ui-tools/shared/utils/predicate'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
 import { DASHBOARD_MISSING_VALUE, useDashboardFormat } from '../composables/use-dashboard-format'
+import { countedFigure, tweenTarget, useDashboardTween } from '../composables/use-dashboard-tween'
 import { useDashboardUi } from '../composables/use-dashboard-ui'
 import type {
   DashboardBlockBaseProps,
@@ -121,11 +122,14 @@ const ready = computed(() => {
 })
 const resolved = computed(() => (ready.value ? value(ready.value.data) : undefined))
 const formatValue = computed(() => formats.resolve(format))
+const counted = useDashboardTween(() => [tweenTarget(resolved.value)])
 const display = computed(() => {
   if (!ready.value) return ''
   const shown = resolved.value
   if (shown === null || shown === undefined) return DASHBOARD_MISSING_VALUE
-  return isNumber(shown) ? formatValue.value(shown) : resolveTextValue(shown)
+  return isNumber(shown)
+    ? formatValue.value(countedFigure(shown, counted.value[0]))
+    : resolveTextValue(shown)
 })
 const previous = computed(() => {
   if (!ready.value || !compare) return null
@@ -257,7 +261,7 @@ const extra = computed(() => (trend ? 'trend' : goal ? 'goal' : undefined))
     </template>
 
     <template v-if="ready">
-      <div :class="classes.value">
+      <div :class="classes.value" data-stat-value>
         <slot name="value" :data="ready.data" :value="display">{{ display }}</slot>
       </div>
       <div v-if="change || captionText || $slots.caption" :class="classes.meta">
