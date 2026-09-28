@@ -71,7 +71,10 @@ export function useFieldOptions(params: {
     }
     return resolveTrackedOptionSource(params.field(), params.callbackParams.value)
   })
-  const resolvedSource = computed(() => trackedOptionSource.value.source)
+  const resolvedSource = computed(() => {
+    const { source } = trackedOptionSource.value
+    return isRuntimeQueryOptions(source) && isDisabledQueryOptions(source) ? [] : source
+  })
   const contextResources = computed(() => {
     const { ctx } = params.callbackParams.value
     if (!isRecord(ctx)) {
@@ -520,6 +523,14 @@ function trackContextAccess(ctx: FormFieldCallbackParams['ctx'], contextKeys: Se
       return Object.getOwnPropertyDescriptor(target, property)?.value
     },
   })
+}
+
+/**
+ * A query source that states `enabled: false` offers no options yet, so a dependent field waits
+ * idle instead of loading until its dependencies enable the query.
+ */
+function isDisabledQueryOptions(source: FormRuntimeQueryOptions) {
+  return Object.getOwnPropertyDescriptor(source, 'enabled')?.value === false
 }
 
 function isRuntimeQueryOptions(value: FormValue): value is FormRuntimeQueryOptions {
