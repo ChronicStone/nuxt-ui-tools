@@ -9,7 +9,7 @@ import type { Router } from 'vue-router'
 import { useDashboard } from '#ui-tools/dashboard'
 import type { DashboardSchemaLike, InferDashboard } from '#ui-tools/dashboard'
 
-import { setAppConfig, setBreakpoint } from '../nuxt-state'
+import { setAppConfig, setBreakpoint, setReducedMotion } from '../nuxt-state'
 import type { BreakpointKey } from '../nuxt-state'
 
 export interface DashboardHarness<TSchema> {
@@ -34,8 +34,11 @@ export async function mountDashboard<
   render?: (dashboard: InferDashboard<TSchema>) => VNodeChild
   /** App error handler, as Nuxt installs one: errors are collected instead of thrown. */
   onError?: (error: unknown) => void
+  /** Lets figures count toward new values. Off by default, so assertions read final figures. */
+  animate?: boolean
 }): Promise<DashboardHarness<TSchema>> {
   setBreakpoint(options.breakpoint ?? 'xl')
+  setReducedMotion(options.animate !== true)
   setAppConfig({})
   const router = createRouter({
     history: createMemoryHistory(),

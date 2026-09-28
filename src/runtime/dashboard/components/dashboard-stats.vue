@@ -8,6 +8,7 @@ import { isNumber, isString } from '#ui-tools/shared/utils/predicate'
 import { resolveTextValue } from '#ui-tools/shared/utils/render'
 
 import { useDashboardFormat } from '../composables/use-dashboard-format'
+import { countedFigure, tweenTarget, useDashboardTween } from '../composables/use-dashboard-tween'
 import { useDashboardUi } from '../composables/use-dashboard-ui'
 import type {
   DashboardBlockBaseProps,
@@ -138,6 +139,18 @@ const entries = computed(() => {
   })
 })
 
+// One position per item, loaded or not: each figure counts from where its own previous value was.
+const counted = useDashboardTween(() =>
+  items.map((_item, index) => tweenTarget(entries.value[index]?.raw)),
+)
+const shown = computed(() =>
+  entries.value.map((entry, index) =>
+    isNumber(entry.raw)
+      ? formats.resolve(items[index]?.format)(countedFigure(entry.raw, counted.value[index]))
+      : entry.value,
+  ),
+)
+
 function tabulate(): DashboardDataTable {
   const hasDelta = items.some((item) => item.delta)
   return {
@@ -180,7 +193,7 @@ function tabulate(): DashboardDataTable {
     </template>
 
     <div :class="classes.grid" :style="gridColumns ?? undefined" :data-variant="variant">
-      <div v-for="entry in entries" :key="entry.key" :class="classes.item" data-stats-item>
+      <div v-for="(entry, index) in entries" :key="entry.key" :class="classes.item" data-stats-item>
         <div class="flex min-w-0 items-center gap-2">
           <span
             v-if="entry.icon"
@@ -195,7 +208,7 @@ function tabulate(): DashboardDataTable {
           <span :class="classes.label">{{ entry.label }}</span>
         </div>
         <div :class="classes.value">
-          <span class="truncate">{{ entry.value }}</span>
+          <span class="truncate">{{ shown[index] }}</span>
           <span
             v-if="entry.status"
             :class="classes.status"
