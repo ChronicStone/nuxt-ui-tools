@@ -62,18 +62,12 @@ describe('form field dependencies', () => {
       },
     }
 
+    const deps = resolveFieldDependencies({ field, parentPath: ['account', 'address'], state })
+
     expect(
-      resolveFieldDependencies({
-        field,
-        parentPath: ['account', 'address'],
-        state,
-      }),
-    ).toStrictEqual({
-      'account.name': 'Ada',
-      country: 'FR',
-      parentRegion: 'eu-west',
-      root: state,
-      siblingCity: 'Paris',
-    })
+      ['account.name', 'country', 'siblingCity', 'parentRegion', 'root', 'undeclared'].map((key) =>
+        deps.get(key),
+      ),
+    ).toStrictEqual(['Ada', 'FR', 'Paris', 'eu-west', state, undefined])
   })
 })

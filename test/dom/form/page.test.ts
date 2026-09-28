@@ -21,7 +21,7 @@ function typeSection() {
     fields: [
       { key: 'accountType', label: 'Type', options: TYPES, required: true, type: 'select' },
       {
-        condition: ({ deps }) => 'accountType' in deps && deps.accountType === 'testCenter',
+        condition: ({ deps }) => deps.get('accountType') === 'testCenter',
         dependencies: ['accountType'],
         key: 'testCenter',
         label: 'Centre',
@@ -67,7 +67,7 @@ function billingSection() {
 
 function documentsSection() {
   return defineFormPageSection({
-    condition: ({ deps }) => !('accountType' in deps) || deps.accountType !== 'testCenter',
+    condition: ({ deps }) => deps.get('accountType') !== 'testCenter',
     dependencies: ['accountType'],
     fields: [{ key: 'kbis', label: 'KBIS', type: 'text' }],
     key: 'documents',

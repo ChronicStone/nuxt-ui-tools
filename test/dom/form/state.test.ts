@@ -235,7 +235,7 @@ describe('form state', () => {
           dependencies: ['parent'],
           key: 'resolvedAncestors',
           onDependencyChange: ({ api, deps }) =>
-            api.value.set([`ancestor:${String('parent' in deps ? deps.parent : '')}`]),
+            api.value.set([`ancestor:${String(deps.get('parent'))}`]),
           type: 'hidden',
         },
       ],

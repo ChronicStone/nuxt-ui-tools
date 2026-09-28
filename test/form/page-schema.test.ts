@@ -28,7 +28,7 @@ function billingSection(params: { hasActiveContract: boolean }) {
         dependencies: ['accountType'],
         key: 'vtestId',
         label: 'VTEST ID',
-        required: ({ deps }) => params.hasActiveContract || 'accountType' in deps,
+        required: ({ deps }) => params.hasActiveContract || deps.get('accountType') !== null,
         type: 'text',
       },
     ],
@@ -45,7 +45,7 @@ const accountSchema = defineFormPageSchema({
   sections: [
     accountTypeSection(),
     {
-      condition: ({ deps }) => 'accountType' in deps,
+      condition: ({ deps }) => deps.get('accountType') !== null,
       dependencies: ['accountType'],
       fields: [{ key: 'address.city', label: 'Ville', type: 'text' }],
       key: 'address',

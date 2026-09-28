@@ -376,7 +376,7 @@ export function consumptionFormSchema(accounts: readonly Account[]) {
         label: 'Contrat',
         onDependencyChange: ({ api }) => api.value.set(null),
         options: ({ deps }) => {
-          const account = 'account' in deps ? deps.account : null
+          const account = deps.get('account')
           return isString(account) ? contractsOf(account) : []
         },
         props: { mono: true },
@@ -391,8 +391,8 @@ export function consumptionFormSchema(accounts: readonly Account[]) {
         layout: { span: 'full' },
         onDependencyChange: ({ api }) => api.value.set(null),
         options: ({ deps }) => {
-          const account = 'account' in deps ? deps.account : null
-          const contractId = 'contract' in deps ? deps.contract : null
+          const account = deps.get('account')
+          const contractId = deps.get('contract')
           if (!isString(account) || !isString(contractId)) {
             return []
           }
@@ -479,7 +479,7 @@ export function invoiceFormSchema(accounts: readonly Account[]) {
         label: 'Contrat',
         onDependencyChange: ({ api }) => api.value.set(null),
         options: ({ deps }) => {
-          const account = 'account' in deps ? deps.account : null
+          const account = deps.get('account')
           return isString(account) ? contractsOf(account) : []
         },
         props: { mono: true },

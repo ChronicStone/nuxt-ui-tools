@@ -9,7 +9,7 @@ const schema = defineFormSchema({
     { key: 'name', label: 'Nom', type: 'text', validation: { required: true } },
     { key: 'email', label: 'E-mail', placeholder: 'prenom@exemple.fr', type: 'text' },
     {
-      condition: ({ deps }) => 'kind' in deps && deps.kind === 'company',
+      condition: ({ deps }) => deps.get('kind') === 'company',
       dependencies: ['kind'],
       key: 'company',
       label: 'Société',

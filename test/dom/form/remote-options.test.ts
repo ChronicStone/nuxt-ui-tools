@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { ref } from 'vue'
 
 import { defineFormSchema } from '#ui-tools/form'
-import type { FormObject, FormOptionValue } from '#ui-tools/form'
+import type { FormDependencies, FormOptionValue } from '#ui-tools/form'
 import { defineRemoteOptions } from '#ui-tools/shared'
 
 import { deferred, mountForm, scrollToEnd } from './harness'
@@ -42,12 +42,12 @@ interface PageRequest {
 }
 
 interface SelectedRequest {
-  deps: FormObject
+  deps: FormDependencies
   values: readonly FormOptionValue[]
 }
 
-function depsCategory(deps: FormObject) {
-  return String(deps.category ?? '')
+function depsCategory(deps: FormDependencies) {
+  return String(deps.get('category') ?? '')
 }
 
 function pagedSource(requests: ReturnType<typeof requestMap<Page>>, keyPrefix: string) {

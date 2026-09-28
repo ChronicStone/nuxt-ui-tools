@@ -87,7 +87,7 @@ function securitySection() {
         key: 'ssoDomain',
         label: () => t('pages.formPage.fields.ssoDomain'),
         placeholder: 'acme.com',
-        required: ({ deps }) => 'plan' in deps && deps.plan === 'enterprise',
+        required: ({ deps }) => deps.get('plan') === 'enterprise',
         type: 'text',
       },
       {

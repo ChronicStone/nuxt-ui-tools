@@ -868,7 +868,7 @@ const showcaseForm = defineFormSchema({
       },
       type: 'password',
       validators: ({ deps }) => ({
-        sameAs: withMessage(sameAs(deps.password), 'Passwords do not match.'),
+        sameAs: withMessage(sameAs(deps.get('password')), 'Passwords do not match.'),
       }),
     },
     {

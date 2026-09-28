@@ -26,7 +26,7 @@ import { isRecord } from '../utils/path'
  *         label: 'VTEST ID',
  *         // `accountType` belongs to another section: a page is one form, one state.
  *         dependencies: ['accountType'],
- *         required: ({ deps }) => hasActiveContract || 'accountType' in deps,
+ *         required: ({ deps }) => hasActiveContract || deps.get('accountType') !== null,
  *       },
  *     ],
  *   })

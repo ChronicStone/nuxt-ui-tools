@@ -8,6 +8,7 @@ import { calendarSeedFromValue, isDateFamilyRange } from '../fields/date-family/
 import type { FormDateFamilyType, FormDateSeedValue } from '../fields/date-family/utils'
 import type { FormPasswordRequirement } from '../fields/password/types'
 import type {
+  FormDependencies,
   FormValue,
   FormErrorOptions,
   FormField,
@@ -610,7 +611,7 @@ function buildLeafRules(params: {
   path: readonly string[]
   callbackParams: {
     ctx: FormRuntimeContext
-    deps: FormObject
+    deps: FormDependencies
     api: ReturnType<FormFieldApiFactory>
   }
   includeAsync: boolean
@@ -992,7 +993,7 @@ function applyDateBoundsRules(
     field: FormField
     callbackParams: {
       ctx: FormRuntimeContext
-      deps: FormObject
+      deps: FormDependencies
       api: ReturnType<FormFieldApiFactory>
     }
     getDateMinMessage?: (bound: string) => string
@@ -1030,7 +1031,7 @@ function resolveDateFieldBounds(
   field: FormField & { type: FormDateFamilyType },
   callbackParams: {
     ctx: FormRuntimeContext
-    deps: FormObject
+    deps: FormDependencies
     api: ReturnType<FormFieldApiFactory>
   },
 ): ResolvedDateBounds {

@@ -331,7 +331,7 @@ describe('Regle-owned form validation', () => {
           key: 'emailConfirmation',
           type: 'text',
           validators: ({ deps }) => ({
-            matchesEmail: withMessage(sameAs(deps.email), 'Email addresses do not match.'),
+            matchesEmail: withMessage(sameAs(deps.get('email')), 'Email addresses do not match.'),
           }),
         },
         {

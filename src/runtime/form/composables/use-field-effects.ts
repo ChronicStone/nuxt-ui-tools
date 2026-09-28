@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 
 import type { FormValue, FormField } from '../types'
 import { isEqualFormValue } from '../utils/compare'
+import { readFormDependencyValues } from '../utils/dependencies'
 import { cloneFormValue } from '../utils/path'
 import { isFunction, isNumber, isObject } from '../utils/predicate'
 import { useFormRuntimeContext } from './use-form-runtime'
@@ -35,7 +36,7 @@ export function useFieldEffects(field: () => FormField, path: () => readonly str
   )
 
   watchWithFilter(
-    () => params.value.deps,
+    () => readFormDependencyValues(params.value.deps),
     (deps) => {
       if (lastDeps !== UNSET && isEqualFormValue(deps, lastDeps)) {
         return

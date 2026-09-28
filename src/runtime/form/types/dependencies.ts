@@ -42,7 +42,8 @@ type DependenciesValue<TDependencies, TState> = TDependencies extends readonly F
   : NonNullable<unknown>
 
 /**
- * Extracts the `deps` object made available to callbacks for a single field.
+ * Extracts the values of a single field's declared dependencies, keyed by target name: the types a
+ * callback reads through `deps.get(key)`.
  *
  * Pass the form internal state as the second type argument to resolve dependency values from
  * absolute dotted paths. `$parent` dependencies intentionally resolve to `unknown` at this layer
@@ -55,6 +56,7 @@ type DependenciesValue<TDependencies, TState> = TDependencies extends readonly F
  *   dependencies: ['password', ['profile.country', 'country']]
  * }, State>
  * // { password: string | null, country: 'FR' | 'BE' | null }
+ * deps.get<Deps['country']>('country')
  * ```
  */
 export type ExtractFormFieldDependencies<TField, TState = FormObject> = TField extends {
