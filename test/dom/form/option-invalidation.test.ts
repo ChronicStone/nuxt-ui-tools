@@ -71,6 +71,36 @@ describe('option invalidation', () => {
     harness.unmount()
   })
 
+  it('keeps a disabled query source idle until its dependency enables it', async () => {
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [
+        { key: 'line', options: ['adults', 'schools'], type: 'select' },
+        {
+          dependencies: ['line'],
+          key: 'product',
+          options: ({ deps }) =>
+            queryOptions({
+              enabled: deps.get('line') !== null,
+              queryFn: async () => PRODUCTS,
+              queryKey: ['option-invalidation-idle', deps.get('line')],
+              select: (products) => products.filter((product) => product.line === deps.get('line')),
+            }),
+          type: 'select',
+        },
+      ],
+    })
+    const harness = await mountForm({ input: { product: 'schools-exam' }, schema })
+
+    await harness.until(() => harness.form.state.get('product') === null)
+    harness.form.state.set('line', 'schools')
+    harness.form.state.set('product', 'schools-exam')
+    await harness.flush()
+
+    expect(harness.form.state.get('product')).toBe('schools-exam')
+    harness.unmount()
+  })
+
   it('keeps values while the option source fails', async () => {
     const schema = defineFormSchema({
       actions: [],

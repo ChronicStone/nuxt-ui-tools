@@ -55,5 +55,6 @@ export interface FormOptionRuntimeState {
   /** Loads the direct children of a remote tree option. */
   loadChildren: (option: ResolvedFormOption) => Promise<void>
   add: (option: FormValue) => void
-  create: (label: string) => Promise<ResolvedFormOption | null>
+  /** Creates an option; a blank typed label creates nothing, and no label runs the handler with an empty one. */
+  create: (label?: string) => Promise<ResolvedFormOption | null>
 }

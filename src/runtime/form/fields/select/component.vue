@@ -97,7 +97,7 @@ async function handleCreate(label: string) {
 }
 
 async function handleCreateAction() {
-  await handleCreate(searchTerm.value)
+  await options.create(searchTerm.value.trim() || undefined)
 }
 
 async function handleNativeCreate(label: string) {

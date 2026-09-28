@@ -104,8 +104,11 @@ export interface FormFieldOptionsApi<TOption = FormValue> {
   error: () => FormValue | null
   /** Refreshes the option source when it is async or query-backed. */
   refresh: () => Promise<void>
-  /** Creates a new option when the field configured an option creation handler. */
-  create: (label: string) => Promise<TOption | null>
+  /**
+   * Creates a new option when the field configured an option creation handler. A blank typed label
+   * creates nothing; calling it without a label runs the handler with an empty one.
+   */
+  create: (label?: string) => Promise<TOption | null>
   /** Returns hydrated options for the current selection, including values outside loaded pages. */
   selected: () => readonly TOption[]
   /** True when the field loads options remotely. */

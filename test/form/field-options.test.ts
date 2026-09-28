@@ -125,6 +125,60 @@ describe('form field options', () => {
     scope.stop()
   })
 
+  it('runs the create handler with an empty label when none is given', async () => {
+    const labels: string[] = []
+    const schema = computed(() =>
+      defineFormSchema({
+        fields: [
+          {
+            key: 'rate',
+            options: {
+              create: {
+                handler: ({ label }) => {
+                  labels.push(label)
+                  return { label: 'October rate', value: 'october' }
+                },
+              },
+              source: [],
+            },
+            type: 'select',
+          },
+        ],
+      }),
+    )
+    const scope = effectScope()
+    const app = createApp({})
+    app.use(VueQueryPlugin, { queryClient: new QueryClient() })
+    const result = app.runWithContext(() =>
+      scope.run(() => {
+        const runtime = useFormRuntime({ schema })
+        const field = getSchemaFields(schema.value)[0]
+        if (!field) {
+          throw new Error('Missing option field')
+        }
+        const path = ['rate']
+        const options = useFieldOptions({
+          api: computed(() => runtime.getFieldApi(path, field)),
+          callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
+          field: () => field,
+          path: () => path,
+          refreshFieldOptions: runtime.refreshFieldOptions,
+          register: runtime.registerFieldOptions,
+        })
+        return { options, runtime }
+      }),
+    )
+    if (!result) {
+      throw new Error('Failed to create option runtime')
+    }
+
+    await result.options.create()
+
+    expect(labels).toStrictEqual([''])
+    expect(result.runtime.getValue('rate')).toBe('october')
+    scope.stop()
+  })
+
   it('reinvokes a promise-backed source when refreshed', async () => {
     let runs = 0
     const schema = computed(() =>

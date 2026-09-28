@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.10.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.10.0...v1.10.1)
+
+A query option source that states `enabled: false` offers no options and is not loading. A select whose query waits on a dependency no longer spins before the dependency is set, keeps no options from its previous dependency, and clears a value it no longer allows. The explicit create action in an option menu now runs the create handler without a search term, with an empty label, so a creator that opens its own form works from the menu footer; a blank typed label still creates nothing.
+
 ## v1.10.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.9.0...v1.10.0)
