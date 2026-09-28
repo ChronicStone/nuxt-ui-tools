@@ -1,23 +1,29 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import type { DataListControlSize, DataListInputProps, DataListSearchUi } from '../../types'
 
-const props = defineProps<{
-  placeholder: string
-  loading?: boolean
-  size: DataListControlSize
-  ui?: DataListSearchUi
-  inputProps?: DataListInputProps
-}>()
+const props = withDefaults(
+  defineProps<{
+    placeholder: string
+    loading?: boolean
+    size: DataListControlSize
+    ui?: DataListSearchUi
+    inputProps?: DataListInputProps
+    /** Milliseconds of typing inactivity before the query is applied. */
+    debounce?: number
+  }>(),
+  { debounce: 300 },
+)
 const model = defineModel<string>({ required: true })
 const { t } = useUiToolsLocale()
 const localValue = ref<string>(model.value)
 const input = ref<{ inputRef?: HTMLInputElement | null } | null>(null)
+let pending: ReturnType<typeof setTimeout> | undefined
 
 watch(
   model,
@@ -38,18 +44,33 @@ const inputAttrs = computed<Record<string, unknown>>(() => ({
 }))
 const clearable = computed(() => localValue.value.length > 0)
 
+function cancelPending() {
+  clearTimeout(pending)
+  pending = undefined
+}
+
 function commitValue() {
+  cancelPending()
   if (localValue.value === model.value) {
     return
   }
   model.value = localValue.value
 }
 
+function updateValue(value: unknown) {
+  localValue.value = String(value ?? '')
+  cancelPending()
+  pending = setTimeout(commitValue, props.debounce)
+}
+
 function clear() {
+  cancelPending()
   localValue.value = ''
   model.value = ''
   input.value?.inputRef?.focus()
 }
+
+onBeforeUnmount(cancelPending)
 </script>
 
 <template>
@@ -62,7 +83,7 @@ function clear() {
     :placeholder="placeholder"
     :ui="ui"
     class="nut-dl-search max-w-full shrink-0"
-    @update:model-value="localValue = String($event ?? '')"
+    @update:model-value="updateValue"
     @blur="commitValue"
     @keydown.enter.prevent="commitValue"
     @keydown.escape="clearable && clear()"
