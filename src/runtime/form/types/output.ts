@@ -15,7 +15,12 @@ import type {
   MatrixFieldOutput,
   ResolveFormFieldValue,
 } from './field-output'
-import type { FormStateMode, TransformOutputValue } from './field-output-utils'
+import type {
+  FormStateMode,
+  NullableValue,
+  TransformInputValue,
+  TransformOutputValue,
+} from './field-output-utils'
 
 export type {
   ExtractFormFieldInternalValue,
@@ -125,7 +130,14 @@ type ArrayFieldValue<TField, TMode extends FormStateMode> = TField extends { typ
 
 type ApplyOutputMode<TField, TMode extends FormStateMode, TValue> = TMode extends 'output'
   ? TransformOutputValue<TField, TValue>
-  : TValue
+  : TMode extends 'input'
+    ? TransformInputValue<TField, TValue | NullableValue>
+    : TValue
+
+/** Input leaves every key out and accepts `null`, since a form fills in defaults for what is missing. */
+type ModeFieldValueObject<TField, TMode extends FormStateMode, TValue> = TMode extends 'input'
+  ? OptionalFieldValueObject<TField, TValue>
+  : FieldValueObject<TField, TValue>
 
 type ObjectFieldValue<TField, TMode extends FormStateMode> = ApplyOutputMode<
   TField,
@@ -145,16 +157,18 @@ type MatrixFieldValue<TField, TMode extends FormStateMode> = ApplyOutputMode<
   MatrixFieldOutput<MatrixRows<TField>, FieldsValue<ChildFields<TField>, TMode>>
 >
 
-type StatefulFieldObject<TField, TMode extends FormStateMode> = TMode extends 'output'
-  ? TField extends { submit: { omit: true } }
-    ? NonNullable<unknown>
-    : TField extends { condition: infer _TCondition }
-      ? OptionalFieldValueObject<
-          TField,
-          ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>
-        >
-      : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
-  : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
+type StatefulFieldObject<TField, TMode extends FormStateMode> = TMode extends 'input'
+  ? OptionalFieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
+  : TMode extends 'output'
+    ? TField extends { submit: { omit: true } }
+      ? NonNullable<unknown>
+      : TField extends { condition: infer _TCondition }
+        ? OptionalFieldValueObject<
+            TField,
+            ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>
+          >
+        : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
+    : FieldValueObject<TField, ApplyOutputMode<TField, TMode, ResolveFormFieldValue<TField>>>
 
 type FieldObject<TField, TMode extends FormStateMode> = TField extends {
   type: 'info' | 'divider' | 'button'
@@ -165,9 +179,9 @@ type FieldObject<TField, TMode extends FormStateMode> = TField extends {
     : TField extends { type: 'input-group' | 'card' | 'column' }
       ? FieldsValue<ChildFields<TField>, TMode>
       : TField extends { type: 'object' | 'group' }
-        ? FieldValueObject<TField, ObjectFieldValue<TField, TMode>>
+        ? ModeFieldValueObject<TField, TMode, ObjectFieldValue<TField, TMode>>
         : TField extends { type: 'matrix' }
-          ? FieldValueObject<TField, MatrixFieldValue<TField, TMode>>
+          ? ModeFieldValueObject<TField, TMode, MatrixFieldValue<TField, TMode>>
           : TField extends {
                 type:
                   | 'array-list'
@@ -176,10 +190,11 @@ type FieldObject<TField, TMode extends FormStateMode> = TField extends {
                   | 'array-variant'
                   | 'array-collapse'
               }
-            ? FieldValueObject<TField, ArrayFieldValue<TField, TMode>>
+            ? ModeFieldValueObject<TField, TMode, ArrayFieldValue<TField, TMode>>
             : TField extends { type: 'array-primitive' }
-              ? FieldValueObject<
+              ? ModeFieldValueObject<
                   TField,
+                  TMode,
                   ApplyOutputMode<TField, TMode, ArrayPrimitiveFieldOutput<TField>>
                 >
               : StatefulFieldObject<TField, TMode>
@@ -210,10 +225,40 @@ export type ExtractFormInternalValue<TSchema> = TSchema extends { readonly field
     : NonNullable<unknown>
 
 /**
- * Extracts the complete submitted output value from a raw authored schema.
+ * Extracts the value a form accepts as `input` from a raw authored schema: every key optional,
+ * `null` accepted, and a field with `transform.input` typed by the value that hook takes.
+ */
+export type ExtractFormInput<TSchema> = TSchema extends { readonly fields: infer TFields }
+  ? FormInputValue<DeepPrettify<FieldsValue<TFields, 'input'>>>
+  : TSchema extends { readonly steps: infer TSteps }
+    ? FormInputValue<DeepPrettify<StepsValue<TSteps, 'input'>>>
+    : FormObject
+
+/** Makes every key of plain records optional, through arrays, leaving files and dates whole. */
+type FormInputValue<TValue> = TValue extends Date | Blob
+  ? TValue
+  : TValue extends readonly (infer TItem)[]
+    ? readonly FormInputValue<TItem>[]
+    : TValue extends FormObject
+      ? { [TKey in keyof TValue]?: FormInputValue<TValue[TKey]> }
+      : TValue
+
+/**
+ * Extracts the complete submitted output value from a raw authored schema. Its arrays are mutable:
+ * the submitted value is a fresh object, and request bodies inferred from validators take mutable
+ * arrays, so `formData` passes to them as it is.
  */
 export type ExtractFormOutput<TSchema> = TSchema extends { readonly fields: infer TFields }
-  ? DeepPrettify<FieldsValue<TFields, 'output'>>
+  ? FormOutputValue<DeepPrettify<FieldsValue<TFields, 'output'>>>
   : TSchema extends { readonly steps: infer TSteps }
-    ? DeepPrettify<StepsValue<TSteps, 'output'>>
+    ? FormOutputValue<DeepPrettify<StepsValue<TSteps, 'output'>>>
     : NonNullable<unknown>
+
+/** Drops `readonly` from arrays and tuples through plain records, leaving files and dates whole. */
+type FormOutputValue<TValue> = TValue extends Date | Blob
+  ? TValue
+  : TValue extends readonly unknown[]
+    ? { -readonly [TIndex in keyof TValue]: FormOutputValue<TValue[TIndex]> }
+    : TValue extends FormObject
+      ? { [TKey in keyof TValue]: FormOutputValue<TValue[TKey]> }
+      : TValue

@@ -7,12 +7,15 @@ import type {
   ExtractFormFieldInternalValue,
   ExtractFormFieldOutputValue,
   ExtractFormFields,
+  ExtractFormInput,
   FormObject,
   ExtractFormInternalValue,
   ExtractFormOutput,
   FormApiController,
   FormApiCreateResult,
 } from '#ui-tools/form'
+
+import type { RemoteOptionsLoader } from '../../src/runtime/shared/types/remote-options'
 
 const schema = defineFormSchema({
   context: {
@@ -503,6 +506,95 @@ describe('form output inference', () => {
     expectTypeOf<ExtractFormFieldOutputValue<SelectedQueryField>>().toEqualTypeOf<'draft' | null>()
   })
 
+  it('types input from the schema, with transform inputs taking what they accept', () => {
+    const priced = defineFormSchema({
+      fields: [
+        { key: 'name', type: 'text', required: true },
+        {
+          key: 'price',
+          type: 'number',
+          required: true,
+          transform: {
+            input: (value: string) => Number(value),
+            output: (value: number) => value.toFixed(2),
+          },
+        },
+        {
+          key: 'rows',
+          type: 'array-table',
+          fields: [{ key: 'label', type: 'text', required: true }],
+        },
+      ],
+    })
+    type Input = ExtractFormInput<typeof priced>
+
+    expectTypeOf<Pick<Input, 'name' | 'price'>>().toEqualTypeOf<{
+      name?: string | null
+      price?: string
+    }>()
+    expectTypeOf<NonNullable<Input['rows']>[number]>().toEqualTypeOf<{ label?: string | null }>()
+    expectTypeOf<ExtractFormOutput<typeof priced>['price']>().toEqualTypeOf<string>()
+
+    useForm({
+      input: { name: 'Ada', price: '12.50', rows: [{ label: 'A' }] },
+      onSubmit: ({ formData }) => {
+        const body: { name: string; price: string; rows: { label: string }[] } = formData
+        expectTypeOf(body.rows).toEqualTypeOf<{ label: string }[]>()
+        return { success: true }
+      },
+      schema: priced,
+    })
+    // @ts-expect-error the transformed field takes the value its input hook accepts
+    useForm({ input: { price: 12.5 }, schema: priced })
+    // @ts-expect-error a known field keeps its type
+    useForm({ input: { name: 3 }, schema: priced })
+  })
+
+  it('types a remote select by the values its loader offers', () => {
+    const loader: RemoteOptionsLoader<{ label: string; value: `account-${number}` }> = {
+      load: () => ({
+        queryFn: async () => ({ hasMore: false, options: [] }),
+        queryKey: ['accounts'],
+      }),
+      pagination: { size: 25, type: 'page' },
+      resolveSelected: () => ({ queryFn: async () => [], queryKey: ['accounts', 'selected'] }),
+    }
+    const remote = defineFormSchema({
+      fields: [
+        { key: 'accountId', options: { loader, mode: 'remote' }, required: true, type: 'select' },
+      ],
+    })
+
+    expectTypeOf<
+      ExtractFormOutput<typeof remote>['accountId']
+    >().toEqualTypeOf<`account-${number}`>()
+  })
+
+  it('types a date by the format it submits', () => {
+    const dates = defineFormSchema({
+      fields: [{ key: 'day', required: true, type: 'date' }],
+    })
+
+    expectTypeOf<ExtractFormOutput<typeof dates>['day']>().toEqualTypeOf<string>()
+  })
+
+  it('types a hidden field by what its input transform holds', () => {
+    const hidden = defineFormSchema({
+      fields: [
+        {
+          key: 'presetId',
+          transform: { input: (presetId: string | null) => presetId },
+          type: 'hidden',
+        },
+      ],
+    })
+
+    expectTypeOf<ExtractFormOutput<typeof hidden>['presetId']>().toEqualTypeOf<string | null>()
+    expectTypeOf<ExtractFormInput<typeof hidden>['presetId']>().toEqualTypeOf<
+      string | null | undefined
+    >()
+  })
+
   it('removes null from required field output', () => {
     expectTypeOf<ExtractFormOutput<typeof requiredSchema>>().toEqualTypeOf<{
       email: string
@@ -532,7 +624,9 @@ describe('form output inference', () => {
       onSubmit: ({ formData }) => {
         expectTypeOf(formData.profile.name).toEqualTypeOf<string>()
         expectTypeOf(formData.meta.score).toEqualTypeOf<string>()
-        expectTypeOf(formData.roles).toEqualTypeOf<readonly ('admin' | 'reviewer')[] | null>()
+        expectTypeOf(formData.roles).toEqualTypeOf<('admin' | 'reviewer')[] | null>()
+        const body: { roles: ('admin' | 'reviewer')[] | null } = formData
+        expectTypeOf(body.roles).toEqualTypeOf<('admin' | 'reviewer')[] | null>()
 
         return { success: true }
       },

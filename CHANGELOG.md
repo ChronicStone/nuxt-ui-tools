@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.8.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.7.0...v1.8.0)
+
+Any file opens in a preview. `useFilePreview()` and `useNuxtApp().$filePreview.open()` show one file or a gallery in a modal, a drawer, or a fullscreen overlay rendered by `<UiFilePreviewProvider>`, with a renderer made for each kind: zoomable images, video and audio with custom controls, PDFs, text and JSON, CSV tables, Markdown through an app-provided sanitizer, and a download card for Office files and archives. Sources can be URLs, `File` or `Blob` objects, or functions that return a short-lived link on demand; renditions preview formats browsers cannot display, and `defineFilePreviewRenderer` adds custom kinds. Upload fields resolve stored values through `upload.resolve` so saved files show their name, size, and thumbnail, open them through `upload.open`, cancel uploads through an `AbortSignal`, cap files with `max`, and preview their files as a gallery when a provider is mounted.
+
+Form input is typed from the schema. `useForm({ input })` and `formApi.createForm(schema, { input })` accept `ExtractFormInput<typeof schema>`: any field may be missing or `null`, and a field with `transform.input` takes the value that hook accepts, such as a record loaded from the API. A container's `transform.input` now runs before its children read the result. Outputs are narrower too: a date field submits a `YYYY-MM-DD` string, or a `Date` with `outputFormat: 'date'`, and a hidden field holds what its `transform.input` returns. Fields defined outside a schema read their `deps` as form values. `useQueryState` without a default, or with an `undefined` one, types its value as possibly `undefined`. A page stays still when it becomes modified: the unsaved badge and the section reset keep their place, the modified ring is drawn inside the section, and on narrow pages the reset shares the title's row. The page now gives the navigation the `--nut-form-page-header` variable and each section its `scroll-margin-top` rather than setting the variable on the page root, so a resized header restyles only them. `optional: false` keeps an array section required.
+
+Table searches wait for a pause in typing: the search input applies its query after 300 ms without a keystroke instead of on every one. Spare width goes to the data columns, in proportion to their widths, instead of to a trailing filler column.
+
+Dependencies are pinned to exact versions. `@internationalized/date`, `@tanstack/vue-virtual`, `@vueuse/core`, and `tailwind-merge` are now peer dependencies, which Nuxt UI already brings. `vue-draggable-plus`, for drag-to-reorder arrays, and `xlsx`, for spreadsheet imports, are optional peer dependencies to install when an app uses those features. `motion-v` and `@tanstack/pacer` are no longer dependencies.
+
 ## v1.7.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.6.5...v1.7.0)

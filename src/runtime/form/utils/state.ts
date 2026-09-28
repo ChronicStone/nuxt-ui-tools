@@ -114,7 +114,7 @@ function applyInputTransforms(
       continue
     }
     const path = fieldPath(parentPath, field)
-    const value = getPathValue(target, path)
+    const value = transformFieldInput({ apiFactory, ctx, field, parentPath, path, target })
     if (isObjectContainerField(field)) {
       if (isRecord(value)) {
         applyInputTransforms(target, getChildFields(field), ctx, path, apiFactory)
@@ -150,17 +150,34 @@ function applyInputTransforms(
       }
       continue
     }
-    if (isUndefined(value)) {
-      continue
-    }
-    const transform = Object.getOwnPropertyDescriptor(field, 'transform')?.value
-    if (!isRecord(transform) || !isFunction(transform.input)) {
-      continue
-    }
-    const api = apiFactory?.(path, field)
-    const params = api ? callbackParams({ api, ctx, field, parentPath, state: target }) : undefined
-    setPathValue(target, path, transform.input(value, params))
   }
+}
+
+/**
+ * Applies a field's `transform.input` to the value its input brought, a container's before its
+ * children read the result, and returns the value the field now holds.
+ */
+function transformFieldInput(params: {
+  target: FormObject
+  field: FormField
+  path: readonly string[]
+  parentPath: readonly string[]
+  ctx: FormContextData
+  apiFactory: FormFieldApiFactory | undefined
+}) {
+  const { target, field, path } = params
+  const value = getPathValue(target, path)
+  const transform = Object.getOwnPropertyDescriptor(field, 'transform')?.value
+  if (isUndefined(value) || !isRecord(transform) || !isFunction(transform.input)) {
+    return value
+  }
+  const api = params.apiFactory?.(path, field)
+  const callback = api
+    ? callbackParams({ api, ctx: params.ctx, field, parentPath: params.parentPath, state: target })
+    : undefined
+  const transformed = transform.input(value, callback)
+  setPathValue(target, path, transformed)
+  return transformed
 }
 
 export function buildInitialFormFieldsState(fields: readonly FormField[], ctx: FormContextData) {

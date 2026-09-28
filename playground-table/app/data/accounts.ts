@@ -1,7 +1,14 @@
 import { faker } from '@faker-js/faker/locale/fr'
 
 import { ACCOUNT_TYPE, COUNTRY, CURRENCY, GROUPS, MANAGER_LOCATIONS } from './enums'
-import type { AccountStatus, AccountType, CountryCode, Currency } from './enums'
+import type {
+  AccountGroup,
+  AccountStatus,
+  AccountType,
+  CountryCode,
+  Currency,
+  ManagerLocation,
+} from './enums'
 
 export interface Contact {
   id: string
@@ -24,7 +31,7 @@ export interface Account {
   accountType: AccountType
   country: CountryCode
   city: string
-  group: string | null
+  group: AccountGroup | null
   evoliz: boolean
   vtest: boolean
   edofSync: boolean
@@ -37,7 +44,7 @@ export interface Account {
   canPerformOnSite: boolean
   erpId: string | null
   vtestId: string | null
-  managerLocation: string | null
+  managerLocation: ManagerLocation | null
   legalRepresentativeId: string | null
   billingContactId: string | null
   generalContacts: string[]

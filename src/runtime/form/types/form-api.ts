@@ -3,7 +3,7 @@ import type { ComputedRef } from 'vue'
 import type { FormValue } from './'
 import type { FormSubmitHandler } from './api'
 import type { FormController } from './controller'
-import type { ExtractFormOutput } from './output'
+import type { ExtractFormInput, ExtractFormOutput } from './output'
 import type { FormObject } from './utils'
 
 export type FormApiDisplayMode = 'modal' | 'drawer' | 'fullscreen'
@@ -26,10 +26,12 @@ export interface FormResolvedCreateOptions {
   onSubmit?: FormSubmitHandler<FormObject, FormValue>
 }
 
-export interface FormApiCreateOptions<
-  TSchema,
-  TSubmitData = FormValue,
-> extends FormApiCreateBaseOptions {
+export interface FormApiCreateOptions<TSchema, TSubmitData = FormValue> extends Omit<
+  FormApiCreateBaseOptions,
+  'input'
+> {
+  /** Initial value, typed from the schema as in `useForm`. */
+  input?: ExtractFormInput<TSchema>
   /** Optional submit handler owned by the form overlay. Keeps submit buttons pending until it settles. */
   onSubmit?: FormSubmitHandler<ExtractFormOutput<TSchema>, TSubmitData>
 }

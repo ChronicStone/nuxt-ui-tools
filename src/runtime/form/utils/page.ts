@@ -80,7 +80,7 @@ export function resolveFormPageSectionState(params: {
     ? leaves.filter((leaf) => isRequiredLeaf(leaf, runtime))
     : []
   const missing = required.filter((leaf) => isEmptyValue(runtime.getValue(leaf.path))).length
-  const optional = entry.section.optional === true || required.every((leaf) => leaf.item)
+  const optional = entry.section.optional ?? required.every((leaf) => leaf.item)
   const filled =
     !optional || leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
 

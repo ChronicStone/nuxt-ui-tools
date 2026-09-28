@@ -210,9 +210,11 @@ export interface FormOverlayUi {
  * (`complete`, `invalid`, `pending`) on entries and indicators, `data-dirty` on modified
  * sections and entries.
  *
- * Two CSS variables place sections under the pinned header: `--nut-form-page-header` (its
- * measured height, set by the page) and `--nut-form-page-gap` (the room below it, `24px` by
- * default). Set them on an element around the navigation and sections, such as the root.
+ * Sections and the navigation stay below the pinned header: the page gives each section its
+ * `scroll-margin-top` and the navigation the `--nut-form-page-header` variable (the header's
+ * measured height), rather than setting a variable every field inherits, so a header that
+ * resizes restyles only them. `--nut-form-page-gap` is the room below the header (`24px` by
+ * default); set it on an element around the navigation and sections, such as the root.
  */
 export interface FormPageUi {
   /** The `<form>` element, which scrolls on its own and is the container of the page queries. */

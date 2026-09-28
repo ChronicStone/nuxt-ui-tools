@@ -87,8 +87,8 @@ export type Prettify<T> = {
   [K in keyof T]: T[K]
 } & NonNullable<unknown>
 
-export type DeepPrettify<T> = T extends (infer U)[]
-  ? DeepPrettify<U>[]
+export type DeepPrettify<T> = T extends readonly unknown[]
+  ? { [K in keyof T]: DeepPrettify<T[K]> }
   : T extends object
     ? { [K in keyof T]: DeepPrettify<T[K]> } & NonNullable<unknown>
     : T
@@ -97,8 +97,8 @@ export type PathToObject<Path extends string, Output> = Path extends `${infer Fi
   ? { [K in First]: PathToObject<Rest, Output> }
   : { [K in Path]: Output }
 
-export type RemoveDotKeys<T> = T extends (infer U)[]
-  ? RemoveDotKeys<U>[]
+export type RemoveDotKeys<T> = T extends readonly unknown[]
+  ? { [I in keyof T]: RemoveDotKeys<T[I]> }
   : {
       [K in keyof T as K extends `${string}.${string}` ? never : K]: T[K] extends object
         ? RemoveDotKeys<T[K]>
@@ -112,8 +112,8 @@ export type DeepTransformNestedPaths<T> = T extends unknown
 type DeepTransformNestedPathsMember<T> = DeepPrettify<
   RemoveDotKeys<
     {
-      [K in keyof T]: T[K] extends (infer U)[]
-        ? DeepTransformNestedPaths<U>[]
+      [K in keyof T]: T[K] extends readonly unknown[]
+        ? DeepTransformNestedPathsItems<T[K]>
         : T[K] extends object
           ? DeepTransformNestedPaths<T[K]>
           : T[K]
@@ -121,10 +121,8 @@ type DeepTransformNestedPathsMember<T> = DeepPrettify<
       {
         [K in Extract<keyof T, string>]: PathToObject<
           K,
-          T[K] extends (infer U)[]
-            ? U extends object
-              ? DeepTransformNestedPaths<U>[]
-              : T[K]
+          T[K] extends readonly unknown[]
+            ? DeepTransformNestedPathsItems<T[K]>
             : T[K] extends object
               ? DeepTransformNestedPaths<T[K]>
               : T[K]
@@ -133,6 +131,11 @@ type DeepTransformNestedPathsMember<T> = DeepPrettify<
     >
   >
 >
+
+/** Maps the items of an array or tuple, keeping it an array or tuple and keeping `readonly`. */
+type DeepTransformNestedPathsItems<T extends readonly unknown[]> = {
+  [I in keyof T]: T[I] extends object ? DeepTransformNestedPaths<T[I]> : T[I]
+}
 
 export type SplitLitteral<String extends string, Divider extends string> = string extends String
   ? string[]

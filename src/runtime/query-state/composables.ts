@@ -83,7 +83,7 @@ export function useQueryStateClient(options?: {
 // ---------------------------------------------------------------------------
 
 type ResolveDefaultedValue<TValue, TDefault> = undefined extends TDefault
-  ? TValue
+  ? TValue | undefined
   : Exclude<TValue, undefined>
 
 interface UseQueryStateBaseOptions<TValue> {
@@ -110,7 +110,7 @@ export type UseQueryStateOptions<TValue, TDefault = TValue> = UseQueryStateBaseO
 
 export function useQueryState<TValue>(
   options: UseQueryStateBaseOptions<TValue> & { defaultValue: undefined },
-): WritableComputedRef<TValue>
+): WritableComputedRef<TValue | undefined>
 export function useQueryState<TValue, TDefault extends Exclude<TValue, undefined>>(
   options: UseQueryStateBaseOptions<TValue> & { defaultValue: TDefault },
 ): WritableComputedRef<Exclude<TValue, undefined>>

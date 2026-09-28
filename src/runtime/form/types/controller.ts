@@ -2,7 +2,7 @@ import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
 import type { FormValue } from './'
 import type { FormSubmitAction, FormSubmitHandler, FormSubmitHandlerResult } from './api'
-import type { ExtractFormInternalValue, ExtractFormOutput } from './output'
+import type { ExtractFormInput, ExtractFormInternalValue, ExtractFormOutput } from './output'
 import type { FormRuntime, FormRuntimeStep } from './runtime'
 import type { ExtractFormContext } from './schema'
 import type { FormObject } from './utils'
@@ -26,8 +26,11 @@ import type { FormValidationError, FormValidationMode, FormValidationOptions } f
 export interface UseFormParams<TSchema, TSubmitData = FormValue> {
   /** Schema owned by this form controller and passed to `<NutForm :form="form" />`. */
   schema: MaybeRefOrGetter<TSchema>
-  /** Optional initial internal state. Dotted field keys are still normalized by the runtime. */
-  input?: MaybeRefOrGetter<FormObject | undefined>
+  /**
+   * Optional initial value, typed from the schema: fields may be missing or `null`, and a field
+   * with `transform.input` takes what that hook accepts, such as a record loaded from the API.
+   */
+  input?: MaybeRefOrGetter<ExtractFormInput<TSchema> | undefined>
   /** Keeps later input changes synchronized into the mounted runtime. */
   syncInput?: MaybeRefOrGetter<boolean | readonly string[]>
   /** Selects required, custom-rule, all, or no validation. */

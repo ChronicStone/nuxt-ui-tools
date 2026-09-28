@@ -157,6 +157,48 @@ describe('form page layout', () => {
     )
   })
 
+  it('keeps a section in place when it becomes modified, with its reset beside the title', async () => {
+    for (const width of [420, 1100]) {
+      // oxlint-disable-next-line no-await-in-loop -- one mounted page per width
+      const harness = await mountPage({
+        schema: defineFormPageSchema({
+          controls: { dirtyCheck: true },
+          sections: [
+            {
+              description:
+                'Le nom affiché, l’entité légale, les identifiants officiels et le logo.',
+              fields: [{ key: 'name', label: 'Nom', type: 'text' }],
+              key: 'identity',
+              label: 'Identité',
+            },
+          ],
+        }),
+        style: `height: 700px; width: ${width}px`,
+      })
+      // oxlint-disable-next-line no-await-in-loop -- layout of this width
+      await settle()
+      const section = harness.section('identity')
+      const before = section.getBoundingClientRect()
+
+      // oxlint-disable-next-line no-await-in-loop -- layout of this width
+      await harness.setValue('name', 'DemandQA')
+      // oxlint-disable-next-line no-await-in-loop -- layout of this width
+      await settle()
+
+      const after = section.getBoundingClientRect()
+      const title = must(section.querySelector<HTMLElement>('[data-form-page-section-title]'))
+      const reset = must(section.querySelector<HTMLElement>('[data-form-page-reset]'))
+      expect(section.dataset.dirty).toBe('true')
+      expect(after.height).toBeCloseTo(before.height, 1)
+      expect(after.top).toBeCloseTo(before.top, 1)
+      const titleBox = title.getBoundingClientRect()
+      const resetBox = reset.getBoundingClientRect()
+      expect(resetBox.top).toBeLessThan(titleBox.bottom)
+      expect(resetBox.bottom).toBeGreaterThan(titleBox.top)
+      unmountPage()
+    }
+  })
+
   it('turns the navigation into one scrolling row of chips on narrow pages', async () => {
     const { header, navigation, page, sections, entry } = await mountSized(420)
 

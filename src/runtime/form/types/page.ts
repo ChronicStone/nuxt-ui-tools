@@ -53,7 +53,8 @@ export interface FormPageSection<
   /**
    * Shows the section as optional and leaves it out of the sections left to complete. A section
    * without a required field is optional already; set this when its required fields are filled
-   * by their defaults and the user has nothing to do there.
+   * by their defaults and the user has nothing to do there. Set `false` to keep a section
+   * required when its only required fields are the cells of array rows.
    */
   optional?: boolean
   /** Grid of the section's fields, merged over the schema `layout`. */
@@ -177,7 +178,10 @@ export interface FormPageSectionState {
   label: string
   /** Resolved supporting copy. */
   description?: string
-  /** True when the section is declared optional or has no required field outside array items. */
+  /**
+   * True when the section is declared optional, or declares nothing and has no required field
+   * outside array items.
+   */
   optional: boolean
   /** Number of required fields without a value, the fields of array items included. */
   missing: number

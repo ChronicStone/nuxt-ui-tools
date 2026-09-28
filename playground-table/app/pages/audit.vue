@@ -89,9 +89,7 @@ const schema = defineTableSchema({
           <span class="min-w-0 flex-1">
             <b>{AUDIT_ACTIONS[row.action]}</b>
             <small>
-              {dateFmt.format(new Date(row.at))}{' '}
-              ·{' '}
-              {timeFmt.format(new Date(row.at))}
+              {dateFmt.format(new Date(row.at))} · {timeFmt.format(new Date(row.at))}
             </small>
           </span>
           <span class="ex-st" style={{ '--dot': OUTCOME_COLOR[row.outcome] }}>

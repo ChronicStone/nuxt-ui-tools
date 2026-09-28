@@ -94,7 +94,7 @@ type ResolveNullableFormFieldValue<TField> = TField extends { type: 'text' }
                                             : TField extends { type: 'rating' }
                                               ? RatingFieldOutput
                                               : TField extends { type: 'date' }
-                                                ? DateFieldOutput
+                                                ? DateFieldOutput<TField>
                                                 : TField extends { type: 'datetime' }
                                                   ? DateTimeFieldOutput
                                                   : TField extends { type: 'daterange' }

@@ -1,11 +1,18 @@
 import type { FormValue } from './'
 import type { FormFieldApi } from './api'
+import type { FormObject } from './utils'
+
+/**
+ * Dependency values a field callback reads: each declared dependency under its target name, typed
+ * `FormValue` until the callback narrows it, since a reusable field can be mounted anywhere.
+ */
+export type FormDependencyValues = Readonly<FormObject>
 /**
  * Parameters passed to field-level callbacks.
  */
 export interface FormFieldCallbackParams<
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
   TOption = FormValue,
 > {
@@ -23,7 +30,7 @@ export interface FormFieldCallbackParams<
 export type FormFieldCallback<
   TResult,
   TContext = NonNullable<unknown>,
-  TDeps = NonNullable<unknown>,
+  TDeps = FormDependencyValues,
   TValue = FormValue,
   TOption = FormValue,
 > = (params: FormFieldCallbackParams<TContext, TDeps, TValue, TOption>) => TResult

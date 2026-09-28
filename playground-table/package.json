@@ -9,11 +9,11 @@
     "clean": "rm -rf .nuxt .output"
   },
   "dependencies": {
-    "@faker-js/faker": "^10.6.0",
-    "@nuxt/ui": "4.10.0",
+    "@faker-js/faker": "10.6.0",
+    "@nuxt/ui": "4.11.2",
     "@nuxtjs/i18n": "10.6.0",
-    "@tanstack/vue-query": "5.101.4",
-    "nuxt": "^4.5.2",
+    "@tanstack/vue-query": "5.104.0",
+    "nuxt": "4.5.2",
     "tailwindcss": "4.3.3"
   }
 }

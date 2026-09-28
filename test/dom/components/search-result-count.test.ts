@@ -13,7 +13,7 @@ let harness: Harness | undefined
 afterEach(() => harness?.unmount())
 
 describe('search part', () => {
-  it('renders the placeholder, icon and width, committing on enter and blur only', async () => {
+  it('renders the placeholder, icon and width, committing after typing pauses or on enter and blur', async () => {
     harness = await mountLoaded({ render: () => h(DataListSearch), schema: createAccountsSchema() })
     const w = harness.wrapper
     const input = w.find('input[data-ui="UInput"]')
@@ -39,6 +39,12 @@ describe('search part', () => {
     await input.trigger('blur')
     await harness.flush()
     expect(harness.internals.filters.searchQuery.value).toBe('Compte 02')
+
+    await input.setValue('Compte 03')
+    expect(harness.internals.filters.searchQuery.value).toBe('Compte 02')
+    await new Promise((resolve) => setTimeout(resolve, 350))
+    await harness.flush()
+    expect(harness.internals.filters.searchQuery.value).toBe('Compte 03')
 
     harness.internals.filters.searchQuery.value = ''
     await harness.flush()

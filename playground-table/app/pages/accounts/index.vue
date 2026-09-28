@@ -225,8 +225,7 @@ const schema = defineTableSchema({
         </dl>
         <footer class="ex-card__ft">
           <span>
-            {row.contracts}{' '}
-            contrat
+            {row.contracts} contrat
             {row.contracts > 1 ? 's' : ''}
           </span>
           <span class="ex-card__sep">·</span>
