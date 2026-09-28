@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.8.0...v1.8.1)
+
+A number column's loading skeleton follows the column's alignment instead of always sitting on the right, so a left-aligned number column no longer jumps from right to left when its values load. The peer dependency ranges for `@internationalized/date`, `@tanstack/vue-virtual`, `@vueuse/core`, and `tailwind-merge` accept the whole major line these packages are used on, so apps on an earlier Nuxt UI 4 release install without peer warnings.
+
 ## v1.8.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.7.0...v1.8.0)
