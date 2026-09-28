@@ -1,16 +1,20 @@
-import type { QueryKey, UseQueryOptions } from '@tanstack/vue-query'
-import type { ComputedRef, Ref } from 'vue'
+import type { QueryKey, QueryObserverOptions } from '@tanstack/vue-query'
+import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 
 import type { ResolvedFormOption } from '../utils/options'
 import type { FormValue } from './'
 
 /**
- * Query options accepted by option sources once they cross the runtime boundary.
+ * Query options accepted by option sources once they cross the runtime boundary: a plain options
+ * object whose `queryKey` is an array, which is what the runtime checks before using it. They reach
+ * Vue Query's `useQuery`, which reads `enabled` as a boolean, a ref, or a getter.
  */
-export type FormRuntimeQueryOptions = Exclude<
-  UseQueryOptions<FormValue, Error, FormValue, FormValue, QueryKey>,
-  Ref<FormValue> | ComputedRef<FormValue>
->
+export type FormRuntimeQueryOptions = Omit<
+  QueryObserverOptions<FormValue, Error, FormValue, FormValue, QueryKey>,
+  'enabled'
+> & {
+  enabled?: MaybeRefOrGetter<boolean | undefined>
+}
 
 /**
  * Option state registered by a mounted option field and read through the field API.

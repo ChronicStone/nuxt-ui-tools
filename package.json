@@ -178,63 +178,75 @@
     "dev:prepare:table": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground-table"
   },
   "dependencies": {
-    "@internationalized/date": "^3.12.3",
-    "@nuxt/kit": "^4.5.2",
-    "@regle/core": "1.29.1",
-    "@regle/rules": "1.29.1",
-    "@tanstack/pacer": "0.22.0",
-    "@tanstack/vue-table": "9.2.3",
-    "@tanstack/vue-virtual": "3.13.36",
-    "@vueuse/core": "14.4.0",
+    "@nuxt/kit": "4.5.2",
+    "@regle/core": "1.29.3",
+    "@regle/rules": "1.29.3",
+    "@tanstack/vue-table": "9.2.4",
     "cookiejs": "2.1.4",
-    "libphonenumber-js": "1.13.11",
+    "libphonenumber-js": "1.13.14",
     "maska": "3.2.1",
-    "motion-v": "2.4.0",
-    "nuxt-viewport": "2.6.0",
-    "tailwind-merge": "^3.6.0"
+    "nuxt-viewport": "2.6.1"
   },
   "devDependencies": {
-    "@nuxt/module-builder": "^1.0.3",
-    "@nuxt/schema": "^4.5.2",
-    "@nuxt/ui": "^4.10.0",
+    "@internationalized/date": "3.12.4",
+    "@nuxt/module-builder": "1.0.3",
+    "@nuxt/schema": "4.5.2",
+    "@nuxt/ui": "4.11.2",
     "@tailwindcss/vite": "4.3.3",
+    "@tanstack/vue-query": "5.104.0",
+    "@tanstack/vue-virtual": "3.13.39",
     "@tiptap/y-tiptap": "3.0.9",
-    "@types/node": "25.4.0",
+    "@types/node": "26.6.3",
     "@unovis/ts": "1.7.0",
     "@unovis/vue": "1.7.0",
-    "@vitejs/plugin-vue": "^6.0.8",
-    "@vitejs/plugin-vue-jsx": "^5.1.6",
-    "@vitest/browser-playwright": "4.1.11",
+    "@vitejs/plugin-vue": "6.0.9",
+    "@vitejs/plugin-vue-jsx": "5.1.6",
+    "@vitest/browser-playwright": "5.0.2",
     "@vue/test-utils": "2.5.1",
-    "changelogen": "^0.6.2",
+    "@vueuse/core": "14.4.0",
+    "changelogen": "0.6.2",
     "happy-dom": "20.14.5",
-    "nuxt": "^4.5.2",
-    "oxfmt": "0.64.0",
-    "oxlint": "^1.82.0",
+    "nuxt": "4.5.2",
+    "oxfmt": "0.70.0",
+    "oxlint": "1.85.0",
     "playwright": "1.63.0",
-    "typescript": "~5.9.3",
-    "ultracite": "7.12.0",
-    "vitest": "^4.1.11",
-    "vue-tsc": "^3.3.10",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "ultracite": "7.12.1",
+    "vitest": "5.0.2",
+    "vue-draggable-plus": "0.6.1",
+    "vue-tsc": "3.3.11",
     "xlsx": "0.18.5"
   },
   "peerDependencies": {
+    "@internationalized/date": ">=3.12.4",
     "@nuxt/ui": ">=4.10.0",
     "@tanstack/vue-query": ">=5.101.4",
+    "@tanstack/vue-virtual": ">=3.13.39",
     "@unovis/ts": ">=1.6.0",
     "@unovis/vue": ">=1.6.0",
+    "@vueuse/core": ">=14.4.0",
     "nuxt": ">=4.5.2",
+    "tailwind-merge": ">=3.7.0",
     "tailwindcss": ">=4.3.3",
     "typescript": ">=5.9.0",
     "vue": ">=3.5.41",
     "vue-draggable-plus": ">=0.6.1",
-    "vue-router": ">=4.6.4"
+    "vue-router": ">=4.6.4",
+    "xlsx": ">=0.18.5"
   },
   "peerDependenciesMeta": {
     "@unovis/ts": {
       "optional": true
     },
     "@unovis/vue": {
+      "optional": true
+    },
+    "vue-draggable-plus": {
+      "optional": true
+    },
+    "xlsx": {
       "optional": true
     }
   },
