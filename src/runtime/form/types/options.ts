@@ -66,7 +66,10 @@ export interface FormCreateOptionParams<
   TValue = FormValue,
   TOption = FormValue,
 > extends FormFieldCallbackParams<TContext, TDeps, TValue, TOption> {
-  /** User-entered label that should be converted into a concrete option. */
+  /**
+   * User-entered label that should be converted into a concrete option. Empty when the explicit
+   * create action runs without a search term, such as a creator that opens its own form.
+   */
   label: string
 }
 

@@ -306,9 +306,9 @@ export function useFieldOptions(params: {
     return normalized
   }
 
-  async function create(label: string) {
-    const normalizedLabel = label.trim()
-    if (!normalizedLabel || creating.value) {
+  async function create(label?: string) {
+    const normalizedLabel = label?.trim() ?? ''
+    if ((!isUndefined(label) && !normalizedLabel) || creating.value) {
       return null
     }
 
