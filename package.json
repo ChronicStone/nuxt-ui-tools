@@ -1,6 +1,6 @@
 {
   "name": "nuxt-ui-tools",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Nuxt module and runtime toolkit for UI-heavy Nuxt applications",
   "homepage": "https://github.com/ChronicStone/nuxt-ui-tools#readme",
   "bugs": "https://github.com/ChronicStone/nuxt-ui-tools/issues",
@@ -220,15 +220,15 @@
     "xlsx": "0.18.5"
   },
   "peerDependencies": {
-    "@internationalized/date": ">=3.12.4",
+    "@internationalized/date": ">=3.12.0",
     "@nuxt/ui": ">=4.10.0",
     "@tanstack/vue-query": ">=5.101.4",
-    "@tanstack/vue-virtual": ">=3.13.39",
+    "@tanstack/vue-virtual": ">=3.13.0",
     "@unovis/ts": ">=1.6.0",
     "@unovis/vue": ">=1.6.0",
-    "@vueuse/core": ">=14.4.0",
+    "@vueuse/core": ">=14.0.0",
     "nuxt": ">=4.5.2",
-    "tailwind-merge": ">=3.7.0",
+    "tailwind-merge": ">=3.0.0",
     "tailwindcss": ">=4.3.3",
     "typescript": ">=5.9.0",
     "vue": ">=3.5.41",
