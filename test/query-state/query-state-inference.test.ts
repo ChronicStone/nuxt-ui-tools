@@ -21,6 +21,14 @@ function useOptionalLayoutState() {
   })
 }
 
+function useOptionalSearchState() {
+  return useQueryState({
+    codec: stringCodec,
+    defaultValue: undefined,
+    key: 'q',
+  })
+}
+
 function useCombinedQueryStates() {
   return useQueryStates({
     schema: {
@@ -52,6 +60,12 @@ describe('query-state inference', () => {
   it('preserves undefined when defaultValue is undefined', () => {
     expectTypeOf<ReturnType<typeof useOptionalLayoutState>>().toEqualTypeOf<
       WritableComputedRef<'grid' | 'table' | undefined>
+    >()
+  })
+
+  it('adds undefined to a codec that never parses it when defaultValue is undefined', () => {
+    expectTypeOf<ReturnType<typeof useOptionalSearchState>>().toEqualTypeOf<
+      WritableComputedRef<string | undefined>
     >()
   })
 
