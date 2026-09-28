@@ -4,6 +4,7 @@ import type { InjectionKey } from 'vue'
 import type { FormPageSectionState } from '../types'
 import { getSchemaDirtyCheck } from '../utils/controls'
 import {
+  collectFormPageLeaves,
   getFormPageNavigationTitle,
   getFormPageSections,
   isFormPageSectionVisible,
@@ -33,14 +34,19 @@ export function useFormPage(params: {
   const requiredEnforced = computed(
     () => root.validationMode.value === true || root.validationMode.value === 'required',
   )
+  /** Fields of each visible section, which follow the structure of the form, not its values. */
+  const structure = computed(() =>
+    entries.value.map((entry) => ({ entry, leaves: collectFormPageLeaves(entry, runtime) })),
+  )
   /** Each visible section with where it stands. */
   const items = computed(() =>
-    entries.value.map((entry, index) => ({
+    structure.value.map(({ entry, leaves }, index) => ({
       entry,
       section: resolveFormPageSectionState({
         entry,
         index,
         input: root.input.value,
+        leaves,
         requiredEnforced: requiredEnforced.value,
         runtime,
       }),
@@ -77,8 +83,8 @@ export function useFormPage(params: {
     }
     for (const path of section.dirtyPaths) {
       runtime.setValue(path, cloneFormValue(runtime.getInitialValue(path)))
-      runtime.clearError(path)
     }
+    runtime.clearErrors(section.dirtyPaths)
     await runtime.settleEffects()
   }
 

@@ -1,3 +1,5 @@
+import { isProxy } from 'vue'
+
 import type { FormValue, FormFieldCallbackParams, FormOptionItem, FormOptionValue } from '../types'
 import { isRecord } from './path'
 import { isBoolean, isFunction, isNumber, isString, isUndefined } from './predicate'
@@ -59,11 +61,44 @@ export function normalizeOptionItem(
   }
 }
 
+/**
+ * Normalized options, keyed by the option object and its keys. Every row of an array shares the
+ * option objects of the same query or list, so each is normalized once rather than once per row.
+ */
+const normalizedOptions = new WeakMap<object, Map<string, ResolvedFormOption>>()
+
 export function normalizeOptionItems(
   options: readonly FormValue[] | undefined,
   keys: FormOptionKeys = {},
 ) {
-  return (options ?? []).map((option) => normalizeOptionItem(option, keys))
+  const signature = `${keys.value ?? ''}|${keys.label ?? ''}|${keys.children ?? ''}`
+  return (options ?? []).map((option) => {
+    if (!isStaticOption(option)) {
+      return normalizeOptionItem(option, keys)
+    }
+    const cached = normalizedOptions.get(option)?.get(signature)
+    if (cached) {
+      return cached
+    }
+    const normalized = normalizeOptionItem(option, keys)
+    const entries = normalizedOptions.get(option) ?? new Map<string, ResolvedFormOption>()
+    entries.set(signature, normalized)
+    normalizedOptions.set(option, entries)
+    return normalized
+  })
+}
+
+/**
+ * A plain option whose texts are not functions: its normalized form cannot change without a new
+ * object, unlike a reactive one or one whose label follows the locale.
+ */
+function isStaticOption(option: FormValue): option is FormOptionItem & object {
+  return (
+    isRecord(option) &&
+    !isProxy(option) &&
+    !Object.values(option).some(isFunction) &&
+    !Array.isArray(option.children)
+  )
 }
 
 export const LOAD_MORE_OPTION_VALUE = '__nut:load-more__'

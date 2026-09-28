@@ -45,6 +45,11 @@ const DEFAULT_DIRTY_NAVIGATION_MESSAGE = 'You have unsaved changes. Close this f
  * Root of a rendered form. It creates the runtime and binds it to the controller, provides the
  * runtime and the presentation config to the fields, guards navigation away from a dirty form,
  * and owns submit and cancel. `<NutForm>` and `FormPage` both render from it.
+ *
+ * The controller is bound once the form has mounted. A page renders before the forms it contains
+ * set up, so it reads an unbound controller either way in the browser; binding at mount keeps the
+ * server, which renders the page after the form, from reading a bound one the hydrating page
+ * would not match.
  */
 export function useFormRoot(params: UseFormRootParams) {
   const router = useRouter()
@@ -71,18 +76,18 @@ export function useFormRoot(params: UseFormRootParams) {
 
   provideFormRuntime(runtime)
 
-  watch(
-    params.form,
-    (controller, previousController) => {
-      previousController?.unbind(runtime)
-      controller?.bind(runtime)
-    },
-    { immediate: true },
-  )
-
   onBeforeUnmount(() => params.form()?.unbind(runtime))
 
   onMounted(async () => {
+    watch(
+      params.form,
+      (controller, previousController) => {
+        previousController?.unbind(runtime)
+        controller?.bind(runtime)
+      },
+      { immediate: true },
+    )
+    runtime.paint.start()
     await nextTick()
     const target = getSchemaAutoFocus(schema.value)
     if (isString(target)) {

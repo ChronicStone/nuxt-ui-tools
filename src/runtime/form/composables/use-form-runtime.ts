@@ -36,6 +36,7 @@ import {
 import { getSchemaContext, useFormContextResources } from './use-form-context-resources'
 import { useFormFocus } from './use-form-focus'
 import { useFormOptionRegistry } from './use-form-option-registry'
+import { createFormPaintGate } from './use-form-paint'
 import { useFormState } from './use-form-state'
 import { useFormSubmission } from './use-form-submission'
 import { useFormUploadRegistry } from './use-form-upload-registry'
@@ -64,6 +65,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const currentStepIndex = ref<number>(0)
   const navigationActionPending = ref<'next' | 'previous' | 'reset' | null>(null)
   const effects = createEffectLifecycle()
+  const paint = createFormPaintGate({ defer: import.meta.client === true })
   const { t } = useUiToolsLocale()
 
   setContext(getSchemaContext(params.schema.value))
@@ -104,29 +106,58 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     setValue: (target: readonly string[], value: FormValue) => void
     state: () => FormObject
   }) {
-    return (path: readonly string[], field?: FormField) =>
-      createFieldApi({
-        clearExternalError: () => validation.clearError(path),
-        ctx: context,
-        field,
-        focusField: () => focus.focusField(path),
-        form: createFormNamespace(path, read),
-        getInitialValue: read.getInitialValue,
-        getValue: read.getValue,
-        optionRegistry,
-        path,
-        pendingField: () => validation.isPending(path),
-        resetValue: state.resetValue,
-        setExternalError: (message, options) => validation.setError(path, message, options),
-        setValue: read.setValue,
-        state: read.state(),
-        uploadRegistry,
-        validateField: () =>
-          field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
-      })
+    return (path: readonly string[], field?: FormField) => buildFieldApi(read, { field, path })
   }
 
-  const apiFactory = createApiFactory({
+  const apiCache = new WeakMap<FormField, Map<string, FormFieldApi>>()
+  const unboundApiCache = new Map<string, FormFieldApi>()
+
+  /** Field APIs only close over their path and field, so one instance serves every caller. */
+  function cachedApiFactory(read: Parameters<typeof createApiFactory>[0]) {
+    return (path: readonly string[], field?: FormField) => {
+      const key = path.join('\u0000')
+      let bucket = unboundApiCache
+      if (field) {
+        bucket = apiCache.get(field) ?? new Map<string, FormFieldApi>()
+        apiCache.set(field, bucket)
+      }
+      const cached = bucket.get(key)
+      if (cached) {
+        return cached
+      }
+      const api = buildFieldApi(read, { field, path })
+      bucket.set(key, api)
+      return api
+    }
+  }
+
+  function buildFieldApi(
+    read: Parameters<typeof createApiFactory>[0],
+    target: { path: readonly string[]; field?: FormField },
+  ) {
+    const { field, path } = target
+    return createFieldApi({
+      clearExternalError: () => validation.clearError(path),
+      ctx: context,
+      field,
+      focusField: () => focus.focusField(path),
+      form: createFormNamespace(path, read),
+      getInitialValue: read.getInitialValue,
+      getValue: read.getValue,
+      optionRegistry,
+      path,
+      pendingField: () => validation.isPending(path),
+      resetValue: state.resetValue,
+      setExternalError: (message, options) => validation.setError(path, message, options),
+      setValue: read.setValue,
+      state: read.state(),
+      uploadRegistry,
+      validateField: () =>
+        field ? validation.validateFields([field], path.slice(0, -1)) : Promise.resolve(true),
+    })
+  }
+
+  const apiFactory = cachedApiFactory({
     getInitialValue: (target) => state.getInitialValue(target),
     getValue: (target) => state.getValue(target),
     setValue: (target, value) => state.setValue(target, value),
@@ -148,9 +179,11 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     schema: params.schema,
   })
 
+  const deferItemRules = paint.painted.value === false
   const validation = useFormValidation({
     apiFactory,
     context,
+    deferItemRules,
     getDateMaxMessage: (max: string) => t('form.validation.dateMax', { max }),
     getDateMinMessage: (min: string) => t('form.validation.dateMin', { min }),
     getRequiredMessage: () => t('form.validation.required'),
@@ -160,7 +193,34 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     state: state.state,
   })
 
+  if (deferItemRules) {
+    paint.afterPaint(() => whenIdle(() => void validation.completeRules()))
+  }
+
+  const rowActivators = new Map<string, () => void>()
+
+  function registerRowActivator(itemPath: string, activate: () => void) {
+    rowActivators.set(itemPath, activate)
+    return () => {
+      if (rowActivators.get(itemPath) === activate) {
+        rowActivators.delete(itemPath)
+      }
+    }
+  }
+
+  function activateField(path: string) {
+    const segments = path.split('.')
+    for (let length = segments.length; length > 0; length -= 1) {
+      const activate = rowActivators.get(segments.slice(0, length).join('.'))
+      if (activate) {
+        activate()
+        return
+      }
+    }
+  }
+
   const focus = useFormFocus({
+    beforeFocus: activateField,
     getErrors: () => validation.validationErrors.value,
   })
 
@@ -378,11 +438,14 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   }
 
   const runtime: FormRuntime = {
+    paint,
     actionPending,
+    activateField,
+    registerRowActivator,
     canGoNext,
     canGoPrevious,
     clearError: (path) => validation.clearError(path ? pathSegments(path) : undefined),
-    clearErrors: () => validation.clearError(),
+    clearErrors: (paths) => (paths ? validation.clearPaths(paths) : validation.clearError()),
     context,
     currentFields,
     currentLayout,
@@ -762,4 +825,17 @@ function fieldCallbackParams(params: {
     ctx: params.ctx,
     deps: resolveFieldDependencies(params),
   }
+}
+
+/**
+ * Runs `task` once the browser has no input or frame to handle, so work nobody waits for yet,
+ * such as the validation rules of array items, does not delay the user. Browsers without idle
+ * callbacks run it after a short delay instead.
+ */
+function whenIdle(task: () => void) {
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(task, { timeout: 2000 })
+    return
+  }
+  setTimeout(task, 200)
 }

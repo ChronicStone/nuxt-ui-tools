@@ -40,6 +40,7 @@ const model = computed<boolean>({
   >
     <USwitch
       v-model="model"
+      :aria-label="bare ? undefined : label"
       v-bind="controlProps"
       :label="bare ? undefined : label"
       :description="bare ? undefined : description"

@@ -8,7 +8,7 @@ import {
   defineNuxtModule,
   installModule,
 } from '@nuxt/kit'
-import type { VueTSConfig } from '@nuxt/schema'
+import type { NuxtOptions, VueTSConfig } from '@nuxt/schema'
 import { breakpointsTailwind } from '@vueuse/core'
 import type { ModuleOptions as ViewportOptions } from 'nuxt-viewport'
 import typescript from 'typescript'
@@ -124,6 +124,8 @@ export default defineNuxtModule<ModuleOptions>({
       ...new Set([...(nuxt.options.vite.resolve.dedupe ?? []), '@nuxt/ui']),
     ]
     nuxt.options.alias.cookiejs ??= cookieEsmPath
+    keepServerPrefetchInClient(nuxt.options)
+    bundleTableEngines(nuxt.options)
 
     const viewportOptions = normalizeViewportOptions(nuxt.options.viewport)
     nuxt.options.viewport = viewportOptions
@@ -181,6 +183,36 @@ function normalizeViewportOptions(
     return mergeViewportOptions()
   }
   return mergeViewportOptions(viewportOptions)
+}
+
+/**
+ * Keeps `onServerPrefetch` in client builds, which Nuxt removes by default. Vue gives every
+ * component that registers the hook its own `useId` scope, so after any such component, such as
+ * each Nuxt Icon, the ids the browser generates while hydrating would otherwise differ from the
+ * ids the server rendered, and labels, descriptions, and popups would point at the wrong elements.
+ */
+function keepServerPrefetchInClient(options: NuxtOptions) {
+  const composables = options.optimization.treeShake.composables.client
+  const vue = composables.vue
+  if (Array.isArray(vue)) {
+    composables.vue = vue.filter((name) => name !== 'onServerPrefetch')
+  }
+}
+
+/**
+ * Bundles TanStack Table into the server build. The tables of this module use its version 9 while
+ * Nuxt UI's table uses version 8; bundling resolves each import from its importer, as the client
+ * build does, while an external import is resolved once from the server chunks, where package
+ * managers with isolated installs only expose one of the two versions.
+ */
+function bundleTableEngines(options: NuxtOptions) {
+  options.vite.ssr ??= {}
+  const current = options.vite.ssr.noExternal
+  if (current === true) {
+    return
+  }
+  const listed = Array.isArray(current) ? current : current === undefined ? [] : [current]
+  options.vite.ssr.noExternal = [...listed, '@tanstack/vue-table', '@tanstack/table-core']
 }
 
 function setupJsxCompilerOptions(config: VueTSConfig) {
