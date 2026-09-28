@@ -39,7 +39,7 @@ describe('TableRenderer skeleton and tokens', () => {
   it('renders typed skeleton rows while the first page loads', async () => {
     harness = await mountDataList({
       render: () => h(TableRenderer, { height: '400px' }),
-      schema: createAccountsSchema({ delay: 80 }),
+      schema: createAccountsSchema({ gate: new Promise(() => {}) }),
       settle: false,
     })
     await harness.flush(1)

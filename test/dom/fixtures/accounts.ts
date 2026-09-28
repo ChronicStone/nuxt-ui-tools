@@ -46,6 +46,8 @@ export function createAccounts(count: number): AccountRow[] {
 export interface AccountsSchemaOptions {
   rows?: AccountRow[]
   delay?: number
+  /** Holds every query until the promise settles, so a test can inspect a load in progress. */
+  gate?: Promise<unknown>
   onQuery?: (context: unknown) => void
   pagination?: false | Record<string, unknown>
   actions?: boolean
@@ -190,6 +192,9 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
           query: (context) => ({
             queryFn: async () => {
               options.onQuery?.(context)
+              if (options.gate) {
+                await options.gate
+              }
               if (options.delay) {
                 await new Promise((resolve) => setTimeout(resolve, options.delay))
               }
@@ -240,6 +245,9 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
           query: (context) => ({
             queryFn: async () => {
               options.onQuery?.(context)
+              if (options.gate) {
+                await options.gate
+              }
               if (options.delay) {
                 await new Promise((resolve) => setTimeout(resolve, options.delay))
               }
