@@ -11,6 +11,7 @@ import { getFormOverlayDescription, getFormOverlayTitle } from '../utils/overlay
 import { isRecord } from '../utils/path'
 import { useForm } from './use-form'
 import { useFormApi } from './use-form-api'
+import { useFormRuntime } from './use-form-runtime'
 
 export function useFormOverlayController(instance: FormApiRuntimeInstance) {
   const formApi = useFormApi()
@@ -28,6 +29,16 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
   )
   const dismissible = computed(() => !form.isSubmitting.value)
 
+  // The runtime owns the values, so it lives with the controller and not with the layout that
+  // renders it: switching between modal, drawer and fullscreen must not rebuild the state.
+  const runtime = useFormRuntime({
+    input: form.input,
+    schema: form.schema,
+    syncInput: form.syncInput,
+    validationMode: form.validationMode,
+  })
+  form.bind(runtime)
+
   formApi.setController(instance.id, form)
 
   const runtimeControls = {
@@ -38,6 +49,7 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
   formApi.setRuntimeControls(instance.id, runtimeControls)
 
   onBeforeUnmount(() => {
+    form.unbind(runtime)
     formApi.removeController(instance.id, form)
     formApi.removeRuntimeControls(instance.id, runtimeControls)
   })
@@ -115,6 +127,7 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
     handleSubmitted,
     open,
     resolveAfterClose,
+    runtime,
     title,
   }
 }

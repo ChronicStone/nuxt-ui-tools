@@ -1,3 +1,9 @@
+## v1.11.2
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.11.1...v1.11.2)
+
+Form API forms keep their state when the overlay layout changes. Resizing across the modal and drawer breakpoint remounted the renderer, and the runtime that held the values was created inside it, so the form rebuilt itself from its initial input and lost what the user had typed. The overlay controller now owns the runtime and the modal, drawer and fullscreen layouts only render it, so values, step, errors and touched fields survive the switch.
+
 # Changelog
 
 ## v1.11.1
