@@ -95,12 +95,15 @@ export interface FormStatefulFieldBase<
   default?: FormDynamic<TValue, { ctx: TContext; api: FormFieldApi<TValue, FormValue, TContext> }>
   /** Label rendered by the field wrapper. */
   label?: FormText
-  /** Optional supporting copy rendered near the control, or a tooltip/modal variant. */
-  description?: FormText | FormFieldDescription
-  /** Optional right-side hint rendered by the field wrapper. */
-  hint?: FormText
-  /** Optional help text rendered under the control. */
-  help?: FormText
+  /** Optional supporting copy rendered near the control, or a tooltip/modal variant. Callbacks receive `{ ctx, deps, api }`. */
+  description?:
+    | FormText
+    | FormFieldDescription
+    | FormFieldCallback<FormText | FormFieldDescription, TContext, TDeps, TValue>
+  /** Optional right-side hint rendered by the field wrapper. Callbacks receive `{ ctx, deps, api }`. */
+  hint?: FormText | FormFieldCallback<FormText, TContext, TDeps, TValue>
+  /** Optional help text rendered under the control. Callbacks receive `{ ctx, deps, api }`. */
+  help?: FormText | FormFieldCallback<FormText, TContext, TDeps, TValue>
   /** Optional rich content rendered beside the label. Takes precedence over `hint`. */
   labelExtra?: FormRenderable
   /** Placeholder forwarded to controls that support placeholders. Callbacks receive `{ ctx, deps, api }`. */

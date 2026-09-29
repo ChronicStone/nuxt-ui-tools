@@ -31,14 +31,31 @@ const model = computed<string | undefined>({
   set: (value) => form.setValue(props.path, normalize(value)),
 })
 const maskOptions = computed(() => maskDirectiveOptions(fieldProps.value.mask))
+// A field whose mask is removed keeps its Maska instance, so it is reset to pass input through.
 const vOptionalMaska: Directive<HTMLElement, ReturnType<typeof maskDirectiveOptions>> = (
   element,
   binding,
   vnode,
   previousVnode,
 ) => {
-  if (binding.value !== undefined && typeof vMaska === 'function') {
+  if (typeof vMaska !== 'function') {
+    return
+  }
+  if (binding.value !== undefined) {
     vMaska(element, binding, vnode, previousVnode)
+  } else if (binding.oldValue !== undefined) {
+    vMaska(
+      element,
+      {
+        dir: {},
+        instance: binding.instance,
+        modifiers: {},
+        oldValue: binding.oldValue,
+        value: { mask: null },
+      },
+      vnode,
+      previousVnode,
+    )
   }
 }
 const prefix = computed(() => resolveFormText(fieldProps.value.prefix))

@@ -146,6 +146,12 @@ false and `confirmNavOnDirty` stops asking; a navigation made by `onSubmit` itse
 Use `labelExtra` for rich content beside a field label, such as a password-recovery link. It
 accepts renderable Vue content and takes precedence over the field's text-only `hint`.
 
+A field's `help`, `hint`, and `description` accept text, a function returning text, or a callback
+that receives `{ ctx, deps, api }` like `placeholder`, so the copy around a control can follow the
+fields it depends on. A `description` callback may also return `{ text, display, title }`. The copy
+updates as those dependencies change. `label` stays text or a function returning text, because
+labels also name fields in table columns and matrix headers.
+
 Submit handlers receive typed external-error controls through `api.setError(path, message)` and
 `api.clearError(path?)`. Map expected server failures to their owning fields and return
 `{ success: false }`; use one application-level toast only when the failure is not mapped. Editing
@@ -336,6 +342,21 @@ Use `fields` for package-wide defaults on any registered field kind. Its `size`,
 underlying Nuxt UI `ui` slots merge after the shared `control` defaults, while the authored
 field's `props` still wins for one-off exceptions.
 
+Text fields take a Maska pattern through `props.mask`: a string such as `'### ### ###'`, or Maska
+options with custom `tokens`. `#` is a digit, `A` a letter shown in upper case, and `!` escapes a
+literal character. The field stores the masked text, or the unmasked characters with
+`maskOutput: 'raw'`. Return the mask from a `props` callback to follow another field; when the
+callback stops returning one, the field accepts free text again:
+
+```ts
+{
+  key: 'registration',
+  type: 'text',
+  dependencies: ['country'],
+  props: ({ deps }) => (deps.get('country') === 'FR' ? { mask: '### ### ### #####' } : {}),
+}
+```
+
 Radio and checkbox card fields, including group fields with `variant: 'card'`, show a
 selected outer ring through the Nuxt UI `item` slot. The ring does not change card dimensions;
 override `ui.item` in the field's `props` to customize it.
@@ -406,8 +427,12 @@ export function identitySection() {
         label: 'SIREN',
         // `country` belongs to the address section: a page is one form, one state.
         dependencies: ['country'],
+        help: ({ deps }) =>
+          deps.get('country') === 'FR'
+            ? 'The 9 digits of your SIREN'
+            : 'Your local registration number',
         validators: ({ deps }) =>
-          deps.country === 'FR' ? { siren: withMessage(regex(/^\d{9}$/), '9 digits') } : {},
+          deps.get('country') === 'FR' ? { siren: withMessage(regex(/^\d{9}$/), '9 digits') } : {},
       },
     ],
   })

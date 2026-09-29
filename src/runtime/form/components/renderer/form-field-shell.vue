@@ -16,7 +16,7 @@ import { getSchemaDirtyCheck } from '../../utils/controls'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { isFunction, isNumber, isString } from '../../utils/predicate'
 import { resolveRequired } from '../../utils/state'
-import { resolveFieldDescription, resolveFormText } from '../../utils/text'
+import { resolveFieldDescription, resolveFieldText, resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 
 const props = defineProps<{
@@ -29,6 +29,7 @@ const form = useFormRuntimeContext()
 const formUi = useFormUi()
 const bare = useFormFieldBare()
 const field = computed(() => createFormFieldInstance(props.field))
+const params = computed(() => form.getFieldCallbackParams(props.path, props.field))
 
 const label = computed(() =>
   field.value.capability.has('label') && 'label' in props.field
@@ -38,7 +39,7 @@ const label = computed(() =>
 const { t } = useUiToolsLocale()
 const descriptionConfig = computed(() =>
   field.value.capability.has('description') && 'description' in props.field
-    ? resolveFieldDescription(props.field.description)
+    ? resolveFieldDescription(props.field.description, params.value)
     : undefined,
 )
 const description = computed(() =>
@@ -71,7 +72,7 @@ const shellStyle = computed(() =>
 )
 const hint = computed(() =>
   field.value.capability.has('hint') && 'hint' in props.field
-    ? resolveFormText(props.field.hint)
+    ? resolveFieldText(props.field.hint, params.value)
     : undefined,
 )
 const labelExtra = computed(() => {
@@ -91,11 +92,11 @@ const required = computed(() => {
   if (!field.value.capability.has('validation')) {
     return false
   }
-  return resolveRequired(props.field, form.getFieldCallbackParams(props.path, props.field))
+  return resolveRequired(props.field, params.value)
 })
 const help = computed(() =>
   field.value.capability.has('hint') && 'help' in props.field
-    ? resolveFormText(props.field.help)
+    ? resolveFieldText(props.field.help, params.value)
     : undefined,
 )
 const shellHelp = computed(() => (props.inlineLabel ? undefined : help.value))

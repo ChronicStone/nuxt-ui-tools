@@ -30,6 +30,31 @@ describe('text parity props', () => {
     harness.unmount()
   })
 
+  it('stops masking when a dependency removes the mask', async () => {
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [
+        { key: 'country', label: 'Country', type: 'text' },
+        {
+          dependencies: ['country'],
+          key: 'registration',
+          label: 'Registration',
+          props: ({ deps }) => (deps.get('country') === 'FR' ? { mask: '### ### ###' } : {}),
+          type: 'text',
+        },
+      ],
+    })
+    const harness = await mountForm({ input: { country: 'FR' }, schema })
+
+    await harness.setInput('registration', '123456789')
+    expect(harness.form.state.get('registration')).toBe('123 456 789')
+
+    await harness.setInput('country', 'TN')
+    await harness.setInput('registration', 'b0123456 rc-tunis')
+    expect(harness.form.state.get('registration')).toBe('b0123456 rc-tunis')
+    harness.unmount()
+  })
+
   it('renders prefix, suffix, and a clear button that empties the value', async () => {
     const schema = defineFormSchema({
       actions: [],
