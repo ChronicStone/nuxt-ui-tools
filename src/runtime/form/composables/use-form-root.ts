@@ -7,6 +7,7 @@ import { useUiToolsLocale } from '../../i18n/use-locale'
 import type {
   FormObject,
   FormRendererController,
+  FormRuntime,
   FormSubmitHandlerResult,
   FormUiConfig,
   FormValidationMode,
@@ -30,6 +31,8 @@ import { provideFormUi } from './use-form-ui'
 export interface UseFormRootParams {
   /** Controller from `useForm`. Its schema, input, and policies win over the direct ones. */
   form: () => FormRendererController | undefined
+  /** Runtime owned by a parent. The root renders it and neither creates, binds nor disposes it. */
+  runtime?: () => FormRuntime | undefined
   schema: () => FormValue
   input: () => FormObject | undefined
   syncInput: () => boolean | readonly string[] | undefined
@@ -67,20 +70,23 @@ export function useFormRoot(params: UseFormRootParams) {
       params.validate() ??
       getSchemaValidationMode(schema.value),
   )
-  const runtime = useFormRuntime({ input, schema, syncInput, validationMode })
+  const ownedRuntime = params.runtime?.()
+  const runtime = ownedRuntime ?? useFormRuntime({ input, schema, syncInput, validationMode })
 
   provideFormRuntime(runtime)
 
-  watch(
-    params.form,
-    (controller, previousController) => {
-      previousController?.unbind(runtime)
-      controller?.bind(runtime)
-    },
-    { immediate: true },
-  )
+  if (!ownedRuntime) {
+    watch(
+      params.form,
+      (controller, previousController) => {
+        previousController?.unbind(runtime)
+        controller?.bind(runtime)
+      },
+      { immediate: true },
+    )
 
-  onBeforeUnmount(() => params.form()?.unbind(runtime))
+    onBeforeUnmount(() => params.form()?.unbind(runtime))
+  }
 
   onMounted(async () => {
     await nextTick()

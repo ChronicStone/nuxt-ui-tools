@@ -54,6 +54,7 @@ function resolveSchemaUi(schema: FormValue) {
   >
     <FormRoot
       :form="overlay.form"
+      :runtime="overlay.runtime"
       shell="drawer"
       :show-close-button="drawerConfig?.showCloseButton !== false"
       :ui="formUi"
@@ -75,6 +76,7 @@ function resolveSchemaUi(schema: FormValue) {
   >
     <FormRoot
       :form="overlay.form"
+      :runtime="overlay.runtime"
       shell="fullscreen"
       :show-close-button="fullscreenConfig?.showCloseButton !== false"
       :ui="formUi"
@@ -96,6 +98,7 @@ function resolveSchemaUi(schema: FormValue) {
   >
     <FormRoot
       :form="overlay.form"
+      :runtime="overlay.runtime"
       shell="modal"
       :show-close-button="modalConfig?.showCloseButton !== false"
       :ui="formUi"

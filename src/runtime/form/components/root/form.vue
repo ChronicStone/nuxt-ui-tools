@@ -16,6 +16,7 @@ import type {
   FormHeaderDisplay,
   FormObject,
   FormRendererController,
+  FormRuntime,
   FormRenderShell,
   FormUiConfig,
   FormValidationMode,
@@ -32,6 +33,7 @@ import FormDirectionalTransition from '../utils/form-directional-transition.vue'
 
 const props = defineProps<{
   form?: FormRendererController
+  runtime?: FormRuntime
   schema?: FormValue
   input?: FormObject
   shell?: FormRenderShell
@@ -59,6 +61,7 @@ const {
   submit,
 } = useFormRoot({
   form: () => props.form,
+  runtime: () => props.runtime,
   input: () => props.input,
   onCancelled: (value) => emit('cancel', value),
   onSubmitted: (value, result) => emit('submit', value, result),
