@@ -146,6 +146,12 @@ false and `confirmNavOnDirty` stops asking; a navigation made by `onSubmit` itse
 Use `labelExtra` for rich content beside a field label, such as a password-recovery link. It
 accepts renderable Vue content and takes precedence over the field's text-only `hint`.
 
+A field's `help`, `hint`, and `description` accept text, a function returning text, or a callback
+that receives `{ ctx, deps, api }` like `placeholder`, so the copy around a control can follow the
+fields it depends on. A `description` callback may also return `{ text, display, title }`. The copy
+updates as those dependencies change. `label` stays text or a function returning text, because
+labels also name fields in table columns and matrix headers.
+
 Submit handlers receive typed external-error controls through `api.setError(path, message)` and
 `api.clearError(path?)`. Map expected server failures to their owning fields and return
 `{ success: false }`; use one application-level toast only when the failure is not mapped. Editing
@@ -406,8 +412,12 @@ export function identitySection() {
         label: 'SIREN',
         // `country` belongs to the address section: a page is one form, one state.
         dependencies: ['country'],
+        help: ({ deps }) =>
+          deps.get('country') === 'FR'
+            ? 'The 9 digits of your SIREN'
+            : 'Your local registration number',
         validators: ({ deps }) =>
-          deps.country === 'FR' ? { siren: withMessage(regex(/^\d{9}$/), '9 digits') } : {},
+          deps.get('country') === 'FR' ? { siren: withMessage(regex(/^\d{9}$/), '9 digits') } : {},
       },
     ],
   })

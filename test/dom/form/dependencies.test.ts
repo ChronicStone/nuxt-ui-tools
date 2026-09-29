@@ -124,6 +124,46 @@ describe('form dependency state', () => {
     harness.unmount()
   })
 
+  it('reacts help, hint, and description copy to the field dependencies', async () => {
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [
+        { help: () => 'Where the head office is', key: 'country', type: 'text' },
+        {
+          dependencies: ['country'],
+          description: ({ deps }) => ({ text: `Registered in ${text(deps.get('country'))}` }),
+          help: ({ deps }) =>
+            deps.get('country') === 'FR'
+              ? 'The 14 digits of your SIRET'
+              : 'Your local registration number',
+          hint: ({ deps }) => `Format ${text(deps.get('country'))}`,
+          key: 'registeredNumber',
+          label: 'Registration number',
+          type: 'text',
+        },
+      ],
+    })
+    const harness = await mountForm({ input: { country: 'FR' }, schema })
+
+    function copy(slot: string) {
+      return harness.wrapper.find(`[data-name="registeredNumber"] [data-ui-${slot}]`).text()
+    }
+
+    expect(harness.wrapper.find('[data-name="country"] [data-ui-help]').text()).toBe(
+      'Where the head office is',
+    )
+    expect(copy('help')).toBe('The 14 digits of your SIRET')
+    expect(copy('hint')).toBe('Format FR')
+    expect(copy('description')).toBe('Registered in FR')
+
+    await harness.setInput('country', 'DE')
+
+    expect(copy('help')).toBe('Your local registration number')
+    expect(copy('hint')).toBe('Format DE')
+    expect(copy('description')).toBe('Registered in DE')
+    harness.unmount()
+  })
+
   it('derives a dotted sibling only after every declared source is complete', async () => {
     const schema = defineFormSchema({
       actions: [],

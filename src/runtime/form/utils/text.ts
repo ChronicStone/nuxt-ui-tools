@@ -1,4 +1,4 @@
-import type { FormFieldDescription, FormText, FormValue } from '../types'
+import type { FormText, FormValue } from '../types'
 import { isRecord } from './path'
 import { invokeFormFunction, isFunction, isNumber, isString } from './predicate'
 
@@ -10,6 +10,11 @@ export function resolveFormText(text: FormText | undefined) {
     return String(text)
   }
   return text
+}
+
+/** Resolves field copy that is static, lazy, or computed from the field callback parameters. */
+export function resolveFieldText(text: FormValue, params: FormValue) {
+  return resolveFormBoundaryText(isFunction(text) ? invokeFormFunction(text, [params]) : text)
 }
 
 export function resolveFormBoundaryText(value: FormValue) {
@@ -31,25 +36,24 @@ export interface ResolvedFieldDescription {
   title?: string
 }
 
+const DESCRIPTION_DISPLAYS = ['inline', 'tooltip', 'modal'] as const
+
 export function resolveFieldDescription(
-  value: FormText | FormFieldDescription | undefined,
+  description: FormValue,
+  params: FormValue,
 ): ResolvedFieldDescription | undefined {
-  if (value === undefined) {
-    return undefined
-  }
-  if (isDescriptionConfig(value)) {
-    const text = resolveFormText(value.text)
+  const value = isFunction(description) ? invokeFormFunction(description, [params]) : description
+  if (isRecord(value) && 'text' in value) {
+    const text = resolveFormBoundaryText(value.text)
     if (!text) {
       return undefined
     }
-    return { display: value.display ?? 'inline', text, title: resolveFormText(value.title) }
+    return {
+      display: DESCRIPTION_DISPLAYS.find((display) => display === value.display) ?? 'inline',
+      text,
+      title: resolveFormBoundaryText(value.title),
+    }
   }
-  const text = resolveFormText(value)
+  const text = resolveFormBoundaryText(value)
   return text ? { display: 'inline', text } : undefined
-}
-
-function isDescriptionConfig(
-  value: FormText | FormFieldDescription,
-): value is FormFieldDescription {
-  return isRecord(value) && 'text' in value
 }
