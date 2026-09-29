@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.11.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.11.0...v1.11.1)
+
+The global stylesheets now sit in cascade layers, so an app's Tailwind utilities win over them. The scrollbar stylesheet's unlayered `*` rule set `transition: scrollbar-color` on every element and overrode every `transition-*` utility, because Tailwind v4 keeps utilities in the `utilities` layer and unlayered rules beat layered ones: hover and state changes snapped instead of animating. The scrollbar rules and the theme variables now live in `base`, the dashboard and file preview classes in `components`, and both files declare Tailwind's layer order first so it holds whichever stylesheet loads first. Arbitrary utilities such as `[scrollbar-width:none]` apply again.
+
 ## v1.11.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.10.1...v1.11.0)
