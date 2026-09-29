@@ -6,6 +6,8 @@
 
 A field's help, hint, and description can follow its dependencies. Each accepts a callback that receives `{ ctx, deps, api }`, like `placeholder`, and the copy updates as those dependencies change: `help: ({ deps }) => (deps.get('country') === 'FR' ? 'The 14 digits of your SIRET' : 'Your local registration number')`. A `description` callback may also return `{ text, display, title }`. Static text and functions without arguments work as before; `label` stays static, because table columns and matrix headers resolve child labels without field callback parameters.
 
+A text field whose mask is removed accepts free text again. When a `props` callback stops returning a `mask`, for example after the country it follows changes, the previous mask no longer reformats what the user types.
+
 ## v1.10.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.10.0...v1.10.1)
