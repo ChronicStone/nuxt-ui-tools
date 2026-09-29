@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.11.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.10.1...v1.11.0)
+
+A field's help, hint, and description can follow its dependencies. Each accepts a callback that receives `{ ctx, deps, api }`, like `placeholder`, and the copy updates as those dependencies change: `help: ({ deps }) => (deps.get('country') === 'FR' ? 'The 14 digits of your SIRET' : 'Your local registration number')`. A `description` callback may also return `{ text, display, title }`. Static text and functions without arguments work as before; `label` stays static, because table columns and matrix headers resolve child labels without field callback parameters.
+
 ## v1.10.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.10.0...v1.10.1)
