@@ -1,4 +1,5 @@
-import type { QueryFunction, QueryKey, QueryOptions, UseQueryOptions } from '@tanstack/vue-query'
+import type { DataTag, QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type { UnwrapRef } from 'vue'
 
 /**
  * TanStack query definition accepted by runtime domains that own the `useQuery` call themselves
@@ -19,25 +20,21 @@ export interface QueryFnDefinition<TData = unknown> {
   queryFn: QueryFunction<TData, QueryKey, string | null>
 }
 
-/** Data returned by a query function, including generated options whose function may be a ref. */
+type FunctionResult<TFunction> = TFunction extends (...args: never[]) => infer TResult
+  ? TResult
+  : never
+
+type QueryFnResult<TQuery> = TQuery extends { queryFn?: infer TQueryFn }
+  ? Awaited<FunctionResult<UnwrapRef<Exclude<TQueryFn, undefined>>>>
+  : never
+
+/**
+ * Data returned by a query definition. A tagged `queryKey` (TanStack `queryOptions`, generated
+ * clients such as Tuyau) gives the data even when the options are ref-wrapped; otherwise the
+ * `queryFn` result is used, unwrapping a ref and ignoring `skipToken`.
+ */
 export type QueryFunctionResult<TQuery> = TQuery extends {
-  queryFn: (...args: never[]) => infer TResult
+  queryKey: DataTag<QueryKey, infer TTagged, infer _TError>
 }
-  ? Awaited<TResult>
-  : TQuery extends QueryOptions<
-        infer TQueryFnData,
-        infer _TError,
-        infer _TData,
-        infer _TQueryData,
-        infer _TQueryKey
-      >
-    ? Awaited<TQueryFnData>
-    : TQuery extends UseQueryOptions<
-          infer _TQueryFnData,
-          infer _TError,
-          infer TData,
-          infer _TQueryData,
-          infer _TQueryKey
-        >
-      ? Awaited<TData>
-      : never
+  ? TTagged
+  : QueryFnResult<TQuery>
