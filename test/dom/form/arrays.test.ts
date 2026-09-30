@@ -167,7 +167,10 @@ describe('array list items', () => {
         .findAll('[data-form-array-item] [data-icon="i-lucide-trash-2"]')
         .map((button) => button.attributes('aria-label'))
     await harness.until(() => removeLabels().length === 2)
-    expect(removeLabels()).toStrictEqual(['Supprimer Center 1 · Lyon', 'Supprimer Center 2 · Paris'])
+    expect(removeLabels()).toStrictEqual([
+      'Supprimer Center 1 · Lyon',
+      'Supprimer Center 2 · Paris',
+    ])
 
     await must(
       harness.wrapper.findAll('[data-form-array-item] [data-icon="i-lucide-trash-2"]')[0],
