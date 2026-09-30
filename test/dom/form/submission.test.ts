@@ -119,6 +119,33 @@ describe('form submission', () => {
     harness.unmount()
   })
 
+  it('sets a custom error on one array item through an indexed path', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          fields: [{ key: 'email', label: 'Email', type: 'text' }],
+          key: 'contacts',
+          label: 'Contacts',
+          type: 'array-list',
+        },
+      ],
+    })
+    const harness = await mountForm({
+      input: { contacts: [{ email: 'ada@example.com' }, { email: 'grace@example.com' }] },
+      onSubmit: ({ api }) => {
+        api.setError('contacts.1.email', 'Already registered')
+        return false
+      },
+      schema,
+    })
+
+    await harness.submit()
+
+    expect(errorOf(harness, 'contacts.0.email')).toBeUndefined()
+    expect(errorOf(harness, 'contacts.1.email')).toBe('Already registered')
+    harness.unmount()
+  })
+
   it('blocks the next submit while a blocking custom error stands, until the value changes', async () => {
     const onSubmit = vi.fn<() => boolean>(() => true)
     const schema = defineFormSchema({
