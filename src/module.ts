@@ -69,6 +69,7 @@ const publicRuntimeDomains = [
   'query-prefetch',
   'query-state',
   'shared',
+  'spreadsheet',
   'table',
 ] as const
 const require = createRequire(import.meta.url)

@@ -66,6 +66,14 @@ export function setupImports(runtimeDir: string) {
       { from: 'table', name: 'useTable' },
     ]),
 
+    // Spreadsheet
+    ...withRuntime(runtimeDir, [
+      { from: 'spreadsheet', name: 'defineSpreadsheetSchema' },
+      { from: 'spreadsheet', name: 'spreadsheetSteps' },
+      { from: 'spreadsheet', name: 'useSpreadsheetImport' },
+      { from: 'spreadsheet', name: 'useSpreadsheetSteps' },
+    ]),
+
     // Dashboard
     ...withRuntime(runtimeDir, [
       { from: 'dashboard', name: 'defineDashboardSchema' },

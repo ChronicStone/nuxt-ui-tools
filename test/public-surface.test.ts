@@ -7,7 +7,7 @@ function readRepositoryFile(path: string) {
 }
 
 describe('public package surface', () => {
-  it('exports every release-ready runtime domain except spreadsheet', () => {
+  it('exports every release-ready runtime domain', () => {
     const packageManifest = readRepositoryFile('package.json')
 
     for (const domain of [
@@ -17,23 +17,23 @@ describe('public package surface', () => {
       'query-prefetch',
       'query-state',
       'shared',
+      'spreadsheet',
       'table',
     ]) {
       expect(packageManifest).toContain(`"./${domain}"`)
     }
-
-    expect(packageManifest).not.toContain('"./spreadsheet"')
   })
 
-  it('keeps spreadsheet out of Nuxt public registration', () => {
+  it('registers the spreadsheet import entry points with Nuxt', () => {
     const moduleSource = readRepositoryFile('src/module.ts')
     const importsSource = readRepositoryFile('src/imports.ts')
     const componentsSource = readRepositoryFile('src/components.ts')
 
     expect(moduleSource).not.toContain("alias['#ui-tools']")
-    expect(moduleSource).not.toContain("'spreadsheet'")
-    expect(importsSource).not.toContain('Spreadsheet')
-    expect(componentsSource).not.toContain('Spreadsheet')
+    expect(moduleSource).toContain("'spreadsheet'")
+    expect(importsSource).toContain("{ from: 'spreadsheet', name: 'defineSpreadsheetSchema' }")
+    expect(importsSource).toContain("{ from: 'spreadsheet', name: 'useSpreadsheetImport' }")
+    expect(componentsSource).toContain('SpreadsheetImport')
   })
 
   it('keeps useForm as the only public form controller', () => {

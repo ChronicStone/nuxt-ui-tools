@@ -43,6 +43,9 @@
       ],
       "table": [
         "./dist/runtime/table/index.d.ts"
+      ],
+      "spreadsheet": [
+        "./dist/runtime/spreadsheet/index.d.ts"
       ]
     }
   },
@@ -110,6 +113,14 @@
     "#ui-tools/table/*": {
       "types": "./dist/runtime/table/*.d.ts",
       "default": "./dist/runtime/table/*.js"
+    },
+    "#ui-tools/spreadsheet": {
+      "types": "./dist/runtime/spreadsheet/index.d.ts",
+      "default": "./dist/runtime/spreadsheet/index.js"
+    },
+    "#ui-tools/spreadsheet/*": {
+      "types": "./dist/runtime/spreadsheet/*.d.ts",
+      "default": "./dist/runtime/spreadsheet/*.js"
     }
   },
   "exports": {
@@ -148,6 +159,10 @@
     "./table": {
       "types": "./dist/runtime/table/index.d.ts",
       "import": "./dist/runtime/table/index.js"
+    },
+    "./spreadsheet": {
+      "types": "./dist/runtime/spreadsheet/index.d.ts",
+      "import": "./dist/runtime/spreadsheet/index.js"
     }
   },
   "publishConfig": {

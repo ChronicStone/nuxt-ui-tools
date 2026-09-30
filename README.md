@@ -3,15 +3,21 @@
 Nuxt module and runtime toolkit for UI-heavy Nuxt apps, with a local playground for integration testing and demos.
 
 The release-ready public runtimes are available through `nuxt-ui-tools/table`,
-`nuxt-ui-tools/form`, `nuxt-ui-tools/query-state`, `nuxt-ui-tools/shared`, and
-`nuxt-ui-tools/i18n`. Installing the Nuxt module also exposes the same domains
-through `#ui-tools/*`, auto-imports their primary functions, and registers their
+`nuxt-ui-tools/form`, `nuxt-ui-tools/query-state`, `nuxt-ui-tools/spreadsheet`,
+`nuxt-ui-tools/shared`, and `nuxt-ui-tools/i18n`. Installing the Nuxt module also exposes the
+same domains through `#ui-tools/*`, auto-imports their primary functions, and registers their
 top-level components.
 
 The shared entrypoint exports the breakpoint-aware runtime helpers
 `getResponsiveValue`, `parseResponsiveValue`, `resolveResponsiveValueAtBreakpoint`,
-and `useResponsiveValue`. The spreadsheet import engine is still internal and is
-not part of the package export map or Nuxt public surface.
+and `useResponsiveValue`.
+
+The spreadsheet import reads files with SheetJS, an optional peer. npm only serves SheetJS up to
+0.18.5, which has known vulnerabilities; install 0.20.2 or later from the SheetJS CDN:
+
+```bash
+bun add https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
+```
 
 ## Structure
 
