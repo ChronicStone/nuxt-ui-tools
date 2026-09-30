@@ -232,7 +232,7 @@
     "vitest": "5.0.2",
     "vue-draggable-plus": "0.6.1",
     "vue-tsc": "3.3.11",
-    "xlsx": "0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "peerDependencies": {
     "@internationalized/date": ">=3.12.0",
@@ -249,7 +249,7 @@
     "vue": ">=3.5.41",
     "vue-draggable-plus": ">=0.6.1",
     "vue-router": ">=4.6.4",
-    "xlsx": ">=0.18.5"
+    "xlsx": ">=0.20.2"
   },
   "peerDependenciesMeta": {
     "@unovis/ts": {
