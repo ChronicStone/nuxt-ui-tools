@@ -18,6 +18,20 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.13.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.12.0...v1.13.0)
+
+Spreadsheet imports are public, through `nuxt-ui-tools/spreadsheet` and `#ui-tools/spreadsheet`. `defineSpreadsheetSchema` describes the data: columns are chained, `(c) => c.text('secureCode', { required: true }).select('productId', { options })`, and the callbacks of a column receive `row`, typed with the columns declared above it, so its options, default, parser, and rules can follow another column: `options: ({ row, ctx }) => scaleOf(ctx, row.productId)`. Reading a column declared below, declaring a key twice, or reading `from` a column that is not above is a type error. `group` nests columns, and `dynamic` builds one column per item of the context.
+
+Headers and values match declared names exactly, ignoring case, accents, spaces, and a trailing `*`; nothing is guessed. A value that is not an option follows the column's `unknown` policy: `ask`, `error`, `skip-rows`, `leave-empty`, or `create`, which calls `options.create.handler` once when the rows are sent. Each unknown value is asked once, per set of options when the options depend on the row. `rows.key` identifies rows: duplicates block both rows or keep the first or the last, and the stored records returned by `existing.lookup` update, skip, or block each row.
+
+`useSpreadsheetImport` runs an import headless, with one reactive model per concern: `file`, `context`, `layout`, `columns`, `values`, `rows`, `review`, `submit`, and `readiness`. `onSubmit` receives the rows in batches, with progress and an abort signal, and returns the rows the server refused, which go back to review. The `UiSpreadsheetImport*` parts compose any screen, `useSpreadsheetSteps` runs built-in and custom steps, and `UiSpreadsheetImport` is a ready wizard.
+
+Remote option loaders accept an optional `resolveLabels` query that returns the options whose label is exactly one of the given labels, with the response shape of `resolveSelected`.
+
+Spreadsheet imports read files with SheetJS, an optional peer that must be 0.20.2 or later. npm only serves 0.18.5, which has known vulnerabilities, so install it from the SheetJS CDN: `bun add https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`.
+
 ## v1.11.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.11.0...v1.11.1)
