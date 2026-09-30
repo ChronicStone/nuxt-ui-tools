@@ -54,6 +54,7 @@ export interface AccountsSchemaOptions {
   rowActions?: boolean
   selection?: { mode?: boolean | 'auto'; scope?: 'page' | 'all' }
   selectionClear?: 'trigger' | 'success' | 'never'
+  exportResult?: () => unknown
   grid?: boolean
   tableEnabled?: boolean | string
   summaries?: boolean
@@ -328,6 +329,7 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
                 bulkActionSelections.push(
                   context.selectedRows.map((row) => String((row as AccountRow).id)),
                 )
+                return options.exportResult?.()
               },
               icon: 'i-lucide-download',
               key: 'export',
