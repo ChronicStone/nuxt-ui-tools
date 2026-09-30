@@ -39,6 +39,7 @@ export function defineRemoteOptions<
   config: DefineRemoteOptionsConfig<TPageQuery, TSelectedQuery, TOption>,
 ): RemoteOptionsLoader<TOption> {
   const suffix = ['remote-options', config.key]
+  const resolveLabels = queries.resolveLabels
   return {
     load: (request) =>
       mapRemoteOptionsQuery<QueryFunctionResult<TPageQuery>, RemoteOptionsResult<TOption>>(
@@ -48,6 +49,14 @@ export function defineRemoteOptions<
       ),
     pagination: config.pagination,
     queryKeyFor: (request) => [...queries.load(request).queryKey, ...suffix, 'page'],
+    resolveLabels: resolveLabels
+      ? (request) =>
+          mapRemoteOptionsQuery<QueryFunctionResult<TSelectedQuery>, readonly TOption[]>(
+            resolveLabels(request),
+            config.mapSelected,
+            [...suffix, 'labels'],
+          )
+      : undefined,
     resolveSelected: (request) =>
       mapRemoteOptionsQuery<QueryFunctionResult<TSelectedQuery>, readonly TOption[]>(
         queries.resolveSelected(request),

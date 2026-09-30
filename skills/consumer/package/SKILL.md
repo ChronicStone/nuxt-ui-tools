@@ -40,6 +40,10 @@ If the task is about previewing images, video, audio, PDFs, text, CSV, or Markdo
 
 - `skills/consumer/file-preview/SKILL.md`
 
+If the task is about importing Excel or CSV files, column matching, value reconciliation, or the import wizard, use:
+
+- `skills/consumer/spreadsheet/SKILL.md`
+
 If the task is about typed URL state, query params, codecs, or reusable URL-backed state, use:
 
 - `skills/consumer/query-state/SKILL.md`

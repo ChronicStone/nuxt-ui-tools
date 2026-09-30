@@ -56,6 +56,45 @@ function getPublicComponents(
       name: `${prefix}DataList${part}`,
     })),
 
+    // Spreadsheet
+    {
+      filePath: `${runtimeDir}/spreadsheet/components/spreadsheet-import.vue`,
+      global: options.global,
+      name: `${prefix}SpreadsheetImport`,
+    },
+    {
+      filePath: `${runtimeDir}/spreadsheet/components/spreadsheet-import-root.vue`,
+      global: options.global,
+      name: `${prefix}SpreadsheetImportRoot`,
+    },
+    ...[
+      'Dropzone',
+      'FileCard',
+      'SourceSettings',
+      'ExpectedColumns',
+      'TemplateButton',
+      'ColumnMapping',
+      'ValueMapping',
+      'Table',
+      'TableToolbar',
+      'RowInspector',
+      'Stats',
+      'Stat',
+      'ExportButton',
+      'SubmitButton',
+      'Summary',
+      'Progress',
+    ].map((part) => ({
+      filePath: `${runtimeDir}/spreadsheet/components/parts/spreadsheet-import-${toKebabCase(part)}.vue`,
+      global: options.global,
+      name: `${prefix}SpreadsheetImport${part}`,
+    })),
+    ...['Stepper', 'Step', 'StepNav'].map((part) => ({
+      filePath: `${runtimeDir}/spreadsheet/components/steps/spreadsheet-import-${toKebabCase(part)}.vue`,
+      global: options.global,
+      name: `${prefix}SpreadsheetImport${part}`,
+    })),
+
     // Dashboard
     ...[
       'Grid',

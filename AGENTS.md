@@ -263,6 +263,24 @@ Philosophy:
 
 Read `.agents/skills/nuxt-ui-tools-maintainer/references/file-preview-runtime.md` before changing it.
 
+### `src/runtime/spreadsheet`
+
+Purpose:
+
+- Excel, CSV, and pasted-row imports: `defineSpreadsheetSchema` (typed context, chained columns
+  whose callbacks read the columns above), the headless
+  `useSpreadsheetImport` runtime, `SpreadsheetImport*` parts, optional `useSpreadsheetSteps`, and the
+  ready-made `SpreadsheetImport` wizard
+
+Philosophy:
+
+- exact or ask: headers and values match declared names, anything else goes to a policy or the user
+- the schema describes data only; steps, headings, and pickers belong to the UI
+- edits are text that goes through the same parsing, options, answers, and rules as the file
+- parts read the public importer only, so a custom UI has the same power as the shipped one
+
+Read `.agents/skills/nuxt-ui-tools-maintainer/references/spreadsheet-runtime.md` before changing it.
+
 ### Future Core Areas
 
 The target core repository shape is not just table.
@@ -273,7 +291,7 @@ Think in terms of a growing core around:
 - form
 - dashboard
 - file-preview
-- excel-import
+- spreadsheet
 
 Do not over-optimize around table as if it will remain the only serious runtime domain.
 

@@ -4,7 +4,14 @@ const drawer = ref(false)
 
 const nav = [
   {
-    items: [{ icon: 'i-lucide-layout-dashboard', label: 'Tableau de bord', to: '/dashboard' }],
+    items: [
+      { icon: 'i-lucide-layout-dashboard', label: 'Tableau de bord', to: '/dashboard' },
+      {
+        icon: 'i-lucide-file-spreadsheet',
+        label: 'Import d’assessments',
+        to: '/assessments/import',
+      },
+    ],
     label: 'Pilotage',
   },
   {

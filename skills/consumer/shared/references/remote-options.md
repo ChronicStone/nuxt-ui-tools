@@ -29,6 +29,10 @@ const users = defineRemoteOptions(
 )
 ```
 
+An optional `resolveLabels({ labels })` query returns the options whose label is exactly one of
+`labels`, with the response shape of `resolveSelected`. Spreadsheet imports use it to match every
+distinct value of a file in one request.
+
 The first argument supplies endpoint queries, so `mapPage` and `mapSelected` infer their response
 types. The maps convert endpoint data to `{ options, nextCursor }` for cursor pagination, or
 `{ options, hasMore }` for page pagination. `resolveSelected` supplies labels for values restored

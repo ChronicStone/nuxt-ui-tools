@@ -1,672 +1,524 @@
-import type { LazyTextValue, MaybePromise } from '#ui-tools/shared/types/utils'
+import type { LazyTextValue } from '#ui-tools/shared/types/utils'
 
 import type {
   InferSpreadsheetOptionValue,
-  InferSpreadsheetOptionsSourceValue,
   SpreadsheetOptionItem,
-  SpreadsheetOptionsSource,
+  SpreadsheetOptionsInput,
 } from './options'
-import type {
-  SpreadsheetColumnResolveDefinition,
-  SpreadsheetResolvedSelectionValue,
-} from './resolution'
-import type {
-  SpreadsheetCellValue,
-  SpreadsheetMatchDefinition,
-  SpreadsheetModifier,
-  SpreadsheetValue,
-} from './shared'
-import type { SpreadsheetFieldRulesInput } from './validation'
+import type { SpreadsheetCell, SpreadsheetHeaderCell, SpreadsheetPrettify } from './shared'
+import type { SpreadsheetRule, SpreadsheetRuleBuilder, SpreadsheetRulesInput } from './validation'
 
-export interface SpreadsheetColumnDefinition<
-  TKey extends string = string,
-  TValue = unknown,
-  TRequired extends boolean = boolean,
-  TContext = unknown,
-  TRulesInput extends SpreadsheetFieldRulesInput<TValue> | undefined = undefined,
-  TSourceValue = TValue,
-  TResolve = undefined,
-> {
-  kind: 'text' | 'email' | 'number' | 'date' | 'boolean' | 'enum' | 'option'
-  key: TKey
+export type SpreadsheetColumnKind = 'text' | 'number' | 'date' | 'boolean' | 'select'
+
+/**
+ * What happens to a value that is not one of a `select` column's options:
+ *
+ * - `ask` (default): a question for the user, once per distinct value
+ * - `error`: a blocking issue on the row
+ * - `skip-rows`: rows using the value are left out of the import
+ * - `leave-empty`: the value is dropped
+ * - `create`: the value is created with the options' `create` handler when the user imports
+ */
+export type SpreadsheetUnknownPolicy = 'ask' | 'error' | 'skip-rows' | 'leave-empty' | 'create'
+
+/** Callback typed with the context; stored bivariantly so any context fits the runtime shape. */
+export type SpreadsheetContextCallback<TContext, TResult> = {
+  bivarianceHack(params: { ctx: TContext }): TResult
+}['bivarianceHack']
+
+/** Callback typed with the context and the row so far. */
+export type SpreadsheetRowCallback<TContext, TRow, TResult> = {
+  bivarianceHack(params: { ctx: TContext; row: TRow }): TResult
+}['bivarianceHack']
+
+/**
+ * A declared name of the column in files. Strings match exactly, ignoring case, accents, extra
+ * spaces, and a trailing `*`; a regex tests the header text; a predicate decides.
+ */
+export type SpreadsheetHeaderMatcher<TContext = unknown> =
+  | string
+  | RegExp
+  | {
+      bivarianceHack(params: { header: SpreadsheetHeaderCell; ctx: TContext }): boolean
+    }['bivarianceHack']
+
+export interface SpreadsheetMultipleOptions {
+  /** Separator between items. Defaults to a comma. */
+  separator?: string
+}
+
+/* ------------------------------------------------------------------ runtime entries */
+
+/** Runtime shape of a column's options, with every type parameter erased. */
+export interface SpreadsheetColumnConfig {
   label?: LazyTextValue
-  required?: TRequired
-  match?: SpreadsheetMatchDefinition
-  from?: string | RegExp | readonly (string | RegExp)[]
-  modifiers?: readonly SpreadsheetModifier[]
-  multiple?:
-    | boolean
+  headers?: SpreadsheetHeaderMatcher | readonly SpreadsheetHeaderMatcher[]
+  required?: boolean
+  /** A value, or `({ ctx, row }) => value`. */
+  default?: unknown
+  when?: SpreadsheetContextCallback<unknown, boolean>
+  description?: LazyTextValue
+  example?: LazyTextValue
+  rules?:
+    | readonly SpreadsheetRule<unknown>[]
     | {
-        separator?: string
-        matchBy?: 'label' | 'value'
-        itemModifiers?: readonly SpreadsheetModifier[]
-      }
-  parse?: (params: { cell: SpreadsheetCellValue; context: TContext }) => MaybePromise<TSourceValue>
-  resolve?: TResolve
-  rules?: SpreadsheetFieldRulesInput<TValue>
-  __rulesInput?: TRulesInput
-  __valueType?: TValue
-  __sourceValueType?: TSourceValue
-  __resolveType?: TResolve
+        bivarianceHack(
+          rules: SpreadsheetRuleBuilder<unknown>,
+          params: { row: unknown; ctx: unknown },
+        ): readonly SpreadsheetRule<unknown>[]
+      }['bivarianceHack']
+  editable?: boolean
+  multiple?: boolean | SpreadsheetMultipleOptions
+  parse?: {
+    bivarianceHack(params: { cell: SpreadsheetCell; ctx: unknown; row: unknown }): unknown
+  }['bivarianceHack']
+  /** `number` */
+  decimal?: '.' | ','
+  /** `date` */
+  formats?: readonly string[]
+  /** `boolean` */
+  true?: readonly string[]
+  false?: readonly string[]
+  /** `select` */
+  options?: SpreadsheetOptionsInput<unknown, SpreadsheetOptionItem, unknown>
+  from?: string
+  unknown?: SpreadsheetUnknownPolicy
 }
 
-export interface SpreadsheetColumnGroupDefinition<
-  TKey extends string = string,
-  TColumns extends readonly unknown[] = readonly unknown[],
-> {
-  kind: 'group'
-  key: TKey
-  columns: TColumns
+/** A column, as the builder records it. */
+export interface SpreadsheetColumnEntry<TKey extends string = string> {
+  readonly entry: 'column'
+  readonly kind: SpreadsheetColumnKind
+  readonly key: TKey
+  readonly config: SpreadsheetColumnConfig
 }
 
-export type SpreadsheetStaticColumnEntry =
-  | SpreadsheetColumnDefinition<string, unknown, boolean, unknown>
-  | SpreadsheetColumnGroupDefinition<string, readonly unknown[]>
-
-type ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple> = TParse extends (
-  ...args: infer _Args
-) => infer TResult
-  ? Awaited<TResult>
-  : TMultiple extends false | undefined
-    ? TDefault
-    : TDefault[]
-
-export interface SpreadsheetColumnMultipleOptions {
-  separator?: string
-  itemModifiers?: readonly SpreadsheetModifier[]
-}
-
-export interface SpreadsheetEnumColumnMultipleOptions extends SpreadsheetColumnMultipleOptions {}
-
-export interface SpreadsheetOptionColumnMultipleOptions extends SpreadsheetColumnMultipleOptions {
-  matchBy?: 'label' | 'value'
-}
-
-export interface SpreadsheetColumnBaseOptions<
-  TContext,
-  TSourceValue,
-  TRequired extends boolean,
-  TMultiple = boolean | SpreadsheetColumnMultipleOptions,
-> {
+export interface SpreadsheetGroupOptions<TContext> {
   label?: LazyTextValue
+  description?: LazyTextValue
+  when?: SpreadsheetContextCallback<TContext, boolean>
+}
+
+/** A group: its columns are nested under its key in the row. */
+export interface SpreadsheetGroupEntry {
+  readonly entry: 'group'
+  readonly key: string
+  readonly config: SpreadsheetGroupOptions<unknown>
+  readonly children: readonly SpreadsheetColumnEntry[]
+}
+
+/** A group whose columns are built from the context, one per item. */
+export interface SpreadsheetDynamicEntry {
+  readonly entry: 'dynamic'
+  readonly key: string
+  readonly config: SpreadsheetGroupOptions<unknown> & {
+    items: SpreadsheetContextCallback<unknown, readonly unknown[]>
+    column: {
+      bivarianceHack(
+        item: unknown,
+        factory: SpreadsheetColumnFactory<never, never>,
+      ): SpreadsheetColumnEntry
+    }['bivarianceHack']
+  }
+}
+
+export type SpreadsheetEntry =
+  | SpreadsheetColumnEntry
+  | SpreadsheetGroupEntry
+  | SpreadsheetDynamicEntry
+
+/* ------------------------------------------------------------------ value inference */
+
+type SpreadsheetItems<TItem, TMultiple> = [TMultiple] extends [undefined | false] ? TItem : TItem[]
+
+/**
+ * Value of a column in the row: an array with `multiple` (empty when the cell is), otherwise the
+ * item, or `null` when the cell can be empty (not required and without a default).
+ */
+export type SpreadsheetColumnValue<TItem, TMultiple, TRequired, TDefault> = [TMultiple] extends [
+  undefined | false,
+]
+  ? [TRequired] extends [true]
+    ? TItem
+    : [TDefault] extends [never]
+      ? TItem | null
+      : TItem
+  : TItem[]
+
+export type SpreadsheetIsOptional<TWhen> = [TWhen] extends [never] ? false : true
+
+type SpreadsheetItem<TParsed, TFallback> = [TParsed] extends [never] ? TFallback : TParsed
+
+/** The row with one more column. */
+export type SpreadsheetWith<TRow, TKey extends string, TValue, TOptional> = TOptional extends true
+  ? TRow & { [K in TKey]?: TValue }
+  : TRow & { [K in TKey]: TValue }
+
+/** A key the row does not have yet; declaring a key twice is a type error. */
+type SpreadsheetNewKey<TKey extends string, TRow> = TKey &
+  NoInfer<TKey extends keyof TRow ? { duplicateColumn: TKey } : unknown>
+
+/* ------------------------------------------------------------------ column options */
+
+/** Options shared by every column. `TRow` is the row so far: the columns declared above. */
+export interface SpreadsheetColumnCommonOptions<TContext, TRow, TItem> {
+  /** Name of the field everywhere in the UI. Also a header the column matches. */
+  label?: LazyTextValue
+  /** Other names the column has in files. Defaults to the label and the key. */
+  headers?: SpreadsheetHeaderMatcher<TContext> | readonly SpreadsheetHeaderMatcher<TContext>[]
+  /** Shown with the expected columns, in the template, and in mapping hints. */
+  description?: LazyTextValue
+  /** Sample value for the template. */
+  example?: LazyTextValue
+  /** Checks on each non-empty value (each item with `multiple`); the function form reads the row. */
+  rules?: SpreadsheetRulesInput<NoInfer<TItem>, TContext, TRow>
+  /** Whether the cell can be edited in review. Defaults to `true`. */
+  editable?: boolean
+}
+
+/** Options whose presence changes the value type; their generics are inferred from return types. */
+interface SpreadsheetTypedOptions<TContext, TRow, TMultiple, TRequired, TDefault, TWhen> {
+  /** A required column without a match blocks the import; an empty cell is a blocking issue. */
   required?: TRequired
-  match?: SpreadsheetMatchDefinition
-  from?: string | RegExp | readonly (string | RegExp)[]
-  modifiers?: readonly SpreadsheetModifier[]
+  /** Used when the column is missing from the file or the cell is empty. */
+  default?: TDefault | ((params: { ctx: TContext; row: TRow }) => TDefault)
+  /** Includes the column only when it returns `true` for the context. */
+  when?: (params: { ctx: TContext }) => TWhen
+  /** Splits the cell into items, on commas unless a separator is given. */
   multiple?: TMultiple
-  parse?: (params: { cell: SpreadsheetCellValue; context: TContext }) => MaybePromise<TSourceValue>
-  rules?: SpreadsheetFieldRulesInput<TSourceValue>
 }
 
-export type SpreadsheetEnumColumnOptions<
+type SpreadsheetScalarOptions<
   TContext,
-  TOptionValue,
-  TRequired extends boolean,
-  TMultiple = boolean | SpreadsheetEnumColumnMultipleOptions,
-  TResolvedValue = TOptionValue,
-> = SpreadsheetColumnBaseOptions<TContext, TResolvedValue, TRequired, TMultiple> & {
-  options: readonly TOptionValue[]
-}
-
-export type SpreadsheetOptionColumnOptions<
-  TContext,
-  TOption extends SpreadsheetOptionItem,
-  TRequired extends boolean,
-  TMultiple = boolean | SpreadsheetOptionColumnMultipleOptions,
-  TResolvedValue = InferSpreadsheetOptionValue<TOption>,
-> = SpreadsheetColumnBaseOptions<TContext, TResolvedValue, TRequired, TMultiple> & {
-  options: SpreadsheetOptionsSource<{ context: TContext }, TOption>
-}
-
-export type SpreadsheetScalarColumnBuilder<
-  TContext = unknown,
-  TDefault = unknown,
-  TMultipleConfig = SpreadsheetColumnMultipleOptions,
-> = <
-  TKey extends string,
-  TRequired extends boolean = false,
-  TMultiple extends boolean | TMultipleConfig | undefined = undefined,
-  TParse extends
-    | SpreadsheetColumnBaseOptions<
-        TContext,
-        ResolveSpreadsheetColumnValue<TDefault, undefined, TMultiple>,
-        TRequired,
-        Exclude<TMultiple, undefined>
-      >['parse']
-    | undefined = undefined,
-  TRulesInput extends
-    | SpreadsheetFieldRulesInput<ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>>
-    | undefined =
-    | SpreadsheetFieldRulesInput<ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>>
-    | undefined,
->(
-  key: TKey,
-  options?: SpreadsheetColumnBaseOptions<
-    TContext,
-    ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
-    TRequired,
-    Exclude<TMultiple, undefined>
-  > & {
-    rules?: TRulesInput
-  },
-) => SpreadsheetColumnDefinition<
-  TKey,
-  ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
+  TRow,
+  TItem,
+  TParsed,
+  TMultiple,
   TRequired,
-  TContext,
-  TRulesInput
->
+  TDefault,
+  TWhen,
+> = SpreadsheetColumnCommonOptions<TContext, TRow, TItem> &
+  SpreadsheetTypedOptions<TContext, TRow, TMultiple, TRequired, TDefault, TWhen> & {
+    /** Reads the cell yourself; its return type becomes the value type. */
+    parse?: (params: { cell: SpreadsheetCell; ctx: TContext; row: TRow }) => TParsed
+  }
 
-export interface SpreadsheetResolvableScalarColumnBuilder<
-  TContext = unknown,
-  TDefault = unknown,
-  TMultipleConfig = SpreadsheetColumnMultipleOptions,
-> {
-  <
-    TKey extends string,
-    TRequired extends boolean = false,
-    TMultiple extends boolean | TMultipleConfig | undefined = undefined,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<
-          TContext,
-          ResolveSpreadsheetColumnValue<TDefault, undefined, TMultiple>,
-          TRequired,
-          Exclude<TMultiple, undefined>
-        >['parse']
-      | undefined = undefined,
-    TSourceValue = ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
-    TRulesInput extends SpreadsheetFieldRulesInput<TSourceValue> | undefined =
-      | SpreadsheetFieldRulesInput<TSourceValue>
-      | undefined,
-  >(
-    key: TKey,
-    options?: Omit<
-      SpreadsheetColumnBaseOptions<
-        TContext,
-        TSourceValue,
-        TRequired,
-        Exclude<TMultiple, undefined>
-      >,
-      'rules'
-    > & {
-      rules?: TRulesInput
-    },
-  ): SpreadsheetColumnDefinition<TKey, TSourceValue, TRequired, TContext, TRulesInput, TSourceValue>
-  <
-    TKey extends string,
-    TRequired extends boolean = false,
-    TMultiple extends boolean | TMultipleConfig | undefined = undefined,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<
-          TContext,
-          ResolveSpreadsheetColumnValue<TDefault, undefined, TMultiple>,
-          TRequired,
-          Exclude<TMultiple, undefined>
-        >['parse']
-      | undefined = undefined,
-    TSourceValue = ResolveSpreadsheetColumnValue<TDefault, TParse, TMultiple>,
-    const TResolveOptions = readonly SpreadsheetOptionItem[],
-    TResolveValue = SpreadsheetResolvedSelectionValue<
-      TSourceValue,
-      InferSpreadsheetOptionsSourceValue<TResolveOptions>
-    >,
-    TRulesInput extends SpreadsheetFieldRulesInput<TResolveValue> | undefined =
-      | SpreadsheetFieldRulesInput<TResolveValue>
-      | undefined,
-  >(
-    key: TKey,
-    options: Omit<
-      SpreadsheetColumnBaseOptions<
-        TContext,
-        TSourceValue,
-        TRequired,
-        Exclude<TMultiple, undefined>
-      >,
-      'rules'
-    > & {
-      resolve: {
-        options: TResolveOptions &
-          SpreadsheetOptionsSource<{ context: TContext }, SpreadsheetOptionItem>
-        getOptions?: SpreadsheetColumnResolveDefinition<
-          TContext,
-          TSourceValue,
-          SpreadsheetOptionItem,
-          TResolveValue
-        >['getOptions']
-      }
-      rules?: TRulesInput
-    },
-  ): SpreadsheetColumnDefinition<
-    TKey,
-    TResolveValue,
-    TRequired,
-    TContext,
-    TRulesInput,
-    TSourceValue,
-    SpreadsheetColumnResolveDefinition<TContext, TSourceValue, SpreadsheetOptionItem, TResolveValue>
-  >
+export interface SpreadsheetNumberOptions {
+  /** Decimal separator of the file. Defaults to `.`; thousands separators are ignored. */
+  decimal?: '.' | ','
 }
 
-export type SpreadsheetOptionColumnBuilder<TContext = unknown> = <
-  TKey extends string,
-  const TOption extends SpreadsheetOptionItem,
-  TRequired extends boolean = false,
-  TMultiple extends boolean | SpreadsheetOptionColumnMultipleOptions | undefined = undefined,
-  TParse extends
-    | SpreadsheetColumnBaseOptions<
-        TContext,
-        ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, undefined, TMultiple>,
-        TRequired,
-        Exclude<TMultiple, undefined>
-      >['parse']
-    | undefined = undefined,
-  TRulesInput extends
-    | SpreadsheetFieldRulesInput<
-        ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>
-      >
-    | undefined =
-    | SpreadsheetFieldRulesInput<
-        ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>
-      >
-    | undefined,
->(
-  key: TKey,
-  options: SpreadsheetColumnBaseOptions<
-    TContext,
-    ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>,
-    TRequired,
-    Exclude<TMultiple, undefined>
-  > & {
-    rules?: TRulesInput
-    options: SpreadsheetOptionsSource<{ context: TContext }, TOption>
-  },
-) => SpreadsheetColumnDefinition<
-  TKey,
-  ResolveSpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TParse, TMultiple>,
+export interface SpreadsheetDateOptions {
+  /**
+   * Text formats to read, like `dd/MM/yyyy` or `MMMM d, yyyy h:mm a`. Excel dates are read
+   * whatever the format. The value is an ISO date, with the time when the format has one.
+   */
+  formats?: readonly string[]
+}
+
+export interface SpreadsheetBooleanOptions {
+  /** Texts read as `true`. Defaults to yes, oui, true, vrai, x, 1. */
+  true?: readonly string[]
+  /** Texts read as `false`. Defaults to no, non, false, faux, 0. */
+  false?: readonly string[]
+}
+
+export type SpreadsheetSelectOptions<
+  TContext,
+  TRow,
+  TOption,
+  TMultiple,
   TRequired,
+  TDefault,
+  TWhen,
+  TFrom,
+> = SpreadsheetColumnCommonOptions<TContext, TRow, InferSpreadsheetOptionValue<TOption>> &
+  SpreadsheetTypedOptions<TContext, TRow, TMultiple, TRequired, TDefault, TWhen> & {
+    /**
+     * The known values: a list, a query, a remote loader, or `({ ctx, row }) => list`. A cell
+     * matches an option on its label, value, or an alias, exactly.
+     */
+    options: SpreadsheetOptionsInput<TContext, TOption, TRow>
+    /** Reads the cell of a column declared above, like a product from an exam name. */
+    from?: TFrom
+    /** What to do with a value that is not an option. Defaults to `ask`. */
+    unknown?: SpreadsheetUnknownPolicy
+  }
+
+/* ------------------------------------------------------------------ builders */
+
+type SpreadsheetBuilderKind = 'root' | 'group' | 'factory'
+
+/** What the row looks like to the callbacks of a column. */
+type SpreadsheetScope<TKind, TRow, TOuter, TGroupKey extends string> = TKind extends 'group'
+  ? SpreadsheetPrettify<TOuter & { [K in TGroupKey]: SpreadsheetPrettify<TRow> }>
+  : TKind extends 'factory'
+    ? SpreadsheetPrettify<TOuter>
+    : SpreadsheetPrettify<TRow>
+
+type SpreadsheetNext<
+  TKind,
   TContext,
-  TRulesInput
->
-
-export interface SpreadsheetColumnBuilder<TContext = unknown> {
-  text: SpreadsheetResolvableScalarColumnBuilder<TContext, string>
-  email: SpreadsheetScalarColumnBuilder<TContext, string>
-  number: SpreadsheetResolvableScalarColumnBuilder<TContext, number>
-  date: SpreadsheetScalarColumnBuilder<TContext, string>
-  boolean: SpreadsheetScalarColumnBuilder<TContext, boolean>
-  enum: <
-    TKey extends string,
-    const TOptions extends readonly unknown[],
-    TRequired extends boolean = false,
-    TMultiple extends boolean | SpreadsheetEnumColumnMultipleOptions | undefined = undefined,
-    TParse extends
-      | SpreadsheetColumnBaseOptions<
-          TContext,
-          ResolveSpreadsheetColumnValue<TOptions[number], undefined, TMultiple>,
-          TRequired,
-          Exclude<TMultiple, undefined>
-        >['parse']
-      | undefined = undefined,
-    TRulesInput extends
-      | SpreadsheetFieldRulesInput<
-          ResolveSpreadsheetColumnValue<TOptions[number], TParse, TMultiple>
-        >
-      | undefined =
-      | SpreadsheetFieldRulesInput<
-          ResolveSpreadsheetColumnValue<TOptions[number], TParse, TMultiple>
-        >
-      | undefined,
-  >(
-    key: TKey,
-    options: SpreadsheetEnumColumnOptions<
-      TContext,
-      TOptions[number],
-      TRequired,
-      Exclude<TMultiple, undefined>,
-      ResolveSpreadsheetColumnValue<TOptions[number], TParse, TMultiple>
-    > & {
-      rules?: TRulesInput
-      options: TOptions
-    },
-  ) => SpreadsheetColumnDefinition<
-    TKey,
-    ResolveSpreadsheetColumnValue<TOptions[number], TParse, TMultiple>,
-    TRequired,
-    TContext,
-    TRulesInput
-  >
-  option: SpreadsheetOptionColumnBuilder<TContext>
-}
-
-export type SpreadsheetGroupBuilder = <
+  TRow,
+  TOuter,
+  TGroupKey extends string,
   TKey extends string,
-  TColumns extends readonly SpreadsheetStaticColumnEntry[],
->(
-  key: TKey,
-  columns: TColumns,
-) => SpreadsheetColumnGroupDefinition<TKey, TColumns>
-
-type ArrayElement<TValue> = TValue extends readonly (infer TItem)[] ? TItem : never
-type SpreadsheetDynamicCollectionCallback<TParams, TResult> = (params: TParams) => TResult
-type SpreadsheetDynamicCallback<TParams, TResult> = (params: TParams) => TResult
-type SpreadsheetDynamicItemCallback<TResult> = SpreadsheetDynamicCallback<unknown, TResult>
-
-export interface SpreadsheetDynamicTextValueDefinition {
-  kind: 'text'
-  modifiers?: readonly SpreadsheetModifier[]
-}
-
-export interface SpreadsheetDynamicNumberValueDefinition {
-  kind: 'number'
-}
-
-export interface SpreadsheetDynamicDateValueDefinition {
-  kind: 'date'
-}
-
-export interface SpreadsheetDynamicBooleanValueDefinition {
-  kind: 'boolean'
-}
-
-export interface SpreadsheetDynamicOptionsValueDefinition<
-  TOption extends SpreadsheetOptionItem = SpreadsheetOptionItem,
-  TMode extends 'single' | 'multiple' = 'single',
-> {
-  kind: 'options'
-  from: readonly TOption[]
-  mode: TMode
-  separator?: string
-  matchBy: 'label' | 'value'
-  itemModifiers?: readonly SpreadsheetModifier[]
-}
-
-export type SpreadsheetDynamicValueDefinition =
-  | SpreadsheetDynamicTextValueDefinition
-  | SpreadsheetDynamicNumberValueDefinition
-  | SpreadsheetDynamicDateValueDefinition
-  | SpreadsheetDynamicBooleanValueDefinition
-  | SpreadsheetDynamicOptionsValueDefinition<SpreadsheetOptionItem, 'single' | 'multiple'>
-
-type SpreadsheetDynamicResolvedValue<TValueDefinition> =
-  TValueDefinition extends SpreadsheetDynamicTextValueDefinition
-    ? string
-    : TValueDefinition extends SpreadsheetDynamicNumberValueDefinition
-      ? number
-      : TValueDefinition extends SpreadsheetDynamicDateValueDefinition
-        ? string
-        : TValueDefinition extends SpreadsheetDynamicBooleanValueDefinition
-          ? boolean
-          : TValueDefinition extends SpreadsheetDynamicOptionsValueDefinition<
-                infer TOption,
-                infer TMode
-              >
-            ? TMode extends 'multiple'
-              ? InferSpreadsheetOptionValue<TOption>[]
-              : InferSpreadsheetOptionValue<TOption>
-            : never
-
-type SpreadsheetDynamicDefaultArrayItem<
-  TId extends string,
-  TValueDefinition extends SpreadsheetDynamicValueDefinition,
-> =
-  SpreadsheetDynamicResolvedValue<TValueDefinition> extends infer TResult
-    ? TResult extends readonly unknown[]
-      ? { id: TId; values: TResult }
-      : { id: TId; value: TResult }
-    : never
-
-type SpreadsheetDynamicDefaultRecordValue<
-  TValueDefinition extends SpreadsheetDynamicValueDefinition,
-> = SpreadsheetDynamicResolvedValue<TValueDefinition>
-
-interface SpreadsheetDynamicBuildParams<
-  TSource,
-  TId extends string,
-  TValueDefinition extends SpreadsheetDynamicValueDefinition,
-> {
-  id: TId
-  source: TSource
-  value?: SpreadsheetDynamicResolvedValue<TValueDefinition>
-  values?: SpreadsheetDynamicResolvedValue<TValueDefinition>
-}
-
-export interface SpreadsheetDynamicValueBuilder {
-  text: (config?: {
-    modifiers?: readonly SpreadsheetModifier[]
-  }) => SpreadsheetDynamicTextValueDefinition
-  number: () => SpreadsheetDynamicNumberValueDefinition
-  date: () => SpreadsheetDynamicDateValueDefinition
-  boolean: () => SpreadsheetDynamicBooleanValueDefinition
-  options<
-    const TOption extends SpreadsheetOptionItem,
-    TMode extends 'single' | 'multiple' = 'single',
-  >(config: {
-    from: readonly TOption[]
-    mode?: TMode
-    separator?: string
-    matchBy: 'label' | 'value'
-    itemModifiers?: readonly SpreadsheetModifier[]
-  }): SpreadsheetDynamicOptionsValueDefinition<TOption, TMode>
-}
-
-type SpreadsheetDynamicValueInput =
-  | SpreadsheetDynamicValueDefinition
-  | ((value: SpreadsheetDynamicValueBuilder) => SpreadsheetValue)
-
-type ResolveSpreadsheetDynamicValueInput<TValueInput> = TValueInput extends (
-  ...args: infer _Args
-) => infer TValueDefinition
-  ? TValueDefinition extends SpreadsheetDynamicValueDefinition
-    ? TValueDefinition
-    : never
-  : TValueInput extends SpreadsheetDynamicValueDefinition
-    ? TValueInput
-    : never
-
-interface SpreadsheetDynamicCollectionItemContract<TSource = unknown> {
-  id: string
-  match: SpreadsheetMatchDefinition
-  value: SpreadsheetDynamicValueInput
-  build?: SpreadsheetDynamicCollectionCallback<
-    SpreadsheetDynamicBuildParams<TSource, string, SpreadsheetDynamicValueDefinition>,
-    unknown
-  >
-}
-
-export interface SpreadsheetDynamicCollectionItemDefinition<
-  TId extends string = string,
-  TValueInput extends SpreadsheetDynamicValueInput = SpreadsheetDynamicValueInput,
-  TSource = unknown,
-  TBuild = unknown,
-> {
-  id: TId
-  match: SpreadsheetMatchDefinition
-  value: TValueInput
-  build?: SpreadsheetDynamicCollectionCallback<
-    SpreadsheetDynamicBuildParams<TSource, TId, ResolveSpreadsheetDynamicValueInput<TValueInput>>,
-    TBuild
-  >
-  source?: TSource
-}
-
-export interface SpreadsheetDynamicCollectionDefinition<
-  TRootKey extends string = string,
-  TAs extends 'array' | 'record' = 'record',
-  TItems = readonly unknown[],
-  TOutput = unknown,
-> {
-  kind: 'collection'
-  rootKey: TRootKey
-  as: TAs
-  items: TItems
-  __outputType?: TOutput
-}
-
-export interface SpreadsheetDynamicOptionGroupsDefinition<
-  TKey extends string = string,
-  TInto extends string = string,
-  TValue = unknown,
-> {
-  kind: 'option-groups'
-  key: TKey
-  source?: readonly unknown[]
-  itemKey?: SpreadsheetDynamicItemCallback<string>
-  itemLabel?: SpreadsheetDynamicItemCallback<string>
-  targetKey?: SpreadsheetDynamicItemCallback<string>
-  header?: {
-    strategy: 'exact' | 'template' | 'patterns'
-    template?: SpreadsheetDynamicCallback<{ source: unknown }, string>
-    patterns?: SpreadsheetDynamicCallback<{ source: unknown }, readonly (string | RegExp)[]>
-  }
-  options?:
-    | readonly SpreadsheetOptionItem<TValue>[]
-    | SpreadsheetDynamicCollectionCallback<unknown, readonly SpreadsheetOptionItem<TValue>[]>
-  values?: {
-    mode: 'single' | 'csv'
-    separator?: string
-    resolve: 'label' | 'value'
-    itemModifiers?: readonly SpreadsheetModifier[]
-  }
-  output: {
-    into: TInto
-  }
-  __valueType?: TValue
-}
-
-export type SpreadsheetBuiltDynamicOptionGroupsDefinition<
-  TKey extends string,
-  TSource extends readonly unknown[],
-  TOption extends SpreadsheetOptionItem,
   TValue,
-  TInto extends string,
-> = Omit<
-  SpreadsheetDynamicOptionGroupsDefinition<TKey, TInto, TValue>,
-  'source' | 'itemKey' | 'itemLabel' | 'targetKey' | 'header' | 'options' | 'values'
-> & {
-  source: TSource
-  itemKey: (item: ArrayElement<TSource>) => string
-  itemLabel: (item: ArrayElement<TSource>) => string
-  targetKey?: (item: ArrayElement<TSource>) => string
-  header: {
-    strategy: 'exact' | 'template' | 'patterns'
-    template?: (params: { source: ArrayElement<TSource> }) => string
-    patterns?: (params: { source: ArrayElement<TSource> }) => readonly (string | RegExp)[]
-  }
-  options: readonly TOption[] | ((item: ArrayElement<TSource>) => readonly TOption[])
-  values: {
-    mode: 'single' | 'csv'
-    separator?: string
-    resolve: 'label' | 'value'
-    itemModifiers?: readonly SpreadsheetModifier[]
-  }
-}
-
-export type SpreadsheetDynamicColumnEntry =
-  | SpreadsheetDynamicOptionGroupsDefinition<string, string, unknown>
-  | SpreadsheetDynamicCollectionDefinition<
-      string,
-      'array' | 'record',
-      readonly SpreadsheetDynamicCollectionItemDefinition[],
-      unknown
+  TOptional,
+> = TKind extends 'group'
+  ? SpreadsheetGroupBuilder<
+      TContext,
+      TOuter,
+      TGroupKey,
+      SpreadsheetWith<TRow, TKey, TValue, TOptional>
     >
+  : TKind extends 'factory'
+    ? SpreadsheetColumnSpec<TKey, TValue>
+    : SpreadsheetColumnsBuilder<TContext, SpreadsheetWith<TRow, TKey, TValue, TOptional>>
 
-export interface SpreadsheetDynamicBuilder<TContext = unknown> {
-  optionGroups: <
-    TKey extends string,
-    TSource extends readonly unknown[],
+type SpreadsheetScalarMethod<
+  TKind extends SpreadsheetBuilderKind,
+  TContext,
+  TRow,
+  TOuter,
+  TGroupKey extends string,
+  TFallback,
+  TExtra,
+> = <
+  const TKey extends string,
+  TParsed = never,
+  TMultiple extends boolean | SpreadsheetMultipleOptions | undefined = undefined,
+  TRequired extends boolean | undefined = undefined,
+  TDefault extends SpreadsheetItems<SpreadsheetItem<TParsed, TFallback>, TMultiple> = never,
+  TWhen extends boolean = never,
+>(
+  key: SpreadsheetNewKey<TKey, TRow>,
+  options?: SpreadsheetScalarOptions<
+    TContext,
+    SpreadsheetScope<TKind, TRow, TOuter, TGroupKey>,
+    SpreadsheetItem<TParsed, TFallback>,
+    TParsed,
+    TMultiple,
+    TRequired,
+    TDefault,
+    TWhen
+  > &
+    TExtra,
+) => SpreadsheetNext<
+  TKind,
+  TContext,
+  TRow,
+  TOuter,
+  TGroupKey,
+  TKey,
+  NoInfer<
+    SpreadsheetColumnValue<SpreadsheetItem<TParsed, TFallback>, TMultiple, TRequired, TDefault>
+  >,
+  NoInfer<SpreadsheetIsOptional<TWhen>>
+>
+
+/** The column methods every builder has: text, number, date, boolean, select. */
+export interface SpreadsheetColumnMethods<
+  TKind extends SpreadsheetBuilderKind,
+  TContext,
+  TRow,
+  TOuter,
+  TGroupKey extends string,
+> {
+  text: SpreadsheetScalarMethod<
+    TKind,
+    TContext,
+    TRow,
+    TOuter,
+    TGroupKey,
+    string,
+    NonNullable<unknown>
+  >
+  number: SpreadsheetScalarMethod<
+    TKind,
+    TContext,
+    TRow,
+    TOuter,
+    TGroupKey,
+    number,
+    SpreadsheetNumberOptions
+  >
+  date: SpreadsheetScalarMethod<
+    TKind,
+    TContext,
+    TRow,
+    TOuter,
+    TGroupKey,
+    string,
+    SpreadsheetDateOptions
+  >
+  boolean: SpreadsheetScalarMethod<
+    TKind,
+    TContext,
+    TRow,
+    TOuter,
+    TGroupKey,
+    boolean,
+    SpreadsheetBooleanOptions
+  >
+  select: <
+    const TKey extends string,
     const TOption extends SpreadsheetOptionItem,
-    TInto extends string,
-  >(config: {
-    key: TKey
-    source: TSource
-    itemKey: (item: ArrayElement<TSource>) => string
-    itemLabel: (item: ArrayElement<TSource>) => string
-    targetKey?: (item: ArrayElement<TSource>) => string
-    header: {
-      strategy: 'exact' | 'template' | 'patterns'
-      template?: (params: { source: ArrayElement<TSource> }) => string
-      patterns?: (params: { source: ArrayElement<TSource> }) => readonly (string | RegExp)[]
-    }
-    options: readonly TOption[] | ((item: ArrayElement<TSource>) => readonly TOption[])
-    values: {
-      mode: 'single' | 'csv'
-      separator?: string
-      resolve: 'label' | 'value'
-      itemModifiers?: readonly SpreadsheetModifier[]
-    }
-    output: {
-      into: TInto
-    }
-  }) => SpreadsheetBuiltDynamicOptionGroupsDefinition<
+    TMultiple extends boolean | SpreadsheetMultipleOptions | undefined = undefined,
+    TRequired extends boolean | undefined = undefined,
+    TDefault extends SpreadsheetItems<InferSpreadsheetOptionValue<TOption>, TMultiple> = never,
+    TWhen extends boolean = never,
+    const TFrom extends SpreadsheetFieldPath<SpreadsheetScope<TKind, TRow, TOuter, TGroupKey>> =
+      never,
+  >(
+    key: SpreadsheetNewKey<TKey, TRow>,
+    options: SpreadsheetSelectOptions<
+      TContext,
+      SpreadsheetScope<TKind, TRow, TOuter, TGroupKey>,
+      TOption,
+      TMultiple,
+      TRequired,
+      TDefault,
+      TWhen,
+      TFrom
+    >,
+  ) => SpreadsheetNext<
+    TKind,
+    TContext,
+    TRow,
+    TOuter,
+    TGroupKey,
     TKey,
-    TSource,
-    TOption,
-    InferSpreadsheetOptionValue<TOption>,
-    TInto
-  >
-  arrayFromCollection: <
-    TRootKey extends string,
-    TSource extends readonly unknown[],
-    TItem extends SpreadsheetDynamicCollectionItemContract<TSource[number]>,
-  >(
-    rootKey: TRootKey,
-    config: {
-      from: SpreadsheetDynamicCollectionCallback<{ context: TContext }, TSource>
-      each: SpreadsheetDynamicCollectionCallback<TSource[number], TItem>
-    },
-  ) => SpreadsheetDynamicCollectionDefinition<
-    TRootKey,
-    'array',
-    readonly TItem[],
-    TItem extends { id: infer TId extends string; value: infer TValueInput; build?: infer TBuild }
-      ? [TBuild] extends [unknown]
-        ? SpreadsheetDynamicDefaultArrayItem<TId, ResolveSpreadsheetDynamicValueInput<TValueInput>>
-        : TBuild
-      : never
-  >
-  recordFromCollection: <
-    TRootKey extends string,
-    TSource extends readonly unknown[],
-    TItem extends SpreadsheetDynamicCollectionItemContract<TSource[number]>,
-  >(
-    rootKey: TRootKey,
-    config: {
-      from: SpreadsheetDynamicCollectionCallback<{ context: TContext }, TSource>
-      each: SpreadsheetDynamicCollectionCallback<TSource[number], TItem>
-    },
-  ) => SpreadsheetDynamicCollectionDefinition<
-    TRootKey,
-    'record',
-    readonly TItem[],
-    TItem extends { value: infer TValueInput; build?: infer TBuild }
-      ? [TBuild] extends [unknown]
-        ? SpreadsheetDynamicDefaultRecordValue<ResolveSpreadsheetDynamicValueInput<TValueInput>>
-        : TBuild
-      : never
+    NoInfer<
+      SpreadsheetColumnValue<InferSpreadsheetOptionValue<TOption>, TMultiple, TRequired, TDefault>
+    >,
+    NoInfer<SpreadsheetIsOptional<TWhen>>
   >
 }
 
-export interface SpreadsheetColumnsDefinition<TContext = unknown> {
-  static?:
-    | readonly unknown[]
-    | ((
-        column: SpreadsheetColumnBuilder<TContext>,
-        group: SpreadsheetGroupBuilder,
-      ) => readonly unknown[])
-  dynamic?: (params: {
-    dynamic: SpreadsheetDynamicBuilder<TContext>
-    context: TContext
-  }) => readonly unknown[]
+/**
+ * The `c` of `columns: (c) => c.text(…).select(…)`. Each method adds a column and returns the
+ * builder; callbacks of a column receive the row so far, typed.
+ */
+export interface SpreadsheetColumnsBuilder<TContext, TRow> extends SpreadsheetColumnMethods<
+  'root',
+  TContext,
+  TRow,
+  unknown,
+  never
+> {
+  /** Columns nested under `key`; their callbacks also read the columns declared above the group. */
+  group: <const TKey extends string, TGroupRow, TWhen extends boolean = never>(
+    key: SpreadsheetNewKey<TKey, TRow>,
+    options: Omit<SpreadsheetGroupOptions<TContext>, 'when'> & {
+      when?: (params: { ctx: TContext }) => TWhen
+    },
+    build: (
+      group: SpreadsheetGroupBuilder<
+        TContext,
+        SpreadsheetPrettify<TRow>,
+        TKey,
+        NonNullable<unknown>
+      >,
+    ) => SpreadsheetGroupBuilder<TContext, SpreadsheetPrettify<TRow>, TKey, TGroupRow>,
+  ) => SpreadsheetColumnsBuilder<
+    TContext,
+    SpreadsheetWith<
+      TRow,
+      TKey,
+      SpreadsheetPrettify<TGroupRow>,
+      NoInfer<SpreadsheetIsOptional<TWhen>>
+    >
+  >
+  /**
+   * A group with one column per item of the context, like one column per affiliation group. Its
+   * value is a record keyed by the columns' keys.
+   */
+  dynamic: <const TKey extends string, TItem, TValue, TWhen extends boolean = never>(
+    key: SpreadsheetNewKey<TKey, TRow>,
+    options: Omit<SpreadsheetGroupOptions<TContext>, 'when'> & {
+      when?: (params: { ctx: TContext }) => TWhen
+      /** The items, one column each. */
+      items: (params: { ctx: TContext }) => readonly TItem[]
+      /** The column of an item, built with `c`. */
+      column: (
+        item: TItem,
+        c: SpreadsheetColumnFactory<TContext, SpreadsheetPrettify<TRow>>,
+      ) => SpreadsheetColumnSpec<string, TValue>
+    },
+  ) => SpreadsheetColumnsBuilder<
+    TContext,
+    SpreadsheetWith<TRow, TKey, { [key: string]: TValue }, NoInfer<SpreadsheetIsOptional<TWhen>>>
+  >
+  /** Runtime: the columns declared so far. */
+  readonly '~entries': readonly SpreadsheetEntry[]
+  /** Type only. */
+  readonly '~row'?: TRow
 }
 
-type ResolveSpreadsheetCollection<TCollection> = TCollection extends (
-  ...args: infer _Args
-) => infer TResult
-  ? TResult
-  : TCollection
+/** The builder inside a group. */
+export interface SpreadsheetGroupBuilder<
+  TContext,
+  TOuter,
+  TGroupKey extends string,
+  TRow,
+> extends SpreadsheetColumnMethods<'group', TContext, TRow, TOuter, TGroupKey> {
+  /** Runtime: the columns declared so far. */
+  readonly '~entries': readonly SpreadsheetEntry[]
+  /** Type only. */
+  readonly '~row'?: TRow
+}
 
-export type SpreadsheetResolvedColumns<TColumns> = TColumns extends { static?: infer TStatic }
-  ? Omit<TColumns, 'static'> & {
-      static?: ResolveSpreadsheetCollection<TStatic>
-    }
-  : TColumns
+/** The `c` of a dynamic group's `column`: each method returns one column. */
+export type SpreadsheetColumnFactory<TContext, TScope> = SpreadsheetColumnMethods<
+  'factory',
+  TContext,
+  NonNullable<unknown>,
+  TScope,
+  never
+>
+
+/** One column built by a factory. */
+export interface SpreadsheetColumnSpec<
+  TKey extends string,
+  TValue,
+> extends SpreadsheetColumnEntry<TKey> {
+  /** Type only. */
+  readonly '~value'?: TValue
+}
+
+/* ------------------------------------------------------------------ row inference */
+
+/** Row type of a columns builder. */
+export type SpreadsheetRowOf<TBuilder> = TBuilder extends { '~row'?: infer TRow }
+  ? SpreadsheetPrettify<TRow>
+  : never
+
+type SpreadsheetIsNested<TValue> = [NonNullable<TValue>] extends [never]
+  ? false
+  : NonNullable<TValue> extends readonly unknown[]
+    ? false
+    : NonNullable<TValue> extends Record<string, unknown>
+      ? true
+      : false
+
+/** Path of every field of a row, like `secureCode` or `levels.general`. */
+export type SpreadsheetFieldPath<TRow> = string extends keyof TRow
+  ? string
+  : {
+      [TKey in keyof TRow & string]: SpreadsheetIsNested<TRow[TKey]> extends true
+        ? `${TKey}.${SpreadsheetFieldPath<NonNullable<TRow[TKey]>>}`
+        : TKey
+    }[keyof TRow & string]
+
+/** Value of a field path in a row. */
+export type SpreadsheetFieldValue<
+  TRow,
+  TPath extends string,
+> = TPath extends `${infer THead}.${infer TRest}`
+  ? THead extends keyof TRow
+    ? SpreadsheetFieldValue<NonNullable<TRow[THead]>, TRest>
+    : never
+  : TPath extends keyof TRow
+    ? TRow[TPath]
+    : never

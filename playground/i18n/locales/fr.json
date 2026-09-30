@@ -127,96 +127,50 @@
       "fullscreenScenario": "Scénario plein écran",
       "openVariant": "Ouvrir la variante",
       "variants": {
-        "happyPath": {
-          "title": "Import happy path",
-          "description": "Flux de bout en bout de référence."
+        "v1Assessments": {
+          "title": "Import des assessments ExAssess V1",
+          "description": "L’assistant prêt à l’emploi avec une étape à vous : lignes de titre, colonnes renommées ou manquantes, valeurs inconnues, enregistrements resynchronisés."
         },
-        "manualMatching": {
-          "title": "Lab de matching manuel",
-          "description": "Sélection d'en-tête et affectation manuelle des colonnes."
+        "onePage": {
+          "title": "Une page, sans étapes",
+          "description": "Les briques sur une seule page : dépôt, correspondances seulement si besoin, tableau, bouton d’import."
         },
-        "columnResolve": {
-          "title": "Lab de résolution de colonne",
-          "description": "Résolution intelligente en place où le champ final devient canonique et la source brute n'est pas conservée."
+        "optionsLab": {
+          "title": "Sources d’options",
+          "description": "Une liste, une requête TanStack, un chargeur distant résolu exactement avec resolveLabels, la création de valeurs, et un select qui lit une autre colonne."
         },
-        "derivedReferences": {
-          "title": "Lab de références dérivées",
-          "description": "Champ importé brut conservé, plus un champ canonique dérivé via des références de haut niveau."
+        "identityLab": {
+          "title": "Identité des lignes",
+          "description": "Doublons du fichier et enregistrements existants : erreur, garder le premier ou le dernier, mettre à jour, ignorer, ou décider par ligne."
         },
-        "referenceReconciliation": {
-          "title": "Réconciliation de références",
-          "description": "Suggestions de références à valeur unique et résolution manuelle."
-        },
-        "multiReference": {
-          "title": "Lab multi-références",
-          "description": "Références résolues à partir d'un champ source multi-valeur vers un tableau de sortie."
-        },
-        "referenceRules": {
-          "title": "Lab des règles de référence",
-          "description": "Les références non résolues peuvent continuer ; les règles de référence décident de la validité en revue."
-        },
-        "structureStress": {
-          "title": "Test de stress structurel",
-          "description": "Grand classeur et cas limites structurels."
-        },
-        "largeValidation": {
-          "title": "Lab de validation large volume",
-          "description": "Grand jeu de données avec validations mixtes en échec."
-        },
-        "refineRelations": {
-          "title": "Lab d'affinage des relations",
-          "description": "Petit scénario déterministe de validation inter-champs."
-        },
-        "multiValue": {
-          "title": "Lab multi-valeur",
-          "description": "Colonnes multiples natives sans références."
+        "largeFile": {
+          "title": "Gros fichier",
+          "description": "5 000 lignes au-delà d’une limite de 4 800, avec la grille virtualisée."
         }
       }
     },
     "spreadsheetPages": {
-      "happyPath": {
-        "title": "Import parcours nominal",
-        "description": "Scénario de base avec matching automatique fiable et références résolues."
+      "v1Assessments": {
+        "title": "Importer des assessments",
+        "testCenter": "Centre de test",
+        "trySample": "Pas de fichier sous la main ? Essayez un exemple",
+        "sampleClean": "Modèle ExAssess",
+        "sampleMessy": "Export VTest brut"
       },
-      "manualMatching": {
-        "title": "Lab d'association manuelle",
-        "description": "La confirmation de la ligne d'en-tête et l'affectation manuelle des colonnes doivent être au cœur de ce scénario."
+      "onePage": {
+        "title": "Importer des tarifs",
+        "description": "Depuis notre propre modèle : les correspondances n’apparaissent que si quelque chose demande une réponse."
       },
-      "columnResolve": {
-        "title": "Lab de résolution de colonne",
-        "description": "Résolution intelligente en place. La colonne Product importée est résolue directement vers productId, donc le champ source brut n'est pas conservé sur la ligne finale."
+      "optionsLab": {
+        "title": "Sources d’options"
       },
-      "derivedReferences": {
-        "title": "Lab de références dérivées",
-        "description": "Résolution dérivée au niveau du schéma. productLabelRaw reste sur la ligne et productId est ajouté séparément via les références de premier niveau."
+      "identityLab": {
+        "title": "Identité des lignes",
+        "duplicates": "Doublons du fichier",
+        "existing": "Enregistrements existants"
       },
-      "referenceReconciliation": {
-        "title": "Rapprochement des références",
-        "description": "Ce scénario conserve une étiquette produit non résolue afin que l'étape de rapprochement reste active."
-      },
-      "multiReference": {
-        "title": "Lab multi-références",
-        "description": "Scénario ciblé pour des références résolues depuis un champ source multi-valeur vers une sortie en tableau."
-      },
-      "referenceRules": {
-        "title": "Lab des règles de référence",
-        "description": "Les références non résolues sont autorisées pendant le matching, puis les règles de référence déterminent la validité des lignes en revue."
-      },
-      "structureStress": {
-        "title": "Test de charge structurel",
-        "description": "Grand classeur généré avec en-têtes décalés, lignes cassées, valeurs non résolues et dépassement de limite d'import."
-      },
-      "largeValidation": {
-        "title": "Lab de validation volumineuse",
-        "description": "Classeur de 250 lignes généré avec exactement 20 % de lignes invalides entre valeurs manquantes, problèmes de score, règles de lot et incohérences de centre."
-      },
-      "refineRelations": {
-        "title": "Lab des relations refine",
-        "description": "Petit classeur déterministe centré sur les relations refine() avec des messages explicites entre champs pour la revue."
-      },
-      "multiValue": {
-        "title": "Lab multi-valeurs",
-        "description": "Parcours de validation ciblé pour les colonnes multiples statiques intégrées, avec parsing texte, nombre, option, enum et booléen."
+      "largeFile": {
+        "title": "Gros fichier"
       }
     },
     "tableCommon": {

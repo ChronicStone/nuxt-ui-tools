@@ -1,6 +1,6 @@
 {
   "name": "nuxt-ui-tools",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "Nuxt module and runtime toolkit for UI-heavy Nuxt applications",
   "homepage": "https://github.com/ChronicStone/nuxt-ui-tools#readme",
   "bugs": "https://github.com/ChronicStone/nuxt-ui-tools/issues",
@@ -43,6 +43,9 @@
       ],
       "table": [
         "./dist/runtime/table/index.d.ts"
+      ],
+      "spreadsheet": [
+        "./dist/runtime/spreadsheet/index.d.ts"
       ]
     }
   },
@@ -110,6 +113,14 @@
     "#ui-tools/table/*": {
       "types": "./dist/runtime/table/*.d.ts",
       "default": "./dist/runtime/table/*.js"
+    },
+    "#ui-tools/spreadsheet": {
+      "types": "./dist/runtime/spreadsheet/index.d.ts",
+      "default": "./dist/runtime/spreadsheet/index.js"
+    },
+    "#ui-tools/spreadsheet/*": {
+      "types": "./dist/runtime/spreadsheet/*.d.ts",
+      "default": "./dist/runtime/spreadsheet/*.js"
     }
   },
   "exports": {
@@ -148,6 +159,10 @@
     "./table": {
       "types": "./dist/runtime/table/index.d.ts",
       "import": "./dist/runtime/table/index.js"
+    },
+    "./spreadsheet": {
+      "types": "./dist/runtime/spreadsheet/index.d.ts",
+      "import": "./dist/runtime/spreadsheet/index.js"
     }
   },
   "publishConfig": {
@@ -217,7 +232,7 @@
     "vitest": "5.0.2",
     "vue-draggable-plus": "0.6.1",
     "vue-tsc": "3.3.11",
-    "xlsx": "0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "peerDependencies": {
     "@internationalized/date": ">=3.12.0",
@@ -234,7 +249,7 @@
     "vue": ">=3.5.41",
     "vue-draggable-plus": ">=0.6.1",
     "vue-router": ">=4.6.4",
-    "xlsx": ">=0.18.5"
+    "xlsx": ">=0.20.2"
   },
   "peerDependenciesMeta": {
     "@unovis/ts": {

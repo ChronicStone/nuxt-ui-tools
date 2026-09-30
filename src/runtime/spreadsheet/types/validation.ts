@@ -1,124 +1,72 @@
-import type { SpreadsheetIssueLevel, SpreadsheetRecord } from './shared'
+import type { LazyTextValue } from '#ui-tools/shared/types/utils'
 
-export type SpreadsheetLazyMessage<
-  TValue,
-  TParams extends unknown[] = [],
-  TMeta extends SpreadsheetRecord = NonNullable<unknown>,
-> = string | (() => string) | ((ctx: SpreadsheetMessageContext<TValue, TParams, TMeta>) => string)
+import type { SpreadsheetIssueLevel } from './shared'
 
-export type SpreadsheetValidatorResult<TMeta extends SpreadsheetRecord = NonNullable<unknown>> =
-  | boolean
-  | ({ $valid: boolean } & TMeta)
+/** Message of a failed rule: text, lazy text, or a function of the value and the context. */
+export type SpreadsheetRuleMessage<TValue, TContext = unknown> =
+  | LazyTextValue
+  | ((params: { value: TValue; ctx: TContext }) => string)
 
-export type SpreadsheetMessageContext<
-  TValue,
-  TParams extends unknown[] = [],
-  TMeta extends SpreadsheetRecord = NonNullable<unknown>,
-> = {
-  [key: string]: SpreadsheetRecord[string]
-  $valid?: boolean
-  value: TValue
-  params: TParams
-} & Partial<TMeta>
-
-export interface SpreadsheetRuleOverrides<
-  TValue,
-  TParams extends unknown[] = [],
-  TMeta extends SpreadsheetRecord = NonNullable<unknown>,
-> {
-  message?: SpreadsheetLazyMessage<TValue, TParams, TMeta>
+export interface SpreadsheetRuleOptions<TValue, TContext = unknown> {
+  message?: SpreadsheetRuleMessage<TValue, TContext>
+  /** `error` (default) keeps the row out of the import; `warning` and `info` only inform. */
+  level?: SpreadsheetIssueLevel
 }
 
-export interface SpreadsheetRuleFlags {
-  required?: true
-}
-
-export interface SpreadsheetRuleExecutionResult<
-  TMeta extends SpreadsheetRecord = SpreadsheetRecord,
-> {
-  $valid: boolean
-  $message: string | null
-  $meta: TMeta
-}
-
-export interface SpreadsheetRule<
-  TValue,
-  TFlags extends SpreadsheetRuleFlags = SpreadsheetRuleFlags,
-> {
-  readonly flags?: TFlags
-  readonly $rule: true
-  readonly name?: string
+/**
+ * A rule checks one value. Rules run on non-empty values only, except `required`; on a column
+ * with `multiple`, they run on each item.
+ */
+export interface SpreadsheetRule<TValue> {
+  readonly name: string
   readonly level: SpreadsheetIssueLevel
-  readonly validate: {
-    bivarianceHack: (value: TValue) => SpreadsheetRuleExecutionResult
-  }['bivarianceHack']
+  /** The rule also runs on empty values. */
+  readonly required: boolean
+  /** Returns the message when the value fails, `null` when it passes. */
+  check(value: TValue, context: { ctx: unknown }): string | null
 }
 
-export type SpreadsheetFieldRules<TValue> = readonly SpreadsheetRule<TValue, SpreadsheetRuleFlags>[]
-
-export interface SpreadsheetRuleBuilder {
-  validate: <TValue, TMeta extends SpreadsheetRecord = NonNullable<unknown>>(options: {
+export interface SpreadsheetRuleBuilder<TContext> {
+  /** The value must not be empty. Prefer the column's `required` flag unless you need a level. */
+  required: (options?: SpreadsheetRuleOptions<unknown, TContext>) => SpreadsheetRule<unknown>
+  /** A rule of your own. */
+  validate: <TValue>(options: {
     name?: string
-    validator: (value: TValue) => SpreadsheetValidatorResult<TMeta>
-    message: SpreadsheetLazyMessage<TValue, [], TMeta>
+    validator: (value: TValue, context: { ctx: TContext }) => boolean
+    message: SpreadsheetRuleMessage<TValue, TContext>
+    level?: SpreadsheetIssueLevel
   }) => SpreadsheetRule<TValue>
-  required: CreateSpreadsheetRuleReturn<unknown, [], NonNullable<unknown>, { required: true }>
-  maxLength: CreateSpreadsheetRuleReturn<string, [max: number], { max: number }>
-  minLength: CreateSpreadsheetRuleReturn<string, [min: number], { min: number }>
-  number: CreateSpreadsheetRuleReturn<number, [], NonNullable<unknown>>
-  min: CreateSpreadsheetRuleReturn<number, [min: number], { min: number }>
-  max: CreateSpreadsheetRuleReturn<number, [max: number], { max: number }>
-  between: CreateSpreadsheetRuleReturn<
-    number,
-    [min: number, max: number],
-    {
-      min: number
-      max: number
-    }
-  >
-  oneOf: <const TValues extends readonly unknown[]>(
-    values: TValues,
-    overrides?: SpreadsheetRuleOverrides<
-      SpreadsheetWidenLiteral<TValues[number]>,
-      [TValues],
-      { values: TValues }
-    >,
-  ) => SpreadsheetRule<SpreadsheetWidenLiteral<TValues[number]>>
+  email: (options?: SpreadsheetRuleOptions<string, TContext>) => SpreadsheetRule<string>
+  pattern: (
+    pattern: RegExp,
+    options?: SpreadsheetRuleOptions<string, TContext>,
+  ) => SpreadsheetRule<string>
+  minLength: (
+    min: number,
+    options?: SpreadsheetRuleOptions<string, TContext>,
+  ) => SpreadsheetRule<string>
+  maxLength: (
+    max: number,
+    options?: SpreadsheetRuleOptions<string, TContext>,
+  ) => SpreadsheetRule<string>
+  min: (min: number, options?: SpreadsheetRuleOptions<number, TContext>) => SpreadsheetRule<number>
+  max: (max: number, options?: SpreadsheetRuleOptions<number, TContext>) => SpreadsheetRule<number>
+  between: (
+    min: number,
+    max: number,
+    options?: SpreadsheetRuleOptions<number, TContext>,
+  ) => SpreadsheetRule<number>
+  /** ISO dates only: the date must not be after today. */
+  notFuture: (options?: SpreadsheetRuleOptions<string, TContext>) => SpreadsheetRule<string>
 }
 
-export type SpreadsheetFieldRulesInput<TValue> =
-  | SpreadsheetFieldRules<TValue>
-  | ((rules: SpreadsheetRuleBuilder) => SpreadsheetFieldRules<TValue>)
-
-export type CreateSpreadsheetRuleReturn<
-  TValue,
-  TParams extends unknown[],
-  TMeta extends SpreadsheetRecord,
-  TFlags extends SpreadsheetRuleFlags = NonNullable<unknown>,
-> = TParams extends []
-  ? (
-      overrides?: SpreadsheetRuleOverrides<TValue, TParams, TMeta>,
-    ) => SpreadsheetRule<TValue, TFlags>
-  : (
-      ...args: [...TParams, overrides?: SpreadsheetRuleOverrides<TValue, TParams, TMeta>]
-    ) => SpreadsheetRule<TValue, TFlags>
-
-export type SpreadsheetWidenLiteral<TValue> = TValue extends string
-  ? string
-  : TValue extends number
-    ? number
-    : TValue extends boolean
-      ? boolean
-      : TValue
-
-export type CreateSpreadsheetRule = <
-  TValue,
-  TParams extends unknown[],
-  TMeta extends SpreadsheetRecord = NonNullable<unknown>,
-  TFlags extends SpreadsheetRuleFlags = NonNullable<unknown>,
->(options: {
-  name?: string
-  flags?: TFlags
-  validator: (value: TValue, ...params: TParams) => SpreadsheetValidatorResult<TMeta>
-  message: SpreadsheetLazyMessage<TValue, TParams, TMeta>
-}) => CreateSpreadsheetRuleReturn<TValue, TParams, TMeta, TFlags>
+/**
+ * Rules of a column. The function form also receives the row so far (the columns declared before
+ * this one) and the context, for rules that depend on another column.
+ */
+export type SpreadsheetRulesInput<TValue, TContext, TRow = unknown> =
+  | readonly SpreadsheetRule<TValue>[]
+  | ((
+      rules: SpreadsheetRuleBuilder<TContext>,
+      params: { row: TRow; ctx: TContext },
+    ) => readonly SpreadsheetRule<TValue>[])

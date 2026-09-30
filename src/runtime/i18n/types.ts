@@ -150,144 +150,266 @@ export interface UiToolsTableMessages {
 }
 
 export interface UiToolsSpreadsheetMessages {
-  common: {
-    steps: string
-    previous: string
-    continue: string
-    closeImport: string
-    preparingReview: string
-    preparingReviewDescription: string
-    importRows: string
-    exportDiscardedRows: string
-    importSummary: string
-    clickToChangeHeaderRow: string
-    referencesStepHint: string
-    sheetStats: string
-    arrayValue: string
-    objectValue: string
-    arraySummary: string
-    objectSummary: string
+  issues: {
+    required: string
+    number: string
+    date: string
+    boolean: string
+    unknownValue: string
+    notFound: string
+    skipped: string
+    duplicate: string
+    exists: string
+    email: string
+    pattern: string
+    minLength: string
+    maxLength: string
+    min: string
+    max: string
+    between: string
+    notFuture: string
+  }
+  template: {
+    sheet: string
+    guide: string
+    column: string
+    required: string
+    allowed: string
+    description: string
+    yes: string
   }
   steps: {
-    upload: {
+    file: string
+    columns: string
+    values: string
+    review: string
+    submit: string
+    auto: string
+  }
+  stepHints: {
+    file: string
+    columns: string
+    values: string
+    review: string
+    submit: string
+  }
+  headings: {
+    file: {
       title: string
       description: string
-      stageTitle: string
     }
-    structure: {
+    columns: {
       title: string
       description: string
-      stageTitle: string
-      loadWorkbookFirstTitle: string
-      loadWorkbookFirstDescription: string
-      sheetLabel: string
-      previewTitle: string
-      autoDetected: string
-      headerDetectedAtRow: string
     }
-    matching: {
-      title: string
-      description: string
-      matched: string
-      needsMatch: string
-      missing: string
-      autoMapped: string
-      ignored: string
-      ignoreField: string
-      columnFallback: string
-      systemField: string
-      requirement: string
-      spreadsheetColumn: string
-      statusHeader: string
-      required: string
-      optional: string
-      searchColumns: string
-      selectColumn: string
-      assigned: string
-      available: string
-      autoMappedField: string
-      ignoredColumns: string
-    }
-    references: {
+    values: {
       title: string
       description: string
     }
     review: {
       title: string
       description: string
-      importLimit: string
-      selected: string
-      discard: string
-      restore: string
-      discardRow: string
-      next: string
-      prev: string
-      backToTable: string
-      restoreRow: string
-      allRows: string
-      valid: string
-      invalid: string
-      discarded: string
-      allIssues: string
-      blocking: string
-      warnings: string
-      ready: string
-      validRows: string
-      noBlockingIssues: string
-      willNotBeImported: string
-      nothingDiscarded: string
-      row: string
-      blockingIssues: string
-      warningsOnly: string
-      validRow: string
-      issueBadgeBlocking: string
-      issueBadgeWarning: string
-      noValue: string
-      overflowTitle: string
-      overflowDescription: string
-      discardedStatus: string
-      blockingStatus: string
-      warningStatus: string
-      validStatus: string
-      issueRowsProgress: string
-      inspectingRow: string
-      propertyGroups: string
-      issueGroups: string
-      rowData: string
-      issuesOnThisRow: string
-      byProperty: string
-      byIssueType: string
-      ruleKey: string
-      groupedByIssueType: string
-      rowLevelIssue: string
-      affectsFullRow: string
-      property: string
-      valueInFile: string
-      viewAllRowsWithThisIssue: string
-      autoTrim: string
+    }
+    submit: {
+      title: string
+      description: string
     }
   }
-  upload: {
-    dropzoneLabel: string
-    dropzoneDescription: string
-    parsingFailed: string
-    downloadTemplate: string
-    downloadTemplateDescription: string
+  nav: {
+    back: string
+    continue: string
+    cancel: string
+    close: string
+    import: string
+    another: string
+    blockers: {
+      file: string
+      columns: string
+      values: string
+      review: string
+      invalid: string
+    }
   }
-  validation: {
-    required: string
-    maxLength: string
-    minLength: string
-    number: string
-    min: string
-    max: string
-    between: string
-    oneOf: string
-    unrecognizedValue: string
-    invalidNumberInput: string
-    invalidBooleanInput: string
-    missingValue: string
-    parseFailed: string
+  file: {
+    dropTitle: string
+    dropBrowse: string
+    dropHint: string
+    dropHintNoLimit: string
+    paste: string
+    reading: string
+    readFailed: string
+    replace: string
+    summary: string
+    sheet: string
+    sheetOption: string
+    headerRow: string
+    rowOption: string
+    emptyRow: string
+    detected: string
+    titleRows: string
+    ambiguous: string
+    noMatch: string
+    useDetected: string
+    previewTitle: string
+    previewHeader: string
+    expected: string
+    expectedCount: string
+    optional: string
+    fromContext: string
+    template: string
+  }
+  columns: {
+    field: string
+    column: string
+    samples: string
+    none: string
+    columnFor: string
+    emptyColumn: string
+    statuses: {
+      matched: string
+      manual: string
+      default: string
+      missing: string
+      unmatched: string
+    }
+    suggestion: string
+    useSuggestion: string
+    reset: string
+    reads: string
+    found: string
+    allFound: string
+    unused: string
+  }
+  values: {
+    value: string
+    rows: string
+    answer: string
+    rowCount: string
+    choose: string
+    search: string
+    loading: string
+    valueFor: string
+    /** Heading of values checked against options that depend on other columns. */
+    scope: string
+    condition: string
+    leaveEmpty: string
+    skipRows: string
+    create: string
+    statuses: {
+      open: string
+      user: string
+      policy: string
+      recognized: string
+    }
+    recognized: string
+    nothing: string
+  }
+  table: {
+    tabs: {
+      all: string
+      importable: string
+      invalid: string
+      discarded: string
+    }
+    levels: {
+      all: string
+      blocking: string
+      warnings: string
+    }
+    modes: {
+      all: string
+      create: string
+      update: string
+    }
+    search: string
+    anyIssue: string
+    byColumn: string
+    byIssue: string
+    columnIssueOption: string
+    issueOption: string
+    clearFilter: string
+    selected: string
+    discard: string
+    restore: string
+    clearSelection: string
+    row: string
+    selectRow: string
+    selectAll: string
+    inspectRow: string
+    empty: string
+    emptyCell: string
+    edited: string
+    defaulted: string
+    created: string
+    stored: string
+    rowCount: string
+    modeCreate: string
+    modeUpdate: string
+    status: {
+      valid: string
+      warning: string
+      blocking: string
+      discarded: string
+    }
+    reasons: {
+      manual: string
+      value: string
+      limit: string
+      duplicate: string
+      existing: string
+    }
+  }
+  inspector: {
+    title: string
+    close: string
+    position: string
+    positionNone: string
+    previous: string
+    next: string
+    issues: string
+    noIssue: string
+    values: string
+    inFile: string
+    revert: string
+    discard: string
+    restore: string
+    allRows: string
+    answerIt: string
+  }
+  stats: {
+    importable: string
+    invalid: string
+    discarded: string
+    create: string
+    update: string
+    warnings: string
+    blocking: string
+  }
+  review: {
+    issuesColumn: string
+    export: string
+  }
+  summary: {
+    file: string
+    toImport: string
+    create: string
+    update: string
+    invalid: string
+    discarded: string
+    edited: string
+    created: string
+  }
+  progress: {
+    running: string
+    count: string
+    done: string
+    doneHint: string
+    rejected: string
+    rejectedHint: string
+    retry: string
+    review: string
+    error: string
+    tryAgain: string
   }
 }
 

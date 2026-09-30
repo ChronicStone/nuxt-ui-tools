@@ -64,6 +64,11 @@ export interface RemoteOptionsLoader<TOption> {
   resolveSelected: (request: {
     values: readonly RemoteOptionValue[]
   }) => QueryFnDefinition<readonly TOption[]>
+  /**
+   * Options whose label is exactly one of `labels`, in one request. Spreadsheet imports use it to
+   * match the values of a file; without it they search each value.
+   */
+  resolveLabels?: (request: { labels: readonly string[] }) => QueryFnDefinition<readonly TOption[]>
   pagination: RemoteOptionsPagination
   search?: RemoteOptionsSearch
   /** Identity of a page query, used by pickers that cache an infinite list as one query. */
@@ -84,6 +89,8 @@ export interface RemoteOptionsQueries<
 > {
   load: (request: { search: string; page: RemoteOptionsPageRequest }) => TPageQuery
   resolveSelected: (request: { values: readonly RemoteOptionValue[] }) => TSelectedQuery
+  /** Options whose label is one of `labels`; its response has the shape of `resolveSelected`'s. */
+  resolveLabels?: (request: { labels: readonly string[] }) => TSelectedQuery
 }
 
 /** Maps endpoint responses to the option result shared by all three pickers. */

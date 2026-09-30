@@ -94,7 +94,8 @@ export default defineAppConfig({
         { class: 'w-[34px] p-0 justify-center', size: 'md', square: true },
         { class: 'w-[38px] p-0 justify-center', size: 'lg', square: true },
         {
-          class: 'text-[#1f1d1a] font-semibold hover:bg-[#ff9f1a]',
+          class:
+            'text-[#1f1d1a] font-semibold hover:bg-[#ff9f1a] disabled:bg-[var(--ui-bg-accented)] disabled:text-[var(--ui-text-dimmed)] disabled:opacity-100',
           color: 'primary',
           variant: 'solid',
         },

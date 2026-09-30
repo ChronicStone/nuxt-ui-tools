@@ -127,96 +127,50 @@
       "fullscreenScenario": "Fullscreen scenario",
       "openVariant": "Open variant",
       "variants": {
-        "happyPath": {
-          "title": "Happy Path Import",
-          "description": "Baseline end-to-end flow."
+        "v1Assessments": {
+          "title": "ExAssess V1 assessment import",
+          "description": "The ready-made wizard with a step of your own: title rows, renamed and missing columns, unknown values, stored records re-synced."
         },
-        "manualMatching": {
-          "title": "Manual Matching Lab",
-          "description": "Header selection and manual column assignment."
+        "onePage": {
+          "title": "One page, no steps",
+          "description": "Parts placed on a single page: dropzone, mapping only when needed, table, import button."
         },
-        "columnResolve": {
-          "title": "Column Resolve Lab",
-          "description": "In-place smart resolution where the final field becomes canonical and the raw source is not kept."
+        "optionsLab": {
+          "title": "Option sources",
+          "description": "A list, a TanStack query, a remote loader matched exactly with resolveLabels, value creation, and a select reading another column."
         },
-        "derivedReferences": {
-          "title": "Derived References Lab",
-          "description": "Raw imported field preserved plus a derived canonical field through top-level references."
+        "identityLab": {
+          "title": "Row identity",
+          "description": "Duplicates in the file and stored records: error, keep first or last, update, skip, or decide per row."
         },
-        "referenceReconciliation": {
-          "title": "Reference Reconciliation",
-          "description": "Single-value reference suggestions and manual resolution."
-        },
-        "multiReference": {
-          "title": "Multi Reference Lab",
-          "description": "References resolving from a multi-value source field into an array output."
-        },
-        "referenceRules": {
-          "title": "Reference Rules Lab",
-          "description": "Unresolved references can continue; reference rules decide review validity."
-        },
-        "structureStress": {
-          "title": "Structure Stress Test",
-          "description": "Large workbook and structural edge cases."
-        },
-        "largeValidation": {
-          "title": "Large Validation Lab",
-          "description": "Large dataset with mixed validation failures."
-        },
-        "refineRelations": {
-          "title": "Refine Relations Lab",
-          "description": "Tiny deterministic cross-field validation scenario."
-        },
-        "multiValue": {
-          "title": "Multi Value Lab",
-          "description": "Built-in multiple columns without references."
+        "largeFile": {
+          "title": "Large file",
+          "description": "5,000 rows past a 4,800 row limit, with the grid virtualized."
         }
       }
     },
     "spreadsheetPages": {
-      "happyPath": {
-        "title": "Happy Path Import",
-        "description": "Clean baseline scenario with strong automatic matching and successful reference resolution."
+      "v1Assessments": {
+        "title": "Import assessments",
+        "testCenter": "Test center",
+        "trySample": "No file at hand? Try a sample",
+        "sampleClean": "ExAssess template",
+        "sampleMessy": "Raw VTest export"
       },
-      "manualMatching": {
-        "title": "Manual Matching Lab",
-        "description": "Header row confirmation and manual column assignment should be the main focus in this scenario."
+      "onePage": {
+        "title": "Import rates",
+        "description": "From our own template: the mapping and the values appear only when something needs an answer."
       },
-      "columnResolve": {
-        "title": "Column Resolve Lab",
-        "description": "In-place smart resolution. The imported Product column resolves directly into productId, so the raw source field is not kept on the final row."
+      "optionsLab": {
+        "title": "Option sources"
       },
-      "derivedReferences": {
-        "title": "Derived References Lab",
-        "description": "Schema-level derived resolution. productLabelRaw stays on the row and productId is added separately through top-level references."
+      "identityLab": {
+        "title": "Row identity",
+        "duplicates": "Duplicates in the file",
+        "existing": "Stored records"
       },
-      "referenceReconciliation": {
-        "title": "Reference Reconciliation",
-        "description": "This scenario keeps one unresolved product label visible so the reconciliation step stays active."
-      },
-      "multiReference": {
-        "title": "Multi Reference Lab",
-        "description": "Focused scenario for references resolving from a multi-value source field into an array output."
-      },
-      "referenceRules": {
-        "title": "Reference Rules Lab",
-        "description": "Unresolved references are allowed in matching, then reference rules decide row validity in review."
-      },
-      "structureStress": {
-        "title": "Structure Stress Test",
-        "description": "Large seeded workbook with offset headers, broken rows, unresolved values, and import overflow."
-      },
-      "largeValidation": {
-        "title": "Large Validation Lab",
-        "description": "Seeded 250-row workbook with exactly 20% invalid rows across missing values, score issues, batch naming violations, and center mismatches."
-      },
-      "refineRelations": {
-        "title": "Refine Relations Lab",
-        "description": "Small deterministic workbook focused on refine() relations with explicit cross-field messages for review."
-      },
-      "multiValue": {
-        "title": "Multi Value Lab",
-        "description": "Focused validation route for built-in static multiple columns, including text, number, option, enum, and boolean parsing."
+      "largeFile": {
+        "title": "Large file"
       }
     },
     "tableCommon": {

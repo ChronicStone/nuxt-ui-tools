@@ -32,6 +32,8 @@ Then load the domain reference that matches the task:
   `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md`
 - file preview runtime:
   `.agents/skills/nuxt-ui-tools-maintainer/references/file-preview-runtime.md`
+- spreadsheet import runtime:
+  `.agents/skills/nuxt-ui-tools-maintainer/references/spreadsheet-runtime.md`
 
 For technical foundation work, also load the matching skill:
 

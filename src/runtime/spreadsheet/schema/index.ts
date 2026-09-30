@@ -1,147 +1,52 @@
 import type {
-  SpreadsheetColumnsDefinition,
-  SpreadsheetContextDataFromItems,
-  SpreadsheetContextItem,
-  SpreadsheetFileDefinition,
-  SpreadsheetHeaderStepDefinition,
-  SpreadsheetMatchingStepDefinition,
-  SpreadsheetReferenceBuilder,
-  SpreadsheetSchemaWithRefine,
-  SpreadsheetResolvedColumns,
-  SpreadsheetReviewStepDefinition,
-  SpreadsheetRowData,
-  SpreadsheetSheetStepDefinition,
-  SpreadsheetStepsDefinition,
+  SpreadsheetLookupResult,
+  SpreadsheetPrettify,
+  SpreadsheetRowKey,
+  SpreadsheetSchema,
+  SpreadsheetSchemaDefinition,
 } from '../types'
-import { resolveSpreadsheetColumns } from '../utils/builders'
 
-type SpreadsheetResolvedColumnsInput<TColumns> = [TColumns] extends [
-  SpreadsheetColumnsDefinition<any>,
-]
-  ? SpreadsheetResolvedColumns<TColumns>
-  : undefined
+export { createSpreadsheetColumnsBuilder } from './builder'
 
-type SpreadsheetExtractedReference<TValue> = Extract<
-  TValue,
-  import('../types').SpreadsheetReferenceDefinition<any, any, any>
->
-
-type SpreadsheetResolvedReferences<TReferences> = TReferences extends (
-  ...args: infer _Args
-) => infer TResult
-  ? TResult extends readonly unknown[]
-    ? readonly SpreadsheetExtractedReference<TResult[number]>[]
-    : readonly []
-  : TReferences extends readonly unknown[]
-    ? readonly SpreadsheetExtractedReference<TReferences[number]>[]
-    : readonly []
-
-interface SpreadsheetSchemaDefinition<
-  TImportKey extends string,
-  TContextItems extends readonly SpreadsheetContextItem<string, unknown>[],
-  TColumns,
-  TReferences,
-  TBuildRow,
-> {
-  importKey: TImportKey
-  file?: SpreadsheetFileDefinition
-  sheet?: SpreadsheetSheetStepDefinition
-  header?: SpreadsheetHeaderStepDefinition
-  matching?: SpreadsheetMatchingStepDefinition
-  steps?: SpreadsheetStepsDefinition
-  review?: SpreadsheetReviewStepDefinition
-  context?: TContextItems
-  columns?: TColumns
-  references?: TReferences
-  buildRow?: TBuildRow
-}
-
-type SpreadsheetBuildRowInput<TContext, TRow, TResult> = (params: {
-  context: TContext
-  row: TRow
-}) => TResult | Promise<TResult>
-
-type SpreadsheetSchemaReturn<
-  TImportKey extends string,
-  TContextItems extends readonly SpreadsheetContextItem<string, unknown>[],
-  TColumns,
-  TReferences,
-  TBuildRow,
-> = Omit<
-  SpreadsheetSchemaDefinition<TImportKey, TContextItems, TColumns, TReferences, TBuildRow>,
-  'columns'
-> & {
-  columns?: SpreadsheetResolvedColumnsInput<TColumns>
-  __columnsInput?: TColumns
-}
-
-type SpreadsheetDefinedSchemaReturn<
-  TImportKey extends string,
-  TContextItems extends readonly SpreadsheetContextItem<string, unknown>[],
-  TColumns,
-  TReferences,
-  TBuildRow,
-> = SpreadsheetSchemaWithRefine<
-  SpreadsheetSchemaReturn<TImportKey, TContextItems, TColumns, TReferences, TBuildRow>
->
-
-function withSpreadsheetRefine<TSchema extends { importKey: string }>(
-  schema: TSchema,
-): SpreadsheetSchemaWithRefine<TSchema>
-function withSpreadsheetRefine(schema: { importKey: string; relations?: readonly unknown[] }) {
-  return {
-    ...schema,
-    refine(refinement: { relations: readonly unknown[] }) {
-      return withSpreadsheetRefine({
-        ...schema,
-        relations: refinement.relations,
-      })
-    },
-  }
-}
-
-export function defineSpreadsheetSchema<
-  const TImportKey extends string,
-  const TContextItems extends readonly SpreadsheetContextItem<string, unknown>[] = readonly [],
-  TContextData = SpreadsheetContextDataFromItems<TContextItems>,
-  const TColumns extends SpreadsheetColumnsDefinition<TContextData> | undefined =
-    | SpreadsheetColumnsDefinition<TContextData>
-    | undefined,
-  const TReferences extends readonly unknown[] | undefined = readonly unknown[] | undefined,
-  TReferenceRow = SpreadsheetRowData<SpreadsheetResolvedColumnsInput<TColumns>, readonly []>,
-  TResolvedReferences = SpreadsheetResolvedReferences<TReferences>,
-  TFinalRow = SpreadsheetRowData<SpreadsheetResolvedColumnsInput<TColumns>, TResolvedReferences>,
-  TBuildRowResult = never,
+type SpreadsheetSchemaFactory<TContext> = <
+  TRow,
+  const TKeyValue extends SpreadsheetRowKey = never,
+  TLookup extends SpreadsheetLookupResult = never,
+  TOutput = SpreadsheetPrettify<TRow>,
 >(
-  schema: SpreadsheetSchemaDefinition<
-    TImportKey,
-    TContextItems,
-    TColumns,
-    TReferences | ((reference: SpreadsheetReferenceBuilder<TReferenceRow>) => TReferences),
-    SpreadsheetBuildRowInput<TContextData, TFinalRow, TBuildRowResult> | undefined
-  > & {
-    relations?: undefined
-  },
-): SpreadsheetDefinedSchemaReturn<
-  TImportKey,
-  TContextItems,
-  TColumns,
-  TReferences,
-  SpreadsheetBuildRowInput<TContextData, TFinalRow, TBuildRowResult> | undefined
->
-export function defineSpreadsheetSchema(schema: {
-  importKey: string
-  columns?: SpreadsheetColumnsDefinition<unknown>
-  relations?: undefined
-}) {
-  if (!schema.columns) {
-    return withSpreadsheetRefine(schema)
-  }
+  definition: SpreadsheetSchemaDefinition<TContext, TRow, TKeyValue, TLookup, TOutput>,
+) => SpreadsheetSchema<TContext, TRow, TKeyValue, TLookup, TOutput>
 
-  return withSpreadsheetRefine({
-    ...schema,
-    columns: resolveSpreadsheetColumns(schema.columns),
-  })
+/**
+ * Declares an import: its columns, how their values match, the rules, row identity, and output.
+ * Pass the context type first when the columns depend on data the page provides; every callback
+ * then receives it as `ctx`. Columns are chained, and each column's callbacks read the columns
+ * declared above it as `row`.
+ *
+ * @example
+ * ```ts
+ * const assessmentsImport = defineSpreadsheetSchema<{ center: TestCenter; products: Product[] }>()({
+ *   key: 'assessments',
+ *   columns: (c) =>
+ *     c
+ *       .text('secureCode', { label: 'Secure code', required: true })
+ *       .select('productId', { options: ({ ctx }) => ctx.products.map(toOption), required: true })
+ *       .select('level', { options: ({ row, ctx }) => scaleOf(ctx, row.productId) }),
+ *   rows: { key: (row) => row.secureCode, existing: { lookup: ({ keys }) => assessmentsQuery(keys) } },
+ * })
+ * ```
+ */
+export function defineSpreadsheetSchema<TContext>(): SpreadsheetSchemaFactory<TContext>
+export function defineSpreadsheetSchema<
+  TRow,
+  const TKeyValue extends SpreadsheetRowKey = never,
+  TLookup extends SpreadsheetLookupResult = never,
+  TOutput = SpreadsheetPrettify<TRow>,
+>(
+  definition: SpreadsheetSchemaDefinition<NonNullable<unknown>, TRow, TKeyValue, TLookup, TOutput>,
+): SpreadsheetSchema<NonNullable<unknown>, TRow, TKeyValue, TLookup, TOutput>
+// The overloads carry the types; the implementation only returns the definition it receives.
+export function defineSpreadsheetSchema(definition?: unknown): unknown {
+  if (definition) return definition
+  return (next: unknown) => next
 }
-
-export * from './normalize'
