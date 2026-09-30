@@ -1,3 +1,15 @@
+## v1.12.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.11.2...v1.12.0)
+
+A toolbar or bulk action can report a failure without throwing, like a form submit handler. Returning `false` or `{ success: false }` from `action` keeps the selection, even with `selectionClear: 'success'`, and `execute()` now resolves `true` only when the action ran and succeeded. An app that already shows its own error can catch it and return `false` instead of rethrowing, so the dropdown and selection bar no longer leak an unhandled rejection. A rejection still keeps the selection and propagates as before.
+
+Form error and focus paths address array items by index. `api.setError('contacts.1.email', message)`, `clearError`, and `focus` accept `contacts.${number}.email` and nested indexed paths, while the unindexed `contacts.email` stays accepted.
+
+Array remove buttons name their item: the list, collapse, and table layouts label each one "Remove" followed by the item heading, such as "Remove Center 2 · Lyon", instead of a generic "Remove item". Cards removed from a list layout fade out, and added cards fade in; both respect reduced motion.
+
+Remote option mappers are typed over generated query options. `QueryFunctionResult` reads the data from a tagged `queryKey`, so `defineRemoteOptions` over Tuyau-style options, whose options are ref-wrapped, types `mapPage` and `mapSelected` instead of passing `unknown`. A `queryFn` held in a ref and a `skipToken` alternative resolve too.
+
 ## v1.11.2
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.11.1...v1.11.2)

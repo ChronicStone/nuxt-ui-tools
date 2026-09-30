@@ -1,4 +1,4 @@
-import type { NestedPaths } from '../../shared/types/utils'
+import type { DecrementDepth } from '../../shared/types/utils'
 import type { FormValue } from './'
 import type { FormContextData } from './context'
 import type { FormMaybePromise, FormObject } from './utils'
@@ -209,12 +209,29 @@ export interface FormFieldApi<TValue = FormValue, TOption = FormValue, TContext 
 }
 
 /**
+ * Dot path into submitted output. Array items are addressed by index (`contacts.0.email`); the
+ * unindexed form (`contacts.email`) stays accepted.
+ */
+type FormOutputPath<T, MaxDepth extends number = 10> = [MaxDepth] extends [0]
+  ? never
+  : T extends readonly (infer TItem)[]
+    ?
+        | `${number}`
+        | `${number}.${FormOutputPath<TItem, DecrementDepth<MaxDepth>>}`
+        | FormOutputPath<TItem, DecrementDepth<MaxDepth>>
+    : T extends object
+      ? {
+          [K in keyof T & string]: `${K}` | `${K}.${FormOutputPath<T[K], DecrementDepth<MaxDepth>>}`
+        }[keyof T & string]
+      : never
+
+/**
  * Public form API available from form-level callbacks.
  */
 export type FormFieldPath<TOutput = FormObject> = TOutput extends FormObject
   ? FormObject extends TOutput
     ? string
-    : NestedPaths<TOutput>
+    : FormOutputPath<TOutput>
   : string
 
 export interface FormApi<TOutput = FormObject> {

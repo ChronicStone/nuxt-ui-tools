@@ -234,6 +234,7 @@ export default defineUiToolsLocale<Messages>({
           expand: 'Déplier',
           item: 'Élément',
           removeItem: 'Supprimer l’élément',
+          removeNamedItem: 'Supprimer {item}',
           unique: 'Cette valeur est déjà dans la liste',
         },
         color: {

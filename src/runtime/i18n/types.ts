@@ -358,6 +358,7 @@ export interface UiToolsFormMessages {
     array: {
       addItem: string
       removeItem: string
+      removeNamedItem: string
       dragItem: string
       editItem: string
       confirmDelete: string

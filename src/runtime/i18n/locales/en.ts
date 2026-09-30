@@ -232,6 +232,7 @@ export default defineUiToolsLocale<Messages>({
           expand: 'Expand',
           item: 'Item',
           removeItem: 'Remove item',
+          removeNamedItem: 'Remove {item}',
           unique: 'This value is already in the list',
         },
         color: {

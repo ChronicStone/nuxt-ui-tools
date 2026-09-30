@@ -50,6 +50,7 @@ const {
   itemPath,
   itemRenderKey,
   items,
+  removeItemLabel,
   runCustomAction,
   t,
   title,
@@ -247,7 +248,7 @@ function updateDraggedItems(value: readonly FormObject[]) {
                   variant="ghost"
                   size="xs"
                   :class="ui?.action"
-                  :aria-label="t('form.fields.array.removeItem')"
+                  :aria-label="removeItemLabel(item, index)"
                   @click.stop="removeItem(index)"
                 />
               </div>
@@ -308,76 +309,84 @@ function updateDraggedItems(value: readonly FormObject[]) {
       handle=".array-drag-handle"
       :animation="150"
     >
-      <div
-        v-for="(item, index) in items"
-        :key="itemRenderKey(item, index)"
-        :class="[
-          mergeFormUiClass('grid rounded-lg border border-default bg-default', ui?.item),
-          fieldProps.compact ? 'gap-3 p-3' : 'gap-4 p-4',
-        ]"
+      <TransitionGroup
+        enter-active-class="transition duration-200 ease-out motion-reduce:transition-none"
+        enter-from-class="translate-y-1 opacity-0"
+        leave-active-class="transition duration-150 ease-in motion-reduce:transition-none"
+        leave-to-class="scale-[0.98] opacity-0"
       >
-        <div :class="mergeFormUiClass('flex items-center justify-between gap-3', ui?.itemHeader)">
-          <span
-            :class="mergeFormUiClass('text-sm font-medium text-highlighted', ui?.itemTitle)"
-            :data-form-array-heading="index"
-          >
-            {{ itemHeading(items[index] ?? {}, index) }}
-          </span>
-          <div :class="mergeFormUiClass('flex items-center gap-1', ui?.itemActions)">
-            <UButton
-              v-if="isDraggable"
-              icon="i-lucide-grip-vertical"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="mergeFormUiClass('array-drag-handle cursor-grab', ui?.action)"
-              :aria-label="t('form.fields.array.dragItem')"
-            />
-            <UButton
-              v-if="canDelete(index)"
-              icon="i-lucide-trash-2"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="ui?.action"
-              :aria-label="t('form.fields.array.removeItem')"
-              @click="removeItem(index)"
-            />
-            <UButton
-              v-for="(action, actionIndex) in field.actions?.custom ?? []"
-              v-show="customActionVisible(index, actionIndex)"
-              :key="actionIndex"
-              :icon="action.icon"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              :class="ui?.action"
-              @click="runCustomAction(index, actionIndex)"
+        <div
+          v-for="(item, index) in items"
+          :key="itemRenderKey(item, index)"
+          :class="[
+            mergeFormUiClass('grid rounded-lg border border-default bg-default', ui?.item),
+            fieldProps.compact ? 'gap-3 p-3' : 'gap-4 p-4',
+          ]"
+          :data-form-array-item="index"
+        >
+          <div :class="mergeFormUiClass('flex items-center justify-between gap-3', ui?.itemHeader)">
+            <span
+              :class="mergeFormUiClass('text-sm font-medium text-highlighted', ui?.itemTitle)"
+              :data-form-array-heading="index"
             >
-              {{ resolveFormText(action.label) }}
-            </UButton>
+              {{ itemHeading(items[index] ?? {}, index) }}
+            </span>
+            <div :class="mergeFormUiClass('flex items-center gap-1', ui?.itemActions)">
+              <UButton
+                v-if="isDraggable"
+                icon="i-lucide-grip-vertical"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :class="mergeFormUiClass('array-drag-handle cursor-grab', ui?.action)"
+                :aria-label="t('form.fields.array.dragItem')"
+              />
+              <UButton
+                v-if="canDelete(index)"
+                icon="i-lucide-trash-2"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :class="ui?.action"
+                :aria-label="removeItemLabel(items[index] ?? {}, index)"
+                @click="removeItem(index)"
+              />
+              <UButton
+                v-for="(action, actionIndex) in field.actions?.custom ?? []"
+                v-show="customActionVisible(index, actionIndex)"
+                :key="actionIndex"
+                :icon="action.icon"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :class="ui?.action"
+                @click="runCustomAction(index, actionIndex)"
+              >
+                {{ resolveFormText(action.label) }}
+              </UButton>
+            </div>
+          </div>
+
+          <USelect
+            v-if="field.type === 'array-variant'"
+            :model-value="variantValue(items[index])"
+            :items="variantItems"
+            value-key="value"
+            :size="formUi.controlSize.value"
+            :class="mergeFormUiClass('w-full max-w-xs', ui?.variant)"
+            @update:model-value="updateVariant(index, $event)"
+          />
+
+          <div :class="mergeFormUiClass('grid', ui?.fields)" :style="containerLayout.style.value">
+            <FormFieldRenderer
+              v-for="child in fieldsForItem(items[index] ?? {})"
+              :key="child.key"
+              :field="child"
+              :parent-path="itemPath(index)"
+            />
           </div>
         </div>
-
-        <USelect
-          v-if="field.type === 'array-variant'"
-          :model-value="variantValue(items[index])"
-          :items="variantItems"
-          value-key="value"
-          :size="formUi.controlSize.value"
-          :class="mergeFormUiClass('w-full max-w-xs', ui?.variant)"
-          @update:model-value="updateVariant(index, $event)"
-        />
-
-        <div :class="mergeFormUiClass('grid', ui?.fields)" :style="containerLayout.style.value">
-          <FormFieldRenderer
-            v-for="child in fieldsForItem(items[index] ?? {})"
-            :key="child.key"
-            :field="child"
-            :parent-path="itemPath(index)"
-          />
-        </div>
-      </div>
+      </TransitionGroup>
     </component>
 
     <UButton

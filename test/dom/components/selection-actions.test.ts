@@ -96,6 +96,35 @@ describe('selection actions part', () => {
     expect(harness.internals.selection.selectedCount.value).toBe(0)
   })
 
+  it('keeps the selection when a bulk action reports a failure', async () => {
+    const results: (() => unknown)[] = [
+      () => false,
+      () => ({ success: false }),
+      () => Promise.reject(new Error('down')),
+      () => null,
+    ]
+    harness = await mountBar({
+      schema: createAccountsSchema({
+        exportResult: () => results.shift()?.(),
+        selectionClear: 'success',
+      }),
+    })
+    const internals = harness.internals
+    internals.selection.selectRows({ rowIds: ['acc-1'] })
+    await harness.flush()
+    const exportAction = () => must(internals.actions.bulkActions.value[0])
+
+    await expect(exportAction().execute()).resolves.toBe(false)
+    await expect(exportAction().execute()).resolves.toBe(false)
+    expect(internals.selection.selectedCount.value).toBe(1)
+    await expect(exportAction().execute()).rejects.toThrow('down')
+    expect(internals.selection.selectedCount.value).toBe(1)
+    expect(internals.actions.runningKeys.value).toStrictEqual([])
+    await expect(exportAction().execute()).resolves.toBe(true)
+    expect(bulkActionCalls.filter((call) => call === 'export')).toHaveLength(4)
+    expect(internals.selection.selectedCount.value).toBe(0)
+  })
+
   it('keeps one inline action on mobile and honours maxVisible', async () => {
     harness = await mountBar({ breakpoint: 'sm' })
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })

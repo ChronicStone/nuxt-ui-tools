@@ -35,6 +35,11 @@ export interface TableToolbarAction<
   condition?: boolean | ((context: TContext) => boolean)
   disabled?: boolean | ((context: TableActionContext<TRow, TContext, TPageContext>) => boolean)
   loading?: boolean | ((context: TableActionContext<TRow, TContext, TPageContext>) => boolean)
+  /**
+   * Runs the action. Returning `false` or `{ success: false }` marks the run as failed without
+   * throwing, like a form submit handler: the selection is kept and `execute()` resolves `false`.
+   * A rejection also keeps the selection and propagates to the caller.
+   */
   action?: (context: TableActionContext<TRow, TContext, TPageContext>) => MaybePromise<unknown>
 }
 
@@ -44,6 +49,7 @@ export interface TableBulkAction<
   TPageContext extends GenericObject = GenericObject,
 > extends TableToolbarAction<TRow, TContext, TPageContext> {
   requiresSelection?: boolean
+  /** When the selection clears: before the action runs, after it succeeds, or never. */
   selectionClear?: 'trigger' | 'success' | 'never'
 }
 
@@ -72,7 +78,8 @@ export interface TableActionSlotProps<
   state: TableActionState
   running: boolean
   selection: TableApi['selection']
-  execute: () => Promise<void>
+  /** Runs the action and resolves `true` when it ran and succeeded. */
+  execute: () => Promise<boolean>
 }
 
 export interface TableRowActionContext<

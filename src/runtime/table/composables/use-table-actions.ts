@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import type { ComputedRef } from 'vue'
 
+import { isRecord } from '../../shared/utils/path'
 import { isFunction } from '../../shared/utils/predicate'
 import type {
   TableActionSlotProps,
@@ -88,10 +89,10 @@ export function useTableActions(options: UseTableActionsParams) {
   async function execute(definition: TableActionDefinition) {
     const state = resolveState(definition)
     if (!state.visible || state.disabled || state.loading || state.running) {
-      return
+      return false
     }
     if (!definition.action) {
-      return
+      return false
     }
 
     const actionContext = context.value
@@ -102,10 +103,14 @@ export function useTableActions(options: UseTableActionsParams) {
       selectionApi.clear()
     }
     try {
-      await definition.action(actionContext)
+      const result = await definition.action(actionContext)
+      if (isFailedActionResult(result)) {
+        return false
+      }
       if (selectionClear === 'success') {
         selectionApi.clear()
       }
+      return true
     } finally {
       runningKeys.value = runningKeys.value.filter((key) => key !== definition.key)
     }
@@ -173,6 +178,10 @@ function isBooleanResolver<TContext>(
   value: BooleanResolver<TContext>,
 ): value is (context: TContext) => boolean {
   return isFunction(value)
+}
+
+function isFailedActionResult(result: unknown) {
+  return result === false || (isRecord(result) && result.success === false)
 }
 
 function toPlainRecord(value: GenericObject): TableRuntimeRecord {
