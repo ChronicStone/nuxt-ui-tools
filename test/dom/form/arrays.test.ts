@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { defineFormSchema } from '#ui-tools/form'
 import { isNumber } from '#ui-tools/shared/utils/predicate'
 
+import { must } from '../../helpers/must'
 import { mountForm } from './harness'
 
 describe('array table mutation', () => {
@@ -138,6 +139,42 @@ describe('array table mutation', () => {
     await harness.submit()
     await harness.flush()
     expect(harness.wrapper.findAll('[data-ui="UTooltip"]')).toHaveLength(0)
+    harness.unmount()
+  })
+})
+
+describe('array list items', () => {
+  it('names each remove button after its item and removes the right card', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          confirmDelete: false,
+          fields: [{ key: 'name', label: 'Name', type: 'text' }],
+          headerTemplate: (item, index) => `Center ${index + 1} · ${String(item.name)}`,
+          key: 'centers',
+          props: { draggable: false },
+          type: 'array-list',
+        },
+      ],
+    })
+    const harness = await mountForm({
+      input: { centers: [{ name: 'Lyon' }, { name: 'Paris' }] },
+      schema,
+    })
+
+    const removeLabels = () =>
+      harness.wrapper
+        .findAll('[data-form-array-item] [data-icon="i-lucide-trash-2"]')
+        .map((button) => button.attributes('aria-label'))
+    await harness.until(() => removeLabels().length === 2)
+    expect(removeLabels()).toStrictEqual(['Supprimer Center 1 · Lyon', 'Supprimer Center 2 · Paris'])
+
+    await must(
+      harness.wrapper.findAll('[data-form-array-item] [data-icon="i-lucide-trash-2"]')[0],
+    ).trigger('click')
+    await harness.until(() => removeLabels().length === 1)
+    expect(removeLabels()).toStrictEqual(['Supprimer Center 1 · Paris'])
+    expect(harness.output()).toStrictEqual({ centers: [{ name: 'Paris' }] })
     harness.unmount()
   })
 })

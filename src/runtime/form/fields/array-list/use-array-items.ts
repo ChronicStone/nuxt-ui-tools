@@ -154,6 +154,10 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     )
   }
 
+  function removeItemLabel(item: FormObject, index: number) {
+    return t('form.fields.array.removeNamedItem', { item: itemHeading(item, index) })
+  }
+
   function resolveAction(action: FormArrayAction | undefined, index: number) {
     const condition = isArrayActionConfig(action) ? action.condition : action
     if (isBoolean(condition)) {
@@ -303,6 +307,7 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     itemRenderKey,
     items,
     removeItem,
+    removeItemLabel,
     resolveAction,
     runCustomAction,
     t,

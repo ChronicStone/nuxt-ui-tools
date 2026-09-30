@@ -48,6 +48,7 @@ const {
   itemPath,
   itemRenderKey,
   items,
+  removeItemLabel,
   runCustomAction,
   t,
   title,
@@ -249,7 +250,7 @@ function bodyId(index: number) {
                 variant="ghost"
                 size="xs"
                 :class="ui?.action"
-                :aria-label="t('form.fields.array.removeItem')"
+                :aria-label="removeItemLabel(item, index)"
                 @click="removeItem(index)"
               />
               <UButton

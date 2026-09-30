@@ -49,6 +49,7 @@ const {
   itemRenderKey,
   items,
   removeItem,
+  removeItemLabel,
   runCustomAction,
   t,
   title,
@@ -223,7 +224,7 @@ function fieldLabel(field: FormField) {
                   variant="ghost"
                   size="xs"
                   :class="ui?.action"
-                  :aria-label="t('form.fields.array.removeItem')"
+                  :aria-label="removeItemLabel(item, index)"
                   @click="removeItem(index)"
                 />
                 <UButton
