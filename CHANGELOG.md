@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.13.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.13.0...v1.13.1)
+
+The password requirements popover no longer swallows the first click on what it covers. It opens under the focused field and often sits over the next field or the submit button, always on phones where fields stack. Pressing it blurred the field, which closed the popover before the button was released, so the click reached nothing and the user had to click twice. The popover is informational, so its content and Reka's positioning wrapper now ignore the pointer, and clicks go straight to what is underneath.
+
 ## v1.13.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.12.0...v1.13.0)
