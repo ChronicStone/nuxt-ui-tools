@@ -229,3 +229,10 @@ const model = computed<string | undefined>({
     </UPopover>
   </FormFieldShell>
 </template>
+
+<style>
+[data-reka-popper-content-wrapper]:has([data-form-password-requirements]),
+[data-reka-popper-content-wrapper]:has([data-form-password-requirements]) > * {
+  pointer-events: none;
+}
+</style>
