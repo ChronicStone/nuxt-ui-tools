@@ -1,4 +1,5 @@
 export * from './menu'
+export * from './preferences'
 export * from './render'
 export * from './schema'
 export * from './state'

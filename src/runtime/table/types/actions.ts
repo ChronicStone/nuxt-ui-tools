@@ -97,6 +97,11 @@ export interface TableRowAction<
 > extends Omit<DropdownMenuItem, 'children' | 'disabled' | 'loading' | 'label' | 'onSelect'> {
   key: string
   label?: TableTextValue
+  /**
+   * Actions sharing a group render together, separated from the other groups by a divider.
+   * Groups follow the order of their first visible action; actions without a group share one.
+   */
+  group?: string
   condition?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
   disabled?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)
   loading?: boolean | ((context: TableRowActionContext<TRow, TContext, TPageContext>) => boolean)

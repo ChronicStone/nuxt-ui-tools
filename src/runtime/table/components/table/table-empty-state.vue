@@ -22,20 +22,21 @@ const emptyProps = computed(() => dataListUi.ui.value.table?.props?.empty)
 const filtered = computed(
   () => internals.filters.hasActiveUiFilters.value || Boolean(internals.filters.searchQuery.value),
 )
+const custom = computed(() => (filtered.value ? undefined : emptyProps.value))
 const icon = computed(
-  () => emptyProps.value?.icon ?? (filtered.value ? 'i-lucide-search-x' : 'i-lucide-inbox'),
+  () => custom.value?.icon ?? (filtered.value ? 'i-lucide-search-x' : 'i-lucide-inbox'),
 )
 const title = computed(
   () =>
-    emptyProps.value?.title ??
+    custom.value?.title ??
     (filtered.value ? t('table.states.empty.filteredTitle') : t('table.states.empty.title')),
 )
 const description = computed(() => {
-  if (emptyProps.value?.description === false) {
+  if (custom.value?.description === false) {
     return ''
   }
   return (
-    emptyProps.value?.description ||
+    custom.value?.description ||
     (filtered.value
       ? t('table.states.empty.filteredDescription')
       : t('table.states.empty.description'))
