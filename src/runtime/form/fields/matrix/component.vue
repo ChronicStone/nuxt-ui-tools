@@ -118,13 +118,16 @@ function controlClass(field: FormField) {
                 mergeFormUiClass(
                   [
                     rowPadding,
+                    'text-left font-medium',
                     bordered ? 'border-b border-r border-default' : 'border-b border-default',
                   ].join(' '),
                   formUi.ui.value.matrix?.ui?.corner,
                 )
               "
               :style="{ width: rowHeaderWidth, minWidth: rowHeaderWidth }"
-            />
+            >
+              {{ resolveFormText(fieldProps.rowHeaderLabel) }}
+            </th>
             <th
               v-for="column in visibleFields"
               :id="columnLabelId(column)"

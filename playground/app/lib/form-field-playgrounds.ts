@@ -1172,7 +1172,13 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         ],
         key: 'notificationMatrix',
         label: 'Sectioned matrix',
-        props: { bordered: false, hoverable: false, minWidth: '30rem', rowHeaderWidth: '16rem' },
+        props: {
+          bordered: false,
+          hoverable: false,
+          minWidth: '30rem',
+          rowHeaderLabel: 'Event',
+          rowHeaderWidth: '16rem',
+        },
         rows: [
           { label: 'Conversations', type: 'section' },
           { description: 'Threads you take part in', key: 'threads', label: 'New thread' },
