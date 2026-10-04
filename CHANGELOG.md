@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.14.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.13.1...v1.14.0)
+
+Matrix rows can be grouped into sections. A `{ type: 'section', label, description? }` entry in `rows` opens a full-width row group: each section renders as its own `<tbody>` headed by a `rowgroup` header that spans every column, and its cells name the section in their `headers`. Sections are optional, hold no value, and never appear in the inferred output, which keeps only the row keys. Rows also accept a `description`, rendered under their label. The new `rowLabel`, `rowDescription`, `section`, `sectionHeader`, `sectionLabel` and `sectionDescription` matrix UI slots theme these parts.
+
 ## v1.13.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.13.0...v1.13.1)
