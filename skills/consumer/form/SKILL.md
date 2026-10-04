@@ -64,6 +64,8 @@ rows: [
 
 The output keeps only the row keys: `{ threads: {...}, messages: {...}, overdue: {...} }`.
 
+`props.rowHeaderLabel` names the row label column in the header corner, for example `'Event'`.
+
 Discriminated arrays use `variantKey` and keep each variant's output narrowed:
 
 ```ts

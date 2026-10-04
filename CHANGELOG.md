@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.15.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.14.0...v1.15.0)
+
+A matrix can name its row label column. `props.rowHeaderLabel` renders a left-aligned heading in the header corner, above the row labels, such as "Event" over a list of notification events. The corner stays empty when it is not set.
+
 ## v1.14.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.13.1...v1.14.0)

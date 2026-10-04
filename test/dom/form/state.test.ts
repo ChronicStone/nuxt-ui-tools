@@ -192,6 +192,7 @@ describe('form state', () => {
             { key: 'email', label: 'Email', type: 'switch' },
           ],
           key: 'preferences',
+          props: { rowHeaderLabel: 'Event' },
           rows: [
             { key: 'digest', label: 'Weekly digest' },
             { label: 'Notes', type: 'section' },
@@ -217,6 +218,7 @@ describe('form state', () => {
       'rowgroup',
     ])
     expect(sections.map((section) => section.attributes('colspan'))).toStrictEqual(['3', '3'])
+    expect(harness.wrapper.find('thead th').text()).toBe('Event')
     expect(sections[1]?.text()).toContain('Sent before the deadline')
     expect(groups[1]?.find('th[scope="row"]').text()).toContain('Threads you take part in')
     expect(groups[1]?.find('td').attributes('headers')).toContain(sections[0]?.attributes('id'))

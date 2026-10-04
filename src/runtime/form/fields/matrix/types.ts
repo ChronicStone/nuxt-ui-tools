@@ -21,6 +21,8 @@ export type FormMatrixEntry = FormMatrixRow | FormMatrixSection
 export interface FormMatrixProps {
   minWidth?: number | string
   rowHeaderWidth?: number | string
+  /** Heading of the row label column, shown in the header corner. */
+  rowHeaderLabel?: FormText
   bordered?: boolean
   striped?: boolean
   hoverable?: boolean
