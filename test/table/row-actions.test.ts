@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import type { TableApi } from '#ui-tools/table/types'
 
 import {
+  createRowActionDropdownGroups,
   createRowActionDropdownItems,
   hasVisibleTableRowActions,
   resolveVisibleTableRowActions,
@@ -298,5 +299,35 @@ describe('row actions', () => {
 
     expect(items).toHaveLength(1)
     expect(items[0]?.label).toBe('1 copy')
+  })
+  it('groups actions in the order of their first visible action', () => {
+    const schema = {
+      rowActions: [
+        { action: () => {}, group: 'open', key: 'open', label: 'Open' },
+        { action: () => {}, group: 'status', key: 'deactivate', label: 'Deactivate' },
+        { action: () => {}, condition: () => false, group: 'sync', key: 'sync', label: 'Sync' },
+        { action: () => {}, group: 'open', key: 'edit', label: 'Edit' },
+        {
+          action: () => {},
+          color: 'error' as const,
+          group: 'danger',
+          key: 'remove',
+          label: 'Remove',
+        },
+      ],
+    }
+
+    const scope = createScope({ active: true, id: '1' })
+    const groups = createRowActionDropdownGroups({
+      actions: resolveVisibleTableRowActions({ schema, scope }),
+      scope,
+    })
+
+    expect(groups.map((group) => group.map((item) => item.label))).toEqual([
+      ['Open', 'Edit'],
+      ['Deactivate'],
+      ['Remove'],
+    ])
+    expect(groups[0]?.[0]).not.toHaveProperty('group')
   })
 })

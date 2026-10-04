@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UDrawer from '@nuxt/ui/components/Drawer.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
-import type { DropdownMenuProps } from '@nuxt/ui/components/DropdownMenu.vue'
+import type { DropdownMenuItem, DropdownMenuProps } from '@nuxt/ui/components/DropdownMenu.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, ref, useAttrs } from 'vue'
 
@@ -9,7 +9,7 @@ import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoin
 import { useTableInternals } from '../../composables/use-table-internals'
 import { useTableRowActionScope } from '../../composables/use-table-row-actions'
 import type { DataListControlSize } from '../../types'
-import { createRowActionDropdownItems, resolveVisibleTableRowActions } from '../../utils'
+import { createRowActionDropdownGroups, resolveVisibleTableRowActions } from '../../utils'
 
 defineOptions({
   inheritAttrs: false,
@@ -32,20 +32,23 @@ const sheetOpen = ref<boolean>(false)
 interface SheetItem {
   label?: string
   icon?: string
-  color?: string
+  color?: DropdownMenuItem['color']
   disabled?: boolean
   onSelect?: (event: Event) => void
   dividerBefore: boolean
 }
-const sheetItems = computed<SheetItem[]>(() => {
-  const groups = (Array.isArray(items.value[0]) ? items.value : [items.value]) as Omit<
-    SheetItem,
-    'dividerBefore'
-  >[][]
-  return groups.flatMap((group, index) =>
-    group.map((item, itemIndex) => ({ ...item, dividerBefore: index > 0 && itemIndex === 0 })),
-  )
-})
+const sheetItems = computed<SheetItem[]>(() =>
+  items.value.flatMap((group, index) =>
+    group.map((item, itemIndex) => ({
+      color: item.color,
+      disabled: item.disabled,
+      dividerBefore: index > 0 && itemIndex === 0,
+      icon: item.icon,
+      label: item.label,
+      onSelect: item.onSelect,
+    })),
+  ),
+)
 function runSheetItem(item: SheetItem) {
   sheetOpen.value = false
   item.onSelect?.(new Event('select'))
@@ -68,7 +71,7 @@ const items = computed(() => {
     return []
   }
 
-  return createRowActionDropdownItems({
+  return createRowActionDropdownGroups({
     actions: visibleActions.value,
     scope: scope.value,
   })

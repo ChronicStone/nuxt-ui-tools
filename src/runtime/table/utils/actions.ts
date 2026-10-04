@@ -99,6 +99,23 @@ export function createRowActionDropdownItems(options: {
   )
 }
 
+export function createRowActionDropdownGroups(options: {
+  actions: ResolvedRowAction[]
+  scope: TableInjectedRowActionScope
+}): DropdownMenuItem[][] {
+  const groups = new Map<string, DropdownMenuItem[]>()
+
+  for (const action of options.actions) {
+    const key = action.group ?? ''
+    const items = groups.get(key) ?? []
+
+    items.push(mapRowActionToDropdownItem({ action, scope: options.scope }))
+    groups.set(key, items)
+  }
+
+  return [...groups.values()]
+}
+
 function mapRowActionToDropdownItem(options: {
   action: ResolvedRowAction
   scope: TableInjectedRowActionScope
@@ -129,6 +146,7 @@ function mapRowActionToDropdownItem(options: {
 
   delete item.condition
   delete item.action
+  delete item.group
 
   return item
 }
