@@ -63,19 +63,20 @@ describe('column preferences cookie', () => {
     expect(decodeColumnPreferences(value)?.widths).toEqual({ 'a~b!c*d': 90 })
   })
 
-  it('reads the former JSON cookie so nobody loses their layout', () => {
+  it('reads the former JSON cookie, keeping explicit hides and the current defaults', () => {
     const legacy = encodeURIComponent(
       JSON.stringify({
         order: ['email', 'name', 'city', 'score', '__row-actions'],
         pinning: { left: ['__select', 'name'], right: ['__row-actions'] },
         sizing: {},
-        visibility: { '__row-actions': true, city: false, email: true, name: true, score: false },
+        visibility: { '__row-actions': true, city: false, email: true, name: true, score: true },
       }),
     )
     const restored = restore(legacy)
 
     expect(restored.columnOrder.slice(0, 2)).toEqual(['email', 'name'])
     expect(restored.columnVisibility.city).toBe(false)
+    expect(restored.columnVisibility.score).toBe(false)
     expect(encodeColumnPreferences({ defaults: defaults(), state: restored })).toBe(
       '1!oemail~name~city~score!hcity',
     )

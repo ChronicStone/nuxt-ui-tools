@@ -161,7 +161,6 @@ function decodeLegacyPreferences(value: string): ColumnPreferences | null {
     left: isArray(pinning.left) ? pinning.left.filter((id) => isString(id)) : undefined,
     order: isArray(legacy.order) ? legacy.order.filter((id) => isString(id)) : undefined,
     right: isArray(pinning.right) ? pinning.right.filter((id) => isString(id)) : undefined,
-    shown: visibility.filter(([, visible]) => visible === true).map(([id]) => id),
     widths: isPlainObject(legacy.sizing)
       ? Object.fromEntries(
           Object.entries(legacy.sizing).filter((entry): entry is [string, number] =>
