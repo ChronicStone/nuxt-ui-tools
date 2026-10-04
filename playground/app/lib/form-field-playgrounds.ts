@@ -1167,6 +1167,36 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
       {
         fields: [
+          { default: true, key: 'inApp', label: 'Bell', type: 'switch' },
+          { default: false, key: 'email', label: 'Email', type: 'switch' },
+        ],
+        key: 'notificationMatrix',
+        label: 'Sectioned matrix',
+        props: { bordered: false, hoverable: false, minWidth: '30rem', rowHeaderWidth: '16rem' },
+        rows: [
+          { label: 'Conversations', type: 'section' },
+          { description: 'Threads you take part in', key: 'threads', label: 'New thread' },
+          { description: 'Threads you follow', key: 'messages', label: 'New message' },
+          {
+            description: 'Sent to the account manager and administrators',
+            label: 'Billing',
+            type: 'section',
+          },
+          {
+            description: 'As soon as the due date passes',
+            key: 'overdue',
+            label: 'Overdue invoice',
+          },
+          {
+            description: '30 then 7 days before the deadline',
+            key: 'renewal',
+            label: 'Renewal to decide',
+          },
+        ],
+        type: 'matrix',
+      },
+      {
+        fields: [
           { default: false, key: 'required', label: 'Required', type: 'checkbox' },
           {
             default: 2,
@@ -1198,6 +1228,12 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         before: 'permissions',
         description: 'Semantic row headers stay left-aligned while data controls remain centered.',
         label: 'Bordered matrix',
+      },
+      {
+        before: 'notificationMatrix',
+        description:
+          'Section entries open full-width row groups; row descriptions sit under the row label. Neither holds a value.',
+        label: 'Sections and descriptions',
       },
       {
         before: 'approvalMatrix',

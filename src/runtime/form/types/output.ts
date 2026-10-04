@@ -146,7 +146,7 @@ type ObjectFieldValue<TField, TMode extends FormStateMode> = ApplyOutputMode<
 >
 
 type MatrixRows<TField> = TField extends { readonly rows: infer TRows }
-  ? TRows extends readonly { key: string }[]
+  ? TRows extends readonly object[]
     ? TRows
     : readonly []
   : readonly []

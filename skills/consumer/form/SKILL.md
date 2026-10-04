@@ -48,6 +48,22 @@ const permissionsForm = defineFormSchema({
 
 The output is `{ permissions: { catalog: { enabled, scope }, orders: { enabled, scope } } }`.
 
+Rows can carry a `description`, and `{ type: 'section', label, description? }` entries open
+full-width row groups. Sections are optional and hold no value: they render as `rowgroup` headers
+and never appear in the output.
+
+```ts
+rows: [
+  { type: 'section', label: 'Conversations' },
+  { key: 'threads', label: 'New thread', description: 'Threads you take part in' },
+  { key: 'messages', label: 'New message' },
+  { type: 'section', label: 'Billing', description: 'Sent to the account manager' },
+  { key: 'overdue', label: 'Overdue invoice' },
+]
+```
+
+The output keeps only the row keys: `{ threads: {...}, messages: {...}, overdue: {...} }`.
+
 Discriminated arrays use `variantKey` and keep each variant's output narrowed:
 
 ```ts
@@ -333,7 +349,8 @@ export default defineAppConfig({
 ```
 
 `FormUiConfig` covers root/header/viewport/footer, field chrome, actions, grouped controls, inline
-tree, tree-select, matrix, array list/table, and modal/drawer/fullscreen slots. Override precedence is
+tree, tree-select, matrix (including `rowLabel`, `rowDescription`, `section`, `sectionHeader`,
+`sectionLabel` and `sectionDescription`), array list/table, and modal/drawer/fullscreen slots. Override precedence is
 app config, then schema `ui`, then `<NutForm :ui>`. A field's `props` are applied last, so
 `props: { size: 'lg', ui: { base: 'rounded-none' } }` remains the narrow escape hatch for one
 underlying Nuxt UI control.

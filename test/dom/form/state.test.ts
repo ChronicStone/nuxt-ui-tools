@@ -182,6 +182,53 @@ describe('form state', () => {
     harness.unmount()
   })
 
+  it('renders matrix sections as row groups that hold no value', async () => {
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [
+        {
+          fields: [
+            { key: 'inApp', label: 'Bell', type: 'switch' },
+            { key: 'email', label: 'Email', type: 'switch' },
+          ],
+          key: 'preferences',
+          rows: [
+            { key: 'digest', label: 'Weekly digest' },
+            { label: 'Notes', type: 'section' },
+            { description: 'Threads you take part in', key: 'feeds', label: 'New thread' },
+            { key: 'messages', label: 'New message' },
+            { description: 'Sent before the deadline', label: 'Billing', type: 'section' },
+            { key: 'invoices', label: 'Overdue invoice' },
+          ],
+          type: 'matrix',
+        },
+      ],
+    })
+    const harness = await mountForm({
+      input: { preferences: { feeds: { email: true, inApp: true } } },
+      schema,
+    })
+    const groups = harness.wrapper.findAll('[data-matrix-group]')
+    const sections = harness.wrapper.findAll('[data-matrix-section] th')
+
+    expect(groups.map((group) => group.findAll('th[scope="row"]').length)).toStrictEqual([1, 2, 1])
+    expect(sections.map((section) => section.attributes('scope'))).toStrictEqual([
+      'rowgroup',
+      'rowgroup',
+    ])
+    expect(sections.map((section) => section.attributes('colspan'))).toStrictEqual(['3', '3'])
+    expect(sections[1]?.text()).toContain('Sent before the deadline')
+    expect(groups[1]?.find('th[scope="row"]').text()).toContain('Threads you take part in')
+    expect(groups[1]?.find('td').attributes('headers')).toContain(sections[0]?.attributes('id'))
+    expect(harness.output().preferences).toStrictEqual({
+      digest: { email: false, inApp: false },
+      feeds: { email: true, inApp: true },
+      invoices: { email: false, inApp: false },
+      messages: { email: false, inApp: false },
+    })
+    harness.unmount()
+  })
+
   it('clears a sibling field through the field form api without touching its own value', async () => {
     const schema = defineFormSchema({
       actions: [],

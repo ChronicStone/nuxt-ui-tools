@@ -103,7 +103,12 @@ export type {
 } from '../fields/hierarchy/types'
 export type { FormInfoField } from '../fields/info/types'
 export type { FormInputGroupField } from '../fields/input-group/types'
-export type { FormMatrixField, FormMatrixRow } from '../fields/matrix/types'
+export type {
+  FormMatrixEntry,
+  FormMatrixField,
+  FormMatrixRow,
+  FormMatrixSection,
+} from '../fields/matrix/types'
 export type { FormNumberField } from '../fields/number/types'
 export type { FormOneTimeCodeField } from '../fields/one-time-code/types'
 export type { FormObjectField } from '../fields/object/types'

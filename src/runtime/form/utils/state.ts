@@ -571,7 +571,7 @@ export function getMatrixRows(field: FormField) {
     return []
   }
   return rows.flatMap((row) => {
-    if (!isRecord(row) || !isString(row.key)) {
+    if (!isRecord(row) || row.type === 'section' || !isString(row.key)) {
       return []
     }
     return row.key
