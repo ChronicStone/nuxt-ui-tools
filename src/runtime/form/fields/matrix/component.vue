@@ -10,6 +10,7 @@ import { isNumber } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
 import { mergeFormUiClass } from '../../utils/ui'
 import type { FormMatrixField, FormMatrixRow } from './types'
+import { groupMatrixEntries } from './utils'
 
 const props = defineProps<{
   field: FormMatrixField
@@ -26,6 +27,7 @@ const matrixInstanceId = useId()
 const visibleFields = computed(() =>
   props.field.fields.filter((field) => field.type !== 'hidden' && field.ignore !== true),
 )
+const groups = computed(() => groupMatrixEntries(props.field.rows))
 const matrixId = computed<string>(() => `${matrixInstanceId}-${props.path.join('-')}`)
 const minWidth = computed(() =>
   isNumber(fieldProps.value.minWidth)
@@ -41,6 +43,7 @@ const bordered = computed(() => fieldProps.value.bordered !== false)
 const hoverable = computed(() => fieldProps.value.hoverable !== false)
 const rowPadding = computed(() => (fieldProps.value.compact ? 'px-3 py-2' : 'px-4 py-3'))
 const cellPadding = computed(() => (fieldProps.value.compact ? 'px-2 py-1.5' : 'px-3 py-2.5'))
+const sectionPadding = computed(() => (fieldProps.value.compact ? 'px-3 py-1.5' : 'px-4 py-2'))
 
 function rowPath(row: FormMatrixRow) {
   return [...props.path, row.key]
@@ -54,8 +57,22 @@ function rowLabelId(row: FormMatrixRow) {
   return `${matrixId.value}-row-${row.key}`
 }
 
+function sectionId(index: number) {
+  return `${matrixId.value}-section-${index}`
+}
+
 function columnLabelId(field: FormField) {
   return `${matrixId.value}-column-${field.key}`
+}
+
+function cellHeaders(options: { row: FormMatrixRow; column: FormField; section: number | null }) {
+  return [
+    options.section === null ? null : sectionId(options.section),
+    rowLabelId(options.row),
+    columnLabelId(options.column),
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 function controlClass(field: FormField) {
@@ -128,9 +145,58 @@ function controlClass(field: FormField) {
             </th>
           </tr>
         </thead>
-        <tbody :class="formUi.ui.value.matrix?.ui?.body">
+        <tbody
+          v-for="(group, groupIndex) in groups"
+          :key="group.section ? `section-${groupIndex}` : `rows-${groupIndex}`"
+          :class="
+            mergeFormUiClass(
+              '[&:not(:last-child)>tr:last-child>*]:border-b [&:not(:last-child)>tr:last-child>*]:border-default',
+              formUi.ui.value.matrix?.ui?.body,
+            )
+          "
+          data-matrix-group
+        >
           <tr
-            v-for="row in field.rows"
+            v-if="group.section"
+            :class="mergeFormUiClass('bg-elevated/50', formUi.ui.value.matrix?.ui?.section)"
+            data-matrix-section
+          >
+            <th
+              :id="sectionId(groupIndex)"
+              scope="rowgroup"
+              :colspan="visibleFields.length + 1"
+              :class="
+                mergeFormUiClass(
+                  [sectionPadding, 'border-b border-default text-left font-normal'].join(' '),
+                  formUi.ui.value.matrix?.ui?.sectionHeader,
+                )
+              "
+            >
+              <span
+                :class="
+                  mergeFormUiClass(
+                    'block text-xs font-semibold text-highlighted',
+                    formUi.ui.value.matrix?.ui?.sectionLabel,
+                  )
+                "
+              >
+                {{ resolveFormText(group.section.label) }}
+              </span>
+              <span
+                v-if="group.section.description"
+                :class="
+                  mergeFormUiClass(
+                    'mt-0.5 block text-xs text-muted',
+                    formUi.ui.value.matrix?.ui?.sectionDescription,
+                  )
+                "
+              >
+                {{ resolveFormText(group.section.description) }}
+              </span>
+            </th>
+          </tr>
+          <tr
+            v-for="row in group.rows"
             :key="row.key"
             :class="
               mergeFormUiClass(
@@ -159,12 +225,25 @@ function controlClass(field: FormField) {
               "
               :style="{ width: rowHeaderWidth, minWidth: rowHeaderWidth }"
             >
-              {{ resolveFormText(row.label) ?? row.key }}
+              <span :class="mergeFormUiClass('block', formUi.ui.value.matrix?.ui?.rowLabel)">
+                {{ resolveFormText(row.label) ?? row.key }}
+              </span>
+              <span
+                v-if="row.description"
+                :class="
+                  mergeFormUiClass(
+                    'mt-0.5 block text-xs font-normal text-muted',
+                    formUi.ui.value.matrix?.ui?.rowDescription,
+                  )
+                "
+              >
+                {{ resolveFormText(row.description) }}
+              </span>
             </th>
             <td
               v-for="column in visibleFields"
               :key="column.key"
-              :headers="`${rowLabelId(row)} ${columnLabelId(column)}`"
+              :headers="cellHeaders({ row, column, section: group.section ? groupIndex : null })"
               :class="
                 mergeFormUiClass(
                   [

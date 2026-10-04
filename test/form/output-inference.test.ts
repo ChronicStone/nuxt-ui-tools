@@ -376,6 +376,26 @@ const matrixSchema = defineFormSchema({
   ],
 })
 
+const sectionedMatrixSchema = defineFormSchema({
+  fields: [
+    {
+      fields: [
+        { key: 'inApp', type: 'switch' },
+        { key: 'email', type: 'switch' },
+      ],
+      key: 'preferences',
+      rows: [
+        { label: 'Notes', type: 'section' },
+        { description: 'Threads you take part in', key: 'feeds', label: 'New thread' },
+        { key: 'messages', label: 'New message' },
+        { description: 'Sent before the deadline', label: 'Billing', type: 'section' },
+        { key: 'invoices', label: 'Overdue invoice' },
+      ],
+      type: 'matrix',
+    },
+  ],
+})
+
 const requiredSchema = defineFormSchema({
   fields: [
     { key: 'email', required: true, type: 'text' },
@@ -617,6 +637,13 @@ describe('form output inference', () => {
       | { kind: 'email'; address: string | null; rank: number }
       | { kind: 'phone'; number: string | null }
     >()
+  })
+
+  it('keeps matrix sections out of the inferred rows', () => {
+    type Preferences = ExtractFormOutput<typeof sectionedMatrixSchema>['preferences']
+
+    expectTypeOf<keyof Preferences>().toEqualTypeOf<'feeds' | 'messages' | 'invoices'>()
+    expectTypeOf<Preferences['invoices']>().toEqualTypeOf<{ inApp: boolean; email: boolean }>()
   })
 
   it('types useForm controller state, output, and submit handlers from the schema', () => {

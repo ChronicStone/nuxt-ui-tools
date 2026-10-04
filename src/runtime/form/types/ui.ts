@@ -119,6 +119,12 @@ export interface FormMatrixUi {
   body?: FormUiClass
   row?: FormUiClass
   rowHeader?: FormUiClass
+  rowLabel?: FormUiClass
+  rowDescription?: FormUiClass
+  section?: FormUiClass
+  sectionHeader?: FormUiClass
+  sectionLabel?: FormUiClass
+  sectionDescription?: FormUiClass
   cell?: FormUiClass
   control?: FormUiClass
 }
