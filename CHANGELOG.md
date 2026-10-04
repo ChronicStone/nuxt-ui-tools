@@ -26,6 +26,8 @@ Column preferences take a few bytes in their cookie. A table now stores only wha
 
 Row actions can be grouped. A `group` key on a row action renders it with the other actions of that group, and the groups are separated by a divider in the dropdown and in the mobile action sheet, in the order of their first visible action. Actions without a group share one, so existing menus are unchanged. `createRowActionDropdownGroups` returns the grouped items.
 
+A custom empty state (`ui.table.props.empty`) now describes the list when it is truly empty. When a search or a filter leaves no rows, the table and grid show the "no results" message with its reset button instead of the custom text, which used to tell users there was nothing yet while their filter was hiding rows.
+
 ## v1.15.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.14.0...v1.15.0)
