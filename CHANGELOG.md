@@ -24,6 +24,8 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 Column preferences take a few bytes in their cookie. A table now stores only what differs from its schema defaults, as a compact string such as `1!hcity~email!wname*240` (two hidden columns and one width), instead of its full order, visibility, pinning and sizing as URL-encoded JSON. A table left on its defaults stores no cookie at all, so an app with many tables stops inflating the `Cookie` header of every request. The sections are `o` (order), `h` (hidden), `v` (shown), `l` and `r` (pinned left and right) and `w` (widths as `id*px`), and a column id is URI-escaped only when it contains a separator. An existing JSON cookie is read once and rewritten in the new format, so nobody loses their layout. `encodeColumnPreferences`, `decodeColumnPreferences` and `applyColumnPreferences` are exported with the table column utilities.
 
+Row actions can be grouped. A `group` key on a row action renders it with the other actions of that group, and the groups are separated by a divider in the dropdown and in the mobile action sheet, in the order of their first visible action. Actions without a group share one, so existing menus are unchanged. `createRowActionDropdownGroups` returns the grouped items.
+
 ## v1.15.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.14.0...v1.15.0)
