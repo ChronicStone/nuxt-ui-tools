@@ -10,7 +10,12 @@ export interface FormCustomComponentField<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
 > extends FormStatefulFieldBase<'custom-component', FormValue, TContext, TDeps> {
+  /**
+   * Renders the field as a control: the component receives the field value as `modelValue`, its
+   * resolved `props`, and `disabled`, and sets the value by emitting `update:modelValue`.
+   */
   component?: Component
+  /** Renders free content from the field callback params, `{ ctx, deps, api }`. */
   render?: FormFieldCallback<FormRenderable, TContext, TDeps>
 }
 

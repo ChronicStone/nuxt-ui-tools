@@ -67,7 +67,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       description-key="description"
       :orientation="fieldProps.orientation"
       :ui="groupUi"
-      :variant="fieldProps.variant === 'table' ? 'list' : (fieldProps.variant ?? 'list')"
+      :variant="fieldProps.variant ?? 'list'"
       :indicator="fieldProps.indicator"
       :disabled="disabled"
       @blur="handleBlur"

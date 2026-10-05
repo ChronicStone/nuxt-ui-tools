@@ -18,6 +18,14 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.7
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.6...v1.16.7)
+
+Radio and checkbox group fields render their `table` variant. `props: { variant: 'table' }` was accepted but drawn as the plain list; it now reaches Nuxt UI, which joins the options into one framed list with a divider between rows and tints the selected row. It suits a choice of roles where each option has a description.
+
+A `custom-component` field with a `component` now works as a control. The component receives the field value as `modelValue`, the field's resolved `props`, and `disabled`, and sets the value by emitting `update:modelValue`, so validation, dirty tracking and submission treat it like any other field. Before, the component was mounted with no props and could only reach the value through a `render` callback.
+
 ## v1.16.6
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.5...v1.16.6)

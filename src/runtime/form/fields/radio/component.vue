@@ -48,7 +48,7 @@ const groupUi = computed(() => ({
       description-key="description"
       :items="items"
       :ui="groupUi"
-      :variant="fieldProps.variant === 'table' ? 'list' : (fieldProps.variant ?? 'list')"
+      :variant="fieldProps.variant ?? 'list'"
       :orientation="fieldProps.orientation"
       :indicator="fieldProps.indicator"
       :disabled="disabled"
