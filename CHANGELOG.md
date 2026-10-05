@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.5
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.4...v1.16.5)
+
+A single select closes its menu when the create action in the menu footer runs. The menu stayed open behind a creator that opens its own form, and was still open over the field once the created option had been selected. Multiple selects keep the menu open so the user can keep picking.
+
 ## v1.16.4
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.3...v1.16.4)
