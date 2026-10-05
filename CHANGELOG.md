@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.2
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.1...v1.16.2)
+
+Custom component fields keep what they render mounted. The output of a `render` callback was wrapped in a new inline component on every update, so any change to the field's value, its dependencies, or the state its closure reads remounted the whole subtree: a component rendered there lost its local state, its focus, and its running transitions each time. The output now renders through one component created with the field, so updates patch the existing tree.
+
 ## v1.16.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.0...v1.16.1)
