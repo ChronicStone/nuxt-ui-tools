@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.7
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.6...v1.16.7)
+
+Radio and checkbox group fields render their `table` variant. `props: { variant: 'table' }` was accepted but drawn as the plain list; it now reaches Nuxt UI, which joins the options into one framed list with a divider between rows and tints the selected row. It suits a choice of roles where each option has a description.
+
 ## v1.16.6
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.5...v1.16.6)
