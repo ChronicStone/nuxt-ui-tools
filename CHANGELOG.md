@@ -18,6 +18,14 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.6
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.5...v1.16.6)
+
+Form confirmations can go through the app. Leaving a dirty form and removing an array item asked with `window.confirm`, which embedded browsers answer `false` without showing anything, so cancel and remove silently did nothing there. `UiFormProvider` now takes a `confirm` handler: it receives `{ kind: 'unsaved-changes' | 'remove-item', message }` and resolves `true` to go ahead, so an app can show its own modal. Without a handler the native dialog is still used.
+
+The unsaved-changes message is now localized (`form.confirm.unsavedChanges`). Cancelling a dirty form and confirming no longer asks a second time when the page then navigates away; editing again re-arms the question.
+
 ## v1.16.5
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.4...v1.16.5)
