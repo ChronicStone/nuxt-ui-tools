@@ -18,6 +18,14 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.3
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.2...v1.16.3)
+
+The selection bar keeps its actions inside the bar. It showed up to three actions inline whatever their length, so long labels pushed the last action and the overflow button under the dismiss control, out of reach. It now measures the strip after each render and moves the actions that don't fit into the overflow menu, again when the bar is resized or the labels change; the three-action cap (one on mobile) still applies.
+
+Column menus no longer set their own text colors. The active sort item was forced to `--ui-text-highlighted` and the title to `--ui-text-dimmed`, which made them invisible in an app whose dropdown theme uses a dark or inverted surface. The active item keeps its weight and dot, and both now take the menu theme's colors.
+
 ## v1.16.2
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.1...v1.16.2)
