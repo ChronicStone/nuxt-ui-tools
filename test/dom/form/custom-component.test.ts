@@ -53,4 +53,63 @@ describe('custom component fields', () => {
     expect(mounts).toBe(1)
     harness.unmount()
   })
+
+  it('binds a component field to its value, props and disabled state like a control', async () => {
+    const Picker = defineComponent({
+      emits: ['update:modelValue'],
+      props: {
+        disabled: { type: Boolean, default: false },
+        modelValue: { type: Array, default: () => [] },
+        options: { type: Array, default: () => [] },
+      },
+      setup(props, { emit }) {
+        return () =>
+          h(
+            'div',
+            { 'data-testid': 'picker', 'data-disabled': String(props.disabled) },
+            props.options.map((option) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  'data-option': String(option),
+                  'aria-pressed': String(props.modelValue.includes(option)),
+                  onClick: () => emit('update:modelValue', [...props.modelValue, option]),
+                },
+                String(option),
+              ),
+            ),
+          )
+      },
+    })
+    const harness = await mountForm({
+      input: { spaces: ['admin'] },
+      schema: defineFormSchema({
+        fields: [
+          { key: 'locked', type: 'checkbox', label: 'Locked', default: false },
+          {
+            key: 'spaces',
+            type: 'custom-component',
+            component: Picker,
+            default: [],
+            dependencies: ['locked'],
+            disabled: ({ deps }) => deps.get('locked') === true,
+            props: { options: ['admin', 'client'] },
+          },
+        ],
+      }),
+    })
+    const option = (value: string) => harness.wrapper.find(`[data-option="${value}"]`)
+
+    expect(option('admin').attributes('aria-pressed')).toBe('true')
+    await option('client').trigger('click')
+    await harness.flush()
+    expect(harness.output().spaces).toStrictEqual(['admin', 'client'])
+    expect(option('client').attributes('aria-pressed')).toBe('true')
+
+    harness.form.state.set('locked', true)
+    await harness.flush()
+    expect(harness.wrapper.find('[data-testid="picker"]').attributes('data-disabled')).toBe('true')
+    harness.unmount()
+  })
 })
