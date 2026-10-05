@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.4
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.3...v1.16.4)
+
+Remote option fields now read the shared option settings. A `mode: 'remote'` config was not recognised as an option config, so its `create` hook, `allowOptionsRefresh` and `disableOnLoading` were ignored: a remote select never showed its create action. The create action now appears in the menu footer, runs the handler, and selects the created option like a local field.
+
 ## v1.16.3
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.2...v1.16.3)

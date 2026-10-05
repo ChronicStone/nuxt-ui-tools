@@ -213,6 +213,66 @@ describe('remote field options', () => {
     harness.unmount()
   })
 
+  it('offers the create action of a remote field and selects the created option', async () => {
+    const labels: string[] = []
+    const users = defineRemoteOptions(
+      {
+        load: ({ page, search }) =>
+          queryOptions({
+            queryFn: () =>
+              Promise.resolve({ hasMore: false, rows: [{ label: 'Ada', value: 'u1' }] }),
+            queryKey: ['form-creatable-users', search, page.index],
+          }),
+        resolveSelected: ({ values }) =>
+          queryOptions({
+            queryFn: () =>
+              Promise.resolve({ rows: [{ label: 'Grace', value: String(values[0]) }] }),
+            queryKey: ['form-creatable-users', 'selected', values],
+          }),
+      },
+      {
+        key: 'form-creatable-users',
+        mapPage: ({ hasMore, rows }) => ({ hasMore, options: rows }),
+        mapSelected: ({ rows }) => rows,
+        pagination: { size: 2, type: 'page' },
+      },
+    )
+    const schema = defineFormSchema({
+      actions: [],
+      fields: [
+        {
+          key: 'owner',
+          options: {
+            create: {
+              handler: ({ label }) => {
+                labels.push(label)
+                return { label: 'Grace', value: 'u9' }
+              },
+              label: 'New user',
+            },
+            loader: users,
+            mode: 'remote',
+          },
+          type: 'select',
+        },
+      ],
+    })
+    const harness = await mountForm({ schema })
+
+    await openMenu(harness, 'owner')
+    await harness.until(() => itemValues(harness, 'owner').length === 1)
+    const create = harness
+      .field('owner')
+      .findAll('button')
+      .find((button) => button.text() === 'New user')
+
+    expect(create).toBeDefined()
+    await create?.trigger('click')
+    await harness.until(() => harness.output().owner === 'u9')
+    expect(labels).toStrictEqual([''])
+    harness.unmount()
+  })
+
   it('waits for the menu to open, loads the first page, and appends a deduplicated next page', async () => {
     const requests = requestMap<Page>()
     const source = pagedSource(requests, 'remote-page')

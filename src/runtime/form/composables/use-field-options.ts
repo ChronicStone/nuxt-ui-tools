@@ -269,8 +269,9 @@ export function useFieldOptions(params: {
   watch(
     sourceItems,
     (nextOptions, previousOptions) => {
-      if (optionConfig.value?.onOptionsChange) {
-        optionConfig.value.onOptionsChange(nextOptions, {
+      const config = optionConfig.value
+      if (config && 'onOptionsChange' in config && config.onOptionsChange) {
+        config.onOptionsChange(nextOptions, {
           ...params.callbackParams.value,
           previousOptions: previousOptions ?? [],
         })
@@ -446,7 +447,12 @@ function isRemoteOptionConfig(value: FormValue): value is FormRemoteOptionConfig
   )
 }
 
-function resolveOptionConfig(field: FormField): FormOptionConfig<FormValue> | undefined {
+type FormFieldOptionConfig =
+  | FormOptionConfig<FormValue>
+  | FormRemoteOptionConfig<FormValue>
+  | FormRemoteLoaderOptionConfig<FormValue>
+
+function resolveOptionConfig(field: FormField): FormFieldOptionConfig | undefined {
   if (!createFormFieldInstance(field).capability.has('options')) {
     return undefined
   }
@@ -550,8 +556,8 @@ function isAsyncResource(value: FormValue): value is FormAsyncResource<FormValue
   )
 }
 
-function isFormOptionConfig(value: FormValue): value is FormOptionConfig<FormValue> {
-  return isRecord(value) && 'source' in value
+function isFormOptionConfig(value: FormValue): value is FormFieldOptionConfig {
+  return isRecord(value) && ('source' in value || value.mode === 'remote')
 }
 
 function hasCreateHandler(value: FormValue) {
