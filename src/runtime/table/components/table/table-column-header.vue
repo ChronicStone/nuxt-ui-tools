@@ -101,11 +101,9 @@ function startResize(event: MouseEvent | TouchEvent) {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ui-text-dimmed);
 }
 .nut-dl-colmenu .nut-dl-colmenu__item--active {
   font-weight: 600;
-  color: var(--ui-text-highlighted);
 }
 .nut-dl-colmenu .nut-dl-colmenu__item--active::after {
   content: '';
