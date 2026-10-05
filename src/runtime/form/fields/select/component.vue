@@ -35,6 +35,7 @@ const {
   { omit: ['createItem', 'max', 'searchable', 'clearable'] },
 )
 const searchTerm = ref<string>('')
+const open = ref<boolean>(false)
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
   get: () => {
     const value = form.getValue(props.path)
@@ -86,8 +87,9 @@ watch(searchTerm, (term) => {
   }
 })
 
-function handleOpen(open: boolean) {
-  if (open) {
+function handleOpen(next: boolean) {
+  open.value = next
+  if (next) {
     options.activate()
   }
 }
@@ -97,7 +99,11 @@ async function handleCreate(label: string) {
 }
 
 async function handleCreateAction() {
-  await options.create(searchTerm.value.trim() || undefined)
+  const label = searchTerm.value.trim() || undefined
+  if (!fieldProps.value.multiple) {
+    open.value = false
+  }
+  await options.create(label)
 }
 
 async function handleNativeCreate(label: string) {
@@ -122,6 +128,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
     v-if="bare"
     v-model="model"
     v-model:search-term="searchTerm"
+    :open="open"
     v-bind="controlProps"
     class="w-full"
     value-key="value"
@@ -169,6 +176,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
     <USelectMenu
       v-model="model"
       v-model:search-term="searchTerm"
+      :open="open"
       v-bind="controlProps"
       class="w-full"
       value-key="value"

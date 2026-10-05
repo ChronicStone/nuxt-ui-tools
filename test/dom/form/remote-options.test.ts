@@ -270,6 +270,7 @@ describe('remote field options', () => {
     await create?.trigger('click')
     await harness.until(() => harness.output().owner === 'u9')
     expect(labels).toStrictEqual([''])
+    expect(harness.field('owner').find('[data-open]').attributes('data-open')).toBe('false')
     harness.unmount()
   })
 
