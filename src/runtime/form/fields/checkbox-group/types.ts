@@ -8,6 +8,10 @@ import type {
 } from '../../types/options'
 
 export interface FormCheckboxGroupProps {
+  /**
+   * `list` (the default) lines up bare checkboxes, `card` frames each option on its own, and
+   * `table` joins the options into one framed list with a divider between rows.
+   */
   variant?: 'table' | 'list' | 'card'
   orientation?: 'horizontal' | 'vertical'
   indicator?: 'start' | 'end' | 'hidden'
