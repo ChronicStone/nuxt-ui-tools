@@ -87,13 +87,13 @@ function addItem() {
   activeIndex.value = array.addItem()
 }
 
-function removeItem(index: number) {
+async function removeItem(index: number) {
   const currentActiveIndex = activeIndex.value
   const hasNextItem = index + 1 < items.value.length
   if (currentActiveIndex === index) {
     tabTransitionDirection.value = hasNextItem ? 'forward' : 'backward'
   }
-  if (!array.removeItem(index)) {
+  if (!(await array.removeItem(index))) {
     return
   }
   if (currentActiveIndex < index) {

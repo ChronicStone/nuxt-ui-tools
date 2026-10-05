@@ -414,6 +414,10 @@ export interface UiToolsSpreadsheetMessages {
 }
 
 export interface UiToolsFormMessages {
+  /** Confirmations asked before discarding work. */
+  confirm: {
+    unsavedChanges: string
+  }
   actions: {
     nextButton: string
     prevButton: string

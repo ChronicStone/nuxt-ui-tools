@@ -198,6 +198,9 @@ export default defineUiToolsLocale<Messages>({
       untitled: 'Fichier sans nom',
     },
     form: {
+      confirm: {
+        unsavedChanges: 'Vous avez des modifications non enregistrées. Les abandonner ?',
+      },
       actions: {
         cancelButton: 'Annuler',
         nextButton: 'Suivant',
