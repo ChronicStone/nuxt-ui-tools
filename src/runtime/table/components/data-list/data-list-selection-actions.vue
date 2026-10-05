@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
-import { computed } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
@@ -84,8 +85,13 @@ const scopeEnabled = computed(
 )
 const bulkScope = computed(() => internals.selection.bulkScope.value)
 const maxVisible = computed(() => props.maxVisible ?? (isMobile.value ? 1 : 3))
-const visibleActions = computed(() => actions.value.slice(0, maxVisible.value))
-const overflowActions = computed(() => actions.value.slice(maxVisible.value))
+const fitted = ref<number>(Number.POSITIVE_INFINITY)
+const visibleCount = computed(() => Math.min(maxVisible.value, fitted.value))
+const visibleActions = computed(() => actions.value.slice(0, visibleCount.value))
+const overflowActions = computed(() => actions.value.slice(visibleCount.value))
+const rootElement = useTemplateRef<HTMLElement>('rootElement')
+const actionsElement = useTemplateRef<HTMLElement>('actionsElement')
+let fitting = 0
 const overflowItems = computed(() =>
   overflowActions.value.map((action) => ({
     disabled: action.state.disabled,
@@ -115,12 +121,43 @@ function formatCount(value: number) {
 function clearSelection() {
   internals.selection.clearSelection()
 }
+
+function overflowing() {
+  const strip = actionsElement.value
+
+  return Boolean(strip && strip.scrollWidth > strip.clientWidth + 1)
+}
+
+async function fit() {
+  const run = ++fitting
+
+  fitted.value = Number.POSITIVE_INFINITY
+  await nextTick()
+
+  while (run === fitting && visibleCount.value > 0 && overflowing()) {
+    fitted.value = visibleCount.value - 1
+    await nextTick()
+  }
+}
+
+watch(
+  () => [
+    selectedCount.value > 0,
+    maxVisible.value,
+    actions.value.map((action) => resolveTableActionLabel(action.definition.label)).join('\n'),
+  ],
+  () => void fit(),
+  { flush: 'post' },
+)
+
+useResizeObserver(rootElement, () => void fit())
 </script>
 
 <template>
   <Transition name="nut-dl-selbar">
     <div
       v-if="selectedCount > 0 && actions.length"
+      ref="rootElement"
       :class="
         mergeDataListUiClass(
           `nut-dl-selbar pointer-events-none z-40 flex justify-center px-4 ${position === 'fixed' ? 'fixed inset-x-0 bottom-4' : 'absolute inset-x-0 bottom-[22px]'}`,
@@ -205,6 +242,7 @@ function clearSelection() {
             </span>
 
             <div
+              ref="actionsElement"
               :class="
                 mergeDataListUiClass(
                   `nut-dl-selbar__actions flex min-w-0 items-center gap-0.5 ${scopeEnabled ? 'ml-1 pl-2' : ''}`,
