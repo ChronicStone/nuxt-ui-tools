@@ -242,7 +242,7 @@ function clearSelection() {
                 :ui="{
                   content: 'min-w-52',
                   item: 'gap-2 text-[13px]',
-                  itemLeadingIcon: 'size-3.5 text-muted',
+                  itemLeadingIcon: 'size-3.5',
                 }"
               >
                 <UButton

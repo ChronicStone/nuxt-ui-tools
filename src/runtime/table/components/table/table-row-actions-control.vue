@@ -31,7 +31,7 @@ const buttonProps = computed(() =>
       :ui="{
         content: 'z-[80] min-w-48',
         item: 'nut-dl-menu__item gap-2 text-[13px]',
-        itemLeadingIcon: 'size-3.5 text-muted',
+        itemLeadingIcon: 'size-3.5',
       }"
     >
       <UButton
