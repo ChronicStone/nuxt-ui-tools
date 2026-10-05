@@ -100,8 +100,8 @@ function addItem() {
   expand(array.addItem())
 }
 
-function removeItem(index: number) {
-  if (!array.removeItem(index)) {
+async function removeItem(index: number) {
+  if (!(await array.removeItem(index))) {
     return
   }
   expanded.value = expanded.value

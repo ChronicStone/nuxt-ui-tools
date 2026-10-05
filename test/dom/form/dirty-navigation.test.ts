@@ -74,4 +74,49 @@ describe('dirty form navigation', () => {
     expect(confirm).not.toHaveBeenCalled()
     harness.unmount()
   })
+
+  it('asks the app confirm handler instead of the native dialog', async () => {
+    const native = mockConfirm(false)
+    const confirm = vi.fn(async () => true)
+    const harness = await mountForm({
+      confirm,
+      input: { name: 'Original' },
+      schema: createSchema(),
+    })
+    harness.router.addRoute({ component: Target, name: 'target', path: '/target' })
+
+    await harness.setInput('name', 'Unsaved edit')
+    await harness.router.push('/target')
+
+    expect(harness.router.currentRoute.value.path).toBe('/target')
+    expect(confirm).toHaveBeenCalledExactlyOnceWith({
+      kind: 'unsaved-changes',
+      message: expect.any(String),
+    })
+    expect(native).not.toHaveBeenCalled()
+    harness.unmount()
+  })
+
+  it('asks once when a confirmed cancel navigates away', async () => {
+    const confirm = vi.fn(async () => true)
+    const harness = await mountForm({
+      confirm,
+      input: { name: 'Original' },
+      schema: defineFormSchema({
+        actions: [{ key: 'cancel', label: 'Cancel' }],
+        controls: { confirmNavOnDirty: true },
+        fields: [{ key: 'name', label: 'Name', type: 'text' }],
+      }),
+    })
+    harness.router.addRoute({ component: Target, name: 'target', path: '/target' })
+
+    await harness.setInput('name', 'Unsaved edit')
+    await harness.button('Cancel').trigger('click')
+    await harness.until(() => harness.cancelled.length === 1)
+    await harness.router.push('/target')
+
+    expect(harness.router.currentRoute.value.path).toBe('/target')
+    expect(confirm).toHaveBeenCalledOnce()
+    harness.unmount()
+  })
 })

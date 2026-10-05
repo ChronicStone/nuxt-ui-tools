@@ -7,6 +7,7 @@ import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldRenderer from '../../components/renderer/form-field-renderer.vue'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import { useFormConfirm } from '../../composables/use-form-confirm'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormValue, FormField } from '../../types'
 import { formOptionKey, normalizeOptionItem, resolveOptionSource } from '../../utils/options'
@@ -40,6 +41,7 @@ const VueDraggable = defineAsyncComponent(async () => {
 
 const formUi = useFormUi()
 const { t } = useUiToolsLocale()
+const confirm = useFormConfirm()
 const ui = computed(() => formUi.ui.value.arrayPrimitive?.ui)
 const values = computed<readonly FormValue[]>(() => {
   const value = form.getValue(props.path)
@@ -178,12 +180,11 @@ async function addItem() {
   await form.focusField(itemPath(index))
 }
 
-function removeItem(index: number) {
+async function removeItem(index: number) {
   if (!isPending(index) && props.field.confirmDelete !== false) {
     const message =
       resolveFormBoundaryText(props.field.confirmDelete) ?? t('form.fields.array.confirmDelete')
-    // oxlint-disable-next-line no-alert -- confirmation stays native until the engine ships its own confirm overlay
-    if (!window.confirm(message)) {
+    if (!(await confirm({ kind: 'remove-item', message }))) {
       return
     }
   }

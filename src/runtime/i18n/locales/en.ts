@@ -196,6 +196,9 @@ export default defineUiToolsLocale<Messages>({
       untitled: 'Untitled file',
     },
     form: {
+      confirm: {
+        unsavedChanges: 'You have unsaved changes. Discard them?',
+      },
       actions: {
         cancelButton: 'Cancel',
         nextButton: 'Next',

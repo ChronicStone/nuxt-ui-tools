@@ -2,6 +2,7 @@ import { computed } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { useResolvedFieldProps } from '../../composables/use-field-control'
+import { useFormConfirm } from '../../composables/use-form-confirm'
 import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
 import type {
@@ -42,6 +43,7 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
   const formUi = useFormUi()
   const fieldProps = useResolvedFieldProps(field, path)
   const { t } = useUiToolsLocale()
+  const confirm = useFormConfirm()
   const itemKeys = new WeakMap<FormObject, string>()
   let nextItemKey = 0
 
@@ -103,19 +105,18 @@ export function useFormArrayItems(field: () => FormArrayItemsField, path: () => 
     return index
   }
 
-  function confirmRemoval() {
+  async function confirmRemoval() {
     const current = field()
     if (!current.confirmDelete) {
       return true
     }
     const message =
       resolveFormBoundaryText(current.confirmDelete) ?? t('form.fields.array.confirmDelete')
-    // oxlint-disable-next-line no-alert -- confirmation stays native until the engine ships its own confirm overlay
-    return window.confirm(message)
+    return confirm({ kind: 'remove-item', message })
   }
 
-  function removeItem(index: number) {
-    if (!confirmRemoval()) {
+  async function removeItem(index: number) {
+    if (!(await confirmRemoval())) {
       return false
     }
     updateItems(items.value.filter((_, itemIndex) => itemIndex !== index))

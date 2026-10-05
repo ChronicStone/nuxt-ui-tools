@@ -25,6 +25,7 @@ import { isString, isUndefined, stringArray } from '../utils/predicate'
 import { collectFormFieldsPaths } from '../utils/state'
 import { resolveFormText } from '../utils/text'
 import { mergeFormUi, resolveAppFormUi } from '../utils/ui'
+import { useFormConfirm } from './use-form-confirm'
 import { provideFormRuntime, useFormRuntime } from './use-form-runtime'
 import { provideFormUi } from './use-form-ui'
 
@@ -41,8 +42,6 @@ export interface UseFormRootParams {
   onSubmitted: (value: FormObject, result: FormSubmitHandlerResult<FormValue>) => void
   onCancelled: (value: FormObject) => void
 }
-
-const DEFAULT_DIRTY_NAVIGATION_MESSAGE = 'You have unsaved changes. Close this form?'
 
 /**
  * Root of a rendered form. It creates the runtime and binds it to the controller, provides the
@@ -74,6 +73,17 @@ export function useFormRoot(params: UseFormRootParams) {
   const runtime = ownedRuntime ?? useFormRuntime({ input, schema, syncInput, validationMode })
 
   provideFormRuntime(runtime)
+
+  const confirm = useFormConfirm()
+  // Set once the user agrees to discard their changes, so cancelling and the navigation it
+  // triggers ask only once. Editing again re-arms the question.
+  let leaveConfirmed = false
+  watch(
+    () => runtime.dirtyPaths.value,
+    () => {
+      leaveConfirmed = false
+    },
+  )
 
   if (!ownedRuntime) {
     watch(
@@ -117,10 +127,10 @@ export function useFormRoot(params: UseFormRootParams) {
     if (runtime.actionPending.value === 'submit' || isSameDocument(to, from)) {
       return true
     }
-    if (!shouldConfirmDirtyNavigation()) {
+    if (leaveConfirmed || !shouldConfirmDirtyNavigation()) {
       return true
     }
-    return window.confirm(getDirtyNavigationMessage())
+    return confirmLeave()
   })
   onBeforeUnmount(removeRouteGuard)
 
@@ -164,11 +174,19 @@ export function useFormRoot(params: UseFormRootParams) {
     }
   }
 
-  function cancel() {
-    if (shouldConfirmDirtyNavigation() && !window.confirm(getDirtyNavigationMessage())) {
+  async function cancel() {
+    if (!leaveConfirmed && shouldConfirmDirtyNavigation() && !(await confirmLeave())) {
       return
     }
     params.onCancelled(runtime.output.value)
+  }
+
+  async function confirmLeave() {
+    leaveConfirmed = await confirm({
+      kind: 'unsaved-changes',
+      message: getDirtyNavigationMessage(),
+    })
+    return leaveConfirmed
   }
 
   function shouldConfirmDirtyNavigation() {
@@ -192,10 +210,10 @@ export function useFormRoot(params: UseFormRootParams) {
   function getDirtyNavigationMessage() {
     const config = getSchemaDirtyNavigation(schema.value)
     if (!isRecord(config)) {
-      return DEFAULT_DIRTY_NAVIGATION_MESSAGE
+      return t('form.confirm.unsavedChanges')
     }
     const message = Object.getOwnPropertyDescriptor(config, 'message')?.value
-    return resolveFormText(message) ?? DEFAULT_DIRTY_NAVIGATION_MESSAGE
+    return resolveFormText(message) ?? t('form.confirm.unsavedChanges')
   }
 
   async function focusFirstField() {

@@ -14,6 +14,7 @@ import { useForm } from '#ui-tools/form/composables/use-form'
 import { useFormApi } from '#ui-tools/form/composables/use-form-api'
 import type {
   FormApiController,
+  FormConfirmHandler,
   FormController,
   FormObject,
   FormRenderShell,
@@ -40,6 +41,8 @@ export interface MountFormOptions {
   settle?: boolean
   /** App-wide file preview API, as the module plugin provides it. */
   filePreview?: FilePreviewApi
+  /** App confirm handler given to the form provider. */
+  confirm?: FormConfirmHandler
 }
 
 export interface FormHarness {
@@ -244,7 +247,7 @@ function createHost(params: HostParams) {
   return defineComponent({
     name: 'Host',
     setup() {
-      return () => h(FormProvider, null, { default: () => h(Inner) })
+      return () => h(FormProvider, { confirm: params.options.confirm }, { default: () => h(Inner) })
     },
   })
 }

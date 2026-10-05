@@ -1,6 +1,7 @@
 export type * from './api'
 export type * from './actions'
 export type * from './callbacks'
+export type * from './confirm'
 export type * from './context'
 export type * from './controller'
 export type * from './dependencies'
