@@ -15,11 +15,12 @@ const { params } = useFieldControl(
   () => props.path,
 )
 const rendered = computed(() => props.field.render?.(params.value))
+const Rendered = () => rendered.value
 </script>
 
 <template>
   <FormFieldShell :field="field" :path="path">
     <component :is="field.component" v-if="field.component" />
-    <component :is="() => rendered" v-else-if="rendered" />
+    <Rendered v-else-if="rendered" />
   </FormFieldShell>
 </template>
