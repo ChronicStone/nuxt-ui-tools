@@ -232,6 +232,14 @@ describe('TableRenderer structure', () => {
     expect(w.find('colgroup col').attributes('style')).toContain('width: 44px')
   })
 
+  it('leaves row menu icons to the item color so destructive actions stay red', async () => {
+    harness = await mountTable({ schema: createAccountsSchema() })
+    const menu = harness.wrapper.find('td[data-col="__row-actions"] [data-ui="UDropdownMenu"]')
+    const iconClasses = (menu.attributes('data-slot-itemleadingicon') ?? '').split(' ')
+    expect(iconClasses).toContain('size-3.5')
+    expect(iconClasses.filter((name) => name.startsWith('text-'))).toStrictEqual([])
+  })
+
   it('reflects column visibility, ellipsis and ui slot classes', async () => {
     harness = await mountTable({
       schema: createAccountsSchema(),

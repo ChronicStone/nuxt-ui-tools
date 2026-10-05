@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.0...v1.16.1)
+
+Row action menus and the selection bar's overflow menu no longer force their icons grey. Both passed `text-muted` to every item icon, which overrode Nuxt UI's item colors: a destructive action showed a red label next to a grey icon, and an app's own `dropdownMenu` theme could not color the icons either. The icons now take the item's color, so a `color: 'error'` action is red throughout and a themed menu applies its icon colors.
+
 ## v1.16.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.15.0...v1.16.0)

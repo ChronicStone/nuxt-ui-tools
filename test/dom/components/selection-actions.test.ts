@@ -183,6 +183,16 @@ describe('selection actions part', () => {
     expect(dismiss.classes()).toContain('dis-x')
   })
 
+  it('leaves overflow menu icons to the item color', async () => {
+    harness = await mountBar()
+    harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
+    await harness.flush()
+    const menu = harness.wrapper.find('.nut-dl-selbar__actions [data-ui="UDropdownMenu"]')
+    const iconClasses = (menu.attributes('data-slot-itemleadingicon') ?? '').split(' ')
+    expect(iconClasses).toContain('size-3.5')
+    expect(iconClasses.filter((name) => name.startsWith('text-'))).toStrictEqual([])
+  })
+
   it('is hidden without bulk actions', async () => {
     harness = await mountBar({
       schema: createAccountsSchema({ actions: false, selection: { mode: true } }),
