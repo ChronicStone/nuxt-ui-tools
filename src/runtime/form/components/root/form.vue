@@ -21,6 +21,7 @@ import type {
   FormUiConfig,
   FormValidationMode,
 } from '../../types'
+import { createFormFieldInstance } from '../../utils/field-instance'
 import { getFormHeader } from '../../utils/overlay'
 import { isRecord } from '../../utils/path'
 import { isFunction, isNumber, isString } from '../../utils/predicate'
@@ -89,6 +90,11 @@ const displayedStep = computed(() =>
   isSteppedSchema(schemaRef.value)
     ? getSchemaSteps(schemaRef.value)[displayedStepIndex.value]
     : undefined,
+)
+const skeletonFields = computed(() =>
+  runtime.currentFields.value.filter((field) =>
+    createFormFieldInstance(field).capability.has('layout'),
+  ),
 )
 const displayedFields = computed(() =>
   isSteppedSchema(schemaRef.value)
@@ -333,7 +339,7 @@ function getSchemaShowStepper(schema: FormValue) {
         :style="grid.style.value"
       >
         <div
-          v-for="field in runtime.currentFields.value"
+          v-for="field in skeletonFields"
           :key="field.key"
           :class="mergeFormUiClass('grid gap-2', formUi.ui.value.root?.ui?.skeletonField)"
         >

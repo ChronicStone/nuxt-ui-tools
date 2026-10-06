@@ -28,6 +28,34 @@ const schema = defineFormSchema({
   formKey: 'smoke',
 })
 
+describe('headless fields', () => {
+  it('keeps hidden fields out of the layout grid while their value is submitted', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          { default: 'center-1', key: 'centerId', type: 'hidden' },
+          { key: 'firstName', label: 'Prénom', type: 'text' },
+          { key: 'lastName', label: 'Nom', type: 'text' },
+        ],
+        formKey: 'headless',
+        layout: { columns: 2, fieldSpan: 1 },
+      }),
+    })
+    const grid = harness.wrapper.find('[data-form-field="firstName"]').element.parentElement
+    const cells = [...(grid?.children ?? [])].filter((child) => child.tagName !== 'INPUT')
+
+    expect(harness.wrapper.find('div[data-form-field="centerId"]').exists()).toBe(false)
+    expect(cells.map((cell) => cell.getAttribute('data-form-field'))).toStrictEqual([
+      'firstName',
+      'lastName',
+    ])
+
+    await harness.submit()
+
+    expect(harness.submitted[0]?.value).toMatchObject({ centerId: 'center-1' })
+  })
+})
+
 describe('form harness', () => {
   it('renders labels, binds inputs and submits output', async () => {
     const harness = await mountForm({ schema })
