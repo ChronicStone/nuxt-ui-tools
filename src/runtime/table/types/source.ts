@@ -1,4 +1,10 @@
-import type { InfiniteData, QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type {
+  InfiniteData,
+  QueryFunction,
+  QueryKey,
+  QueryMeta,
+  UseQueryOptions,
+} from '@tanstack/vue-query'
 
 import type { QueryDefinition } from '../../shared/types/query'
 import type { TableResolvedFilterGroup } from './filters'
@@ -51,6 +57,7 @@ export interface TableInfiniteQueryDefinition<TData = unknown> {
     allPageParams: (string | null)[],
   ) => string | null | undefined
   enabled?: boolean
+  meta?: QueryMeta
   staleTime?: number
   gcTime?: number
   refetchOnWindowFocus?: boolean

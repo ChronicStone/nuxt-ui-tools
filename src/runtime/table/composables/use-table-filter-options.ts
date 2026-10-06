@@ -325,6 +325,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
             })
             return { result, values }
           },
+          meta: definition.meta,
           queryKey: ['table-filter-page-facets', ...definition.queryKey],
           refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
           staleTime: QUERY_DEFAULTS.staleTime.filterOptions,

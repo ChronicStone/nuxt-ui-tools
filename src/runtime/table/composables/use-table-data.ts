@@ -447,7 +447,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
         ...result,
       })),
     queries: () => {
-      if (!isPageContextEnabled.value) {
+      if (!isActiveDataSuccess.value) {
         return []
       }
 
@@ -457,7 +457,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
             context: contextData.value,
             rows: data.value.rows,
           }),
-          true,
+          isPageContextEnabled.value,
           {
             refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
             staleTime: QUERY_DEFAULTS.staleTime.context,
@@ -875,6 +875,7 @@ function createCursorQueryDefinition(options: {
 
   return {
     enabled: isQueryDefinitionEnabled(firstPageDefinition),
+    meta: firstPageDefinition.meta,
     getNextPageParam(lastPage) {
       return isTableCursorPageResult(lastPage)
         ? (lastPage.pageInfo.nextCursor ?? undefined)
