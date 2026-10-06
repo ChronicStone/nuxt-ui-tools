@@ -174,6 +174,46 @@ describe('Regle-owned form validation', () => {
     expect(validation.getFieldError(['email'])).toBeUndefined()
   })
 
+  it('validates an object held by a custom component as one value', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          key: 'access',
+          type: 'custom-component',
+          render: () => null,
+          validators: {
+            granted: withMessage(
+              (value: unknown) =>
+                typeof value === 'object' &&
+                value !== null &&
+                'rules' in value &&
+                Array.isArray(value.rules) &&
+                value.rules.length > 0,
+              'Grant at least one rule.',
+            ),
+          },
+        },
+      ],
+    })
+    const state = reactive<FormObject>({
+      access: { mode: 'selection', rules: [], accounts: [{ id: 'a', account: { name: 'A' } }] },
+    })
+    const validation = useFormValidation({
+      apiFactory: createApiFactory(state),
+      context: {},
+      getValidationMode: () => true,
+      schema: () => schema,
+      state,
+    })
+
+    await expect(validation.validate()).resolves.toBeFalsy()
+    expect(validation.getFieldError(['access'])).toBe('Grant at least one rule.')
+
+    state.access = { mode: 'selection', rules: ['type'], accounts: [] }
+    await expect(validation.validate()).resolves.toBeTruthy()
+    expect(validation.getFieldError(['access'])).toBeUndefined()
+  })
+
   it('can run native validators without the required layer', async () => {
     const schema = defineFormSchema({
       fields: [

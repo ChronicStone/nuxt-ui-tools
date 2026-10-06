@@ -3,17 +3,22 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 
 import type { FormControlUi } from '../../types'
 import { mergeFormUiClass } from '../../utils/ui'
+import type { ChoiceCardMark } from './types'
 
 /**
- * Content of a card's label: the option icon, inline or in a tile above the label, and the check
- * a selected card shows in its corner. Styled through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`,
- * `ui.check`, and `ui.checkIcon`.
+ * Content of a card's label: the option icon, inline or in a tile above the label, and the
+ * selection mark the card draws itself: a check in the corner of a selected card, or a switch
+ * that follows the selection. Both marks are decorative; the group's own control keeps the
+ * semantics. Styled through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`,
+ * `ui.checkIcon`, `ui.switch`, and `ui.switchThumb`; the tile and the switch carry the option
+ * value as `data-value` for per-option styling.
  */
 defineProps<{
   label?: string
   icon?: string
+  value?: string | number | boolean
   tile: boolean
-  corner: boolean
+  mark: ChoiceCardMark
   selected: boolean
   ui?: FormControlUi
 }>()
@@ -23,6 +28,7 @@ defineProps<{
   <span
     v-if="tile && icon"
     :data-selected="selected || undefined"
+    :data-value="value"
     :class="
       mergeFormUiClass(
         'grid size-8 place-items-center rounded-lg bg-elevated text-muted transition-colors data-[selected]:bg-primary/10 data-[selected]:text-primary',
@@ -43,7 +49,7 @@ defineProps<{
   </span>
   <span v-else class="block">{{ label }}</span>
   <span
-    v-if="corner && selected"
+    v-if="mark === 'corner' && selected"
     aria-hidden="true"
     :class="
       mergeFormUiClass(
@@ -54,5 +60,27 @@ defineProps<{
     data-choice-check
   >
     <UIcon name="i-lucide-check" :class="mergeFormUiClass('size-2.5', ui?.checkIcon)" />
+  </span>
+  <span
+    v-if="mark === 'switch'"
+    aria-hidden="true"
+    :data-state="selected ? 'checked' : 'unchecked'"
+    :data-value="value"
+    :class="
+      mergeFormUiClass(
+        'group/switch absolute end-3 top-3.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full bg-accented p-0.5 transition-colors duration-150 data-[state=checked]:bg-primary',
+        ui?.switch,
+      )
+    "
+    data-choice-switch
+  >
+    <span
+      :class="
+        mergeFormUiClass(
+          'size-3.5 rounded-full bg-default shadow-xs transition-transform duration-150 group-data-[state=checked]/switch:translate-x-3.5 motion-reduce:transition-none rtl:group-data-[state=checked]/switch:-translate-x-3.5',
+          ui?.switchThumb,
+        )
+      "
+    />
   </span>
 </template>
