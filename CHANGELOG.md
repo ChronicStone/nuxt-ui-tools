@@ -18,6 +18,12 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.9
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.8...v1.16.9)
+
+Hidden fields take no place in the form layout. A `hidden` field is headless: it holds and submits a value but renders no control, so it no longer gets a grid cell. In a two-column form, a hidden field declared first used to leave an empty cell and push the next field into the second column. A field kind that declares no layout renders without the layout wrapper, and the loading skeleton skips it too.
+
 ## v1.16.8
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.7...v1.16.8)
