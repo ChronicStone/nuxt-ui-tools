@@ -620,8 +620,9 @@ on an element around the navigation and the sections.
 - `columns`: a fixed grid of equal columns, with breakpoints: `3`, `'2 xl:3'`, or `'1 md:2 lg:3'`.
   The unprefixed value covers every width below the first breakpoint you name, so start prefixes
   at `md`. Without `columns`, cards flow along `orientation`.
-- `indicator`: `start` (default), `end`, `hidden`, or `corner`, a check in the top corner of
-  selected cards only.
+- `indicator`: `start` (default), `end`, `hidden`, `corner`, a check in the top corner of
+  selected cards only, or `switch`, a switch in the top corner of every card that turns on with
+  the selection, for cards that enable something.
 - `icon`: where an option `icon` shows, `inline` before its label (default) or `tile`, in a square
   above it that takes the selection color.
 
@@ -637,9 +638,12 @@ on an element around the navigation and the sections.
 }
 ```
 
-Style the parts the engine renders through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`, and
-`ui.checkIcon`, next to the Nuxt UI slots of the group (`fieldset`, `item`, `label`, `description`,
-and so on). Set them for one field in its `props.ui`, or for every card of a kind in the app config:
+Style the parts the engine renders through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`,
+`ui.checkIcon`, `ui.switch`, and `ui.switchThumb`, next to the Nuxt UI slots of the group
+(`fieldset`, `item`, `label`, `description`, and so on). The tile and the switch carry the option
+value as `data-value`, so one option can take its own colors, for example
+`tile: 'data-[value=billing]:bg-info/10 data-[value=billing]:text-info'`. Set them for one field in
+its `props.ui`, or for every card of a kind in the app config:
 
 ```ts
 nuxtUiTools: {

@@ -32,6 +32,19 @@ const radioSchema = defineFormSchema({
   ],
 })
 
+function switchLabel(selected: boolean) {
+  return mount(ChoiceCardLabel, {
+    props: {
+      icon: 'i-lucide-users',
+      label: 'Partenaire',
+      mark: 'switch',
+      selected,
+      tile: true,
+      value: 'partner',
+    },
+  })
+}
+
 describe('choice cards', () => {
   it('lays the cards out in a fixed grid whose column count follows the breakpoints', async () => {
     const wide = await mountForm({ breakpoint: 'xl', schema: radioSchema })
@@ -82,10 +95,41 @@ describe('choice cards', () => {
     harness.unmount()
   })
 
+  it('replaces the Nuxt UI indicator with a switch that follows the selection', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            default: ['customer'],
+            key: 'kinds',
+            options: OPTIONS,
+            props: { columns: 2, icon: 'tile', indicator: 'switch' },
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    const group = harness.wrapper.findComponent({ name: 'UCheckboxGroup' })
+    const ui: unknown = group.props('ui')
+
+    expect(group.props('indicator')).toBe('hidden')
+    expect(typeof ui === 'object' && ui !== null && 'item' in ui && ui.item).toContain('relative')
+    harness.unmount()
+
+    const on = switchLabel(true)
+    const off = switchLabel(false)
+
+    expect(on.find('[data-choice-switch]').attributes('data-state')).toBe('checked')
+    expect(off.find('[data-choice-switch]').attributes('data-state')).toBe('unchecked')
+    expect(on.find('[data-choice-switch]').attributes('aria-hidden')).toBe('true')
+    expect(on.find('[data-choice-tile]').attributes('data-value')).toBe('partner')
+    expect(on.find('[data-choice-check]').exists()).toBe(false)
+  })
+
   it('renders the icon in a tile and a check in the corner of a selected card', () => {
     const selected = mount(ChoiceCardLabel, {
       props: {
-        corner: true,
+        mark: 'corner',
         icon: 'i-lucide-users',
         label: 'Partenaire',
         selected: true,
@@ -98,7 +142,7 @@ describe('choice cards', () => {
 
     const other = mount(ChoiceCardLabel, {
       props: {
-        corner: true,
+        mark: 'corner',
         icon: 'i-lucide-users',
         label: 'Partenaire',
         selected: false,
@@ -110,7 +154,7 @@ describe('choice cards', () => {
 
     const inline = mount(ChoiceCardLabel, {
       props: {
-        corner: false,
+        mark: 'none',
         icon: 'i-lucide-users',
         label: 'Partenaire',
         selected: true,

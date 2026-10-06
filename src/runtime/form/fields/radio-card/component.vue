@@ -53,8 +53,9 @@ const items = computed(() => [...options.items.value])
         <ChoiceCardLabel
           :label="item.label"
           :icon="item.icon"
+          :value="item.value"
           :tile="cards.tile.value"
-          :corner="cards.corner.value"
+          :mark="cards.mark.value"
           :selected="model === item.value"
           :ui="cards.ui.value"
         />

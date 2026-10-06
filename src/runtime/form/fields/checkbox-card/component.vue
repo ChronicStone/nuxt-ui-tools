@@ -73,8 +73,9 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         <ChoiceCardLabel
           :label="optionByKey.get(item.value)?.label ?? item.label"
           :icon="optionByKey.get(item.value)?.icon"
+          :value="optionByKey.get(item.value)?.value"
           :tile="cards.tile.value"
-          :corner="cards.corner.value"
+          :mark="cards.mark.value"
           :selected="model.includes(item.value)"
           :ui="cards.ui.value"
         />
