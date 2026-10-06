@@ -24,7 +24,9 @@ describe('table summary row', () => {
     })
     const w = harness.wrapper
     await harness.until(
-      () => w.find('tfoot td[data-col="contracts"] .nut-dl-tf__value').exists(),
+      () =>
+        w.find('tfoot td[data-col="contracts"] .nut-dl-tf__value').exists() &&
+        w.find('tbody tr.nut-dl-row td[data-col="contracts"] .nut-dl-td__inner').exists(),
       4000,
     )
 
