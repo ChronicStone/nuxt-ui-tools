@@ -1,4 +1,4 @@
-import { useRegle } from '@regle/core'
+import { markStatic, useRegle } from '@regle/core'
 import type { RegleRuleRaw } from '@regle/core'
 import { withMessage } from '@regle/rules'
 import { computed, nextTick, reactive, ref, unref, watch } from 'vue'
@@ -507,6 +507,12 @@ function buildFieldRules(params: {
     }
 
     const path = fieldPath(params.parentPath, field)
+    if (fieldInstance.type.is('custom-component')) {
+      const value = getPathValue(params.state, path)
+      if (isRecord(value)) {
+        markStatic(value)
+      }
+    }
     const api = params.apiFactory(path, field)
     const callbackParams = {
       api,

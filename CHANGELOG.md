@@ -26,6 +26,8 @@ Radio and checkbox cards can draw a switch as their selection mark. `props: { in
 
 The card tile and the switch carry the option value as `data-value`, so one option can take its own colors from the field's `ui`, for example `tile: 'data-[value=billing]:bg-info/10'`.
 
+A custom component field that holds an object is validated as one value. Validation used to walk into the object as if its keys were nested fields, so a validator written for the whole value never reported its message: the form refused to submit without saying why. Walking it was also slow: every change rebuilt one validation entry per item, and a value holding 500 rows took close to a second per keystroke. The field's validators now receive the object itself, and its size no longer affects how fast the form reacts.
+
 ## v1.16.7
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.6...v1.16.7)
