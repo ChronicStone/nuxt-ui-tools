@@ -18,6 +18,14 @@ Form API forms keep their state when the overlay layout changes. Resizing across
 
 # Changelog
 
+## v1.16.10
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.9...v1.16.10)
+
+Table queries keep the `meta` of the source query. Cursor tables rebuilt their infinite query from the source definition and dropped its `meta`, and page facet counts did the same, so an app that reads `query.meta` from the cache, for example to invalidate the queries showing a changed record, could not find those queries. `QueryDefinition` now declares `meta`, and both derived queries carry it over.
+
+Page context stays loaded while the table refreshes. The page context queries were removed every time the base rows refetched and created again afterwards. With an app default of `refetchOnMount: 'always'`, each refresh then fetched every page context query a second time. Those observers now stay mounted and only pause while the rows load, so a refresh with unchanged rows reuses the page context it already has, and the cells built from it no longer blank out during the refresh.
+
 ## v1.16.9
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.8...v1.16.9)
