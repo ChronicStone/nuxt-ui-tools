@@ -28,6 +28,7 @@ export interface MountOptions {
   appConfig?: Record<string, unknown>
   start?: boolean
   settle?: boolean
+  queryDefaults?: { refetchOnMount?: boolean | 'always' }
 }
 
 export interface Harness {
@@ -53,7 +54,9 @@ export async function mountDataList(options: MountOptions): Promise<Harness> {
   await router.push({ path: '/', query: options.query ?? {} })
   await router.isReady()
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { gcTime: 0, retry: false, staleTime: 0 } },
+    defaultOptions: {
+      queries: { gcTime: 0, retry: false, staleTime: 0, ...options.queryDefaults },
+    },
   })
   let table!: ReturnType<typeof useTable>
   const Host = defineComponent({

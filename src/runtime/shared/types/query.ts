@@ -1,14 +1,21 @@
-import type { DataTag, QueryFunction, QueryKey, UseQueryOptions } from '@tanstack/vue-query'
+import type {
+  DataTag,
+  QueryFunction,
+  QueryKey,
+  QueryMeta,
+  UseQueryOptions,
+} from '@tanstack/vue-query'
 import type { UnwrapRef } from 'vue'
 
 /**
  * TanStack query definition accepted by runtime domains that own the `useQuery` call themselves
- * (table sources, dashboard queries): an explicit `queryKey`, an optional `queryFn`, and any other
- * query option.
+ * (table sources, dashboard queries): an explicit `queryKey`, an optional `queryFn`, the `meta`
+ * that every derived table query carries over, and any other query option.
  */
 export type QueryDefinition<TData = unknown> = Omit<UseQueryOptions<TData>, 'queryFn'> & {
   queryKey: QueryKey
   queryFn?: QueryFunction<TData, QueryKey, string | null>
+  meta?: QueryMeta
 }
 
 /**
