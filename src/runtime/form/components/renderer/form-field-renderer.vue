@@ -92,6 +92,7 @@ const controlAttrs = computed<FormObject>(() => {
 provideFormFieldBare(bare)
 provideFormFieldControlAttrs(controlAttrs)
 const field = computed(() => createFormFieldInstance(props.field))
+const headless = computed(() => !field.value.capability.has('layout'))
 const path = computed(() => fieldPath(props.parentPath, props.field))
 const childPath = computed(() => childParentPath(props.parentPath, props.field))
 const visible = computed(() => form.shouldRender(props.field, path.value))
@@ -215,7 +216,7 @@ function resolveControlLabel(controlField: FormField) {
 </script>
 
 <template>
-  <template v-if="visible && bare">
+  <template v-if="visible && (bare || headless)">
     <component :is="renderer" v-if="renderer" v-bind="rendererProps" />
     <UAlert
       v-else
