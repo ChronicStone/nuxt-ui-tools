@@ -38,3 +38,5 @@ coverage
 .idea
 *.iml
 .DS_Store
+
+.vitest/
