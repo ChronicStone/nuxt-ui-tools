@@ -105,6 +105,22 @@ function createTableApiStub() {
       updateRow: () => {},
       updateRows: () => {},
     },
+    expansion: {
+      collapse: () => {},
+      collapseAll: () => {},
+      expand: () => {},
+      expandAll: () => {},
+      isExpanded: () => false,
+      reset: () => {},
+      state: computed(() => ({
+        allExpanded: false,
+        branchCount: 0,
+        enabled: false,
+        expandedCount: 0,
+        expandedKeys: [],
+      })),
+      toggle: () => {},
+    },
     filters: {
       activeCount: computed(() => 0),
       clear: () => {},

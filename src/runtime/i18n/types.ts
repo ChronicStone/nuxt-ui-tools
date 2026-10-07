@@ -51,6 +51,14 @@ export interface UiToolsTableMessages {
     rowOne: string
     rowOther: string
   }
+  tree: {
+    expand: string
+    collapse: string
+    expandAll: string
+    collapseAll: string
+    selectRow: string
+    selectAll: string
+  }
   columnsMenu: {
     sortAsc: string
     sortDesc: string

@@ -5,9 +5,10 @@
  */
 import type { HTMLAttributes } from 'vue'
 
-import type { GenericObject } from '../../types'
+import type { GenericObject, TableTreeMotion, TableTreeNode } from '../../types'
 import TableCell from './table-cell'
 import type { tableRowCells } from './table-layout'
+import TableTreeControl from './table-tree-control.vue'
 
 defineProps<{
   rowId: string
@@ -17,7 +18,15 @@ defineProps<{
   selected: boolean
   appended: boolean
   rowClass?: HTMLAttributes['class']
+  /** Where the row sits in the tree; absent unless the schema configures `table.tree`. */
+  node?: TableTreeNode
+  expanded?: boolean
+  /** Whether the tree cell carries a checkbox for this row. */
+  checkbox?: boolean
+  /** The row is being revealed or concealed by a branch opening or closing. */
+  motion?: TableTreeMotion
 }>()
+const emit = defineEmits<{ toggle: []; select: [event: MouseEvent] }>()
 </script>
 
 <template>
@@ -26,10 +35,13 @@ defineProps<{
     :class="[
       selected ? 'nut-dl-row--selected' : '',
       appended ? 'nut-dl-row--appended' : '',
+      motion ? `nut-dl-row--${motion.kind === 'enter' ? 'reveal' : 'conceal'}` : '',
       rowClass,
     ]"
+    :style="motion ? { '--nut-dl-tree-i': motion.order } : undefined"
     :data-index="index"
     :data-row-id="rowId"
+    :data-tree-depth="node?.depth"
   >
     <template v-for="slot in cells" :key="slot.key">
       <td v-if="slot.kind === 'fill'" class="nut-dl-table__fill p-0" aria-hidden="true" />
@@ -46,7 +58,19 @@ defineProps<{
         :data-col="slot.columnId"
         :style="slot.layout.style"
       >
-        <div class="nut-dl-td__inner min-w-0" :class="slot.layout.innerClass">
+        <template v-if="slot.layout.internal === 'tree'">
+          <TableTreeControl
+            v-if="node"
+            :node="node"
+            :expanded="expanded === true"
+            :index="index"
+            :selected="selected"
+            :checkbox="checkbox === true"
+            @toggle="emit('toggle')"
+            @select="emit('select', $event)"
+          />
+        </template>
+        <div v-else class="nut-dl-td__inner min-w-0" :class="slot.layout.innerClass">
           <TableCell
             v-if="slot.layout.render"
             :index="index"

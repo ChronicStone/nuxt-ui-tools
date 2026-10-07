@@ -17,6 +17,7 @@ import { useTableSelection } from './use-table-selection'
 import { useTableStartup } from './use-table-startup'
 import { useTableState } from './use-table-state'
 import { useTableSummaries } from './use-table-summaries'
+import { useTableTree } from './use-table-tree'
 
 function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TSchema> }) {
   const publicSchema = computed<TSchema>(() => resolveSchemaSource({ schema: options.rawSchema }))
@@ -34,9 +35,14 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     startup,
     state,
   })
+  const tree = useTableTree({
+    queryContent,
+    schema,
+  })
   const selection = useTableSelection({
     queryContent,
     schema,
+    tree,
   })
   const controls = useTableControls({
     layout,
@@ -61,6 +67,7 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     state,
     tableApi,
     tableLayout: controls.tableLayout,
+    tree,
   })
   const summaries = useTableSummaries({
     queryContent,
@@ -86,6 +93,7 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     runtimeSchema: schema,
     selection,
     state,
+    tree,
   })
 
   if (!tableApi.value) {
@@ -116,6 +124,7 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     summaries,
     tableApi: tableApi.value,
     tableColumns,
+    tree,
   }
 }
 

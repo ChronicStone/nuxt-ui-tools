@@ -16,6 +16,8 @@ import {
   ROW_ACTIONS_COLUMN_WIDTH,
   SELECT_COLUMN_ID,
   SELECT_COLUMN_WIDTH,
+  TREE_COLUMN_ID,
+  TREE_COLUMN_WIDTH,
 } from './types'
 import type { DataListColumnDef, TableRuntimeColumn, UseTableColumnsParams } from './types'
 
@@ -32,7 +34,25 @@ export function createColumnDefs(options: {
 }): DataListColumnDef[] {
   const defs: DataListColumnDef[] = []
 
-  if (options.params.selection.selectionEnabled.value) {
+  if (options.params.tree.enabled.value) {
+    /* One control column carries the rail, the chevron and the row checkbox, so the checkbox
+       indents with the depth. The row's cell and the header's buttons are drawn by the table
+       renderer, which owns their props; the definition only claims the column and its place. */
+    defs.push({
+      enableResizing: false,
+      id: TREE_COLUMN_ID,
+      maxSize: MAX_COLUMN_SIZE,
+      meta: {
+        canHide: false,
+        internal: 'tree',
+        label: '',
+        render: () => null,
+        sortable: false,
+      },
+      minSize: TREE_COLUMN_WIDTH,
+      size: TREE_COLUMN_WIDTH,
+    })
+  } else if (options.params.selection.selectionEnabled.value) {
     const selection = createSelectionColumn({ params: options.params })
     defs.push({
       enableResizing: false,

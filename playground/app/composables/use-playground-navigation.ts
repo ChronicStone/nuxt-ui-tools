@@ -192,6 +192,28 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
       {
         children: [
           {
+            description:
+              'Credit notes open beneath their invoice: rail, chevron, expand all, search.',
+            id: 'table-tree-invoices',
+            label: 'Invoices',
+            mode: 'fixed',
+            path: '/table/tree',
+          },
+          {
+            description: 'Four levels and thousands of rows, virtualized, with a programmatic API.',
+            id: 'table-tree-deep',
+            label: 'Deep tree',
+            mode: 'fixed',
+            path: '/table/tree-deep',
+          },
+        ],
+        description: 'Rows that hold child rows, opened beneath them.',
+        id: 'table-tree-rows',
+        label: 'Tree rows',
+      },
+      {
+        children: [
+          {
             description: 'A full-height table with a persistent filter rail and cursor loading.',
             id: 'table-composition-rail',
             label: 'Filter rail',
