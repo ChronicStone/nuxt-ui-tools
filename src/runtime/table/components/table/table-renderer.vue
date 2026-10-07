@@ -24,7 +24,16 @@ import {
   ROW_ACTIONS_COLUMN_ID,
   SELECT_COLUMN_ID,
   SELECT_COLUMN_WIDTH,
+  TREE_COLUMN_ID,
 } from '../../utils/columns/types'
+import {
+  TREE_CHECK_WIDTH,
+  TREE_GAP,
+  TREE_GUTTER_WIDTH,
+  TREE_LEAD,
+  TREE_TOGGLE_WIDTH,
+  getTreeColumnWidth,
+} from '../../utils/tree'
 import DataListErrorState from '../data-list/data-list-error-state.vue'
 import ProgressLine from '../layout/progress-line.vue'
 import TableCell from './table-cell'
@@ -35,6 +44,7 @@ import type { TableColumnSlot } from './table-layout'
 import TableOverlayScrollbars from './table-overlay-scrollbars.vue'
 import TableRow from './table-row.vue'
 import TableSkeletonCell from './table-skeleton-cell'
+import TableTreeHeader from './table-tree-header.vue'
 
 const LOAD_MORE_THRESHOLD = 6
 const PREFETCH_VIEWPORTS = 3
@@ -61,6 +71,7 @@ const props = defineProps<{
 }>()
 
 const internals = useTableInternals()
+const { tree } = internals
 const dataListUi = useDataListUi()
 const { locale, t } = useUiToolsLocale()
 
@@ -102,21 +113,39 @@ const tokenStyle = computed(() => ({
   '--nut-dl-gutter': `${gutter.value}px`,
   '--nut-dl-head-h': `${tokens.value.head}px`,
   '--nut-dl-row-h': `${tokens.value.row}px`,
+  '--nut-dl-tree-gutter': `${TREE_GUTTER_WIDTH}px`,
+  '--nut-dl-tree-toggle': `${TREE_TOGGLE_WIDTH}px`,
+  '--nut-dl-tree-gap': `${TREE_GAP}px`,
+  '--nut-dl-tree-check': `${treeCheckWidth.value}px`,
+  '--nut-dl-tree-lead': `${treeLead.value}px`,
 }))
 
 const { columnDefs } = internals.tableColumns
 const columnState = internals.tableColumns.tableState
+/** The control column is the first one, so it opens with the table's own left gutter. */
+const treeLead = computed(() => Math.max(TREE_LEAD, gutter.value - 2))
+/** Held on every row, selectable or not, and whether or not the table has selection at all. */
+const treeCheckWidth = computed(() => TREE_CHECK_WIDTH[dataListUi.controlSize.value])
 const columnSizing = computed({
   get: () => {
     const sizing = columnState.value.columnSizing ?? {}
-    if (!gutterExtra.value) {
+    const ids = new Set(columnDefs.value.map((def) => def.id))
+    const hasTree = ids.has(TREE_COLUMN_ID)
+    if (!gutterExtra.value && !hasTree) {
       return sizing
     }
-    const ids = new Set(columnDefs.value.map((def) => def.id))
     const next = { ...sizing }
-    if (ids.has(SELECT_COLUMN_ID) && !(SELECT_COLUMN_ID in sizing)) {
+    if (ids.has(SELECT_COLUMN_ID) && !(SELECT_COLUMN_ID in sizing) && gutterExtra.value) {
       next[SELECT_COLUMN_ID] = SELECT_COLUMN_WIDTH + gutterExtra.value
     }
+    /* Sized for the deepest loaded row, not the deepest visible one: opening a branch must not
+       move the columns beside it. */
+    if (hasTree)
+      next[TREE_COLUMN_ID] = getTreeColumnWidth({
+        check: treeCheckWidth.value,
+        lead: treeLead.value,
+        maxDepth: tree.index.value.maxDepth,
+      })
     return next
   },
   set: (columnSizing: Record<string, number>) => {
@@ -126,14 +155,18 @@ const columnSizing = computed({
 const pinned = computed(() => {
   const ids = new Set(columnDefs.value.map((def) => def.id))
   const left = (columnState.value.columnPinning?.left ?? []).filter(
-    (id) => ids.has(id) && id !== SELECT_COLUMN_ID,
+    (id) => ids.has(id) && id !== SELECT_COLUMN_ID && id !== TREE_COLUMN_ID,
   )
   const right = (columnState.value.columnPinning?.right ?? []).filter(
     (id) => ids.has(id) && id !== ROW_ACTIONS_COLUMN_ID,
   )
   return {
     end: ids.has(ROW_ACTIONS_COLUMN_ID) ? [...right, ROW_ACTIONS_COLUMN_ID] : right,
-    start: ids.has(SELECT_COLUMN_ID) ? [SELECT_COLUMN_ID, ...left] : left,
+    start: [
+      ...(ids.has(SELECT_COLUMN_ID) ? [SELECT_COLUMN_ID] : []),
+      ...(ids.has(TREE_COLUMN_ID) ? [TREE_COLUMN_ID] : []),
+      ...left,
+    ],
   }
 })
 
@@ -141,7 +174,15 @@ function getRowId(row: GenericObject, index: number) {
   return internals.selection.getRowId({ index, row })
 }
 
-const renderRows = computed(() => (rowsMounted.value ? rows.value : []))
+/**
+ * A tree table renders the flat list of rows that are on screen, not the nested source: the
+ * virtualizer, the row model and every index below then work on rows exactly as they do in a
+ * plain table, and a closed branch costs nothing however many rows it holds.
+ */
+const sourceRows = computed<GenericObject[]>(() =>
+  tree.enabled.value && rows.value.length > 0 ? tree.visibleRows.value : rows.value,
+)
+const renderRows = computed(() => (rowsMounted.value ? sourceRows.value : []))
 const virtualized = computed(
   () =>
     renderRows.value.length >= VIRTUALIZE_ROW_THRESHOLD ||
@@ -421,7 +462,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
 })
 
-watch([totalWidth, () => rows.value.length], () =>
+watch([totalWidth, () => sourceRows.value.length], () =>
   nextTick().then(() => {
     columnVirtualizer.value.measure()
     scrollbarsRef.value?.measure()
@@ -596,6 +637,32 @@ watch(
     }, APPEND_WINDOW)
   },
 )
+/** A row appended by a cursor page is told apart by its top-level row, so its children arrive with it. */
+function isAppended(rowId: string, flatIndex: number) {
+  return (tree.nodeOf(rowId)?.rootIndex ?? flatIndex) >= appendedFrom.value
+}
+
+/** The checkbox's footprint is reserved on every tree row; only selectable rows draw one. */
+function hasCheckbox(rowId: string) {
+  const node = tree.nodeOf(rowId)
+  return internals.selection.selectionEnabled.value && node !== undefined && tree.isSelectable(node)
+}
+
+function onSelectRow(rowId: string, event: MouseEvent) {
+  internals.selection.toggleRowSelection({
+    rowId,
+    selected: !internals.selection.isRowSelected({ rowId }),
+    shiftKey: event.shiftKey,
+  })
+}
+
+/** Lights the path to the row under the pointer, in the rows above it as well. */
+function onBodyPointerOver(event: PointerEvent) {
+  if (!tree.enabled.value || event.pointerType === 'touch') return
+  const row = event.target instanceof Element ? event.target.closest<HTMLElement>('tr') : null
+  tree.lightLineage(row?.dataset.rowId)
+}
+
 function skeletonColumn(columnId: string) {
   const meta = headerByColumnId.value.get(columnId)?.column.columnDef.meta
   if (meta?.internal === 'selection') return { align: meta.align, skeleton: 'check' as const }
@@ -746,6 +813,12 @@ defineExpose({ resetColumnSizing })
                       :row="HEADER_ROW"
                       :index="-1"
                     />
+                    <TableTreeHeader
+                      v-else-if="
+                        headerByColumnId.get(slot.columnId)!.column.columnDef.meta?.internal ===
+                        'tree'
+                      "
+                    />
                   </div>
                 </template>
                 <TableColumnHeader
@@ -762,6 +835,8 @@ defineExpose({ resetColumnSizing })
         <tbody
           :class="mergeDataListUiClass('nut-dl-table__body', undefined, ui?.tbody)"
           :data-replacing="replacing"
+          @pointerover="onBodyPointerOver"
+          @pointerleave="tree.lightLineage()"
         >
           <tr
             v-if="virtualPaddingTop"
@@ -781,8 +856,14 @@ defineExpose({ resetColumnSizing })
             :index="virtual.index"
             :cells="rowCells"
             :selected="internals.selection.isRowSelected({ rowId: String(row.id) })"
-            :appended="virtual.index >= appendedFrom"
+            :appended="isAppended(row.id, virtual.index)"
             :row-class="rowClass"
+            :node="tree.nodeOf(row.id)"
+            :expanded="tree.isExpanded(row.id)"
+            :checkbox="hasCheckbox(row.id)"
+            :motion="tree.motionOf(row.id)"
+            @toggle="tree.toggleRow(row.id)"
+            @select="onSelectRow(row.id, $event)"
           />
 
           <tr
@@ -1014,6 +1095,14 @@ defineExpose({ resetColumnSizing })
   --nut-dl-accent: var(--ui-primary);
   --nut-dl-cell-fg: var(--nut-dl-table-cell-fg, var(--ui-text-toned));
   --nut-dl-pin-line: var(--nut-dl-table-pin-line, var(--nut-dl-line));
+  /* Tree rows. The rail follows the app's theme: its colour from the border scale, its turn from
+     the same radius step the rest of the package derives from `--ui-radius`. The gutter, toggle
+     and lead widths come from the renderer, which also sizes the tree column with them. */
+  --nut-dl-rail: var(--nut-dl-table-rail, var(--ui-border-accented));
+  --nut-dl-rail-lit: var(--nut-dl-table-rail-lit, var(--ui-primary));
+  --nut-dl-rail-radius: var(--nut-dl-table-rail-radius, calc(var(--ui-radius) * 1.5));
+  --nut-dl-toggle-hover: var(--nut-dl-table-toggle-hover, var(--ui-bg-accented));
+  --nut-dl-tree-shift: var(--nut-dl-table-tree-shift, 6px);
 }
 .nut-dl-table__scroll {
   scrollbar-width: none;

@@ -22,6 +22,7 @@ import type { useTableLayout } from './use-table-layout'
 import type { useTablePagination } from './use-table-pagination'
 import type { useTableSelection } from './use-table-selection'
 import type { useTableState } from './use-table-state'
+import type { useTableTree } from './use-table-tree'
 
 export interface UseTableApiParams<TSchema = TableSchemaView> {
   runtimeSchema: ComputedRef<TableSchemaView>
@@ -29,6 +30,7 @@ export interface UseTableApiParams<TSchema = TableSchemaView> {
   layout: ReturnType<typeof useTableLayout>
   state: ReturnType<typeof useTableState>
   selection: ReturnType<typeof useTableSelection>
+  tree: ReturnType<typeof useTableTree>
   controls: ReturnType<typeof useTableControls>
   columns: ReturnType<typeof useTableColumns>
   filters: ReturnType<typeof useTableFilters>
@@ -130,6 +132,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     all() {
       reset.query()
       selection.clear()
+      params.tree.expansion.reset()
     },
     query() {
       const { defaultLayout } = params.runtimeSchema.value
@@ -148,6 +151,7 @@ export function useTableApi<TSchema = TableSchemaView>(
 
   return {
     data,
+    expansion: params.tree.expansion,
     filters,
     layout: layoutApi,
     pagination,

@@ -4,6 +4,7 @@ import type {
   TableSummaryScope,
   TableSummaryValue,
 } from './columns'
+import type { TableTreeSchema } from './tree'
 import type {
   GenericObject,
   TableDefaultSort,
@@ -90,8 +91,8 @@ export interface TableTableSchema<
 > {
   enabled?: boolean | string | (() => boolean | string)
   columns?: TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey, TData>
-  treeMode?: boolean
-  childrenKey?: TableSortKey<TRow>
+  /** Lets rows hold child rows that open beneath them. See `TableTreeSchema`. */
+  tree?: TableTreeSchema<TRow>
   defaultSorting?: TableDefaultSort<TSortKey>
   selection?: boolean | 'auto'
   summaries?: TableSummariesSchema<TRow>

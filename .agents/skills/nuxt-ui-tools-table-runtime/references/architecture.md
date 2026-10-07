@@ -57,6 +57,7 @@ Current state is distributed across several composables:
 - `use-query-state.ts`
 - `use-table-data.ts`
 - `use-table-selection.ts`
+- `use-table-tree.ts`
 - `use-table-controls.ts`
 - `use-table-columns.tsx`
 

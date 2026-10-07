@@ -2,19 +2,30 @@ import { computed, ref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import type { GenericObject, TableSchemaView } from '../types'
-import { hasConfiguredTableActions, resolveTableRowId } from '../utils'
+import { flattenTreeRows, hasConfiguredTableActions, resolveTableRowId } from '../utils'
 import type { useTableData } from './use-table-data'
+import type { useTableTree } from './use-table-tree'
 
 export interface UseTableSelectionParams {
   schema: ComputedRef<TableSchemaView>
   queryContent: ReturnType<typeof useTableData>
+  tree: ReturnType<typeof useTableTree>
 }
 
 export function useTableSelection(options: UseTableSelectionParams) {
   const selectedKeys = ref<string[]>([])
   const bulkScope = ref<'selection' | 'all'>('selection')
   const lastTouchedRowId = ref<string | null>(null)
-  const pageRows = computed<GenericObject[]>(() => options.queryContent.data.value.rows)
+  /** Rows the tree adds to a selection scope: children are selectable unless limited to roots. */
+  function withTreeRows(rows: GenericObject[]) {
+    const childrenPath = options.schema.value.table?.tree?.children
+    return childrenPath && options.tree.selectable.value === 'all'
+      ? flattenTreeRows(rows, childrenPath)
+      : rows
+  }
+  const pageRows = computed<GenericObject[]>(() =>
+    withTreeRows(options.queryContent.data.value.rows),
+  )
 
   const selectionEnabled = computed(() => {
     const mode =
@@ -32,7 +43,9 @@ export function useTableSelection(options: UseTableSelectionParams) {
     return options.schema.value.selection?.scope ?? 'all'
   })
   const selectionRows = computed<GenericObject[]>(() =>
-    selectionScope.value === 'all' ? options.queryContent.selectableRows.value : pageRows.value,
+    selectionScope.value === 'all'
+      ? withTreeRows(options.queryContent.selectableRows.value)
+      : pageRows.value,
   )
   const pageRowIds = computed(() => pageRows.value.map((row, index) => getRowId({ index, row })))
 
@@ -160,9 +173,18 @@ export function useTableSelection(options: UseTableSelectionParams) {
     lastTouchedRowId.value = params.rowId
   }
 
+  /** A tree's range runs over the rows on screen, so a closed branch is not selected unseen. */
+  const rangeRowIds = computed(() =>
+    options.tree.enabled.value
+      ? options.tree.visibleNodes.value
+          .filter((node) => options.tree.isSelectable(node))
+          .map((node) => node.id)
+      : scopeRowIds.value,
+  )
+
   function getRangeRowIds(params: { anchorRowId: string; targetRowId: string }) {
-    const anchorIndex = scopeRowIds.value.indexOf(params.anchorRowId)
-    const targetIndex = scopeRowIds.value.indexOf(params.targetRowId)
+    const anchorIndex = rangeRowIds.value.indexOf(params.anchorRowId)
+    const targetIndex = rangeRowIds.value.indexOf(params.targetRowId)
 
     if (anchorIndex === -1 || targetIndex === -1) {
       return [params.targetRowId]
@@ -171,7 +193,7 @@ export function useTableSelection(options: UseTableSelectionParams) {
     const start = Math.min(anchorIndex, targetIndex)
     const end = Math.max(anchorIndex, targetIndex)
 
-    return scopeRowIds.value.slice(start, end + 1)
+    return rangeRowIds.value.slice(start, end + 1)
   }
 
   watch(

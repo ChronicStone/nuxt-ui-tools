@@ -4,6 +4,7 @@ import type { useTableData } from '../composables/use-table-data'
 import type { useTablePagination } from '../composables/use-table-pagination'
 import type { TableFilterState } from './query-state'
 import type { TableSchemaView } from './schema'
+import type { TableExpansionApi } from './tree'
 import type {
   ExtractTableContextData,
   ExtractTablePageContextData,
@@ -152,6 +153,11 @@ export interface TableApi<TSchema = TableSchemaView> {
     toggle: (options: { rowId: string; selected?: boolean; shiftKey?: boolean }) => void
     isSelected: (rowId: string) => boolean
   }
+  /**
+   * Open and close tree rows. With no `table.tree` in the schema, `state.enabled` is `false` and
+   * nothing here has an effect.
+   */
+  expansion: TableExpansionApi
   reset: {
     query: () => void
     all: () => void

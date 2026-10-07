@@ -56,6 +56,8 @@ When you need the fastest understanding of current table wiring, start there.
   `use-table-filters.ts`
 - filter presentation:
   `use-table-filter-presentation.ts`
+- tree rows (flattening, expansion state, branch motion, hover path):
+  `use-table-tree.ts`, with the pure index and flatten in `utils/tree.ts`
 - selection:
   `use-table-selection.ts`
 - columns:
@@ -158,6 +160,27 @@ Prefer:
 - one public mapping only when the public API truly needs a different shape
 
 The existing query-state integration works, but it is still a known simplification target.
+
+## Tree Rows
+
+`table.tree` makes rows hold child rows. The design rules that must survive any change:
+
+- TanStack's expanded row model (`rowExpandingFeature`, `createExpandedRowModel`, `getSubRows`) is
+  deliberately not used. It materialises every descendant before the virtualizer sees a row. The
+  nested source rows stay as they are; `utils/tree.ts` indexes them once per data change
+  (`buildTableTree`, iterative, parent pointers, no per-node arrays) and `flattenVisibleTree` walks
+  only the open branches. `table-renderer.vue` virtualizes that flat list exactly as it does a plain
+  table, so `getItemKey` stays the unique row id and nothing else in the renderer knows about trees.
+- Expansion is a baseline (`defaultExpanded`, or what `expandAll` / `collapseAll` last chose) plus
+  per-row overrides in a reactive `Map`, so a toggle wakes only what read that row and rows that load
+  later follow the baseline. `use-table-tree.ts` owns it, the branch motion and the hover path.
+- A branch opening or closing animates opacity and a few pixels of translate on the rows, never a
+  height: a height change under the virtualizer re-measures every frame.
+- One pinned control column (`internal: 'tree'`) replaces the selection column in a tree table. It
+  carries the rail, the chevron and the checkbox, is as wide as the deepest loaded row needs, and
+  always reserves the chevron's and the checkbox's width so nothing shifts.
+- Rail colours, the radius and the hover colour are tokens on `.nut-dl-table`; geometry widths come
+  from `utils/tree.ts` through inline custom properties, so CSS and the column width share one number.
 
 ## Known Cleanup Direction
 

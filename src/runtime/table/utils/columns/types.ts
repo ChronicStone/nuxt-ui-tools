@@ -2,6 +2,7 @@ import type { ComputedRef, ShallowRef } from 'vue'
 
 import type { UseTableDataReturn } from '../../composables/use-table-data'
 import type { useTableState } from '../../composables/use-table-state'
+import type { useTableTree } from '../../composables/use-table-tree'
 import type {
   TableApi,
   TableColumnAlign,
@@ -12,9 +13,17 @@ import type {
   TableRuntimeRecord,
   TableColumnSkeleton,
 } from '../../types'
+import { TREE_CHECK_WIDTH, TREE_LEAD, getTreeColumnWidth } from '../tree'
 
 export const SELECT_COLUMN_ID = '__select'
 export const SELECT_COLUMN_WIDTH = 44
+export const TREE_COLUMN_ID = '__tree'
+/** The control column at depth zero; it grows from here by one gutter per level of depth. */
+export const TREE_COLUMN_WIDTH = getTreeColumnWidth({
+  check: TREE_CHECK_WIDTH.md,
+  lead: TREE_LEAD,
+  maxDepth: 0,
+})
 export const ROW_ACTIONS_COLUMN_ID = '__row-actions'
 export const ROW_ACTIONS_COLUMN_WIDTH = 56
 
@@ -78,6 +87,7 @@ export interface UseTableColumnsParams {
   selection: TableColumnsSelectionState
   tableLayout: ComputedRef<TableLayout>
   tableApi: ShallowRef<TableApi<unknown> | null>
+  tree: ReturnType<typeof useTableTree>
 }
 
 export interface TableColumnRenderParams {
@@ -96,7 +106,7 @@ export interface TableCellRenderContext {
   layout: TableLayout
 }
 
-export type DataListColumnInternalKind = 'selection' | 'actions'
+export type DataListColumnInternalKind = 'selection' | 'tree' | 'actions'
 
 export interface DataListColumnMeta {
   label: string

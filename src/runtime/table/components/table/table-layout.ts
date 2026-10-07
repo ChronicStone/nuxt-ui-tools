@@ -31,6 +31,7 @@ export function columnCellLayout(params: {
     ],
     innerClass:
       meta?.align === 'right' ? 'justify-end' : meta?.align === 'center' ? 'justify-center' : '',
+    internal: meta?.internal,
     render: meta?.render,
     style: [params.offset, meta?.lines ? { '--nut-dl-lines': meta.lines } : undefined],
   }

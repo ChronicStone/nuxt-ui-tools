@@ -17,6 +17,7 @@ Use this skill for package-consumer tasks involving:
 - client or remote table setup
 - table query-state integration
 - cursor infinite loading and no-pagination mode
+- tree rows (`table.tree`) and the `expansion` API
 
 ## Read This Skill With
 
@@ -35,6 +36,7 @@ Then use the focused references:
 - `skills/consumer/table/references/filters.md`
 - `skills/consumer/table/references/columns.md`
 - `skills/consumer/table/references/selection.md`
+- `skills/consumer/table/references/tree.md`
 - `skills/consumer/table/references/context.md`
 - `skills/consumer/table/references/actions.md`
 - `skills/consumer/table/references/slots.md`
