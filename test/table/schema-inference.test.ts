@@ -349,3 +349,38 @@ describe('defineTableSchema inference', () => {
     })
   })
 })
+
+describe('source select', () => {
+  it('types the rows from select, not from what the queryFn fetched', () => {
+    defineTableSchema({
+      rowKey: 'id',
+      source: tableSource({
+        mode: 'remote',
+        query: () => ({
+          queryKey: ['select-inference'],
+          queryFn: async () => ({
+            rows: [{ id: 'invoice-1', credits: [{ id: 'credit-1', total: '10' }] }],
+          }),
+          select: (response: {
+            rows: { id: string; credits: { id: string; total: string }[] }[]
+          }) => ({
+            ...response,
+            rows: response.rows.map((row) => ({ ...row, documentKind: 'invoice' as const })),
+          }),
+        }),
+      }),
+      table: {
+        tree: { children: 'credits' },
+        columns: (column) => [
+          column.field('id', {
+            render: ({ row }) => {
+              expectTypeOf(row.documentKind).toEqualTypeOf<'invoice'>()
+              return row.id
+            },
+          }),
+        ],
+      },
+      tableKey: 'select-inference',
+    })
+  })
+})
