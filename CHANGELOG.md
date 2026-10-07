@@ -1,3 +1,15 @@
+## v1.17.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.10...v1.17.0)
+
+### 🚀 Enhancements
+
+- **table:** Add expandable tree rows ([#69](https://github.com/ChronicStone/nuxt-ui-tools/pull/69))
+
+### ❤️ Contributors
+
+- Cyprien Thao ([@ChronicStone](https://github.com/ChronicStone))
+
 ## v1.12.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.11.2...v1.12.0)
