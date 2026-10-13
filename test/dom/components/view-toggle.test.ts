@@ -106,6 +106,16 @@ describe('view toggle part', () => {
     expect(harness.wrapper.find('.nut-dl-view-toggle').exists()).toBeFalsy()
   })
 
+  it('keeps no choice made while summary rows are not available', async () => {
+    harness = await mountToggle({ breakpoint: 'xl' })
+    harness.internals.rowSummary.setActive(false)
+    await harness.flush()
+    harness.unmount()
+
+    harness = await mountToggle()
+    expect(harness.internals.rowSummary.active.value).toBe(true)
+  })
+
   it('gives its slot the state, the label and the toggle', async () => {
     harness = await mountLoaded({
       breakpoint: 'sm',

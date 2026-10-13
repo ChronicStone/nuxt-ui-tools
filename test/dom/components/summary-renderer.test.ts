@@ -246,6 +246,15 @@ describe('summary rows toggle', () => {
     expect(useCookie<string | null>('accounts::view').value).toBeNull()
   })
 
+  it('stores the choice under a valid cookie name for a free-form table key', async () => {
+    harness = await mountSummary({
+      schema: { ...createAccountsSchema({ summary: true }), tableKey: 'Comptes clients' },
+    })
+    harness.internals.rowSummary.setActive(false)
+    await harness.flush()
+    expect(useCookie<string | null>('Comptes%20clients::view').value).toBe('table')
+  })
+
   it('is reachable through the table api', async () => {
     harness = await mountSummary({ schema: createAccountsSchema({ summary: true }) })
     const { summary } = harness.table
