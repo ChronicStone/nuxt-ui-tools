@@ -24,7 +24,8 @@ function typeSection() {
       {
         key: 'accountType',
         layout: { span: 'full' },
-        // Eight types stay short as compact cards under four headings.
+        // Eight types stay short as compact cards under four headings. The options come from a
+        // function, so `groupKey` names the property that holds each heading.
         options: () =>
           ACCOUNT_TYPES.map((type) => ({
             description: t(`pages.formPagePlain.types.${type.value}.description`),
@@ -33,7 +34,12 @@ function typeSection() {
             label: t(`pages.formPagePlain.types.${type.value}.label`),
             value: type.value,
           })),
-        props: { columns: '1 md:2 xl:3', density: 'compact', indicator: 'corner' },
+        props: {
+          columns: '1 md:2 xl:3',
+          density: 'compact',
+          groupKey: 'group',
+          indicator: 'corner',
+        },
         required: true,
         type: 'radio-card',
       },

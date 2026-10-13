@@ -46,6 +46,20 @@ export interface FormChoiceCardProps {
    * an ellipsis (the full description stays in the card's tooltip). Defaults to `default`.
    */
   density?: FormChoiceCardDensity
+  /**
+   * Property of the options that holds the heading they are listed under. Options written inline
+   * in the schema group by their `group` without it. The records a function, a promise or a query
+   * returns group only when this names the property, so records that already carry a `group` for
+   * another purpose are never regrouped by surprise.
+   *
+   * @example
+   * ```ts
+   * // Rows from the API, each with a `section` to list the cards under.
+   * options: () => queryOptions({ queryKey: ['plans'], queryFn: fetchPlans }),
+   * props: { groupKey: 'section' }
+   * ```
+   */
+  groupKey?: string
 }
 
 /**
@@ -60,7 +74,8 @@ export interface FormChoiceCardOption<
   /**
    * Heading this option is listed under. Options sharing a heading are listed together, and the
    * headings follow the order in which they first appear in the options. Options without one
-   * stay together, without a heading.
+   * stay together, without a heading. Read from this property for options written inline in the
+   * schema; options a function, a promise or a query returns need `props.groupKey`.
    */
   group?: FormText
 }

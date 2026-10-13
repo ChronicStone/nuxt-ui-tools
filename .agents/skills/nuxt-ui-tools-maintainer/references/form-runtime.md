@@ -168,9 +168,18 @@ When adding form features, bias toward:
   `useChoiceCard` takes the `kind` of group (`ICON_UI`) and only hides the Nuxt UI `icon` slot of
   a radio group, where it is a duplicate of the option icon the card label already draws.
   `ResolvedFormOption.group` carries an option's heading and `choice-card/utils.ts` splits the
-  items into headed groups (pure, first-appearance order). Nuxt UI's `RadioGroup` and
-  `CheckboxGroup` cannot place a heading between their items, so each heading gets its own group
-  with the heading as its `legend`; for `radio-card` that means one tab stop per group and a
+  items into headed groups (pure, first-appearance order). Grouping is opt-in through the option
+  keys: `normalizeOptionItem` reads a heading only from the property `FormOptionKeys.group` names,
+  never from a raw `group`. Only the kinds that declare `options.groups` in their registry config
+  (the `optionGroups` capability) get that key, from `resolveOptionGroupKey`: `props.groupKey`
+  when set, else `'group'` for options written inline in the schema (an array, or a `source`
+  array), else none, so the records a function, promise or query returns are never regrouped by a
+  `group` they happen to carry. `useFieldControl` resolves the field `props` once and hands them to
+  `useFieldOptions`, which derives the key as a primitive computed so the normalized options do not
+  recompute each time dynamic props resolve; `groupKey` is in `CHOICE_CARD_PROPS` to stay off the
+  Nuxt UI group. Nuxt UI's `RadioGroup` and `CheckboxGroup` cannot place a heading between their
+  items, so each heading gets its own group with the heading as its `legend`; for `radio-card`
+  that means one tab stop per group and a
   selection shown only in the group of the chosen option, which is the accepted cost of keeping
   Nuxt UI's card styling instead of re-implementing the radio group. Every group receives the
   same control attributes, but an `id` names one element: `choiceCardGroupAttrs` keeps the control

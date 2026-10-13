@@ -696,6 +696,8 @@ on an element around the navigation and the sections.
 - `density`: `default`, or `compact` for a long list of options: smaller cards where the icon (or a
   smaller tile) sits beside a one-line title over a one-line description, both truncated with an
   ellipsis and keeping the full text in their tooltip. The selection mark centers on the row.
+- `groupKey`: the option property that holds the heading each option is listed under (see Grouped
+  options).
 
 ```ts
 {
@@ -715,6 +717,26 @@ Give options a `group` to list them under headings: options that share one are l
 headings follow the order in which they first appear, and options without a group stay together
 without a heading. `group` takes text or a function returning text, like `label`. A list without
 any `group` renders exactly as before.
+
+Grouping is opt-in for computed options. Options written inline in the schema group by their
+`group`, as below. The records a function, a promise, or a query returns are your own data, so a
+`group` they already carry for another purpose is not read until `props.groupKey` names the
+property that holds the heading. Without it they render as one list:
+
+```ts
+{
+  key: 'plan',
+  type: 'radio-card',
+  // Rows from the API: { value, label, section }
+  options: () => queryOptions({ queryKey: ['plans'], queryFn: fetchPlans }),
+  props: { groupKey: 'section' },
+}
+```
+
+`groupKey` also maps inline options: a list that sets `groupKey: 'section'` groups by `section` and
+ignores any `group` it carries. Options keep the same heading rules whatever the property is
+called. The two choice cards are the fields that group their options; `groupKey` has no effect
+elsewhere.
 
 ```ts
 {

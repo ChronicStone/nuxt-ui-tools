@@ -7,6 +7,7 @@ import {
   getFormFieldKind,
   isRegisteredFormFieldType,
 } from '#ui-tools/form'
+import type { FormField } from '#ui-tools/form'
 
 describe('form field kinds', () => {
   it('keeps file and upload as separate field kinds', () => {
@@ -60,6 +61,25 @@ describe('form field kinds', () => {
     expect(field.capability.hasAll(['label', 'validation', 'transform'])).toBeTruthy()
     expect(field.capability.has('upload')).toBeFalsy()
     expect([field.config?.type, field.raw]).toStrictEqual(['select', rawField])
+  })
+
+  it('declares the option groups only on the choice cards', () => {
+    const options = [{ label: 'France', value: 'FR' }]
+    const supports = (field: FormField) =>
+      createFormFieldInstance(field).capability.has('optionGroups')
+
+    expect([
+      supports(defineFormField({ key: 'a', options, type: 'radio-card' })),
+      supports(defineFormField({ key: 'b', options, type: 'checkbox-card' })),
+      supports(defineFormField({ key: 'c', options, type: 'select' })),
+      supports(defineFormField({ key: 'd', options, type: 'radio' })),
+    ]).toStrictEqual([true, true, false, false])
+    expect(
+      formFieldKinds
+        .filter((kind) => kind.options?.groups === true)
+        .map((kind) => kind.type)
+        .sort(),
+    ).toStrictEqual(['checkbox-card', 'radio-card'])
   })
 
   it('uses the registry as the source of truth for field type support', () => {

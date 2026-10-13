@@ -1,3 +1,4 @@
+import { queryOptions } from '@tanstack/vue-query'
 import { mount } from '@vue/test-utils'
 import type { DOMWrapper } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
@@ -389,6 +390,200 @@ describe('grouped choice cards', () => {
       [],
       ['string:admin'],
     ])
+    harness.unmount()
+  })
+})
+
+const CATEGORIZED = [
+  { category: 'Organisation', group: 'Ignorée', label: 'École', value: 'school' },
+  { category: 'Partenaire', group: 'Ignorée', label: 'Revendeur', value: 'reseller' },
+  { category: 'Organisation', group: 'Ignorée', label: 'Entreprise', value: 'company' },
+] as const
+
+const ALL_VALUES = ACCOUNT_TYPES.map((type) => type.value)
+
+function headings(harness: { wrapper: GroupFinder }, component: 'URadioGroup' | 'UCheckboxGroup') {
+  return summarizeGroups(harness.wrapper, component).map((group) => group.heading)
+}
+
+describe('choice card headings by option source', () => {
+  it('does not read the group of records a function returns: they stay in one list', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [{ key: 'kind', options: () => ACCOUNT_TYPES, type: 'radio-card' }],
+      }),
+    })
+
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')).toStrictEqual([
+      { checked: [], heading: undefined, values: ALL_VALUES },
+    ])
+    expect(harness.wrapper.find('[data-ui-legend]').exists()).toBe(false)
+    harness.unmount()
+  })
+
+  it('groups the records a function returns once groupKey maps their heading', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: () => ACCOUNT_TYPES,
+            props: { groupKey: 'group' },
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    expect(headings(harness, 'URadioGroup')).toStrictEqual([
+      'Organisation cliente',
+      'Partenaire',
+      'Centre de test',
+      'Compte interne',
+    ])
+    harness.unmount()
+  })
+
+  it('reads the heading from the property groupKey names, ignoring group', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: () => CATEGORIZED,
+            props: { groupKey: 'category' },
+            type: 'radio-card',
+          },
+          {
+            key: 'inline',
+            options: CATEGORIZED,
+            props: { groupKey: 'category' },
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    const [fromFunction, inline] = harness.wrapper
+      .findAll('[data-form-field]')
+      .map((root) => summarizeGroups(root, 'URadioGroup'))
+
+    expect(fromFunction?.map((group) => [group.heading, group.values])).toStrictEqual([
+      ['Organisation', ['school', 'company']],
+      ['Partenaire', ['reseller']],
+    ])
+    expect(inline?.map((group) => group.heading)).toStrictEqual(['Organisation', 'Partenaire'])
+    harness.unmount()
+  })
+
+  it('stops grouping inline options when groupKey maps a property they do not have', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: ACCOUNT_TYPES,
+            props: { groupKey: 'section' },
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    expect(headings(harness, 'URadioGroup')).toStrictEqual([undefined])
+    harness.unmount()
+  })
+
+  it('resolves groupKey from dynamic props', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: () => CATEGORIZED,
+            props: () => ({ groupKey: 'category' }),
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    expect(headings(harness, 'URadioGroup')).toStrictEqual(['Organisation', 'Partenaire'])
+    harness.unmount()
+  })
+
+  it('groups the records a promise resolves only when groupKey maps their heading', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          { key: 'plain', options: async () => ACCOUNT_TYPES, type: 'radio-card' },
+          {
+            key: 'mapped',
+            options: async () => ACCOUNT_TYPES,
+            props: { groupKey: 'group' },
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    await harness.until(() => harness.wrapper.findAll('input[type="radio"]').length === 16)
+    const [plain, mapped] = harness.wrapper
+      .findAll('[data-form-field]')
+      .map((root) => headings({ wrapper: root }, 'URadioGroup'))
+
+    expect(plain).toStrictEqual([undefined])
+    expect(mapped).toHaveLength(4)
+    harness.unmount()
+  })
+
+  it('groups the records a query loads only when groupKey maps their heading', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'plain',
+            options: () =>
+              queryOptions({ queryFn: async () => ACCOUNT_TYPES, queryKey: ['card-plain'] }),
+            type: 'checkbox-card',
+          },
+          {
+            key: 'mapped',
+            options: () =>
+              queryOptions({ queryFn: async () => ACCOUNT_TYPES, queryKey: ['card-mapped'] }),
+            props: { groupKey: 'group' },
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    await harness.until(() => harness.wrapper.findAll('input[type="checkbox"]').length === 16)
+    const [plain, mapped] = harness.wrapper
+      .findAll('[data-form-field]')
+      .map((root) => headings({ wrapper: root }, 'UCheckboxGroup'))
+
+    expect(plain).toStrictEqual([undefined])
+    expect(mapped).toHaveLength(4)
+    harness.unmount()
+  })
+
+  it('keeps groupKey off the Nuxt UI group', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: () => ACCOUNT_TYPES,
+            props: { groupKey: 'group' },
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    for (const group of harness.wrapper.findAll('[data-ui="URadioGroup"]')) {
+      expect(Object.keys(group.attributes()).map((name) => name.toLowerCase())).not.toContain(
+        'groupkey',
+      )
+    }
     harness.unmount()
   })
 })

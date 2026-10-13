@@ -22,6 +22,8 @@ export interface FormFieldKindDefinition<TType extends FormFieldType = FormField
   /** Whether the field owns option resolution. */
   options?: {
     enabled: boolean
+    /** Whether the field lists its options under headings read from a property of the options. */
+    groups?: boolean
   }
   /** Whether the field owns file upload work. */
   upload?: {
@@ -45,6 +47,7 @@ export type FormFieldCapability =
   | 'itemLayout'
   | 'containerLayout'
   | 'options'
+  | 'optionGroups'
   | 'upload'
   | 'validation'
   | 'transform'

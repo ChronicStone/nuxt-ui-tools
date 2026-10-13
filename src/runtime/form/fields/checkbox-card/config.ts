@@ -2,7 +2,7 @@ import { defineFormFieldKind } from '../../utils/field-kind'
 
 export const checkboxCardFieldKind = defineFormFieldKind({
   layout: { item: true },
-  options: { enabled: true },
+  options: { enabled: true, groups: true },
   state: 'stateful',
   transform: true,
   type: 'checkbox-card',
