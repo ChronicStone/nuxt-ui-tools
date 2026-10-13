@@ -101,6 +101,10 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/input-time.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/Link\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/link.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Modal\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/modal.ts`,
       },

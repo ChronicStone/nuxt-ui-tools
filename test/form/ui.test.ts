@@ -43,7 +43,14 @@ describe('form UI', () => {
       control: { size: 'md', ui: { base: 'rounded-sm' } },
       density: 'comfortable',
       drawer: { ui: { content: 'md:max-w-2xl' } },
-      field: { ui: { body: 'gap-1', label: 'text-xs' } },
+      field: {
+        ui: {
+          body: 'gap-1',
+          disabledReason: 'text-xs',
+          disabledReasonIcon: 'text-warning',
+          label: 'text-xs',
+        },
+      },
       fields: {
         select: { class: 'max-w-96', size: 'sm', ui: { base: 'rounded-md' } },
         upload: { class: 'min-h-36' },

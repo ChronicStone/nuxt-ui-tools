@@ -2,9 +2,12 @@ import { h } from 'vue'
 
 import { defineTableSchema, tableSource } from '#ui-tools/table'
 import type {
+  GenericObject,
   TableControlsSchema,
+  TableEmptySchema,
   TableFilterFacetConfig,
   TableFilterRemoteOptions,
+  TableRowSummarySchema,
   TableSummariesSchema,
 } from '#ui-tools/table/types'
 
@@ -70,6 +73,43 @@ export interface AccountsSchemaOptions {
   remoteCountry?: TableFilterRemoteOptions
   /** Counts the remote country options through the filter's own facet query. */
   remoteCountryFacet?: TableFilterFacetConfig
+  /** Reads each account as a summary row: `true` for the defaults, an object to tune them. */
+  summary?: boolean | AccountSummaryOptions
+  /** Names each account for assistive technology by its name. */
+  rowLabel?: boolean
+  /** What the list shows while it has no accounts at all. */
+  empty?: TableEmptySchema
+}
+
+export interface AccountSummaryOptions {
+  enabled?: boolean | string
+  /** Makes each row a link to its account. */
+  to?: boolean
+  onSelect?: (row: AccountRow) => void
+}
+
+/** The rows of this fixture are accounts; schema callbacks only know them as objects. */
+export function asAccount(row: GenericObject) {
+  // SAFETY: every source of this fixture serves AccountRow records.
+  return row as AccountRow
+}
+
+function createAccountSummary(options: AccountSummaryOptions): TableRowSummarySchema {
+  const { onSelect } = options
+  return {
+    details: ({ row }) => [asAccount(row).country, asAccount(row).legalEntity],
+    enabled: options.enabled,
+    leading: ({ row }) => asAccount(row).name.slice(-2),
+    onSelect: onSelect ? ({ row }) => onSelect(asAccount(row)) : undefined,
+    status: ({ row }) =>
+      h(
+        'span',
+        { class: 'pill', 'data-status': asAccount(row).status },
+        STATUS_LABEL[asAccount(row).status],
+      ),
+    title: ({ row }) => asAccount(row).name,
+    to: options.to ? ({ row }) => `/accounts/${asAccount(row).id}` : undefined,
+  }
 }
 
 export const bulkActionCalls: string[] = []
@@ -182,6 +222,8 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
             ...options.pagination,
           },
     rowKey: 'id',
+    rowLabel: options.rowLabel ? (row) => asAccount(row).name : undefined,
+    empty: options.empty,
     selection: {
       mode: options.selection?.mode ?? 'auto',
       scope: options.selection?.scope ?? 'all',
@@ -263,6 +305,9 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
     table: {
       defaultSorting: { dir: 'asc', key: 'name' },
       enabled: options.tableEnabled ?? true,
+      summary: options.summary
+        ? createAccountSummary(options.summary === true ? {} : options.summary)
+        : undefined,
       ...(options.summaries === false
         ? {}
         : {
@@ -382,12 +427,19 @@ export interface AuditRow {
   at: string
 }
 
+function asAudit(row: GenericObject) {
+  // SAFETY: the audit source serves AuditRow records.
+  return row as AuditRow
+}
+
 export function createAuditSchema(
   options: {
     total?: number
     pageSize?: number
     delay?: number
     onPage?: (cursor: string | null) => void
+    /** Reads each event as a summary row. */
+    summary?: boolean
   } = {},
 ) {
   const total = options.total ?? 45
@@ -444,6 +496,12 @@ export function createAuditSchema(
         column.field('actor', { label: 'Acteur' }),
         column.field('at', { label: 'Date' }),
       ],
+      summary: options.summary
+        ? {
+            details: ({ row }) => [asAudit(row).actor],
+            title: ({ row }) => asAudit(row).action,
+          }
+        : undefined,
     },
     tableKey: 'audit',
   })

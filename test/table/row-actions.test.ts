@@ -176,6 +176,10 @@ function createTableApiStub() {
       layout,
       query,
     },
+    summary: {
+      set: () => {},
+      state: computed(() => ({ active: false, available: false })),
+    },
     updateRow: () => {},
     updateRows: () => {},
   }

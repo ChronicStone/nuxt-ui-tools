@@ -103,13 +103,12 @@ function securitySection() {
 }
 
 const form = useForm({
+  // The name is missing: Workspace reads "To complete" until it is filled. Notifications is
+  // complete from the input, and Security stays optional until the Enterprise plan needs its domain.
   input: {
     digest: 'weekly',
-    mentions: true,
-    name: 'Design systems',
     plan: 'team',
     region: 'eu',
-    twoFactor: false,
   },
   onSubmit: () => {
     toast.add({ color: 'success', title: t('pages.formPage.saved') })

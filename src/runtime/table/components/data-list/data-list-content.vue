@@ -63,6 +63,12 @@ const viewportStyle = computed(() => {
   }
   return undefined
 })
+/**
+ * Keys the table so the switch between summary rows and the table is a change of the transition's
+ * own child: the rows leave, then the table comes in, as in every other layout switch. Unkeyed, the
+ * new view mounts inside the old one's transition and cuts its leave short.
+ */
+const presentation = computed(() => (internals.rowSummary.active.value ? 'summary' : 'table'))
 const rootUi = computed(() => dataListUi.ui.value.content?.ui)
 const resolvedSize = computed(
   () => props.size ?? dataListUi.ui.value.content?.size ?? dataListUi.controlSize.value,
@@ -163,7 +169,12 @@ watch(
         mode="out-in"
       >
         <slot v-if="internals.controls.tableLayout.value === 'table'" name="table" :rows="rows">
-          <DataListTable :size="resolvedSize" :fill="fit !== 'content'" class="min-h-0 flex-1">
+          <DataListTable
+            :key="presentation"
+            :size="resolvedSize"
+            :fill="fit !== 'content'"
+            class="min-h-0 flex-1"
+          >
             <template v-if="$slots.error" #error="scope">
               <slot name="error" v-bind="scope" />
             </template>

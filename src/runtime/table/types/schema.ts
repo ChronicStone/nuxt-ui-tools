@@ -3,6 +3,7 @@ import type { TableContextDataFromItems, TableContextItem, TablePageContextItem 
 import type { TableFiltersSchema } from './filters'
 import type {
   TableControlsSchema,
+  TableEmptySchema,
   TableGridSchema,
   TablePaginationSchema,
   TablePersistenceOptions,
@@ -40,7 +41,15 @@ export interface TableSchema<
     TableContextDataFromItems<TContextItems>,
     TRow[] | TableSourceExecutionResult<TRow> | TableCursorPageResult<TRow>
   >
+  /**
+   * Names a record for assistive technology, in "Select {label}" and "Actions for {label}".
+   * Without it the controls name the row by its position on the page.
+   * @example (row) => row.name
+   */
+  rowLabel?: (row: TRow) => string | number | null | undefined
   defaultLayout?: TableLayout
+  /** What the list shows while it has no records at all. See `TableEmptySchema`. */
+  empty?: TableEmptySchema
   pagination?: TablePaginationSchema
   context?: TContextItems
   pageContext?: TPageContextItems

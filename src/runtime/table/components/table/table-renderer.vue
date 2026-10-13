@@ -1261,6 +1261,12 @@ tbody .nut-dl-table__fill {
 .nut-dl-td--selection,
 .nut-dl-td--actions {
   white-space: nowrap;
+  /* A control here can be a 44px tap target: it sets the row height, with no padding added to it. */
+  --nut-dl-cell-y: 0px;
+}
+/* On a phone the checkbox's tap area reaches the cell's edges, so the inner box must not clip it. */
+.nut-dl-td--selection .nut-dl-td__inner {
+  overflow: visible;
 }
 .nut-dl-td--actions .nut-dl-td__inner > * {
   opacity: 0.55;

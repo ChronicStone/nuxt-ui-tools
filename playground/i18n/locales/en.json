@@ -309,6 +309,49 @@
       },
       "noCompany": "No company",
       "noDepartment": "No department"
+    },
+    "tableSummary": {
+      "eyebrow": "Accounts",
+      "title": "Accounts",
+      "description": "Summary rows read each account as an identity, one status, two values and one action. The toggle in the footer brings the table back.",
+      "searchPlaceholder": "Search an account...",
+      "hint": "Tap a row to open its account.",
+      "opened": "Opened: {name}",
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "inactive": "Inactive"
+      },
+      "kind": {
+        "partner": "Partner",
+        "client": "Client",
+        "testCenter": "Test centre"
+      },
+      "columns": {
+        "name": "Account",
+        "kind": "Type",
+        "city": "City",
+        "status": "Status"
+      },
+      "filters": {
+        "status": "Status",
+        "kind": "Type"
+      },
+      "actions": {
+        "open": "Open account",
+        "suspend": "Suspend",
+        "reactivate": "Reactivate",
+        "export": "Export",
+        "archive": "Archive"
+      }
+    },
+    "tableFirstUse": {
+      "title": "Accounts",
+      "description": "A workspace with no account yet offers its first action. A list hidden by a search keeps its reset instead.",
+      "emptyTitle": "No account yet",
+      "emptyDescription": "Create your first account to start assessing.",
+      "action": "Create an account",
+      "reset": "Back to empty"
     }
   },
   "pages": {
@@ -434,6 +477,115 @@
         "daily": "Daily",
         "weekly": "Weekly",
         "never": "Never"
+      }
+    },
+    "formPagePlain": {
+      "eyebrow": "Accounts",
+      "title": "New account",
+      "description": "Plain sections: no card, only spacing and a hairline between blocks.",
+      "navigation": "Creation",
+      "saved": "Account created",
+      "sections": {
+        "type": {
+          "label": "Account type",
+          "description": "who this account is for"
+        },
+        "identity": {
+          "label": "Identity",
+          "description": "name, parent account and test center"
+        },
+        "billing": {
+          "label": "Billing",
+          "description": "invoicing details, when they differ"
+        },
+        "documents": {
+          "label": "Legal documents",
+          "description": "proof of registration"
+        }
+      },
+      "fields": {
+        "name": "Account name",
+        "parent": "Parent account",
+        "center": "Test center",
+        "centerReason": "Choose a parent account first",
+        "billingEmail": "Billing email",
+        "vatNumber": "VAT number",
+        "registration": "Registration extract"
+      },
+      "parents": {
+        "pasteur": "Lycée Pasteur",
+        "alpha": "Alpha training"
+      },
+      "centers": {
+        "paris": "Paris center",
+        "lyon": "Lyon center"
+      },
+      "groups": {
+        "client": "Client organization",
+        "partner": "Partner",
+        "center": "Test center",
+        "internal": "Internal account"
+      },
+      "types": {
+        "school": {
+          "label": "School",
+          "description": "High schools, universities, colleges"
+        },
+        "company": {
+          "label": "Company",
+          "description": "Private employers and training bodies"
+        },
+        "authority": {
+          "label": "Public authority",
+          "description": "Local and regional authorities"
+        },
+        "reseller": {
+          "label": "Reseller",
+          "description": "Sells licenses to its own clients"
+        },
+        "distributor": {
+          "label": "Distributor",
+          "description": "Supplies several resellers"
+        },
+        "testCenter": {
+          "label": "Test center",
+          "description": "Runs assessment sessions on site"
+        },
+        "admin": {
+          "label": "Administrator",
+          "description": "Full access to the platform"
+        },
+        "support": {
+          "label": "Support",
+          "description": "Helps accounts, no billing access"
+        }
+      }
+    },
+    "formPageFocused": {
+      "eyebrow": "Members",
+      "title": "Invite a member",
+      "description": "Two short sections: a navigation would only add noise, so the page is a single column.",
+      "saved": "Invitation sent",
+      "sections": {
+        "contact": {
+          "label": "Contact",
+          "description": "who receives the invitation"
+        },
+        "access": {
+          "label": "Access",
+          "description": "what they can do"
+        }
+      },
+      "fields": {
+        "email": "Email address",
+        "name": "Full name",
+        "role": "Role",
+        "message": "Message"
+      },
+      "roles": {
+        "reviewer": "Reviewer",
+        "manager": "Manager",
+        "owner": "Owner"
       }
     }
   }

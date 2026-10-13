@@ -10,11 +10,13 @@ import { mergeFormUiClass } from '../../utils/ui'
 
 /**
  * Navigation of a form page: one entry per visible section, following the section in view.
- * An entry shows whether its section is complete, invalid, or still to fill, marks optional
- * sections, and, with `controls.dirtyCheck`, a dot on modified sections. The footer sums up
- * the sections left to complete, or the modified ones with dirty checking.
+ * An entry shows whether its section is complete, to fix, to complete, or optional with nothing
+ * entered (a dashed circle and an "Optional" tag, never "to complete"), and, with
+ * `controls.dirtyCheck`, a dot on modified sections. The footer sums up the sections left to
+ * complete, which leaves out untouched optional ones, or the modified ones with dirty checking.
  *
  * From 768px of page width it is a pinned column; below, a row of chips that scrolls sideways.
+ * It renders nothing while the page has fewer visible sections than `navigation.minSections`.
  */
 defineSlots<{
   /** Replaces the heading, which comes from the schema `navigation.title`. */
@@ -108,6 +110,7 @@ function select(event: MouseEvent, key: string) {
 
 <template>
   <nav
+    v-if="page.navigationVisible.value"
     :aria-labelledby="page.navigationTitle.value || $slots.title ? titleId : undefined"
     :aria-label="page.navigationTitle.value || $slots.title ? undefined : t('form.page.navigation')"
     :style="{ '--nut-form-page-header': `${page.stickyOffset.value}px` }"
@@ -173,7 +176,7 @@ function select(event: MouseEvent, key: string) {
                 aria-hidden="true"
                 :class="
                   mergeFormUiClass(
-                    'grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-accented text-[10px] leading-none font-bold group-data-[active]:border-primary data-[state=complete]:border-(--ui-text-highlighted) data-[state=complete]:bg-(--ui-text-highlighted) data-[state=complete]:text-(--ui-bg) data-[state=invalid]:border-error data-[state=invalid]:bg-error data-[state=invalid]:text-inverted group-data-[active]:data-[state=complete]:border-primary group-data-[active]:data-[state=complete]:bg-primary group-data-[active]:data-[state=complete]:text-inverted',
+                    'grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-accented text-[10px] leading-none font-bold group-data-[active]:border-primary data-[state=optional]:border-dashed data-[state=complete]:border-(--ui-text-highlighted) data-[state=complete]:bg-(--ui-text-highlighted) data-[state=complete]:text-(--ui-bg) data-[state=invalid]:border-error data-[state=invalid]:bg-error data-[state=invalid]:text-inverted group-data-[active]:data-[state=complete]:border-primary group-data-[active]:data-[state=complete]:bg-primary group-data-[active]:data-[state=complete]:text-inverted',
                     pageUi?.navigationIndicator,
                   )
                 "
@@ -217,15 +220,17 @@ function select(event: MouseEvent, key: string) {
                 data-form-page-dirty
               />
               <span
-                v-else-if="section.optional && section.status !== 'complete'"
+                v-else-if="section.status === 'optional'"
+                aria-hidden="true"
                 :class="
                   mergeFormUiClass(
                     'hidden shrink-0 text-[11px] font-normal text-dimmed @3xl/form-page:inline',
                     pageUi?.navigationOptional,
                   )
                 "
+                data-form-page-optional
               >
-                {{ t('form.page.optional') }}
+                {{ t('form.page.status.optional') }}
               </span>
             </a>
           </slot>

@@ -133,10 +133,64 @@ When adding form features, bias toward:
   renders takes a `FormPageUi` slot; keep it that way when adding one. Sections and the pinned
   navigation read `--nut-form-page-header` (set by `FormPage` from the measured header) plus
   `--nut-form-page-gap`, resolved where they are used so a wrapper can override either.
+- Section status is `invalid | pending | complete | optional`, decided by the pure
+  `resolveFormPageSectionStatus` in `utils/page.ts`. It is honest on purpose (UX audit): an optional
+  section nobody entered a value in is `optional`, never `pending`, and the navigation counts only
+  the statuses in `BLOCKS_SUBMIT` (`invalid`, `pending`) as left to complete. `invalid` needs no
+  extra rule because `runtime.errors` only holds errors of touched or submitted paths. The
+  `form.page.status.*` messages serve the screen reader text and the visible "Optional" tag, so a
+  new status needs its message, its `BLOCKS_SUBMIT` entry, and its indicator style together.
+- Page surface and navigation threshold: `ui.page.surface` (`FormPageUiConfig`, merged through
+  `mergePart`, whose spread also carries `surface`) selects an entry of the `FORM_PAGE_SURFACES`
+  table in `utils/page-surface.ts`. Its strings are the default classes of the root background, the
+  sections stack, a section, its description, and the skeleton, and `useFormPage` exposes
+  `surface` and `surfaceClasses` to every part. `navigation.minSections` is read by
+  `getFormPageNavigationMinSections` and drives `navigationVisible` (visible sections, so
+  conditions count), which `FormPageNavigation` (it renders nothing) and the `FormPage` body
+  (a single centered column) both follow. A new surface or layout is a table entry, not a branch in
+  a component.
+- `use-field-control.ts` exposes the authored `placeholder` only. The `shared-ui` baseline
+  restored a generic default ("Enter a value") through i18n; that default is removed on purpose
+  (UX audit: it repeats the label and reads like pre-filled noise for non-technical users), so a
+  control shows a placeholder only when the schema authors one and no
+  `form.fields.text.defaultPlaceholder` key exists. Date-family, color-picker, and one-time-code
+  keep their own format and visual hints because those are not generic prompts.
+- `utils/disabled.ts` owns the author-driven part of disabling: `isFieldDisabledByCallback` feeds
+  `useFieldControl`, and `resolveFieldDisabledReason` feeds `FormFieldShell`, which renders the
+  reason in the `UFormField` `help` slot (after the help copy, with the string `help` prop kept so
+  Nuxt UI still wires `aria-describedby`). Engine-driven disabling (pending action, loading
+  options) never carries a reason. Items of a primitive array render bare, so `disabledReason` is
+  part of `ItemFieldChrome` there.
 - `fields/choice-card/` is the presentation `radio-card` and `checkbox-card` share: the grid
   (`--nut-choice-columns`), the corner check, and the icon tile, with `ui.tile` and `ui.check` for
   the parts the engine renders. `checkbox-card` strips option icons from the items it hands to
-  `UCheckboxGroup`, because a checkbox `icon` is its check mark.
+  `UCheckboxGroup`, because a checkbox `icon` is its check mark: for the same reason
+  `useChoiceCard` takes the `kind` of group (`ICON_UI`) and only hides the Nuxt UI `icon` slot of
+  a radio group, where it is a duplicate of the option icon the card label already draws.
+  `ResolvedFormOption.group` carries an option's heading and `choice-card/utils.ts` splits the
+  items into headed groups (pure, first-appearance order). Grouping is opt-in through the option
+  keys: `normalizeOptionItem` reads a heading only from the property `FormOptionKeys.group` names,
+  never from a raw `group`. Only the kinds that declare `options.groups` in their registry config
+  (the `optionGroups` capability) get that key, from `resolveOptionGroupKey(field)`: the field's top-level
+  `groupKey` (`FormChoiceCardGrouping`, read statically like `labelKey` and `valueKey`; `false` opts out)
+  when set, else `'group'` for options written inline in the schema (an array, or a `source`
+  array), else none, so the records a function, promise or query returns are never regrouped by a
+  `group` they happen to carry. The key is never read from `props`: a dynamic `props` callback may
+  read `api.options`, so deriving the option keys from it forms a computed cycle (items, keys,
+  props, `api.options`, items) that throws on mount. Nuxt UI's `RadioGroup` and `CheckboxGroup` cannot place a heading between their
+  items, so each heading gets its own group with the heading as its `legend`; for `radio-card`
+  that means one tab stop per group and a
+  selection shown only in the group of the chosen option, which is the accepted cost of keeping
+  Nuxt UI's card styling instead of re-implementing the radio group. Every group receives the
+  same control attributes, but an `id` names one element: `choiceCardGroupAttrs` keeps the control
+  id on the first group and gives each later group `<id>-group-<index>`, a suffix Vue's `useId` never generates (in bare mode, a table or matrix
+  cell, the id is always set; in a normal field Nuxt UI generates one per group), while
+  `data-form-field` and the accessible name stay on every group so focus moving between groups does
+  not leave the field. `density: 'compact'` selects
+  the `compact` entry of `LAYOUT_UI` in `use-choice-card.ts` (a two-column label grid) and moves the
+  description from the Nuxt UI group (stripped from its items) into `ChoiceCardLabel`. Nuxt UI
+  centers the wrapper of a card whose indicator is hidden (`corner`, `switch`, `hidden`), so the
+  compact wrapper stretches (`items-stretch`) to keep the label at the card edge.
 
 When adding a field, update the local type/config/component, assembled union, registry, renderer,
 value/output inference, recursive state ownership where relevant, tests, playground, and consumer

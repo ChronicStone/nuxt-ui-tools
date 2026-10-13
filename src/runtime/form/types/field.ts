@@ -74,6 +74,12 @@ export type { FormAutoCompleteField } from '../fields/auto-complete/types'
 export type { FormButtonField } from '../fields/button/types'
 export type { FormCardField } from '../fields/card/types'
 export type { FormCheckboxCardField } from '../fields/checkbox-card/types'
+export type {
+  FormChoiceCardDensity,
+  FormChoiceCardOption,
+  FormChoiceCardOptionItem,
+  FormChoiceCardProps,
+} from '../fields/choice-card/types'
 export type { FormCheckboxField } from '../fields/checkbox/types'
 export type { FormCheckboxGroupField } from '../fields/checkbox-group/types'
 export type { FormColorPickerField } from '../fields/color-picker/types'

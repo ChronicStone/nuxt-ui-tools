@@ -1,10 +1,21 @@
+import { queryOptions } from '@tanstack/vue-query'
 import { mount } from '@vue/test-utils'
+import type { DOMWrapper } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import { defineFormSchema } from '#ui-tools/form'
+import type { FormFieldCallbackParams } from '#ui-tools/form'
 import ChoiceCardLabel from '#ui-tools/form/fields/choice-card/choice-card-label.vue'
 
 import { mountForm } from './harness'
+
+function emptyOptionsDisable({ api }: FormFieldCallbackParams) {
+  return { disabled: api.options.get().length === 0 }
+}
+
+function loadingOptionsDisable({ api }: FormFieldCallbackParams) {
+  return { disabled: api.options.loading() || api.options.get().length === 0 }
+}
 
 const OPTIONS = [
   {
@@ -80,7 +91,7 @@ describe('choice cards', () => {
     harness.unmount()
   })
 
-  it('keeps option icons off checkbox cards, whose Nuxt UI icon is the check mark', async () => {
+  it('keeps option icons off checkbox cards and their check mark visible', async () => {
     const harness = await mountForm({
       schema: defineFormSchema({
         fields: [
@@ -88,10 +99,14 @@ describe('choice cards', () => {
         ],
       }),
     })
-    const items: unknown = harness.wrapper.findComponent({ name: 'UCheckboxGroup' }).props('items')
+    const group = harness.wrapper.findComponent({ name: 'UCheckboxGroup' })
+    const items: unknown = group.props('items')
 
+    // The Nuxt UI icon of a checkbox is its check mark: hiding that slot, as a radio card does for
+    // the copy of its option icon, would leave a filled box without a check.
     expect(Array.isArray(items) && items.length).toBe(2)
     expect(Array.isArray(items) && items.some((item) => Object.hasOwn(item, 'icon'))).toBe(false)
+    expect(group.props('ui')).toMatchObject({ icon: '' })
     harness.unmount()
   })
 
@@ -163,5 +178,658 @@ describe('choice cards', () => {
     })
     expect(inline.find('[data-choice-tile]').exists()).toBe(false)
     expect(inline.find('[data-ui="UIcon"]').exists()).toBe(true)
+  })
+})
+
+const ACCOUNT_TYPES = [
+  {
+    description: 'Lycée, collège ou université',
+    group: 'Organisation cliente',
+    label: 'Établissement',
+    value: 'school',
+  },
+  {
+    description: 'Entreprise ou association',
+    group: 'Organisation cliente',
+    label: 'Entreprise',
+    value: 'company',
+  },
+  {
+    description: 'Revend les tests à ses clients',
+    group: 'Partenaire',
+    label: 'Revendeur',
+    value: 'reseller',
+  },
+  {
+    description: 'Apporte des clients',
+    group: 'Partenaire',
+    label: 'Apporteur',
+    value: 'referrer',
+  },
+  {
+    description: 'Fait passer les tests',
+    group: 'Centre de test',
+    label: 'Centre agréé',
+    value: 'center',
+  },
+  {
+    description: 'Fait passer les tests à distance',
+    group: 'Centre de test',
+    label: 'Centre distant',
+    value: 'remote',
+  },
+  {
+    description: 'Équipe ExAssess',
+    group: 'Compte interne',
+    label: 'Administrateur',
+    value: 'admin',
+  },
+  { description: 'Aide les clients', group: 'Compte interne', label: 'Support', value: 'support' },
+] as const
+
+function groupedSchema(density?: 'compact') {
+  return defineFormSchema({
+    fields: [
+      {
+        key: 'accountType',
+        options: ACCOUNT_TYPES,
+        props: { columns: 2, density, icon: 'tile', indicator: 'corner' },
+        type: 'radio-card',
+      },
+    ],
+  })
+}
+
+function checkedValues(group: DOMWrapper<Element>) {
+  return group
+    .findAll('input')
+    .flatMap((input) =>
+      input.element instanceof HTMLInputElement && input.element.checked
+        ? [input.element.value]
+        : [],
+    )
+}
+
+interface GroupFinder {
+  findAll: (selector: string) => DOMWrapper<Element>[]
+}
+
+function summarizeGroups(wrapper: GroupFinder, component: 'URadioGroup' | 'UCheckboxGroup') {
+  return wrapper.findAll(`[data-ui="${component}"]`).map((group) => ({
+    checked: checkedValues(group),
+    heading: group.find('[data-ui-legend]').exists()
+      ? group.find('[data-ui-legend]').text()
+      : undefined,
+    values: group.findAll('input').map((input) => input.element.getAttribute('value')),
+  }))
+}
+
+describe('grouped choice cards', () => {
+  it('lists radio cards under their headings in order of first appearance', async () => {
+    const harness = await mountForm({ schema: groupedSchema() })
+
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')).toStrictEqual([
+      { checked: [], heading: 'Organisation cliente', values: ['school', 'company'] },
+      { checked: [], heading: 'Partenaire', values: ['reseller', 'referrer'] },
+      { checked: [], heading: 'Centre de test', values: ['center', 'remote'] },
+      { checked: [], heading: 'Compte interne', values: ['admin', 'support'] },
+    ])
+    harness.unmount()
+  })
+
+  it('keeps the options of a group together when they are not authored side by side', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: [
+              { group: 'B', label: 'B1', value: 'b1' },
+              { group: 'A', label: 'A1', value: 'a1' },
+              { group: 'B', label: 'B2', value: 'b2' },
+            ],
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    expect(
+      summarizeGroups(harness.wrapper, 'URadioGroup').map((group) => group.heading),
+    ).toStrictEqual(['B', 'A'])
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')[0]?.values).toStrictEqual(['b1', 'b2'])
+    harness.unmount()
+  })
+
+  it('shows the selection in the group of the chosen option and moves it across groups', async () => {
+    const harness = await mountForm({ input: { accountType: 'reseller' }, schema: groupedSchema() })
+    const groups = () => summarizeGroups(harness.wrapper, 'URadioGroup')
+
+    expect(groups().map((group) => group.checked)).toStrictEqual([[], ['reseller'], [], []])
+
+    await harness.wrapper.find('input[value="center"]').setValue(true)
+    await harness.flush()
+    expect(harness.form.state.get('accountType')).toBe('center')
+    expect(groups().map((group) => group.checked)).toStrictEqual([[], [], ['center'], []])
+
+    await harness.wrapper.find('input[value="school"]').setValue(true)
+    await harness.flush()
+    expect(harness.form.state.get('accountType')).toBe('school')
+    expect(groups().map((group) => group.checked)).toStrictEqual([['school'], [], [], []])
+    harness.unmount()
+  })
+
+  it('renders an ungrouped list as one group without a heading', async () => {
+    const harness = await mountForm({ schema: radioSchema })
+
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')).toStrictEqual([
+      { checked: [], heading: undefined, values: ['customer', 'partner'] },
+    ])
+    expect(harness.wrapper.find('[data-ui-legend]').exists()).toBe(false)
+    harness.unmount()
+  })
+
+  it('resolves lazy headings and styles the heading and the stack through ui', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: [
+              { group: () => 'Organisation', label: 'École', value: 'school' },
+              { group: () => 'Partenaire', label: 'Revendeur', value: 'reseller' },
+            ],
+            props: { ui: { groups: 'gap-8', legend: 'text-xs uppercase' } },
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    const first = harness.wrapper.find('[data-ui="URadioGroup"]')
+
+    expect(
+      summarizeGroups(harness.wrapper, 'URadioGroup').map((group) => group.heading),
+    ).toStrictEqual(['Organisation', 'Partenaire'])
+    expect(first.attributes('data-slot-legend')).toContain('uppercase')
+    expect(first.element.parentElement?.className).toContain('gap-8')
+    harness.unmount()
+  })
+
+  it('keeps the selections of several checkbox groups and the order they were made in', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            default: ['reseller'],
+            key: 'kinds',
+            options: ACCOUNT_TYPES,
+            props: { columns: 2 },
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    const groups = () => summarizeGroups(harness.wrapper, 'UCheckboxGroup')
+
+    expect(groups().map((group) => group.heading)).toStrictEqual([
+      'Organisation cliente',
+      'Partenaire',
+      'Centre de test',
+      'Compte interne',
+    ])
+    expect(groups().map((group) => group.checked)).toStrictEqual([[], ['string:reseller'], [], []])
+
+    await harness.wrapper.find('input[value="string:school"]').setValue(true)
+    await harness.wrapper.find('input[value="string:admin"]').setValue(true)
+    await harness.wrapper.find('input[value="string:referrer"]').setValue(true)
+    await harness.flush()
+    expect(harness.form.state.get('kinds')).toStrictEqual([
+      'reseller',
+      'school',
+      'admin',
+      'referrer',
+    ])
+
+    await harness.wrapper.find('input[value="string:reseller"]').setValue(false)
+    await harness.flush()
+    expect(harness.form.state.get('kinds')).toStrictEqual(['school', 'admin', 'referrer'])
+    expect(groups().map((group) => group.checked)).toStrictEqual([
+      ['string:school'],
+      ['string:referrer'],
+      [],
+      ['string:admin'],
+    ])
+    harness.unmount()
+  })
+})
+
+const CATEGORIZED = [
+  { category: 'Organisation', group: 'Ignorée', label: 'École', value: 'school' },
+  { category: 'Partenaire', group: 'Ignorée', label: 'Revendeur', value: 'reseller' },
+  { category: 'Organisation', group: 'Ignorée', label: 'Entreprise', value: 'company' },
+] as const
+
+const ALL_VALUES = ACCOUNT_TYPES.map((type) => type.value)
+
+function headings(harness: { wrapper: GroupFinder }, component: 'URadioGroup' | 'UCheckboxGroup') {
+  return summarizeGroups(harness.wrapper, component).map((group) => group.heading)
+}
+
+describe('choice card headings by option source', () => {
+  it('does not read the group of records a function returns: they stay in one list', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [{ key: 'kind', options: () => ACCOUNT_TYPES, type: 'radio-card' }],
+      }),
+    })
+
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')).toStrictEqual([
+      { checked: [], heading: undefined, values: ALL_VALUES },
+    ])
+    expect(harness.wrapper.find('[data-ui-legend]').exists()).toBe(false)
+    harness.unmount()
+  })
+
+  it('groups the records a function returns once groupKey maps their heading', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: () => ACCOUNT_TYPES,
+            groupKey: 'group',
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    expect(headings(harness, 'URadioGroup')).toStrictEqual([
+      'Organisation cliente',
+      'Partenaire',
+      'Centre de test',
+      'Compte interne',
+    ])
+    harness.unmount()
+  })
+
+  it('reads the heading from the property groupKey names, ignoring group', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: () => CATEGORIZED,
+            groupKey: 'category',
+            type: 'radio-card',
+          },
+          {
+            key: 'inline',
+            options: CATEGORIZED,
+            groupKey: 'category',
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    const [fromFunction, inline] = harness.wrapper
+      .findAll('[data-form-field]')
+      .map((root) => summarizeGroups(root, 'URadioGroup'))
+
+    expect(fromFunction?.map((group) => [group.heading, group.values])).toStrictEqual([
+      ['Organisation', ['school', 'company']],
+      ['Partenaire', ['reseller']],
+    ])
+    expect(inline?.map((group) => group.heading)).toStrictEqual(['Organisation', 'Partenaire'])
+    harness.unmount()
+  })
+
+  it('stops grouping inline options when groupKey maps a property they do not have', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: ACCOUNT_TYPES,
+            groupKey: 'section',
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    expect(headings(harness, 'URadioGroup')).toStrictEqual([undefined])
+    harness.unmount()
+  })
+
+  it('mounts option fields whose dynamic props read the resolved options', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'country',
+            options: async () => ACCOUNT_TYPES,
+            props: emptyOptionsDisable as never,
+            type: 'select',
+          },
+          {
+            key: 'kind',
+            options: async () => ACCOUNT_TYPES,
+            props: loadingOptionsDisable as never,
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    await harness.until(() => harness.wrapper.findAll('input[type="radio"]').length === 8)
+
+    expect(harness.wrapper.findAll('[data-form-field]')).toHaveLength(2)
+    harness.unmount()
+  })
+
+  it('lists inline options without headings when groupKey is false', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [{ groupKey: false, key: 'kind', options: ACCOUNT_TYPES, type: 'radio-card' }],
+      }),
+    })
+
+    expect(headings(harness, 'URadioGroup')).toStrictEqual([undefined])
+    harness.unmount()
+  })
+
+  it('groups inline checkbox cards by their group without a groupKey', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [{ key: 'kinds', options: ACCOUNT_TYPES, type: 'checkbox-card' }],
+      }),
+    })
+
+    expect(headings(harness, 'UCheckboxGroup')).toStrictEqual([
+      'Organisation cliente',
+      'Partenaire',
+      'Centre de test',
+      'Compte interne',
+    ])
+    harness.unmount()
+  })
+
+  it('groups the records a promise resolves only when groupKey maps their heading', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          { key: 'plain', options: async () => ACCOUNT_TYPES, type: 'radio-card' },
+          {
+            key: 'mapped',
+            options: async () => ACCOUNT_TYPES,
+            groupKey: 'group',
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    await harness.until(() => harness.wrapper.findAll('input[type="radio"]').length === 16)
+    const [plain, mapped] = harness.wrapper
+      .findAll('[data-form-field]')
+      .map((root) => headings({ wrapper: root }, 'URadioGroup'))
+
+    expect(plain).toStrictEqual([undefined])
+    expect(mapped).toHaveLength(4)
+    harness.unmount()
+  })
+
+  it('groups the records a query loads only when groupKey maps their heading', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'plain',
+            options: () =>
+              queryOptions({ queryFn: async () => ACCOUNT_TYPES, queryKey: ['card-plain'] }),
+            type: 'checkbox-card',
+          },
+          {
+            key: 'mapped',
+            options: () =>
+              queryOptions({ queryFn: async () => ACCOUNT_TYPES, queryKey: ['card-mapped'] }),
+            groupKey: 'group',
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    await harness.until(() => harness.wrapper.findAll('input[type="checkbox"]').length === 16)
+    const [plain, mapped] = harness.wrapper
+      .findAll('[data-form-field]')
+      .map((root) => headings({ wrapper: root }, 'UCheckboxGroup'))
+
+    expect(plain).toStrictEqual([undefined])
+    expect(mapped).toHaveLength(4)
+    harness.unmount()
+  })
+
+  it('keeps groupKey off the Nuxt UI group', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: () => ACCOUNT_TYPES,
+            groupKey: 'group',
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    for (const group of harness.wrapper.findAll('[data-ui="URadioGroup"]')) {
+      expect(Object.keys(group.attributes()).map((name) => name.toLowerCase())).not.toContain(
+        'groupkey',
+      )
+    }
+    harness.unmount()
+  })
+})
+
+const radioRowsSchema = defineFormSchema({
+  fields: [
+    {
+      confirmDelete: false,
+      fields: [{ key: 'kind', label: 'Compte', options: ACCOUNT_TYPES, type: 'radio-card' }],
+      key: 'rows',
+      type: 'array-table',
+    },
+  ],
+})
+
+const checkboxRowsSchema = defineFormSchema({
+  fields: [
+    {
+      confirmDelete: false,
+      fields: [{ key: 'kinds', label: 'Comptes', options: ACCOUNT_TYPES, type: 'checkbox-card' }],
+      key: 'rows',
+      type: 'array-table',
+    },
+  ],
+})
+
+function groupAttributes(
+  row: GroupFinder,
+  component: 'URadioGroup' | 'UCheckboxGroup',
+  name: string,
+) {
+  return row.findAll(`[data-ui="${component}"]`).map((group) => group.attributes(name))
+}
+
+describe('choice card groups in table cells', () => {
+  it('gives every radio group of a cell its own id and keeps the control id on the first', async () => {
+    const harness = await mountForm({
+      input: { rows: [{ kind: 'school' }, { kind: 'center' }] },
+      schema: radioRowsSchema,
+    })
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 2)
+    const ids = harness.wrapper
+      .findAll('tbody tr')
+      .map((row) => groupAttributes(row, 'URadioGroup', 'id'))
+
+    expect(ids.map((rowIds) => rowIds.length)).toStrictEqual([4, 4])
+    expect(new Set(ids.flat()).size).toBe(8)
+    for (const [control, ...others] of ids) {
+      expect(control).toBeTruthy()
+      expect(others).toStrictEqual([
+        `${control}-group-1`,
+        `${control}-group-2`,
+        `${control}-group-3`,
+      ])
+    }
+    harness.unmount()
+  })
+
+  it('gives every checkbox group of a cell its own id and keeps the control id on the first', async () => {
+    const harness = await mountForm({
+      input: { rows: [{ kinds: ['school'] }, { kinds: [] }] },
+      schema: checkboxRowsSchema,
+    })
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 2)
+    const ids = harness.wrapper
+      .findAll('tbody tr')
+      .map((row) => groupAttributes(row, 'UCheckboxGroup', 'id'))
+
+    expect(ids.map((rowIds) => rowIds.length)).toStrictEqual([4, 4])
+    expect(new Set(ids.flat()).size).toBe(8)
+    for (const [control, ...others] of ids) {
+      expect(control).toBeTruthy()
+      expect(others).toStrictEqual([
+        `${control}-group-1`,
+        `${control}-group-2`,
+        `${control}-group-3`,
+      ])
+    }
+    harness.unmount()
+  })
+
+  it('keeps the field marker and the accessible name on every group', async () => {
+    const harness = await mountForm({
+      input: { rows: [{ kind: 'school' }] },
+      schema: radioRowsSchema,
+    })
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 1)
+    const row = harness.wrapper.find('tbody tr')
+
+    expect(groupAttributes(row, 'URadioGroup', 'data-form-field')).toStrictEqual(
+      Array.from({ length: 4 }, () => 'rows.0.kind'),
+    )
+    expect(groupAttributes(row, 'URadioGroup', 'aria-label')).toStrictEqual(
+      Array.from({ length: 4 }, () => 'Compte'),
+    )
+    harness.unmount()
+  })
+})
+
+describe('compact choice cards', () => {
+  it('shrinks the cards and keeps the density prop off the Nuxt UI group', async () => {
+    const harness = await mountForm({ schema: groupedSchema('compact') })
+    const group = harness.wrapper.find('[data-ui="URadioGroup"]')
+
+    expect(group.attributes('density')).toBeUndefined()
+    expect(group.attributes('data-slot-item')).toContain('p-2.5')
+    expect(group.attributes('data-slot-item')).toContain('items-center')
+    expect(group.attributes('data-slot-fieldset')).toContain('gap-2')
+    expect(group.attributes('data-slot-fieldset')).not.toContain('gap-2.5')
+    expect(group.attributes('data-slot-label')).toContain('grid')
+    expect(group.attributes('data-slot-wrapper')).toContain('min-w-0')
+    // Nuxt UI centers the wrapper of a card with a hidden indicator: the label must fill it.
+    expect(group.attributes('data-slot-wrapper')).toContain('items-stretch')
+    // Compact never stacks the tile above the label: the wrapper keeps its default layout.
+    expect(group.attributes('data-slot-wrapper')).not.toContain('flex-col')
+    harness.unmount()
+  })
+
+  it('renders the description in the card label instead of the Nuxt UI group', async () => {
+    const compact = await mountForm({ schema: groupedSchema('compact') })
+    const card = compact.wrapper.find('[data-ui-radio="school"]')
+
+    expect(card.find('[data-ui-description]').exists()).toBe(false)
+    expect(card.find('[data-choice-title]').text()).toBe('Établissement')
+    expect(card.find('[data-choice-description]').text()).toBe('Lycée, collège ou université')
+    expect(card.find('[data-choice-description]').attributes('title')).toBe(
+      'Lycée, collège ou université',
+    )
+    compact.unmount()
+
+    const regular = await mountForm({ schema: groupedSchema() })
+    const regularCard = regular.wrapper.find('[data-ui-radio="school"]')
+    expect(regularCard.find('[data-ui-description]').text()).toBe('Lycée, collège ou université')
+    expect(regularCard.find('[data-choice-description]').exists()).toBe(false)
+    regular.unmount()
+  })
+
+  it('does the same for checkbox cards', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kinds',
+            options: ACCOUNT_TYPES,
+            props: { density: 'compact', icon: 'tile' },
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    const card = harness.wrapper.find('[data-ui-option="string:school"]')
+
+    expect(card.find('[data-ui-description]').exists()).toBe(false)
+    expect(card.find('[data-choice-description]').text()).toBe('Lycée, collège ou université')
+    harness.unmount()
+  })
+
+  it('lays the label out as a smaller tile, a truncated title, and a truncated description', () => {
+    const label = mount(ChoiceCardLabel, {
+      props: {
+        compact: true,
+        description: 'Lycée, collège ou université',
+        icon: 'i-lucide-school',
+        label: 'Établissement',
+        mark: 'corner',
+        selected: true,
+        tile: true,
+        value: 'school',
+      },
+    })
+
+    expect(label.find('[data-choice-tile]').classes()).toEqual(
+      expect.arrayContaining(['size-7', 'row-span-2', 'col-start-1']),
+    )
+    expect(label.find('[data-choice-tile]').classes()).not.toContain('size-8')
+    expect(label.find('[data-choice-title]').classes()).toEqual(
+      expect.arrayContaining(['truncate', 'col-start-2']),
+    )
+    expect(label.find('[data-choice-title]').attributes('title')).toBe('Établissement')
+    expect(label.find('[data-choice-description]').classes()).toEqual(
+      expect.arrayContaining(['truncate', 'col-start-2']),
+    )
+    expect(label.find('[data-choice-check]').classes()).toEqual(
+      expect.arrayContaining(['top-1/2', '-translate-y-1/2']),
+    )
+  })
+
+  it('puts a bare icon beside the title and skips the description line when there is none', () => {
+    const label = mount(ChoiceCardLabel, {
+      props: {
+        compact: true,
+        icon: 'i-lucide-school',
+        label: 'Établissement',
+        mark: 'none',
+        selected: false,
+        tile: false,
+      },
+    })
+
+    expect(label.find('[data-choice-tile]').exists()).toBe(false)
+    expect(label.find('[data-ui="UIcon"]').classes()).toEqual(
+      expect.arrayContaining(['row-span-2', 'size-4']),
+    )
+    expect(label.find('[data-choice-description]').exists()).toBe(false)
   })
 })

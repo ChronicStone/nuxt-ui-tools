@@ -44,6 +44,7 @@ function getPublicComponents(
       'ColumnPanel',
       'SortMenu',
       'LayoutSwitch',
+      'ViewToggle',
       'Content',
       'ErrorState',
       'Table',

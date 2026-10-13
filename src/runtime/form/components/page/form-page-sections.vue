@@ -12,9 +12,10 @@ import { mergeFormUiClass } from '../../utils/ui'
 import FormPageSection from './form-page-section.vue'
 
 /**
- * Cards of a form page, one per visible section, each with its title, description, fields, and,
- * with `controls.dirtyCheck`, a ring and a reset button while it is modified. Skeleton cards
- * stand in while the schema context loads.
+ * Sections of a form page, one per visible section, each with its title, description, fields, and,
+ * with `controls.dirtyCheck`, a mark and a reset button while it is modified. They are cards, or
+ * plain blocks with the `page.surface` UI option. Skeletons stand in while the schema context
+ * loads.
  */
 defineSlots<{
   /** Extra buttons in a section header, before its reset button. */
@@ -30,7 +31,12 @@ const { contextError, contextLoading, contextPending, refreshContext } = page.ro
 
 <template>
   <div
-    :class="mergeFormUiClass('flex min-w-0 flex-col gap-[18px]', pageUi?.sections)"
+    :class="
+      mergeFormUiClass(
+        `flex min-w-0 flex-col ${page.surfaceClasses.value.sections}`,
+        pageUi?.sections,
+      )
+    "
     data-form-page-sections
   >
     <UAlert
@@ -60,7 +66,7 @@ const { contextError, contextLoading, contextPending, refreshContext } = page.ro
         :key="section.key"
         :class="
           mergeFormUiClass(
-            'grid gap-4 rounded-xl border border-default bg-default px-6 pt-[22px] pb-6',
+            `grid gap-4 ${page.surfaceClasses.value.sectionSkeleton}`,
             pageUi?.sectionSkeleton,
           )
         "

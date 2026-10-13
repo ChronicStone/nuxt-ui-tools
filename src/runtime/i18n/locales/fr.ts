@@ -203,6 +203,7 @@ export default defineUiToolsLocale<Messages>({
       },
       actions: {
         cancelButton: 'Annuler',
+        closeButton: 'Fermer le formulaire',
         nextButton: 'Suivant',
         prevButton: 'Précédent',
         resetButton: 'Réinitialiser',
@@ -213,14 +214,14 @@ export default defineUiToolsLocale<Messages>({
         modifiedOne: '{count} modifiée.',
         modifiedOther: '{count} modifiées.',
         navigation: 'Sections du formulaire',
-        optional: 'optionnel',
         remaining: '{count} à compléter.',
         resetSection: 'Réinitialiser',
         sectionsOne: '{count} section',
         sectionsOther: '{count} sections',
         status: {
-          complete: 'Complète',
-          invalid: 'Contient des erreurs',
+          complete: 'Complété',
+          invalid: 'À corriger',
+          optional: 'Facultatif',
           pending: 'À compléter',
         },
         unmodified: 'Aucune modification en cours.',
@@ -289,15 +290,23 @@ export default defineUiToolsLocale<Messages>({
         rating: {
           value: '{value} sur {max}',
         },
+        shell: {
+          collapse: 'Replier',
+          expand: 'Déplier',
+          reset: 'Réinitialiser le champ',
+        },
         text: {
           clear: 'Effacer',
-          defaultPlaceholder: 'Saisissez une valeur',
         },
         time: {
           clear: 'Effacer l’heure',
           format: 'HH:mm',
           hour: 'Heure',
           minute: 'Minute',
+        },
+        unsupported: {
+          description: 'Le type de champ « {type} » ne peut pas être affiché.',
+          title: 'Champ non pris en charge',
         },
         upload: {
           cancel: 'Annuler le téléversement',
@@ -318,6 +327,9 @@ export default defineUiToolsLocale<Messages>({
           description: "Certaines données du formulaire n'ont pas pu être chargées.",
           title: 'Données du formulaire indisponibles',
         },
+      },
+      steps: {
+        fallback: 'Étape {number}',
       },
       validation: {
         dateMax: 'La date doit être au plus tard le {max}',
@@ -704,7 +716,17 @@ export default defineUiToolsLocale<Messages>({
       header: {
         gridView: 'Vue grille',
         refreshData: 'Actualiser les données',
+        summaryView: 'Vue liste',
         tableView: 'Vue tableau',
+      },
+      rowActions: {
+        label: 'Actions pour {label}',
+        labelAt: 'Actions pour la ligne {position}',
+      },
+      selection: {
+        selectAll: 'Sélectionner toutes les lignes',
+        selectRow: 'Sélectionner {label}',
+        selectRowAt: 'Sélectionner la ligne {position}',
       },
       selectionBar: {
         allResults: 'Tous les résultats',
@@ -747,8 +769,6 @@ export default defineUiToolsLocale<Messages>({
         collapseAll: 'Replier toutes les lignes',
         expand: 'Déplier la ligne',
         expandAll: 'Déplier toutes les lignes',
-        selectAll: 'Sélectionner toutes les lignes',
-        selectRow: 'Sélectionner la ligne',
       },
     },
   },

@@ -4,6 +4,7 @@ import type {
   FormPageSection,
   FormPageSectionEntry,
   FormPageSectionState,
+  FormPageSectionStatus,
   FormRuntime,
   FormText,
   FormValue,
@@ -31,6 +32,17 @@ interface FormPageLeaf {
   item: boolean
 }
 
+/**
+ * Whether a section in this status keeps the form from being submitted. Typed over every status,
+ * so adding one forces a choice here.
+ */
+const BLOCKS_SUBMIT: Record<FormPageSectionStatus, boolean> = {
+  complete: false,
+  invalid: true,
+  optional: false,
+  pending: true,
+}
+
 /** Pairs each section of a page schema with the card `defineFormPageSchema` generated for it. */
 export function getFormPageSections(schema: FormValue): readonly FormPageSectionEntry[] {
   if (!isRecord(schema) || !Array.isArray(schema.sections)) {
@@ -52,9 +64,45 @@ export function getFormPageNavigationTitle(schema: FormValue) {
   return isFormText(title) ? resolveFormText(title) : undefined
 }
 
+/**
+ * Number of visible sections the navigation needs to show. Zero, the default, shows it whatever
+ * the number of sections; anything that is not a count above one means the same.
+ */
+export function getFormPageNavigationMinSections(schema: FormValue) {
+  if (!isRecord(schema) || !isRecord(schema.navigation)) {
+    return 0
+  }
+  const { minSections } = schema.navigation
+  return isNumber(minSections) && minSections > 1 ? Math.trunc(minSections) : 0
+}
+
 /** True while the section's `condition` lets it render. */
 export function isFormPageSectionVisible(entry: FormPageSectionEntry, runtime: FormRuntime) {
   return !hasCondition(entry.card) || runtime.shouldRender(entry.card, [entry.card.key])
+}
+
+/**
+ * Where a section stands, from what it shows and what it still misses. An optional section nothing
+ * was entered in is `optional`, not `pending`: the user has nothing to do there.
+ */
+export function resolveFormPageSectionStatus(params: {
+  /** The section shows a validation error, which needs the user to leave a field or submit. */
+  invalid: boolean
+  /** Number of required fields without a value. */
+  missing: number
+  optional: boolean
+  /** The user entered a value, or the form input brought one. Only read for an optional section. */
+  provided: boolean
+}): FormPageSectionStatus {
+  if (params.invalid) return 'invalid'
+  if (params.missing > 0) return 'pending'
+  if (params.optional && !params.provided) return 'optional'
+  return 'complete'
+}
+
+/** True while the section keeps the form from being submitted: the sections left to complete. */
+export function isFormPageSectionBlocking(section: Pick<FormPageSectionState, 'status'>) {
+  return BLOCKS_SUBMIT[section.status]
 }
 
 /**
@@ -81,8 +129,8 @@ export function resolveFormPageSectionState(params: {
     : []
   const missing = required.filter((leaf) => isEmptyValue(runtime.getValue(leaf.path))).length
   const optional = entry.section.optional ?? required.every((leaf) => leaf.item)
-  const filled =
-    !optional || leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
+  const provided =
+    optional && leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
 
   return {
     description: resolveFormText(entry.section.description),
@@ -93,7 +141,7 @@ export function resolveFormPageSectionState(params: {
     label: resolveFormText(entry.section.label) ?? entry.section.key,
     missing,
     optional,
-    status: invalid ? 'invalid' : missing === 0 && filled ? 'complete' : 'pending',
+    status: resolveFormPageSectionStatus({ invalid, missing, optional, provided }),
   }
 }
 

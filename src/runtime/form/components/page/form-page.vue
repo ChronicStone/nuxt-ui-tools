@@ -18,6 +18,8 @@ import FormPageSections from './form-page-sections.vue'
 /**
  * A form laid out as a page: a header with the title and the actions, a navigation that follows
  * the section in view, and one card per section. Render a schema from `defineFormPageSchema`.
+ * The `page.surface` UI option draws the sections as `plain` blocks instead of cards, and the
+ * schema `navigation.minSections` leaves the navigation out of a page with few sections.
  *
  * The page scrolls on its own, so give it a height (`h-full` in a layout that sizes its main
  * area). Put parts in the default slot to compose another layout: `FormPageHeader`,
@@ -95,6 +97,18 @@ const root = useFormRoot({
 })
 const page = provideFormPage(useFormPage({ element: () => element.value, hash: () => hash, root }))
 const pageUi = computed(() => root.formUi.ui.value.page?.ui)
+
+/**
+ * The body is a column for the navigation beside the sections, or, when the page has too few
+ * sections for a navigation (`navigation.minSections`), the sections alone in one centered column
+ * as wide as the beside layout gives them.
+ */
+const BODY_UI = {
+  beside:
+    'grid gap-4 px-4 pt-4 pb-16 @3xl/form-page:grid-cols-[200px_minmax(0,1fr)] @3xl/form-page:items-start @3xl/form-page:gap-7 @3xl/form-page:px-7 @3xl/form-page:pt-6 @3xl/form-page:pb-20 @5xl/form-page:grid-cols-[230px_minmax(0,760px)]',
+  single:
+    'mx-auto grid w-full max-w-[816px] gap-4 px-4 pt-4 pb-16 @3xl/form-page:gap-7 @3xl/form-page:px-7 @3xl/form-page:pt-6 @3xl/form-page:pb-20',
+} as const
 </script>
 
 <template>
@@ -102,8 +116,12 @@ const pageUi = computed(() => root.formUi.ui.value.page?.ui)
     ref="element"
     novalidate
     :class="
-      mergeFormUiClass('@container/form-page h-full min-w-0 overflow-y-auto bg-muted', pageUi?.root)
+      mergeFormUiClass(
+        `@container/form-page h-full min-w-0 overflow-y-auto ${page.surfaceClasses.value.root}`,
+        pageUi?.root,
+      )
     "
+    :data-surface="page.surface.value"
     data-form-page
     @submit.prevent="root.submit"
   >
@@ -128,7 +146,7 @@ const pageUi = computed(() => root.formUi.ui.value.page?.ui)
       <div
         :class="
           mergeFormUiClass(
-            'grid gap-4 px-4 pt-4 pb-16 @3xl/form-page:grid-cols-[200px_minmax(0,1fr)] @3xl/form-page:items-start @3xl/form-page:gap-7 @3xl/form-page:px-7 @3xl/form-page:pt-6 @3xl/form-page:pb-20 @5xl/form-page:grid-cols-[230px_minmax(0,760px)]',
+            page.navigationVisible.value ? BODY_UI.beside : BODY_UI.single,
             pageUi?.body,
           )
         "

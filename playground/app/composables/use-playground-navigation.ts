@@ -123,11 +123,27 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
           },
           {
             description:
-              'Sections with a scrollspy navigation, dirty rings, card grids, translated labels.',
+              'Cards with a scrollspy navigation, honest section statuses, dirty rings, translated labels.',
             id: 'form-page',
             label: 'Page',
             mode: 'fixed',
             path: '/form/page',
+          },
+          {
+            description:
+              'Plain surface without cards, grouped compact choice cards, and a disabled field that says why.',
+            id: 'form-page-plain',
+            label: 'Page, plain surface',
+            mode: 'fixed',
+            path: '/form/page-plain',
+          },
+          {
+            description:
+              'Too few sections for a navigation: minSections leaves it out for one focused column.',
+            id: 'form-page-focused',
+            label: 'Page, focused column',
+            mode: 'fixed',
+            path: '/form/page-focused',
           },
         ],
         id: 'form-workflows',
@@ -210,6 +226,29 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
         description: 'Rows that hold child rows, opened beneath them.',
         id: 'table-tree-rows',
         label: 'Tree rows',
+      },
+      {
+        children: [
+          {
+            description:
+              'Accounts as summary rows: identity, one status, two values, one 44px action; a footer toggle brings the table back.',
+            id: 'table-summary-rows',
+            label: 'Summary rows',
+            mode: 'fixed',
+            path: '/table/summary-rows',
+          },
+          {
+            description:
+              'A list with no record yet offers its first action in the table, the grid and summary rows; a filtered list keeps its reset.',
+            id: 'table-first-use',
+            label: 'First use',
+            mode: 'fixed',
+            path: '/table/first-use',
+          },
+        ],
+        description: 'How a list presents itself on a phone and before it holds a record.',
+        id: 'table-presentation',
+        label: 'Presentation',
       },
       {
         children: [

@@ -4,18 +4,22 @@ import type { InjectionKey } from 'vue'
 import type { FormPageSectionState } from '../types'
 import { getSchemaDirtyCheck } from '../utils/controls'
 import {
+  getFormPageNavigationMinSections,
   getFormPageNavigationTitle,
   getFormPageSections,
+  isFormPageSectionBlocking,
   isFormPageSectionVisible,
   resolveFormPageSectionState,
 } from '../utils/page'
+import { getFormPageSurfaceClasses, resolveFormPageSurface } from '../utils/page-surface'
 import { cloneFormValue } from '../utils/path'
 import { useFormPageScroll } from './use-form-page-scroll'
 import type { useFormRoot } from './use-form-root'
 
 /**
  * State shared by a form page and its parts: the visible sections and where each stands, the
- * section in view, the navigation summary, and the actions a part can take on a section.
+ * section in view, the navigation summary, whether the navigation shows, the surface the
+ * sections are drawn with, and the actions a part can take on a section.
  */
 export function useFormPage(params: {
   root: ReturnType<typeof useFormRoot>
@@ -52,18 +56,21 @@ export function useFormPage(params: {
   /** Rings modified sections and marks them in the navigation, from `controls.dirtyCheck`. */
   const dirtyCheck = computed(() => getSchemaDirtyCheck(root.schema.value))
   const navigationTitle = computed(() => getFormPageNavigationTitle(root.schema.value))
+  const navigationMinSections = computed(() => getFormPageNavigationMinSections(root.schema.value))
+  /**
+   * False while the page has fewer visible sections than `navigation.minSections`: the
+   * navigation then renders nothing and the sections fill one focused column.
+   */
+  const navigationVisible = computed(() => sections.value.length >= navigationMinSections.value)
+  const surface = computed(() => resolveFormPageSurface(root.formUi.ui.value.page?.surface))
+  /** Default classes the surface sets on the page parts. */
+  const surfaceClasses = computed(() => getFormPageSurfaceClasses(surface.value))
   /**
    * Sections that still need something before the form can be submitted: a required section that
-   * is not complete, or an optional one the user started and left incomplete or invalid.
+   * is not complete, or an optional one the user started and left incomplete or invalid. An
+   * optional section nobody entered anything in is not one of them.
    */
-  const remaining = computed(
-    () =>
-      sections.value.filter((section) =>
-        section.optional
-          ? section.missing > 0 || section.status === 'invalid'
-          : section.status !== 'complete',
-      ).length,
-  )
+  const remaining = computed(() => sections.value.filter(isFormPageSectionBlocking).length)
   const modified = computed(() => sections.value.filter((section) => section.dirty).length)
   /** Height of the pinned header, which sections scroll under. */
   const stickyOffset = ref<number>(0)
@@ -89,6 +96,7 @@ export function useFormPage(params: {
     items,
     modified,
     navigationTitle,
+    navigationVisible,
     register: scroll.register,
     remaining,
     resetSection,
@@ -96,6 +104,8 @@ export function useFormPage(params: {
     scrollTo: scroll.scrollTo,
     sections,
     stickyOffset,
+    surface,
+    surfaceClasses,
   }
 }
 

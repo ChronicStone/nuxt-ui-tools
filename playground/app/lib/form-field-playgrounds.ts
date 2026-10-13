@@ -30,6 +30,65 @@ const roleOptions = [
   { description: 'Read and comment', label: 'Reviewer', value: 'reviewer' },
 ] as const
 
+const accountTypeOptions = [
+  {
+    description: 'High schools and universities',
+    group: 'Client organization',
+    icon: 'i-lucide-school',
+    label: 'School',
+    value: 'school',
+  },
+  {
+    description: 'Private employers and training bodies',
+    group: 'Client organization',
+    icon: 'i-lucide-building-2',
+    label: 'Company',
+    value: 'company',
+  },
+  {
+    description: 'Local and regional authorities',
+    group: 'Client organization',
+    icon: 'i-lucide-landmark',
+    label: 'Public authority',
+    value: 'authority',
+  },
+  {
+    description: 'Sells licenses to its own clients',
+    group: 'Partner',
+    icon: 'i-lucide-handshake',
+    label: 'Reseller',
+    value: 'reseller',
+  },
+  {
+    description: 'Supplies several resellers',
+    group: 'Partner',
+    icon: 'i-lucide-truck',
+    label: 'Distributor',
+    value: 'distributor',
+  },
+  {
+    description: 'Runs assessment sessions on site',
+    group: 'Test center',
+    icon: 'i-lucide-map-pin',
+    label: 'Test center',
+    value: 'testCenter',
+  },
+  {
+    description: 'Full access to the platform',
+    group: 'Internal account',
+    icon: 'i-lucide-shield-check',
+    label: 'Administrator',
+    value: 'admin',
+  },
+  {
+    description: 'Helps accounts, no billing access',
+    group: 'Internal account',
+    icon: 'i-lucide-life-buoy',
+    label: 'Support',
+    value: 'support',
+  },
+] as const
+
 const hierarchyOptions = [
   {
     children: [
@@ -82,11 +141,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         props: { inputType: 'email' },
         type: 'text',
       },
+      // Without a placeholder the control stays empty: the engine adds no generic prompt.
+      { key: 'reference', label: 'Reference (no placeholder)', type: 'text' },
       {
         default: 'Read only',
         disabled: () => true,
+        disabledReason: 'Managed by your administrator',
         key: 'disabled',
-        label: 'Disabled',
+        label: 'Disabled, with a reason',
         type: 'text',
       },
     ],
@@ -362,9 +424,29 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         props: { orientation: 'vertical' },
         type: 'radio-card',
       },
+      {
+        default: 'team',
+        key: 'compact',
+        label: 'Compact',
+        options: planOptions,
+        props: { columns: '1 md:3', density: 'compact' },
+        type: 'radio-card',
+      },
+      {
+        key: 'accountType',
+        label: 'Grouped and compact',
+        options: accountTypeOptions,
+        props: { columns: '1 md:2 xl:3', density: 'compact', indicator: 'corner' },
+        type: 'radio-card',
+        validation: required,
+      },
     ],
     id: 'radio-card',
     label: 'Radio cards',
+    notes: [
+      'An option group puts its cards under a heading, in order of first appearance. A radio group allows one tab stop per heading.',
+      'Options written inline group by their group property. Options a function, a promise or a query returns group only when their groupKey names the property that holds the heading.',
+    ],
   },
   {
     description: 'Multi-choice option groups across list, card, and horizontal layouts.',
@@ -397,6 +479,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         label: 'Enabled plans',
         options: planOptions,
         props: { orientation: 'horizontal' },
+        type: 'checkbox-card',
+      },
+      {
+        default: ['school', 'reseller'],
+        key: 'accountTypes',
+        label: 'Grouped and compact',
+        options: accountTypeOptions,
+        props: { columns: '1 md:2 xl:3', density: 'compact' },
         type: 'checkbox-card',
       },
     ],
@@ -469,6 +559,16 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         disabled: () => true,
         key: 'disabled',
         label: 'Disabled',
+        options: roleOptions,
+        type: 'select',
+      },
+      { key: 'account', label: 'Account', options: roleOptions, type: 'select' },
+      {
+        dependencies: ['account'],
+        disabled: ({ deps }) => !deps.get('account'),
+        disabledReason: 'Choose an account first',
+        key: 'center',
+        label: 'Test center (disabled until an account is chosen)',
         options: roleOptions,
         type: 'select',
       },

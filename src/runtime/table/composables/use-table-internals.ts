@@ -13,6 +13,7 @@ import { useTableFilters } from './use-table-filters'
 import { useTableGrid } from './use-table-grid'
 import { useTableLayout } from './use-table-layout'
 import { useTablePagination } from './use-table-pagination'
+import { useTableRowSummary } from './use-table-row-summary'
 import { useTableSelection } from './use-table-selection'
 import { useTableStartup } from './use-table-startup'
 import { useTableState } from './use-table-state'
@@ -44,8 +45,14 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     schema,
     tree,
   })
+  const rowSummary = useTableRowSummary({
+    layout,
+    schema,
+    tree,
+  })
   const controls = useTableControls({
     layout,
+    rowSummary,
     schema,
   })
   const filters = useTableFilters({
@@ -90,6 +97,7 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     pagination,
     publicSchema,
     queryContent,
+    rowSummary,
     runtimeSchema: schema,
     selection,
     state,
@@ -118,6 +126,7 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     queryContent,
     queryState: state.queryState,
     resolvedFilterState: state.resolvedFilterState,
+    rowSummary,
     schema,
     selection,
     startup,

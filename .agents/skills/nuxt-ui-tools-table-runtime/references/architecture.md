@@ -186,18 +186,27 @@ Main files:
 
 - `components/DataList.vue`
 - `components/table/*`
+- `components/summary/*`
 - `components/grid/*`
 - `components/layout/*`
 
 `DataList.vue` is primarily the shell/composition boundary.
 It should consume orchestrated state rather than become the domain brain.
 
+The table layout has two renderers. `components/table/*` draws columns; `components/summary/*` draws one
+compact row per record while `rowSummary.active` is true (`use-table-row-summary.ts`: `available` is
+what the schema and viewport allow, `active` adds the reader's cookie-backed choice). The view toggle
+lives in the offset footer, or in the default toolbar for cursor and unpaginated lists. Summary rows
+keep the table's selection, row actions, query state, and pagination; they drop columns, column
+sorting, and the totals row, so the sort menu stands in for column headers while they are active.
+
 ## 9. Playground Role
 
 Current package usage examples live mainly in:
 
-- `playground/app/pages/table-client.vue`
-- `playground/app/pages/table-remote.vue`
+- `playground/app/pages/table/client.vue`
+- `playground/app/pages/table/remote.vue`
+- `playground/app/pages/table/summary-rows.vue` and `first-use.vue` for summary rows and the first-use empty state
 
 Use them to validate package-facing behavior, but do not move reusable logic there.
 

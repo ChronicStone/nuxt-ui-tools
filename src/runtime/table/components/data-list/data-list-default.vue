@@ -17,6 +17,7 @@ import DataListRefresh from './data-list-refresh.vue'
 import DataListSearch from './data-list-search.vue'
 import DataListSelectionActions from './data-list-selection-actions.vue'
 import DataListSortMenu from './data-list-sort-menu.vue'
+import DataListViewToggle from './data-list-view-toggle.vue'
 
 const props = defineProps<{
   title?: string
@@ -109,6 +110,8 @@ function humanizeKey(value: string) {
           <DataListColumnPanel v-if="controls.columns" />
           <DataListRefresh v-if="controls.refresh" />
           <DataListLayoutSwitch v-if="controls.layout" />
+          <!-- Offset pagination carries the toggle in its footer; the other modes have none. -->
+          <DataListViewToggle v-if="internals.pagination.mode.value !== 'offset'" />
         </div>
       </div>
     </header>

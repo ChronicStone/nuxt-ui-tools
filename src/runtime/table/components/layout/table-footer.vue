@@ -21,6 +21,46 @@ import {
   mergeDataListUiClass,
   resolveDataListControlGeometry,
 } from '../../utils'
+import DataListViewToggle from '../data-list/data-list-view-toggle.vue'
+
+/**
+ * The edge and step buttons of the page list. Nuxt UI draws them with English-only accessible
+ * names, so they are drawn here instead, through the pagination's own slots.
+ */
+const PAGER_CONTROLS = [
+  {
+    icon: 'i-lucide-chevrons-left',
+    iconProp: 'firstIcon',
+    label: 'table.footer.firstPage',
+    mirrored: 'i-lucide-chevrons-right',
+    slot: 'first',
+    target: () => 1,
+  },
+  {
+    icon: 'i-lucide-chevron-left',
+    iconProp: 'prevIcon',
+    label: 'table.footer.previousPage',
+    mirrored: 'i-lucide-chevron-right',
+    slot: 'prev',
+    target: (page: number) => (page > 1 ? page - 1 : undefined),
+  },
+  {
+    icon: 'i-lucide-chevron-right',
+    iconProp: 'nextIcon',
+    label: 'table.footer.nextPage',
+    mirrored: 'i-lucide-chevron-left',
+    slot: 'next',
+    target: (page: number, pages: number) => (page < pages ? page + 1 : undefined),
+  },
+  {
+    icon: 'i-lucide-chevrons-right',
+    iconProp: 'lastIcon',
+    label: 'table.footer.lastPage',
+    mirrored: 'i-lucide-chevrons-left',
+    slot: 'last',
+    target: (_page: number, pages: number) => pages,
+  },
+] as const
 
 const props = withDefaults(
   defineProps<{
@@ -35,7 +75,7 @@ const internals = useTableInternals()
 const { isMobile } = useDataListBreakpoint()
 const compact = computed(() => props.compact ?? isMobile.value)
 const dataListUi = useDataListUi()
-const { locale, t } = useUiToolsLocale()
+const { dir, locale, t } = useUiToolsLocale()
 const controlSize = computed(
   () => props.size ?? dataListUi.ui.value.pagination?.size ?? dataListUi.controlSize.value,
 )
@@ -62,6 +102,24 @@ const paginationProps = computed(() =>
     controlProps.value.pagination,
   ),
 )
+const pagerControls = computed(() => {
+  const resolved = paginationProps.value
+  if (resolved.showControls === false) return []
+  return PAGER_CONTROLS.map((control) => {
+    const target = control.target(page.value, internals.pagination.totalPages.value)
+    return {
+      label: t(control.label),
+      props: {
+        color: resolved.color,
+        icon: resolved[control.iconProp] || (dir.value === 'rtl' ? control.mirrored : control.icon),
+        size: resolved.size,
+        to: target === undefined ? undefined : resolved.to?.(target),
+        variant: resolved.variant,
+      },
+      slot: control.slot,
+    }
+  })
+})
 const pageSizeProps = computed(() =>
   mergeDataListProps<
     Pick<DataListSelectControlProps, 'color' | 'variant' | 'size' | 'icon' | 'trailingIcon'>
@@ -116,12 +174,14 @@ const paginationControls = computed(() => {
     showPagesList: pagination.showPagesList ?? true,
   }
 })
+const showViewToggle = computed(() => internals.controls.headerControls.value.summary)
 const showFooter = computed(
   () =>
     internals.pagination.mode.value === 'offset' &&
     (paginationControls.value.showPageSizePicker ||
       paginationControls.value.showPagesCount ||
-      paginationControls.value.showPagesList),
+      paginationControls.value.showPagesList ||
+      showViewToggle.value),
 )
 
 function formatCount(value: number) {
@@ -210,6 +270,10 @@ function formatCount(value: number) {
           />
         </label>
       </slot>
+    </div>
+
+    <div v-if="showViewToggle" class="nut-dl-footer__view mx-auto">
+      <slot name="view-toggle"><DataListViewToggle /></slot>
     </div>
 
     <div
@@ -301,7 +365,26 @@ function formatCount(value: number) {
               ui.button,
             ),
           }"
-        />
+        >
+          <template v-for="control in pagerControls" #[control.slot]>
+            <UButton v-bind="control.props" :aria-label="control.label" />
+          </template>
+          <template #item="{ item, page: current, pageCount }">
+            <UButton
+              v-if="item.type === 'page'"
+              :color="current === item.value ? paginationProps.activeColor : paginationProps.color"
+              :variant="
+                current === item.value ? paginationProps.activeVariant : paginationProps.variant
+              "
+              :size="paginationProps.size"
+              :label="String(item.value)"
+              :aria-label="t('table.footer.page', { current: item.value, total: pageCount })"
+              :to="paginationProps.to?.(item.value)"
+              :ui="{ label: 'min-w-5 text-center' }"
+              square
+            />
+          </template>
+        </UPagination>
       </slot>
     </div>
   </footer>

@@ -280,7 +280,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       key: step.key ?? String(index + 1),
       label: isFunction(step.title)
         ? String(step.title())
-        : String(step.title ?? step.key ?? `Step ${index + 1}`),
+        : String(step.title ?? step.key ?? t('form.steps.fallback', { number: index + 1 })),
       root: step.root,
     })),
   )

@@ -5,8 +5,9 @@ import { defineFormPageSchema, defineFormPageSection } from '#ui-tools/form'
 import FormPageActions from '#ui-tools/form/components/page/form-page-actions.vue'
 import FormPageNavigation from '#ui-tools/form/components/page/form-page-navigation.vue'
 import FormPageSections from '#ui-tools/form/components/page/form-page-sections.vue'
-import type { FormObject, FormSubmitHandler, FormValue } from '#ui-tools/form/types'
+import type { FormObject, FormSubmitHandler, FormUiConfig, FormValue } from '#ui-tools/form/types'
 
+import { localeCode } from '../stubs/nuxt-ui-locale'
 import { mountPage, unmountPage } from './page-harness'
 import type { PageHarness } from './page-harness'
 
@@ -75,7 +76,9 @@ function documentsSection() {
   })
 }
 
-function accountSchema(options: { dirtyCheck?: boolean } = {}) {
+function accountSchema(
+  options: { dirtyCheck?: boolean; minSections?: number; ui?: FormUiConfig } = {},
+) {
   return defineFormPageSchema({
     actions: [
       { key: 'cancel', label: 'Annuler' },
@@ -83,8 +86,9 @@ function accountSchema(options: { dirtyCheck?: boolean } = {}) {
     ],
     controls: { dirtyCheck: options.dirtyCheck ?? false },
     header: { description: () => 'Nouveau client', title: () => 'Nouveau compte' },
-    navigation: { title: () => 'Création' },
+    navigation: { minSections: options.minSections, title: () => 'Création' },
     sections: [typeSection(), identitySection(), billingSection(), documentsSection()],
+    ui: options.ui,
   })
 }
 
@@ -95,7 +99,29 @@ function sectionKeys(harness: PageHarness) {
   )
 }
 
-afterEach(unmountPage)
+/** The element holding the sections and, beside them, the navigation. */
+function pageBody(harness: PageHarness) {
+  return harness.wrapper.find('[data-form-page-sections]').element.parentElement
+}
+
+function surfaceOf(harness: PageHarness) {
+  return harness.wrapper.find('[data-form-page]').attributes('data-surface')
+}
+
+/** Visually hidden status of a navigation entry, which screen readers announce. */
+function status(harness: PageHarness, key: string) {
+  return harness.entry(key).querySelector('.sr-only')?.textContent?.trim()
+}
+
+/** The visible "Facultatif" tag of a navigation entry. */
+function optionalTag(harness: PageHarness, key: string) {
+  return harness.entry(key).querySelector('[data-form-page-optional]')
+}
+
+afterEach(() => {
+  unmountPage()
+  localeCode.value = 'fr'
+})
 
 describe('form page', () => {
   it('renders the header, one navigation entry and one card per section, with lazy labels', async () => {
@@ -119,14 +145,26 @@ describe('form page', () => {
 
     expect(harness.entry('type').dataset.state).toBe('pending')
     expect(harness.entry('identity').dataset.state).toBe('pending')
-    // Optional: the currency default alone does not complete it, nor does an empty section.
-    expect(harness.entry('billing').dataset.state).toBe('pending')
-    expect(harness.entry('billing').textContent).toContain('optionnel')
-    expect(harness.entry('documents').textContent).toContain('optionnel')
+    expect(status(harness, 'identity')).toBe('À compléter')
+    expect(optionalTag(harness, 'identity')).toBeNull()
+    // Optional: the currency default alone does not complete it, nor does an empty section. It
+    // reads "Facultatif" alone, never "À compléter" as well.
+    for (const key of ['billing', 'documents']) {
+      expect(harness.entry(key).dataset.state).toBe('optional')
+      expect(status(harness, key)).toBe('Facultatif')
+      expect(optionalTag(harness, key)?.textContent?.trim()).toBe('Facultatif')
+      expect(harness.entry(key).textContent).not.toContain('À compléter')
+      expect(harness.section(key).dataset.state).toBe('optional')
+      expect(harness.section(key).querySelector('[data-form-page-optional]')?.textContent).toBe(
+        'Facultatif',
+      )
+    }
+    expect(harness.section('identity').querySelector('[data-form-page-optional]')).toBeNull()
     expect(harness.summary()).toBe('2 sections à compléter.')
 
     await harness.setValue('name', 'DemandQA')
     expect(harness.entry('identity').dataset.state).toBe('complete')
+    expect(status(harness, 'identity')).toBe('Complété')
     expect(harness.summary()).toBe('1 section à compléter.')
 
     harness.form.state.set('accountType', 'customer')
@@ -136,7 +174,76 @@ describe('form page', () => {
 
     await harness.setValue('erpId', 'EV-1')
     expect(harness.entry('billing').dataset.state).toBe('complete')
-    expect(harness.entry('billing').textContent).not.toContain('optionnel')
+    expect(status(harness, 'billing')).toBe('Complété')
+    expect(optionalTag(harness, 'billing')).toBeNull()
+    expect(harness.section('billing').querySelector('[data-form-page-optional]')).toBeNull()
+    expect(harness.summary()).toBe('Tout est prêt.')
+  })
+
+  it('flags a section to fix only once a field was left or a submit was tried', async () => {
+    const harness = await mountPage({ schema: accountSchema() })
+
+    // Required sections wait to be completed: none shows an error before the user acts.
+    expect(harness.wrapper.find('[data-state="invalid"]').exists()).toBe(false)
+
+    await harness.wrapper.find('[data-form-field="name"] input').trigger('blur')
+    await harness.flush()
+    expect(harness.entry('identity').dataset.state).toBe('invalid')
+    expect(status(harness, 'identity')).toBe('À corriger')
+    expect(harness.entry('type').dataset.state).toBe('pending')
+    // An invalid section still blocks the submit, so the summary keeps counting it.
+    expect(harness.summary()).toBe('2 sections à compléter.')
+
+    await harness.setValue('name', 'DemandQA')
+    expect(harness.entry('identity').dataset.state).toBe('complete')
+
+    await harness.wrapper.find('form').trigger('submit')
+    await harness.flush()
+    expect(harness.entry('type').dataset.state).toBe('invalid')
+    expect(status(harness, 'type')).toBe('À corriger')
+    // A failed submit does not turn optional sections into something to fix.
+    expect(harness.entry('billing').dataset.state).toBe('optional')
+    expect(status(harness, 'billing')).toBe('Facultatif')
+  })
+
+  it('counts an optional section the user started and left incomplete, without its tag', async () => {
+    const harness = await mountPage({
+      input: { accountType: 'customer', name: 'DemandQA' },
+      schema: accountSchema(),
+    })
+
+    expect(harness.entry('billing').dataset.state).toBe('optional')
+    expect(harness.summary()).toBe('Tout est prêt.')
+
+    // The currency is required in the billing section: emptying it blocks the submit.
+    harness.form.state.set('currency', null)
+    await harness.flush()
+
+    expect(harness.entry('billing').dataset.state).toBe('pending')
+    expect(status(harness, 'billing')).toBe('À compléter')
+    expect(optionalTag(harness, 'billing')).toBeNull()
+    expect(harness.section('billing').querySelector('[data-form-page-optional]')).toBeNull()
+    expect(harness.summary()).toBe('1 section à compléter.')
+
+    harness.form.state.set('currency', 'USD')
+    await harness.flush()
+    expect(harness.entry('billing').dataset.state).toBe('complete')
+    expect(harness.summary()).toBe('Tout est prêt.')
+  })
+
+  it('announces the status in English, with the unsaved changes marker', async () => {
+    localeCode.value = 'en'
+    const harness = await mountPage({
+      input: { accountType: 'customer', name: 'DemandQA' },
+      schema: accountSchema({ dirtyCheck: true }),
+    })
+
+    expect(status(harness, 'identity')).toBe('Completed')
+    expect(status(harness, 'billing')).toBe('Optional')
+    expect(optionalTag(harness, 'billing')?.textContent?.trim()).toBe('Optional')
+
+    await harness.setValue('name', 'DemandQA Europe')
+    expect(status(harness, 'identity')).toBe('Completed, Unsaved changes')
   })
 
   it('counts the required cells of array rows without making their section required', async () => {
@@ -161,13 +268,16 @@ describe('form page', () => {
       }),
     })
 
-    expect(harness.entry('targets').textContent).toContain('optionnel')
+    expect(harness.entry('targets').dataset.state).toBe('optional')
+    expect(optionalTag(harness, 'targets')).not.toBeNull()
     expect(harness.summary()).toBe('Tout est prêt.')
 
     harness.form.state.set('targets', [{ label: '' }])
     await harness.flush()
     expect(harness.entry('targets').dataset.state).toBe('pending')
-    expect(harness.entry('targets').textContent).toContain('optionnel')
+    // A row was added and left incomplete: the section blocks the submit, so it is no longer
+    // presented as optional.
+    expect(optionalTag(harness, 'targets')).toBeNull()
     expect(harness.summary()).toBe('1 section à compléter.')
 
     harness.form.state.set('targets', [{ label: 'Année 1' }])
@@ -200,7 +310,7 @@ describe('form page', () => {
     })
 
     expect(harness.entry('versions').dataset.state).toBe('pending')
-    expect(harness.entry('versions').textContent).not.toContain('optionnel')
+    expect(optionalTag(harness, 'versions')).toBeNull()
     expect(harness.summary()).toBe('1 section à compléter.')
 
     harness.form.state.set('versions', [{ label: 'Standard' }])
@@ -246,7 +356,7 @@ describe('form page', () => {
     expect(harness.entry('type').dataset.state).toBe('invalid')
     expect(harness.entry('identity').dataset.state).toBe('invalid')
     expect(harness.section('identity').dataset.state).toBe('invalid')
-    expect(harness.entry('billing').dataset.state).not.toBe('invalid')
+    expect(harness.entry('billing').dataset.state).toBe('optional')
   })
 
   it('makes the section of the field that takes focus the current one', async () => {
@@ -384,5 +494,172 @@ describe('form page', () => {
     await harness.flush()
 
     expect(onSubmit).toHaveBeenCalledOnce()
+  })
+})
+
+describe('form page surface', () => {
+  it('draws each section as a bordered card on a gray canvas by default', async () => {
+    const harness = await mountPage({ schema: accountSchema() })
+
+    expect(surfaceOf(harness)).toBe('card')
+    expect(harness.wrapper.find('[data-form-page]').classes()).toContain('bg-muted')
+    for (const key of ['type', 'identity', 'billing']) {
+      expect(harness.section(key).classList).toContain('rounded-xl')
+      expect(harness.section(key).classList).toContain('border')
+      expect(harness.section(key).classList).toContain('bg-default')
+    }
+  })
+
+  it('draws plain sections without a box, apart by spacing and a hairline', async () => {
+    const harness = await mountPage({
+      schema: accountSchema({ ui: { page: { surface: 'plain' } } }),
+    })
+    const sections = harness.wrapper.find('[data-form-page-sections]')
+
+    expect(surfaceOf(harness)).toBe('plain')
+    expect(harness.wrapper.find('[data-form-page]').classes()).toContain('bg-default')
+    expect(harness.wrapper.find('[data-form-page]').classes()).not.toContain('bg-muted')
+    expect(sections.classes()).toContain('gap-0')
+    for (const key of ['type', 'identity', 'billing']) {
+      const classes = harness.section(key).classList
+      expect(classes).toContain('border-t')
+      expect(classes).toContain('py-8')
+      expect(classes).not.toContain('rounded-xl')
+      expect(classes).not.toContain('bg-default')
+    }
+    // The heading, description, and fields are still there.
+    expect(harness.section('type').querySelector('h2')?.textContent?.trim()).toBe('Type de compte')
+    expect(harness.section('type').textContent).toContain('le type conditionne les champs')
+    expect(harness.section('identity').querySelector('[data-form-field="name"]')).not.toBeNull()
+    // The description sits under the title on a plain section whatever the page width.
+    const description = harness.section('type').querySelector('p')
+    expect(description?.classList).toContain('basis-full')
+    expect(description?.classList).not.toContain('@3xl/form-page:basis-auto')
+  })
+
+  it('layers the surface over app config, schema ui, and the page ui prop', async () => {
+    const plain: FormUiConfig = { page: { surface: 'plain' } }
+    const card: FormUiConfig = { page: { surface: 'card' } }
+    const appConfig = { nuxtUiTools: { form: plain } }
+
+    const fromApp = await mountPage({ appConfig, schema: accountSchema() })
+    expect(surfaceOf(fromApp)).toBe('plain')
+    unmountPage()
+
+    const schemaOverApp = await mountPage({ appConfig, schema: accountSchema({ ui: card }) })
+    expect(surfaceOf(schemaOverApp)).toBe('card')
+    unmountPage()
+
+    const propOverSchema = await mountPage({ schema: accountSchema({ ui: card }), ui: plain })
+    expect(surfaceOf(propOverSchema)).toBe('plain')
+    unmountPage()
+
+    // A layer that only restyles slots keeps the surface of the layers below.
+    const slotsOnly = await mountPage({
+      appConfig,
+      schema: accountSchema({ ui: { page: { ui: { section: 'py-4' } } } }),
+    })
+    expect(surfaceOf(slotsOnly)).toBe('plain')
+    expect(slotsOnly.section('identity').classList).toContain('py-4')
+    expect(slotsOnly.section('identity').classList).not.toContain('py-8')
+  })
+
+  it('marks and resets a modified plain section like a card', async () => {
+    const harness = await mountPage({
+      input: { accountType: 'customer', name: 'DemandQA' },
+      schema: accountSchema({ dirtyCheck: true, ui: { page: { surface: 'plain' } } }),
+    })
+
+    expect(harness.section('identity').dataset.dirty).toBeUndefined()
+    await harness.setValue('name', 'DemandQA Europe')
+    expect(harness.section('identity').dataset.dirty).toBe('true')
+    // The bar in the margin is the only mark a plain section has: it follows the data attribute.
+    expect(harness.section('identity').className).toContain('data-[dirty]:before:bg-primary')
+
+    await harness.wrapper
+      .find('[data-form-page-section="identity"] [data-form-page-reset]')
+      .trigger('click')
+    await harness.flush()
+    expect(harness.form.state.get('name')).toBe('DemandQA')
+    expect(harness.section('identity').dataset.dirty).toBeUndefined()
+  })
+
+  it('draws the loading skeletons without a box on a plain page', async () => {
+    const harness = await mountPage({
+      schema: defineFormPageSchema({
+        context: {
+          centers: {
+            queryFn: () => new Promise<readonly string[]>(() => undefined),
+            queryKey: ['page-surface', 'centers'],
+          },
+        },
+        sections: [identitySection(), billingSection()],
+        ui: { page: { surface: 'plain' } },
+      }),
+    })
+    const skeletons = [...harness.wrapper.element.querySelectorAll('[data-form-skeleton]')]
+
+    expect(skeletons).toHaveLength(2)
+    for (const skeleton of skeletons) {
+      expect(skeleton.classList).toContain('border-t')
+      expect(skeleton.classList).not.toContain('rounded-xl')
+    }
+  })
+})
+
+describe('form page navigation threshold', () => {
+  it('shows the navigation beside the sections by default', async () => {
+    const harness = await mountPage({ schema: accountSchema() })
+
+    expect(harness.wrapper.find('[data-form-page-navigation]').exists()).toBe(true)
+    expect(pageBody(harness)?.classList).toContain('grid')
+    expect(pageBody(harness)?.classList).not.toContain('mx-auto')
+  })
+
+  it('shows it once the page has the minimum number of sections', async () => {
+    const harness = await mountPage({ schema: accountSchema({ minSections: 4 }) })
+
+    expect(sectionKeys(harness)).toHaveLength(4)
+    expect(harness.wrapper.find('[data-form-page-navigation]').exists()).toBe(true)
+    expect(pageBody(harness)?.classList).not.toContain('mx-auto')
+  })
+
+  it('leaves the navigation out of a page with fewer sections, in one centered column', async () => {
+    const harness = await mountPage({ schema: accountSchema({ minSections: 5 }) })
+
+    expect(harness.wrapper.find('[data-form-page-navigation]').exists()).toBe(false)
+    expect(harness.wrapper.find('[data-form-page-summary]').exists()).toBe(false)
+    expect(sectionKeys(harness)).toStrictEqual(['type', 'identity', 'billing', 'documents'])
+    expect(pageBody(harness)?.classList).toContain('mx-auto')
+    expect(pageBody(harness)?.classList).toContain('max-w-[816px]')
+    // The page still validates and submits without it.
+    expect(harness.wrapper.find('[data-form-page-actions]').text()).toContain('Créer le compte')
+  })
+
+  it('counts the visible sections, so a condition can bring the navigation back', async () => {
+    const harness = await mountPage({
+      input: { accountType: 'testCenter' },
+      schema: accountSchema({ minSections: 4 }),
+    })
+
+    // The documents section is hidden for a test center: three sections are left.
+    expect(sectionKeys(harness)).toStrictEqual(['type', 'identity', 'billing'])
+    expect(harness.wrapper.find('[data-form-page-navigation]').exists()).toBe(false)
+
+    harness.form.state.set('accountType', 'customer')
+    await harness.flush()
+    expect(sectionKeys(harness)).toHaveLength(4)
+    expect(harness.wrapper.find('[data-form-page-navigation]').exists()).toBe(true)
+    expect(pageBody(harness)?.classList).not.toContain('mx-auto')
+  })
+
+  it('renders no navigation part in a custom layout while below the threshold', async () => {
+    const harness = await mountPage({
+      layout: () => [h(FormPageSections), h(FormPageNavigation)],
+      schema: accountSchema({ minSections: 5 }),
+    })
+
+    expect(harness.wrapper.find('[data-form-page-sections]').exists()).toBe(true)
+    expect(harness.wrapper.find('[data-form-page-navigation]').exists()).toBe(false)
   })
 })

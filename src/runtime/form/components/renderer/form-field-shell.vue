@@ -13,6 +13,7 @@ import { useFormRuntimeContext } from '../../composables/use-form-runtime'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormField } from '../../types'
 import { getSchemaDirtyCheck } from '../../utils/controls'
+import { resolveFieldDisabledReason } from '../../utils/disabled'
 import { createFormFieldInstance } from '../../utils/field-instance'
 import { isFunction, isNumber, isString } from '../../utils/predicate'
 import { resolveRequired } from '../../utils/state'
@@ -100,6 +101,12 @@ const help = computed(() =>
     : undefined,
 )
 const shellHelp = computed(() => (props.inlineLabel ? undefined : help.value))
+// Why the field is disabled: shown with the help copy, only while the author's `disabled` holds.
+const disabledReason = computed(() =>
+  field.value.capability.has('hint')
+    ? resolveFieldDisabledReason(props.field, params.value)
+    : undefined,
+)
 const dirty = computed(
   () =>
     'dirtyCheck' in props.field &&
@@ -153,7 +160,7 @@ function renderLabelExtra() {
     :description="shellDescription"
     :hint="shellLabelExtra === undefined || shellLabelExtra === null ? shellHint : undefined"
     :error="error"
-    :help="shellHelp"
+    :help="shellHelp ?? disabledReason"
     :required="required"
     :size="formUi.controlSize.value"
     :orientation="orientation"
@@ -206,6 +213,26 @@ function renderLabelExtra() {
         <component :is="renderLabelExtra" />
       </span>
     </template>
+    <template v-if="disabledReason" #help>
+      <span v-if="shellHelp" class="block">{{ shellHelp }}</span>
+      <span
+        :class="
+          mergeFormUiClass(
+            'flex items-start gap-1.5',
+            shellHelp ? 'mt-1' : undefined,
+            fieldUi?.disabledReason,
+          )
+        "
+        data-form-disabled-reason=""
+      >
+        <UIcon
+          name="i-lucide-lock"
+          aria-hidden="true"
+          :class="mergeFormUiClass('mt-0.5 size-3.5 shrink-0', fieldUi?.disabledReasonIcon)"
+        />
+        <span>{{ disabledReason }}</span>
+      </span>
+    </template>
     <UCollapsible
       v-if="collapsible"
       v-model:open="open"
@@ -218,7 +245,7 @@ function renderLabelExtra() {
         :icon="open ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
         :class="mergeFormUiClass('justify-self-start', fieldUi?.collapseTrigger)"
       >
-        {{ open ? 'Collapse' : 'Expand' }}
+        {{ open ? t('form.fields.shell.collapse') : t('form.fields.shell.expand') }}
       </UButton>
       <template #content>
         <div :class="mergeFormUiClass('flex items-start gap-2', fieldUi?.body)">
@@ -239,7 +266,7 @@ function renderLabelExtra() {
             color="neutral"
             variant="ghost"
             size="xs"
-            aria-label="Reset field"
+            :aria-label="t('form.fields.shell.reset')"
             :class="fieldUi?.reset"
             @click="resetField"
           />
@@ -262,7 +289,7 @@ function renderLabelExtra() {
         color="neutral"
         variant="ghost"
         size="xs"
-        aria-label="Reset field"
+        :aria-label="t('form.fields.shell.reset')"
         :class="fieldUi?.reset"
         @click="resetField"
       />

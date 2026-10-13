@@ -201,6 +201,7 @@ export default defineUiToolsLocale<Messages>({
       },
       actions: {
         cancelButton: 'Cancel',
+        closeButton: 'Close form',
         nextButton: 'Next',
         prevButton: 'Back',
         resetButton: 'Reset',
@@ -211,14 +212,14 @@ export default defineUiToolsLocale<Messages>({
         modifiedOne: '{count} modified.',
         modifiedOther: '{count} modified.',
         navigation: 'Form sections',
-        optional: 'optional',
         remaining: '{count} left to complete.',
         resetSection: 'Reset',
         sectionsOne: '{count} section',
         sectionsOther: '{count} sections',
         status: {
-          complete: 'Complete',
-          invalid: 'Has errors',
+          complete: 'Completed',
+          invalid: 'To fix',
+          optional: 'Optional',
           pending: 'To complete',
         },
         unmodified: 'No unsaved changes.',
@@ -287,15 +288,23 @@ export default defineUiToolsLocale<Messages>({
         rating: {
           value: '{value} of {max}',
         },
+        shell: {
+          collapse: 'Collapse',
+          expand: 'Expand',
+          reset: 'Reset field',
+        },
         text: {
           clear: 'Clear',
-          defaultPlaceholder: 'Enter a value',
         },
         time: {
           clear: 'Clear time',
           format: 'HH:mm',
           hour: 'Hour',
           minute: 'Minute',
+        },
+        unsupported: {
+          description: 'The "{type}" field type cannot be displayed.',
+          title: 'Unsupported field',
         },
         upload: {
           cancel: 'Cancel upload',
@@ -316,6 +325,9 @@ export default defineUiToolsLocale<Messages>({
           description: 'Some form data could not be loaded.',
           title: 'Form data unavailable',
         },
+      },
+      steps: {
+        fallback: 'Step {number}',
       },
       validation: {
         dateMax: 'The date must be on or before {max}',
@@ -697,7 +709,17 @@ export default defineUiToolsLocale<Messages>({
       header: {
         gridView: 'Grid view',
         refreshData: 'Refresh data',
+        summaryView: 'List view',
         tableView: 'Table view',
+      },
+      rowActions: {
+        label: 'Actions for {label}',
+        labelAt: 'Actions for row {position}',
+      },
+      selection: {
+        selectAll: 'Select all rows',
+        selectRow: 'Select {label}',
+        selectRowAt: 'Select row {position}',
       },
       selectionBar: {
         allResults: 'All results',
@@ -738,8 +760,6 @@ export default defineUiToolsLocale<Messages>({
         collapseAll: 'Collapse all rows',
         expand: 'Expand row',
         expandAll: 'Expand all rows',
-        selectAll: 'Select all rows',
-        selectRow: 'Select row',
       },
     },
   },

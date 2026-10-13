@@ -11,10 +11,12 @@ import type {
   TableSchemaView,
 } from '../types'
 import type { useTableLayout } from './use-table-layout'
+import type { useTableRowSummary } from './use-table-row-summary'
 
 export interface UseTableControlsParams {
   schema: ComputedRef<TableSchemaView>
   layout: ReturnType<typeof useTableLayout>
+  rowSummary: ReturnType<typeof useTableRowSummary>
 }
 
 export function useTableControls(options: UseTableControlsParams) {
@@ -31,12 +33,16 @@ export function useTableControls(options: UseTableControlsParams) {
     layout: responsiveControl('layout'),
     refresh: responsiveControl('refresh'),
     sort: responsiveControl('sort'),
+    summary: responsiveControl('summary'),
   }
   const headerControls = computed<Record<keyof TableControlsSchema, boolean>>(() => ({
     actions:
       Boolean(rawControls.actions[tableLayout.value].value) &&
       Boolean(options.schema.value.toolbarActions?.length),
-    columns: Boolean(rawControls.columns[tableLayout.value].value) && tableLayout.value === 'table',
+    columns:
+      Boolean(rawControls.columns[tableLayout.value].value) &&
+      tableLayout.value === 'table' &&
+      !options.rowSummary.active.value,
     filters:
       Boolean(rawControls.filters[tableLayout.value].value) &&
       Boolean(options.schema.value.filters?.ui?.length),
@@ -45,10 +51,13 @@ export function useTableControls(options: UseTableControlsParams) {
       gridEnabled.value &&
       tableEnabled.value,
     refresh: Boolean(rawControls.refresh[tableLayout.value].value),
+    /* Summary rows have no column headers to sort by, so the menu stands in for them. */
     sort:
       Boolean(rawControls.sort[tableLayout.value].value) &&
-      tableLayout.value === 'grid' &&
-      Boolean(options.schema.value.grid?.sortOptions?.length),
+      ((tableLayout.value === 'grid' && Boolean(options.schema.value.grid?.sortOptions?.length)) ||
+        options.rowSummary.active.value),
+    summary:
+      Boolean(rawControls.summary[tableLayout.value].value) && options.rowSummary.available.value,
   }))
   const layoutState = computed(() => {
     const available: TableLayout[] = []

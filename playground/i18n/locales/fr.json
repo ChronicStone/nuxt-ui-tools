@@ -309,6 +309,49 @@
       },
       "noCompany": "Aucune entreprise",
       "noDepartment": "Aucun département"
+    },
+    "tableSummary": {
+      "eyebrow": "Comptes",
+      "title": "Comptes",
+      "description": "Les lignes résumé présentent chaque compte avec son identité, un statut, deux valeurs et une action. La bascule du pied de liste ramène le tableau.",
+      "searchPlaceholder": "Rechercher un compte...",
+      "hint": "Touchez une ligne pour ouvrir son compte.",
+      "opened": "Ouvert : {name}",
+      "status": {
+        "active": "Actif",
+        "pending": "En attente",
+        "inactive": "Inactif"
+      },
+      "kind": {
+        "partner": "Partenaire",
+        "client": "Client",
+        "testCenter": "Centre de test"
+      },
+      "columns": {
+        "name": "Compte",
+        "kind": "Type",
+        "city": "Ville",
+        "status": "Statut"
+      },
+      "filters": {
+        "status": "Statut",
+        "kind": "Type"
+      },
+      "actions": {
+        "open": "Ouvrir le compte",
+        "suspend": "Suspendre",
+        "reactivate": "Réactiver",
+        "export": "Exporter",
+        "archive": "Archiver"
+      }
+    },
+    "tableFirstUse": {
+      "title": "Comptes",
+      "description": "Un espace sans aucun compte propose sa première action. Une liste masquée par une recherche garde sa réinitialisation.",
+      "emptyTitle": "Aucun compte pour le moment",
+      "emptyDescription": "Créez votre premier compte pour commencer les évaluations.",
+      "action": "Créer un compte",
+      "reset": "Revenir à vide"
     }
   },
   "pages": {
@@ -434,6 +477,115 @@
         "daily": "Quotidien",
         "weekly": "Hebdomadaire",
         "never": "Jamais"
+      }
+    },
+    "formPagePlain": {
+      "eyebrow": "Comptes",
+      "title": "Nouveau compte",
+      "description": "Sections à plat : pas de carte, seulement de l’espace et un filet entre les blocs.",
+      "navigation": "Création",
+      "saved": "Compte créé",
+      "sections": {
+        "type": {
+          "label": "Type de compte",
+          "description": "à qui s’adresse ce compte"
+        },
+        "identity": {
+          "label": "Identité",
+          "description": "nom, compte de rattachement et centre de test"
+        },
+        "billing": {
+          "label": "Facturation",
+          "description": "coordonnées de facturation, si elles diffèrent"
+        },
+        "documents": {
+          "label": "Documents légaux",
+          "description": "justificatifs d’immatriculation"
+        }
+      },
+      "fields": {
+        "name": "Nom du compte",
+        "parent": "Compte de rattachement",
+        "center": "Centre de test",
+        "centerReason": "Choisissez d’abord un compte",
+        "billingEmail": "E-mail de facturation",
+        "vatNumber": "N° de TVA",
+        "registration": "Extrait d’immatriculation"
+      },
+      "parents": {
+        "pasteur": "Lycée Pasteur",
+        "alpha": "Alpha Formation"
+      },
+      "centers": {
+        "paris": "Centre de Paris",
+        "lyon": "Centre de Lyon"
+      },
+      "groups": {
+        "client": "Organisation cliente",
+        "partner": "Partenaire",
+        "center": "Centre de test",
+        "internal": "Compte interne"
+      },
+      "types": {
+        "school": {
+          "label": "Établissement scolaire",
+          "description": "Lycées, universités, écoles"
+        },
+        "company": {
+          "label": "Entreprise",
+          "description": "Employeurs privés et organismes de formation"
+        },
+        "authority": {
+          "label": "Collectivité",
+          "description": "Collectivités locales et régionales"
+        },
+        "reseller": {
+          "label": "Revendeur",
+          "description": "Vend des licences à ses propres clients"
+        },
+        "distributor": {
+          "label": "Distributeur",
+          "description": "Approvisionne plusieurs revendeurs"
+        },
+        "testCenter": {
+          "label": "Centre de test",
+          "description": "Organise des sessions d’évaluation sur site"
+        },
+        "admin": {
+          "label": "Administrateur",
+          "description": "Accès complet à la plateforme"
+        },
+        "support": {
+          "label": "Support",
+          "description": "Aide les comptes, sans accès à la facturation"
+        }
+      }
+    },
+    "formPageFocused": {
+      "eyebrow": "Membres",
+      "title": "Inviter un membre",
+      "description": "Deux sections courtes : une navigation n’apporterait que du bruit, la page tient donc en une colonne.",
+      "saved": "Invitation envoyée",
+      "sections": {
+        "contact": {
+          "label": "Contact",
+          "description": "qui reçoit l’invitation"
+        },
+        "access": {
+          "label": "Accès",
+          "description": "ce que la personne peut faire"
+        }
+      },
+      "fields": {
+        "email": "Adresse e-mail",
+        "name": "Nom complet",
+        "role": "Rôle",
+        "message": "Message"
+      },
+      "roles": {
+        "reviewer": "Relecteur",
+        "manager": "Responsable",
+        "owner": "Propriétaire"
       }
     }
   }

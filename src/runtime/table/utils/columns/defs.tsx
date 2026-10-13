@@ -63,7 +63,9 @@ export function createColumnDefs(options: {
         internal: 'selection',
         label: '',
         render: ({ row, index }) =>
-          selection.cell({ row: { id: options.params.selection.getRowId({ index, row }) } }),
+          selection.cell({
+            row: { id: options.params.selection.getRowId({ index, row }), index, original: row },
+          }),
         renderHeader: () => selection.header(),
         sortable: false,
       },

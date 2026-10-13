@@ -16,6 +16,7 @@ import type {
   DataListUiConfig,
 } from '../../types'
 import { mergeDataListUiConfig } from '../../utils'
+import { layerDataListMobileDefaults } from '../../utils/mobile-defaults'
 
 interface AppConfigRoot {
   nuxtUiTools?: {
@@ -43,14 +44,12 @@ provideDataListUi(
       props.density,
       props.size,
     )
-    if (!isMobile.value || !merged.mobile) {
+    if (!isMobile.value) {
       return merged
     }
-    return mergeDataListUiConfig(
-      merged,
-      merged.mobile,
-      merged.mobile.density,
-      merged.mobile.control?.size,
+    const { mobile } = merged
+    return layerDataListMobileDefaults(
+      mobile ? mergeDataListUiConfig(merged, mobile, mobile.density, mobile.control?.size) : merged,
     )
   }),
 )

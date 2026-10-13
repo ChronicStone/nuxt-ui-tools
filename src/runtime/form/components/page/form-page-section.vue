@@ -65,7 +65,7 @@ onBeforeUnmount(() => unregister?.())
     }"
     :class="
       mergeFormUiClass(
-        'flex min-w-0 flex-col gap-[18px] rounded-xl border border-default bg-default px-5 pt-5 pb-6 transition-[border-color,box-shadow] duration-200 @3xl/form-page:px-6 @3xl/form-page:pt-[22px] data-[dirty]:border-primary data-[dirty]:ring-4 data-[dirty]:ring-primary/20 data-[dirty]:ring-inset',
+        `flex min-w-0 flex-col ${page.surfaceClasses.value.section}`,
         pageUi?.section,
       )
     "
@@ -92,7 +92,7 @@ onBeforeUnmount(() => unregister?.())
         v-if="section.description"
         :class="
           mergeFormUiClass(
-            'order-last m-0 basis-full text-[13px] text-muted @3xl/form-page:order-none @3xl/form-page:basis-auto',
+            `m-0 text-[13px] text-muted ${page.surfaceClasses.value.sectionDescription}`,
             pageUi?.sectionDescription,
           )
         "
@@ -100,11 +100,12 @@ onBeforeUnmount(() => unregister?.())
         {{ section.description }}
       </p>
       <UBadge
-        v-if="section.optional"
+        v-if="section.status === 'optional'"
         color="neutral"
         variant="soft"
-        :label="t('form.page.optional')"
-        :class="mergeFormUiClass('capitalize', pageUi?.sectionOptional)"
+        :label="t('form.page.status.optional')"
+        :class="pageUi?.sectionOptional"
+        data-form-page-optional
       />
       <div
         v-if="page.dirtyCheck.value || $slots.actions"

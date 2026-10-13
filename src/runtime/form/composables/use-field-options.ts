@@ -23,6 +23,8 @@ import {
   normalizeOptionItem,
   normalizeOptionItems,
   normalizeOptionSelection,
+  readOptionSource,
+  resolveOptionGroupKey,
 } from '../utils/options'
 import type { FormOptionKeys, ResolvedFormOption } from '../utils/options'
 import { isRecord, relativePathSegments } from '../utils/path'
@@ -56,7 +58,10 @@ export function useFieldOptions(params: {
   const promiseResolution = shallowRef<Promise<void> | null>(null)
   const creating = ref<boolean>(false)
   const remoteConfig = computed(() => resolveRemoteOptionConfig(params.field()))
-  const optionKeys = computed<FormOptionKeys>(() => resolveOptionKeys(params.field()))
+  const optionKeys = computed<FormOptionKeys>(() => ({
+    ...resolveOptionKeys(params.field()),
+    group: resolveOptionGroupKey(params.field()),
+  }))
   const remote = useRemoteFieldOptions({
     api: params.api,
     callbackParams: params.callbackParams,
@@ -465,8 +470,7 @@ function resolveOptionSource(field: FormField, params: FormFieldCallbackParams) 
     return []
   }
 
-  const options = Object.getOwnPropertyDescriptor(field, 'options')?.value
-  const source = isRecord(options) && 'source' in options ? options.source : options
+  const source = readOptionSource(field)
   return isFunction(source) ? source(params) : source
 }
 

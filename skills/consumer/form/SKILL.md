@@ -170,6 +170,32 @@ fields it depends on. A `description` callback may also return `{ text, display,
 updates as those dependencies change. `label` stays text or a function returning text, because
 labels also name fields in table columns and matrix headers.
 
+`placeholder` is authored copy only: a field that declares none renders none, so there is no
+generic "Enter a value" prompt repeating the label. Author one only when it adds information the
+label does not, such as an example value (`prenom@exemple.fr`) or a format. Select-like controls
+keep the search prompt Nuxt UI localizes for searchable lists, and date, color-picker, and
+one-time-code controls keep their own format hints.
+
+A field's `disabled` callback locks it; add `disabledReason` to say why and what unlocks it. The
+reason renders under the control in muted text with a small lock icon, and only while that
+`disabled` callback holds, so it never explains the disabling the engine does itself (a pending
+submit, options still loading). It takes text, lazy text, or a `{ ctx, deps, api }` callback that
+returns nothing when no reason applies. It sits after the field's `help`, shows wherever the field
+renders its wrapper (not in bare table cells or primitive array items), and is announced with the
+control. Style it through `ui.field.ui.disabledReason` and `ui.field.ui.disabledReasonIcon`.
+
+```ts
+{
+  key: 'center',
+  type: 'select',
+  label: 'Centre de test',
+  options: centers,
+  dependencies: ['account'],
+  disabled: ({ deps }) => !deps.get('account'),
+  disabledReason: 'Choisissez d’abord un compte',
+}
+```
+
 Submit handlers receive typed external-error controls through `api.setError(path, message)` and
 `api.clearError(path?)`. Map expected server failures to their owning fields and return
 `{ success: false }`; use one application-level toast only when the failure is not mapped. Editing
@@ -505,17 +531,23 @@ A section takes:
 
 ### What the navigation shows
 
-Each entry has a status:
+Each entry has one of four statuses, which `section.status`, `data-state`, and the text read by
+screen readers share:
 
-- **complete** (a check): every required field has a value and no field shows an error. An optional
-  section also needs a value the user entered or the form `input` provided; defaults alone do not
-  count.
-- **invalid** (a `!`): a field of the section shows an error, for example after a failed submit.
-- **pending** (an empty circle): anything else.
+- **complete** (a check, "Completed"): every required field has a value and no field shows an
+  error. An optional section also needs a value the user entered or the form `input` provided;
+  defaults alone do not count.
+- **invalid** (a `!`, "To fix"): a field of the section shows an error. Errors appear once the user
+  left a field or tried to submit, so a section nobody touched is never invalid: it waits as
+  pending.
+- **pending** (an empty circle, "To complete"): a required field has no value yet.
+- **optional** (a dashed circle and an "Optional" tag, also on the section card): an optional
+  section nothing was entered in. It never reads "To complete" as well.
 
-Optional sections read "optional" and are not counted in the summary under the entries ("3 sections
-left to complete", then "Everything is ready"), unless the user started one and left it incomplete or
-invalid, since that blocks the submit.
+The summary under the entries ("3 sections left to complete", then "Everything is ready") counts
+the sections that keep the form from being submitted: pending and invalid ones. Optional sections
+nobody touched are left out. One the user started and left incomplete or invalid is counted and
+loses its "Optional" tag, since it blocks the submit.
 
 Required fields inside array items count too: a row added to an `array-table` with an empty required
 cell leaves its section pending. They never make a section required; only the section's own fields
@@ -526,6 +558,41 @@ With `controls.dirtyCheck: true` (typically on edit pages), a modified section g
 changes" badge, and the summary counts the modified sections. A successful submit saves the values
 as the new baseline, so the rings clear. `confirmNavOnDirty` asks before leaving unsaved changes, but
 not for navigations your `onSubmit` makes after saving.
+
+### Plain sections, and pages without a navigation
+
+By default each section is a bordered card on a gray canvas (`surface: 'card'`). Set the page
+`surface` to `'plain'` to draw sections with no box: the heading with its description under it, then
+the fields, on the page background, with spacing and a hairline between one section and the next. A
+modified section (with `controls.dirtyCheck`) gets a bar in the margin instead of a ring. `surface`
+is a form UI option, so it layers like the others: app config, then the schema `ui`, then the `ui`
+prop of `NutFormPage`, and a layer that only restyles slots keeps the surface of the layers below.
+
+```ts
+// app.config.ts: every form page of the app
+export default defineAppConfig({
+  nuxtUiTools: { form: { page: { surface: 'plain' } } },
+})
+
+// One page, over the app default
+defineFormPageSchema({
+  ui: { page: { surface: 'card' } },
+  sections: [identitySection(), addressSection()],
+})
+```
+
+A side navigation next to two short sections only adds noise. `navigation.minSections` shows the
+navigation only when the page has at least that many visible sections. Below it, the page is one
+focused column: the sections fill a centered column, and `NutFormPageNavigation` renders nothing,
+its summary included. Without `minSections`, the navigation always shows. The count follows section
+`condition`s, so a page gains its navigation when a choice reveals more sections.
+
+```ts
+defineFormPageSchema({
+  navigation: { title: 'Creation', minSections: 3 },
+  sections: [identitySection(), addressSection()],
+})
+```
 
 ### Scrolling and layout
 
@@ -588,8 +655,9 @@ renders has a slot:
   `sectionDescription`, `sectionOptional`, `sectionActions`, `sectionReset`, `sectionBody`
 
 The action buttons take the `actions` part (`ui.actions.ui.button`) and each action's `class`, as in
-any form. Entries carry `data-active` and `data-state` (`complete`, `invalid`, `pending`), and
-modified sections and entries carry `data-dirty`:
+any form. Entries and section cards carry `data-state` (`complete`, `invalid`, `pending`,
+`optional`), the current entry carries `data-active`, and modified sections and entries carry
+`data-dirty`:
 
 ```ts
 export default defineAppConfig({
@@ -625,6 +693,9 @@ on an element around the navigation and the sections.
   the selection, for cards that enable something.
 - `icon`: where an option `icon` shows, `inline` before its label (default) or `tile`, in a square
   above it that takes the selection color.
+- `density`: `default`, or `compact` for a long list of options: smaller cards where the icon (or a
+  smaller tile) sits beside a one-line title over a one-line description, both truncated with an
+  ellipsis and keeping the full text in their tooltip. The selection mark centers on the row.
 
 ```ts
 {
@@ -637,6 +708,56 @@ on an element around the navigation and the sections.
   props: { columns: '1 md:3', icon: 'tile', indicator: 'corner' },
 }
 ```
+
+### Grouped options
+
+Give options a `group` to list them under headings: options that share one are listed together,
+headings follow the order in which they first appear, and options without a group stay together
+without a heading. `group` takes text or a function returning text, like `label`. A list without
+any `group` renders exactly as before.
+
+Grouping is opt-in for computed options. Options written inline in the schema group by their
+`group`, as below. The records a function, a promise, or a query returns are your own data, so a
+`group` they already carry for another purpose is not read until the field's `groupKey` names the
+property that holds the heading. Without it they render as one list. `groupKey` sits on the field
+next to `options`, not in `props`:
+
+```ts
+{
+  key: 'plan',
+  type: 'radio-card',
+  // Rows from the API: { value, label, section }
+  options: () => queryOptions({ queryKey: ['plans'], queryFn: fetchPlans }),
+  groupKey: 'section',
+}
+```
+
+`groupKey` also maps inline options: a list that sets `groupKey: 'section'` groups by `section` and
+ignores any `group` it carries, and `groupKey: false` lists every option together, even inline
+options that carry a `group`. Options keep the same heading rules whatever the property is
+called. The two choice cards are the fields that group their options; `groupKey` has no effect
+elsewhere.
+
+```ts
+{
+  key: 'accountType',
+  type: 'radio-card',
+  options: [
+    { value: 'school', label: 'Établissement', description: 'Lycée, collège, université', icon: 'i-lucide-school', group: 'Organisation cliente' },
+    { value: 'company', label: 'Entreprise', description: 'Entreprise ou association', icon: 'i-lucide-building-2', group: 'Organisation cliente' },
+    { value: 'reseller', label: 'Revendeur', description: 'Revend les tests', icon: 'i-lucide-store', group: 'Partenaire' },
+    { value: 'center', label: 'Centre agréé', description: 'Fait passer les tests', icon: 'i-lucide-map-pin', group: 'Centre de test' },
+  ],
+  props: { columns: '1 md:2', density: 'compact', icon: 'tile', indicator: 'corner' },
+}
+```
+
+Each heading is the `legend` of its own group of cards, so assistive technology announces it. A
+`radio-card` therefore renders one radio group per heading, with one tab stop each and arrow keys
+that stay inside a group; the selection lives in the group of the chosen option and the others
+show none. A `checkbox-card` keeps every group independent and merges them into the one array
+value, in the order the boxes were ticked. Style the heading with the Nuxt UI `ui.legend` slot and
+the stack of groups with `ui.groups`.
 
 Style the parts the engine renders through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`,
 `ui.checkIcon`, `ui.switch`, and `ui.switchThumb`, next to the Nuxt UI slots of the group

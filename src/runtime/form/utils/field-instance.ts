@@ -148,6 +148,9 @@ export function fieldKindHas(kind: FormFieldKind, capability: FormFieldCapabilit
   if (capability === 'options') {
     return kind.options?.enabled === true
   }
+  if (capability === 'optionGroups') {
+    return kind.options?.groups === true
+  }
   if (capability === 'upload') {
     return kind.upload?.enabled === true
   }

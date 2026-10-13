@@ -1,4 +1,11 @@
-import type { FormValue, FormFieldCallbackParams, FormOptionItem, FormOptionValue } from '../types'
+import type {
+  FormValue,
+  FormField,
+  FormFieldCallbackParams,
+  FormOptionItem,
+  FormOptionValue,
+} from '../types'
+import { createFormFieldInstance } from './field-instance'
 import { isRecord } from './path'
 import { isBoolean, isFunction, isNumber, isString, isUndefined } from './predicate'
 import { resolveFormText } from './text'
@@ -7,7 +14,15 @@ export interface FormOptionKeys {
   value?: string
   label?: string
   children?: string
+  /**
+   * Property holding the heading an option is listed under. Options are not grouped without it:
+   * a `group` property is never read unless it is mapped here.
+   */
+  group?: string
 }
+
+/** Property inline options hold their heading in when the field does not map another one. */
+const DEFAULT_GROUP_KEY = 'group'
 
 export interface ResolvedFormOption {
   value: FormOptionValue
@@ -15,6 +30,8 @@ export interface ResolvedFormOption {
   description?: string
   disabled?: boolean
   icon?: string
+  /** Heading the option is listed under, for the fields that group their options. */
+  group?: string
   children?: readonly ResolvedFormOption[]
   /** True when the option has children that load on demand. */
   lazy?: boolean
@@ -29,6 +46,7 @@ export function normalizeOptionItem(
     const fallbackValue = isUndefined(rawValue) ? option.key : rawValue
     const rawChildren = readOptionProperty(option, keys.children ?? 'children')
     const rawDescription = readOptionProperty(option, 'description')
+    const rawGroup = keys.group ? readOptionProperty(option, keys.group) : undefined
     const children = Array.isArray(rawChildren)
       ? rawChildren.map((child) => normalizeOptionItem(child, keys))
       : undefined
@@ -38,6 +56,7 @@ export function normalizeOptionItem(
     const normalized: ResolvedFormOption = {
       description: isFormText(rawDescription) ? resolveFormText(rawDescription) : undefined,
       disabled: option.disabled === true,
+      group: isFormText(rawGroup) ? resolveFormText(rawGroup) : undefined,
       icon: isString(rawIcon) ? rawIcon : undefined,
       label: resolveFormText(readOptionProperty(option, keys.label ?? 'label')) ?? String(value),
       value,
@@ -64,6 +83,31 @@ export function normalizeOptionItems(
   keys: FormOptionKeys = {},
 ) {
   return (options ?? []).map((option) => normalizeOptionItem(option, keys))
+}
+
+/**
+ * The `options` of a field as authored: its array, function or query source, whether given
+ * directly or inside a `source` property.
+ */
+export function readOptionSource(field: FormField): FormValue {
+  const options = Object.getOwnPropertyDescriptor(field, 'options')?.value
+  return isRecord(options) && 'source' in options ? options.source : options
+}
+
+/**
+ * Property the options of a field hold their heading in, for the field kinds that list options
+ * under headings. The field's `groupKey` names it, read statically from the definition like
+ * `labelKey` and `valueKey`. Without it, options written inline in the schema group by their
+ * `group`, the way a literal option is authored. The records a function, a promise or a query
+ * returns belong to the author's data, so a `group` they happen to carry is not read until
+ * `groupKey` maps it. `groupKey: false` opts out.
+ */
+export function resolveOptionGroupKey(field: FormField): string | undefined {
+  if (!createFormFieldInstance(field).capability.has('optionGroups')) return undefined
+  const mapped = Object.getOwnPropertyDescriptor(field, 'groupKey')?.value
+  if (mapped === false) return undefined
+  if (isString(mapped) && mapped) return mapped
+  return Array.isArray(readOptionSource(field)) ? DEFAULT_GROUP_KEY : undefined
 }
 
 export const LOAD_MORE_OPTION_VALUE = '__nut:load-more__'
