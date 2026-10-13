@@ -44,7 +44,9 @@ export function useTableRowSummary(params: UseTableRowSummaryParams) {
   )
 
   const persistPreferences = computed(() => params.schema.value.persistence?.preferences !== false)
-  const stored = useCookie<TableSummaryChoice>(`${params.schema.value.tableKey}::view`, {
+  /* A cookie name only takes printable ASCII without spaces, `;` or `=`: a free-form key is encoded. */
+  const cookieName = `${encodeURIComponent(params.schema.value.tableKey)}::view`
+  const stored = useCookie<TableSummaryChoice>(cookieName, {
     decode: (value) => (value === 'table' ? 'table' : null),
     default: () => null,
     encode: (value) => value ?? '',
