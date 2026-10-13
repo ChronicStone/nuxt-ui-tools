@@ -1,3 +1,22 @@
+## v1.18.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.17.1...v1.18.0)
+
+### 🚀 Enhancements
+
+- **table:** Summary rows below `md` (`TableTableSchema.summary`) with a "Vue tableau" toggle, 44px mobile tap targets, `TableSchema.rowLabel` for named row controls, and `TableSchema.empty.action` for a first-use create action
+- **form:** Honest section status (Facultatif, Complété, À corriger, À compléter), `FormPageUiConfig.surface: 'plain'`, `navigation.minSections`, and `disabledReason` on fields
+- **form:** Choice cards accept `density: 'compact'` and group their options under headings, through a field-level `groupKey` (inline options group by `group`; `groupKey: false` opts out)
+
+### ⚠️ Breaking changes
+
+- The default text placeholder is gone, as are `form.page.optional` and `table.tree.{selectRow,selectAll}`
+- `FormPageSectionStatus` gains `optional`
+
+### ❤️ Contributors
+
+- Cyprien Thao ([@ChronicStone](https://github.com/ChronicStone))
+
 ## v1.17.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.16.10...v1.17.0)
