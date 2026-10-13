@@ -8,7 +8,13 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import FormPage from '#ui-tools/form/components/page/form-page.vue'
 import FormProvider from '#ui-tools/form/components/provider/form-provider.vue'
 import { useForm } from '#ui-tools/form/composables/use-form'
-import type { FormController, FormObject, FormSubmitHandler, FormValue } from '#ui-tools/form/types'
+import type {
+  FormController,
+  FormObject,
+  FormSubmitHandler,
+  FormUiConfig,
+  FormValue,
+} from '#ui-tools/form/types'
 
 import { setAppConfig, setBreakpoint } from '../nuxt-state'
 
@@ -40,12 +46,16 @@ export async function flush() {
 export async function mountPage(options: {
   schema: FormValue
   input?: FormObject
+  /** App config, where `nuxtUiTools.form` holds the app-wide presentation defaults. */
+  appConfig?: FormObject
+  /** The `ui` prop of the page, which layers over the app config and the schema `ui`. */
+  ui?: FormUiConfig
   onSubmit?: FormSubmitHandler<FormObject, FormValue>
   layout?: () => VNodeChild
   style?: string
 }): Promise<PageHarness> {
   setBreakpoint('xl')
-  setAppConfig({})
+  setAppConfig(options.appConfig ?? {})
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ component: { render: () => h('div') }, path: '/' }],
@@ -65,7 +75,11 @@ export async function mountPage(options: {
       return () => {
         const page = h(
           FormPage,
-          { form: controller, onSubmit: (value: FormObject) => submitted.push(value) },
+          {
+            form: controller,
+            onSubmit: (value: FormObject) => submitted.push(value),
+            ui: options.ui,
+          },
           options.layout ? { default: options.layout } : undefined,
         )
         return options.style ? h('div', { style: options.style }, [page]) : page

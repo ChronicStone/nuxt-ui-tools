@@ -213,10 +213,28 @@ export interface FormOverlayUi {
 }
 
 /**
+ * How the sections of a form page are drawn:
+ *
+ * - `card`: each section is a bordered card on the gray canvas of the page (default)
+ * - `plain`: no box. A section is its heading, description, and fields on the page itself,
+ *   separated from the next by spacing and a hairline
+ */
+export type FormPageSurface = 'card' | 'plain'
+
+/**
+ * The `page` part of the form UI config: the surface of the sections and the `ui` slots of the
+ * page parts. Both follow the usual layering: app config, then schema `ui`, then the `ui` prop.
+ */
+export interface FormPageUiConfig extends FormUiPartConfig<FormPageUi> {
+  /** Defaults to `card`. */
+  surface?: FormPageSurface
+}
+
+/**
  * Slots of a form page and its parts. Data attributes carry the live state, so a slot can
  * restyle one state: `data-active` on the current navigation entry, `data-state`
- * (`complete`, `invalid`, `pending`) on entries and indicators, `data-dirty` on modified
- * sections and entries.
+ * (`complete`, `invalid`, `pending`, `optional`) on entries, indicators, and sections,
+ * `data-dirty` on modified sections and entries.
  *
  * Sections and the navigation stay below the pinned header: the page gives each section its
  * `scroll-margin-top` and the navigation the `--nut-form-page-header` variable (the header's
@@ -310,5 +328,5 @@ export interface FormUiConfig {
   drawer?: FormUiPartConfig<FormOverlayUi>
   fullscreen?: FormUiPartConfig<FormOverlayUi>
   /** Form page rendered by `FormPage` and its parts. */
-  page?: FormUiPartConfig<FormPageUi>
+  page?: FormPageUiConfig
 }

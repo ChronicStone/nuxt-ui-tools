@@ -73,6 +73,12 @@ export interface FormPageSection<
 export interface FormPageNavigationConfig {
   /** Heading above the entries, e.g. `'Création'`. Accepts a function to translate it. */
   title?: FormText
+  /**
+   * Shows the navigation only when the page has at least this many visible sections. Below it,
+   * the page is one focused column of content: two short sections gain nothing from a side
+   * navigation. Without it, the navigation always shows.
+   */
+  minSections?: number
 }
 
 /**

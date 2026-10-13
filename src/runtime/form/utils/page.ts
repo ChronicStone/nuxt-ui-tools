@@ -64,6 +64,18 @@ export function getFormPageNavigationTitle(schema: FormValue) {
   return isFormText(title) ? resolveFormText(title) : undefined
 }
 
+/**
+ * Number of visible sections the navigation needs to show. Zero, the default, shows it whatever
+ * the number of sections; anything that is not a count above one means the same.
+ */
+export function getFormPageNavigationMinSections(schema: FormValue) {
+  if (!isRecord(schema) || !isRecord(schema.navigation)) {
+    return 0
+  }
+  const { minSections } = schema.navigation
+  return isNumber(minSections) && minSections > 1 ? Math.trunc(minSections) : 0
+}
+
 /** True while the section's `condition` lets it render. */
 export function isFormPageSectionVisible(entry: FormPageSectionEntry, runtime: FormRuntime) {
   return !hasCondition(entry.card) || runtime.shouldRender(entry.card, [entry.card.key])

@@ -559,6 +559,41 @@ changes" badge, and the summary counts the modified sections. A successful submi
 as the new baseline, so the rings clear. `confirmNavOnDirty` asks before leaving unsaved changes, but
 not for navigations your `onSubmit` makes after saving.
 
+### Plain sections, and pages without a navigation
+
+By default each section is a bordered card on a gray canvas (`surface: 'card'`). Set the page
+`surface` to `'plain'` to draw sections with no box: the heading with its description under it, then
+the fields, on the page background, with spacing and a hairline between one section and the next. A
+modified section (with `controls.dirtyCheck`) gets a bar in the margin instead of a ring. `surface`
+is a form UI option, so it layers like the others: app config, then the schema `ui`, then the `ui`
+prop of `NutFormPage`, and a layer that only restyles slots keeps the surface of the layers below.
+
+```ts
+// app.config.ts: every form page of the app
+export default defineAppConfig({
+  nuxtUiTools: { form: { page: { surface: 'plain' } } },
+})
+
+// One page, over the app default
+defineFormPageSchema({
+  ui: { page: { surface: 'card' } },
+  sections: [identitySection(), addressSection()],
+})
+```
+
+A side navigation next to two short sections only adds noise. `navigation.minSections` shows the
+navigation only when the page has at least that many visible sections. Below it, the page is one
+focused column: the sections fill a centered column, and `NutFormPageNavigation` renders nothing,
+its summary included. Without `minSections`, the navigation always shows. The count follows section
+`condition`s, so a page gains its navigation when a choice reveals more sections.
+
+```ts
+defineFormPageSchema({
+  navigation: { title: 'Creation', minSections: 3 },
+  sections: [identitySection(), addressSection()],
+})
+```
+
 ### Scrolling and layout
 
 The page scrolls on its own: give it a height, such as `h-full` or `flex-1 min-h-0` in a layout that

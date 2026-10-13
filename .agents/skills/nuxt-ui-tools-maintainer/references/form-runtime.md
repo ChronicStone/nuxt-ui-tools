@@ -140,6 +140,15 @@ When adding form features, bias toward:
   extra rule because `runtime.errors` only holds errors of touched or submitted paths. The
   `form.page.status.*` messages serve the screen reader text and the visible "Optional" tag, so a
   new status needs its message, its `BLOCKS_SUBMIT` entry, and its indicator style together.
+- Page surface and navigation threshold: `ui.page.surface` (`FormPageUiConfig`, merged through
+  `mergePart`, whose spread also carries `surface`) selects an entry of the `FORM_PAGE_SURFACES`
+  table in `utils/page-surface.ts`. Its strings are the default classes of the root background, the
+  sections stack, a section, its description, and the skeleton, and `useFormPage` exposes
+  `surface` and `surfaceClasses` to every part. `navigation.minSections` is read by
+  `getFormPageNavigationMinSections` and drives `navigationVisible` (visible sections, so
+  conditions count), which `FormPageNavigation` (it renders nothing) and the `FormPage` body
+  (a single centered column) both follow. A new surface or layout is a table entry, not a branch in
+  a component.
 - `use-field-control.ts` exposes the authored `placeholder` only. The `shared-ui` baseline
   restored a generic default ("Enter a value") through i18n; that default is removed on purpose
   (UX audit: it repeats the label and reads like pre-filled noise for non-technical users), so a

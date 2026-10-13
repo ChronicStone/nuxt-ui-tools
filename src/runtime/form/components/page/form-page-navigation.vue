@@ -16,6 +16,7 @@ import { mergeFormUiClass } from '../../utils/ui'
  * complete, which leaves out untouched optional ones, or the modified ones with dirty checking.
  *
  * From 768px of page width it is a pinned column; below, a row of chips that scrolls sideways.
+ * It renders nothing while the page has fewer visible sections than `navigation.minSections`.
  */
 defineSlots<{
   /** Replaces the heading, which comes from the schema `navigation.title`. */
@@ -109,6 +110,7 @@ function select(event: MouseEvent, key: string) {
 
 <template>
   <nav
+    v-if="page.navigationVisible.value"
     :aria-labelledby="page.navigationTitle.value || $slots.title ? titleId : undefined"
     :aria-label="page.navigationTitle.value || $slots.title ? undefined : t('form.page.navigation')"
     :style="{ '--nut-form-page-header': `${page.stickyOffset.value}px` }"
