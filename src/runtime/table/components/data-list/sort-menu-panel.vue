@@ -97,7 +97,7 @@ function humanize(value: string) {
           :aria-checked="activeDirection === dir"
           class="flex min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-[5px] px-1 font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/40"
           :class="[
-            compact ? 'h-7 text-[12px]' : 'h-8 text-[12.5px]',
+            compact ? 'h-7 text-[12px]' : 'h-11 text-[13px]',
             activeDirection === dir
               ? 'nut-dl-sort__dir--active bg-default text-highlighted shadow-[0_0_0_1px_var(--ui-border)]'
               : 'text-muted hover:text-default',

@@ -116,6 +116,15 @@ export interface TableApi<TSchema = TableSchemaView> {
     state: ComputedRef<{ active: TableLayout; available: TableLayout[] }>
     set: (layout: TableLayout) => void
   }
+  /**
+   * Summary rows, the compact presentation of the table layout. With no `table.summary` in the
+   * schema, or where it is not enabled, `state.available` is `false` and `set` has no effect.
+   */
+  summary: {
+    state: ComputedRef<{ active: boolean; available: boolean }>
+    /** Shows the summary rows (`true`) or the full table (`false`), and remembers the choice. */
+    set: (active: boolean) => void
+  }
   filters: {
     state: ComputedRef<TableFilterState>
     search: WritableComputedRef<string>

@@ -20,6 +20,7 @@ import type { UseTableDataReturn } from './use-table-data'
 import type { useTableFilters } from './use-table-filters'
 import type { useTableLayout } from './use-table-layout'
 import type { useTablePagination } from './use-table-pagination'
+import type { useTableRowSummary } from './use-table-row-summary'
 import type { useTableSelection } from './use-table-selection'
 import type { useTableState } from './use-table-state'
 import type { useTableTree } from './use-table-tree'
@@ -36,6 +37,7 @@ export interface UseTableApiParams<TSchema = TableSchemaView> {
   filters: ReturnType<typeof useTableFilters>
   pagination: ReturnType<typeof useTablePagination>
   queryContent: UseTableDataReturn
+  rowSummary: ReturnType<typeof useTableRowSummary>
 }
 
 export function useTableApi<TSchema = TableSchemaView>(
@@ -90,6 +92,14 @@ export function useTableApi<TSchema = TableSchemaView>(
       params.columns.setSorting(getDefaultSort({ layout, schema: params.runtimeSchema.value }))
     },
     state: params.controls.layoutState,
+  }
+
+  const summary: TableApi<TSchema>['summary'] = {
+    set: params.rowSummary.setActive,
+    state: computed(() => ({
+      active: params.rowSummary.active.value,
+      available: params.rowSummary.available.value,
+    })),
   }
 
   const filters: TableApi<TSchema>['filters'] = {
@@ -160,6 +170,7 @@ export function useTableApi<TSchema = TableSchemaView>(
     selection,
     sorting,
     state,
+    summary,
     updateRow: data.updateRow,
     updateRows: data.updateRows,
   }

@@ -47,12 +47,13 @@ const PLAIN_RENDER_CONTEXT_CACHE = new WeakMap<
 
 export function createSelectionColumn(options: { params: UseTableColumnsParams }) {
   return {
-    cell: ({ row }: { row: { id: string } }) => {
+    cell: ({ row }: { row: { id: string; original: GenericObject; index: number } }) => {
       const rowId = String(row.id)
       return (
         <TableSelectionControl
           modelValue={options.params.selection.isRowSelected({ rowId })}
-          ariaLabel="Select row"
+          row={row.original}
+          index={row.index}
           onToggle={(event: MouseEvent) =>
             options.params.selection.toggleRowSelection({
               rowId,
@@ -81,7 +82,6 @@ export function createSelectionColumn(options: { params: UseTableColumnsParams }
               ? 'indeterminate'
               : false
         }
-        ariaLabel="Select all rows"
         onToggle={() =>
           options.params.selection.toggleAllRows({
             selected: !options.params.selection.allSelected.value,

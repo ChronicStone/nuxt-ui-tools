@@ -68,7 +68,6 @@ function toggle() {
       <TableSelectionControl
         v-if="selection.selectionEnabled.value"
         :model-value="checkState"
-        :ariaLabel="t('table.tree.selectAll')"
         @toggle="selection.toggleAllRows({ selected: !selection.allSelected.value })"
       />
     </span>

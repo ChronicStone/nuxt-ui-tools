@@ -704,7 +704,17 @@ export default defineUiToolsLocale<Messages>({
       header: {
         gridView: 'Vue grille',
         refreshData: 'Actualiser les données',
+        summaryView: 'Vue liste',
         tableView: 'Vue tableau',
+      },
+      rowActions: {
+        label: 'Actions pour {label}',
+        labelAt: 'Actions pour la ligne {position}',
+      },
+      selection: {
+        selectAll: 'Sélectionner toutes les lignes',
+        selectRow: 'Sélectionner {label}',
+        selectRowAt: 'Sélectionner la ligne {position}',
       },
       selectionBar: {
         allResults: 'Tous les résultats',
@@ -747,8 +757,6 @@ export default defineUiToolsLocale<Messages>({
         collapseAll: 'Replier toutes les lignes',
         expand: 'Déplier la ligne',
         expandAll: 'Déplier toutes les lignes',
-        selectAll: 'Sélectionner toutes les lignes',
-        selectRow: 'Sélectionner la ligne',
       },
     },
   },

@@ -697,7 +697,17 @@ export default defineUiToolsLocale<Messages>({
       header: {
         gridView: 'Grid view',
         refreshData: 'Refresh data',
+        summaryView: 'List view',
         tableView: 'Table view',
+      },
+      rowActions: {
+        label: 'Actions for {label}',
+        labelAt: 'Actions for row {position}',
+      },
+      selection: {
+        selectAll: 'Select all rows',
+        selectRow: 'Select {label}',
+        selectRowAt: 'Select row {position}',
       },
       selectionBar: {
         allResults: 'All results',
@@ -738,8 +748,6 @@ export default defineUiToolsLocale<Messages>({
         collapseAll: 'Collapse all rows',
         expand: 'Expand row',
         expandAll: 'Expand all rows',
-        selectAll: 'Select all rows',
-        selectRow: 'Select row',
       },
     },
   },

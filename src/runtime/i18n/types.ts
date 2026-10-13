@@ -3,8 +3,11 @@ import type { DeepPartial } from '#ui-tools/shared/types/utils'
 export interface UiToolsTableMessages {
   header: {
     refreshData: string
+    /** Names the table layout, and the toggle that leaves summary rows for the table. */
     tableView: string
     gridView: string
+    /** Toggle that brings summary rows back from the table. */
+    summaryView: string
   }
   footer: {
     rowsSelected: string
@@ -13,12 +16,28 @@ export interface UiToolsTableMessages {
     range: string
     rangeEmpty: string
     pageOf: string
+    /** Accessible name of a page button: "Page {current} of {total}". */
     page: string
     pageSizeOption: string
     previousPage: string
     nextPage: string
     firstPage: string
     lastPage: string
+  }
+  /** Accessible names of the selection checkboxes. */
+  selection: {
+    selectAll: string
+    /** A record with a label: "Select {label}". */
+    selectRow: string
+    /** A record without one, by its position on the page: "Select row {position}". */
+    selectRowAt: string
+  }
+  /** Accessible names of a row's actions menu. */
+  rowActions: {
+    /** A record with a label: "Actions for {label}". */
+    label: string
+    /** A record without one, by its position on the page: "Actions for row {position}". */
+    labelAt: string
   }
   controls: {
     addFilter: string
@@ -56,8 +75,6 @@ export interface UiToolsTableMessages {
     collapse: string
     expandAll: string
     collapseAll: string
-    selectRow: string
-    selectAll: string
   }
   columnsMenu: {
     sortAsc: string
