@@ -22,6 +22,12 @@ export interface FormLayoutConfig {
 export interface FormItemLayout {
   /** Column span for this field inside the owning layout grid. Replaces legacy `size`. */
   span?: number | string
+  /**
+   * Starts this field on a new row of the owning grid, at its first column, whatever the fields
+   * before it left free. Only the start of the column is set, so a responsive `span` still
+   * decides how wide the field is at each breakpoint.
+   */
+  newRow?: boolean
   /** Fixed width used by renderers that lay fields out as columns, such as array tables. */
   width?: number | string
   /** Label placement for this field. */

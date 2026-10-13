@@ -5,12 +5,12 @@ import { computed } from 'vue'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRadioCardField, FormValue } from '../../types'
-import { formOptionKey } from '../../utils/options'
+import { formOptionKey, groupOptions } from '../../utils/options'
+import type { OptionGroup } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import ChoiceCardLabel from '../choice-card/choice-card-label.vue'
 import { CHOICE_CARD_PROPS, useChoiceCard } from '../choice-card/use-choice-card'
-import type { ChoiceCardGroup } from '../choice-card/utils'
-import { choiceCardGroupAttrs, groupChoiceCardItems } from '../choice-card/utils'
+import { choiceCardGroupAttrs } from '../choice-card/utils'
 
 const props = defineProps<{
   field: FormRadioCardField
@@ -48,9 +48,9 @@ const items = computed(() =>
 )
 // Options with a `group` are listed under their headings, one radio group per heading; the
 // selection lives in the group of the selected option and the others show none.
-const groups = computed(() => groupChoiceCardItems(items.value))
+const groups = computed(() => groupOptions(items.value))
 
-function selectionOf(group: ChoiceCardGroup<(typeof items.value)[number]>) {
+function selectionOf(group: OptionGroup<(typeof items.value)[number]>) {
   return group.items.some((item) => item.value === model.value) ? model.value : undefined
 }
 

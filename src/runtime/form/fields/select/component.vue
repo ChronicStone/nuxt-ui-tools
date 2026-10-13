@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
+import { createReusableTemplate } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormOptionDisplayValue from '../../components/utils/form-option-display-value.vue'
 import FormOptionItemLabel from '../../components/utils/form-option-item-label.vue'
+import FormOptionLeading from '../../components/utils/form-option-leading.vue'
 import FormOptionMenuFooter from '../../components/utils/form-option-menu-footer.vue'
+import FormOptionSuffix from '../../components/utils/form-option-suffix.vue'
 import { useFieldControl } from '../../composables/use-field-control'
+import { useOptionMenu } from '../../composables/use-option-menu'
 import type { FormValue, FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
-import { appendLoadMoreOption } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -34,6 +38,7 @@ const {
   () => props.path,
   { omit: ['createItem', 'max', 'searchable', 'clearable'] },
 )
+const [DefineControl, ReuseControl] = createReusableTemplate()
 const searchTerm = ref<string>('')
 const open = ref<boolean>(false)
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
@@ -59,16 +64,20 @@ const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
     form.setValue(props.path, value)
   },
 })
-const items = computed(() => [
-  ...appendLoadMoreOption(
-    options.items.value,
-    options.remote.value && (options.hasMore.value || options.loadingMore.value),
-    t('form.fields.options.loadingMore'),
-  ),
-])
+const menu = useOptionMenu({
+  field: () => props.field,
+  loadMoreLabel: () => t('form.fields.options.loadingMore'),
+  model: () => model.value,
+  multiple: () => fieldProps.value.multiple === true,
+  options,
+})
 const controlUi = computed(() => ({
   ...controlProps.value.ui,
   content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
+  itemDescription: mergeFormUiClass(
+    menu.renderOption.value ? 'hidden' : 'text-[12.5px]',
+    controlProps.value.ui?.itemDescription,
+  ),
 }))
 const createItem = computed<FormSelectCreateItem>(() =>
   options.creatable.value && fieldProps.value.createItem ? fieldProps.value.createItem : false,
@@ -124,55 +133,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
 </script>
 
 <template>
-  <USelectMenu
-    v-if="bare"
-    v-model="model"
-    v-model:search-term="searchTerm"
-    :open="open"
-    v-bind="controlProps"
-    class="w-full"
-    value-key="value"
-    label-key="label"
-    :items="items"
-    :multiple="fieldProps.multiple"
-    :placeholder="placeholder"
-    :disabled="disabled"
-    :loading="
-      validationPending || options.loading.value || options.fetching.value || options.creating.value
-    "
-    :trailing="true"
-    :search-input="searchable"
-    :ignore-filter="options.remote.value"
-    :clear="fieldProps.clearable === true"
-    :create-item="createItem"
-    :ui="controlUi"
-    @update:open="handleOpen"
-    @create="handleNativeCreate"
-    @blur="handleBlur"
-  >
-    <template #item-label="{ item }">
-      <FormOptionItemLabel :item="item" />
-    </template>
-
-    <template #content-bottom>
-      <FormOptionMenuFooter
-        :options="options"
-        :disabled="disabled"
-        :show-create="showExplicitCreate"
-        :create-label="createActionLabel"
-        @create="handleCreateAction"
-      />
-    </template>
-
-    <template #create-item-label="{ item }">
-      {{
-        options.creating.value
-          ? t('form.fields.options.creating')
-          : t('form.fields.options.createNamed', { label: item })
-      }}
-    </template>
-  </USelectMenu>
-  <FormFieldShell v-else :field="field" :path="path">
+  <DefineControl>
     <USelectMenu
       v-model="model"
       v-model:search-term="searchTerm"
@@ -181,7 +142,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       class="w-full"
       value-key="value"
       label-key="label"
-      :items="items"
+      :items="menu.items.value"
       :multiple="fieldProps.multiple"
       :placeholder="placeholder"
       :disabled="disabled"
@@ -201,8 +162,38 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       @create="handleNativeCreate"
       @blur="handleBlur"
     >
+      <template v-if="menu.leadingOption.value" #leading="{ ui }">
+        <FormOptionLeading
+          :option="menu.leadingOption.value"
+          :icon-class="ui.leadingIcon()"
+          :avatar-size="ui.itemLeadingAvatarSize()"
+          chip-class="size-5"
+        />
+      </template>
+
+      <template v-if="menu.customValueOption.value" #default="{ ui }">
+        <span :class="ui.value({ class: controlProps.ui?.value })" data-slot="value">
+          <FormOptionDisplayValue
+            :option="menu.customValueOption.value"
+            :render="menu.renderValue.value"
+          />
+        </span>
+      </template>
+
+      <template #item-leading="{ item }">
+        <FormOptionLeading :option="menu.renderOption.value ? undefined : item" />
+      </template>
+
       <template #item-label="{ item }">
-        <FormOptionItemLabel :item="item" />
+        <FormOptionItemLabel
+          :option="item"
+          :selected="menu.isSelected(item)"
+          :render="menu.renderOption.value"
+        />
+      </template>
+
+      <template #item-trailing="{ item }">
+        <FormOptionSuffix v-if="!menu.renderOption.value" :option="item" />
       </template>
 
       <template #content-bottom>
@@ -223,5 +214,10 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         }}
       </template>
     </USelectMenu>
+  </DefineControl>
+
+  <ReuseControl v-if="bare" />
+  <FormFieldShell v-else :field="field" :path="path">
+    <ReuseControl />
   </FormFieldShell>
 </template>

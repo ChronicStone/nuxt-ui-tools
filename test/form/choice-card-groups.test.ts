@@ -9,10 +9,8 @@ import type {
   FormText,
 } from '#ui-tools/form'
 
-import {
-  choiceCardGroupAttrs,
-  groupChoiceCardItems,
-} from '../../src/runtime/form/fields/choice-card/utils'
+import { choiceCardGroupAttrs } from '../../src/runtime/form/fields/choice-card/utils'
+import { groupOptions } from '../../src/runtime/form/utils/options'
 
 interface Item {
   value: string
@@ -20,7 +18,7 @@ interface Item {
 }
 
 function summarize(items: readonly Item[]) {
-  return groupChoiceCardItems(items).map((group) => ({
+  return groupOptions(items).map((group) => ({
     heading: group.heading,
     values: group.items.map((item) => item.value),
   }))

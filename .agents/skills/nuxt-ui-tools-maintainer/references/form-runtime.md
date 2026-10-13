@@ -161,6 +161,24 @@ When adding form features, bias toward:
   Nuxt UI still wires `aria-describedby`). Engine-driven disabling (pending action, loading
   options) never carries a reason. Items of a primitive array render bare, so `disabledReason` is
   part of `ItemFieldChrome` there.
+- Rich options: `FormOption` carries `icon`, `avatar`, `chip`, `suffix` next to `label` and
+  `description`, and `normalizeOptionItem` resolves them into `ResolvedFormOption` (public, defined in
+  `types/options.ts`) with the authored option untouched as `item`. The parts live in
+  `components/utils/form-option-*.vue`: `leading` (icon, else avatar, else chip), `suffix`,
+  `item-label` (menu label, load-more row, `renderOption`), `choice-label` (radio and checkbox rows),
+  `display-value` (closed control), and `value-overlay` (the auto-complete draws a `renderValue`
+  or suffix over its input while it rests, copying the input's padding and type).
+  `use-option-menu.ts` serves select and auto-complete (menu items, selected option, leading and
+  custom value), `use-choice-group-items.ts` serves radio and checkbox group. Both fill the Nuxt UI
+  slots (`item-leading`, `item-label`, `item-trailing`, `leading`, the default slot, `label`) and
+  never the `item` slot, so the control keeps its own indicator. An empty slot would bring back the
+  Nuxt UI default, hence `FormOptionLeading` always rendering a component. The radio and checkbox
+  groups get plain items (value, label, description, disabled, `ui.description` indent) because a
+  checkbox group binds item keys onto `UCheckbox`, where `icon` is the check mark. `renderOption` and
+  `renderValue` are read from the field (not `props`), declared as methods so a callback annotated
+  with `FormOptionRenderContext<MyOption>` fits an inline schema. Select and auto-complete have the
+  `optionGroups` capability: `toMenuItems` (`utils/options.ts`) turns grouped options into one array
+  per group with a `type: 'label'` heading, which Nuxt UI filters group by group on search.
 - `fields/choice-card/` is the presentation `radio-card` and `checkbox-card` share: the grid
   (`--nut-choice-columns`), the corner check, and the icon tile, with `ui.tile` and `ui.check` for
   the parts the engine renders. `checkbox-card` strips option icons from the items it hands to

@@ -44,9 +44,11 @@ export function useFormItemLayout(params: {
     normalizeFormGridColumnSpanStyle,
   )
 
-  const style = computed(
-    () => span.value ?? normalizeFormGridColumnSpanStyle(String(FORM_LAYOUT_DEFAULTS.fieldSpan)),
-  )
+  const style = computed(() => {
+    const spanStyle =
+      span.value ?? normalizeFormGridColumnSpanStyle(String(FORM_LAYOUT_DEFAULTS.fieldSpan))
+    return params.layout()?.newRow ? `${spanStyle}; grid-column-start: 1` : spanStyle
+  })
 
   return {
     span,

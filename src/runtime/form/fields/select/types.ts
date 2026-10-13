@@ -5,7 +5,13 @@ import type {
   FallbackNever,
   NullableValue,
 } from '../../types/field-output-utils'
-import type { FormAnyOptionConfig, FormOptionItem, FormOptionValue } from '../../types/options'
+import type {
+  FormAnyOptionConfig,
+  FormOptionGrouping,
+  FormOptionItem,
+  FormOptionValue,
+  FormOptionValueRenderers,
+} from '../../types/options'
 
 export type FormSelectCreateItem =
   | boolean
@@ -28,13 +34,17 @@ export interface FormSelectField<
   TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
-> extends FormStatefulFieldBase<
-  'select',
-  TValue | readonly TValue[] | null,
-  TContext,
-  TDeps,
-  FormSelectProps
-> {
+>
+  extends
+    FormStatefulFieldBase<
+      'select',
+      TValue | readonly TValue[] | null,
+      TContext,
+      TDeps,
+      FormSelectProps
+    >,
+    FormOptionGrouping,
+    FormOptionValueRenderers<TOption> {
   options: FormAnyOptionConfig<TOption, TContext, TDeps, TValue | readonly TValue[] | null>
 }
 

@@ -429,6 +429,7 @@ Behavior:
 - the next page loads ahead of the scroll (three viewport heights by default, set `pagination.prefetchDistance` in pixels to change it); there is no "load more" button, and a failed page offers an inline retry
 - tags, panel chips, and the mobile sheet show labels for committed values through `resolveSelected` (and `prefetchTable` warms that query for values in the URL); without it such values show as their raw value
 - picked values stay listed at the top of the editor, even when the current search does not return them
+- `filters` on `remoteTableOptions` (for example active rows only) apply to every page of options, not to the lookup of selected values: a stored value the filters now exclude still shows its label
 
 ## Boolean Filters
 

@@ -31,6 +31,18 @@ function noop() {
   return null
 }
 
+function asArray(value: StubValue): StubValue[] {
+  return Array.isArray(value) ? [...value] : []
+}
+
+/** The `ui` object Nuxt UI passes to menu slots: one class function per theme slot. */
+const SLOT_UI = Object.fromEntries(
+  ['itemLeadingAvatarSize', 'leadingIcon', 'placeholder', 'value'].map((slot) => [
+    slot,
+    () => `ui-${slot}`,
+  ]),
+)
+
 function asHandler(value: StubValue): Handler | undefined {
   // SAFETY: stub menu items only ever receive DOM events; the authored callback signature is (event) => void.
   return isFunction(value) ? (value as Handler) : undefined
@@ -354,7 +366,14 @@ export function createInputStub(
                 slots.label ? slots.label({ item }) : scalarText(item.label),
                 item.description === undefined
                   ? null
-                  : h('p', { 'data-ui-description': '' }, scalarText(item.description)),
+                  : h(
+                      'p',
+                      {
+                        class: uiClass(item.ui, 'description'),
+                        'data-ui-description': '',
+                      },
+                      scalarText(item.description),
+                    ),
               ]),
             ),
           ])
@@ -501,6 +520,7 @@ export function createMenuStub(name: string) {
       clear: optional,
       color: optional,
       createItem: optional,
+      descriptionKey: optional,
       disabled: optional,
       items: optional,
       labelKey: optional,
@@ -538,12 +558,16 @@ export function createMenuStub(name: string) {
         const label = record[scalarText(props.labelKey, 'label')]
         return scalarText(label ?? record[scalarText(props.valueKey, 'value')])
       }
-      function flatItems(): StubValue[] {
+      // Nuxt UI draws an array of arrays as groups; a flat array is one group.
+      function itemGroups(): StubValue[][] {
         const { items } = props
         if (!Array.isArray(items)) {
           return []
         }
-        return items.flatMap((entry) => (Array.isArray(entry) ? entry : [entry]))
+        return Array.isArray(items[0]) ? items.map((group) => asArray(group)) : [items]
+      }
+      function flatItems(): StubValue[] {
+        return itemGroups().flat()
       }
       function selectedValues(): StubScalar[] {
         if (props.multiple) {
@@ -578,14 +602,64 @@ export function createMenuStub(name: string) {
           })
           .join(', ')
       }
-      function renderItemContent(option: StubValue) {
+      function isHeading(option: StubValue) {
+        return asRecord(option)?.type === 'label'
+      }
+      function renderItemContent(option: StubValue, index: number) {
         if (slots.item) {
-          return slots.item({ item: option })
+          return slots.item({ index, item: option, ui: SLOT_UI })
         }
-        if (slots['item-label']) {
-          return slots['item-label']({ index: 0, item: option })
-        }
-        return optionLabel(option)
+        const record = asRecord(option)
+        const description =
+          slots['item-description']?.({ index, item: option }) ??
+          scalarText(record?.[scalarText(props.descriptionKey, 'description')]) ??
+          ''
+        return [
+          slots['item-leading']
+            ? h(
+                'span',
+                { 'data-ui-slot': 'item-leading' },
+                slots['item-leading']({ index, item: option, ui: SLOT_UI }),
+              )
+            : null,
+          h(
+            'span',
+            { 'data-ui-slot': 'item-label' },
+            slots['item-label']
+              ? slots['item-label']({ index, item: option })
+              : optionLabel(option),
+          ),
+          description ? h('span', { 'data-ui-slot': 'item-description' }, description) : null,
+          slots['item-trailing']
+            ? h(
+                'span',
+                { 'data-ui-slot': 'item-trailing' },
+                slots['item-trailing']({ index, item: option, ui: SLOT_UI }),
+              )
+            : null,
+        ]
+      }
+      function renderGroup(group: StubValue[], selected: StubScalar[], offset: number) {
+        return h(
+          'div',
+          { 'data-ui-group': '', role: 'group' },
+          group.map((option, index) =>
+            isHeading(option)
+              ? h('div', { 'data-ui-heading': '' }, optionLabel(option))
+              : h(
+                  'button',
+                  {
+                    'aria-selected': selected.includes(optionValue(option)) ? 'true' : 'false',
+                    'data-ui-item': scalarText(optionValue(option)),
+                    disabled: asRecord(option)?.disabled === true,
+                    onClick: () => select(option),
+                    role: 'option',
+                    type: 'button',
+                  },
+                  renderItemContent(option, offset + index),
+                ),
+          ),
+        )
       }
       function renderContent(items: StubValue[], selected: StubScalar[], search: string) {
         const showCreate =
@@ -606,18 +680,11 @@ export function createMenuStub(name: string) {
           h(
             'div',
             { 'data-ui-items': '', role: 'listbox' },
-            items.map((option) =>
-              h(
-                'button',
-                {
-                  'aria-selected': selected.includes(optionValue(option)) ? 'true' : 'false',
-                  'data-ui-item': scalarText(optionValue(option)),
-                  disabled: asRecord(option)?.disabled === true,
-                  onClick: () => select(option),
-                  role: 'option',
-                  type: 'button',
-                },
-                renderItemContent(option),
+            itemGroups().map((group, index, groups) =>
+              renderGroup(
+                group,
+                selected,
+                groups.slice(0, index).reduce((count, entry) => count + entry.length, 0),
               ),
             ),
           ),
@@ -659,7 +726,18 @@ export function createMenuStub(name: string) {
                 onClick: () => setOpen(!open),
                 type: 'button',
               },
-              renderTriggerText(items, selected),
+              [
+                slots.leading
+                  ? h(
+                      'span',
+                      { 'data-ui-slot': 'leading' },
+                      slots.leading({ modelValue: props.modelValue, open, ui: SLOT_UI }),
+                    )
+                  : null,
+                slots.default
+                  ? slots.default({ modelValue: props.modelValue, open, ui: SLOT_UI })
+                  : renderTriggerText(items, selected),
+              ],
             ),
             props.clear && selected.length
               ? h('button', {

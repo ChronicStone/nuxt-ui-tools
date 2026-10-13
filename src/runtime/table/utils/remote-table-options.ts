@@ -58,6 +58,10 @@ export function remoteTableOptions(
   const { fields, search } = resolveSearch(config.search)
   const sorting = resolveSorting(config.sort)
 
+  /**
+   * `filters` replaces the base filters: the lookup of selected values must find a row the base
+   * filters now exclude (an account closed since it was chosen), or its label never resolves.
+   */
   function request(params: {
     page: RemoteOptionsPageRequest
     search: string
@@ -65,7 +69,7 @@ export function remoteTableOptions(
   }): TableRemoteSourceRequest {
     const { page } = params
     return {
-      filters: [...(config.filters ?? []), ...(params.filters ?? [])],
+      filters: params.filters ?? [...(config.filters ?? [])],
       pagination:
         pagination.type === 'cursor'
           ? { count: 'none', cursor: page.cursor, mode: 'cursor', pageSize: page.size }

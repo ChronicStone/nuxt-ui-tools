@@ -1,24 +1,34 @@
 <script setup lang="ts">
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
+import type { VNodeChild } from 'vue'
 
-import type { FormValue } from '../../types'
+import type { FormOptionRenderContext, ResolvedFormOption } from '../../types'
 import { isLoadMoreOption } from '../../utils/options'
-import { isRecord } from '../../utils/path'
-import { isNumber, isString } from '../../utils/predicate'
+import FormOptionRender from './form-option-render'
 
+/**
+ * Label of an option in a menu. The load-more row keeps its own loader, an option with a
+ * `renderOption` function shows what it returns, and any other option shows its label.
+ */
 const props = defineProps<{
-  item: FormValue
+  option: ResolvedFormOption
+  selected?: boolean
+  render?: (context: FormOptionRenderContext) => VNodeChild
 }>()
 
-const loadMore = computed(() => isLoadMoreOption(props.item))
-const label = computed(() => {
-  if (isRecord(props.item)) {
-    const value = props.item.label
-    return isString(value) || isNumber(value) ? String(value) : ''
-  }
-  return isString(props.item) || isNumber(props.item) ? String(props.item) : ''
-})
+const loadMore = computed(() => isLoadMoreOption(props.option))
+
+function content() {
+  const { item } = props.option
+  if (item === undefined) return null
+  return props.render?.({
+    disabled: props.option.disabled === true,
+    item,
+    option: props.option,
+    selected: props.selected === true,
+  })
+}
 </script>
 
 <template>
@@ -28,7 +38,10 @@ const label = computed(() => {
     data-form-option-loading=""
   >
     <UIcon name="i-lucide-loader-circle" class="size-3.5 animate-spin" aria-hidden="true" />
-    {{ label }}
+    {{ option.label }}
   </span>
-  <template v-else>{{ label }}</template>
+  <span v-else-if="render" class="block whitespace-normal" data-form-option-custom>
+    <FormOptionRender :content="content" />
+  </span>
+  <template v-else>{{ option.label }}</template>
 </template>

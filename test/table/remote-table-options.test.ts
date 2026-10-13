@@ -10,6 +10,7 @@ import type {
   TableCursorPageResult,
   TableFilterRemoteOptions,
   TableRemoteSourceRequest,
+  TableResolvedFilterGroup,
 } from '#ui-tools/table'
 
 interface Account {
@@ -118,6 +119,45 @@ describe('remoteTableOptions', () => {
       search: { fields: ['name'], value: '' },
       sorting: [],
     })
+  })
+
+  it('applies the base filters to the pages but not to the lookup of selected values', async () => {
+    const endpoint = createEndpoint()
+    const activeOnly: TableResolvedFilterGroup = {
+      children: [{ key: 'active', operator: 'is', type: 'condition', value: true }],
+      combinator: 'and',
+      type: 'group',
+    }
+    const accounts = remoteTableOptions((request) => endpoint.queryOptions({ body: request }), {
+      filters: [activeOnly],
+      option: (account) => ({ label: account.name, value: account.id }),
+      search: ['name'],
+    })
+
+    void run(accounts.load({ page: { cursor: null, index: 1, size: 2 }, search: '' }))
+    // A stored value can name a row the base filters now exclude: its label must still resolve.
+    await expect(run(accounts.resolveSelected({ values: ['a3'] }))).resolves.toEqual([
+      { label: 'Initech', value: 'a3' },
+    ])
+
+    expect(endpoint.requests[0]?.filters).toEqual([activeOnly])
+    expect(endpoint.requests[1]?.filters).toEqual([
+      {
+        children: [{ key: 'id', operator: 'isAnyOf', type: 'condition', value: ['a3'] }],
+        combinator: 'and',
+        type: 'group',
+      },
+    ])
+    expect(endpoint.requests[1]?.pagination).toEqual({
+      count: 'none',
+      cursor: null,
+      mode: 'cursor',
+      pageSize: 1,
+    })
+    expect(endpoint.requests[1]?.sorting).toEqual([])
+    expect(accounts.selectedQueryKeyFor?.({ values: ['a3'] })).toEqual(
+      accounts.resolveSelected({ values: ['a3'] }).queryKey,
+    )
   })
 
   it('pages by offset when asked to', () => {

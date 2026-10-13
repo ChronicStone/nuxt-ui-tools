@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools-form
-description: Use this skill when working with the nuxt-ui-tools form runtime as a package consumer. It covers schema-driven forms, the provider-backed form API, inline rendering, overlay rendering, form pages with a section navigation, choice cards, and typed submit results.
+description: Use this skill when working with the nuxt-ui-tools form runtime as a package consumer. It covers schema-driven forms, the provider-backed form API, inline rendering, overlay rendering, form pages with a section navigation, rich options (icon, avatar, chip, description, suffix, grouped menus, and renderOption/renderValue render functions on select, auto-complete, radio, and checkbox group), choice cards, and typed submit results.
 ---
 
 # nuxt-ui-tools Form
@@ -302,6 +302,16 @@ defineFormSchema({
 Checkboxes, switches, upload controls, and other visually dominant fields should normally span the
 full modal row instead of being paired with an unrelated text field merely because space exists.
 
+`layout.newRow: true` starts a field on a new row, at the first column, whatever the fields before
+it left free. It sets only where the field starts, so a responsive `span` still decides its width at
+each breakpoint:
+
+```ts
+{ key: 'firstName', type: 'text', layout: { span: '1 md:2' } },
+{ key: 'lastName', type: 'text', layout: { span: '1 md:2' } },
+{ key: 'email', type: 'text', layout: { span: '1 md:3', newRow: true } },
+```
+
 TanStack `queryOptions(...)` objects can be used directly for context or field options. The form
 observer retains the full query configuration, including `select`, retry/cache settings, meta,
 initial/placeholder data, and query-function cancellation signals.
@@ -583,8 +593,9 @@ defineFormPageSchema({
 
 A side navigation next to two short sections only adds noise. `navigation.minSections` shows the
 navigation only when the page has at least that many visible sections. Below it, the page is one
-focused column: the sections fill a centered column, and `NutFormPageNavigation` renders nothing,
-its summary included. Without `minSections`, the navigation always shows. The count follows section
+focused column: the sections fill a centered column, the title and actions of the header line up
+with that column (the header band itself still spans the page), and `NutFormPageNavigation`
+renders nothing, its summary included. Without `minSections`, the navigation always shows. The count follows section
 `condition`s, so a page gains its navigation when a choice reveals more sections.
 
 ```ts
@@ -646,7 +657,7 @@ app config first, then the schema `ui`, then the `ui` prop of `NutFormPage`. Eve
 renders has a slot:
 
 - page: `root`, `body`
-- header: `header`, `headerContent`, `heading`, `eyebrow`, `title`, `meta`, `unsaved`, `actions`
+- header: `header`, `headerRow`, `headerContent`, `heading`, `eyebrow`, `title`, `meta`, `unsaved`, `actions`
 - navigation: `navigation`, `navigationGroup`, `navigationTitle`, `navigationList`,
   `navigationEntry`, `navigationItem`, `navigationIndicator`, `navigationIndicatorIcon`,
   `navigationIndicatorMarker`, `navigationLabel`, `navigationOptional`, `navigationDirty`,
@@ -680,6 +691,155 @@ The page sets the first to the height of its pinned `NutFormPageHeader`; the sec
 change the gap, set it on the root, for example with `ui.page.ui.root: '[--nut-form-page-gap:32px]'`.
 When your own pinned header replaces `NutFormPageHeader`, set `--nut-form-page-header` to its height
 on an element around the navigation and the sections.
+
+## Rich Options
+
+`select`, `auto-complete`, `radio`, and `checkbox-group` read more than a label from each option.
+Every key is optional, and an option without them renders exactly as before:
+
+- `icon`: an Iconify name drawn before the label.
+- `avatar`: `{ src?, alt?, text? }`, for people and organisations. `alt` defaults to the label, and
+  `text` is the fallback shown when there is no picture (without it, the initials of `alt`).
+- `chip`: `{ color? }`, a colored dot for statuses and categories (`primary` by default, or
+  `secondary`, `success`, `info`, `warning`, `error`, `neutral`).
+- `description`: a second line under the label.
+- `suffix`: text at the end of the option, such as a code or a count. Text, or a function returning
+  text like `label`.
+
+Only one leading visual shows, the first of `icon`, `avatar`, `chip`.
+
+```ts
+{
+  key: 'currency',
+  type: 'select',
+  label: 'Currency',
+  options: [
+    { value: 'EUR', label: 'Euro', suffix: 'EUR' },
+    { value: 'USD', label: 'US dollar', suffix: 'USD' },
+  ],
+}
+
+{
+  key: 'owner',
+  type: 'auto-complete',
+  label: 'Owner',
+  options: [
+    { value: 'camille', label: 'Camille Durand', avatar: { src: '/people/camille.jpg' } },
+    { value: 'louis', label: 'Louis Martin', avatar: { text: 'LM' }, description: 'Test center manager' },
+  ],
+}
+
+{
+  key: 'status',
+  type: 'select',
+  label: 'Status',
+  options: [
+    { value: 'published', label: 'Published', chip: { color: 'success' } },
+    { value: 'review', label: 'In review', chip: { color: 'warning' } },
+  ],
+}
+
+{
+  key: 'plan',
+  type: 'radio',
+  label: 'Plan',
+  options: [
+    { value: 'starter', label: 'Starter', icon: 'i-lucide-rocket', description: 'One workspace.', suffix: '0 €' },
+    { value: 'scale', label: 'Scale', icon: 'i-lucide-users', description: 'Several teams.', suffix: '49 €' },
+  ],
+}
+```
+
+What you get without writing any rendering:
+
+- In the menu of a select or auto-complete, the leading visual (a 16px icon in muted ink, an `xs`
+  avatar, or the dot) comes before the label, the description sits under it in muted smaller text,
+  and the suffix is right-aligned in dimmed text with tabular numbers, before the selected check.
+- In the closed control of a single select, the chosen option's leading visual takes the control's
+  leading slot, and its suffix follows the label, dimmed. An auto-complete shows its leading visual
+  the same way, and draws a suffix over the text of its input while it rests. An empty field keeps
+  its placeholder. Multiple selection keeps the comma-separated labels.
+- In a radio or checkbox list, the leading visual comes before the label, the description stays
+  under it (lined up with the label), and the suffix ends the row.
+- Search, remote and async sources, creatable options, the load-more row, and `clearable` behave as
+  before. The choice cards read `icon` only.
+
+An option's `icon` on a `checkbox-group` is its leading visual, not the check mark.
+
+### Render functions
+
+When the defaults are not enough, declare a render function on the field, next to `options`. It
+returns anything a Vue render function returns (`h(...)`, JSX, a string).
+
+- `renderOption({ option, item, selected, disabled })` replaces the content of each option: the
+  label, the description, the leading visual, and the suffix. The control keeps its own selection
+  indicator (the check mark, the radio dot, the checkbox) and its keyboard behavior. Available on
+  all four fields.
+- `renderValue({ option, item })` replaces how the chosen option reads in the closed control of a
+  `select` or `auto-complete`, in single selection. Multiple selection keeps its labels.
+
+`option` is the resolved option (`label`, `description`, `icon`, `avatar`, `chip`, `suffix`,
+`value`, `disabled`). `item` is the option exactly as you wrote it or your source returned it,
+untouched, so it carries any data of your own.
+
+```ts
+import { h } from 'vue'
+import type { FormOption, FormOptionRenderContext, FormOptionValueRenderContext } from 'nuxt-ui-tools/form'
+
+interface Currency extends FormOption<'EUR' | 'USD'> {
+  symbol: string
+}
+
+{
+  key: 'currency',
+  type: 'select',
+  label: 'Currency',
+  options: [
+    { value: 'EUR', label: 'Euro', suffix: 'EUR', symbol: '€' },
+    { value: 'USD', label: 'US dollar', suffix: 'USD', symbol: '$' },
+  ],
+  // Each row: symbol, name, code.
+  renderOption: ({ item, option }: FormOptionRenderContext<Currency>) =>
+    h('span', { class: 'flex items-baseline gap-2' }, [
+      h('span', { class: 'w-4 text-center font-medium' }, item.symbol),
+      h('span', option.label),
+      h('span', { class: 'text-dimmed' }, option.suffix),
+    ]),
+  // The closed control reads "€ EUR".
+  renderValue: ({ item, option }: FormOptionValueRenderContext<Currency>) =>
+    h('span', `${item.symbol} ${option.suffix}`),
+}
+```
+
+In an inline schema the option type is not inferred into the callback, so annotate its parameter
+with `FormOptionRenderContext<YourOption>` (or `FormOptionValueRenderContext<YourOption>`) to read
+your own data typed. A field you type yourself, `FormSelectField<Ctx, Deps, Value, YourOption>`,
+passes that option type to both functions. Return a flat, compact row: the option keeps the height
+of its menu item, and the load-more row of a remote list is never passed to `renderOption`.
+
+### Grouped menus
+
+`select` and `auto-complete` list options under headings with the same contract as the choice
+cards (see Grouped options below): inline options group by `group`, the records a function,
+promise, or query returns group only when the field's `groupKey` names the property, and
+`groupKey: false` lists every option together. Each heading is drawn by the menu above its group,
+and a search keeps a heading only while its group still has a match.
+
+```ts
+{
+  key: 'accountType',
+  type: 'select',
+  label: 'Account type',
+  options: [
+    { value: 'school', label: 'École', icon: 'i-lucide-school', description: 'Lycées et universités', group: 'Organisation cliente' },
+    { value: 'company', label: 'Entreprise', icon: 'i-lucide-building-2', description: 'Employeurs privés', group: 'Organisation cliente' },
+    { value: 'reseller', label: 'Revendeur', icon: 'i-lucide-handshake', description: 'Revend les licences', group: 'Partenaire' },
+    { value: 'center', label: 'Centre de test', icon: 'i-lucide-map-pin', description: 'Organise les sessions', group: 'Centre de test' },
+    { value: 'demo', label: 'Démonstration', icon: 'i-lucide-flask-conical', description: 'Démos commerciales', group: 'Compte de test' },
+  ],
+  props: { searchable: true },
+}
+```
 
 ## Choice Cards
 
@@ -735,8 +895,9 @@ next to `options`, not in `props`:
 `groupKey` also maps inline options: a list that sets `groupKey: 'section'` groups by `section` and
 ignores any `group` it carries, and `groupKey: false` lists every option together, even inline
 options that carry a `group`. Options keep the same heading rules whatever the property is
-called. The two choice cards are the fields that group their options; `groupKey` has no effect
-elsewhere.
+called. The choice cards, `select`, and `auto-complete` are the fields that group their options (a select
+or auto-complete draws the headings as menu group labels, see Rich Options); `groupKey` has no
+effect elsewhere.
 
 ```ts
 {

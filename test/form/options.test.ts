@@ -27,21 +27,33 @@ describe('form option normalization', () => {
 
     expect(options).toStrictEqual([
       {
+        avatar: undefined,
         children: [
           {
+            avatar: undefined,
+            chip: undefined,
             description: undefined,
             disabled: false,
             group: undefined,
             icon: undefined,
+            item: { id: 2, title: expect.any(Function) },
             label: '42',
+            suffix: undefined,
             value: 2,
           },
         ],
+        chip: undefined,
         description: undefined,
         disabled: false,
         group: undefined,
         icon: undefined,
+        item: {
+          id: 1,
+          nodes: [{ id: 2, title: expect.any(Function) }],
+          title: expect.any(Function),
+        },
         label: 'Catalog',
+        suffix: undefined,
         value: 1,
       },
     ])
@@ -205,9 +217,33 @@ describe('option group key', () => {
   })
 
   it('applies only to the field kinds that list options under headings', () => {
-    const select = defineFormField({ key: 'country', options: records, type: 'select' })
+    const radio = defineFormField({ key: 'country', options: records, type: 'radio' })
+    const group = defineFormField({ key: 'countries', options: records, type: 'checkbox-group' })
 
-    expect(resolveOptionGroupKey(select)).toBeUndefined()
+    expect(resolveOptionGroupKey(radio)).toBeUndefined()
+    expect(resolveOptionGroupKey(group)).toBeUndefined()
+  })
+
+  it('groups the inline options of a select and an auto-complete, and honors groupKey', () => {
+    const select = defineFormField({ key: 'country', options: records, type: 'select' })
+    const autoComplete = defineFormField({
+      groupKey: 'section',
+      key: 'country',
+      options: () => records,
+      type: 'auto-complete',
+    })
+    const optedOut = defineFormField({
+      groupKey: false,
+      key: 'country',
+      options: records,
+      type: 'select',
+    })
+    const fromFunction = defineFormField({ key: 'country', options: () => records, type: 'select' })
+
+    expect(resolveOptionGroupKey(select)).toBe('group')
+    expect(resolveOptionGroupKey(autoComplete)).toBe('section')
+    expect(resolveOptionGroupKey(optedOut)).toBeUndefined()
+    expect(resolveOptionGroupKey(fromFunction)).toBeUndefined()
   })
 
   it('reads the options source whether or not it is wrapped in a source property', () => {

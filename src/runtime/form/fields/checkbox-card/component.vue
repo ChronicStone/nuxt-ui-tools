@@ -5,12 +5,12 @@ import { computed } from 'vue'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormCheckboxCardField, FormOptionValue } from '../../types'
-import { formOptionKey } from '../../utils/options'
+import { formOptionKey, groupOptions } from '../../utils/options'
+import type { OptionGroup } from '../../utils/options'
 import { isBoolean, isNumber, isString, isUndefined } from '../../utils/predicate'
 import ChoiceCardLabel from '../choice-card/choice-card-label.vue'
 import { CHOICE_CARD_PROPS, useChoiceCard } from '../choice-card/use-choice-card'
-import { choiceCardGroupAttrs, groupChoiceCardItems } from '../choice-card/utils'
-import type { ChoiceCardGroup } from '../choice-card/utils'
+import { choiceCardGroupAttrs } from '../choice-card/utils'
 
 const props = defineProps<{
   field: FormCheckboxCardField
@@ -55,14 +55,14 @@ const items = computed(() =>
   })),
 )
 // Options with a `group` are listed under their headings, one checkbox group per heading.
-const groups = computed(() => groupChoiceCardItems(items.value))
+const groups = computed(() => groupOptions(items.value))
 
-function selectionOf(group: ChoiceCardGroup<(typeof items.value)[number]>) {
+function selectionOf(group: OptionGroup<(typeof items.value)[number]>) {
   return model.value.filter((key) => group.items.some((item) => item.value === key))
 }
 
 /** Applies what one group changed to the whole selection, keeping the order of the others. */
-function update(group: ChoiceCardGroup<(typeof items.value)[number]>, keys: string[]) {
+function update(group: OptionGroup<(typeof items.value)[number]>, keys: string[]) {
   const kept = model.value.filter(
     (key) => keys.includes(key) || !group.items.some((item) => item.value === key),
   )
