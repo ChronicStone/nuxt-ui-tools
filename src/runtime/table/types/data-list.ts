@@ -7,6 +7,7 @@ import type { SelectProps } from '@nuxt/ui/components/Select.vue'
 import type { ComputedRef } from 'vue'
 
 import type { TableInternals } from '../composables/use-table-internals'
+import type { TableEmptySchema } from './layout'
 import type { TableLayout } from './utils'
 
 export interface DataListTable {
@@ -231,6 +232,15 @@ export interface DataListLayoutSwitchUi {
   triggerTrailingIcon?: DataListUiClass
 }
 
+/** UI slots rendered by the summary/table toggle. */
+export interface DataListViewToggleUi {
+  [slot: string]: DataListUiClass | undefined
+  base?: DataListUiClass
+  label?: DataListUiClass
+  leadingIcon?: DataListUiClass
+  trailingIcon?: DataListUiClass
+}
+
 /** UI slots rendered by the content state boundary. */
 export interface DataListContentUi {
   root?: DataListUiClass
@@ -266,6 +276,36 @@ export interface DataListTableUi {
   loading?: DataListUiClass
   loadingOverlay?: DataListUiClass
   emptyOverlay?: DataListUiClass
+  /** The empty state's button: the reset of a filtered list and the first-use `empty.action`. */
+  emptyAction?: DataListUiClass
+  /** The row-actions button at the end of each row, in the table and in summary rows. */
+  rowAction?: DataListUiClass
+  /** The tap area around a selection checkbox, a row's or the select-all one, in the table and in summary rows. */
+  selectControl?: DataListUiClass
+}
+
+/** UI slots rendered by summary rows, the compact presentation of the table layout. */
+export interface DataListSummaryUi {
+  root?: DataListUiClass
+  viewport?: DataListUiClass
+  /** The select-all strip above the rows, present when the list has selection. */
+  header?: DataListUiClass
+  list?: DataListUiClass
+  row?: DataListUiClass
+  /** The checkbox cell of a row and of the select-all strip. */
+  select?: DataListUiClass
+  /** The tappable part of a row: everything between the checkbox and the actions. */
+  main?: DataListUiClass
+  leading?: DataListUiClass
+  body?: DataListUiClass
+  title?: DataListUiClass
+  /** The line under the title, holding the status and the details. */
+  meta?: DataListUiClass
+  status?: DataListUiClass
+  details?: DataListUiClass
+  actions?: DataListUiClass
+  skeleton?: DataListUiClass
+  loadingMore?: DataListUiClass
 }
 
 /** UI slots rendered by the grid mode and its built-in states. */
@@ -389,12 +429,20 @@ export interface DataListLayoutSwitchProps {
   icons?: Partial<Record<TableLayout, string>>
 }
 
-/** Component props exposed by the table renderer controls. */
+/** Component props exposed by the summary/table toggle. */
+export interface DataListViewToggleProps {
+  button?: DataListButtonProps
+}
+
+/** Component props exposed by the table renderer controls, shared by summary rows. */
 export interface DataListTableProps {
   checkbox?: DataListCheckboxProps
   rowActions?: DataListButtonProps
-  /** Empty state copy; `description: false` hides the second line. */
-  empty?: { icon?: string; title?: string; description?: string | false }
+  /**
+   * Empty state copy and first-use action shared by every list. A list's own `empty` schema
+   * field wins, field by field. `description: false` hides the second line.
+   */
+  empty?: TableEmptySchema
 }
 
 /** Component props exposed by offset pagination. */
@@ -468,13 +516,22 @@ export interface DataListUiConfig {
   columnPanel?: DataListPartConfig<DataListColumnPanelUi, DataListColumnPanelProps>
   sortMenu?: DataListPartConfig<DataListSortMenuUi, DataListSortMenuProps>
   layoutSwitch?: DataListPartConfig<DataListLayoutSwitchUi, DataListLayoutSwitchProps>
+  viewToggle?: DataListPartConfig<DataListViewToggleUi, DataListViewToggleProps>
   content?: DataListPartConfig<DataListContentUi>
   table?: DataListTableConfig
+  summary?: DataListPartConfig<DataListSummaryUi>
   grid?: DataListGridConfig
   pagination?: DataListPartConfig<DataListPaginationUi, DataListPaginationProps>
   infiniteLoader?: DataListPartConfig<DataListInfiniteLoaderUi, DataListInfiniteLoaderProps>
   selectionActions?: DataListPartConfig<DataListSelectionActionsUi, DataListSelectionActionsProps>
-  /** Overrides merged on top of this config while the viewport is below the `md` breakpoint. */
+  /**
+   * Overrides merged on top of this config while the viewport is below the `md` breakpoint.
+   *
+   * Below `md` the package also adds a 44px touch target (`min-h-11 min-w-11` and alike) to the
+   * controls a thumb reaches, under the classes of each `ui` slot: yours add to them and win only
+   * where they conflict. To shrink a control back, state the conflicting utilities, for example
+   * `min-h-0 min-w-0`.
+   */
   mobile?: Omit<DataListUiConfig, 'mobile'>
 }
 

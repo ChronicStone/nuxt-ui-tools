@@ -17,6 +17,8 @@ pagination: {
 
 The source receives `{ mode: 'offset', pageIndex, pageSize, count: 'exact' }`. Page and size remain URL-backed as `?p.page=3&p.size=50`, and `<UiDataListPagination />` renders the numbered footer.
 
+The footer names every control in the locale: the first, previous, next, and last buttons ("Première page", "Page précédente", ...) and each page ("Page 2 sur 3"). Below `md` it collapses to a range, a compact previous/next pager with a "1 / 3" indicator, and, while summary rows are available, the view toggle between them. Replace the toggle with the footer's `view-toggle` slot.
+
 ## Cursor pagination
 
 Cursor mode is for remote sources and accumulates pages with TanStack Query. The request and response are structurally compatible with Drizzle Resource 2.0 without adding it as a dependency.

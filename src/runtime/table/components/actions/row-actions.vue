@@ -8,6 +8,7 @@ import { computed, ref, useAttrs } from 'vue'
 import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
 import { useTableInternals } from '../../composables/use-table-internals'
 import { useTableRowActionScope } from '../../composables/use-table-row-actions'
+import { useTableRowLabels } from '../../composables/use-table-row-labels'
 import type { DataListControlSize } from '../../types'
 import { createRowActionDropdownGroups, resolveVisibleTableRowActions } from '../../utils'
 
@@ -54,6 +55,11 @@ function runSheetItem(item: SheetItem) {
   item.onSelect?.(new Event('select'))
 }
 const scope = useTableRowActionScope()
+const labels = useTableRowLabels()
+/** Names the menu for the record it acts on: the drawer's title and the trigger's accessible name. */
+const label = computed(() =>
+  scope ? labels.rowActions({ index: scope.value.index, row: scope.value.row }) : undefined,
+)
 const portal = computed(() => props.portal ?? true)
 const visibleActions = computed(() => {
   if (!scope?.value) {
@@ -83,7 +89,7 @@ const items = computed(() => {
     v-if="scope && visibleActions.length && items.length && isMobile"
     v-model:open="sheetOpen"
     direction="bottom"
-    title="Actions"
+    :title="label"
     :ui="{
       header: 'sr-only',
       content: 'nut-dl-sheet rounded-t-[16px]',
@@ -91,7 +97,7 @@ const items = computed(() => {
       body: 'p-0 pb-4',
     }"
   >
-    <slot :items="items" :open="sheetOpen" />
+    <slot :items="items" :open="sheetOpen" :label="label" />
     <template #body>
       <div class="px-[10px] pt-2">
         <template v-for="(item, index) in sheetItems" :key="index">
@@ -128,7 +134,7 @@ const items = computed(() => {
     v-bind="attrs"
   >
     <template #default="slotProps">
-      <slot v-bind="slotProps" :items="items" />
+      <slot v-bind="slotProps" :items="items" :label="label" />
     </template>
   </UDropdownMenu>
 </template>

@@ -130,7 +130,8 @@ function onKeydown(event: KeyboardEvent) {
       <TableSelectionControl
         v-if="checkbox"
         :model-value="selected"
-        :ariaLabel="t('table.tree.selectRow')"
+        :row="node.row"
+        :index="index"
         @toggle="emit('select', $event)"
       />
     </span>

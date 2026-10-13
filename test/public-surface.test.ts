@@ -52,4 +52,14 @@ describe('public package surface', () => {
     expect(importsSource).toContain("{ from: 'table', name: 'tableSource' }")
     expect(tableUtilsEntry).toContain('tableSource')
   })
+
+  it('registers the view toggle as a granular table part', () => {
+    const componentsSource = readRepositoryFile('src/components.ts')
+    const part = readRepositoryFile(
+      'src/runtime/table/components/data-list/data-list-view-toggle.vue',
+    )
+
+    expect(componentsSource).toContain("'ViewToggle'")
+    expect(part).toContain('rowSummary')
+  })
 })

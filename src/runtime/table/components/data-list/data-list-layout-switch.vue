@@ -18,6 +18,12 @@ import type {
 } from '../../types'
 import { mergeDataListProps, mergeDataListUiClass } from '../../utils'
 
+/** Names each layout, for its tooltip, its accessible name and the labelled form of the switch. */
+const LAYOUT_LABEL_KEYS = {
+  grid: 'table.header.gridView',
+  table: 'table.header.tableView',
+} as const satisfies Record<TableLayout, string>
+
 const props = withDefaults(
   defineProps<{
     size?: DataListControlSize
@@ -78,21 +84,15 @@ function setLayout(layout: TableLayout) {
       :size="resolvedSize"
       :class="mergeDataListUiClass('nut-dl-layout', undefined, resolvedUi.root)"
     >
-      <UTooltip
-        v-for="layout in order"
-        :key="layout"
-        :text="layout === 'table' ? t('table.header.tableView') : t('table.header.gridView')"
-      >
+      <UTooltip v-for="layout in order" :key="layout" :text="t(LAYOUT_LABEL_KEYS[layout])">
         <UButton
           v-bind="buttonProps(internals.controls.tableLayout.value === layout)"
           :data-active="internals.controls.tableLayout.value === layout"
           :icon="
             controlProps.icons?.[layout] ?? (layout === 'table' ? 'i-lucide-menu' : 'i-lucide-box')
           "
-          :label="labels ? (layout === 'table' ? 'Table' : 'Grid') : undefined"
-          :aria-label="
-            layout === 'table' ? t('table.header.tableView') : t('table.header.gridView')
-          "
+          :label="labels ? t(LAYOUT_LABEL_KEYS[layout]) : undefined"
+          :aria-label="t(LAYOUT_LABEL_KEYS[layout])"
           :ui="{
             base: mergeDataListUiClass('nut-dl-layout__btn', undefined, resolvedUi.trigger),
             label: resolvedUi.triggerLabel,

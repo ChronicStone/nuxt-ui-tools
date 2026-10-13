@@ -8,6 +8,8 @@ defineTableSchema({
   rowKey,
   source: tableSource({ ... }),
   defaultLayout,
+  rowLabel,
+  empty,
   pagination,
   context,
   pageContext,
@@ -51,3 +53,9 @@ In most setups you will use:
 - `pagination`
 - `table`
 - optionally `grid`
+
+## Record Names And First Use
+
+- `rowLabel: (row) => row.name` names each record for assistive technology: the row checkbox reads "Select {name}", the row-actions button "Actions for {name}", and the mobile actions sheet is titled with it. Without it the controls name the row by its position on the page. See `selection.md`.
+- `empty: { icon, title, description, action }` is what the list shows while it has no record at all, including a first action. See `layouts.md`.
+- `table.summary` reads each record as one compact row below `md`. See `layouts.md`.

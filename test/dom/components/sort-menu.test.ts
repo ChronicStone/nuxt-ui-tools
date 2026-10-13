@@ -132,3 +132,29 @@ describe('DataListSortMenu mobile sheet', () => {
     expect(must(w.findAll('.nut-dl-sort__dir button')[1]).classes()).toContain('bg-default')
   })
 })
+
+describe('DataListSortMenu with summary rows', () => {
+  it('takes the place of the column headers the rows do not have', async () => {
+    harness = await mountMenu({
+      breakpoint: 'sm',
+      menuProps: { layouts: ['grid'] },
+      schema: createAccountsSchema({ summary: true }),
+    })
+    const w = harness.wrapper
+    expect(w.find('.nut-dl-sortbtn--sheet').exists()).toBeTruthy()
+    await w.find('.nut-dl-sortbtn--sheet').trigger('click')
+    await harness.flush()
+    await must(w.findAll('.nut-dl-sort__row')[2]).trigger('click')
+    await harness.flush()
+    expect(harness.internals.tableColumns.sortingState.value.key).toBe('country')
+
+    harness.internals.rowSummary.setActive(false)
+    await harness.flush()
+    expect(w.find('.nut-dl-sortbtn--sheet').exists()).toBeFalsy()
+  })
+
+  it('stays hidden for the table when summary rows are not configured', async () => {
+    harness = await mountMenu({ breakpoint: 'sm', menuProps: { layouts: ['grid'] } })
+    expect(harness.wrapper.find('.nut-dl-sortbtn--sheet').exists()).toBeFalsy()
+  })
+})

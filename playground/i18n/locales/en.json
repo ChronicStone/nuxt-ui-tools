@@ -309,6 +309,49 @@
       },
       "noCompany": "No company",
       "noDepartment": "No department"
+    },
+    "tableSummary": {
+      "eyebrow": "Accounts",
+      "title": "Accounts",
+      "description": "Summary rows read each account as an identity, one status, two values and one action. The toggle in the footer brings the table back.",
+      "searchPlaceholder": "Search an account...",
+      "hint": "Tap a row to open its account.",
+      "opened": "Opened: {name}",
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "inactive": "Inactive"
+      },
+      "kind": {
+        "partner": "Partner",
+        "client": "Client",
+        "testCenter": "Test centre"
+      },
+      "columns": {
+        "name": "Account",
+        "kind": "Type",
+        "city": "City",
+        "status": "Status"
+      },
+      "filters": {
+        "status": "Status",
+        "kind": "Type"
+      },
+      "actions": {
+        "open": "Open account",
+        "suspend": "Suspend",
+        "reactivate": "Reactivate",
+        "export": "Export",
+        "archive": "Archive"
+      }
+    },
+    "tableFirstUse": {
+      "title": "Accounts",
+      "description": "A workspace with no account yet offers its first action. A list hidden by a search keeps its reset instead.",
+      "emptyTitle": "No account yet",
+      "emptyDescription": "Create your first account to start assessing.",
+      "action": "Create an account",
+      "reset": "Back to empty"
     }
   },
   "pages": {

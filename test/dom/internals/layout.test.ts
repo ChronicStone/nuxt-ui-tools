@@ -92,6 +92,7 @@ describe('table layout', () => {
       layout: true,
       refresh: true,
       sort: false,
+      summary: false,
     })
 
     harness.internals.controls.setTableLayout('grid')
@@ -105,6 +106,36 @@ describe('table layout', () => {
       layout: false,
       refresh: false,
       sort: true,
+      summary: false,
     })
+  })
+
+  it('swaps the column panel for the sort menu while summary rows are shown', async () => {
+    harness = await mountLoaded({
+      breakpoint: 'sm',
+      schema: createAccountsSchema({ summary: true }),
+    })
+    expect(harness.internals.controls.headerControls.value).toMatchObject({
+      columns: false,
+      sort: true,
+      summary: true,
+    })
+
+    harness.internals.rowSummary.setActive(false)
+    await harness.flush()
+    expect(harness.internals.controls.headerControls.value).toMatchObject({
+      columns: true,
+      sort: false,
+      summary: true,
+    })
+  })
+
+  it('lets the schema hide the summary toggle', async () => {
+    harness = await mountLoaded({
+      breakpoint: 'sm',
+      schema: createAccountsSchema({ controls: { summary: false }, summary: true }),
+    })
+    expect(harness.internals.rowSummary.active.value).toBeTruthy()
+    expect(harness.internals.controls.headerControls.value.summary).toBeFalsy()
   })
 })

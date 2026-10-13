@@ -282,7 +282,9 @@ export function mergeDataListUiConfig(
     search: mergeSearchConfig(appUi?.search, componentUi?.search),
     selectionActions: mergePartConfig(appUi?.selectionActions, componentUi?.selectionActions),
     sortMenu: mergePartConfig(appUi?.sortMenu, componentUi?.sortMenu),
+    summary: mergeUiConfig(appUi?.summary, componentUi?.summary),
     table: mergeUiConfig(appUi?.table, componentUi?.table),
+    viewToggle: mergePartConfig(appUi?.viewToggle, componentUi?.viewToggle),
   }
 }
 

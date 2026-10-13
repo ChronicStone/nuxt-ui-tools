@@ -81,7 +81,7 @@ describe('layout switch part', () => {
       must(buttons[1]).attributes('data-icon'),
       must(buttons[1]).attributes('data-variant'),
       must(buttons[1]).attributes('data-size'),
-    ]).toStrictEqual([['Grid', 'Table'], 'i-lucide-rows-3', 'ghost', 'sm'])
+    ]).toStrictEqual([['Vue grille', 'Vue tableau'], 'i-lucide-rows-3', 'ghost', 'sm'])
     expect(must(buttons[1]).classes()).toContain('btn-x')
     expect(harness.wrapper.find('.nut-dl-layout').classes()).toContain('root-x')
   })

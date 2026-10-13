@@ -7,9 +7,13 @@ import { must } from '../../helpers/must'
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
 import { mountDataList, mountLoaded } from '../harness'
 import type { Harness } from '../harness'
+import { localeCode } from '../stubs/nuxt-ui-locale'
 
 let harness: Harness | undefined
-afterEach(() => harness?.unmount())
+afterEach(() => {
+  harness?.unmount()
+  localeCode.value = 'fr'
+})
 
 function mountFooter(
   options: Partial<Parameters<typeof mountLoaded>[0]> & {
@@ -182,5 +186,164 @@ describe('TableFooter compact', () => {
     expect(harness.wrapper.find('.custom-nav').text()).toBe('3')
     expect(harness.wrapper.find('.custom-size').text()).toBe('20')
     expect(harness.wrapper.find('[data-ui="UPagination"]').exists()).toBeFalsy()
+  })
+})
+
+function pagerNames(mounted: Harness) {
+  const pager = mounted.wrapper.find('[data-ui="UPagination"]')
+  const nameOf = (selector: string) =>
+    pager.find(`${selector} [data-ui="UButton"]`).attributes('aria-label')
+  return {
+    pages: pager
+      .findAll('[data-ui-page]')
+      .map((item) => item.find('[data-ui="UButton"]').attributes('aria-label')),
+    steps: [
+      nameOf('[data-ui-page-first]'),
+      nameOf('[data-ui-page-prev]'),
+      nameOf('[data-ui-page-next]'),
+      nameOf('[data-ui-page-last]'),
+    ],
+  }
+}
+
+describe('TableFooter accessible names', () => {
+  it('names the step buttons and every page in the locale', async () => {
+    harness = await mountFooter()
+    expect(pagerNames(harness)).toStrictEqual({
+      pages: ['Page 1 sur 3', 'Page 2 sur 3', 'Page 3 sur 3'],
+      steps: ['Première page', 'Page précédente', 'Page suivante', 'Dernière page'],
+    })
+    expect(
+      harness.wrapper
+        .findAll('.nut-dl-pager [data-ui="UButton"]')
+        .map((button) => button.attributes('data-icon')),
+    ).toStrictEqual([
+      'i-lucide-chevrons-left',
+      'i-lucide-chevron-left',
+      undefined,
+      undefined,
+      undefined,
+      'i-lucide-chevron-right',
+      'i-lucide-chevrons-right',
+    ])
+  })
+
+  it('follows the locale', async () => {
+    localeCode.value = 'en'
+    harness = await mountFooter()
+    expect(pagerNames(harness)).toStrictEqual({
+      pages: ['Page 1 of 3', 'Page 2 of 3', 'Page 3 of 3'],
+      steps: ['First page', 'Previous page', 'Next page', 'Last page'],
+    })
+    harness.unmount()
+
+    harness = await mountFooter({ breakpoint: 'sm' })
+    expect(
+      harness.wrapper
+        .findAll('.nut-dl-pager--compact [data-ui="UButton"]')
+        .map((button) => button.attributes('aria-label')),
+    ).toStrictEqual(['Previous page', 'Next page'])
+  })
+
+  it('keeps page links and icons from the pagination props', async () => {
+    harness = await mountFooter({
+      footerProps: {
+        props: {
+          pagination: {
+            firstIcon: 'i-lucide-arrow-left-to-line',
+            to: (page: number) => `/accounts?page=${page}`,
+          },
+        },
+      },
+    })
+    const pager = harness.wrapper.find('[data-ui="UPagination"]')
+    expect([
+      pager.find('[data-ui-page-first] [data-ui="UButton"]').attributes('data-icon'),
+      ...['first', 'prev', 'next', 'last'].map((slot) =>
+        pager.find(`[data-ui-page-${slot}] [data-ui="UButton"]`).attributes('to'),
+      ),
+      ...pager.findAll('[data-ui-page] [data-ui="UButton"]').map((item) => item.attributes('to')),
+    ]).toStrictEqual([
+      'i-lucide-arrow-left-to-line',
+      '/accounts?page=1',
+      undefined,
+      '/accounts?page=2',
+      '/accounts?page=3',
+      '/accounts?page=1',
+      '/accounts?page=2',
+      '/accounts?page=3',
+    ])
+  })
+})
+
+function footerParts(mounted: Harness) {
+  return Array.from(mounted.wrapper.find('footer').element.children, (child) =>
+    [...child.classList].find((name) => name.startsWith('nut-dl-footer__')),
+  )
+}
+
+describe('TableFooter view toggle', () => {
+  it('sits between the range and the pager as a text button', async () => {
+    harness = await mountFooter({
+      breakpoint: 'sm',
+      schema: createAccountsSchema({ summary: true }),
+    })
+    expect(footerParts(harness)).toStrictEqual([
+      'nut-dl-footer__lead',
+      'nut-dl-footer__view',
+      'nut-dl-footer__pages',
+    ])
+    const toggle = harness.wrapper.find('.nut-dl-footer__view .nut-dl-view-toggle')
+    expect([toggle.text(), toggle.attributes('data-variant')]).toStrictEqual([
+      'Vue tableau',
+      'link',
+    ])
+    await toggle.trigger('click')
+    await harness.flush()
+    expect([
+      harness.internals.rowSummary.active.value,
+      harness.wrapper.find('.nut-dl-footer__view .nut-dl-view-toggle').text(),
+    ]).toStrictEqual([false, 'Vue liste'])
+  })
+
+  it('is left out where the list cannot read as summary rows', async () => {
+    harness = await mountFooter({ schema: createAccountsSchema({ summary: true }) })
+    expect(footerParts(harness)).toStrictEqual(['nut-dl-footer__lead', 'nut-dl-footer__pages'])
+    harness.unmount()
+
+    harness = await mountFooter({ breakpoint: 'sm' })
+    expect(harness.wrapper.find('.nut-dl-footer__view').exists()).toBeFalsy()
+  })
+
+  it('follows summary rows onto a larger viewport when the schema asks for them there', async () => {
+    harness = await mountFooter({ schema: createAccountsSchema({ summary: { enabled: true } }) })
+    expect(harness.wrapper.find('.nut-dl-footer__view .nut-dl-view-toggle').text()).toBe(
+      'Vue tableau',
+    )
+  })
+
+  it('can be replaced through its slot', async () => {
+    harness = await mountLoaded({
+      render: () =>
+        h(DataListPagination, null, {
+          'view-toggle': () => h('i', { class: 'custom-toggle' }, 'Basculer'),
+        }),
+      breakpoint: 'sm',
+      schema: createAccountsSchema({ summary: true }),
+    })
+    expect(harness.wrapper.find('.nut-dl-footer__view .custom-toggle').text()).toBe('Basculer')
+    expect(harness.wrapper.find('.nut-dl-view-toggle').exists()).toBeFalsy()
+  })
+
+  it('keeps the footer for the toggle alone when every other control is off', async () => {
+    harness = await mountFooter({
+      breakpoint: 'sm',
+      schema: createAccountsSchema({
+        pagination: { showPageSizePicker: false, showPagesCount: false, showPagesList: false },
+        summary: true,
+      }),
+    })
+    expect(footerParts(harness)).toStrictEqual(['nut-dl-footer__lead', 'nut-dl-footer__view'])
+    expect(harness.wrapper.find('.nut-dl-view-toggle').exists()).toBeTruthy()
   })
 })

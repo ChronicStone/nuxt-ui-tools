@@ -409,7 +409,7 @@ export const UPaginationStub = defineComponent({
     ui: optional,
     variant: optional,
   },
-  setup(props, { attrs, emit }) {
+  setup(props, { attrs, emit, slots }) {
     return () => {
       const page = Number(props.page ?? 1)
       const pages = Math.max(
@@ -423,6 +423,19 @@ export const UPaginationStub = defineComponent({
         target: number,
         disabled = false,
       ) {
+        const slotted = slots[slot]
+        if (slotted) {
+          return h(
+            'span',
+            {
+              class: uiClass(props.ui, slot),
+              'data-disabled': disabled ? 'true' : undefined,
+              [marker]: '',
+              onClick: () => !disabled && emit('update:page', target),
+            },
+            slotted(),
+          )
+        }
         return h(
           'button',
           {
@@ -433,6 +446,25 @@ export const UPaginationStub = defineComponent({
             type: 'button',
           },
           label,
+        )
+      }
+      function itemButton(value: number) {
+        const slotted = slots.item?.({
+          index: value - 1,
+          item: { type: 'page', value },
+          page,
+          pageCount: pages,
+        })
+        return h(
+          slotted ? 'span' : 'button',
+          {
+            class: uiClass(props.ui, 'item'),
+            'data-active': String(value === page),
+            'data-ui-page': String(value),
+            onClick: () => emit('update:page', value),
+            type: slotted ? undefined : 'button',
+          },
+          slotted ?? String(value),
         )
       }
       return h(
@@ -451,19 +483,7 @@ export const UPaginationStub = defineComponent({
         [
           pageButton('first', 'data-ui-page-first', '«', 1),
           pageButton('prev', 'data-ui-page-prev', '‹', page - 1, page <= 1),
-          ...Array.from({ length: pages }, (_, index) =>
-            h(
-              'button',
-              {
-                class: uiClass(props.ui, 'item'),
-                'data-active': String(index + 1 === page),
-                'data-ui-page': String(index + 1),
-                onClick: () => emit('update:page', index + 1),
-                type: 'button',
-              },
-              String(index + 1),
-            ),
-          ),
+          ...Array.from({ length: pages }, (_, index) => itemButton(index + 1)),
           pageButton('next', 'data-ui-page-next', '›', page + 1, page >= pages),
           pageButton('last', 'data-ui-page-last', '»', pages),
         ],

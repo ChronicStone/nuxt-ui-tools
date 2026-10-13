@@ -8,6 +8,7 @@ import { mergeDataListProps } from '../../utils'
 import RowActions from '../actions/row-actions.vue'
 
 const dataListUi = useDataListUi()
+const ui = computed(() => dataListUi.ui.value.table?.ui)
 const buttonProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
     {
@@ -34,12 +35,15 @@ const buttonProps = computed(() =>
         itemLeadingIcon: 'size-3.5',
       }"
     >
-      <UButton
-        v-bind="buttonProps"
-        square
-        aria-label="Row actions"
-        class="nut-dl-rowbtn text-muted hover:text-default focus-visible:text-default"
-      />
+      <template #default="{ label }">
+        <UButton
+          v-bind="buttonProps"
+          square
+          :aria-label="label"
+          :ui="{ base: ui?.rowAction }"
+          class="nut-dl-rowbtn text-muted hover:text-default focus-visible:text-default"
+        />
+      </template>
     </RowActions>
   </div>
 </template>

@@ -52,7 +52,12 @@ const resolvedUi = computed<DataListSortMenuUi>(() => ({
   ...dataListUi.ui.value.sortMenu?.ui,
   ...props.ui,
 }))
-const visible = computed(() => props.layouts.includes(internals.controls.tableLayout.value))
+/** Summary rows have no column headers to sort by, so the menu stands in for them. */
+const visible = computed(
+  () =>
+    props.layouts.includes(internals.controls.tableLayout.value) ||
+    (internals.rowSummary.active.value && sortKeys.value.length > 0),
+)
 const triggerControlProps = computed(() =>
   mergeDataListProps<DataListButtonProps>(
     { color: 'neutral', size: resolvedSize.value, variant: 'outline' },
