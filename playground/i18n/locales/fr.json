@@ -309,6 +309,49 @@
       },
       "noCompany": "Aucune entreprise",
       "noDepartment": "Aucun département"
+    },
+    "tableSummary": {
+      "eyebrow": "Comptes",
+      "title": "Comptes",
+      "description": "Les lignes résumé présentent chaque compte avec son identité, un statut, deux valeurs et une action. La bascule du pied de liste ramène le tableau.",
+      "searchPlaceholder": "Rechercher un compte...",
+      "hint": "Touchez une ligne pour ouvrir son compte.",
+      "opened": "Ouvert : {name}",
+      "status": {
+        "active": "Actif",
+        "pending": "En attente",
+        "inactive": "Inactif"
+      },
+      "kind": {
+        "partner": "Partenaire",
+        "client": "Client",
+        "testCenter": "Centre de test"
+      },
+      "columns": {
+        "name": "Compte",
+        "kind": "Type",
+        "city": "Ville",
+        "status": "Statut"
+      },
+      "filters": {
+        "status": "Statut",
+        "kind": "Type"
+      },
+      "actions": {
+        "open": "Ouvrir le compte",
+        "suspend": "Suspendre",
+        "reactivate": "Réactiver",
+        "export": "Exporter",
+        "archive": "Archiver"
+      }
+    },
+    "tableFirstUse": {
+      "title": "Comptes",
+      "description": "Un espace sans aucun compte propose sa première action. Une liste masquée par une recherche garde sa réinitialisation.",
+      "emptyTitle": "Aucun compte pour le moment",
+      "emptyDescription": "Créez votre premier compte pour commencer les évaluations.",
+      "action": "Créer un compte",
+      "reset": "Revenir à vide"
     }
   },
   "pages": {
