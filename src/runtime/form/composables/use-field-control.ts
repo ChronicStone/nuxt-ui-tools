@@ -11,6 +11,7 @@ import type {
   FormValidationTrigger,
 } from '../types'
 import { isEqualFormValue } from '../utils/compare'
+import { isFieldDisabledByCallback } from '../utils/disabled'
 import { createFormFieldInstance } from '../utils/field-instance'
 import { cloneFormValue } from '../utils/path'
 import { isFunction, isObject, isString } from '../utils/predicate'
@@ -119,16 +120,12 @@ export function useFieldControl<TField extends FormField>(
     return isFormControlSize(value) ? value : formUi.controlSize.value
   })
 
-  const disabled = computed(() => {
-    const current = field()
-    const value = Object.getOwnPropertyDescriptor(current, 'disabled')?.value
-    const disabledByCallback = isFunction(value) ? value(params.value) === true : false
-    return (
-      disabledByCallback ||
+  const disabled = computed(
+    () =>
+      isFieldDisabledByCallback(field(), params.value) ||
       form.actionPending.value !== null ||
-      (options.disableOnLoading.value && options.loading.value)
-    )
-  })
+      (options.disableOnLoading.value && options.loading.value),
+  )
 
   /** Authored placeholder only: a field that declares none shows none. */
   const placeholder = computed<string | undefined>(() =>

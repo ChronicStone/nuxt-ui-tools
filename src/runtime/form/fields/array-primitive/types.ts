@@ -24,7 +24,15 @@ type ContainerFieldType =
   | 'button'
   | 'hidden'
 
-type ItemFieldChrome = 'key' | 'label' | 'description' | 'hint' | 'help' | 'labelExtra' | 'layout'
+type ItemFieldChrome =
+  | 'key'
+  | 'label'
+  | 'description'
+  | 'hint'
+  | 'help'
+  | 'disabledReason'
+  | 'labelExtra'
+  | 'layout'
 
 type DistributiveOmit<TValue, TKey extends PropertyKey> = TValue extends unknown
   ? Omit<TValue, TKey>

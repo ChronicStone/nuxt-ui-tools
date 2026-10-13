@@ -50,6 +50,8 @@ export interface FormFieldUi {
   hint?: FormUiClass
   labelExtra?: FormUiClass
   help?: FormUiClass
+  disabledReason?: FormUiClass
+  disabledReasonIcon?: FormUiClass
   body?: FormUiClass
   content?: FormUiClass
   pending?: FormUiClass

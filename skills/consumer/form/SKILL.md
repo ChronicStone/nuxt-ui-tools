@@ -176,6 +176,26 @@ label does not, such as an example value (`prenom@exemple.fr`) or a format. Sele
 keep the search prompt Nuxt UI localizes for searchable lists, and date, color-picker, and
 one-time-code controls keep their own format hints.
 
+A field's `disabled` callback locks it; add `disabledReason` to say why and what unlocks it. The
+reason renders under the control in muted text with a small lock icon, and only while that
+`disabled` callback holds, so it never explains the disabling the engine does itself (a pending
+submit, options still loading). It takes text, lazy text, or a `{ ctx, deps, api }` callback that
+returns nothing when no reason applies. It sits after the field's `help`, shows wherever the field
+renders its wrapper (not in bare table cells or primitive array items), and is announced with the
+control. Style it through `ui.field.ui.disabledReason` and `ui.field.ui.disabledReasonIcon`.
+
+```ts
+{
+  key: 'center',
+  type: 'select',
+  label: 'Centre de test',
+  options: centers,
+  dependencies: ['account'],
+  disabled: ({ deps }) => !deps.get('account'),
+  disabledReason: 'Choisissez d’abord un compte',
+}
+```
+
 Submit handlers receive typed external-error controls through `api.setError(path, message)` and
 `api.clearError(path?)`. Map expected server failures to their owning fields and return
 `{ success: false }`; use one application-level toast only when the failure is not mapped. Editing

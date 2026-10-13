@@ -116,6 +116,12 @@ export interface FormStatefulFieldBase<
   props?: FormFieldProps<TProps, TContext, TDeps>
   /** Disables the field without removing it from form state. */
   disabled?: FormFieldCallback<boolean, TContext, TDeps, TValue>
+  /**
+   * Why the field is disabled, shown under the control with a lock icon only while the `disabled`
+   * callback holds. Static text, or a callback receiving `{ ctx, deps, api }` that returns nothing
+   * when no reason applies.
+   */
+  disabledReason?: FormText | FormFieldCallback<FormText | undefined, TContext, TDeps, TValue>
   /** Controls whether the field is rendered. Hidden fields can still be part of form state. */
   condition?: FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Validation behavior for this field. */

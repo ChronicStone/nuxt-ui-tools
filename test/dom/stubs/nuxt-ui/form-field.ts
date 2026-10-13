@@ -35,6 +35,13 @@ export default defineComponent({
       if (props.error && props.error !== true) {
         return h('p', { class: uiClass('error'), 'data-ui-error': '' }, scalarText(props.error))
       }
+      if (slots.help) {
+        return h(
+          'p',
+          { class: uiClass('help'), 'data-ui-help': '' },
+          slots.help({ help: props.help }),
+        )
+      }
       if (props.help !== undefined) {
         return h('p', { class: uiClass('help'), 'data-ui-help': '' }, scalarText(props.help))
       }

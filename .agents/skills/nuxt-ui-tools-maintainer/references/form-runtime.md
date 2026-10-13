@@ -139,6 +139,12 @@ When adding form features, bias toward:
   control shows a placeholder only when the schema authors one and no
   `form.fields.text.defaultPlaceholder` key exists. Date-family, color-picker, and one-time-code
   keep their own format and visual hints because those are not generic prompts.
+- `utils/disabled.ts` owns the author-driven part of disabling: `isFieldDisabledByCallback` feeds
+  `useFieldControl`, and `resolveFieldDisabledReason` feeds `FormFieldShell`, which renders the
+  reason in the `UFormField` `help` slot (after the help copy, with the string `help` prop kept so
+  Nuxt UI still wires `aria-describedby`). Engine-driven disabling (pending action, loading
+  options) never carries a reason. Items of a primitive array render bare, so `disabledReason` is
+  part of `ItemFieldChrome` there.
 - `fields/choice-card/` is the presentation `radio-card` and `checkbox-card` share: the grid
   (`--nut-choice-columns`), the corner check, and the icon tile, with `ui.tile` and `ui.check` for
   the parts the engine renders. `checkbox-card` strips option icons from the items it hands to
