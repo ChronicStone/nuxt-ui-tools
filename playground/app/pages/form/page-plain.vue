@@ -22,6 +22,7 @@ function typeSection() {
     description: () => t('pages.formPagePlain.sections.type.description'),
     fields: [
       {
+        groupKey: 'group',
         key: 'accountType',
         layout: { span: 'full' },
         // Eight types stay short as compact cards under four headings. The options come from a
@@ -34,12 +35,7 @@ function typeSection() {
             label: t(`pages.formPagePlain.types.${type.value}.label`),
             value: type.value,
           })),
-        props: {
-          columns: '1 md:2 xl:3',
-          density: 'compact',
-          groupKey: 'group',
-          indicator: 'corner',
-        },
+        props: { columns: '1 md:2 xl:3', density: 'compact', indicator: 'corner' },
         required: true,
         type: 'radio-card',
       },

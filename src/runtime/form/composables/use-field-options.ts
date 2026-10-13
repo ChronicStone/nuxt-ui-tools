@@ -9,7 +9,6 @@ import type {
   FormField,
   FormFieldApi,
   FormFieldCallbackParams,
-  FormObject,
   FormOptionConfig,
   FormOptionValue,
   FormRemoteLoaderOptionConfig,
@@ -44,8 +43,6 @@ import { useRemoteFieldOptions } from './use-remote-field-options'
 export function useFieldOptions(params: {
   field: () => FormField
   path: () => readonly string[]
-  /** The `props` of the field after dynamic resolution. */
-  props: ComputedRef<FormObject>
   api: ComputedRef<FormFieldApi>
   callbackParams: ComputedRef<FormFieldCallbackParams>
   register: FormRuntime['registerFieldOptions']
@@ -61,14 +58,9 @@ export function useFieldOptions(params: {
   const promiseResolution = shallowRef<Promise<void> | null>(null)
   const creating = ref<boolean>(false)
   const remoteConfig = computed(() => resolveRemoteOptionConfig(params.field()))
-  // A primitive, so the option keys (and the options normalized with them) only change when the
-  // property that holds the heading does, not each time the dynamic props resolve again.
-  const groupKey = computed<string | undefined>(() =>
-    resolveOptionGroupKey(params.field(), params.props.value),
-  )
   const optionKeys = computed<FormOptionKeys>(() => ({
     ...resolveOptionKeys(params.field()),
-    group: groupKey.value,
+    group: resolveOptionGroupKey(params.field()),
   }))
   const remote = useRemoteFieldOptions({
     api: params.api,

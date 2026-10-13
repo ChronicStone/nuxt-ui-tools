@@ -46,20 +46,26 @@ export interface FormChoiceCardProps {
    * an ellipsis (the full description stays in the card's tooltip). Defaults to `default`.
    */
   density?: FormChoiceCardDensity
+}
+
+/**
+ * Option grouping of the radio and checkbox cards, declared on the field next to its `options`.
+ *
+ * @example
+ * ```ts
+ * // Rows from the API, each with a `section` to list the cards under.
+ * { type: 'radio-card', options: () => queryOptions({ queryKey: ['plans'], queryFn: fetchPlans }), groupKey: 'section' }
+ * ```
+ */
+export interface FormChoiceCardGrouping {
   /**
    * Property of the options that holds the heading they are listed under. Options written inline
    * in the schema group by their `group` without it. The records a function, a promise or a query
    * returns group only when this names the property, so records that already carry a `group` for
-   * another purpose are never regrouped by surprise.
-   *
-   * @example
-   * ```ts
-   * // Rows from the API, each with a `section` to list the cards under.
-   * options: () => queryOptions({ queryKey: ['plans'], queryFn: fetchPlans }),
-   * props: { groupKey: 'section' }
-   * ```
+   * another purpose are never regrouped by surprise. `false` lists every option together, even
+   * inline options that carry a `group`.
    */
-  groupKey?: string
+  groupKey?: string | false
 }
 
 /**
@@ -75,7 +81,7 @@ export interface FormChoiceCardOption<
    * Heading this option is listed under. Options sharing a heading are listed together, and the
    * headings follow the order in which they first appear in the options. Options without one
    * stay together, without a heading. Read from this property for options written inline in the
-   * schema; options a function, a promise or a query returns need `props.groupKey`.
+   * schema; options a function, a promise or a query returns need `groupKey`.
    */
   group?: FormText
 }

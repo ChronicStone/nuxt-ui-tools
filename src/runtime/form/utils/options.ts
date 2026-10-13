@@ -2,7 +2,6 @@ import type {
   FormValue,
   FormField,
   FormFieldCallbackParams,
-  FormObject,
   FormOptionItem,
   FormOptionValue,
 } from '../types'
@@ -97,14 +96,16 @@ export function readOptionSource(field: FormField): FormValue {
 
 /**
  * Property the options of a field hold their heading in, for the field kinds that list options
- * under headings. `props.groupKey` names it. Without it, options written inline in the schema
- * group by their `group`, the way a literal option is authored. The records a function, a promise
- * or a query returns belong to the author's data, so a `group` they happen to carry is not read
- * until `groupKey` maps it.
+ * under headings. The field's `groupKey` names it, read statically from the definition like
+ * `labelKey` and `valueKey`. Without it, options written inline in the schema group by their
+ * `group`, the way a literal option is authored. The records a function, a promise or a query
+ * returns belong to the author's data, so a `group` they happen to carry is not read until
+ * `groupKey` maps it. `groupKey: false` opts out.
  */
-export function resolveOptionGroupKey(field: FormField, props: FormObject): string | undefined {
+export function resolveOptionGroupKey(field: FormField): string | undefined {
   if (!createFormFieldInstance(field).capability.has('optionGroups')) return undefined
-  const mapped = props.groupKey
+  const mapped = Object.getOwnPropertyDescriptor(field, 'groupKey')?.value
+  if (mapped === false) return undefined
   if (isString(mapped) && mapped) return mapped
   return Array.isArray(readOptionSource(field)) ? DEFAULT_GROUP_KEY : undefined
 }

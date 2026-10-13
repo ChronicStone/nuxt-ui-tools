@@ -7,14 +7,7 @@ import { CARD_SELECTED_RING } from '../card-selection'
 import type { ChoiceCardKind, ChoiceCardLayout, ChoiceCardMark, FormChoiceCardProps } from './types'
 
 /** Props the card fields render themselves, kept away from the Nuxt UI group. */
-export const CHOICE_CARD_PROPS = [
-  'columns',
-  'density',
-  'groupKey',
-  'icon',
-  'indicator',
-  'orientation',
-]
+export const CHOICE_CARD_PROPS = ['columns', 'density', 'icon', 'indicator', 'orientation']
 
 interface ChoiceCardLayoutUi {
   /** Gap between the cards. */

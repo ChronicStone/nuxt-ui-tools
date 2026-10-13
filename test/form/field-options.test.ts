@@ -42,7 +42,6 @@ describe('form field options', () => {
           callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
           field: () => field,
           path: () => path,
-          props: computed(() => ({})),
           refreshFieldOptions: runtime.refreshFieldOptions,
           register: runtime.registerFieldOptions,
         })
@@ -99,7 +98,6 @@ describe('form field options', () => {
           callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
           field: () => field,
           path: () => path,
-          props: computed(() => ({})),
           refreshFieldOptions: runtime.refreshFieldOptions,
           register: runtime.registerFieldOptions,
         })
@@ -164,7 +162,6 @@ describe('form field options', () => {
           callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
           field: () => field,
           path: () => path,
-          props: computed(() => ({})),
           refreshFieldOptions: runtime.refreshFieldOptions,
           register: runtime.registerFieldOptions,
         })
@@ -214,7 +211,6 @@ describe('form field options', () => {
           callbackParams: computed(() => runtime.getFieldCallbackParams(path, field)),
           field: () => field,
           path: () => path,
-          props: computed(() => ({})),
           refreshFieldOptions: runtime.refreshFieldOptions,
           register: runtime.registerFieldOptions,
         })

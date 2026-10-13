@@ -63,18 +63,11 @@ export function useFieldControl<TField extends FormField>(
   const fieldControlAttrs = useFormFieldControlAttrs()
   const api = computed(() => form.getFieldApi(path(), field()))
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
-  const fieldProps = useResolvedFieldProps(field, path)
-  const resolvedProps = computed<FormObject>(() => {
-    // SAFETY: the resolved props are a plain record; the typed view only narrows known keys.
-    const record = fieldProps.value as FormObject
-    return record
-  })
   const options = useFieldOptions({
     api,
     callbackParams: params,
     field,
     path,
-    props: resolvedProps,
     refreshFieldOptions: form.refreshFieldOptions,
     register: form.registerFieldOptions,
   })
@@ -91,6 +84,12 @@ export function useFieldControl<TField extends FormField>(
     loading?: boolean
     trailing?: boolean
   }
+  const fieldProps = useResolvedFieldProps(field, path)
+  const resolvedProps = computed<FormObject>(() => {
+    // SAFETY: the resolved props are a plain record; the typed view only narrows known keys.
+    const record = fieldProps.value as FormObject
+    return record
+  })
   const controlProps = computed<FormControlProps>(() => {
     const current = field()
     const fieldUi = formUi.ui.value.fields?.[current.type]

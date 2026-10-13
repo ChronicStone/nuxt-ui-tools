@@ -171,19 +171,19 @@ When adding form features, bias toward:
   items into headed groups (pure, first-appearance order). Grouping is opt-in through the option
   keys: `normalizeOptionItem` reads a heading only from the property `FormOptionKeys.group` names,
   never from a raw `group`. Only the kinds that declare `options.groups` in their registry config
-  (the `optionGroups` capability) get that key, from `resolveOptionGroupKey`: `props.groupKey`
+  (the `optionGroups` capability) get that key, from `resolveOptionGroupKey(field)`: the field's top-level
+  `groupKey` (`FormChoiceCardGrouping`, read statically like `labelKey` and `valueKey`; `false` opts out)
   when set, else `'group'` for options written inline in the schema (an array, or a `source`
   array), else none, so the records a function, promise or query returns are never regrouped by a
-  `group` they happen to carry. `useFieldControl` resolves the field `props` once and hands them to
-  `useFieldOptions`, which derives the key as a primitive computed so the normalized options do not
-  recompute each time dynamic props resolve; `groupKey` is in `CHOICE_CARD_PROPS` to stay off the
-  Nuxt UI group. Nuxt UI's `RadioGroup` and `CheckboxGroup` cannot place a heading between their
+  `group` they happen to carry. The key is never read from `props`: a dynamic `props` callback may
+  read `api.options`, so deriving the option keys from it forms a computed cycle (items, keys,
+  props, `api.options`, items) that throws on mount. Nuxt UI's `RadioGroup` and `CheckboxGroup` cannot place a heading between their
   items, so each heading gets its own group with the heading as its `legend`; for `radio-card`
   that means one tab stop per group and a
   selection shown only in the group of the chosen option, which is the accepted cost of keeping
   Nuxt UI's card styling instead of re-implementing the radio group. Every group receives the
   same control attributes, but an `id` names one element: `choiceCardGroupAttrs` keeps the control
-  id on the first group and gives each later group `<id>-<index>` (in bare mode, a table or matrix
+  id on the first group and gives each later group `<id>-group-<index>`, a suffix Vue's `useId` never generates (in bare mode, a table or matrix
   cell, the id is always set; in a normal field Nuxt UI generates one per group), while
   `data-form-field` and the accessible name stay on every group so focus moving between groups does
   not leave the field. `density: 'compact'` selects

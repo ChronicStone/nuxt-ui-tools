@@ -445,7 +445,7 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
     label: 'Radio cards',
     notes: [
       'An option group puts its cards under a heading, in order of first appearance. A radio group allows one tab stop per heading.',
-      'Options written inline group by their group property. Options a function, a promise or a query returns group only when props.groupKey names the property that holds the heading.',
+      'Options written inline group by their group property. Options a function, a promise or a query returns group only when their groupKey names the property that holds the heading.',
     ],
   },
   {

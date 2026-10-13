@@ -142,8 +142,8 @@ describe('option group key', () => {
   })
 
   it('defaults to the group property for options written inline in the schema', () => {
-    expect(resolveOptionGroupKey(inline, {})).toBe('group')
-    expect(resolveOptionGroupKey(inlineSource, {})).toBe('group')
+    expect(resolveOptionGroupKey(inline)).toBe('group')
+    expect(resolveOptionGroupKey(inlineSource)).toBe('group')
   })
 
   it('gives the records a function, a promise or a query returns no default', () => {
@@ -170,40 +170,44 @@ describe('option group key', () => {
 
     expect(
       [fromFunction, fromPromise, fromQuery, fromSource].map((field) =>
-        resolveOptionGroupKey(field, {}),
+        resolveOptionGroupKey(field),
       ),
     ).toStrictEqual([undefined, undefined, undefined, undefined])
   })
 
-  it('reads the property props.groupKey names, from any source', () => {
+  it('reads the property groupKey names, from any source', () => {
     const fromFunction = defineFormField({
+      groupKey: 'section',
       key: 'kind',
       options: () => records,
       type: 'radio-card',
     })
+    const mappedInline = defineFormField({
+      groupKey: 'section',
+      key: 'kind',
+      options: records,
+      type: 'radio-card',
+    })
 
-    expect(resolveOptionGroupKey(fromFunction, { groupKey: 'section' })).toBe('section')
-    expect(resolveOptionGroupKey(inline, { groupKey: 'section' })).toBe('section')
+    expect(resolveOptionGroupKey(fromFunction)).toBe('section')
+    expect(resolveOptionGroupKey(mappedInline)).toBe('section')
   })
 
-  it('ignores a groupKey that is not a property name', () => {
-    expect(resolveOptionGroupKey(inline, { groupKey: '' })).toBe('group')
-    expect(resolveOptionGroupKey(inline, { groupKey: 3 })).toBe('group')
-    expect(
-      resolveOptionGroupKey(
-        defineFormField({ key: 'kind', options: () => records, type: 'radio-card' }),
-        {
-          groupKey: 3,
-        },
-      ),
-    ).toBeUndefined()
+  it('lists inline options together when groupKey is false', () => {
+    const optedOut = defineFormField({
+      groupKey: false,
+      key: 'kind',
+      options: records,
+      type: 'checkbox-card',
+    })
+
+    expect(resolveOptionGroupKey(optedOut)).toBeUndefined()
   })
 
   it('applies only to the field kinds that list options under headings', () => {
     const select = defineFormField({ key: 'country', options: records, type: 'select' })
 
-    expect(resolveOptionGroupKey(select, { groupKey: 'group' })).toBeUndefined()
-    expect(resolveOptionGroupKey(select, {})).toBeUndefined()
+    expect(resolveOptionGroupKey(select)).toBeUndefined()
   })
 
   it('reads the options source whether or not it is wrapped in a source property', () => {

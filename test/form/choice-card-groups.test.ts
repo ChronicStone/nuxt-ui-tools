@@ -88,8 +88,8 @@ describe('choice card group attributes', () => {
   })
 
   it('derives an id from the position for each later group and keeps every other attribute', () => {
-    expect(choiceCardGroupAttrs(control, 1)).toStrictEqual({ ...control, id: 'v-3-1' })
-    expect(choiceCardGroupAttrs(control, 2)).toStrictEqual({ ...control, id: 'v-3-2' })
+    expect(choiceCardGroupAttrs(control, 1)).toStrictEqual({ ...control, id: 'v-3-group-1' })
+    expect(choiceCardGroupAttrs(control, 2)).toStrictEqual({ ...control, id: 'v-3-group-2' })
   })
 
   it('does not invent an id: a group without one generates its own', () => {

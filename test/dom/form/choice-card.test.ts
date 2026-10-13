@@ -4,9 +4,18 @@ import type { DOMWrapper } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import { defineFormSchema } from '#ui-tools/form'
+import type { FormFieldCallbackParams } from '#ui-tools/form'
 import ChoiceCardLabel from '#ui-tools/form/fields/choice-card/choice-card-label.vue'
 
 import { mountForm } from './harness'
+
+function emptyOptionsDisable({ api }: FormFieldCallbackParams) {
+  return { disabled: api.options.get().length === 0 }
+}
+
+function loadingOptionsDisable({ api }: FormFieldCallbackParams) {
+  return { disabled: api.options.loading() || api.options.get().length === 0 }
+}
 
 const OPTIONS = [
   {
@@ -428,7 +437,7 @@ describe('choice card headings by option source', () => {
           {
             key: 'kind',
             options: () => ACCOUNT_TYPES,
-            props: { groupKey: 'group' },
+            groupKey: 'group',
             type: 'radio-card',
           },
         ],
@@ -451,13 +460,13 @@ describe('choice card headings by option source', () => {
           {
             key: 'kind',
             options: () => CATEGORIZED,
-            props: { groupKey: 'category' },
+            groupKey: 'category',
             type: 'radio-card',
           },
           {
             key: 'inline',
             options: CATEGORIZED,
-            props: { groupKey: 'category' },
+            groupKey: 'category',
             type: 'radio-card',
           },
         ],
@@ -482,7 +491,7 @@ describe('choice card headings by option source', () => {
           {
             key: 'kind',
             options: ACCOUNT_TYPES,
-            props: { groupKey: 'section' },
+            groupKey: 'section',
             type: 'radio-card',
           },
         ],
@@ -493,21 +502,55 @@ describe('choice card headings by option source', () => {
     harness.unmount()
   })
 
-  it('resolves groupKey from dynamic props', async () => {
+  it('mounts option fields whose dynamic props read the resolved options', async () => {
     const harness = await mountForm({
       schema: defineFormSchema({
         fields: [
           {
+            key: 'country',
+            options: async () => ACCOUNT_TYPES,
+            props: emptyOptionsDisable as never,
+            type: 'select',
+          },
+          {
             key: 'kind',
-            options: () => CATEGORIZED,
-            props: () => ({ groupKey: 'category' }),
+            options: async () => ACCOUNT_TYPES,
+            props: loadingOptionsDisable as never,
             type: 'radio-card',
           },
         ],
       }),
     })
+    await harness.until(() => harness.wrapper.findAll('input[type="radio"]').length === 8)
 
-    expect(headings(harness, 'URadioGroup')).toStrictEqual(['Organisation', 'Partenaire'])
+    expect(harness.wrapper.findAll('[data-form-field]')).toHaveLength(2)
+    harness.unmount()
+  })
+
+  it('lists inline options without headings when groupKey is false', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [{ groupKey: false, key: 'kind', options: ACCOUNT_TYPES, type: 'radio-card' }],
+      }),
+    })
+
+    expect(headings(harness, 'URadioGroup')).toStrictEqual([undefined])
+    harness.unmount()
+  })
+
+  it('groups inline checkbox cards by their group without a groupKey', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [{ key: 'kinds', options: ACCOUNT_TYPES, type: 'checkbox-card' }],
+      }),
+    })
+
+    expect(headings(harness, 'UCheckboxGroup')).toStrictEqual([
+      'Organisation cliente',
+      'Partenaire',
+      'Centre de test',
+      'Compte interne',
+    ])
     harness.unmount()
   })
 
@@ -519,7 +562,7 @@ describe('choice card headings by option source', () => {
           {
             key: 'mapped',
             options: async () => ACCOUNT_TYPES,
-            props: { groupKey: 'group' },
+            groupKey: 'group',
             type: 'radio-card',
           },
         ],
@@ -549,7 +592,7 @@ describe('choice card headings by option source', () => {
             key: 'mapped',
             options: () =>
               queryOptions({ queryFn: async () => ACCOUNT_TYPES, queryKey: ['card-mapped'] }),
-            props: { groupKey: 'group' },
+            groupKey: 'group',
             type: 'checkbox-card',
           },
         ],
@@ -572,7 +615,7 @@ describe('choice card headings by option source', () => {
           {
             key: 'kind',
             options: () => ACCOUNT_TYPES,
-            props: { groupKey: 'group' },
+            groupKey: 'group',
             type: 'radio-card',
           },
         ],
@@ -633,7 +676,11 @@ describe('choice card groups in table cells', () => {
     expect(new Set(ids.flat()).size).toBe(8)
     for (const [control, ...others] of ids) {
       expect(control).toBeTruthy()
-      expect(others).toStrictEqual([`${control}-1`, `${control}-2`, `${control}-3`])
+      expect(others).toStrictEqual([
+        `${control}-group-1`,
+        `${control}-group-2`,
+        `${control}-group-3`,
+      ])
     }
     harness.unmount()
   })
@@ -652,7 +699,11 @@ describe('choice card groups in table cells', () => {
     expect(new Set(ids.flat()).size).toBe(8)
     for (const [control, ...others] of ids) {
       expect(control).toBeTruthy()
-      expect(others).toStrictEqual([`${control}-1`, `${control}-2`, `${control}-3`])
+      expect(others).toStrictEqual([
+        `${control}-group-1`,
+        `${control}-group-2`,
+        `${control}-group-3`,
+      ])
     }
     harness.unmount()
   })
