@@ -393,6 +393,93 @@ describe('grouped choice cards', () => {
   })
 })
 
+const radioRowsSchema = defineFormSchema({
+  fields: [
+    {
+      confirmDelete: false,
+      fields: [{ key: 'kind', label: 'Compte', options: ACCOUNT_TYPES, type: 'radio-card' }],
+      key: 'rows',
+      type: 'array-table',
+    },
+  ],
+})
+
+const checkboxRowsSchema = defineFormSchema({
+  fields: [
+    {
+      confirmDelete: false,
+      fields: [{ key: 'kinds', label: 'Comptes', options: ACCOUNT_TYPES, type: 'checkbox-card' }],
+      key: 'rows',
+      type: 'array-table',
+    },
+  ],
+})
+
+function groupAttributes(
+  row: GroupFinder,
+  component: 'URadioGroup' | 'UCheckboxGroup',
+  name: string,
+) {
+  return row.findAll(`[data-ui="${component}"]`).map((group) => group.attributes(name))
+}
+
+describe('choice card groups in table cells', () => {
+  it('gives every radio group of a cell its own id and keeps the control id on the first', async () => {
+    const harness = await mountForm({
+      input: { rows: [{ kind: 'school' }, { kind: 'center' }] },
+      schema: radioRowsSchema,
+    })
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 2)
+    const ids = harness.wrapper
+      .findAll('tbody tr')
+      .map((row) => groupAttributes(row, 'URadioGroup', 'id'))
+
+    expect(ids.map((rowIds) => rowIds.length)).toStrictEqual([4, 4])
+    expect(new Set(ids.flat()).size).toBe(8)
+    for (const [control, ...others] of ids) {
+      expect(control).toBeTruthy()
+      expect(others).toStrictEqual([`${control}-1`, `${control}-2`, `${control}-3`])
+    }
+    harness.unmount()
+  })
+
+  it('gives every checkbox group of a cell its own id and keeps the control id on the first', async () => {
+    const harness = await mountForm({
+      input: { rows: [{ kinds: ['school'] }, { kinds: [] }] },
+      schema: checkboxRowsSchema,
+    })
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 2)
+    const ids = harness.wrapper
+      .findAll('tbody tr')
+      .map((row) => groupAttributes(row, 'UCheckboxGroup', 'id'))
+
+    expect(ids.map((rowIds) => rowIds.length)).toStrictEqual([4, 4])
+    expect(new Set(ids.flat()).size).toBe(8)
+    for (const [control, ...others] of ids) {
+      expect(control).toBeTruthy()
+      expect(others).toStrictEqual([`${control}-1`, `${control}-2`, `${control}-3`])
+    }
+    harness.unmount()
+  })
+
+  it('keeps the field marker and the accessible name on every group', async () => {
+    const harness = await mountForm({
+      input: { rows: [{ kind: 'school' }] },
+      schema: radioRowsSchema,
+    })
+    await harness.until(() => harness.wrapper.findAll('tbody tr').length === 1)
+    const row = harness.wrapper.find('tbody tr')
+
+    expect(groupAttributes(row, 'URadioGroup', 'data-form-field')).toStrictEqual(
+      Array.from({ length: 4 }, () => 'rows.0.kind'),
+    )
+    expect(groupAttributes(row, 'URadioGroup', 'aria-label')).toStrictEqual(
+      Array.from({ length: 4 }, () => 'Compte'),
+    )
+    harness.unmount()
+  })
+})
+
 describe('compact choice cards', () => {
   it('shrinks the cards and keeps the density prop off the Nuxt UI group', async () => {
     const harness = await mountForm({ schema: groupedSchema('compact') })

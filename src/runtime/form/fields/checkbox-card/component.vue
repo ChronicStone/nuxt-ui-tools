@@ -9,7 +9,7 @@ import { formOptionKey } from '../../utils/options'
 import { isBoolean, isNumber, isString, isUndefined } from '../../utils/predicate'
 import ChoiceCardLabel from '../choice-card/choice-card-label.vue'
 import { CHOICE_CARD_PROPS, useChoiceCard } from '../choice-card/use-choice-card'
-import { groupChoiceCardItems } from '../choice-card/utils'
+import { choiceCardGroupAttrs, groupChoiceCardItems } from '../choice-card/utils'
 import type { ChoiceCardGroup } from '../choice-card/utils'
 
 const props = defineProps<{
@@ -78,10 +78,10 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
   <FormFieldShell :field="field" :path="path">
     <div :class="cards.groupsClass.value">
       <UCheckboxGroup
-        v-for="group in groups"
+        v-for="(group, index) in groups"
         :key="group.key"
         :model-value="selectionOf(group)"
-        v-bind="controlProps"
+        v-bind="choiceCardGroupAttrs(controlProps, index)"
         :items="group.items"
         value-key="value"
         label-key="label"

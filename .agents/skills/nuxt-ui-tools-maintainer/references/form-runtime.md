@@ -172,7 +172,12 @@ When adding form features, bias toward:
   `CheckboxGroup` cannot place a heading between their items, so each heading gets its own group
   with the heading as its `legend`; for `radio-card` that means one tab stop per group and a
   selection shown only in the group of the chosen option, which is the accepted cost of keeping
-  Nuxt UI's card styling instead of re-implementing the radio group. `density: 'compact'` selects
+  Nuxt UI's card styling instead of re-implementing the radio group. Every group receives the
+  same control attributes, but an `id` names one element: `choiceCardGroupAttrs` keeps the control
+  id on the first group and gives each later group `<id>-<index>` (in bare mode, a table or matrix
+  cell, the id is always set; in a normal field Nuxt UI generates one per group), while
+  `data-form-field` and the accessible name stay on every group so focus moving between groups does
+  not leave the field. `density: 'compact'` selects
   the `compact` entry of `LAYOUT_UI` in `use-choice-card.ts` (a two-column label grid) and moves the
   description from the Nuxt UI group (stripped from its items) into `ChoiceCardLabel`. Nuxt UI
   centers the wrapper of a card whose indicator is hidden (`corner`, `switch`, `hidden`), so the

@@ -9,7 +9,10 @@ import type {
   FormText,
 } from '#ui-tools/form'
 
-import { groupChoiceCardItems } from '../../src/runtime/form/fields/choice-card/utils'
+import {
+  choiceCardGroupAttrs,
+  groupChoiceCardItems,
+} from '../../src/runtime/form/fields/choice-card/utils'
 
 interface Item {
   value: string
@@ -74,6 +77,31 @@ describe('choice card groups', () => {
       { heading: undefined, values: ['a'] },
       { heading: 'Partenaire', values: ['b', 'c'] },
     ])
+  })
+})
+
+describe('choice card group attributes', () => {
+  const control = { 'aria-label': 'Compte', 'data-form-field': 'rows.0.kind', id: 'v-3' }
+
+  it('keeps the control attributes untouched on the first group', () => {
+    expect(choiceCardGroupAttrs(control, 0)).toBe(control)
+  })
+
+  it('derives an id from the position for each later group and keeps every other attribute', () => {
+    expect(choiceCardGroupAttrs(control, 1)).toStrictEqual({ ...control, id: 'v-3-1' })
+    expect(choiceCardGroupAttrs(control, 2)).toStrictEqual({ ...control, id: 'v-3-2' })
+  })
+
+  it('does not invent an id: a group without one generates its own', () => {
+    const attrs = { size: 'md' }
+
+    expect(choiceCardGroupAttrs(attrs, 2)).toBe(attrs)
+  })
+
+  it('leaves the attributes it was given untouched', () => {
+    choiceCardGroupAttrs(control, 1)
+
+    expect(control.id).toBe('v-3')
   })
 })
 

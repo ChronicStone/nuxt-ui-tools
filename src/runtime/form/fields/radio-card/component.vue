@@ -10,7 +10,7 @@ import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import ChoiceCardLabel from '../choice-card/choice-card-label.vue'
 import { CHOICE_CARD_PROPS, useChoiceCard } from '../choice-card/use-choice-card'
 import type { ChoiceCardGroup } from '../choice-card/utils'
-import { groupChoiceCardItems } from '../choice-card/utils'
+import { choiceCardGroupAttrs, groupChoiceCardItems } from '../choice-card/utils'
 
 const props = defineProps<{
   field: FormRadioCardField
@@ -63,10 +63,10 @@ function select(value: FormValue) {
   <FormFieldShell :field="field" :path="path">
     <div :class="cards.groupsClass.value">
       <URadioGroup
-        v-for="group in groups"
+        v-for="(group, index) in groups"
         :key="group.key"
         :model-value="selectionOf(group)"
-        v-bind="controlProps"
+        v-bind="choiceCardGroupAttrs(controlProps, index)"
         value-key="value"
         label-key="label"
         variant="card"
