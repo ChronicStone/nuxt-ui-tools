@@ -249,9 +249,10 @@ export interface FormPageUi {
   navigationIndicator?: FormUiClass
   /** Check of a complete section in the indicator. */
   navigationIndicatorIcon?: FormUiClass
-  /** Dot in the indicator of the current section while it is pending. */
+  /** Dot in the indicator of the current section while it is pending or optional. */
   navigationIndicatorMarker?: FormUiClass
   navigationLabel?: FormUiClass
+  /** The "Optional" tag of an entry whose optional section has nothing entered. */
   navigationOptional?: FormUiClass
   navigationDirty?: FormUiClass
   /** Wrapper under the entries, whose padding insets the summary. */
@@ -267,6 +268,7 @@ export interface FormPageUi {
   sectionHeader?: FormUiClass
   sectionTitle?: FormUiClass
   sectionDescription?: FormUiClass
+  /** The "Optional" badge of an optional section with nothing entered. */
   sectionOptional?: FormUiClass
   sectionActions?: FormUiClass
   sectionReset?: FormUiClass

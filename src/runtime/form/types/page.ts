@@ -51,10 +51,10 @@ export interface FormPageSection<
   /** Supporting copy next to the title. */
   description?: FormText
   /**
-   * Shows the section as optional and leaves it out of the sections left to complete. A section
-   * without a required field is optional already; set this when its required fields are filled
-   * by their defaults and the user has nothing to do there. Set `false` to keep a section
-   * required when its only required fields are the cells of array rows.
+   * Marks the section optional while nothing is entered in it, and leaves it out of the sections
+   * left to complete. A section without a required field is optional already; set this when its
+   * required fields are filled by their defaults and the user has nothing to do there. Set
+   * `false` to keep a section required when its only required fields are the cells of array rows.
    */
   optional?: boolean
   /** Grid of the section's fields, merged over the schema `layout`. */
@@ -159,12 +159,18 @@ export interface FormPageScrollOptions {
 /**
  * Where a section stands:
  *
- * - `invalid`: it shows at least one validation error
+ * - `invalid`: it shows at least one validation error, which only appears once the user left the
+ *   field or tried to submit, so a section nobody touched is never `invalid`
+ * - `pending`: a required field has no value yet, in a required section, or in an optional one
+ *   the user started and left incomplete
  * - `complete`: nothing required is missing and it shows no error; an optional section also
  *   needs a value, entered by the user or provided by the form input
- * - `pending`: anything else
+ * - `optional`: an optional section without any entered value, where there is nothing to do
+ *
+ * `invalid` and `pending` are the sections that keep the form from being submitted, and the only
+ * ones the navigation counts as left to complete.
  */
-export type FormPageSectionStatus = 'invalid' | 'complete' | 'pending'
+export type FormPageSectionStatus = 'invalid' | 'pending' | 'complete' | 'optional'
 
 /**
  * Live state of a visible section, as the page navigation and section slots receive it.
@@ -185,7 +191,7 @@ export interface FormPageSectionState {
   optional: boolean
   /** Number of required fields without a value, the fields of array items included. */
   missing: number
-  /** Summary of the section's requirements, see `FormPageSectionStatus`. */
+  /** Where the section stands, see `FormPageSectionStatus`. */
   status: FormPageSectionStatus
   /** True when a value of the section differs from the form's baseline. */
   dirty: boolean

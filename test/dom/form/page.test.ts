@@ -7,6 +7,7 @@ import FormPageNavigation from '#ui-tools/form/components/page/form-page-navigat
 import FormPageSections from '#ui-tools/form/components/page/form-page-sections.vue'
 import type { FormObject, FormSubmitHandler, FormValue } from '#ui-tools/form/types'
 
+import { localeCode } from '../stubs/nuxt-ui-locale'
 import { mountPage, unmountPage } from './page-harness'
 import type { PageHarness } from './page-harness'
 
@@ -95,7 +96,20 @@ function sectionKeys(harness: PageHarness) {
   )
 }
 
-afterEach(unmountPage)
+/** Visually hidden status of a navigation entry, which screen readers announce. */
+function status(harness: PageHarness, key: string) {
+  return harness.entry(key).querySelector('.sr-only')?.textContent?.trim()
+}
+
+/** The visible "Facultatif" tag of a navigation entry. */
+function optionalTag(harness: PageHarness, key: string) {
+  return harness.entry(key).querySelector('[data-form-page-optional]')
+}
+
+afterEach(() => {
+  unmountPage()
+  localeCode.value = 'fr'
+})
 
 describe('form page', () => {
   it('renders the header, one navigation entry and one card per section, with lazy labels', async () => {
@@ -119,14 +133,26 @@ describe('form page', () => {
 
     expect(harness.entry('type').dataset.state).toBe('pending')
     expect(harness.entry('identity').dataset.state).toBe('pending')
-    // Optional: the currency default alone does not complete it, nor does an empty section.
-    expect(harness.entry('billing').dataset.state).toBe('pending')
-    expect(harness.entry('billing').textContent).toContain('optionnel')
-    expect(harness.entry('documents').textContent).toContain('optionnel')
+    expect(status(harness, 'identity')).toBe('À compléter')
+    expect(optionalTag(harness, 'identity')).toBeNull()
+    // Optional: the currency default alone does not complete it, nor does an empty section. It
+    // reads "Facultatif" alone, never "À compléter" as well.
+    for (const key of ['billing', 'documents']) {
+      expect(harness.entry(key).dataset.state).toBe('optional')
+      expect(status(harness, key)).toBe('Facultatif')
+      expect(optionalTag(harness, key)?.textContent?.trim()).toBe('Facultatif')
+      expect(harness.entry(key).textContent).not.toContain('À compléter')
+      expect(harness.section(key).dataset.state).toBe('optional')
+      expect(harness.section(key).querySelector('[data-form-page-optional]')?.textContent).toBe(
+        'Facultatif',
+      )
+    }
+    expect(harness.section('identity').querySelector('[data-form-page-optional]')).toBeNull()
     expect(harness.summary()).toBe('2 sections à compléter.')
 
     await harness.setValue('name', 'DemandQA')
     expect(harness.entry('identity').dataset.state).toBe('complete')
+    expect(status(harness, 'identity')).toBe('Complété')
     expect(harness.summary()).toBe('1 section à compléter.')
 
     harness.form.state.set('accountType', 'customer')
@@ -136,7 +162,76 @@ describe('form page', () => {
 
     await harness.setValue('erpId', 'EV-1')
     expect(harness.entry('billing').dataset.state).toBe('complete')
-    expect(harness.entry('billing').textContent).not.toContain('optionnel')
+    expect(status(harness, 'billing')).toBe('Complété')
+    expect(optionalTag(harness, 'billing')).toBeNull()
+    expect(harness.section('billing').querySelector('[data-form-page-optional]')).toBeNull()
+    expect(harness.summary()).toBe('Tout est prêt.')
+  })
+
+  it('flags a section to fix only once a field was left or a submit was tried', async () => {
+    const harness = await mountPage({ schema: accountSchema() })
+
+    // Required sections wait to be completed: none shows an error before the user acts.
+    expect(harness.wrapper.find('[data-state="invalid"]').exists()).toBe(false)
+
+    await harness.wrapper.find('[data-form-field="name"] input').trigger('blur')
+    await harness.flush()
+    expect(harness.entry('identity').dataset.state).toBe('invalid')
+    expect(status(harness, 'identity')).toBe('À corriger')
+    expect(harness.entry('type').dataset.state).toBe('pending')
+    // An invalid section still blocks the submit, so the summary keeps counting it.
+    expect(harness.summary()).toBe('2 sections à compléter.')
+
+    await harness.setValue('name', 'DemandQA')
+    expect(harness.entry('identity').dataset.state).toBe('complete')
+
+    await harness.wrapper.find('form').trigger('submit')
+    await harness.flush()
+    expect(harness.entry('type').dataset.state).toBe('invalid')
+    expect(status(harness, 'type')).toBe('À corriger')
+    // A failed submit does not turn optional sections into something to fix.
+    expect(harness.entry('billing').dataset.state).toBe('optional')
+    expect(status(harness, 'billing')).toBe('Facultatif')
+  })
+
+  it('counts an optional section the user started and left incomplete, without its tag', async () => {
+    const harness = await mountPage({
+      input: { accountType: 'customer', name: 'DemandQA' },
+      schema: accountSchema(),
+    })
+
+    expect(harness.entry('billing').dataset.state).toBe('optional')
+    expect(harness.summary()).toBe('Tout est prêt.')
+
+    // The currency is required in the billing section: emptying it blocks the submit.
+    harness.form.state.set('currency', null)
+    await harness.flush()
+
+    expect(harness.entry('billing').dataset.state).toBe('pending')
+    expect(status(harness, 'billing')).toBe('À compléter')
+    expect(optionalTag(harness, 'billing')).toBeNull()
+    expect(harness.section('billing').querySelector('[data-form-page-optional]')).toBeNull()
+    expect(harness.summary()).toBe('1 section à compléter.')
+
+    harness.form.state.set('currency', 'USD')
+    await harness.flush()
+    expect(harness.entry('billing').dataset.state).toBe('complete')
+    expect(harness.summary()).toBe('Tout est prêt.')
+  })
+
+  it('announces the status in English, with the unsaved changes marker', async () => {
+    localeCode.value = 'en'
+    const harness = await mountPage({
+      input: { accountType: 'customer', name: 'DemandQA' },
+      schema: accountSchema({ dirtyCheck: true }),
+    })
+
+    expect(status(harness, 'identity')).toBe('Completed')
+    expect(status(harness, 'billing')).toBe('Optional')
+    expect(optionalTag(harness, 'billing')?.textContent?.trim()).toBe('Optional')
+
+    await harness.setValue('name', 'DemandQA Europe')
+    expect(status(harness, 'identity')).toBe('Completed, Unsaved changes')
   })
 
   it('counts the required cells of array rows without making their section required', async () => {
@@ -161,13 +256,16 @@ describe('form page', () => {
       }),
     })
 
-    expect(harness.entry('targets').textContent).toContain('optionnel')
+    expect(harness.entry('targets').dataset.state).toBe('optional')
+    expect(optionalTag(harness, 'targets')).not.toBeNull()
     expect(harness.summary()).toBe('Tout est prêt.')
 
     harness.form.state.set('targets', [{ label: '' }])
     await harness.flush()
     expect(harness.entry('targets').dataset.state).toBe('pending')
-    expect(harness.entry('targets').textContent).toContain('optionnel')
+    // A row was added and left incomplete: the section blocks the submit, so it is no longer
+    // presented as optional.
+    expect(optionalTag(harness, 'targets')).toBeNull()
     expect(harness.summary()).toBe('1 section à compléter.')
 
     harness.form.state.set('targets', [{ label: 'Année 1' }])
@@ -200,7 +298,7 @@ describe('form page', () => {
     })
 
     expect(harness.entry('versions').dataset.state).toBe('pending')
-    expect(harness.entry('versions').textContent).not.toContain('optionnel')
+    expect(optionalTag(harness, 'versions')).toBeNull()
     expect(harness.summary()).toBe('1 section à compléter.')
 
     harness.form.state.set('versions', [{ label: 'Standard' }])
@@ -246,7 +344,7 @@ describe('form page', () => {
     expect(harness.entry('type').dataset.state).toBe('invalid')
     expect(harness.entry('identity').dataset.state).toBe('invalid')
     expect(harness.section('identity').dataset.state).toBe('invalid')
-    expect(harness.entry('billing').dataset.state).not.toBe('invalid')
+    expect(harness.entry('billing').dataset.state).toBe('optional')
   })
 
   it('makes the section of the field that takes focus the current one', async () => {

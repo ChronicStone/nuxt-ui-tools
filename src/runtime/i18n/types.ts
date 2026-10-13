@@ -439,8 +439,6 @@ export interface UiToolsFormMessages {
   page: {
     /** Accessible name of the section navigation when the schema gives it no title. */
     navigation: string
-    /** Marks an optional section, in the navigation and on its card. */
-    optional: string
     /** Badge under the page title and name of a section's dirty marker. */
     unsavedChanges: string
     /** Button of a modified section that puts its values back. */
@@ -457,11 +455,19 @@ export interface UiToolsFormMessages {
     modifiedOther: string
     /** Navigation summary of a form with dirty checking and no change. */
     unmodified: string
-    /** Accessible status of a navigation entry. */
+    /**
+     * Where a section stands: the accessible status of a navigation entry, and the tag that marks
+     * an optional section nothing was entered in (`optional`), in the navigation and on its card.
+     */
     status: {
+      /** Nothing required is missing and no field shows an error. */
       complete: string
-      pending: string
+      /** A field shows an error, once the user left it or tried to submit. */
       invalid: string
+      /** An optional section nobody entered a value in. */
+      optional: string
+      /** A required field has no value yet. */
+      pending: string
     }
   }
   states: {

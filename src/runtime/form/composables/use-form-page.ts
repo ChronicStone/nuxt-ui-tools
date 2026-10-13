@@ -6,6 +6,7 @@ import { getSchemaDirtyCheck } from '../utils/controls'
 import {
   getFormPageNavigationTitle,
   getFormPageSections,
+  isFormPageSectionBlocking,
   isFormPageSectionVisible,
   resolveFormPageSectionState,
 } from '../utils/page'
@@ -54,16 +55,10 @@ export function useFormPage(params: {
   const navigationTitle = computed(() => getFormPageNavigationTitle(root.schema.value))
   /**
    * Sections that still need something before the form can be submitted: a required section that
-   * is not complete, or an optional one the user started and left incomplete or invalid.
+   * is not complete, or an optional one the user started and left incomplete or invalid. An
+   * optional section nobody entered anything in is not one of them.
    */
-  const remaining = computed(
-    () =>
-      sections.value.filter((section) =>
-        section.optional
-          ? section.missing > 0 || section.status === 'invalid'
-          : section.status !== 'complete',
-      ).length,
-  )
+  const remaining = computed(() => sections.value.filter(isFormPageSectionBlocking).length)
   const modified = computed(() => sections.value.filter((section) => section.dirty).length)
   /** Height of the pinned header, which sections scroll under. */
   const stickyOffset = ref<number>(0)

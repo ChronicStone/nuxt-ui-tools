@@ -531,17 +531,23 @@ A section takes:
 
 ### What the navigation shows
 
-Each entry has a status:
+Each entry has one of four statuses, which `section.status`, `data-state`, and the text read by
+screen readers share:
 
-- **complete** (a check): every required field has a value and no field shows an error. An optional
-  section also needs a value the user entered or the form `input` provided; defaults alone do not
-  count.
-- **invalid** (a `!`): a field of the section shows an error, for example after a failed submit.
-- **pending** (an empty circle): anything else.
+- **complete** (a check, "Completed"): every required field has a value and no field shows an
+  error. An optional section also needs a value the user entered or the form `input` provided;
+  defaults alone do not count.
+- **invalid** (a `!`, "To fix"): a field of the section shows an error. Errors appear once the user
+  left a field or tried to submit, so a section nobody touched is never invalid: it waits as
+  pending.
+- **pending** (an empty circle, "To complete"): a required field has no value yet.
+- **optional** (a dashed circle and an "Optional" tag, also on the section card): an optional
+  section nothing was entered in. It never reads "To complete" as well.
 
-Optional sections read "optional" and are not counted in the summary under the entries ("3 sections
-left to complete", then "Everything is ready"), unless the user started one and left it incomplete or
-invalid, since that blocks the submit.
+The summary under the entries ("3 sections left to complete", then "Everything is ready") counts
+the sections that keep the form from being submitted: pending and invalid ones. Optional sections
+nobody touched are left out. One the user started and left incomplete or invalid is counted and
+loses its "Optional" tag, since it blocks the submit.
 
 Required fields inside array items count too: a row added to an `array-table` with an empty required
 cell leaves its section pending. They never make a section required; only the section's own fields
@@ -614,8 +620,9 @@ renders has a slot:
   `sectionDescription`, `sectionOptional`, `sectionActions`, `sectionReset`, `sectionBody`
 
 The action buttons take the `actions` part (`ui.actions.ui.button`) and each action's `class`, as in
-any form. Entries carry `data-active` and `data-state` (`complete`, `invalid`, `pending`), and
-modified sections and entries carry `data-dirty`:
+any form. Entries and section cards carry `data-state` (`complete`, `invalid`, `pending`,
+`optional`), the current entry carries `data-active`, and modified sections and entries carry
+`data-dirty`:
 
 ```ts
 export default defineAppConfig({

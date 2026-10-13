@@ -4,6 +4,7 @@ import type {
   FormPageSection,
   FormPageSectionEntry,
   FormPageSectionState,
+  FormPageSectionStatus,
   FormRuntime,
   FormText,
   FormValue,
@@ -29,6 +30,17 @@ interface FormPageLeaf {
   path: readonly string[]
   /** True for a field of an array item, which never makes its section required. */
   item: boolean
+}
+
+/**
+ * Whether a section in this status keeps the form from being submitted. Typed over every status,
+ * so adding one forces a choice here.
+ */
+const BLOCKS_SUBMIT: Record<FormPageSectionStatus, boolean> = {
+  complete: false,
+  invalid: true,
+  optional: false,
+  pending: true,
 }
 
 /** Pairs each section of a page schema with the card `defineFormPageSchema` generated for it. */
@@ -58,6 +70,30 @@ export function isFormPageSectionVisible(entry: FormPageSectionEntry, runtime: F
 }
 
 /**
+ * Where a section stands, from what it shows and what it still misses. An optional section nothing
+ * was entered in is `optional`, not `pending`: the user has nothing to do there.
+ */
+export function resolveFormPageSectionStatus(params: {
+  /** The section shows a validation error, which needs the user to leave a field or submit. */
+  invalid: boolean
+  /** Number of required fields without a value. */
+  missing: number
+  optional: boolean
+  /** The user entered a value, or the form input brought one. Only read for an optional section. */
+  provided: boolean
+}): FormPageSectionStatus {
+  if (params.invalid) return 'invalid'
+  if (params.missing > 0) return 'pending'
+  if (params.optional && !params.provided) return 'optional'
+  return 'complete'
+}
+
+/** True while the section keeps the form from being submitted: the sections left to complete. */
+export function isFormPageSectionBlocking(section: Pick<FormPageSectionState, 'status'>) {
+  return BLOCKS_SUBMIT[section.status]
+}
+
+/**
  * Live state of one visible section: what it still misses, whether it shows errors, and what
  * changed since the baseline.
  */
@@ -81,8 +117,8 @@ export function resolveFormPageSectionState(params: {
     : []
   const missing = required.filter((leaf) => isEmptyValue(runtime.getValue(leaf.path))).length
   const optional = entry.section.optional ?? required.every((leaf) => leaf.item)
-  const filled =
-    !optional || leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
+  const provided =
+    optional && leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
 
   return {
     description: resolveFormText(entry.section.description),
@@ -93,7 +129,7 @@ export function resolveFormPageSectionState(params: {
     label: resolveFormText(entry.section.label) ?? entry.section.key,
     missing,
     optional,
-    status: invalid ? 'invalid' : missing === 0 && filled ? 'complete' : 'pending',
+    status: resolveFormPageSectionStatus({ invalid, missing, optional, provided }),
   }
 }
 

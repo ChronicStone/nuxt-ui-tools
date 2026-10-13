@@ -100,11 +100,12 @@ onBeforeUnmount(() => unregister?.())
         {{ section.description }}
       </p>
       <UBadge
-        v-if="section.optional"
+        v-if="section.status === 'optional'"
         color="neutral"
         variant="soft"
-        :label="t('form.page.optional')"
-        :class="mergeFormUiClass('capitalize', pageUi?.sectionOptional)"
+        :label="t('form.page.status.optional')"
+        :class="pageUi?.sectionOptional"
+        data-form-page-optional
       />
       <div
         v-if="page.dirtyCheck.value || $slots.actions"

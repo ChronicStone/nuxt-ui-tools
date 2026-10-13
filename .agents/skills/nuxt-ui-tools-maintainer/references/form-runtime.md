@@ -133,6 +133,13 @@ When adding form features, bias toward:
   renders takes a `FormPageUi` slot; keep it that way when adding one. Sections and the pinned
   navigation read `--nut-form-page-header` (set by `FormPage` from the measured header) plus
   `--nut-form-page-gap`, resolved where they are used so a wrapper can override either.
+- Section status is `invalid | pending | complete | optional`, decided by the pure
+  `resolveFormPageSectionStatus` in `utils/page.ts`. It is honest on purpose (UX audit): an optional
+  section nobody entered a value in is `optional`, never `pending`, and the navigation counts only
+  the statuses in `BLOCKS_SUBMIT` (`invalid`, `pending`) as left to complete. `invalid` needs no
+  extra rule because `runtime.errors` only holds errors of touched or submitted paths. The
+  `form.page.status.*` messages serve the screen reader text and the visible "Optional" tag, so a
+  new status needs its message, its `BLOCKS_SUBMIT` entry, and its indicator style together.
 - `use-field-control.ts` exposes the authored `placeholder` only. The `shared-ui` baseline
   restored a generic default ("Enter a value") through i18n; that default is removed on purpose
   (UX audit: it repeats the label and reads like pre-filled noise for non-technical users), so a
