@@ -651,6 +651,9 @@ on an element around the navigation and the sections.
   the selection, for cards that enable something.
 - `icon`: where an option `icon` shows, `inline` before its label (default) or `tile`, in a square
   above it that takes the selection color.
+- `density`: `default`, or `compact` for a long list of options: smaller cards where the icon (or a
+  smaller tile) sits beside a one-line title over a one-line description, both truncated with an
+  ellipsis and keeping the full text in their tooltip. The selection mark centers on the row.
 
 ```ts
 {
@@ -663,6 +666,34 @@ on an element around the navigation and the sections.
   props: { columns: '1 md:3', icon: 'tile', indicator: 'corner' },
 }
 ```
+
+### Grouped options
+
+Give options a `group` to list them under headings: options that share one are listed together,
+headings follow the order in which they first appear, and options without a group stay together
+without a heading. `group` takes text or a function returning text, like `label`. A list without
+any `group` renders exactly as before.
+
+```ts
+{
+  key: 'accountType',
+  type: 'radio-card',
+  options: [
+    { value: 'school', label: 'Établissement', description: 'Lycée, collège, université', icon: 'i-lucide-school', group: 'Organisation cliente' },
+    { value: 'company', label: 'Entreprise', description: 'Entreprise ou association', icon: 'i-lucide-building-2', group: 'Organisation cliente' },
+    { value: 'reseller', label: 'Revendeur', description: 'Revend les tests', icon: 'i-lucide-store', group: 'Partenaire' },
+    { value: 'center', label: 'Centre agréé', description: 'Fait passer les tests', icon: 'i-lucide-map-pin', group: 'Centre de test' },
+  ],
+  props: { columns: '1 md:2', density: 'compact', icon: 'tile', indicator: 'corner' },
+}
+```
+
+Each heading is the `legend` of its own group of cards, so assistive technology announces it. A
+`radio-card` therefore renders one radio group per heading, with one tab stop each and arrow keys
+that stay inside a group; the selection lives in the group of the chosen option and the others
+show none. A `checkbox-card` keeps every group independent and merges them into the one array
+value, in the order the boxes were ticked. Style the heading with the Nuxt UI `ui.legend` slot and
+the stack of groups with `ui.groups`.
 
 Style the parts the engine renders through `ui.tile`, `ui.tileIcon`, `ui.optionIcon`, `ui.check`,
 `ui.checkIcon`, `ui.switch`, and `ui.switchThumb`, next to the Nuxt UI slots of the group

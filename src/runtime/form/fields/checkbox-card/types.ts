@@ -1,18 +1,13 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FieldOptionValue, NullableValue } from '../../types/field-output-utils'
-import type {
-  FormOptionConfig,
-  FormOptionItem,
-  FormOptionValue,
-  FormOptionsSource,
-} from '../../types/options'
-import type { FormChoiceCardProps } from '../choice-card/types'
+import type { FormOptionConfig, FormOptionValue, FormOptionsSource } from '../../types/options'
+import type { FormChoiceCardOptionItem, FormChoiceCardProps } from '../choice-card/types'
 
 export interface FormCheckboxCardField<
   TContext = NonNullable<unknown>,
   TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
-  TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
+  TOption extends FormChoiceCardOptionItem<TValue> = FormChoiceCardOptionItem<TValue>,
 > extends FormStatefulFieldBase<
   'checkbox-card',
   readonly TValue[] | null,

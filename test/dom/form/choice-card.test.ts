@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import type { DOMWrapper } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import { defineFormSchema } from '#ui-tools/form'
@@ -163,5 +164,333 @@ describe('choice cards', () => {
     })
     expect(inline.find('[data-choice-tile]').exists()).toBe(false)
     expect(inline.find('[data-ui="UIcon"]').exists()).toBe(true)
+  })
+})
+
+const ACCOUNT_TYPES = [
+  {
+    description: 'Lycée, collège ou université',
+    group: 'Organisation cliente',
+    label: 'Établissement',
+    value: 'school',
+  },
+  {
+    description: 'Entreprise ou association',
+    group: 'Organisation cliente',
+    label: 'Entreprise',
+    value: 'company',
+  },
+  {
+    description: 'Revend les tests à ses clients',
+    group: 'Partenaire',
+    label: 'Revendeur',
+    value: 'reseller',
+  },
+  {
+    description: 'Apporte des clients',
+    group: 'Partenaire',
+    label: 'Apporteur',
+    value: 'referrer',
+  },
+  {
+    description: 'Fait passer les tests',
+    group: 'Centre de test',
+    label: 'Centre agréé',
+    value: 'center',
+  },
+  {
+    description: 'Fait passer les tests à distance',
+    group: 'Centre de test',
+    label: 'Centre distant',
+    value: 'remote',
+  },
+  {
+    description: 'Équipe ExAssess',
+    group: 'Compte interne',
+    label: 'Administrateur',
+    value: 'admin',
+  },
+  { description: 'Aide les clients', group: 'Compte interne', label: 'Support', value: 'support' },
+] as const
+
+function groupedSchema(density?: 'compact') {
+  return defineFormSchema({
+    fields: [
+      {
+        key: 'accountType',
+        options: ACCOUNT_TYPES,
+        props: { columns: 2, density, icon: 'tile', indicator: 'corner' },
+        type: 'radio-card',
+      },
+    ],
+  })
+}
+
+function checkedValues(group: DOMWrapper<Element>) {
+  return group
+    .findAll('input')
+    .flatMap((input) =>
+      input.element instanceof HTMLInputElement && input.element.checked
+        ? [input.element.value]
+        : [],
+    )
+}
+
+interface GroupFinder {
+  findAll: (selector: string) => DOMWrapper<Element>[]
+}
+
+function summarizeGroups(wrapper: GroupFinder, component: 'URadioGroup' | 'UCheckboxGroup') {
+  return wrapper.findAll(`[data-ui="${component}"]`).map((group) => ({
+    checked: checkedValues(group),
+    heading: group.find('[data-ui-legend]').exists()
+      ? group.find('[data-ui-legend]').text()
+      : undefined,
+    values: group.findAll('input').map((input) => input.element.getAttribute('value')),
+  }))
+}
+
+describe('grouped choice cards', () => {
+  it('lists radio cards under their headings in order of first appearance', async () => {
+    const harness = await mountForm({ schema: groupedSchema() })
+
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')).toStrictEqual([
+      { checked: [], heading: 'Organisation cliente', values: ['school', 'company'] },
+      { checked: [], heading: 'Partenaire', values: ['reseller', 'referrer'] },
+      { checked: [], heading: 'Centre de test', values: ['center', 'remote'] },
+      { checked: [], heading: 'Compte interne', values: ['admin', 'support'] },
+    ])
+    harness.unmount()
+  })
+
+  it('keeps the options of a group together when they are not authored side by side', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: [
+              { group: 'B', label: 'B1', value: 'b1' },
+              { group: 'A', label: 'A1', value: 'a1' },
+              { group: 'B', label: 'B2', value: 'b2' },
+            ],
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+
+    expect(
+      summarizeGroups(harness.wrapper, 'URadioGroup').map((group) => group.heading),
+    ).toStrictEqual(['B', 'A'])
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')[0]?.values).toStrictEqual(['b1', 'b2'])
+    harness.unmount()
+  })
+
+  it('shows the selection in the group of the chosen option and moves it across groups', async () => {
+    const harness = await mountForm({ input: { accountType: 'reseller' }, schema: groupedSchema() })
+    const groups = () => summarizeGroups(harness.wrapper, 'URadioGroup')
+
+    expect(groups().map((group) => group.checked)).toStrictEqual([[], ['reseller'], [], []])
+
+    await harness.wrapper.find('input[value="center"]').setValue(true)
+    await harness.flush()
+    expect(harness.form.state.get('accountType')).toBe('center')
+    expect(groups().map((group) => group.checked)).toStrictEqual([[], [], ['center'], []])
+
+    await harness.wrapper.find('input[value="school"]').setValue(true)
+    await harness.flush()
+    expect(harness.form.state.get('accountType')).toBe('school')
+    expect(groups().map((group) => group.checked)).toStrictEqual([['school'], [], [], []])
+    harness.unmount()
+  })
+
+  it('renders an ungrouped list as one group without a heading', async () => {
+    const harness = await mountForm({ schema: radioSchema })
+
+    expect(summarizeGroups(harness.wrapper, 'URadioGroup')).toStrictEqual([
+      { checked: [], heading: undefined, values: ['customer', 'partner'] },
+    ])
+    expect(harness.wrapper.find('[data-ui-legend]').exists()).toBe(false)
+    harness.unmount()
+  })
+
+  it('resolves lazy headings and styles the heading and the stack through ui', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kind',
+            options: [
+              { group: () => 'Organisation', label: 'École', value: 'school' },
+              { group: () => 'Partenaire', label: 'Revendeur', value: 'reseller' },
+            ],
+            props: { ui: { groups: 'gap-8', legend: 'text-xs uppercase' } },
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    const first = harness.wrapper.find('[data-ui="URadioGroup"]')
+
+    expect(
+      summarizeGroups(harness.wrapper, 'URadioGroup').map((group) => group.heading),
+    ).toStrictEqual(['Organisation', 'Partenaire'])
+    expect(first.attributes('data-slot-legend')).toContain('uppercase')
+    expect(first.element.parentElement?.className).toContain('gap-8')
+    harness.unmount()
+  })
+
+  it('keeps the selections of several checkbox groups and the order they were made in', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            default: ['reseller'],
+            key: 'kinds',
+            options: ACCOUNT_TYPES,
+            props: { columns: 2 },
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    const groups = () => summarizeGroups(harness.wrapper, 'UCheckboxGroup')
+
+    expect(groups().map((group) => group.heading)).toStrictEqual([
+      'Organisation cliente',
+      'Partenaire',
+      'Centre de test',
+      'Compte interne',
+    ])
+    expect(groups().map((group) => group.checked)).toStrictEqual([[], ['string:reseller'], [], []])
+
+    await harness.wrapper.find('input[value="string:school"]').setValue(true)
+    await harness.wrapper.find('input[value="string:admin"]').setValue(true)
+    await harness.wrapper.find('input[value="string:referrer"]').setValue(true)
+    await harness.flush()
+    expect(harness.form.state.get('kinds')).toStrictEqual([
+      'reseller',
+      'school',
+      'admin',
+      'referrer',
+    ])
+
+    await harness.wrapper.find('input[value="string:reseller"]').setValue(false)
+    await harness.flush()
+    expect(harness.form.state.get('kinds')).toStrictEqual(['school', 'admin', 'referrer'])
+    expect(groups().map((group) => group.checked)).toStrictEqual([
+      ['string:school'],
+      ['string:referrer'],
+      [],
+      ['string:admin'],
+    ])
+    harness.unmount()
+  })
+})
+
+describe('compact choice cards', () => {
+  it('shrinks the cards and keeps the density prop off the Nuxt UI group', async () => {
+    const harness = await mountForm({ schema: groupedSchema('compact') })
+    const group = harness.wrapper.find('[data-ui="URadioGroup"]')
+
+    expect(group.attributes('density')).toBeUndefined()
+    expect(group.attributes('data-slot-item')).toContain('p-2.5')
+    expect(group.attributes('data-slot-item')).toContain('items-center')
+    expect(group.attributes('data-slot-fieldset')).toContain('gap-2')
+    expect(group.attributes('data-slot-fieldset')).not.toContain('gap-2.5')
+    expect(group.attributes('data-slot-label')).toContain('grid')
+    expect(group.attributes('data-slot-wrapper')).toContain('min-w-0')
+    // Compact never stacks the tile above the label: the wrapper keeps its default layout.
+    expect(group.attributes('data-slot-wrapper')).not.toContain('flex-col')
+    harness.unmount()
+  })
+
+  it('renders the description in the card label instead of the Nuxt UI group', async () => {
+    const compact = await mountForm({ schema: groupedSchema('compact') })
+    const card = compact.wrapper.find('[data-ui-radio="school"]')
+
+    expect(card.find('[data-ui-description]').exists()).toBe(false)
+    expect(card.find('[data-choice-title]').text()).toBe('Établissement')
+    expect(card.find('[data-choice-description]').text()).toBe('Lycée, collège ou université')
+    expect(card.find('[data-choice-description]').attributes('title')).toBe(
+      'Lycée, collège ou université',
+    )
+    compact.unmount()
+
+    const regular = await mountForm({ schema: groupedSchema() })
+    const regularCard = regular.wrapper.find('[data-ui-radio="school"]')
+    expect(regularCard.find('[data-ui-description]').text()).toBe('Lycée, collège ou université')
+    expect(regularCard.find('[data-choice-description]').exists()).toBe(false)
+    regular.unmount()
+  })
+
+  it('does the same for checkbox cards', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            key: 'kinds',
+            options: ACCOUNT_TYPES,
+            props: { density: 'compact', icon: 'tile' },
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    const card = harness.wrapper.find('[data-ui-option="string:school"]')
+
+    expect(card.find('[data-ui-description]').exists()).toBe(false)
+    expect(card.find('[data-choice-description]').text()).toBe('Lycée, collège ou université')
+    harness.unmount()
+  })
+
+  it('lays the label out as a smaller tile, a truncated title, and a truncated description', () => {
+    const label = mount(ChoiceCardLabel, {
+      props: {
+        compact: true,
+        description: 'Lycée, collège ou université',
+        icon: 'i-lucide-school',
+        label: 'Établissement',
+        mark: 'corner',
+        selected: true,
+        tile: true,
+        value: 'school',
+      },
+    })
+
+    expect(label.find('[data-choice-tile]').classes()).toEqual(
+      expect.arrayContaining(['size-7', 'row-span-2', 'col-start-1']),
+    )
+    expect(label.find('[data-choice-tile]').classes()).not.toContain('size-8')
+    expect(label.find('[data-choice-title]').classes()).toEqual(
+      expect.arrayContaining(['truncate', 'col-start-2']),
+    )
+    expect(label.find('[data-choice-title]').attributes('title')).toBe('Établissement')
+    expect(label.find('[data-choice-description]').classes()).toEqual(
+      expect.arrayContaining(['truncate', 'col-start-2']),
+    )
+    expect(label.find('[data-choice-check]').classes()).toEqual(
+      expect.arrayContaining(['top-1/2', '-translate-y-1/2']),
+    )
+  })
+
+  it('puts a bare icon beside the title and skips the description line when there is none', () => {
+    const label = mount(ChoiceCardLabel, {
+      props: {
+        compact: true,
+        icon: 'i-lucide-school',
+        label: 'Établissement',
+        mark: 'none',
+        selected: false,
+        tile: false,
+      },
+    })
+
+    expect(label.find('[data-choice-tile]').exists()).toBe(false)
+    expect(label.find('[data-ui="UIcon"]').classes()).toEqual(
+      expect.arrayContaining(['row-span-2', 'size-4']),
+    )
+    expect(label.find('[data-choice-description]').exists()).toBe(false)
   })
 })

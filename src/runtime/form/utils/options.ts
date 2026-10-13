@@ -15,6 +15,8 @@ export interface ResolvedFormOption {
   description?: string
   disabled?: boolean
   icon?: string
+  /** Heading the option is listed under, for the fields that group their options. */
+  group?: string
   children?: readonly ResolvedFormOption[]
   /** True when the option has children that load on demand. */
   lazy?: boolean
@@ -29,6 +31,7 @@ export function normalizeOptionItem(
     const fallbackValue = isUndefined(rawValue) ? option.key : rawValue
     const rawChildren = readOptionProperty(option, keys.children ?? 'children')
     const rawDescription = readOptionProperty(option, 'description')
+    const rawGroup = readOptionProperty(option, 'group')
     const children = Array.isArray(rawChildren)
       ? rawChildren.map((child) => normalizeOptionItem(child, keys))
       : undefined
@@ -38,6 +41,7 @@ export function normalizeOptionItem(
     const normalized: ResolvedFormOption = {
       description: isFormText(rawDescription) ? resolveFormText(rawDescription) : undefined,
       disabled: option.disabled === true,
+      group: isFormText(rawGroup) ? resolveFormText(rawGroup) : undefined,
       icon: isString(rawIcon) ? rawIcon : undefined,
       label: resolveFormText(readOptionProperty(option, keys.label ?? 'label')) ?? String(value),
       value,

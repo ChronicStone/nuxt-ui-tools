@@ -294,6 +294,7 @@ export function createInputStub(
       highlight: optional,
       icon: optional,
       items: optional,
+      legend: optional,
       loading: optional,
       max: optional,
       min: optional,
@@ -338,10 +339,11 @@ export function createInputStub(
           )
         }
         if (kind === 'radio') {
-          return h(
-            'div',
-            { ...shared, role: 'radiogroup' },
-            asRecords(props.items).map((item) =>
+          return h('div', { ...shared, role: 'radiogroup' }, [
+            props.legend === undefined
+              ? null
+              : h('legend', { 'data-ui-legend': '' }, scalarText(props.legend)),
+            ...asRecords(props.items).map((item) =>
               h('label', { 'data-ui-radio': scalarText(item.value) }, [
                 h('input', {
                   checked: scalarText(item.value) === model,
@@ -349,10 +351,13 @@ export function createInputStub(
                   type: 'radio',
                   value: scalarText(item.value),
                 }),
-                scalarText(item.label),
+                slots.label ? slots.label({ item }) : scalarText(item.label),
+                item.description === undefined
+                  ? null
+                  : h('p', { 'data-ui-description': '' }, scalarText(item.description)),
               ]),
             ),
-          )
+          ])
         }
         if (kind === 'checkbox') {
           return h('input', {

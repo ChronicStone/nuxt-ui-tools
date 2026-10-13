@@ -26,6 +26,7 @@ describe('form option normalization', () => {
           {
             description: undefined,
             disabled: false,
+            group: undefined,
             icon: undefined,
             label: '42',
             value: 2,
@@ -33,10 +34,29 @@ describe('form option normalization', () => {
         ],
         description: undefined,
         disabled: false,
+        group: undefined,
         icon: undefined,
         label: 'Catalog',
         value: 1,
       },
+    ])
+  })
+
+  it('resolves the group heading of an option, lazily', () => {
+    const options = normalizeOptionItems([
+      { group: 'Partenaire', label: 'Revendeur', value: 'reseller' },
+      { group: () => 'Centre de test', label: 'Centre', value: 'center' },
+      { group: 3, label: 'Numérique', value: 'numeric' },
+      { group: { not: 'text' }, label: 'Autre', value: 'other' },
+      'plain',
+    ])
+
+    expect(options.map((option) => option.group)).toStrictEqual([
+      'Partenaire',
+      'Centre de test',
+      '3',
+      undefined,
+      undefined,
     ])
   })
 
