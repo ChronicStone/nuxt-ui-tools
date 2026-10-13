@@ -289,6 +289,8 @@ export interface FormPageUi {
   sectionSkeleton?: FormUiClass
   section?: FormUiClass
   sectionHeader?: FormUiClass
+  /** Tile around the section `icon`, before the title. */
+  sectionIcon?: FormUiClass
   sectionTitle?: FormUiClass
   sectionDescription?: FormUiClass
   /** The "Optional" badge of an optional section with nothing entered. */

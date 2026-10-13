@@ -51,6 +51,11 @@ export interface FormPageSection<
   /** Supporting copy next to the title. */
   description?: FormText
   /**
+   * Iconify icon drawn before the title, so each section of a long page reads at a glance
+   * (`'i-lucide-map-pin'` for an address). Style it with `ui.page.ui.sectionIcon`.
+   */
+  icon?: string
+  /**
    * Marks the section optional while nothing is entered in it, and leaves it out of the sections
    * left to complete. A section without a required field is optional already; set this when its
    * required fields are filled by their defaults and the user has nothing to do there. Set
@@ -190,6 +195,8 @@ export interface FormPageSectionState {
   label: string
   /** Resolved supporting copy. */
   description?: string
+  /** Icon drawn before the title. */
+  icon?: string
   /**
    * True when the section is declared optional, or declares nothing and has no required field
    * outside array items.

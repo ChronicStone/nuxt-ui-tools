@@ -474,6 +474,9 @@ export function identitySection() {
     key: 'identity',
     label: () => t('account.sections.identity'),
     description: () => t('account.sections.identityHint'),
+    // Drawn in a tile before the title (`ui.page.ui.sectionIcon`), so each section of a long
+    // page reads at a glance.
+    icon: 'i-lucide-id-card',
     fields: [
       { key: 'name', type: 'text', label: () => t('account.name'), required: true },
       {
@@ -662,7 +665,7 @@ renders has a slot:
   `navigationEntry`, `navigationItem`, `navigationIndicator`, `navigationIndicatorIcon`,
   `navigationIndicatorMarker`, `navigationLabel`, `navigationOptional`, `navigationDirty`,
   `navigationFooter`, `navigationSummary`, `navigationSummaryCount`
-- sections: `sections`, `sectionSkeleton`, `section`, `sectionHeader`, `sectionTitle`,
+- sections: `sections`, `sectionSkeleton`, `section`, `sectionHeader`, `sectionIcon`, `sectionTitle`,
   `sectionDescription`, `sectionOptional`, `sectionActions`, `sectionReset`, `sectionBody`
 
 The action buttons take the `actions` part (`ui.actions.ui.button`) and each action's `class`, as in

@@ -135,6 +135,7 @@ export function resolveFormPageSectionState(params: {
   return {
     description: resolveFormText(entry.section.description),
     dirty: dirtyPaths.length > 0,
+    icon: entry.section.icon,
     dirtyPaths,
     index: params.index,
     key: entry.section.key,
