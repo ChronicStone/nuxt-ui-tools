@@ -10,6 +10,7 @@ import type {
   FormUiConfig,
   FormValue,
 } from '../../types'
+import { FORM_PAGE_COLUMN } from '../../utils/page-surface'
 import { mergeFormUiClass } from '../../utils/ui'
 import FormPageHeader from './form-page-header.vue'
 import FormPageNavigation from './form-page-navigation.vue'
@@ -101,13 +102,12 @@ const pageUi = computed(() => root.formUi.ui.value.page?.ui)
 /**
  * The body is a column for the navigation beside the sections, or, when the page has too few
  * sections for a navigation (`navigation.minSections`), the sections alone in one centered column
- * as wide as the beside layout gives them.
+ * as wide as the beside layout gives them. The header row takes the same column.
  */
 const BODY_UI = {
   beside:
     'grid gap-4 px-4 pt-4 pb-16 @3xl/form-page:grid-cols-[200px_minmax(0,1fr)] @3xl/form-page:items-start @3xl/form-page:gap-7 @3xl/form-page:px-7 @3xl/form-page:pt-6 @3xl/form-page:pb-20 @5xl/form-page:grid-cols-[230px_minmax(0,760px)]',
-  single:
-    'mx-auto grid w-full max-w-[816px] gap-4 px-4 pt-4 pb-16 @3xl/form-page:gap-7 @3xl/form-page:px-7 @3xl/form-page:pt-6 @3xl/form-page:pb-20',
+  single: `${FORM_PAGE_COLUMN} grid gap-4 px-4 pt-4 pb-16 @3xl/form-page:gap-7 @3xl/form-page:px-7 @3xl/form-page:pt-6 @3xl/form-page:pb-20`,
 } as const
 </script>
 

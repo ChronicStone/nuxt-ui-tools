@@ -18,6 +18,12 @@ export interface FormPageSurfaceClasses {
   sectionSkeleton: string
 }
 
+/**
+ * The centered column of a page without a navigation. The body and the row of the header share
+ * it, so both start and end on the same edges, padding included.
+ */
+export const FORM_PAGE_COLUMN = 'mx-auto w-full max-w-[816px]'
+
 export const DEFAULT_FORM_PAGE_SURFACE: FormPageSurface = 'card'
 
 /**

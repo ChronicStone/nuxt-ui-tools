@@ -248,6 +248,11 @@ export interface FormPageUi {
   /** Grid holding the navigation and the sections. */
   body?: FormUiClass
   header?: FormUiClass
+  /**
+   * Row holding the heading and the actions. Beside a navigation it adds no box of its own; on a
+   * page without one it is the centered column the body shares, and carries the header padding.
+   */
+  headerRow?: FormUiClass
   headerContent?: FormUiClass
   heading?: FormUiClass
   eyebrow?: FormUiClass

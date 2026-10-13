@@ -636,6 +636,28 @@ describe('form page navigation threshold', () => {
     expect(harness.wrapper.find('[data-form-page-actions]').text()).toContain('Créer le compte')
   })
 
+  it('gives the header row the same centered column as the body', async () => {
+    const harness = await mountPage({ schema: accountSchema({ minSections: 5 }) })
+    const row = harness.wrapper.find('[data-form-page-header-row]').element
+
+    for (const name of ['mx-auto', 'w-full', 'max-w-[816px]']) {
+      expect(row.classList).toContain(name)
+      expect(pageBody(harness)?.classList).toContain(name)
+    }
+    expect(harness.wrapper.find('[data-form-page-header]').element.classList).not.toContain('px-4')
+  })
+
+  it('leaves the header of the beside layout as it was', async () => {
+    const harness = await mountPage({ schema: accountSchema() })
+    const header = harness.wrapper.find('[data-form-page-header]').element
+    const row = harness.wrapper.find('[data-form-page-header-row]').element
+
+    expect(row.classList).toContain('contents')
+    expect(row.classList).not.toContain('max-w-[816px]')
+    expect(header.classList).toContain('px-4')
+    expect(header.classList).toContain('@3xl/form-page:justify-between')
+  })
+
   it('counts the visible sections, so a condition can bring the navigation back', async () => {
     const harness = await mountPage({
       input: { accountType: 'testCenter' },
