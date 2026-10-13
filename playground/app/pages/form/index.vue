@@ -23,9 +23,21 @@ const examples = [
   },
   {
     description:
-      'Sections with a scrollspy navigation, dirty rings, card grids, translated labels.',
+      'Cards with a scrollspy navigation, honest section statuses, dirty rings, translated labels.',
     label: 'Page',
     to: '/form/page',
+  },
+  {
+    description:
+      'Plain surface without cards, grouped compact choice cards, and a disabled field that says why.',
+    label: 'Page, plain surface',
+    to: '/form/page-plain',
+  },
+  {
+    description:
+      'Too few sections for a navigation: minSections leaves it out for one focused column.',
+    label: 'Page, focused column',
+    to: '/form/page-focused',
   },
 ] as const
 </script>

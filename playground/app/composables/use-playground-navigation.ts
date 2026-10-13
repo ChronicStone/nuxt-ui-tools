@@ -123,11 +123,27 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
           },
           {
             description:
-              'Sections with a scrollspy navigation, dirty rings, card grids, translated labels.',
+              'Cards with a scrollspy navigation, honest section statuses, dirty rings, translated labels.',
             id: 'form-page',
             label: 'Page',
             mode: 'fixed',
             path: '/form/page',
+          },
+          {
+            description:
+              'Plain surface without cards, grouped compact choice cards, and a disabled field that says why.',
+            id: 'form-page-plain',
+            label: 'Page, plain surface',
+            mode: 'fixed',
+            path: '/form/page-plain',
+          },
+          {
+            description:
+              'Too few sections for a navigation: minSections leaves it out for one focused column.',
+            id: 'form-page-focused',
+            label: 'Page, focused column',
+            mode: 'fixed',
+            path: '/form/page-focused',
           },
         ],
         id: 'form-workflows',
