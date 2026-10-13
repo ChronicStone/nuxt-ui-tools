@@ -198,7 +198,8 @@ account: f.remote(
 - Nothing loads until the picker opens (`open`) or a search term is typed.
 - Pages are cached per search term; the previous term's options stay while the next one loads.
 - Selected ids missing from the loaded pages are hydrated through `resolveSelected`; the control's
-  `display` shows `…` until they resolve.
+  `display` shows `…` until they resolve. Base `filters` of `remoteTableOptions` apply to the pages
+  only, so an id the filters now exclude still resolves to its label.
 
 ## Items From Data
 

@@ -65,7 +65,10 @@ export interface RemoteTableOptionsConfig<
    * values the loaded pages do not contain. Defaults to `'id'`.
    */
   valueKey?: TableKnownFieldPath<TRow> | 'id'
-  /** Filters applied to every request, e.g. active accounts only. */
+  /**
+   * Filters applied to every page request, e.g. active accounts only. The lookup of selected
+   * values ignores them, so a value the filters now exclude still shows its label.
+   */
   filters?: readonly TableResolvedFilterGroup<TableKnownFieldPath<TRow> | string>[]
   /** Page type and size. Must match what the endpoint pages by. Defaults to cursor pages of 25. */
   pagination?: RemoteOptionsPagination
