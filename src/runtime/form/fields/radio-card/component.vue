@@ -22,7 +22,11 @@ const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFie
   () => props.path,
   { omit: CHOICE_CARD_PROPS },
 )
-const cards = useChoiceCard({ props: () => fieldProps.value, ui: () => controlProps.value.ui })
+const cards = useChoiceCard({
+  kind: 'radio',
+  props: () => fieldProps.value,
+  ui: () => controlProps.value.ui,
+})
 const model = computed<string | number | boolean | undefined>({
   get: () => {
     const value = form.getValue(props.path)

@@ -164,7 +164,9 @@ When adding form features, bias toward:
 - `fields/choice-card/` is the presentation `radio-card` and `checkbox-card` share: the grid
   (`--nut-choice-columns`), the corner check, and the icon tile, with `ui.tile` and `ui.check` for
   the parts the engine renders. `checkbox-card` strips option icons from the items it hands to
-  `UCheckboxGroup`, because a checkbox `icon` is its check mark.
+  `UCheckboxGroup`, because a checkbox `icon` is its check mark: for the same reason
+  `useChoiceCard` takes the `kind` of group (`ICON_UI`) and only hides the Nuxt UI `icon` slot of
+  a radio group, where it is a duplicate of the option icon the card label already draws.
   `ResolvedFormOption.group` carries an option's heading and `choice-card/utils.ts` splits the
   items into headed groups (pure, first-appearance order). Nuxt UI's `RadioGroup` and
   `CheckboxGroup` cannot place a heading between their items, so each heading gets its own group
@@ -172,7 +174,9 @@ When adding form features, bias toward:
   selection shown only in the group of the chosen option, which is the accepted cost of keeping
   Nuxt UI's card styling instead of re-implementing the radio group. `density: 'compact'` selects
   the `compact` entry of `LAYOUT_UI` in `use-choice-card.ts` (a two-column label grid) and moves the
-  description from the Nuxt UI group (stripped from its items) into `ChoiceCardLabel`.
+  description from the Nuxt UI group (stripped from its items) into `ChoiceCardLabel`. Nuxt UI
+  centers the wrapper of a card whose indicator is hidden (`corner`, `switch`, `hidden`), so the
+  compact wrapper stretches (`items-stretch`) to keep the label at the card edge.
 
 When adding a field, update the local type/config/component, assembled union, registry, renderer,
 value/output inference, recursive state ownership where relevant, tests, playground, and consumer

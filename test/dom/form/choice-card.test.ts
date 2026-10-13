@@ -81,7 +81,7 @@ describe('choice cards', () => {
     harness.unmount()
   })
 
-  it('keeps option icons off checkbox cards, whose Nuxt UI icon is the check mark', async () => {
+  it('keeps option icons off checkbox cards and their check mark visible', async () => {
     const harness = await mountForm({
       schema: defineFormSchema({
         fields: [
@@ -89,10 +89,14 @@ describe('choice cards', () => {
         ],
       }),
     })
-    const items: unknown = harness.wrapper.findComponent({ name: 'UCheckboxGroup' }).props('items')
+    const group = harness.wrapper.findComponent({ name: 'UCheckboxGroup' })
+    const items: unknown = group.props('items')
 
+    // The Nuxt UI icon of a checkbox is its check mark: hiding that slot, as a radio card does for
+    // the copy of its option icon, would leave a filled box without a check.
     expect(Array.isArray(items) && items.length).toBe(2)
     expect(Array.isArray(items) && items.some((item) => Object.hasOwn(item, 'icon'))).toBe(false)
+    expect(group.props('ui')).toMatchObject({ icon: '' })
     harness.unmount()
   })
 
@@ -401,6 +405,8 @@ describe('compact choice cards', () => {
     expect(group.attributes('data-slot-fieldset')).not.toContain('gap-2.5')
     expect(group.attributes('data-slot-label')).toContain('grid')
     expect(group.attributes('data-slot-wrapper')).toContain('min-w-0')
+    // Nuxt UI centers the wrapper of a card with a hidden indicator: the label must fill it.
+    expect(group.attributes('data-slot-wrapper')).toContain('items-stretch')
     // Compact never stacks the tile above the label: the wrapper keeps its default layout.
     expect(group.attributes('data-slot-wrapper')).not.toContain('flex-col')
     harness.unmount()

@@ -75,3 +75,6 @@ export type ChoiceCardLayout = 'inline' | 'stacked' | 'compact'
 
 /** The mark a card draws itself, in place of the Nuxt UI indicator. */
 export type ChoiceCardMark = 'corner' | 'switch' | 'none'
+
+/** The Nuxt UI group a card field wraps. */
+export type ChoiceCardKind = 'checkbox' | 'radio'

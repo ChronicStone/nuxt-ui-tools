@@ -4,7 +4,7 @@ import { useResponsiveValue } from '../../../shared/composables/use-responsive-v
 import type { FormControlUi } from '../../types'
 import { mergeFormUiClass } from '../../utils/ui'
 import { CARD_SELECTED_RING } from '../card-selection'
-import type { ChoiceCardLayout, ChoiceCardMark, FormChoiceCardProps } from './types'
+import type { ChoiceCardKind, ChoiceCardLayout, ChoiceCardMark, FormChoiceCardProps } from './types'
 
 /** Props the card fields render themselves, kept away from the Nuxt UI group. */
 export const CHOICE_CARD_PROPS = ['columns', 'density', 'icon', 'indicator', 'orientation']
@@ -20,14 +20,16 @@ interface ChoiceCardLayoutUi {
 /**
  * What each layout changes in the Nuxt UI slots. `inline` puts the icon before the label and
  * `stacked` puts its tile above it. `compact` makes the label a two-column grid (icon or tile,
- * then the title over a one-line description) in a smaller card.
+ * then the title over a one-line description) in a smaller card. Nuxt UI centers the wrapper of a
+ * card with a hidden indicator, so the compact wrapper stretches the label across the card: its
+ * content starts at the card edge whatever its length.
  */
 const LAYOUT_UI: Record<ChoiceCardLayout, ChoiceCardLayoutUi> = {
   compact: {
     gap: 'gap-2',
     item: 'items-center p-2.5',
     label: 'grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center',
-    wrapper: 'min-w-0',
+    wrapper: 'min-w-0 items-stretch',
   },
   inline: { gap: 'gap-2.5' },
   stacked: {
@@ -38,12 +40,23 @@ const LAYOUT_UI: Record<ChoiceCardLayout, ChoiceCardLayoutUi> = {
 }
 
 /**
+ * What each group does with its Nuxt UI `icon` slot. A radio group draws a copy of the option icon
+ * next to the card content, which draws the icon itself: that copy stays hidden. A checkbox group
+ * draws its check mark with the same slot and its items carry no icon, so it stays visible.
+ */
+const ICON_UI: Record<ChoiceCardKind, string | undefined> = {
+  checkbox: undefined,
+  radio: 'hidden',
+}
+
+/**
  * Presentation of a radio or checkbox card group: the flowing row or fixed grid of cards, the
  * selection mark, where option icons go, the density, and the headings of grouped options.
  * Returns the props and `ui` slots for the Nuxt UI group, and what the card content renders
  * (`compact`, `tile`, `mark`).
  */
 export function useChoiceCard(params: {
+  kind: ChoiceCardKind
   props: () => FormChoiceCardProps
   ui: () => FormControlUi | undefined
 }) {
@@ -88,9 +101,7 @@ export function useChoiceCard(params: {
         mark.value === 'none' ? undefined : 'relative',
         current?.item,
       ),
-      // The card label renders the option icon itself (inline or as a tile): Nuxt UI's own copy
-      // would show it twice.
-      icon: mergeFormUiClass('hidden', current?.icon),
+      icon: mergeFormUiClass(ICON_UI[params.kind], current?.icon),
       // The heading of a group of options, set above its cards.
       legend: mergeFormUiClass('mb-2 text-sm font-medium text-muted', current?.legend),
       label: mergeFormUiClass(layoutUi.label, current?.label),

@@ -22,7 +22,11 @@ const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFie
   () => props.path,
   { omit: CHOICE_CARD_PROPS },
 )
-const cards = useChoiceCard({ props: () => fieldProps.value, ui: () => controlProps.value.ui })
+const cards = useChoiceCard({
+  kind: 'checkbox',
+  props: () => fieldProps.value,
+  ui: () => controlProps.value.ui,
+})
 const optionByKey = computed(
   () => new Map(options.items.value.map((item) => [formOptionKey(item.value), item])),
 )
