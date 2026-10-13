@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UBadge from '@nuxt/ui/components/Badge.vue'
 import UButton from '@nuxt/ui/components/Button.vue'
+import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed, onBeforeUnmount, onMounted, useId, useTemplateRef } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
@@ -75,6 +76,19 @@ onBeforeUnmount(() => unregister?.())
         mergeFormUiClass('flex flex-wrap items-center gap-x-3 gap-y-1', pageUi?.sectionHeader)
       "
     >
+      <span
+        v-if="section.icon"
+        :class="
+          mergeFormUiClass(
+            'grid size-8 shrink-0 place-items-center rounded-lg bg-elevated text-muted',
+            pageUi?.sectionIcon,
+          )
+        "
+        aria-hidden="true"
+        data-form-page-section-icon
+      >
+        <UIcon :name="section.icon" class="size-4" />
+      </span>
       <h2
         :id="titleId"
         tabindex="-1"

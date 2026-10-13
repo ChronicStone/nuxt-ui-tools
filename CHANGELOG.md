@@ -1,3 +1,11 @@
+## v1.20.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.19.0...v1.20.0)
+
+### 🚀 Enhancements
+
+- **form:** A form page section takes an `icon`, drawn in a tile before its title (`ui.page.ui.sectionIcon`, `data-form-page-section-icon`), and the section state passed to slots carries it
+
 ## v1.19.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.18.0...v1.19.0)

@@ -140,6 +140,33 @@ describe('form page', () => {
     expect(harness.wrapper.find('[data-form-page-actions]').text()).toContain('Créer le compte')
   })
 
+  it('draws a section icon before its title, styled by the page ui', async () => {
+    const harness = await mountPage({
+      schema: defineFormPageSchema({
+        sections: [
+          defineFormPageSection({
+            fields: [{ key: 'street', label: 'Rue', type: 'text' }],
+            icon: 'i-lucide-map-pin',
+            key: 'address',
+            label: 'Adresse',
+          }),
+          defineFormPageSection({
+            fields: [{ key: 'note', label: 'Note', type: 'text' }],
+            key: 'notes',
+            label: 'Notes',
+          }),
+        ],
+      }),
+      ui: { page: { ui: { sectionIcon: 'bg-primary/10' } } },
+    })
+
+    const icon = harness.section('address').querySelector('[data-form-page-section-icon]')
+    expect(icon?.nextElementSibling?.tagName).toBe('H2')
+    expect(icon?.getAttribute('aria-hidden')).toBe('true')
+    expect(icon?.className).toContain('bg-primary/10')
+    expect(harness.section('notes').querySelector('[data-form-page-section-icon]')).toBeNull()
+  })
+
   it('shows where each section stands and counts the required ones left', async () => {
     const harness = await mountPage({ schema: accountSchema() })
 
