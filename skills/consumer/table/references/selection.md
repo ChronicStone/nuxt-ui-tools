@@ -82,3 +82,13 @@ With the default `'auto'` mode, the selection column is omitted when the schema 
 no bulk actions. Toolbar and row actions do not imply row selection. Set
 `selection.mode` to `true` when an application needs selection for a custom workflow
 that is not represented by bulk actions.
+
+## Accessible Names
+
+Row controls read the record they act on. Set `rowLabel` on the schema so a screen reader hears "Select Fleury SCS" and "Actions for Fleury SCS" instead of a bare checkbox:
+
+```ts
+rowLabel: (row) => row.name,
+```
+
+Return `null`, `undefined`, or a blank string for a record that has no name, and the controls fall back to its position on the page ("Select row 3"). The names follow the locale. The header checkbox is named "Select all rows" and the mobile actions sheet takes the record's name as its title.

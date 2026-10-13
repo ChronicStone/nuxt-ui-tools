@@ -38,7 +38,7 @@ Set `size="xs" | "sm" | "md" | "lg" | "xl"` on `UiDataList` or `UiDataListRoot` 
 </UiDataListRoot>
 ```
 
-Public parts include search, filter tags, add/clear/panel filters, result count, refresh, column panel, sort menu, layout switch, content, forced table/grid renderers, offset pagination, and cursor infinite loading.
+Public parts include search, filter tags, add/clear/panel filters, result count, refresh, column panel, sort menu, layout switch, view toggle, content, forced table/grid renderers, offset pagination, and cursor infinite loading.
 
 `UiDataListFilterPanel` accepts `mode="panel"` for a raw inline panel and
 `commit-mode="live" | "submit"` for its filter update contract. Action surfaces
@@ -81,9 +81,13 @@ Each popup-backed filter tag can replace its trigger without replacing the filte
 
 The `empty` slot receives `layout`, `refresh`, `hasActiveQuery`, and `clearQuery`. Use `hasActiveQuery` to distinguish a truly empty collection from a search or filter with no matches; `clearQuery` clears both the search term and active UI filters without coupling the empty-state component to the table instance.
 
+A list with no record at all shows the schema's `empty` copy and first action (see `layouts.md`), in the table, summary rows, and the grid. A list hidden by a search or a filter shows a reset button instead. Style that button with `ui.table.ui.emptyAction`.
+
 `UiDataListInfiniteLoader` separately exposes `loading`, `error`, and `end`, so a failed next page keeps already loaded content visible. The default `<UiDataList />` forwards `initial-loading`, `loading`, `empty`, `empty-table`, `empty-grid`, `error`, `refreshing`, `loading-more`, `load-more-error`, and `end`.
 
-`UiDataListPagination` can be replaced through its default slot, or customized in pieces through `selected-count`, `page-size`, `page-count`, and `navigation`.
+`UiDataListPagination` can be replaced through its default slot, or customized in pieces through `selected-count`, `page-size`, `page-count`, `view-toggle`, and `navigation`.
+
+`UiDataListViewToggle` switches the table layout between summary rows and the full table. It renders a text button naming the other view, and its default slot receives `active`, `available`, `label`, and `toggle` for a custom control. It draws nothing where summary rows are not available. Style it through `ui.viewToggle` (`size`, `ui.base`, `props.button`).
 
 ## Sizing and density
 
@@ -166,6 +170,26 @@ The same `nuxtUiTools.dataList` object can be provided through Nuxt app config. 
 DataList controls keep using Nuxt UI primitives. An application-level `app.config.ui.input`, `button`, `dropdownMenu`, `popover`, or `slideover` theme is therefore applied normally, and DataList `ui` slots merge on top of that primitive theme. Replacing a trigger through its slot intentionally transfers rendering ownership to the custom child.
 
 `UiDataListContent` uses `fit="content"`, `fit="height"`, or `fit="fill"`, and the granular root has no implicit fixed height.
+
+## Touch targets on mobile
+
+Below the `md` breakpoint the package adds a 44px touch target to the controls a thumb reaches: the search field and its clear button, filter, sort, column, and layout triggers, refresh, the view toggle, the pager buttons, the selection bar actions, retry and load-more buttons, the row-actions button, the selection checkboxes, and the empty state's button. A checkbox keeps its drawn size and its tap area grows around it, so rows do not change height. Table column headers keep their height. Desktop sizing is untouched.
+
+The classes sit under each slot's own, so what you set in `ui` keeps applying and wins wherever it conflicts. To shrink one control back, state the conflicting utilities. `ui.mobile` is the place for classes that should only apply on a phone, and takes the same shape as the root `ui`:
+
+```vue
+<UiDataListRoot
+  :table="table"
+  :ui="{
+    mobile: {
+      refresh: { ui: { base: 'min-h-0 min-w-0' } }, // opt this one out
+      table: { ui: { rowAction: 'rounded-full' } }, // add to the 44px target
+    },
+  }"
+/>
+```
+
+`ui.table.ui.rowAction` styles the row-actions button on every viewport, `ui.table.ui.selectControl` the tap area around a selection checkbox, and `ui.table.ui.emptyAction` the empty state's button.
 
 ## Error State
 
