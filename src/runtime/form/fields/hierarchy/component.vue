@@ -161,15 +161,16 @@ const selectedTreeItems = computed<readonly TreeHierarchyItem[]>(() => {
   return Array.isArray(selected) ? selected : [selected]
 })
 const treeSelectLabel = computed<string>(() => {
+  const empty = placeholder.value ?? ''
   if (!selectedTreeItems.value.length) {
-    return placeholder.value
+    return empty
   }
   if (treeMultiple.value) {
     return selectedTreeItems.value.map((item) => item.pathLabel).join(', ')
   }
   const [selected] = selectedTreeItems.value
   if (!selected) {
-    return placeholder.value
+    return empty
   }
   return props.field.type === 'tree-select' && fieldProps.value.showPath
     ? selected.pathLabel

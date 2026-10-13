@@ -133,6 +133,12 @@ When adding form features, bias toward:
   renders takes a `FormPageUi` slot; keep it that way when adding one. Sections and the pinned
   navigation read `--nut-form-page-header` (set by `FormPage` from the measured header) plus
   `--nut-form-page-gap`, resolved where they are used so a wrapper can override either.
+- `use-field-control.ts` exposes the authored `placeholder` only. The `shared-ui` baseline
+  restored a generic default ("Enter a value") through i18n; that default is removed on purpose
+  (UX audit: it repeats the label and reads like pre-filled noise for non-technical users), so a
+  control shows a placeholder only when the schema authors one and no
+  `form.fields.text.defaultPlaceholder` key exists. Date-family, color-picker, and one-time-code
+  keep their own format and visual hints because those are not generic prompts.
 - `fields/choice-card/` is the presentation `radio-card` and `checkbox-card` share: the grid
   (`--nut-choice-columns`), the corner check, and the icon tile, with `ui.tile` and `ui.check` for
   the parts the engine renders. `checkbox-card` strips option icons from the items it hands to

@@ -1,7 +1,6 @@
 import { watchWithFilter } from '@vueuse/core'
 import { computed, onScopeDispose } from 'vue'
 
-import { useUiToolsLocale } from '../../i18n/use-locale'
 import type {
   FormValue,
   FormControlSize,
@@ -14,7 +13,8 @@ import type {
 import { isEqualFormValue } from '../utils/compare'
 import { createFormFieldInstance } from '../utils/field-instance'
 import { cloneFormValue } from '../utils/path'
-import { isFunction, isNumber, isObject, isString } from '../utils/predicate'
+import { isFunction, isObject, isString } from '../utils/predicate'
+import { resolveFieldText } from '../utils/text'
 import { mergeFormUiClass } from '../utils/ui'
 import { useFieldOptions } from './use-field-options'
 import { useFormFieldControlAttrs } from './use-form-field-chrome'
@@ -59,7 +59,6 @@ export function useFieldControl<TField extends FormField>(
 ) {
   const form = useFormRuntimeContext()
   const formUi = useFormUi()
-  const { t } = useUiToolsLocale()
   const fieldControlAttrs = useFormFieldControlAttrs()
   const api = computed(() => form.getFieldApi(path(), field()))
   const params = computed(() => form.getFieldCallbackParams(path(), field()))
@@ -131,21 +130,10 @@ export function useFieldControl<TField extends FormField>(
     )
   })
 
-  const placeholder = computed(() => {
-    const current = field()
-    const value = Object.getOwnPropertyDescriptor(current, 'placeholder')?.value
-    if (isFunction(value)) {
-      const resolved = value(params.value)
-      return isString(resolved) || isNumber(resolved)
-        ? String(resolved)
-        : t('form.fields.text.defaultPlaceholder')
-    }
-    if (isString(value) || isNumber(value)) {
-      return String(value)
-    }
-
-    return t('form.fields.text.defaultPlaceholder')
-  })
+  /** Authored placeholder only: a field that declares none shows none. */
+  const placeholder = computed<string | undefined>(() =>
+    resolveFieldText(Object.getOwnPropertyDescriptor(field(), 'placeholder')?.value, params.value),
+  )
 
   let lastValue = cloneFormValue(form.getValue(path()))
   watchWithFilter(

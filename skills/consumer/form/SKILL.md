@@ -170,6 +170,12 @@ fields it depends on. A `description` callback may also return `{ text, display,
 updates as those dependencies change. `label` stays text or a function returning text, because
 labels also name fields in table columns and matrix headers.
 
+`placeholder` is authored copy only: a field that declares none renders none, so there is no
+generic "Enter a value" prompt repeating the label. Author one only when it adds information the
+label does not, such as an example value (`prenom@exemple.fr`) or a format. Select-like controls
+keep the search prompt Nuxt UI localizes for searchable lists, and date, color-picker, and
+one-time-code controls keep their own format hints.
+
 Submit handlers receive typed external-error controls through `api.setError(path, message)` and
 `api.clearError(path?)`. Map expected server failures to their owning fields and return
 `{ success: false }`; use one application-level toast only when the failure is not mapped. Editing

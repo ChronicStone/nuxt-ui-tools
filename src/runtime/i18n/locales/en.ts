@@ -289,7 +289,6 @@ export default defineUiToolsLocale<Messages>({
         },
         text: {
           clear: 'Clear',
-          defaultPlaceholder: 'Enter a value',
         },
         time: {
           clear: 'Clear time',

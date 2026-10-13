@@ -291,7 +291,6 @@ export default defineUiToolsLocale<Messages>({
         },
         text: {
           clear: 'Effacer',
-          defaultPlaceholder: 'Saisissez une valeur',
         },
         time: {
           clear: 'Effacer l’heure',

@@ -476,7 +476,6 @@ export interface UiToolsFormMessages {
   }
   fields: {
     text: {
-      defaultPlaceholder: string
       clear: string
     }
     description: {
