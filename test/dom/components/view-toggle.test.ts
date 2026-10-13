@@ -8,6 +8,7 @@ import DataListViewToggle from '#ui-tools/table/components/data-list/data-list-v
 import { createAccountsSchema, createAuditSchema } from '../fixtures/accounts'
 import { mountLoaded } from '../harness'
 import type { Harness } from '../harness'
+import { setBreakpoint } from '../nuxt-state'
 import { localeCode } from '../stubs/nuxt-ui-locale'
 
 let harness: Harness | undefined
@@ -109,10 +110,8 @@ describe('view toggle part', () => {
   it('keeps no choice made while summary rows are not available', async () => {
     harness = await mountToggle({ breakpoint: 'xl' })
     harness.internals.rowSummary.setActive(false)
+    setBreakpoint('sm')
     await harness.flush()
-    harness.unmount()
-
-    harness = await mountToggle()
     expect(harness.internals.rowSummary.active.value).toBe(true)
   })
 

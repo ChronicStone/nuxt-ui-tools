@@ -62,6 +62,7 @@ export function useTableRowSummary(params: UseTableRowSummaryParams) {
   const active = computed(() => available.value && choice.value === null)
 
   function setActive(next: boolean) {
+    if (!available.value) return
     choice.value = next ? null : 'table'
   }
 
