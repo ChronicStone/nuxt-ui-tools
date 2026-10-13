@@ -1,3 +1,27 @@
+## v1.19.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.18.0...v1.19.0)
+
+### 🚀 Enhancements
+
+- **form:** Rich options on `select`, `auto-complete`, `radio`, and `checkbox-group`: an option takes an `icon`, an `avatar` (`{ src, alt, text }`), a `chip` (`{ color }`), and a `suffix` next to its `label` and `description`, and every field draws them without any rendering code (leading visual, description under the label, suffix at the end of the row, and the chosen option's visual and suffix in the closed control). `renderOption({ option, item, selected, disabled })` replaces the content of each option on the four fields and `renderValue({ option, item })` replaces the closed control of a single `select` or `auto-complete`; `ResolvedFormOption`, which carries the authored option as `item`, and the render contexts are public types
+- **form:** `select` and `auto-complete` list options under headings, with the contract of the choice cards (inline `group`, the field `groupKey`, `groupKey: false`); a search keeps a heading only while its group has a match. `FormChoiceCardGrouping` is now `FormOptionGrouping`
+- **form:** `layout.newRow` starts a field on a new grid row and works with responsive spans
+- **form:** On a page without a navigation, the header row takes the centered column of the body, so both share their edges (`ui.page.ui.headerRow`); the beside layout is unchanged
+
+### 🩹 Fixes
+
+- **table:** `remoteTableOptions` resolves the labels of selected values without the base `filters`, so a stored value that those filters now exclude (an inactive account, a contact no longer flagged) shows its label instead of its raw id
+
+### ⚠️ Behavior notes
+
+- The `icon` of a `checkbox-group` option is now its leading visual before the label; it no longer replaces the check mark
+- Inline options of a `select` or `auto-complete` that carry a `group` are now listed under headings; set `groupKey: false` on the field to keep one list
+
+### ❤️ Contributors
+
+- Cyprien Thao ([@ChronicStone](https://github.com/ChronicStone))
+
 ## v1.18.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.17.1...v1.18.0)
