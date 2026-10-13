@@ -76,7 +76,9 @@ describe('form field kinds', () => {
     ]).toStrictEqual([true, true, false, false])
     expect(
       formFieldKinds
-        .filter((kind) => kind.options?.groups === true)
+        .filter(
+          (kind) => 'options' in kind && 'groups' in kind.options && kind.options.groups === true,
+        )
         .map((kind) => kind.type)
         .sort(),
     ).toStrictEqual(['checkbox-card', 'radio-card'])
