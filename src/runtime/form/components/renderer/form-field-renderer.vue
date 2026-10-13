@@ -3,6 +3,7 @@ import UAlert from '@nuxt/ui/components/Alert.vue'
 import { computed, ref, useId, watchEffect } from 'vue'
 import type { Component } from 'vue'
 
+import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { useFieldEffects } from '../../composables/use-field-effects'
 import {
   provideFormFieldBare,
@@ -72,6 +73,7 @@ const props = defineProps<{
 }>()
 
 const form = useFormRuntimeContext()
+const { t } = useUiToolsLocale()
 const element = ref<HTMLElement | null>(null)
 const bare = computed<boolean>(() => props.bare === true)
 const controlId = useId()
@@ -223,8 +225,8 @@ function resolveControlLabel(controlField: FormField) {
       color="neutral"
       variant="soft"
       icon="i-lucide-construction"
-      title="Unsupported field"
-      :description="`The ${field.type.value} field renderer is not implemented in this slice.`"
+      :title="t('form.fields.unsupported.title')"
+      :description="t('form.fields.unsupported.description', { type: field.type.value })"
     />
   </template>
 
@@ -240,8 +242,8 @@ function resolveControlLabel(controlField: FormField) {
       color="neutral"
       variant="soft"
       icon="i-lucide-construction"
-      title="Unsupported field"
-      :description="`The ${field.type.value} field renderer is not implemented in this slice.`"
+      :title="t('form.fields.unsupported.title')"
+      :description="t('form.fields.unsupported.description', { type: field.type.value })"
     />
   </div>
 </template>

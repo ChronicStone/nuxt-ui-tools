@@ -432,6 +432,8 @@ export interface UiToolsFormMessages {
     submitButton: string
     cancelButton: string
     resetButton: string
+    /** Accessible name of the close button of a modal, drawer, or fullscreen form. */
+    closeButton: string
   }
   /** Form page chrome. Counts use `Intl.PluralRules`: `One` for "one", `Other` otherwise. */
   page: {
@@ -468,6 +470,10 @@ export interface UiToolsFormMessages {
       description: string
       action: string
     }
+  }
+  steps: {
+    /** Name of a step that declares no title: "Step {number}". */
+    fallback: string
   }
   validation: {
     required: string
@@ -563,6 +569,17 @@ export interface UiToolsFormMessages {
       country: string
       number: string
       clear: string
+    }
+    /** Chrome around a stateful field: its collapsible body and its dirty-reset button. */
+    shell: {
+      collapse: string
+      expand: string
+      reset: string
+    }
+    /** Fallback for a field kind that has no renderer: "{type}" is the kind. */
+    unsupported: {
+      title: string
+      description: string
     }
   }
 }

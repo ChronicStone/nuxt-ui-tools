@@ -201,6 +201,7 @@ export default defineUiToolsLocale<Messages>({
       },
       actions: {
         cancelButton: 'Cancel',
+        closeButton: 'Close form',
         nextButton: 'Next',
         prevButton: 'Back',
         resetButton: 'Reset',
@@ -287,6 +288,11 @@ export default defineUiToolsLocale<Messages>({
         rating: {
           value: '{value} of {max}',
         },
+        shell: {
+          collapse: 'Collapse',
+          expand: 'Expand',
+          reset: 'Reset field',
+        },
         text: {
           clear: 'Clear',
         },
@@ -295,6 +301,10 @@ export default defineUiToolsLocale<Messages>({
           format: 'HH:mm',
           hour: 'Hour',
           minute: 'Minute',
+        },
+        unsupported: {
+          description: 'The "{type}" field type cannot be displayed.',
+          title: 'Unsupported field',
         },
         upload: {
           cancel: 'Cancel upload',
@@ -315,6 +325,9 @@ export default defineUiToolsLocale<Messages>({
           description: 'Some form data could not be loaded.',
           title: 'Form data unavailable',
         },
+      },
+      steps: {
+        fallback: 'Step {number}',
       },
       validation: {
         dateMax: 'The date must be on or before {max}',

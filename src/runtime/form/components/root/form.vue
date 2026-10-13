@@ -176,7 +176,7 @@ defineExpose({
 })
 
 function stepLabel(index: number) {
-  return runtime.steps.value[index]?.label ?? `Step ${index + 1}`
+  return runtime.steps.value[index]?.label ?? t('form.steps.fallback', { number: index + 1 })
 }
 
 function getHeaderText(headerConfig: FormValue, key: string) {
@@ -283,7 +283,7 @@ function getSchemaShowStepper(schema: FormValue) {
           :size="formUi.controlSize.value"
           icon="i-lucide-x"
           :disabled="runtime.actionPending.value !== null"
-          aria-label="Close form"
+          :aria-label="t('form.actions.closeButton')"
           :class="formUi.ui.value.root?.ui?.close"
           @click="cancel"
         />

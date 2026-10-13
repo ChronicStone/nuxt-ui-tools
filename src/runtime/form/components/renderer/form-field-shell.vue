@@ -218,7 +218,7 @@ function renderLabelExtra() {
         :icon="open ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
         :class="mergeFormUiClass('justify-self-start', fieldUi?.collapseTrigger)"
       >
-        {{ open ? 'Collapse' : 'Expand' }}
+        {{ open ? t('form.fields.shell.collapse') : t('form.fields.shell.expand') }}
       </UButton>
       <template #content>
         <div :class="mergeFormUiClass('flex items-start gap-2', fieldUi?.body)">
@@ -239,7 +239,7 @@ function renderLabelExtra() {
             color="neutral"
             variant="ghost"
             size="xs"
-            aria-label="Reset field"
+            :aria-label="t('form.fields.shell.reset')"
             :class="fieldUi?.reset"
             @click="resetField"
           />
@@ -262,7 +262,7 @@ function renderLabelExtra() {
         color="neutral"
         variant="ghost"
         size="xs"
-        aria-label="Reset field"
+        :aria-label="t('form.fields.shell.reset')"
         :class="fieldUi?.reset"
         @click="resetField"
       />

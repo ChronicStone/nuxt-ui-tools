@@ -34,6 +34,8 @@ export interface MountFormOptions {
   syncInput?: boolean | readonly string[]
   validate?: FormValidationMode
   shell?: FormRenderShell
+  /** Shows the close button of an overlay shell, as the overlay host does. */
+  showCloseButton?: boolean
   ui?: FormUiConfig
   breakpoint?: BreakpointKey
   appConfig?: FormObject
@@ -240,6 +242,7 @@ function createHost(params: HostParams) {
           onSubmit: (value: FormObject, result: { success: boolean; data?: FormValue }) =>
             params.submitted.push({ result, value }),
           shell: params.options.shell,
+          showCloseButton: params.options.showCloseButton,
           ui: params.options.ui,
         })
     },

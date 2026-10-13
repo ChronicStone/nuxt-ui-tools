@@ -203,6 +203,7 @@ export default defineUiToolsLocale<Messages>({
       },
       actions: {
         cancelButton: 'Annuler',
+        closeButton: 'Fermer le formulaire',
         nextButton: 'Suivant',
         prevButton: 'Précédent',
         resetButton: 'Réinitialiser',
@@ -289,6 +290,11 @@ export default defineUiToolsLocale<Messages>({
         rating: {
           value: '{value} sur {max}',
         },
+        shell: {
+          collapse: 'Replier',
+          expand: 'Déplier',
+          reset: 'Réinitialiser le champ',
+        },
         text: {
           clear: 'Effacer',
         },
@@ -297,6 +303,10 @@ export default defineUiToolsLocale<Messages>({
           format: 'HH:mm',
           hour: 'Heure',
           minute: 'Minute',
+        },
+        unsupported: {
+          description: 'Le type de champ « {type} » ne peut pas être affiché.',
+          title: 'Champ non pris en charge',
         },
         upload: {
           cancel: 'Annuler le téléversement',
@@ -317,6 +327,9 @@ export default defineUiToolsLocale<Messages>({
           description: "Certaines données du formulaire n'ont pas pu être chargées.",
           title: 'Données du formulaire indisponibles',
         },
+      },
+      steps: {
+        fallback: 'Étape {number}',
       },
       validation: {
         dateMax: 'La date doit être au plus tard le {max}',
