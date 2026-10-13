@@ -49,32 +49,12 @@ export interface FormChoiceCardProps {
 }
 
 /**
- * Option grouping of the radio and checkbox cards, declared on the field next to its `options`.
- *
- * @example
- * ```ts
- * // Rows from the API, each with a `section` to list the cards under.
- * { type: 'radio-card', options: () => queryOptions({ queryKey: ['plans'], queryFn: fetchPlans }), groupKey: 'section' }
- * ```
- */
-export interface FormChoiceCardGrouping {
-  /**
-   * Property of the options that holds the heading they are listed under. Options written inline
-   * in the schema group by their `group` without it. The records a function, a promise or a query
-   * returns group only when this names the property, so records that already carry a `group` for
-   * another purpose are never regrouped by surprise. `false` lists every option together, even
-   * inline options that carry a `group`.
-   */
-  groupKey?: string | false
-}
-
-/**
- * Option of a radio or checkbox card: the shared option shape plus the icon and the heading the
- * cards can show.
+ * Option of a radio or checkbox card: the shared option shape plus the heading the cards can show.
+ * A card draws its `icon` only, so the avatar, chip and suffix of other option fields are left out.
  */
 export interface FormChoiceCardOption<
   TValue extends FormOptionValue = FormOptionValue,
-> extends FormOption<TValue> {
+> extends Omit<FormOption<TValue>, 'avatar' | 'chip' | 'suffix'> {
   /** Icon shown with the label, inline or in a tile (see `props.icon`). */
   icon?: string
   /**

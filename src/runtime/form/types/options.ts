@@ -1,4 +1,5 @@
 import type { QueryKey } from '@tanstack/vue-query'
+import type { VNodeChild } from 'vue'
 
 import type {
   RemoteOptionsLoader,
@@ -11,6 +12,35 @@ import type { FormValue } from './'
 import type { FormDependencies, FormFieldCallback, FormFieldCallbackParams } from './callbacks'
 import type { FormQueryOptions } from './context'
 import type { FormMaybePromise, FormText } from './utils'
+
+/** Colors a `chip` option dot can take. */
+export type FormOptionChipColor =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'info'
+  | 'warning'
+  | 'error'
+  | 'neutral'
+
+/**
+ * Picture drawn before an option label, passed to the Nuxt UI avatar. Use it for people and
+ * organisations: `text` is the fallback shown when `src` is missing or fails to load.
+ */
+export interface FormOptionAvatar {
+  /** Image URL. */
+  src?: string
+  /** Accessible description of the image. Defaults to the option label. */
+  alt?: string
+  /** Fallback text shown when there is no image, such as initials. */
+  text?: string
+}
+
+/** Colored dot drawn before an option label, for statuses and categories. */
+export interface FormOptionChip {
+  /** Color of the dot. Defaults to `primary`. */
+  color?: FormOptionChipColor
+}
 
 /**
  * Primitive value accepted by option-based fields.
@@ -29,6 +59,131 @@ export interface FormOption<TValue extends FormOptionValue = FormOptionValue> {
   description?: FormText
   /** Disables the option without removing it from the list. */
   disabled?: boolean
+  /** Iconify icon drawn before the label. */
+  icon?: string
+  /**
+   * Picture drawn before the label, for people and organisations. Only one leading visual shows,
+   * in the order `icon`, `avatar`, `chip`.
+   */
+  avatar?: FormOptionAvatar
+  /**
+   * Colored dot drawn before the label, for statuses and categories. Only one leading visual
+   * shows, in the order `icon`, `avatar`, `chip`.
+   */
+  chip?: FormOptionChip
+  /**
+   * Secondary text at the end of the option, such as a code (`EUR`) or a count. It also follows
+   * the label in the closed control of a select.
+   */
+  suffix?: FormText
+}
+
+/**
+ * Option as the engine resolved it: the shared shape every option-based field renders from,
+ * whatever the authored option looked like (a primitive, a record, or a record with its own keys).
+ */
+export interface ResolvedFormOption {
+  value: FormOptionValue
+  label: string
+  description?: string
+  disabled?: boolean
+  icon?: string
+  avatar?: FormOptionAvatar
+  chip?: FormOptionChip
+  /** Secondary text at the end of the option, already resolved. */
+  suffix?: string
+  /**
+   * The option exactly as the schema or the source gave it, so render functions can read any
+   * data it carries. A primitive option is the primitive itself. The load-more row has none.
+   */
+  item?: FormOptionItem
+  /** Heading the option is listed under, for the fields that group their options. */
+  group?: string
+  children?: readonly ResolvedFormOption[]
+  /** True when the option has children that load on demand. */
+  lazy?: boolean
+}
+
+/** What a field hands `renderOption` for each option it lists. */
+export interface FormOptionRenderContext<TOption = FormOptionItem> {
+  /** The resolved option: label, description, icon, avatar, chip and suffix as the field reads them. */
+  option: ResolvedFormOption
+  /** The option exactly as authored or returned by the source, with any custom data it carries. */
+  item: TOption
+  /** True when the option is part of the field value. */
+  selected: boolean
+  /** True when the option cannot be chosen. */
+  disabled: boolean
+}
+
+/** What a field hands `renderValue` for the option it shows in the closed control. */
+export interface FormOptionValueRenderContext<TOption = FormOptionItem> {
+  /** The resolved option: label, description, icon, avatar, chip and suffix as the field reads them. */
+  option: ResolvedFormOption
+  /** The option exactly as authored or returned by the source, with any custom data it carries. */
+  item: TOption
+}
+
+/**
+ * Content render functions of the option-based fields, declared on the field next to its
+ * `options`. A field typed with its option type (`FormSelectField<Ctx, Deps, Value, Currency>`)
+ * hands them that type. In an inline schema the option type is not inferred into the callback, so
+ * annotate the parameter with the context of your option type to read its custom data.
+ *
+ * @example
+ * ```ts
+ * interface Currency extends FormOption<'EUR' | 'USD'> {
+ *   symbol: string
+ * }
+ *
+ * // Each currency is listed as its symbol, then its name.
+ * {
+ *   type: 'select',
+ *   key: 'currency',
+ *   options: [{ value: 'EUR', label: 'Euro', symbol: '€' }],
+ *   renderOption: ({ item, option }: FormOptionRenderContext<Currency>) =>
+ *     h('span', [item.symbol, ' ', option.label]),
+ * }
+ * ```
+ */
+export interface FormOptionRenderers<TOption = FormOptionItem> {
+  /**
+   * Replaces the content of each option in the list: label, description, leading visual and
+   * suffix. The control keeps its own selection indicator and keyboard behavior.
+   */
+  renderOption?(context: FormOptionRenderContext<TOption>): VNodeChild
+}
+
+/** Renderers of the fields that show the chosen option in a closed control. */
+export interface FormOptionValueRenderers<
+  TOption = FormOptionItem,
+> extends FormOptionRenderers<TOption> {
+  /**
+   * Replaces how the chosen option reads in the closed control, in single selection. Multiple
+   * selection keeps its comma-separated labels.
+   */
+  renderValue?(context: FormOptionValueRenderContext<TOption>): VNodeChild
+}
+
+/**
+ * Option grouping of the fields that list options under headings, declared on the field next to
+ * its `options`.
+ *
+ * @example
+ * ```ts
+ * // Rows from the API, each with a `section` to list the options under.
+ * { type: 'select', options: () => queryOptions({ queryKey: ['plans'], queryFn: fetchPlans }), groupKey: 'section' }
+ * ```
+ */
+export interface FormOptionGrouping {
+  /**
+   * Property of the options that holds the heading they are listed under. Options written inline
+   * in the schema group by their `group` without it. The records a function, a promise or a query
+   * returns group only when this names the property, so records that already carry a `group` for
+   * another purpose are never regrouped by surprise. `false` lists every option together, even
+   * inline options that carry a `group`.
+   */
+  groupKey?: string | false
 }
 
 /**

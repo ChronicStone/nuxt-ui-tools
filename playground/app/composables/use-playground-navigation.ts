@@ -97,6 +97,14 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
         path: '/form/fields',
       },
       {
+        description:
+          'Icons, avatars, chips, descriptions, suffixes, option groups, and render functions across select, auto-complete, radio, and checkbox group.',
+        id: 'form-rich-options',
+        label: 'Rich options',
+        mode: 'document',
+        path: '/form/rich-options',
+      },
+      {
         children: [
           {
             description:

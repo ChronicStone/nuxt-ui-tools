@@ -63,7 +63,7 @@ describe('form field kinds', () => {
     expect([field.config?.type, field.raw]).toStrictEqual(['select', rawField])
   })
 
-  it('declares the option groups only on the choice cards', () => {
+  it('declares the option groups on the choice cards, the select and the auto-complete', () => {
     const options = [{ label: 'France', value: 'FR' }]
     const supports = (field: FormField) =>
       createFormFieldInstance(field).capability.has('optionGroups')
@@ -73,7 +73,9 @@ describe('form field kinds', () => {
       supports(defineFormField({ key: 'b', options, type: 'checkbox-card' })),
       supports(defineFormField({ key: 'c', options, type: 'select' })),
       supports(defineFormField({ key: 'd', options, type: 'radio' })),
-    ]).toStrictEqual([true, true, false, false])
+      supports(defineFormField({ key: 'e', options, type: 'auto-complete' })),
+      supports(defineFormField({ key: 'f', options, type: 'checkbox-group' })),
+    ]).toStrictEqual([true, true, true, false, true, false])
     expect(
       formFieldKinds
         .filter(
@@ -81,7 +83,7 @@ describe('form field kinds', () => {
         )
         .map((kind) => kind.type)
         .sort(),
-    ).toStrictEqual(['checkbox-card', 'radio-card'])
+    ).toStrictEqual(['auto-complete', 'checkbox-card', 'radio-card', 'select'])
   })
 
   it('uses the registry as the source of truth for field type support', () => {

@@ -21,6 +21,10 @@ export default defineConfig({
         replacement: `${root}test/dom/stubs/nuxt-ui/alert.ts`,
       },
       {
+        find: /^@nuxt\/ui\/components\/Avatar\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/avatar.ts`,
+      },
+      {
         find: /^@nuxt\/ui\/components\/Badge\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/badge.ts`,
       },
@@ -43,6 +47,10 @@ export default defineConfig({
       {
         find: /^@nuxt\/ui\/components\/CheckboxGroup\.vue$/u,
         replacement: `${root}test/dom/stubs/nuxt-ui/checkbox-group.ts`,
+      },
+      {
+        find: /^@nuxt\/ui\/components\/Chip\.vue$/u,
+        replacement: `${root}test/dom/stubs/nuxt-ui/chip.ts`,
       },
       {
         find: /^@nuxt\/ui\/components\/Collapsible\.vue$/u,

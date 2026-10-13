@@ -3,6 +3,7 @@ import type { FieldOptionValue, NullableValue } from '../../types/field-output-u
 import type {
   FormOptionConfig,
   FormOptionItem,
+  FormOptionRenderers,
   FormOptionValue,
   FormOptionsSource,
 } from '../../types/options'
@@ -22,13 +23,16 @@ export interface FormCheckboxGroupField<
   TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
-> extends FormStatefulFieldBase<
-  'checkbox-group',
-  readonly TValue[] | null,
-  TContext,
-  TDeps,
-  FormCheckboxGroupProps
-> {
+>
+  extends
+    FormStatefulFieldBase<
+      'checkbox-group',
+      readonly TValue[] | null,
+      TContext,
+      TDeps,
+      FormCheckboxGroupProps
+    >,
+    FormOptionRenderers<TOption> {
   options:
     | FormOptionConfig<TOption, TContext, TDeps, readonly TValue[] | null>
     | FormOptionsSource<TOption, TContext, TDeps, readonly TValue[] | null>

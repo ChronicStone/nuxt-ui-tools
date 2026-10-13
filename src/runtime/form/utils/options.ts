@@ -2,8 +2,12 @@ import type {
   FormValue,
   FormField,
   FormFieldCallbackParams,
+  FormOptionAvatar,
+  FormOptionChip,
+  FormOptionChipColor,
   FormOptionItem,
   FormOptionValue,
+  ResolvedFormOption,
 } from '../types'
 import { createFormFieldInstance } from './field-instance'
 import { isRecord } from './path'
@@ -24,23 +28,48 @@ export interface FormOptionKeys {
 /** Property inline options hold their heading in when the field does not map another one. */
 const DEFAULT_GROUP_KEY = 'group'
 
-export interface ResolvedFormOption {
-  value: FormOptionValue
-  label: string
-  description?: string
-  disabled?: boolean
-  icon?: string
-  /** Heading the option is listed under, for the fields that group their options. */
-  group?: string
-  children?: readonly ResolvedFormOption[]
-  /** True when the option has children that load on demand. */
-  lazy?: boolean
+export type { ResolvedFormOption } from '../types'
+
+const CHIP_COLORS: readonly FormOptionChipColor[] = [
+  'primary',
+  'secondary',
+  'success',
+  'info',
+  'warning',
+  'error',
+  'neutral',
+]
+
+/** The one visual an option draws before its label: its icon, else its avatar, else its chip. */
+export type OptionLeading = 'icon' | 'avatar' | 'chip'
+
+export function resolveOptionLeading(option: ResolvedFormOption): OptionLeading | undefined {
+  if (option.icon) return 'icon'
+  if (option.avatar) return 'avatar'
+  if (option.chip) return 'chip'
+  return undefined
+}
+
+/**
+ * Indent that lines the description of a radio or checkbox option up under its label: the width of
+ * the leading visual (16px icon or chip box, 24px avatar) plus the 8px gap of the row.
+ */
+const DESCRIPTION_INDENT: Record<OptionLeading, string> = {
+  avatar: 'ps-8',
+  chip: 'ps-6',
+  icon: 'ps-6',
+}
+
+export function resolveOptionDescriptionIndent(option: ResolvedFormOption): string | undefined {
+  const leading = resolveOptionLeading(option)
+  return leading ? DESCRIPTION_INDENT[leading] : undefined
 }
 
 export function normalizeOptionItem(
   option: FormValue,
   keys: FormOptionKeys = {},
 ): ResolvedFormOption {
+  const item = isFormOptionItem(option) ? option : undefined
   if (isRecord(option)) {
     const rawValue = readOptionProperty(option, keys.value ?? 'value')
     const fallbackValue = isUndefined(rawValue) ? option.key : rawValue
@@ -53,12 +82,17 @@ export function normalizeOptionItem(
     const lazy = option.isLeaf === false || option.hasChildren === true
     const value = normalizeOptionValue(fallbackValue)
     const rawIcon = readOptionProperty(option, 'icon')
+    const rawSuffix = readOptionProperty(option, 'suffix')
     const normalized: ResolvedFormOption = {
+      avatar: normalizeOptionAvatar(readOptionProperty(option, 'avatar')),
+      chip: normalizeOptionChip(readOptionProperty(option, 'chip')),
       description: isFormText(rawDescription) ? resolveFormText(rawDescription) : undefined,
       disabled: option.disabled === true,
       group: isFormText(rawGroup) ? resolveFormText(rawGroup) : undefined,
       icon: isString(rawIcon) ? rawIcon : undefined,
+      item,
       label: resolveFormText(readOptionProperty(option, keys.label ?? 'label')) ?? String(value),
+      suffix: isFormText(rawSuffix) ? resolveFormText(rawSuffix) : undefined,
       value,
     }
     if (children) {
@@ -73,9 +107,30 @@ export function normalizeOptionItem(
   }
 
   return {
+    item,
     label: String(option),
     value: normalizeOptionValue(option),
   }
+}
+
+/** An option as authored: a primitive value, or a record that carries its own data. */
+function isFormOptionItem(value: FormValue): value is FormOptionItem {
+  return isOptionValue(value) || isRecord(value)
+}
+
+function normalizeOptionAvatar(raw: FormValue): FormOptionAvatar | undefined {
+  if (!isRecord(raw)) return undefined
+  const { alt, src, text } = raw
+  return {
+    alt: isString(alt) ? alt : undefined,
+    src: isString(src) ? src : undefined,
+    text: isString(text) ? text : undefined,
+  }
+}
+
+function normalizeOptionChip(raw: FormValue): FormOptionChip | undefined {
+  if (!isRecord(raw)) return undefined
+  return { color: CHIP_COLORS.find((color) => color === raw.color) }
 }
 
 export function normalizeOptionItems(
@@ -110,6 +165,35 @@ export function resolveOptionGroupKey(field: FormField): string | undefined {
   return Array.isArray(readOptionSource(field)) ? DEFAULT_GROUP_KEY : undefined
 }
 
+export interface OptionGroup<TItem> {
+  /** Stable key of the group: its heading, or an empty string for the options without one. */
+  key: string
+  /** Heading shown above the options of the group; none for options that declare no group. */
+  heading?: string
+  /** The group's options, as the mutable list the Nuxt UI groups take. */
+  items: TItem[]
+}
+
+/**
+ * Lists options under their group headings. Headings follow the order in which they first appear
+ * in `items`, and each keeps its options in their authored order. The options without a group form
+ * one more group with no heading, placed where its first option appears. Without any group the
+ * result is a single headingless group, so an ungrouped list renders as it always did.
+ */
+export function groupOptions<TItem extends { group?: string }>(
+  items: readonly TItem[],
+): readonly OptionGroup<TItem>[] {
+  const groups = new Map<string, TItem[]>()
+  for (const item of items) {
+    const key = item.group?.trim() ?? ''
+    const members = groups.get(key)
+    if (members) members.push(item)
+    else groups.set(key, [item])
+  }
+  if (groups.size === 0) return [{ items: [], key: '' }]
+  return [...groups].map(([key, members]) => ({ heading: key || undefined, items: members, key }))
+}
+
 export const LOAD_MORE_OPTION_VALUE = '__nut:load-more__'
 
 export function isLoadMoreOption(item: FormValue) {
@@ -125,6 +209,33 @@ export function appendLoadMoreOption(
     return items
   }
   return [...items, { disabled: true, label, value: LOAD_MORE_OPTION_VALUE }]
+}
+
+/** Item of a Nuxt UI menu: an option, or the heading (`type: 'label'`) the menu draws above a group. */
+export type OptionMenuItem = ResolvedFormOption & { type?: 'label' }
+
+function menuHeading(heading: string): OptionMenuItem {
+  return { label: heading, type: 'label', value: '' }
+}
+
+/**
+ * Items for the Nuxt UI menu of a select or auto-complete: the options as one flat list, or, when
+ * some options belong to a group, one array per group with a heading item first. Nuxt UI draws
+ * each array as a group and keeps a heading only while its group still has a match for the search.
+ * The load-more row, when shown, is last and belongs to no group.
+ */
+export function toMenuItems(
+  options: readonly ResolvedFormOption[],
+  loadMore: { show: boolean; label: string },
+): OptionMenuItem[] | OptionMenuItem[][] {
+  const groups = groupOptions(options)
+  if (!groups.some((group) => group.heading)) {
+    return [...appendLoadMoreOption(options, loadMore.show, loadMore.label)]
+  }
+  const nested = groups.map((group) =>
+    group.heading ? [menuHeading(group.heading), ...group.items] : group.items,
+  )
+  return loadMore.show ? [...nested, [...appendLoadMoreOption([], true, loadMore.label)]] : nested
 }
 
 export function formOptionKey(value: FormOptionValue) {

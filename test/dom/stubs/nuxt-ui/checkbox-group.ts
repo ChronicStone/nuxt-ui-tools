@@ -1,6 +1,6 @@
 import { defineComponent, h } from 'vue'
 
-import { asRecords, asScalar, dataValue, optional, scalarText } from './props'
+import { asRecord, asRecords, asScalar, dataValue, optional, scalarText } from './props'
 
 export default defineComponent({
   emits: ['update:modelValue'],
@@ -51,7 +51,14 @@ export default defineComponent({
               slots.label ? slots.label({ item }) : scalarText(item.label),
               item.description === undefined
                 ? null
-                : h('p', { 'data-ui-description': '' }, scalarText(item.description)),
+                : h(
+                    'p',
+                    {
+                      class: dataValue(asRecord(item.ui)?.description),
+                      'data-ui-description': '',
+                    },
+                    scalarText(item.description),
+                  ),
             ])
           }),
         ],

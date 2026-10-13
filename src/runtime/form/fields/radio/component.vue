@@ -3,8 +3,11 @@ import URadioGroup from '@nuxt/ui/components/RadioGroup.vue'
 import { computed } from 'vue'
 
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormOptionChoiceLabel from '../../components/utils/form-option-choice-label.vue'
+import { useChoiceGroupItems } from '../../composables/use-choice-group-items'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormRadioField } from '../../types'
+import { formOptionKey } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 import { CARD_SELECTED_RING } from '../card-selection'
@@ -28,7 +31,13 @@ const model = computed<string | number | boolean | undefined>({
   },
   set: (value) => form.setValue(props.path, value),
 })
-const items = computed(() => [...options.items.value])
+const renderOption = computed(() => props.field.renderOption)
+const { items, optionOf } = useChoiceGroupItems({
+  custom: () => renderOption.value !== undefined,
+  options,
+  ui: () => controlProps.value.ui,
+  valueOf: (option) => option.value,
+})
 const groupUi = computed(() => ({
   ...controlProps.value.ui,
   item: mergeFormUiClass(
@@ -53,6 +62,14 @@ const groupUi = computed(() => ({
       :indicator="fieldProps.indicator"
       :disabled="disabled"
       @blur="handleBlur"
-    />
+    >
+      <template #label="{ item }">
+        <FormOptionChoiceLabel
+          :option="optionOf(formOptionKey(item.value))"
+          :selected="model === item.value"
+          :render="renderOption"
+        />
+      </template>
+    </URadioGroup>
   </FormFieldShell>
 </template>

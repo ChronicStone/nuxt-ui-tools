@@ -3,6 +3,8 @@ import UCheckboxGroup from '@nuxt/ui/components/CheckboxGroup.vue'
 import { computed } from 'vue'
 
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormOptionChoiceLabel from '../../components/utils/form-option-choice-label.vue'
+import { useChoiceGroupItems } from '../../composables/use-choice-group-items'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormCheckboxGroupField, FormOptionValue } from '../../types'
 import { formOptionKey } from '../../utils/options'
@@ -36,9 +38,13 @@ const model = computed<string[]>({
       }),
     ),
 })
-const items = computed(() =>
-  options.items.value.map((item) => ({ ...item, value: formOptionKey(item.value) })),
-)
+const renderOption = computed(() => props.field.renderOption)
+const { items, optionOf } = useChoiceGroupItems({
+  custom: () => renderOption.value !== undefined,
+  options,
+  ui: () => controlProps.value.ui,
+  valueOf: (option) => formOptionKey(option.value),
+})
 const groupUi = computed(() => ({
   ...controlProps.value.ui,
   fieldset: mergeFormUiClass(
@@ -71,6 +77,14 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
       :indicator="fieldProps.indicator"
       :disabled="disabled"
       @blur="handleBlur"
-    />
+    >
+      <template #label="{ item }">
+        <FormOptionChoiceLabel
+          :option="optionOf(item.value)"
+          :selected="model.includes(item.value)"
+          :render="renderOption"
+        />
+      </template>
+    </UCheckboxGroup>
   </FormFieldShell>
 </template>

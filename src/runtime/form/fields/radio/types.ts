@@ -1,6 +1,11 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FieldOptionValue, NullableValue } from '../../types/field-output-utils'
-import type { FormOptionItem, FormOptionValue, FormOptionsSource } from '../../types/options'
+import type {
+  FormOptionItem,
+  FormOptionRenderers,
+  FormOptionValue,
+  FormOptionsSource,
+} from '../../types/options'
 
 export interface FormRadioProps {
   /**
@@ -18,7 +23,10 @@ export interface FormRadioField<
   TDeps = NonNullable<unknown>,
   TValue extends FormOptionValue = FormOptionValue,
   TOption extends FormOptionItem<TValue> = FormOptionItem<TValue>,
-> extends FormStatefulFieldBase<'radio', TValue | null, TContext, TDeps, FormRadioProps> {
+>
+  extends
+    FormStatefulFieldBase<'radio', TValue | null, TContext, TDeps, FormRadioProps>,
+    FormOptionRenderers<TOption> {
   options: FormOptionsSource<TOption, TContext, TDeps, TValue | null>
 }
 
