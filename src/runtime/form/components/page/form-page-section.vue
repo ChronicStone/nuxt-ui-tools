@@ -35,6 +35,45 @@ const titleId = useId()
  * reflows; on narrow pages the description moves under the title row, which holds the button.
  */
 const dirty = computed(() => page.dirtyCheck.value && props.section.dirty)
+/**
+ * Where the section stands, at the end of its heading with the `page.status` UI option. An
+ * optional section with nothing entered shows its "Facultatif" tag there too, so every status
+ * sits in the same place.
+ */
+const status = computed(() => {
+  if (!page.statusVisible.value) {
+    return undefined
+  }
+  if (props.section.status === 'optional') {
+    return { color: 'neutral', icon: undefined, label: t('form.page.status.optional') } as const
+  }
+  if (props.section.status === 'complete') {
+    return {
+      color: 'success',
+      icon: 'i-lucide-check',
+      label: t('form.page.status.complete'),
+    } as const
+  }
+  if (props.section.status === 'invalid') {
+    return {
+      color: 'error',
+      icon: 'i-lucide-circle-alert',
+      label: t('form.page.status.invalid'),
+    } as const
+  }
+  const { missing, required } = props.section
+  return {
+    color: 'neutral',
+    icon: undefined,
+    label: t('form.page.progress', { filled: required - missing, required }),
+  } as const
+})
+/** On a spanned page the section takes its columns once the sections area is wide enough. */
+const spanClass = computed(() =>
+  page.spanned.value
+    ? 'col-span-12 @3xl/form-sections:col-span-(--nut-form-page-section-span)'
+    : '',
+)
 
 // The section scopes the grid its fields lay out in, the way a step does.
 const layout = computed(() =>
@@ -63,17 +102,21 @@ onBeforeUnmount(() => unregister?.())
     :data-dirty="dirty || undefined"
     :style="{
       scrollMarginTop: `calc(${page.stickyOffset.value}px + var(--nut-form-page-gap, 24px))`,
+      '--nut-form-page-section-span': page.spanned.value ? String(section.span) : undefined,
     }"
     :class="
       mergeFormUiClass(
-        `flex min-w-0 flex-col ${page.surfaceClasses.value.section}`,
+        `flex min-w-0 flex-col ${spanClass} ${page.surfaceClasses.value.section}`,
         pageUi?.section,
       )
     "
   >
     <header
       :class="
-        mergeFormUiClass('flex flex-wrap items-center gap-x-3 gap-y-1', pageUi?.sectionHeader)
+        mergeFormUiClass(
+          `flex flex-wrap items-center gap-x-3 gap-y-1 ${page.surfaceClasses.value.sectionHeader}`,
+          pageUi?.sectionHeader,
+        )
       "
     >
       <span
@@ -114,7 +157,7 @@ onBeforeUnmount(() => unregister?.())
         {{ section.description }}
       </p>
       <UBadge
-        v-if="section.status === 'optional'"
+        v-if="section.status === 'optional' && !status"
         color="neutral"
         variant="soft"
         :label="t('form.page.status.optional')"
@@ -122,9 +165,24 @@ onBeforeUnmount(() => unregister?.())
         data-form-page-optional
       />
       <div
-        v-if="page.dirtyCheck.value || $slots.actions"
+        v-if="status || page.dirtyCheck.value || $slots.actions"
         :class="mergeFormUiClass('ms-auto -my-1.5 flex items-center gap-2', pageUi?.sectionActions)"
       >
+        <UBadge
+          v-if="status"
+          :color="status.color"
+          variant="soft"
+          :icon="status.icon"
+          :label="status.label"
+          :class="
+            mergeFormUiClass(
+              section.status === 'optional' ? pageUi?.sectionOptional : undefined,
+              pageUi?.sectionStatus,
+            )
+          "
+          :data-form-page-status="section.status"
+          :data-form-page-optional="section.status === 'optional' ? '' : undefined"
+        />
         <slot name="actions" :section />
         <UButton
           v-if="page.dirtyCheck.value"
@@ -140,7 +198,12 @@ onBeforeUnmount(() => unregister?.())
         />
       </div>
     </header>
-    <div :class="mergeFormUiClass('min-w-0', pageUi?.sectionBody)" :style="grid.style.value">
+    <div
+      :class="
+        mergeFormUiClass(`min-w-0 ${page.surfaceClasses.value.sectionBody}`, pageUi?.sectionBody)
+      "
+      :style="grid.style.value"
+    >
       <FormFieldRenderer
         v-for="field in entry.section.fields"
         :key="field.key"

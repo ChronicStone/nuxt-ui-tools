@@ -12,6 +12,10 @@ export interface FormPageSurfaceClasses {
   sections: string
   /** The box of a card, or the spacing, hairline, and modified marker of a plain section. */
   section: string
+  /** The bar of a panel heading. */
+  sectionHeader: string
+  /** Padding of the fields under a panel bar. */
+  sectionBody: string
   /** Where the description sits against the title. */
   sectionDescription: string
   /** Placeholder shown while the schema context loads. */
@@ -27,24 +31,40 @@ export const FORM_PAGE_COLUMN = 'mx-auto w-full max-w-[816px]'
 export const DEFAULT_FORM_PAGE_SURFACE: FormPageSurface = 'card'
 
 /**
- * A card is a bordered box that rings when modified. A plain section has no box: it is separated
- * from the previous one by spacing and a hairline (none above the first, no padding below the
- * last), and a modified one gets a bar in the margin beside it.
+ * A card is a bordered box that rings when modified. A panel is a card whose heading is a bar
+ * across its top, its fields padded below. A plain section has no box: it is separated from the
+ * previous one by spacing and a hairline (none above the first, no padding below the last), and a
+ * modified one gets a bar in the margin beside it.
  */
 const FORM_PAGE_SURFACES: Record<FormPageSurface, FormPageSurfaceClasses> = {
   card: {
     root: 'bg-muted',
     section:
       'gap-[18px] rounded-xl border border-default bg-default px-5 pt-5 pb-6 transition-[border-color,box-shadow] duration-200 @3xl/form-page:px-6 @3xl/form-page:pt-[22px] data-[dirty]:border-primary data-[dirty]:ring-4 data-[dirty]:ring-primary/20 data-[dirty]:ring-inset',
+    sectionBody: '',
     sectionDescription: 'order-last basis-full @3xl/form-page:order-none @3xl/form-page:basis-auto',
+    sectionHeader: '',
     sectionSkeleton: 'rounded-xl border border-default bg-default px-6 pt-[22px] pb-6',
     sections: 'gap-[18px]',
+  },
+  panel: {
+    root: 'bg-muted',
+    section:
+      'overflow-hidden rounded-xl border border-default bg-default transition-[border-color,box-shadow] duration-200 focus-within:border-accented data-[dirty]:border-primary data-[dirty]:ring-4 data-[dirty]:ring-primary/20 data-[dirty]:ring-inset',
+    sectionBody: 'px-5 pt-5 pb-6 @3xl/form-page:px-6',
+    sectionDescription: 'order-last basis-full',
+    sectionHeader:
+      'min-h-13 border-b border-default bg-elevated/60 px-4 py-2.5 @3xl/form-page:px-5',
+    sectionSkeleton: 'rounded-xl border border-default bg-default px-6 pt-[22px] pb-6',
+    sections: 'gap-4',
   },
   plain: {
     root: 'bg-default',
     section:
       'relative gap-[18px] border-t border-default py-8 first:border-t-0 first:pt-0 last:pb-0 before:pointer-events-none before:absolute before:inset-y-8 before:-start-3 before:w-0.5 before:rounded-full before:transition-colors first:before:top-0 last:before:bottom-0 data-[dirty]:before:bg-primary',
+    sectionBody: '',
     sectionDescription: 'order-last basis-full',
+    sectionHeader: '',
     sectionSkeleton: 'border-t border-default py-8 first:border-t-0 first:pt-0',
     sections: 'gap-0',
   },

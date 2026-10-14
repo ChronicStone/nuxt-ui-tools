@@ -216,10 +216,11 @@ export interface FormOverlayUi {
  * How the sections of a form page are drawn:
  *
  * - `card`: each section is a bordered card on the gray canvas of the page (default)
+ * - `panel`: a card whose heading sits in a bar across its top, above the fields
  * - `plain`: no box. A section is its heading, description, and fields on the page itself,
  *   separated from the next by spacing and a hairline
  */
-export type FormPageSurface = 'card' | 'plain'
+export type FormPageSurface = 'card' | 'panel' | 'plain'
 
 /**
  * The `page` part of the form UI config: the surface of the sections and the `ui` slots of the
@@ -228,6 +229,13 @@ export type FormPageSurface = 'card' | 'plain'
 export interface FormPageUiConfig extends FormUiPartConfig<FormPageUi> {
   /** Defaults to `card`. */
   surface?: FormPageSurface
+  /**
+   * Shows where each section stands at the end of its heading: the required fields filled out of
+   * the total while some are missing ("2 sur 3"), "Complété" once nothing is, "À corriger" while a
+   * field shows an error, and "Facultatif" for an optional section with nothing entered, which
+   * then carries its tag there instead of after the title. Off by default.
+   */
+  status?: boolean
 }
 
 /**
@@ -295,6 +303,8 @@ export interface FormPageUi {
   sectionDescription?: FormUiClass
   /** The "Optional" badge of an optional section with nothing entered. */
   sectionOptional?: FormUiClass
+  /** Badge of where the section stands, with `page.status`. Carries `data-form-page-status`. */
+  sectionStatus?: FormUiClass
   sectionActions?: FormUiClass
   sectionReset?: FormUiClass
   sectionBody?: FormUiClass

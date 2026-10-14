@@ -65,6 +65,10 @@ export function useFormPage(params: {
   const surface = computed(() => resolveFormPageSurface(root.formUi.ui.value.page?.surface))
   /** Default classes the surface sets on the page parts. */
   const surfaceClasses = computed(() => getFormPageSurfaceClasses(surface.value))
+  /** Shows where each section stands in its heading, from the `page.status` UI option. */
+  const statusVisible = computed(() => root.formUi.ui.value.page?.status === true)
+  /** True once a visible section takes less than the full row: the sections lay out in a grid. */
+  const spanned = computed(() => sections.value.some((section) => section.span < 12))
   /**
    * Sections that still need something before the form can be submitted: a required section that
    * is not complete, or an optional one the user started and left incomplete or invalid. An
@@ -103,6 +107,8 @@ export function useFormPage(params: {
     root,
     scrollTo: scroll.scrollTo,
     sections,
+    spanned,
+    statusVisible,
     stickyOffset,
     surface,
     surfaceClasses,

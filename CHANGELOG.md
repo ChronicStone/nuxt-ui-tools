@@ -1,3 +1,13 @@
+## v1.21.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.20.1...v1.21.0)
+
+### 🚀 Enhancements
+
+- **form:** A form page has a `panel` surface: each section is a card whose heading sits in a bar across its top, above the padded fields
+- **form:** A form page section takes a `span` out of twelve columns, so short sections share a row once the sections area is 48rem wide; without one a section keeps the full row, and a page with no span keeps its column
+- **form:** `ui.page.status` shows where each section stands at the end of its heading ("2 sur 3", "Complété", "À corriger"); the section state passed to slots carries `required` and `span`
+
 ## v1.20.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.20.0...v1.20.1)

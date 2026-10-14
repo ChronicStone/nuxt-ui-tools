@@ -712,3 +712,111 @@ describe('form page navigation threshold', () => {
     expect(harness.wrapper.find('[data-form-page-navigation]').exists()).toBe(false)
   })
 })
+
+function spanSchema(ui?: FormUiConfig) {
+  return defineFormPageSchema({
+    sections: [
+      defineFormPageSection({
+        fields: [{ key: 'kind', label: 'Type', required: true, type: 'text' }],
+        key: 'profile',
+        label: 'Profil',
+        span: 4,
+      }),
+      defineFormPageSection({
+        fields: [
+          { key: 'name', label: 'Nom', required: true, type: 'text' },
+          { key: 'legal', label: 'Entité', required: true, type: 'text' },
+        ],
+        key: 'identity',
+        label: 'Identité',
+        span: 8,
+      }),
+      defineFormPageSection({
+        fields: [{ key: 'note', label: 'Note', type: 'text' }],
+        key: 'notes',
+        label: 'Notes',
+      }),
+    ],
+    ui,
+  })
+}
+
+const spanOf = (harness: PageHarness, key: string) =>
+  harness.section(key).style.getPropertyValue('--nut-form-page-section-span')
+
+describe('form page panels, spans and status', () => {
+  it('lays sections out in a twelve-column grid once one sets a span', async () => {
+    const harness = await mountPage({ schema: spanSchema() })
+
+    expect(harness.wrapper.find('[data-form-page-sections]').classes()).toEqual(
+      expect.arrayContaining(['@container/form-sections', 'grid', 'grid-cols-12']),
+    )
+    expect(spanOf(harness, 'profile')).toBe('4')
+    expect(spanOf(harness, 'identity')).toBe('8')
+    // A section without a span takes the whole row.
+    expect(spanOf(harness, 'notes')).toBe('12')
+    for (const key of ['profile', 'identity', 'notes']) {
+      // Full row until the sections area is wide enough for the span.
+      expect(harness.section(key).classList).toContain('col-span-12')
+      expect(harness.section(key).classList).toContain(
+        '@3xl/form-sections:col-span-(--nut-form-page-section-span)',
+      )
+    }
+  })
+
+  it('keeps the column of sections when none sets a span', async () => {
+    const harness = await mountPage({ schema: accountSchema() })
+    const sections = harness.wrapper.find('[data-form-page-sections]')
+
+    expect(sections.classes()).toContain('flex')
+    expect(sections.classes()).not.toContain('grid-cols-12')
+    expect(harness.section('identity').classList).not.toContain('col-span-12')
+    expect(spanOf(harness, 'identity')).toBe('')
+  })
+
+  it('draws panels: a heading bar across the top, the fields padded below it', async () => {
+    const harness = await mountPage({ schema: spanSchema({ page: { surface: 'panel' } }) })
+    const section = harness.section('identity')
+    const header = section.querySelector('header')
+
+    expect(surfaceOf(harness)).toBe('panel')
+    expect(harness.wrapper.find('[data-form-page]').classes()).toContain('bg-muted')
+    expect([...section.classList]).toEqual(
+      expect.arrayContaining(['overflow-hidden', 'rounded-xl', 'border', 'bg-default']),
+    )
+    expect([...(header?.classList ?? [])]).toEqual(
+      expect.arrayContaining(['border-b', 'bg-elevated/60', 'px-4']),
+    )
+    expect(header?.nextElementSibling?.classList).toContain('px-5')
+    expect(header?.nextElementSibling?.querySelector('[data-form-field="name"]')).not.toBeNull()
+  })
+
+  it('shows where each section stands at the end of its heading with page.status', async () => {
+    const harness = await mountPage({ schema: spanSchema({ page: { status: true } }) })
+    const badge = (key: string) => harness.section(key).querySelector('[data-form-page-status]')
+
+    expect(badge('identity')?.textContent?.trim()).toBe('0 sur 2')
+    expect(badge('identity')?.getAttribute('data-form-page-status')).toBe('pending')
+    // An optional section with nothing entered shows its tag in the same place, once.
+    expect(badge('notes')?.textContent?.trim()).toBe('Facultatif')
+    expect(badge('notes')?.getAttribute('data-form-page-status')).toBe('optional')
+    expect(harness.section('notes').querySelectorAll('[data-form-page-optional]')).toHaveLength(1)
+
+    await harness.setValue('name', 'Lingua Formation')
+    expect(badge('identity')?.textContent?.trim()).toBe('1 sur 2')
+    await harness.setValue('legal', 'Lingua Formation SAS')
+    expect(badge('identity')?.textContent?.trim()).toBe('Complété')
+    expect(badge('identity')?.getAttribute('data-form-page-status')).toBe('complete')
+
+    await harness.wrapper.find('[data-form-field="kind"] input').trigger('blur')
+    await harness.flush()
+    expect(badge('profile')?.textContent?.trim()).toBe('À corriger')
+    expect(badge('profile')?.getAttribute('data-form-page-status')).toBe('invalid')
+  })
+
+  it('leaves the heading without a status by default', async () => {
+    const harness = await mountPage({ schema: spanSchema() })
+
+    expect(harness.wrapper.find('[data-form-page-status]').exists()).toBe(false)
+  })
+})
