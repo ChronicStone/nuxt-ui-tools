@@ -168,6 +168,19 @@ onBeforeUnmount(() => unregister?.())
         v-if="status || page.dirtyCheck.value || $slots.actions"
         :class="mergeFormUiClass('ms-auto -my-1.5 flex items-center gap-2', pageUi?.sectionActions)"
       >
+        <slot name="actions" :section />
+        <UButton
+          v-if="page.dirtyCheck.value"
+          type="button"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          icon="i-lucide-rotate-ccw"
+          :label="t('form.page.resetSection')"
+          :class="mergeFormUiClass(dirty ? undefined : 'invisible', pageUi?.sectionReset)"
+          :data-form-page-reset="dirty ? '' : undefined"
+          @click="page.resetSection(section.key)"
+        />
         <UBadge
           v-if="status"
           :color="status.color"
@@ -182,19 +195,6 @@ onBeforeUnmount(() => unregister?.())
           "
           :data-form-page-status="section.status"
           :data-form-page-optional="section.status === 'optional' ? '' : undefined"
-        />
-        <slot name="actions" :section />
-        <UButton
-          v-if="page.dirtyCheck.value"
-          type="button"
-          color="neutral"
-          variant="ghost"
-          size="sm"
-          icon="i-lucide-rotate-ccw"
-          :label="t('form.page.resetSection')"
-          :class="mergeFormUiClass(dirty ? undefined : 'invisible', pageUi?.sectionReset)"
-          :data-form-page-reset="dirty ? '' : undefined"
-          @click="page.resetSection(section.key)"
         />
       </div>
     </header>
