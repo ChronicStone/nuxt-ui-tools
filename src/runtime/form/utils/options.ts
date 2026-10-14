@@ -43,6 +43,21 @@ const CHIP_COLORS: readonly FormOptionChipColor[] = [
 /** The one visual an option draws before its label: its icon, else its avatar, else its chip. */
 export type OptionLeading = 'icon' | 'avatar' | 'chip'
 
+const LEADING_PADDING = { lg: 'ps-10', md: 'ps-9', sm: 'ps-8', xl: 'ps-11', xs: 'ps-7' } as const
+
+/**
+ * Start padding of a select or auto-complete that draws the chosen option's visual in its leading
+ * slot. Nuxt UI decides that padding from the slot once, so a visual that appears after mount (a
+ * value picked later) would otherwise draw over the text.
+ */
+export function leadingVisualPadding(size: unknown) {
+  return LEADING_PADDING[isLeadingSize(size) ? size : 'md']
+}
+
+function isLeadingSize(size: unknown): size is keyof typeof LEADING_PADDING {
+  return isString(size) && Object.hasOwn(LEADING_PADDING, size)
+}
+
 export function resolveOptionLeading(option: ResolvedFormOption): OptionLeading | undefined {
   if (option.icon) return 'icon'
   if (option.avatar) return 'avatar'
