@@ -3,6 +3,7 @@ import USwitch from '@nuxt/ui/components/Switch.vue'
 import { computed, useId } from 'vue'
 
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormOptionChoiceLabel from '../../components/utils/form-option-choice-label.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue, FormOptionValue, FormSwitchGroupField } from '../../types'
 import { formOptionKey } from '../../utils/options'
@@ -47,7 +48,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
     <div
       role="group"
       class="grid gap-3"
-      :class="fieldProps.orientation === 'horizontal' ? 'sm:flex sm:flex-wrap' : ''"
+      :class="fieldProps.orientation === 'horizontal' ? 'sm:flex sm:flex-wrap sm:gap-x-7' : ''"
     >
       <USwitch
         v-for="item in items"
@@ -63,7 +64,11 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         :unchecked-icon="fieldProps.uncheckedIcon"
         @update:model-value="toggleOption(item.value, $event === true)"
         @blur="handleBlur"
-      />
+      >
+        <template #label>
+          <FormOptionChoiceLabel :option="item" :selected="model.includes(item.value)" />
+        </template>
+      </USwitch>
     </div>
   </FormFieldShell>
 </template>

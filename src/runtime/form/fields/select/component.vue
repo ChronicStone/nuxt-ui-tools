@@ -10,10 +10,12 @@ import FormOptionItemLabel from '../../components/utils/form-option-item-label.v
 import FormOptionLeading from '../../components/utils/form-option-leading.vue'
 import FormOptionMenuFooter from '../../components/utils/form-option-menu-footer.vue'
 import FormOptionSuffix from '../../components/utils/form-option-suffix.vue'
+import FormOptionTokens from '../../components/utils/form-option-tokens.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useOptionMenu } from '../../composables/use-option-menu'
 import type { FormValue, FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
-import { leadingVisualPadding } from '../../utils/options'
+import { formOptionKey, leadingVisualPadding } from '../../utils/options'
+import type { ResolvedFormOption } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -84,6 +86,22 @@ const controlUi = computed(() => ({
     controlProps.value.ui?.itemDescription,
   ),
 }))
+/**
+ * The chosen options of a multiple select, drawn as tokens with their visual in the control.
+ * `renderValue` stays a single-selection display: the tokens keep the labels.
+ */
+const tokenOptions = computed<readonly ResolvedFormOption[]>(() => {
+  if (!fieldProps.value.multiple || !Array.isArray(model.value)) {
+    return []
+  }
+  const chosen = new Map(
+    options.selectedItems.value.map((option) => [formOptionKey(option.value), option]),
+  )
+  // A value whose option is still loading keeps its place, under its raw value.
+  return model.value.map(
+    (value) => chosen.get(formOptionKey(value)) ?? { label: String(value), value },
+  )
+})
 const createItem = computed<FormSelectCreateItem>(() =>
   options.creatable.value && fieldProps.value.createItem ? fieldProps.value.createItem : false,
 )
@@ -183,6 +201,9 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             :render="menu.renderValue.value"
           />
         </span>
+      </template>
+      <template v-else-if="tokenOptions.length" #default>
+        <FormOptionTokens :options="tokenOptions" />
       </template>
 
       <template #item-leading="{ item }">

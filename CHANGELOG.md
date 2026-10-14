@@ -1,3 +1,14 @@
+## v1.22.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.21.0...v1.22.0)
+
+### 🚀 Enhancements
+
+- **form:** A multiple `select` shows each chosen option as a token with its icon, avatar or chip instead of a comma-separated line; tokens wrap, one row keeps the input height, and a value still loading keeps its place under its raw value
+- **form:** The tags of a multiple `auto-complete` draw the icon, avatar or chip of their option
+- **form:** A `switch-group` draws the icon, avatar or chip and the suffix of each option, and spaces options further apart in a row
+- **form:** A `tree-select` or `cascader` draws the chosen option's visual in its control and tokens for a multiple selection, and the rows of a tree with selection controls draw their option's visual
+
 ## v1.21.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.20.1...v1.21.0)
