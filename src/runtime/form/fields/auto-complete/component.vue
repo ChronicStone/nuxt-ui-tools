@@ -17,6 +17,7 @@ import type {
   FormOptionValue,
   FormSelectCreateItem,
 } from '../../types'
+import { leadingVisualPadding } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -72,6 +73,7 @@ const controlUi = computed(() => ({
   ...controlProps.value.ui,
   base: mergeFormUiClass(
     controlProps.value.ui?.base,
+    menu.leadingOption.value ? leadingVisualPadding(controlProps.value.size) : undefined,
     overlayActive.value ? 'text-transparent' : undefined,
   ),
   content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),

@@ -1,3 +1,11 @@
+## v1.20.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.20.0...v1.20.1)
+
+### 🩹 Fixes
+
+- **form:** A `select` or `auto-complete` whose chosen option has an icon, an avatar or a chip pads its control for that visual even when the value is picked after mount; the visual no longer covers the start of the label
+
 ## v1.20.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.19.0...v1.20.0)

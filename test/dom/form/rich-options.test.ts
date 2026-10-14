@@ -49,6 +49,23 @@ function item(path: string, value: string) {
 }
 
 describe('select with rich options', () => {
+  it('pads the control for a visual picked after mount, so it never covers the label', async () => {
+    harness = await mountForm({
+      schema: defineFormSchema({
+        actions: [],
+        fields: [{ key: 'person', options: people, type: 'select' }],
+      }),
+    })
+    const control = () => harness?.wrapper.findComponent({ name: 'USelectMenu' })
+    expect(control()?.props('ui')?.base ?? '').not.toContain('ps-9')
+
+    await open('person')
+    await item('person', 'louis').trigger('click')
+    await harness.flush()
+
+    expect(control()?.props('ui')?.base).toContain('ps-9')
+  })
+
   it('draws the leading visual, description, and suffix of each option in the menu', async () => {
     harness = await mountForm({
       schema: defineFormSchema({

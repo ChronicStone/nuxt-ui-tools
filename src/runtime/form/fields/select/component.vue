@@ -13,6 +13,7 @@ import FormOptionSuffix from '../../components/utils/form-option-suffix.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useOptionMenu } from '../../composables/use-option-menu'
 import type { FormValue, FormOptionValue, FormSelectCreateItem, FormSelectField } from '../../types'
+import { leadingVisualPadding } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -73,6 +74,10 @@ const menu = useOptionMenu({
 })
 const controlUi = computed(() => ({
   ...controlProps.value.ui,
+  base: mergeFormUiClass(
+    controlProps.value.ui?.base,
+    menu.leadingOption.value ? leadingVisualPadding(controlProps.value.size) : undefined,
+  ),
   content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
   itemDescription: mergeFormUiClass(
     menu.renderOption.value ? 'hidden' : 'text-[12.5px]',
