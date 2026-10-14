@@ -725,8 +725,9 @@ on an element around the navigation and the sections.
 
 ## Rich Options
 
-`select`, `auto-complete`, `radio`, and `checkbox-group` read more than a label from each option.
-Every key is optional, and an option without them renders exactly as before:
+`select`, `auto-complete`, `radio`, `checkbox-group`, `switch-group`, `tree-select`, and `cascader`
+read more than a label from each option. Every key is optional, and an option without them renders
+exactly as before:
 
 - `icon`: an Iconify name drawn before the label.
 - `avatar`: `{ src?, alt?, text? }`, for people and organisations. `alt` defaults to the label, and
@@ -738,6 +739,13 @@ Every key is optional, and an option without them renders exactly as before:
   text like `label`.
 
 Only one leading visual shows, the first of `icon`, `avatar`, `chip`.
+
+The chosen value carries the visual too. A single select, auto-complete, tree select or cascader
+draws the chosen option's visual at the start of the control. A multiple select, tree select or
+cascader shows each chosen option as a token with its visual, the way a multiple auto-complete shows
+its tags; tokens wrap onto more lines when they do not fit, and one row keeps the control as tall as
+the inputs beside it. Tokens keep the labels when the field sets `renderValue`, which stays a
+single-selection display.
 
 ```ts
 {

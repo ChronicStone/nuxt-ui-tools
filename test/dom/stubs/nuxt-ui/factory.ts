@@ -306,6 +306,7 @@ export function createInputStub(
       highlight: optional,
       icon: optional,
       items: optional,
+      label: optional,
       legend: optional,
       loading: optional,
       max: optional,
@@ -379,7 +380,7 @@ export function createInputStub(
           ])
         }
         if (kind === 'checkbox') {
-          return h('input', {
+          const control = h('input', {
             ...shared,
             checked: props.modelValue === true,
             'data-indeterminate': props.modelValue === 'indeterminate' ? 'true' : undefined,
@@ -390,6 +391,13 @@ export function createInputStub(
             },
             type: 'checkbox',
           })
+          // A switch or checkbox with a label slot draws it beside the control, as Nuxt UI does.
+          return slots.label
+            ? h('span', { 'data-ui-labelled': name }, [
+                control,
+                h('span', { 'data-ui-slot': 'label' }, slots.label({ label: props.label })),
+              ])
+            : control
         }
         return h('span', { class: uiClass(props.ui, 'root'), 'data-ui-wrap': name }, [
           slots.leading?.(),
@@ -734,9 +742,17 @@ export function createMenuStub(name: string) {
                       slots.leading({ modelValue: props.modelValue, open, ui: SLOT_UI }),
                     )
                   : null,
-                slots.default
-                  ? slots.default({ modelValue: props.modelValue, open, ui: SLOT_UI })
-                  : renderTriggerText(items, selected),
+                props.multiple && slots['tags-item-text'] && selected.length
+                  ? selected.map((value, index) =>
+                      h(
+                        'span',
+                        { 'data-ui-slot': 'tags-item' },
+                        slots['tags-item-text']?.({ index, item: value }),
+                      ),
+                    )
+                  : slots.default
+                    ? slots.default({ modelValue: props.modelValue, open, ui: SLOT_UI })
+                    : renderTriggerText(items, selected),
               ],
             ),
             props.clear && selected.length

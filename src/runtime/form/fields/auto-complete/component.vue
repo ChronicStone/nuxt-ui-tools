@@ -8,6 +8,7 @@ import FormOptionItemLabel from '../../components/utils/form-option-item-label.v
 import FormOptionLeading from '../../components/utils/form-option-leading.vue'
 import FormOptionMenuFooter from '../../components/utils/form-option-menu-footer.vue'
 import FormOptionSuffix from '../../components/utils/form-option-suffix.vue'
+import FormOptionToken from '../../components/utils/form-option-token.vue'
 import FormOptionValueOverlay from '../../components/utils/form-option-value-overlay.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useOptionMenu } from '../../composables/use-option-menu'
@@ -17,7 +18,8 @@ import type {
   FormOptionValue,
   FormSelectCreateItem,
 } from '../../types'
-import { leadingVisualPadding } from '../../utils/options'
+import { formOptionKey, leadingVisualPadding } from '../../utils/options'
+import type { ResolvedFormOption } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
 
@@ -119,6 +121,19 @@ async function handleNativeCreate(label: string) {
   await handleCreate(normalizedLabel)
 }
 
+/** The chosen option a tag stands for, so the tag shows its visual; its value alone otherwise. */
+function tagOption(value: unknown): ResolvedFormOption {
+  const optionValue: FormOptionValue =
+    typeof value === 'number' || typeof value === 'boolean' ? value : String(value)
+  const key = formOptionKey(optionValue)
+  return (
+    options.selectedItems.value.find((option) => formOptionKey(option.value) === key) ?? {
+      label: String(value),
+      value: optionValue,
+    }
+  )
+}
+
 function isOptionValue(value: FormValue): value is FormOptionValue {
   return isString(value) || isNumber(value) || isBoolean(value)
 }
@@ -171,6 +186,10 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             :avatar-size="ui.itemLeadingAvatarSize()"
             chip-class="size-5"
           />
+        </template>
+
+        <template v-if="fieldProps.multiple" #tags-item-text="{ item }">
+          <FormOptionToken :option="tagOption(item)" :render="menu.renderValue.value" />
         </template>
 
         <template #item-leading="{ item }">

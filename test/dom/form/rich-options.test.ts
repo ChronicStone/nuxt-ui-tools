@@ -244,6 +244,11 @@ describe('select with rich options', () => {
     expect(control.text()).toBe('Euro, Dollar')
     expect(control.find('[data-ui-slot="leading"]').exists()).toBeFalsy()
     expect(control.find('[data-form-option-suffix]').exists()).toBeFalsy()
+    // One token per chosen option, in the order chosen.
+    expect(control.findAll('[data-form-option-token]').map((token) => token.text())).toEqual([
+      'Euro',
+      'Dollar',
+    ])
   })
 
   it('hands renderOption the resolved option, the authored item, and the state of the option', async () => {
@@ -770,5 +775,116 @@ describe('radio and checkbox group with rich options', () => {
 
     expect(row('plans', 'string:starter').attributes('data-icon')).toBeUndefined()
     expect(row('plans', 'string:starter').attributes('icon')).toBeUndefined()
+  })
+})
+
+describe('chosen values with their visuals', () => {
+  it('draws each chosen option of a multiple select as a token with its chip', async () => {
+    harness = await mountForm({
+      input: { statuses: ['active', 'draft'] },
+      schema: defineFormSchema({
+        actions: [],
+        fields: [{ key: 'statuses', options: statuses, props: { multiple: true }, type: 'select' }],
+      }),
+    })
+
+    const tokens = harness.field('statuses').findAll('[data-form-option-token]')
+    expect(tokens.map((token) => token.text())).toEqual(['Actif', 'Brouillon'])
+    for (const token of tokens) {
+      expect(token.find('[data-form-option-leading="chip"]').exists()).toBe(true)
+    }
+  })
+
+  it('shows the placeholder, not tokens, while a multiple select is empty', async () => {
+    harness = await mountForm({
+      schema: defineFormSchema({
+        actions: [],
+        fields: [
+          {
+            key: 'statuses',
+            options: statuses,
+            placeholder: 'Choisir des statuts',
+            props: { multiple: true },
+            type: 'select',
+          },
+        ],
+      }),
+    })
+
+    const control = harness.field('statuses').find('[data-ui-trigger]')
+    expect(control.find('[data-form-option-tokens]').exists()).toBe(false)
+    expect(control.text()).toBe('Choisir des statuts')
+  })
+
+  it('draws the visual of each option in the tags of a multiple auto-complete', async () => {
+    harness = await mountForm({
+      input: { statuses: ['active', 'pending'] },
+      schema: defineFormSchema({
+        actions: [],
+        fields: [
+          { key: 'statuses', options: statuses, props: { multiple: true }, type: 'auto-complete' },
+        ],
+      }),
+    })
+
+    const tags = harness.field('statuses').findAll('[data-form-option-token-content]')
+    expect(tags.map((tag) => tag.text())).toEqual(['Actif', 'En attente'])
+    for (const tag of tags) {
+      expect(tag.find('[data-form-option-leading="chip"]').exists()).toBe(true)
+    }
+  })
+
+  it('draws the icon of each option of a switch group before its label', async () => {
+    harness = await mountForm({
+      schema: defineFormSchema({
+        actions: [],
+        fields: [
+          {
+            key: 'channels',
+            options: [
+              { icon: 'i-lucide-mail', label: 'E-mail', value: 'email' },
+              { label: 'SMS', value: 'sms' },
+            ],
+            type: 'switch-group',
+          },
+        ],
+      }),
+    })
+
+    const field = harness.field('channels')
+    expect(field.find('[data-form-option-leading="icon"]').exists()).toBe(true)
+    expect(field.text()).toContain('E-mail')
+    expect(field.text()).toContain('SMS')
+  })
+
+  it('shows the visual of the chosen option on a tree select, and tokens when several are', async () => {
+    const regions = [
+      {
+        children: [
+          { chip: { color: 'success' }, label: 'Paris', value: 'paris' },
+          { chip: { color: 'warning' }, label: 'Lyon', value: 'lyon' },
+        ],
+        icon: 'i-lucide-map',
+        label: 'France',
+        value: 'fr',
+      },
+    ] as const
+
+    harness = await mountForm({
+      input: { city: 'lyon', cities: ['paris', 'lyon'] },
+      schema: defineFormSchema({
+        actions: [],
+        fields: [
+          { key: 'city', options: regions, type: 'tree-select' },
+          { key: 'cities', options: regions, props: { multiple: true }, type: 'tree-select' },
+        ],
+      }),
+    })
+
+    const single = harness.field('city')
+    expect(single.find('[data-form-option-leading="chip"]').exists()).toBe(true)
+    expect(single.text()).toContain('Lyon')
+    const tokens = harness.field('cities').findAll('[data-form-option-token]')
+    expect(tokens.map((token) => token.text())).toEqual(['Paris', 'Lyon'])
   })
 })

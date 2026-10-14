@@ -23,8 +23,10 @@ const props = withDefaults(
     avatarSize?: string
     /** Classes of the box the chip dot is centered in. */
     chipClass?: string
+    /** Nuxt UI chip size: `sm` for the small text of a token. */
+    chipSize?: 'sm' | 'md'
   }>(),
-  { avatarSize: 'xs', chipClass: 'size-4', iconClass: 'size-4 text-muted' },
+  { avatarSize: 'xs', chipClass: 'size-4', chipSize: 'md', iconClass: 'size-4 text-muted' },
 )
 
 const size = computed(() => AVATAR_SIZES.find((entry) => entry === props.avatarSize) ?? 'xs')
@@ -53,6 +55,6 @@ const size = computed(() => AVATAR_SIZES.find((entry) => entry === props.avatarS
     aria-hidden="true"
     data-form-option-leading="chip"
   >
-    <UChip standalone inset size="md" :color="option.chip.color" />
+    <UChip standalone inset :size="chipSize" :color="option.chip.color" />
   </span>
 </template>

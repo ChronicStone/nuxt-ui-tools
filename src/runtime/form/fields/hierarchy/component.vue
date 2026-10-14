@@ -12,11 +12,13 @@ import { computed, ref, watch } from 'vue'
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import FormCompositeControl from '../../components/renderer/form-composite-control.vue'
 import FormFieldShell from '../../components/renderer/form-field-shell.vue'
+import FormOptionLeading from '../../components/utils/form-option-leading.vue'
 import FormOptionMenuFooter from '../../components/utils/form-option-menu-footer.vue'
+import FormOptionTokens from '../../components/utils/form-option-tokens.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import { useFormUi } from '../../composables/use-form-ui'
 import type { FormValue, FormOptionValue } from '../../types'
-import { formOptionKey } from '../../utils/options'
+import { formOptionKey, leadingVisualPadding, resolveOptionLeading } from '../../utils/options'
 import type { ResolvedFormOption } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import { resolveFormText } from '../../utils/text'
@@ -177,8 +179,52 @@ const treeSelectLabel = computed<string>(() => {
     : String(selected.label)
 })
 const fieldLabel = computed<string | undefined>(() => resolveFormText(props.field.label))
+/** Every option by key with its path, so a chosen value can show the option's own visual. */
+const optionEntries = computed(() => {
+  const entries = new Map<string, { option: ResolvedFormOption; path: string }>()
+  const walk = (items: readonly ResolvedFormOption[], labels: readonly string[]) => {
+    for (const item of items) {
+      const path = [...labels, item.label]
+      entries.set(formOptionKey(item.value), { option: item, path: path.join(separator.value) })
+      walk(item.children ?? [], path)
+    }
+  }
+  walk(options.items.value, [])
+  return entries
+})
+/** Path labels for the fields that show one, plain labels otherwise. */
+const showsPath = computed(() => props.field.type === 'cascader' || hasShowPath(props.field))
+
+function optionOf(item: { value: FormOptionValue }) {
+  return optionEntries.value.get(formOptionKey(item.value))?.option
+}
+
+function tokenLabel(option: ResolvedFormOption) {
+  return showsPath.value
+    ? (optionEntries.value.get(formOptionKey(option.value))?.path ?? option.label)
+    : option.label
+}
+
+/** The chosen options, as tokens when several can be chosen. */
+const chosenOptions = computed<readonly ResolvedFormOption[]>(() => {
+  const values = Array.isArray(model.value) ? model.value : [model.value]
+  return values.flatMap((value) => {
+    const option = value === null ? undefined : optionEntries.value.get(formOptionKey(value))
+    return option ? [option.option] : []
+  })
+})
+/** The chosen option of a single selection, when it has a visual for the control. */
+const leadingOption = computed(() => {
+  const [option] = chosenOptions.value
+  const multiple = usesTree.value ? treeMultiple.value : fieldProps.value.multiple === true
+  return !multiple && option && resolveOptionLeading(option) ? option : undefined
+})
 const ownedControlUi = computed(() => ({
   ...controlProps.value.ui,
+  base: mergeFormUiClass(
+    controlProps.value.ui?.base,
+    leadingOption.value ? leadingVisualPadding(controlProps.value.size) : undefined,
+  ),
   content: mergeFormUiClass(controlProps.value.ui?.content, interactionOwnerClass.value),
 }))
 
@@ -471,6 +517,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
               @click.stop
               @select="selectRadioTreeItem(item)"
             />
+            <FormOptionLeading :option="optionOf(item)" />
             <span :class="ui.linkLabel()">{{ item.label }}</span>
             <button
               v-if="isExpandable(item)"
@@ -529,7 +576,25 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
           }"
           @blur="handleBlur"
         >
-          {{ treeSelectLabel }}
+          <FormOptionTokens
+            v-if="treeMultiple && chosenOptions.length"
+            :options="chosenOptions"
+            :label-of="tokenLabel"
+          />
+          <span
+            v-else
+            :class="
+              mergeFormUiClass(
+                'flex min-w-0 flex-1 items-center gap-1.5 text-left',
+                formUi.ui.value.treeSelect?.ui?.triggerLabel,
+              )
+            "
+          >
+            <FormOptionLeading v-if="leadingOption" :option="leadingOption" />
+            <span :class="chosenOptions.length ? 'truncate' : 'truncate text-dimmed'">
+              {{ treeSelectLabel }}
+            </span>
+          </span>
         </UButton>
 
         <template #content>
@@ -607,6 +672,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
                     @click.stop
                     @select="selectRadioTreeItem(item)"
                   />
+                  <FormOptionLeading :option="optionOf(item)" />
                   <span :class="ui.linkLabel()">{{ item.label }}</span>
                   <button
                     v-if="isExpandable(item)"
@@ -681,7 +747,19 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
         :loading="validationPending || options.loading.value"
         :ui="ownedControlUi"
         @blur="handleBlur"
-      />
+      >
+        <template v-if="leadingOption" #leading="{ ui }">
+          <FormOptionLeading
+            :option="leadingOption"
+            :icon-class="ui.leadingIcon()"
+            :avatar-size="ui.itemLeadingAvatarSize()"
+            chip-class="size-5"
+          />
+        </template>
+        <template v-if="fieldProps.multiple && chosenOptions.length" #default>
+          <FormOptionTokens :options="chosenOptions" :label-of="tokenLabel" />
+        </template>
+      </USelectMenu>
     </FormCompositeControl>
   </FormFieldShell>
 </template>

@@ -153,6 +153,24 @@ const accountTypes = [
   },
 ] as const
 
+const regions = [
+  {
+    children: [
+      { chip: { color: 'success' as const }, label: 'Paris', value: 'paris' },
+      { chip: { color: 'warning' as const }, label: 'Lyon', value: 'lyon' },
+    ],
+    icon: 'i-lucide-map',
+    label: 'France',
+    value: 'fr',
+  },
+  {
+    children: [{ chip: { color: 'error' as const }, label: 'Bruxelles', value: 'bxl' }],
+    icon: 'i-lucide-map',
+    label: 'Belgique',
+    value: 'be',
+  },
+]
+
 async function loadPeople() {
   await new Promise((resolve) => setTimeout(resolve, 500))
   return people
@@ -193,11 +211,22 @@ const schema = defineFormSchema({
       type: 'select',
     },
     {
+      default: ['published', 'review'],
+      description: 'Each chosen option is a token with its chip; one row keeps the input height.',
       key: 'statuses',
       label: 'Statuses, multiple',
       options: statuses,
       props: { clearable: true, multiple: true },
       type: 'select',
+    },
+    {
+      default: ['camille', 'nadia'],
+      description: 'Tags carry the avatar of each person.',
+      key: 'people',
+      label: 'People, multiple auto-complete',
+      options: people,
+      props: { multiple: true },
+      type: 'auto-complete',
     },
     {
       default: 'louis',
@@ -282,6 +311,28 @@ const schema = defineFormSchema({
       options: statuses,
       props: { variant: 'table' },
       type: 'radio',
+    },
+    {
+      default: ['published'],
+      key: 'statusSwitches',
+      label: 'Statuses, switch group',
+      options: statuses,
+      type: 'switch-group',
+    },
+    {
+      default: 'paris',
+      key: 'city',
+      label: 'City, tree select',
+      options: regions,
+      type: 'tree-select',
+    },
+    {
+      default: ['paris', 'lyon'],
+      key: 'cities',
+      label: 'Cities, tree select multiple',
+      options: regions,
+      props: { multiple: true },
+      type: 'tree-select',
     },
   ],
   formKey: 'playground.form.rich-options',
