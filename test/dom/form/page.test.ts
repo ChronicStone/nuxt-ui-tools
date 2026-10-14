@@ -814,6 +814,22 @@ describe('form page panels, spans and status', () => {
     expect(badge('profile')?.getAttribute('data-form-page-status')).toBe('invalid')
   })
 
+  it('keeps the status at the end of the heading, with the reset button before it', async () => {
+    const harness = await mountPage({
+      schema: defineFormPageSchema({
+        controls: { dirtyCheck: true },
+        sections: spanSchema().sections,
+        ui: { page: { status: true } },
+      }),
+    })
+    const actions = harness
+      .section('identity')
+      .querySelector('[data-form-page-status]')?.parentElement
+
+    expect(actions?.lastElementChild?.hasAttribute('data-form-page-status')).toBe(true)
+    expect(actions?.querySelector('button')?.textContent).toContain('Réinitialiser')
+  })
+
   it('leaves the heading without a status by default', async () => {
     const harness = await mountPage({ schema: spanSchema() })
 

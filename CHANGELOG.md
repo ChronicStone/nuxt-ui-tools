@@ -1,3 +1,11 @@
+## v1.22.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.22.0...v1.22.1)
+
+### 🩹 Fixes
+
+- **form:** With `ui.page.status` and `controls.dirtyCheck`, a section's status sits at the end of its heading and the reset button appears before it, instead of the reserved reset space pushing the status away from the edge
+
 ## v1.22.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.21.0...v1.22.0)
