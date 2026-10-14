@@ -25,12 +25,13 @@ function section() {
 
 describe('form page surface', () => {
   it('types the surface and the navigation threshold', () => {
-    expectTypeOf<FormPageSurface>().toEqualTypeOf<'card' | 'plain'>()
+    expectTypeOf<FormPageSurface>().toEqualTypeOf<'card' | 'panel' | 'plain'>()
+    expectTypeOf<FormPageUiConfig['status']>().toEqualTypeOf<boolean | undefined>()
     expectTypeOf<FormPageUiConfig['surface']>().toEqualTypeOf<FormPageSurface | undefined>()
     expectTypeOf<NonNullable<FormUiConfig['page']>>().toEqualTypeOf<FormPageUiConfig>()
     expectTypeOf<FormPageUiConfig>().toHaveProperty('ui')
     expectTypeOf<FormPageNavigationConfig['minSections']>().toEqualTypeOf<number | undefined>()
-    // @ts-expect-error -- a surface is `card` or `plain`
+    // @ts-expect-error -- a surface is `card`, `panel` or `plain`
     const invalid: FormUiConfig = { page: { surface: 'floating' } }
     expect(invalid).toBeDefined()
   })

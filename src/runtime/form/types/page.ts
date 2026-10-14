@@ -64,6 +64,13 @@ export interface FormPageSection<
   optional?: boolean
   /** Grid of the section's fields, merged over the schema `layout`. */
   layout?: FormLayoutConfig
+  /**
+   * Columns, out of twelve, the section takes once the sections area is at least 48rem wide, so
+   * short sections sit side by side: `span: 4` next to `span: 8`. Sections fill the rows in order
+   * and the ones sharing a row stretch to the same height. Below that width, or without a `span`,
+   * the section takes the whole row.
+   */
+  span?: number
   /** Raw dependency paths read before evaluating `condition`. */
   dependencies?: readonly (string | readonly [string, string])[]
   /** Hides the section, its navigation entry, and its fields while it returns `false`. */
@@ -204,6 +211,10 @@ export interface FormPageSectionState {
   optional: boolean
   /** Number of required fields without a value, the fields of array items included. */
   missing: number
+  /** Number of required fields, the fields of array items included. */
+  required: number
+  /** Columns, out of twelve, the section takes on a wide sections area: 12 without a `span`. */
+  span: number
   /** Where the section stands, see `FormPageSectionStatus`. */
   status: FormPageSectionStatus
   /** True when a value of the section differs from the form's baseline. */

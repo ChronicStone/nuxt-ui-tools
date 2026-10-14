@@ -142,8 +142,15 @@ export function resolveFormPageSectionState(params: {
     label: resolveFormText(entry.section.label) ?? entry.section.key,
     missing,
     optional,
+    required: required.length,
+    span: resolveFormPageSectionSpan(entry.section.span),
     status: resolveFormPageSectionStatus({ invalid, missing, optional, provided }),
   }
+}
+
+/** Columns a section takes out of twelve: a whole number from 1 to 12, the full row otherwise. */
+export function resolveFormPageSectionSpan(value: FormValue) {
+  return isNumber(value) && value >= 1 ? Math.min(12, Math.trunc(value)) : 12
 }
 
 /**

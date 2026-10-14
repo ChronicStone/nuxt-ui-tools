@@ -467,6 +467,8 @@ export interface UiToolsFormMessages {
     remaining: string
     /** Navigation summary once every required section is complete. */
     complete: string
+    /** Status of a section with required fields left, with `page.status`: "{filled} of {required}". */
+    progress: string
     /** Navigation summary of a form with dirty checking: "{count} modified." */
     modifiedOne: string
     modifiedOther: string

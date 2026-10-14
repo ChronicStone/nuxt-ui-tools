@@ -13,9 +13,10 @@ import FormPageSection from './form-page-section.vue'
 
 /**
  * Sections of a form page, one per visible section, each with its title, description, fields, and,
- * with `controls.dirtyCheck`, a mark and a reset button while it is modified. They are cards, or
- * plain blocks with the `page.surface` UI option. Skeletons stand in while the schema context
- * loads.
+ * with `controls.dirtyCheck`, a mark and a reset button while it is modified. They are cards,
+ * panels, or plain blocks with the `page.surface` UI option. Once a section sets a `span`, they lay
+ * out in a twelve-column grid, which is also the container their spans query. Skeletons stand in
+ * while the schema context loads.
  */
 defineSlots<{
   /** Extra buttons in a section header, before its reset button. */
@@ -27,20 +28,23 @@ const formUi = useFormUi()
 const { t } = useUiToolsLocale()
 const pageUi = computed(() => formUi.ui.value.page?.ui)
 const { contextError, contextLoading, contextPending, refreshContext } = page.root
+const flow = computed(() =>
+  page.spanned.value ? '@container/form-sections grid grid-cols-12 items-stretch' : 'flex flex-col',
+)
+/** Full row for what is not a section, such as the context error and the skeletons. */
+const fullRow = computed(() => (page.spanned.value ? 'col-span-12' : ''))
 </script>
 
 <template>
   <div
     :class="
-      mergeFormUiClass(
-        `flex min-w-0 flex-col ${page.surfaceClasses.value.sections}`,
-        pageUi?.sections,
-      )
+      mergeFormUiClass(`${flow} min-w-0 ${page.surfaceClasses.value.sections}`, pageUi?.sections)
     "
     data-form-page-sections
   >
     <UAlert
       v-if="contextError"
+      :class="fullRow"
       color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
@@ -66,7 +70,7 @@ const { contextError, contextLoading, contextPending, refreshContext } = page.ro
         :key="section.key"
         :class="
           mergeFormUiClass(
-            `grid gap-4 ${page.surfaceClasses.value.sectionSkeleton}`,
+            `grid gap-4 ${fullRow} ${page.surfaceClasses.value.sectionSkeleton}`,
             pageUi?.sectionSkeleton,
           )
         "

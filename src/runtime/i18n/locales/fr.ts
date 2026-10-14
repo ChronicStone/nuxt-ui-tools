@@ -211,6 +211,7 @@ export default defineUiToolsLocale<Messages>({
       },
       page: {
         complete: 'Tout est prêt.',
+        progress: '{filled} sur {required}',
         modifiedOne: '{count} modifiée.',
         modifiedOther: '{count} modifiées.',
         navigation: 'Sections du formulaire',

@@ -594,6 +594,34 @@ defineFormPageSchema({
 })
 ```
 
+### Panels, sections side by side, and section status
+
+`surface: 'panel'` draws each section as a card whose heading sits in a bar across its top, with
+the fields padded below. Pick it when sections are compact blocks the user scans as objects (an
+account: profile, identity, address, billing); keep `card` or `plain` for long single-topic pages.
+
+A section `span` (out of twelve columns) lets short sections share a row once the sections area is
+48rem wide: a `span: 4` profile next to a `span: 8` identity. Sections fill the rows in order and
+the ones on a row stretch to the same height. Without a `span` a section takes the whole row, and
+a page where no section sets one keeps its single column. Set spans only where the sections are
+short and related; a stack of full rows is the right layout for most forms.
+
+`page.status: true` shows where each section stands at the end of its heading: "2 sur 3" while
+required fields are missing, "Complété", or "À corriger" once a field shows an error. An optional
+section with nothing entered keeps its "Facultatif" tag. Style it with `ui.page.ui.sectionStatus`
+(`data-form-page-status` carries the status).
+
+```ts
+defineFormPageSchema({
+  ui: { page: { surface: 'panel', status: true } },
+  sections: [
+    defineFormPageSection({ key: 'profile', label: 'Profil', span: 4, fields: [/* … */] }),
+    defineFormPageSection({ key: 'identity', label: 'Identité', span: 8, fields: [/* … */] }),
+    defineFormPageSection({ key: 'contacts', label: 'Contacts', fields: [/* … */] }),
+  ],
+})
+```
+
 A side navigation next to two short sections only adds noise. `navigation.minSections` shows the
 navigation only when the page has at least that many visible sections. Below it, the page is one
 focused column: the sections fill a centered column, the title and actions of the header line up
