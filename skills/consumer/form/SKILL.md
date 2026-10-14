@@ -608,7 +608,7 @@ short and related; a stack of full rows is the right layout for most forms.
 
 `page.status: true` shows where each section stands at the end of its heading: "2 sur 3" while
 required fields are missing, "Complété", or "À corriger" once a field shows an error. An optional
-section with nothing entered keeps its "Facultatif" tag. Style it with `ui.page.ui.sectionStatus`
+section with nothing entered shows its "Facultatif" tag in that same place. Style it with `ui.page.ui.sectionStatus`
 (`data-form-page-status` carries the status).
 
 ```ts

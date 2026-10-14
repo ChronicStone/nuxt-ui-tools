@@ -797,11 +797,10 @@ describe('form page panels, spans and status', () => {
 
     expect(badge('identity')?.textContent?.trim()).toBe('0 sur 2')
     expect(badge('identity')?.getAttribute('data-form-page-status')).toBe('pending')
-    // An optional section with nothing entered keeps its own tag.
-    expect(badge('notes')).toBeNull()
-    expect(harness.section('notes').querySelector('[data-form-page-optional]')?.textContent).toBe(
-      'Facultatif',
-    )
+    // An optional section with nothing entered shows its tag in the same place, once.
+    expect(badge('notes')?.textContent?.trim()).toBe('Facultatif')
+    expect(badge('notes')?.getAttribute('data-form-page-status')).toBe('optional')
+    expect(harness.section('notes').querySelectorAll('[data-form-page-optional]')).toHaveLength(1)
 
     await harness.setValue('name', 'Lingua Formation')
     expect(badge('identity')?.textContent?.trim()).toBe('1 sur 2')

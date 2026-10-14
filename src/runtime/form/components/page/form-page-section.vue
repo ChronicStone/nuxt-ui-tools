@@ -37,11 +37,15 @@ const titleId = useId()
 const dirty = computed(() => page.dirtyCheck.value && props.section.dirty)
 /**
  * Where the section stands, at the end of its heading with the `page.status` UI option. An
- * optional section with nothing entered keeps its own tag instead.
+ * optional section with nothing entered shows its "Facultatif" tag there too, so every status
+ * sits in the same place.
  */
 const status = computed(() => {
-  if (!page.statusVisible.value || props.section.status === 'optional') {
+  if (!page.statusVisible.value) {
     return undefined
+  }
+  if (props.section.status === 'optional') {
+    return { color: 'neutral', icon: undefined, label: t('form.page.status.optional') } as const
   }
   if (props.section.status === 'complete') {
     return {
@@ -153,7 +157,7 @@ onBeforeUnmount(() => unregister?.())
         {{ section.description }}
       </p>
       <UBadge
-        v-if="section.status === 'optional'"
+        v-if="section.status === 'optional' && !status"
         color="neutral"
         variant="soft"
         :label="t('form.page.status.optional')"
@@ -170,8 +174,14 @@ onBeforeUnmount(() => unregister?.())
           variant="soft"
           :icon="status.icon"
           :label="status.label"
-          :class="pageUi?.sectionStatus"
+          :class="
+            mergeFormUiClass(
+              section.status === 'optional' ? pageUi?.sectionOptional : undefined,
+              pageUi?.sectionStatus,
+            )
+          "
           :data-form-page-status="section.status"
+          :data-form-page-optional="section.status === 'optional' ? '' : undefined"
         />
         <slot name="actions" :section />
         <UButton

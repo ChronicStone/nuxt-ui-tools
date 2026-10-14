@@ -232,8 +232,8 @@ export interface FormPageUiConfig extends FormUiPartConfig<FormPageUi> {
   /**
    * Shows where each section stands at the end of its heading: the required fields filled out of
    * the total while some are missing ("2 sur 3"), "Complété" once nothing is, "À corriger" while a
-   * field shows an error. An optional section with nothing entered keeps its "Facultatif" tag.
-   * Off by default.
+   * field shows an error, and "Facultatif" for an optional section with nothing entered, which
+   * then carries its tag there instead of after the title. Off by default.
    */
   status?: boolean
 }
