@@ -1,4 +1,10 @@
-import { keepPreviousData, useInfiniteQuery, useQueries, useQuery } from '@tanstack/vue-query'
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/vue-query'
 import type { InfiniteData, QueryKey } from '@tanstack/vue-query'
 import { computed, readonly, ref, shallowRef, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
@@ -212,25 +218,43 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
 
   const dataStaleTime = computed(() => QUERY_DEFAULTS.staleTime.data)
   const isCursorPagination = computed(() => requestPagination.value.mode === 'cursor')
+  const sourceDefinition = computed(() =>
+    resolveSourceDefinition({
+      context: contextData.value,
+      request: requestContext.value,
+      sourceRequest: sourceRequest.value,
+      source: params.schema.value.source,
+    }),
+  )
+  const cachedSourceKey = isCursorPagination.value
+    ? createTableCursorQueryKey(
+        sourceDefinition.value.queryKey,
+        params.state.queryState.paginationRevision.value,
+      )
+    : sourceDefinition.value.queryKey
+
+  if (
+    isQueryDefinitionEnabled(sourceDefinition.value) &&
+    useQueryClient().getQueryData(cachedSourceKey) !== undefined
+  ) {
+    params.startup.start()
+  }
 
   const query = useQuery<TableRuntimeSourceResult, Error, TableRuntimeSourceResult, QueryKey>(
     computed(() => {
-      const definition = resolveSourceDefinition({
-        context: contextData.value,
-        request: requestContext.value,
-        sourceRequest: sourceRequest.value,
-        source: params.schema.value.source,
-      })
-
       if (isCursorPagination.value) {
         return disabledQueryDefinition('cursor')
       }
 
-      return withEnabled(definition, params.startup.isActive.value && isContextReady.value, {
-        placeholderData: keepPreviousData,
-        refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
-        staleTime: dataStaleTime.value,
-      })
+      return withEnabled(
+        sourceDefinition.value,
+        params.startup.isActive.value && isContextReady.value,
+        {
+          placeholderData: keepPreviousData,
+          refetchOnWindowFocus: QUERY_DEFAULTS.refetchOnWindowFocus,
+          staleTime: dataStaleTime.value,
+        },
+      )
     }),
   )
   const infiniteQuery = useInfiniteQuery<
