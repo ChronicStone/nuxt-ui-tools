@@ -1,3 +1,11 @@
+## v1.22.2
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.22.1...v1.22.2)
+
+### 🩹 Fixes
+
+- **table:** A table whose data is already cached shows its rows on the first render instead of a skeleton during the startup frames, and its data query mounts enabled, so the client's `refetchOnMount` applies: with `'always'`, reopening a list revalidates the cached rows behind them
+
 ## v1.22.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.22.0...v1.22.1)
