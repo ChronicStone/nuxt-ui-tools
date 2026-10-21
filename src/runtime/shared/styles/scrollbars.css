@@ -4,6 +4,9 @@
   :root {
     --nut-scrollbar-size: 11px;
     --nut-scrollbar-gap: 3px;
+    --nut-table-scrollbar-size: 5px;
+    --nut-table-scrollbar-idle-opacity: 0;
+    --nut-table-scrollbar-idle-pointer-events: none;
     --nut-scrollbar-thumb: color-mix(in srgb, var(--ui-text, #1f1d1a) 18%, transparent);
     --nut-scrollbar-thumb-hover: color-mix(in srgb, var(--ui-text, #1f1d1a) 32%, transparent);
     --nut-scrollbar-thumb-active: color-mix(in srgb, var(--ui-text, #1f1d1a) 44%, transparent);

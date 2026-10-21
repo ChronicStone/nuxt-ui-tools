@@ -162,8 +162,8 @@ defineExpose({ measure: schedule })
 <template>
   <div
     v-if="hasVertical"
-    class="nut-dl-sb pointer-events-none absolute top-1 right-[3px] bottom-2 z-[6] w-[5px] opacity-0 transition-opacity duration-200 ease-out motion-reduce:transition-none"
-    :class="{ 'pointer-events-auto opacity-100': visible }"
+    class="nut-dl-sb [pointer-events:var(--nut-table-scrollbar-idle-pointer-events)] absolute top-1 right-[3px] bottom-2 z-[6] w-(--nut-table-scrollbar-size) opacity-(--nut-table-scrollbar-idle-opacity) transition-opacity duration-200 ease-out motion-reduce:transition-none"
+    :class="{ 'pointer-events-auto! opacity-100': visible }"
   >
     <span
       class="absolute top-0 left-0 w-full rounded-full bg-(--nut-scrollbar-thumb) transition-colors duration-150 will-change-transform hover:bg-(--nut-scrollbar-thumb-hover)"
@@ -177,8 +177,8 @@ defineExpose({ measure: schedule })
   </div>
   <div
     v-if="hasHorizontal"
-    class="nut-dl-sb pointer-events-none absolute right-2 bottom-[3px] left-1 z-[6] h-[5px] opacity-0 transition-opacity duration-200 ease-out motion-reduce:transition-none"
-    :class="{ 'pointer-events-auto opacity-100': visible }"
+    class="nut-dl-sb [pointer-events:var(--nut-table-scrollbar-idle-pointer-events)] absolute right-2 bottom-[3px] left-1 z-[6] h-(--nut-table-scrollbar-size) opacity-(--nut-table-scrollbar-idle-opacity) transition-opacity duration-200 ease-out motion-reduce:transition-none"
+    :class="{ 'pointer-events-auto! opacity-100': visible }"
   >
     <span
       class="absolute top-0 left-0 h-full rounded-full bg-(--nut-scrollbar-thumb) transition-colors duration-150 will-change-transform hover:bg-(--nut-scrollbar-thumb-hover)"
