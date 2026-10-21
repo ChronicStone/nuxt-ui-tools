@@ -1,3 +1,11 @@
+## v1.23.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.22.2...v1.23.0)
+
+### 🚀 Enhancements
+
+- **table:** The table's overlay scrollbars read three theme tokens: `--nut-table-scrollbar-size` (thickness, `5px` by default), `--nut-table-scrollbar-idle-opacity` (`0` by default, so they still appear only on hover, scroll or drag) and `--nut-table-scrollbar-idle-pointer-events` (`none` by default). An app that sets the opacity above `0` and the pointer events to `auto` keeps its scrollbars visible and draggable at rest
+
 ## v1.22.2
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.22.1...v1.22.2)
