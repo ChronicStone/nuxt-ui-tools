@@ -26,7 +26,6 @@ export const DATA_LIST_MOBILE_DEFAULTS = {
   pagination: { ui: { button: TOUCH_TARGET } },
   refresh: { ui: { base: TOUCH_TARGET } },
   search: { ui: { base: 'min-h-11', clear: TOUCH_TARGET } },
-  selectionActions: { ui: { action: 'h-11 min-w-11', dismiss: 'size-11', overflow: 'size-11' } },
   sortMenu: { ui: { trigger: TOUCH_TARGET } },
   table: { ui: { emptyAction: TOUCH_TARGET, rowAction: TOUCH_TARGET, selectControl: TOUCH_AREA } },
   viewToggle: { ui: { base: TOUCH_TARGET } },

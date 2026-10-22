@@ -87,12 +87,26 @@ const schema = defineTableSchema({
     { action: () => {}, icon: 'i-lucide-refresh-cw', key: 'sync', label: 'Synchroniser' },
     {
       action: () => {},
+      description: 'Un fichier Excel par compte, envoyé par e-mail',
       icon: 'i-lucide-award',
       key: 'candidates',
       label: 'Exporter les candidats',
     },
-    { action: () => {}, icon: 'i-lucide-clock', key: 'inactive', label: 'Passer inactif' },
-    { action: () => {}, icon: 'i-lucide-trash-2', key: 'delete', label: 'Supprimer' },
+    {
+      action: () => {},
+      disabled: ({ selectedRows }) => selectedRows.some((row) => row.status === 'pending'),
+      disabledReason: 'Les comptes en attente ne peuvent pas être passés inactifs',
+      icon: 'i-lucide-clock',
+      key: 'inactive',
+      label: 'Passer inactif',
+    },
+    {
+      action: () => {},
+      color: 'error',
+      icon: 'i-lucide-trash-2',
+      key: 'delete',
+      label: 'Supprimer',
+    },
   ],
   defaultLayout: 'table',
   filters: {

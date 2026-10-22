@@ -181,6 +181,45 @@ buttons, pending state, and a clear-selection button:
 <UiDataListSelectionActions />
 ```
 
+From `md` up, the bar shows up to `maxVisible` actions inline (3 by default). The rest, and any
+action that does not fit, go into a « … » menu.
+
+Below `md` the bar is compact: a clear button, the count (« 2 sélectionnés », or « Tous les 144
+résultats » when the action targets every result), and an « Actions » button. That button opens a
+bottom sheet with the selection / all-results switch and every bulk action as a full-width row.
+Each row has its `icon`, `label`, and `description`. Actions with `color: 'error'` come last, in
+red. A disabled action shows its `disabledReason` instead of its description. Tapping a row closes
+the sheet and runs the same `action` the desktop button runs. The scroll areas of
+`<UiDataListContent>` end with room for the bar, so the last row scrolls above it:
+
+```ts
+actions: [
+  {
+    key: 'archive',
+    label: 'Archiver',
+    icon: 'i-lucide-archive',
+    description: 'Les comptes restent consultables',
+    disabled: ({ selectedRows }) => selectedRows.every((row) => row.archived),
+    disabledReason: 'Ces comptes sont déjà archivés',
+    requiresSelection: true,
+    action: ({ selectedRows }) => archive(selectedRows),
+  },
+  {
+    key: 'delete',
+    label: 'Supprimer',
+    icon: 'i-lucide-trash-2',
+    color: 'error',
+    requiresSelection: true,
+    action: ({ selectedRows }) => remove(selectedRows),
+  },
+]
+```
+
+`disabledReason` takes a string, a lazy text, or a callback that receives the action context. The
+resolved text is also on `state.disabledReason` while the action is disabled. The mobile bar
+reuses the `root`, `bar`, `count`, and `dismiss` ui slots, and adds `trigger` for the « Actions »
+button and `sheet` for the sheet. `props.trigger` sets that button's props.
+
 Use the `default` slot for a fully headless bar. It receives `actions`, `selectedCount`, the
 table `selection` API, and `clearSelection`; the `action` slot receives the same controller
 shape as the toolbar:

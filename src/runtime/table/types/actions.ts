@@ -34,6 +34,13 @@ export interface TableToolbarAction<
   label?: TableTextValue
   condition?: boolean | ((context: TContext) => boolean)
   disabled?: boolean | ((context: TableActionContext<TRow, TContext, TPageContext>) => boolean)
+  /**
+   * Why the action is disabled. The mobile actions sheet shows it under the label while the action
+   * is disabled, in place of `description`.
+   */
+  disabledReason?:
+    | TableTextValue
+    | ((context: TableActionContext<TRow, TContext, TPageContext>) => TableTextValue | undefined)
   loading?: boolean | ((context: TableActionContext<TRow, TContext, TPageContext>) => boolean)
   /**
    * Runs the action. Returning `false` or `{ success: false }` marks the run as failed without
@@ -57,6 +64,8 @@ export interface TableBulkAction<
 export interface TableActionState {
   visible: boolean
   disabled: boolean
+  /** The resolved `disabledReason` while the action is disabled. */
+  disabledReason?: string
   loading: boolean
   running: boolean
 }

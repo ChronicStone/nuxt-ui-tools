@@ -54,6 +54,10 @@ export interface AccountsSchemaOptions {
   onQuery?: (context: unknown) => void
   pagination?: false | Record<string, unknown>
   actions?: boolean
+  /** Replaces the bulk action labels, in order. */
+  actionLabels?: string[]
+  /** Describes sync, disables archive with a reason, and colours delete as destructive. */
+  actionDetails?: boolean
   rowActions?: boolean
   selection?: { mode?: boolean | 'auto'; scope?: 'page' | 'all' }
   selectionClear?: 'trigger' | 'success' | 'never'
@@ -378,32 +382,37 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
               },
               icon: 'i-lucide-download',
               key: 'export',
-              label: 'Exporter',
+              label: options.actionLabels?.[0] ?? 'Exporter',
               selectionClear: options.selectionClear,
             },
             {
               action: () => bulkActionCalls.push('sync'),
               icon: 'i-lucide-refresh-cw',
               key: 'sync',
-              label: 'Synchroniser',
+              label: options.actionLabels?.[1] ?? 'Synchroniser',
+              ...(options.actionDetails ? { description: 'Met à jour EDOF et VTest' } : {}),
             },
             {
               action: () => bulkActionCalls.push('archive'),
               icon: 'i-lucide-archive',
               key: 'archive',
-              label: 'Archiver',
+              label: options.actionLabels?.[2] ?? 'Archiver',
+              ...(options.actionDetails
+                ? { disabled: true, disabledReason: () => 'Ces comptes sont déjà archivés' }
+                : {}),
             },
             {
               action: () => bulkActionCalls.push('inactive'),
               icon: 'i-lucide-clock',
               key: 'inactive',
-              label: 'Passer inactif',
+              label: options.actionLabels?.[3] ?? 'Passer inactif',
             },
             {
               action: () => bulkActionCalls.push('delete'),
               icon: 'i-lucide-trash-2',
               key: 'delete',
-              label: 'Supprimer',
+              label: options.actionLabels?.[4] ?? 'Supprimer',
+              ...(options.actionDetails ? { color: 'error' as const } : {}),
             },
           ],
         }),

@@ -459,6 +459,8 @@ export interface DataListSelectionActionsProps {
   overflow?: DataListButtonProps
   dismiss?: DataListButtonProps
   scope?: DataListButtonProps
+  /** The « Actions » button that opens the actions sheet below `md`. */
+  trigger?: DataListButtonProps
 }
 
 /** Component props exposed by the refresh control. */
@@ -548,7 +550,10 @@ export interface DataListTableConfig extends DataListPartConfig<
   gutter?: number
 }
 
-/** UI slots rendered by the floating selection bar. */
+/**
+ * UI slots rendered by the floating selection bar. Below `md` the bar keeps `root`, `bar`, `count`
+ * and `dismiss`, opens its actions in a sheet from `trigger`, and styles the sheet with `sheet`.
+ */
 export interface DataListSelectionActionsUi {
   root?: DataListUiClass
   bar?: DataListUiClass
@@ -558,4 +563,6 @@ export interface DataListSelectionActionsUi {
   action?: DataListUiClass
   overflow?: DataListUiClass
   dismiss?: DataListUiClass
+  trigger?: DataListUiClass
+  sheet?: DataListUiClass
 }

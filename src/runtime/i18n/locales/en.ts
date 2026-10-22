@@ -723,8 +723,13 @@ export default defineUiToolsLocale<Messages>({
         selectRowAt: 'Select row {position}',
       },
       selectionBar: {
+        actions: 'Actions',
+        actionsTitle: 'Actions on the selection',
         allResults: 'All results',
         clear: 'Clear selection',
+        countAll: 'All {count} results',
+        countSelectedOne: '{count} selected',
+        countSelectedOther: '{count} selected',
         more: 'More actions',
         selection: 'Selection',
       },

@@ -13,11 +13,7 @@ describe('mobile touch-target defaults', () => {
     const layered = layerDataListMobileDefaults({})
     expect(layered.refresh?.ui?.base).toBe('min-h-11 min-w-11')
     expect(layered.search?.ui).toStrictEqual({ base: 'min-h-11', clear: 'min-h-11 min-w-11' })
-    expect(layered.selectionActions?.ui).toStrictEqual({
-      action: 'h-11 min-w-11',
-      dismiss: 'size-11',
-      overflow: 'size-11',
-    })
+    expect(layered.selectionActions).toBeUndefined()
     expect(layered.table?.ui).toStrictEqual({
       emptyAction: 'min-h-11 min-w-11',
       rowAction: 'min-h-11 min-w-11',

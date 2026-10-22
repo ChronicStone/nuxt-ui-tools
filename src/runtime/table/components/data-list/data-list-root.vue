@@ -7,6 +7,7 @@ import type { UiToolsLocale, UiToolsMessages } from '#ui-tools/i18n'
 
 import { isObject } from '../../../shared/utils/predicate'
 import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
+import { provideDataListOverlayInset } from '../../composables/use-data-list-overlay-inset'
 import { provideDataListUi } from '../../composables/use-data-list-ui'
 import { provideTableInternals } from '../../composables/use-table-internals'
 import type {
@@ -35,6 +36,7 @@ const appConfig = useAppConfig()
 
 provideTableInternals(props.table['__internals'])
 provideUiToolsLocale(useUiToolsLocaleRef(computed(() => props.locale)))
+provideDataListOverlayInset()
 const { isMobile } = useDataListBreakpoint()
 provideDataListUi(
   computed<DataListUiConfig>(() => {

@@ -15,6 +15,7 @@ import { mergeDataListUiClass, resolveTableRowId } from '../../utils'
 import DataListErrorState from '../data-list/data-list-error-state.vue'
 import ProgressLine from '../layout/progress-line.vue'
 import TableEmptyState from '../table/table-empty-state.vue'
+import OverlayInsetSpacer from '../utils/overlay-inset-spacer.vue'
 import GridCard from './grid-card.vue'
 import GridSkeleton from './grid-skeleton.vue'
 
@@ -304,6 +305,7 @@ function refreshData() {
           <GridCard :row-index="index" />
         </div>
       </div>
+      <OverlayInsetSpacer />
     </div>
 
     <div

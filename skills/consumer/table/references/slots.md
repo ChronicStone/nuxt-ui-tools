@@ -173,7 +173,7 @@ DataList controls keep using Nuxt UI primitives. An application-level `app.confi
 
 ## Touch targets on mobile
 
-Below the `md` breakpoint the package adds a 44px touch target to the controls a thumb reaches: the search field and its clear button, filter, sort, column, and layout triggers, refresh, the view toggle, the pager buttons, the selection bar actions, retry and load-more buttons, the row-actions button, the selection checkboxes, and the empty state's button. A checkbox keeps its drawn size and its tap area grows around it, so rows do not change height. Table column headers keep their height. Desktop sizing is untouched.
+Below the `md` breakpoint the package adds a 44px touch target to the controls a thumb reaches: the search field and its clear button, filter, sort, column, and layout triggers, refresh, the view toggle, the pager buttons, the selection bar's clear and « Actions » buttons, retry and load-more buttons, the row-actions button, the selection checkboxes, and the empty state's button. A checkbox keeps its drawn size and its tap area grows around it, so rows do not change height. Table column headers keep their height. Desktop sizing is untouched.
 
 The classes sit under each slot's own, so what you set in `ui` keeps applying and wins wherever it conflicts. To shrink one control back, state the conflicting utilities. `ui.mobile` is the place for classes that should only apply on a phone, and takes the same shape as the root `ui`:
 
