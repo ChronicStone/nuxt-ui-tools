@@ -7,6 +7,12 @@ const examples = [
     to: '/form/fields',
   },
   {
+    description:
+      'Info fields drawing display blocks: every kind and variant, reactive and loaded props.',
+    label: 'Display blocks',
+    to: '/form/display',
+  },
+  {
     description: 'Field kinds, context resources, overlays, arrays, uploads, and live output.',
     label: 'Showcase',
     to: '/form/showcase',

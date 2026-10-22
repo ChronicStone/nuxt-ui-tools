@@ -98,6 +98,14 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
       },
       {
         description:
+          'Every display kind of the info field: facts, stats, breakdowns, meters, records, timelines, media and more, sync or loaded.',
+        id: 'form-display',
+        label: 'Display blocks',
+        mode: 'document',
+        path: '/form/display',
+      },
+      {
+        description:
           'Icons, avatars, chips, descriptions, suffixes, option groups, and render functions across select, auto-complete, radio, and checkbox group.',
         id: 'form-rich-options',
         label: 'Rich options',
