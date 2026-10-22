@@ -1,3 +1,22 @@
+## v1.25.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.24.0...v1.25.0)
+
+### 🚀 Enhancements
+
+- **display:** Display blocks: 19 kinds of read-only content, each with its variants: `heading` (title, eyebrow), `text` (body, lead, muted, caption, quote, legal, prose, with `maxLines`), `alert` (soft, outline, subtle, solid, callout, inline, banner, with items, lists, folded details and actions), `facts` (ledger, grid, inline, columns, tiles, with groups, copy, chips, emphasis, per-item `loading` and block `actions`), `stat` (hero, price, row, trend with a delta and a sparkline), `breakdown` (open, collapsible, compare), `meter` (bar with thresholds, segments, split, ring, scale), `chart` (bars, line, donut, funnel in the dashboard palette), `table` (sticky header and footer, `maxHeight`), `diff` (inline with `showUnchanged`, columns), `record` (row, card, compact, stack), `person` (user, group, contact), `list` (bullets, numbered, icons, checks, steps, columns, files, chips), `timeline` (vertical, log, pipeline, schedule with a « today » marker), `date` (tile, range, countdown), `media` (image, gallery, video, document, link), `code` (block with JSON highlighting, value, secret), `empty` and `accordion` with nested blocks. Every block has a skeleton (`loading`), named slots (`ui`), and words in English and French
+- **display:** `UiDisplay` draws any block outside a form: `<UiDisplay display="facts" :props="…" />`. Types are exported from `#ui-tools/display`
+- **display:** `appConfig.nuxtUiTools.display` takes `presets` (named default props per kind, picked with `preset`), `ui` (slot classes per kind) and `tones`
+- **display:** Tones go through five CSS variables each (`--nut-display-<tone>`, `-ink`, `-soft`, `-line`, `-contrast`). `display.tones` restyles the built-in tones and registers new ones from a single `color`, with `dark` overrides; augmenting `DisplayToneRegistry` makes the new names type-check on every `tone`. Badges of a registered tone are recolored neutral `UBadge`s
+- **display:** File links of `list` files and `media` documents, links and images accept a function returning the URL, such as a signed URL. It runs only when the file is opened, previewed or downloaded, with the button showing its progress and a « Retry » line when it fails; a new tab opens during the click so popup blockers let it through
+- **form:** The `info` field draws a display block with `display` and `props`, typed per kind. `props` can be a callback `({ ctx, deps, api }) => props` that runs again when its `dependencies` change, a promise of props, or TanStack Query options (with `select` mapping the cached data to props). Loaded props show the block's skeleton, then the block, or a compact error with a « Retry » button; an answer to an older run never overwrites a newer one
+- **form:** An `info` field with a `label`, `description`, `hint` or `help` sits in the standard field wrapper, like an input, for read-only values in a form grid
+- **form:** Field callbacks get `api.form.close()`, which closes the form the way its Cancel action does, confirming unsaved changes when the schema asks for it
+
+### 🩹 Fixes
+
+- **form:** An upload thumbnail or a picked image preview that fails to load (an expired signed URL) shows the file icon instead of a broken image, and a new thumbnail or file is tried again
+
 ## v1.24.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.23.0...v1.24.0)
