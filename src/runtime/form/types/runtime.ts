@@ -102,4 +102,6 @@ export interface FormRuntime {
   nextStep: () => Promise<boolean>
   previousStep: () => Promise<boolean>
   goToStep: (index: number) => Promise<boolean>
+  /** Cancels the rendered form, as its Cancel action does. Set by the form root that renders it. */
+  bindCancel: (cancel: (() => Promise<void>) | null) => void
 }

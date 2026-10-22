@@ -76,6 +76,12 @@ export interface FormFieldFormApi {
   reset: () => Promise<void>
   /** Submits the form through the configured submit lifecycle. */
   submit: () => Promise<boolean>
+  /**
+   * Closes the form the way its Cancel action does: asks to discard unsaved changes when the
+   * schema asks for it, then cancels (an overlay closes). Does nothing for a form rendered without
+   * a cancel handler.
+   */
+  close: () => Promise<void>
   /** Advances to the next step on stepped forms. */
   nextStep: () => Promise<boolean>
   /** Returns to the previous step on stepped forms. */

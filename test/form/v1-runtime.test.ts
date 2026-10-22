@@ -62,6 +62,7 @@ function apiFactory(path: readonly string[]): FormFieldApi {
     focus: async () => path.length > 0,
     form: {
       clearError: () => {},
+      close: async () => undefined,
       focus: () => Promise.resolve(false),
       get: () => null,
       initial: () => null,

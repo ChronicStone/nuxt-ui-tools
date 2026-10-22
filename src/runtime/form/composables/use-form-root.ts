@@ -73,6 +73,8 @@ export function useFormRoot(params: UseFormRootParams) {
   const runtime = ownedRuntime ?? useFormRuntime({ input, schema, syncInput, validationMode })
 
   provideFormRuntime(runtime)
+  runtime.bindCancel(() => cancel())
+  onBeforeUnmount(() => runtime.bindCancel(null))
 
   const confirm = useFormConfirm()
   // Set once the user agrees to discard their changes, so cancelling and the navigation it
