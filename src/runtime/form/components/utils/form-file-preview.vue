@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
-import { computed, onScopeDispose, watch } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { fileExtensionLabel, fileIconName, formatFileSize } from '../../../shared/utils/file'
@@ -29,6 +29,11 @@ const preview = computed(() => {
   return previewUrl
 })
 const icon = computed(() => fileIconName(props.file.type))
+// A preview that fails to load falls back to the file icon.
+const previewFailed = ref<boolean>(false)
+watch(preview, () => {
+  previewFailed.value = false
+})
 const meta = computed(
   () => `${fileExtensionLabel(props.file)} · ${formatFileSize(props.file.size, code.value)}`,
 )
@@ -56,8 +61,9 @@ onScopeDispose(() => {
     data-form-file=""
   >
     <img
-      v-if="preview"
+      v-if="preview && !previewFailed"
       :src="preview"
+      @error="previewFailed = true"
       :alt="file.name"
       class="size-10 shrink-0 rounded-md border border-default object-cover"
     />

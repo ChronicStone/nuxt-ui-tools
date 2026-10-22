@@ -110,9 +110,11 @@ function retry() {
         v-else-if="source.status.value === 'error'"
         icon="i-lucide-triangle-alert"
         tone="error"
-        :title="t('filePreview.errors.sourceTitle')"
-        :description="t('filePreview.errors.sourceDescription')"
-        :detail="source.error.value?.message"
+        :title="source.failure.value?.title ?? t('filePreview.errors.sourceTitle')"
+        :description="
+          source.failure.value?.description ?? t('filePreview.errors.sourceDescription')
+        "
+        :detail="source.failure.value?.description ? null : source.error.value?.message"
       >
         <UButton
           v-if="source.retryable.value"

@@ -249,6 +249,21 @@ Philosophy:
 
 Read `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md` before changing it.
 
+### `src/runtime/display`
+
+Purpose:
+
+- read-only display blocks (19 kinds: facts, breakdown, meter, record, timeline, media…), rendered by
+  `UiDisplay` and by the form `info` field
+- tones (built-in and app-registered), presets and slot classes from `appConfig.nuxtUiTools.display`
+
+Philosophy:
+
+- a kind is a registry entry (`DisplayPropsMap`, `DISPLAY_BLOCKS`); variants are props, not kinds
+- every rendered element has a slot class; colors only go through tone variables
+
+Read `.agents/skills/nuxt-ui-tools-maintainer/references/display-runtime.md` before changing it.
+
 ### `src/runtime/file-preview`
 
 Purpose:

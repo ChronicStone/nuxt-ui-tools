@@ -1,4 +1,4 @@
-import { computed, inject, nextTick, provide, ref, watch } from 'vue'
+import { computed, inject, nextTick, provide, ref, shallowRef, watch } from 'vue'
 import type { InjectionKey } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
@@ -64,6 +64,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const currentStepIndex = ref<number>(0)
   const navigationActionPending = ref<'next' | 'previous' | 'reset' | null>(null)
   const effects = createEffectLifecycle()
+  const cancelHandler = shallowRef<(() => Promise<void>) | null>(null)
   const { t } = useUiToolsLocale()
 
   setContext(getSchemaContext(params.schema.value))
@@ -95,6 +96,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       state: () => read.state(),
       submit: () => runtime.submit(),
       validate: () => runtime.validate(),
+      close: () => cancelHandler.value?.() ?? Promise.resolve(),
     }
   }
 
@@ -533,6 +535,9 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       return result.success
     },
     submitHandler,
+    bindCancel: (cancel) => {
+      cancelHandler.value = cancel
+    },
     trackEffect: effects.track,
     validate,
     validateCurrentStep,

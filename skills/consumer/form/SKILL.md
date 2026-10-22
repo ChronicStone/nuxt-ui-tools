@@ -22,7 +22,7 @@ Alpha select is intentionally not part of this package; use `select` or `tree-se
 The registry includes text, password, textarea, number, checkbox, switch, radio, select,
 autocomplete, checkbox/radio cards and groups, slider, color, OTP, rating, tags, phone, file,
 upload, date, time, datetime, date/month/datetime ranges, month, year, tree-select, cascader,
-tree, hidden, info, divider, button, custom component, object, input-group, group, card, column,
+tree, hidden, info (display blocks), divider, button, custom component, object, input-group, group, card, column,
 array-list, array-tabs, array-table, discriminated array-variant, and matrix.
 
 Matrix columns are normal form fields, so their values and validations are inferred for every row:
@@ -980,6 +980,45 @@ nuxtUiTools: {
   },
 }
 ```
+
+## Info Fields: Display Blocks
+
+An `info` field holds no value. With `display` and `props` it draws one of the 19 display kinds
+(facts, breakdown, meter, record, timeline, media…); without `display` it draws its `content` in a
+notice. Full reference: `skills/consumer/display/references/info-field.md`.
+
+| Option                                 | What it does                                                                                                                                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `display`                              | the kind: `heading`, `text`, `alert`, `facts`, `stat`, `breakdown`, `meter`, `chart`, `table`, `diff`, `record`, `person`, `list`, `timeline`, `date`, `media`, `code`, `empty`, `accordion` |
+| `props`                                | the kind's props, typed by `display`; or a callback `({ ctx, deps, api }) => props`, a promise of them, or TanStack Query options (with `select` mapping the data to props)                  |
+| `dependencies`                         | the paths the callback reads; it runs again when one changes                                                                                                                                 |
+| `preset`                               | default props from `appConfig.nuxtUiTools.display.presets[display]`                                                                                                                          |
+| `label`, `description`, `hint`, `help` | draw the block in the field wrapper, like an input                                                                                                                                           |
+| `condition`, `layout`                  | as on other fields; info fields span the full row by default                                                                                                                                 |
+| `content`                              | the notice text when there is no `display`                                                                                                                                                   |
+
+```ts
+{
+  key: 'accountNote',
+  type: 'info',
+  display: 'text',
+  label: 'Account note',
+  dependencies: ['accountId'],
+  props: ({ deps }) =>
+    queryOptions({
+      queryKey: ['accounts', deps.get<string>('accountId'), 'note'],
+      queryFn: () => fetchAccountNote(deps.get<string>('accountId')),
+      select: (note) => ({ appearance: 'quote', text: note.body }),
+    }),
+}
+```
+
+Loaded props show the block's skeleton until they arrive, and a compact error with « Retry » when
+they fail; a promise from an older run never overwrites a newer one.
+
+In any field callback, `api.form.close()` closes the form like its Cancel action (confirming
+unsaved changes when the schema asks for it), next to `api.form.set`, `submit`, `reset` and
+`validate`.
 
 ## Array Tables
 

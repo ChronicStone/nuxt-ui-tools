@@ -86,6 +86,127 @@
     --nut-fp-checker-a: #e9e4dd;
     --nut-fp-checker-b: #d8d1c7;
   }
+
+  /* Display blocks: five colors per tone, mapped onto Nuxt UI tokens. A toned element carries
+   * `nut-display-tone-<tone>`, which points `--nut-tone` (solid fill), `--nut-tone-ink` (text and
+   * icons on the page), `--nut-tone-soft` (tinted background), `--nut-tone-line` (border) and
+   * `--nut-tone-contrast` (text on the solid fill) at that tone; its parts only read those five.
+   * An app restyles a tone by setting its `--nut-display-<tone>*` variables. Zero specificity. */
+  :where(:root) {
+    --nut-display-radius: calc(var(--ui-radius) * 2);
+    --nut-display-track: var(--ui-bg-accented);
+    --nut-display-code-bg: var(--ui-color-neutral-900);
+    --nut-display-code-ink: var(--ui-color-neutral-100);
+    --nut-display-code-muted: var(--ui-color-neutral-400);
+    --nut-display-code-line: var(--ui-color-neutral-800);
+    --nut-display-code-key: var(--ui-color-primary-300);
+    --nut-display-code-string: var(--ui-color-success-300);
+    --nut-display-code-number: var(--ui-color-info-300);
+    --nut-display-code-literal: var(--ui-color-error-300);
+
+    --nut-display-primary: var(--ui-primary);
+    --nut-display-primary-ink: var(--ui-primary);
+    --nut-display-primary-soft: color-mix(in oklab, var(--ui-primary) 10%, var(--ui-bg));
+    --nut-display-primary-line: color-mix(in oklab, var(--ui-primary) 40%, var(--ui-bg));
+    --nut-display-primary-contrast: var(--ui-text-inverted);
+
+    --nut-display-secondary: var(--ui-secondary);
+    --nut-display-secondary-ink: var(--ui-secondary);
+    --nut-display-secondary-soft: color-mix(in oklab, var(--ui-secondary) 10%, var(--ui-bg));
+    --nut-display-secondary-line: color-mix(in oklab, var(--ui-secondary) 40%, var(--ui-bg));
+    --nut-display-secondary-contrast: var(--ui-text-inverted);
+
+    --nut-display-success: var(--ui-success);
+    --nut-display-success-ink: var(--ui-success);
+    --nut-display-success-soft: color-mix(in oklab, var(--ui-success) 10%, var(--ui-bg));
+    --nut-display-success-line: color-mix(in oklab, var(--ui-success) 40%, var(--ui-bg));
+    --nut-display-success-contrast: var(--ui-text-inverted);
+
+    --nut-display-info: var(--ui-info);
+    --nut-display-info-ink: var(--ui-info);
+    --nut-display-info-soft: color-mix(in oklab, var(--ui-info) 10%, var(--ui-bg));
+    --nut-display-info-line: color-mix(in oklab, var(--ui-info) 40%, var(--ui-bg));
+    --nut-display-info-contrast: var(--ui-text-inverted);
+
+    --nut-display-warning: var(--ui-warning);
+    --nut-display-warning-ink: var(--ui-warning);
+    --nut-display-warning-soft: color-mix(in oklab, var(--ui-warning) 10%, var(--ui-bg));
+    --nut-display-warning-line: color-mix(in oklab, var(--ui-warning) 40%, var(--ui-bg));
+    --nut-display-warning-contrast: var(--ui-text-inverted);
+
+    --nut-display-error: var(--ui-error);
+    --nut-display-error-ink: var(--ui-error);
+    --nut-display-error-soft: color-mix(in oklab, var(--ui-error) 10%, var(--ui-bg));
+    --nut-display-error-line: color-mix(in oklab, var(--ui-error) 40%, var(--ui-bg));
+    --nut-display-error-contrast: var(--ui-text-inverted);
+
+    --nut-display-neutral: var(--ui-bg-inverted);
+    --nut-display-neutral-ink: var(--ui-text-toned);
+    --nut-display-neutral-soft: var(--ui-bg-elevated);
+    --nut-display-neutral-line: var(--ui-border-accented);
+    --nut-display-neutral-contrast: var(--ui-text-inverted);
+  }
+
+  :where(.dark) {
+    --nut-display-code-bg: var(--ui-color-neutral-950);
+    --nut-display-code-line: var(--ui-color-neutral-800);
+  }
+
+  :where(.nut-display-tone-primary) {
+    --nut-tone: var(--nut-display-primary);
+    --nut-tone-ink: var(--nut-display-primary-ink);
+    --nut-tone-soft: var(--nut-display-primary-soft);
+    --nut-tone-line: var(--nut-display-primary-line);
+    --nut-tone-contrast: var(--nut-display-primary-contrast);
+  }
+
+  :where(.nut-display-tone-secondary) {
+    --nut-tone: var(--nut-display-secondary);
+    --nut-tone-ink: var(--nut-display-secondary-ink);
+    --nut-tone-soft: var(--nut-display-secondary-soft);
+    --nut-tone-line: var(--nut-display-secondary-line);
+    --nut-tone-contrast: var(--nut-display-secondary-contrast);
+  }
+
+  :where(.nut-display-tone-success) {
+    --nut-tone: var(--nut-display-success);
+    --nut-tone-ink: var(--nut-display-success-ink);
+    --nut-tone-soft: var(--nut-display-success-soft);
+    --nut-tone-line: var(--nut-display-success-line);
+    --nut-tone-contrast: var(--nut-display-success-contrast);
+  }
+
+  :where(.nut-display-tone-info) {
+    --nut-tone: var(--nut-display-info);
+    --nut-tone-ink: var(--nut-display-info-ink);
+    --nut-tone-soft: var(--nut-display-info-soft);
+    --nut-tone-line: var(--nut-display-info-line);
+    --nut-tone-contrast: var(--nut-display-info-contrast);
+  }
+
+  :where(.nut-display-tone-warning) {
+    --nut-tone: var(--nut-display-warning);
+    --nut-tone-ink: var(--nut-display-warning-ink);
+    --nut-tone-soft: var(--nut-display-warning-soft);
+    --nut-tone-line: var(--nut-display-warning-line);
+    --nut-tone-contrast: var(--nut-display-warning-contrast);
+  }
+
+  :where(.nut-display-tone-error) {
+    --nut-tone: var(--nut-display-error);
+    --nut-tone-ink: var(--nut-display-error-ink);
+    --nut-tone-soft: var(--nut-display-error-soft);
+    --nut-tone-line: var(--nut-display-error-line);
+    --nut-tone-contrast: var(--nut-display-error-contrast);
+  }
+
+  :where(.nut-display-tone-neutral) {
+    --nut-tone: var(--nut-display-neutral);
+    --nut-tone-ink: var(--nut-display-neutral-ink);
+    --nut-tone-soft: var(--nut-display-neutral-soft);
+    --nut-tone-line: var(--nut-display-neutral-line);
+    --nut-tone-contrast: var(--nut-display-neutral-contrast);
+  }
 }
 
 @layer components {

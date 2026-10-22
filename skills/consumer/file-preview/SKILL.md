@@ -134,6 +134,24 @@ follow redirects without CORS.
 Errors show a reason and the right action: Retry when `src` is a function (an expired signed link),
 Download when the browser cannot decode the format.
 
+A failing `src` function shows a generic explanation (« The link may have expired… ») with the raw
+error message under it. When the app knows the cause, throw a `FilePreviewSourceError` (or any
+error with a `title` and/or `description`, as text or lazy text): its title and description replace
+the generic ones and the raw message is left out.
+
+```ts
+import { FilePreviewSourceError } from '#ui-tools/file-preview'
+
+src: async () => {
+  const response = await fetch(`/api/invoices/${invoice.id}/file`)
+  if (response.status === 404)
+    throw new FilePreviewSourceError({ description: 'The invoice file cannot be found.' })
+  if (!response.ok)
+    throw new FilePreviewSourceError({ description: 'The file service is unavailable. Try again.' })
+  return (await response.json()).url
+}
+```
+
 Keys: `←` `→` `Home` `End` navigate, `Esc` closes, `+` `−` `0` `R` zoom, fit, and rotate images,
 `Space` `K` `M` `F` control media.
 

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { FilePreviewSourceError } from '#ui-tools/file-preview'
+
 import { mountFilePreview } from './harness'
 
 type Preview = ReturnType<typeof mountFilePreview>
@@ -62,6 +64,54 @@ describe('file preview provider', () => {
     const frame = await shown(preview, '[data-file-preview-pdf]')
     expect(frame.attributes('src')).toBe('/signed/qualiopi.pdf#view=FitH')
     expect(src).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps the generic explanation and the raw message for an unexplained source error', async () => {
+    const preview = open()
+    preview.api.open({ name: 'Facture.pdf', src: () => Promise.reject(new Error('500 Internal')) })
+
+    await shown(preview, '[data-file-preview-retry]')
+    const message = preview.text('[data-file-preview-message]')
+    expect(message).toContain('Le lien a peut-être expiré')
+    expect(message).toContain('500 Internal')
+  })
+
+  it("shows a source error's own title and description instead of the generic copy and the raw message", async () => {
+    const preview = open()
+    preview.api.open({
+      name: 'Facture.pdf',
+      src: () =>
+        Promise.reject(
+          new FilePreviewSourceError({
+            description: 'Le fichier de la facture est introuvable.',
+            message: '404 Not Found',
+            title: 'Fichier introuvable',
+          }),
+        ),
+    })
+
+    await shown(preview, '[data-file-preview-retry]')
+    const message = preview.text('[data-file-preview-message]')
+    expect(message).toContain('Fichier introuvable')
+    expect(message).toContain('Le fichier de la facture est introuvable.')
+    expect(message).not.toContain('Le lien a peut-être expiré')
+    expect(message).not.toContain('404 Not Found')
+    expect(preview.find('[data-file-preview-message] .font-mono').exists()).toBe(false)
+  })
+
+  it('reads a description from any thrown error that carries one', async () => {
+    const preview = open()
+    preview.api.open({
+      name: 'Facture.pdf',
+      src: () =>
+        Promise.reject(
+          Object.assign(new Error('500'), { description: () => 'Service indisponible.' }),
+        ),
+    })
+
+    await shown(preview, '[data-file-preview-retry]')
+    expect(preview.text('[data-file-preview-message]')).toContain('Service indisponible.')
+    expect(preview.text('[data-file-preview-message]')).not.toContain('500')
   })
 
   it('shows a rendition and still downloads the original', async () => {

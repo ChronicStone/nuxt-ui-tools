@@ -17,6 +17,7 @@ import { setupComponents } from './components'
 import { setupImports } from './imports'
 import { transformQueryPrefetchMacro } from './internals/query-prefetch-transform'
 import type { DashboardUiConfig } from './runtime/dashboard/types'
+import type { DisplayUiConfig } from './runtime/display/types'
 import type { FormUiConfig } from './runtime/form/types'
 import type { DataListUiConfig } from './runtime/table/types'
 import { setupTailwindCss } from './tailwindcss'
@@ -30,6 +31,7 @@ declare module '@nuxt/schema' {
     nuxtUiTools?: {
       dashboard?: DashboardUiConfig
       dataList?: DataListUiConfig
+      display?: DisplayUiConfig
       form?: FormUiConfig
     }
   }
@@ -38,6 +40,7 @@ declare module '@nuxt/schema' {
     nuxtUiTools?: {
       dashboard?: DashboardUiConfig
       dataList?: DataListUiConfig
+      display?: DisplayUiConfig
       form?: FormUiConfig
     }
   }
@@ -63,6 +66,7 @@ const viewportDefaults = {
 
 const publicRuntimeDomains = [
   'dashboard',
+  'display',
   'file-preview',
   'form',
   'i18n',
@@ -140,6 +144,7 @@ export default defineNuxtModule<ModuleOptions>({
     addPlugin(resolve('./runtime/query-prefetch/plugins/link-prefetch.client'))
     addPlugin(resolve('./runtime/form/plugins/form-api'))
     addPlugin(resolve('./runtime/file-preview/plugins/file-preview-api'))
+    addPlugin(resolve('./runtime/display/plugins/display-tones'))
     addVitePlugin({
       enforce: 'pre',
       name: 'nuxt-ui-tools:query-prefetch-macro',

@@ -21,6 +21,7 @@ function createApiFactory(state: FormObject) {
     focus: async () => true,
     form: {
       clearError: () => {},
+      close: async () => undefined,
       focus: () => Promise.resolve(false),
       get: () => null,
       initial: () => null,

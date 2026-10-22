@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools
-description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview and routes to table, form, dashboard, file preview, query-state, shared responsive helpers, remote option loaders, and i18n usage.
+description: Use this skill when working with the nuxt-ui-tools package as a consumer or integrator. It provides the current package overview and routes to table, form, display blocks, dashboard, file preview, query-state, shared responsive helpers, remote option loaders, and i18n usage.
 ---
 
 # nuxt-ui-tools
@@ -17,6 +17,7 @@ The current serious package surfaces are:
 
 - table runtime
 - form runtime
+- display blocks (read-only content, in forms and on their own)
 - dashboard runtime
 - file preview runtime
 - query-state runtime
@@ -31,6 +32,10 @@ If the task is about table setup, schema design, columns, filters, layouts, or `
 If the task is about schema-driven forms, inline form rendering, provider-owned modal/drawer forms, or `useFormApi`, use:
 
 - `skills/consumer/form/SKILL.md`
+
+If the task is about read-only content blocks (facts, breakdowns, meters, records, timelines, media…), the form `info` field with `display`, `UiDisplay`, display presets, or tones, use:
+
+- `skills/consumer/display/SKILL.md`
 
 If the task is about analytics dashboards, KPI tiles, charts, staged queries, or dashboard params, use:
 
