@@ -29,6 +29,16 @@ export type FilePreviewSource =
   | FilePreviewSourceValue
   | (() => MaybePromise<FilePreviewSourceValue>)
 
+/**
+ * Why a source function failed, carried by the error it throws (for example a
+ * `FilePreviewSourceError`, or any error with these properties). The preview shows them in place
+ * of its generic copy and leaves out the raw error message.
+ */
+export interface FilePreviewSourceFailure {
+  title?: FilePreviewText
+  description?: FilePreviewText
+}
+
 export interface FilePreviewDetail {
   label: FilePreviewText
   value: FilePreviewText

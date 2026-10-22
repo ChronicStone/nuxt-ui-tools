@@ -1,8 +1,9 @@
 import { useObjectUrl } from '@vueuse/core'
 import { computed, ref, shallowRef, watch } from 'vue'
 
-import { isFunction, isString } from '../../shared/utils/predicate'
+import { isFunction, isObject, isString } from '../../shared/utils/predicate'
 import type { FilePreviewItem, FilePreviewSourceValue } from '../types'
+import { explainFilePreviewFailure } from '../utils/errors'
 
 type FilePreviewSourceStatus = 'loading' | 'ready' | 'error'
 
@@ -18,6 +19,8 @@ export function useFilePreviewSource(item: () => FilePreviewItem | null) {
   const value = shallowRef<FilePreviewSourceValue | null>(null)
   const status = ref<FilePreviewSourceStatus>('loading')
   const error = shallowRef<Error | null>(null)
+  /** The title and description the thrown error carried, shown instead of the generic copy. */
+  const failure = shallowRef<ReturnType<typeof explainFilePreviewFailure>>(null)
   const blob = computed(() => (value.value instanceof Blob ? value.value : null))
   const objectUrl = useObjectUrl(blob)
   const url = computed(() => (isString(value.value) ? value.value : (objectUrl.value ?? null)))
@@ -26,6 +29,7 @@ export function useFilePreviewSource(item: () => FilePreviewItem | null) {
   function settle(next: FilePreviewSourceValue) {
     value.value = next
     error.value = null
+    failure.value = null
     status.value = 'ready'
   }
 
@@ -42,6 +46,7 @@ export function useFilePreviewSource(item: () => FilePreviewItem | null) {
 
     value.value = null
     error.value = null
+    failure.value = null
     status.value = 'loading'
     try {
       const next = await src()
@@ -51,6 +56,8 @@ export function useFilePreviewSource(item: () => FilePreviewItem | null) {
     } catch (cause) {
       if (current !== attempt) return
       error.value = cause instanceof Error ? cause : new Error(String(cause))
+      failure.value =
+        cause instanceof Error || isObject(cause) ? explainFilePreviewFailure(cause) : null
       status.value = 'error'
     }
   }
@@ -60,6 +67,7 @@ export function useFilePreviewSource(item: () => FilePreviewItem | null) {
   return {
     blob,
     error,
+    failure,
     /** Whether `retry()` can fetch the source again, which only a source function can. */
     retryable: computed(() => isFunction(item()?.file.src)),
     retry: () => resolve({ force: true }),

@@ -15,6 +15,7 @@
 
 ### 🩹 Fixes
 
+- **file-preview:** A source function that fails with an error carrying a `title` or `description` (such as the new `FilePreviewSourceError`, exported from `#ui-tools/file-preview`) shows them in place of the generic « The link may have expired » copy, without the raw error message under it. Errors without a description keep the generic copy and the message
 - **form:** An upload thumbnail or a picked image preview that fails to load (an expired signed URL) shows the file icon instead of a broken image, and a new thumbnail or file is tried again
 
 ## v1.24.0
