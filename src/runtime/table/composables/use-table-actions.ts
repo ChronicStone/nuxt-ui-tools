@@ -11,8 +11,9 @@ import type {
   GenericObject,
   TableApi,
   TableRuntimeRecord,
+  TableTextValue,
 } from '../types'
-import { resolveTableActionDefinitions } from '../utils/actions'
+import { resolveTableActionDefinitions, resolveTableActionLabel } from '../utils/actions'
 import type { UseTableDataReturn } from './use-table-data'
 import type { useTableSelection } from './use-table-selection'
 
@@ -77,13 +78,16 @@ export function useTableActions(options: UseTableActionsParams) {
     const disabled = resolveFlag(definition.disabled, actionContext)
     const loading = resolveFlag(definition.loading, actionContext)
     const requiresSelection = 'requiresSelection' in definition && definition.requiresSelection
-
-    return {
+    const state: TableActionState = {
       disabled: disabled || Boolean(requiresSelection && !actionContext.selectedRows.length),
       loading,
       running: isRunning(definition.key),
       visible: condition,
     }
+    const reason = disabled ? resolveReason(definition.disabledReason, actionContext) : undefined
+    if (reason) state.disabledReason = reason
+
+    return state
   }
 
   async function execute(definition: TableActionDefinition) {
@@ -158,6 +162,17 @@ export function useTableActions(options: UseTableActionsParams) {
 
 function resolveCondition(value: TableActionDefinition['condition'], context: TableRuntimeRecord) {
   return isBooleanResolver<TableRuntimeRecord>(value) ? value(context) : (value ?? true)
+}
+
+type ActionContext = TableActionContext<GenericObject, TableRuntimeRecord, TableRuntimeRecord>
+type ReasonResolver = (context: ActionContext) => TableTextValue | undefined
+
+function resolveReason(value: TableActionDefinition['disabledReason'], context: ActionContext) {
+  return resolveTableActionLabel(isReasonResolver(value) ? value(context) : value)
+}
+
+function isReasonResolver(value: TableActionDefinition['disabledReason']): value is ReasonResolver {
+  return isFunction(value)
 }
 
 function resolveFlag(

@@ -135,18 +135,11 @@ const TARGETS: TouchTarget[] = [
     selector: '.nut-dl-pager__btn',
   },
   {
-    classes: ['h-11', 'min-w-11'],
+    classes: ['h-11'],
     mount: (breakpoint) => mountPart(DataListSelectionActions, breakpoint),
-    name: 'selection action',
+    name: 'selection actions button',
     prepare: select,
-    selector: '.nut-dl-selbar__action',
-  },
-  {
-    classes: ['size-11'],
-    mount: (breakpoint) => mountPart(DataListSelectionActions, breakpoint),
-    name: 'selection overflow',
-    prepare: select,
-    selector: '.nut-dl-selbar__more',
+    selector: '.nut-dl-selbar__trigger',
   },
   {
     classes: ['size-11'],

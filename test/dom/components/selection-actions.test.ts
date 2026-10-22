@@ -125,20 +125,80 @@ describe('selection actions part', () => {
     expect(internals.selection.selectedCount.value).toBe(0)
   })
 
-  it('keeps one inline action on mobile and honours maxVisible', async () => {
-    harness = await mountBar({ breakpoint: 'sm' })
-    harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
-    await harness.flush()
-    expect(harness.wrapper.findAll('.nut-dl-selbar__action')).toHaveLength(1)
-    expect(harness.wrapper.findAll('.nut-dl-selbar__actions [data-ui-item]')).toHaveLength(4)
-    harness.unmount()
-
+  it('honours maxVisible on the desktop bar', async () => {
     harness = await mountBar({ barProps: { maxVisible: 5, position: 'fixed' } })
     harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
     await harness.flush()
     expect(harness.wrapper.findAll('.nut-dl-selbar__action')).toHaveLength(5)
     expect(harness.wrapper.find('.nut-dl-selbar__more').exists()).toBeFalsy()
     expect(harness.wrapper.find('.nut-dl-selbar').classes()).toContain('fixed')
+  })
+
+  it('shows a compact bar on mobile that opens every action in a sheet', async () => {
+    harness = await mountBar({
+      breakpoint: 'sm',
+      schema: createAccountsSchema({ actionDetails: true }),
+    })
+    harness.internals.selection.selectRows({ rowIds: ['acc-1', 'acc-2'] })
+    await harness.flush()
+    const w = harness.wrapper
+    expect(w.find('.nut-dl-selbar__bar--compact').exists()).toBeTruthy()
+    expect(w.find('.nut-dl-selbar__action').exists()).toBeFalsy()
+    expect(w.find('.nut-dl-selbar__count').text()).toBe('2 sélectionnés')
+    expect(w.find('.nut-dl-selbar__count').attributes('role')).toBe('status')
+    expect(w.find('.nut-dl-selbar__trigger').attributes('aria-label')).toBe(
+      'Actions sur la sélection',
+    )
+    expect(w.find('.nut-dl-selsheet__action').exists()).toBeFalsy()
+
+    await w.find('[data-ui="UDrawer"] [data-ui-trigger]').trigger('click')
+    await harness.flush()
+    const rows = () => w.findAll('.nut-dl-selsheet__action')
+    expect(texts(w, '.nut-dl-selsheet__label')).toStrictEqual([
+      'Exporter',
+      'Synchroniser',
+      'Archiver',
+      'Passer inactif',
+      'Supprimer',
+    ])
+    expect(texts(w, '.nut-dl-selsheet__detail')).toStrictEqual([
+      'Met à jour EDOF et VTest',
+      'Ces comptes sont déjà archivés',
+    ])
+    expect(must(rows()[2]).attributes('aria-disabled')).toBe('true')
+    expect(must(rows()[4]).classes()).toContain('text-error')
+    expect(
+      w.findAll('.nut-dl-selsheet__scope-btn').map((b) => b.attributes('aria-checked')),
+    ).toStrictEqual(['true', 'false'])
+
+    await must(rows()[2]).trigger('click')
+    await harness.flush()
+    expect(bulkActionCalls).not.toContain('archive')
+
+    await must(rows()[1]).trigger('click')
+    await harness.flush()
+    expect(bulkActionCalls).toContain('sync')
+    expect(w.find('.nut-dl-selsheet__action').exists()).toBeFalsy()
+  })
+
+  it('lists destructive actions last and switches the scope from the sheet', async () => {
+    harness = await mountBar({
+      breakpoint: 'sm',
+      schema: createAccountsSchema({
+        actionDetails: true,
+        actionLabels: ['Exporter', 'Synchroniser', 'Archiver', 'Passer inactif', 'Supprimer'],
+      }),
+    })
+    harness.internals.selection.selectRows({ rowIds: ['acc-1'] })
+    await harness.flush()
+    const w = harness.wrapper
+    expect(w.find('.nut-dl-selbar__count').text()).toBe('1 sélectionné')
+    await w.find('[data-ui="UDrawer"] [data-ui-trigger]').trigger('click')
+    await harness.flush()
+    await must(w.findAll('.nut-dl-selsheet__scope-btn')[1]).trigger('click')
+    await harness.flush()
+    expect(harness.internals.selection.bulkScope.value).toBe('all')
+    expect(w.find('.nut-dl-selbar__count').text()).toBe('Tous les 60 résultats')
   })
 
   it('falls back to a plain count when the scope is page-bound or disabled', async () => {

@@ -1,3 +1,13 @@
+## v1.24.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.23.0...v1.24.0)
+
+### 🚀 Enhancements
+
+- **table:** Below `md`, the selection bar is a compact bar with a clear button, the count (« 2 sélectionnés », or « Tous les 144 résultats ») and an « Actions » button. The button opens a bottom sheet with the selection / all-results switch and every bulk action as a full-width row with its icon, label and description. Destructive actions (`color: 'error'`) come last, in red. Tapping a row closes the sheet and runs the same handler as the desktop button. Labels are no longer cut down to « N… » on a phone. While the bar is shown, the list's scroll areas end with room for it, so the last row scrolls above it. The desktop and tablet bar is unchanged
+- **table:** Bulk and toolbar actions take an optional `disabledReason` (text or a callback that receives the action context). The mobile actions sheet shows it under a disabled action's label, and `state.disabledReason` exposes it to custom renderers
+- **table:** The selection bar's `ui` takes `trigger` and `sheet` classes, and its `props` take `trigger` button props, for the mobile « Actions » button and sheet
+
 ## v1.23.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.22.2...v1.23.0)

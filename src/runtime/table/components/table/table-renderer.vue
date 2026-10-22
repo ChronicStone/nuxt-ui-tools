@@ -36,6 +36,7 @@ import {
 } from '../../utils/tree'
 import DataListErrorState from '../data-list/data-list-error-state.vue'
 import ProgressLine from '../layout/progress-line.vue'
+import OverlayInsetSpacer from '../utils/overlay-inset-spacer.vue'
 import TableCell from './table-cell'
 import TableColumnHeader from './table-column-header.vue'
 import TableEmptyState from './table-empty-state.vue'
@@ -1066,6 +1067,7 @@ defineExpose({ resetColumnSizing })
           />
         </slot>
       </div>
+      <OverlayInsetSpacer />
     </div>
     <ProgressLine
       :active="refreshing"

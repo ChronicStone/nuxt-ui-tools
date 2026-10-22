@@ -61,6 +61,11 @@ export interface UiToolsTableMessages {
     allResults: string
     more: string
     clear: string
+    actions: string
+    actionsTitle: string
+    countSelectedOne: string
+    countSelectedOther: string
+    countAll: string
   }
   summaries: {
     total: string

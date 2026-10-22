@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import UButton from '@nuxt/ui/components/Button.vue'
 import UDropdownMenu from '@nuxt/ui/components/DropdownMenu.vue'
-import { useResizeObserver } from '@vueuse/core'
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { useElementSize, useResizeObserver } from '@vueuse/core'
+import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch, watchEffect } from 'vue'
 
 import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { isString, isNullish } from '../../../shared/utils/predicate'
 import { useDataListBreakpoint } from '../../composables/use-data-list-breakpoint'
+import { useDataListOverlayInset } from '../../composables/use-data-list-overlay-inset'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import type { TableActionController } from '../../composables/use-table-actions'
 import { useTableInternals } from '../../composables/use-table-internals'
@@ -23,13 +24,14 @@ import type {
 } from '../../types'
 import { mergeDataListProps, mergeDataListUiClass } from '../../utils'
 import { resolveTableActionLabel } from '../../utils/actions'
+import DataListSelectionSheet from './data-list-selection-sheet.vue'
 
 const props = withDefaults(
   defineProps<{
     size?: DataListControlSize
     /** `absolute` docks the bar inside the nearest positioned ancestor; `fixed` pins it to the viewport. */
     position?: 'absolute' | 'fixed'
-    /** Number of actions rendered inline before the overflow menu. */
+    /** Number of actions the desktop bar renders inline before the overflow menu. Below `md` every action opens from a sheet. */
     maxVisible?: number
     /** Shows the selection / all-results scope switch when the schema allows an `all` scope. */
     scope?: boolean
@@ -84,7 +86,14 @@ const scopeEnabled = computed(
     matchingCount.value > 0,
 )
 const bulkScope = computed(() => internals.selection.bulkScope.value)
-const maxVisible = computed(() => props.maxVisible ?? (isMobile.value ? 1 : 3))
+const maxVisible = computed(() => props.maxVisible ?? 3)
+const placement = computed(() => {
+  if (props.position === 'fixed')
+    return isMobile.value
+      ? 'fixed inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom))]'
+      : 'fixed inset-x-0 bottom-4'
+  return isMobile.value ? 'absolute inset-x-0 bottom-3' : 'absolute inset-x-0 bottom-[22px]'
+})
 const fitted = ref<number>(Number.POSITIVE_INFINITY)
 const visibleCount = computed(() => Math.min(maxVisible.value, fitted.value))
 const visibleActions = computed(() => actions.value.slice(0, visibleCount.value))
@@ -143,6 +152,7 @@ async function fit() {
 watch(
   () => [
     selectedCount.value > 0,
+    isMobile.value,
     maxVisible.value,
     actions.value.map((action) => resolveTableActionLabel(action.definition.label)).join('\n'),
   ],
@@ -151,6 +161,16 @@ watch(
 )
 
 useResizeObserver(rootElement, () => void fit())
+
+const overlayInset = useDataListOverlayInset()
+const { height: rootHeight } = useElementSize(rootElement)
+watchEffect(() => {
+  if (overlayInset)
+    overlayInset.bottom.value = isMobile.value && rootHeight.value ? rootHeight.value + 24 : 0
+})
+onBeforeUnmount(() => {
+  if (overlayInset) overlayInset.bottom.value = 0
+})
 </script>
 
 <template>
@@ -160,20 +180,30 @@ useResizeObserver(rootElement, () => void fit())
       ref="rootElement"
       :class="
         mergeDataListUiClass(
-          `nut-dl-selbar pointer-events-none z-40 flex justify-center px-4 ${position === 'fixed' ? 'fixed inset-x-0 bottom-4' : 'absolute inset-x-0 bottom-[22px]'}`,
+          `nut-dl-selbar pointer-events-none z-40 flex justify-center px-4 ${placement}`,
           undefined,
           ui.root,
         )
       "
     >
-      <div class="pointer-events-auto flex max-w-full justify-center">
+      <div
+        class="pointer-events-auto flex max-w-full justify-center"
+        :class="{ 'w-full': isMobile }"
+      >
         <slot
           :actions="actions"
           :selected-count="selectedCount"
           :selection="selection"
           :clear-selection="clearSelection"
         >
+          <DataListSelectionSheet
+            v-if="isMobile"
+            :scope="scopeEnabled"
+            :ui="ui"
+            :controls="controlProps"
+          />
           <div
+            v-else
             :class="
               mergeDataListUiClass(
                 'nut-dl-selbar__bar flex h-11 max-w-[min(840px,100%)] items-center gap-2.5 rounded-[10px] bg-inverted px-1.5 text-[13px] text-inverted shadow-[0_20px_50px_-18px_rgb(31_29_26/0.6)]',

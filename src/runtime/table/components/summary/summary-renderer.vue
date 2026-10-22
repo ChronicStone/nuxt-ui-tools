@@ -23,6 +23,7 @@ import DataListErrorState from '../data-list/data-list-error-state.vue'
 import ProgressLine from '../layout/progress-line.vue'
 import TableEmptyState from '../table/table-empty-state.vue'
 import TableSelectionControl from '../table/table-selection-control.vue'
+import OverlayInsetSpacer from '../utils/overlay-inset-spacer.vue'
 import SummaryRow from './summary-row.vue'
 
 /**
@@ -297,6 +298,7 @@ watch(
           <span>{{ t('table.controls.loadingMore') }}</span>
         </li>
       </ul>
+      <OverlayInsetSpacer />
     </div>
 
     <ProgressLine
