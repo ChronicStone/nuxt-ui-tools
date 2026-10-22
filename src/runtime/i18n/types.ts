@@ -728,6 +728,41 @@ export interface UiToolsDashboardMessages {
   }
 }
 
+export interface UiToolsDisplayMessages {
+  /** Shown by a block with nothing to list. */
+  empty: string
+  /** "Show more · {count}" */
+  showMore: string
+  readMore: string
+  readLess: string
+  showDetails: string
+  hideDetails: string
+  /** Toggle of a collapsible breakdown. */
+  details: string
+  copy: string
+  copied: string
+  reveal: string
+  conceal: string
+  open: string
+  download: string
+  play: string
+  today: string
+  from: string
+  to: string
+  /** "{duration} overdue" */
+  overdue: string
+  /** "Due {date}" */
+  dueOn: string
+  /** "{count} pages" */
+  pages: string
+  /** Shown when a block's props failed to load. */
+  loadError: string
+  retry: string
+  field: string
+  before: string
+  after: string
+}
+
 export interface UiToolsFilePreviewMessages {
   /** Name shown for a file that has none, such as a pasted image. */
   untitled: string
@@ -837,6 +872,7 @@ export interface UiToolsFilePreviewMessages {
 
 export interface Messages {
   dashboard: UiToolsDashboardMessages
+  display: UiToolsDisplayMessages
   filePreview: UiToolsFilePreviewMessages
   form: UiToolsFormMessages
   table: UiToolsTableMessages

@@ -132,6 +132,13 @@ function getPublicComponents(
       name: `${prefix}Dashboard${part}`,
     })),
 
+    // Display
+    {
+      filePath: `${runtimeDir}/display/components/display.vue`,
+      global: options.global,
+      name: `${prefix}Display`,
+    },
+
     // File preview
     {
       filePath: `${runtimeDir}/file-preview/components/provider/file-preview-provider.vue`,
