@@ -2,7 +2,7 @@
 import UButton from '@nuxt/ui/components/Button.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import UProgress from '@nuxt/ui/components/Progress.vue'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { fileExtensionLabel, fileIconName, formatFileSize } from '../../../shared/utils/file'
@@ -27,6 +27,14 @@ const emit = defineEmits<{
 const { code, t } = useUiToolsLocale()
 
 const icon = computed(() => fileIconName(props.item.type))
+// A thumbnail that fails to load (an expired signed URL) falls back to the file icon.
+const thumbnailFailed = ref<boolean>(false)
+watch(
+  () => props.item.thumbnail,
+  () => {
+    thumbnailFailed.value = false
+  },
+)
 const meta = computed(() => {
   if (props.item.description) return props.item.description
   const extension = fileExtensionLabel({ name: props.item.name, type: props.item.type })
@@ -54,9 +62,10 @@ const status = computed(() => {
     :data-form-upload-item="item.status"
   >
     <img
-      v-if="item.thumbnail"
+      v-if="item.thumbnail && !thumbnailFailed"
       :src="item.thumbnail"
       :alt="item.name"
+      @error="thumbnailFailed = true"
       class="shrink-0 rounded-md border border-default bg-white object-contain p-0.5"
       :class="compact ? 'size-7' : 'size-10'"
     />
