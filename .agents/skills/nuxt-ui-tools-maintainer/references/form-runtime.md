@@ -210,6 +210,12 @@ When adding form features, bias toward:
   centers the wrapper of a card whose indicator is hidden (`corner`, `switch`, `hidden`), so the
   compact wrapper stretches (`items-stretch`) to keep the label at the card edge.
 
+- `fields/info/` draws read-only blocks: a notice from `content`, or a display block from `display`
+  and `props` through the display runtime (see `display-runtime.md`). `use-info-display.ts` owns
+  static, derived, promise and query props; a label or supporting copy wraps the block in
+  `FormFieldShell`. `FormFieldFormApi.close()` calls the cancel the form root binds with
+  `runtime.bindCancel`, so callbacks close the form the way its Cancel action does.
+
 When adding a field, update the local type/config/component, assembled union, registry, renderer,
 value/output inference, recursive state ownership where relevant, tests, playground, and consumer
 skill as one maintenance surface.

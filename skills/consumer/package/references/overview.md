@@ -8,6 +8,7 @@ Today the main usable package surfaces are:
 
 - table runtime
 - form runtime
+- display blocks
 - query-state runtime
 - shared responsive helpers
 - reusable remote option loaders
@@ -29,12 +30,14 @@ That includes the primary entrypoints for:
 The module also auto-registers the main public components:
 
 - `DataList`
+- `Display`
 - `Form`
 - `FormProvider`
 - `ToolsProvider`
 
 The configured module prefix still applies, so with the default module options
-those components are available as `UiDataList`, `UiForm`, `UiFormProvider`, and `UiToolsProvider`.
+those components are available as `UiDataList`, `UiDisplay`, `UiForm`, `UiFormProvider`, and
+`UiToolsProvider`.
 
 ## What To Import
 
@@ -72,8 +75,14 @@ Form usage:
 import { defineFormSchema, useForm } from '#ui-tools/form'
 ```
 
+Display block types (the blocks themselves render through `UiDisplay` or a form `info` field):
+
+```ts
+import type { DisplayFact, DisplaySpec, DisplayTone } from '#ui-tools/display'
+```
+
 The same domain entrypoints are available as `nuxt-ui-tools/table`,
-`nuxt-ui-tools/form`, `nuxt-ui-tools/query-state`, `nuxt-ui-tools/shared`, and
+`nuxt-ui-tools/form`, `nuxt-ui-tools/display`, `nuxt-ui-tools/query-state`, `nuxt-ui-tools/shared`, and
 `nuxt-ui-tools/i18n` when explicit package imports are preferable.
 
 The spreadsheet import engine remains internal and is intentionally absent from
@@ -91,6 +100,8 @@ Use:
   for breakpoint-aware shared runtime helpers
 - `skills/consumer/form/SKILL.md`
   for schema-driven forms and provider-owned overlays
+- `skills/consumer/display/SKILL.md`
+  for read-only display blocks in forms and pages
 - `skills/consumer/i18n/SKILL.md`
   for locale wiring and translation-friendly text
 
@@ -100,4 +111,5 @@ Use:
 - use `skills/consumer/query-state/SKILL.md` for URL/query-param state questions
 - use `skills/consumer/shared/SKILL.md` for breakpoint-driven values
 - use `skills/consumer/form/SKILL.md` for form runtime questions
+- use `skills/consumer/display/SKILL.md` for display blocks, the `info` field, presets and tones
 - use `skills/consumer/i18n/SKILL.md` for locale questions

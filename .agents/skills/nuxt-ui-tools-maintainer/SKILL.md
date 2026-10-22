@@ -30,6 +30,8 @@ Then load the domain reference that matches the task:
   `.agents/skills/nuxt-ui-tools-maintainer/references/form-runtime.md`
 - dashboard runtime:
   `.agents/skills/nuxt-ui-tools-maintainer/references/dashboard-runtime.md`
+- display blocks (and the form `info` field):
+  `.agents/skills/nuxt-ui-tools-maintainer/references/display-runtime.md`
 - file preview runtime:
   `.agents/skills/nuxt-ui-tools-maintainer/references/file-preview-runtime.md`
 - spreadsheet import runtime:
