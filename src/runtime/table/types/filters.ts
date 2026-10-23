@@ -954,53 +954,79 @@ export type TableDateFilterOptions<
   TKey extends string = TableKnownFieldPath<TRow>,
 > = Omit<TableDateFilterDefinition<TRow, TContext, TKey>, 'key' | 'kind'>
 
-/**
- * Keys a filter may use. A row field path filters rows; any other key names a query parameter of
- * the source and requires `behavior.applyTo: 'query'`.
- */
-export type TableFilterKey<TRow extends GenericObject = GenericObject> =
-  | TableKnownFieldPath<TRow>
-  | (string & {})
+/** What marks a filter as a scope of the source query rather than of the rows. */
+export type TableQueryFilterScope = { behavior: { applyTo: 'query' } }
 
-/** What a filter key adds to its options: nothing for a row field, `applyTo: 'query'` otherwise. */
-export type TableFilterKeyScope<TRow extends GenericObject, TKey extends string> =
-  TKey extends TableKnownFieldPath<TRow> ? unknown : { behavior: { applyTo: 'query' } }
+/**
+ * Builds filters that scope the source query (`behavior.applyTo: 'query'`). Their key names a query
+ * parameter, so it does not have to be a row field.
+ */
+export interface TableQueryFilterBuilder<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+> {
+  text<TKey extends string>(
+    key: TKey,
+    options: TableTextFilterOptions<TRow, TContext, TKey>,
+  ): TableTextFilterDefinition<TRow, TContext, TKey> & TableQueryFilterScope
+  option<
+    TKey extends string,
+    TValue extends TableFilterPrimitiveValue,
+    TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
+  >(
+    key: TKey,
+    options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>,
+  ): TableOptionFilterDefinition<TRow, TContext, TKey, TValue, TPresentation> &
+    TableQueryFilterScope
+  boolean<TKey extends string>(
+    key: TKey,
+    options: TableBooleanFilterOptions<TRow, TContext, TKey>,
+  ): TableBooleanFilterDefinition<TRow, TContext, TKey> & TableQueryFilterScope
+  number<TKey extends string>(
+    key: TKey,
+    options: TableNumberFilterOptions<TRow, TContext, TKey>,
+  ): TableNumberFilterDefinition<TRow, TContext, TKey> & TableQueryFilterScope
+  date<TKey extends string>(
+    key: TKey,
+    options: TableDateFilterOptions<TRow, TContext, TKey>,
+  ): TableDateFilterDefinition<TRow, TContext, TKey> & TableQueryFilterScope
+}
 
 export interface TableFilterBuilder<
   TRow extends GenericObject = GenericObject,
   TContext extends GenericObject = GenericObject,
 > {
-  text<TKey extends TableFilterKey<TRow>>(
+  text<TKey extends TableKnownFieldPath<TRow>>(
     key: TKey,
-    options: TableTextFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
-  ): TableTextFilterDefinition<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>
+    options: TableTextFilterOptions<TRow, TContext, TKey>,
+  ): TableTextFilterDefinition<TRow, TContext, TKey>
   option<
-    TKey extends TableFilterKey<TRow>,
+    TKey extends TableKnownFieldPath<TRow>,
     TValue extends TableFilterPrimitiveValue,
     TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
   >(
     key: TKey,
-    options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation> &
-      TableFilterKeyScope<TRow, TKey>,
-  ): TableOptionFilterDefinition<TRow, TContext, TKey, TValue, TPresentation> &
-    TableFilterKeyScope<TRow, TKey>
-  boolean<TKey extends TableFilterKey<TRow>>(
+    options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>,
+  ): TableOptionFilterDefinition<TRow, TContext, TKey, TValue, TPresentation>
+  boolean<TKey extends TableKnownFieldPath<TRow>>(
     key: TKey,
-    options: TableBooleanFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
-  ): TableBooleanFilterDefinition<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>
-  number<TKey extends TableFilterKey<TRow>>(
+    options: TableBooleanFilterOptions<TRow, TContext, TKey>,
+  ): TableBooleanFilterDefinition<TRow, TContext, TKey>
+  number<TKey extends TableKnownFieldPath<TRow>>(
     key: TKey,
-    options: TableNumberFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
-  ): TableNumberFilterDefinition<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>
-  date<TKey extends TableFilterKey<TRow>>(
+    options: TableNumberFilterOptions<TRow, TContext, TKey>,
+  ): TableNumberFilterDefinition<TRow, TContext, TKey>
+  date<TKey extends TableKnownFieldPath<TRow>>(
     key: TKey,
-    options: TableDateFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
-  ): TableDateFilterDefinition<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>
+    options: TableDateFilterOptions<TRow, TContext, TKey>,
+  ): TableDateFilterDefinition<TRow, TContext, TKey>
+  /** Filters that scope the source query instead of the rows. See `TableQueryFilterBuilder`. */
+  query: TableQueryFilterBuilder<TRow, TContext>
 }
 
 /**
- * One filter of a table: a row filter keyed by a row field, or a query filter
- * (`behavior.applyTo: 'query'`) keyed by any query parameter.
+ * One filter of a table: a row filter keyed by a row field, or a query filter built with
+ * `filter.query` and keyed by any query parameter.
  */
 export type TableUiFilterCollectionItem<
   TRow extends GenericObject = GenericObject,
@@ -1008,7 +1034,7 @@ export type TableUiFilterCollectionItem<
   TKey extends string = TableKnownFieldPath<TRow>,
 > =
   | TableUiFilterDefinition<TRow, TContext, TKey>
-  | (TableUiFilterDefinition<TRow, TContext, string> & { behavior: { applyTo: 'query' } })
+  | (TableUiFilterDefinition<TRow, TContext, string> & TableQueryFilterScope)
 
 export type TableUiFilterCollection<
   TRow extends GenericObject = GenericObject,

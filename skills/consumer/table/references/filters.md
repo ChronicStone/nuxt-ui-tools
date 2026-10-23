@@ -140,10 +140,12 @@ When several filters declare defaults, an explicit URL value overrides only its 
 other defaults remain effective without becoming active. Panel clear actions restore these defaults
 instead of leaving defaulted filters empty.
 
-`applyTo: 'query'` makes a filter a scope for the data rather than a row filter. Its value still
-shows as a tag, lives in the URL and reaches the source query through `filters`, but a client source
-never matches its rows (nor its facet counts) against it. Use it when the filter picks which dataset
-the server returns, such as a period or a certification, and read it in the query:
+Query filters scope the data rather than the rows. Declare them with `filter.query`, which sets
+`behavior.applyTo: 'query'`: the value still shows as a tag, lives in the URL and reaches the source
+query through `filters`, but a client source never matches its rows (nor its facet counts) against
+it. Their key names a query parameter, so it does not have to be a row field; every other filter key
+must be a row field path. Use them when the filter picks which dataset the server returns, such as a
+period or a certification, and read them in the query:
 
 ```ts
 source: tableSource({
@@ -152,18 +154,14 @@ source: tableSource({
 }),
 filters: {
   ui: (filter) => [
-    filter.option('certification', {
+    filter.query.option('certification', {
       label: 'Certification',
-      behavior: { applyTo: 'query', defaultValue: ['RS6905'], persist: true },
+      behavior: { defaultValue: ['RS6905'], persist: true },
       source: { query: () => certificationOptions() },
     }),
   ],
 },
 ```
-
-A query filter's key names a query parameter, so it does not have to be a row field: `period` or
-`certification` type-check as long as the filter sets `applyTo: 'query'`. Any other filter key must be
-a row field path.
 
 `persist: true` remembers the filter's last value in `localStorage`, per table key and filter key. On
 the next visit it replaces the default when the URL does not set the filter, without adding a

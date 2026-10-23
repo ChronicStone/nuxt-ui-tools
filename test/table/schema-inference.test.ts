@@ -210,13 +210,13 @@ defineTableSchema({
   }),
   filters: {
     ui: (filter) => [
-      filter.option('certification', {
+      filter.query.option('certification', {
         label: 'Certification',
-        behavior: { applyTo: 'query', defaultValue: ['RS6905'] },
+        behavior: { defaultValue: ['RS6905'] },
         source: { options: [{ label: 'RS6905', value: 'RS6905' }] },
       }),
       filter.boolean('active', { label: 'Active' }),
-      // @ts-expect-error a key that is not a row field must scope the query
+      // @ts-expect-error a row filter is keyed by a row field
       filter.option('period', {
         label: 'Period',
         source: { options: [{ label: 'All', value: 'all' }] },

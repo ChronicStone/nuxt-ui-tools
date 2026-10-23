@@ -9,9 +9,8 @@ import type {
   TableDisplayColumnOptions,
   TableFieldColumnOptions,
   TableFilterBuilder,
-  TableFilterKey,
-  TableFilterKeyScope,
   TableKnownFieldPath,
+  TableQueryFilterBuilder,
   TableNumberFilterOptions,
   TableOptionFilterOptions,
   TableSortKey,
@@ -68,9 +67,9 @@ export function createTableFilterBuilder<
   TContext extends GenericObject = GenericObject,
 >(): TableFilterBuilder<TRow, TContext> {
   return {
-    boolean<TKey extends TableFilterKey<TRow>>(
+    boolean<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableBooleanFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
+      options: TableBooleanFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
         key,
@@ -78,9 +77,9 @@ export function createTableFilterBuilder<
         ...options,
       }
     },
-    date<TKey extends TableFilterKey<TRow>>(
+    date<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableDateFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
+      options: TableDateFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
         key,
@@ -88,9 +87,9 @@ export function createTableFilterBuilder<
         ...options,
       }
     },
-    number<TKey extends TableFilterKey<TRow>>(
+    number<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableNumberFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
+      options: TableNumberFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
         key,
@@ -99,29 +98,64 @@ export function createTableFilterBuilder<
       }
     },
     option<
-      TKey extends TableFilterKey<TRow>,
+      TKey extends TableKnownFieldPath<TRow>,
       TValue extends string | number | boolean,
       TPresentation extends import('../types').TableOptionFilterPresentation = 'list',
-    >(
-      key: TKey,
-      options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation> &
-        TableFilterKeyScope<TRow, TKey>,
-    ) {
+    >(key: TKey, options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>) {
       return {
         key,
         kind: 'option',
         ...options,
       }
     },
-    text<TKey extends TableFilterKey<TRow>>(
+    text<TKey extends TableKnownFieldPath<TRow>>(
       key: TKey,
-      options: TableTextFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
+      options: TableTextFilterOptions<TRow, TContext, TKey>,
     ) {
       return {
         key,
         kind: 'text',
         ...options,
       }
+    },
+    query: createTableQueryFilterBuilder<TRow, TContext>(),
+  }
+}
+
+function createTableQueryFilterBuilder<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+>(): TableQueryFilterBuilder<TRow, TContext> {
+  return {
+    boolean(key, options) {
+      return {
+        key,
+        kind: 'boolean',
+        ...options,
+        behavior: { ...options.behavior, applyTo: 'query' },
+      }
+    },
+    date(key, options) {
+      return { key, kind: 'date', ...options, behavior: { ...options.behavior, applyTo: 'query' } }
+    },
+    number(key, options) {
+      return {
+        key,
+        kind: 'number',
+        ...options,
+        behavior: { ...options.behavior, applyTo: 'query' },
+      }
+    },
+    option(key, options) {
+      return {
+        key,
+        kind: 'option',
+        ...options,
+        behavior: { ...options.behavior, applyTo: 'query' },
+      }
+    },
+    text(key, options) {
+      return { key, kind: 'text', ...options, behavior: { ...options.behavior, applyTo: 'query' } }
     },
   }
 }
