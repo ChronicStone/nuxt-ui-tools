@@ -5,6 +5,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayLocale } from '../../composables/use-display-locale'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayTextAppearance, DisplayTextProps, DisplayTextSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
@@ -104,11 +105,16 @@ useResizeObserver(body, () => {
       :class="classes.header"
     >
       <UIcon v-if="icon" :name="icon" :class="classes.icon" />
-      <span :class="classes.title"><DisplayRender :content="title" /></span>
+      <span v-reveal-truncated :class="classes.title"><DisplayRender :content="title" /></span>
     </div>
     <UIcon v-if="appearance === 'caption' && icon" :name="icon" :class="classes.icon" />
     <div ref="body" :style="clampStyle">
-      <div v-for="(content, index) in blocks" :key="index" :class="classes.paragraph">
+      <div
+        v-for="(content, index) in blocks"
+        :key="index"
+        v-reveal-truncated
+        :class="classes.paragraph"
+      >
         <DisplayRender :content="content" />
       </div>
     </div>

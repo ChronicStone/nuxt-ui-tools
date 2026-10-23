@@ -6,6 +6,7 @@ import { computed, ref } from 'vue'
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayBreakdownLine, DisplayBreakdownProps, DisplayBreakdownSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
@@ -99,6 +100,7 @@ function valueClass(line: DisplayBreakdownLine) {
             <td
               v-for="(cell, cellIndex) in line.values ?? []"
               :key="cellIndex"
+              v-reveal-truncated
               :class="['px-4 py-2 text-end', valueClass(line)]"
             >
               <DisplayRender :content="cell" />
@@ -121,7 +123,7 @@ function valueClass(line: DisplayBreakdownLine) {
     </div>
     <div v-else-if="mode === 'collapsible'" :class="classes.root">
       <div :class="classes.total">
-        <span :class="classes.totalLabel">
+        <span v-reveal-truncated :class="classes.totalLabel">
           <DisplayRender :content="total?.label ?? title" />
           <DisplayChip v-if="total?.chip" :chip="total.chip" />
         </span>
@@ -139,31 +141,35 @@ function valueClass(line: DisplayBreakdownLine) {
       </div>
       <div v-if="open" :class="classes.body">
         <div v-for="(line, index) in lines" :key="index" :class="lineClass(line)">
-          <span :class="classes.label">
+          <span v-reveal-truncated :class="classes.label">
             <DisplayRender :content="line.label" />
             <span v-if="!isDisplayContentEmpty(line.detail)" :class="classes.detail"
               ><DisplayRender :content="line.detail"
             /></span>
           </span>
-          <span :class="valueClass(line)"><DisplayRender :content="line.value" /></span>
+          <span v-reveal-truncated :class="valueClass(line)"
+            ><DisplayRender :content="line.value"
+          /></span>
         </div>
       </div>
     </div>
     <div v-else :class="classes.root">
-      <div v-if="!isDisplayContentEmpty(title)" :class="classes.title">
+      <div v-if="!isDisplayContentEmpty(title)" v-reveal-truncated :class="classes.title">
         <DisplayRender :content="title" />
       </div>
       <div v-for="(line, index) in lines" :key="index" :class="lineClass(line)">
-        <span :class="classes.label">
+        <span v-reveal-truncated :class="classes.label">
           <DisplayRender :content="line.label" />
           <span v-if="!isDisplayContentEmpty(line.detail)" :class="classes.detail"
             ><DisplayRender :content="line.detail"
           /></span>
         </span>
-        <span :class="valueClass(line)"><DisplayRender :content="line.value" /></span>
+        <span v-reveal-truncated :class="valueClass(line)"
+          ><DisplayRender :content="line.value"
+        /></span>
       </div>
       <div v-if="total" :class="classes.total">
-        <span :class="classes.totalLabel">
+        <span v-reveal-truncated :class="classes.totalLabel">
           <DisplayRender :content="total.label" />
           <DisplayChip v-if="total.chip" :chip="total.chip" />
         </span>

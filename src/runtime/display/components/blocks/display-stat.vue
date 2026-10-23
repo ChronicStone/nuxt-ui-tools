@@ -4,6 +4,7 @@ import { twMerge } from 'tailwind-merge'
 import { computed } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayStatProps, DisplayStatSlot, DisplayTone } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty, resolveDisplayText } from '../../utils/content'
@@ -113,11 +114,17 @@ const classes = computed(() =>
         :key="index"
         :class="[classes.item, item.tone ? displayToneClass(item.tone) : '']"
       >
-        <div :class="classes.itemLabel"><DisplayRender :content="item.label" /></div>
+        <div v-reveal-truncated :class="classes.itemLabel">
+          <DisplayRender :content="item.label" />
+        </div>
         <div :class="twMerge(classes.itemValue, item.tone ? 'text-[var(--nut-tone-ink)]' : '')">
           <DisplayRender :content="item.value" />
         </div>
-        <div v-if="!isDisplayContentEmpty(item.caption)" :class="classes.itemCaption">
+        <div
+          v-if="!isDisplayContentEmpty(item.caption)"
+          v-reveal-truncated
+          :class="classes.itemCaption"
+        >
           <DisplayRender :content="item.caption" />
         </div>
       </div>
@@ -130,11 +137,11 @@ const classes = computed(() =>
     :data-variant="variant"
   >
     <div :class="variant === 'trend' ? 'min-w-0' : 'contents'">
-      <div v-if="!isDisplayContentEmpty(label)" :class="classes.label">
+      <div v-if="!isDisplayContentEmpty(label)" v-reveal-truncated :class="classes.label">
         <DisplayRender :content="label" />
       </div>
       <div :class="variant === 'trend' ? 'flex items-center gap-2' : 'contents'">
-        <div :class="classes.value">
+        <div v-reveal-truncated :class="classes.value">
           <DisplayRender :content="value" />
           <span v-if="!isDisplayContentEmpty(unit)" :class="classes.unit"
             ><DisplayRender :content="unit"
@@ -148,7 +155,11 @@ const classes = computed(() =>
         <UIcon v-if="status.icon" :name="status.icon" class="size-4 shrink-0" />
         <DisplayRender :content="status.text" />
       </div>
-      <div v-if="!isDisplayContentEmpty(caption) || chip" :class="classes.caption">
+      <div
+        v-if="!isDisplayContentEmpty(caption) || chip"
+        v-reveal-truncated
+        :class="classes.caption"
+      >
         <DisplayChip v-if="chip" :chip="chip" />
         <DisplayRender :content="caption" />
       </div>

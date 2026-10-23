@@ -5,6 +5,7 @@ import { computed } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayReveal } from '../../composables/use-display-reveal'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayRecordItem, DisplayRecordProps, DisplayRecordSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
@@ -44,6 +45,7 @@ const classes = computed(() =>
         'flex items-center gap-2 border-b border-default bg-elevated px-3 py-2 text-sm font-semibold text-toned',
       icon: 'size-4 shrink-0 text-dimmed',
       item: 'flex items-center gap-2.5 border-t border-muted px-3 py-2.5 first:border-t-0',
+      avatar: '',
       list: '',
       media: '',
       meta: 'mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted',
@@ -99,17 +101,54 @@ function linkProps(item: DisplayRecordItem) {
           item.to || item.onClick ? 'w-full text-start hover:bg-elevated' : '',
         ]"
       >
-        <DisplayRecordMedia :item="item" size="sm" />
+        <DisplayRecordMedia
+          :item="item"
+          size="sm"
+          :class="classes.media"
+          :avatar-class="classes.avatar"
+        />
         <div :class="classes.body">
-          <div :class="[classes.title, 'text-sm']"><DisplayRender :content="item.title" /></div>
-          <div v-if="!isDisplayContentEmpty(item.meta)" :class="classes.meta">
+          <div
+            v-if="!isDisplayContentEmpty(item.reference)"
+            v-reveal-truncated
+            :class="classes.reference"
+          >
+            <DisplayRender :content="item.reference" />
+          </div>
+          <div v-reveal-truncated :class="[classes.title, 'text-sm']">
+            <DisplayRender :content="item.title" />
+          </div>
+          <div v-if="!isDisplayContentEmpty(item.meta)" v-reveal-truncated :class="classes.meta">
             <UIcon v-if="item.metaIcon" :name="item.metaIcon" class="size-3 shrink-0" />
-            <span class="truncate"><DisplayRender :content="item.meta" /></span>
+            <span v-reveal-truncated class="truncate"><DisplayRender :content="item.meta" /></span>
+          </div>
+          <div
+            v-if="!isDisplayContentEmpty(item.description)"
+            v-reveal-truncated
+            :class="classes.description"
+          >
+            <DisplayRender :content="item.description" />
+          </div>
+          <div v-if="item.badges?.length" :class="classes.badges">
+            <DisplayChip
+              v-for="(badge, badgeIndex) in item.badges"
+              :key="badgeIndex"
+              :chip="badge"
+            />
           </div>
         </div>
         <DisplayChip v-if="item.chip" :chip="item.chip" />
-        <div v-else-if="!isDisplayContentEmpty(item.trailing)" :class="classes.trailing">
-          <div :class="classes.trailingValue"><DisplayRender :content="item.trailing" /></div>
+        <div v-if="!isDisplayContentEmpty(item.trailing)" :class="classes.trailing">
+          <div v-reveal-truncated :class="classes.trailingValue">
+            <DisplayRender :content="item.trailing" />
+          </div>
+          <div
+            v-if="!isDisplayContentEmpty(item.trailingCaption)"
+            v-reveal-truncated
+            :class="classes.trailingCaption"
+          >
+            <DisplayRender :content="item.trailingCaption" />
+          </div>
         </div>
       </component>
       <DisplayMore
@@ -130,18 +169,26 @@ function linkProps(item: DisplayRecordItem) {
   >
     <DisplayRecordMedia :item="single" banner :class="classes.media" />
     <div class="p-3.5">
-      <div v-if="!isDisplayContentEmpty(single.reference)" :class="classes.reference">
+      <div
+        v-if="!isDisplayContentEmpty(single.reference)"
+        v-reveal-truncated
+        :class="classes.reference"
+      >
         <DisplayRender :content="single.reference" />
       </div>
-      <div :class="classes.title"><DisplayRender :content="single.title" /></div>
-      <div v-if="!isDisplayContentEmpty(single.meta)" :class="classes.meta">
+      <div v-reveal-truncated :class="classes.title"><DisplayRender :content="single.title" /></div>
+      <div v-if="!isDisplayContentEmpty(single.meta)" v-reveal-truncated :class="classes.meta">
         <UIcon v-if="single.metaIcon" :name="single.metaIcon" class="size-3 shrink-0" />
-        <span class="truncate"><DisplayRender :content="single.meta" /></span>
+        <span v-reveal-truncated class="truncate"><DisplayRender :content="single.meta" /></span>
       </div>
       <div v-if="single.badges?.length" :class="classes.badges">
         <DisplayChip v-for="(badge, index) in single.badges" :key="index" :chip="badge" />
       </div>
-      <div v-if="!isDisplayContentEmpty(single.description)" :class="classes.description">
+      <div
+        v-if="!isDisplayContentEmpty(single.description)"
+        v-reveal-truncated
+        :class="classes.description"
+      >
         <DisplayRender :content="single.description" />
       </div>
     </div>
@@ -160,16 +207,21 @@ function linkProps(item: DisplayRecordItem) {
     <DisplayRecordMedia
       :item="single"
       :size="variant === 'compact' ? 'sm' : 'lg'"
+      :avatar-class="classes.avatar"
       :class="classes.media"
     />
     <div :class="classes.body">
-      <div v-if="!isDisplayContentEmpty(single.reference)" :class="classes.reference">
+      <div
+        v-if="!isDisplayContentEmpty(single.reference)"
+        v-reveal-truncated
+        :class="classes.reference"
+      >
         <DisplayRender :content="single.reference" />
       </div>
-      <div :class="classes.title"><DisplayRender :content="single.title" /></div>
-      <div v-if="!isDisplayContentEmpty(single.meta)" :class="classes.meta">
+      <div v-reveal-truncated :class="classes.title"><DisplayRender :content="single.title" /></div>
+      <div v-if="!isDisplayContentEmpty(single.meta)" v-reveal-truncated :class="classes.meta">
         <UIcon v-if="single.metaIcon" :name="single.metaIcon" class="size-3 shrink-0" />
-        <span class="truncate"><DisplayRender :content="single.meta" /></span>
+        <span v-reveal-truncated class="truncate"><DisplayRender :content="single.meta" /></span>
       </div>
       <div v-if="single.badges?.length && variant === 'row'" :class="classes.badges">
         <DisplayChip v-for="(badge, index) in single.badges" :key="index" :chip="badge" />
@@ -177,8 +229,14 @@ function linkProps(item: DisplayRecordItem) {
     </div>
     <DisplayChip v-if="single.chip" :chip="single.chip" />
     <div v-if="!isDisplayContentEmpty(single.trailing)" :class="classes.trailing">
-      <div :class="classes.trailingValue"><DisplayRender :content="single.trailing" /></div>
-      <div v-if="!isDisplayContentEmpty(single.trailingCaption)" :class="classes.trailingCaption">
+      <div v-reveal-truncated :class="classes.trailingValue">
+        <DisplayRender :content="single.trailing" />
+      </div>
+      <div
+        v-if="!isDisplayContentEmpty(single.trailingCaption)"
+        v-reveal-truncated
+        :class="classes.trailingCaption"
+      >
         <DisplayRender :content="single.trailingCaption" />
       </div>
     </div>

@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayDiffProps, DisplayDiffSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
@@ -40,6 +41,7 @@ const classes = computed(() =>
       before:
         'rounded-[4px] bg-[var(--nut-display-error-soft)] px-1.5 py-px text-[var(--nut-display-error-ink)] line-through decoration-[color-mix(in_oklab,currentColor_45%,transparent)]',
       cell: 'border-t border-muted px-3 py-2 align-middle',
+      frame: 'overflow-hidden rounded-[var(--nut-display-radius)] border border-default',
       headCell:
         'bg-elevated px-3 py-2 text-start text-[11px] font-bold tracking-[0.07em] text-muted uppercase',
       item: '',
@@ -64,12 +66,12 @@ const classes = computed(() =>
     :count="Math.max(items.length, 2)"
   />
   <div v-else :class="classes.root" data-display="diff" :data-variant="variant">
-    <div v-if="!isDisplayContentEmpty(title)" :class="classes.title">
+    <div v-if="!isDisplayContentEmpty(title)" v-reveal-truncated :class="classes.title">
       <DisplayRender :content="title" />
     </div>
     <template v-if="variant === 'inline'">
       <div v-for="(item, index) in inlineItems" :key="index" :class="classes.item">
-        <div :class="classes.label">
+        <div v-reveal-truncated :class="classes.label">
           <DisplayRender :content="item.label" />
           <DisplayChip v-if="item.note" :chip="item.note" :class="classes.note" />
         </div>
@@ -81,7 +83,10 @@ const classes = computed(() =>
           <DisplayRender :content="isDisplayContentEmpty(item.after) ? item.before : item.after" />
         </div>
         <div v-else :class="classes.values">
-          <span v-if="!isDisplayContentEmpty(item.before)" :class="classes.before"
+          <span
+            v-if="!isDisplayContentEmpty(item.before)"
+            v-reveal-truncated
+            :class="classes.before"
             ><DisplayRender :content="item.before"
           /></span>
           <UIcon
@@ -89,13 +94,13 @@ const classes = computed(() =>
             :name="icons.arrowRight"
             :class="classes.arrow"
           />
-          <span v-if="!isDisplayContentEmpty(item.after)" :class="classes.after"
+          <span v-if="!isDisplayContentEmpty(item.after)" v-reveal-truncated :class="classes.after"
             ><DisplayRender :content="item.after"
           /></span>
         </div>
       </div>
     </template>
-    <div v-else class="overflow-hidden rounded-[var(--nut-display-radius)] border border-default">
+    <div v-else :class="classes.frame">
       <table :class="classes.table">
         <thead>
           <tr>
@@ -103,6 +108,7 @@ const classes = computed(() =>
               v-for="(heading, index) in headings"
               :key="index"
               scope="col"
+              v-reveal-truncated
               :class="classes.headCell"
             >
               <DisplayRender :content="heading" />
@@ -116,13 +122,19 @@ const classes = computed(() =>
             :class="item.changed === false ? 'text-dimmed' : ''"
             :data-changed="item.changed !== false"
           >
-            <td :class="[classes.cell, item.changed === false ? '' : 'text-toned']">
+            <td
+              v-reveal-truncated
+              :class="[classes.cell, item.changed === false ? '' : 'text-toned']"
+            >
               <span class="inline-flex flex-wrap items-center gap-1.5">
                 <DisplayRender :content="item.label" />
                 <DisplayChip v-if="item.note" :chip="item.note" :class="classes.note" />
               </span>
             </td>
-            <td :class="[classes.cell, item.changed === false ? '' : 'text-muted']">
+            <td
+              v-reveal-truncated
+              :class="[classes.cell, item.changed === false ? '' : 'text-muted']"
+            >
               <DisplayRender :content="item.before" />
             </td>
             <td

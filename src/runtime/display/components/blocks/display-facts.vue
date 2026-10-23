@@ -4,6 +4,7 @@ import { twMerge } from 'tailwind-merge'
 import { computed } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type {
   DisplayFact,
   DisplayFactsLayout,
@@ -137,40 +138,54 @@ function valueClass(fact: DisplayFact) {
   >
     <template v-for="(group, groupIndex) in resolvedGroups" :key="groupIndex">
       <div v-if="!isDisplayContentEmpty(group.title)" :class="classes.groupHeader">
-        <span :class="classes.groupTitle"><DisplayRender :content="group.title" /></span>
-        <span v-if="!isDisplayContentEmpty(group.aside)" :class="classes.groupAside">
+        <span v-reveal-truncated :class="classes.groupTitle"
+          ><DisplayRender :content="group.title"
+        /></span>
+        <span
+          v-if="!isDisplayContentEmpty(group.aside)"
+          v-reveal-truncated
+          :class="classes.groupAside"
+        >
           <DisplayRender :content="group.aside" />
         </span>
       </div>
       <div v-for="(fact, index) in group.items" :key="index" :class="classes.item">
         <div class="flex min-w-0 flex-col gap-px">
-          <span :class="classes.label">
+          <span v-reveal-truncated :class="classes.label">
             <UIcon v-if="fact.icon" :name="fact.icon" class="size-3.5 shrink-0" />
             <DisplayRender :content="fact.label" />
           </span>
-          <span v-if="!isDisplayContentEmpty(fact.hint)" :class="classes.hint">
+          <span v-if="!isDisplayContentEmpty(fact.hint)" v-reveal-truncated :class="classes.hint">
             <DisplayRender :content="fact.hint" />
           </span>
         </div>
-        <div :class="valueClass(fact)" data-display-value><DisplayFactValue :fact="fact" /></div>
+        <div v-reveal-truncated :class="valueClass(fact)" data-display-value>
+          <DisplayFactValue :fact="fact" />
+        </div>
       </div>
     </template>
   </div>
   <div v-else :class="classes.root" data-display="facts" :data-layout="layout">
     <div v-for="(group, groupIndex) in resolvedGroups" :key="groupIndex">
       <div v-if="!isDisplayContentEmpty(group.title)" :class="classes.groupHeader">
-        <span :class="classes.groupTitle"><DisplayRender :content="group.title" /></span>
-        <span v-if="!isDisplayContentEmpty(group.aside)" :class="classes.groupAside">
+        <span v-reveal-truncated :class="classes.groupTitle"
+          ><DisplayRender :content="group.title"
+        /></span>
+        <span
+          v-if="!isDisplayContentEmpty(group.aside)"
+          v-reveal-truncated
+          :class="classes.groupAside"
+        >
           <DisplayRender :content="group.aside" />
         </span>
       </div>
       <dl :class="['m-0', classes.group]" :style="groupStyle">
         <div v-for="(fact, index) in group.items" :key="index" :class="classes.item">
-          <dt :class="classes.label">
+          <dt v-reveal-truncated :class="classes.label">
             <UIcon v-if="fact.icon" :name="fact.icon" class="size-3.5 shrink-0" />
             <DisplayRender :content="fact.label" />
           </dt>
-          <dd :class="['m-0', valueClass(fact)]" data-display-value>
+          <dd v-reveal-truncated :class="['m-0', valueClass(fact)]" data-display-value>
             <DisplayFactValue :fact="fact" />
           </dd>
           <dd

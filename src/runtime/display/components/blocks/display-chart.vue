@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayNumber } from '../../composables/use-display-number'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayChartDatum, DisplayChartProps, DisplayChartSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty, resolveDisplayText } from '../../utils/content'
@@ -110,7 +111,7 @@ function colorOf(datum: DisplayChartDatum, index: number) {
       v-if="!isDisplayContentEmpty(title) || !isDisplayContentEmpty(aside)"
       :class="classes.header"
     >
-      <span :class="classes.title"><DisplayRender :content="title" /></span>
+      <span v-reveal-truncated :class="classes.title"><DisplayRender :content="title" /></span>
       <span :class="classes.aside"><DisplayRender :content="aside" /></span>
     </div>
     <DisplayEmptyLine v-if="!data.length" :content="empty" :class="classes.plot" />
@@ -147,6 +148,7 @@ function colorOf(datum: DisplayChartDatum, index: number) {
         <span
           v-for="(datum, index) in data"
           :key="index"
+          v-reveal-truncated
           class="min-w-0 flex-1 truncate text-center"
         >
           {{ resolveDisplayText(datum.label) }}
@@ -222,7 +224,9 @@ function colorOf(datum: DisplayChartDatum, index: number) {
     </div>
     <div v-else-if="variant === 'funnel'" :class="[classes.plot, 'flex flex-col gap-1.5']">
       <div v-for="(step, index) in steps" :key="index" :class="classes.step">
-        <span :class="classes.stepLabel">{{ resolveDisplayText(step.label) }}</span>
+        <span v-reveal-truncated :class="classes.stepLabel">{{
+          resolveDisplayText(step.label)
+        }}</span>
         <span
           class="h-4 rounded-[3px]"
           :style="{

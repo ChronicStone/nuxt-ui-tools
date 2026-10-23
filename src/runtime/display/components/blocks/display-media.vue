@@ -9,6 +9,7 @@ import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayFilePreview } from '../../composables/use-display-file-preview'
 import { useDisplayLocale } from '../../composables/use-display-locale'
 import { useDisplayUrlActions, useResolvedDisplayUrl } from '../../composables/use-display-url'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type {
   DisplayAction,
   DisplayMediaImage,
@@ -190,7 +191,7 @@ function openLink() {
       />
       <span v-else-if="shown.pending.value" class="nut-dash-shimmer absolute inset-0" />
     </component>
-    <figcaption v-if="!isDisplayContentEmpty(caption)" :class="classes.caption">
+    <figcaption v-if="!isDisplayContentEmpty(caption)" v-reveal-truncated :class="classes.caption">
       <DisplayRender :content="caption" />
     </figcaption>
   </figure>
@@ -217,7 +218,7 @@ function openLink() {
         >
       </button>
     </div>
-    <figcaption v-if="!isDisplayContentEmpty(caption)" :class="classes.caption">
+    <figcaption v-if="!isDisplayContentEmpty(caption)" v-reveal-truncated :class="classes.caption">
       <DisplayRender :content="caption" />
     </figcaption>
   </figure>
@@ -251,6 +252,7 @@ function openLink() {
         /></span>
         <span
           v-if="!isDisplayContentEmpty(title)"
+          v-reveal-truncated
           :class="[classes.title, 'absolute start-3 bottom-2 text-white']"
         >
           <DisplayRender :content="title" />
@@ -260,7 +262,7 @@ function openLink() {
         }}</span>
       </button>
     </div>
-    <figcaption v-if="!isDisplayContentEmpty(caption)" :class="classes.caption">
+    <figcaption v-if="!isDisplayContentEmpty(caption)" v-reveal-truncated :class="classes.caption">
       <DisplayRender :content="caption" />
     </figcaption>
   </figure>
@@ -286,9 +288,13 @@ function openLink() {
       />
     </div>
     <div :class="classes.body">
-      <div :class="classes.name">{{ fileName }}</div>
-      <div v-if="documentMeta" :class="classes.meta">{{ documentMeta }}</div>
-      <div v-if="!isDisplayContentEmpty(description)" :class="classes.description">
+      <div v-reveal-truncated :class="classes.name">{{ fileName }}</div>
+      <div v-if="documentMeta" v-reveal-truncated :class="classes.meta">{{ documentMeta }}</div>
+      <div
+        v-if="!isDisplayContentEmpty(description)"
+        v-reveal-truncated
+        :class="classes.description"
+      >
         <DisplayRender :content="description" />
       </div>
       <DisplayActions
@@ -310,10 +316,10 @@ function openLink() {
     @click="isString(href) ? undefined : openLink()"
   >
     <div :class="[classes.body, 'px-3 py-2.5']">
-      <div v-if="domain" :class="classes.domain">
+      <div v-if="domain" v-reveal-truncated :class="classes.domain">
         <UIcon name="i-lucide-globe" class="size-3.5 shrink-0" />{{ domain }}
       </div>
-      <div :class="[classes.title, 'mt-0.5 flex items-center gap-1.5']">
+      <div v-reveal-truncated :class="[classes.title, 'mt-0.5 flex items-center gap-1.5']">
         <DisplayRender :content="title ?? (isString(href) ? href : undefined)" />
         <UIcon
           v-if="links.pending.value === 'open'"
@@ -321,7 +327,11 @@ function openLink() {
           class="size-3.5 shrink-0 animate-spin text-muted"
         />
       </div>
-      <div v-if="!isDisplayContentEmpty(description)" :class="classes.description">
+      <div
+        v-if="!isDisplayContentEmpty(description)"
+        v-reveal-truncated
+        :class="classes.description"
+      >
         <DisplayRender :content="description" />
       </div>
     </div>

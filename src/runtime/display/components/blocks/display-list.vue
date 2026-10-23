@@ -11,6 +11,7 @@ import { useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
 import { useDisplayReveal } from '../../composables/use-display-reveal'
 import { useDisplayUrlActions } from '../../composables/use-display-url'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type {
   DisplayListItem,
   DisplayListProps,
@@ -174,7 +175,7 @@ function downloadFile(index: number) {
 <template>
   <DisplaySkeleton v-if="loading" :count="Math.min(Math.max(items.length, 2), 5)" />
   <div v-else :class="classes.root" data-display="list" :data-variant="variant">
-    <div v-if="!isDisplayContentEmpty(title)" :class="classes.title">
+    <div v-if="!isDisplayContentEmpty(title)" v-reveal-truncated :class="classes.title">
       <DisplayRender :content="title" />
     </div>
     <DisplayEmptyLine v-if="!items.length" :content="empty" :class="classes.empty" />
@@ -213,7 +214,7 @@ function downloadFile(index: number) {
             {{ files[index]?.label }}
           </span>
           <div class="min-w-0 flex-1">
-            <div :class="classes.text">
+            <div v-reveal-truncated :class="classes.text">
               <a
                 v-if="item.href"
                 :href="isString(item.href) ? item.href : '#'"
@@ -229,6 +230,7 @@ function downloadFile(index: number) {
             </div>
             <div
               v-if="files[index]?.size || !isDisplayContentEmpty(item.description)"
+              v-reveal-truncated
               :class="classes.description"
             >
               {{ files[index]?.size
@@ -298,11 +300,15 @@ function downloadFile(index: number) {
             >
               <DisplayRender :content="item.text" />
             </div>
-            <div v-if="!isDisplayContentEmpty(item.description)" :class="classes.description">
+            <div
+              v-if="!isDisplayContentEmpty(item.description)"
+              v-reveal-truncated
+              :class="classes.description"
+            >
               <DisplayRender :content="item.description" />
             </div>
           </div>
-          <span v-if="!isDisplayContentEmpty(item.meta)" :class="classes.meta"
+          <span v-if="!isDisplayContentEmpty(item.meta)" v-reveal-truncated :class="classes.meta"
             ><DisplayRender :content="item.meta"
           /></span>
         </template>
