@@ -115,3 +115,22 @@ function isResolvedFilterGroup<
     isArray(value.children)
   )
 }
+
+/**
+ * Drops the rules of filters marked `behavior.applyTo: 'query'`, which feed the source query but
+ * never narrow client rows.
+ */
+export function withoutQueryFilterRules(options: {
+  definitions: TableUiFilterDefinition[]
+  filters: TableFilterState
+}): TableFilterState {
+  const queryKeys = new Set(
+    options.definitions
+      .filter((definition) => definition.behavior?.applyTo === 'query')
+      .map((definition) => definition.key),
+  )
+
+  return queryKeys.size === 0
+    ? options.filters
+    : { ...options.filters, ui: options.filters.ui.filter((rule) => !queryKeys.has(rule.key)) }
+}

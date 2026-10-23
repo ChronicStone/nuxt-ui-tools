@@ -170,6 +170,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     params.state.queryState.sorting.value ? [params.state.queryState.sorting.value] : [],
   )
   const requestFilters = computed(() => params.state.resolvedFilterState.value)
+  const rowFilters = computed(() => params.state.rowFilterState.value)
   const requestSearch = computed(() => ({
     fields: params.schema.value.filters?.search?.fields ?? [],
     value: params.state.queryState.filters.value.search,
@@ -359,7 +360,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     }
 
     return filterClientRows({
-      filters: requestFilters.value,
+      filters: rowFilters.value,
       rows: rawData.value.rows,
       search: requestSearch.value,
     })
@@ -421,7 +422,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     if (params.schema.value.source.mode === 'client') {
       return executeClientFacets({
         facets: clientFacetDescriptors.value,
-        request: requestContext.value,
+        request: { ...requestContext.value, filters: rowFilters.value },
         rows: rawData.value.rows,
       })
     }

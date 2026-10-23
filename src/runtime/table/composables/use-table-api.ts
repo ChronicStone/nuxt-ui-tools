@@ -66,6 +66,10 @@ export function useTableApi<TSchema = TableSchemaView>(
     // SAFETY: raw rows follow the same schema source contract before client-side shaping.
     rawRows: computed(() => params.queryContent.rawData.value.rows as ExtractTableRow<TSchema>[]),
     rawRowCount: computed(() => params.queryContent.rawData.value.rowCount),
+    // SAFETY: filtered rows are the raw source rows after client filtering and sorting.
+    filteredRows: computed(
+      () => params.queryContent.filteredRows.value as ExtractTableRow<TSchema>[] | undefined,
+    ),
     context: computed(
       // SAFETY: context keys are decoded from the schema context items before publication.
       () => params.queryContent.contextData.value as ExtractTableContextData<TSchema>,

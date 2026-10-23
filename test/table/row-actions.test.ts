@@ -92,6 +92,7 @@ function createTableApiStub() {
       error,
       loadedRowCount: rowCount,
       pageContext: context,
+      filteredRows: rows,
       rawRowCount: rowCount,
       rawRows: rows,
       refresh: () => {
