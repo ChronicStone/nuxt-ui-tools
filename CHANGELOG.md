@@ -1,3 +1,11 @@
+## v1.27.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.0...v1.27.1)
+
+### 🩹 Fixes
+
+- **table:** A filter with `behavior.applyTo: 'query'` may use any key, since its key names a query parameter rather than a row field (`filter.option('period', { behavior: { applyTo: 'query' } })`). Every other filter key must still be a row field path, and a key outside the row without `applyTo: 'query'` is a type error
+
 ## v1.27.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.26.0...v1.27.0)
