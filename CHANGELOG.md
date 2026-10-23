@@ -1,3 +1,11 @@
+## v1.27.2
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.1...v1.27.2)
+
+### 🩹 Fixes
+
+- **table:** Query filters are declared with `filter.query.option`, `.boolean`, `.text`, `.number` and `.date`, which take any key and set `behavior.applyTo: 'query'`. Every other filter is keyed by a row field path again, as before 1.27.1, so a filter with `resolve` keeps typing its callback and nested row paths are accepted again
+
 ## v1.27.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.0...v1.27.1)
