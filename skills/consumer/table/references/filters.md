@@ -219,6 +219,33 @@ Important rule:
 
 If you want counts in either client or remote mode, opt in with `source.facet`.
 
+When the values come from the facet alone (no `options`), the editor lists them as stored. Give
+`source.label` to show your own words: it receives each value and returns its label, or `undefined`
+to keep the stored text. The facet still decides which values appear and their counts, so a value
+your map does not know yet still shows up, and tags of committed values use the same labels.
+
+```ts
+const VTEST_STATUS_LABELS: Record<string, string> = {
+  Approved: 'Validé',
+  Done: 'Terminé',
+  'Security compromised': 'Sécurité compromise',
+}
+
+filters: [
+  {
+    key: 'vtestStatus',
+    kind: 'option',
+    label: 'Statut VTest',
+    source: {
+      facet: 'exclude-self',
+      label: (value) => VTEST_STATUS_LABELS[String(value)],
+    },
+  },
+]
+// Facet [{ value: 'Approved', count: 12 }, { value: 'Expired', count: 1 }]
+// lists « Validé · 12 » and « Expired · 1 ».
+```
+
 ### `editor`
 
 `editor` controls the actual input or picker UI for the filter kind.

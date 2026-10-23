@@ -67,6 +67,7 @@ const {
   onCancelled: (value) => emit('cancel', value),
   onSubmitted: (value, result) => emit('submit', value, result),
   schema: () => props.schema,
+  shell: () => props.shell,
   syncInput: () => props.syncInput,
   ui: () => props.ui,
   validate: () => props.validate,

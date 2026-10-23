@@ -78,7 +78,7 @@ export function useFormOverlayController(instance: FormApiRuntimeInstance) {
       return
     }
 
-    requestCancel()
+    void runtime.close()
   }
 
   function requestComplete(formData: FormObject, submitData?: FormValue) {

@@ -28,6 +28,7 @@ import type {
   FilePreviewDetail,
   FilePreviewInstance,
   FilePreviewItem,
+  FilePreviewRendererError,
 } from '../../types'
 import { downloadFilePreviewItem, openFilePreviewItem } from '../../utils/download'
 import { formatFilePreviewDate, resolveFilePreviewText } from '../../utils/format'
@@ -57,6 +58,7 @@ const stage = useTemplateRef<HTMLElement>('stage')
 const strip = useTemplateRef<HTMLElement>('strip')
 const showDetails = ref<boolean>(false)
 const reported = shallowRef<readonly FilePreviewDetail[]>([])
+const failure = shallowRef<FilePreviewRendererError | null>(null)
 
 const files = computed(() => props.instance.files.value)
 const index = computed(() => props.instance.index.value)
@@ -71,6 +73,10 @@ const itemRenderer = computed(() =>
 )
 const kindLabel = computed(() => filePreviewKindLabel(itemRenderer.value, t))
 const source = useFilePreviewSource(() => display.value)
+/** The file could not be fetched, so there is nothing to open in a tab or download. */
+const unavailable = computed<boolean>(
+  () => source.status.value === 'error' || failure.value?.reason === 'source',
+)
 const many = computed(() => files.value.length > 1)
 const hasPrevious = computed(() => loop.value || index.value > 0)
 const hasNext = computed(() => loop.value || index.value < files.value.length - 1)
@@ -230,6 +236,7 @@ async function runAction(action: FilePreviewAction) {
       :can-expand="canExpand"
       :expanded="expanded"
       :details="showDetails"
+      :unavailable="unavailable"
       @previous="instance.handle.previous"
       @next="instance.handle.next"
       @close="emit('close')"
@@ -263,6 +270,7 @@ async function runAction(action: FilePreviewAction) {
         :kind-label="kindLabel"
         :arrows="arrows"
         @ready="reported = $event"
+        @failure="failure = $event"
         @previous="instance.handle.previous"
         @next="instance.handle.next"
         @download="download"

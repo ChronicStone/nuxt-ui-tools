@@ -507,8 +507,22 @@ export interface UiToolsFormMessages {
   }
   validation: {
     required: string
+    /** A date before the field's `min`: "Date before {min}". */
     dateMin: string
+    /** A date after the field's `max`: "Date after {max}". */
     dateMax: string
+    monthMin: string
+    monthMax: string
+    yearMin: string
+    yearMax: string
+    /** A number below the field's `min`: "Minimum value: {bound}". */
+    numberMin: string
+    /** A number above the field's `max`: "Maximum value: {bound}". */
+    numberMax: string
+    /** A phone number too short for its country. */
+    phoneIncomplete: string
+    /** A phone number that is not valid for its country or allowed types. */
+    phoneInvalid: string
   }
   fields: {
     text: {
@@ -565,6 +579,8 @@ export interface UiToolsFormMessages {
       end: string
       clear: string
       confirm: string
+      /** Accessible name of the calendar when the field has no label, read before the month. */
+      calendar: string
       tokens: {
         day: string
         month: string

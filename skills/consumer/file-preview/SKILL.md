@@ -132,7 +132,9 @@ page (same origin, or CORS allowing your origin). Images, video, audio, and PDFs
 follow redirects without CORS.
 
 Errors show a reason and the right action: Retry when `src` is a function (an expired signed link),
-Download when the browser cannot decode the format.
+Download when the browser cannot decode the format. A file that fails to load (a rejected `src`
+function, or a text, CSV or Markdown file answering 404) offers no Download and no « Open in a new
+tab », in the header as in the phone menu, until a retry loads it.
 
 A failing `src` function shows a generic explanation (« The link may have expired… ») with the raw
 error message under it. When the app knows the cause, throw a `FilePreviewSourceError` (or any

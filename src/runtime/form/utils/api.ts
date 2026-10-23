@@ -4,6 +4,7 @@ import { pathSegments } from './path'
 export function createPublicFormApi(runtime: FormRuntime): FormApi {
   return {
     clearError: (path) => runtime.clearError(path ? pathSegments(path) : undefined),
+    close: runtime.close,
     focus: runtime.focusField,
     get: runtime.getValue,
     initial: runtime.getInitialValue,

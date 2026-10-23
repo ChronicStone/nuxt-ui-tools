@@ -289,6 +289,24 @@ export function calendarSeedFromValue(value: FormDateSeedValue, type: FormDateFa
   return ''
 }
 
+/**
+ * Writes a canonical bound (`2026`, `2026-10`, `2026-10-24`, `2026-10-24T09:30`) the way the
+ * locale reads it, such as « 24 oct. 2026 » or « octobre 2026 ».
+ */
+export function formatDateFamilyBound(value: string, locale: string) {
+  const date = /^\d{4}$/u.test(value) ? undefined : canonicalDateToJsDate(value)
+  if (!date) {
+    return value
+  }
+  if (/^\d{4}-\d{2}$/u.test(value)) {
+    return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(date)
+  }
+  return new Intl.DateTimeFormat(
+    locale,
+    value.includes('T') ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: 'medium' },
+  ).format(date)
+}
+
 export function calendarDateToJsDate(value: DateValue) {
   return value.toDate(getLocalTimeZone())
 }

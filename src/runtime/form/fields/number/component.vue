@@ -20,7 +20,7 @@ const { code } = useUiToolsLocale()
 const { fieldProps, form, controlProps, disabled, handleBlur, placeholder } = useFieldControl(
   () => props.field,
   () => props.path,
-  { omit: ['prefix', 'suffix', 'format', 'controls', 'mono'] },
+  { omit: ['prefix', 'suffix', 'format', 'controls', 'mono', 'min', 'max'] },
 )
 const model = computed<number | undefined>({
   get: () => {
@@ -29,6 +29,14 @@ const model = computed<number | undefined>({
   },
   set: (value) => form.setValue(props.path, value ?? null),
 })
+const atMax = computed<boolean>(
+  () =>
+    isNumber(model.value) && isNumber(fieldProps.value.max) && model.value >= fieldProps.value.max,
+)
+const atMin = computed<boolean>(
+  () =>
+    isNumber(model.value) && isNumber(fieldProps.value.min) && model.value <= fieldProps.value.min,
+)
 const prefix = computed(() => resolveFormText(fieldProps.value.prefix))
 const suffix = computed(() => resolveFormText(fieldProps.value.suffix))
 const controls = computed(() => fieldProps.value.controls !== false)
@@ -82,13 +90,13 @@ const affixStyle = computed(() => ({
       :ui="controlUi"
       :placeholder="placeholder"
       :disabled="disabled"
-      :min="fieldProps.min"
-      :max="fieldProps.max"
       :step="fieldProps.step"
       :locale="code"
       :format-options="fieldProps.format"
       :increment="controls"
       :decrement="controls"
+      :increment-disabled="atMax"
+      :decrement-disabled="atMin"
       @blur="handleBlur"
     />
     <span
@@ -131,13 +139,13 @@ const affixStyle = computed(() => ({
         :ui="controlUi"
         :placeholder="placeholder"
         :disabled="disabled"
-        :min="fieldProps.min"
-        :max="fieldProps.max"
         :step="fieldProps.step"
         :locale="code"
         :format-options="fieldProps.format"
         :increment="controls"
         :decrement="controls"
+        :increment-disabled="atMax"
+        :decrement-disabled="atMin"
         @blur="handleBlur"
       />
       <span

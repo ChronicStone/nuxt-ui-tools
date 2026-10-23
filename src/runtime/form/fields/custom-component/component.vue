@@ -18,8 +18,7 @@ const model = computed<FormValue>({
   get: () => form.getValue(props.path),
   set: (value) => form.setValue(props.path, value),
 })
-const rendered = computed(() => props.field.render?.(params.value))
-const Rendered = () => rendered.value
+const Rendered = () => props.field.render?.(params.value)
 </script>
 
 <template>
@@ -32,6 +31,6 @@ const Rendered = () => rendered.value
       :disabled="disabled"
       @blur="handleBlur"
     />
-    <Rendered v-else-if="rendered" />
+    <Rendered v-else-if="field.render" />
   </FormFieldShell>
 </template>

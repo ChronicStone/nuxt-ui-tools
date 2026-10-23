@@ -4,7 +4,12 @@ import UFieldGroup from '@nuxt/ui/components/FieldGroup.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import UInput from '@nuxt/ui/components/Input.vue'
 import USelectMenu from '@nuxt/ui/components/SelectMenu.vue'
-import { getCountries, getCountryCallingCode, parsePhoneNumberFromString } from 'libphonenumber-js'
+import {
+  getCountries,
+  getCountryCallingCode,
+  parsePhoneNumberFromString,
+  validatePhoneNumberLength,
+} from 'libphonenumber-js'
 import type { CountryCode } from 'libphonenumber-js'
 import { computed, onMounted, ref, useId, watch } from 'vue'
 
@@ -63,6 +68,24 @@ const processedValue = computed(() => {
 
   return { valid: true, value: formatPhoneNumber(parsed) }
 })
+
+const inputError = computed<string | null>(() => {
+  if (!phoneValue.value || !countryCode.value || processedValue.value.valid) {
+    return null
+  }
+  return validatePhoneNumberLength(phoneValue.value, countryCode.value) === 'TOO_SHORT'
+    ? t('form.validation.phoneIncomplete')
+    : t('form.validation.phoneInvalid')
+})
+
+watch(
+  [() => props.path, inputError],
+  ([path, message], _previous, onCleanup) => {
+    form.setInputError(path, message)
+    onCleanup(() => form.setInputError(path, null))
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   syncFromExternalValue(form.getValue(props.path))

@@ -828,6 +828,23 @@ export interface TableOptionFilterDefinition<
      */
     remote?: TableFilterRemoteOptions<TValue, TPresentation>
     facet?: TableFilterFacetSpec<TRow, TContext, TKey>
+    /**
+     * Labels the values a facet lists when `options` is not set, such as provider statuses stored
+     * as `Approved` or `Security compromised`. The facet still decides which values show, with their
+     * counts; a value it returns `undefined` for shows as stored. Tags and previews of a committed
+     * value read the same label.
+     *
+     * @example
+     * ```ts
+     * source: {
+     *   facet: true,
+     *   label: (value) => ({ Approved: 'Validé', Done: 'Terminé' })[String(value)],
+     * }
+     * ```
+     */
+    label?: {
+      bivarianceHack(value: TValue): TableTextValue | undefined
+    }['bivarianceHack']
     sort?: 'alpha' | 'count'
   }
   editor?: TableOptionFilterEditorConfig<TPresentation>

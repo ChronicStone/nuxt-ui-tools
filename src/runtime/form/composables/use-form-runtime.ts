@@ -2,6 +2,7 @@ import { computed, inject, nextTick, provide, ref, shallowRef, watch } from 'vue
 import type { InjectionKey } from 'vue'
 
 import { useUiToolsLocale } from '../../i18n/use-locale'
+import { dateFamilyCalendarType, formatDateFamilyBound } from '../fields/date-family/utils'
 import type {
   FormValue,
   FormErrorOptions,
@@ -65,7 +66,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const navigationActionPending = ref<'next' | 'previous' | 'reset' | null>(null)
   const effects = createEffectLifecycle()
   const cancelHandler = shallowRef<(() => Promise<void>) | null>(null)
-  const { t } = useUiToolsLocale()
+  const { code, t } = useUiToolsLocale()
 
   setContext(getSchemaContext(params.schema.value))
 
@@ -96,7 +97,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
       state: () => read.state(),
       submit: () => runtime.submit(),
       validate: () => runtime.validate(),
-      close: () => cancelHandler.value?.() ?? Promise.resolve(),
+      close: () => runtime.close(),
     }
   }
 
@@ -153,8 +154,18 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
   const validation = useFormValidation({
     apiFactory,
     context,
-    getDateMaxMessage: (max: string) => t('form.validation.dateMax', { max }),
-    getDateMinMessage: (min: string) => t('form.validation.dateMin', { min }),
+    getDateMaxMessage: (max, type) =>
+      t(`form.validation.${dateFamilyCalendarType(type)}Max`, {
+        max: formatDateFamilyBound(max, code.value),
+      }),
+    getDateMinMessage: (min, type) =>
+      t(`form.validation.${dateFamilyCalendarType(type)}Min`, {
+        min: formatDateFamilyBound(min, code.value),
+      }),
+    getNumberBoundMessage: (edge, bound) =>
+      t(`form.validation.number${edge === 'min' ? 'Min' : 'Max'}`, {
+        bound: new Intl.NumberFormat(code.value).format(bound),
+      }),
     getRequiredMessage: () => t('form.validation.required'),
     getUniqueMessage: () => t('form.fields.array.unique'),
     getValidationMode: () => params.validationMode?.value ?? true,
@@ -515,6 +526,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     },
     schema: params.schema,
     setError: (path, message, options) => validation.setError(pathSegments(path), message, options),
+    setInputError: (path, message) => validation.setInputError(pathSegments(path), message),
     setValue: state.setValue,
     settleEffects: settleEffectRounds,
     shouldRender: (field, path) =>
@@ -538,6 +550,7 @@ export function useFormRuntime(params: UseFormRuntimeParams): FormRuntime {
     bindCancel: (cancel) => {
       cancelHandler.value = cancel
     },
+    close: () => cancelHandler.value?.() ?? Promise.resolve(),
     trackEffect: effects.track,
     validate,
     validateCurrentStep,

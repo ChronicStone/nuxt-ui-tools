@@ -1,3 +1,4 @@
+import { isBoolean, isNullish, isNumber, isString } from '../../../../shared/utils/predicate'
 import type {
   TableBooleanFilterDefinition,
   TableBooleanFilterOperator,
@@ -5,6 +6,7 @@ import type {
   TableOptionFilterOperator,
   TableQueryStateFilterRule,
 } from '../../../types'
+import { getFilterLabelText } from '../common'
 import { resolveBooleanFilterUi, resolveOptionFilterUi } from '../ui'
 import type { FilterPreviewEntry, FilterPreviewOptionEntry, FilterPreviewResult } from './types'
 
@@ -91,7 +93,11 @@ function resolveOptionPreviewLabel(options: {
     return options.value ? filterUi.labels.true : filterUi.labels.false
   }
 
-  return String(options.value ?? '')
+  const label =
+    isString(options.value) || isNumber(options.value) || isBoolean(options.value)
+      ? options.definition.source?.label?.(options.value)
+      : undefined
+  return isNullish(label) ? String(options.value ?? '') : getFilterLabelText({ label })
 }
 
 function resolveOptionPreview(options: {

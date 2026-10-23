@@ -349,7 +349,10 @@ export interface FormRemoteOptionConfig<
   create?: FormCreateOption<TOption, TContext, TDeps, TValue>
   /** Enables the field-level refresh affordance. */
   allowOptionsRefresh?: boolean
-  /** Disable the field while its option source has no usable data yet. */
+  /**
+   * Ignored: remote options load once the menu opens and the menu shows the loading state, so the
+   * field and its search input stay usable while a page loads.
+   */
   disableOnLoading?: boolean
 }
 

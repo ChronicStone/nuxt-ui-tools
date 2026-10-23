@@ -21,6 +21,21 @@ const entries = [
 ]
 
 describe('option previews', () => {
+  it('labels a committed facet value through source.label before its facet loads', () => {
+    const preview = buildFilterPreview({
+      definition: {
+        key: 'status',
+        kind: 'option',
+        label: 'Statut',
+        source: { facet: true, label: (value) => (value === 'Done' ? 'Terminé' : undefined) },
+      },
+      optionEntries: [],
+      rule: { key: 'status', operator: 'isAnyOf', value: ['Done', 'Paused'] },
+    })
+
+    expect(preview.tags).toStrictEqual(['Terminé', 'Paused'])
+  })
+
   it('keeps entries with colours for a single selected value', () => {
     const preview = buildFilterPreview({
       definition: optionDefinition,
