@@ -9,13 +9,15 @@ import type {
   TableDisplayColumnOptions,
   TableFieldColumnOptions,
   TableFilterBuilder,
+  TableFilterKey,
+  TableFilterKeyScope,
   TableKnownFieldPath,
   TableNumberFilterOptions,
   TableOptionFilterOptions,
   TableSortKey,
   TableTextFilterOptions,
   TableUiFilterCollection,
-  TableUiFilterDefinition,
+  TableUiFilterCollectionItem,
 } from '../types'
 
 export { type TableSortKey } from '../types'
@@ -66,9 +68,9 @@ export function createTableFilterBuilder<
   TContext extends GenericObject = GenericObject,
 >(): TableFilterBuilder<TRow, TContext> {
   return {
-    boolean<TKey extends TableKnownFieldPath<TRow>>(
+    boolean<TKey extends TableFilterKey<TRow>>(
       key: TKey,
-      options: TableBooleanFilterOptions<TRow, TContext, TKey>,
+      options: TableBooleanFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
     ) {
       return {
         key,
@@ -76,9 +78,9 @@ export function createTableFilterBuilder<
         ...options,
       }
     },
-    date<TKey extends TableKnownFieldPath<TRow>>(
+    date<TKey extends TableFilterKey<TRow>>(
       key: TKey,
-      options: TableDateFilterOptions<TRow, TContext, TKey>,
+      options: TableDateFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
     ) {
       return {
         key,
@@ -86,9 +88,9 @@ export function createTableFilterBuilder<
         ...options,
       }
     },
-    number<TKey extends TableKnownFieldPath<TRow>>(
+    number<TKey extends TableFilterKey<TRow>>(
       key: TKey,
-      options: TableNumberFilterOptions<TRow, TContext, TKey>,
+      options: TableNumberFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
     ) {
       return {
         key,
@@ -97,19 +99,23 @@ export function createTableFilterBuilder<
       }
     },
     option<
-      TKey extends TableKnownFieldPath<TRow>,
+      TKey extends TableFilterKey<TRow>,
       TValue extends string | number | boolean,
       TPresentation extends import('../types').TableOptionFilterPresentation = 'list',
-    >(key: TKey, options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation>) {
+    >(
+      key: TKey,
+      options: TableOptionFilterOptions<TRow, TContext, TKey, TValue, TPresentation> &
+        TableFilterKeyScope<TRow, TKey>,
+    ) {
       return {
         key,
         kind: 'option',
         ...options,
       }
     },
-    text<TKey extends TableKnownFieldPath<TRow>>(
+    text<TKey extends TableFilterKey<TRow>>(
       key: TKey,
-      options: TableTextFilterOptions<TRow, TContext, TKey>,
+      options: TableTextFilterOptions<TRow, TContext, TKey> & TableFilterKeyScope<TRow, TKey>,
     ) {
       return {
         key,
@@ -166,6 +172,6 @@ export function resolveUiFilters<
   TKey extends string,
 >(
   filters: TableUiFilterCollection<TRow, TContext, TKey> | undefined,
-): TableUiFilterDefinition<TRow, TContext, TKey>[] | undefined {
+): TableUiFilterCollectionItem<TRow, TContext, TKey>[] | undefined {
   return resolveCollection(filters, createTableFilterBuilder<TRow, TContext>())
 }
