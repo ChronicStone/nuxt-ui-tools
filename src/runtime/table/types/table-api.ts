@@ -103,6 +103,11 @@ export interface TableApi<TSchema = TableSchemaView> {
     totalRowCount: ComputedRef<number | null>
     rawRows: ComputedRef<ExtractTableRow<TSchema>[]>
     rawRowCount: ComputedRef<number | null>
+    /**
+     * Every row that passes the filters and the search, sorted, before pagination. Client sources
+     * only; `undefined` for remote sources, which never hold the whole result.
+     */
+    filteredRows: ComputedRef<ExtractTableRow<TSchema>[] | undefined>
     context: ComputedRef<ExtractTableContextData<TSchema>>
     pageContext: ComputedRef<ExtractTablePageContextData<TSchema>>
     requestContext: ReturnType<typeof useTableData>['requestContext']

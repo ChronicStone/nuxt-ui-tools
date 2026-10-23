@@ -59,6 +59,17 @@ export interface TableFilterBehaviorCommon<
   commitMode?: TableFilterCommitMode
   clearOnOperatorChange?: boolean
   reopenOnOperatorChange?: boolean
+  /**
+   * What the filter narrows. `rows` (default) matches every row against it. `query` only hands the
+   * value to the source query, through its `filters`, so a client source can ask the server for a
+   * different dataset (a period, a scope) while its rows are never matched against the rule.
+   */
+  applyTo?: 'rows' | 'query'
+  /**
+   * Remembers the last value in `localStorage`, per table key and filter key. It is restored when
+   * the URL carries no value of its own, and forgotten once the filter returns to its default.
+   */
+  persist?: boolean
 }
 
 export interface TableFilterUiActionLabelsConfig {

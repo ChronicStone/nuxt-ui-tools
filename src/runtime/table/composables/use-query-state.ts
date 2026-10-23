@@ -28,6 +28,7 @@ import {
   resolveFilterSupportedOperators,
   serializeTableFilterQueryState,
 } from '../utils'
+import { useFilterPersistence } from './use-filter-persistence'
 
 export interface UseQueryStateParams {
   schema: ComputedRef<TableSchemaView>
@@ -141,33 +142,38 @@ export function useQueryState(params: UseQueryStateParams) {
   // Filters — URL keys: f.search, f.ui.{key}, f.ui.{key}~{operator}
   // ---------------------------------------------------------------------------
 
-  const filters = useQueryStates({
-    historyMode: 'push',
-    prefix: 'f',
-    schema: {
-      search: { codec: stringCodec, defaultValue: '' },
-      ui: dynamicQueryState<TableUiFilterDefinition, TableQueryStateFilterRule[]>({
-        defaultValue: resolveTableFilterDefaultRules(params.schema.value.filters?.ui ?? []),
-        definitions: () => params.schema.value.filters?.ui ?? [],
-        parse(entries, definitions) {
-          return parseTableFilterQueryState({ definitions, entries })
-        },
-        resolve(filter) {
-          const definition = normalizeFilterDefinition(filter)
-          const operators = resolveFilterSupportedOperators(definition)
-          const defaultOp = resolveFilterDefaultOperator(definition)
-          const codec = createTableFilterValueCodec(definition)
+  const filterSchema = {
+    search: { codec: stringCodec, defaultValue: '' },
+    ui: dynamicQueryState<TableUiFilterDefinition, TableQueryStateFilterRule[]>({
+      defaultValue: resolveTableFilterDefaultRules(params.schema.value.filters?.ui ?? []),
+      definitions: () => params.schema.value.filters?.ui ?? [],
+      parse(entries, definitions) {
+        return parseTableFilterQueryState({ definitions, entries })
+      },
+      resolve(filter) {
+        const definition = normalizeFilterDefinition(filter)
+        const operators = resolveFilterSupportedOperators(definition)
+        const defaultOp = resolveFilterDefaultOperator(definition)
+        const codec = createTableFilterValueCodec(definition)
 
-          return operators.map((op) => ({
-            codec,
-            urlKey: op === defaultOp ? definition.key : `${definition.key}~${op}`,
-          }))
-        },
-        serialize(rules, definitions) {
-          return serializeTableFilterQueryState({ definitions, rules })
-        },
-        urlPrefix: 'ui',
-      }),
+        return operators.map((op) => ({
+          codec,
+          urlKey: op === defaultOp ? definition.key : `${definition.key}~${op}`,
+        }))
+      },
+      serialize(rules, definitions) {
+        return serializeTableFilterQueryState({ definitions, rules })
+      },
+      urlPrefix: 'ui',
+    }),
+  }
+  const filters = useQueryStates({ historyMode: 'push', prefix: 'f', schema: filterSchema })
+
+  useFilterPersistence({
+    schema: params.schema,
+    filters,
+    restore(state) {
+      useQueryStates({ historyMode: 'replace', prefix: 'f', schema: filterSchema }).value = state
     },
   })
 

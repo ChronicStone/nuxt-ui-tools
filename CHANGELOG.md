@@ -1,3 +1,13 @@
+## v1.27.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.26.0...v1.27.0)
+
+### 🚀 Enhancements
+
+- **table:** A filter with `behavior.applyTo: 'query'` scopes the data instead of the rows: its value shows as a tag, lives in the URL and reaches the source query through `filters`, but a client source never matches its rows or facet counts against it. A client table can now ask the server for one period or one certification from its own filter bar
+- **table:** A filter with `behavior.persist: true` remembers its last value in `localStorage`, per table and filter. The next visit starts from it when the URL does not set the filter, without a history entry; a value the filter no longer accepts is ignored, and the stored value is forgotten once the filter is back at its default
+- **table:** `table.data.filteredRows` gives every row of a client source that passes the filters and the search, sorted and before pagination, for summaries computed over the whole filtered set
+
 ## v1.26.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.25.1...v1.26.0)

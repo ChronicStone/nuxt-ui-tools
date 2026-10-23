@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import type { TableResolvedFilterGroup, TableSchemaView } from '../types'
-import { createResolvedFilterState } from '../utils'
+import { createResolvedFilterState, withoutQueryFilterRules } from '../utils'
 import { useQueryState } from './use-query-state'
 import type { useTableLayout } from './use-table-layout'
 
@@ -24,9 +24,20 @@ export function useTableState(params: UseTableStateParams) {
       staticFilters: params.schema.value.filters?.static,
     }),
   )
+  const rowFilterState = computed<TableResolvedFilterGroup<string>>(() =>
+    createResolvedFilterState({
+      definitions: params.schema.value.filters?.ui ?? [],
+      filters: withoutQueryFilterRules({
+        definitions: params.schema.value.filters?.ui ?? [],
+        filters: queryState.filters.value,
+      }),
+      staticFilters: params.schema.value.filters?.static,
+    }),
+  )
 
   return {
     queryState,
     resolvedFilterState,
+    rowFilterState,
   }
 }
