@@ -3,6 +3,7 @@ import type {
   DisplayBlockBase,
   DisplayChip,
   DisplayContent,
+  DisplayLinkTarget,
   DisplaySize,
   DisplayText,
   DisplayTone,
@@ -37,6 +38,8 @@ export interface DisplayPersonContact {
   value: string
   /** Makes the value a link, such as `mailto:` or `tel:`. */
   href?: string
+  /** Where `href` opens. Absolute http(s) links open in a new tab by default. */
+  target?: DisplayLinkTarget | null
   /** Adds a copy button. Defaults to `true`. */
   copy?: boolean
 }

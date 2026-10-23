@@ -9,6 +9,8 @@
 - **display:** A block's `ui` merges over its preset's `ui` slot by slot with tailwind-merge, instead of replacing it
 - **display:** Dates outside the current year show their year, such as a countdown's « Échéance jeu. 30 sept. 2027 »
 - **display:** The diff `columns` table frame takes a `frame` slot class
+- **display:** Links of facts, records, person contacts and actions open an absolute http(s) address in a new tab with `rel="noopener noreferrer"` instead of navigating away from the form; a `target` on facts items, record items and contacts (and the actions' own `target`) chooses, and `null` keeps the same tab
+- **form:** A submit handler that throws or rejects no longer reaches the page's error boundary and replaces a page form: in every mode the form keeps its values, leaves the submitting state, and the error goes to the app error handler, where modal and drawer forms already sent it
 - **display:** `display.ui.chip` in the app config styles every chip the blocks draw, per `UBadge` slot, with each chip's `ui` merged over it; tones still color the chips. The date range duration is now one of those chips
 
 ## v1.25.0

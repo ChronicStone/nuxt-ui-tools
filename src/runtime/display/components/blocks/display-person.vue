@@ -9,6 +9,7 @@ import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayPerson, DisplayPersonProps, DisplayPersonSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty, resolveDisplayText } from '../../utils/content'
+import { displayLinkAttrs } from '../../utils/links'
 import {
   DISPLAY_SURFACE_CLASSES,
   displayToneClass,
@@ -133,7 +134,7 @@ function avatarOf(entry: DisplayPerson) {
         <UIcon v-if="contact.icon" :name="contact.icon" :class="classes.contactIcon" />
         <ULink
           v-if="contact.href"
-          :to="contact.href"
+          v-bind="displayLinkAttrs(contact.href, contact.target)"
           v-reveal-truncated
           :class="[classes.contactValue, 'hover:text-highlighted']"
         >

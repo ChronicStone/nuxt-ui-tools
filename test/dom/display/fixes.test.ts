@@ -4,7 +4,9 @@ import { afterEach, describe, expect, it } from 'vitest'
 import DisplayDate from '#ui-tools/display/components/blocks/display-date.vue'
 import DisplayDiff from '#ui-tools/display/components/blocks/display-diff.vue'
 import DisplayFacts from '#ui-tools/display/components/blocks/display-facts.vue'
+import DisplayHeading from '#ui-tools/display/components/blocks/display-heading.vue'
 import DisplayList from '#ui-tools/display/components/blocks/display-list.vue'
+import DisplayPerson from '#ui-tools/display/components/blocks/display-person.vue'
 import DisplayRecord from '#ui-tools/display/components/blocks/display-record.vue'
 import UiDisplay from '#ui-tools/display/components/display.vue'
 import { revealTruncated } from '#ui-tools/display/directives/reveal-truncated'
@@ -151,5 +153,58 @@ describe('display fixes in 1.25.1', () => {
     })
     expect(list.find('[data-ui="UBadge"]').classes()).toContain('rounded-full')
     expect(list.find('[data-ui="UBadge"]').attributes('data-color')).toBe('warning')
+  })
+
+  it('opens absolute links in a new tab without opener, and keeps app links and authored targets', () => {
+    const facts = mount(DisplayFacts, {
+      props: {
+        items: [
+          { label: 'Web document', to: 'https://app.evoliz.com/doc/42', value: 'FAC-42' },
+          { label: 'Account', to: '/accounts/7', value: 'Arvelle' },
+          { label: 'Same tab', target: '_self', to: 'https://example.com', value: 'Example' },
+          { label: 'Forced back', target: null, to: 'https://example.com/b', value: 'B' },
+        ],
+      },
+    })
+    const links = facts.findAll('a')
+    expect(links[0]?.attributes()).toMatchObject({ rel: 'noopener noreferrer', target: '_blank' })
+    expect(links[1]?.attributes('target')).toBeUndefined()
+    expect(links[2]?.attributes('target')).toBe('_self')
+    expect(links[2]?.attributes('rel')).toBeUndefined()
+    expect(links[3]?.attributes('target')).toBeUndefined()
+
+    const record = mount(DisplayRecord, {
+      props: { title: 'Evoliz', to: 'https://app.evoliz.com/doc/42' },
+    })
+    expect(record.find('a').attributes('target')).toBe('_blank')
+    const person = mount(DisplayPerson, {
+      props: {
+        contacts: [
+          { href: 'https://example.com/profile', value: 'Profile' },
+          { href: 'mailto:ada@example.com', value: 'ada@example.com' },
+        ],
+        name: 'Ada',
+        variant: 'contact',
+      },
+    })
+    expect(person.findAll('a').map((link) => link.attributes('target'))).toEqual([
+      '_blank',
+      undefined,
+    ])
+    const heading = mount(DisplayHeading, {
+      props: { action: { label: 'Open', to: 'https://example.com' }, title: 'Invoice' },
+    })
+    expect(heading.find('[data-ui="UButton"]').attributes('target')).toBe('_blank')
+    const facts2 = mount(DisplayFacts, {
+      props: {
+        actions: [
+          { label: 'Edit', to: '/edit' },
+          { label: 'Evoliz', to: 'https://app.evoliz.com' },
+        ],
+        items: [{ label: 'A', value: 1 }],
+      },
+    })
+    const buttons = facts2.findAll('[data-display-actions] [data-ui="UButton"]')
+    expect(buttons.map((button) => button.attributes('target'))).toEqual([undefined, '_blank'])
   })
 })

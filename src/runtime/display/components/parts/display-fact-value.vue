@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { isString } from '../../../shared/utils/predicate'
 import type { DisplayFact } from '../../types'
 import { displayContentText, isDisplayContentEmpty } from '../../utils/content'
+import { displayLinkAttrs } from '../../utils/links'
 import DisplayChip from './display-chip.vue'
 import DisplayCopy from './display-copy.vue'
 import DisplayRender from './display-render'
@@ -27,7 +28,7 @@ const copyValue = computed(() =>
   <span v-else-if="isDisplayContentEmpty(fact.value)" class="font-medium text-dimmed">—</span>
   <ULink
     v-else-if="fact.to"
-    :to="fact.to"
+    v-bind="displayLinkAttrs(fact.to, fact.target)"
     class="underline decoration-[var(--ui-border-accented)] underline-offset-2 hover:decoration-current"
   >
     <DisplayRender :content="fact.value" />

@@ -9,6 +9,7 @@ import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayRecordItem, DisplayRecordProps, DisplayRecordSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
+import { displayLinkAttrs } from '../../utils/links'
 import { DISPLAY_SURFACE_CLASSES } from '../../utils/tone'
 import DisplayChip from '../parts/display-chip.vue'
 import DisplayEmptyLine from '../parts/display-empty-line.vue'
@@ -66,7 +67,7 @@ const classes = computed(() =>
 )
 
 function linkProps(item: DisplayRecordItem) {
-  if (item.to) return { is: ULink, to: item.to }
+  if (item.to) return { is: ULink, ...displayLinkAttrs(item.to, item.target) }
   if (item.onClick) return { is: 'button', type: 'button', onClick: item.onClick }
   return { is: 'div' }
 }

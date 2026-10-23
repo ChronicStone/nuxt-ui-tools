@@ -7,6 +7,11 @@ VNode or a render function. Every kind also takes `loading` and `ui`.
 Text a block cuts short (`truncate`, a line clamp, or a clipping class you add through `ui`) shows
 in full on hover and focus, through a `title` set while it is cut. An authored `title` is kept.
 
+Links (`to` on facts and records, `href` on person contacts, `to` on actions) open an absolute
+http(s) address in a new tab with `rel="noopener noreferrer"`, so a form never navigates away to an
+external page. Set `target` to choose (`'_self'`, `'_blank'`…), or `null` to keep an absolute link in
+the same tab; app paths stay in the same tab.
+
 ## heading
 
 Titles a group of fields.
@@ -70,7 +75,7 @@ Warning and error alerts are `role="status"`, so a notice appearing while the us
 | `actions`           | buttons under the facts                                                                                              |
 | `empty`             | shown with no facts                                                                                                  |
 
-A fact: `{ label, value?, hint?, tone?, chip?, copy?, mono?, emphasis?, icon?, to?, loading? }`.
+A fact: `{ label, value?, hint?, tone?, chip?, copy?, mono?, emphasis?, icon?, to?, target?, loading? }`.
 An empty value draws a dash; `chip` draws the value as a badge; `copy: true` copies a text value
 (or pass the string to copy); `loading` draws a placeholder bar in place of the value.
 

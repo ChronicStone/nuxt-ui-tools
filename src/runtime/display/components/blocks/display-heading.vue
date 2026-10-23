@@ -8,6 +8,7 @@ import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayHeadingProps, DisplayHeadingSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty, resolveDisplayText } from '../../utils/content'
+import { isExternalLink } from '../../utils/links'
 import { displayToneClass } from '../../utils/tone'
 import DisplayRender from '../parts/display-render'
 import DisplaySkeleton from '../parts/display-skeleton.vue'
@@ -69,6 +70,7 @@ const actionButton = computed(() => {
     variant: 'link' as const,
     ...rest,
     label: resolveDisplayText(label),
+    target: rest.target === undefined && isExternalLink(rest.to) ? '_blank' : rest.target,
   }
 })
 </script>

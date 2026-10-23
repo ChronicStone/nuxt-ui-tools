@@ -5,6 +5,7 @@ import { computed } from 'vue'
 
 import type { DisplayAction } from '../../types'
 import { resolveDisplayText } from '../../utils/content'
+import { isExternalLink } from '../../utils/links'
 
 const { actions, size = 'sm' } = defineProps<{
   actions: readonly DisplayAction[]
@@ -18,6 +19,8 @@ const buttons = computed(() =>
     variant: 'outline' as const,
     ...action,
     label: resolveDisplayText(label),
+    // A link out of the app opens in a new tab unless the action sets its own target.
+    target: action.target === undefined && isExternalLink(action.to) ? '_blank' : action.target,
   })),
 )
 </script>
