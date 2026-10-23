@@ -28,6 +28,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   ready: [details: readonly FilePreviewDetail[]]
+  /** The renderer's error, or `null` when the file is shown again. */
+  failure: [error: FilePreviewRendererError | null]
   previous: []
   next: []
   download: []
@@ -46,6 +48,7 @@ const extension = computed(() => (props.display.extension ?? props.kindLabel).to
 
 function restart() {
   failure.value = null
+  emit('failure', null)
   ready.value = false
   slow.value = false
   delay.start()
@@ -62,6 +65,7 @@ function handleReady(details?: readonly FilePreviewDetail[]) {
 function handleError(error: FilePreviewRendererError) {
   failure.value = error
   delay.stop()
+  emit('failure', error)
 }
 
 function retry() {
@@ -123,14 +127,6 @@ function retry() {
           data-file-preview-retry=""
           @click="retry"
         />
-        <UButton
-          v-if="downloadable"
-          icon="i-lucide-download"
-          :label="t('filePreview.download')"
-          color="neutral"
-          variant="outline"
-          @click="emit('download')"
-        />
       </FilePreviewMessage>
 
       <FilePreviewMessage
@@ -143,7 +139,7 @@ function retry() {
         :detail="failure.message"
       >
         <UButton
-          v-if="downloadable"
+          v-if="downloadable && failure.reason !== 'source'"
           icon="i-lucide-download"
           :label="t('filePreview.download')"
           @click="emit('download')"

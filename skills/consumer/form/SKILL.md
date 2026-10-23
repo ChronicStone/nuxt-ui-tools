@@ -158,7 +158,12 @@ list of paths; when omitted, later input changes do not replace local edits.
 
 Schema `controls` can set `dirtyCheck`, `autoFocus`, `confirmNavOnDirty`, `syncInput`, and
 `validate`. A successful submit makes the submitted values the new baseline, so `isDirty` turns
-false and `confirmNavOnDirty` stops asking; a navigation made by `onSubmit` itself never asks. Stateful fields can define `watch`, `onDependencyChange`, `onRendered`,
+false and `confirmNavOnDirty` stops asking; a navigation made by `onSubmit` itself never asks.
+A form opened with `createForm` as a modal, drawer, or fullscreen overlay asks the provider's
+`confirm` before Escape, an outside click, the close button, Cancel, or `api.close()` discards
+changes, and stays open when the answer is no; a form never edited closes at once. Set
+`controls: { confirmNavOnDirty: false }` to close such an overlay without asking. Leaving the page
+asks only when `confirmNavOnDirty` is set. Stateful fields can define `watch`, `onDependencyChange`, `onRendered`,
 `stateEffect`, `ignore`, `dirtyCheck`, and collapsible behavior.
 
 Use `labelExtra` for rich content beside a field label, such as a password-recovery link. It
@@ -1023,8 +1028,19 @@ skipping error boundaries such as a page's `NuxtErrorBoundary`. Return `{ succes
 without an error.
 
 In any field callback, `api.form.close()` closes the form like its Cancel action (confirming
-unsaved changes when the schema asks for it), next to `api.form.set`, `submit`, `reset` and
-`validate`.
+unsaved changes when the schema asks for it, which overlays do by default), next to
+`api.form.set`, `submit`, `reset` and `validate`. Actions and submit handlers get the same
+`api.close()`:
+
+```ts
+actions: [{ key: 'later', label: 'Plus tard', action: ({ api }) => api.close() }]
+```
+
+Typed values a field cannot accept stay in the field with a message instead of being erased: a
+date outside `props.min`/`props.max` reads « Date antérieure au 24 oct. 2026 » (« Mois antérieur
+à… », « Année antérieure à… » for month and year fields), a number outside `min`/`max` reads
+« Valeur minimale : 1 » (the steppers stop at the bounds), and an incomplete phone number reads
+« Numéro de téléphone incomplet ». Each blocks submit like any rule.
 
 ## Array Tables
 

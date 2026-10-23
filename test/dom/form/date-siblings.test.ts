@@ -96,21 +96,41 @@ describe('date family siblings', () => {
     harness.unmount()
   })
 
-  it('silently ignores a manually entered date outside the min/max bounds', async () => {
+  it('keeps a typed date outside min/max and says which bound it crosses', async () => {
     const schema = defineFormSchema({
       fields: [
         {
           key: 'appointment',
           label: 'Appointment',
-          props: { max: '2026-12-31', min: '2026-01-01' },
+          props: { max: '2026-12-31', min: '2026-10-24' },
+          required: true,
           type: 'date',
         },
       ],
     })
-    const harness = await mountForm({ input: { appointment: '2026-06-01' }, schema })
+    const harness = await mountForm({ input: { appointment: '2026-11-01' }, schema })
 
     await commitManualInput(harness.control('appointment'), '01/01/2027')
-    expect(harness.form.state.get('appointment')).toBe('2026-06-01')
+    expect(harness.form.state.get('appointment')).toBe('2027-01-01')
+    await harness.submit()
+    expect(errorOf(harness, 'appointment')).toBe('Date postérieure au 31 déc. 2026')
+
+    await commitManualInput(harness.control('appointment'), '23/10/2026')
+    await harness.submit()
+    expect(harness.form.state.get('appointment')).toBe('2026-10-23')
+    expect(errorOf(harness, 'appointment')).toBe('Date antérieure au 24 oct. 2026')
+    expect(harness.submitted).toHaveLength(0)
+    harness.unmount()
+  })
+
+  it('names the month a month field must not cross', async () => {
+    const schema = defineFormSchema({
+      fields: [{ key: 'period', label: 'Period', props: { min: '2026-10' }, type: 'month' }],
+    })
+    const harness = await mountForm({ input: { period: '2026-09' }, schema })
+
+    await harness.submit()
+    expect(errorOf(harness, 'period')).toBe('Mois antérieur à octobre 2026')
     harness.unmount()
   })
 
@@ -131,7 +151,29 @@ describe('date family siblings', () => {
     await harness.until(() =>
       harness.form.errors.value.some((error) => error.path === 'appointment'),
     )
-    expect(errorOf(harness, 'appointment')).toBe('La date doit être au plus tard le 2026-12-31')
+    expect(errorOf(harness, 'appointment')).toBe('Date postérieure au 31 déc. 2026')
+    harness.unmount()
+  })
+})
+
+describe('date calendar label', () => {
+  it('names the calendar after the field instead of the « Event Date » default', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          { key: 'appointment', label: 'Rendez-vous', type: 'date' },
+          { key: 'period', type: 'daterange' },
+        ],
+      }),
+    })
+    await harness.control('appointment').trigger('click')
+    await harness.control('period').trigger('click')
+    await harness.flush()
+    const labels = harness.wrapper
+      .findAllComponents({ name: 'UCalendar' })
+      .map((calendar) => calendar.find('input').attributes('calendar-label'))
+
+    expect(labels).toStrictEqual(['Rendez-vous', 'Calendrier'])
     harness.unmount()
   })
 })

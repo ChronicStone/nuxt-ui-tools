@@ -90,6 +90,11 @@ export interface FormRuntime {
   validate: (options?: FormValidationOptions) => Promise<boolean>
   validateCurrentStep: (options?: FormValidationOptions) => Promise<boolean>
   setError: (path: string | readonly string[], message: string, options?: FormErrorOptions) => void
+  /**
+   * Reports input a control holds but cannot store as a value, such as an incomplete phone number,
+   * or clears it with `null`. It shows like a rule error once the field is touched and blocks submit.
+   */
+  setInputError: (path: string | readonly string[], message: string | null) => void
   clearError: (path?: string | readonly string[]) => void
   focusRequest: Ref<FormFocusRequest | null>
   registerFieldElement: (path: string | readonly string[], element: HTMLElement) => () => void
@@ -104,4 +109,9 @@ export interface FormRuntime {
   goToStep: (index: number) => Promise<boolean>
   /** Cancels the rendered form, as its Cancel action does. Set by the form root that renders it. */
   bindCancel: (cancel: (() => Promise<void>) | null) => void
+  /**
+   * Closes the form the way its Cancel action does, asking first when it holds unsaved changes the
+   * schema protects. Resolves at once when no form root renders the runtime.
+   */
+  close: () => Promise<void>
 }

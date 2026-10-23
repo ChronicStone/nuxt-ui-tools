@@ -24,6 +24,34 @@ describe('filter option utils', () => {
     ])
   })
 
+  it('labels facet values through source.label, keeping their counts and the unknown ones', () => {
+    const labels = new Map([
+      ['Approved', 'Validé'],
+      ['Done', 'Terminé'],
+    ])
+    const entries = resolveFilterOptionEntries({
+      definition: {
+        key: 'status',
+        kind: 'option',
+        label: 'Statut',
+        source: { facet: true, label: (value) => labels.get(String(value)) },
+      },
+      deriveCounts: false,
+      facetCounts: [
+        { count: 5, value: 'Approved' },
+        { count: 2, value: 'Security compromised' },
+        { count: 1, value: 'Done' },
+      ],
+      rows: [],
+    })
+
+    expect(entries.map(({ count, label, value }) => ({ count, label, value }))).toStrictEqual([
+      { count: 5, label: 'Validé', value: 'Approved' },
+      { count: 2, label: 'Security compromised', value: 'Security compromised' },
+      { count: 1, label: 'Terminé', value: 'Done' },
+    ])
+  })
+
   it('falls back missing remote option counts to zero when requested', () => {
     const entries = resolveFilterOptionEntries({
       definition: {

@@ -234,7 +234,9 @@ export function useFieldOptions(params: {
   const createLabel = computed<string | undefined>(() =>
     resolveFormText(optionConfig.value?.create?.label),
   )
-  const disableOnLoading = computed<boolean>(() => optionConfig.value?.disableOnLoading !== false)
+  const disableOnLoading = computed<boolean>(
+    () => !remoteConfig.value && optionConfig.value?.disableOnLoading !== false,
+  )
   const selectCreatedOption = computed<boolean>(
     () => optionConfig.value?.create?.selectOnCreation !== false,
   )

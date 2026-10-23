@@ -78,8 +78,8 @@ export interface FormFieldFormApi {
   submit: () => Promise<boolean>
   /**
    * Closes the form the way its Cancel action does: asks to discard unsaved changes when the
-   * schema asks for it, then cancels (an overlay closes). Does nothing for a form rendered without
-   * a cancel handler.
+   * schema asks for it (an overlay form does by default), then cancels (an overlay closes). Does
+   * nothing for a form rendered without a cancel handler.
    */
   close: () => Promise<void>
   /** Advances to the next step on stepped forms. */
@@ -259,6 +259,13 @@ export interface FormApi<TOutput = FormObject> {
   submit: () => Promise<void>
   /** Resets the form and waits for dependency effects triggered by the reset. */
   reset: () => Promise<void>
+  /**
+   * Closes the form the way its Cancel action does: asks to discard unsaved changes when the
+   * schema asks for it (an overlay form does by default), then cancels, so an overlay closes and
+   * its `createForm` promise resolves with `isCompleted: false`. Does nothing for a form rendered
+   * without a cancel handler.
+   */
+  close: () => Promise<void>
 }
 
 export type FormSubmitAction = 'next' | 'previous' | 'submit' | 'reset'

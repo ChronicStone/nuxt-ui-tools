@@ -20,7 +20,11 @@ export interface FormControlsConfig {
   ignoreDirtyPaths?: readonly string[]
   /** Focuses the first field after mount, or a specific raw field path. */
   autoFocus?: boolean | string
-  /** Warns before an inline dirty form is closed or navigated away from. */
+  /**
+   * Asks before a modified form is cancelled, closed, or left for another page. A form opened as a
+   * modal, drawer, or fullscreen overlay asks before closing (Escape, outside click, close button,
+   * Cancel, `api.close()`) unless this is `false`; leaving the page asks only when it is set.
+   */
   confirmNavOnDirty?: boolean | FormDirtyNavigationConfig
   /** Keeps external input changes synchronized after the initial mount. */
   syncInput?: boolean | readonly string[]

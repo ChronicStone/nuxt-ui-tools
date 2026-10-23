@@ -272,6 +272,7 @@ export default defineUiToolsLocale<Messages>({
           open: 'Open color picker',
         },
         date: {
+          calendar: 'Calendar',
           clear: 'Clear value',
           confirm: 'Confirm',
           end: 'End',
@@ -358,9 +359,17 @@ export default defineUiToolsLocale<Messages>({
         fallback: 'Step {number}',
       },
       validation: {
-        dateMax: 'The date must be on or before {max}',
-        dateMin: 'The date must be on or after {min}',
+        dateMax: 'Date after {max}',
+        dateMin: 'Date before {min}',
+        monthMax: 'Month after {max}',
+        monthMin: 'Month before {min}',
+        numberMax: 'Maximum value: {bound}',
+        numberMin: 'Minimum value: {bound}',
+        phoneIncomplete: 'Incomplete phone number',
+        phoneInvalid: 'Invalid phone number',
         required: 'This field is required',
+        yearMax: 'Year after {max}',
+        yearMin: 'Year before {min}',
       },
     },
     spreadsheet: {

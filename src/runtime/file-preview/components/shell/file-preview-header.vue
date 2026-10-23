@@ -20,6 +20,8 @@ const props = defineProps<{
   canExpand: boolean
   expanded: boolean
   details: boolean
+  /** The file failed to load: its download and open-in-tab actions are hidden. */
+  unavailable: boolean
 }>()
 
 const emit = defineEmits<{
@@ -35,7 +37,7 @@ const emit = defineEmits<{
 
 const { t } = useUiToolsLocale()
 const name = computed(() => splitFilePreviewName(props.item.name || t('filePreview.untitled')))
-const downloadable = computed(() => props.item.file.download !== false)
+const downloadable = computed(() => !props.unavailable && props.item.file.download !== false)
 const actions = computed(() => props.item.file.actions ?? [])
 const menu = computed(() => [
   [
@@ -49,11 +51,15 @@ const menu = computed(() => [
           },
         ]
       : []),
-    {
-      icon: 'i-lucide-external-link',
-      label: t('filePreview.openInNewTab'),
-      onSelect: () => emit('open'),
-    },
+    ...(props.unavailable
+      ? []
+      : [
+          {
+            icon: 'i-lucide-external-link',
+            label: t('filePreview.openInNewTab'),
+            onSelect: () => emit('open'),
+          },
+        ]),
   ],
   actions.value.map((action) => ({
     icon: action.icon,
@@ -140,11 +146,14 @@ const menu = computed(() => [
         v-if="downloadable"
         icon="i-lucide-download"
         :label="t('filePreview.download')"
+        data-file-preview-header-download=""
         @click="emit('download')"
       />
       <FilePreviewButton
+        v-if="!unavailable"
         icon="i-lucide-external-link"
         :label="t('filePreview.openInNewTab')"
+        data-file-preview-open-tab=""
         @click="emit('open')"
       />
       <span class="mx-1 h-5 w-px shrink-0 bg-(--ui-border)" aria-hidden="true" />

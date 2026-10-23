@@ -15,6 +15,7 @@ import FormFieldShell from '../../components/renderer/form-field-shell.vue'
 import { useFieldControl } from '../../composables/use-field-control'
 import type { FormValue } from '../../types'
 import { isNumber, isString } from '../../utils/predicate'
+import { resolveFieldText } from '../../utils/text'
 import type { FormDateField } from '../date/types'
 import type { FormDateFamilyField, FormDateManualInputOptions } from './types'
 import {
@@ -60,6 +61,7 @@ const {
   disabled,
   handleBlur,
   interactionOwnerClass,
+  params,
   placeholder: fieldPlaceholder,
 } = useFieldControl(
   () => props.field,
@@ -180,6 +182,11 @@ const minuteStep = computed<number>(() => {
 })
 const timeStep = computed<{ minute: number }>(() => ({ minute: minuteStep.value }))
 const calendarUi = computed(() => ({ heading: 'min-w-0', root: 'p-2' }))
+const calendarLabel = computed(
+  () =>
+    resolveFieldText(Object.getOwnPropertyDescriptor(props.field, 'label')?.value, params.value) ??
+    t('form.fields.date.calendar'),
+)
 
 watch(
   selectedValues,
@@ -322,16 +329,10 @@ function commitManualInput(raw: string) {
   }
 
   if (!isString(parsed)) {
-    if (!isWithinBounds(parsed[0]) || !isWithinBounds(parsed[1])) {
-      return false
-    }
     setStoredRange(parsed[0], parsed[1])
     return true
   }
 
-  if (!isWithinBounds(parsed)) {
-    return false
-  }
   setStoredPart(0, parsed)
   return true
 }
@@ -528,6 +529,7 @@ function isCalendarRangeValue(
               :week-numbers="fieldProps.calendar?.weekNumbers ?? false"
               :number-of-months="fieldProps.calendar?.numberOfMonths"
               :view-control="{ trailingIcon: 'i-lucide-chevron-down', class: 'font-medium' }"
+              :calendar-label="calendarLabel"
               :ui="calendarUi"
               @update:model-value="updateRangeCalendar"
             />
@@ -543,6 +545,7 @@ function isCalendarRangeValue(
               :week-numbers="fieldProps.calendar?.weekNumbers ?? false"
               :number-of-months="fieldProps.calendar?.numberOfMonths"
               :view-control="{ trailingIcon: 'i-lucide-chevron-down', class: 'font-medium' }"
+              :calendar-label="calendarLabel"
               :ui="calendarUi"
               @update:model-value="updateSingleCalendar"
             />

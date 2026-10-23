@@ -563,6 +563,9 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
                 <UCalendar
                   :model-value="calendarRange"
                   :size="size"
+                  :calendar-label="
+                    internals.filters.getFilterLabelText({ label: definition.label })
+                  "
                   range
                   :number-of-months="rangeCalendarPanels"
                   :paged-navigation="
@@ -702,6 +705,7 @@ function areSameCalendarDay(left: CalendarDate | undefined, right: CalendarDate 
               "
               :model-value="localDate"
               :size="size"
+              :calendar-label="internals.filters.getFilterLabelText({ label: definition.label })"
               :fixed-weeks="filterUi.scalar.calendar.fixedWeeks"
               :ui="{
                 root: mergeDataListUiClass(

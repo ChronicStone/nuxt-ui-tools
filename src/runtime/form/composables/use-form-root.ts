@@ -6,6 +6,7 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { useUiToolsLocale } from '../../i18n/use-locale'
 import type {
   FormObject,
+  FormRenderShell,
   FormRendererController,
   FormRuntime,
   FormSubmitHandlerResult,
@@ -39,6 +40,8 @@ export interface UseFormRootParams {
   syncInput: () => boolean | readonly string[] | undefined
   validate: () => FormValidationMode | undefined
   ui: () => FormUiConfig | undefined
+  /** Shell the form renders in. Overlay shells ask before closing a modified form by default. */
+  shell?: () => FormRenderShell | undefined
   onSubmitted: (value: FormObject, result: FormSubmitHandlerResult<FormValue>) => void
   onCancelled: (value: FormObject) => void
 }
@@ -81,6 +84,7 @@ export function useFormRoot(params: UseFormRootParams) {
   // Set once the user agrees to discard their changes, so cancelling and the navigation it
   // triggers ask only once. Editing again re-arms the question.
   let leaveConfirmed = false
+  let pendingLeave: Promise<boolean> | null = null
   watch(
     () => runtime.dirtyPaths.value,
     () => {
@@ -194,26 +198,40 @@ export function useFormRoot(params: UseFormRootParams) {
   }
 
   async function cancel() {
-    if (!leaveConfirmed && shouldConfirmDirtyNavigation() && !(await confirmLeave())) {
+    if (!leaveConfirmed && shouldConfirmDirtyClose() && !(await confirmLeave())) {
       return
     }
     params.onCancelled(runtime.output.value)
   }
 
-  async function confirmLeave() {
-    leaveConfirmed = await confirm({
-      kind: 'unsaved-changes',
-      message: getDirtyNavigationMessage(),
-    })
-    return leaveConfirmed
+  function confirmLeave() {
+    pendingLeave ??= askLeave()
+    return pendingLeave
+  }
+
+  async function askLeave() {
+    try {
+      leaveConfirmed = await confirm({
+        kind: 'unsaved-changes',
+        message: getDirtyNavigationMessage(),
+      })
+      return leaveConfirmed
+    } finally {
+      pendingLeave = null
+    }
   }
 
   function shouldConfirmDirtyNavigation() {
-    if (!runtime.isDirty.value) {
-      return false
-    }
+    return confirmsDirtyChanges(getSchemaDirtyNavigation(schema.value))
+  }
+
+  function shouldConfirmDirtyClose() {
     const config = getSchemaDirtyNavigation(schema.value)
-    if (!config) {
+    return confirmsDirtyChanges(isUndefined(config) ? isOverlayShell(params.shell?.()) : config)
+  }
+
+  function confirmsDirtyChanges(config: FormValue) {
+    if (!runtime.isDirty.value || !config) {
       return false
     }
     if (!isRecord(config)) {
@@ -258,6 +276,10 @@ export function useFormRoot(params: UseFormRootParams) {
     submit,
     validationMode,
   }
+}
+
+function isOverlayShell(shell: FormRenderShell | undefined) {
+  return shell === 'modal' || shell === 'drawer' || shell === 'fullscreen'
 }
 
 /** A change of hash only, such as a form page recording the section in view. */

@@ -1,3 +1,23 @@
+## v1.26.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.25.1...v1.26.0)
+
+### 🚀 Enhancements
+
+- **form:** A form opened with `createForm` as a modal, drawer or fullscreen overlay asks the provider's `confirm` before Escape, an outside click, the close button, Cancel or `api.close()` discards unsaved changes, and stays open when the answer is no. A form never edited closes at once, and `controls: { confirmNavOnDirty: false }` closes without asking. Leaving the page still asks only when `confirmNavOnDirty` is set
+- **form:** Actions and submit handlers get `api.close()`, which closes the form the way its Cancel action does, as field callbacks already could with `api.form.close()`
+- **table:** Option filters take `source.label: (value) => label | undefined` to label the values their facet lists, such as provider statuses stored as `Approved` or `Security compromised`. Facet counts and order are kept, a value it returns nothing for shows as stored, and tags of committed values read the same labels
+
+### 🩹 Fixes
+
+- **form:** A date typed outside `props.min`/`props.max` stays in the field and reads « Date antérieure au 24 oct. 2026 » or « Date postérieure au 31 déc. 2026 » (month and year fields say « Mois… », « Année… »), instead of being erased and reported as required
+- **form:** A number typed outside `min`/`max` is no longer clamped: it stays in the field and reads « Valeur minimale : 1 » or « Valeur maximale : 1 200 ». The steppers stop at the bounds
+- **form:** An incomplete phone number (« 12 ») stays in the field and blocks submit with « Numéro de téléphone incomplet », or « Numéro de téléphone invalide » for a number its country or allowed types reject, instead of being saved empty
+- **form:** A remote select stays usable while the menu loads its first page, so its search input takes focus on open and typing filters, with the mouse as with the keyboard. Its `disableOnLoading` is ignored
+- **form:** A `custom-component` field builds its `render` output on every render instead of reusing a cached VNode, which broke unmounting a matrix whose cells render a `UTooltip` (« Cannot read properties of null (reading 'nextSibling') », then the app stopped rendering)
+- **file-preview:** A file that fails to load (a rejected `src` function, or a text, CSV or Markdown file answering 404) no longer offers « Ouvrir dans un nouvel onglet » or Download, in the header, the phone menu or the error message, until a retry loads it
+- **form:** The date picker's calendar is named after the field (or « Calendrier » / « Calendar ») instead of Reka's « Event Date »; table date filters name theirs after the filter
+
 ## v1.25.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.25.0...v1.25.1)

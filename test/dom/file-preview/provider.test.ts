@@ -66,6 +66,38 @@ describe('file preview provider', () => {
     expect(src).toHaveBeenCalledTimes(2)
   })
 
+  it('offers no download or new tab for a file that failed to load, and offers them back once it loads', async () => {
+    const preview = open()
+    const src = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('404 Not Found'))
+      .mockResolvedValueOnce('/signed/attestation.pdf')
+    preview.api.open({ name: 'Attestation.pdf', src })
+
+    const retry = await shown(preview, '[data-file-preview-retry]')
+    expect(preview.find('[data-file-preview-open-tab]').exists()).toBe(false)
+    expect(preview.find('[data-file-preview-header-download]').exists()).toBe(false)
+    expect(preview.find('[data-file-preview-message]').findAll('button')).toHaveLength(1)
+
+    await retry.trigger('click')
+    await shown(preview, '[data-file-preview-pdf]')
+    expect(preview.find('[data-file-preview-open-tab]').exists()).toBe(true)
+    expect(preview.find('[data-file-preview-header-download]').exists()).toBe(true)
+  })
+
+  it('offers no download or new tab when a text file answers 404', async () => {
+    const preview = open()
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('', { status: 404, statusText: 'Not Found' }),
+    )
+    preview.api.open({ name: 'notes.txt', src: '/files/notes.txt' })
+
+    await shown(preview, '[data-file-preview-message]')
+    expect(preview.find('[data-file-preview-open-tab]').exists()).toBe(false)
+    expect(preview.find('[data-file-preview-header-download]').exists()).toBe(false)
+    expect(preview.find('[data-file-preview-message]').findAll('button')).toHaveLength(0)
+  })
+
   it('keeps the generic explanation and the raw message for an unexplained source error', async () => {
     const preview = open()
     preview.api.open({ name: 'Facture.pdf', src: () => Promise.reject(new Error('500 Internal')) })

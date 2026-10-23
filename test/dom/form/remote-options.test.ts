@@ -86,6 +86,41 @@ async function loadMore(harness: FormHarness, path: string) {
 }
 
 describe('remote field options', () => {
+  it('keeps the control and its search usable while the first page loads', async () => {
+    const page = deferred<Page>()
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        actions: [],
+        fields: [
+          {
+            key: 'account',
+            options: {
+              load: ({ search }) =>
+                queryOptions({
+                  queryFn: () => page.promise,
+                  queryKey: ['form-first-page-usable', search],
+                }),
+              mode: 'remote',
+              pagination: { size: 20, type: 'page' },
+            },
+            type: 'select',
+          },
+        ],
+      }),
+    })
+
+    await openMenu(harness, 'account')
+    const menu = harness.wrapper.findComponent({ name: 'USelectMenu' })
+    expect(menu.props('loading')).toBe(true)
+    expect(menu.props('disabled')).toBe(false)
+    expect(menu.props('searchInput')).toBe(true)
+
+    page.resolve({ hasMore: false, options: [{ label: 'QA Test admin', value: 'qa' }] })
+    await harness.flush()
+    expect(itemValues(harness, 'account')).toStrictEqual(['qa'])
+    harness.unmount()
+  })
+
   it('keeps the label of a selected search result after the list reloads', async () => {
     const schema = defineFormSchema({
       actions: [],

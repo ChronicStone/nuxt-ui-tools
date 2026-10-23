@@ -65,10 +65,12 @@ export function useFormValidation(params: {
   getValidationMode: () => FormValidationMode
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
-  getDateMinMessage?: (bound: string) => string
-  getDateMaxMessage?: (bound: string) => string
+  getDateMinMessage?: (bound: string, type: FormDateFamilyType) => string
+  getDateMaxMessage?: (bound: string, type: FormDateFamilyType) => string
+  getNumberBoundMessage?: (edge: 'min' | 'max', bound: number) => string
 }) {
   const customErrors = ref<readonly FormValidationError[]>([])
+  const inputErrors = ref<ReadonlyMap<string, string>>(new Map())
   const touchedPaths = ref<readonly string[]>([])
   const pendingPaths = ref<ReadonlyMap<string, ReadonlySet<string>>>(new Map())
   const validatedMessages = ref<ReadonlyMap<string, readonly string[]>>(new Map())
@@ -82,6 +84,7 @@ export function useFormValidation(params: {
         context: params.context,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
+        getNumberBoundMessage: params.getNumberBoundMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: true,
@@ -99,6 +102,7 @@ export function useFormValidation(params: {
         context: params.context,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
+        getNumberBoundMessage: params.getNumberBoundMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: false,
@@ -118,6 +122,7 @@ export function useFormValidation(params: {
         context: params.context,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
+        getNumberBoundMessage: params.getNumberBoundMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: true,
@@ -135,6 +140,7 @@ export function useFormValidation(params: {
         context: params.context,
         getDateMaxMessage: params.getDateMaxMessage,
         getDateMinMessage: params.getDateMinMessage,
+        getNumberBoundMessage: params.getNumberBoundMessage,
         getRequiredMessage: params.getRequiredMessage,
         getUniqueMessage: params.getUniqueMessage,
         includeAsync: false,
@@ -249,7 +255,7 @@ export function useFormValidation(params: {
       if (validationRuns.get('$form') !== run) {
         return asyncValid
       }
-      return syncResult.valid && asyncValid && !hasBlockingErrors(paths)
+      return syncResult.valid && asyncValid && !hasBlockingErrors(paths) && !hasInputErrors(paths)
     } finally {
       removePendingPaths(pendingPaths, potentialAsyncPaths, pendingToken)
     }
@@ -308,7 +314,7 @@ export function useFormValidation(params: {
         )
       }
 
-      return syncResult.valid && asyncValid && !hasBlockingErrors(paths)
+      return syncResult.valid && asyncValid && !hasBlockingErrors(paths) && !hasInputErrors(paths)
     } finally {
       removePendingPaths(pendingPaths, potentialAsyncPaths, pendingToken)
     }
@@ -333,6 +339,27 @@ export function useFormValidation(params: {
       ...customErrors.value.filter((error) => error.path !== key),
       { blocking: options?.blocking === true, message, path: key },
     ]
+  }
+
+  /**
+   * Input a control holds but cannot turn into a value, such as an incomplete phone number. It reads
+   * like a rule error once the field is touched, replaces the rule messages, and blocks submit.
+   */
+  function setInputError(path: readonly string[], message: string | null) {
+    const key = path.join('.')
+    if ((inputErrors.value.get(key) ?? null) === message) {
+      return
+    }
+    const next = new Map(inputErrors.value)
+    if (message === null) next.delete(key)
+    else next.set(key, message)
+    inputErrors.value = next
+  }
+
+  function hasInputErrors(paths: readonly string[]) {
+    return [...inputErrors.value.keys()].some((key) =>
+      paths.some((path) => isScopedPath(key, path)),
+    )
   }
 
   function hasBlockingErrors(paths: readonly string[]) {
@@ -389,7 +416,8 @@ export function useFormValidation(params: {
   }
 
   function resolveFieldErrors(path: string) {
-    return validatedMessages.value.get(path) ?? []
+    const inputError = inputErrors.value.get(path)
+    return inputError ? [inputError] : (validatedMessages.value.get(path) ?? [])
   }
 
   function markTouched(path: readonly string[]) {
@@ -430,6 +458,7 @@ export function useFormValidation(params: {
     isTouched,
     markTouched,
     setError,
+    setInputError,
     validate,
     validateFields,
     validationErrors,
@@ -445,8 +474,9 @@ function buildRegleRules(params: {
   mode: FormValidationMode
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
-  getDateMinMessage?: (bound: string) => string
-  getDateMaxMessage?: (bound: string) => string
+  getDateMinMessage?: (bound: string, type: FormDateFamilyType) => string
+  getDateMaxMessage?: (bound: string, type: FormDateFamilyType) => string
+  getNumberBoundMessage?: (edge: 'min' | 'max', bound: number) => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
   if (isSteppedSchemaForRules(params.schema)) {
@@ -483,8 +513,9 @@ function buildFieldRules(params: {
   mode: FormValidationMode
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
-  getDateMinMessage?: (bound: string) => string
-  getDateMaxMessage?: (bound: string) => string
+  getDateMinMessage?: (bound: string, type: FormDateFamilyType) => string
+  getDateMaxMessage?: (bound: string, type: FormDateFamilyType) => string
+  getNumberBoundMessage?: (edge: 'min' | 'max', bound: number) => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
 
@@ -624,8 +655,9 @@ function buildLeafRules(params: {
   mode: FormValidationMode
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
-  getDateMinMessage?: (bound: string) => string
-  getDateMaxMessage?: (bound: string) => string
+  getDateMinMessage?: (bound: string, type: FormDateFamilyType) => string
+  getDateMaxMessage?: (bound: string, type: FormDateFamilyType) => string
+  getNumberBoundMessage?: (edge: 'min' | 'max', bound: number) => string
 }): RegleRuleTree {
   const output: RegleRuleTree = {}
   if (params.mode !== 'validators' && resolveRequired(params.field, params.callbackParams)) {
@@ -640,6 +672,7 @@ function buildLeafRules(params: {
   }
 
   applyDateBoundsRules(output, params)
+  applyNumberBoundsRules(output, params)
   applyPasswordRequirementRules(output, params)
 
   const authoredValidators: FormValidatorsConfig | undefined =
@@ -682,6 +715,37 @@ function applyPasswordRequirementRules(
     output[`requirement:${requirement.key}`] = withMessage(
       (value: FormValue) => isEmptyValue(value) || (isString(value) && requirement.validate(value)),
       resolveFormText(requirement.label) ?? requirement.key,
+    )
+  }
+}
+
+function applyNumberBoundsRules(
+  output: RegleRuleTree,
+  params: Parameters<typeof buildLeafRules>[0],
+) {
+  if (params.field.type !== 'number') {
+    return
+  }
+
+  const authoredProps = Object.getOwnPropertyDescriptor(params.field, 'props')?.value
+  const resolvedProps = isFunction(authoredProps)
+    ? authoredProps(params.callbackParams)
+    : authoredProps
+  if (!isObject(resolvedProps)) {
+    return
+  }
+
+  const { max, min } = resolvedProps
+  if (isNumber(min)) {
+    output.numberMin = withMessage(
+      (value: FormValue) => !isNumber(value) || value >= min,
+      params.getNumberBoundMessage?.('min', min) ?? `Must be at least ${min}`,
+    )
+  }
+  if (isNumber(max)) {
+    output.numberMax = withMessage(
+      (value: FormValue) => !isNumber(value) || value <= max,
+      params.getNumberBoundMessage?.('max', max) ?? `Must be at most ${max}`,
     )
   }
 }
@@ -936,8 +1000,9 @@ function buildPrimitiveItemRules(params: {
   mode: FormValidationMode
   getRequiredMessage?: () => string
   getUniqueMessage?: () => string
-  getDateMinMessage?: (bound: string) => string
-  getDateMaxMessage?: (bound: string) => string
+  getDateMinMessage?: (bound: string, type: FormDateFamilyType) => string
+  getDateMaxMessage?: (bound: string, type: FormDateFamilyType) => string
+  getNumberBoundMessage?: (edge: 'min' | 'max', bound: number) => string
 }): RegleRuleTree {
   const rules: RegleRuleTree = {}
   for (const target of collectPrimitiveArraysForSchema(params.schema, params.state)) {
@@ -1002,8 +1067,8 @@ function applyDateBoundsRules(
       deps: FormDependencies
       api: ReturnType<FormFieldApiFactory>
     }
-    getDateMinMessage?: (bound: string) => string
-    getDateMaxMessage?: (bound: string) => string
+    getDateMinMessage?: (bound: string, type: FormDateFamilyType) => string
+    getDateMaxMessage?: (bound: string, type: FormDateFamilyType) => string
   },
 ) {
   if (!isDateFamilyField(params.field)) {
@@ -1014,13 +1079,14 @@ function applyDateBoundsRules(
   if (bounds.min !== undefined) {
     output.dateMin = withMessage(
       (value: FormValue) => isWithinDateMin(value, bounds.min, dateField.type),
-      params.getDateMinMessage?.(bounds.minLabel ?? '') ?? `Must be on or after ${bounds.minLabel}`,
+      params.getDateMinMessage?.(bounds.minLabel ?? '', dateField.type) ??
+        `Must be on or after ${bounds.minLabel}`,
     )
   }
   if (bounds.max !== undefined) {
     output.dateMax = withMessage(
       (value: FormValue) => isWithinDateMax(value, bounds.max, dateField.type),
-      params.getDateMaxMessage?.(bounds.maxLabel ?? '') ??
+      params.getDateMaxMessage?.(bounds.maxLabel ?? '', dateField.type) ??
         `Must be on or before ${bounds.maxLabel}`,
     )
   }
