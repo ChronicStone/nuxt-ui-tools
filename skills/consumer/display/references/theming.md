@@ -81,9 +81,28 @@ Slots per kind are the `Display<Kind>Slot` types, for example `DisplayFactsSlot`
 `root`, `group`, `groupHeader`, `groupTitle`, `groupAside`, `item`, `label`, `hint`, `value`,
 `empty`, `actions`.
 
+## Chips
+
+Every chip the blocks draw (facts chips, record and person chips, record badges, list chips, stat
+and breakdown chips, diff notes, the date range duration) is a `UBadge`. Give them all the app's
+badge style once with `display.ui.chip`, a class map over the badge slots (`base`, `label`,
+`leadingIcon`, `leadingAvatar`, `leadingAvatarSize`, `trailingIcon`):
+
+```ts
+nuxtUiTools: {
+  display: {
+    ui: { chip: { base: 'rounded-full px-2 py-0.5 text-[11.5px]', label: 'font-semibold' } },
+  },
+}
+```
+
+A chip's own `ui` merges over it per slot. Tones still color the chips: keep colors out of these
+classes.
+
 ## Presets
 
-Presets are named default props per kind, picked with `preset`:
+Presets are named default props per kind, picked with `preset`. A block's props override the
+preset's, and its `ui` merges over the preset's `ui` per slot with tailwind-merge:
 
 ```ts
 nuxtUiTools: {

@@ -55,6 +55,12 @@ export type DisplayContent = LazyRenderableValue
  */
 export type DisplayUrl = string | (() => MaybePromise<string>)
 
+/**
+ * Where a block link opens. Absolute http(s) links default to `_blank`, others to the same tab;
+ * `null` keeps an absolute link in the same tab.
+ */
+export type DisplayLinkTarget = '_blank' | '_self' | '_parent' | '_top' | (string & {})
+
 /** Date accepted by date-aware blocks: a `Date`, an ISO string, or epoch milliseconds. */
 export type DisplayDate = Date | string | number
 
@@ -68,6 +74,18 @@ export interface DisplayChip extends Omit<BadgeProps, 'label'> {
   label: DisplayText
   tone?: DisplayTone
 }
+
+/** The `UBadge` slots of a chip. */
+export type DisplayChipSlot =
+  | 'base'
+  | 'label'
+  | 'leadingIcon'
+  | 'leadingAvatar'
+  | 'leadingAvatarSize'
+  | 'trailingIcon'
+
+/** Classes per `UBadge` slot of every chip, from `appConfig.nuxtUiTools.display.ui.chip`. */
+export type DisplayChipUi = DisplayUiSlots<DisplayChipSlot>
 
 /** Avatar with every `UAvatar` prop. Without `src`, the initials of `alt` show. */
 export type DisplayAvatar = AvatarProps

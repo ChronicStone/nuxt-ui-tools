@@ -7,6 +7,7 @@ import { isNumber } from '../../../shared/utils/predicate'
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayCodeProps, DisplayCodeSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { resolveDisplayText } from '../../utils/content'
@@ -110,7 +111,7 @@ const classes = computed(() =>
   </div>
   <div v-else :class="classes.root" data-display="code" :data-variant="variant">
     <UIcon v-if="icon" :name="icon" :class="classes.icon" />
-    <span :class="classes.value" data-display-value>{{
+    <span v-reveal-truncated :class="classes.value" data-display-value>{{
       variant === 'secret' && !revealed ? masked : value
     }}</span>
     <div :class="classes.actions">

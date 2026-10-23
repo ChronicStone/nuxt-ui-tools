@@ -132,7 +132,7 @@ Without any of them the block sits on its own, as wide as its span.
 ## Presets
 
 `preset` names default props from `appConfig.nuxtUiTools.display.presets[display]`; the field's
-props win over them.
+props win over them, and its `ui` merges over the preset's `ui` slot by slot.
 
 ```ts
 // app.config.ts

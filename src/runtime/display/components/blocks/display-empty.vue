@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayEmptyProps, DisplayEmptySlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
@@ -60,10 +61,10 @@ const classes = computed(() =>
   >
     <UIcon v-if="variant === 'plain'" :name="icon ?? icons.empty" :class="classes.icon" />
     <span v-else :class="classes.icon"><UIcon :name="icon ?? icons.empty" class="size-5" /></span>
-    <div :class="classes.title">
+    <div v-reveal-truncated :class="classes.title">
       <DisplayRender :content="title ?? (variant === 'plain' ? undefined : t('display.empty'))" />
     </div>
-    <div v-if="!isDisplayContentEmpty(description)" :class="classes.description">
+    <div v-if="!isDisplayContentEmpty(description)" v-reveal-truncated :class="classes.description">
       <DisplayRender :content="description" />
     </div>
     <DisplayActions v-if="actions?.length" :actions="actions" :class="classes.actions" />

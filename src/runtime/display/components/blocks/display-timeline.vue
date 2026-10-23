@@ -7,6 +7,7 @@ import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
 import { useDisplayReveal } from '../../composables/use-display-reveal'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type {
   DisplayTimelineItem,
   DisplayTimelineProps,
@@ -202,6 +203,7 @@ function actorAvatar(name: string) {
         <template v-else>{{ index + 1 }}</template>
       </span>
       <span
+        v-reveal-truncated
         :class="[classes.title, entry.resolvedState === 'upcoming' ? 'font-medium text-muted' : '']"
       >
         <DisplayRender :content="entry.title" />
@@ -231,12 +233,16 @@ function actorAvatar(name: string) {
           />
           <span :class="[classes.marker, dotClass(entry.resolvedState)]" aria-hidden="true" />
           <div :class="classes.body">
-            <div :class="[classes.title, entry.resolvedState === 'upcoming' ? 'text-muted' : '']">
+            <div
+              v-reveal-truncated
+              :class="[classes.title, entry.resolvedState === 'upcoming' ? 'text-muted' : '']"
+            >
               <span class="min-w-0"><DisplayRender :content="entry.title" /></span>
               <time v-if="entry.timeLabel" :class="classes.time">{{ entry.timeLabel }}</time>
             </div>
             <div
               v-if="entry.actor || !isDisplayContentEmpty(entry.description)"
+              v-reveal-truncated
               :class="classes.description"
             >
               <span v-if="entry.actor" :class="classes.actor">

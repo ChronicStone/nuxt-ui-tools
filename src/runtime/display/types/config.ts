@@ -1,5 +1,5 @@
 import type { DisplayKind, DisplayPropsMap, DisplayUiMap } from './registry'
-import type { DisplayBuiltinTone, DisplayToneRegistry } from './shared'
+import type { DisplayBuiltinTone, DisplayChipUi, DisplayToneRegistry } from './shared'
 
 /**
  * Colors of a tone, as CSS colors. Only `color` is needed for a new tone: the ink defaults to it,
@@ -56,5 +56,10 @@ export interface DisplayUiConfig {
   presets?: DisplayPresets
   /** Extra tones, and color changes to the built-in ones. Register new names in `DisplayToneRegistry`. */
   tones?: Partial<DisplayToneDefinitions>
-  ui?: Partial<DisplayUiMap>
+  /**
+   * Slot classes per kind, plus `chip`: the `UBadge` slots of every chip the blocks draw (facts
+   * chips, record badges, list chips…), so chips match the app's badge style. Tones still color
+   * them: leave colors out of these classes.
+   */
+  ui?: Partial<DisplayUiMap> & { chip?: DisplayChipUi }
 }

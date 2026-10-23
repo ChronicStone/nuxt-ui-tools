@@ -3,6 +3,7 @@ import type {
   DisplayBlockBase,
   DisplayChip,
   DisplayContent,
+  DisplayLinkTarget,
   DisplaySurface,
   DisplayTone,
 } from '../shared'
@@ -40,6 +41,8 @@ export interface DisplayFact {
   icon?: string
   /** Makes the value a link. */
   to?: string
+  /** Where `to` opens. Absolute http(s) links open in a new tab by default. */
+  target?: DisplayLinkTarget | null
   /** Draws a placeholder bar instead of the value, such as one figure still loading. */
   loading?: boolean
 }

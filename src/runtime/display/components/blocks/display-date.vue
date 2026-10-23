@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import UBadge from '@nuxt/ui/components/Badge.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayDateProps, DisplayDateSlot, DisplayTone } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty, resolveDisplayText } from '../../utils/content'
@@ -18,6 +18,7 @@ import {
   toDisplayDate,
 } from '../../utils/dates'
 import { displayToneClass } from '../../utils/tone'
+import DisplayChip from '../parts/display-chip.vue'
 import DisplayRender from '../parts/display-render'
 import DisplaySkeleton from '../parts/display-skeleton.vue'
 
@@ -75,8 +76,14 @@ const countdownText = computed(() => {
     return t('display.overdue', { duration: formatDayCount(-days.value, code.value) })
   return formatRelativeDays(days.value, code.value)
 })
+// The year shows whenever the date is not in the current year.
 const longDate = (date: Date | null) =>
-  date ? formatDisplayDate(date, code.value, time ? LONG_DATE_TIME_FORMAT : LONG_DATE_FORMAT) : ''
+  date
+    ? formatDisplayDate(date, code.value, {
+        ...(time ? LONG_DATE_TIME_FORMAT : LONG_DATE_FORMAT),
+        year: date.getFullYear() === reference.value.getFullYear() ? undefined : 'numeric',
+      })
+    : ''
 const duration = computed(() =>
   start.value && finish.value
     ? formatDayCount(calendarDaysBetween(start.value, finish.value) + 1, code.value)
@@ -123,8 +130,10 @@ const classes = computed(() =>
     <template v-if="variant === 'countdown'">
       <UIcon :name="icon ?? (overdue ? icons.warning : 'i-lucide-clock')" :class="classes.icon" />
       <div :class="classes.body">
-        <div :class="classes.value" data-display-countdown>{{ countdownText }}</div>
-        <div :class="classes.caption">
+        <div v-reveal-truncated :class="classes.value" data-display-countdown>
+          {{ countdownText }}
+        </div>
+        <div v-reveal-truncated :class="classes.caption">
           <DisplayRender
             :content="
               description ??
@@ -137,21 +146,14 @@ const classes = computed(() =>
     <template v-else-if="variant === 'range'">
       <div :class="classes.bound">
         <span :class="classes.boundLabel">{{ t('display.from') }}</span>
-        <span :class="classes.boundValue">{{ longDate(start) }}</span>
+        <span v-reveal-truncated :class="classes.boundValue">{{ longDate(start) }}</span>
       </div>
       <div :class="classes.line">
-        <UBadge
-          v-if="duration"
-          color="neutral"
-          variant="soft"
-          size="sm"
-          :label="duration"
-          :class="classes.duration"
-        />
+        <DisplayChip v-if="duration" :chip="{ label: duration }" :class="classes.duration" />
       </div>
       <div :class="[classes.bound, 'text-end']">
         <span :class="classes.boundLabel">{{ t('display.to') }}</span>
-        <span :class="classes.boundValue">{{ longDate(finish) }}</span>
+        <span v-reveal-truncated :class="classes.boundValue">{{ longDate(finish) }}</span>
       </div>
     </template>
     <template v-else>
@@ -161,8 +163,14 @@ const classes = computed(() =>
         <div :class="classes.weekday">{{ leaf?.weekday }}</div>
       </div>
       <div :class="classes.body">
-        <div :class="classes.title"><DisplayRender :content="title ?? longDate(start)" /></div>
-        <div v-if="!isDisplayContentEmpty(description) || timeRange" :class="classes.description">
+        <div v-reveal-truncated :class="classes.title">
+          <DisplayRender :content="title ?? longDate(start)" />
+        </div>
+        <div
+          v-if="!isDisplayContentEmpty(description) || timeRange"
+          v-reveal-truncated
+          :class="classes.description"
+        >
           <UIcon v-if="timeRange" :name="icon ?? 'i-lucide-clock'" class="size-3 shrink-0" />
           <span v-if="timeRange">{{ timeRange }}</span>
           <template v-if="timeRange && !isDisplayContentEmpty(description)"> · </template>

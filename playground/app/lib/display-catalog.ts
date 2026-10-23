@@ -763,10 +763,14 @@ export const displayCatalog: readonly DisplayCatalogKind[] = [
             headingIcon: 'i-lucide-calendar',
             items: [
               {
+                badges: [{ label: 'Training account', tone: 'violet' }],
                 chip: { label: '12 seats', tone: 'success' },
                 icon: 'i-lucide-calendar',
-                meta: 'Lyon Part-Dieu',
-                title: 'TOEIC · Oct 24, 9:00',
+                meta: 'Lyon Part-Dieu, 12 Republic street, second floor, room 3',
+                reference: 'SES-0412',
+                title: 'TOEIC Listening & Reading · Thursday Oct 24, 9:00 · morning session',
+                trailing: '€96',
+                trailingCaption: 'excl. VAT',
               },
               {
                 chip: { label: '3 seats', tone: 'warning' },

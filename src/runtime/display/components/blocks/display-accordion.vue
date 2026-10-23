@@ -4,6 +4,7 @@ import { computed, defineAsyncComponent, ref, useId } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayIcons } from '../../composables/use-display-icons'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayAccordionProps, DisplayAccordionSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import DisplayRender from '../parts/display-render'
@@ -76,7 +77,9 @@ function toggle(index: number) {
         @click="toggle(index)"
       >
         <UIcon v-if="item.icon" :name="item.icon" :class="classes.icon" />
-        <span :class="classes.label"><DisplayRender :content="item.label" /></span>
+        <span v-reveal-truncated :class="classes.label"
+          ><DisplayRender :content="item.label"
+        /></span>
         <UIcon
           :name="icons.chevronDown"
           :class="[classes.chevron, open.includes(index) ? 'rotate-180' : '']"

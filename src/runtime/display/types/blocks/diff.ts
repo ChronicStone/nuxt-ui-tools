@@ -11,6 +11,7 @@ export type DisplayDiffSlot =
   | 'arrow'
   | 'note'
   | 'unchanged'
+  | 'frame'
   | 'table'
   | 'headCell'
   | 'cell'

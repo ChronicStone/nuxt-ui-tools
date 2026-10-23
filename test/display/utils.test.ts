@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { applyDisplayPreset } from '#ui-tools/display/utils/config'
+import { applyDisplayPreset, mergeDisplaySlots } from '#ui-tools/display/utils/config'
 import {
   calendarDaysBetween,
   formatDayCount,
@@ -118,6 +118,25 @@ describe('display presets', () => {
       text: 'Hi',
     })
     expect(applyDisplayPreset('text', { text: 'Hi' }, 'unknown', config)).toEqual({ text: 'Hi' })
+  })
+
+  it('merges slot classes per slot, the block over the preset', () => {
+    expect(mergeDisplaySlots({ root: 'p-4 text-sm', title: 'font-bold' }, { root: 'p-2' })).toEqual(
+      {
+        root: 'text-sm p-2',
+        title: 'font-bold',
+      },
+    )
+    expect(mergeDisplaySlots(undefined, { root: 'p-2' })).toEqual({ root: 'p-2' })
+    const config = {
+      presets: { text: { legal: { ui: { root: 'border-s-4', title: 'text-xs' } } } },
+    }
+    expect(
+      applyDisplayPreset('text', { text: 'Hi', ui: { title: 'text-sm' } }, 'legal', config).ui,
+    ).toEqual({
+      root: 'border-s-4',
+      title: 'text-sm',
+    })
   })
 })
 

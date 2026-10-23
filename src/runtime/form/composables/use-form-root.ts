@@ -1,5 +1,5 @@
 import { useAppConfig } from 'nuxt/app'
-import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { RouteLocationNormalized } from 'vue-router'
 
@@ -50,6 +50,7 @@ export interface UseFormRootParams {
  */
 export function useFormRoot(params: UseFormRootParams) {
   const router = useRouter()
+  const appContext = getCurrentInstance()?.appContext
   const { t } = useUiToolsLocale()
   const appConfig = useAppConfig()
 
@@ -168,12 +169,28 @@ export function useFormRoot(params: UseFormRootParams) {
     )
   }
 
+  /**
+   * Submits the form. A submit handler that throws or rejects leaves the form as it is (values kept,
+   * submitting ended) and reaches the app error handler, where the app toasts it, skipping error
+   * boundaries in between: a page form must not be replaced by its page's error state.
+   */
   async function submit() {
     const controller = params.form()
-    const result = controller ? await controller.submitHandler() : await runtime.submitHandler()
-    if (result.success) {
-      params.onSubmitted(runtime.output.value, result)
+    try {
+      const result = controller ? await controller.submitHandler() : await runtime.submitHandler()
+      if (result.success) params.onSubmitted(runtime.output.value, result)
+    } catch (error) {
+      reportSubmitError(error)
     }
+  }
+
+  function reportSubmitError(error: Error | FormValue) {
+    const handler = appContext?.config.errorHandler
+    if (handler) handler(error, null, 'nuxt-ui-tools form submit')
+    else
+      queueMicrotask(() => {
+        throw error
+      })
   }
 
   async function cancel() {

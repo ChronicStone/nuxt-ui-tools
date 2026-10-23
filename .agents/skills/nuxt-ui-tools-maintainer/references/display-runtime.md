@@ -14,6 +14,7 @@ src/runtime/display/
   components/display.vue the dispatcher (UiDisplay): applies the preset, renders DISPLAY_BLOCKS[display]
   components/blocks/     one component per kind
   components/parts/      render, chip, actions, copy, skeleton, more, empty line, load error, fact value, record media
+  directives/            reveal-truncated: a `title` with the full text of clipped text, on hover and focus
   composables/           app config and slot classes, icons, locale, number format, reveal, file preview, lazy URLs
   utils/                 classes, content, dates, meter, json tokens, tone classes, tone CSS, URLs, presets, registry
   plugins/display-tones  injects the CSS of tones set in appConfig.nuxtUiTools.display.tones
@@ -32,6 +33,9 @@ src/runtime/display/
   tone classes live in `shared/styles/tokens.css`; registered ones come from `buildDisplayToneCss`.
   Chips keep `UBadge` with a Nuxt UI `color` for built-in tones and switch to tone variables for
   registered ones (`isBuiltinTone`).
+- Every text slot carries `v-reveal-truncated`, so text cut by a block or by an app `ui` class
+  shows in full on hover. Chips go through `DisplayChip`, which merges `display.ui.chip` over
+  each chip's `ui`; never render a bare `UBadge` in a block.
 - Collections fold with `useDisplayReveal`; loading draws `DisplaySkeleton`; empty draws
   `DisplayEmptyLine`; words come from the `display` messages of the ui-tools locale.
 - File links (`DisplayUrl`) may be functions. Previews pass them to the file preview as lazy

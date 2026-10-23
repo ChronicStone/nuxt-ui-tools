@@ -10,10 +10,13 @@ const {
   item,
   size = 'md',
   banner = false,
+  avatarClass = undefined,
 } = defineProps<{
   item: DisplayRecordItem
   size?: 'sm' | 'md' | 'lg'
   banner?: boolean
+  /** Classes of the avatar, from the record's `ui.avatar`. */
+  avatarClass?: string
 }>()
 
 const BOX = { lg: 'size-13', md: 'size-10', sm: 'size-8' } as const
@@ -45,7 +48,7 @@ watch(
     v-else-if="item.avatar && !banner"
     v-bind="item.avatar"
     :size="item.avatar.size ?? AVATAR[size]"
-    class="shrink-0"
+    :class="['shrink-0', avatarClass]"
   />
   <span
     v-else-if="item.icon || item.image || banner"

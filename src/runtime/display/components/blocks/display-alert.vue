@@ -5,6 +5,7 @@ import { computed, ref } from 'vue'
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { toneIcon, useDisplayIcons } from '../../composables/use-display-icons'
 import { useDisplayLocale } from '../../composables/use-display-locale'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayAlertAppearance, DisplayAlertProps, DisplayAlertSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
@@ -94,8 +95,10 @@ const classes = computed(() =>
     </span>
     <UIcon v-else-if="resolvedIcon" :name="resolvedIcon" :class="classes.icon" />
     <div :class="classes.body">
-      <div v-if="titled" :class="classes.title"><DisplayRender :content="title" /></div>
-      <div v-if="!isDisplayContentEmpty(message)" :class="classes.message">
+      <div v-if="titled" v-reveal-truncated :class="classes.title">
+        <DisplayRender :content="title" />
+      </div>
+      <div v-if="!isDisplayContentEmpty(message)" v-reveal-truncated :class="classes.message">
         <DisplayRender :content="message" />
       </div>
       <div v-if="items?.length" :class="classes.items">

@@ -5,6 +5,7 @@ import { computed } from 'vue'
 import { isPlainObject } from '../../../shared/utils/predicate'
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayNumber } from '../../composables/use-display-number'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type {
   DisplayMeterLevel,
   DisplayMeterProps,
@@ -172,16 +173,16 @@ function partTone(partToneName: DisplayTone) {
         </text>
       </svg>
       <div :class="classes.parts">
-        <div v-if="!isDisplayContentEmpty(label)" :class="classes.label">
+        <div v-if="!isDisplayContentEmpty(label)" v-reveal-truncated :class="classes.label">
           <DisplayRender :content="label" />
         </div>
         <div v-for="(part, index) in resolvedParts" :key="index" :class="partTone(part.tone)">
           <div :class="classes.header">
-            <span :class="classes.label">
+            <span v-reveal-truncated :class="classes.label">
               <UIcon v-if="part.icon" :name="part.icon" class="size-3.5" />
               <DisplayRender :content="part.label" />
             </span>
-            <span :class="classes.value"
+            <span v-reveal-truncated :class="classes.value"
               ><DisplayRender :content="part.valueLabel ?? format(part.value)"
             /></span>
           </div>
@@ -192,15 +193,15 @@ function partTone(partToneName: DisplayTone) {
             />
           </div>
         </div>
-        <div v-if="!isDisplayContentEmpty(caption)" :class="classes.caption">
+        <div v-if="!isDisplayContentEmpty(caption)" v-reveal-truncated :class="classes.caption">
           <DisplayRender :content="caption" />
         </div>
       </div>
     </div>
     <template v-else-if="variant === 'scale'">
       <div :class="classes.header">
-        <span :class="classes.label"><DisplayRender :content="label" /></span>
-        <span v-if="!isDisplayContentEmpty(valueLabel)" :class="classes.value"
+        <span v-reveal-truncated :class="classes.label"><DisplayRender :content="label" /></span>
+        <span v-if="!isDisplayContentEmpty(valueLabel)" v-reveal-truncated :class="classes.value"
           ><DisplayRender :content="valueLabel"
         /></span>
       </div>
@@ -234,7 +235,7 @@ function partTone(partToneName: DisplayTone) {
           {{ resolveDisplayText(level.caption) }}
         </span>
       </div>
-      <div v-if="!isDisplayContentEmpty(caption)" :class="classes.caption">
+      <div v-if="!isDisplayContentEmpty(caption)" v-reveal-truncated :class="classes.caption">
         <DisplayRender :content="caption" />
       </div>
     </template>
@@ -259,14 +260,14 @@ function partTone(partToneName: DisplayTone) {
           :style="{ width: `${part.width}%` }"
         />
       </div>
-      <div v-if="!isDisplayContentEmpty(caption)" :class="classes.caption">
+      <div v-if="!isDisplayContentEmpty(caption)" v-reveal-truncated :class="classes.caption">
         <DisplayRender :content="caption" />
       </div>
     </template>
     <template v-else>
       <div v-if="!isDisplayContentEmpty(label) || variant === 'bar'" :class="classes.header">
-        <span :class="classes.label"><DisplayRender :content="label" /></span>
-        <span :class="classes.value"
+        <span v-reveal-truncated :class="classes.label"><DisplayRender :content="label" /></span>
+        <span v-reveal-truncated :class="classes.value"
           ><DisplayRender :content="variant === 'bar' ? headerValue : valueLabel"
         /></span>
       </div>
@@ -300,7 +301,7 @@ function partTone(partToneName: DisplayTone) {
           /></b>
         </span>
       </div>
-      <div v-if="!isDisplayContentEmpty(caption)" :class="classes.caption">
+      <div v-if="!isDisplayContentEmpty(caption)" v-reveal-truncated :class="classes.caption">
         <DisplayRender :content="caption" />
       </div>
     </template>

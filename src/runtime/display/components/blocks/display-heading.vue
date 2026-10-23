@@ -4,9 +4,11 @@ import UIcon from '@nuxt/ui/components/Icon.vue'
 import { computed } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayHeadingProps, DisplayHeadingSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty, resolveDisplayText } from '../../utils/content'
+import { isExternalLink } from '../../utils/links'
 import { displayToneClass } from '../../utils/tone'
 import DisplayRender from '../parts/display-render'
 import DisplaySkeleton from '../parts/display-skeleton.vue'
@@ -68,6 +70,7 @@ const actionButton = computed(() => {
     variant: 'link' as const,
     ...rest,
     label: resolveDisplayText(label),
+    target: rest.target === undefined && isExternalLink(rest.to) ? '_blank' : rest.target,
   }
 })
 </script>
@@ -83,14 +86,18 @@ const actionButton = computed(() => {
   <div v-else :class="[classes.root, displayToneClass(tone)]" data-display="heading">
     <span v-if="tile" :class="classes.icon"><UIcon :name="icon ?? ''" class="size-5" /></span>
     <UIcon v-else-if="icon" :name="icon" :class="classes.icon" />
-    <div :class="classes.text">
+    <div v-reveal-truncated :class="classes.text">
       <component :is="`h${level}`" :class="classes.title">
         <DisplayRender :content="title" />
         <span v-if="count !== undefined" :class="classes.count">{{
           resolveDisplayText(count)
         }}</span>
       </component>
-      <div v-if="!isDisplayContentEmpty(description)" :class="classes.description">
+      <div
+        v-if="!isDisplayContentEmpty(description)"
+        v-reveal-truncated
+        :class="classes.description"
+      >
         <DisplayRender :content="description" />
       </div>
     </div>

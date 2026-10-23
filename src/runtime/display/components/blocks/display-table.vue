@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { isNumber } from '../../../shared/utils/predicate'
 import { useDisplayAppUi } from '../../composables/use-display-config'
 import { useDisplayReveal } from '../../composables/use-display-reveal'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayTableColumn, DisplayTableProps, DisplayTableSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty } from '../../utils/content'
@@ -81,6 +82,7 @@ function alignClass(column: DisplayTableColumn) {
               v-for="column in columns"
               :key="column.key"
               scope="col"
+              v-reveal-truncated
               :class="[classes.headCell, ...alignClass(column)]"
               :style="column.width ? { width: column.width } : undefined"
             >
@@ -93,6 +95,7 @@ function alignClass(column: DisplayTableColumn) {
             <td
               v-for="column in columns"
               :key="column.key"
+              v-reveal-truncated
               :class="[classes.cell, ...alignClass(column)]"
             >
               <DisplayRender :content="row[column.key]" />
@@ -120,6 +123,7 @@ function alignClass(column: DisplayTableColumn) {
     />
     <div
       v-if="!isDisplayContentEmpty(caption) || !isDisplayContentEmpty(note)"
+      v-reveal-truncated
       :class="classes.meta"
     >
       <span><DisplayRender :content="caption" /></span>

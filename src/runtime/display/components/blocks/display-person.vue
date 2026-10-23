@@ -5,9 +5,11 @@ import ULink from '@nuxt/ui/components/Link.vue'
 import { computed } from 'vue'
 
 import { useDisplayAppUi } from '../../composables/use-display-config'
+import { vRevealTruncated } from '../../directives/reveal-truncated'
 import type { DisplayPerson, DisplayPersonProps, DisplayPersonSlot } from '../../types'
 import { resolveDisplayClasses } from '../../utils/classes'
 import { isDisplayContentEmpty, resolveDisplayText } from '../../utils/content'
+import { displayLinkAttrs } from '../../utils/links'
 import {
   DISPLAY_SURFACE_CLASSES,
   displayToneClass,
@@ -105,7 +107,7 @@ function avatarOf(entry: DisplayPerson) {
         :ui="{ fallback: 'font-semibold text-toned', root: 'bg-elevated' }"
       />
     </div>
-    <span v-if="!isDisplayContentEmpty(label)" :class="classes.label"
+    <span v-if="!isDisplayContentEmpty(label)" v-reveal-truncated :class="classes.label"
       ><DisplayRender :content="label"
     /></span>
   </div>
@@ -116,8 +118,12 @@ function avatarOf(entry: DisplayPerson) {
         :size="AVATAR_SIZES[variant === 'contact' ? 'contact' : 'user'][size]"
       />
       <div :class="classes.body">
-        <div :class="classes.name">{{ resolveDisplayText(self.name) }}</div>
-        <div v-if="!isDisplayContentEmpty(self.description)" :class="classes.description">
+        <div v-reveal-truncated :class="classes.name">{{ resolveDisplayText(self.name) }}</div>
+        <div
+          v-if="!isDisplayContentEmpty(self.description)"
+          v-reveal-truncated
+          :class="classes.description"
+        >
           <DisplayRender :content="self.description" />
         </div>
       </div>
@@ -128,12 +134,13 @@ function avatarOf(entry: DisplayPerson) {
         <UIcon v-if="contact.icon" :name="contact.icon" :class="classes.contactIcon" />
         <ULink
           v-if="contact.href"
-          :to="contact.href"
+          v-bind="displayLinkAttrs(contact.href, contact.target)"
+          v-reveal-truncated
           :class="[classes.contactValue, 'hover:text-highlighted']"
         >
           {{ contact.value }}
         </ULink>
-        <span v-else :class="classes.contactValue">{{ contact.value }}</span>
+        <span v-else v-reveal-truncated :class="classes.contactValue">{{ contact.value }}</span>
         <DisplayCopy v-if="contact.copy !== false" :value="contact.value" class="-my-1" />
       </div>
     </div>

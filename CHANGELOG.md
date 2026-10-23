@@ -1,3 +1,18 @@
+## v1.25.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.25.0...v1.25.1)
+
+### 🩹 Fixes
+
+- **display:** Text a block cuts short (record titles, meta and descriptions, people, list items, file names, chips, chart labels, code values, and any text an app clips through `ui`, such as a facts value) shows its full text on hover and focus through a `title`, set only while the text is cut. An authored `title` is kept
+- **display:** Record `stack` items render every record field: reference, title, meta, description, badges, image, avatar or icon, and the chip together with the trailing value and its caption. A new `avatar` slot styles record avatars in every variant
+- **display:** A block's `ui` merges over its preset's `ui` slot by slot with tailwind-merge, instead of replacing it
+- **display:** Dates outside the current year show their year, such as a countdown's « Échéance jeu. 30 sept. 2027 »
+- **display:** The diff `columns` table frame takes a `frame` slot class
+- **display:** Links of facts, records, person contacts and actions open an absolute http(s) address in a new tab with `rel="noopener noreferrer"` instead of navigating away from the form; a `target` on facts items, record items and contacts (and the actions' own `target`) chooses, and `null` keeps the same tab
+- **form:** A submit handler that throws or rejects no longer reaches the page's error boundary and replaces a page form: in every mode the form keeps its values, leaves the submitting state, and the error goes to the app error handler, where modal and drawer forms already sent it
+- **display:** `display.ui.chip` in the app config styles every chip the blocks draw, per `UBadge` slot, with each chip's `ui` merged over it; tones still color the chips. The date range duration is now one of those chips
+
 ## v1.25.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.24.0...v1.25.0)

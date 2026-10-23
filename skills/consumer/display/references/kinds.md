@@ -4,6 +4,14 @@ Every example is the `props` of a block: write it as `{ display: '<kind>', props
 `<UiDisplay display="<kind>" :props="props" />`. Text props accept a string, a lazy translation, a
 VNode or a render function. Every kind also takes `loading` and `ui`.
 
+Text a block cuts short (`truncate`, a line clamp, or a clipping class you add through `ui`) shows
+in full on hover and focus, through a `title` set while it is cut. An authored `title` is kept.
+
+Links (`to` on facts and records, `href` on person contacts, `to` on actions) open an absolute
+http(s) address in a new tab with `rel="noopener noreferrer"`, so a form never navigates away to an
+external page. Set `target` to choose (`'_self'`, `'_blank'`…), or `null` to keep an absolute link in
+the same tab; app paths stay in the same tab.
+
 ## heading
 
 Titles a group of fields.
@@ -67,7 +75,7 @@ Warning and error alerts are `role="status"`, so a notice appearing while the us
 | `actions`           | buttons under the facts                                                                                              |
 | `empty`             | shown with no facts                                                                                                  |
 
-A fact: `{ label, value?, hint?, tone?, chip?, copy?, mono?, emphasis?, icon?, to?, loading? }`.
+A fact: `{ label, value?, hint?, tone?, chip?, copy?, mono?, emphasis?, icon?, to?, target?, loading? }`.
 An empty value draws a dash; `chip` draws the value as a badge; `copy: true` copies a text value
 (or pass the string to copy); `loading` draws a placeholder bar in place of the value.
 
@@ -129,7 +137,8 @@ With `maxHeight`, the rows scroll under a pinned header and footer. Numeric colu
 
 `{ variant: 'inline' | 'columns', title?, columns?, items: { label, before?, after?, changed?, note? }[], showUnchanged? }`.
 `inline` strikes the old value before the new one and hides items with `changed: false` unless
-`showUnchanged`, which lists them with their value as is. `columns` dims unchanged rows.
+`showUnchanged`, which lists them with their value as is. `columns` dims unchanged rows; the `frame`
+slot styles the box around its table.
 
 ## record
 
@@ -141,6 +150,10 @@ With `maxHeight`, the rows scroll under a pinned header and footer. Numeric colu
 | `badges`, `chip`, `trailing`, `trailingCaption`           |                                             |
 | `to`, `onClick`                                           | makes the record a link or a button         |
 | `heading`, `headingIcon`, `items`, `max`, `step`, `empty` | `stack`                                     |
+
+`stack` items render every field: reference, title, meta, description, badges, image, avatar or
+icon, and the chip together with the trailing value and its caption. The `avatar` slot styles
+avatars, in every variant.
 
 ## person
 
@@ -176,6 +189,7 @@ An item: `{ text, description?, icon?, tone?, done?, current?, meta?, tooltip?, 
 ## date
 
 `{ variant: 'tile' | 'range' | 'countdown', value, end?, title?, description?, icon?, tone?, time?, deadline?, warnWithin?, now?, label? }`.
+Dates outside the current year (the year of `now`) show their year, in every variant.
 `countdown` words the distance (« In 2 days », « Tomorrow »), turns `warning` within `warnWithin`
 days (3) and `error` once past when `deadline` (default) reads it as overdue (« 3 days overdue »).
 

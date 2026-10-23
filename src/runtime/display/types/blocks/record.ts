@@ -3,6 +3,7 @@ import type {
   DisplayBlockBase,
   DisplayChip,
   DisplayContent,
+  DisplayLinkTarget,
   DisplayRevealable,
   DisplaySurface,
   DisplayTone,
@@ -11,6 +12,7 @@ import type {
 export type DisplayRecordSlot =
   | 'root'
   | 'media'
+  | 'avatar'
   | 'icon'
   | 'body'
   | 'reference'
@@ -49,6 +51,8 @@ export interface DisplayRecordItem {
   chip?: DisplayChip
   /** Makes the record a link. */
   to?: string
+  /** Where `to` opens. Absolute http(s) links open in a new tab by default. */
+  target?: DisplayLinkTarget | null
   onClick?: () => void
 }
 
