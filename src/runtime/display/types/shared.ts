@@ -69,6 +69,18 @@ export interface DisplayChip extends Omit<BadgeProps, 'label'> {
   tone?: DisplayTone
 }
 
+/** The `UBadge` slots of a chip. */
+export type DisplayChipSlot =
+  | 'base'
+  | 'label'
+  | 'leadingIcon'
+  | 'leadingAvatar'
+  | 'leadingAvatarSize'
+  | 'trailingIcon'
+
+/** Classes per `UBadge` slot of every chip, from `appConfig.nuxtUiTools.display.ui.chip`. */
+export type DisplayChipUi = DisplayUiSlots<DisplayChipSlot>
+
 /** Avatar with every `UAvatar` prop. Without `src`, the initials of `alt` show. */
 export type DisplayAvatar = AvatarProps
 

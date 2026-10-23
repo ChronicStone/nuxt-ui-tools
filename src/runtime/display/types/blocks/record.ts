@@ -11,6 +11,7 @@ import type {
 export type DisplayRecordSlot =
   | 'root'
   | 'media'
+  | 'avatar'
   | 'icon'
   | 'body'
   | 'reference'
