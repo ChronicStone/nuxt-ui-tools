@@ -1016,6 +1016,12 @@ notice. Full reference: `skills/consumer/display/references/info-field.md`.
 Loaded props show the block's skeleton until they arrive, and a compact error with « Retry » when
 they fail; a promise from an older run never overwrites a newer one.
 
+A submit handler that throws or rejects never takes the form down, in any mode (inline, modal,
+drawer, fullscreen, page): the form keeps its values, leaves the submitting state, and the error
+goes to the app error handler (Nuxt's `vue:error` hook, where an app shows its error toast),
+skipping error boundaries such as a page's `NuxtErrorBoundary`. Return `{ success: false }` to fail
+without an error.
+
 In any field callback, `api.form.close()` closes the form like its Cancel action (confirming
 unsaved changes when the schema asks for it), next to `api.form.set`, `submit`, `reset` and
 `validate`.
