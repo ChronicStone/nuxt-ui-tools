@@ -199,6 +199,33 @@ defineTableSchema({
   tableKey: 'summary-inference',
 })
 
+defineTableSchema({
+  rowKey: 'id',
+  source: tableSource({
+    mode: 'client',
+    query: () => ({
+      queryKey: ['scoped-filters'],
+      queryFn: async () => [{ id: 'center-1', active: true }],
+    }),
+  }),
+  filters: {
+    ui: (filter) => [
+      filter.option('certification', {
+        label: 'Certification',
+        behavior: { applyTo: 'query', defaultValue: ['RS6905'] },
+        source: { options: [{ label: 'RS6905', value: 'RS6905' }] },
+      }),
+      filter.boolean('active', { label: 'Active' }),
+      // @ts-expect-error a key that is not a row field must scope the query
+      filter.option('period', {
+        label: 'Period',
+        source: { options: [{ label: 'All', value: 'all' }] },
+      }),
+    ],
+  },
+  tableKey: 'scoped-filters',
+})
+
 type ContextData = ExtractTableContextData<typeof schema>
 type PageContextData = ExtractTablePageContextData<typeof schema>
 type Row = ExtractTableRow<typeof schema>

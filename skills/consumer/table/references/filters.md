@@ -161,6 +161,10 @@ filters: {
 },
 ```
 
+A query filter's key names a query parameter, so it does not have to be a row field: `period` or
+`certification` type-check as long as the filter sets `applyTo: 'query'`. Any other filter key must be
+a row field path.
+
 `persist: true` remembers the filter's last value in `localStorage`, per table key and filter key. On
 the next visit it replaces the default when the URL does not set the filter, without adding a
 history entry. A value the filter no longer accepts is ignored, and the stored value is forgotten as
