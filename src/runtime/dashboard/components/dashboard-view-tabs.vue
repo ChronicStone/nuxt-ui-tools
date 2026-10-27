@@ -30,6 +30,14 @@ defineSlots<{
 /** Room kept between a revealed tab and the strip edge, in pixels. */
 const EDGE = 16
 
+/**
+ * An invisible bold copy of the label (`data-label`) sets the label's width, so a tab an app turns
+ * bold when active keeps the width it has when idle and its neighbours never shift. The copy is
+ * generated content: the label stays the tab's only text and accessible name.
+ */
+const LABEL =
+  'inline-flex flex-col items-center after:invisible after:block after:h-0 after:overflow-hidden after:font-bold after:content-[attr(data-label)]'
+
 const { t } = useUiToolsLocale()
 const appUi = useDashboardUi()
 const strip = useTemplateRef<HTMLElement>('strip')
@@ -88,7 +96,7 @@ watch(
       @click="dashboard.view.current = item.value"
     >
       <slot name="tab" :item :active="dashboard.view.current === item.value">
-        {{ item.label }}
+        <span :class="LABEL" :data-label="item.label">{{ item.label }}{{ ' ' }}</span>
         <span v-if="item.badge !== undefined" :class="classes.badge" data-dashboard-view-badge>
           {{ item.badge }}
         </span>
