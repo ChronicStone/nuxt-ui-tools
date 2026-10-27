@@ -177,6 +177,14 @@ describe('display blocks', () => {
     })
     expect(open.text()).toContain('24 × 96')
     expect(open.text()).toContain('From 20')
+    const totalDetail = {
+      lines: [{ label: 'VAT', value: '460' }],
+      total: { detail: '≈ 3 000 $', label: 'Total', value: '2764' },
+    }
+    const detailed = mount(DisplayBreakdown, { props: totalDetail })
+    expect(detailed.text()).toContain('Total≈ 3 000 $')
+    const folded = mount(DisplayBreakdown, { props: { ...totalDetail, mode: 'collapsible' } })
+    expect(folded.text()).toContain('≈ 3 000 $')
     const collapsible = mount(DisplayBreakdown, {
       props: {
         lines: [{ label: 'VAT', value: '460' }],

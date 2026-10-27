@@ -436,7 +436,12 @@ export const displayCatalog: readonly DisplayCatalogKind[] = [
               { label: 'Subtotal', subtotal: true, value: '€2,073.60' },
               { detail: '20 %', label: 'VAT', value: '€414.72' },
             ],
-            total: { chip: { label: 'Quote' }, label: 'Total', value: '€2,488.32' },
+            total: {
+              chip: { label: 'Quote' },
+              detail: '≈ $2,700',
+              label: 'Total',
+              value: '€2,488.32',
+            },
           },
         },
       },
