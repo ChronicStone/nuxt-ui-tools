@@ -16,12 +16,14 @@
    * The standard properties keep the platform's overlay scrollbars, drawn over the content. Styling
    * `::-webkit-scrollbar` switches those off and reserves a gutter in every scroll container, so the
    * pseudo-elements below only style browsers without the standard properties.
+   *
+   * No `transition` here: declared on every element, it made Chrome start about a thousand
+   * transitions when a modal drawer opened or closed (Reka sets `pointer-events: none` on the body).
    */
   @supports (scrollbar-width: thin) {
     * {
       scrollbar-width: thin;
       scrollbar-color: transparent transparent;
-      transition: scrollbar-color 0.2s ease;
     }
 
     *:hover {
