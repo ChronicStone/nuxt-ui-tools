@@ -1,3 +1,13 @@
+## v1.27.3
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.2...v1.27.3)
+
+### 🩹 Fixes
+
+- **shared:** The scrollbar stylesheet no longer declares a `transition` on every element. A modal drawer opening or closing made Chrome start about a thousand of them, which delayed the drawer; the thumb still appears on hover, without the 0.2 s fade
+- **dashboard:** A view tab reserves the width of its bold label, so tabs an app turns bold when active (through `ui.viewTabs`) no longer shift their neighbours by a few pixels
+- **display:** A `breakdown` block renders `total.detail` next to the total label, the same way as the line details
+
 ## v1.27.2
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.1...v1.27.2)
