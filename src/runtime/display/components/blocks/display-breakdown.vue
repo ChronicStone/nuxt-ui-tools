@@ -125,6 +125,9 @@ function valueClass(line: DisplayBreakdownLine) {
       <div :class="classes.total">
         <span v-reveal-truncated :class="classes.totalLabel">
           <DisplayRender :content="total?.label ?? title" />
+          <span v-if="!isDisplayContentEmpty(total?.detail)" :class="classes.detail"
+            ><DisplayRender :content="total?.detail"
+          /></span>
           <DisplayChip v-if="total?.chip" :chip="total.chip" />
         </span>
         <button type="button" :class="classes.toggle" :aria-expanded="open" @click="open = !open">
@@ -171,6 +174,9 @@ function valueClass(line: DisplayBreakdownLine) {
       <div v-if="total" :class="classes.total">
         <span v-reveal-truncated :class="classes.totalLabel">
           <DisplayRender :content="total.label" />
+          <span v-if="!isDisplayContentEmpty(total.detail)" :class="classes.detail"
+            ><DisplayRender :content="total.detail"
+          /></span>
           <DisplayChip v-if="total.chip" :chip="total.chip" />
         </span>
         <span :class="classes.totalValue"><DisplayRender :content="total.value" /></span>
