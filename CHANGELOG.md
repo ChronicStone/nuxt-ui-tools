@@ -1,3 +1,11 @@
+## v1.27.5
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.4...v1.27.5)
+
+### 🩹 Fixes
+
+- **form:** An array field (`array-list`, `array-table`, …) starts from its `default` when the form input leaves it out; it used to start empty, ignoring the default
+
 ## v1.27.4
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.3...v1.27.4)
