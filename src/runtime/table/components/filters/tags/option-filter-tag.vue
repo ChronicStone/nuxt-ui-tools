@@ -96,7 +96,9 @@ const session = useFilterTagSession({
   },
   onDismiss: () => emit('dismiss'),
   onOpen: () => {
-    isContentReady.value = false
+    // An embedded editor opens a microtask after its content mounted; resetting here would
+    // leave it unready for good and stop remote options from following the search.
+    if (!props.embedded) isContentReady.value = false
     initLocalState()
   },
   onSessionClosed: () => emit('sessionClosed'),

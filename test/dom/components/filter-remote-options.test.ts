@@ -173,6 +173,28 @@ describe('remote option filters', () => {
     ])
   })
 
+  it('searches on the server from the editor the add-filter picker embeds', async () => {
+    const server = createCountryServer()
+    harness = await mountRemoteTags(server)
+    const w = harness.wrapper
+
+    await w.find('.nut-dl-tag--add').trigger('click')
+    await harness.flush()
+    await must(
+      w
+        .findAll('[data-filter-stage-content] button.rounded-md')
+        .find((row) => row.text() === 'Pays'),
+    ).trigger('click')
+    await harness.flush()
+    await must(w.findAll('[data-filter-stage-content] button')[0]).trigger('click')
+    await harness.until(() => texts(must(harness).wrapper, '.nut-dl-option').length === 20)
+
+    await w.find('[data-filter-stage-content] input').setValue('pays 5')
+    await harness.until(() => texts(must(harness).wrapper, '.nut-dl-option').length === 11)
+
+    expect(server.pages.at(-1)).toStrictEqual({ index: 1, search: 'pays 5' })
+  })
+
   it('counts each loaded page through the filter facet query, never the main request', async () => {
     const server = createCountryServer()
     const counted: (readonly (string | number | boolean)[])[] = []
