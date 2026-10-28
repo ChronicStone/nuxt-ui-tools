@@ -1,3 +1,11 @@
+## v1.27.4
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.3...v1.27.4)
+
+### 🩹 Fixes
+
+- **table:** An option filter opened from the add-filter picker searches its remote options again. The embedded editor marked its content unready right after mounting it, so typing kept the first page on screen and never reached the server
+
 ## v1.27.3
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.2...v1.27.3)
