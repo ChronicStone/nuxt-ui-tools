@@ -305,10 +305,13 @@ function mergeMissingFieldDefaults(
 
     if (isArrayField(field)) {
       const path = fieldPath(parentPath, field)
-      const value = getPathValue(target, path)
-      if (!Array.isArray(value)) {
-        setPathValue(target, path, [])
-        continue
+      const current = getPathValue(target, path)
+      const fallback = Array.isArray(current)
+        ? null
+        : resolveFieldDefault(field, ctx, apiFactory?.(path, field))
+      const value = Array.isArray(current) ? current : Array.isArray(fallback) ? fallback : []
+      if (!Array.isArray(current)) {
+        setPathValue(target, path, value)
       }
       for (const [index, item] of value.entries()) {
         if (!isRecord(item)) {

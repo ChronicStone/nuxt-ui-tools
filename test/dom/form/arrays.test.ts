@@ -180,4 +180,31 @@ describe('array list items', () => {
     expect(harness.output()).toStrictEqual({ centers: [{ name: 'Paris' }] })
     harness.unmount()
   })
+
+  it('starts from the field default when the input has no value for it', async () => {
+    const schema = defineFormSchema({
+      fields: [
+        {
+          default: [{ name: 'Lyon' }, { name: 'Paris' }],
+          fields: [
+            { key: 'name', label: 'Name', type: 'text' },
+            { default: 'FR', key: 'country', label: 'Country', type: 'text' },
+          ],
+          key: 'centers',
+          props: { draggable: false },
+          type: 'array-list',
+        },
+      ],
+    })
+    const harness = await mountForm({ schema })
+
+    await harness.until(() => harness.wrapper.findAll('[data-form-array-item]').length === 2)
+    expect(harness.output()).toStrictEqual({
+      centers: [
+        { country: 'FR', name: 'Lyon' },
+        { country: 'FR', name: 'Paris' },
+      ],
+    })
+    harness.unmount()
+  })
 })
