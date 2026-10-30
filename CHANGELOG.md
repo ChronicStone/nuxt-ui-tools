@@ -1,3 +1,11 @@
+## v1.28.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.5...v1.28.0)
+
+### 🚀 Enhancements
+
+- **media:** `UiVideoPlayer`, the file preview's video player as a standalone component: custom controls that hide during playback (play, time, seek, volume, speed, captions, picture-in-picture, full screen), a start overlay with an optional title, and Space / K / M / F shortcuts while the player has focus. The file preview renders it, and the media controls live in the new `media` runtime domain (`#ui-tools/media`, `nuxt-ui-tools/media`)
+
 ## v1.27.5
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.4...v1.27.5)

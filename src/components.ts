@@ -151,6 +151,13 @@ function getPublicComponents(
       name: `${prefix}FilePreviewTools`,
     },
 
+    // Media
+    {
+      filePath: `${runtimeDir}/media/components/video-player.vue`,
+      global: options.global,
+      name: `${prefix}VideoPlayer`,
+    },
+
     // Form
     {
       filePath: `${runtimeDir}/form/components/root/form.vue`,

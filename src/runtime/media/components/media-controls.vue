@@ -5,9 +5,9 @@ import USlider from '@nuxt/ui/components/Slider.vue'
 import type { useFullscreen, useMediaControls } from '@vueuse/core'
 import { computed } from 'vue'
 
-import { useUiToolsLocale } from '../../../i18n/use-locale'
-import { formatFilePreviewDuration } from '../../utils/format'
-import FilePreviewButton from '../shell/file-preview-button.vue'
+import FilePreviewButton from '../../file-preview/components/shell/file-preview-button.vue'
+import { formatFilePreviewDuration } from '../../file-preview/utils/format'
+import { useUiToolsLocale } from '../../i18n/use-locale'
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
