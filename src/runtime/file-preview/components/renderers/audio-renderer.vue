@@ -4,10 +4,10 @@ import { useMediaControls } from '@vueuse/core'
 import { computed, useTemplateRef } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
+import MediaControls from '../../../media/components/media-controls.vue'
 import { onFilePreviewKey } from '../../composables/use-file-preview-shell'
 import type { FilePreviewRendererEmits, FilePreviewRendererProps } from '../../types'
 import { formatFilePreviewDuration } from '../../utils/format'
-import MediaControls from './media-controls.vue'
 
 /** Heights of the decorative equalizer bars on the cover. */
 const BARS = Array.from(

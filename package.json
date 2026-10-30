@@ -35,6 +35,9 @@
       "i18n": [
         "./dist/runtime/i18n/index.d.ts"
       ],
+      "media": [
+        "./dist/runtime/media/index.d.ts"
+      ],
       "query-state": [
         "./dist/runtime/query-state/index.d.ts"
       ],
@@ -92,6 +95,14 @@
     "#ui-tools/i18n/*": {
       "types": "./dist/runtime/i18n/*.d.ts",
       "default": "./dist/runtime/i18n/*.js"
+    },
+    "#ui-tools/media": {
+      "types": "./dist/runtime/media/index.d.ts",
+      "default": "./dist/runtime/media/index.js"
+    },
+    "#ui-tools/media/*": {
+      "types": "./dist/runtime/media/*.d.ts",
+      "default": "./dist/runtime/media/*.js"
     },
     "#ui-tools/query-state": {
       "types": "./dist/runtime/query-state/index.d.ts",
@@ -158,6 +169,10 @@
     "./i18n": {
       "types": "./dist/runtime/i18n/index.d.ts",
       "import": "./dist/runtime/i18n/index.js"
+    },
+    "./media": {
+      "types": "./dist/runtime/media/index.d.ts",
+      "import": "./dist/runtime/media/index.js"
     },
     "./query-state": {
       "types": "./dist/runtime/query-state/index.d.ts",

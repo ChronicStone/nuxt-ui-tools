@@ -70,6 +70,7 @@ const publicRuntimeDomains = [
   'file-preview',
   'form',
   'i18n',
+  'media',
   'query-prefetch',
   'query-state',
   'shared',
