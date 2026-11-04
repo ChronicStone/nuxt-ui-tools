@@ -19,7 +19,7 @@ import type {
   TableSummaryCellDefinition,
   TableSummaryValue,
 } from '../../types'
-import { mergeDataListUiClass } from '../../utils'
+import { mergeDataListUiClass, tableGroupOf } from '../../utils'
 import {
   ROW_ACTIONS_COLUMN_ID,
   SELECT_COLUMN_ID,
@@ -72,7 +72,7 @@ const props = defineProps<{
 }>()
 
 const internals = useTableInternals()
-const { tree } = internals
+const { groups, tree } = internals
 const dataListUi = useDataListUi()
 const { locale, t } = useUiToolsLocale()
 
@@ -114,6 +114,7 @@ const tokenStyle = computed(() => ({
   '--nut-dl-gutter': `${gutter.value}px`,
   '--nut-dl-head-h': `${tokens.value.head}px`,
   '--nut-dl-row-h': `${tokens.value.row}px`,
+  '--nut-dl-select-w': `${SELECT_COLUMN_WIDTH + gutterExtra.value}px`,
   '--nut-dl-tree-gutter': `${TREE_GUTTER_WIDTH}px`,
   '--nut-dl-tree-toggle': `${TREE_TOGGLE_WIDTH}px`,
   '--nut-dl-tree-gap': `${TREE_GAP}px`,
@@ -172,7 +173,7 @@ const pinned = computed(() => {
 })
 
 function getRowId(row: GenericObject, index: number) {
-  return internals.selection.getRowId({ index, row })
+  return tableGroupOf(row)?.key ?? internals.selection.getRowId({ index, row })
 }
 
 /**
@@ -180,9 +181,11 @@ function getRowId(row: GenericObject, index: number) {
  * virtualizer, the row model and every index below then work on rows exactly as they do in a
  * plain table, and a closed branch costs nothing however many rows it holds.
  */
-const sourceRows = computed<GenericObject[]>(() =>
-  tree.enabled.value && rows.value.length > 0 ? tree.visibleRows.value : rows.value,
-)
+const sourceRows = computed<GenericObject[]>(() => {
+  if (rows.value.length === 0) return rows.value
+  if (tree.enabled.value) return tree.visibleRows.value
+  return groups.enabled.value ? groups.displayRows.value : rows.value
+})
 const renderRows = computed(() => (rowsMounted.value ? sourceRows.value : []))
 const virtualized = computed(
   () =>
@@ -862,7 +865,9 @@ defineExpose({ resetColumnSizing })
             :node="tree.nodeOf(row.id)"
             :expanded="tree.isExpanded(row.id)"
             :checkbox="hasCheckbox(row.id)"
-            :motion="tree.motionOf(row.id)"
+            :motion="tree.motionOf(row.id) ?? groups.motionOf(row.id)"
+            :group="tableGroupOf(row.original)"
+            :col-span="columnCount"
             @toggle="tree.toggleRow(row.id)"
             @select="onSelectRow(row.id, $event)"
           />

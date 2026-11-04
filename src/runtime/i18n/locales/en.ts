@@ -753,6 +753,11 @@ export default defineUiToolsLocale<Messages>({
         label: 'Actions for {label}',
         labelAt: 'Actions for row {position}',
       },
+      groups: {
+        empty: 'Other',
+        select: 'Select the whole group',
+        toggle: 'Fold or unfold the group',
+      },
       selection: {
         selectAll: 'Select all rows',
         selectRow: 'Select {label}',

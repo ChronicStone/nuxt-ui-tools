@@ -760,6 +760,11 @@ export default defineUiToolsLocale<Messages>({
         label: 'Actions pour {label}',
         labelAt: 'Actions pour la ligne {position}',
       },
+      groups: {
+        empty: 'Autres',
+        select: 'Sélectionner tout le groupe',
+        toggle: 'Replier ou déplier le groupe',
+      },
       selection: {
         selectAll: 'Sélectionner toutes les lignes',
         selectRow: 'Sélectionner {label}',

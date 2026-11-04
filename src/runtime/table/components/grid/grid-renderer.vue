@@ -10,11 +10,12 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 import { useDataListUi } from '../../composables/use-data-list-ui'
 import { useTableInternals } from '../../composables/use-table-internals'
 import { GRID_DEFAULTS } from '../../constants/grid'
-import type { DataListControlSize, DataListGridUi } from '../../types'
+import type { DataListControlSize, DataListGridUi, TableGroup } from '../../types'
 import { mergeDataListUiClass, resolveTableRowId } from '../../utils'
 import DataListErrorState from '../data-list/data-list-error-state.vue'
 import ProgressLine from '../layout/progress-line.vue'
 import TableEmptyState from '../table/table-empty-state.vue'
+import TableGroupHeader from '../table/table-group-header.vue'
 import OverlayInsetSpacer from '../utils/overlay-inset-spacer.vue'
 import GridCard from './grid-card.vue'
 import GridSkeleton from './grid-skeleton.vue'
@@ -88,6 +89,7 @@ watch(
 
 function getVirtualRowKey(index: number) {
   const chunk = rowChunks.value[index]
+  if (chunk?.group) return `grid-group:${chunk.group.key}`
   const firstRow = chunk?.rows[0]
   return firstRow
     ? `grid-row:${resolveTableRowId({ index: chunk.start, row: firstRow, rowKey: internals.schema.value.rowKey })}`
@@ -97,6 +99,18 @@ function getVirtualRowKey(index: number) {
 function rowId(row: object, index: number) {
   return resolveTableRowId({ index, row, rowKey: internals.schema.value.rowKey })
 }
+
+/** The flow layout's items: every card, with each group's header before its cards. */
+const flowItems = computed<{ group?: TableGroup; index: number; key: string }[]>(() =>
+  rowChunks.value.flatMap((chunk) =>
+    chunk.group
+      ? [{ group: chunk.group, index: chunk.start, key: `grid-group:${chunk.group.key}` }]
+      : chunk.rows.map((row, offset) => ({
+          index: chunk.start + offset,
+          key: rowId(row, chunk.start + offset),
+        })),
+  ),
+)
 
 function scrollToTop() {
   viewportRef.value?.scrollTo({ behavior: 'auto', left: 0, top: 0 })
@@ -280,6 +294,13 @@ function refreshData() {
           :data-index="virtualRow.index"
         >
           <div
+            v-if="rowChunks[virtualRow.index]?.group"
+            class="nut-dl-grid__group min-w-0"
+            :style="{ gridColumn: '1 / -1' }"
+          >
+            <TableGroupHeader :group="rowChunks[virtualRow.index]!.group!" />
+          </div>
+          <div
             v-for="(row, offset) in rowChunks[virtualRow.index]?.rows ?? []"
             :key="rowId(row, (rowChunks[virtualRow.index]?.start ?? 0) + offset)"
             :class="mergeDataListUiClass('nut-dl-grid__item min-w-0', undefined, ui?.item)"
@@ -296,14 +317,22 @@ function refreshData() {
         :class="mergeDataListUiClass('nut-dl-grid__flow grid', undefined, ui?.flow)"
         :style="{ gridTemplateColumns, gap: `${gap}px` }"
       >
-        <div
-          v-for="(row, index) in tableRows"
-          :key="rowId(row, index)"
-          :class="mergeDataListUiClass('nut-dl-grid__item min-w-0', undefined, ui?.item)"
-          :style="{ gridColumn }"
-        >
-          <GridCard :row-index="index" />
-        </div>
+        <template v-for="item in flowItems" :key="item.key">
+          <div
+            v-if="item.group"
+            class="nut-dl-grid__group min-w-0"
+            :style="{ gridColumn: '1 / -1' }"
+          >
+            <TableGroupHeader :group="item.group" />
+          </div>
+          <div
+            v-else
+            :class="mergeDataListUiClass('nut-dl-grid__item min-w-0', undefined, ui?.item)"
+            :style="{ gridColumn }"
+          >
+            <GridCard :row-index="item.index" />
+          </div>
+        </template>
       </div>
       <OverlayInsetSpacer />
     </div>
