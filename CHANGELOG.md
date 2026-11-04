@@ -1,3 +1,11 @@
+## v1.30.2
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.30.1...v1.30.2)
+
+### 🩹 Fixes
+
+- **form:** A section or other container hidden by its `condition` no longer validates the fields it hides. Their required rules held the submit back with no message on screen, because nothing could show one
+
 ## v1.30.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.30.0...v1.30.1)
