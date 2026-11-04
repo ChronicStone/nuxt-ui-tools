@@ -200,10 +200,12 @@ onBeforeUnmount(() => unregister?.())
     </header>
     <div
       :class="
-        mergeFormUiClass(
-          entry.section.flush ? 'min-w-0' : `min-w-0 ${page.surfaceClasses.value.sectionBody}`,
-          pageUi?.sectionBody,
-        )
+        entry.section.flush
+          ? 'min-w-0'
+          : mergeFormUiClass(
+              `min-w-0 ${page.surfaceClasses.value.sectionBody}`,
+              pageUi?.sectionBody,
+            )
       "
       :style="grid.style.value"
     >
