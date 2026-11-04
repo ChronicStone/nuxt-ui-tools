@@ -2,6 +2,13 @@ import { usePreferredReducedMotion } from '@vueuse/core'
 import { computed, onScopeDispose, reactive, ref, shallowRef } from 'vue'
 import type { ComputedRef } from 'vue'
 
+import {
+  ROW_CONCEAL_MS as CONCEAL_MS,
+  ROW_MOTION_LIMIT as MOTION_ROW_LIMIT,
+  ROW_REVEAL_MS as REVEAL_MS,
+  ROW_STAGGER_LIMIT as STAGGER_ROW_LIMIT,
+  ROW_STAGGER_MS as STAGGER_MS,
+} from '../constants/row-motion'
 import type {
   GenericObject,
   TableExpansionApi,
@@ -19,15 +26,6 @@ import {
   isOpenByDefault,
 } from '../utils/tree'
 import type { UseTableDataReturn } from './use-table-data'
-
-/** How long a closing branch plays out before its rows leave the list. */
-const CONCEAL_MS = 120
-/** How long the last revealed row takes to settle; the renderer's CSS owns the actual timing. */
-const REVEAL_MS = 190
-const STAGGER_MS = 24
-/** Rows beyond these start or stop without a transition: they are mostly off screen anyway. */
-const MOTION_ROW_LIMIT = 24
-const STAGGER_ROW_LIMIT = 8
 
 const EMPTY_INDEX: TableTreeIndex = {
   branches: [],

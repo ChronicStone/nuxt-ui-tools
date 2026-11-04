@@ -4,12 +4,14 @@ import type { ComputedRef } from 'vue'
 import type { GenericObject, TableSchemaView } from '../types'
 import { flattenTreeRows, hasConfiguredTableActions, resolveTableRowId } from '../utils'
 import type { useTableData } from './use-table-data'
+import type { useTableGroups } from './use-table-groups'
 import type { useTableTree } from './use-table-tree'
 
 export interface UseTableSelectionParams {
   schema: ComputedRef<TableSchemaView>
   queryContent: ReturnType<typeof useTableData>
   tree: ReturnType<typeof useTableTree>
+  groups: ReturnType<typeof useTableGroups>
 }
 
 export function useTableSelection(options: UseTableSelectionParams) {
@@ -96,6 +98,14 @@ export function useTableSelection(options: UseTableSelectionParams) {
     return selectedKeys.value.includes(params.rowId)
   }
 
+  /** A checkbox standing for several rows: ticked when all are selected, mixed when some are. */
+  function getRowsSelectionState(params: { rowIds: string[] }): boolean | 'indeterminate' {
+    const selected = new Set(selectedKeys.value)
+    const count = params.rowIds.filter((rowId) => selected.has(rowId)).length
+    if (count === 0) return false
+    return count === params.rowIds.length ? true : 'indeterminate'
+  }
+
   function selectRows(params: { rowIds: string[] }) {
     if (!selectionEnabled.value) {
       return
@@ -174,13 +184,14 @@ export function useTableSelection(options: UseTableSelectionParams) {
   }
 
   /** A tree's range runs over the rows on screen, so a closed branch is not selected unseen. */
-  const rangeRowIds = computed(() =>
-    options.tree.enabled.value
-      ? options.tree.visibleNodes.value
-          .filter((node) => options.tree.isSelectable(node))
-          .map((node) => node.id)
-      : scopeRowIds.value,
-  )
+  const rangeRowIds = computed(() => {
+    if (options.tree.enabled.value) {
+      return options.tree.visibleNodes.value
+        .filter((node) => options.tree.isSelectable(node))
+        .map((node) => node.id)
+    }
+    return options.groups.enabled.value ? options.groups.visibleRowIds.value : scopeRowIds.value
+  })
 
   function getRangeRowIds(params: { anchorRowId: string; targetRowId: string }) {
     const anchorIndex = rangeRowIds.value.indexOf(params.anchorRowId)
@@ -228,6 +239,7 @@ export function useTableSelection(options: UseTableSelectionParams) {
     bulkScope,
     clearSelection,
     getRowId,
+    getRowsSelectionState,
     isRowSelected,
     lastTouchedRowId,
     partiallySelected,

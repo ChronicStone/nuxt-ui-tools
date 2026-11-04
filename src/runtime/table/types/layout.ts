@@ -7,6 +7,7 @@ import type {
   TableSummaryScope,
   TableSummaryValue,
 } from './columns'
+import type { TableGroupBySchema } from './groups'
 import type { TableTreeSchema } from './tree'
 import type {
   GenericObject,
@@ -108,6 +109,8 @@ export interface TableGridSchema<
   itemSize?: number | string | (() => number | string)
   sortOptions?: TableGridSortOption<TSortKey>[]
   defaultSorting?: TableDefaultSort<TSortKey>
+  /** Gathers the cards that share a value under a header that folds them. See `TableGroupBySchema`. */
+  groupBy?: TableGroupBySchema<TRow>
 }
 
 export interface TableTableSchema<
@@ -121,6 +124,8 @@ export interface TableTableSchema<
   columns?: TableColumnCollection<TRow, TContext, TPageContext, string, TSortKey, TData>
   /** Lets rows hold child rows that open beneath them. See `TableTreeSchema`. */
   tree?: TableTreeSchema<TRow>
+  /** Gathers rows that share a value under a header row that folds them. Ignored with `tree`. See `TableGroupBySchema`. */
+  groupBy?: TableGroupBySchema<TRow>
   defaultSorting?: TableDefaultSort<TSortKey>
   selection?: boolean | 'auto'
   summaries?: TableSummariesSchema<TRow>

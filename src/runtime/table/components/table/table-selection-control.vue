@@ -13,6 +13,8 @@ const props = defineProps<{
   row?: GenericObject
   /** Where the record sits in the rendered rows: it names the record when the schema has no `rowLabel`. */
   index?: number
+  /** Names what it selects when that is neither one record nor every row. */
+  label?: string
 }>()
 const emit = defineEmits<{
   toggle: [event: MouseEvent]
@@ -26,8 +28,12 @@ const areaClass = computed(() =>
     dataListUi.ui.value.table?.ui?.selectControl,
   ),
 )
-const ariaLabel = computed(() =>
-  props.row ? labels.selectRow({ index: props.index ?? 0, row: props.row }) : labels.selectAll(),
+const ariaLabel = computed(
+  () =>
+    props.label ??
+    (props.row
+      ? labels.selectRow({ index: props.index ?? 0, row: props.row })
+      : labels.selectAll()),
 )
 const checkboxProps = computed(() =>
   mergeDataListProps<DataListCheckboxProps>(

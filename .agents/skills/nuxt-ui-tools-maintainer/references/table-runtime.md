@@ -58,6 +58,9 @@ When you need the fastest understanding of current table wiring, start there.
   `use-table-filter-presentation.ts`
 - tree rows (flattening, expansion state, branch motion, hover path):
   `use-table-tree.ts`, with the pure index and flatten in `utils/tree.ts`
+- row groups (groups of the loaded rows, fold state, fold motion): `use-table-groups.ts`, with the
+  pure grouping in `utils/groups.ts`; the data stays flat and header rows exist only in what the
+  table renders (`displayRows`) and in the grid's chunks
 - selection:
   `use-table-selection.ts`
 - columns:

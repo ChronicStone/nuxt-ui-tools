@@ -24,6 +24,13 @@ export interface UiToolsTableMessages {
     firstPage: string
     lastPage: string
   }
+  /** A row group's header. */
+  groups: {
+    /** The label of the group holding rows with no value. */
+    empty: string
+    select: string
+    toggle: string
+  }
   /** Accessible names of the selection checkboxes. */
   selection: {
     selectAll: string

@@ -246,6 +246,20 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
       {
         children: [
           {
+            description: 'Exams under their family: fold, select a group, sort inside it, cards.',
+            id: 'table-groups-exams',
+            label: 'Exams by family',
+            mode: 'fixed',
+            path: '/table/groups',
+          },
+        ],
+        description: 'Rows that share a value, gathered under a header that folds them.',
+        id: 'table-row-groups',
+        label: 'Row groups',
+      },
+      {
+        children: [
+          {
             description:
               'Accounts as summary rows: identity, one status, two values, one 44px action; a footer toggle brings the table back.',
             id: 'table-summary-rows',

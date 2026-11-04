@@ -18,6 +18,7 @@ Use this skill for package-consumer tasks involving:
 - table query-state integration
 - cursor infinite loading and no-pagination mode
 - tree rows (`table.tree`) and the `expansion` API
+- row groups (`table.groupBy`, `grid.groupBy`)
 - summary rows (`table.summary`) and the view toggle for phones
 - first-use empty states (`empty`) and record names for assistive technology (`rowLabel`)
 - touch targets below the `md` breakpoint (`ui.mobile`)
@@ -40,6 +41,7 @@ Then use the focused references:
 - `skills/consumer/table/references/columns.md`
 - `skills/consumer/table/references/selection.md`
 - `skills/consumer/table/references/tree.md`
+- `skills/consumer/table/references/groups.md`
 - `skills/consumer/table/references/context.md`
 - `skills/consumer/table/references/actions.md`
 - `skills/consumer/table/references/slots.md`

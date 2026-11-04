@@ -5,8 +5,9 @@
  */
 import type { HTMLAttributes } from 'vue'
 
-import type { GenericObject, TableTreeMotion, TableTreeNode } from '../../types'
+import type { GenericObject, TableGroup, TableTreeMotion, TableTreeNode } from '../../types'
 import TableCell from './table-cell'
+import TableGroupHeader from './table-group-header.vue'
 import type { tableRowCells } from './table-layout'
 import TableTreeControl from './table-tree-control.vue'
 
@@ -25,12 +26,27 @@ defineProps<{
   checkbox?: boolean
   /** The row is being revealed or concealed by a branch opening or closing. */
   motion?: TableTreeMotion
+  /** Set on a group's header row, which spans the columns instead of filling them. */
+  group?: TableGroup
+  colSpan?: number
 }>()
 const emit = defineEmits<{ toggle: []; select: [event: MouseEvent] }>()
 </script>
 
 <template>
   <tr
+    v-if="group"
+    class="nut-dl-row nut-dl-row--group"
+    :class="rowClass"
+    :data-index="index"
+    :data-row-id="rowId"
+  >
+    <td :colspan="colSpan" class="nut-dl-group-cell">
+      <TableGroupHeader :group="group" selectable />
+    </td>
+  </tr>
+  <tr
+    v-else
     class="nut-dl-row group/row"
     :class="[
       selected ? 'nut-dl-row--selected' : '',
