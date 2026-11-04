@@ -855,7 +855,7 @@ describe('a flush section', () => {
           }),
         ],
       }),
-      ui: { page: { surface: 'card' } },
+      ui: { page: { surface: 'panel' } },
     })
     const bodyOf = (key: string) =>
       harness.section(key).querySelector(':scope > div')?.className ?? ''
