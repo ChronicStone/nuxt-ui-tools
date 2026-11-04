@@ -864,3 +864,45 @@ describe('a flush section', () => {
     expect(bodyOf('padded')).toContain('px-9')
   })
 })
+
+describe('a section hidden by its condition', () => {
+  it('does not hold the submit back with the required fields it hides', async () => {
+    const onSubmit = vi.fn<FormSubmitHandler<FormObject, FormValue>>(() => true)
+    const harness = await mountPage({
+      onSubmit,
+      schema: defineFormPageSchema({
+        sections: [
+          defineFormPageSection({
+            fields: [{ default: 'Examen', key: 'name', label: 'Nom', type: 'text' }],
+            key: 'visible',
+            label: 'Visible',
+          }),
+          defineFormPageSection({
+            condition: () => false,
+            fields: [{ key: 'city', label: 'Ville', required: true, type: 'text' }],
+            key: 'plain',
+            label: 'Champ masqué',
+          }),
+          defineFormPageSection({
+            condition: () => false,
+            fields: [
+              {
+                fields: [{ key: 'amount', label: 'Montant', required: true, type: 'number' }],
+                key: 'price',
+                type: 'object',
+              },
+            ],
+            key: 'nested',
+            label: 'Objet masqué',
+          }),
+        ],
+      }),
+    })
+
+    await harness.wrapper.find('form').trigger('submit')
+    await harness.flush()
+
+    expect(harness.form.errors.value).toStrictEqual([])
+    expect(onSubmit).toHaveBeenCalled()
+  })
+})
