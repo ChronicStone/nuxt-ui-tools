@@ -9,6 +9,7 @@ import { useUiToolsLocale } from '#ui-tools/i18n'
 
 import { useTableInternals } from '../../composables/use-table-internals'
 import type { TableGroup } from '../../types'
+import GroupHeader from '../group-header.vue'
 import TableCell from './table-cell'
 import TableSelectionControl from './table-selection-control.vue'
 
@@ -45,117 +46,26 @@ function toggleSelection() {
 </script>
 
 <template>
-  <div
-    class="nut-dl-group"
-    :data-collapsed="collapsed || undefined"
-    :data-selectable="showCheckbox || undefined"
-    @click="groups.toggle(group)"
+  <GroupHeader
+    :collapsed="collapsed"
+    :toggle-label="t('table.groups.toggle')"
+    @toggle="groups.toggle(group)"
   >
-    <span v-if="showCheckbox" class="nut-dl-group__check">
+    <template v-if="showCheckbox" #leading>
       <TableSelectionControl
         :model-value="checked"
         :label="t('table.groups.select')"
         @toggle="toggleSelection"
       />
-    </span>
-    <button
-      type="button"
-      class="nut-dl-group__toggle"
-      :aria-expanded="!collapsed"
-      :aria-label="t('table.groups.toggle')"
-      @click.stop="groups.toggle(group)"
-    >
-      <svg
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.75"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <path d="m4 6 4 4 4-4" />
-      </svg>
-    </button>
-    <span class="nut-dl-group__label">
-      <TableCell :index="0" :render="renderLabel" :row="group" />
-    </span>
-    <span class="nut-dl-group__summary">
+    </template>
+    <TableCell :index="0" :render="renderLabel" :row="group" />
+    <template #summary>
       <TableCell :index="0" :render="renderSummary" :row="group" />
-    </span>
-  </div>
+    </template>
+  </GroupHeader>
 </template>
 
 <style>
-.nut-dl-group {
-  --nut-dl-group-gutter: var(--nut-dl-gutter, 0px);
-  position: sticky;
-  left: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 100%;
-  min-height: 32px;
-  max-width: 100%;
-  padding-inline: var(--nut-dl-group-gutter);
-  box-sizing: border-box;
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ui-text-highlighted);
-}
-/* The chevron starts where the first column's content does, below it. */
-.nut-dl-group__check {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  margin-right: -6px;
-  width: calc(
-    var(--nut-dl-select-w, 44px) - var(--nut-dl-group-gutter) + var(--nut-dl-cell-x, 0px)
-  );
-}
-.nut-dl-group__toggle {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: calc(var(--ui-radius) * 1.5);
-  background: transparent;
-  color: var(--ui-text-muted);
-  cursor: pointer;
-  outline: none;
-}
-.nut-dl-group__toggle:hover {
-  background: var(--nut-dl-toggle-hover, var(--ui-bg-accented));
-}
-.nut-dl-group__toggle:focus-visible {
-  box-shadow: 0 0 0 2px var(--ui-primary);
-}
-.nut-dl-group__toggle svg {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.16s ease;
-}
-.nut-dl-group[data-collapsed] .nut-dl-group__toggle svg {
-  transform: rotate(-90deg);
-}
-.nut-dl-group__label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.nut-dl-group__summary {
-  flex: none;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ui-text-muted);
-  font-variant-numeric: tabular-nums;
-}
 .nut-dl-row.nut-dl-row--group {
   background: var(--nut-dl-head-bg);
 }
@@ -171,10 +81,5 @@ function toggleSelection() {
 }
 .nut-dl-grid__group {
   border-bottom: 1px solid var(--ui-border);
-}
-@media (prefers-reduced-motion: reduce) {
-  .nut-dl-group__toggle svg {
-    transition: none;
-  }
 }
 </style>

@@ -1,3 +1,13 @@
+## v1.30.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.29.0...v1.30.0)
+
+### 🚀 Enhancements
+
+- **form:** `flush` on a form page section lets its content reach the card's edges, for a block that draws its own rows
+- **shared:** `useSheetNavigation` makes a grid of inputs walk like a spreadsheet: arrows and Enter move between inputs marked with `data-sheet-col`, and focusing one selects its value
+- **table:** `UiGroupHeader`, the fold header of a row group without the table's state, for grids built by hand
+
 ## v1.29.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.28.0...v1.29.0)

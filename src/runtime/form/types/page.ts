@@ -51,6 +51,12 @@ export interface FormPageSection<
   /** Supporting copy next to the title. */
   description?: FormText
   /**
+   * Lets the section's content reach the card's edges: the body under the heading has no padding.
+   * For a block that draws its own rows, such as a price grid. Only panel surfaces pad a section's
+   * body, so this changes nothing on a plain one.
+   */
+  flush?: boolean
+  /**
    * Iconify icon drawn before the title, so each section of a long page reads at a glance
    * (`'i-lucide-map-pin'` for an address). Style it with `ui.page.ui.sectionIcon`.
    */
