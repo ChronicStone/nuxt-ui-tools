@@ -1,3 +1,11 @@
+## v1.29.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.28.0...v1.29.0)
+
+### 🚀 Enhancements
+
+- **table:** Row groups: `table.groupBy` and `grid.groupBy` gather rows that share a value under a header that folds them, with a count, a checkbox for the whole group when the rows have one, and fold state remembered per table. A column sort applies inside each group
+
 ## v1.28.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.27.5...v1.28.0)
