@@ -855,12 +855,12 @@ describe('a flush section', () => {
           }),
         ],
       }),
-      ui: { page: { surface: 'panel' } },
+      ui: { page: { surface: 'panel', ui: { sectionBody: 'px-9' } } },
     })
     const bodyOf = (key: string) =>
       harness.section(key).querySelector(':scope > div')?.className ?? ''
 
     expect(bodyOf('flush')).not.toMatch(/\bp[xt]-/)
-    expect(bodyOf('padded')).toMatch(/\bp[xt]-/)
+    expect(bodyOf('padded')).toContain('px-9')
   })
 })

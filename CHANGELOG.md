@@ -1,3 +1,11 @@
+## v1.30.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.30.0...v1.30.1)
+
+### 🩹 Fixes
+
+- **form:** A `flush` section also leaves out the padding an app sets with `ui.page.ui.sectionBody`, which is where most apps set it
+
 ## v1.30.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.29.0...v1.30.0)

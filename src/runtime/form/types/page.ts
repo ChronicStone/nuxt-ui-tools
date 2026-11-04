@@ -51,9 +51,9 @@ export interface FormPageSection<
   /** Supporting copy next to the title. */
   description?: FormText
   /**
-   * Lets the section's content reach the card's edges: the body under the heading has no padding.
-   * For a block that draws its own rows, such as a price grid. Only panel surfaces pad a section's
-   * body, so this changes nothing on a plain one.
+   * Lets the section's content reach the card's edges: the body under the heading has no padding,
+   * neither the surface's nor one set with `ui.page.ui.sectionBody`. For a block that draws its own
+   * rows, such as a price grid.
    */
   flush?: boolean
   /**
