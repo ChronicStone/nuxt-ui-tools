@@ -44,3 +44,9 @@ const schema = defineTableSchema({
   group, otherwise a group splits across pages and its count covers the current page only.
 - Grouping is one level. `table.groupBy` is ignored with `table.tree`, which has its own hierarchy.
 - Summary rows (`table.summary`) stay flat.
+
+## Outside a table
+
+`UiGroupHeader` is the same header without the table's state, for a grid you build yourself:
+`collapsed`, `toggleLabel`, the `toggle` event, and the `leading`, default and `summary` slots.
+`--nut-group-toggle` and `--nut-group-gap` line its label up with your rows.

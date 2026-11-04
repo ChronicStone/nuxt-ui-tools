@@ -836,3 +836,31 @@ describe('form page panels, spans and status', () => {
     expect(harness.wrapper.find('[data-form-page-status]').exists()).toBe(false)
   })
 })
+
+describe('a flush section', () => {
+  it('leaves the padding off its body and keeps it on the others', async () => {
+    const harness = await mountPage({
+      schema: defineFormPageSchema({
+        sections: [
+          defineFormPageSection({
+            fields: [{ key: 'name', label: 'Nom', type: 'text' }],
+            flush: true,
+            key: 'flush',
+            label: 'Sans marge',
+          }),
+          defineFormPageSection({
+            fields: [{ key: 'city', label: 'Ville', type: 'text' }],
+            key: 'padded',
+            label: 'Avec marge',
+          }),
+        ],
+      }),
+      ui: { page: { surface: 'card' } },
+    })
+    const bodyOf = (key: string) =>
+      harness.section(key).querySelector(':scope > div')?.className ?? ''
+
+    expect(bodyOf('flush')).not.toMatch(/\bp[xt]-/)
+    expect(bodyOf('padded')).toMatch(/\bp[xt]-/)
+  })
+})

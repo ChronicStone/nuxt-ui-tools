@@ -13,6 +13,7 @@ Use this skill for package-consumer tasks involving:
 - breakpoint-aware primitive values
 - table or form UI values that should change with the current viewport
 - `defineRemoteOptions(...)` loaders used across dashboard, table, and form pickers
+- `useSheetNavigation(root)`: arrows and Enter walk the inputs marked `data-sheet-col`, like a spreadsheet
 
 ## Read This Skill With
 

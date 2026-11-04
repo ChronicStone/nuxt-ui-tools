@@ -57,6 +57,12 @@ function getPublicComponents(
       name: `${prefix}DataList${part}`,
     })),
 
+    {
+      filePath: `${runtimeDir}/table/components/group-header.vue`,
+      global: options.global,
+      name: `${prefix}GroupHeader`,
+    },
+
     // Spreadsheet
     {
       filePath: `${runtimeDir}/spreadsheet/components/spreadsheet-import.vue`,
