@@ -528,6 +528,19 @@ function buildFieldRules(params: {
       continue
     }
     if (isFlatPassthroughField(field)) {
+      /* A container hidden by its condition hides its fields: none of them can be filled in. */
+      const visible = shouldRenderField(field, {
+        api: params.apiFactory(params.parentPath, field),
+        ctx: params.context,
+        deps: resolveFieldDependencies({
+          field,
+          parentPath: params.parentPath,
+          state: params.state,
+        }),
+      })
+      if (!visible) {
+        continue
+      }
       const childRules = buildFieldRules({ ...params, fields: getChildFieldsForRules(field) })
       for (const [key, value] of Object.entries(childRules)) {
         if (value !== undefined) {
