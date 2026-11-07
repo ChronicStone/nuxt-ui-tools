@@ -1,6 +1,11 @@
 import type { FormStatefulFieldBase } from '../../types/field-base'
 import type { FieldOptionValue, NullableValue } from '../../types/field-output-utils'
-import type { FormOptionGrouping, FormOptionValue, FormOptionsSource } from '../../types/options'
+import type {
+  FormOptionGrouping,
+  FormOptionRenderers,
+  FormOptionValue,
+  FormOptionsSource,
+} from '../../types/options'
 import type { FormChoiceCardOptionItem, FormChoiceCardProps } from '../choice-card/types'
 
 export interface FormRadioCardField<
@@ -11,7 +16,8 @@ export interface FormRadioCardField<
 >
   extends
     FormStatefulFieldBase<'radio-card', TValue | null, TContext, TDeps, FormChoiceCardProps>,
-    FormOptionGrouping {
+    FormOptionGrouping,
+    FormOptionRenderers<TOption> {
   options: FormOptionsSource<TOption, TContext, TDeps, TValue | null>
 }
 

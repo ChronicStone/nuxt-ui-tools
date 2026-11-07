@@ -209,6 +209,19 @@ When adding form features, bias toward:
   description from the Nuxt UI group (stripped from its items) into `ChoiceCardLabel`. Nuxt UI
   centers the wrapper of a card whose indicator is hidden (`corner`, `switch`, `hidden`), so the
   compact wrapper stretches (`items-stretch`) to keep the label at the card edge.
+  An option `tone` is read from the authored option (`choiceCardTone`, narrowed by the tone-name
+  pattern) and reaches the Nuxt UI item as `class`: the display tone class (`displayToneClass`,
+  which points `--nut-tone*` at the tone) plus `CARD_TONED_ITEM` from `card-selection.ts`. Nuxt UI
+  groups accept a per-item `class` but no per-item `style`, which is why the color travels through
+  the tone registry's classes and not an inline variable. A disabled option gets no tone class.
+  `ChoiceCardLabel` draws the tile, check, and switch in the tone (`TONED`) when `toned`. With
+  `renderOption`, `useChoiceCard({ custom })` stretches the wrapper and label to full width, the
+  items lose their description, and `ChoiceCardLabel` renders the function through
+  `FormOptionRender` in place of its icon and label, keeping the marks.
+- `fields/switch/` with `props.icon` turns the Nuxt UI wrapper into a two-column grid (`ICON_UI`):
+  the label element becomes `contents` so the icon (`row-span-2`) and the label text are grid
+  items, and the description moves to the second column. `icon` is omitted from the props handed
+  to `USwitch`.
 
 - `fields/info/` draws read-only blocks: a notice from `content`, or a display block from `display`
   and `props` through the display runtime (see `display-runtime.md`). `use-info-display.ts` owns

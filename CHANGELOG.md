@@ -1,3 +1,13 @@
+## v1.31.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.30.2...v1.31.0)
+
+### 🚀 Enhancements
+
+- **form:** A `radio-card` or `checkbox-card` option takes a `tone`, a Nuxt UI color or a tone registered in `appConfig.nuxtUiTools.display.tones`: the icon tile takes it, and once the card is selected so do its border, ring, background and corner check or switch. A disabled option stays neutral
+- **form:** `renderOption` works on `radio-card` and `checkbox-card`: what it returns replaces the card's icon, label and description and spans the card, which keeps its border, selection styling and mark
+- **form:** `props.icon` on a `switch` draws an icon before its label and description, centered on both, styled with `ui.leadingIcon`
+
 ## v1.30.2
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.30.1...v1.30.2)

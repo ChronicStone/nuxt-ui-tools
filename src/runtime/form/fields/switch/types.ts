@@ -10,6 +10,16 @@ export interface FormSwitchProps<
   falseValue?: TFalse
   checkedIcon?: string
   uncheckedIcon?: string
+  /**
+   * Icon drawn before the label and the description, centered on both, for a switch laid out as a
+   * row that names what it turns on. Style it with the `ui.leadingIcon` slot.
+   *
+   * @example
+   * ```ts
+   * props: { icon: 'i-lucide-gauge', ui: { leadingIcon: 'text-info' } }
+   * ```
+   */
+  icon?: string
   loading?: boolean
 }
 

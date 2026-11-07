@@ -2,9 +2,10 @@ import { queryOptions } from '@tanstack/vue-query'
 import { mount } from '@vue/test-utils'
 import type { DOMWrapper } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { h } from 'vue'
 
 import { defineFormSchema } from '#ui-tools/form'
-import type { FormFieldCallbackParams } from '#ui-tools/form'
+import type { FormFieldCallbackParams, FormOptionRenderContext } from '#ui-tools/form'
 import ChoiceCardLabel from '#ui-tools/form/fields/choice-card/choice-card-label.vue'
 
 import { mountForm } from './harness'
@@ -831,5 +832,141 @@ describe('compact choice cards', () => {
       expect.arrayContaining(['row-span-2', 'size-4']),
     )
     expect(label.find('[data-choice-description]').exists()).toBe(false)
+  })
+})
+
+const SKILLS = [
+  { icon: 'i-lucide-headphones', label: 'Listening', tone: 'info', value: 'listening' },
+  { disabled: true, icon: 'i-lucide-mic', label: 'Speaking', tone: 'warning', value: 'speaking' },
+  { icon: 'i-lucide-pen-line', label: 'Writing', value: 'writing' },
+] as const
+
+function itemClasses(items: unknown) {
+  return Array.isArray(items)
+    ? items.map((item: unknown) =>
+        typeof item === 'object' && item !== null && 'class' in item ? item.class : undefined,
+      )
+    : []
+}
+
+describe('toned choice cards', () => {
+  it('puts the tone class on each toned card, and none on disabled or untoned cards', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            default: ['listening'],
+            key: 'skills',
+            options: SKILLS,
+            props: { icon: 'tile', indicator: 'corner' },
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+    const [listening, speaking, writing] = itemClasses(
+      harness.wrapper.findComponent({ name: 'UCheckboxGroup' }).props('items'),
+    )
+
+    expect(listening).toContain('nut-display-tone-info')
+    expect(listening).toContain('has-data-[state=checked]:border-(color:--nut-tone)')
+    expect(speaking).toBeUndefined()
+    expect(writing).toBeUndefined()
+    harness.unmount()
+  })
+
+  it('does the same for radio cards', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [{ key: 'skill', options: SKILLS, props: { icon: 'tile' }, type: 'radio-card' }],
+      }),
+    })
+    const [listening, speaking] = itemClasses(
+      harness.wrapper.findComponent({ name: 'URadioGroup' }).props('items'),
+    )
+
+    expect(listening).toContain('nut-display-tone-info')
+    expect(speaking).toBeUndefined()
+    harness.unmount()
+  })
+
+  it('draws the tile and the check of a toned card in its tone', () => {
+    const toned = mount(ChoiceCardLabel, {
+      props: {
+        icon: 'i-lucide-headphones',
+        mark: 'corner',
+        selected: true,
+        tile: true,
+        toned: true,
+      },
+    })
+    expect(toned.find('[data-choice-tile]').classes()).toContain('text-(color:--nut-tone-ink)')
+    expect(toned.find('[data-choice-check]').classes()).toContain('bg-(color:--nut-tone)')
+
+    const plain = mount(ChoiceCardLabel, {
+      props: { icon: 'i-lucide-headphones', mark: 'corner', selected: true, tile: true },
+    })
+    expect(plain.find('[data-choice-tile]').classes()).toContain('data-[selected]:text-primary')
+    expect(plain.find('[data-choice-check]').classes()).toContain('bg-primary')
+  })
+})
+
+const SCALES = [
+  { label: 'CEFR', levels: ['A1', 'C2'], value: 'cefr' },
+  { description: 'For children', label: 'Young learners', levels: ['A1', 'C1'], value: 'young' },
+] as const
+
+describe('choice cards with renderOption', () => {
+  it('renders what renderOption returns, with the authored option and its selection', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            default: 'cefr',
+            key: 'scale',
+            options: SCALES,
+            props: { indicator: 'corner' },
+            renderOption: ({ item, selected }: FormOptionRenderContext<(typeof SCALES)[number]>) =>
+              h(
+                'span',
+                { 'data-scale': item.value },
+                `${item.label} ${item.levels.join('–')}${selected ? ' ✓' : ''}`,
+              ),
+            type: 'radio-card',
+          },
+        ],
+      }),
+    })
+    const group = harness.wrapper.findComponent({ name: 'URadioGroup' })
+
+    expect(harness.wrapper.find('[data-scale="cefr"]').text()).toBe('CEFR A1–C2 ✓')
+    expect(harness.wrapper.find('[data-scale="young"]').text()).toBe('Young learners A1–C1')
+    // The custom content owns the card: the group draws no description, and the content spans it.
+    expect(harness.wrapper.find('[data-ui-description]').exists()).toBe(false)
+    expect(group.props('ui')).toMatchObject({ label: expect.stringContaining('w-full') })
+    // The card keeps its own selection mark.
+    expect(harness.wrapper.find('[data-ui-radio="cefr"] [data-choice-check]').exists()).toBe(true)
+    harness.unmount()
+  })
+
+  it('does the same for checkbox cards', async () => {
+    const harness = await mountForm({
+      schema: defineFormSchema({
+        fields: [
+          {
+            default: ['young'],
+            key: 'scales',
+            options: SCALES,
+            renderOption: ({ item, selected }: FormOptionRenderContext<(typeof SCALES)[number]>) =>
+              h('span', { 'data-scale': item.value }, selected ? 'on' : 'off'),
+            type: 'checkbox-card',
+          },
+        ],
+      }),
+    })
+
+    expect(harness.wrapper.find('[data-scale="cefr"]').text()).toBe('off')
+    expect(harness.wrapper.find('[data-scale="young"]').text()).toBe('on')
+    harness.unmount()
   })
 })

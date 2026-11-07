@@ -1,3 +1,4 @@
+import type { DisplayTone } from '../../../display/types'
 import type { FormOption, FormOptionValue } from '../../types/options'
 import type { FormText } from '../../types/utils'
 
@@ -57,6 +58,20 @@ export interface FormChoiceCardOption<
 > extends Omit<FormOption<TValue>, 'avatar' | 'chip' | 'suffix'> {
   /** Icon shown with the label, inline or in a tile (see `props.icon`). */
   icon?: string
+  /**
+   * Color of this card: a Nuxt UI color or a tone registered in
+   * `appConfig.nuxtUiTools.display.tones`. It tints the icon tile, and once selected the border,
+   * the ring, the background and the corner check or switch. Without it the card uses `primary`.
+   *
+   * @example
+   * ```ts
+   * options: [
+   *   { value: 'listening', label: 'Listening', icon: 'i-lucide-headphones', tone: 'cyan' },
+   *   { value: 'reading', label: 'Reading', icon: 'i-lucide-book-open', tone: 'violet' },
+   * ]
+   * ```
+   */
+  tone?: DisplayTone
   /**
    * Heading this option is listed under. Options sharing a heading are listed together, and the
    * headings follow the order in which they first appear in the options. Options without one
