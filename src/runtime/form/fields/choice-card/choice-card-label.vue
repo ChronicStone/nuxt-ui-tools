@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import UIcon from '@nuxt/ui/components/Icon.vue'
+import type { VNodeChild } from 'vue'
 
-import type { FormControlUi } from '../../types'
+import FormOptionRender from '../../components/utils/form-option-render'
+import type { FormControlUi, FormOptionRenderContext, ResolvedFormOption } from '../../types'
 import { mergeFormUiClass } from '../../utils/ui'
 import type { ChoiceCardMark } from './types'
 
@@ -17,8 +19,12 @@ import type { ChoiceCardMark } from './types'
  * smaller tile) beside the title, over a one-line description. Both lines truncate and keep the
  * full text in their tooltip, and the marks center on the row. The card passes the description
  * here because the Nuxt UI group would draw it below the icon instead.
+ *
+ * A `toned` card (its option has a `tone`) draws its tile, check and switch in the tone the card
+ * carries. With `render`, the card shows what `renderOption` returns in place of its icon, label
+ * and description, and keeps its selection mark.
  */
-defineProps<{
+const props = defineProps<{
   label?: string
   description?: string
   icon?: string
@@ -27,6 +33,9 @@ defineProps<{
   compact?: boolean
   mark: ChoiceCardMark
   selected: boolean
+  toned?: boolean
+  option?: ResolvedFormOption
+  render?: (context: FormOptionRenderContext) => VNodeChild
   ui?: FormControlUi
 }>()
 
@@ -34,59 +43,91 @@ defineProps<{
 const COMPACT_MARK = 'end-2.5 top-1/2 -translate-y-1/2'
 /** The compact tile: smaller, and the first column of the label grid. */
 const COMPACT_TILE = 'col-start-1 row-span-2 me-2.5 size-7 rounded-md'
+/** The tile, check and switch of a toned card, in its tone whether selected or not. */
+const TONED = {
+  check: 'bg-(color:--nut-tone) text-(color:--nut-tone-contrast)',
+  switch: 'data-[state=checked]:bg-(color:--nut-tone)',
+  tile: 'bg-(color:--nut-tone-soft) text-(color:--nut-tone-ink) data-[selected]:bg-(color:--nut-tone-soft) data-[selected]:text-(color:--nut-tone-ink)',
+} as const
+
+function content() {
+  const option = props.option
+  if (!option || option.item === undefined) return null
+  return props.render?.({
+    disabled: option.disabled === true,
+    item: option.item,
+    option,
+    selected: props.selected,
+  })
+}
 </script>
 
 <template>
-  <span
-    v-if="tile && icon"
-    :data-selected="selected || undefined"
-    :data-value="value"
-    :class="
-      mergeFormUiClass(
-        'grid size-8 place-items-center rounded-lg bg-elevated text-muted transition-colors data-[selected]:bg-primary/10 data-[selected]:text-primary',
-        compact ? COMPACT_TILE : undefined,
-        ui?.tile,
-      )
-    "
-    data-choice-tile
-  >
-    <UIcon :name="icon" :class="mergeFormUiClass('size-4', ui?.tileIcon)" aria-hidden="true" />
+  <span v-if="render" class="block w-full min-w-0 font-normal whitespace-normal" data-choice-custom>
+    <FormOptionRender :content="content" />
   </span>
-  <template v-if="compact">
-    <UIcon
-      v-if="icon && !tile"
-      :name="icon"
-      :class="
-        mergeFormUiClass('col-start-1 row-span-2 me-2.5 size-4 shrink-0 text-muted', ui?.optionIcon)
-      "
-      aria-hidden="true"
-    />
-    <span :title="label" class="col-start-2 block truncate" data-choice-title>{{ label }}</span>
+  <template v-else>
     <span
-      v-if="description"
-      :title="description"
-      class="col-start-2 block truncate text-xs font-normal text-muted"
-      data-choice-description
+      v-if="tile && icon"
+      :data-selected="selected || undefined"
+      :data-value="value"
+      :class="
+        mergeFormUiClass(
+          'grid size-8 place-items-center rounded-lg bg-elevated text-muted transition-colors data-[selected]:bg-primary/10 data-[selected]:text-primary',
+          [compact ? COMPACT_TILE : '', toned ? TONED.tile : ''].join(' '),
+          ui?.tile,
+        )
+      "
+      data-choice-tile
     >
-      {{ description }}
+      <UIcon :name="icon" :class="mergeFormUiClass('size-4', ui?.tileIcon)" aria-hidden="true" />
     </span>
+    <template v-if="compact">
+      <UIcon
+        v-if="icon && !tile"
+        :name="icon"
+        :class="
+          mergeFormUiClass(
+            'col-start-1 row-span-2 me-2.5 size-4 shrink-0 text-muted',
+            toned ? 'text-(color:--nut-tone-ink)' : undefined,
+            ui?.optionIcon,
+          )
+        "
+        aria-hidden="true"
+      />
+      <span :title="label" class="col-start-2 block truncate" data-choice-title>{{ label }}</span>
+      <span
+        v-if="description"
+        :title="description"
+        class="col-start-2 block truncate text-xs font-normal text-muted"
+        data-choice-description
+      >
+        {{ description }}
+      </span>
+    </template>
+    <span v-else-if="!tile && icon" class="inline-flex items-center gap-2">
+      <UIcon
+        :name="icon"
+        :class="
+          mergeFormUiClass(
+            'size-4 shrink-0',
+            toned ? 'text-(color:--nut-tone-ink)' : undefined,
+            ui?.optionIcon,
+          )
+        "
+        aria-hidden="true"
+      />
+      <span>{{ label }}</span>
+    </span>
+    <span v-else class="block">{{ label }}</span>
   </template>
-  <span v-else-if="!tile && icon" class="inline-flex items-center gap-2">
-    <UIcon
-      :name="icon"
-      :class="mergeFormUiClass('size-4 shrink-0', ui?.optionIcon)"
-      aria-hidden="true"
-    />
-    <span>{{ label }}</span>
-  </span>
-  <span v-else class="block">{{ label }}</span>
   <span
     v-if="mark === 'corner' && selected"
     aria-hidden="true"
     :class="
       mergeFormUiClass(
         'absolute end-3 top-3 grid size-4 place-items-center rounded-[4px] bg-primary text-inverted',
-        compact ? COMPACT_MARK : undefined,
+        [compact ? COMPACT_MARK : '', toned ? TONED.check : ''].join(' '),
         ui?.check,
       )
     "
@@ -102,7 +143,7 @@ const COMPACT_TILE = 'col-start-1 row-span-2 me-2.5 size-7 rounded-md'
     :class="
       mergeFormUiClass(
         'group/switch absolute end-3 top-3.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full bg-accented p-0.5 transition-colors duration-150 data-[state=checked]:bg-primary',
-        compact ? COMPACT_MARK : undefined,
+        [compact ? COMPACT_MARK : '', toned ? TONED.switch : ''].join(' '),
         ui?.switch,
       )
     "

@@ -1,9 +1,12 @@
 import { computed } from 'vue'
 
+import type { DisplayTone } from '../../../display/types'
+import { displayToneClass } from '../../../display/utils/tone'
 import { useResponsiveValue } from '../../../shared/composables/use-responsive-value'
-import type { FormControlUi } from '../../types'
+import type { FormControlUi, ResolvedFormOption } from '../../types'
+import { isObject, isString } from '../../utils/predicate'
 import { mergeFormUiClass } from '../../utils/ui'
-import { CARD_SELECTED_RING } from '../card-selection'
+import { CARD_SELECTED_RING, CARD_TONED_ITEM } from '../card-selection'
 import type { ChoiceCardKind, ChoiceCardLayout, ChoiceCardMark, FormChoiceCardProps } from './types'
 
 /** Props the card fields render themselves, kept away from the Nuxt UI group. */
@@ -56,6 +59,8 @@ const ICON_UI: Record<ChoiceCardKind, string | undefined> = {
  * (`compact`, `tile`, `mark`).
  */
 export function useChoiceCard(params: {
+  /** True when a `renderOption` function owns the content of the cards. */
+  custom?: () => boolean
   kind: ChoiceCardKind
   props: () => FormChoiceCardProps
   ui: () => FormControlUi | undefined
@@ -104,7 +109,11 @@ export function useChoiceCard(params: {
       icon: mergeFormUiClass(ICON_UI[params.kind], current?.icon),
       // The heading of a group of options, set above its cards.
       legend: mergeFormUiClass('mb-2 text-sm font-medium text-muted', current?.legend),
-      label: mergeFormUiClass(layoutUi.label, current?.label),
+      // Custom content spans the card, so it can lay itself out across the full width.
+      label: mergeFormUiClass(
+        [layoutUi.label ?? '', params.custom?.() ? 'block w-full' : ''].join(' '),
+        current?.label,
+      ),
       // A hidden indicator centers the text: keep it aligned, and clear of an inline corner check.
       wrapper: mergeFormUiClass(
         layoutUi.wrapper,
@@ -112,6 +121,7 @@ export function useChoiceCard(params: {
           indicator.value === 'hidden' ? 'ms-0 text-start' : '',
           mark.value === 'corner' && !stacked ? 'pe-7' : '',
           mark.value === 'switch' && !stacked ? 'pe-12' : '',
+          params.custom?.() ? 'w-full' : '',
         ].join(' '),
         current?.wrapper,
       ),
@@ -121,4 +131,23 @@ export function useChoiceCard(params: {
   const groupsClass = computed(() => mergeFormUiClass('flex flex-col gap-5', params.ui()?.groups))
 
   return { compact, groupsClass, indicator, mark, orientation, style, tile, ui }
+}
+
+/** Tone names are lowercase words, the names the tone registry accepts. */
+const TONE_NAME = /^[a-z][a-z0-9-]*$/u
+
+function isToneName(value: unknown): value is DisplayTone {
+  return isString(value) && TONE_NAME.test(value)
+}
+
+/** The `tone` an option was authored with, read from the option as the schema or source gave it. */
+export function choiceCardTone(option: ResolvedFormOption | undefined): DisplayTone | undefined {
+  const item = option?.item
+  if (!isObject(item) || !('tone' in item)) return undefined
+  return isToneName(item.tone) ? item.tone : undefined
+}
+
+/** Classes a card takes from its option's `tone`: the tone variables and the toned selection. */
+export function choiceCardToneClass(tone: DisplayTone | undefined) {
+  return tone ? `${displayToneClass(tone)} ${CARD_TONED_ITEM}` : undefined
 }

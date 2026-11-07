@@ -9,7 +9,12 @@ import { formOptionKey, groupOptions } from '../../utils/options'
 import type { OptionGroup } from '../../utils/options'
 import { isBoolean, isNumber, isString, isUndefined } from '../../utils/predicate'
 import ChoiceCardLabel from '../choice-card/choice-card-label.vue'
-import { CHOICE_CARD_PROPS, useChoiceCard } from '../choice-card/use-choice-card'
+import {
+  CHOICE_CARD_PROPS,
+  choiceCardTone,
+  choiceCardToneClass,
+  useChoiceCard,
+} from '../choice-card/use-choice-card'
 import { choiceCardGroupAttrs } from '../choice-card/utils'
 
 const props = defineProps<{
@@ -23,6 +28,7 @@ const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFie
   { omit: CHOICE_CARD_PROPS },
 )
 const cards = useChoiceCard({
+  custom: () => props.field.renderOption !== undefined,
   kind: 'checkbox',
   props: () => fieldProps.value,
   ui: () => controlProps.value.ui,
@@ -44,13 +50,16 @@ const model = computed<string[]>({
       }),
     ),
 })
+const renderOption = computed(() => props.field.renderOption)
 // Each item becomes a Nuxt UI checkbox, whose `icon` is its check mark: the option icon is
 // rendered by the card content instead. A compact card renders its description itself, beside
-// the icon, so the group draws none.
+// the icon, and a `renderOption` card renders all its content, so the group draws none for
+// either. A toned card carries its tone's class, unless it is disabled.
 const items = computed(() =>
   options.items.value.map(({ icon: _icon, ...item }) => ({
     ...item,
-    description: cards.compact.value ? undefined : item.description,
+    class: item.disabled ? undefined : choiceCardToneClass(choiceCardTone(item)),
+    description: cards.compact.value || renderOption.value ? undefined : item.description,
     value: formOptionKey(item.value),
   })),
 )
@@ -108,6 +117,9 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
             :compact="cards.compact.value"
             :mark="cards.mark.value"
             :selected="model.includes(item.value)"
+            :toned="item.class !== undefined"
+            :option="optionByKey.get(item.value)"
+            :render="renderOption"
             :ui="cards.ui.value"
           />
         </template>

@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-tools-form
-description: Use this skill when working with the nuxt-ui-tools form runtime as a package consumer. It covers schema-driven forms, the provider-backed form API, inline rendering, overlay rendering, form pages with a section navigation, rich options (icon, avatar, chip, description, suffix, grouped menus, and renderOption/renderValue render functions on select, auto-complete, radio, and checkbox group), choice cards, and typed submit results.
+description: Use this skill when working with the nuxt-ui-tools form runtime as a package consumer. It covers schema-driven forms, the provider-backed form API, inline rendering, overlay rendering, form pages with a section navigation, rich options (icon, avatar, chip, description, suffix, grouped menus, and renderOption/renderValue render functions on select, auto-complete, radio, checkbox group, and the choice cards), choice cards with toned options, switches with an icon, and typed submit results.
 ---
 
 # nuxt-ui-tools Form
@@ -818,7 +818,7 @@ returns anything a Vue render function returns (`h(...)`, JSX, a string).
 - `renderOption({ option, item, selected, disabled })` replaces the content of each option: the
   label, the description, the leading visual, and the suffix. The control keeps its own selection
   indicator (the check mark, the radio dot, the checkbox) and its keyboard behavior. Available on
-  all four fields.
+  these four fields and on `radio-card` and `checkbox-card` (see Choice Cards).
 - `renderValue({ option, item })` replaces how the chosen option reads in the closed control of a
   `select` or `auto-complete`, in single selection. Multiple selection keeps its labels.
 
@@ -983,6 +983,82 @@ nuxtUiTools: {
       },
     },
   },
+}
+```
+
+### Toned cards
+
+Give an option a `tone` to color its card: a Nuxt UI color (`info`, `warning`, ...) or a tone
+registered in `appConfig.nuxtUiTools.display.tones` (see Info Fields: Display Blocks). The icon
+tile takes the tone, and once the card is selected so do its border, ring, background, and corner
+check or switch. A disabled option stays neutral whatever its tone. Options without a `tone` keep
+`primary`.
+
+```ts
+{
+  key: 'skills',
+  type: 'checkbox-card',
+  options: ({ deps }) => [
+    { value: 'listening', label: 'Listening', icon: 'i-lucide-headphones', tone: 'cyan' },
+    { value: 'reading', label: 'Reading', icon: 'i-lucide-book-open', tone: 'violet' },
+    {
+      value: 'speaking',
+      label: 'Speaking',
+      icon: 'i-lucide-mic',
+      tone: 'orange',
+      // A scale without speaking: the card stays visible, disabled, and says why.
+      disabled: deps.get('scale') === 'simplified',
+      description: deps.get('scale') === 'simplified' ? 'Not on this scale' : undefined,
+    },
+  ],
+  dependencies: ['scale'],
+  props: { columns: '2 md:4', icon: 'tile', indicator: 'corner' },
+}
+```
+
+### Custom card content
+
+`renderOption` works on the cards too (see Render functions). What it returns replaces the icon,
+label, and description, and spans the full width of the card. The card keeps its border, its
+selection styling, and its `indicator`. Use it when a card has to show something of its own, such
+as a preview of what the option means:
+
+```ts
+import { h } from 'vue'
+
+interface Scale extends FormOption<'cefr' | 'young'> {
+  levels: readonly string[]
+}
+
+{
+  key: 'scale',
+  type: 'radio-card',
+  options: scales,
+  props: { columns: '1 md:3', indicator: 'hidden' },
+  renderOption: ({ item, selected }: FormOptionRenderContext<Scale>) =>
+    h('span', { class: 'flex flex-col gap-2' }, [
+      h('span', { class: 'font-semibold' }, item.label),
+      h('span', { class: 'flex h-1.5 gap-0.5' }, item.levels.map(() =>
+        h('span', { class: ['flex-1 rounded-sm', selected ? 'bg-primary' : 'bg-accented'] }))),
+      h('span', { class: 'flex justify-between text-xs text-muted' }, [
+        h('span', item.levels[0]), h('span', `${item.levels.length} levels`), h('span', item.levels.at(-1)),
+      ]),
+    ]),
+}
+```
+
+## Switch Icon
+
+`props.icon` draws an icon before a switch's label and description, centered on both, for a switch
+laid out as a row that names what it turns on. Style it with `ui.leadingIcon`:
+
+```ts
+{
+  key: 'overall',
+  type: 'switch',
+  label: 'Overall score',
+  description: 'Overall level, at the top of the result',
+  props: { icon: 'i-lucide-gauge', ui: { leadingIcon: 'text-info' } },
 }
 ```
 

@@ -9,7 +9,12 @@ import { formOptionKey, groupOptions } from '../../utils/options'
 import type { OptionGroup } from '../../utils/options'
 import { isBoolean, isNumber, isString } from '../../utils/predicate'
 import ChoiceCardLabel from '../choice-card/choice-card-label.vue'
-import { CHOICE_CARD_PROPS, useChoiceCard } from '../choice-card/use-choice-card'
+import {
+  CHOICE_CARD_PROPS,
+  choiceCardTone,
+  choiceCardToneClass,
+  useChoiceCard,
+} from '../choice-card/use-choice-card'
 import { choiceCardGroupAttrs } from '../choice-card/utils'
 
 const props = defineProps<{
@@ -23,6 +28,7 @@ const { fieldProps, form, controlProps, disabled, handleBlur, options } = useFie
   { omit: CHOICE_CARD_PROPS },
 )
 const cards = useChoiceCard({
+  custom: () => props.field.renderOption !== undefined,
   kind: 'radio',
   props: () => fieldProps.value,
   ui: () => controlProps.value.ui,
@@ -37,14 +43,19 @@ const model = computed<string | number | boolean | undefined>({
   },
   set: (value) => form.setValue(props.path, value),
 })
-const descriptionByKey = computed(
-  () => new Map(options.items.value.map((item) => [formOptionKey(item.value), item.description])),
+const optionByKey = computed(
+  () => new Map(options.items.value.map((item) => [formOptionKey(item.value), item])),
 )
-// A compact card renders its description itself, beside the icon: the group draws none.
+const renderOption = computed(() => props.field.renderOption)
+// A compact card renders its description itself, beside the icon, and a `renderOption` card
+// renders all its content: the group draws no description for either. A toned card carries its
+// tone's class, unless it is disabled: a disabled card stays neutral.
 const items = computed(() =>
-  options.items.value.map((item) =>
-    cards.compact.value ? { ...item, description: undefined } : item,
-  ),
+  options.items.value.map((item) => ({
+    ...item,
+    class: item.disabled ? undefined : choiceCardToneClass(choiceCardTone(item)),
+    description: cards.compact.value || renderOption.value ? undefined : item.description,
+  })),
 )
 // Options with a `group` are listed under their headings, one radio group per heading; the
 // selection lives in the group of the selected option and the others show none.
@@ -84,7 +95,9 @@ function select(value: FormValue) {
           <ChoiceCardLabel
             :label="item.label"
             :description="
-              cards.compact.value ? descriptionByKey.get(formOptionKey(item.value)) : undefined
+              cards.compact.value
+                ? optionByKey.get(formOptionKey(item.value))?.description
+                : undefined
             "
             :icon="item.icon"
             :value="item.value"
@@ -92,6 +105,9 @@ function select(value: FormValue) {
             :compact="cards.compact.value"
             :mark="cards.mark.value"
             :selected="model === item.value"
+            :toned="item.class !== undefined"
+            :option="optionByKey.get(formOptionKey(item.value))"
+            :render="renderOption"
             :ui="cards.ui.value"
           />
         </template>

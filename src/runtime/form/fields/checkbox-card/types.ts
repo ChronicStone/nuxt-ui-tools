@@ -3,6 +3,7 @@ import type { FieldOptionValue, NullableValue } from '../../types/field-output-u
 import type {
   FormOptionConfig,
   FormOptionGrouping,
+  FormOptionRenderers,
   FormOptionValue,
   FormOptionsSource,
 } from '../../types/options'
@@ -22,7 +23,8 @@ export interface FormCheckboxCardField<
       TDeps,
       FormChoiceCardProps
     >,
-    FormOptionGrouping {
+    FormOptionGrouping,
+    FormOptionRenderers<TOption> {
   options:
     | FormOptionConfig<TOption, TContext, TDeps, readonly TValue[] | null>
     | FormOptionsSource<TOption, TContext, TDeps, readonly TValue[] | null>

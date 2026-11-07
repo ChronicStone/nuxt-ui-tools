@@ -1,6 +1,12 @@
 import { h } from 'vue'
 
-import type { FormControlSize, FormField, FormFieldType, FormObject } from '#ui-tools/form'
+import type {
+  FormControlSize,
+  FormField,
+  FormFieldType,
+  FormObject,
+  FormOptionRenderContext,
+} from '#ui-tools/form'
 
 export interface FormFieldPlaygroundDefinition {
   id: FormFieldType
@@ -22,6 +28,76 @@ const planOptions = [
   { description: 'Simple workflows', label: 'Starter', value: 'starter' },
   { description: 'Team workflows', label: 'Scale', value: 'scale' },
   { description: 'Advanced governance', label: 'Enterprise', value: 'enterprise' },
+] as const
+
+const scaleOptions = [
+  {
+    label: 'CEFR',
+    levels: ['Pre-A1', 'A1', 'A2.1', 'A2.2', 'B1.1', 'B1.2', 'B2.1', 'B2.2', 'C1.1', 'C1.2', 'C2'],
+    value: 'cefr',
+  },
+  {
+    label: 'CEFR, simplified',
+    levels: ['Pre-A1', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+    value: 'cefr-simple',
+  },
+  {
+    label: 'Young learners',
+    levels: [
+      'Pre-A1',
+      'A1.1',
+      'A1.2',
+      'A1.3',
+      'A2.1',
+      'A2.2',
+      'B1',
+      'B1.1',
+      'B1.2',
+      'B2.1',
+      'B2.2',
+      'C1',
+    ],
+    value: 'young',
+  },
+] as const
+
+/** A scale card: its name, a bar of its levels, then the first level, the count and the last. */
+function renderScale({ item, selected }: FormOptionRenderContext<(typeof scaleOptions)[number]>) {
+  const { levels } = item
+  return h('span', { class: 'flex flex-col gap-2' }, [
+    h('span', { class: 'font-semibold text-highlighted' }, item.label),
+    h(
+      'span',
+      { class: 'flex h-1.5 gap-0.5' },
+      levels.map((_, index) =>
+        h('span', {
+          class: ['flex-1 rounded-sm', selected ? 'bg-primary' : 'bg-accented'],
+          style: selected
+            ? { opacity: String(0.3 + (0.7 * index) / (levels.length - 1)) }
+            : undefined,
+        }),
+      ),
+    ),
+    h('span', { class: 'flex justify-between text-xs text-muted' }, [
+      h('span', levels[0]),
+      h('span', `${levels.length} levels`),
+      h('span', levels.at(-1)),
+    ]),
+  ])
+}
+
+const skillOptions = [
+  { icon: 'i-lucide-headphones', label: 'Listening', tone: 'teal', value: 'listening' },
+  { icon: 'i-lucide-book-open', label: 'Reading', tone: 'violet', value: 'reading' },
+  { icon: 'i-lucide-pen-line', label: 'Writing', tone: 'warning', value: 'writing' },
+  {
+    description: 'Not on this scale',
+    disabled: true,
+    icon: 'i-lucide-mic',
+    label: 'Speaking',
+    tone: 'error',
+    value: 'speaking',
+  },
 ] as const
 
 const roleOptions = [
@@ -363,6 +439,21 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
       },
       { default: false, key: 'notifications', label: 'Notifications', type: 'switch' },
       { default: true, disabled: () => true, key: 'disabled', label: 'Disabled', type: 'switch' },
+      {
+        default: true,
+        description: 'Overall level, at the top of the result',
+        key: 'overall',
+        label: 'Overall score',
+        props: {
+          icon: 'i-lucide-gauge',
+          ui: {
+            leadingIcon: 'text-info',
+            root: 'w-full flex-row-reverse items-center justify-between gap-4 rounded-lg border border-default px-3.5 py-2.5',
+            wrapper: 'ms-0 min-w-0',
+          },
+        },
+        type: 'switch',
+      },
     ],
     id: 'switch',
     label: 'Switch',
@@ -440,6 +531,15 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         type: 'radio-card',
         validation: required,
       },
+      {
+        default: 'cefr',
+        key: 'scale',
+        label: 'Custom content',
+        options: scaleOptions,
+        props: { columns: '1 md:3', indicator: 'hidden' },
+        renderOption: renderScale,
+        type: 'radio-card',
+      },
     ],
     id: 'radio-card',
     label: 'Radio cards',
@@ -487,6 +587,14 @@ export const formFieldPlaygrounds: readonly FormFieldPlaygroundDefinition[] = [
         label: 'Grouped and compact',
         options: accountTypeOptions,
         props: { columns: '1 md:2 xl:3', density: 'compact' },
+        type: 'checkbox-card',
+      },
+      {
+        default: ['listening', 'reading'],
+        key: 'skills',
+        label: 'Toned',
+        options: skillOptions,
+        props: { columns: '2 md:4', icon: 'tile', indicator: 'corner' },
         type: 'checkbox-card',
       },
     ],
