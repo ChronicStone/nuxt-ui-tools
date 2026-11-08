@@ -315,6 +315,8 @@ export interface DataListGridUi {
   canvas?: DataListUiClass
   row?: DataListUiClass
   item?: DataListUiClass
+  /** The "select all" row above the cards, shown when rows can be selected. */
+  selectAll?: DataListUiClass
   flowRoot?: DataListUiClass
   flow?: DataListUiClass
   loading?: DataListUiClass
