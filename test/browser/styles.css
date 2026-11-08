@@ -3,3 +3,9 @@
 @source '../../src/runtime/form';
 @source '../../src/runtime/table';
 @source '../../src/runtime/display';
+
+/* test-utils stubs <Transition> with an element; Vue renders none, so it must not take part in layout. */
+transition-stub,
+transition-group-stub {
+  display: contents;
+}
