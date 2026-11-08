@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineComponent } from 'vue'
+import { computed, defineComponent, h } from 'vue'
 
 import { useGridRow, useProvideGridRow } from '../../composables/use-grid-row'
 import { useTableInternals } from '../../composables/use-table-internals'
@@ -29,6 +29,10 @@ type GridRenderParams = Parameters<GridRenderItem>[0]
 
 useProvideGridRow(localRowIndex.value)
 
+const showControl = computed(
+  () => selectable.value && internals.schema.value.grid?.selectControl !== false,
+)
+
 const rowParams = computed(() =>
   createGridRenderParams({
     context: toPlainRecord(internals.queryContent.contextData.value),
@@ -36,6 +40,12 @@ const rowParams = computed(() =>
     layout: 'grid',
     pageContext: toPlainRecord(internals.queryContent.pageContextData.value),
     row: rowData.value ?? {},
+    selection: {
+      enabled: selectable.value,
+      renderControl,
+      selected: selected.value,
+      toggle: (options) => toggleSelection(options ?? {}),
+    },
     tableApi: internals.tableApi,
   }),
 )
@@ -48,11 +58,23 @@ const RenderGridCard = defineComponent({
 })
 
 /** The same toggle as the table's checkbox, so both layouts edit one selection. */
-function toggleSelection(event: MouseEvent) {
+function toggleSelection(options: { shiftKey?: boolean }) {
   internals.selection.toggleRowSelection({
     rowId: rowId.value,
     selected: !selected.value,
-    shiftKey: event.shiftKey,
+    shiftKey: options.shiftKey,
+  })
+}
+
+function renderControl(options: { class?: string } = {}) {
+  const row = rowData.value
+  if (!selectable.value || !row) return null
+  return h(TableSelectionControl, {
+    class: options.class,
+    index: localRowIndex.value,
+    modelValue: selected.value,
+    onToggle: (event: MouseEvent) => toggleSelection(event),
+    row,
   })
 }
 
@@ -73,13 +95,15 @@ function toPlainRecord(value: GenericObject) {
     <TableRowScopeProvider :scope="rowParams">
       <RenderGridCard />
     </TableRowScopeProvider>
-    <TableSelectionControl
-      v-if="selectable && rowData"
-      class="nut-dl-grid__select absolute top-1 right-1 z-10 min-h-11 min-w-11 justify-center"
-      :model-value="selected"
-      :row="rowData"
-      :index="localRowIndex"
-      @toggle="toggleSelection"
-    />
+    <!--
+      Positioned here, not on the control: below `md` the control carries `relative` for its touch
+      area, which would beat `absolute` on the same element and put it back in the card's flow.
+    -->
+    <div
+      v-if="showControl"
+      class="nut-dl-grid__select absolute top-1 right-1 z-10 flex min-h-11 min-w-11 items-center justify-center"
+    >
+      <component :is="renderControl({ class: 'size-full justify-center' })" />
+    </div>
   </div>
 </template>

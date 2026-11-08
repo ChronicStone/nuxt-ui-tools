@@ -85,7 +85,18 @@ that is not represented by bulk actions.
 
 ## Selection In The Grid
 
-When selection is on, every grid card carries a checkbox in its top-right corner (a 44px touch target) and a « select all » row sits above the cards. They edit the same selection as the table, so the selection bar and bulk actions appear the same way, and a phone on the grid reaches them. Cards without selection stay unchanged. Style the select-all row with `ui.grid.ui.selectAll`; the checkbox is the card's own `.nut-dl-grid__select`, and a selected card carries `data-selected="true"`.
+When selection is on, every grid card carries a checkbox in its top-right corner (a 44px touch target) and a « select all » row sits above the cards. The checkbox belongs to the library's card shell, so it appears around any `renderItem`, including a custom card, and takes no room in the card's layout. They edit the same selection as the table, so the selection bar and bulk actions appear the same way. Cards without selection stay unchanged. Style the select-all row with `ui.grid.ui.selectAll`; a selected card carries `data-selected="true"`.
+
+To place the checkbox yourself, turn the corner one off and use `selection` from the `renderItem` params:
+
+```ts
+grid: {
+  selectControl: false,
+  renderItem: ({ row, selection }) => h(ContactCard, { row }, () => selection.renderControl()),
+},
+```
+
+`selection` holds `enabled`, `selected`, `toggle()` and `renderControl()`, which draws the library's checkbox named after the row (it renders nothing when selection is off).
 
 ## Accessible Names
 

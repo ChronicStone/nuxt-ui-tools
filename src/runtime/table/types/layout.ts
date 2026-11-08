@@ -14,6 +14,7 @@ import type {
   TableDefaultSort,
   TableGridSortOption,
   TableLayout,
+  TableGridRenderParams,
   TableRowRenderParams,
   RenderableType,
   TableSortKey,
@@ -103,7 +104,13 @@ export interface TableGridSchema<
 > {
   enabled?: boolean | string | (() => boolean | string)
   mode?: TableGridMode
-  renderItem?: (params: TableRowRenderParams<TRow, TContext, TPageContext>) => RenderableType
+  /**
+   * Draws a card. The library puts a checkbox in the card's top-right corner when rows can be
+   * selected; `selection` lets the card place its own instead, with `selectControl: false`.
+   */
+  renderItem?: (params: TableGridRenderParams<TRow, TContext, TPageContext>) => RenderableType
+  /** Whether the library draws the selection checkbox in the card's corner. Defaults to `true`. */
+  selectControl?: boolean
   renderSkeleton?: (params: { layout?: 'grid' }) => RenderableType
   gridSize?: number | string | (() => number | string)
   itemSize?: number | string | (() => number | string)
