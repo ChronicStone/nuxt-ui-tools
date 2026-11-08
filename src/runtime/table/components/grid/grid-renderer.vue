@@ -16,6 +16,7 @@ import DataListErrorState from '../data-list/data-list-error-state.vue'
 import ProgressLine from '../layout/progress-line.vue'
 import TableEmptyState from '../table/table-empty-state.vue'
 import TableGroupHeader from '../table/table-group-header.vue'
+import TableSelectionControl from '../table/table-selection-control.vue'
 import OverlayInsetSpacer from '../utils/overlay-inset-spacer.vue'
 import GridCard from './grid-card.vue'
 import GridSkeleton from './grid-skeleton.vue'
@@ -60,6 +61,24 @@ const showError = computed(() => Boolean(internals.queryContent.error.value))
 const showEmpty = computed(
   () => !showInitialLoading.value && !showError.value && tableRows.value.length === 0,
 )
+/** Cards carry their own checkbox, so "select all" sits above them where the table has its header. */
+const showSelectAll = computed(
+  () =>
+    internals.selection.selectionEnabled.value &&
+    !showInitialLoading.value &&
+    !showError.value &&
+    tableRows.value.length > 0,
+)
+const allSelectedState = computed<boolean | 'indeterminate'>(() =>
+  internals.selection.allSelected.value
+    ? true
+    : internals.selection.partiallySelected.value
+      ? 'indeterminate'
+      : false,
+)
+function toggleSelectAll() {
+  internals.selection.toggleAllRows({ selected: !internals.selection.allSelected.value })
+}
 const skeletonRows = computed(() =>
   Array.from({ length: GRID_DEFAULTS.skeletonRows }, (_, index) => index),
 )
@@ -208,6 +227,24 @@ function refreshData() {
     :data-loading="showInitialLoading"
     :data-replacing="replacing"
   >
+    <div
+      v-if="showSelectAll"
+      :class="
+        mergeDataListUiClass(
+          'nut-dl-grid__select-all flex shrink-0 items-center gap-1 text-sm text-muted',
+          undefined,
+          ui?.selectAll,
+        )
+      "
+    >
+      <TableSelectionControl
+        class="min-h-11 min-w-11 justify-center"
+        :model-value="allSelectedState"
+        @toggle="toggleSelectAll"
+      />
+      <span>{{ t('table.selection.selectAll') }}</span>
+    </div>
+
     <div
       ref="viewportRef"
       :class="

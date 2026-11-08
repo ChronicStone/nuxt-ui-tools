@@ -83,6 +83,10 @@ no bulk actions. Toolbar and row actions do not imply row selection. Set
 `selection.mode` to `true` when an application needs selection for a custom workflow
 that is not represented by bulk actions.
 
+## Selection In The Grid
+
+When selection is on, every grid card carries a checkbox in its top-right corner (a 44px touch target) and a « select all » row sits above the cards. They edit the same selection as the table, so the selection bar and bulk actions appear the same way, and a phone on the grid reaches them. Cards without selection stay unchanged. Style the select-all row with `ui.grid.ui.selectAll`; the checkbox is the card's own `.nut-dl-grid__select`, and a selected card carries `data-selected="true"`.
+
 ## Accessible Names
 
 Row controls read the record they act on. Set `rowLabel` on the schema so a screen reader hears "Select Fleury SCS" and "Actions for Fleury SCS" instead of a bare checkbox:
