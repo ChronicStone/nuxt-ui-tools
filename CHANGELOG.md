@@ -1,3 +1,11 @@
+## v1.33.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.32.0...v1.33.0)
+
+### 🚀 Enhancements
+
+- **table:** When selection is on, every grid card carries a checkbox in its top-right corner (a 44px touch target, named after `rowLabel` or the card's position) and a « select all » row sits above the cards. They edit the same selection as the table, so the selection bar and bulk actions are reachable on a phone. Cards stay unchanged when selection is off. The row takes `ui.grid.ui.selectAll`, and a selected card carries `data-selected="true"`
+
 ## v1.32.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.31.0...v1.32.0)
