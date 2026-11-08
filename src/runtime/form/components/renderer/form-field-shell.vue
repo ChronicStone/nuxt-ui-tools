@@ -5,7 +5,7 @@ import UFormField from '@nuxt/ui/components/FormField.vue'
 import UIcon from '@nuxt/ui/components/Icon.vue'
 import UModal from '@nuxt/ui/components/Modal.vue'
 import UTooltip from '@nuxt/ui/components/Tooltip.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
 import { useFormFieldBare } from '../../composables/use-form-field-chrome'
@@ -84,6 +84,12 @@ const labelExtra = computed(() => {
   return isFunction(value) ? value() : value
 })
 const shellLabel = computed(() => (props.inlineLabel ? undefined : label.value))
+/**
+ * Id of the label text, given to the slot so a control whose own name is generic can point
+ * `aria-labelledby` at it. Undefined while the shell draws no label.
+ */
+const labelId = useId()
+const slotLabelId = computed(() => (shellLabel.value ? labelId : undefined))
 const shellDescription = computed(() => (props.inlineLabel ? undefined : description.value))
 const shellHint = computed(() => (props.inlineLabel ? undefined : hint.value))
 const shellLabelExtra = computed(() => (props.inlineLabel ? undefined : labelExtra.value))
@@ -151,7 +157,13 @@ function renderLabelExtra() {
 
 <template>
   <template v-if="bare">
-    <slot :label="label" :description="description" :hint="hint" :required="required" />
+    <slot
+      :label="label"
+      :description="description"
+      :hint="hint"
+      :required="required"
+      :label-id="slotLabelId"
+    />
   </template>
   <UFormField
     v-else
@@ -167,9 +179,10 @@ function renderLabelExtra() {
     :style="shellStyle"
     :ui="nuxtFieldUi"
   >
-    <template v-if="shellLabel && (descriptionTooltip || descriptionModal)" #label>
-      <span class="inline-flex items-center gap-1.5">
-        <span>{{ shellLabel }}</span>
+    <template v-if="shellLabel" #label>
+      <span v-if="!descriptionTooltip && !descriptionModal" :id="labelId">{{ shellLabel }}</span>
+      <span v-else class="inline-flex items-center gap-1.5">
+        <span :id="labelId">{{ shellLabel }}</span>
         <UTooltip v-if="descriptionTooltip" :text="descriptionTooltip.text">
           <UIcon
             name="i-lucide-circle-help"
@@ -250,7 +263,13 @@ function renderLabelExtra() {
       <template #content>
         <div :class="mergeFormUiClass('flex items-start gap-2', fieldUi?.body)">
           <div :class="mergeFormUiClass('min-w-0 flex-1', fieldUi?.content)">
-            <slot :label="label" :description="description" :hint="hint" :required="required" />
+            <slot
+              :label="label"
+              :description="description"
+              :hint="hint"
+              :required="required"
+              :label-id="slotLabelId"
+            />
           </div>
           <UIcon
             v-if="pending"
@@ -275,7 +294,13 @@ function renderLabelExtra() {
     </UCollapsible>
     <div v-else :class="mergeFormUiClass('flex items-start gap-2', fieldUi?.body)">
       <div :class="mergeFormUiClass('min-w-0 flex-1', fieldUi?.content)">
-        <slot :label="label" :description="description" :hint="hint" :required="required" />
+        <slot
+          :label="label"
+          :description="description"
+          :hint="hint"
+          :required="required"
+          :label-id="slotLabelId"
+        />
       </div>
       <UIcon
         v-if="pending"

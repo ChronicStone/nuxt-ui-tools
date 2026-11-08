@@ -65,7 +65,7 @@ const status = computed(() => {
   return {
     color: 'neutral',
     icon: undefined,
-    label: t('form.page.progress', { filled: required - missing, required }),
+    label: t('form.page.progress', { filled: required - missing, missing, required }),
   } as const
 })
 /** On a spanned page the section takes its columns once the sections area is wide enough. */
@@ -99,6 +99,7 @@ onBeforeUnmount(() => unregister?.())
     :aria-labelledby="titleId"
     :data-form-page-section="section.key"
     :data-state="section.status"
+    :data-form-page-missing="section.missing"
     :data-dirty="dirty || undefined"
     :style="{
       scrollMarginTop: `calc(${page.stickyOffset.value}px + var(--nut-form-page-gap, 24px))`,

@@ -130,6 +130,13 @@ export interface FormStatefulFieldBase<
   required?: boolean | FormFieldCallback<boolean, TContext, TDeps, TValue>
   /** Message used by the required rule. */
   requiredMessage?: FormText
+  /**
+   * Whether a value counts as empty, for the field that holds a value the generic check cannot
+   * judge: a multi-select scope whose `{ mode: 'selected', ids: [] }` selects nothing. A form page
+   * section reads it to count the field as missing or not provided; without it, `null`,
+   * `undefined`, a blank string and an empty array are empty.
+   */
+  empty?(value: TValue): boolean
   /** Native Regle validation rules. */
   validators?: FormValidatorsConfig<TContext>
   /** Input/output transforms for this field. */

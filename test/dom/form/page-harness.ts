@@ -1,7 +1,7 @@
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { mount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
-import { defineComponent, h, nextTick } from 'vue'
+import { defineComponent, h, nextTick, ref } from 'vue'
 import type { VNodeChild } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
@@ -15,6 +15,8 @@ import type {
   FormUiConfig,
   FormValue,
 } from '#ui-tools/form/types'
+import { provideUiToolsLocale } from '#ui-tools/i18n'
+import type { Locale } from '#ui-tools/i18n'
 
 import { setAppConfig, setBreakpoint } from '../nuxt-state'
 
@@ -53,6 +55,8 @@ export async function mountPage(options: {
   onSubmit?: FormSubmitHandler<FormObject, FormValue>
   layout?: () => VNodeChild
   style?: string
+  /** A locale the app provides, as a consumer overriding messages does. */
+  locale?: Locale
 }): Promise<PageHarness> {
   setBreakpoint('xl')
   setAppConfig(options.appConfig ?? {})
@@ -87,7 +91,14 @@ export async function mountPage(options: {
     },
   })
   const wrapper = mount(
-    defineComponent({ setup: () => () => h(FormProvider, null, { default: () => h(Page) }) }),
+    defineComponent({
+      setup() {
+        if (options.locale) {
+          provideUiToolsLocale(ref(options.locale))
+        }
+        return () => h(FormProvider, null, { default: () => h(Page) })
+      },
+    }),
     {
       attachTo: document.body,
       global: {

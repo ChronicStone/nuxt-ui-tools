@@ -614,7 +614,13 @@ short and related; a stack of full rows is the right layout for most forms.
 `page.status: true` shows where each section stands at the end of its heading: "2 sur 3" while
 required fields are missing, "Complété", or "À corriger" once a field shows an error. An optional
 section with nothing entered shows its "Facultatif" tag in that same place. Style it with `ui.page.ui.sectionStatus`
-(`data-form-page-status` carries the status).
+(`data-form-page-status` carries the status). The `form.page.progress` message receives `{filled}`,
+`{required}` and `{missing}`, so a locale can print « 3 requis »; each section also carries
+`data-form-page-missing` with the number of required fields still empty.
+
+A field whose value the generic check cannot judge (a scope object that selects nothing) declares
+`empty: (value) => boolean`; a section counts that field as missing, or not provided, by it instead
+of by the default (`null`, blank string, empty array).
 
 ```ts
 defineFormPageSchema({

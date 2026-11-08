@@ -41,7 +41,22 @@ const {
   () => props.path,
   { omit: ['createItem', 'max', 'searchable', 'clearable'] },
 )
-const [DefineControl, ReuseControl] = createReusableTemplate()
+/**
+ * Reka's trigger hard-codes "Show popup" as its name. The visible label names it instead, and a
+ * field without one falls back to its placeholder, then its key. A bare control already carries
+ * its own name through the field attrs.
+ */
+function triggerName(labelId: string | undefined) {
+  const attrs = controlProps.value
+  if (isString(attrs['aria-label']) || isString(attrs['aria-labelledby'])) {
+    return {}
+  }
+  if (labelId) {
+    return { 'aria-labelledby': labelId }
+  }
+  return { 'aria-label': placeholder.value || props.field.key }
+}
+const [DefineControl, ReuseControl] = createReusableTemplate<{ labelId?: string }>()
 const searchTerm = ref<string>('')
 const open = ref<boolean>(false)
 const model = computed<FormOptionValue | FormOptionValue[] | null | undefined>({
@@ -156,12 +171,12 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
 </script>
 
 <template>
-  <DefineControl>
+  <DefineControl v-slot="{ labelId }">
     <USelectMenu
       v-model="model"
       v-model:search-term="searchTerm"
       :open="open"
-      v-bind="controlProps"
+      v-bind="{ ...controlProps, ...triggerName(labelId) }"
       class="w-full"
       value-key="value"
       label-key="label"
@@ -243,7 +258,7 @@ function isOptionValue(value: FormValue): value is FormOptionValue {
   </DefineControl>
 
   <ReuseControl v-if="bare" />
-  <FormFieldShell v-else :field="field" :path="path">
-    <ReuseControl />
+  <FormFieldShell v-else v-slot="{ labelId }" :field="field" :path="path">
+    <ReuseControl :label-id="labelId" />
   </FormFieldShell>
 </template>

@@ -127,7 +127,7 @@ export function resolveFormPageSectionState(params: {
   const required = params.requiredEnforced
     ? leaves.filter((leaf) => isRequiredLeaf(leaf, runtime))
     : []
-  const missing = required.filter((leaf) => isEmptyValue(runtime.getValue(leaf.path))).length
+  const missing = required.filter((leaf) => isEmptyLeaf(leaf, runtime.getValue(leaf.path))).length
   const optional = entry.section.optional ?? required.every((leaf) => leaf.item)
   const provided =
     optional && leaves.some((leaf) => isProvided(leaf, runtime, dirtyPaths, params.input))
@@ -227,14 +227,20 @@ function isProvided(
   dirtyPaths: readonly string[],
   input: FormObject | undefined,
 ) {
-  if (isEmptyValue(runtime.getValue(leaf.path))) {
+  if (isEmptyLeaf(leaf, runtime.getValue(leaf.path))) {
     return false
   }
   const path = leaf.path.join('.')
   return (
     dirtyPaths.some((dirtyPath) => isPathWithin(dirtyPath, path)) ||
-    !isEmptyValue(getPathValue(input ?? {}, leaf.path))
+    !isEmptyLeaf(leaf, getPathValue(input ?? {}, leaf.path))
   )
+}
+
+/** Whether a field holds no value: its own `empty` predicate when it has one, the generic check otherwise. */
+function isEmptyLeaf(leaf: FormPageLeaf, value: FormValue) {
+  const empty = Object.getOwnPropertyDescriptor(leaf.field, 'empty')?.value
+  return isFunction(empty) ? empty(value) === true : isEmptyValue(value)
 }
 
 function hasCondition(field: FormField) {
