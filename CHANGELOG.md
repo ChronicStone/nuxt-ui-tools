@@ -1,3 +1,15 @@
+## v1.33.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.33.0...v1.33.1)
+
+### 🩹 Fixes
+
+- **table:** The grid card's selection checkbox was positioned on the control itself, and below `md` the control's own `relative` beat `absolute`: on a phone it fell into the card's flow, stretched the card with an empty band before its footer and was clipped out of view. The checkbox now sits in a positioned shell around the card, outside whatever `renderItem` draws, so every card gets it and the card keeps its natural height
+
+### 🚀 Enhancements
+
+- **table:** `renderItem` receives `selection` (`enabled`, `selected`, `toggle()`, `renderControl()`) so a card can place the checkbox itself; `grid.selectControl: false` turns the corner one off
+
 ## v1.33.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.32.0...v1.33.0)

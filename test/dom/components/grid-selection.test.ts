@@ -6,7 +6,7 @@ import GridRenderer from '#ui-tools/table/components/grid/grid-renderer.vue'
 import TableRenderer from '#ui-tools/table/components/table/table-renderer.vue'
 
 import { must } from '../../helpers/must'
-import { createAccountsSchema } from '../fixtures/accounts'
+import { asAccount, createAccountsSchema } from '../fixtures/accounts'
 import { mountLoaded } from '../harness'
 import type { Harness } from '../harness'
 
@@ -75,18 +75,18 @@ describe('grid card selection', () => {
     const { selection } = mounted.internals
     expect(mounted.wrapper.find('.nut-dl-selbar').exists()).toBeFalsy()
 
-    await must(mounted.wrapper.findAll('.nut-dl-grid__select')[0]).trigger('click')
+    await must(mounted.wrapper.findAll('.nut-dl-grid__select .nut-dl-select')[0]).trigger('click')
     await mounted.flush()
     expect(selection.selectedKeys.value).toStrictEqual(['acc-1'])
     expect(selection.isRowSelected({ rowId: 'acc-1' })).toBe(true)
     expect(mounted.wrapper.find('.nut-dl-selbar').exists()).toBeTruthy()
     expect(mounted.wrapper.find('.nut-dl-grid__card[data-selected="true"]').exists()).toBeTruthy()
 
-    await must(mounted.wrapper.findAll('.nut-dl-grid__select')[1]).trigger('click')
+    await must(mounted.wrapper.findAll('.nut-dl-grid__select .nut-dl-select')[1]).trigger('click')
     await mounted.flush()
     expect(selection.selectedKeys.value).toStrictEqual(['acc-1', 'acc-2'])
 
-    await must(mounted.wrapper.findAll('.nut-dl-grid__select')[0]).trigger('click')
+    await must(mounted.wrapper.findAll('.nut-dl-grid__select .nut-dl-select')[0]).trigger('click')
     await mounted.flush()
     expect(selection.selectedKeys.value).toStrictEqual(['acc-2'])
   })
@@ -98,7 +98,7 @@ describe('grid card selection', () => {
       schema: flowSchema(),
     })
     await harness.until(() => must(harness).wrapper.findAll('.nut-dl-grid__item').length > 0)
-    await must(harness.wrapper.findAll('.nut-dl-grid__select')[3]).trigger('click')
+    await must(harness.wrapper.findAll('.nut-dl-grid__select .nut-dl-select')[3]).trigger('click')
     await harness.flush()
     const tableRow = must(harness.wrapper.find('tbody tr[data-row-id="acc-4"]'))
     expect(tableRow.find<HTMLInputElement>('td[data-col="__select"] input').element.checked).toBe(
@@ -125,10 +125,50 @@ describe('grid card selection', () => {
 
   it('shows the select-all as mixed while only some rows are selected', async () => {
     const mounted = await mountGrid()
-    await must(mounted.wrapper.findAll('.nut-dl-grid__select')[0]).trigger('click')
+    await must(mounted.wrapper.findAll('.nut-dl-grid__select .nut-dl-select')[0]).trigger('click')
     await mounted.flush()
     expect(
       mounted.wrapper.find('.nut-dl-grid__select-all input').attributes('data-indeterminate'),
     ).toBe('true')
+  })
+
+  it('hands a custom card the selection, and its own checkbox to place', async () => {
+    const schema = flowSchema()
+    must(schema.grid).selectControl = false
+    must(schema.grid).renderItem = ({ row, selection }) =>
+      h('article', { class: 'custom-card', 'data-row': asAccount(row).id }, [
+        selection.renderControl(),
+        h('span', { class: 'custom-state' }, `${selection.enabled}:${selection.selected}`),
+      ])
+    harness = await mountLoaded({
+      query: { l: 'grid' },
+      render: () => h(GridRenderer, { height: '400px' }),
+      schema,
+    })
+    await harness.until(() => must(harness).wrapper.findAll('.custom-card').length > 0)
+    const w = harness.wrapper
+    expect(w.find('.nut-dl-grid__select').exists()).toBeFalsy()
+    const card = must(w.findAll('.custom-card')[0])
+    expect(card.find('.custom-state').text()).toBe('true:false')
+
+    await card.find('.nut-dl-select').trigger('click')
+    await harness.flush()
+    expect(harness.internals.selection.selectedKeys.value).toStrictEqual(['acc-1'])
+    expect(must(w.findAll('.custom-card')[0]).find('.custom-state').text()).toBe('true:true')
+  })
+
+  it('still draws the corner checkbox around a custom card', async () => {
+    const schema = flowSchema()
+    must(schema.grid).renderItem = ({ row }) =>
+      h('article', { class: 'custom-card' }, asAccount(row).id)
+    harness = await mountLoaded({
+      query: { l: 'grid' },
+      render: () => h(GridRenderer, { height: '400px' }),
+      schema,
+    })
+    await harness.until(() => must(harness).wrapper.findAll('.custom-card').length > 0)
+    const item = must(harness.wrapper.findAll('.nut-dl-grid__item')[0])
+    expect(item.find('.nut-dl-grid__select').exists()).toBeTruthy()
+    expect(item.find('.custom-card').find('input').exists()).toBeFalsy()
   })
 })

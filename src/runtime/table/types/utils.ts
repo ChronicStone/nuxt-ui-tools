@@ -103,6 +103,24 @@ export interface TableRowRenderParams<
   layout: TableLayout
 }
 
+/** What a grid card knows of its row's selection, to place a control of its own. */
+export interface TableGridSelection {
+  /** Whether rows can be selected: the table has selection on. */
+  enabled: boolean
+  selected: boolean
+  toggle: (options?: { shiftKey?: boolean }) => void
+  /** The library's checkbox for this card, named after the row. It renders nothing without selection. */
+  renderControl: () => RenderableType
+}
+
+export interface TableGridRenderParams<
+  TRow extends GenericObject = GenericObject,
+  TContext extends GenericObject = GenericObject,
+  TPageContext extends GenericObject = GenericObject,
+> extends TableRowRenderParams<TRow, TContext, TPageContext> {
+  selection: TableGridSelection
+}
+
 export interface TableGridSortOption<TKey extends string = string> {
   label: string | (() => RenderableType)
   key: TKey
