@@ -6,6 +6,8 @@ import FormPageActions from '#ui-tools/form/components/page/form-page-actions.vu
 import FormPageNavigation from '#ui-tools/form/components/page/form-page-navigation.vue'
 import FormPageSections from '#ui-tools/form/components/page/form-page-sections.vue'
 import type { FormObject, FormSubmitHandler, FormUiConfig, FormValue } from '#ui-tools/form/types'
+import { isRecord } from '#ui-tools/form/utils/path'
+import { extendUiToolsLocale, fr } from '#ui-tools/i18n'
 
 import { localeCode } from '../stubs/nuxt-ui-locale'
 import { mountPage, unmountPage } from './page-harness'
@@ -116,6 +118,14 @@ function status(harness: PageHarness, key: string) {
 /** The visible "Facultatif" tag of a navigation entry. */
 function optionalTag(harness: PageHarness, key: string) {
   return harness.entry(key).querySelector('[data-form-page-optional]')
+}
+
+/** A scope selects nothing when it lists no ids; `all` selects everything without listing any. */
+function scopeEmpty(value: FormValue) {
+  if (!isRecord(value)) {
+    return true
+  }
+  return value.mode === 'selected' && Array.isArray(value.ids) && value.ids.length === 0
 }
 
 afterEach(() => {
@@ -355,6 +365,44 @@ describe('form page', () => {
     expect(
       ['type', 'identity', 'billing', 'documents'].map((key) => harness.entry(key).dataset.state),
     ).toStrictEqual(['complete', 'complete', 'complete', 'complete'])
+  })
+
+  it('asks a field whether its value is empty before the generic check', async () => {
+    const schema = defineFormPageSchema({
+      sections: [
+        defineFormPageSection({
+          fields: [
+            {
+              empty: scopeEmpty,
+              key: 'scope',
+              label: 'Comptes',
+              render: () => h('div'),
+              required: true,
+              type: 'custom-component',
+            },
+          ],
+          key: 'access',
+          label: 'Accès',
+        }),
+      ],
+    })
+    const harness = await mountPage({
+      input: { scope: { ids: [], mode: 'selected' } },
+      schema,
+    })
+
+    // An object is not empty for the generic check, but the field says it selects nothing.
+    expect(harness.entry('access').dataset.state).toBe('pending')
+    expect(harness.section('access').dataset.formPageMissing).toBe('1')
+
+    harness.form.state.set('scope', { ids: ['a1'], mode: 'selected' })
+    await harness.flush()
+    expect(harness.entry('access').dataset.state).toBe('complete')
+    expect(harness.section('access').dataset.formPageMissing).toBe('0')
+
+    harness.form.state.set('scope', { ids: [], mode: 'all' })
+    await harness.flush()
+    expect(harness.entry('access').dataset.state).toBe('complete')
   })
 
   it('follows conditions across sections: fields, requirements, and whole sections', async () => {
@@ -812,6 +860,35 @@ describe('form page panels, spans and status', () => {
     await harness.flush()
     expect(badge('profile')?.textContent?.trim()).toBe('À corriger')
     expect(badge('profile')?.getAttribute('data-form-page-status')).toBe('invalid')
+  })
+
+  it('hands the count of missing required fields to the status and the section', async () => {
+    const harness = await mountPage({ schema: spanSchema({ page: { status: true } }) })
+    const missing = (key: string) => harness.section(key).getAttribute('data-form-page-missing')
+
+    // Backward compatible: the default copy still reads "filled sur required".
+    expect(missing('identity')).toBe('2')
+    expect(missing('notes')).toBe('0')
+
+    await harness.setValue('name', 'Lingua Formation')
+    expect(missing('identity')).toBe('1')
+    await harness.setValue('legal', 'Lingua Formation SAS')
+    expect(missing('identity')).toBe('0')
+  })
+
+  it('gives the status copy the missing count beside filled and required', async () => {
+    const harness = await mountPage({
+      locale: extendUiToolsLocale(fr, {
+        messages: { form: { page: { progress: '{missing} requis ({filled}/{required})' } } },
+      }),
+      schema: spanSchema({ page: { status: true } }),
+    })
+    const badge = () =>
+      harness.section('identity').querySelector('[data-form-page-status]')?.textContent?.trim()
+
+    expect(badge()).toBe('2 requis (0/2)')
+    await harness.setValue('name', 'Lingua Formation')
+    expect(badge()).toBe('1 requis (1/2)')
   })
 
   it('keeps the status at the end of the heading, with the reset button before it', async () => {

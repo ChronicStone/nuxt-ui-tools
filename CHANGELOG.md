@@ -1,3 +1,16 @@
+## v1.32.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.31.0...v1.32.0)
+
+### 🚀 Enhancements
+
+- **form:** A field can declare `empty(value)`, which says whether its value counts as empty. A form page section reads it before the generic check, so a multi-select scope that selects nothing counts as missing instead of « Complet »
+- **form:** The `form.page.progress` message receives `{missing}` beside `{filled}` and `{required}`, and each page section carries `data-form-page-missing` with the number of required fields still empty. The default copy is unchanged
+
+### 🩹 Fixes
+
+- **form:** A `select` trigger takes its name from the field label through `aria-labelledby` instead of Reka's generic « Show popup »; a field without a label falls back to an `aria-label` from its placeholder, then its key
+
 ## v1.31.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.30.2...v1.31.0)
