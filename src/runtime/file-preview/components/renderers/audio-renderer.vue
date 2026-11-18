@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import UIcon from '@nuxt/ui/components/Icon.vue'
-import { useMediaControls } from '@vueuse/core'
-import { computed, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 
 import { useUiToolsLocale } from '../../../i18n/use-locale'
-import MediaControls from '../../../media/components/media-controls.vue'
+import AudioPlayer from '../../../media/components/audio-player.vue'
 import { onFilePreviewKey } from '../../composables/use-file-preview-shell'
 import type { FilePreviewRendererEmits, FilePreviewRendererProps } from '../../types'
 import { formatFilePreviewDuration } from '../../utils/format'
@@ -19,23 +18,26 @@ defineProps<FilePreviewRendererProps>()
 const emit = defineEmits<FilePreviewRendererEmits>()
 
 const { t } = useUiToolsLocale()
-const audio = useTemplateRef<HTMLAudioElement>('audio')
-const controls = useMediaControls(audio)
+const player = useTemplateRef<InstanceType<typeof AudioPlayer>>('player')
+const seconds = ref(0)
+const playing = ref(false)
 const duration = computed(() =>
-  controls.duration.value > 0 ? formatFilePreviewDuration(controls.duration.value) : null,
+  seconds.value > 0 ? formatFilePreviewDuration(seconds.value) : null,
 )
 
-function handleMetadata() {
-  const element = audio.value
-  if (!element) return
+function handleReady(metadata: { duration: number }) {
+  seconds.value = metadata.duration
   emit('ready', [
-    { label: t('filePreview.fields.duration'), value: formatFilePreviewDuration(element.duration) },
+    {
+      label: t('filePreview.fields.duration'),
+      value: formatFilePreviewDuration(metadata.duration),
+    },
   ])
 }
 
 onFilePreviewKey([' ', 'k', 'm'], (event) => {
-  if (event.key === 'm') controls.muted.value = !controls.muted.value
-  else controls.playing.value = !controls.playing.value
+  if (event.key === 'm') player.value?.toggleMute()
+  else player.value?.toggle()
 })
 </script>
 
@@ -56,10 +58,7 @@ onFilePreviewKey([' ', 'k', 'm'], (event) => {
           <i
             v-for="(height, position) in BARS"
             :key="position"
-            :class="[
-              'block w-1 rounded-full bg-white/80',
-              controls.playing.value ? 'nut-fp-equalizer' : '',
-            ]"
+            :class="['block w-1 rounded-full bg-white/80', playing ? 'nut-fp-equalizer' : '']"
             :style="{ height: `${height}px`, animationDelay: `${(position % 7) * -0.13}s` }"
           />
           <UIcon
@@ -72,15 +71,17 @@ onFilePreviewKey([' ', 'k', 'm'], (event) => {
         <p class="m-0 truncate text-sm font-semibold text-highlighted">{{ file.name }}</p>
         <p v-if="duration" class="m-0 text-xs text-muted tabular-nums">{{ duration }}</p>
       </div>
-      <audio
-        ref="audio"
+      <AudioPlayer
+        ref="player"
         :src="url"
-        preload="metadata"
-        class="hidden"
-        @loadedmetadata="handleMetadata"
+        :title="file.name"
+        :keyboard="false"
+        compact
+        @ready="handleReady"
+        @play="playing = true"
+        @pause="playing = false"
         @error="emit('error', { reason: 'decode' })"
       />
-      <MediaControls :controls="controls" variant="audio" compact />
     </div>
   </div>
 </template>

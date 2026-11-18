@@ -163,6 +163,11 @@ function getPublicComponents(
       global: options.global,
       name: `${prefix}VideoPlayer`,
     },
+    {
+      filePath: `${runtimeDir}/media/components/audio-player.vue`,
+      global: options.global,
+      name: `${prefix}AudioPlayer`,
+    },
 
     // Form
     {

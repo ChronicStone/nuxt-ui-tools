@@ -182,6 +182,13 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
         mode: 'document',
         path: '/file-preview',
       },
+      {
+        description: 'Video and audio players: clips, play limits, locked timeline, controls.',
+        id: 'file-preview-media',
+        label: 'Media players',
+        mode: 'document',
+        path: '/file-preview/media',
+      },
     ],
     path: '/file-preview',
   },
