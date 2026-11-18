@@ -11,7 +11,12 @@ import {
   isString,
   isNullish,
 } from '../../shared/utils/predicate'
-import { QUERY_DEFAULTS } from '../constants/query-state'
+import { resolveTextValue } from '../../shared/utils/render'
+import {
+  QUERY_DEFAULTS,
+  TABLE_FILTER_NONE_ICON,
+  TABLE_FILTER_NONE_VALUE,
+} from '../constants/query-state'
 import type {
   TableBooleanFilterDefinition,
   TableFacetExecutionResult,
@@ -32,6 +37,7 @@ import {
   flattenFilterOptionEntries,
   resolveFilterOptionEntries,
   resolveOptionFilterUi,
+  hasNoneEntry,
   resolveTableFacetMode,
 } from '../utils'
 import type { UseTableDataReturn } from './use-table-data'
@@ -253,6 +259,7 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
               cursor: undefined,
               key: options.definition.key,
               limit: facetConfig.value.limit,
+              ...(hasNoneEntry(options.definition) ? { missing: true } : {}),
               mode: resolveTableFacetMode(facetConfig.value),
               search: facetSearch.value,
             },
@@ -304,10 +311,18 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       const config = facetConfig.value
       const query = config?.query
       if (!query) return []
-      return pageFacetRequests.value.map((values) => {
+      return pageFacetRequests.value.map((values, index) => {
         const definition = unref(
           query({
-            facets: [{ key: options.definition.key, mode: resolveTableFacetMode(config), values }],
+            facets: [
+              {
+                key: options.definition.key,
+                // One request is enough for the empty rows: the first.
+                ...(index === 0 && hasNoneEntry(options.definition) ? { missing: true } : {}),
+                mode: resolveTableFacetMode(config),
+                values,
+              },
+            ],
             table: options.queryContent.facetsBaseContext.value,
           }),
         )
@@ -365,6 +380,18 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     )
   })
 
+  /** Rows where the field is empty (the facet's `missing`), shown on the none entry. */
+  const missingCount = computed<number | undefined>(() => {
+    if (!usesFacetCounts.value || !shouldDeriveCounts.value) return undefined
+    const facets = countsPagesRemotely.value
+      ? pageFacetQueries.value.flatMap((query) => query.data?.result.facets ?? [])
+      : isRemoteTable.value && hasPerFilterFacetQuery.value
+        ? (unref(perFilterFacetQuery.data)?.facets ?? [])
+        : options.queryContent.facets.value.facets
+    const facet = facets.find((item: { key: string }) => item.key === options.definition.key)
+    return facet?.missing
+  })
+
   const resolvedFacetCounts = computed(() =>
     facetCounts.value.flatMap((entry) =>
       isPrimitiveFilterOptionValue(entry.value) ? [{ count: entry.count, value: entry.value }] : [],
@@ -391,14 +418,41 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
     }),
   )
   const sourceEntries = computed(() => flattenFilterOptionEntries(resolvedSourceTreeEntries.value))
-  const selectableSourceEntries = computed(() =>
+  // `source.none`: a first entry for rows where the field is empty, counted by the facet's `missing`.
+  const noneEntry = computed<(TableResolvedFilterOptionEntry & { value: string }) | null>(() => {
+    const none = options.definition.kind === 'option' ? options.definition.source?.none : undefined
+    if (!none) return null
+    return {
+      children: [],
+      count: missingCount.value,
+      icon: none.icon ?? TABLE_FILTER_NONE_ICON,
+      id: TABLE_FILTER_NONE_VALUE,
+      label: resolveTextValue(none.label),
+      selected: false,
+      value: TABLE_FILTER_NONE_VALUE,
+    }
+  })
+  const valueSourceEntries = computed(() =>
     sourceEntries.value.filter(
       (entry): entry is TableResolvedFilterOptionEntry & { value: string | number | boolean } =>
         !isNullish(entry.value),
     ),
   )
+  const selectableSourceEntries = computed(() => [
+    ...(noneEntry.value ? [noneEntry.value] : []),
+    ...valueSourceEntries.value,
+  ])
 
-  const filteredTreeState = computed(() => {
+  /** The none entry stays while the search is empty or matches its own label. */
+  const visibleNoneEntries = computed(() =>
+    noneEntry.value &&
+    (!normalizedSearch.value.length ||
+      noneEntry.value.label.toLowerCase().includes(normalizedSearch.value.toLowerCase()))
+      ? [noneEntry.value]
+      : [],
+  )
+
+  const searchedTreeState = computed(() => {
     if (optionUi.value?.presentation !== 'tree') {
       const expandedIds: string[] = []
       return {
@@ -428,6 +482,15 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       expandedIds: collectFilterOptionBranchIds(resolvedSourceTreeEntries.value),
     }
   })
+  // The tree leads with the none entry as a root leaf, like the flat list's first section.
+  const filteredTreeState = computed(() =>
+    optionUi.value?.presentation === 'tree'
+      ? {
+          ...searchedTreeState.value,
+          entries: [...visibleNoneEntries.value, ...searchedTreeState.value.entries],
+        }
+      : searchedTreeState.value,
+  )
 
   const filteredEntries = computed(() => {
     if (optionUi.value?.presentation === 'tree') {
@@ -437,13 +500,17 @@ export function useTableFilterOptions(options: UseTableFilterOptionsParams) {
       )
     }
 
-    if (!normalizedSearch.value.length || hasServerOptions.value) {
+    if (!normalizedSearch.value.length) {
       return selectableSourceEntries.value
     }
 
-    return selectableSourceEntries.value.filter((entry) =>
-      entry.label.toLowerCase().includes(normalizedSearch.value.toLowerCase()),
-    )
+    // The server already searched its values.
+    const values = hasServerOptions.value
+      ? valueSourceEntries.value
+      : valueSourceEntries.value.filter((entry) =>
+          entry.label.toLowerCase().includes(normalizedSearch.value.toLowerCase()),
+        )
+    return [...visibleNoneEntries.value, ...values]
   })
 
   const isInitialLoading = computed(() =>

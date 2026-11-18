@@ -5,6 +5,7 @@ import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
+import { TABLE_FILTER_NONE_VALUE } from '../../../constants/query-state'
 import type {
   DataListCheckboxProps,
   DataListControlSize,
@@ -129,11 +130,16 @@ const geometry = computed(() => resolveDataListControlGeometry(size.value))
         </button>
 
         <USkeleton
-          v-if="props.showCounts && (props.countLoading || entry.count == null)"
+          v-if="
+            props.showCounts &&
+            (props.countLoading || (entry.count == null && entry.value !== TABLE_FILTER_NONE_VALUE))
+          "
           :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
         />
         <span
-          v-else-if="props.showCounts"
+          v-else-if="
+            props.showCounts && (entry.count != null || entry.value !== TABLE_FILTER_NONE_VALUE)
+          "
           :class="mergeDataListUiClass('shrink-0 text-muted', undefined, ui?.optionCount)"
         >
           {{ entry.count ?? 0 }}

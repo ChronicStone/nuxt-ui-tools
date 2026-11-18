@@ -131,7 +131,7 @@ function resolveClientFacet<
           }),
     search: options.request.search,
   })
-  const counts = countFacetOptions({
+  const { missing, options: counts } = countFacetOptions({
     key: options.facet.key,
     rows: matchingRows,
     search: options.facet.search,
@@ -143,6 +143,7 @@ function resolveClientFacet<
 
   return {
     key: options.facet.key,
+    missing,
     nextCursor:
       options.facet.limit && start + options.facet.limit < counts.length
         ? String(start + options.facet.limit)
@@ -407,9 +408,11 @@ function countFacetOptions<TRow extends GenericObject>(options: {
 }) {
   const countByValue = new Map<string, TableFacetOptionResult<string | number | boolean>>()
   const normalizedSearch = options.search?.trim().toLocaleLowerCase() ?? ''
+  let missing = 0
 
   for (const row of options.rows) {
     const seenInRow = new Set<string>()
+    if (isEmptyFilterValue(getFilterTargetValue({ key: options.key, source: row }))) missing += 1
 
     for (const value of toValueList(getFilterTargetValue({ key: options.key, source: row }))) {
       if (!isString(value) && !isNumber(value) && !isBoolean(value)) {
@@ -440,7 +443,7 @@ function countFacetOptions<TRow extends GenericObject>(options: {
     }
   }
 
-  return [...countByValue.values()].sort(compareFacetOptions)
+  return { missing, options: [...countByValue.values()].sort(compareFacetOptions) }
 }
 
 function compareFacetOptions(
@@ -501,6 +504,12 @@ function matchesFilterCondition<TRow extends GenericObject>(
     case 'isNot': {
       return !matchIsAnyOf({ filter: condition.value, value })
     }
+    case 'isEmpty': {
+      return isEmptyFilterValue(value)
+    }
+    case 'isNotEmpty': {
+      return !isEmptyFilterValue(value)
+    }
     case 'gt': {
       return matchComparison({ filter: condition.value, operator: 'gt', value })
     }
@@ -526,6 +535,10 @@ function matchesFilterCondition<TRow extends GenericObject>(
       return false
     }
   }
+}
+
+function isEmptyFilterValue(value: unknown): boolean {
+  return toValueList(value).every((item) => isNullish(item) || item === '')
 }
 
 function getFilterTargetValue<TSource>(options: { source: TSource; key: string }) {

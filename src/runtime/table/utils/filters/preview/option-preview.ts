@@ -1,4 +1,5 @@
 import { isBoolean, isNullish, isNumber, isString } from '../../../../shared/utils/predicate'
+import { TABLE_FILTER_NONE_ICON, TABLE_FILTER_NONE_VALUE } from '../../../constants/query-state'
 import type {
   TableBooleanFilterDefinition,
   TableBooleanFilterOperator,
@@ -57,10 +58,24 @@ function resolveOptionPreviewEntry(options: {
   const matched = options.optionEntries.find(
     (entry) => String(entry.value) === String(options.value),
   )
+  const none = resolveNoneEntry(options)
   return {
     color: matched?.color,
-    icon: matched?.icon,
-    label: resolveOptionPreviewLabel(options),
+    icon: matched?.icon ?? none?.icon,
+    label: none?.label ?? resolveOptionPreviewLabel(options),
+  }
+}
+
+/** The `source.none` entry reads the same in the chip without any loaded options. */
+function resolveNoneEntry(options: {
+  definition: Parameters<typeof resolveOptionPreviewLabel>[0]['definition']
+  value: unknown
+}) {
+  const none = options.definition.kind === 'option' ? options.definition.source?.none : undefined
+  if (!none || options.value !== TABLE_FILTER_NONE_VALUE) return undefined
+  return {
+    icon: none.icon ?? TABLE_FILTER_NONE_ICON,
+    label: getFilterLabelText({ label: none.label }),
   }
 }
 

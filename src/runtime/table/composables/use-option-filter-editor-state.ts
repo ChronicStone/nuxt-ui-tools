@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 
 import { isNullish } from '../../shared/utils/predicate'
+import { TABLE_FILTER_NONE_VALUE } from '../constants/query-state'
 import type {
   TableFilterOptionEntry,
   TableOptionFilterDefinition,
@@ -49,6 +50,15 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
   })
 
   const filterUi = computed(() => resolveOptionFilterUi(options.definition, options.operator.value))
+
+  /** A value's count is pending until its facet answers; the none entry has one only when the server sends `missing`. */
+  function isCountPending(entry: { count?: number; value?: PrimitiveFilterValue }) {
+    return (
+      optionSource.showCounts.value &&
+      isNullish(entry.count) &&
+      entry.value !== TABLE_FILTER_NONE_VALUE
+    )
+  }
 
   const frozenOrder = ref<Map<string, number> | null>(null)
   watch(
@@ -129,7 +139,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
       if (!entry.branchSelectable) {
         return {
           ...entry,
-          countPending: optionSource.showCounts.value && isNullish(entry.count),
+          countPending: isCountPending(entry),
           expanded: effectiveExpandedIds.value.has(entry.id),
           indeterminate: false,
         }
@@ -148,7 +158,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
 
       return {
         ...entry,
-        countPending: optionSource.showCounts.value && isNullish(entry.count),
+        countPending: isCountPending(entry),
         expanded: effectiveExpandedIds.value.has(entry.id),
         indeterminate: selectedCount > 0 && selectedCount < descendantValues.length,
         selected: descendantValues.length > 0 && selectedCount === descendantValues.length,
@@ -160,7 +170,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     displayEntries.value.map((entry) => ({
       color: entry.color,
       count: optionSource.showCounts.value ? entry.count : undefined,
-      countPending: optionSource.showCounts.value && isNullish(entry.count),
+      countPending: isCountPending(entry),
       icon: entry.icon,
       label: entry.label,
       truncate: filterUi.value.row.truncate,
@@ -191,7 +201,7 @@ export function useOptionFilterEditorState(options: UseOptionFilterEditorStatePa
     visibleTreeEntries.value.map((entry) => ({
       color: entry.color,
       count: optionSource.showCounts.value ? entry.count : undefined,
-      countPending: optionSource.showCounts.value && isNullish(entry.count),
+      countPending: isCountPending(entry),
       depth: entry.depth,
       disabled: !entry.selectable,
       expandable: entry.expandable,

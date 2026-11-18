@@ -26,6 +26,9 @@ export type TableFilterOperator =
   | 'between'
   | 'before'
   | 'after'
+  /** No value: null, empty string, empty array or no related row. Emitted for `source.none`. */
+  | 'isEmpty'
+  | 'isNotEmpty'
 
 export type TableQueryStateFilterKind = 'text' | 'option' | 'boolean' | 'number' | 'date'
 

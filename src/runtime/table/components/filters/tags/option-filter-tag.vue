@@ -8,6 +8,7 @@ import { useDataListUi } from '../../../composables/use-data-list-ui'
 import { useFilterTagSession } from '../../../composables/use-filter-tag-session'
 import { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
 import { useTableInternals } from '../../../composables/use-table-internals'
+import { TABLE_FILTER_NONE_VALUE } from '../../../constants/query-state'
 import type {
   TableFilterOperator,
   TableOptionFilterDefinition,
@@ -127,26 +128,43 @@ const operatorItems = computed(() =>
   }),
 )
 
+// `source.none` keeps its own first section: it never moves when picked, values pin below it.
+const noneEntries = computed(() =>
+  state.displayEntries.value.filter((entry) => entry.value === TABLE_FILTER_NONE_VALUE),
+)
+
+const valueEntries = computed(() =>
+  state.displayEntries.value.filter((entry) => entry.value !== TABLE_FILTER_NONE_VALUE),
+)
+
 const pinnedEntries = computed(() =>
-  state.displayEntries.value.filter((entry) => pinnedValues.value.has(String(entry.value))),
+  valueEntries.value.filter((entry) => pinnedValues.value.has(String(entry.value))),
 )
 
 const restEntries = computed(() =>
-  state.displayEntries.value.filter((entry) => !pinnedValues.value.has(String(entry.value))),
+  valueEntries.value.filter((entry) => !pinnedValues.value.has(String(entry.value))),
 )
 
 const listSections = computed(() => {
   const sections = []
 
+  if (noneEntries.value.length) {
+    sections.push({
+      entries: noneEntries.value,
+      key: 'none',
+    })
+  }
+
   if (pinnedEntries.value.length) {
     sections.push({
+      dividerBefore: sections.length > 0,
       entries: pinnedEntries.value,
       key: 'pinned',
     })
   }
 
   sections.push({
-    dividerBefore: pinnedEntries.value.length > 0,
+    dividerBefore: sections.length > 0,
     entries: restEntries.value,
     key: 'rest',
   })
@@ -258,6 +276,11 @@ function handleSelectEntry(options: {
   index: number
   sectionKey: string
 }) {
+  if (options.sectionKey === 'none') {
+    state.toggleValue(TABLE_FILTER_NONE_VALUE)
+    return
+  }
+
   if (options.sectionKey === 'pinned') {
     const entry = pinnedEntries.value.find((item) => String(item.value) === String(options.value))
     if (!entry) {

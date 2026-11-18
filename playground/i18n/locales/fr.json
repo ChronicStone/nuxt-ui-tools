@@ -352,6 +352,18 @@
       "emptyDescription": "Créez votre premier compte pour commencer les évaluations.",
       "action": "Créer un compte",
       "reset": "Revenir à vide"
+    },
+    "tableNoneOption": {
+      "title": "Comptes",
+      "description": "Chaque filtre propose une première entrée « Sans … » pour les lignes dont le champ est vide. Cochée avec des valeurs, elle élargit la recherche ; avec « n’est pas », elle ne garde que les lignes qui ont une valeur.",
+      "search": "Rechercher un compte…",
+      "name": "Nom",
+      "tags": "Tags",
+      "noTag": "Sans tag",
+      "manager": "Responsable du compte",
+      "noManager": "Sans responsable",
+      "certification": "Certification",
+      "noCertification": "Sans certification"
     }
   },
   "pages": {

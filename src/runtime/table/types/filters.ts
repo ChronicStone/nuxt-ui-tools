@@ -172,6 +172,15 @@ export interface TableOptionFilterUiOperatorConfig {
   labels?: TableOptionFilterUiLabels
 }
 
+export interface TableOptionFilterNoneConfig {
+  /** Entry label, in the filter's own words: « Sans tag », « Sans responsable ». */
+  label: TableTextValue
+  /** Defaults to `i-lucide-circle-slash`. */
+  icon?: string
+  /** Field tested for emptiness when it differs from the filter key (a foreign key behind a label). */
+  key?: string
+}
+
 export interface TableOptionFilterEditorConfig<
   TPresentation extends TableOptionFilterPresentation = TableOptionFilterPresentation,
 > {
@@ -857,6 +866,11 @@ export interface TableOptionFilterDefinition<
       bivarianceHack(value: TValue): TableTextValue | undefined
     }['bivarianceHack']
     sort?: 'alpha' | 'count'
+    /**
+     * Adds a first « none » entry that matches rows where the field is empty, OR-ed with the picked
+     * values. Off when omitted.
+     */
+    none?: TableOptionFilterNoneConfig
   }
   editor?: TableOptionFilterEditorConfig<TPresentation>
 }

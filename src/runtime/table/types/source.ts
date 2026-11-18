@@ -125,6 +125,8 @@ export interface TableGlobalFacetDescriptor<TKey extends string = string> {
   key: TKey
   mode?: 'exclude-self' | 'include-self'
   limit?: number
+  /** Also count the rows where the field is empty (`missing`): set for filters with `source.none`. */
+  missing?: boolean
 }
 
 export interface TableFacetRequestDescriptor<TKey extends string = string> {
@@ -138,6 +140,8 @@ export interface TableFacetRequestDescriptor<TKey extends string = string> {
    * the values of one loaded page, since no single request can know every value.
    */
   values?: readonly (string | number | boolean)[]
+  /** Also count the rows where the field is empty (`missing`): set for filters with `source.none`. */
+  missing?: boolean
 }
 
 export interface TableFacetOptionResult<TValue = unknown> {
@@ -148,6 +152,8 @@ export interface TableFacetOptionResult<TValue = unknown> {
 export interface TableFacetResult<TKey extends string = string, TValue = unknown> {
   key: TKey
   options: TableFacetOptionResult<TValue>[]
+  /** Rows where the field is empty; counts the `source.none` entry. */
+  missing?: number
   nextCursor?: string | null
   total?: number
 }
