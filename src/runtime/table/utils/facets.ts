@@ -41,10 +41,16 @@ export function resolveTableGlobalFacetDescriptors(
       {
         key: definition.key,
         limit: isFacetLimit(facet) ? facet.limit : undefined,
+        ...(hasNoneEntry(definition) ? { missing: true } : {}),
         mode: resolveTableFacetMode(facet),
       },
     ]
   })
+}
+
+/** Filters with `source.none` ask their facet for the `missing` count. */
+export function hasNoneEntry(definition: TableUiFilterDefinition): boolean {
+  return definition.kind === 'option' && Boolean(definition.source?.none)
 }
 
 function isFacetLimit(value: TableFilterFacetSpec | undefined): value is TableFilterFacetConfig {

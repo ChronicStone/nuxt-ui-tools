@@ -282,6 +282,14 @@ const playgroundAbstractions: readonly PlaygroundAbstraction[] = [
             mode: 'fixed',
             path: '/table/first-use',
           },
+          {
+            description:
+              'Option filters lead with a « none » entry for empty fields: list, facet counts, tree.',
+            id: 'table-none-option',
+            label: 'Empty values',
+            mode: 'fixed',
+            path: '/table/none-option',
+          },
         ],
         description: 'How a list presents itself on a phone and before it holds a record.',
         id: 'table-presentation',

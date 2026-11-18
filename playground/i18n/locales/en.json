@@ -352,6 +352,18 @@
       "emptyDescription": "Create your first account to start assessing.",
       "action": "Create an account",
       "reset": "Back to empty"
+    },
+    "tableNoneOption": {
+      "title": "Accounts",
+      "description": "Each filter offers a first « none » entry for rows where the field is empty. Picked with values, it widens the match; with « is not », it keeps only rows that have a value.",
+      "search": "Search an account…",
+      "name": "Name",
+      "tags": "Tags",
+      "noTag": "No tag",
+      "manager": "Account manager",
+      "noManager": "No account manager",
+      "certification": "Certification",
+      "noCertification": "No certification"
     }
   },
   "pages": {

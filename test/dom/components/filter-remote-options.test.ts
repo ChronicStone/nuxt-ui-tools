@@ -126,6 +126,15 @@ describe('remote option filters', () => {
     expect(server.pages).toStrictEqual([])
   })
 
+  it('never asks resolveSelected for the source.none value', async () => {
+    const server = createCountryServer()
+    harness = await mountRemoteTags(server)
+    harness.internals.filters.setOptionFilterValues({ key: 'country', values: ['~none', 'C42'] })
+    await harness.until(() => texts(must(harness).wrapper, '.nut-dl-tag__text').includes('Pays 42'))
+
+    expect(server.resolved).toStrictEqual([['C42']])
+  })
+
   it('loads the first page on open and the next one ahead of the scroll, without a button', async () => {
     const server = createCountryServer()
     harness = await mountRemoteTags(server)

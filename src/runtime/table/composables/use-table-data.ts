@@ -412,6 +412,7 @@ export function useTableData(params: UseTableDataParams): UseTableDataReturn {
     globalFacetDescriptors.value.map((facet) => ({
       key: facet.key,
       limit: facet.limit,
+      ...(facet.missing ? { missing: true } : {}),
       mode: facet.mode,
     })),
   )

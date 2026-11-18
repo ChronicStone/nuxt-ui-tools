@@ -1,4 +1,5 @@
-import { isArray, isObject } from '../../shared/utils/predicate'
+import { isArray, isBoolean, isNumber, isObject, isString } from '../../shared/utils/predicate'
+import { TABLE_FILTER_NONE_VALUE } from '../constants/query-state'
 import type {
   GenericObject,
   TableFilterState,
@@ -42,6 +43,12 @@ export function createResolvedFilterState<
       continue
     }
 
+    const noneNode = resolveNoneRule({ context: params.context, definition, operator, rule })
+    if (noneNode) {
+      children.push(noneNode)
+      continue
+    }
+
     const resolvedNode: TableResolvedFilterNode<string> | null = definition.resolve?.({
       context: params.context,
       definition,
@@ -66,6 +73,53 @@ export function createResolvedFilterState<
     combinator: 'and',
     type: 'group',
   }
+}
+
+/**
+ * `source.none`: the `~none` value becomes an `isEmpty` condition OR-ed with the picked values
+ * (`isNot`: AND-ed with `isNotEmpty`). A custom `resolve` only ever sees the real values.
+ */
+function resolveNoneRule<
+  TRow extends GenericObject,
+  TContext extends GenericObject,
+  TKey extends string,
+>(params: {
+  definition: TableUiFilterDefinition<TRow, TContext, TKey>
+  rule: TableFilterState<TKey>['ui'][number]
+  operator: NonNullable<TableFilterState<TKey>['ui'][number]['operator']>
+  context?: TContext
+}): TableResolvedFilterNode<string> | null {
+  const none = params.definition.kind === 'option' ? params.definition.source?.none : undefined
+  const values = isArray(params.rule.value) ? params.rule.value : [params.rule.value]
+  if (!none || !values.some((value) => value === TABLE_FILTER_NONE_VALUE)) {
+    return null
+  }
+
+  const exclude = params.operator === 'isNot'
+  const emptyNode: TableResolvedFilterNode<string> = {
+    key: none.key ?? params.definition.key,
+    operator: exclude ? 'isNotEmpty' : 'isEmpty',
+    type: 'condition',
+    value: null,
+  }
+  const picked = values.filter(
+    (value): value is string | number | boolean =>
+      (isString(value) || isNumber(value) || isBoolean(value)) && value !== TABLE_FILTER_NONE_VALUE,
+  )
+  if (!picked.length) {
+    return emptyNode
+  }
+
+  const rule = { ...params.rule, operator: params.operator, value: picked }
+  const valueNode = params.definition.resolve?.({
+    context: params.context,
+    definition: params.definition,
+    rule,
+  }) ?? { key: rule.key, operator: rule.operator, type: 'condition' as const, value: picked }
+
+  return valueNode
+    ? { children: [valueNode, emptyNode], combinator: exclude ? 'and' : 'or', type: 'group' }
+    : emptyNode
 }
 
 function normalizeStaticFilterNode<

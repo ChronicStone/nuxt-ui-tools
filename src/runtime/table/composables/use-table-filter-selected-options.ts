@@ -3,7 +3,7 @@ import { computed, shallowRef, watch } from 'vue'
 import type { ComputedRef } from 'vue'
 
 import { isBoolean, isNullish, isNumber, isString } from '../../shared/utils/predicate'
-import { QUERY_DEFAULTS } from '../constants/query-state'
+import { QUERY_DEFAULTS, TABLE_FILTER_NONE_VALUE } from '../constants/query-state'
 import type {
   TableFilterOptionEntry,
   TableFilterOptionValueEntry,
@@ -70,7 +70,11 @@ export function useTableFilterSelectedOptions(params: UseTableFilterSelectedOpti
       : isNullish(rule?.value)
         ? []
         : [rule.value]
-    return values.filter(isPrimitiveValue)
+    // The `source.none` entry is not a value: `resolveSelected` only ever sees real ones.
+    return values.filter(
+      (value): value is TableFilterPrimitiveValue =>
+        isPrimitiveValue(value) && value !== TABLE_FILTER_NONE_VALUE,
+    )
   }
 
   const requests = computed<SelectedOptionsRequest[]>(() =>

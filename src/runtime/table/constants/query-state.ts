@@ -8,6 +8,11 @@ export const DEFAULT_FILTER_OPERATOR = {
   text: 'contains',
 } satisfies Record<TableQueryStateFilterKind, TableFilterOperator>
 
+/** URL and rule value of an option filter's « none » entry (`source.none`): the field is empty. */
+export const TABLE_FILTER_NONE_VALUE = '~none'
+/** Default icon of the « none » entry. */
+export const TABLE_FILTER_NONE_ICON = 'i-lucide-circle-slash'
+
 export const PAGINATION_DEFAULTS = {
   defaultSize: { grid: 10, table: 50 },
   sizes: {

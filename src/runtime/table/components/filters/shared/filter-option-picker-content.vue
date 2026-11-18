@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useMediaQuery } from '@vueuse/core'
+import { computed } from 'vue'
 
 import { isNullish } from '../../../../shared/utils/predicate'
 import type { useOptionFilterEditorState } from '../../../composables/use-option-filter-editor-state'
+import { TABLE_FILTER_NONE_VALUE } from '../../../constants/query-state'
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
 import FilterOptionListEnd from './filter-option-list-end.vue'
 import FilterOptionLoadingList from './filter-option-loading-list.vue'
@@ -25,6 +27,21 @@ const props = defineProps<{
 }>()
 
 const searchQuery = defineModel<string>('searchQuery', { default: '' })
+
+/** Without caller sections, the `source.none` entry still gets its own first section. */
+const defaultSections = computed<FilterOptionMultipleListSection[]>(() => {
+  const entries = props.state.displayEntries.value
+  const none = entries.filter((entry) => entry.value === TABLE_FILTER_NONE_VALUE)
+  if (!none.length) return [{ entries, key: 'default' }]
+  return [
+    { entries: none, key: 'none' },
+    {
+      dividerBefore: true,
+      entries: entries.filter((entry) => entry.value !== TABLE_FILTER_NONE_VALUE),
+      key: 'default',
+    },
+  ]
+})
 const finePointer = useMediaQuery('(pointer: fine)')
 const flatRadioValue = defineModel<string | undefined>('flatRadioValue', { default: undefined })
 const treeRadioValue = defineModel<string | undefined>('treeRadioValue', { default: undefined })
@@ -111,9 +128,7 @@ function handleSelect(options: {
       />
       <FilterOptionMultipleList
         v-else
-        :sections="
-          props.sections ?? [{ key: 'default', entries: props.state.displayEntries.value }]
-        "
+        :sections="props.sections ?? defaultSections"
         :show-counts="props.state.optionSource.showCounts.value"
         :count-loading="props.state.optionSource.isCountLoading.value"
         :selected-icon="props.state.filterUi.value.row.selectedIcon"

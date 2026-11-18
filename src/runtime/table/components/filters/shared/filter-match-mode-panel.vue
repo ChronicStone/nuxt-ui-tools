@@ -36,7 +36,9 @@ const operatorHints = {
   gte: '≥',
   is: '=',
   isAnyOf: 'in',
+  isEmpty: '∅',
   isNot: '≠',
+  isNotEmpty: '≠ ∅',
   lt: '<',
   lte: '≤',
 } satisfies Record<TableFilterOperator, string>

@@ -6,6 +6,7 @@ import USkeleton from '@nuxt/ui/components/Skeleton.vue'
 import { computed } from 'vue'
 
 import { useDataListUi } from '../../../composables/use-data-list-ui'
+import { TABLE_FILTER_NONE_VALUE } from '../../../constants/query-state'
 import type { DataListControlSize, DataListFilterEditorUi } from '../../../types'
 import {
   mergeDataListUiClass,
@@ -101,99 +102,103 @@ function activateTreeEntry(entry: TreeEntry) {
     v-if="multiple"
     :class="mergeDataListUiClass('grid grid-cols-1 gap-0.5', undefined, ui?.list)"
   >
-    <div
-      v-for="entry in entries"
-      :key="entry.id"
-      :class="
-        mergeDataListUiClass(
-          `flex cursor-pointer items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
-          undefined,
-          ui?.option,
-        )
-      "
-      :style="getTreeIndentStyle(entry.depth)"
-      @click="activateTreeEntry(entry)"
-    >
-      <button
-        v-if="entry.expandable"
-        type="button"
-        :aria-label="entry.expanded ? `Collapse ${entry.label}` : `Expand ${entry.label}`"
-        :aria-expanded="entry.expanded"
+    <template v-for="(entry, index) in entries" :key="entry.id">
+      <div
         :class="
           mergeDataListUiClass(
-            `flex ${sizeClasses.optionIcon} shrink-0 items-center justify-center rounded-sm text-muted transition-transform hover:bg-accented ${entry.expanded ? 'rotate-90' : ''}`,
+            `flex cursor-pointer items-center rounded-md text-left transition-colors hover:bg-elevated ${sizeClasses.option} ${entry.selected ? 'bg-elevated text-highlighted' : 'text-default'}`,
             undefined,
-            ui?.optionExpander,
+            ui?.option,
           )
         "
-        @click.stop="emit('toggleExpanded', entry.id)"
+        :style="getTreeIndentStyle(entry.depth)"
+        @click="activateTreeEntry(entry)"
       >
-        <UIcon name="i-lucide-chevron-right" :class="sizeClasses.optionIcon" />
-      </button>
-      <span
-        v-else
-        :class="
-          mergeDataListUiClass(`${sizeClasses.optionIcon} shrink-0`, undefined, ui?.optionSpacer)
-        "
-      />
-
-      <UCheckbox
-        v-if="entry.selectable || entry.branchSelectable"
-        :model-value="entry.indeterminate ? 'indeterminate' : entry.selected"
-        color="neutral"
-        :size="size"
-        :aria-label="entry.label"
-        :icon="selectedIcon"
-        :ui="{ base: ui?.optionCheckbox }"
-        @click.stop
-        @update:model-value="emit('toggleEntry', entry.id)"
-      />
-      <span
-        v-else
-        :class="mergeDataListUiClass(`${geometry.icon} shrink-0`, undefined, ui?.optionSpacer)"
-      />
-
-      <button
-        type="button"
-        class="flex min-w-0 flex-1 items-center text-left"
-        :class="geometry.toolbarGap"
-      >
-        <UIcon
-          v-if="entry.icon"
-          :name="entry.icon"
+        <button
+          v-if="entry.expandable"
+          type="button"
+          :aria-label="entry.expanded ? `Collapse ${entry.label}` : `Expand ${entry.label}`"
+          :aria-expanded="entry.expanded"
           :class="
             mergeDataListUiClass(
-              `${sizeClasses.optionIcon} shrink-0 text-muted`,
+              `flex ${sizeClasses.optionIcon} shrink-0 items-center justify-center rounded-sm text-muted transition-transform hover:bg-accented ${entry.expanded ? 'rotate-90' : ''}`,
               undefined,
-              ui?.optionIcon,
+              ui?.optionExpander,
             )
+          "
+          @click.stop="emit('toggleExpanded', entry.id)"
+        >
+          <UIcon name="i-lucide-chevron-right" :class="sizeClasses.optionIcon" />
+        </button>
+        <span
+          v-else
+          :class="
+            mergeDataListUiClass(`${sizeClasses.optionIcon} shrink-0`, undefined, ui?.optionSpacer)
           "
         />
-        <span
-          :class="
-            mergeDataListUiClass(
-              `min-w-0 flex-1 ${sizeClasses.optionLabel} ${entry.truncate ? 'truncate' : ''}`,
-              undefined,
-              ui?.optionLabel,
-            )
-          "
-          :title="entry.label"
-        >
-          {{ entry.label }}
-        </span>
-      </button>
 
-      <USkeleton
-        v-if="countLoading || entry.countPending"
-        :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
+        <UCheckbox
+          v-if="entry.selectable || entry.branchSelectable"
+          :model-value="entry.indeterminate ? 'indeterminate' : entry.selected"
+          color="neutral"
+          :size="size"
+          :aria-label="entry.label"
+          :icon="selectedIcon"
+          :ui="{ base: ui?.optionCheckbox }"
+          @click.stop
+          @update:model-value="emit('toggleEntry', entry.id)"
+        />
+        <span
+          v-else
+          :class="mergeDataListUiClass(`${geometry.icon} shrink-0`, undefined, ui?.optionSpacer)"
+        />
+
+        <button
+          type="button"
+          class="flex min-w-0 flex-1 items-center text-left"
+          :class="geometry.toolbarGap"
+        >
+          <UIcon
+            v-if="entry.icon"
+            :name="entry.icon"
+            :class="
+              mergeDataListUiClass(
+                `${sizeClasses.optionIcon} shrink-0 text-muted`,
+                undefined,
+                ui?.optionIcon,
+              )
+            "
+          />
+          <span
+            :class="
+              mergeDataListUiClass(
+                `min-w-0 flex-1 ${sizeClasses.optionLabel} ${entry.truncate ? 'truncate' : ''}`,
+                undefined,
+                ui?.optionLabel,
+              )
+            "
+            :title="entry.label"
+          >
+            {{ entry.label }}
+          </span>
+        </button>
+
+        <USkeleton
+          v-if="countLoading || entry.countPending"
+          :class="[sizeClasses.skeletonCount, 'shrink-0 rounded-full']"
+        />
+        <span
+          v-else-if="entry.count != null"
+          :class="mergeDataListUiClass('shrink-0 text-muted', undefined, ui?.optionCount)"
+        >
+          {{ entry.count }}
+        </span>
+      </div>
+      <div
+        v-if="entry.value === TABLE_FILTER_NONE_VALUE && index < entries.length - 1"
+        :class="mergeDataListUiClass('my-1 border-t border-default', undefined, ui?.listDivider)"
       />
-      <span
-        v-else-if="entry.count != null"
-        :class="mergeDataListUiClass('shrink-0 text-muted', undefined, ui?.optionCount)"
-      >
-        {{ entry.count }}
-      </span>
-    </div>
+    </template>
   </div>
 
   <URadioGroup
