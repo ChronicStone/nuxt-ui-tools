@@ -1,3 +1,22 @@
+## v1.34.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.33.1...v1.34.0)
+
+### 🚀 Enhancements
+
+- **media:** `UiVideoPlayer` plays a clip between `start` and `end`: playback starts at `start`, stops at `end` and counts as ended there, and the time readout and timeline show the clip, not the whole file
+- **media:** `maxPlays` limits plays, each counted when playback starts from the clip start; `v-model:plays` lets the host keep the count. The start screen and the bar show the plays left, and once all are used the player shows a locked state (the `locked` slot replaces it)
+- **media:** `seekable: false` turns the timeline into a progress bar and reverts any other seek (keyboard, native, picture in picture is turned off)
+- **media:** `rates` sets the speeds offered (`false` removes the menu), `hide` removes bar controls (`time`, `volume`, `rate`, `captions`, `pictureInPicture`, `fullscreen`, `download`), and `download` adds a download button
+- **media:** `autoplay`, `loop`, `preload`, `crossorigin` and `disabled`; `v-model:rate`, `v-model:volume`, `v-model:muted`; `progress` and `ended` events; the exposed API gains `play`, `pause` and `seek`; an `overlay` slot sits over the video
+- **media:** New `UiAudioPlayer` with the same options in a compact bar; the file preview's audio renderer uses it
+- **media:** `download: true` shows a download button that emits `download`, so the host saves the file its own way; several caption tracks get a language menu with an « off » item
+
+### 🩹 Fixes
+
+- **media:** A restricted video (play limit or no seeking) refuses the browser's context menu, and the browser's own « Loop » ends the play instead of replaying it uncounted
+- **media:** Both players shrink to their container, so a player in a grid no longer widens a phone layout to the video's natural width
+
 ## v1.33.1
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.33.0...v1.33.1)

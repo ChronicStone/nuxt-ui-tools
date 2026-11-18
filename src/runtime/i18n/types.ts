@@ -864,10 +864,16 @@ export interface UiToolsFilePreviewMessages {
     volume: string
     speed: string
     captions: string
+    captionsOff: string
     pictureInPicture: string
     fullscreen: string
     exitFullscreen: string
     seek: string
+    progress: string
+    download: string
+    locked: string
+    playsLeft: string
+    playsLeftOne: string
   }
   text: {
     wrap: string
