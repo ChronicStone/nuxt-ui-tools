@@ -1,3 +1,13 @@
+## v1.35.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.34.0...v1.35.0)
+
+### 🚀 Enhancements
+
+- **table:** An option filter can offer a « none » entry for records with no value: `source: { none: { label } }` (optional `icon`, and `key` when the emptiness is tested on another field). It sits first in its own section, keeps its place when ticked, follows search on its own label, shows its count on facet filters, and reads in the chip like any value (« Tags ⊘ Sans tag · VIP »)
+- **table:** The rule travels as `~none` in the URL and is rewritten before the request: « parmi [A, none] » becomes `or(isAnyOf [A], isEmpty)`, « n'est pas [A, none] » becomes `and(isNot [A], isNotEmpty)`. A custom `resolve` and `source.remote.resolveSelected` only ever receive real values
+- **table:** New operators `isEmpty` / `isNotEmpty`, and `TableFacetResult.missing` for the « none » count; the tree presentation shows the entry too
+
 ## v1.34.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.33.1...v1.34.0)
