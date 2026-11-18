@@ -13,6 +13,8 @@ export const MEDIA_PLAYER_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2] as const
 const SEEK_TOLERANCE = 0.75
 
 interface MediaPlaybackRules {
+  /** The file played; a new one starts the play count's current play over. */
+  source: string
   seekable: boolean
   maxPlays: number
   start: number | undefined
@@ -75,6 +77,8 @@ export function useMediaPlayback(options: {
     limited.value ? Math.max(0, rules().maxPlays - models.plays.value) : null,
   )
   const locked = computed(() => remaining.value === 0 && !active.value)
+  /** Restricted players refuse the browser's context menu, whose « Loop » and speed bypass the rules. */
+  const restricted = computed(() => limited.value || !rules().seekable)
   const playable = computed(() => !rules().disabled && !locked.value)
 
   function moveTo(time: number) {
@@ -159,6 +163,17 @@ export function useMediaPlayback(options: {
     const media = element.value
     if (!media) return
 
+    // On a restricted player the browser's own « Loop » would replay without counting: end the play.
+    if (media.loop && restricted.value) {
+      media.loop = false
+      if (active.value) {
+        moveTo(clipEnd.value)
+        finish()
+
+        return
+      }
+    }
+
     const outside = media.currentTime < clipStart.value || media.currentTime > clipEnd.value
     const moved = Math.abs(media.currentTime - allowedTime) > SEEK_TOLERANCE
 
@@ -170,12 +185,20 @@ export function useMediaPlayback(options: {
       )
   })
 
+  // Metadata can load on the first click (preload="none"), after that click already counted a play.
   useEventListener(element, 'loadedmetadata', () => {
-    active.value = false
-    started.value = false
+    if (started.value) return
     if (clipStart.value > 0) moveTo(clipStart.value)
     if (rules().autoplay) play()
   })
+
+  watch(
+    () => rules().source,
+    () => {
+      active.value = false
+      started.value = false
+    },
+  )
 
   watch(models.rate, (rate) => (controls.rate.value = rate), { immediate: true })
   watch(controls.rate, (rate) => (models.rate.value = rate))
@@ -186,6 +209,7 @@ export function useMediaPlayback(options: {
 
   return {
     controls,
+    restricted,
     started,
     active,
     position,

@@ -864,6 +864,7 @@ export interface UiToolsFilePreviewMessages {
     volume: string
     speed: string
     captions: string
+    captionsOff: string
     pictureInPicture: string
     fullscreen: string
     exitFullscreen: string

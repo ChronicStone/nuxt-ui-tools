@@ -55,8 +55,8 @@ export interface MediaPlayerOptions {
   rates?: readonly number[] | false
   /** Controls to remove from the bar. */
   hide?: readonly MediaPlayerControl[]
-  /** Adds a download button for this file. */
-  download?: MediaPlayerDownload
+  /** A download button: a file to link to, or `true` to emit `download` and let the host save it. */
+  download?: MediaPlayerDownload | true
   /** Starts playing once the file is ready; browsers only allow it muted. */
   autoplay?: boolean
   /** Restarts the clip when it ends; each restart counts as a play. */

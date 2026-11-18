@@ -109,6 +109,51 @@ describe('VideoPlayer', () => {
     expect(wrapper.find('[data-media-download]').attributes('to')).toBe('/files/lecture.mp4')
     expect(wrapper.find('[data-media-download]').attributes('download')).toBe('Cours 1.mp4')
   })
+  it('counts one play when metadata only loads after the first click (preload none)', async () => {
+    wrapper = mount(VideoPlayer, {
+      attachTo: document.body,
+      props: { src: '/lazy.mp4', maxPlays: 2, preload: 'none' },
+    })
+    const video = wrapper.find('video').element
+
+    await nextTick()
+    await wrapper.find('[data-video-player-start]').trigger('click')
+    await loadMetadata(video, 30)
+    expect(wrapper.emitted('update:plays')).toHaveLength(1)
+    expect(wrapper.find('[data-video-player-locked]').exists()).toBeFalsy()
+  })
+
+  it('ends the play instead of replaying it when the browser loops the video', async () => {
+    wrapper = mount(VideoPlayer, {
+      attachTo: document.body,
+      props: { src: '/lecture.mp4', maxPlays: 1 },
+    })
+    const video = wrapper.find('video').element
+
+    await loadMetadata(video, 30)
+    await wrapper.find('[data-video-player-start]').trigger('click')
+    await nextTick()
+    video.loop = true
+    video.currentTime = 0
+    video.dispatchEvent(new Event('seeking'))
+    await nextTick()
+    expect(video.loop).toBeFalsy()
+    expect(wrapper.emitted('ended')).toHaveLength(1)
+    expect(wrapper.find('[data-video-player-locked]').exists()).toBeTruthy()
+  })
+
+  it('emits download for the host to save the file when `download` is true', async () => {
+    wrapper = mount(VideoPlayer, {
+      attachTo: document.body,
+      props: { src: '/lecture.mp4', download: true },
+    })
+
+    await wrapper.find('[data-video-player-start]').trigger('click')
+    await nextTick()
+    await wrapper.find('[data-media-download]').trigger('click')
+    expect(wrapper.emitted('download')).toHaveLength(1)
+    expect(wrapper.find('[data-media-download]').attributes('to')).toBeUndefined()
+  })
 })
 
 describe('AudioPlayer', () => {
@@ -123,6 +168,8 @@ describe('AudioPlayer', () => {
     expect(play.attributes('aria-label')).toBe('Plus de lecture possible')
     expect(play.attributes('disabled')).toBeDefined()
     expect(wrapper.find('[data-media-plays-left]').text()).toBe('Plus de lecture possible')
+    expect(wrapper.find('[aria-label="Couper le son"]').exists()).toBeFalsy()
+    expect(wrapper.find('[role="progressbar"]').exists()).toBeFalsy()
   })
 
   it('plays from the clip start and reports the clip as ended at `end`', async () => {

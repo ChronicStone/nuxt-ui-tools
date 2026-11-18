@@ -29,6 +29,10 @@ const lessonEnded = ref(0)
         <NutVideoPlayer
           :src="VIDEO"
           title="Leçon 1 : présentation"
+          :tracks="[
+            { src: '/media/lesson.fr.vtt', srcLang: 'fr', label: 'Français', default: true },
+            { src: '/media/lesson.en.vtt', srcLang: 'en', label: 'English' },
+          ]"
           class="aspect-video rounded-lg"
         />
       </section>

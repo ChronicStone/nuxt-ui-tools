@@ -54,8 +54,8 @@ const {
   rates?: readonly number[] | false
   /** Controls to remove from the bar. */
   hide?: readonly MediaPlayerControl[]
-  /** Adds a download button for this file. */
-  download?: MediaPlayerDownload
+  /** A download button: a file to link to, or `true` to emit `download` and let the host save it. */
+  download?: MediaPlayerDownload | true
   /** Starts playing once the file is ready; browsers only allow it muted. */
   autoplay?: boolean
   /** Restarts the clip when it ends; each restart counts as a play. */
@@ -80,6 +80,8 @@ const emit = defineEmits<{
   /** The clip played to its end. */
   ended: []
   progress: [progress: MediaPlayerProgress]
+  /** The download button was pressed while `download` is `true`. */
+  download: []
 }>()
 
 defineSlots<{
@@ -96,7 +98,7 @@ const frame = useTemplateRef<HTMLElement>('frame')
 const video = useTemplateRef<HTMLVideoElement>('video')
 const playback = useMediaPlayback({
   element: video,
-  rules: () => ({ seekable, maxPlays, start, end, loop, disabled, autoplay }),
+  rules: () => ({ source: src, seekable, maxPlays, start, end, loop, disabled, autoplay }),
   models: { plays, rate, volume, muted },
   hooks: {
     onEnded: () => emit('ended'),
@@ -196,6 +198,9 @@ defineExpose({
     :aria-label="title"
     role="region"
     data-video-player=""
+    :data-controls-shown="
+      playback.started.value && !playback.locked.value && showControls ? '' : undefined
+    "
     @pointermove="wake"
     @keydown="handleKey"
   >
@@ -212,6 +217,7 @@ defineExpose({
       class="size-full object-contain"
       @click="toggle"
       @dblclick="toggleFullscreen"
+      @contextmenu="playback.restricted.value && $event.preventDefault()"
       @loadedmetadata="handleMetadata"
       @error="handleError"
     />
@@ -289,7 +295,25 @@ defineExpose({
       :rates="rates"
       :hide="hide"
       :download="download"
+      @download="emit('download')"
       variant="video"
     />
   </div>
 </template>
+
+<style scoped>
+/* Captions rise above the control bar while it shows, instead of sitting under it. */
+video::-webkit-media-text-track-container {
+  transition: transform 200ms ease-out;
+}
+
+[data-controls-shown] video::-webkit-media-text-track-container {
+  transform: translateY(-3.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  video::-webkit-media-text-track-container {
+    transition: none;
+  }
+}
+</style>

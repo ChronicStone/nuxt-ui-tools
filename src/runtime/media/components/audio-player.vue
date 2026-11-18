@@ -43,8 +43,8 @@ const {
   rates?: readonly number[] | false
   /** Controls to remove from the bar. */
   hide?: readonly MediaPlayerControl[]
-  /** Adds a download button for this file. */
-  download?: MediaPlayerDownload
+  /** A download button: a file to link to, or `true` to emit `download` and let the host save it. */
+  download?: MediaPlayerDownload | true
   /** Starts playing once the file is ready; browsers only allow it muted. */
   autoplay?: boolean
   /** Restarts the clip when it ends; each restart counts as a play. */
@@ -69,13 +69,15 @@ const emit = defineEmits<{
   /** The clip played to its end. */
   ended: []
   progress: [progress: MediaPlayerProgress]
+  /** The download button was pressed while `download` is `true`. */
+  download: []
 }>()
 
 const frame = useTemplateRef<HTMLElement>('frame')
 const audio = useTemplateRef<HTMLAudioElement>('audio')
 const playback = useMediaPlayback({
   element: audio,
-  rules: () => ({ seekable, maxPlays, start, end, loop, disabled, autoplay }),
+  rules: () => ({ source: src, seekable, maxPlays, start, end, loop, disabled, autoplay }),
   models: { plays, rate, volume, muted },
   hooks: {
     onEnded: () => emit('ended'),
@@ -148,6 +150,7 @@ defineExpose({
       :rates="rates"
       :hide="hide"
       :download="download"
+      @download="emit('download')"
       variant="audio"
     />
   </div>

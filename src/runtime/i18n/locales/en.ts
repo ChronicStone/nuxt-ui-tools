@@ -194,6 +194,7 @@ export default defineUiToolsLocale<Messages>({
       },
       media: {
         captions: 'Captions',
+        captionsOff: 'Captions off',
         exitFullscreen: 'Exit full screen',
         fullscreen: 'Full screen',
         mute: 'Mute',

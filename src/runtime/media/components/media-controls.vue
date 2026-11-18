@@ -30,8 +30,11 @@ const {
   seekable?: boolean
   rates?: readonly number[] | false
   hide?: readonly MediaPlayerControl[]
-  download?: MediaPlayerDownload
+  /** A file to link to, or `true` for a button that emits `download` for the host to save. */
+  download?: MediaPlayerDownload | true
 }>()
+
+const emit = defineEmits<{ download: [] }>()
 
 const { t } = useUiToolsLocale()
 const controls = computed(() => playback.controls)
@@ -45,6 +48,24 @@ const percent = computed(() =>
 )
 const silent = computed(() => controls.value.muted.value || controls.value.volume.value === 0)
 const captions = computed(() => controls.value.selectedTrack.value !== -1)
+const trackItems = computed(() => [
+  {
+    checked: !captions.value,
+    label: t('filePreview.media.captionsOff'),
+    onSelect: () => controls.value.disableTrack(),
+    type: 'checkbox' as const,
+  },
+  ...controls.value.tracks.value.map((track, position) => ({
+    checked: controls.value.selectedTrack.value === position,
+    label: track.label,
+    onSelect: () => controls.value.enableTrack(position),
+    type: 'checkbox' as const,
+  })),
+])
+/** The file the download button links to; `true` means the host saves it on `download`. */
+const downloadLink = computed(() => (download && download !== true ? download : null))
+/** Every play used: only the lock, the time and what explains it stay in the bar. */
+const spent = computed(() => playback.locked.value)
 const sliderUi = computed(() =>
   variant === 'video'
     ? { range: 'bg-white', thumb: 'bg-white ring-white', track: 'bg-white/30' }
@@ -63,7 +84,7 @@ const rateItems = computed(() =>
 const playsLeft = computed(() => {
   const remaining = playback.remaining.value
   if (remaining === null || playback.active.value) return null
-  if (remaining === 0) return compact ? null : t('filePreview.media.locked')
+  if (remaining === 0) return t('filePreview.media.locked')
   if (compact) return String(remaining)
 
   return remaining === 1
@@ -132,7 +153,7 @@ function toggleCaptions() {
       {{ time }}
     </span>
     <USlider
-      v-if="seekable"
+      v-if="!spent && seekable"
       :model-value="playback.position.value"
       :min="0"
       :max="Math.max(playback.length.value, 0.1)"
@@ -145,7 +166,7 @@ function toggleCaptions() {
       @update:model-value="seek"
     />
     <div
-      v-else
+      v-else-if="!spent"
       role="progressbar"
       :aria-label="t('filePreview.media.progress')"
       :aria-valuenow="Math.round(percent)"
@@ -168,20 +189,23 @@ function toggleCaptions() {
     <span
       v-if="playsLeft"
       :class="[
-        'inline-flex min-w-0 shrink items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap tabular-nums',
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap tabular-nums',
+        spent ? 'min-w-0 flex-1 justify-center' : compact ? 'shrink-0' : 'min-w-0 shrink',
         variant === 'video' ? 'bg-white/15 text-white' : 'bg-accented text-toned',
       ]"
       :title="
-        compact
-          ? t('filePreview.media.playsLeft', { count: playback.remaining.value ?? 0 })
+        compact && !spent
+          ? playback.remaining.value === 1
+            ? t('filePreview.media.playsLeftOne')
+            : t('filePreview.media.playsLeft', { count: playback.remaining.value ?? 0 })
           : undefined
       "
       data-media-plays-left=""
     >
-      <UIcon v-if="compact" name="i-lucide-repeat" class="size-3 shrink-0" />
+      <UIcon v-if="compact && !spent" name="i-lucide-repeat" class="size-3 shrink-0" />
       <span class="truncate">{{ playsLeft }}</span>
     </span>
-    <template v-if="shown('volume')">
+    <template v-if="shown('volume') && !spent">
       <FilePreviewButton
         :icon="silent ? 'i-lucide-volume-x' : 'i-lucide-volume-2'"
         :label="silent ? t('filePreview.media.unmute') : t('filePreview.media.mute')"
@@ -204,7 +228,7 @@ function toggleCaptions() {
       />
     </template>
     <UDropdownMenu
-      v-if="shown('rate') && rateItems.length > 1"
+      v-if="shown('rate') && !spent && rateItems.length > 1"
       :items="rateItems"
       :content="{ align: 'end', side: 'top' }"
     >
@@ -221,19 +245,40 @@ function toggleCaptions() {
       />
     </UDropdownMenu>
     <FilePreviewButton
-      v-if="shown('captions') && controls.tracks.value.length > 0"
+      v-if="shown('captions') && !spent && controls.tracks.value.length === 1"
       icon="i-lucide-captions"
       :label="t('filePreview.media.captions')"
       :pressed="captions"
       :tone="tone"
       @click="toggleCaptions"
     />
+    <UDropdownMenu
+      v-else-if="shown('captions') && !spent && controls.tracks.value.length > 1"
+      :items="trackItems"
+      :content="{ align: 'end', side: 'top' }"
+    >
+      <FilePreviewButton
+        icon="i-lucide-captions"
+        :label="t('filePreview.media.captions')"
+        :pressed="captions"
+        :tone="tone"
+        data-media-captions-menu=""
+      />
+    </UDropdownMenu>
     <FilePreviewButton
-      v-if="download && shown('download')"
+      v-if="download === true && shown('download')"
       icon="i-lucide-download"
       :label="t('filePreview.media.download')"
-      :to="download.url"
-      :download="download.fileName ?? true"
+      :tone="tone"
+      data-media-download=""
+      @click="emit('download')"
+    />
+    <FilePreviewButton
+      v-else-if="downloadLink && shown('download')"
+      icon="i-lucide-download"
+      :label="t('filePreview.media.download')"
+      :to="downloadLink.url"
+      :download="downloadLink.fileName ?? true"
       external
       :tone="tone"
       data-media-download=""
@@ -241,6 +286,7 @@ function toggleCaptions() {
     <FilePreviewButton
       v-if="
         variant === 'video' &&
+        !spent &&
         shown('pictureInPicture') &&
         seekable &&
         controls.supportsPictureInPicture
