@@ -654,6 +654,9 @@ export default defineUiToolsLocale<Messages>({
       },
       controls: {
         addFilter: 'Add filter',
+        addFavoriteFilter: 'Always show {label}',
+        removeFavoriteFilter: 'Stop always showing {label}',
+        favoriteFilters: 'Always shown',
         clearSelection: 'Clear selection',
         close: 'Close',
         columnsCount: '{visible} of {total}',

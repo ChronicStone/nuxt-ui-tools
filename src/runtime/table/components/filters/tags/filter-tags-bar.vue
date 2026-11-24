@@ -41,6 +41,7 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
     v-if="
       visibleDefinitions.length ||
       internals.filterPresentation.dormantDynamicDefinitions.value.length ||
+      internals.filterPresentation.favoriteDefinitions.value.length ||
       dynamicSessionDefinition ||
       internals.filters.hasActiveUiFilters.value
     "
@@ -84,6 +85,7 @@ function getFilterLabel(definition: TableUiFilterDefinition) {
       v-if="
         props.showAdd &&
         (internals.filterPresentation.dormantDynamicDefinitions.value.length ||
+          internals.filterPresentation.favoriteDefinitions.value.length ||
           dynamicSessionDefinition)
       "
       :definitions="internals.filterPresentation.dormantDynamicDefinitions.value"

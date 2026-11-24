@@ -87,6 +87,14 @@ const operatorItems = computed(() =>
     : internals.filters.getFilterOperatorOptions({ key: selectedKey.value }),
 )
 
+const filteredFavoriteDefinitions = computed(() => {
+  const search = searchQuery.value.trim().toLowerCase()
+  const favorites = internals.filterPresentation.favoriteDefinitions.value
+  return search
+    ? favorites.filter((definition) => props.getLabel(definition).toLowerCase().includes(search))
+    : favorites
+})
+
 const filteredDefinitions = computed(() => {
   const search = searchQuery.value.trim().toLowerCase()
   if (!search) {
@@ -277,43 +285,33 @@ function toggle() {
               :searchable="searchable"
               :autofocus="searchable"
               :search-placeholder="t('table.controls.searchFilters')"
-              :show-empty="!filteredDefinitions.length"
+              :show-empty="!filteredDefinitions.length && !filteredFavoriteDefinitions.length"
               :empty-label="t('table.controls.noMatchingFilters')"
               max-height-class="max-h-72"
               :size="size"
               :ui="ui"
             >
-              <button
-                v-for="definition in filteredDefinitions"
-                :key="definition.key"
-                type="button"
+              <div
+                v-if="filteredFavoriteDefinitions.length"
+                class="px-2 pt-1 pb-0.5 text-xs font-medium text-muted"
+              >
+                {{ t('table.controls.favoriteFilters') }}
+              </div>
+              <div
+                v-for="definition in filteredFavoriteDefinitions"
+                :key="`favorite:${definition.key}`"
                 :class="
                   mergeDataListUiClass(
-                    `flex min-w-0 items-center rounded-md text-left outline-none transition-colors hover:bg-elevated/70 focus-visible:ring-2 focus-visible:ring-primary/40 ${sizeClasses.option}`,
+                    `group flex min-w-0 items-center rounded-md ${sizeClasses.option}`,
                     undefined,
                     ui?.option,
                   )
                 "
-                @click="handleSelect(definition.key)"
               >
-                <UIcon
-                  :name="
-                    pickerProps?.icon === 'kind'
-                      ? resolveFilterTriggerIcon(definition)
-                      : 'i-lucide-plus'
-                  "
-                  :class="
-                    mergeDataListUiClass(
-                      `${sizeClasses.optionIcon} shrink-0 text-muted`,
-                      undefined,
-                      ui?.optionIcon,
-                    )
-                  "
-                />
                 <span
                   :class="
                     mergeDataListUiClass(
-                      `min-w-0 flex-1 truncate text-default ${sizeClasses.optionLabel}`,
+                      `min-w-0 flex-1 truncate text-muted ${sizeClasses.optionLabel}`,
                       undefined,
                       ui?.optionLabel,
                     )
@@ -321,18 +319,90 @@ function toggle() {
                 >
                   {{ getLabel(definition) }}
                 </span>
-                <span
+                <button
+                  type="button"
+                  data-favorite-toggle
+                  :aria-pressed="true"
+                  :aria-label="
+                    t('table.controls.removeFavoriteFilter', { label: getLabel(definition) })
+                  "
+                  class="inline-flex shrink-0 items-center rounded-sm text-warning outline-none hover:text-muted focus-visible:ring-2 focus-visible:ring-primary/40"
+                  @click="internals.filterPresentation.toggleFavorite({ key: definition.key })"
+                >
+                  <UIcon name="i-lucide-star" :class="`${geometry.icon} fill-current`" />
+                </button>
+              </div>
+              <div
+                v-if="filteredFavoriteDefinitions.length && filteredDefinitions.length"
+                class="my-1 border-t border-default"
+              />
+              <div
+                v-for="definition in filteredDefinitions"
+                :key="definition.key"
+                class="group relative"
+              >
+                <button
+                  type="button"
                   :class="
                     mergeDataListUiClass(
-                      'inline-flex shrink-0 items-center text-dimmed',
+                      `flex w-full min-w-0 items-center rounded-md text-left outline-none transition-colors hover:bg-elevated/70 focus-visible:ring-2 focus-visible:ring-primary/40 ${sizeClasses.option}`,
                       undefined,
-                      ui?.optionTrailingIcon,
+                      ui?.option,
                     )
                   "
+                  @click="handleSelect(definition.key)"
                 >
-                  <UIcon name="i-lucide-chevron-right" :class="geometry.icon" />
-                </span>
-              </button>
+                  <UIcon
+                    :name="
+                      pickerProps?.icon === 'kind'
+                        ? resolveFilterTriggerIcon(definition)
+                        : 'i-lucide-plus'
+                    "
+                    :class="
+                      mergeDataListUiClass(
+                        `${sizeClasses.optionIcon} shrink-0 text-muted`,
+                        undefined,
+                        ui?.optionIcon,
+                      )
+                    "
+                  />
+                  <span
+                    :class="
+                      mergeDataListUiClass(
+                        `min-w-0 flex-1 truncate pe-6 text-default ${sizeClasses.optionLabel}`,
+                        undefined,
+                        ui?.optionLabel,
+                      )
+                    "
+                  >
+                    {{ getLabel(definition) }}
+                  </span>
+                  <span
+                    :class="
+                      mergeDataListUiClass(
+                        'inline-flex shrink-0 items-center text-dimmed',
+                        undefined,
+                        ui?.optionTrailingIcon,
+                      )
+                    "
+                  >
+                    <UIcon name="i-lucide-chevron-right" :class="geometry.icon" />
+                  </span>
+                </button>
+                <button
+                  v-if="internals.filterPresentation.isStarrable({ key: definition.key })"
+                  type="button"
+                  data-favorite-toggle
+                  :aria-pressed="false"
+                  :aria-label="
+                    t('table.controls.addFavoriteFilter', { label: getLabel(definition) })
+                  "
+                  class="absolute end-7 top-1/2 inline-flex -translate-y-1/2 items-center rounded-sm p-0.5 text-dimmed opacity-0 outline-none group-hover:opacity-100 hover:text-warning focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-primary/40"
+                  @click="internals.filterPresentation.toggleFavorite({ key: definition.key })"
+                >
+                  <UIcon name="i-lucide-star" :class="geometry.icon" />
+                </button>
+              </div>
             </FilterSearchablePanel>
           </div>
 
