@@ -103,6 +103,10 @@ describe('favorite filters', () => {
       preferences: LOCAL,
       schema: createAccountsSchema({ autoLocations: true }),
     })
+    expect(
+      harness.internals.filterPresentation.isStarrable({ key: 'edofSync' }),
+      'no star to tap on a phone',
+    ).toBeFalsy()
     expect(placement(harness), 'phones keep their own rules').toStrictEqual({
       bar: [],
       menu: ['status', 'country', 'edofSync'],

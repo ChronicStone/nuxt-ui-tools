@@ -56,13 +56,14 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
         declared === 'tag' ||
         (declared === 'auto' &&
           !isNullish(options.filters.getDefaultFilterState({ key: definition.key })))
+      // Phones keep their rules: no stars there, and no favorite pinned.
       const starrable =
         options.favorites.enabled &&
+        !options.isMobile.value &&
         !pinned &&
         declared !== 'panel' &&
         definition.display?.favorite !== false
-      const favorite =
-        starrable && !options.isMobile.value && options.favorites.isFavorite(definition.key)
+      const favorite = starrable && options.favorites.isFavorite(definition.key)
       const location = pinned || favorite ? 'tag' : declared === 'panel' ? 'panel' : 'tag-dynamic'
 
       return {

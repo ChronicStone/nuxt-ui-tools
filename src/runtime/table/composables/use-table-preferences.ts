@@ -110,17 +110,18 @@ function useStoredFavorites(params: {
       return
     }
     const previous = queryClient.getQueryData<TablePreferencesMap>(queryOptions.queryKey)
+    void queryClient.cancelQueries({ queryKey: queryOptions.queryKey })
     const preferences: TablePreferences = { favoriteFilters: next }
 
     queryClient.setQueryData<TablePreferencesMap>(queryOptions.queryKey, {
       ...previous,
       [tableKey]: preferences,
     })
-    mutation.mutate(params.store.variables({ tableKey, preferences }), {
-      onError: () => {
-        queryClient.setQueryData(queryOptions.queryKey, previous)
-      },
-    })
+    // Each call keeps its own promise: TanStack drops the callbacks of an earlier `mutate` once a
+    // newer one starts, so a failed save is caught here and the saved state read back.
+    mutation
+      .mutateAsync(params.store.variables({ tableKey, preferences }))
+      .catch(() => queryClient.invalidateQueries({ queryKey: queryOptions.queryKey }))
   }
 
   return { keys, set }
