@@ -1,3 +1,4 @@
+import { useAppConfig } from 'nuxt/app'
 import { computed, inject, provide, shallowRef } from 'vue'
 import type { InjectionKey } from 'vue'
 
@@ -70,7 +71,11 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     state,
   })
   const { isMobile } = useDataListBreakpoint()
+  const appConfig = useAppConfig()
   const filterPresentation = useTableFilterPresentation({
+    defaultLocation: computed(
+      () => appConfig.nuxtUiTools?.dataList?.filters?.defaultLocation ?? 'tag',
+    ),
     favorites: useTableFavoriteFilters({ tableKey: computed(() => schema.value.tableKey) }),
     filters,
     isMobile,

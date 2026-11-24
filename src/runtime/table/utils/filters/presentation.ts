@@ -15,16 +15,17 @@ const FILTER_DISPLAY_LOCATIONS = [
 
 export function resolveFilterDisplayLocation(
   value?: TableFilterDisplayLocationValue,
+  fallback: TableFilterDisplayLocation = 'tag',
 ): TableFilterDisplayLocation {
   if (!value) {
-    return 'auto'
+    return fallback
   }
   if (isFilterDisplayLocation(value)) {
     return value
   }
 
   const resolved = getResponsiveValue(value)
-  return isFilterDisplayLocation(resolved) ? resolved : 'auto'
+  return isFilterDisplayLocation(resolved) ? resolved : fallback
 }
 
 export function resolveFilterDisplayOrder(definition: TableUiFilterDefinition) {

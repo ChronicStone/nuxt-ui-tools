@@ -43,9 +43,10 @@ export type TableScalarDateFilterOperator = Exclude<TableDateFilterOperator, 'be
 export type TableFilterCommitMode = 'manual' | 'auto'
 export type TableFilterPreviewMode = 'auto' | 'summary' | 'tags'
 /**
- * Where a filter sits. `auto` (default): in the bar when it has a default value, is a favorite or
- * holds a value, otherwise behind « + Filtre ». `tag`: always in the bar. `tag-dynamic`: like `auto`
- * but a default value does not pin it. `panel`: in the filter panel.
+ * Where a filter sits. `tag`: always in the bar (the default unless the app config sets
+ * `dataList.filters.defaultLocation`). `auto`: in the bar when it has a default value, a value or a
+ * favorite star, otherwise behind « + Filtre ». `tag-dynamic`: like `auto`, but a default value does
+ * not pin it. `panel`: in the filter panel.
  */
 export type TableFilterDisplayLocation = 'auto' | 'tag' | 'panel' | 'tag-dynamic'
 export type TableFilterDisplayLocationValue = TableFilterDisplayLocation | string

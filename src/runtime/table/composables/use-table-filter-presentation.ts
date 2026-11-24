@@ -7,6 +7,7 @@ import type {
   TableFilterOperator,
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
+  TableFilterDisplayLocation,
   TableResolvedFilterPresentation,
 } from '../types'
 import { resolvePanelCommitRules, resolvePanelDefaultRules } from '../utils/filter-presentation'
@@ -24,6 +25,8 @@ export interface UseTableFilterPresentationParams {
   favorites: TableFavoriteFilters
   /** Favorites never change the phone layout. */
   isMobile: ComputedRef<boolean>
+  /** Location of a filter that declares none (app config `dataList.filters.defaultLocation`). */
+  defaultLocation: ComputedRef<TableFilterDisplayLocation>
 }
 
 export function useTableFilterPresentation(options: UseTableFilterPresentationParams) {
@@ -45,12 +48,19 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   const resolved = computed<TableResolvedFilterPresentation[]>(() =>
     definitions.value.map((definition) => {
       const active = !isNullish(options.filters.getActiveFilterState({ key: definition.key }))
-      const declared = resolveFilterDisplayLocation(definition.display?.location)
+      const declared = resolveFilterDisplayLocation(
+        definition.display?.location,
+        options.defaultLocation.value,
+      )
       const pinned =
         declared === 'tag' ||
         (declared === 'auto' &&
           !isNullish(options.filters.getDefaultFilterState({ key: definition.key })))
-      const starrable = !pinned && declared !== 'panel' && definition.display?.favorite !== false
+      const starrable =
+        options.favorites.enabled &&
+        !pinned &&
+        declared !== 'panel' &&
+        definition.display?.favorite !== false
       const favorite =
         starrable && !options.isMobile.value && options.favorites.isFavorite(definition.key)
       const location = pinned || favorite ? 'tag' : declared === 'panel' ? 'panel' : 'tag-dynamic'

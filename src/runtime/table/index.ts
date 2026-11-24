@@ -3,6 +3,7 @@ export { useTable } from './composables/use-table'
 export { provideTablePreferences } from './composables/use-table-preferences'
 export type {
   TableFavoriteFilters,
+  TableLocalPreferenceStore,
   TablePreferenceStore,
   TablePreferences,
   TablePreferencesMap,

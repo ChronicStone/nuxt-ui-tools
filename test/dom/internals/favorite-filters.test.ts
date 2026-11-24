@@ -15,6 +15,9 @@ afterEach(() => {
   window.localStorage.clear()
 })
 
+const AUTO = { nuxtUiTools: { dataList: { filters: { defaultLocation: 'auto' } } } }
+const LOCAL = { storage: 'local' } as const
+
 function placement(current: Harness) {
   const presentation = current.internals.filterPresentation
   return {
@@ -41,10 +44,26 @@ function createStore(
 describe('favorite filters', () => {
   it('places a filter without a location by its default value', async () => {
     harness = await mountLoaded({ schema: createAccountsSchema({ autoLocations: true }) })
+    expect(placement(harness), 'without the app default, nothing changes').toStrictEqual({
+      bar: ['status', 'edofSync'],
+      menu: ['country'],
+    })
+    expect(
+      harness.internals.filterPresentation.isStarrable({ key: 'edofSync' }),
+      'no store, no stars',
+    ).toBeFalsy()
+
+    harness.unmount()
+    harness = await mountLoaded({
+      appConfig: AUTO,
+      schema: createAccountsSchema({ autoLocations: true }),
+    })
     expect(placement(harness)).toStrictEqual({ bar: [], menu: ['status', 'country', 'edofSync'] })
 
     harness.unmount()
     harness = await mountLoaded({
+      appConfig: AUTO,
+      preferences: LOCAL,
       schema: createAccountsSchema({ autoLocations: true, statusDefault: ['active'] }),
     })
     expect(placement(harness)).toStrictEqual({ bar: ['status'], menu: ['country', 'edofSync'] })
@@ -55,7 +74,11 @@ describe('favorite filters', () => {
   })
 
   it('pins a starred filter to the bar, keeps it while it holds a value, and not on phones', async () => {
-    harness = await mountLoaded({ schema: createAccountsSchema({ autoLocations: true }) })
+    harness = await mountLoaded({
+      appConfig: AUTO,
+      preferences: LOCAL,
+      schema: createAccountsSchema({ autoLocations: true }),
+    })
     const presentation = harness.internals.filterPresentation
     presentation.toggleFavorite({ key: 'edofSync' })
     await harness.flush()
@@ -75,7 +98,9 @@ describe('favorite filters', () => {
     presentation.toggleFavorite({ key: 'country' })
     harness.unmount()
     harness = await mountLoaded({
+      appConfig: AUTO,
       breakpoint: 'sm',
+      preferences: LOCAL,
       schema: createAccountsSchema({ autoLocations: true }),
     })
     expect(placement(harness), 'phones keep their own rules').toStrictEqual({
@@ -85,7 +110,10 @@ describe('favorite filters', () => {
   })
 
   it('never stars a pinned, panel or opted-out filter', async () => {
-    harness = await mountLoaded({ schema: createAccountsSchema({ panelFilters: true }) })
+    harness = await mountLoaded({
+      preferences: LOCAL,
+      schema: createAccountsSchema({ panelFilters: true }),
+    })
     const presentation = harness.internals.filterPresentation
     presentation.toggleFavorite({ key: 'status' })
     presentation.toggleFavorite({ key: 'country' })
@@ -101,6 +129,7 @@ describe('favorite filters', () => {
   it('reads favorites from the app store and saves each change through its mutation', async () => {
     const { save, store } = createStore({ accounts: { favoriteFilters: ['country', 'gone'] } })
     harness = await mountLoaded({
+      appConfig: AUTO,
       preferences: store,
       schema: createAccountsSchema({ autoLocations: true }),
     })
@@ -127,6 +156,7 @@ describe('favorite filters', () => {
       }),
     )
     harness = await mountLoaded({
+      appConfig: AUTO,
       preferences: store,
       schema: createAccountsSchema({ autoLocations: true }),
     })

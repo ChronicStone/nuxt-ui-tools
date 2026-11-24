@@ -43,12 +43,13 @@ describe('display resolution', () => {
     return { display, key: 'k', kind: 'text', label: 'K' } as unknown as TableUiFilterDefinition
   }
 
-  it('defaults to auto, keeps valid locations and rejects unknown ones', () => {
-    expect(resolveFilterDisplayLocation()).toBe('auto')
-    expect(resolveFilterDisplayLocation('tag')).toBe('tag')
+  it('defaults to tag or the app default, keeps valid locations and rejects unknown ones', () => {
+    expect(resolveFilterDisplayLocation()).toBe('tag')
+    expect(resolveFilterDisplayLocation(undefined, 'auto')).toBe('auto')
+    expect(resolveFilterDisplayLocation('auto')).toBe('auto')
     expect(resolveFilterDisplayLocation('panel')).toBe('panel')
     expect(resolveFilterDisplayLocation('tag-dynamic')).toBe('tag-dynamic')
-    expect(resolveFilterDisplayLocation('bogus' as never)).toBe('auto')
+    expect(resolveFilterDisplayLocation('bogus' as never)).toBe('tag')
   })
 
   it('orders definitions with explicit order first', () => {

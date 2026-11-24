@@ -26,17 +26,30 @@ export interface TablePreferenceStore<TVariables = unknown> {
   variables: (input: { tableKey: string; preferences: TablePreferences }) => TVariables
 }
 
-export const tablePreferenceStoreKey: InjectionKey<TablePreferenceStore> = Symbol(
-  'nuxt-ui-tools-table-preferences',
-)
+/** Keeps preferences in this browser only (`localStorage`), with no API. */
+export interface TableLocalPreferenceStore {
+  storage: 'local'
+}
 
-/** Call once from a Nuxt plugin. Without it, preferences stay in this browser (`localStorage`). */
-export function provideTablePreferences<TVariables>(store: TablePreferenceStore<TVariables>) {
+export const tablePreferenceStoreKey: InjectionKey<
+  TablePreferenceStore | TableLocalPreferenceStore
+> = Symbol('nuxt-ui-tools-table-preferences')
+
+/**
+ * Turns favorite filters on, for every table with a `tableKey`. Call once from a Nuxt plugin, with
+ * the app's own query and mutation options, or `{ storage: 'local' }` to keep them in the browser.
+ * Without this call, tables show no stars.
+ */
+export function provideTablePreferences<TVariables>(
+  store: TablePreferenceStore<TVariables> | TableLocalPreferenceStore,
+) {
   // SAFETY: the store is only read back through its own query, mutation and variables functions.
   useNuxtApp().vueApp.provide(tablePreferenceStoreKey, store as TablePreferenceStore)
 }
 
 export interface TableFavoriteFilters {
+  /** False until the app calls `provideTablePreferences`. */
+  enabled: boolean
   keys: ComputedRef<readonly string[]>
   isFavorite: (key: string) => boolean
   toggle: (key: string) => void
@@ -46,9 +59,16 @@ export function useTableFavoriteFilters(params: {
   tableKey: ComputedRef<string | undefined>
 }): TableFavoriteFilters {
   const store = inject(tablePreferenceStoreKey, null)
-  const favorites = store
-    ? useStoredFavorites({ store, tableKey: params.tableKey })
-    : useBrowserFavorites({ tableKey: params.tableKey })
+
+  if (!store) {
+    const none = computed<readonly string[]>(() => [])
+    return { enabled: false, isFavorite: () => false, keys: none, toggle: () => undefined }
+  }
+
+  const favorites =
+    'storage' in store
+      ? useBrowserFavorites({ tableKey: params.tableKey })
+      : useStoredFavorites({ store, tableKey: params.tableKey })
 
   function toggle(key: string) {
     const current = favorites.keys.value
@@ -58,6 +78,7 @@ export function useTableFavoriteFilters(params: {
   }
 
   return {
+    enabled: true,
     keys: favorites.keys,
     isFavorite: (key) => favorites.keys.value.includes(key),
     toggle,
