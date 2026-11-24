@@ -240,7 +240,7 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-The table caches the query, applies a star at once, saves one change at a time and reads the saved
+The table caches the query, shows no star until it has loaded, applies a star at once, saves one change at a time and reads the saved
 state back if a save fails. `provideTablePreferences({ storage: 'local' })` keeps favorites in the
 browser instead, with no API. Without the call, no stars.
 

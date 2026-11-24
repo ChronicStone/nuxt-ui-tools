@@ -1,3 +1,11 @@
+## v1.36.1
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.36.0...v1.36.1)
+
+### 🩹 Fixes
+
+- **table:** No favorite star until the person's saved favorites have loaded, so a star on a slow first load never replaces the ones already saved. `TableFavoriteFilters` gains `ready`
+
 ## v1.36.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.35.0...v1.36.0)

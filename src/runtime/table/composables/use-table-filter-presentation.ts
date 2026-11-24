@@ -59,6 +59,7 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
       // Phones keep their rules: no stars there, and no favorite pinned.
       const starrable =
         options.favorites.enabled &&
+        options.favorites.ready.value &&
         !options.isMobile.value &&
         !pinned &&
         declared !== 'panel' &&

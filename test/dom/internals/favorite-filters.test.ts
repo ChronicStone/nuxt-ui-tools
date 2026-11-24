@@ -152,8 +152,41 @@ describe('favorite filters', () => {
     })
   })
 
+  it('offers no star until the saved favorites have loaded', async () => {
+    let release: (map: TablePreferencesMap) => void = () => undefined
+    const loaded = new Promise<TablePreferencesMap>((resolve) => {
+      release = resolve
+    })
+    const save = vi.fn(async (_variables: SaveVariables): Promise<undefined> => undefined)
+    const store: TablePreferenceStore<SaveVariables> = {
+      mutation: () => ({ mutationFn: save }),
+      query: () => ({ queryFn: () => loaded, queryKey: ['table-preferences'] }),
+      variables: ({ tableKey, preferences }) => ({ tableKey, ...preferences }),
+    }
+    harness = await mountLoaded({
+      appConfig: AUTO,
+      // SAFETY: the harness only calls the store through its own functions, as provideTablePreferences does.
+      preferences: store as TablePreferenceStore,
+      schema: createAccountsSchema({ autoLocations: true }),
+    })
+    const presentation = harness.internals.filterPresentation
+    expect(presentation.isStarrable({ key: 'edofSync' }), 'still loading').toBeFalsy()
+    presentation.toggleFavorite({ key: 'edofSync' })
+    await harness.flush()
+    expect(save, 'a star before the read never replaces the saved favorites').not.toHaveBeenCalled()
+
+    release({ accounts: { favoriteFilters: ['country'] } })
+    await harness.until(() => placement(harness!).bar.includes('country'))
+    presentation.toggleFavorite({ key: 'edofSync' })
+    await harness.flush()
+    expect(save.mock.calls[0]?.[0]).toStrictEqual({
+      favoriteFilters: ['country', 'edofSync'],
+      tableKey: 'accounts',
+    })
+  })
+
   it('rolls a change back when the store refuses it', async () => {
-    const { store } = createStore(
+    const { save, store } = createStore(
       {},
       vi.fn(async (_variables: SaveVariables): Promise<undefined> => {
         throw new Error('offline')
@@ -164,8 +197,10 @@ describe('favorite filters', () => {
       preferences: store,
       schema: createAccountsSchema({ autoLocations: true }),
     })
+    await harness.until(() => harness!.internals.filterPresentation.isStarrable({ key: 'country' }))
     harness.internals.filterPresentation.toggleFavorite({ key: 'country' })
     await harness.flush()
+    expect(save).toHaveBeenCalledOnce()
     await harness.until(() => !placement(harness!).bar.includes('country'))
     expect(placement(harness).menu).toStrictEqual(['status', 'country', 'edofSync'])
   })
