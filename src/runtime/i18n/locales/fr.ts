@@ -662,7 +662,6 @@ export default defineUiToolsLocale<Messages>({
       controls: {
         addFilter: 'Ajouter un filtre',
         addFavoriteFilter: 'Toujours afficher {label}',
-        removeFavoriteFilter: 'Ne plus toujours afficher {label}',
         favoriteFilters: 'Toujours affichés',
         clearSelection: 'Effacer la sélection',
         close: 'Fermer',

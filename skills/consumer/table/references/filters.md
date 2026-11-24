@@ -203,9 +203,46 @@ display: {
 
 Supported locations:
 
-- `tag`
-- `panel`
-- `tag-dynamic`
+- `tag`: always in the bar (the default)
+- `panel`: in the filter panel
+- `tag-dynamic`: behind « + Filtre » until it holds a value
+- `auto`: in the bar when it has a default value, a value or a favorite star, otherwise behind « + Filtre »
+
+A filter without `location` uses `tag`, or the app default:
+
+```ts
+// app.config.ts
+export default defineAppConfig({
+  nuxtUiTools: { dataList: { filters: { defaultLocation: 'auto' } } },
+})
+```
+
+### Favorite filters (opt-in)
+
+Once the app calls `provideTablePreferences`, people star filters in « + Filtre » to keep them in
+the bar on desktop (phones keep their rules). Starred filters are listed under « Toujours affichés »
+to unstar them. `tag`, `panel` and defaulted filters have no star; `display: { favorite: false }`
+removes it from one filter. Favorites are kept per `tableKey`.
+
+```ts
+// plugins/table-preferences.ts
+import { provideTablePreferences } from '#ui-tools/table'
+
+export default defineNuxtPlugin(() => {
+  const { $api } = useNuxtApp()
+
+  provideTablePreferences({
+    // returns { [tableKey]: { favoriteFilters: string[] } }
+    query: () => $api.profile.tablePreferences.index.queryOptions(),
+    mutation: () => $api.profile.tablePreferences.update.mutationOptions(),
+    variables: ({ tableKey, preferences }) => ({ params: { tableKey }, body: preferences }),
+  })
+})
+```
+
+The table caches the query, applies a star at once, saves one change at a time and reads the saved
+state back if a save fails. `provideTablePreferences({ storage: 'local' })` keeps favorites in the
+browser instead, with no API. Without the call, no stars.
 
 Responsive values use the shared responsive string syntax:
 

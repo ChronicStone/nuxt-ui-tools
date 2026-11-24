@@ -97,9 +97,11 @@ function useStoredFavorites(params: {
     staleTime: Number.POSITIVE_INFINITY,
   })
   // SAFETY: the app's mutation options take the variables its own `variables` function builds.
-  const mutation = useMutation(
-    params.store.mutation() as { mutationFn: (variables: unknown) => Promise<unknown> },
-  )
+  const mutation = useMutation({
+    ...(params.store.mutation() as { mutationFn: (variables: unknown) => Promise<unknown> }),
+    // One save at a time, in order: two quick stars never land on the server out of order.
+    scope: { id: 'nuxt-ui-tools:table-preferences' },
+  })
   const keys = computed<readonly string[]>(() =>
     params.tableKey.value ? (query.data.value?.[params.tableKey.value]?.favoriteFilters ?? []) : [],
   )

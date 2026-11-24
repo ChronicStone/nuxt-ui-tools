@@ -49,7 +49,6 @@ export interface UiToolsTableMessages {
   controls: {
     addFilter: string
     addFavoriteFilter: string
-    removeFavoriteFilter: string
     favoriteFilters: string
     clearSearch: string
     resetFilters: string

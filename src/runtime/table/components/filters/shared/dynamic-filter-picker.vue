@@ -324,7 +324,7 @@ function toggle() {
                   data-favorite-toggle
                   :aria-pressed="true"
                   :aria-label="
-                    t('table.controls.removeFavoriteFilter', { label: getLabel(definition) })
+                    t('table.controls.addFavoriteFilter', { label: getLabel(definition) })
                   "
                   class="inline-flex shrink-0 items-center rounded-sm text-warning outline-none hover:text-muted focus-visible:ring-2 focus-visible:ring-primary/40"
                   @click="internals.filterPresentation.toggleFavorite({ key: definition.key })"
@@ -409,7 +409,7 @@ function toggle() {
                   :aria-label="
                     t('table.controls.addFavoriteFilter', { label: getLabel(definition) })
                   "
-                  class="absolute end-7 top-1/2 inline-flex -translate-y-1/2 items-center rounded-sm p-0.5 text-dimmed opacity-0 outline-none group-hover:opacity-100 hover:text-warning focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-primary/40"
+                  class="absolute end-7 top-1/2 inline-flex -translate-y-1/2 items-center rounded-sm p-0.5 text-dimmed opacity-0 outline-none group-hover:opacity-100 [@media(hover:none)]:opacity-100 hover:text-warning focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-primary/40"
                   @click="internals.filterPresentation.toggleFavorite({ key: definition.key })"
                 >
                   <UIcon name="i-lucide-star" :class="geometry.icon" />
