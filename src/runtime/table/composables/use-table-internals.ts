@@ -1,8 +1,10 @@
+import { useAppConfig } from 'nuxt/app'
 import { computed, inject, provide, shallowRef } from 'vue'
 import type { InjectionKey } from 'vue'
 
 import type { MaybeComputedRef, TableApi, TableSchemaView } from '../types'
 import { resolveSchemaSource } from '../utils'
+import { useDataListBreakpoint } from './use-data-list-breakpoint'
 import { useTableActions } from './use-table-actions'
 import { useTableApi } from './use-table-api'
 import { useTableColumns } from './use-table-columns'
@@ -14,6 +16,7 @@ import { useTableGrid } from './use-table-grid'
 import { useTableGroups } from './use-table-groups'
 import { useTableLayout } from './use-table-layout'
 import { useTablePagination } from './use-table-pagination'
+import { useTableFavoriteFilters } from './use-table-preferences'
 import { useTableRowSummary } from './use-table-row-summary'
 import { useTableSelection } from './use-table-selection'
 import { useTableStartup } from './use-table-startup'
@@ -67,8 +70,15 @@ function createTableInternals<TSchema>(options: { rawSchema: MaybeComputedRef<TS
     schema,
     state,
   })
+  const { isMobile } = useDataListBreakpoint()
+  const appConfig = useAppConfig()
   const filterPresentation = useTableFilterPresentation({
+    defaultLocation: computed(
+      () => appConfig.nuxtUiTools?.dataList?.filters?.defaultLocation ?? 'tag',
+    ),
+    favorites: useTableFavoriteFilters({ tableKey: computed(() => schema.value.tableKey) }),
     filters,
+    isMobile,
   })
   const grid = useTableGrid({
     data: queryContent.data,

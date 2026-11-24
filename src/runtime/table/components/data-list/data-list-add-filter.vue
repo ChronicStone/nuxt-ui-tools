@@ -14,6 +14,7 @@ const props = defineProps<{
 }>()
 const dataListUi = useDataListUi()
 const definitions = computed(() => internals.filterPresentation.dormantDynamicDefinitions.value)
+const favoriteCount = computed(() => internals.filterPresentation.favoriteDefinitions.value.length)
 const sessionDefinition = computed(
   () => internals.filterPresentation.dynamicSessionDefinition.value,
 )
@@ -32,7 +33,7 @@ function getLabel(definition: TableUiFilterDefinition) {
 
 <template>
   <DynamicFilterPicker
-    v-if="definitions.length || sessionDefinition"
+    v-if="definitions.length || favoriteCount || sessionDefinition"
     :definitions="definitions"
     :session-definition="sessionDefinition"
     :get-label="getLabel"

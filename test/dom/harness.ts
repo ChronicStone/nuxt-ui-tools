@@ -9,6 +9,11 @@ import type { Router } from 'vue-router'
 import DataListRoot from '#ui-tools/table/components/data-list/data-list-root.vue'
 import { useTable } from '#ui-tools/table/composables/use-table'
 import type { TableInternals } from '#ui-tools/table/composables/use-table-internals'
+import { tablePreferenceStoreKey } from '#ui-tools/table/composables/use-table-preferences'
+import type {
+  TableLocalPreferenceStore,
+  TablePreferenceStore,
+} from '#ui-tools/table/composables/use-table-preferences'
 import type { DataListControlSize, DataListDensity, DataListUiConfig } from '#ui-tools/table/types'
 
 import { setAppConfig, setBreakpoint } from './nuxt-state'
@@ -30,6 +35,8 @@ export interface MountOptions {
   settle?: boolean
   queryDefaults?: { refetchOnMount?: boolean | 'always' }
   queryClient?: QueryClient
+  /** Table preferences store handed to the app, as `provideTablePreferences` does. */
+  preferences?: TablePreferenceStore | TableLocalPreferenceStore
 }
 
 export interface Harness {
@@ -83,7 +90,10 @@ export async function mountDataList(options: MountOptions): Promise<Harness> {
   })
   const wrapper = mount(Host, {
     attachTo: document.body,
-    global: { plugins: [router, [VueQueryPlugin, { queryClient }]] },
+    global: {
+      plugins: [router, [VueQueryPlugin, { queryClient }]],
+      provide: options.preferences ? { [tablePreferenceStoreKey]: options.preferences } : {},
+    },
   })
   const internals = table.__internals
   if (options.start !== false) {

@@ -7,6 +7,7 @@ import type {
 } from '../../types'
 
 const FILTER_DISPLAY_LOCATIONS = [
+  'auto',
   'tag',
   'panel',
   'tag-dynamic',
@@ -14,16 +15,17 @@ const FILTER_DISPLAY_LOCATIONS = [
 
 export function resolveFilterDisplayLocation(
   value?: TableFilterDisplayLocationValue,
+  fallback: TableFilterDisplayLocation = 'tag',
 ): TableFilterDisplayLocation {
   if (!value) {
-    return 'tag'
+    return fallback
   }
   if (isFilterDisplayLocation(value)) {
     return value
   }
 
   const resolved = getResponsiveValue(value)
-  return isFilterDisplayLocation(resolved) ? resolved : 'tag'
+  return isFilterDisplayLocation(resolved) ? resolved : fallback
 }
 
 export function resolveFilterDisplayOrder(definition: TableUiFilterDefinition) {

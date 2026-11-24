@@ -1,3 +1,13 @@
+## v1.36.0
+
+[compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.35.0...v1.36.0)
+
+### 🚀 Enhancements
+
+- **table:** Favorite filters, opt-in: after `provideTablePreferences(store)` each person can star a filter in « + Filtre » to keep it in the bar on desktop (phones keep their rules). The store hands the app's own `query` and `mutation` options plus a `variables` mapper; the table caches, applies a change at once and rolls it back if the mutation fails. `provideTablePreferences({ storage: 'local' })` keeps favorites in the browser instead. Without the call, no stars. A filter opts out with `display.favorite: false`; `tag`, `panel` and defaulted filters are never starrable
+- **table:** New `auto` location, and app config `nuxtUiTools.dataList.filters.defaultLocation` for filters that declare none. `auto` shows a filter in the bar when it has a default value, a value or a favorite star, otherwise behind « + Filtre ». The library default stays `tag`
+- **table:** « + Filtre » lists starred filters under « Toujours affichés », so they can be unstarred, and stays available when only favorites are left
+
 ## v1.35.0
 
 [compare changes](https://github.com/ChronicStone/nuxt-ui-tools/compare/v1.34.0...v1.35.0)

@@ -42,7 +42,13 @@ export type TableDateFilterOperator = 'is' | 'isNot' | 'before' | 'after' | 'bet
 export type TableScalarDateFilterOperator = Exclude<TableDateFilterOperator, 'between'>
 export type TableFilterCommitMode = 'manual' | 'auto'
 export type TableFilterPreviewMode = 'auto' | 'summary' | 'tags'
-export type TableFilterDisplayLocation = 'tag' | 'panel' | 'tag-dynamic'
+/**
+ * Where a filter sits. `tag`: always in the bar (the default unless the app config sets
+ * `dataList.filters.defaultLocation`). `auto`: in the bar when it has a default value, a value or a
+ * favorite star, otherwise behind « + Filtre ». `tag-dynamic`: like `auto`, but a default value does
+ * not pin it. `panel`: in the filter panel.
+ */
+export type TableFilterDisplayLocation = 'auto' | 'tag' | 'panel' | 'tag-dynamic'
 export type TableFilterDisplayLocationValue = TableFilterDisplayLocation | string
 
 export interface TableFilterBehaviorCommon<
@@ -81,6 +87,8 @@ export interface TableFilterUiActionLabelsConfig {
 
 export interface TableFilterDisplayConfig {
   location?: TableFilterDisplayLocationValue
+  /** `false` hides the star: the filter can never be pinned to the bar as a favorite. */
+  favorite?: boolean
   icon?: string
   order?: number
   group?: string
@@ -425,6 +433,10 @@ export interface TableResolvedFilterPresentation<TKey extends string = string> {
   panelSection?: string
   active: boolean
   visible: boolean
+  /** The person starred it, and it sits in the bar for that reason (never on mobile). */
+  favorite: boolean
+  /** It can be starred: not pinned by its location or default, and not opted out. */
+  starrable: boolean
 }
 
 export interface TableTextFilterUiResolved {

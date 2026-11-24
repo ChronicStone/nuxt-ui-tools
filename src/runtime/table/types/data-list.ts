@@ -7,6 +7,7 @@ import type { SelectProps } from '@nuxt/ui/components/Select.vue'
 import type { ComputedRef } from 'vue'
 
 import type { TableInternals } from '../composables/use-table-internals'
+import type { TableFilterDisplayLocation } from './filters'
 import type { TableEmptySchema } from './layout'
 import type { TableLayout } from './utils'
 
@@ -507,6 +508,14 @@ export interface DataListSearchConfig extends DataListPartConfig<
 export interface DataListUiConfig {
   /** Default control density for the composed page. */
   density?: DataListDensity
+  filters?: {
+    /**
+     * Where a filter without `display.location` sits. `tag` (default) keeps it in the bar; `auto`
+     * shows it in the bar only when it has a default value, a value or a favorite star, and
+     * otherwise behind « + Filtre ».
+     */
+    defaultLocation?: TableFilterDisplayLocation
+  }
   /** Shared size fallback for controls that do not declare their own size. */
   control?: { size?: DataListControlSize }
   default?: { ui?: DataListDefaultUi }

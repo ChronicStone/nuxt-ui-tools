@@ -67,6 +67,8 @@ export interface AccountsSchemaOptions {
   summaries?: boolean
   summariesResolve?: TableSummariesSchema['resolve']
   panelFilters?: boolean
+  /** Leaves status and EDOF sync without a location, so the table places them itself. */
+  autoLocations?: boolean
   /** Adds the legal entity text filter as a dynamic tag. */
   textTag?: boolean
   statusDefault?: AccountStatus[]
@@ -135,7 +137,7 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
             ...(options.statusDefault ? { defaultValue: options.statusDefault } : {}),
             commitMode: 'auto',
           },
-          display: { location: 'tag', order: 1 },
+          display: options.autoLocations ? { order: 1 } : { location: 'tag', order: 1 },
           editor: { searchable: false, selection: { mode: 'multiple' } },
           label: 'Statut',
           source: {
@@ -170,7 +172,7 @@ export function createAccountsSchema(options: AccountsSchemaOptions = {}) {
               },
         }),
         filter.boolean('edofSync', {
-          display: { location: 'tag-dynamic', order: 3 },
+          display: options.autoLocations ? { order: 3 } : { location: 'tag-dynamic', order: 3 },
           label: 'Synchronisation EDOF',
         }),
         ...(options.textTag

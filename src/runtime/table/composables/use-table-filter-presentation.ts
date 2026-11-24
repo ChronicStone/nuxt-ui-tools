@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import { isNullish } from '../../shared/utils/predicate'
 import type {
@@ -6,6 +7,7 @@ import type {
   TableFilterOperator,
   TableQueryStateFilterRule,
   TableQueryStateFilterValue,
+  TableFilterDisplayLocation,
   TableResolvedFilterPresentation,
 } from '../types'
 import { resolvePanelCommitRules, resolvePanelDefaultRules } from '../utils/filter-presentation'
@@ -14,11 +16,17 @@ import {
   resolveFilterDisplayOrder,
 } from '../utils/filters/presentation'
 import type { useTableFilters } from './use-table-filters'
+import type { TableFavoriteFilters } from './use-table-preferences'
 
 export { resolvePanelCommitRules, resolvePanelDefaultRules } from '../utils/filter-presentation'
 
 export interface UseTableFilterPresentationParams {
   filters: ReturnType<typeof useTableFilters>
+  favorites: TableFavoriteFilters
+  /** Favorites never change the phone layout. */
+  isMobile: ComputedRef<boolean>
+  /** Location of a filter that declares none (app config `dataList.filters.defaultLocation`). */
+  defaultLocation: ComputedRef<TableFilterDisplayLocation>
 }
 
 export function useTableFilterPresentation(options: UseTableFilterPresentationParams) {
@@ -40,17 +48,34 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
   const resolved = computed<TableResolvedFilterPresentation[]>(() =>
     definitions.value.map((definition) => {
       const active = !isNullish(options.filters.getActiveFilterState({ key: definition.key }))
-      const location = resolveFilterDisplayLocation(definition.display?.location)
-      const visible = location !== 'tag-dynamic' || active
+      const declared = resolveFilterDisplayLocation(
+        definition.display?.location,
+        options.defaultLocation.value,
+      )
+      const pinned =
+        declared === 'tag' ||
+        (declared === 'auto' &&
+          !isNullish(options.filters.getDefaultFilterState({ key: definition.key })))
+      // Phones keep their rules: no stars there, and no favorite pinned.
+      const starrable =
+        options.favorites.enabled &&
+        !options.isMobile.value &&
+        !pinned &&
+        declared !== 'panel' &&
+        definition.display?.favorite !== false
+      const favorite = starrable && options.favorites.isFavorite(definition.key)
+      const location = pinned || favorite ? 'tag' : declared === 'panel' ? 'panel' : 'tag-dynamic'
 
       return {
         active,
+        favorite,
         group: definition.display?.group,
         key: definition.key,
         location,
         order: resolveFilterDisplayOrder(definition),
         panelSection: definition.display?.panel?.section,
-        visible,
+        starrable,
+        visible: location !== 'tag-dynamic' || active,
       }
     }),
   )
@@ -88,6 +113,23 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
       ? undefined
       : definitions.value.find((definition) => definition.key === dynamicSessionKey.value),
   )
+
+  /** Starred filters shown in the bar, listed in « + Filtre » so they can be unstarred. */
+  const favoriteDefinitions = computed(() =>
+    definitions.value.filter(
+      (definition) => resolved.value.find((item) => item.key === definition.key)?.favorite,
+    ),
+  )
+
+  function isStarrable(input: { key: string }) {
+    return Boolean(resolved.value.find((item) => item.key === input.key)?.starrable)
+  }
+
+  function toggleFavorite(input: { key: string }) {
+    if (isStarrable(input)) {
+      options.favorites.toggle(input.key)
+    }
+  }
 
   const panelDefinitions = computed(() =>
     definitions.value.filter((definition) => {
@@ -292,9 +334,12 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     commitPanelDraft,
     dormantDynamicDefinitions,
     dynamicSessionDefinition,
+    favoriteDefinitions,
+    favorites: options.favorites,
     getPanelDraftFilterState,
     getPanelFilterOperator,
     hasPanelFilters,
+    isStarrable,
     openPanel,
     panelCommitMode,
     panelDefinitions,
@@ -308,5 +353,6 @@ export function useTableFilterPresentation(options: UseTableFilterPresentationPa
     setPanelOptionFilterValues,
     setPanelScalarFilterValue,
     tagDefinitions,
+    toggleFavorite,
   }
 }
