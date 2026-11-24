@@ -50,6 +50,8 @@ export function provideTablePreferences<TVariables>(
 export interface TableFavoriteFilters {
   /** False until the app calls `provideTablePreferences`. */
   enabled: boolean
+  /** False until the saved favorites have loaded, so a star never saves over ones not read yet. */
+  ready: ComputedRef<boolean>
   keys: ComputedRef<readonly string[]>
   isFavorite: (key: string) => boolean
   toggle: (key: string) => void
@@ -62,7 +64,13 @@ export function useTableFavoriteFilters(params: {
 
   if (!store) {
     const none = computed<readonly string[]>(() => [])
-    return { enabled: false, isFavorite: () => false, keys: none, toggle: () => undefined }
+    return {
+      enabled: false,
+      isFavorite: () => false,
+      keys: none,
+      ready: computed(() => false),
+      toggle: () => undefined,
+    }
   }
 
   const favorites =
@@ -71,6 +79,9 @@ export function useTableFavoriteFilters(params: {
       : useStoredFavorites({ store, tableKey: params.tableKey })
 
   function toggle(key: string) {
+    if (!favorites.ready.value) {
+      return
+    }
     const current = favorites.keys.value
     favorites.set(
       current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
@@ -80,6 +91,7 @@ export function useTableFavoriteFilters(params: {
   return {
     enabled: true,
     keys: favorites.keys,
+    ready: favorites.ready,
     isFavorite: (key) => favorites.keys.value.includes(key),
     toggle,
   }
@@ -126,7 +138,7 @@ function useStoredFavorites(params: {
       .catch(() => queryClient.invalidateQueries({ queryKey: queryOptions.queryKey }))
   }
 
-  return { keys, set }
+  return { keys, ready: computed(() => query.isSuccess.value), set }
 }
 
 function useBrowserFavorites(params: { tableKey: ComputedRef<string | undefined> }) {
@@ -143,5 +155,5 @@ function useBrowserFavorites(params: { tableKey: ComputedRef<string | undefined>
     stored.value = { ...stored.value, [tableKey]: [...next] }
   }
 
-  return { keys, set }
+  return { keys, ready: computed(() => true), set }
 }
